@@ -37,8 +37,10 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			requester: userRequester,
 			enabled:   true,
 			expected: map[string]string{
-				AnnoAuthor:      "Test User",
-				AnnoAuthorEmail: "test@example.com",
+				AnnoAuthor:       "Test User",
+				AnnoAuthorEmail:  "test@example.com",
+				AnnoAuthorID:     "user:abc123",
+				AnnoAuthorOrigin: "Grafana",
 			},
 		},
 		{
@@ -48,8 +50,10 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			enabled:     true,
 			annotations: map[string]string{AnnoAuthor: "Spoofed", AnnoAuthorEmail: "spoof@evil.com"},
 			expected: map[string]string{
-				AnnoAuthor:      "Test User",
-				AnnoAuthorEmail: "test@example.com",
+				AnnoAuthor:       "Test User",
+				AnnoAuthorEmail:  "test@example.com",
+				AnnoAuthorID:     "user:abc123",
+				AnnoAuthorOrigin: "Grafana",
 			},
 		},
 		{
@@ -69,29 +73,50 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			},
 			enabled:     true,
 			annotations: map[string]string{AnnoAuthor: "Spoofed"},
-			expected:    map[string]string{},
+			expected:    map[string]string{AnnoAuthorOrigin: "Unknown"},
 		},
 		{
-			name:        "user cannot set webhook annotations",
+			name:        "user cannot spoof the author id and origin",
 			operation:   admission.Create,
 			requester:   userRequester,
 			enabled:     true,
-			annotations: map[string]string{AnnoWebhookSender: "spoof", AnnoWebhookSenderID: "1"},
+			annotations: map[string]string{AnnoAuthorID: "user:someone-else", AnnoAuthorOrigin: "GitHub"},
 			expected: map[string]string{
-				AnnoAuthor:      "Test User",
-				AnnoAuthorEmail: "test@example.com",
+				AnnoAuthor:       "Test User",
+				AnnoAuthorEmail:  "test@example.com",
+				AnnoAuthorID:     "user:abc123",
+				AnnoAuthorOrigin: "Grafana",
 			},
 		},
 		{
-			name:      "provisioning service identity keeps webhook annotations",
+			name:      "provisioning service identity keeps webhook attribution but not email",
 			operation: admission.Create,
 			requester: &identity.StaticRequester{
 				Type:    authlib.TypeAccessPolicy,
 				UserUID: "provisioning",
 			},
-			enabled:     false,
-			annotations: map[string]string{AnnoWebhookSender: "grot", AnnoWebhookSenderID: "123"},
-			expected:    map[string]string{AnnoWebhookSender: "grot", AnnoWebhookSenderID: "123"},
+			enabled: true,
+			annotations: map[string]string{
+				AnnoAuthor:       "grot",
+				AnnoAuthorEmail:  "spoof@evil.com",
+				AnnoAuthorID:     "123",
+				AnnoAuthorOrigin: "GitHub",
+			},
+			expected: map[string]string{
+				AnnoAuthor:       "grot",
+				AnnoAuthorID:     "123",
+				AnnoAuthorOrigin: "GitHub",
+			},
+		},
+		{
+			name:      "provisioning service identity without attribution records Grafana as the origin",
+			operation: admission.Create,
+			requester: &identity.StaticRequester{
+				Type:    authlib.TypeAccessPolicy,
+				UserUID: "provisioning",
+			},
+			enabled:  true,
+			expected: map[string]string{AnnoAuthorOrigin: "Grafana"},
 		},
 		{
 			name:        "non-create operation is left untouched",
@@ -127,7 +152,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			// The mutator only ever touches the attribution annotations; assert
 			// on exactly those to confirm none are left stray.
 			got := map[string]string{}
-			for _, k := range []string{AnnoAuthor, AnnoAuthorEmail, AnnoWebhookSender, AnnoWebhookSenderID} {
+			for _, k := range []string{AnnoAuthor, AnnoAuthorEmail, AnnoAuthorID, AnnoAuthorOrigin} {
 				if v, ok := job.Annotations[k]; ok {
 					got[k] = v
 				}

@@ -1412,8 +1412,10 @@ func TestValidateAuthor(t *testing.T) {
 	require.NoError(t, err)
 
 	annotations := map[string]string{
-		AnnoAuthor:      requester.GetName(),
-		AnnoAuthorEmail: requester.GetEmail(),
+		AnnoAuthor:       requester.GetName(),
+		AnnoAuthorEmail:  requester.GetEmail(),
+		AnnoAuthorID:     requester.GetUID(),
+		AnnoAuthorOrigin: "UI",
 	}
 
 	tests := []struct {
@@ -1457,6 +1459,13 @@ func TestValidateAuthor(t *testing.T) {
 			wantErrContains: AnnoAuthorEmail + " must match",
 		},
 		{
+			name:            "create with mismatched id",
+			ctx:             userCtx,
+			operation:       admission.Create,
+			annotations:     map[string]string{AnnoAuthorID: "user:someone-else"},
+			wantErrContains: AnnoAuthorID + " must match",
+		},
+		{
 			name:            "create without requester",
 			ctx:             t.Context(),
 			operation:       admission.Create,
@@ -1474,7 +1483,7 @@ func TestValidateAuthor(t *testing.T) {
 			name:            "update changing name",
 			ctx:             userCtx,
 			operation:       admission.Update,
-			annotations:     map[string]string{AnnoAuthor: "someone else"},
+			annotations:     map[string]string{AnnoAuthor: "someone else", AnnoAuthorEmail: requester.GetEmail(), AnnoAuthorID: requester.GetUID(), AnnoAuthorOrigin: "UI"},
 			oldAnnotations:  annotations,
 			wantErrContains: AnnoAuthor + " is immutable",
 		},
@@ -1482,7 +1491,7 @@ func TestValidateAuthor(t *testing.T) {
 			name:            "update changing email",
 			ctx:             userCtx,
 			operation:       admission.Update,
-			annotations:     map[string]string{AnnoAuthor: requester.GetName(), AnnoAuthorEmail: "other@example.com"},
+			annotations:     map[string]string{AnnoAuthor: requester.GetName(), AnnoAuthorEmail: "other@example.com", AnnoAuthorID: requester.GetUID(), AnnoAuthorOrigin: "UI"},
 			oldAnnotations:  annotations,
 			wantErrContains: AnnoAuthorEmail + " is immutable",
 		},
@@ -1490,9 +1499,17 @@ func TestValidateAuthor(t *testing.T) {
 			name:            "update removing email",
 			ctx:             userCtx,
 			operation:       admission.Update,
-			annotations:     map[string]string{AnnoAuthor: requester.GetName()},
+			annotations:     map[string]string{AnnoAuthor: requester.GetName(), AnnoAuthorID: requester.GetUID(), AnnoAuthorOrigin: "UI"},
 			oldAnnotations:  annotations,
 			wantErrContains: AnnoAuthorEmail + " is immutable",
+		},
+		{
+			name:            "update changing origin",
+			ctx:             userCtx,
+			operation:       admission.Update,
+			annotations:     map[string]string{AnnoAuthor: requester.GetName(), AnnoAuthorEmail: requester.GetEmail(), AnnoAuthorID: requester.GetUID(), AnnoAuthorOrigin: "GitHub"},
+			oldAnnotations:  annotations,
+			wantErrContains: AnnoAuthorOrigin + " is immutable",
 		},
 		{
 			name:        "delete is ignored",
@@ -1533,112 +1550,3 @@ func TestValidateAuthor(t *testing.T) {
 	}
 }
 
-func TestValidateWebhookSender(t *testing.T) {
-	userCtx := identity.WithRequester(t.Context(), &identity.StaticRequester{
-		Type:    authlib.TypeUser,
-		Name:    "Test User",
-		UserUID: "abc123",
-	})
-	serviceCtx, _, err := identity.WithProvisioningIdentity(t.Context(), "default")
-	require.NoError(t, err)
-
-	annotations := map[string]string{
-		AnnoWebhookSender:   "grot",
-		AnnoWebhookSenderID: "123",
-	}
-
-	tests := []struct {
-		name            string
-		ctx             context.Context
-		operation       admission.Operation
-		annotations     map[string]string
-		oldAnnotations  map[string]string
-		wantErrContains string
-	}{
-		{
-			name:        "create without annotations",
-			ctx:         userCtx,
-			operation:   admission.Create,
-			annotations: nil,
-		},
-		{
-			name:        "create by provisioning service identity",
-			ctx:         serviceCtx,
-			operation:   admission.Create,
-			annotations: annotations,
-		},
-		{
-			name:            "create by user",
-			ctx:             userCtx,
-			operation:       admission.Create,
-			annotations:     annotations,
-			wantErrContains: "may only be set by the provisioning service",
-		},
-		{
-			name:            "create without requester",
-			ctx:             t.Context(),
-			operation:       admission.Create,
-			annotations:     annotations,
-			wantErrContains: "may only be set by the provisioning service",
-		},
-		{
-			name:           "update with unchanged annotations",
-			ctx:            userCtx,
-			operation:      admission.Update,
-			annotations:    annotations,
-			oldAnnotations: annotations,
-		},
-		{
-			name:            "update changing sender",
-			ctx:             userCtx,
-			operation:       admission.Update,
-			annotations:     map[string]string{AnnoWebhookSender: "someone else", AnnoWebhookSenderID: "123"},
-			oldAnnotations:  annotations,
-			wantErrContains: AnnoWebhookSender + " is immutable",
-		},
-		{
-			name:            "update removing sender id",
-			ctx:             userCtx,
-			operation:       admission.Update,
-			annotations:     map[string]string{AnnoWebhookSender: "grot"},
-			oldAnnotations:  annotations,
-			wantErrContains: AnnoWebhookSenderID + " is immutable",
-		},
-		{
-			name:        "delete is ignored",
-			ctx:         userCtx,
-			operation:   admission.Delete,
-			annotations: annotations,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			job := &provisioning.Job{ObjectMeta: metav1.ObjectMeta{Name: "test-job", Annotations: tt.annotations}}
-			var oldObj runtime.Object
-			if tt.oldAnnotations != nil {
-				oldObj = &provisioning.Job{ObjectMeta: metav1.ObjectMeta{Name: "test-job", Annotations: tt.oldAnnotations}}
-			}
-			attr := admission.NewAttributesRecord(
-				job,
-				oldObj,
-				provisioning.JobResourceInfo.GroupVersionKind(),
-				"default",
-				"test-job",
-				provisioning.JobResourceInfo.GroupVersionResource(),
-				"",
-				tt.operation,
-				nil,
-				false,
-				&user.DefaultInfo{},
-			)
-
-			err := validateWebhookSender(tt.ctx, attr, job)
-			if tt.wantErrContains != "" {
-				require.ErrorContains(t, err, tt.wantErrContains)
-			} else {
-				require.NoError(t, err)
-			}
-		})
-	}
-}

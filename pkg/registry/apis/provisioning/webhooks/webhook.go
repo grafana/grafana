@@ -206,7 +206,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			actionTaken = string(rsp.Job.Action)
 			span.SetAttributes(attribute.String("job.action", actionTaken))
 
-			ctx := jobs.WithWebhookAttribution(ctx, result.sender, result.senderID)
+			ctx := jobs.WithWebhookAttribution(ctx, result.attribution)
 			job, err := s.core.GetJobQueue().Insert(ctx, namespace, *rsp.Job)
 			if err != nil {
 				span.RecordError(err)
@@ -225,9 +225,8 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 }
 
 type webhookResult struct {
-	response *provisioning.WebhookResponse
-	sender   string
-	senderID string
+	response    *provisioning.WebhookResponse
+	attribution jobs.WebhookAttribution
 }
 
 // webhook turns an inbound delivery into a sync/pull-request job response. The
@@ -276,7 +275,7 @@ func (s *webhookConnector) webhook(ctx context.Context, req *http.Request, repo 
 		if event.Branch != repo.Config().Branch() {
 			return &webhookResult{response: &provisioning.WebhookResponse{Code: http.StatusOK}}, nil
 		}
-		return &webhookResult{response: s.pushSyncResponse(event), sender: event.Sender, senderID: event.SenderID}, nil
+		return &webhookResult{response: s.pushSyncResponse(event), attribution: webhookAttribution(event, repo)}, nil
 	case repository.WebhookEventPullRequest:
 		if event.RepoSlug != repo.Slug() {
 			logging.FromContext(ctx).Warn("webhook pull request event repository mismatch", "expected", repo.Slug(), "got", event.RepoSlug)
@@ -294,7 +293,7 @@ func (s *webhookConnector) webhook(ctx context.Context, req *http.Request, repo 
 				Message: fmt.Sprintf("ignore pull request event: %s", event.Action),
 			}}, nil
 		}
-		return &webhookResult{response: pullRequestResponse(event), sender: event.Sender, senderID: event.SenderID}, nil
+		return &webhookResult{response: pullRequestResponse(event), attribution: webhookAttribution(event, repo)}, nil
 	case repository.WebhookEventPing:
 		return &webhookResult{response: &provisioning.WebhookResponse{Code: http.StatusOK, Message: "ping received"}}, nil
 	default:
@@ -336,6 +335,14 @@ func watchedPullRequestAction(action repository.PullRequestAction) bool {
 		return true
 	default:
 		return false
+	}
+}
+
+func webhookAttribution(event repository.WebhookEvent, repo repository.WebhookRepository) jobs.WebhookAttribution {
+	return jobs.WebhookAttribution{
+		Sender:   event.Sender,
+		SenderID: event.SenderID,
+		Origin:   repo.Config().Spec.Type.String(),
 	}
 }
 

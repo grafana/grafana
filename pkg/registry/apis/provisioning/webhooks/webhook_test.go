@@ -16,6 +16,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
 type stubWebhookRepo struct {
@@ -55,8 +56,7 @@ func TestWebhookConnector_webhook(t *testing.T) {
 		processErr    error
 		expected      *provisioning.WebhookResponse
 		expectedError error
-		sender        string
-		senderID      string
+		attribution   jobs.WebhookAttribution
 	}{
 		{
 			name:          "missing webhook status",
@@ -90,10 +90,9 @@ func TestWebhookConnector_webhook(t *testing.T) {
 			expected: &provisioning.WebhookResponse{Code: http.StatusOK},
 		},
 		{
-			name:     "push accepted",
-			event:    repository.WebhookEvent{Type: repository.WebhookEventPush, RepoSlug: "grafana/grafana", Branch: "main", TotalChanges: 1, Sender: "grot", SenderID: "123"},
-			sender:   "grot",
-			senderID: "123",
+			name:        "push accepted",
+			event:       repository.WebhookEvent{Type: repository.WebhookEventPush, RepoSlug: "grafana/grafana", Branch: "main", TotalChanges: 1, Sender: "grot", SenderID: "123"},
+			attribution: jobs.WebhookAttribution{Sender: "grot", SenderID: "123", Origin: "github"},
 			expected: &provisioning.WebhookResponse{
 				Code: http.StatusAccepted,
 				Job: &provisioning.JobSpec{
@@ -137,8 +136,7 @@ func TestWebhookConnector_webhook(t *testing.T) {
 				Sender:    "grot",
 				SenderID:  "123",
 			},
-			sender:   "grot",
-			senderID: "123",
+			attribution: jobs.WebhookAttribution{Sender: "grot", SenderID: "123", Origin: "github"},
 			expected: &provisioning.WebhookResponse{
 				Code:    http.StatusAccepted,
 				Message: "pull request: opened",
@@ -200,8 +198,7 @@ func TestWebhookConnector_webhook(t *testing.T) {
 			require.Equal(t, tt.expected.Code, result.response.Code)
 			require.Equal(t, tt.expected.Message, result.response.Message)
 			require.Equal(t, tt.expected.Job, result.response.Job)
-			require.Equal(t, tt.sender, result.sender)
-			require.Equal(t, tt.senderID, result.senderID)
+			require.Equal(t, tt.attribution, result.attribution)
 		})
 	}
 }

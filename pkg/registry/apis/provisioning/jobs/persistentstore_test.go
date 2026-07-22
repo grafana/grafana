@@ -422,24 +422,25 @@ func TestGenerateJobName(t *testing.T) {
 
 func TestWebhookAttribution(t *testing.T) {
 	t.Run("no attribution in context", func(t *testing.T) {
-		require.Nil(t, webhookAttributionFromContext(context.Background()))
+		require.Nil(t, webhookAttributionFromContext(t.Context()))
 	})
 
 	t.Run("empty sender is not recorded", func(t *testing.T) {
-		ctx := WithWebhookAttribution(context.Background(), "", "123")
+		ctx := WithWebhookAttribution(t.Context(), WebhookAttribution{SenderID: "123", Origin: "GitHub"})
 		require.Nil(t, webhookAttributionFromContext(ctx))
 	})
 
-	t.Run("sender without id", func(t *testing.T) {
-		ctx := WithWebhookAttribution(context.Background(), "grot", "")
-		require.Equal(t, map[string]string{appjobs.AnnoWebhookSender: "grot"}, webhookAttributionFromContext(ctx))
+	t.Run("sender without id or origin", func(t *testing.T) {
+		ctx := WithWebhookAttribution(t.Context(), WebhookAttribution{Sender: "grot"})
+		require.Equal(t, map[string]string{appjobs.AnnoAuthor: "grot"}, webhookAttributionFromContext(ctx))
 	})
 
-	t.Run("sender with id", func(t *testing.T) {
-		ctx := WithWebhookAttribution(context.Background(), "grot", "123")
+	t.Run("sender with id and origin", func(t *testing.T) {
+		ctx := WithWebhookAttribution(t.Context(), WebhookAttribution{Sender: "grot", SenderID: "123", Origin: "GitHub"})
 		require.Equal(t, map[string]string{
-			appjobs.AnnoWebhookSender:   "grot",
-			appjobs.AnnoWebhookSenderID: "123",
+			appjobs.AnnoAuthor:       "grot",
+			appjobs.AnnoAuthorID:     "123",
+			appjobs.AnnoAuthorOrigin: "GitHub",
 		}, webhookAttributionFromContext(ctx))
 	})
 
@@ -447,13 +448,14 @@ func TestWebhookAttribution(t *testing.T) {
 		client := fakeclientset.NewSimpleClientset()
 		store := newTestStore(client.ProvisioningV0alpha1())
 
-		ctx := WithWebhookAttribution(context.Background(), "grot", "123")
+		ctx := WithWebhookAttribution(t.Context(), WebhookAttribution{Sender: "grot", SenderID: "123", Origin: "GitHub"})
 		job, err := store.Insert(ctx, "default", provisioning.JobSpec{
 			Repository: "repo",
 			Action:     provisioning.JobActionPull,
 		})
 		require.NoError(t, err)
-		require.Equal(t, "grot", job.Annotations[appjobs.AnnoWebhookSender])
-		require.Equal(t, "123", job.Annotations[appjobs.AnnoWebhookSenderID])
+		require.Equal(t, "grot", job.Annotations[appjobs.AnnoAuthor])
+		require.Equal(t, "123", job.Annotations[appjobs.AnnoAuthorID])
+		require.Equal(t, "GitHub", job.Annotations[appjobs.AnnoAuthorOrigin])
 	})
 }

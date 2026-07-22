@@ -626,15 +626,26 @@ func mutateJobAction(job *provisioning.Job) error {
 
 type webhookAttributionCtxKey struct{}
 
+// WebhookAttribution identifies the webhook sender a job should be attributed
+// to: the provider account name and ID, and the provider it came from.
+type WebhookAttribution struct {
+	Sender   string
+	SenderID string
+	Origin   string
+}
+
 // WithWebhookAttribution attaches the webhook request's identity to the
 // context. Insert stamps it onto the created job as annotations.
-func WithWebhookAttribution(ctx context.Context, sender, senderID string) context.Context {
-	if sender == "" {
+func WithWebhookAttribution(ctx context.Context, attribution WebhookAttribution) context.Context {
+	if attribution.Sender == "" {
 		return ctx
 	}
-	annotations := map[string]string{appjobs.AnnoWebhookSender: sender}
-	if senderID != "" {
-		annotations[appjobs.AnnoWebhookSenderID] = senderID
+	annotations := map[string]string{appjobs.AnnoAuthor: attribution.Sender}
+	if attribution.SenderID != "" {
+		annotations[appjobs.AnnoAuthorID] = attribution.SenderID
+	}
+	if attribution.Origin != "" {
+		annotations[appjobs.AnnoAuthorOrigin] = attribution.Origin
 	}
 	return context.WithValue(ctx, webhookAttributionCtxKey{}, annotations)
 }
