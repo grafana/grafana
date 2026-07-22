@@ -36,14 +36,15 @@ import (
 //   - ObserveDrop        — a live notification was received but could not be
 //     dispatched (reason: unmarshal_error, unknown_type).
 //   - ObserveRelist      — a re-list completed successfully (trigger: initial,
-//     resync, reconnect, periodic); marks the last-success time for staleness.
+//     resync, reconnect, periodic); count is how many objects it returned. Marks
+//     the last-success time for staleness and records the re-list size.
 //   - ObserveRelistError — a re-list failed, so missed events are not yet healed.
 type Metrics interface {
 	ObserveLiveEvent(resource, verb string, rv int64)
 	ObserveRelistEvent(resource, verb string, rv int64, initial bool)
 	ObserveReconnect(resource string)
 	ObserveDrop(resource, reason string)
-	ObserveRelist(resource, trigger string)
+	ObserveRelist(resource, trigger string, count int)
 	ObserveRelistError(resource string)
 }
 
@@ -285,7 +286,7 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 			s, err := n.subscriber.Subscribe(ctx, subject, n.onNotification(), opts...)
 			if err == nil {
 				sub = s
-				n.log.Debug("opened nats informer", "subject", subject, "gvr", n.gvr.String())
+				n.log.Info("opened nats informer", "subject", subject, "gvr", n.gvr.String())
 				break
 			}
 			n.log.Warn("nats informer: subscribe failed, will retry", "subject", subject, "error", err)
@@ -326,7 +327,7 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 			// Error already logged in relist; the next tick retries.
 			_ = n.relist(ctx, TriggerResync)
 		case <-n.reconnect:
-			n.log.Debug("nats reconnected; re-listing", "gvr", n.gvr.String())
+			n.log.Info("nats reconnected; re-listing", "gvr", n.gvr.String())
 			_ = n.relist(ctx, TriggerReconnect)
 		}
 	}
@@ -432,7 +433,7 @@ func (n *Informer) relist(ctx context.Context, trigger string) error {
 	// Swap the snapshot for the fresh set; added/removed are the keys that appeared
 	// and vanished since the previous re-list.
 	added, removed := n.store.Replace(objs)
-	n.log.Debug("nats informer re-listed", "gvr", n.gvr.String(), "initial", initial,
+	n.log.Info("nats informer re-listed", "gvr", n.gvr.String(), "trigger", trigger,
 		"count", len(objs), "added", len(added), "removed", len(removed))
 	addedKeys := make(map[string]struct{}, len(added))
 	for _, obj := range added {
@@ -466,7 +467,7 @@ func (n *Informer) relist(ctx context.Context, trigger string) error {
 		n.dispatch(func(h cache.ResourceEventHandler) { h.OnDelete(o) })
 	}
 	if n.metrics != nil {
-		n.metrics.ObserveRelist(n.gvr.Resource, trigger)
+		n.metrics.ObserveRelist(n.gvr.Resource, trigger, len(objs))
 	}
 	return nil
 }

@@ -38,14 +38,15 @@ const (
 // the publisher-side storage_server_watch_notifications_published_total
 // denominator — whether events were missed (events_total{delivery="live"}).
 type Metrics struct {
-	events       *prometheus.CounterVec // source, resource, verb, delivery
-	latency      *prometheus.HistogramVec
-	reconnects   *prometheus.CounterVec // source, resource (nats only)
-	watchErrors  *prometheus.CounterVec // source, resource (apiserver only)
-	dropped      *prometheus.CounterVec // source, resource, reason
-	relists      *prometheus.CounterVec // source, resource, trigger
-	relistErrors *prometheus.CounterVec // source, resource
-	lastRelist   *prometheus.GaugeVec   // source, resource
+	events        *prometheus.CounterVec // source, resource, verb, delivery
+	latency       *prometheus.HistogramVec
+	reconnects    *prometheus.CounterVec // source, resource (nats only)
+	watchErrors   *prometheus.CounterVec // source, resource (apiserver only)
+	dropped       *prometheus.CounterVec // source, resource, reason
+	relists       *prometheus.CounterVec // source, resource, trigger
+	relistErrors  *prometheus.CounterVec // source, resource
+	lastRelist    *prometheus.GaugeVec   // source, resource
+	relistObjects *prometheus.GaugeVec   // source, resource
 }
 
 var (
@@ -105,8 +106,12 @@ func newMetrics(reg prometheus.Registerer) *Metrics {
 			Name: "grafana_provisioning_informer_last_relist_success_timestamp_seconds",
 			Help: "Unix timestamp of the last successful re-list; time since this is a hard upper bound on event staleness.",
 		}, []string{"source", "resource"}),
+		relistObjects: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "grafana_provisioning_informer_relist_objects",
+			Help: "Number of objects returned by the most recent successful re-list, by source and resource.",
+		}, []string{"source", "resource"}),
 	}
-	reg.MustRegister(m.events, m.latency, m.reconnects, m.watchErrors, m.dropped, m.relists, m.relistErrors, m.lastRelist)
+	reg.MustRegister(m.events, m.latency, m.reconnects, m.watchErrors, m.dropped, m.relists, m.relistErrors, m.lastRelist, m.relistObjects)
 	return m
 }
 
@@ -161,12 +166,13 @@ func (r natsRecorder) ObserveDrop(res, reason string) {
 	r.m.dropped.WithLabelValues(sourceNATS, res, reason).Inc()
 }
 
-func (r natsRecorder) ObserveRelist(res, trigger string) {
+func (r natsRecorder) ObserveRelist(res, trigger string, count int) {
 	if r.m == nil {
 		return
 	}
 	r.m.relists.WithLabelValues(sourceNATS, res, trigger).Inc()
 	r.m.lastRelist.WithLabelValues(sourceNATS, res).SetToCurrentTime()
+	r.m.relistObjects.WithLabelValues(sourceNATS, res).Set(float64(count))
 }
 
 func (r natsRecorder) ObserveRelistError(res string) {

@@ -25,6 +25,7 @@ type recordedCall struct {
 	initial  bool
 	reason   string // drop reason
 	trigger  string // relist trigger
+	count    int    // relist object count
 }
 
 // fakeMetrics records the informer's Metrics hook calls for assertion.
@@ -57,10 +58,10 @@ func (m *fakeMetrics) ObserveDrop(resource, reason string) {
 	m.calls = append(m.calls, recordedCall{kind: "drop", resource: resource, reason: reason})
 }
 
-func (m *fakeMetrics) ObserveRelist(resource, trigger string) {
+func (m *fakeMetrics) ObserveRelist(resource, trigger string, count int) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.calls = append(m.calls, recordedCall{kind: "relist_done", resource: resource, trigger: trigger})
+	m.calls = append(m.calls, recordedCall{kind: "relist_done", resource: resource, trigger: trigger, count: count})
 }
 
 func (m *fakeMetrics) ObserveRelistError(resource string) {
@@ -250,6 +251,7 @@ func TestInformer_Metrics_RelistSuccessAndError(t *testing.T) {
 	done := m.byKind("relist_done")
 	require.Len(t, done, 2)
 	assert.Equal(t, TriggerInitial, done[0].trigger)
+	assert.Equal(t, 1, done[0].count, "re-list reports the number of objects returned")
 	assert.Equal(t, TriggerReconnect, done[1].trigger)
 	assert.Len(t, m.byKind("relist_error"), 1)
 }

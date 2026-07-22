@@ -136,16 +136,17 @@ func (s *CachelessPeriodicInformer) relist(ctx context.Context) error {
 		}
 		return err
 	}
-	s.log.Debug("periodic lister re-listed", "name", s.name, "count", len(objs))
+	s.log.Info("periodic lister re-listed", "name", s.name, "count", len(objs))
 	for _, obj := range objs {
 		o := obj
 		s.dispatch(func(h cache.ResourceEventHandler) { h.OnAdd(o, false) })
 	}
 	// This source only ever re-lists (no live stream), so every pass is a periodic
 	// re-list. Per-object events are intentionally not recorded: it re-delivers the
-	// whole set each pass, so counting them would not mean "changes".
+	// whole set each pass, so counting them would not mean "changes". The object
+	// count is recorded as the re-list size instead.
 	if s.metrics != nil {
-		s.metrics.ObserveRelist(s.name, TriggerPeriodic)
+		s.metrics.ObserveRelist(s.name, TriggerPeriodic, len(objs))
 	}
 	return nil
 }

@@ -105,7 +105,7 @@ func TestMetrics_DropRelistAndStaleness(t *testing.T) {
 
 	r.ObserveDrop("repositories", "unmarshal_error")
 	r.ObserveDrop("repositories", "unknown_type")
-	r.ObserveRelist("repositories", "resync")
+	r.ObserveRelist("repositories", "resync", 7)
 	r.ObserveRelistError("repositories")
 
 	assert.Equal(t, float64(1), testutil.ToFloat64(m.dropped.WithLabelValues("nats", "repositories", "unmarshal_error")))
@@ -114,6 +114,8 @@ func TestMetrics_DropRelistAndStaleness(t *testing.T) {
 	assert.Equal(t, float64(1), testutil.ToFloat64(m.relistErrors.WithLabelValues("nats", "repositories")))
 	// The last-relist gauge is stamped with a real wall-clock time on success.
 	assert.Greater(t, testutil.ToFloat64(m.lastRelist.WithLabelValues("nats", "repositories")), float64(0))
+	// The re-list size gauge reflects the object count from the latest re-list.
+	assert.Equal(t, float64(7), testutil.ToFloat64(m.relistObjects.WithLabelValues("nats", "repositories")))
 }
 
 // The NATS relist recorder skips latency on the initial list (object age, not a
