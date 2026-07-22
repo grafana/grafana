@@ -417,6 +417,9 @@ func validateAuthor(ctx context.Context, a admission.Attributes, job *provisioni
 	switch a.GetOperation() {
 	case admission.Create:
 		if info, ok := types.AuthInfoFrom(ctx); ok && identity.IsProvisioningServiceIdentity(info) {
+			if email != "" {
+				return apierrors.NewBadRequest(fmt.Sprintf("annotation %s may not be set by the provisioning service", AnnoAuthorEmail))
+			}
 			return nil
 		}
 		if requester, err := identity.GetRequester(ctx); err == nil && requester.IsIdentityType(types.TypeUser) {

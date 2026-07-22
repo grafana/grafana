@@ -1480,6 +1480,13 @@ func TestValidateAuthor(t *testing.T) {
 			wantErrContains: AnnoAuthorEmail + " must match",
 		},
 		{
+			name:            "create by the provisioning identity with an email",
+			ctx:             serviceCtx,
+			operation:       admission.Create,
+			annotations:     map[string]string{AnnoAuthor: "grot", AnnoAuthorEmail: "grot@example.com"},
+			wantErrContains: AnnoAuthorEmail + " may not be set by the provisioning service",
+		},
+		{
 			name:        "create by audience-based provisioning identity",
 			ctx:         audienceCtx,
 			operation:   admission.Create,
