@@ -5,6 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { useFlagDashboardNewLayouts } from '@grafana/runtime/internal';
 import { Button, useStyles2, Text, Box, Stack, TextLink, Icon, FilterPill, Tooltip } from '@grafana/ui';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { AddNewEditPane } from 'app/features/dashboard-scene/edit-pane/add-new/AddNewEditPane';
@@ -34,12 +35,13 @@ const InternalDashboardEmpty = ({
   onImportDashboard,
 }: InternalProps) => {
   const styles = useStyles2(getStyles);
+  const dashboardNewLayouts = useFlagDashboardNewLayouts();
 
   return (
     <>
       <Stack alignItems="center" justifyContent="center">
         <div className={`${styles.wrapper} ${styles.wrapperMaxWidth}`}>
-          {config.featureToggles.dashboardNewLayouts && dashboard instanceof DashboardScene ? (
+          {dashboardNewLayouts && dashboard instanceof DashboardScene ? (
             <NewLayoutEmpty dashboard={dashboard} styles={styles} />
           ) : (
             <OldLayoutEmpty

@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
+import { useFlagDashboardNewLayouts } from '@grafana/runtime/internal';
 import {
   ControlsLabel,
   type ControlsLayout,
@@ -38,7 +38,8 @@ export function VariableControls({
 }) {
   const { variables: dashboardVariables } = sceneGraph.getVariables(dashboard)!.useState();
   const { isEditing } = dashboard.useState();
-  const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
+  const dashboardNewLayouts = useFlagDashboardNewLayouts();
+  const isEditingNewLayouts = isEditing && dashboardNewLayouts;
   const variables = variablesOverride ?? dashboardVariables;
 
   const visibleVariables = variables.filter(
@@ -57,7 +58,7 @@ export function VariableControls({
             isEditingNewLayouts={isEditingNewLayouts}
           />
         ))}
-      {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
+      {dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
     </>
   );
 }

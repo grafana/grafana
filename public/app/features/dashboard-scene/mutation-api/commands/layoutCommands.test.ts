@@ -1,4 +1,3 @@
-import { config } from '@grafana/runtime';
 import { CustomVariable, SceneVariableSet, VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
@@ -225,15 +224,12 @@ function buildSceneWithLayoutParent(
 }
 
 describe('Layout mutation commands', () => {
-  let originalToggle: boolean | undefined;
-
   beforeEach(() => {
-    originalToggle = config.featureToggles.dashboardNewLayouts;
-    config.featureToggles.dashboardNewLayouts = true;
+    setTestFlags({ dashboardNewLayouts: true });
   });
 
   afterEach(() => {
-    config.featureToggles.dashboardNewLayouts = originalToggle;
+    setTestFlags({});
   });
 
   describe('ADD_ROW', () => {
@@ -748,7 +744,7 @@ describe('Layout mutation commands', () => {
     });
 
     it('is rejected when feature toggle is disabled', async () => {
-      config.featureToggles.dashboardNewLayouts = false;
+      setTestFlags({ dashboardNewLayouts: false });
       const scene = buildRowsScene(['Row']);
       const executor = new DashboardMutationClient(scene);
 
@@ -2070,7 +2066,7 @@ describe('Layout mutation commands', () => {
     });
 
     it('ADD_ROW applies spec.variables when dashboardSectionVariables is enabled', async () => {
-      setTestFlags({ dashboardSectionVariables: true });
+      setTestFlags({ dashboardNewLayouts: true, dashboardSectionVariables: true });
       const scene = buildRowsScene(['Existing']);
       const executor = new DashboardMutationClient(scene);
 
@@ -2089,7 +2085,7 @@ describe('Layout mutation commands', () => {
     });
 
     it('ADD_ROW ignores spec.variables when dashboardSectionVariables is disabled', async () => {
-      setTestFlags({ dashboardSectionVariables: false });
+      setTestFlags({ dashboardNewLayouts: true, dashboardSectionVariables: false });
       const scene = buildRowsScene(['Existing']);
       const executor = new DashboardMutationClient(scene);
 
@@ -2107,7 +2103,7 @@ describe('Layout mutation commands', () => {
     });
 
     it('ADD_TAB applies spec.variables when dashboardSectionVariables is enabled', async () => {
-      setTestFlags({ dashboardSectionVariables: true });
+      setTestFlags({ dashboardNewLayouts: true, dashboardSectionVariables: true });
       const scene = buildTabsScene(['Existing']);
       const executor = new DashboardMutationClient(scene);
 
@@ -2125,7 +2121,7 @@ describe('Layout mutation commands', () => {
     });
 
     it('UPDATE_ROW clears section variables with variables: [] when flag is on', async () => {
-      setTestFlags({ dashboardSectionVariables: true });
+      setTestFlags({ dashboardNewLayouts: true, dashboardSectionVariables: true });
       const row = new RowItem({
         title: 'R',
         layout: DefaultGridLayoutManager.fromVizPanels([]),
@@ -2147,7 +2143,7 @@ describe('Layout mutation commands', () => {
     });
 
     it('UPDATE_TAB clears section variables with variables: [] when flag is on', async () => {
-      setTestFlags({ dashboardSectionVariables: true });
+      setTestFlags({ dashboardNewLayouts: true, dashboardSectionVariables: true });
       const tab = new TabItem({
         title: 'T',
         layout: DefaultGridLayoutManager.fromVizPanels([]),
@@ -2169,7 +2165,7 @@ describe('Layout mutation commands', () => {
     });
 
     it('UPDATE_ROW ignores spec.variables when dashboardSectionVariables is disabled', async () => {
-      setTestFlags({ dashboardSectionVariables: false });
+      setTestFlags({ dashboardNewLayouts: true, dashboardSectionVariables: false });
       const row = new RowItem({
         title: 'R',
         layout: DefaultGridLayoutManager.fromVizPanels([]),
@@ -2191,7 +2187,7 @@ describe('Layout mutation commands', () => {
     });
 
     it('UPDATE_TAB ignores spec.variables when dashboardSectionVariables is disabled', async () => {
-      setTestFlags({ dashboardSectionVariables: false });
+      setTestFlags({ dashboardNewLayouts: true, dashboardSectionVariables: false });
       const tab = new TabItem({
         title: 'T',
         layout: DefaultGridLayoutManager.fromVizPanels([]),
@@ -2329,7 +2325,7 @@ describe('Layout mutation commands', () => {
 
   describe('feature toggle gate', () => {
     it('rejects layout commands when dashboardNewLayouts is disabled', async () => {
-      config.featureToggles.dashboardNewLayouts = false;
+      setTestFlags({ dashboardNewLayouts: false });
       const scene = buildRowsScene(['A']);
       const executor = new DashboardMutationClient(scene);
 

@@ -22,6 +22,7 @@ declare module "@openfeature/core" {
     | "grafana.kubernetesAnnotationsClient"
     | "grafana.newPanelQueryErrorsUI"
     | "useKubernetesShortURLsAPI"
+    | "dashboardNewLayouts"
     | "dashboard.notebooks"
     | "stateTimeline.nameAboveBars"
     | "grafana.secretsReferenceValueUI"

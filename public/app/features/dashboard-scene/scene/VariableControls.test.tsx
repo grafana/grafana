@@ -1,5 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { render as RTLRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { type ReactNode } from 'react';
 
 import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -12,6 +14,7 @@ import {
   ScopesVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 
 import { toControlSourceRef } from '../utils/predefinedVariables';
 
@@ -34,7 +37,15 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
+function render(ui: ReactNode) {
+  return RTLRender(<OpenFeatureProvider client={getTestFeatureFlagClient()}>{ui}</OpenFeatureProvider>);
+}
+
 describe('VariableControls', () => {
+  beforeEach(() => {
+    setTestFlags({ dashboardNewLayouts: false });
+  });
+
   it('should not show scopes variable label but should mount its component', () => {
     const scopesVariable = new ScopesVariable({ hide: VariableHide.hideVariable, name: '__scopes' });
     const variables = [scopesVariable];

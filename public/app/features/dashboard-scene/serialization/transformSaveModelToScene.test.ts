@@ -21,6 +21,7 @@ import {
   type RowPanel,
   type VariableType,
 } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -838,10 +839,10 @@ describe('transformSaveModelToScene', () => {
   describe('Convert to new rows', () => {
     beforeEach(() => {
       // set feature flag to true
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
     });
     afterEach(() => {
-      config.featureToggles.dashboardNewLayouts = false;
+      setTestFlags({ dashboardNewLayouts: false });
     });
 
     it('Should convert legacy rows to new rows', () => {

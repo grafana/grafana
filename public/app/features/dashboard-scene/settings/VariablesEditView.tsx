@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 
 import { type NavModel, type NavModelItem, PageLayoutType, generateUUID } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
-import { useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/internal';
+import { locationService } from '@grafana/runtime';
+import { useFlagDashboardNewLayouts, useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/internal';
 import {
   type SceneComponentProps,
   SceneObjectBase,
@@ -258,7 +258,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   const usages = useMemo(() => model.getUsages(), [model]);
   const saveModel = model.getSaveModel();
 
-  const isDynamicDashboardsEnabled = config.featureToggles.dashboardNewLayouts;
+  const isDynamicDashboardsEnabled = useFlagDashboardNewLayouts();
   const isSettingsPageRedesignEnabled = useFlagGrafanaDashboardSettingsRedesign();
 
   const goToSidebar = () => {

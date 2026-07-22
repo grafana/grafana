@@ -7,8 +7,8 @@ import {
   type PanelPlugin,
   toDataFrame,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { SceneDataNode, SceneDataTransformer, sceneGraph, type VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { type AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
@@ -1230,15 +1230,12 @@ describe('Panel mutation commands', () => {
   });
 
   describe('MOVE_PANEL', () => {
-    let originalToggle: boolean | undefined;
-
     beforeEach(() => {
-      originalToggle = config.featureToggles.dashboardNewLayouts;
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
     });
 
     afterEach(() => {
-      config.featureToggles.dashboardNewLayouts = originalToggle;
+      setTestFlags({});
     });
 
     it('repositions panel within current group using layoutItem', async () => {

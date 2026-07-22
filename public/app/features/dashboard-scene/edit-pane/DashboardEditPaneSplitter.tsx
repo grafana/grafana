@@ -5,8 +5,8 @@ import { useMedia } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config, useChromeHeaderHeight } from '@grafana/runtime';
-import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { useChromeHeaderHeight } from '@grafana/runtime';
+import { useFlagDashboardNewLayouts, useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { type VizPanel, useSceneObjectState } from '@grafana/scenes';
 import {
   ElementSelectionContext,
@@ -46,7 +46,8 @@ interface Props {
 }
 
 export function DashboardEditPaneSplitter(props: Props) {
-  if (config.featureToggles.dashboardNewLayouts) {
+  const dashboardNewLayouts = useFlagDashboardNewLayouts();
+  if (dashboardNewLayouts) {
     return <DashboardEditPaneSplitterNewLayouts {...props} />;
   } else {
     return <DashboardEditPaneSplitterLegacy {...props} />;

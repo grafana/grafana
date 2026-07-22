@@ -278,7 +278,7 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
 }
 
 export function getDefaultPluginId(): string {
-  return config.featureToggles.dashboardNewLayouts ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false) ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
 }
 
 export function getDefaultVizPanel(): VizPanel {

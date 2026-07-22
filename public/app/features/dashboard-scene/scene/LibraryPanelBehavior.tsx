@@ -1,6 +1,7 @@
 import { PanelPlugin, type PanelProps } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   type SceneObject,
   SceneObjectBase,
@@ -122,7 +123,9 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     const isPublicDashboard = dashboard.state.meta.publicDashboardEnabled === true;
     const isScriptedDashboard = dashboard.state.meta.fromScript === true;
     const shouldSkipRepeatMigration =
-      config.featureToggles.dashboardNewLayouts && !isPublicDashboard && !isScriptedDashboard;
+      getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false) &&
+      !isPublicDashboard &&
+      !isScriptedDashboard;
 
     // Migrate repeat options to layout element (only for legacy dashboards, or public/scripted dashboards)
     if (!shouldSkipRepeatMigration && libPanelModel.repeat && layoutElement instanceof DashboardGridItem) {
