@@ -326,6 +326,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
   let borderColor = 'transparent';
   let hoverBorderColor = 'transparent';
   let textColor = visualRefreshEnabled ? color.main : color.contrastText;
+  let backgroundColor = visualRefreshEnabled ? color.transparent : color.main;
 
   // Secondary button has some special rules as we lack the color token to
   // specify border color for normal button vs border color for outline button
@@ -333,9 +334,11 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
     borderColor = color.border;
     hoverBorderColor = theme.colors.emphasize(color.border, 0.25);
     outlineBorderColor = theme.colors.border.strong;
+    textColor = color.contrastText;
   }
 
-  if (color.name === 'primary' || color.name === 'secondary') {
+  if (color.name === 'primary') {
+    backgroundColor = color.main;
     textColor = color.contrastText;
   }
 
@@ -376,7 +379,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
   }
 
   return {
-    background: visualRefreshEnabled ? color.transparent : color.main,
+    background: backgroundColor,
     color: textColor,
     border: `1px solid ${borderColor}`,
 

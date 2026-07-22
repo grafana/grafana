@@ -8,11 +8,11 @@
       "page": "palette.ink900",
       "primary": "palette.ink850",
       "secondary": "palette.ink800",
-      "elevated": "palette.ink700"
+      "elevated": "palette.ink800"
     },
     "primary": {
       "main": "palette.ink100",
-      "transparent": "palette.ink100",
+      "transparent": "palette.ink600",
       "shade": "palette.ink50",
       "border": "palette.ink100"
     },

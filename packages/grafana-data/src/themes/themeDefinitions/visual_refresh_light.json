@@ -12,7 +12,7 @@
     },
     "primary": {
       "main": "palette.neutral950",
-      "transparent": "palette.neutral950",
+      "transparent": "palette.neutral300",
       "shade": "palette.neutral900",
       "border": "palette.neutral950"
     },
