@@ -2,9 +2,9 @@ import { type GrafanaTheme2, type NewThemeOptions } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Combobox, type ComboboxOption, Field, FieldSet, Stack, Text } from '@grafana/ui';
 
-import { getFieldValue, type ThemeFieldDef } from '../../state/themeStudioModel';
+import { type ThemeFieldDef } from '../../state/themeStudioModel';
 
-import { ThemeStudioField } from './ThemeStudioField';
+import { ThemeFieldList } from './ThemeFieldList';
 
 interface ColorsTabProps {
   options: NewThemeOptions;
@@ -156,16 +156,7 @@ export const ColorsTab = ({ options, derived, onChange }: ColorsTabProps) => {
 
       {groups.map((group) => (
         <FieldSet key={group.label} label={group.label}>
-          <Stack direction="column" gap={1}>
-            {group.fields.map((field) => (
-              <ThemeStudioField
-                key={field.path}
-                field={field}
-                value={getFieldValue(options, derived, field)}
-                onChange={onChange}
-              />
-            ))}
-          </Stack>
+          <ThemeFieldList fields={group.fields} options={options} derived={derived} onChange={onChange} />
         </FieldSet>
       ))}
 

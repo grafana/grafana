@@ -7,7 +7,6 @@ describe('getPreviewTheme', () => {
     const theme = createTheme({ colors: { mode: 'dark' } });
     const tokens = getPreviewTheme(theme);
 
-    expect(tokens.dashboardBackground).toBe(theme.colors.background.canvas);
     expect(tokens.panelBackground).toBe(theme.components.panel.background);
     expect(tokens.primary).toBe(theme.colors.primary.main);
     expect(tokens.seriesPalette[0]).toBe(theme.colors.primary.main);

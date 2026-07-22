@@ -1,10 +1,9 @@
 import { type GrafanaTheme2, type NewThemeOptions } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Stack } from '@grafana/ui';
 
-import { getFieldValue, type ThemeFieldDef } from '../../state/themeStudioModel';
+import { type ThemeFieldDef } from '../../state/themeStudioModel';
 
-import { ThemeStudioField } from './ThemeStudioField';
+import { ThemeFieldList } from './ThemeFieldList';
 
 interface ShapeTabProps {
   options: NewThemeOptions;
@@ -34,16 +33,5 @@ export const ShapeTab = ({ options, derived, onChange }: ShapeTabProps) => {
     },
   ];
 
-  return (
-    <Stack direction="column" gap={1}>
-      {fields.map((field) => (
-        <ThemeStudioField
-          key={field.path}
-          field={field}
-          value={getFieldValue(options, derived, field)}
-          onChange={onChange}
-        />
-      ))}
-    </Stack>
-  );
+  return <ThemeFieldList fields={fields} options={options} derived={derived} onChange={onChange} />;
 };

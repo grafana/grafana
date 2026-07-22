@@ -5,18 +5,13 @@ import { createTheme, type GrafanaTheme2, type NewThemeOptions } from '@grafana/
 export type ThemeFieldKind = 'color' | 'number' | 'text';
 
 export interface ThemeFieldDef {
-  /** lodash path into NewThemeOptions. */
   path: string;
   label: string;
   kind: ThemeFieldKind;
-  /**
-   * Path into the derived GrafanaTheme2 used to show the effective value when there is no override.
-   * Defaults to `path` when the input and derived shapes line up.
-   */
+  /** Path into the derived theme for the effective value; defaults to `path`. */
   derivedPath?: string;
 }
 
-/** Deep clone a theme options object so edits never mutate the shared base definitions. */
 export function cloneThemeOptions(options: NewThemeOptions): NewThemeOptions {
   return cloneDeep(options);
 }
@@ -32,10 +27,7 @@ function coerceNumber(value: unknown): number | undefined {
   return undefined;
 }
 
-/**
- * The value shown for a field: an explicit override in the options if present, otherwise the value
- * derived by createTheme so every input reflects the effective theme.
- */
+/** An explicit override if present, otherwise the value from the derived theme. */
 export function getFieldValue(
   options: NewThemeOptions,
   derived: GrafanaTheme2,
@@ -46,7 +38,7 @@ export function getFieldValue(
   return field.kind === 'number' ? coerceNumber(value) : value;
 }
 
-/** Return new options with the value at path set, or the override removed when cleared. */
+/** Set the value at path, or remove the override when cleared. */
 export function setFieldValue(
   options: NewThemeOptions,
   path: string,
@@ -61,7 +53,7 @@ export function setFieldValue(
   return next;
 }
 
-/** Rebuild the derived theme from options, tolerating transient invalid states. */
+/** Build the theme from options, falling back while edits are transiently invalid. */
 export function buildPreviewTheme(options: NewThemeOptions, fallback: GrafanaTheme2): GrafanaTheme2 {
   try {
     return createTheme(options);

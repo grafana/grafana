@@ -19,7 +19,7 @@ export const NoDataPreview = ({ tokens }: PanelProps) => {
           color: tokens.panelTextSecondary,
         }}
       >
-        <div style={{ fontSize: 14 * tokens.headingScale, fontWeight: 600, marginBottom: 4, color: tokens.panelText }}>
+        <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4, color: tokens.panelText }}>
           {t('theme-studio.preview.no-data', 'No data')}
         </div>
         <div style={{ fontSize: 12 * tokens.textScale }}>{t('theme-studio.preview.no-data-yet', 'No data yet')}</div>

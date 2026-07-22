@@ -33,7 +33,7 @@ export const PreviewPanelShell = ({ tokens, title, subtitle, toolbar, children }
         }}
       >
         <div>
-          <div style={{ fontSize: 13 * tokens.headingScale, fontWeight: 600, color: tokens.panelText }}>{title}</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: tokens.panelText }}>{title}</div>
           {subtitle && (
             <div style={{ fontSize: 12 * tokens.textScale, color: tokens.panelTextSecondary }}>{subtitle}</div>
           )}

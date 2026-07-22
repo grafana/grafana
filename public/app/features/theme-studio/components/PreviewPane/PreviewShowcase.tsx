@@ -36,9 +36,8 @@ const comboOptions: Array<ComboboxOption<string>> = [
 ];
 
 /**
- * Renders real Grafana components so every theme field (buttons, inputs, alerts, badges, links,
- * borders, secondary text, action states) is represented. Rendered under a ThemeContext set to the
- * derived theme by the parent, so useStyles2/useTheme2 inside these components pick up the custom theme.
+ * Real Grafana components rendered under the parent's derived ThemeContext, so the full range of
+ * theme fields (buttons, inputs, alerts, badges, links, text, borders) is represented.
  */
 export const PreviewShowcase = () => {
   const styles = useStyles2(getStyles);
@@ -49,7 +48,7 @@ export const PreviewShowcase = () => {
 
   return (
     <div className={styles.grid}>
-      <Card noMargin className={styles.card}>
+      <Card noMargin>
         <Card.Heading>{t('theme-studio.showcase.actions', 'Actions')}</Card.Heading>
         <Card.Description>
           <Stack direction="column" gap={2}>
@@ -73,7 +72,7 @@ export const PreviewShowcase = () => {
         </Card.Description>
       </Card>
 
-      <Card noMargin className={styles.card}>
+      <Card noMargin>
         <Card.Heading>{t('theme-studio.showcase.form', 'Form controls')}</Card.Heading>
         <Card.Description>
           <Stack direction="column" gap={1}>
@@ -99,7 +98,7 @@ export const PreviewShowcase = () => {
         </Card.Description>
       </Card>
 
-      <Card noMargin className={styles.card}>
+      <Card noMargin>
         <Card.Heading>{t('theme-studio.showcase.notifications', 'Notifications')}</Card.Heading>
         <Card.Description>
           <Stack direction="column" gap={1}>
@@ -111,7 +110,7 @@ export const PreviewShowcase = () => {
         </Card.Description>
       </Card>
 
-      <Card noMargin className={styles.card}>
+      <Card noMargin>
         <Card.Heading>{t('theme-studio.showcase.status', 'Badges, tags & text')}</Card.Heading>
         <Card.Description>
           <Stack direction="column" gap={2}>
@@ -151,8 +150,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
     gap: theme.spacing(2),
     marginTop: theme.spacing(2),
-  }),
-  card: css({
-    marginBottom: 0,
   }),
 });
