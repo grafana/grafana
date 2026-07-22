@@ -3,7 +3,7 @@ import { Badge, LinkButton, Stack, Text } from '@grafana/ui';
 import { type SeverityLevel } from 'app/features/alerting/unified/triage/scene/filters/severity';
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 
-import { alertsCardClicked } from '../analytics/main';
+import { ctaClicked } from '../analytics/main';
 
 import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
 import { SummaryCard, SummaryCardAge, SummaryCardTitle } from './SummaryCard';
@@ -130,7 +130,7 @@ export function FiringAlertsCardView({
             <Badge text={severityLabel(level)} color={severityLevelColor(level)} />
             <SummaryCardTitle
               href={detailHref}
-              onClick={() => alertsCardClicked({ action: 'alert_detail', placement: 'list', severity: level })}
+              onClick={() => ctaClicked({ surface: 'alerts_card', action: 'alert_detail', placement: 'list' })}
             >
               {alert.labels.alertname}
             </SummaryCardTitle>
@@ -149,7 +149,7 @@ export function FiringAlertsCardView({
             variant="primary"
             icon="plus"
             href={newRuleHref}
-            onClick={() => alertsCardClicked({ action: 'create_rule', placement: 'empty_state' })}
+            onClick={() => ctaClicked({ surface: 'alerts_card', action: 'create_rule', placement: 'empty_state' })}
           >
             <Trans i18nKey="home.firing-alerts-card.create">Create an alert rule</Trans>
           </LinkButton>

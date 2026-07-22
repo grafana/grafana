@@ -10,38 +10,26 @@ export interface ClearHistoryClicked extends EventProperty {
   dashboard_count: number;
 }
 
-export interface EmptyCtaClicked extends EventProperty {
-  /** Which empty-state button was clicked. */
-  cta_type: 'create_dashboard' | 'browse_dashboards';
-}
-
-export interface RecommendationEnableClicked extends EventProperty {
-  /** Stable id of the recommendation whose Enable CTA was clicked. */
-  recommendation_id: string;
-  /** Which homepage surface fired the CTA. */
-  source: 'card' | 'pill';
-}
-
-export interface AlertsCardClicked extends EventProperty {
-  /** Which control on the Firing alerts card was clicked. */
-  action: 'alert_detail' | 'create_rule' | 'view_all_alerts' | 'view_all_rules';
+export interface CtaClicked extends EventProperty {
+  /** Which homepage widget fired the CTA. */
+  surface: 'alerts_card' | 'incidents_card' | 'recent_tab' | 'recommendations';
+  /** What the user asked for. Which values are valid depends on the surface (not compiler-enforced). */
+  action:
+    | 'alert_detail'
+    | 'create_rule'
+    | 'view_all_alerts'
+    | 'view_all_rules'
+    | 'incident_detail'
+    | 'declare_incident'
+    | 'view_all_incidents'
+    | 'create_dashboard'
+    | 'browse_dashboards'
+    | 'enable';
   /**
-   * Where the control lives on the card. For create_rule this also encodes card state:
-   * 'empty_state' renders only when the card has zero alerts, 'footer' only when alerts exist.
+   * Where on the widget the control lives. 'list' | 'empty_state' | 'footer' apply to the
+   * alerts/incidents cards and the recent tab; 'card' | 'pill' apply to recommendations.
    */
-  placement: 'list' | 'empty_state' | 'footer';
-  /** Canonical severity of the clicked alert (alert_detail only). */
-  severity?: string;
-}
-
-export interface IncidentsCardClicked extends EventProperty {
-  /** Which control on the Active incidents card was clicked. */
-  action: 'incident_detail' | 'declare_incident' | 'view_all_incidents';
-  /**
-   * Where the control lives on the card. For declare_incident this also encodes card state:
-   * 'empty_state' renders only when the card has zero incidents, 'footer' only when incidents exist.
-   */
-  placement: 'list' | 'empty_state' | 'footer';
-  /** Canonical severity of the clicked incident (incident_detail only). */
-  severity?: string;
+  placement: 'list' | 'empty_state' | 'footer' | 'card' | 'pill';
+  /** Stable id of the recommendation whose Enable CTA was clicked (surface 'recommendations' only). */
+  recommendation_id?: string;
 }
