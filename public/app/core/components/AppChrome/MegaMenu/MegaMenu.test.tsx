@@ -240,6 +240,12 @@ describe('MegaMenu', () => {
         await user.click(await screen.findByRole('button', { name: 'Expand section: Dashboards' }));
         await user.click(await screen.findByRole('button', { name: 'Hide Playlists' }));
 
+        // Hiding reports an interaction (path = the item's url).
+        expect(reportInteraction).toHaveBeenCalledWith(
+          'grafana_nav_item_hidden',
+          expect.objectContaining({ path: '/playlists' })
+        );
+
         // While editing it stays visible (greyed) and can be shown again.
         expect(await screen.findByRole('button', { name: 'Show Playlists' })).toBeInTheDocument();
 
@@ -557,10 +563,11 @@ describe('MegaMenu', () => {
         await user.click(screen.getByRole('button', { name: 'Done' }));
 
         await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/playlists']));
-        expect(reportInteraction).toHaveBeenCalledWith('grafana_nav_customise_saved', {
-          hiddenCount: 0,
-          pinnedCount: 1,
-        });
+        // objectContaining: the event also carries the A/B experiment variant stamp.
+        expect(reportInteraction).toHaveBeenCalledWith(
+          'grafana_nav_customise_saved',
+          expect.objectContaining({ hiddenCount: 0, pinnedCount: 1 })
+        );
       });
     });
   });
