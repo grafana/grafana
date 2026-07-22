@@ -9,8 +9,8 @@ import { type Job, type Repository } from 'app/api/clients/provisioning/v0alpha1
 import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 
 import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
-import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
 import { type RepoType } from '../Wizard/types';
+import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
 import { getStatusColor } from '../utils/repositoryStatus';
 import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
 import { formatTimestamp } from '../utils/time';
@@ -88,7 +88,7 @@ const getJobColumns = (showAuthor: boolean) => [
             if (!origin) {
               return t('provisioning.recent-jobs.origin-grafana', 'Grafana');
             }
-            return getRepositoryTypeConfig(origin as RepoType)?.label ?? origin;
+            return originLabel(origin);
           },
         },
       ]
@@ -186,6 +186,13 @@ function ExpandedRow({ row }: ExpandedRowProps) {
       </Stack>
     </Box>
   );
+}
+
+const REPO_TYPES: RepoType[] = ['local', 'git', 'github', 'githubEnterprise', 'gitlab', 'bitbucket'];
+
+function originLabel(origin: string): string {
+  const repoType = REPO_TYPES.find((type) => type === origin);
+  return (repoType ? getRepositoryTypeConfig(repoType)?.label : undefined) ?? origin;
 }
 
 function EmptyState() {
