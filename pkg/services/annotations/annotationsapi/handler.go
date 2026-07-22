@@ -255,7 +255,8 @@ func annoToItemDTO(anno *annotationV0.Annotation) (*annotations.ItemDTO, error) 
 	if anno.Spec.TimeEnd != nil {
 		dto.TimeEnd = *anno.Spec.TimeEnd
 	} else {
-		// Set TimeEnd to Time for point annotations to align with the legacy API response.
+		// Set TimeEnd to Time for point annotations to align with the legacy API response,
+		// so the downsteam Merge sorts new-store and legacy-store points consistently.
 		dto.TimeEnd = anno.Spec.Time
 	}
 	if anno.Spec.PanelID != nil {
