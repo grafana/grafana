@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { useAssistant } from '@grafana/assistant';
-import { PluginSignatureStatus } from '@grafana/data';
+import { PluginSignatureStatus, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
@@ -391,7 +391,10 @@ describe('InstallControlsButton', () => {
       const user = userEvent.setup();
       render(
         <TestProvider store={store}>
-          <InstallControlsButton plugin={{ ...plugin }} pluginStatus={PluginStatus.INSTALL} />
+          <InstallControlsButton
+            plugin={{ ...plugin, type: PluginType.datasource }}
+            pluginStatus={PluginStatus.INSTALL}
+          />
         </TestProvider>
       );
 
@@ -405,7 +408,10 @@ describe('InstallControlsButton', () => {
       const user = userEvent.setup();
       render(
         <TestProvider store={store}>
-          <InstallControlsButton plugin={{ ...plugin }} pluginStatus={PluginStatus.INSTALL} />
+          <InstallControlsButton
+            plugin={{ ...plugin, type: PluginType.datasource }}
+            pluginStatus={PluginStatus.INSTALL}
+          />
         </TestProvider>
       );
 
@@ -432,7 +438,10 @@ describe('InstallControlsButton', () => {
 
       render(
         <TestProvider store={store}>
-          <InstallControlsButton plugin={{ ...plugin }} pluginStatus={PluginStatus.INSTALL} />
+          <InstallControlsButton
+            plugin={{ ...plugin, type: PluginType.datasource }}
+            pluginStatus={PluginStatus.INSTALL}
+          />
         </TestProvider>
       );
 
