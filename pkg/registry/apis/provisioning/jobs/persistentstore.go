@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"strconv"
 	"time"
@@ -653,7 +654,10 @@ func WithWebhookAttribution(ctx context.Context, attribution WebhookAttribution)
 	return context.WithValue(ctx, webhookAttributionCtxKey{}, annotations)
 }
 
+// webhookAttributionFromContext returns a copy of the attribution annotations:
+// the same context serves every Insert, so callers must not be able to mutate
+// the stored map through a job's annotations.
 func webhookAttributionFromContext(ctx context.Context) map[string]string {
 	annotations, _ := ctx.Value(webhookAttributionCtxKey{}).(map[string]string)
-	return annotations
+	return maps.Clone(annotations)
 }

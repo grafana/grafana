@@ -464,3 +464,17 @@ func TestWebhookAttribution(t *testing.T) {
 		require.Equal(t, "GitHub", job.Annotations[appjobs.AnnoAuthorOrigin])
 	})
 }
+
+func TestWebhookAttributionFromContext_ReturnsACopy(t *testing.T) {
+	ctx := WithWebhookAttribution(t.Context(), WebhookAttribution{Sender: "grot", SenderID: "123", Origin: "github"})
+
+	first := webhookAttributionFromContext(ctx)
+	first[appjobs.AnnoAuthor] = "mutated"
+	delete(first, appjobs.AnnoAuthorID)
+
+	require.Equal(t, map[string]string{
+		appjobs.AnnoAuthor:       "grot",
+		appjobs.AnnoAuthorID:     "123",
+		appjobs.AnnoAuthorOrigin: "github",
+	}, webhookAttributionFromContext(ctx))
+}
