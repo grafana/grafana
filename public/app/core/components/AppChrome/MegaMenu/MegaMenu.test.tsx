@@ -246,7 +246,11 @@ describe('MegaMenu', () => {
           expect.objectContaining({ path: '/playlists' })
         );
 
-        // While editing it stays visible (greyed) and can be shown again.
+        // While editing it stays visible (greyed) and the control flips to a Show toggle.
+        await user.click(await screen.findByRole('button', { name: 'Show Playlists' }));
+
+        // Revealing flips the control back — the item is no longer marked hidden.
+        await user.click(await screen.findByRole('button', { name: 'Hide Playlists' }));
         expect(await screen.findByRole('button', { name: 'Show Playlists' })).toBeInTheDocument();
 
         await user.click(screen.getByRole('button', { name: 'Done' }));
