@@ -1,10 +1,11 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import * as React from 'react';
 
 import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, Dropdown, Icon, Menu, Stack } from '@grafana/ui';
+import { Button, Icon, Stack } from '@grafana/ui';
+import { AssistantSetupDropdown } from 'app/features/connections/components/AssistantSetupDropdown/AssistantSetupDropdown';
 import { ROUTES } from 'app/features/connections/constants';
 import { addDataSource } from 'app/features/datasources/state/actions';
 import { useDispatch } from 'app/types/store';
@@ -18,7 +19,6 @@ type Props = {
 
 export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement | null {
   const dispatch = useDispatch();
-  const [isOpen, setIsOpen] = useState(false);
   const { isAvailable: isAssistantAvailable, openAssistant } = useAssistant();
 
   const onAddDataSource = useCallback(() => {
@@ -52,8 +52,6 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
     return null;
   }
 
-  const showAssistantSetup = isAssistantAvailable && !!openAssistant;
-
   const disabledButton = config.pluginAdminExternalManageEnabled && !plugin.isFullyInstalled;
   const buttonTitle = disabledButton
     ? t(
@@ -62,47 +60,44 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
       )
     : undefined;
 
+  const addNewDataSourceLabel = (
+    <>
+      <Icon name="plus" />
+      <Trans i18nKey="plugins.get-started-with-data-source.add-new-data-source">Add new data source</Trans>
+    </>
+  );
+
+  const showAssistantSetup = isAssistantAvailable && !!openAssistant;
+
   // Without the assistant there's only one action, so skip the dropdown and add the data source directly.
   if (!showAssistantSetup) {
     return (
       <Button variant="primary" disabled={disabledButton} title={buttonTitle} onClick={onAddDataSource}>
         <Stack direction="row" alignItems="center" gap={1}>
-          <Icon name="plus" />
-          <Trans i18nKey="plugins.get-started-with-data-source.add-new-data-source">Add new data source</Trans>
+          {addNewDataSourceLabel}
         </Stack>
       </Button>
     );
   }
 
-  const menu = (
-    <Menu>
-      <Menu.Item
-        icon="ai-sparkle"
-        label={t('plugins.get-started-with-data-source.setup-assistant', 'Set up with assistant')}
-        description={t('plugins.get-started-with-data-source.setup-assistant-description', 'Guided configuration')}
-        onClick={onSetupWithAssistant}
-      />
-      <Menu.Item
-        icon="list-ul"
-        label={t('plugins.get-started-with-data-source.setup-manually', 'Set up manually')}
-        description={t(
+  return (
+    <AssistantSetupDropdown
+      assistantItem={{
+        label: t('plugins.get-started-with-data-source.setup-assistant', 'Set up with assistant'),
+        description: t('plugins.get-started-with-data-source.setup-assistant-description', 'Guided configuration'),
+        onClick: onSetupWithAssistant,
+      }}
+      manualItem={{
+        label: t('plugins.get-started-with-data-source.setup-manually', 'Set up manually'),
+        description: t(
           'plugins.get-started-with-data-source.setup-manually-description',
           'Configure all settings yourself'
-        )}
-        onClick={onAddDataSource}
-      />
-    </Menu>
-  );
-
-  return (
-    <Dropdown overlay={menu} placement="bottom-end" onVisibleChange={setIsOpen}>
-      <Button variant="primary" disabled={disabledButton} title={buttonTitle}>
-        <Stack direction="row" alignItems="center" gap={1}>
-          <Icon name="plus" />
-          <Trans i18nKey="plugins.get-started-with-data-source.add-new-data-source">Add new data source</Trans>
-          <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
-        </Stack>
-      </Button>
-    </Dropdown>
+        ),
+        onClick: onAddDataSource,
+      }}
+      buttonProps={{ variant: 'primary', disabled: disabledButton, title: buttonTitle }}
+    >
+      {addNewDataSourceLabel}
+    </AssistantSetupDropdown>
   );
 }

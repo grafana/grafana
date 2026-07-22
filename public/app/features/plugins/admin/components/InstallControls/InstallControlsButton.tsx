@@ -5,11 +5,12 @@ import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
 import { AppEvents, PluginType } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { Button, ConfirmModal, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
+import { Button, ConfirmModal, LinkButton, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
 import { isOpenSourceBuildOrUnlicenced } from 'app/features/admin/EnterpriseAuthFeaturesCard';
+import { AssistantSetupDropdown } from 'app/features/connections/components/AssistantSetupDropdown/AssistantSetupDropdown';
 import { useDispatch } from 'app/types/store';
 
 import { getExternalManageLink, isDisabledAngularPlugin, isMarketplacePlugin } from '../../helpers';
@@ -48,7 +49,6 @@ export function InstallControlsButton({
   const [queryParams] = useQueryParams();
   const location = useLocation();
   const { isAvailable: isAssistantAvailable, openAssistant } = useAssistant();
-  const [isInstallMenuOpen, setIsInstallMenuOpen] = useState(false);
   const { isInstalling, error: errorInstalling } = useInstallStatus();
   const { isUninstalling, error: errorUninstalling } = useUninstallStatus();
   const install = useInstall();
@@ -252,32 +252,22 @@ export function InstallControlsButton({
 
   // With the assistant available, offer a guided installation alongside the manual one.
   if (shouldShowAssistant) {
-    const menu = (
-      <Menu>
-        <Menu.Item
-          icon="ai-sparkle"
-          label={t('plugins.install-controls.install-assistant', 'Install with assistant')}
-          description={t('plugins.install-controls.install-assistant-description', 'Guided installation')}
-          onClick={onInstallWithAssistant}
-        />
-        <Menu.Item
-          icon="list-ul"
-          label={t('plugins.install-controls.install-manually', 'Install manually')}
-          description={t('plugins.install-controls.install-manually-description', 'Install it yourself')}
-          onClick={onInstall}
-        />
-      </Menu>
-    );
-
     return (
-      <Dropdown overlay={menu} placement="bottom-end" onVisibleChange={setIsInstallMenuOpen}>
-        <Button disabled={shouldDisable}>
-          <Stack direction="row" alignItems="center" gap={1}>
-            {installButtonText}
-            <Icon name={isInstallMenuOpen ? 'angle-up' : 'angle-down'} />
-          </Stack>
-        </Button>
-      </Dropdown>
+      <AssistantSetupDropdown
+        assistantItem={{
+          label: t('plugins.install-controls.install-assistant', 'Install with assistant'),
+          description: t('plugins.install-controls.install-assistant-description', 'Guided installation'),
+          onClick: onInstallWithAssistant,
+        }}
+        manualItem={{
+          label: t('plugins.install-controls.install-manually', 'Install manually'),
+          description: t('plugins.install-controls.install-manually-description', 'Install it yourself'),
+          onClick: onInstall,
+        }}
+        buttonProps={{ disabled: shouldDisable }}
+      >
+        {installButtonText}
+      </AssistantSetupDropdown>
     );
   }
 
