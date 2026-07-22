@@ -71,11 +71,11 @@ describe('RecentJobs', () => {
       expect(await screen.findByText('ada@example.com')).toBeInTheDocument();
     });
 
-    it('shows Grafana as the origin with no author when no user triggered the job', async () => {
+    it('shows Unknown as the origin when the job has no attribution', async () => {
       setup([createJob()]);
 
       expect(await screen.findByText('job-1')).toBeInTheDocument();
-      expect(screen.getByText('Grafana')).toBeInTheDocument();
+      expect(screen.getByText('Unknown')).toBeInTheDocument();
     });
 
     it('shows the webhook sender with the provider as the origin', async () => {

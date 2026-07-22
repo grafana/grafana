@@ -8,6 +8,12 @@ import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 import { type Job, type Repository } from 'app/api/clients/provisioning/v0alpha1';
 import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 
+import {
+  AnnoKeyProvisioningAuthor,
+  AnnoKeyProvisioningAuthorEmail,
+  AnnoKeyProvisioningAuthorId,
+  AnnoKeyProvisioningAuthorOrigin,
+} from '../../apiserver/types';
 import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { type RepoType } from '../Wizard/types';
 import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
@@ -22,10 +28,6 @@ interface Props {
   repo: Repository;
 }
 
-const AnnoAuthor = 'provisioning.grafana.app/author';
-const AnnoAuthorEmail = 'provisioning.grafana.app/authorEmail';
-const AnnoAuthorId = 'provisioning.grafana.app/authorId';
-const AnnoAuthorOrigin = 'provisioning.grafana.app/authorOrigin';
 
 type JobCell = {
   row: {
@@ -77,16 +79,16 @@ const getJobColumns = (showAuthor: boolean) => [
           header: t('provisioning.recent-jobs.column-author', 'Author'),
           cell: ({ row: { original: job } }: JobCell) => {
             const annotations = job.metadata?.annotations;
-            return annotations?.[AnnoAuthor] || annotations?.[AnnoAuthorEmail];
+            return annotations?.[AnnoKeyProvisioningAuthor] || annotations?.[AnnoKeyProvisioningAuthorEmail];
           },
         },
         {
           id: 'origin',
           header: t('provisioning.recent-jobs.column-origin', 'Origin'),
           cell: ({ row: { original: job } }: JobCell) => {
-            const origin = job.metadata?.annotations?.[AnnoAuthorOrigin];
+            const origin = job.metadata?.annotations?.[AnnoKeyProvisioningAuthorOrigin];
             if (!origin) {
-              return t('provisioning.recent-jobs.origin-grafana', 'Grafana');
+              return t('provisioning.recent-jobs.origin-unknown', 'Unknown');
             }
             return originLabel(origin);
           },
@@ -139,10 +141,10 @@ function ExpandedRow({ row }: ExpandedRowProps) {
     };
     const annotations = row.metadata?.annotations;
     for (const [key, anno] of [
-      ['author', AnnoAuthor],
-      ['authorEmail', AnnoAuthorEmail],
-      ['authorId', AnnoAuthorId],
-      ['authorOrigin', AnnoAuthorOrigin],
+      ['author', AnnoKeyProvisioningAuthor],
+      ['authorEmail', AnnoKeyProvisioningAuthorEmail],
+      ['authorId', AnnoKeyProvisioningAuthorId],
+      ['authorOrigin', AnnoKeyProvisioningAuthorOrigin],
     ]) {
       const value = annotations?.[anno];
       if (value) {

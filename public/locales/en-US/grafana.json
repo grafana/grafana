@@ -13871,7 +13871,7 @@
       "error-loading-active-jobs": "Error loading active jobs",
       "error-loading-historic-jobs": "Error loading historic jobs",
       "jobs": "Jobs",
-      "origin-grafana": "Grafana"
+      "origin-unknown": "Unknown"
     },
     "repository-actions": {
       "connection": "Connection",
