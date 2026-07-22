@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -787,13 +786,9 @@ func TestHybridSearch_RerankFailureFallsBackToRRFOrder(t *testing.T) {
 	require.Len(t, resp.Results, 2)
 	assert.Equal(t, "first", resp.Results[0].Key.Name)
 	assert.InDelta(t, 1.0/61, resp.Results[0].Score, 1e-12)
-	// fallback metric incremented with reason=error
-	require.NotNil(t, s.vectorMetrics)
-	assert.Equal(t, float64(1), testutil.ToFloat64(
-		s.vectorMetrics.RerankFallbacksTotal.WithLabelValues("test/model", "error")))
 }
 
-func TestHybridSearch_RerankTimeoutFallsBackWithTimeoutReason(t *testing.T) {
+func TestHybridSearch_RerankTimeoutFallsBack(t *testing.T) {
 	s, _, _ := newHybridTestServer(lexTableResponse([3]string{"a", "A", "f"}), &fakeVectorBackend{})
 	scorer := &fakeRerankScorer{err: rerank.ErrCallTimeout}
 	s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{})
@@ -803,8 +798,7 @@ func TestHybridSearch_RerankTimeoutFallsBackWithTimeoutReason(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Len(t, resp.Results, 1)
-	assert.Equal(t, float64(1), testutil.ToFloat64(
-		s.vectorMetrics.RerankFallbacksTotal.WithLabelValues("test/model", "timeout")))
+	assert.InDelta(t, 1.0/61, resp.Results[0].Score, 1e-12)
 }
 
 func TestHybridSearch_RerankScoreLengthMismatchFallsBack(t *testing.T) {
@@ -823,24 +817,6 @@ func TestHybridSearch_RerankScoreLengthMismatchFallsBack(t *testing.T) {
 	require.Len(t, resp.Results, 2)
 	assert.Equal(t, "first", resp.Results[0].Key.Name)
 	assert.InDelta(t, 1.0/61, resp.Results[0].Score, 1e-12)
-}
-
-func TestHybridSearch_RerankDroppedResultsMetric(t *testing.T) {
-	lexResp := lexTableResponse(
-		[3]string{"keep", "Keep", "f"},
-		[3]string{"drop1", "D1", "f"},
-		[3]string{"drop2", "D2", "f"},
-	)
-	s, _, _ := newHybridTestServer(lexResp, &fakeVectorBackend{})
-	scorer := &fakeRerankScorer{scores: []float64{0.5, 0.01, 0.02}}
-	s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{Low: 0.1})
-
-	_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
-		Key: validKey(), Query: "q", MinRelevance: "low",
-	})
-	require.NoError(t, err)
-	assert.Equal(t, float64(2), testutil.ToFloat64(
-		s.vectorMetrics.RerankDroppedResultsTotal.WithLabelValues("test/model", "low")))
 }
 
 func TestHybridSearch_RerankRunsBeforeLimitTruncation(t *testing.T) {

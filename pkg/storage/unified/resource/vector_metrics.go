@@ -13,6 +13,7 @@ type VectorMetrics struct {
 	EmbedDuration                *prometheus.HistogramVec
 	RerankDuration               *prometheus.HistogramVec
 	RerankFallbacksTotal         *prometheus.CounterVec
+	RerankCandidatesTotal        *prometheus.CounterVec
 	RerankDroppedResultsTotal    *prometheus.CounterVec
 	ReconcilerProcessDuration    *prometheus.HistogramVec
 	ReconcilerPendingEvents      prometheus.Gauge
@@ -60,6 +61,10 @@ func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
 			Name: "vector_storage_rerank_fallbacks_total",
 			Help: "Total HybridSearch requests that returned RRF-ordered results because the rerank call failed (fail-open), labeled by model and reason (timeout|error).",
 		}, []string{"model", "reason"}),
+		RerankCandidatesTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "vector_storage_rerank_candidates_total",
+			Help: "Total results scored by the reranker, labeled by model. Denominator for the drop proportion: rate(dropped) / rate(candidates).",
+		}, []string{"model"}),
 		RerankDroppedResultsTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "vector_storage_rerank_dropped_results_total",
 			Help: "Total HybridSearch results dropped by the min_relevance threshold, labeled by model and requested level.",
