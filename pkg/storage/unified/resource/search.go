@@ -666,13 +666,11 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 	// An unprovisioned (group, resource) pair — no catalog row, so no
 	// partition to search — is NOT_FOUND before we spend an embedding on
 	// the query.
-	coll, found, err := s.vectorBackend.ResolveCollection(ctx, req.Key.Group, req.Key.Resource)
+	coll, collAllowed, err := s.resolveAllowedCollection(ctx, req.Key.Group, req.Key.Resource)
 	if err != nil {
-		s.log.Error("vector search: resolve collection", "err", err)
-		return nil, status.Error(codes.Internal, "resolve collection")
+		return nil, s.grpcStatusError(ctx, "vector search: resolve collection", err)
 	}
-	// Config-disallowed and unprovisioned are deliberately the same answer, so callers can't probe which collections exist.
-	if !found || !s.collectionAllowlist.Allows(coll) {
+	if !collAllowed {
 		return &resourcepb.VectorSearchResponse{Error: NewNotFoundError(req.Key)}, nil
 	}
 

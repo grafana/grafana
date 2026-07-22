@@ -431,6 +431,7 @@ func TestHybridSearch_SemanticQueryOverridesEmbedText(t *testing.T) {
 func TestHybridSearch_FiltersReachBothLegs(t *testing.T) {
 	backend := &fakeVectorBackend{}
 	s, idx, _ := newHybridTestServer(lexTableResponse(), backend)
+	s.collectionAllowlist = vector.NewCollectionAllowlist([]string{"g/dashboards"}, nil)
 
 	key := validKey()
 	key.Resource = "dashboards"
@@ -562,6 +563,59 @@ func (r *recordingRateLimiter) Allow(context.Context, string, time.Duration, int
 
 func (r *recordingRateLimiter) SweepOlderThan(context.Context, time.Time) (int64, error) {
 	return 0, nil
+}
+
+func TestHybridSearch_CollectionResolution(t *testing.T) {
+	t.Run("unprovisioned collection is NotFound before embedding", func(t *testing.T) {
+		emb := &fakeTextEmbedder{dim: 4}
+		backend := &fakeVectorBackend{resolveNotFound: true}
+		s, _, _ := newHybridTestServer(lexTableResponse(), backend)
+		s.embedder = newTestEmbedder(emb)
+
+		_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+			Key: validKey(), Query: "q",
+		})
+		require.Error(t, err)
+		assert.Equal(t, codes.NotFound, status.Code(err))
+		assert.Empty(t, emb.gotIn.Texts, "must not spend an embedding on an unprovisioned collection")
+	})
+
+	t.Run("disallowed collection is NotFound, same as unprovisioned", func(t *testing.T) {
+		s, _, _ := newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
+		s.collectionAllowlist = vector.NewCollectionAllowlist(nil, nil)
+
+		_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+			Key: validKey(), Query: "q",
+		})
+		require.Error(t, err)
+		assert.Equal(t, codes.NotFound, status.Code(err))
+	})
+
+	t.Run("external collections are rejected", func(t *testing.T) {
+		backend := &fakeVectorBackend{
+			collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r", IsExternal: true},
+		}
+		s, _, _ := newHybridTestServer(lexTableResponse(), backend)
+
+		_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+			Key: validKey(), Query: "q",
+		})
+		require.Error(t, err)
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
+	t.Run("semantic leg searches the resolved partition key", func(t *testing.T) {
+		backend := &fakeVectorBackend{
+			collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "custom_partition"},
+		}
+		s, _, _ := newHybridTestServer(lexTableResponse(), backend)
+
+		_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+			Key: validKey(), Query: "q",
+		})
+		require.NoError(t, err)
+		assert.Equal(t, "custom_partition", backend.gotResource)
+	})
 }
 
 func TestHybridSearch_NamespaceMismatchIsForbidden(t *testing.T) {

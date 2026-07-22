@@ -69,6 +69,19 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		return nil, err
 	}
 
+	coll, allowed, err := s.resolveAllowedCollection(ctx, req.Key.Group, req.Key.Resource)
+	if err != nil {
+		return nil, s.grpcStatusError(ctx, "hybrid search: resolve collection", err)
+	}
+	if !allowed {
+		return nil, status.Error(codes.NotFound, "collection not found")
+	}
+	// External collections have no lexical index, so the fused contract
+	// can't hold for them.
+	if coll.IsExternal {
+		return nil, status.Error(codes.InvalidArgument, "hybrid search requires an indexed resource; use VectorSearch for external collections")
+	}
+
 	embedText := req.Query
 	if req.SemanticQuery != "" {
 		embedText = req.SemanticQuery
@@ -96,7 +109,7 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 			return err
 		}
 		results, err := s.vectorBackend.Search(gctx,
-			req.Key.Namespace, s.embedder.Model, req.Key.Resource,
+			req.Key.Namespace, s.embedder.Model, coll.PartitionKey,
 			dense, depth, hybridVectorFilters(req.Filters)...)
 		if err != nil {
 			return fmt.Errorf("vector backend: %w", err)
@@ -123,6 +136,18 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		fused = fused[:limit]
 	}
 	return &resourcepb.HybridSearchResponse{Results: fused}, nil
+}
+
+// resolveAllowedCollection is the shared vector-entry guard for
+// VectorSearch and HybridSearch. Unprovisioned and config-disallowed
+// collections are deliberately indistinguishable (allowed=false for
+// both) so callers can't probe which collections exist.
+func (s *searchServer) resolveAllowedCollection(ctx context.Context, group, resource string) (vector.Collection, bool, error) {
+	coll, found, err := s.vectorBackend.ResolveCollection(ctx, group, resource)
+	if err != nil {
+		return vector.Collection{}, false, err
+	}
+	return coll, found && s.collectionAllowlist.Allows(coll), nil
 }
 
 func (s *searchServer) grpcStatusError(ctx context.Context, op string, err error) error {
