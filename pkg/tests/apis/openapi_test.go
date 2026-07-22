@@ -28,7 +28,6 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		RBACSingleOrganization: true,  // required for the Users API
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagQueryService, // Query Library
-			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // library panels in v0
 			featuremgmt.FlagQueryServiceWithConnections,
 			featuremgmt.FlagDatasourceUseNewCRUDAPIs,
