@@ -170,7 +170,7 @@ describe('DashboardPreviewBanner', () => {
       setup();
 
       expect(
-        screen.queryByRole('button', { name: /Open pull request in|View pull request in/i })
+        screen.queryByRole('button', { name: /Open a pull request in|View pull request in/i })
       ).not.toBeInTheDocument();
     });
 
@@ -178,7 +178,7 @@ describe('DashboardPreviewBanner', () => {
       setup({ queryParams: { kiosk: 'tv' } });
 
       expect(
-        screen.queryByRole('button', { name: /Open pull request in|View pull request in/i })
+        screen.queryByRole('button', { name: /Open a pull request in|View pull request in/i })
       ).not.toBeInTheDocument();
     });
 
@@ -186,7 +186,7 @@ describe('DashboardPreviewBanner', () => {
       setup({ path: undefined });
 
       expect(
-        screen.queryByRole('button', { name: /Open pull request in|View pull request in/i })
+        screen.queryByRole('button', { name: /Open a pull request in|View pull request in/i })
       ).not.toBeInTheDocument();
     });
 
@@ -194,7 +194,7 @@ describe('DashboardPreviewBanner', () => {
       setup({ route: DashboardRoutes.Normal });
 
       expect(
-        screen.queryByRole('button', { name: /Open pull request in|View pull request in/i })
+        screen.queryByRole('button', { name: /Open a pull request in|View pull request in/i })
       ).not.toBeInTheDocument();
     });
 
@@ -202,7 +202,7 @@ describe('DashboardPreviewBanner', () => {
       setup({ slug: undefined });
 
       expect(
-        screen.queryByRole('button', { name: /Open pull request in|View pull request in/i })
+        screen.queryByRole('button', { name: /Open a pull request in|View pull request in/i })
       ).not.toBeInTheDocument();
     });
   });
