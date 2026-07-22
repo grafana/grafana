@@ -1,3 +1,4 @@
+import { type Display } from '@grafana/api-clients/rtkq/iam/v0alpha1';
 import { type CurrentUserDTO, type GrafanaConfig, type NavLinkDTO } from '@grafana/data';
 
 const publicDashboardAccessToken = window.__grafanaPublicDashboardAccessToken;
@@ -204,27 +205,59 @@ function loadBootData(): Promise<{ redirect: string } | BootApiResponse> {
   });
 }
 
-async function initGrafana() {
-  // Preserve a mix of values from the initial boot data, and from the backend
-  // - nav tree and user info come from the backend
-  // - merge settings from both. FS settings contains less values
-  // - build info edition comes from the backend
-  const bootData = await loadBootData();
+async function fetchUser(): Promise<Display | undefined> {
+  const namespace = window.grafanaBootData?.settings?.namespace;
+  if (!namespace) {
+    throw new Error('Cannot fetch current user: namespace missing from bootData settings');
+  }
+  const resp = await fetch(`/apis/iam.grafana.app/v0alpha1/namespaces/${namespace}/users/~`);
+  if (resp.status === 401) {
+    return undefined;
+  }
+  if (!resp.ok) {
+    throw new Error(`Unexpected /users/~ response: ${resp.status}`);
+  }
+  return resp.json();
+}
 
-  // If the backend wants us to redirect, we reject this promise to avoid booting the rest of the app.
-  if ('redirect' in bootData) {
-    return Promise.reject({ redirect: bootData.redirect });
+function applyCustomFavIcon() {
+  // @ts-ignore - enterprise only setting.
+  const customFavIcon = window.grafanaBootData.settings.whitelabeling?.favIcon;
+  if (!customFavIcon) {
+    return;
   }
 
-  // TODO: move grabbing user info behind the !window.__grafanaReduceBootdataAPI check once we have
-  // a MT-friendly substitute for it.
-  //
-  // When the __grafanaReduceBootdataAPI flag is enabled, we want to use as little of the boot data response
-  // as possible, and eventually not even call it. However there's no substitute for the user's auth state yet
-  // but we still want to test this codepath, so we keep the user info grabbing here for now.
-  window.grafanaBootData.user = bootData.user;
+  const existingFavIconEl = document.getElementById('grafana_favicon');
+  if (existingFavIconEl && !(existingFavIconEl instanceof HTMLLinkElement)) {
+    return;
+  }
 
+  const favicon = existingFavIconEl ?? document.createElement('link');
+  favicon.rel = 'icon';
+  favicon.type = 'image/png';
+  favicon.id = 'grafana_favicon';
+
+  if (!existingFavIconEl) {
+    document.head.appendChild(favicon);
+  }
+
+  favicon.href = customFavIcon;
+}
+
+async function initGrafana() {
   if (!window.__grafanaReduceBootdataAPI) {
+    // Preserve a mix of values from the initial boot data, and from the backend
+    // - nav tree and user info come from the backend
+    // - merge settings from both. FS settings contains less values
+    // - build info edition comes from the backend
+    const bootData = await loadBootData();
+
+    // If the backend wants us to redirect, we reject this promise to avoid booting the rest of the app.
+    if ('redirect' in bootData) {
+      return Promise.reject({ redirect: bootData.redirect });
+    }
+
+    window.grafanaBootData.user = bootData.user;
     window.grafanaBootData.settings = {
       ...bootData.settings,
       ...window.grafanaBootData.settings,
@@ -247,7 +280,6 @@ async function initGrafana() {
     }
 
     const isLightTheme = window.grafanaBootData.user.lightTheme;
-
     document.body.classList.add(isLightTheme ? 'theme-light' : 'theme-dark');
 
     const lang = window.grafanaBootData.user.language;
@@ -257,30 +289,26 @@ async function initGrafana() {
 
     cssLink.href = window.grafanaBootData.assets[isLightTheme ? 'light' : 'dark'];
     document.head.appendChild(cssLink);
+  } else {
+    const display = await fetchUser();
+    if (display) {
+      window.grafanaBootData.user = {
+        ...window.grafanaBootData.user,
+        isSignedIn: true,
+        id: display.internalId ?? 0,
+        uid: display.identity?.name ?? '',
+        name: display.displayName,
+        gravatarUrl: display.avatarURL ?? '',
+      };
+    } else {
+      window.grafanaBootData.user = {
+        ...window.grafanaBootData.user,
+        isSignedIn: false,
+      };
+    }
   }
 
-  // Set custom fav icon if set in whitelabeling settings
-  // @ts-ignore - enterprise only setting.
-  const customFavIcon = window.grafanaBootData.settings.whitelabeling?.favIcon;
-  if (customFavIcon) {
-    let existingFavIconEl = document.getElementById('grafana_favicon');
-
-    if (existingFavIconEl && !(existingFavIconEl instanceof HTMLLinkElement)) {
-      return;
-    }
-
-    const favicon = existingFavIconEl ?? document.createElement('link');
-
-    favicon.rel = 'icon';
-    favicon.type = 'image/png';
-    favicon.id = 'grafana_favicon';
-
-    if (!existingFavIconEl) {
-      document.head.appendChild(favicon);
-    }
-
-    favicon.href = customFavIcon;
-  }
+  applyCustomFavIcon();
 }
 
 window.__grafana_boot_data_promise = initGrafana();
