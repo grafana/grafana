@@ -14,6 +14,7 @@ export interface RecommendationItem {
 }
 
 export interface ExistingItem {
+  id: string; // stable telemetry id (solution)
   title: string;
   icon: IconName;
   subtitle?: string;

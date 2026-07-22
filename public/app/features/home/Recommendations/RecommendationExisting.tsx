@@ -14,6 +14,7 @@ import { useKubernetesCardData } from './useKubernetesCardData';
 
 const stubbedExisting: ExistingItem[] = [
   {
+    id: 'hosted-metrics',
     title: 'Hosted Metrics',
     icon: 'chart-line',
     stats: {
@@ -30,6 +31,7 @@ const stubbedExisting: ExistingItem[] = [
     href: '#',
   },
   {
+    id: 'hosted-logs',
     title: 'Hosted Logs',
     icon: 'file-alt',
     stats: {
