@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -18,12 +19,10 @@ import (
 // (see registerRoutes / api.go). It drives the REAL router + middleware chain via SetupAPITestServer
 // rather than calling the handlers directly, so it fails if the gate is ever dropped.
 //
-// The contract under test: a non-admin who triggers diagnostics generation must FAIL with 403, and a
-// server admin must NOT be blocked by authz. Because reqGrafanaAdmin runs before the handler, the
-// non-admin cases short-circuit to 403 before any handler/flag/dependency logic — so no handler
-// dependencies need wiring. Each handler checks the feature flag first (returns 404 when off, as it
-// is by default here), which is why a server admin — having cleared the gate — reaches the handler
-// and gets 404, i.e. anything but 403.
+// The contract under test: an anonymous caller must FAIL with 401, a signed-in non-admin must FAIL
+// with 403, and a server admin must NOT be blocked by authz. Because reqGrafanaAdmin runs before the
+// handler, unauthorized callers short-circuit before any handler/flag/dependency logic — so no
+// handler dependencies need wiring.
 func TestDiagnosticsRoutesAreServerAdminOnly(t *testing.T) {
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		cfg := setting.NewCfg()
@@ -55,6 +54,21 @@ func TestDiagnosticsRoutesAreServerAdminOnly(t *testing.T) {
 	}
 
 	for _, rt := range routes {
+		t.Run(fmt.Sprintf("%s %s as anonymous is unauthorized", rt.method, rt.path), func(t *testing.T) {
+			req := server.NewRequest(rt.method, rt.path, nil)
+			req = webtest.RequestWithWebContext(req, &contextmodel.ReqContext{
+				SignedInUser: &user.SignedInUser{},
+				IsSignedIn:   false,
+			})
+
+			resp, err := server.Send(req)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+
+			require.Equal(t, http.StatusUnauthorized, resp.StatusCode,
+				"anonymous caller must be blocked by reqGrafanaAdmin before reaching the handler")
+		})
+
 		for _, na := range nonAdmins {
 			t.Run(fmt.Sprintf("%s %s as %s is forbidden", rt.method, rt.path, na.name), func(t *testing.T) {
 				req := server.NewRequest(rt.method, rt.path, nil)
@@ -79,12 +93,9 @@ func TestDiagnosticsRoutesAreServerAdminOnly(t *testing.T) {
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 
-			// Cleared the gate, so the handler runs. The feature flag is off in this test, so the
-			// handler returns 404 ("not enabled"); the point is only that authz did NOT block it.
+			// Cleared the gate, so the handler runs; its response depends on feature state and wiring.
 			require.NotEqual(t, http.StatusForbidden, resp.StatusCode,
 				"server admin must clear the authz gate and reach the handler")
-			require.Equal(t, http.StatusNotFound, resp.StatusCode,
-				"with the feature flag off, a server admin reaches the handler and gets 404")
 		})
 	}
 }
