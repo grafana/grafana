@@ -96,7 +96,7 @@ describe('PreviewBannerViewPR', () => {
     it('should render correct button text for new PR dashboard', () => {
       setup({ prURL: 'test-url', isNewPr: true });
 
-      expect(screen.getByText('Open pull request in GitHub')).toBeInTheDocument();
+      expect(screen.getByText('Open a pull request in GitHub')).toBeInTheDocument();
     });
 
     it('should render correct button text for existing PR dashboard', () => {
@@ -128,7 +128,7 @@ describe('PreviewBannerViewPR', () => {
     it('should render correct button text for new PR resource', () => {
       setup({ prURL: 'test-url', isNewPr: true });
 
-      expect(screen.getByText('Open pull request in GitHub')).toBeInTheDocument();
+      expect(screen.getByText('Open a pull request in GitHub')).toBeInTheDocument();
     });
 
     it('should render correct button text for existing PR resource', () => {
@@ -147,6 +147,35 @@ describe('PreviewBannerViewPR', () => {
       await userEvent.click(button);
 
       expect(windowOpenSpy).toHaveBeenCalledWith(testUrl, '_blank');
+    });
+  });
+
+  describe('Link fallback', () => {
+    it('falls back to the branch URL when no PR/compare URL is available', async () => {
+      mockUsePullRequestParam.mockReturnValue({
+        prURL: undefined,
+        newPrURL: undefined,
+        repoURL: undefined,
+        repoType: 'github',
+        resourcePushedTo: 'abc',
+        action: undefined,
+        prTitle: undefined,
+      });
+
+      render(
+        <PreviewBannerViewPR
+          isNewPr
+          branchInfo={{
+            targetBranch: 'feature',
+            configuredBranch: 'main',
+            repoBaseUrl: 'https://github.com/org/repo',
+          }}
+        />
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: /close alert/i }));
+
+      expect(windowOpenSpy).toHaveBeenCalledWith('https://github.com/org/repo/tree/feature', '_blank');
     });
   });
 
@@ -194,7 +223,7 @@ describe('PreviewBannerViewPR', () => {
     it('should still render PR button for delete action', () => {
       setup({ prURL: 'test-url', isNewPr: true, action: 'delete' });
 
-      expect(screen.getByText('Open pull request in GitHub')).toBeInTheDocument();
+      expect(screen.getByText('Open a pull request in GitHub')).toBeInTheDocument();
     });
   });
 

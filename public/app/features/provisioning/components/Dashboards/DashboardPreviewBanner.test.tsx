@@ -234,7 +234,7 @@ describe('DashboardPreviewBanner', () => {
           name: 'A new resource has been created in a branch in GitHub.',
         })
       ).toBeInTheDocument();
-      expect(screen.getByText('Open pull request in GitHub')).toBeInTheDocument();
+      expect(screen.getByText('Open a pull request in GitHub')).toBeInTheDocument();
     });
 
     it('calls useGetResourceRepositoryView with slug', () => {

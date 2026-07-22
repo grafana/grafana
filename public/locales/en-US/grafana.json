@@ -13232,7 +13232,7 @@
       "delete-from-branch": "The rest of Grafana users in your organization will still see this resource until this branch is merged",
       "not-saved": "The rest of Grafana users in your organization will still see the current version saved to configured default branch until this branch is merged",
       "open-in-repo-button": "Open in {{repoType}}",
-      "open-pull-request-in-repo": "Open pull request in {{repoType}}",
+      "open-pull-request-in-repo": "Open a pull request in {{repoType}}",
       "update-from-branch": "The rest of Grafana users in your organization will still see the current version until this branch is merged",
       "view-in-repo-button": "View it in {{repoType}} to see the latest changes.",
       "view-pull-request-in-repo": "View pull request in {{repoType}}"

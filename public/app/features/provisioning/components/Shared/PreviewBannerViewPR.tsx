@@ -53,7 +53,13 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
   // Prefill the provider's "open pull request" form title from pullRequest.titleTemplate; only the
   // PR/compare URL carries it. Returns prURL unchanged when no title was threaded through.
   const prLink = appendPullRequestTitleParam(prURL, repoType, prTitle);
-  const linkUrl = prLink || branchInfo?.repoBaseUrl || repoUrl;
+  // When the PR/compare link is unavailable (e.g. the branch was removed after the PR was closed),
+  // fall back to the branch itself rather than the repo root, which is disorienting.
+  const branchLink =
+    branchInfo?.repoBaseUrl && branchInfo?.targetBranch
+      ? getBranchUrl(branchInfo.repoBaseUrl, branchInfo.targetBranch, repoType)
+      : '';
+  const linkUrl = prLink || branchLink || branchInfo?.repoBaseUrl || repoUrl;
 
   const actionText =
     action === 'delete'
@@ -147,7 +153,7 @@ function getCreateBannerText(isNewPr: boolean | undefined, repoType: string): Ba
     button: isNewPr
       ? t(
           'provisioned-resource-preview-banner.preview-banner.open-pull-request-in-repo',
-          'Open pull request in {{repoType}}',
+          'Open a pull request in {{repoType}}',
           { repoType }
         )
       : t(
@@ -171,7 +177,7 @@ function getDeleteBannerText(repoType: string): BannerText {
     ),
     button: t(
       'provisioned-resource-preview-banner.preview-banner.open-pull-request-in-repo',
-      'Open pull request in {{repoType}}',
+      'Open a pull request in {{repoType}}',
       { repoType }
     ),
   };
@@ -190,7 +196,7 @@ function getUpdateBannerText(repoType: string): BannerText {
     ),
     button: t(
       'provisioned-resource-preview-banner.preview-banner.open-pull-request-in-repo',
-      'Open pull request in {{repoType}}',
+      'Open a pull request in {{repoType}}',
       { repoType }
     ),
   };
