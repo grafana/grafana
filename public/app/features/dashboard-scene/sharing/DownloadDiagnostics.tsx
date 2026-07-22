@@ -70,10 +70,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-// Finds a panel's save model within a dashboard save model by id, recursing into collapsed rows
-// (which carry their children in a nested "panels" array). Kept dependency-free to avoid the
-// serialization/utils import cycle the rest of this file works around.
-function findPanelSaveModel(panels: unknown, id: number): unknown {
+// Finds a panel in a v1 dashboard by id, recursing into collapsed rows (which carry their children
+// in a nested "panels" array).
+function findV1PanelSaveModel(panels: unknown, id: number): unknown {
   if (!Array.isArray(panels)) {
     return undefined;
   }
@@ -84,12 +83,27 @@ function findPanelSaveModel(panels: unknown, id: number): unknown {
     if (p.id === id) {
       return p;
     }
-    const nested = findPanelSaveModel(p.panels, id);
+    const nested = findV1PanelSaveModel(p.panels, id);
     if (nested) {
       return nested;
     }
   }
   return undefined;
+}
+
+// V1 dashboards store panels in panels[], while v2 dashboards store them in elements keyed by the
+// scene panel key. Kept dependency-free to avoid the serialization/utils import cycle the rest of
+// this file works around.
+function findPanelSaveModel(dashboard: unknown, panel: VizPanel): unknown {
+  if (!isRecord(dashboard)) {
+    return undefined;
+  }
+
+  if (isRecord(dashboard.elements) && panel.state.key) {
+    return dashboard.elements[panel.state.key];
+  }
+
+  return findV1PanelSaveModel(dashboard.panels, panelIdFrom(panel));
 }
 
 // The download uses a blob-response fetch, whose FetchError carries the detail in status/statusText
@@ -132,13 +146,10 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
     const timeRange = sceneGraph.getTimeRange(panel).state.value;
 
     // Bundle this panel's JSON and the dashboard JSON for context. The panel's save model is resolved
-    // from the dashboard save model by id rather than serialized separately (avoids the serialization
+    // from the dashboard save model rather than serialized separately (avoids the serialization
     // import cycle this view already works around); undefined models are simply not sent.
     const dashboardModel = dashboardRef?.resolve().getSaveModel();
-    const panelModel = findPanelSaveModel(
-      isRecord(dashboardModel) ? dashboardModel.panels : undefined,
-      panelIdFrom(panel)
-    );
+    const panelModel = findPanelSaveModel(dashboardModel, panel);
 
     const controller = new AbortController();
     abortRef.current = controller;

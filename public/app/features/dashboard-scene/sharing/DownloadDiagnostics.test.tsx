@@ -64,6 +64,23 @@ describe('DownloadDiagnostics', () => {
     expect(panelModel).toEqual(expect.objectContaining({ id: 1, type: 'table' }));
   });
 
+  it('resolves a v2 panel from dashboard elements by its scene key', async () => {
+    const panelElement = { kind: 'Panel', spec: { id: 7, title: 'V2 panel' } };
+    const dashboardModel = {
+      title: 'V2 dashboard',
+      elements: { 'custom-panel-key': panelElement },
+      layout: { kind: 'GridLayout', spec: { items: [] } },
+    };
+    const { tab } = setupScenario(undefined, undefined, 'custom-panel-key', dashboardModel);
+
+    render(<tab.Component model={tab} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+
+    const [, , , , panelModel, forwardedDashboardModel] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
+    expect(forwardedDashboardModel).toBe(dashboardModel);
+    expect(panelModel).toBe(panelElement);
+  });
+
   it('fills the runner-level datasource onto queries that lack one', async () => {
     const runner = new SceneQueryRunner({
       datasource: { uid: 'runner-ds', type: 'prometheus' },
@@ -118,9 +135,17 @@ describe('DownloadDiagnostics', () => {
   });
 });
 
-function setupScenario(onDismiss?: () => void, runner?: SceneQueryRunner) {
+function setupScenario(
+  onDismiss?: () => void,
+  runner?: SceneQueryRunner,
+  panelKey = 'panel-1',
+  dashboardSaveModel: unknown = {
+    uid: 'dash-1',
+    panels: [{ id: 1, type: 'table', title: 'Panel' }],
+  }
+) {
   const vizPanel = new VizPanel({
-    key: 'panel-1',
+    key: panelKey,
     pluginId: 'table',
     title: 'Panel',
     $data: runner ?? new SceneQueryRunner({ queries: [{ refId: 'A' }, { refId: 'B', hide: true }] }),
@@ -136,13 +161,12 @@ function setupScenario(onDismiss?: () => void, runner?: SceneQueryRunner) {
     body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [gridItem] }) }),
   });
 
-  // Stub the save model so the test exercises this view's panel-lookup-by-id + payload wiring without
-  // depending on the serializer internals (which can emit v1 or v2). A v1 model with panels[] is used.
-  jest.spyOn(dashboard, 'getSaveModel').mockReturnValue({
-    uid: 'dash-1',
-    panels: [{ id: 1, type: 'table', title: 'Panel' }],
+  // Stub the save model so tests exercise this view's panel lookup + payload wiring without depending
+  // on serializer internals. The default is v1; individual tests can supply a v2 model.
+  jest.spyOn(dashboard, 'getSaveModel').mockReturnValue(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any);
+    dashboardSaveModel as any
+  );
 
   const tab = new DownloadDiagnostics({
     panelRef: vizPanel.getRef(),
