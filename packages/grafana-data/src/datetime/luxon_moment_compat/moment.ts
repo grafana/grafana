@@ -155,7 +155,7 @@ export interface MomentLike {
   isBetween(a: MomentInput, b: MomentInput, unit?: DateTimeUnit, inclusivity?: string): boolean;
 }
 
-export interface MomentDurationLike {
+interface MomentDurationLike {
   add(value: number | MomentDurationLike, unit?: MomentUnit): MomentDurationLike;
   subtract(value: number | MomentDurationLike, unit?: MomentUnit): MomentDurationLike;
   as(unit: DurationUnit): number;
