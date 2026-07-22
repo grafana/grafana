@@ -67,6 +67,30 @@ func TestPluginInstall_ShouldUpdate(t *testing.T) {
 			},
 			expectUpdate: true,
 		},
+		{
+			name: "dependencies not yet applied",
+			modifyInstall: func(pi *PluginInstall) {
+				pi.Dependencies = []string{"dependency-panel"}
+			},
+			expectUpdate: true,
+		},
+		{
+			name: "dependencies match applied annotation",
+			modifyInstall: func(pi *PluginInstall) {
+				pi.Dependencies = []string{"dependency-panel", "other-panel"}
+			},
+			modifyExisting: func(existing *pluginsv0alpha1.Plugin) {
+				existing.Annotations[AppliedDependenciesAnnotation] = "other-panel,dependency-panel"
+			},
+			expectUpdate: false,
+		},
+		{
+			name: "stale applied dependencies",
+			modifyExisting: func(existing *pluginsv0alpha1.Plugin) {
+				existing.Annotations[AppliedDependenciesAnnotation] = "dependency-panel"
+			},
+			expectUpdate: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -95,6 +119,7 @@ func TestInstallRegistrar_Register(t *testing.T) {
 		expectedCreates int
 		expectedUpdates int
 		expectError     bool
+		validateUpdate  func(*testing.T, *pluginsv0alpha1.Plugin)
 	}{
 		{
 			name: "creates plugin when not found",
@@ -128,6 +153,40 @@ func TestInstallRegistrar_Register(t *testing.T) {
 				},
 			},
 			expectedUpdates: 1,
+		},
+		{
+			name: "updates plugin while preserving existing metadata",
+			install: &PluginInstall{
+				ID:      "dependency-panel",
+				Version: "2.0.0",
+				Source:  SourcePluginStore,
+			},
+			existing: &pluginsv0alpha1.Plugin{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:       "org-1",
+					Name:            "dependency-panel",
+					ResourceVersion: "8",
+					Labels: map[string]string{
+						"plugins.grafana.app/dependency": "true",
+					},
+					Annotations: map[string]string{
+						PluginInstallSourceAnnotation:              SourceDependencyPlugin,
+						"plugins.grafana.app/dependency-parents":   "parent-app",
+						"plugins.grafana.app/applied-dependencies": "nested-panel",
+					},
+				},
+				Spec: pluginsv0alpha1.PluginSpec{
+					Id:      "dependency-panel",
+					Version: "latest",
+				},
+			},
+			expectedUpdates: 1,
+			validateUpdate: func(t *testing.T, updated *pluginsv0alpha1.Plugin) {
+				require.Equal(t, "true", updated.Labels["plugins.grafana.app/dependency"])
+				require.Equal(t, "parent-app", updated.Annotations["plugins.grafana.app/dependency-parents"])
+				require.Equal(t, "nested-panel", updated.Annotations["plugins.grafana.app/applied-dependencies"])
+				require.Equal(t, SourcePluginStore, updated.Annotations[PluginInstallSourceAnnotation])
+			},
 		},
 		{
 			name: "skips create when plugin matches",
@@ -208,6 +267,9 @@ func TestInstallRegistrar_Register(t *testing.T) {
 				require.Equal(t, []string{tt.existing.ResourceVersion}, receivedResourceVersions)
 				require.Len(t, updatedPlugins, 1)
 				require.Equal(t, tt.install.Version, updatedPlugins[0].Spec.Version)
+				if tt.validateUpdate != nil {
+					tt.validateUpdate(t, updatedPlugins[0])
+				}
 			}
 		})
 	}
@@ -449,6 +511,31 @@ func TestPluginInstall_ToPluginInstallV0Alpha1(t *testing.T) {
 				require.Equal(t, "my-namespace", p.Namespace)
 				require.Equal(t, "my-plugin", p.Name)
 				require.Equal(t, "my-plugin", p.Spec.Id)
+			},
+		},
+		{
+			name: "dependencies are stamped as applied-dependencies annotation",
+			install: PluginInstall{
+				ID:           "plugin-1",
+				Version:      "1.0.0",
+				Source:       SourcePluginStore,
+				Dependencies: []string{"dependency-panel", "other-panel"},
+			},
+			namespace: "org-1",
+			validate: func(t *testing.T, p *pluginsv0alpha1.Plugin) {
+				require.Equal(t, "dependency-panel,other-panel", p.Annotations[AppliedDependenciesAnnotation])
+			},
+		},
+		{
+			name: "no dependencies leaves applied-dependencies annotation unset",
+			install: PluginInstall{
+				ID:      "plugin-1",
+				Version: "1.0.0",
+				Source:  SourcePluginStore,
+			},
+			namespace: "org-1",
+			validate: func(t *testing.T, p *pluginsv0alpha1.Plugin) {
+				require.NotContains(t, p.Annotations, AppliedDependenciesAnnotation)
 			},
 		},
 	}
@@ -723,14 +810,16 @@ func TestInstallRegistrar_Register_ErrorCases(t *testing.T) {
 
 func TestInstallRegistrar_Unregister(t *testing.T) {
 	tests := []struct {
-		name          string
-		namespace     string
-		pluginName    string
-		source        Source
-		existing      *pluginsv0alpha1.Plugin
-		existingErr   error
-		expectedCalls int
-		expectError   bool
+		name            string
+		namespace       string
+		pluginName      string
+		source          Source
+		existing        *pluginsv0alpha1.Plugin
+		existingErr     error
+		expectedCalls   int
+		expectedUpdates int
+		expectError     bool
+		validateUpdate  func(*testing.T, *pluginsv0alpha1.Plugin)
 	}{
 		{
 			name:       "successfully deletes plugin with matching source",
@@ -813,12 +902,68 @@ func TestInstallRegistrar_Unregister(t *testing.T) {
 			},
 			expectedCalls: 1,
 		},
+		{
+			name:       "demotes plugin with dependency parents instead of deleting",
+			namespace:  "org-1",
+			pluginName: "dependency-panel",
+			source:     SourcePluginStore,
+			existing: &pluginsv0alpha1.Plugin{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:       "org-1",
+					Name:            "dependency-panel",
+					ResourceVersion: "12",
+					Labels: map[string]string{
+						"plugins.grafana.app/dependency": "true",
+					},
+					Annotations: map[string]string{
+						PluginInstallSourceAnnotation: SourcePluginStore,
+						DependencyParentsAnnotation:   "parent-app",
+					},
+				},
+				Spec: pluginsv0alpha1.PluginSpec{
+					Id:      "dependency-panel",
+					Version: "2.0.0",
+				},
+			},
+			expectedCalls:   0,
+			expectedUpdates: 1,
+			validateUpdate: func(t *testing.T, updated *pluginsv0alpha1.Plugin) {
+				require.Equal(t, SourceDependencyPlugin, updated.Annotations[PluginInstallSourceAnnotation])
+				require.Equal(t, DependencyPluginVersion, updated.Spec.Version)
+				require.Equal(t, "parent-app", updated.Annotations[DependencyParentsAnnotation])
+				require.Equal(t, "true", updated.Labels["plugins.grafana.app/dependency"])
+			},
+		},
+		{
+			name:       "skips demote when plugin is already a dependency install",
+			namespace:  "org-1",
+			pluginName: "dependency-panel",
+			source:     SourceDependencyPlugin,
+			existing: &pluginsv0alpha1.Plugin{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "org-1",
+					Name:      "dependency-panel",
+					Annotations: map[string]string{
+						PluginInstallSourceAnnotation: SourceDependencyPlugin,
+						DependencyParentsAnnotation:   "parent-app",
+					},
+				},
+				Spec: pluginsv0alpha1.PluginSpec{
+					Id:      "dependency-panel",
+					Version: DependencyPluginVersion,
+				},
+			},
+			expectedCalls:   0,
+			expectedUpdates: 0,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			deleteCalls := 0
+			updateCalls := 0
+			var updatedPlugins []*pluginsv0alpha1.Plugin
 
 			fakeClient := &fakePluginInstallClient{
 				getFunc: func(context.Context, resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
@@ -837,6 +982,11 @@ func TestInstallRegistrar_Unregister(t *testing.T) {
 					}
 					return nil
 				},
+				updateFunc: func(_ context.Context, obj *pluginsv0alpha1.Plugin, _ resource.UpdateOptions) (*pluginsv0alpha1.Plugin, error) {
+					updateCalls++
+					updatedPlugins = append(updatedPlugins, obj)
+					return obj, nil
+				},
 			}
 
 			registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
@@ -844,10 +994,15 @@ func TestInstallRegistrar_Unregister(t *testing.T) {
 			err := registrar.Unregister(ctx, tt.namespace, tt.pluginName, tt.source)
 
 			require.Equal(t, tt.expectedCalls, deleteCalls)
+			require.Equal(t, tt.expectedUpdates, updateCalls)
 			if tt.expectError {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
+			}
+			if tt.validateUpdate != nil {
+				require.Len(t, updatedPlugins, 1)
+				tt.validateUpdate(t, updatedPlugins[0])
 			}
 		})
 	}

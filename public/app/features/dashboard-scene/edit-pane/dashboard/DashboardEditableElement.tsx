@@ -17,6 +17,7 @@ import {
 import { DashboardLinksSet } from '../../settings/links/DashboardLinksSet';
 import { DashboardFiltersSet } from '../../settings/variables/DashboardFiltersSet';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { VariablesDependenciesButton } from '../../variables/VariablesDependenciesButton';
 
 import { DashboardAnnotationsList } from './DashboardAnnotationsList';
 import { DashboardDescriptionInput, DashboardTitleInput } from './DashboardBasicOptions';
@@ -206,6 +207,16 @@ function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDes
         render: () => <AddVariableButton dashboard={dashboard} />,
       })
     );
+    if ($variables?.state.variables.length) {
+      category.addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          id: 'dashboard-variables-dependencies',
+          skipField: true,
+          render: () => <VariablesDependenciesButton variables={$variables?.state.variables} isInSidebar />,
+        })
+      );
+    }
 
     return [category];
   }, [$variables, addVariableButtonId, variableListId, dashboard]);

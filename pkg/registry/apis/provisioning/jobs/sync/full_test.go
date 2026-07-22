@@ -48,7 +48,7 @@ func TestFullSync_ContextCancelled(t *testing.T) {
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]ResourceFileChange{{}}, nil, nil, nil)
 	progress.On("SetTotal", mock.Anything, 1).Return()
 
-	err := FullSync(ctx, repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false)
+	err := FullSync(ctx, repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false, 0)
 	require.EqualError(t, err, "context canceled")
 }
 
@@ -67,7 +67,7 @@ func TestFullSync_Error(t *testing.T) {
 
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil, nil, fmt.Errorf("some error"))
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false)
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false, 0)
 	require.EqualError(t, err, "compare changes: some error")
 }
 
@@ -87,7 +87,7 @@ func TestFullSync_NoChanges(t *testing.T) {
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]ResourceFileChange{}, nil, nil, nil)
 	progress.On("SetFinalMessage", mock.Anything, "no changes to sync").Return()
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false)
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false, 0)
 	require.NoError(t, err)
 }
 
@@ -118,7 +118,7 @@ func TestFullSync_SuccessfulFolderCreation(t *testing.T) {
 		Path:  "",
 	}, "").Return(nil)
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false)
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false, 0)
 	require.NoError(t, err)
 }
 
@@ -147,7 +147,7 @@ func TestFullSync_FolderCreationFailed(t *testing.T) {
 		Path:  "",
 	}, "").Return(fmt.Errorf("folder creation failed"))
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false)
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false, 0)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "create root folder: folder creation failed")
 }
@@ -193,7 +193,7 @@ func TestFullSync_FolderCreationFailed_UnmanagedConflictBecomesWarning(t *testin
 	})).Return()
 	progress.On("SetFinalMessage", mock.Anything, "root folder cannot be claimed by this repository").Return()
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false)
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false, 0)
 	require.NoError(t, err, "unmanaged-root conflict should not fail the whole job")
 
 	require.Nil(t, recorded.Error(), "conflict should be stored as warning, not error")
@@ -225,7 +225,7 @@ func TestFullSync_FolderCreationFailedWithInstanceTarget(t *testing.T) {
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, nil, nil, fmt.Errorf("compare error"))
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false)
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false, 0)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "compare changes: compare error")
 }
@@ -868,7 +868,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			})
 
 			progress.On("SetTotal", mock.Anything, len(tt.changes)).Return()
-			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), tt.folderMetadataEnabled)
+			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), tt.folderMetadataEnabled, 0)
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError, tt.description)
 			} else {
@@ -1187,7 +1187,7 @@ func TestFullSync_QuotaTrackerSkipsCreationsAtLimit(t *testing.T) {
 	// Tracker: 9 out of 10, so only 1 creation allowed
 	tracker := quotas.NewInMemoryQuotaTracker(9, 10)
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracker, false)
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracker, false, 0)
 	require.NoError(t, err)
 
 	// WriteResourceFromFile should have been called only once (for "a.json")
@@ -1224,7 +1224,7 @@ func TestFullSync_QuotaTrackerAllowsUpdatesRegardlessOfQuota(t *testing.T) {
 	// Tracker already at limit — but updates should still proceed
 	tracker := quotas.NewInMemoryQuotaTracker(10, 10)
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracker, false)
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracker, false, 0)
 	require.NoError(t, err)
 
 	repoResources.AssertCalled(t, "WriteResourceFromFile", mock.Anything, "dashboards/existing.json", "ref")
@@ -1273,7 +1273,7 @@ func TestFullSync_MissingFolderMetadata_FlagEnabled(t *testing.T) {
 		return r.Path() == "myfolder/dashboard.json"
 	})).Return()
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), true)
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), true, 0)
 	require.NoError(t, err)
 }
 
@@ -1306,7 +1306,7 @@ func TestFullSync_MissingFolderMetadata_FlagDisabled(t *testing.T) {
 		return r.Path() == "myfolder/dashboard.json"
 	})).Return()
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false)
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false, 0)
 	require.NoError(t, err)
 }
 
@@ -1333,7 +1333,7 @@ func TestFullSync_InvalidFolderMetadataWarning(t *testing.T) {
 	})).Return()
 	progress.On("SetFinalMessage", mock.Anything, "no changes to sync").Return()
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), true)
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), true, 0)
 	require.NoError(t, err)
 }
 
@@ -1379,7 +1379,7 @@ func TestFullSync_InvalidFolderMetadataWarning_ActionAware(t *testing.T) {
 			})).Return()
 			progress.On("SetFinalMessage", mock.Anything, "no changes to sync").Return()
 
-			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), true)
+			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), true, 0)
 			require.NoError(t, err)
 		})
 	}
@@ -1457,6 +1457,7 @@ func TestApplyChanges_DefersOldFolderDeletion(t *testing.T) {
 	err := applyChanges(
 		context.Background(), changes, clients, "test-ref", repoResources, progress, tracer, 1, metrics,
 		quotas.NewInMemoryQuotaTracker(0, 0), true,
+		0,
 	)
 	require.NoError(t, err)
 
@@ -1532,6 +1533,7 @@ func TestApplyChanges_DefersOrphanFolderDeletion(t *testing.T) {
 	err := applyChanges(
 		context.Background(), changes, clients, "test-ref", repoResources, progress, tracer, 1, metrics,
 		quotas.NewInMemoryQuotaTracker(0, 0), true,
+		0,
 	)
 	require.NoError(t, err)
 	require.Equal(t, []string{
@@ -1600,6 +1602,7 @@ func TestApplyChanges_SkipsDeferredFolderDeletionPerGuardCondition(t *testing.T)
 			err := applyChanges(
 				context.Background(), changes, clients, "test-ref", repoResources, progress, tracer, 1, metrics,
 				quotas.NewInMemoryQuotaTracker(0, 0), true,
+				0,
 			)
 			require.NoError(t, err)
 			repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, "orphan-uid")
@@ -1686,6 +1689,7 @@ func TestApplyChanges_DefersBothRenamedAndOrphanFolderDeletion(t *testing.T) {
 	err := applyChanges(
 		context.Background(), changes, clients, "test-ref", repoResources, progress, tracer, 1, metrics,
 		quotas.NewInMemoryQuotaTracker(0, 0), true,
+		0,
 	)
 	require.NoError(t, err)
 	require.Equal(t, []string{
@@ -1732,6 +1736,7 @@ func TestApplyChanges_ExistingHashPassedToWrite(t *testing.T) {
 		err := applyChanges(
 			context.Background(), changes, clients, "test-ref", repoResources, progress, tracer, 1, metrics,
 			quotas.NewInMemoryQuotaTracker(0, 0), true,
+			0,
 		)
 		require.NoError(t, err)
 	})
@@ -1770,6 +1775,7 @@ func TestApplyChanges_ExistingHashPassedToWrite(t *testing.T) {
 		err := applyChanges(
 			context.Background(), changes, clients, "test-ref", repoResources, progress, tracer, 1, metrics,
 			quotas.NewInMemoryQuotaTracker(0, 0), true,
+			0,
 		)
 		require.NoError(t, err)
 	})
@@ -1819,6 +1825,7 @@ func TestApplyChanges_SortsFolderUpdatesShallowestFirst(t *testing.T) {
 	err := applyChanges(
 		context.Background(), changes, clients, "test-ref", repoResources, progress, tracer, 1, metrics,
 		quotas.NewInMemoryQuotaTracker(0, 0), true,
+		0,
 	)
 	require.NoError(t, err)
 	require.Equal(t, []string{
@@ -1881,6 +1888,7 @@ func TestApplyChanges_OldFolderDeletion_DeepestFirst(t *testing.T) {
 	err := applyChanges(
 		context.Background(), changes, clients, "test-ref", repoResources, progress, tracer, 1, metrics,
 		quotas.NewInMemoryQuotaTracker(0, 0), true,
+		0,
 	)
 	require.NoError(t, err)
 
@@ -1933,6 +1941,7 @@ func TestApplyChanges_OldFolderDeletion_ErrorContinues(t *testing.T) {
 	err := applyChanges(
 		context.Background(), changes, clients, "test-ref", repoResources, progress, tracer, 1, metrics,
 		quotas.NewInMemoryQuotaTracker(0, 0), true,
+		0,
 	)
 
 	// applyChanges must NOT return an error even though RemoveFolder failed
@@ -1940,4 +1949,26 @@ func TestApplyChanges_OldFolderDeletion_ErrorContinues(t *testing.T) {
 
 	// Verify RemoveFolder was actually called
 	repoResources.AssertCalled(t, "RemoveFolder", mock.Anything, "old-broken-uid")
+}
+
+func TestWrapWithTimeout(t *testing.T) {
+	t.Run("uses the provided timeout as the context deadline", func(t *testing.T) {
+		wrapWithTimeout(context.Background(), 5*time.Minute, func(timeoutCtx context.Context) {
+			deadline, ok := timeoutCtx.Deadline()
+			require.True(t, ok, "expected a deadline to be set")
+			// Allow slack for execution time; it must be well above the default fallback.
+			require.Greater(t, time.Until(deadline), defaultResourceTimeout)
+		})
+	})
+
+	t.Run("falls back to the default timeout when non-positive", func(t *testing.T) {
+		for _, timeout := range []time.Duration{0, -time.Second} {
+			wrapWithTimeout(context.Background(), timeout, func(timeoutCtx context.Context) {
+				deadline, ok := timeoutCtx.Deadline()
+				require.True(t, ok, "expected a deadline to be set")
+				// The fallback deadline should be close to defaultResourceTimeout from now.
+				require.Greater(t, time.Until(deadline), defaultResourceTimeout-time.Second)
+			})
+		}
+	})
 }

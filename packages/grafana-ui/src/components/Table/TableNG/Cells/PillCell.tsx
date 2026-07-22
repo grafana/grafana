@@ -14,7 +14,8 @@ import {
 import { FieldColorModeId } from '@grafana/schema';
 
 import { getActiveCellSelector, isTableCellStylesKeyEqual } from '../styles';
-import { type PillCellProps, type TableCellStyles, type TableCellValue } from '../types';
+import { type PillCellProps, type TableCellStyles } from '../types';
+import { inferPills } from '../utils';
 
 export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: PillCellProps) {
   const value = field.values[rowIdx];
@@ -60,30 +61,7 @@ interface Pill {
   color: string;
 }
 
-const SPLIT_RE = /\s*,\s*/;
 const TRANSPARENT = 'rgba(0,0,0,0)';
-
-export function inferPills(rawValue: TableCellValue): unknown[] {
-  if (rawValue === '' || rawValue == null) {
-    return [];
-  }
-
-  if (Array.isArray(rawValue)) {
-    return rawValue.filter((v) => v != null).map((v) => String(v).trim());
-  }
-
-  const value = String(rawValue);
-
-  if (value[0] === '[') {
-    try {
-      return JSON.parse(value);
-    } catch {
-      return value.trim().split(SPLIT_RE);
-    }
-  }
-
-  return value.trim().split(SPLIT_RE);
-}
 
 // FIXME: this does not yet support "shades of a color"
 function getPillColor(value: unknown, field: Field, theme: GrafanaTheme2): string {

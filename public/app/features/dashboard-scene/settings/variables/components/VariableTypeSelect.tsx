@@ -10,10 +10,12 @@ import { type EditableVariableType, getVariableTypeSelectOptions } from '../util
 interface Props {
   onChange: (option: SelectableValue<EditableVariableType>) => void;
   type: VariableType;
+  /** True when rendering outside a dashboard (e.g. the variables management page). */
+  standalone?: boolean;
 }
 
-export function VariableTypeSelect({ onChange, type }: PropsWithChildren<Props>) {
-  const options = useMemo(() => getVariableTypeSelectOptions(), []);
+export function VariableTypeSelect({ onChange, type, standalone }: PropsWithChildren<Props>) {
+  const options = useMemo(() => getVariableTypeSelectOptions({ standalone }), [standalone]);
   const value = useMemo(
     () => options.find((o: SelectableValue<EditableVariableType>) => o.value === type) ?? options[0],
     [options, type]

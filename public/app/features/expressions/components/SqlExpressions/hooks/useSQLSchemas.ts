@@ -3,7 +3,8 @@ import { useDeepCompareEffect } from 'react-use';
 
 import { getAPINamespace } from '@grafana/api-clients';
 import { type AdHocVariableFilter, getDefaultTimeRange, type ScopedVars, type TimeRange } from '@grafana/data';
-import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
@@ -84,7 +85,7 @@ export function useSQLSchemas({ queries, enabled, timeRange, scopedVars, filters
         return;
       }
 
-      const defaultDs = getDataSourceSrv().getInstanceSettings(null);
+      const defaultDs = await getDataSourceInstanceSettings(null);
       const resolvedQueries = nonDashboardQueries.map((query) => {
         if (!query.datasource && defaultDs) {
           return { ...query, datasource: { uid: defaultDs.uid, type: defaultDs.type } };

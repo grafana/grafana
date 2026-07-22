@@ -32,13 +32,13 @@ export const DashboardInteractions = {
     reportDashboardInteraction('init_dashboard_completed', properties);
   },
 
-  dashboardCopied: (properties: { name: string; url: string }) => {
+  dashboardCopied: (properties: { name: string; url: string; diff_count?: number }) => {
     reportInteraction('grafana_dashboard_copied', properties);
   },
 
   dashboardCreatedOrSaved: (
     isNew: boolean | undefined,
-    properties:
+    properties: (
       | ({
           name: string;
           url: string;
@@ -58,6 +58,10 @@ export const DashboardInteractions = {
           customGridLayoutCount: number;
           panelsByDatasourceType: Record<string, number>;
         } & DashboardLibraryTrackingInfo)
+    ) & {
+      // size of the saved edit (diffs between the initial and saved models); scene save path only
+      diff_count?: number;
+    }
   ) => {
     reportDashboardInteraction(isNew ? 'created' : 'saved', properties, 'grafana_dashboard');
   },
@@ -72,6 +76,12 @@ export const DashboardInteractions = {
   // when a user clicks the ‘Exit edit’ or ‘Exit Edit mode’ button in a dashboard edit mode
   exitEditButtonClicked: () => {
     reportDashboardInteraction('exit_edit_button_clicked');
+  },
+
+  // grafana_dashboards_edit_discarded
+  // when a user discards changes by confirming exit from edit mode without saving
+  dashboardEditDiscarded: () => {
+    reportDashboardInteraction('edit_discarded');
   },
 
   // grafana_dashboards_outline_clicked
@@ -136,6 +146,12 @@ export const DashboardInteractions = {
     reportDashboardInteraction('variables_reordered', properties);
   },
 
+  // dashboards_variable_value_changed
+  // when a user changes a variable value from dashboard controls, the controls menu, or a section
+  variableValueChanged: (properties: { type: string }) => {
+    reportDashboardInteraction('variable_value_changed', properties);
+  },
+
   // dashboards_add_annotation_button_clicked
   // when a user clicks on 'Add annotation'
   addAnnotationButtonClicked: (properties: { source: 'edit_pane' }) => {
@@ -148,11 +164,12 @@ export const DashboardInteractions = {
   },
 
   panelActionClicked(
-    item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view',
+    item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view' | 'use_library_panel',
     id: number,
-    source: 'panel' | 'edit_pane' | 'keyboard'
+    source: 'panel' | 'edit_pane' | 'keyboard',
+    panelType?: string
   ) {
-    reportDashboardInteraction('panel_action_clicked', { item, id, source });
+    reportDashboardInteraction('panel_action_clicked', { item, id, source, panelType });
   },
 
   // Panel styles copy/paste interactions
@@ -180,9 +197,9 @@ export const DashboardInteractions = {
     reportDashboardInteraction('edit_action_clicked', { item: 'ungroup' });
   },
   trackPastePanelClick(
-    source: 'sidebar' | 'canvas' | 'editPaneHeader' = 'canvas',
+    source: 'sidebar' | 'canvas' | 'editPaneHeader' | 'keyboard' = 'canvas',
     target?: 'row' | 'tab' | 'dashboard',
-    action: 'drop' | 'click' = 'click'
+    action: 'drop' | 'click' | 'keyboard' = 'click'
   ) {
     reportDashboardInteraction('edit_action_clicked', { item: 'paste_panel', source, target, action });
   },
@@ -333,6 +350,24 @@ export const DashboardInteractions = {
   trackMoveItem: (item: 'panel' | 'row' | 'tab', action: 'drag' | 'drop', context: { isCrossLayout: boolean }) => {
     const properties = { item, action, context };
     reportDashboardInteraction('move_item', properties);
+  },
+
+  // fired when the dashboard scene enters edit mode; source = how it was opened (Edit button vs assistant)
+  editSessionStarted: (properties: { dashboard_uid?: string; source: 'assistant' | 'user' }) => {
+    reportDashboardInteraction('edit_session_started', properties);
+  },
+
+  // click "Take me there" button from the dashboard settings for annotations or variables
+  takeMeToSidebarClicked: (properties: { item: 'annotations' | 'variables' }) => {
+    reportDashboardInteraction('take_me_to_sidebar_clicked', properties);
+  },
+
+  viewPanelAction: (properties: { action?: string; value: string }) => {
+    reportDashboardInteraction('view_panel_action', properties);
+  },
+
+  setVisualOption: (properties?: { ui: 'panel-edit' | 'view-panel'; option: string; value: string }) => {
+    reportDashboardInteraction('set_visualization_option', properties);
   },
 };
 

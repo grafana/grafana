@@ -161,7 +161,7 @@ These issues relate to using template variables with the Parca data source.
 | Cause                         | Solution                                                                                                                                  |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | Variable used in profile type | Template variables are only supported in the **label selector** field. The profile type drop-down doesn't support variable interpolation. |
-| Variable not defined          | Verify the variable exists in **Dashboard settings** > **Variables** and has valid values.                                                |
+| Variable not defined          | Verify the variable exists in **Dashboard options** > **Variables** and has valid values.                                                 |
 | Wrong variable syntax         | Use `$variablename` or `${variablename}`. Verify there are no typos in the variable name.                                                 |
 
 ### Can't use Parca to populate variable options

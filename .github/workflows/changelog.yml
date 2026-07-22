@@ -91,19 +91,16 @@ jobs:
           fetch-tags: true
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
-      - name: "Configure git user"
-        run: |
-          git config --local user.name "github-actions[bot]"
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local --add --bool push.autoSetupRemote true
       - name: "Create branch"
         run: |
           if [[ "$WORK_BRANCH" == '' ]]; then
-            git switch -c "changelog/${RUN_ID}/${VERSION}"
-            exit 0
+            WORK_BRANCH="changelog/${RUN_ID}/${VERSION}"
           fi
+          # Persist the resolved branch name for later steps.
+          echo "WORK_BRANCH=$WORK_BRANCH" >> "$GITHUB_ENV"
 
-          # Checkout the changelog branch if exists, otherwise create a new one
+          # Checkout the changelog branch if it exists so this run patches on top of any
+          # previously accumulated changelog entries; otherwise start from the main checkout.
           if git show-ref --verify --quiet "refs/remotes/origin/$WORK_BRANCH"; then
             git switch --track "origin/$WORK_BRANCH"
           else
@@ -111,6 +108,21 @@ jobs:
           fi
         env:
           WORK_BRANCH: ${{ inputs.work_branch }}
+      # ghcommit-action commits to an existing remote branch via the Git Data API; it does
+      # not create the branch itself. Pre-create the ref at the current HEAD when it is not
+      # already on the remote so the subsequent commit has a target.
+      - name: "Pre-create branch on remote"
+        if: inputs.dry_run != true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! git show-ref --verify --quiet "refs/remotes/origin/$WORK_BRANCH"; then
+            BASE_SHA=$(git rev-parse HEAD)
+            gh api "repos/${GITHUB_REPOSITORY}/git/refs" \
+              --method POST \
+              -f "ref=refs/heads/$WORK_BRANCH" \
+              -f "sha=${BASE_SHA}"
+          fi
       - name: "Generate changelog"
         id: changelog
         uses: ./.github/actions/changelog
@@ -151,11 +163,20 @@ jobs:
 
       - name: "Prettify CHANGELOG.md"
         run: npx prettier --write CHANGELOG.md
+      # Commit through the GitHub commit API (not `git commit`/`git push`) so GitHub signs
+      # the commit, satisfying the repo's required-signatures rule. empty: "true" preserves
+      # the previous `git commit --allow-empty` behaviour for runs with no changelog diff.
       - name: "Commit changelog changes"
-        run: git add CHANGELOG.md && git commit --allow-empty -m "Update changelog" CHANGELOG.md
-      - name: "git push"
         if: inputs.dry_run != true
-        run: git push
+        uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
+        with:
+          commit_message: "Update changelog"
+          repo: ${{ github.repository }}
+          branch: ${{ env.WORK_BRANCH }}
+          empty: "true"
+          file_pattern: "CHANGELOG.md"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: "Create changelog PR"
         run: |
           if gh pr view &>/dev/null; then
@@ -168,6 +189,7 @@ jobs:
               --label "no-backport" \
               --label "no-changelog" \
               -B "${TARGET}" \
+              -H "${WORK_BRANCH}" \
               --title "Release: update changelog for ${TARGET}" \
               --body "Changelog changes for release versions:"
           fi

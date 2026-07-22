@@ -17,8 +17,34 @@ import (
 // GroupByAll is a special value defined by alertmanager that can be used in a Route's GroupBy field to aggregate by all possible labels.
 const GroupByAll = "..."
 
+// DefaultRoutingTreeName is the name the API uses for the default (root) routing tree in both
+// responses (e.g. the default entry in LIST) and as its stable identity for RBAC scopes.
+// The future canonical name is accepted on input via DefaultRoutingTreeNameAlias. A later change can flip this
+// to the alias once clients recognize it.
 const DefaultRoutingTreeName = "user-defined"
+
+// DefaultRoutingTreeNameAlias is the future canonical name for the default (root) routing tree.
+// It is accepted on API input as an alias for DefaultRoutingTreeName so newer clients can use it,
+// but it is not yet emitted in LIST responses or used as an RBAC identifier.
+const DefaultRoutingTreeNameAlias = "default"
+
 const NamedRouteLabel = "__grafana_managed_route__"
+
+// IsDefaultRoutingTreeName reports whether name refers to the default (root) routing tree,
+// accepting both the emitted name and the alias.
+func IsDefaultRoutingTreeName(name string) bool {
+	return name == DefaultRoutingTreeName || name == DefaultRoutingTreeNameAlias
+}
+
+// CanonicalizeRoutingTreeName maps the default-tree alias to the emitted default-tree name and
+// returns any other name unchanged. Used as a stable identity for RBAC scope, so both names resolve to the same
+// permission.
+func CanonicalizeRoutingTreeName(name string) string {
+	if name == DefaultRoutingTreeNameAlias {
+		return DefaultRoutingTreeName
+	}
+	return name
+}
 
 // NotificationSettingsType is an enum of the notification settings configurations a rule may have.
 // It is used by ListAlertRulesQuery to filter rules by the type of notification settings configured.
@@ -325,14 +351,14 @@ func (s *PolicyRouting) Validate() error {
 	if s.Policy == "" {
 		return errors.New("policy must be specified")
 	}
-	if s.Policy == DefaultRoutingTreeName {
+	if IsDefaultRoutingTreeName(s.Policy) {
 		return fmt.Errorf("policy routing should not explicitly point to the default tree: %q", DefaultRoutingTreeName)
 	}
 	return nil
 }
 
 func (s *PolicyRouting) IsDefault() bool {
-	return s.Policy == "" || s.Policy == DefaultRoutingTreeName
+	return s.Policy == "" || IsDefaultRoutingTreeName(s.Policy)
 }
 
 func (s *PolicyRouting) Equals(other *PolicyRouting) bool {
@@ -348,11 +374,7 @@ func (s *PolicyRouting) Fingerprint(_ featuremgmt.FeatureToggles) data.Fingerpri
 	return data.Fingerprint(h.Sum64())
 }
 
-func (s *PolicyRouting) ToLabels(features featuremgmt.FeatureToggles) data.Labels {
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !features.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
-		return make(data.Labels)
-	}
+func (s *PolicyRouting) ToLabels(_ featuremgmt.FeatureToggles) data.Labels {
 	if s.IsDefault() {
 		return make(data.Labels)
 	}

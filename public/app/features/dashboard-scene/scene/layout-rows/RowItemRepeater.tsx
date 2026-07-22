@@ -10,7 +10,7 @@ import {
 } from '@grafana/scenes';
 import { Spinner } from '@grafana/ui';
 
-import { DashboardStateChangedEvent } from '../../edit-pane/shared';
+import { DashboardStateChangedEvent } from '../../edit-pane/events';
 import { getCloneKey, getLocalVariableValueSet, getRepeatVariableValueSet } from '../../utils/clone';
 import { getRepeatLocalVariableValue } from '../../utils/getRepeatLocalVariableValue';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
@@ -28,9 +28,14 @@ interface Props {
 export function RowItemRepeater({ row, variable }: Props) {
   const { repeatedRows } = row.useState();
 
-  // Subscribe to variable state changes and perform repeats when the variable changes
+  // Subscribe to variable state changes and perform repeats when the variable changes.
+  // Defer the initial performRowRepeats to the next macrotask so the parent SceneVariableSet
+  // can activate first under RENDER_BEFORE_ACTIVATION).
+  // A sync call here can early-return while the set is inactive; if the later options update
+  // does not notify subscribeToState (URL value already set), repeatedRows stays undefined
+  // and the row spinner never clears.
   useEffect(() => {
-    performRowRepeats(variable, row, false);
+    const timeoutId = setTimeout(() => performRowRepeats(variable, row, false), 0);
 
     const variableChangeSub = variable.subscribeToState((state) => performRowRepeats(variable, row, false));
     const editEventSub = row.subscribeToEvent(DashboardStateChangedEvent, (e) =>
@@ -38,6 +43,7 @@ export function RowItemRepeater({ row, variable }: Props) {
     );
 
     return () => {
+      clearTimeout(timeoutId);
       editEventSub.unsubscribe();
       variableChangeSub.unsubscribe();
     };

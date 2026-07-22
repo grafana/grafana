@@ -11,13 +11,12 @@ import {
   VizLayout,
   VizLegend,
   type VizLegendItem,
+  getFieldDisplayLinks,
   useStyles2,
   useTheme2,
   usePanelContext,
 } from '@grafana/ui';
 import { getDisplayValuesForCalcs, TooltipHoverMode } from '@grafana/ui/internal';
-
-import { getDataLinks } from '../status-history/utils';
 
 import { XYChartTooltip } from './XYChartTooltip';
 import { type Options } from './panelcfg.gen';
@@ -84,7 +83,7 @@ export const XYChartPanel2 = (props: Props2) => {
       }
     });
 
-    const { placement, displayMode, width, sortBy, sortDesc } = props.options.legend;
+    const { placement, displayMode, width, sortBy, sortDesc, overflow } = props.options.legend;
 
     return (
       <VizLayout.Legend placement={placement} width={width}>
@@ -96,6 +95,7 @@ export const XYChartPanel2 = (props: Props2) => {
           sortBy={sortBy}
           sortDesc={sortDesc}
           isSortable={true}
+          overflow={overflow}
         />
       </VizLayout.Legend>
     );
@@ -122,7 +122,7 @@ export const XYChartPanel2 = (props: Props2) => {
               hoverMode={TooltipHoverMode.xyOne}
               getDataLinks={(seriesIdx, dataIdx) => {
                 const xySeries = series[seriesIdx - 1];
-                return getDataLinks(xySeries.y.field, dataIdx);
+                return getFieldDisplayLinks(xySeries.y.field, dataIdx);
               }}
               render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks) => {
                 return (

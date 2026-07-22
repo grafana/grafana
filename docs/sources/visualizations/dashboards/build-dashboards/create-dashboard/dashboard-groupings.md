@@ -15,7 +15,7 @@ description: Group dashboard panels
 weight: 300
 image_maps:
   - key: panel-groupings
-    src: /media/docs/grafana/dashboards/screenshot-dashboard-w-groupings-v13.0.png
+    src: /media/docs/grafana/dashboards/screenshot-dashboard-w-groupings-v13.1.png
     alt: Dashboard with nested groupings
     points:
       - x_coord: 15
@@ -31,19 +31,19 @@ image_maps:
         content: |
           Also, you can have different panel layouts in within a row or tab. In this dashboard, one tab contains two rows that have two different layouts.
   - key: ungrouping
-    src: /media/docs/grafana/dashboards/screenshot-ungrouping-v13.0.png
+    src: /media/docs/grafana/dashboards/screenshot-ungrouping-v13.1.png
     alt: Dashboard with ungrouping behavior annotated
     points:
-      - x_coord: 24
-        y_coord: 63
+      - x_coord: 22.5
+        y_coord: 64
         content: |
           Ungroups all the rows inside **Nested tab with rows** leaving the panels in that tab.
-      - x_coord: 55.5
+      - x_coord: 52
         y_coord: 9.5
         content: |
           Ungroups all the tabs inside **Row with tabs**, leaving the panels in that row.
-      - x_coord: 22
-        y_coord: 95
+      - x_coord: 20.5
+        y_coord: 96
         content: |
           Removes all groupings on the dashboard, leaving just the panels on the dashboard.
 ---
@@ -94,7 +94,7 @@ The following table describes the options you can set for a row or tab:
 | Title           | Title of the row or tab.                                                    |
 | Fill screen     | Toggle the switch on to make the row fill the screen. Rows only. |
 | Hide row header | Toggle the switch on to hide row headers in view mode. In edit mode, the row header is visible, but crossed out with the hidden icon next to it. Rows only. |
-| Filters       | Add filters that apply to only the panels in the grouping. For more information, refer to [Section-level variables and filters](#grouping-level-variables-and-filters). For information on configuring the **Filter and Group by** feature, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#filter-and-group-by). |
+| Filters       | Add filters that apply to only the panels in the grouping. For more information, refer to [Section-level variables and filters](#grouping-level-variables-and-filters). For information on configuring the **Filter and Group by** feature, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-filters-and-group-by-controls). |
 | Variables       | Add variables that apply to only the panels in the grouping. For more information, refer to [Section-level variables and filters](#grouping-level-variables-and-filters). For information on configuring variables, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables). |
 | Layout          | Select the layout. If the grouping contains another grouping, choose from **Rows** or **Tabs**. If the grouping contains panels, choose from **Custom** or **Auto grid**. For more information, refer to [Panel layouts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-layouts) or [Grouping layouts](#grouping-layouts). |
 | Repeat options > [Repeat by variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#configure-repeat-options) | Configure the dashboard to dynamically add panels, rows, or tabs based on the value of a variable. |
@@ -216,7 +216,7 @@ If you have a row with panels, but you want the panels to appear ungrouped, you 
 In view mode, the row header is hidden, so that the panels in that row appear ungrouped.
 In the following image, the panels are grouped into two rows, but the header of the second row is hidden:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-headerless-row-v13.0.png" max-width="750px" alt="Dashboard including a row with a hidden header" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-headerless-row-v13.1.png" max-width="750px" alt="Dashboard including a row with a hidden header" >}}
 
 When you hide the header of a row, you can't collapse the row.
 
@@ -231,7 +231,7 @@ However, both groupings still share the same time range, and the underlying dash
 
 The following image shows an example using two rows of panels:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-grouping-variables-v13.0.png" max-width="750px" alt="A dashboard with two rows, each with its own variable filter above the panels" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-section-variables-v13.1.png" max-width="750px" alt="A dashboard with two rows, each with its own variable filter above the panels" >}}
 
 Panels in the grouping resolve section-level variables and filters first, then fall back to dashboard-level variables.
 

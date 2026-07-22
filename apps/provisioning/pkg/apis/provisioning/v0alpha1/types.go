@@ -77,13 +77,8 @@ type GitHubRepositoryConfig struct {
 
 	// Whether we should show dashboard previews for pull requests.
 	// By default, this is false (i.e. we will not create previews).
+	// TODO: deprecate this field in favor of PullRequestOptions.GenerateDashboardPreviews once all Github repositories have been backfilled.
 	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
-
-	// WebhookDisabled disables webhook integration for this repository. When true,
-	// Grafana will not register or receive webhook events from GitHub and will poll
-	// the repository on an interval instead. Use this when Grafana is not reachable
-	// from the public internet.
-	WebhookDisabled bool `json:"webhookDisabled,omitempty"`
 
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
@@ -108,9 +103,6 @@ type GitHubEnterpriseRepositoryConfig struct {
 
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
-
-	// Whether we should show dashboard previews for pull requests.
-	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 
 	// Path is the subdirectory for the Grafana data inside the repository.
 	Path string `json:"path,omitempty"`
@@ -146,6 +138,8 @@ type BitbucketRepositoryConfig struct {
 	Branch string `json:"branch"`
 	// TokenUser is the user that will be used to access the repository if it's a personal access token.
 	TokenUser string `json:"tokenUser,omitempty"`
+	// Email is the Atlassian account email used to authenticate the Bitbucket REST API. Required to enable webhooks.
+	Email string `json:"email,omitempty"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
@@ -202,6 +196,11 @@ func (r RepositoryType) IsGit() bool {
 	return r == GitRepositoryType || r == GitHubRepositoryType || r == GitHubEnterpriseRepositoryType || r == BitbucketRepositoryType || r == GitLabRepositoryType
 }
 
+// GitHub || GitHubEnterprise
+func (r RepositoryType) IsGitHub() bool {
+	return r == GitHubRepositoryType || r == GitHubEnterpriseRepositoryType
+}
+
 // Branch returns the branch for git-based repositories
 // or an empty string for local repositories
 func (r *Repository) Branch() string {
@@ -235,6 +234,35 @@ func (r *Repository) Branch() string {
 	}
 
 	return ""
+}
+
+// SetBranch writes branch to the provider-specific spec field for git-based repositories,
+// mirroring Branch(). It is a no-op for non-git types or when the provider config is absent.
+func (r *Repository) SetBranch(branch string) {
+	switch r.Spec.Type {
+	case GitHubRepositoryType:
+		if r.Spec.GitHub != nil {
+			r.Spec.GitHub.Branch = branch
+		}
+	case GitHubEnterpriseRepositoryType:
+		if r.Spec.GitHubEnterprise != nil {
+			r.Spec.GitHubEnterprise.Branch = branch
+		}
+	case GitRepositoryType:
+		if r.Spec.Git != nil {
+			r.Spec.Git.Branch = branch
+		}
+	case BitbucketRepositoryType:
+		if r.Spec.Bitbucket != nil {
+			r.Spec.Bitbucket.Branch = branch
+		}
+	case GitLabRepositoryType:
+		if r.Spec.GitLab != nil {
+			r.Spec.GitLab.Branch = branch
+		}
+	default:
+		// do nothing
+	}
 }
 
 // URL returns the URL for git-based repositories
@@ -305,6 +333,15 @@ func (r *Repository) Path() string {
 	return ""
 }
 
+func (r *Repository) ShouldGenerateDashboardPreviews() bool {
+	// GitHub keeps this on its own config until existing repositories are backfilled
+	// onto PullRequest options. Every other provider reads it from PullRequest.
+	if r.Spec.Type == GitHubRepositoryType {
+		return r.Spec.GitHub != nil && r.Spec.GitHub.GenerateDashboardPreviews
+	}
+	return r.Spec.PullRequest != nil && r.Spec.PullRequest.GenerateDashboardPreviews
+}
+
 // ConnectionName returns the name of the connection referenced by this repository,
 // or an empty string if the repository does not use a connection.
 func (r *Repository) ConnectionName() string {
@@ -347,6 +384,10 @@ type CommitOptions struct {
 	// Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime".
 	// When empty, commits are not signed.
 	SigningMethod SigningMethod `json:"signingMethod,omitempty"`
+
+	// When true, commits are authored by the signer identity
+	// (signerName/signerEmail).
+	SignerIsAuthor bool `json:"signerIsAuthor,omitempty"`
 
 	// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
 	// signingMethod is "smime". This is public (not a secret) and is embedded
@@ -395,6 +436,10 @@ type PullRequestOptions struct {
 
 	// When true, the PR title field in Save drawers is read-only.
 	EnforceTemplate bool `json:"enforceTemplate,omitempty"`
+
+	// Whether we should show dashboard previews for pull requests.
+	// By default, this is false (i.e. we will not create previews).
+	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 }
 
 func (PullRequestOptions) OpenAPIModelName() string {
@@ -522,6 +567,12 @@ type WebhookConfig struct {
 	// and resource name are appended automatically. Trailing slashes are stripped.
 	// Must be a valid HTTP or HTTPS URL.
 	BaseURL string `json:"baseUrl,omitempty"`
+
+	// Disabled turns off webhook integration for this repository. When true,
+	// Grafana will not register or receive webhook events from the Git provider
+	// and will poll the repository on an interval instead. Use this when Grafana
+	// is not reachable from the public internet.
+	Disabled bool `json:"disabled,omitempty"`
 }
 
 func (WebhookConfig) OpenAPIModelName() string {
@@ -606,7 +657,10 @@ func (SyncStatus) OpenAPIModelName() string {
 }
 
 type WebhookStatus struct {
-	ID               int64    `json:"id,omitempty"`
+	// TODO: consolidate ID and UUID into a single string identifier in the next api version.
+	ID   int64  `json:"id,omitempty"`
+	UUID string `json:"uuid,omitempty"`
+
 	URL              string   `json:"url,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 	LastEvent        int64    `json:"lastEvent,omitempty"`

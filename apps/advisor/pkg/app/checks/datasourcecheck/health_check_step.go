@@ -46,6 +46,14 @@ func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advi
 		return nil, nil
 	}
 
+	// When Forward OAuth Identity (oauthPassThru) is enabled, the health check depends on the
+	// end user's OAuth token, which is not available in this context. The result would reflect
+	// the check runner's identity rather than the data source, so we can't reliably verify it.
+	if ds.JsonData != nil && ds.JsonData.Get("oauthPassThru").MustBool(false) {
+		log.Debug("Skipping health check because the data source uses Forward OAuth Identity", "datasource_uid", ds.UID, "datasource_type", ds.Type)
+		return nil, nil
+	}
+
 	// Health check execution
 	resp, err := s.HealthChecker.CheckHealth(ctx, ds)
 	if err != nil || (resp != nil && resp.Status != backend.HealthStatusOk) {

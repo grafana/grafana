@@ -13,12 +13,8 @@ type GitHubRepositoryConfigApplyConfiguration struct {
 	Branch *string `json:"branch,omitempty"`
 	// Whether we should show dashboard previews for pull requests.
 	// By default, this is false (i.e. we will not create previews).
+	// TODO: deprecate this field in favor of PullRequestOptions.GenerateDashboardPreviews once all Github repositories have been backfilled.
 	GenerateDashboardPreviews *bool `json:"generateDashboardPreviews,omitempty"`
-	// WebhookDisabled disables webhook integration for this repository. When true,
-	// Grafana will not register or receive webhook events from GitHub and will poll
-	// the repository on an interval instead. Use this when Grafana is not reachable
-	// from the public internet.
-	WebhookDisabled *bool `json:"webhookDisabled,omitempty"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
@@ -54,14 +50,6 @@ func (b *GitHubRepositoryConfigApplyConfiguration) WithBranch(value string) *Git
 // If called multiple times, the GenerateDashboardPreviews field is set to the value of the last call.
 func (b *GitHubRepositoryConfigApplyConfiguration) WithGenerateDashboardPreviews(value bool) *GitHubRepositoryConfigApplyConfiguration {
 	b.GenerateDashboardPreviews = &value
-	return b
-}
-
-// WithWebhookDisabled sets the WebhookDisabled field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the WebhookDisabled field is set to the value of the last call.
-func (b *GitHubRepositoryConfigApplyConfiguration) WithWebhookDisabled(value bool) *GitHubRepositoryConfigApplyConfiguration {
-	b.WebhookDisabled = &value
 	return b
 }
 

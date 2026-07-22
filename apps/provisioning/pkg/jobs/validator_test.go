@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -11,7 +12,10 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/user"
 
+	authlib "github.com/grafana/authlib/types"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 func TestValidateJob(t *testing.T) {
@@ -412,6 +416,34 @@ func TestValidateJob(t *testing.T) {
 				},
 			},
 			wantErr: false,
+		},
+		{
+			name: "valid migrate job with valid branch",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMigrate,
+					Repository: "test-repo",
+					Migrate:    &provisioning.MigrateJobOptions{Branch: "feature-x"},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "migrate job with invalid branch name",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMigrate,
+					Repository: "test-repo",
+					Migrate:    &provisioning.MigrateJobOptions{Branch: "feature..branch"}, // Invalid: consecutive dots
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.migrate.branch")
+				require.Contains(t, err.Error(), "invalid git branch name")
+			},
 		},
 		{
 			name: "migrate action with resource missing name",
@@ -903,6 +935,188 @@ func TestValidateJob(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "push action at the selective export limit",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: makeDashboardRefs(MaxSelectiveExportResources),
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "push action over the selective export limit",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: makeDashboardRefs(MaxSelectiveExportResources + 1),
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources")
+				require.Contains(t, err.Error(), "must have at most 100 items")
+			},
+		},
+		{
+			name: "migrate action over the selective export limit",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMigrate,
+					Repository: "test-repo",
+					Migrate: &provisioning.MigrateJobOptions{
+						Resources: makeDashboardRefs(MaxSelectiveExportResources + 1),
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.migrate.resources")
+				require.Contains(t, err.Error(), "must have at most 100 items")
+			},
+		},
+		{
+			name: "valid test job",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+					Test:       &provisioning.TestJobOptions{Duration: metav1.Duration{Duration: 10 * time.Second}},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "test action without test options",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.test: Required value")
+			},
+		},
+		{
+			name: "test action with non-positive duration",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+					Test:       &provisioning.TestJobOptions{Duration: metav1.Duration{Duration: 0}},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.test.duration")
+				require.Contains(t, err.Error(), "must be positive")
+			},
+		},
+		{
+			name: "test action over the duration cap",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+					Test:       &provisioning.TestJobOptions{Duration: metav1.Duration{Duration: MaxTestJobDuration + time.Second}},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.test.duration")
+				require.Contains(t, err.Error(), "must not exceed")
+			},
+		},
+		{
+			name: "test action with negative progress updates",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+					Test: &provisioning.TestJobOptions{
+						Duration:        metav1.Duration{Duration: 10 * time.Second},
+						ProgressUpdates: -1,
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.test.progressUpdates")
+				require.Contains(t, err.Error(), "must be non-negative")
+			},
+		},
+		{
+			name: "test action with progress updates too dense for duration",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+					Test: &provisioning.TestJobOptions{
+						// 1s / 100 updates = 10ms apart, far below the throttle.
+						Duration:        metav1.Duration{Duration: time.Second},
+						ProgressUpdates: 100,
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.test.progressUpdates")
+				require.Contains(t, err.Error(), "at least")
+			},
+		},
+		{
+			name: "test action with progress updates exactly at the throttle floor",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+					Test: &provisioning.TestJobOptions{
+						// 10s / 20 updates = 500ms apart, exactly deliverable.
+						Duration:        metav1.Duration{Duration: 10 * time.Second},
+						ProgressUpdates: 20,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "test action over progress updates cap",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+					Test: &provisioning.TestJobOptions{
+						Duration:        metav1.Duration{Duration: 10 * time.Second},
+						ProgressUpdates: MaxTestJobProgressUpdates + 1,
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.test.progressUpdates")
+				require.Contains(t, err.Error(), "must not exceed")
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -925,6 +1139,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 		name            string
 		obj             interface{}
 		operation       admission.Operation
+		perfEnabled     bool
 		wantErr         bool
 		wantErrContains string
 	}{
@@ -938,8 +1153,38 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 					Pull:       &provisioning.SyncJobOptions{Incremental: true},
 				},
 			},
-			operation: admission.Create,
-			wantErr:   false,
+			operation:   admission.Create,
+			perfEnabled: true,
+			wantErr:     false,
+		},
+		{
+			name: "test job is rejected when performance flag is disabled",
+			obj: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+					Test:       &provisioning.TestJobOptions{Duration: metav1.Duration{Duration: 10 * time.Second}},
+				},
+			},
+			operation:       admission.Create,
+			perfEnabled:     false,
+			wantErr:         true,
+			wantErrContains: "provisioning.performance feature flag",
+		},
+		{
+			name: "test job passes when performance flag is enabled",
+			obj: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionTest,
+					Repository: "test-repo",
+					Test:       &provisioning.TestJobOptions{Duration: metav1.Duration{Duration: 10 * time.Second}},
+				},
+			},
+			operation:   admission.Create,
+			perfEnabled: true,
+			wantErr:     false,
 		},
 		{
 			name: "invalid job fails validation",
@@ -950,13 +1195,15 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 					Repository: "test-repo",
 				},
 			},
-			operation: admission.Create,
-			wantErr:   true,
+			operation:   admission.Create,
+			perfEnabled: true,
+			wantErr:     true,
 		},
 		{
-			name:    "returns nil for nil object",
-			obj:     nil,
-			wantErr: false,
+			name:        "returns nil for nil object",
+			obj:         nil,
+			perfEnabled: true,
+			wantErr:     false,
 		},
 		{
 			name: "returns error for non-job object",
@@ -964,6 +1211,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 			},
 			operation:       admission.Create,
+			perfEnabled:     true,
 			wantErr:         true,
 			wantErrContains: "expected job",
 		},
@@ -979,14 +1227,15 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 					Repository: "test-repo",
 				},
 			},
-			operation: admission.Update,
-			wantErr:   false,
+			operation:   admission.Update,
+			perfEnabled: true,
+			wantErr:     false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v := NewAdmissionValidator(nil)
+			v := NewAdmissionValidator(nil, func(context.Context) bool { return tt.perfEnabled })
 
 			var obj runtime.Object
 			if tt.obj != nil {
@@ -1126,6 +1375,15 @@ func TestHistoricJobAdmissionValidator_Validate(t *testing.T) {
 	}
 }
 
+// makeDashboardRefs builds n valid dashboard resource refs for limit tests.
+func makeDashboardRefs(n int) []provisioning.ResourceRef {
+	refs := make([]provisioning.ResourceRef, n)
+	for i := range refs {
+		refs[i] = provisioning.ResourceRef{Name: fmt.Sprintf("dash-%d", i), Kind: "Dashboard"}
+	}
+	return refs
+}
+
 func newHistoricJobAdmissionTestAttributes(obj runtime.Object, op admission.Operation) admission.Attributes {
 	return admission.NewAttributesRecord(
 		obj,
@@ -1140,4 +1398,137 @@ func newHistoricJobAdmissionTestAttributes(obj runtime.Object, op admission.Oper
 		false,
 		&user.DefaultInfo{},
 	)
+}
+
+func TestValidateAuthor(t *testing.T) {
+	requester := &identity.StaticRequester{
+		Type:    authlib.TypeUser,
+		Name:    "Test User",
+		Email:   "test@example.com",
+		UserUID: "abc123",
+	}
+	userCtx := identity.WithRequester(t.Context(), requester)
+	serviceCtx, _, err := identity.WithProvisioningIdentity(t.Context(), "default")
+	require.NoError(t, err)
+
+	annotations := map[string]string{
+		AnnoAuthor:      requester.GetName(),
+		AnnoAuthorEmail: requester.GetEmail(),
+	}
+
+	tests := []struct {
+		name            string
+		ctx             context.Context
+		operation       admission.Operation
+		annotations     map[string]string
+		oldAnnotations  map[string]string
+		wantErrContains string
+	}{
+		{
+			name:        "create without annotations",
+			ctx:         userCtx,
+			operation:   admission.Create,
+			annotations: nil,
+		},
+		{
+			name:        "create by service identity",
+			ctx:         serviceCtx,
+			operation:   admission.Create,
+			annotations: map[string]string{AnnoAuthor: "someone else"},
+		},
+		{
+			name:        "create with matching annotations",
+			ctx:         userCtx,
+			operation:   admission.Create,
+			annotations: annotations,
+		},
+		{
+			name:            "create with mismatched name",
+			ctx:             userCtx,
+			operation:       admission.Create,
+			annotations:     map[string]string{AnnoAuthor: "someone else"},
+			wantErrContains: AnnoAuthor + " must match",
+		},
+		{
+			name:            "create with mismatched email",
+			ctx:             userCtx,
+			operation:       admission.Create,
+			annotations:     map[string]string{AnnoAuthorEmail: "other@example.com"},
+			wantErrContains: AnnoAuthorEmail + " must match",
+		},
+		{
+			name:            "create without requester",
+			ctx:             t.Context(),
+			operation:       admission.Create,
+			annotations:     map[string]string{AnnoAuthor: "Test User"},
+			wantErrContains: "job author annotations must match the requesting user",
+		},
+		{
+			name:           "update with unchanged annotations",
+			ctx:            userCtx,
+			operation:      admission.Update,
+			annotations:    annotations,
+			oldAnnotations: annotations,
+		},
+		{
+			name:            "update changing name",
+			ctx:             userCtx,
+			operation:       admission.Update,
+			annotations:     map[string]string{AnnoAuthor: "someone else"},
+			oldAnnotations:  annotations,
+			wantErrContains: AnnoAuthor + " is immutable",
+		},
+		{
+			name:            "update changing email",
+			ctx:             userCtx,
+			operation:       admission.Update,
+			annotations:     map[string]string{AnnoAuthor: requester.GetName(), AnnoAuthorEmail: "other@example.com"},
+			oldAnnotations:  annotations,
+			wantErrContains: AnnoAuthorEmail + " is immutable",
+		},
+		{
+			name:            "update removing email",
+			ctx:             userCtx,
+			operation:       admission.Update,
+			annotations:     map[string]string{AnnoAuthor: requester.GetName()},
+			oldAnnotations:  annotations,
+			wantErrContains: AnnoAuthorEmail + " is immutable",
+		},
+		{
+			name:        "delete is ignored",
+			ctx:         userCtx,
+			operation:   admission.Delete,
+			annotations: map[string]string{AnnoAuthor: "someone else"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			job := &provisioning.Job{ObjectMeta: metav1.ObjectMeta{Name: "test-job", Annotations: tt.annotations}}
+			var oldObj runtime.Object
+			if tt.oldAnnotations != nil {
+				oldObj = &provisioning.Job{ObjectMeta: metav1.ObjectMeta{Name: "test-job", Annotations: tt.oldAnnotations}}
+			}
+			attr := admission.NewAttributesRecord(
+				job,
+				oldObj,
+				provisioning.JobResourceInfo.GroupVersionKind(),
+				"default",
+				"test-job",
+				provisioning.JobResourceInfo.GroupVersionResource(),
+				"",
+				tt.operation,
+				nil,
+				false,
+				&user.DefaultInfo{},
+			)
+
+			err := validateAuthor(tt.ctx, attr, job)
+			if tt.wantErrContains != "" {
+				require.ErrorContains(t, err, tt.wantErrContains)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }

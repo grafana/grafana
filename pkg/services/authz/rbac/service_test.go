@@ -265,6 +265,143 @@ func TestService_checkPermission(t *testing.T) {
 			expected: true,
 		},
 		{
+			name: "should allow a folder-scoped any check if user has permission on an ancestor folder",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards:read",
+					Scope:      "folders:uid:parent",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "parent",
+				},
+			},
+			folders: []store.Folder{
+				{UID: "parent"},
+				{UID: "child", ParentUID: new("parent")},
+			},
+			check: checkRequest{
+				Action:       "dashboards:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "dashboards",
+				Name:         "",
+				ParentFolder: "child",
+				Verb:         utils.VerbList,
+			},
+			expected: true,
+		},
+		{
+			name: "should deny a folder-scoped any check if user only has permission on an unrelated folder",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards:read",
+					Scope:      "folders:uid:other",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "other",
+				},
+			},
+			folders: []store.Folder{
+				{UID: "parent"},
+				{UID: "child", ParentUID: new("parent")},
+				{UID: "other"},
+			},
+			check: checkRequest{
+				Action:       "dashboards:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "dashboards",
+				Name:         "",
+				ParentFolder: "child",
+				Verb:         utils.VerbList,
+			},
+			expected: false,
+		},
+		{
+			name: "should allow a folder-scoped any check if user has a wildcard folder permission",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:    "dashboards:read",
+					Scope:     "folders:*",
+					Kind:      "folders",
+					Attribute: "*",
+				},
+			},
+			folders: []store.Folder{{UID: "parent"}},
+			check: checkRequest{
+				Action:       "dashboards:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "dashboards",
+				Name:         "",
+				ParentFolder: "parent",
+				Verb:         utils.VerbList,
+			},
+			expected: true,
+		},
+		{
+			name: "should allow a folder-scoped set_permissions any check only via the folder",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards.permissions:write",
+					Scope:      "folders:uid:parent",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "parent",
+				},
+			},
+			folders: []store.Folder{{UID: "parent"}},
+			check: checkRequest{
+				Action:       "dashboards.permissions:write",
+				Group:        "dashboard.grafana.app",
+				Resource:     "dashboards",
+				Name:         "",
+				ParentFolder: "parent",
+				Verb:         utils.VerbSetPermissions,
+			},
+			expected: true,
+		},
+		{
+			name: "should deny a folder-scoped set_permissions any check if the grant is on another folder",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards.permissions:write",
+					Scope:      "folders:uid:other",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "other",
+				},
+			},
+			folders: []store.Folder{{UID: "parent"}, {UID: "other"}},
+			check: checkRequest{
+				Action:       "dashboards.permissions:write",
+				Group:        "dashboard.grafana.app",
+				Resource:     "dashboards",
+				Name:         "",
+				ParentFolder: "parent",
+				Verb:         utils.VerbSetPermissions,
+			},
+			expected: false,
+		},
+		{
+			name: "should keep capabilities semantics for any check with a folder on a non folder-supporting resource",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "teams:read",
+					Scope:      "teams:uid:some_team",
+					Kind:       "teams",
+					Attribute:  "uid",
+					Identifier: "some_team",
+				},
+			},
+			check: checkRequest{
+				Action:       "teams:read",
+				Group:        "iam.grafana.app",
+				Resource:     "teams",
+				Name:         "",
+				ParentFolder: "some_folder",
+				Verb:         utils.VerbList,
+			},
+			expected: true,
+		},
+		{
 			name: "should return true if user has annotation create permission on dashboard (subresource)",
 			permissions: []accesscontrol.Permission{
 				{
@@ -402,7 +539,7 @@ func TestService_checkPermission(t *testing.T) {
 			s.folderCache.Set(context.Background(), folderCacheKey("default"), newFolderTree(tc.folders))
 			tc.check.Namespace = types.NamespaceInfo{Value: "default", OrgID: 1}
 			ns := types.NamespaceInfo{Value: "default", OrgID: 1}
-			got, err := s.checkPermission(context.Background(), s.getScopeMap(tc.permissions), &tc.check, s.newFolderTreeGetter(context.Background(), ns, false))
+			got, err := s.checkPermission(context.Background(), s.getScopeMap(tc.permissions), nil, &tc.check, s.newFolderTreeGetter(context.Background(), ns, false))
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, got)
 		})
@@ -537,7 +674,7 @@ func TestService_checkPermission_folderCacheMissRecovery(t *testing.T) {
 	}
 
 	ns := types.NamespaceInfo{Value: "default", OrgID: 1}
-	got, err := s.checkPermission(ctx, userPermissions, &check, s.newFolderTreeGetter(ctx, ns, false))
+	got, err := s.checkPermission(ctx, userPermissions, nil, &check, s.newFolderTreeGetter(ctx, ns, false))
 	require.NoError(t, err)
 	assert.True(t, got)
 
@@ -1077,6 +1214,120 @@ func TestService_listPermission(t *testing.T) {
 	}
 }
 
+func TestService_listPermissionWithFolderAuthz(t *testing.T) {
+	const group = "widget.ext.grafana.app"
+
+	folderPerm := func(action, folderUID string) accesscontrol.Permission {
+		return accesscontrol.Permission{
+			Action:     action,
+			Scope:      "folders:uid:" + folderUID,
+			Kind:       "folders",
+			Attribute:  "uid",
+			Identifier: folderUID,
+		}
+	}
+
+	type testCase struct {
+		name string
+		// resourceScopeMap is the scope map for the resource action passed to
+		// listPermission (scopeMap[""] signals the stack role).
+		resourceScopeMap map[string]bool
+		// folderPerms are the user's folder grants, queried second.
+		folderPerms     []accesscontrol.Permission
+		folders         []store.Folder
+		verb            string
+		expectedAll     bool
+		expectedFolders []string
+	}
+
+	testCases := []testCase{
+		{
+			name:             "no stack role returns empty response",
+			resourceScopeMap: map[string]bool{},
+			folderPerms:      []accesscontrol.Permission{folderPerm("folders:read", "f1")},
+			folders:          []store.Folder{{UID: "f1"}},
+			verb:             utils.VerbList,
+		},
+		{
+			name:             "resource-type wildcard does not auto-allow without folder grant",
+			resourceScopeMap: map[string]bool{"*": true},
+			folderPerms:      []accesscontrol.Permission{},
+			folders:          []store.Folder{{UID: "f1"}},
+			verb:             utils.VerbList,
+		},
+		{
+			name:             "stack role and folders:read on parent returns folder and descendants",
+			resourceScopeMap: map[string]bool{"": true},
+			folderPerms:      []accesscontrol.Permission{folderPerm("folders:read", "parent")},
+			folders:          []store.Folder{{UID: "parent"}, {UID: "child", ParentUID: new("parent")}},
+			verb:             utils.VerbList,
+			expectedFolders:  []string{"parent", "child"},
+		},
+		{
+			name:             "stack role and folder grant via action-set name is matched",
+			resourceScopeMap: map[string]bool{"": true},
+			folderPerms:      []accesscontrol.Permission{folderPerm("folders:edit", "f1")},
+			folders:          []store.Folder{{UID: "f1"}},
+			verb:             utils.VerbList,
+			expectedFolders:  []string{"f1"},
+		},
+		{
+			name:             "stack role and folder wildcard returns all",
+			resourceScopeMap: map[string]bool{"": true},
+			folderPerms:      []accesscontrol.Permission{{Action: "folders:read", Scope: "*", Kind: "*"}},
+			folders:          []store.Folder{{UID: "f1"}},
+			verb:             utils.VerbList,
+			expectedAll:      true,
+		},
+		{
+			name:             "watch verb behaves like list",
+			resourceScopeMap: map[string]bool{"": true},
+			folderPerms:      []accesscontrol.Permission{folderPerm("folders:read", "f1")},
+			folders:          []store.Folder{{UID: "f1"}},
+			verb:             utils.VerbWatch,
+			expectedFolders:  []string{"f1"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := setupService()
+			userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+			fStore := &fakeStore{userID: userID, userPermissions: tc.folderPerms, folders: tc.folders, disableNsCheck: true}
+			s.store = fStore
+			s.permissionStore = fStore
+			s.folderStore = fStore
+			s.identityStore = &fakeIdentityStore{disableNsCheck: true}
+
+			if tc.folders != nil {
+				s.folderCache.Set(context.Background(), folderCacheKey("default"), newFolderTree(tc.folders))
+			}
+
+			list := listRequest{
+				Namespace:    types.NamespaceInfo{Value: "default", OrgID: 1},
+				IdentityType: types.TypeUser,
+				UserUID:      "test-uid",
+				Group:        group,
+				Resource:     "widgets",
+				Verb:         tc.verb,
+				Action:       group + "/widgets:get",
+				Options:      &ListRequestOptions{},
+			}
+
+			got, err := s.listPermission(context.Background(), tc.resourceScopeMap, &list)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedAll, got.All)
+			assert.ElementsMatch(t, tc.expectedFolders, got.Folders)
+			// The folder-authz path expresses access only through Folders (or
+			// All), never Items: Items matches by object name, which is
+			// meaningless for folder-scoped CRDs. A regression that swapped
+			// buildItemList for buildFolderList would leak folder UIDs here and
+			// silently deny every object, so we assert it stays empty.
+			assert.Empty(t, got.Items)
+		})
+	}
+}
+
 func TestService_Check(t *testing.T) {
 	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
 		Claims: jwt.Claims{
@@ -1533,7 +1784,26 @@ func TestService_K8sNativeFallback(t *testing.T) {
 		assert.False(t, resp.Allowed)
 	})
 
-	t.Run("Check: unregistered group allowed with K8s-native action", func(t *testing.T) {
+	t.Run("Check: unregistered group denied with stack-role grant and no folder (wildcard access)", func(t *testing.T) {
+		s := setup([]accesscontrol.Permission{
+			{Action: "unregistered.grafana.app/widgets:get", Scope: ""},
+			{Action: "folders:read", Scope: "folders:*"},
+		})
+		resp, err := s.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "unregistered.grafana.app",
+			Resource:  "widgets",
+			Verb:      "get",
+			Name:      "w1",
+		})
+		require.Error(t, err)
+		assert.False(t, resp.Allowed)
+	})
+
+	t.Run("Check: unregistered group denied with resource-scoped grant but no stack role", func(t *testing.T) {
+		// A scoped grant on the resource is no longer a stack role, so without
+		// an empty-scope grant the folder-authz path denies access.
 		s := setup([]accesscontrol.Permission{
 			{Action: "unregistered.grafana.app/widgets:get", Scope: "unregistered.grafana.app/widgets:uid:w1"},
 		})
@@ -1546,7 +1816,7 @@ func TestService_K8sNativeFallback(t *testing.T) {
 			Name:      "w1",
 		})
 		require.NoError(t, err)
-		assert.True(t, resp.Allowed)
+		assert.False(t, resp.Allowed)
 	})
 
 	t.Run("Check: unknown verb still errors", func(t *testing.T) {
@@ -1577,7 +1847,9 @@ func TestService_K8sNativeFallback(t *testing.T) {
 		assert.False(t, resp.All)
 	})
 
-	t.Run("List: unregistered group returns items with K8s-native action", func(t *testing.T) {
+	t.Run("List: unregistered group with resource-scoped grant but no stack role returns empty", func(t *testing.T) {
+		// A scoped grant on the resource is no longer a stack role, so without
+		// an empty-scope grant the folder-authz list path returns nothing.
 		s := setup([]accesscontrol.Permission{
 			{Action: "unregistered.grafana.app/widgets:get", Scope: "unregistered.grafana.app/widgets:uid:w1"},
 			{Action: "unregistered.grafana.app/widgets:get", Scope: "unregistered.grafana.app/widgets:uid:w2"},
@@ -1587,10 +1859,32 @@ func TestService_K8sNativeFallback(t *testing.T) {
 			Subject:   "user:test-uid",
 			Group:     "unregistered.grafana.app",
 			Resource:  "widgets",
-			Verb:      "get",
+			Verb:      "list",
 		})
 		require.NoError(t, err)
-		assert.ElementsMatch(t, []string{"w1", "w2"}, resp.Items)
+		assert.Empty(t, resp.Items)
+		assert.Empty(t, resp.Folders)
+		assert.False(t, resp.All)
+	})
+
+	t.Run("List: unregistered group with stack role and folder grant returns folders", func(t *testing.T) {
+		s := setup([]accesscontrol.Permission{
+			{Action: "unregistered.grafana.app/widgets:get", Scope: ""},
+			{Action: "folders:read", Scope: "folders:uid:f1", Kind: "folders", Attribute: "uid", Identifier: "f1"},
+		})
+		s.folderStore = s.store.(*fakeStore)
+		s.store.(*fakeStore).folders = []store.Folder{{UID: "f1"}}
+		resp, err := s.List(ctx, &authzv1.ListRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "unregistered.grafana.app",
+			Resource:  "widgets",
+			Verb:      "list",
+		})
+		require.NoError(t, err)
+		assert.ElementsMatch(t, []string{"f1"}, resp.Folders)
+		assert.Empty(t, resp.Items)
+		assert.False(t, resp.All)
 	})
 
 	t.Run("List: dashboards/annotations subresource resolves correct mapper entry", func(t *testing.T) {
@@ -1609,6 +1903,163 @@ func TestService_K8sNativeFallback(t *testing.T) {
 		require.NoError(t, err)
 		assert.ElementsMatch(t, []string{"dash1", "dash2"}, resp.Items)
 	})
+}
+
+func TestService_checkPermissionWithFolderAuthz(t *testing.T) {
+	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{
+			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+			Audience: []string{"authzservice"},
+		},
+		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+	})
+	ctx := types.WithAuthInfo(context.Background(), callingService)
+
+	const group = "widget.ext.grafana.app"
+
+	// stackRole returns an empty-scope grant for the given resource action,
+	// which the folder-authz path treats as the stack role.
+	stackRole := func(action string) accesscontrol.Permission {
+		return accesscontrol.Permission{Action: action, Scope: ""}
+	}
+	folderPerm := func(action, folderUID string) accesscontrol.Permission {
+		return accesscontrol.Permission{
+			Action:     action,
+			Scope:      "folders:uid:" + folderUID,
+			Kind:       "folders",
+			Attribute:  "uid",
+			Identifier: folderUID,
+		}
+	}
+
+	type testCase struct {
+		name        string
+		permissions []accesscontrol.Permission
+		folders     []store.Folder
+		req         *authzv1.CheckRequest
+		expected    bool
+	}
+
+	testCases := []testCase{
+		{
+			name: "resource with stack role and folder read permission",
+			permissions: []accesscontrol.Permission{
+				stackRole("widget.ext.grafana.app/widgets:get"),
+				folderPerm("folders:read", "f1"),
+			},
+			folders:  []store.Folder{{UID: "f1"}},
+			req:      &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbGet, Name: "w1", Folder: "f1"},
+			expected: true,
+		},
+		{
+			name: "subresource with stack role and folder read permission",
+			permissions: []accesscontrol.Permission{
+				stackRole("widget.ext.grafana.app/widgets/status:get"),
+				folderPerm("folders:read", "f1"),
+			},
+			folders:  []store.Folder{{UID: "f1"}},
+			req:      &authzv1.CheckRequest{Group: group, Resource: "widgets", Subresource: "status", Verb: utils.VerbGet, Name: "w1", Folder: "f1"},
+			expected: true,
+		},
+		{
+			name:        "capabilities probe (no Parent folder) allowed with stack role",
+			permissions: []accesscontrol.Permission{stackRole("widget.ext.grafana.app/widgets:get")},
+			req:         &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbGet},
+			expected:    true,
+		},
+		{
+			name:        "capabilities probe (no Parent folder) denied without stack role",
+			permissions: []accesscontrol.Permission{},
+			req:         &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbGet},
+			expected:    false,
+		},
+		{
+			name: "write verb allowed with stack role and folder write permission",
+			permissions: []accesscontrol.Permission{
+				stackRole("widget.ext.grafana.app/widgets:update"),
+				folderPerm("folders:write", "f1"),
+			},
+			folders:  []store.Folder{{UID: "f1"}},
+			req:      &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbUpdate, Name: "w1", Folder: "f1"},
+			expected: true,
+		},
+		{
+			name:        "stack role but no folder permission denied",
+			permissions: []accesscontrol.Permission{stackRole("widget.ext.grafana.app/widgets:get")},
+			folders:     []store.Folder{{UID: "f1"}},
+			req:         &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbGet, Name: "w1", Folder: "f1"},
+			expected:    false,
+		},
+		{
+			name: "folder inheritance: permission on ancestor allows child",
+			permissions: []accesscontrol.Permission{
+				stackRole("widget.ext.grafana.app/widgets:get"),
+				folderPerm("folders:read", "parent"),
+			},
+			folders:  []store.Folder{{UID: "parent"}, {UID: "child", ParentUID: new("parent")}},
+			req:      &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbGet, Name: "w1", Folder: "child"},
+			expected: true,
+		},
+		{
+			name: "folder inheritance miss: permission on unrelated folder denied",
+			permissions: []accesscontrol.Permission{
+				stackRole("widget.ext.grafana.app/widgets:get"),
+				folderPerm("folders:read", "other"),
+			},
+			folders:  []store.Folder{{UID: "parent"}, {UID: "child", ParentUID: new("parent")}, {UID: "other"}},
+			req:      &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbGet, Name: "w1", Folder: "child"},
+			expected: false,
+		},
+		{
+			name: "wildcard folder grant allows without walking the tree",
+			permissions: []accesscontrol.Permission{
+				stackRole("widget.ext.grafana.app/widgets:get"),
+				{Action: "folders:read", Scope: "*", Kind: "*"},
+			},
+			folders:  []store.Folder{{}},
+			req:      &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbGet, Name: "w1", Folder: "f1"},
+			expected: true,
+		},
+		{
+			name: "permission verb allowed with folder admin",
+			permissions: []accesscontrol.Permission{
+				stackRole("widget.ext.grafana.app/widgets:get_permissions"),
+				folderPerm("folders.permissions:write", "f1"),
+			},
+			folders:  []store.Folder{{UID: "f1"}},
+			req:      &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbGetPermissions, Name: "w1", Folder: "f1"},
+			expected: true,
+		},
+		{
+			name: "permission verb denied with only folder write",
+			permissions: []accesscontrol.Permission{
+				stackRole("widget.ext.grafana.app/widgets:set_permissions"),
+				folderPerm("folders:write", "f1"),
+			},
+			folders:  []store.Folder{{UID: "f1"}},
+			req:      &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbSetPermissions, Name: "w1", Folder: "f1"},
+			expected: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := setupService()
+			userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+			fStore := &fakeStore{userID: userID, userPermissions: tc.permissions, folders: tc.folders}
+			s.store = fStore
+			s.permissionStore = fStore
+			s.folderStore = fStore
+			s.identityStore = &fakeIdentityStore{}
+
+			tc.req.Namespace = "org-12"
+			tc.req.Subject = "user:test-uid"
+
+			resp, err := s.Check(ctx, tc.req)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, resp.Allowed)
+		})
+	}
 }
 
 func TestService_CacheCheck(t *testing.T) {
@@ -3134,6 +3585,196 @@ func TestService_BatchCheck(t *testing.T) {
 		assert.Equal(t, 1, ts.listFoldersCalls,
 			"ListFolders should be called once (single shared getter), not once per group")
 	})
+
+	const extGroup = "widget.ext.grafana.app"
+
+	extCheck := func(id, name, folder string) *authzv1.BatchCheckItem {
+		return &authzv1.BatchCheckItem{
+			CorrelationId: id, Group: extGroup,
+			Resource: "widgets", Verb: "get", Name: name, Folder: folder,
+		}
+	}
+
+	stackRole := func(action string) accesscontrol.Permission {
+		return accesscontrol.Permission{Action: action, Scope: ""}
+	}
+	folderPerm := func(action, folderUID string) accesscontrol.Permission {
+		return accesscontrol.Permission{
+			Action:     action,
+			Scope:      "folders:uid:" + folderUID,
+			Kind:       "folders",
+			Attribute:  "uid",
+			Identifier: folderUID,
+		}
+	}
+
+	setupExtBatchCheck := func(t *testing.T, perms []accesscontrol.Permission, folders []store.Folder) (*Service, *trackingPermissionStore, context.Context) {
+		t.Helper()
+		s := setupService()
+		s.folderCache = newCacheWrap[folderTree](nil, log.New("test"), tracing.NewNoopTracerService(), 0)
+		fStore := &fakeStore{
+			disableNsCheck:  true,
+			userID:          &store.UserIdentifiers{UID: "test-uid", ID: 1},
+			basicRole:       &store.BasicRole{Role: "Viewer", IsAdmin: false},
+			userPermissions: perms,
+			folders:         folders,
+		}
+		s.store = fStore
+		ts := &trackingPermissionStore{inner: fStore}
+		s.permissionStore = ts
+		s.folderStore = fStore
+		s.identityStore = &fakeIdentityStore{disableNsCheck: true}
+		return s, ts, types.WithAuthInfo(context.Background(), callingService)
+	}
+
+	t.Run("folder authz batch: mixed allowed and denied items", func(t *testing.T) {
+		s, _, ctx := setupExtBatchCheck(t, []accesscontrol.Permission{
+			stackRole("widget.ext.grafana.app/widgets:get"),
+			folderPerm("folders:read", "f1"),
+		}, []store.Folder{{UID: "f1"}, {UID: "f2"}})
+
+		resp, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+			Namespace: "org-12", Subject: "user:test-uid",
+			Checks: []*authzv1.BatchCheckItem{
+				extCheck("allowed", "widget1", "f1"),
+				extCheck("denied", "widget2", "f2"),
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, resp.Results["allowed"].Allowed)
+		assert.False(t, resp.Results["denied"].Allowed)
+	})
+
+	t.Run("folder authz batch: one folder permission lookup per group", func(t *testing.T) {
+		s, ts, ctx := setupExtBatchCheck(t, []accesscontrol.Permission{
+			stackRole("widget.ext.grafana.app/widgets:get"),
+			folderPerm("folders:read", "f1"),
+		}, []store.Folder{{UID: "f1"}})
+
+		resp, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+			Namespace: "org-12", Subject: "user:test-uid",
+			Checks: []*authzv1.BatchCheckItem{
+				extCheck("w1", "widget1", "f1"),
+				extCheck("w2", "widget2", "f1"),
+				extCheck("w3", "widget3", "f1"),
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, resp.Results["w1"].Allowed)
+		assert.True(t, resp.Results["w2"].Allowed)
+		assert.True(t, resp.Results["w3"].Allowed)
+		assert.Equal(t, 1, ts.folderPermCalls,
+			"folder permission lookup should happen once per group, not once per item")
+	})
+}
+
+func TestGetScopeMap_Settings(t *testing.T) {
+	s := setupService()
+
+	t.Run("section wildcard is not promoted to global grant", func(t *testing.T) {
+		// settings:auth.saml:* splits to Kind=settings, Attribute=auth.saml, Identifier=*
+		// Without the settings-aware branch this would trigger the generic Identifier=="*"
+		// wildcard collapse and return {"*": true} — an over-grant.
+		perms := []accesscontrol.Permission{
+			{
+				Action:     accesscontrol.ActionSettingsRead,
+				Scope:      "settings:auth.saml:*",
+				Kind:       "settings",
+				Attribute:  "auth.saml",
+				Identifier: "*",
+			},
+		}
+		scopeMap := s.getScopeMap(perms)
+		assert.True(t, scopeMap["settings:uid:auth.saml"], "section grant must collapse to settings:uid:auth.saml")
+		assert.False(t, scopeMap["*"], "section wildcard must not produce a global grant")
+	})
+
+	t.Run("per-key grant is not widened to the section (no up-grant)", func(t *testing.T) {
+		// settings:smtp:host splits to Kind=settings, Attribute=smtp, Identifier=host.
+		// A per-key grant must NOT authorize the whole section — widening it would be a
+		// privilege escalation. It is left as its literal scope, which never matches a
+		// section-level check (settings:uid:smtp).
+		perms := []accesscontrol.Permission{
+			{
+				Action:     accesscontrol.ActionSettingsRead,
+				Scope:      "settings:smtp:host",
+				Kind:       "settings",
+				Attribute:  "smtp",
+				Identifier: "host",
+			},
+		}
+		scopeMap := s.getScopeMap(perms)
+		assert.False(t, scopeMap["settings:uid:smtp"], "per-key grant must not be widened to the section")
+		assert.False(t, scopeMap["*"], "per-key grant must not produce a global grant")
+		assert.False(t, scopeMap["settings:smtp:host"], "per-key grant is kept as its literal scope")
+	})
+
+	t.Run("global settings grant produces wildcard", func(t *testing.T) {
+		// settings:* splits to Kind=settings, Attribute=*, Identifier=*
+		perms := []accesscontrol.Permission{
+			{
+				Action:    accesscontrol.ActionSettingsRead,
+				Scope:     "settings:*",
+				Kind:      "settings",
+				Attribute: "*",
+			},
+		}
+		scopeMap := s.getScopeMap(perms)
+		assert.True(t, scopeMap["*"], "global settings grant must produce wildcard")
+	})
+
+	t.Run("Check allows auth.saml section and denies smtp section", func(t *testing.T) {
+		callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+			Claims: jwt.Claims{
+				Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+				Audience: []string{"authzservice"},
+			},
+			Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+		})
+		ctx := types.WithAuthInfo(context.Background(), callingService)
+
+		userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+		fakeStr := &fakeStore{
+			userID: userID,
+			userPermissions: []accesscontrol.Permission{
+				{
+					Action:     accesscontrol.ActionSettingsRead,
+					Scope:      "settings:auth.saml:*",
+					Kind:       "settings",
+					Attribute:  "auth.saml",
+					Identifier: "*",
+				},
+			},
+		}
+
+		svc := setupService()
+		svc.store = fakeStr
+		svc.permissionStore = fakeStr
+
+		// auth.saml section is granted
+		resp, err := svc.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "setting.grafana.app",
+			Resource:  "settings",
+			Verb:      "get",
+			Name:      "auth.saml",
+		})
+		require.NoError(t, err)
+		assert.True(t, resp.Allowed, "user with settings:auth.saml:* should be allowed to get auth.saml")
+
+		// smtp section is not granted
+		resp, err = svc.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "setting.grafana.app",
+			Resource:  "settings",
+			Verb:      "get",
+			Name:      "smtp",
+		})
+		require.NoError(t, err)
+		assert.False(t, resp.Allowed, "user with settings:auth.saml:* should not be allowed to get smtp")
+	})
 }
 
 // trackingFolderStore wraps a folder store and counts ListFolders calls.
@@ -3145,4 +3786,18 @@ type trackingFolderStore struct {
 func (t *trackingFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo) ([]store.Folder, error) {
 	t.listFoldersCalls++
 	return t.inner.ListFolders(ctx, ns)
+}
+
+// trackingPermissionStore wraps a permission store and counts folder-action lookups.
+type trackingPermissionStore struct {
+	inner           store.PermissionStore
+	folderPermCalls int
+}
+
+func (t *trackingPermissionStore) GetUserPermissions(ctx context.Context, ns types.NamespaceInfo, query store.PermissionsQuery) ([]accesscontrol.Permission, error) {
+	switch query.Action {
+	case "folders:read", "folders:write", "folders.permissions:write":
+		t.folderPermCalls++
+	}
+	return t.inner.GetUserPermissions(ctx, ns, query)
 }

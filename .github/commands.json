@@ -117,39 +117,7 @@
   },
   {
     "type": "label",
-    "name": "datasource/OpenTSDB",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/190"
-    }
-  },
-  {
-    "type": "label",
     "name": "datasource/Loki",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
-    }
-  },
-  {
-    "type": "label",
-    "name": "datasource/Tempo",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
-    }
-  },
-  {
-    "type": "label",
-    "name": "datasource/grafana-pyroscope",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
-    }
-  },
-  {
-    "type": "label",
-    "name": "datasource/Parca",
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/457"
@@ -161,14 +129,6 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/190"
-    }
-  },
-  {
-    "type": "label",
-    "name": "datasource/Jaeger",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
     }
   },
   {
@@ -669,22 +629,6 @@
   },
   {
     "type": "label",
-    "name": "datasource/MSSQL",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/190"
-    }
-  },
-  {
-    "type": "label",
-    "name": "datasource/Jaeger",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
-    }
-  },
-  {
-    "type": "label",
     "name": "area/navigation",
     "action": "addToProject",
     "addToProject": {
@@ -949,6 +893,14 @@
   },
   {
     "type": "label",
+    "name": "area/grafana-assistant",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/1145"
+    }
+  },
+  {
+    "type": "label",
     "name": "area/backend/db/sqlite",
     "action": "addToProject",
     "addToProject": {
@@ -993,14 +945,6 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/911"
-    }
-  },
-  {
-    "type": "label",
-    "name": "datasource/Parca",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
     }
   },
   {

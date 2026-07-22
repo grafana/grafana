@@ -152,6 +152,9 @@ func (b *bleveBackend) snapshotCopyAndUpload(ctx context.Context, key resource.N
 
 	rv, err := getRV(snapshotIdx)
 	bi, biErr := getBuildInfo(snapshotIdx)
+	// docCount is recorded in the manifest for debugging only; a read failure
+	// shouldn't fail the upload, so we log and fall back to zero ("unknown").
+	docCount, docErr := snapshotIdx.DocCount()
 	if closeErr := snapshotIdx.Close(); closeErr != nil {
 		return ulid.ULID{}, 0, fmt.Errorf("closing staged snapshot: %w", closeErr)
 	}
@@ -161,11 +164,16 @@ func (b *bleveBackend) snapshotCopyAndUpload(ctx context.Context, key resource.N
 	if biErr != nil {
 		return ulid.ULID{}, 0, fmt.Errorf("reading snapshot build info: %w", biErr)
 	}
+	if docErr != nil {
+		b.log.Warn("reading snapshot doc count; recording zero", "err", docErr)
+		docCount = 0
+	}
 
 	meta := IndexMeta{
 		BuildVersion:          bi.BuildVersion,
 		IndexFormat:           indexFormat,
 		LatestResourceVersion: rv,
+		DocCount:              docCount,
 	}
 	// bi.BuildTime is the original index creation time; it survives reopens and
 	// downloads, so periodic re-uploads keep the original build-start time.

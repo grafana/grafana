@@ -298,4 +298,11 @@ func TestStripSQLComments(t *testing.T) {
 		result := stripSQLComments(sql)
 		require.Equal(t, sql, result)
 	})
+
+	t.Run("strips a block comment shaped like a SQLCommenter tag", func(t *testing.T) {
+		// stripSQLComments strips all comments; trailing SQLCommenter tags are
+		// preserved earlier in the pipeline by sqlmacro.SplitTrailingSQLCommenter.
+		result := stripSQLComments("SELECT 1 /*application='grafana',feature='panel'*/")
+		require.Equal(t, "SELECT 1 ", result)
+	})
 }

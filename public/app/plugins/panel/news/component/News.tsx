@@ -3,6 +3,7 @@ import { useId } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { type DataFrameView, type GrafanaTheme2, textUtil, dateTimeFormat } from '@grafana/data';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { TextLink, useStyles2 } from '@grafana/ui';
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 
@@ -17,7 +18,8 @@ interface NewsItemProps {
 
 function NewsComponent({ width, showImage, data, index }: NewsItemProps) {
   const titleId = useId();
-  const styles = useStyles2(getStyles);
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const styles = useStyles2(getStyles, visualRefreshEnabled);
   const useWideLayout = width > 600;
   const newsItem = data.get(index);
 
@@ -79,7 +81,7 @@ const NewsSkeleton: SkeletonComponent<Pick<NewsItemProps, 'width' | 'showImage'>
 
 export const News = attachSkeleton(NewsComponent, NewsSkeleton);
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled?: boolean) => ({
   container: css({
     height: '100%',
   }),
@@ -90,7 +92,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginBottom: theme.spacing(0.5),
     marginRight: theme.spacing(1),
     borderBottom: `2px solid ${theme.colors.border.weak}`,
-    background: theme.colors.background.primary,
+    background: visualRefreshEnabled ? theme.components.panel.background : theme.colors.background.primary,
     flexDirection: 'column',
     flexShrink: 0,
   }),
@@ -108,7 +110,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginBottom: theme.spacing(1),
     '> img': {
       width: '100%',
-      borderRadius: `${theme.shape.radius.default} ${theme.shape.radius.default} 0 0`,
+      borderRadius: `${theme.shape.radius.lg} ${theme.shape.radius.lg} 0 0`,
     },
   }),
   socialImageWide: css({
@@ -116,7 +118,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginBottom: 0,
     '> img': {
       width: '250px',
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
     },
   }),
   title: css({
@@ -133,7 +135,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   date: css({
     marginBottom: theme.spacing(0.5),
     fontWeight: 500,
-    borderRadius: `0 0 0 ${theme.shape.radius.default}`,
     color: theme.colors.text.secondary,
   }),
 });

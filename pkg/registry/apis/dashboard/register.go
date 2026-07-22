@@ -244,7 +244,7 @@ func RegisterAPIService(
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, search *SearchHandler) *DashboardsAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, search *SearchHandler, unified resource.ResourceClient) *DashboardsAPIBuilder {
 	migration.Initialize(datasourceProvider, libraryElementProvider, migration.DefaultCacheTTL)
 	return &DashboardsAPIBuilder{
 		minRefreshInterval:     "10s",
@@ -254,7 +254,11 @@ func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles,
 		folderClientProvider:   folderClientProvider,
 		resourcePermissionsSvc: resourcePermissionsSvc,
 		search:                 search,
-		isStandalone:           true,
+		// The resource client doubles as the search index client used to enforce
+		// deprecatedInternalID uniqueness (StorageOptions.Index). Without it,
+		// ensureSingleDeprecatedInternalID is skipped and duplicate IDs slip through.
+		unified:      unified,
+		isStandalone: true,
 	}
 }
 
@@ -384,6 +388,22 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 			return b.validateVariableDelete(ctx)
 		case admission.Connect:
 			return nil
+		}
+	// Reachability invariant: this case only fires when the apiserver routes
+	// a request to the v2beta1 Notebook storage, which is registered in
+	// UpdateAPIGroupInfo behind FlagDashboardNotebooks. Without the flag the
+	// apiserver has no route and admission never dispatches here. Create/Update
+	// enforce the notebook-only layout; delete/connect need no validation.
+	case dashv2beta1.NotebookResourceInfo.GroupVersionResource().Resource:
+		switch op {
+		case admission.Create, admission.Update:
+			notebook, ok := a.GetObject().(*dashv2beta1.Notebook)
+			if !ok {
+				return fmt.Errorf("expected notebook")
+			}
+			return validateNotebook(notebook)
+		default:
+			return nil // delete/connect need no validation
 		}
 	}
 
@@ -798,6 +818,21 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	opts.StorageOptsRegister(dashv0.DashboardResourceInfo.GroupResource(), storageOpts)
 
+	// Library panels live inside folders, so the unified storage backend must accept the
+	// grafana.app/folder annotation. They are keyed by their own GroupResource, so they need
+	// a separate registration from dashboards; without it they default to
+	// EnableFolderSupport=false and any folder-scoped write (e.g. provisioning syncing a panel
+	// into a managed folder) is rejected with "folders are not supported". The folder is
+	// optional (panels may live at the root), so RequireFolder stays false.
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if b.libraryPanelsEnabled {
+		opts.StorageOptsRegister(dashv0.LibraryPanelResourceInfo.GroupResource(), apistore.StorageOptions{
+			Scheme:              opts.Scheme,
+			Index:               b.unified,
+			EnableFolderSupport: true,
+		})
+	}
+
 	// v0alpha1
 	if err := b.storageForVersion(apiGroupInfo, opts,
 		dashv0.DashboardResourceInfo,
@@ -931,6 +966,21 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 		storage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
 		storage[dashv2beta1.VariableResourceInfo.StoragePath()] = gvStore
+	}
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if b.features.IsEnabledGlobally(featuremgmt.FlagDashboardNotebooks) {
+		opts.StorageOptsRegister(dashv2beta1.NotebookResourceInfo.GroupResource(), apistore.StorageOptions{
+			EnableFolderSupport: true,
+		})
+
+		nbStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashv2beta1.NotebookResourceInfo, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+
+		notebookStorage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
+		notebookStorage[dashv2beta1.NotebookResourceInfo.StoragePath()] = nbStore
 	}
 
 	return nil

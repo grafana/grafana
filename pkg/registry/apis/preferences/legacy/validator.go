@@ -15,11 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
-// preferencesCountValidation enforces strict count parity between the legacy
+// PreferencesCountValidation enforces strict count parity between the legacy
 // preferences table and unified storage, counting exactly what the migrator
 // emits: distinct owners (namespace, valid user, valid team), excluding
 // orphans. See countLegacy.
-func preferencesCountValidation(resource schema.GroupResource) migrations.ValidatorFactory {
+func PreferencesCountValidation(resource schema.GroupResource) migrations.ValidatorFactory {
 	return func(client resourcepb.ResourceIndexClient, driverName string) migrations.Validator {
 		return &preferencesCountValidator{
 			resource:   resource,

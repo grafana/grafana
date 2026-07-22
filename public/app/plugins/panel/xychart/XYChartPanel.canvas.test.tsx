@@ -275,6 +275,7 @@ describe('XYChartPanel2', () => {
 
   const assertUPlotReady = async () => {
     expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible();
+    await waitFor(() => uPlotInstance?.status === 1);
     await waitFor(() =>
       expect(screen.getByTestId(selectors.components.VizLayout.container).querySelector('.u-over')).toBeVisible()
     );

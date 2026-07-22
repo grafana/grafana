@@ -29,4 +29,6 @@ export const grafanaESModules = [
   '@grafana/llm',
   'pkce-challenge',
   'uuid',
+  '@react-hookz/web',
+  '@ver0/deep-equal',
 ];

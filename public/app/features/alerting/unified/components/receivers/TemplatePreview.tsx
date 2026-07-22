@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { compact, uniqueId } from 'lodash';
-import * as React from 'react';
 import type { JSX } from 'react';
+import * as React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
+import { type TemplateGroupTemplateKind } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Button, CodeEditor, useStyles2 } from '@grafana/ui';
@@ -28,6 +29,7 @@ export function TemplatePreview({
   className,
   aiGeneratedTemplate,
   setAiGeneratedTemplate,
+  kind,
 }: {
   payload: string;
   templateName: string;
@@ -37,6 +39,7 @@ export function TemplatePreview({
   className?: string;
   aiGeneratedTemplate?: boolean;
   setAiGeneratedTemplate?: (aiGeneratedTemplate: boolean) => void;
+  kind?: TemplateGroupTemplateKind;
 }) {
   const styles = useStyles2(getStyles);
 
@@ -45,7 +48,7 @@ export function TemplatePreview({
     isLoading,
     onPreview,
     error: previewError,
-  } = usePreviewTemplate(templateContent, templateName, payload, setPayloadFormatError);
+  } = usePreviewTemplate(templateContent, templateName, payload, setPayloadFormatError, kind);
 
   const previewToRender = getPreviewResults(previewError, payloadFormatError, data);
 

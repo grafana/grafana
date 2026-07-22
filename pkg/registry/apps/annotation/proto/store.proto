@@ -35,6 +35,7 @@ message Annotation {
   string namespace = 2;
   string created_by = 3;
   AnnotationSpec spec = 4;
+  optional int64 deleted_at = 5;
 }
 
 // AnnotationSpec contains the annotation specification fields
@@ -64,6 +65,12 @@ message ListRequest {
   ListOptions options = 2;
 }
 
+enum DeletedFilter {
+  DELETED_EXCLUDE = 0; // live only (default)
+  DELETED_INCLUDE = 1; // live and tombstones
+  DELETED_ONLY = 2; // tombstones only
+}
+
 message ListOptions {
   string dashboard_uid = 1;
   int64 panel_id = 2;
@@ -76,6 +83,9 @@ message ListOptions {
   repeated string scopes = 9;
   bool scopes_match_any = 10;
   string created_by = 11;
+  // deleted controls whether soft-deleted annotations are included.
+  // A server that does not soft-delete ignores it.
+  DeletedFilter deleted = 12;
 }
 
 message ListResponse {

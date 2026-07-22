@@ -369,4 +369,71 @@ describe('useGetResourceRepositoryView', () => {
       expect(mockUseGetFrontendSettingsQuery).toHaveBeenCalledWith(skipToken);
     });
   });
+
+  describe('isMissingRepo', () => {
+    it('is false while loading, even though no repository is resolved yet', () => {
+      setupMocks({ settingsLoading: true });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'some-folder' }));
+
+      expect(result.current.isLoading).toBe(true);
+      expect(result.current.isMissingRepo).toBe(false);
+    });
+
+    it('is false when a repository is resolved', () => {
+      setupMocks({ settingsItems: [repoView()] });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'my-repo' }));
+
+      expect(result.current.repository).toBeDefined();
+      expect(result.current.isMissingRepo).toBe(false);
+    });
+
+    it('is false when the resolved repository is read-only', () => {
+      setupMocks({ settingsItems: [repoView({ workflows: [] })] });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'my-repo' }));
+
+      expect(result.current.isReadOnlyRepo).toBe(true);
+      expect(result.current.isMissingRepo).toBe(false);
+    });
+
+    it('is true when loading settled with no matching repository', () => {
+      setupMocks({ settingsItems: [] });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'some-folder' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Ready);
+      expect(result.current.repository).toBeUndefined();
+      expect(result.current.isMissingRepo).toBe(true);
+    });
+
+    it('is true when the resource is orphaned (repo no longer exists)', () => {
+      setupMocks({ settingsItems: [repoView()] });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ name: 'deleted-repo' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Orphaned);
+      expect(result.current.isMissingRepo).toBe(true);
+    });
+
+    it('is true when the settings query errors (no repository could be resolved)', () => {
+      setupMocks({ settingsError: { status: 500, data: { message: 'boom' } } });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'some-folder' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Error);
+      expect(result.current.isMissingRepo).toBe(true);
+    });
+
+    it('is true when provisioning is disabled (no repository can exist)', () => {
+      config.featureToggles = { ...originalToggles, provisioning: false };
+      setupMocks();
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'some-folder' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Disabled);
+      expect(result.current.isMissingRepo).toBe(true);
+    });
+  });
 });

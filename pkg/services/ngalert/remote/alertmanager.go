@@ -14,9 +14,11 @@ import (
 	openapiRuntime "github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
 	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
+	"github.com/grafana/alerting/definition"
 	alertingInstrument "github.com/grafana/alerting/http/instrument"
 	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/templates"
 	"github.com/grafana/alerting/utils/hash"
 	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
 	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
@@ -111,6 +113,11 @@ type AlertmanagerConfig struct {
 
 	// RuntimeConfig specifies runtime behavior settings for the remote Alertmanager.
 	RuntimeConfig remoteClient.RuntimeConfig
+
+	// MaxLabelStringSize overrides the sender's byte cap on any single
+	// label/annotation name or value. 0 keeps the sender default
+	// (sender.DefaultMaxLabelStringSize)
+	MaxLabelStringSize int
 }
 
 func (cfg *AlertmanagerConfig) Validate() error {
@@ -177,11 +184,17 @@ func NewAlertmanager(
 		return c.Do(req.WithContext(ctx))
 	}
 	senderLogger := log.New("ngalert.sender.external-alertmanager")
+	senderOpts := []sender.Option{
+		sender.WithDoFunc(doFunc),
+		sender.WithUTF8Labels(),
+	}
+	if cfg.MaxLabelStringSize > 0 {
+		senderOpts = append(senderOpts, sender.WithMaxLabelStringSize(cfg.MaxLabelStringSize))
+	}
 	s, err := sender.NewExternalAlertmanagerSender(
 		senderLogger,
 		prometheus.NewRegistry(),
-		sender.WithDoFunc(doFunc),
-		sender.WithUTF8Labels(),
+		senderOpts...,
 	)
 	if err != nil {
 		return nil, err
@@ -653,10 +666,16 @@ func (am *Alertmanager) TestTemplate(ctx context.Context, c apimodels.TestTempla
 		notifier.AddDefaultLabelsAndAnnotations(alert)
 	}
 
+	kind := templates.GrafanaKind
+	if c.Kind == definition.MimirTemplateKind {
+		kind = templates.MimirKind
+	}
+
 	return am.mimirClient.TestTemplate(ctx, alertingNotify.TestTemplatesConfigBodyParams{
 		Alerts:   c.Alerts,
 		Template: c.Template,
 		Name:     c.Name,
+		Kind:     kind,
 	})
 }
 

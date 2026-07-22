@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -13,7 +14,16 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+)
+
+// AnnoAuthor and AnnoAuthorEmail carry the display name and email of the user
+// that triggered the job. They are set by the server at creation time and are
+// immutable.
+const (
+	AnnoAuthor      = "provisioning.grafana.app/author"
+	AnnoAuthorEmail = "provisioning.grafana.app/authorEmail"
 )
 
 // ValidateJob performs validation on the Job specification and returns an error if validation fails.
@@ -78,6 +88,13 @@ func ValidateJob(job *provisioning.Job, supportedResources []provisioning.Suppor
 	case provisioning.JobActionFixFolderMetadata:
 		// No required options for fix-folder-metadata; it's a no-op placeholder
 
+	case provisioning.JobActionTest:
+		if job.Spec.Test == nil {
+			list = append(list, field.Required(field.NewPath("spec", "test"), "test options required for test action"))
+		} else {
+			list = append(list, validateTestJobOptions(job.Spec.Test)...)
+		}
+
 	case provisioning.JobActionReleaseResources,
 		provisioning.JobActionDeleteResources:
 		// No additional options required; validation is handled by the jobs connector
@@ -129,6 +146,14 @@ func validateExportJobOptions(opts *provisioning.ExportJobOptions, supportedReso
 func validateMigrateJobOptions(opts *provisioning.MigrateJobOptions, supportedResources []provisioning.SupportedResource) field.ErrorList {
 	list := field.ErrorList{} //nolint:prealloc
 
+	// Validate branch name if specified. An empty branch means migrate directly
+	// to the configured branch, which is always valid.
+	if opts.Branch != "" {
+		if !git.IsValidGitBranchName(opts.Branch) {
+			list = append(list, field.Invalid(field.NewPath("spec", "migrate", "branch"), opts.Branch, "invalid git branch name"))
+		}
+	}
+
 	// Empty Resources is valid: the worker falls back to migrating every
 	// unmanaged resource (legacy behavior).
 	list = append(list, validateExportResourceRefs(field.NewPath("spec", "migrate", "resources"), opts.Resources, supportedResources)...)
@@ -136,11 +161,23 @@ func validateMigrateJobOptions(opts *provisioning.MigrateJobOptions, supportedRe
 	return list
 }
 
+// MaxSelectiveExportResources caps how many resources a single export-style job
+// (push or migrate) may explicitly request. Selective export fetches each resource
+// individually, so an unbounded list would translate into an unbounded number of
+// per-resource lookups; this bound keeps a single job's work predictable.
+const MaxSelectiveExportResources = 100
+
 // validateExportResourceRefs enforces the rules shared by export-style resource
 // lists (push and migrate): name + kind are required, and each kind/group must
 // match an active entry in the configured supported-resource set.
 func validateExportResourceRefs(base *field.Path, refs []provisioning.ResourceRef, supportedResources []provisioning.SupportedResource) field.ErrorList {
 	list := field.ErrorList{}
+
+	if len(refs) > MaxSelectiveExportResources {
+		list = append(list, field.TooMany(base, len(refs), MaxSelectiveExportResources))
+		return list
+	}
+
 	supported := activeExportResources(supportedResources)
 	for i, r := range refs {
 		path := base.Index(i)
@@ -234,6 +271,50 @@ func validateDeleteJobOptions(opts *provisioning.DeleteJobOptions) field.ErrorLi
 	return list
 }
 
+// MaxTestJobDuration caps how long a synthetic test job may sleep. It sits
+// below the default per-job processing timeout (20m): the driver starts that
+// timeout before repository lookup and Process run, so a job allowed to sleep
+// for the full timeout would race the deadline and be cancelled — reported as a
+// failure — instead of completing. The margin leaves headroom for that preamble.
+const MaxTestJobDuration = 15 * time.Minute
+
+// MaxTestJobProgressUpdates caps how many progress notifications a synthetic
+// test job may emit. Each update persists status and fans out watch events, so
+// this keeps event volume from a single job bounded.
+const MaxTestJobProgressUpdates = 1000
+
+// MinTestJobProgressInterval is the minimum spacing between persisted progress
+// updates; tighter cadences are coalesced away by the recorder and never
+// persist. Mirrors jobs.NotifyThrottleInterval (not importable from this
+// module) — keep in sync.
+const MinTestJobProgressInterval = 500 * time.Millisecond
+
+// validateTestJobOptions validates performance-testing job options
+func validateTestJobOptions(opts *provisioning.TestJobOptions) field.ErrorList {
+	list := field.ErrorList{}
+
+	d := opts.Duration.Duration
+	switch {
+	case d <= 0:
+		list = append(list, field.Invalid(field.NewPath("spec", "test", "duration"), opts.Duration.Duration.String(), "duration must be positive"))
+	case d > MaxTestJobDuration:
+		list = append(list, field.Invalid(field.NewPath("spec", "test", "duration"), opts.Duration.Duration.String(), fmt.Sprintf("duration must not exceed %s", MaxTestJobDuration)))
+	}
+
+	updates := opts.ProgressUpdates
+	switch {
+	case updates < 0:
+		list = append(list, field.Invalid(field.NewPath("spec", "test", "progressUpdates"), updates, "progressUpdates must be non-negative"))
+	case updates > MaxTestJobProgressUpdates:
+		list = append(list, field.Invalid(field.NewPath("spec", "test", "progressUpdates"), updates, fmt.Sprintf("progressUpdates must not exceed %d", MaxTestJobProgressUpdates)))
+	case d > 0 && updates > 0 && d/time.Duration(updates) < MinTestJobProgressInterval:
+		maxUpdates := int(d / MinTestJobProgressInterval)
+		list = append(list, field.Invalid(field.NewPath("spec", "test", "progressUpdates"), updates, fmt.Sprintf("progressUpdates must not exceed %d for a %s duration (updates must be at least %s apart)", maxUpdates, d, MinTestJobProgressInterval)))
+	}
+
+	return list
+}
+
 // validateMoveJobOptions validates move job options
 func validateMoveJobOptions(opts *provisioning.MoveJobOptions) field.ErrorList {
 	list := field.ErrorList{}
@@ -273,17 +354,24 @@ func validateMoveJobOptions(opts *provisioning.MoveJobOptions) field.ErrorList {
 	return list
 }
 
+// PerfTestingEnabledFunc reports whether the synthetic "test" job type is enabled
+// for the request in ctx. It is injected so this package need not depend on the
+// feature flag implementation, which lives in the main Grafana module.
+type PerfTestingEnabledFunc func(ctx context.Context) bool
+
 // AdmissionValidator handles validation for Job resources during admission
 type AdmissionValidator struct {
 	// supportedResources is the configured set of resource types provisioning can manage,
 	// used to validate export-style (push and migrate) job options.
 	supportedResources []provisioning.SupportedResource
+	perfTestingEnabled PerfTestingEnabledFunc
 }
 
 // NewAdmissionValidator creates a new job admission validator. supportedResources is the
-// configured set of resource types provisioning can manage.
-func NewAdmissionValidator(supportedResources []provisioning.SupportedResource) *AdmissionValidator {
-	return &AdmissionValidator{supportedResources: supportedResources}
+// configured set of resource types provisioning can manage. perfTestingEnabled gates
+// whether synthetic "test" jobs are allowed.
+func NewAdmissionValidator(supportedResources []provisioning.SupportedResource, perfTestingEnabled PerfTestingEnabledFunc) *AdmissionValidator {
+	return &AdmissionValidator{supportedResources: supportedResources, perfTestingEnabled: perfTestingEnabled}
 }
 
 // Validate validates Job resources during admission
@@ -304,7 +392,55 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return fmt.Errorf("expected job, got %T", obj)
 	}
 
+	if err := validateAuthor(ctx, a, job); err != nil {
+		return err
+	}
+
+	if job.Spec.Action == provisioning.JobActionTest && (v.perfTestingEnabled == nil || !v.perfTestingEnabled(ctx)) {
+		return apierrors.NewInvalid(
+			provisioning.JobResourceInfo.GroupVersionKind().GroupKind(),
+			job.Name,
+			field.ErrorList{field.Forbidden(field.NewPath("spec", "action"), "test jobs require the provisioning.performance feature flag")},
+		)
+	}
+
 	return ValidateJob(job, v.supportedResources)
+}
+
+func validateAuthor(ctx context.Context, a admission.Attributes, job *provisioning.Job) error {
+	name := job.Annotations[AnnoAuthor]
+	email := job.Annotations[AnnoAuthorEmail]
+
+	switch a.GetOperation() {
+	case admission.Create:
+		if (name == "" && email == "") || identity.IsServiceIdentity(ctx) {
+			return nil
+		}
+		id, err := identity.GetRequester(ctx)
+		if err != nil {
+			return apierrors.NewBadRequest("job author annotations must match the requesting user")
+		}
+		if name != "" && name != id.GetName() {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthor))
+		}
+		if email != "" && email != id.GetEmail() {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthorEmail))
+		}
+	case admission.Update:
+		old, ok := a.GetOldObject().(*provisioning.Job)
+		if !ok {
+			return nil
+		}
+		if old.Annotations[AnnoAuthor] != name {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", AnnoAuthor))
+		}
+		if old.Annotations[AnnoAuthorEmail] != email {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", AnnoAuthorEmail))
+		}
+	case admission.Delete, admission.Connect:
+	}
+
+	return nil
 }
 
 // HistoricJobAdmissionValidator handles validation for HistoricJob resources during admission.

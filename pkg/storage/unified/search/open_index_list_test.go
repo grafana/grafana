@@ -24,9 +24,9 @@ func TestOpenIndexListWriteAndLoad(t *testing.T) {
 	first := resource.NamespacedResource{Namespace: "ns-a", Group: "group-a", Resource: "resource-a"}
 	second := resource.NamespacedResource{Namespace: "ns-b", Group: "group-b", Resource: "resource-b"}
 
-	_, err = backend.BuildIndex(context.Background(), second, 2, nil, "test", indexTestDocs(second, 2, 100), nil, false, time.Time{}, 0)
+	_, err = backend.BuildIndex(context.Background(), second, 2, "test", indexTestDocs(second, 2, 100), nil, false, time.Time{}, 0)
 	require.NoError(t, err)
-	_, err = backend.BuildIndex(context.Background(), first, 3, nil, "test", indexTestDocs(first, 3, 200), nil, false, time.Time{}, 0)
+	_, err = backend.BuildIndex(context.Background(), first, 3, "test", indexTestDocs(first, 3, 200), nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
 	now := time.Now().UTC()

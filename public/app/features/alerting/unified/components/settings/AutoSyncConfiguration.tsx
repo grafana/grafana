@@ -3,26 +3,10 @@ import { useMemo, useState } from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Alert,
-  Badge,
-  Button,
-  Card,
-  ConfirmModal,
-  Field,
-  LinkButton,
-  Select,
-  Stack,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { Alert, Button, Card, ConfirmModal, Field, LinkButton, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
-import {
-  type AutoSyncState,
-  hasConfiguredUid,
-  isOperatorManaged,
-  useAutoSyncConfiguration,
-} from './useAutoSyncConfiguration';
+import { AutoSyncStatusBadge } from './AutoSyncStatusBadge';
+import { hasConfiguredUid, isOperatorManaged, useAutoSyncConfiguration } from './useAutoSyncConfiguration';
 
 export function AutoSyncConfiguration() {
   const styles = useStyles2(getStyles);
@@ -66,7 +50,7 @@ export function AutoSyncConfiguration() {
       <Card.Heading>
         <Stack alignItems="center" gap={1}>
           <Trans i18nKey="alerting.settings.auto-sync.title">Auto-sync configuration</Trans>
-          <StatusBadge state={state} />
+          <AutoSyncStatusBadge state={state} />
         </Stack>
       </Card.Heading>
       <Card.Description>
@@ -159,7 +143,7 @@ export function AutoSyncConfiguration() {
                 {showSave && (
                   <Tooltip content={saveDisabled ? saveDisabledTooltip : ''} show={saveDisabled ? undefined : false}>
                     <span className={styles.tooltipTarget}>
-                      <Button variant="primary" onClick={save} disabled={saveDisabled || isPending}>
+                      <Button variant="primary" onClick={() => save()} disabled={saveDisabled || isPending}>
                         <Trans i18nKey="common.save">Save</Trans>
                       </Button>
                     </span>
@@ -191,25 +175,6 @@ export function AutoSyncConfiguration() {
       />
     </Card>
   );
-}
-
-function StatusBadge({ state }: { state: AutoSyncState }) {
-  if (state.kind === 'operator-managed') {
-    return (
-      <Badge
-        text={t('alerting.settings.auto-sync.badge-operator-managed', 'Managed by operator')}
-        color="blue"
-        icon="lock"
-      />
-    );
-  }
-  if (state.kind === 'configured' || state.kind === 'orphan-uid') {
-    return <Badge text={t('alerting.settings.auto-sync.badge-active', 'Active')} color="green" />;
-  }
-  if (state.kind === 'unconfigured') {
-    return <Badge text={t('alerting.settings.auto-sync.badge-not-configured', 'Not configured')} color="blue" />;
-  }
-  return null;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

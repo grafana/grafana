@@ -284,10 +284,11 @@ func checkMoveAccess(
 
 	folderGVR := folders.FolderResourceInfo.GroupVersionResource()
 
+	// Separators must keep correlation IDs within OpenFGA's regex pattern ^[\w\d-]{1,36}$
 	const (
 		writeDestKey    = "writeDest"
-		newFolderPrefix = "newFolder|"
-		oldFolderPrefix = "oldFolder|"
+		newFolderPrefix = "newFolder-"
+		oldFolderPrefix = "oldFolder-"
 	)
 
 	checks := make([]authlib.BatchCheckItem, 0, 1+2*len(tierProbes))
@@ -515,10 +516,10 @@ func validateOnDelete(ctx context.Context,
 ) error {
 	// Non-empty folder delete is opt-in via gracePeriodSeconds=0 when kubernetesFolderCascadeDelete
 	// is enabled (same pattern as dashboard delete validation). This only bypasses the empty-folder
-	// check; until cascade reconciliation runs, child resources are left orphaned.
+	// check; the cascade in Delete then removes the subtree.
 	if cascadeDeleteEnabled && forceDeleteFromDeleteOptions(deleteOptions) {
 		logging.FromContext(ctx).Warn(
-			"folder force-delete bypassing empty check; cascade deletion is not yet wired up so sub-folders, dashboards, alert rules, and library elements under this folder will be orphaned. This is a temporary state during the cascade delete rollout.",
+			"folder force-delete bypassing empty check; its subtree (child folders and dashboards) will be cascade-deleted, along with alert rules and library elements when running in-process (monolith)",
 			"folder", f.Name,
 			"namespace", f.Namespace,
 		)

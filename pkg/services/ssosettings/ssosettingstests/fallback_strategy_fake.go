@@ -13,7 +13,7 @@ func NewFakeFallbackStrategy() *FakeFallbackStrategy {
 	return &FakeFallbackStrategy{}
 }
 
-func (f *FakeFallbackStrategy) IsMatch(provider string) bool {
+func (f *FakeFallbackStrategy) IsMatch(_ context.Context, provider string) bool {
 	return f.ExpectedIsMatch
 }
 

@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { type FeatureLike } from 'ol/Feature';
 import { useCallback, useMemo } from 'react';
-import { useObservable } from 'react-use';
 import { type Observable } from 'rxjs';
 
 import {
@@ -10,6 +9,7 @@ import {
   type StandardEditorProps,
   type StandardEditorsRegistryItem,
 } from '@grafana/data';
+import { useObservable } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
 import { ComparisonOperation } from '@grafana/schema';
 import { Button, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';

@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"testing"
+	"time"
 
 	"github.com/bwmarrin/snowflake"
 	authtypes "github.com/grafana/authlib/types"
@@ -13,7 +15,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	registryrest "k8s.io/apiserver/pkg/registry/rest"
@@ -65,7 +67,14 @@ func newTestAdapterWithLegacyID(store Store, ac authtypes.AccessClient) *k8sREST
 // testGetLegacyID is a test helper that extracts the legacy ID from an annotation.
 func testGetLegacyID(t *testing.T, anno *annotationV0.Annotation) int64 {
 	t.Helper()
-	return getLegacyID(anno)
+	return GetLegacyID(anno)
+}
+
+// testGetLegacyData is a test helper that extracts the legacy data blob from an annotation.
+func testGetLegacyData(t *testing.T, anno *annotationV0.Annotation) string {
+	t.Helper()
+	v, _ := GetLegacyData(anno)
+	return v
 }
 
 // TestToAPIError covers the helper in isolation: each sentinel maps to the
@@ -96,6 +105,15 @@ func TestToAPIError(t *testing.T) {
 	t.Run("wrapped sentinels still classify", func(t *testing.T) {
 		err := fmt.Errorf("%w: ns/obj", ErrAlreadyExists)
 		assert.True(t, apierrors.IsAlreadyExists(toAPIError(err, "obj")))
+	})
+
+	t.Run("goneError is a 410 with StatusReasonGone", func(t *testing.T) {
+		err := goneError("obj")
+		require.True(t, apierrors.IsGone(err))
+		status, ok := err.(apierrors.APIStatus)
+		require.True(t, ok)
+		assert.Equal(t, int32(http.StatusGone), status.Status().Code)
+		assert.Equal(t, metav1.StatusReasonGone, status.Status().Reason)
 	})
 
 	t.Run("already an apierror passes through unchanged", func(t *testing.T) {
@@ -239,6 +257,79 @@ func TestK8sAdapter_Create(t *testing.T) {
 			seen[id] = struct{}{}
 		}
 	})
+
+	t.Run("preserves caller-supplied legacy data", func(t *testing.T) {
+		adapter := newTestAdapterWithLegacyID(NewMemoryStore(), allowAll)
+		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+
+		obj := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        "with-data",
+				Namespace:   ns,
+				Annotations: map[string]string{AnnotationKeyLegacyData: `{"foo":"bar"}`},
+			},
+			Spec: annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
+		}
+		result, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		assert.Equal(t, `{"foo":"bar"}`, testGetLegacyData(t, result.(*annotationV0.Annotation)))
+	})
+
+	t.Run("no legacy data when none supplied", func(t *testing.T) {
+		adapter := newTestAdapterWithLegacyID(NewMemoryStore(), allowAll)
+		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+
+		obj := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "no-data", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
+		}
+		result, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		assert.Empty(t, testGetLegacyData(t, result.(*annotationV0.Annotation)))
+	})
+}
+
+func TestK8sAdapter_Get(t *testing.T) {
+	ns := "org-1"
+	allowAll := &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }}
+
+	t.Run("returns the stored legacy data", func(t *testing.T) {
+		adapter := newTestAdapterWithLegacyID(NewMemoryStore(), allowAll)
+		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+
+		obj := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        "with-data",
+				Namespace:   ns,
+				Annotations: map[string]string{AnnotationKeyLegacyData: `{"foo":"bar"}`},
+			},
+			Spec: annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
+		}
+		_, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		got, err := adapter.Get(ctx, "with-data", &metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, `{"foo":"bar"}`, testGetLegacyData(t, got.(*annotationV0.Annotation)))
+	})
+
+	t.Run("soft-deleted annotation returns 410 Gone", func(t *testing.T) {
+		adapter := newTestAdapter(NewMemoryStore(), allowAll)
+		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+
+		_, err := adapter.Create(ctx, &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "gone", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
+		}, nil, &metav1.CreateOptions{})
+		require.NoError(t, err)
+		_, _, err = adapter.Delete(ctx, "gone", nil, &metav1.DeleteOptions{})
+		require.NoError(t, err)
+
+		_, err = adapter.Get(ctx, "gone", &metav1.GetOptions{})
+		assert.True(t, apierrors.IsGone(err), "expected 410 Gone, got %v", err)
+	})
 }
 
 // TestK8sAdapter_Update_StoreErrors covers Update separately because its store
@@ -247,12 +338,144 @@ func TestK8sAdapter_Update(t *testing.T) {
 	ns := "org-1"
 	allowAll := &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }}
 
+	seedWithData := func(t *testing.T) (*k8sRESTAdapter, context.Context) {
+		t.Helper()
+		adapter := newTestAdapterWithLegacyID(NewMemoryStore(), allowAll)
+		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+		_, err := adapter.Create(ctx, &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        "anno",
+				Namespace:   ns,
+				Annotations: map[string]string{AnnotationKeyLegacyData: `{"foo":"bar"}`},
+			},
+			Spec: annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
+		}, nil, &metav1.CreateOptions{})
+		require.NoError(t, err)
+		return adapter, ctx
+	}
+
 	t.Run("pre-fetch returns NotFound", func(t *testing.T) {
 		adapter := newTestAdapter(&errStore{err: ErrNotFound}, allowAll)
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 		obj := &annotationV0.Annotation{ObjectMeta: metav1.ObjectMeta{Name: "obj", Namespace: ns}}
 		_, _, err := adapter.Update(ctx, "obj", &updatedObjectInfo{obj: obj}, nil, nil, false, &metav1.UpdateOptions{})
 		assert.True(t, apierrors.IsNotFound(err), "got %v", err)
+	})
+
+	t.Run("preserves legacy data when the update omits it", func(t *testing.T) {
+		adapter, ctx := seedWithData(t)
+
+		// Incoming object has no legacy data annotation — the omitted case.
+		incoming := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "anno", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "updated", Time: 1000},
+		}
+		updated, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, `{"foo":"bar"}`, testGetLegacyData(t, updated.(*annotationV0.Annotation)))
+
+		got, err := adapter.Get(ctx, "anno", &metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, `{"foo":"bar"}`, testGetLegacyData(t, got.(*annotationV0.Annotation)))
+	})
+
+	t.Run("clears legacy data when the update supplies an empty value", func(t *testing.T) {
+		adapter, ctx := seedWithData(t)
+
+		// Present-but-empty annotation signals an explicit clear.
+		incoming := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        "anno",
+				Namespace:   ns,
+				Annotations: map[string]string{AnnotationKeyLegacyData: ""},
+			},
+			Spec: annotationV0.AnnotationSpec{Text: "updated", Time: 1000},
+		}
+		_, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		got, err := adapter.Get(ctx, "anno", &metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.Empty(t, testGetLegacyData(t, got.(*annotationV0.Annotation)))
+	})
+
+	t.Run("overwrites legacy data when the update supplies a new value", func(t *testing.T) {
+		adapter, ctx := seedWithData(t)
+
+		incoming := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        "anno",
+				Namespace:   ns,
+				Annotations: map[string]string{AnnotationKeyLegacyData: `{"baz":"qux"}`},
+			},
+			Spec: annotationV0.AnnotationSpec{Text: "updated", Time: 1000},
+		}
+		_, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		got, err := adapter.Get(ctx, "anno", &metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, `{"baz":"qux"}`, testGetLegacyData(t, got.(*annotationV0.Annotation)))
+	})
+
+	t.Run("updating a soft-deleted annotation returns 410 Gone", func(t *testing.T) {
+		adapter, ctx := seedWithData(t)
+		_, _, err := adapter.Delete(ctx, "anno", nil, &metav1.DeleteOptions{})
+		require.NoError(t, err)
+
+		incoming := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "anno", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "updated", Time: 1000},
+		}
+		_, _, err = adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
+		assert.True(t, apierrors.IsGone(err), "expected 410 Gone, got %v", err)
+	})
+}
+
+func TestK8sAdapter_Delete(t *testing.T) {
+	ns := "org-1"
+	allowAll := &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }}
+
+	seed := func(t *testing.T, name string) (*k8sRESTAdapter, context.Context) {
+		t.Helper()
+		adapter := newTestAdapter(NewMemoryStore(), allowAll)
+		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+		_, err := adapter.Create(ctx, &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
+		}, nil, &metav1.CreateOptions{})
+		require.NoError(t, err)
+		return adapter, ctx
+	}
+
+	t.Run("deleting an existing annotation succeeds", func(t *testing.T) {
+		adapter, ctx := seed(t, "obj")
+		_, _, err := adapter.Delete(ctx, "obj", nil, &metav1.DeleteOptions{})
+		require.NoError(t, err)
+	})
+
+	t.Run("deleting a missing annotation returns 404", func(t *testing.T) {
+		adapter := newTestAdapter(NewMemoryStore(), allowAll)
+		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+		_, _, err := adapter.Delete(ctx, "missing", nil, &metav1.DeleteOptions{})
+		assert.True(t, apierrors.IsNotFound(err), "expected 404, got %v", err)
+	})
+
+	t.Run("re-deleting a soft-deleted annotation is an idempotent no-op", func(t *testing.T) {
+		adapter, ctx := seed(t, "obj")
+		_, _, err := adapter.Delete(ctx, "obj", nil, &metav1.DeleteOptions{})
+		require.NoError(t, err)
+		_, _, err = adapter.Delete(ctx, "obj", nil, &metav1.DeleteOptions{})
+		require.NoError(t, err)
+	})
+
+	t.Run("getting a soft-deleted annotation returns 410 Gone", func(t *testing.T) {
+		adapter, ctx := seed(t, "obj")
+		_, _, err := adapter.Delete(ctx, "obj", nil, &metav1.DeleteOptions{})
+		require.NoError(t, err)
+
+		_, err = adapter.Get(ctx, "obj", &metav1.GetOptions{})
+		assert.True(t, apierrors.IsGone(err), "expected 410 Gone, got %v", err)
 	})
 }
 
@@ -286,21 +509,21 @@ func TestK8sAdapter_List(t *testing.T) {
 		return adapter, ctx
 	}
 
-	t.Run("field selector filters by legacy ID", func(t *testing.T) {
+	t.Run("label selector filters by legacy ID", func(t *testing.T) {
 		adapter, ctx := setup(t)
 		result, err := adapter.List(ctx, &internalversion.ListOptions{
-			FieldSelector: fields.ParseSelectorOrDie("metadata.legacyID=100"),
+			LabelSelector: labels.SelectorFromSet(labels.Set{LabelKeyLegacyID: "200"}),
 		})
 		require.NoError(t, err)
 		list := result.(*annotationV0.AnnotationList)
 		require.Len(t, list.Items, 1)
-		assert.Equal(t, "anno-a", list.Items[0].Name)
+		assert.Equal(t, "anno-b", list.Items[0].Name)
 	})
 
-	t.Run("non-matching legacy ID returns empty", func(t *testing.T) {
+	t.Run("non-matching legacy ID label returns empty", func(t *testing.T) {
 		adapter, ctx := setup(t)
 		result, err := adapter.List(ctx, &internalversion.ListOptions{
-			FieldSelector: fields.ParseSelectorOrDie("metadata.legacyID=999"),
+			LabelSelector: labels.SelectorFromSet(labels.Set{LabelKeyLegacyID: "999"}),
 		})
 		require.NoError(t, err)
 		list := result.(*annotationV0.AnnotationList)
@@ -314,6 +537,159 @@ func TestK8sAdapter_List(t *testing.T) {
 		list := result.(*annotationV0.AnnotationList)
 		assert.Len(t, list.Items, 2)
 	})
+}
+
+// TestK8sAdapter_MaxScopeCount pins the contract for Spec.Scopes cardinality
+// on both Create and Update:
+// - len(Scopes) <= maxScopeCount succeeds;
+// - over the limit returns 400 BadRequest and the annotation is not persisted/mutated.
+// maxScopeCount = 0 is the configured "no scopes allowed" mode.
+func TestK8sAdapter_MaxScopeCount(t *testing.T) {
+	ns := "org-1"
+	allowAll := &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }}
+
+	buildScopes := func(n int) []string {
+		s := make([]string, n)
+		for i := range n {
+			s[i] = fmt.Sprintf("scope-%d", i)
+		}
+		return s
+	}
+
+	cases := []struct {
+		name          string
+		maxScopeCount int
+		scopeCount    int
+		expectErr     bool
+	}{
+		{"at limit succeeds", 3, 3, false},
+		{"over limit rejected", 3, 4, true},
+		{"zero allows no scopes", 0, 0, false},
+		{"zero rejects any scopes", 0, 1, true},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			store := NewMemoryStore()
+			adapter := newTestAdapter(store, allowAll)
+			adapter.maxScopeCount = tc.maxScopeCount
+			ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+
+			name := "anno"
+			obj := &annotationV0.Annotation{
+				ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
+				Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000, Scopes: buildScopes(tc.scopeCount)},
+			}
+			_, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
+
+			if !tc.expectErr {
+				require.NoError(t, err)
+				return
+			}
+
+			require.Error(t, err)
+			assert.True(t, apierrors.IsBadRequest(err), "expected 400 BadRequest, got %v", err)
+			assert.Contains(t, err.Error(), "max allowed")
+
+			_, getErr := store.Get(ctx, ns, name)
+			assert.ErrorIs(t, getErr, ErrNotFound, "annotation should not have been persisted")
+		})
+	}
+
+	t.Run("update over limit rejected", func(t *testing.T) {
+		store := NewMemoryStore()
+		adapter := newTestAdapter(store, allowAll)
+		adapter.maxScopeCount = 2
+		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+
+		name := "original"
+		orig := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000, Scopes: buildScopes(1)},
+		}
+		_, err := adapter.Create(ctx, orig, nil, &metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		updated := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000, Scopes: buildScopes(3)},
+		}
+		_, _, err = adapter.Update(ctx, name, &updatedObjectInfo{obj: updated}, nil, nil, false, &metav1.UpdateOptions{})
+		require.Error(t, err)
+		assert.True(t, apierrors.IsBadRequest(err), "expected 400 BadRequest, got %v", err)
+		assert.Contains(t, err.Error(), "max allowed")
+
+		stored, getErr := store.Get(ctx, ns, name)
+		require.NoError(t, getErr, "original annotation must still exist")
+		assert.Len(t, stored.Spec.Scopes, 1, "stored annotation must not have been mutated")
+	})
+}
+
+// TestK8sAdapter_ValidateAnnotation pins the time-bounds validation applied on annotation.time for the Create function.
+func TestK8sAdapter_ValidateAnnotation(t *testing.T) {
+	ns := "org-1"
+	allowAll := &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }}
+
+	const defaultTTL = 90 * 24 * time.Hour
+	now := time.Now().UTC().UnixMilli()
+	second := time.Second.Milliseconds()
+	futureWindowMs := maxFutureWindow.Milliseconds()
+	retentionMs := defaultTTL.Milliseconds()
+	veryOldMs := (10 * 365 * 24 * time.Hour).Milliseconds()
+
+	timeEnd := func(ms int64) *int64 { return &ms }
+
+	deletedAt := metav1.NewTime(time.Now().UTC())
+
+	cases := []struct {
+		name              string
+		time              int64
+		timeEnd           *int64
+		deletionTimestamp *metav1.Time
+		retentionTTL      time.Duration
+		expectErr         bool
+		errContains       string
+	}{
+		{name: "time is current", time: now, retentionTTL: defaultTTL},
+		{name: "recent past within retention", time: now - retentionMs/2, retentionTTL: defaultTTL},
+		{name: "inside future bound", time: now + futureWindowMs - second, retentionTTL: defaultTTL},
+		{name: "too far in the future", time: now + futureWindowMs + second, retentionTTL: defaultTTL, expectErr: true, errContains: "time cannot be more than 1 week in the future"},
+		{name: "older than retention TTL", time: now - retentionMs - second, retentionTTL: defaultTTL, expectErr: true, errContains: "time cannot be older than retention TTL"},
+		{name: "very old time accepted with no retention", time: now - veryOldMs, retentionTTL: 0},
+		{name: "future bound enforced with no retention", time: now + futureWindowMs + second, retentionTTL: 0, expectErr: true, errContains: "time cannot be more than 1 week in the future"},
+		{name: "valid timeEnd after time", time: now, timeEnd: timeEnd(now + second), retentionTTL: defaultTTL},
+		{name: "timeEnd before time", time: now, timeEnd: timeEnd(now - second), retentionTTL: defaultTTL, expectErr: true, errContains: "timeEnd must be after time"},
+		{name: "timeEnd too far in the future", time: now, timeEnd: timeEnd(now + futureWindowMs + second), retentionTTL: defaultTTL, expectErr: true, errContains: "timeEnd cannot be more than 1 week in the future"},
+		{name: "deletionTimestamp set on create", time: now, deletionTimestamp: &deletedAt, retentionTTL: defaultTTL, expectErr: true, errContains: "metadata.deletionTimestamp cannot be set on create"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			store := NewMemoryStore()
+			adapter := newTestAdapter(store, allowAll)
+			adapter.retentionTTL = tc.retentionTTL
+			ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+
+			name := "anno"
+			obj := &annotationV0.Annotation{
+				ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns, DeletionTimestamp: tc.deletionTimestamp},
+				Spec:       annotationV0.AnnotationSpec{Text: "test", Time: tc.time, TimeEnd: tc.timeEnd},
+			}
+			_, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
+
+			if !tc.expectErr {
+				require.NoError(t, err)
+				return
+			}
+
+			require.Error(t, err)
+			assert.True(t, apierrors.IsBadRequest(err), "expected 400 BadRequest, got %v", err)
+			assert.Contains(t, err.Error(), tc.errContains)
+
+			_, getErr := store.Get(ctx, ns, name)
+			assert.ErrorIs(t, getErr, ErrNotFound, "invalid annotation should not have been persisted")
+		})
+	}
 }
 
 // compile-time assertion that errStore implements Store

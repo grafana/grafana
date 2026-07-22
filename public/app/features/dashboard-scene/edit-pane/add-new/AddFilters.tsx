@@ -3,14 +3,14 @@ import { useCallback } from 'react';
 import { t } from '@grafana/i18n';
 import { type SceneObject, SceneVariableSet } from '@grafana/scenes';
 
-import { type DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardSceneLike } from '../../scene/types/dashboard';
 import { getNextAvailableId, getVariableNamePrefix, getVariableScene } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 import { dashboardEditActions } from '../shared';
 
 import { AddButton } from './AddButton';
 
-export function openAddFilterForm(dashboard: DashboardScene, sectionOwner: SceneObject) {
+export function openAddFilterForm(dashboard: DashboardSceneLike, sectionOwner: SceneObject) {
   const existing = sectionOwner.state.$variables;
   const variablesSet = existing instanceof SceneVariableSet ? existing : new SceneVariableSet({ variables: [] });
 
@@ -28,7 +28,7 @@ export function openAddFilterForm(dashboard: DashboardScene, sectionOwner: Scene
   dashboard.state.editPane.selectObject(newVar, { force: true, multi: false });
 }
 
-export function AddFilters({ dashboardScene }: { dashboardScene: DashboardScene }) {
+export function AddFilters({ dashboardScene }: { dashboardScene: DashboardSceneLike }) {
   const onAddFiltersClick = useCallback(() => {
     openAddFilterForm(dashboardScene, dashboardScene);
     DashboardInteractions.addFilterButtonClicked({ source: 'edit_pane' });

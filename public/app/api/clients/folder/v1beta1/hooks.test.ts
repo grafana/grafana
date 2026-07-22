@@ -6,13 +6,15 @@ import { AppEvents } from '@grafana/data';
 import { config, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
   useDeleteFoldersMutation as useDeleteFoldersMutationLegacy,
   useMoveFoldersMutation as useMoveFoldersMutationLegacy,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { getFolderURL as getStarredFolderURL } from 'app/features/browse-dashboards/utils/dashboards';
 
-import { AnnoKeyFolder } from '../../../../features/apiserver/types';
+import { AnnoKeyFolder, AnnoKeyGrantPermissions } from '../../../../features/apiserver/types';
 
 import {
   useGetFolderQueryFacade,
@@ -53,6 +55,13 @@ jest.mock('../../../../types/store', () => {
     useDispatch: () => dispatchMockFn,
   };
 });
+
+// The folder mutations refresh the team folders tree as a side effect. listTeamFolders would error
+// here because this test mocks the app dispatch, so stub it out.
+jest.mock('app/features/browse-dashboards/api/services', () => ({
+  ...jest.requireActual('app/features/browse-dashboards/api/services'),
+  listTeamFolders: jest.fn(async () => []),
+}));
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -96,6 +105,28 @@ const setupUpdateFolderHandler = (onPatch?: jest.Mock) => {
             body && typeof body === 'object' && 'spec' in body
               ? (body.spec?.title ?? 'Updated Folder')
               : 'Updated Folder',
+        },
+      });
+    })
+  );
+};
+
+const setupCreateFolderHandler = (onCreate?: jest.Mock) => {
+  folderAPIVersionResolver.set('v1beta1');
+  server.use(
+    http.post('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders', async ({ request }) => {
+      const body = await request.json();
+      onCreate?.(body);
+
+      return HttpResponse.json({
+        apiVersion: 'folder.grafana.app/v1beta1',
+        kind: 'Folder',
+        metadata: {
+          name: 'new-folder-uid',
+          generation: 1,
+        },
+        spec: {
+          title: body && typeof body === 'object' && 'spec' in body ? (body.spec?.title ?? 'test') : 'test',
         },
       });
     })
@@ -312,6 +343,49 @@ describe.each([
       expect(await screen.findByText('Folder created')).toBeInTheDocument();
       expect(dispatchMockFn).toHaveBeenCalled();
     });
+
+    it('sets grant-permissions annotation when creating a root folder via the app platform API', async () => {
+      if (!toggle) {
+        return;
+      }
+
+      const createSpy = jest.fn();
+      setupCreateFolderHandler(createSpy);
+      const { user } = setupCreateFolder();
+
+      await user.click(screen.getByText(/Create Folder at root/));
+
+      await waitFor(() => expect(createSpy).toHaveBeenCalled());
+      expect(createSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            annotations: { [AnnoKeyGrantPermissions]: 'default' },
+          }),
+        })
+      );
+    });
+
+    it('sets folder annotation when creating a nested folder via the app platform API', async () => {
+      if (!toggle) {
+        return;
+      }
+
+      const createSpy = jest.fn();
+      setupCreateFolderHandler(createSpy);
+      const { user } = setupCreateFolder();
+
+      await user.click(screen.getByText(/Create Folder in nested folder/));
+
+      await waitFor(() => expect(createSpy).toHaveBeenCalled());
+      expect(createSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            annotations: { [AnnoKeyFolder]: folderA.item.uid },
+          }),
+        })
+      );
+      expect(createSpy.mock.calls[0][0].metadata.annotations[AnnoKeyGrantPermissions]).toBeUndefined();
+    });
   });
 
   describe('useUpdateFolder', () => {
@@ -328,6 +402,39 @@ describe.each([
 
       expect(await screen.findByText('Folder updated')).toBeInTheDocument();
     });
+  });
+});
+
+describe('useUpdateFolder app-platform starred nav update', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    config.featureToggles.foldersAppPlatformAPI = true;
+    folderAPIVersionResolver.set('v1beta1');
+    setupUpdateFolderHandler();
+  });
+
+  afterEach(() => {
+    config.featureToggles = originalToggles;
+    folderAPIVersionResolver.set('v1beta1');
+    dispatchMockFn.mockReset();
+  });
+
+  it('dispatches updateDashboardName with the request uid/title and folder URL on rename', async () => {
+    const { user } = await setupUpdateFolder(folderA_folderA.item.uid);
+
+    await user.clear(screen.getByLabelText('Folder Title'));
+    await user.type(screen.getByLabelText('Folder Title'), 'Updated Folder');
+    await user.click(screen.getByText('Update Folder'));
+
+    expect(await screen.findByText('Folder updated')).toBeInTheDocument();
+
+    expect(dispatchMockFn).toHaveBeenCalledWith(
+      updateDashboardName({
+        id: folderA_folderA.item.uid,
+        title: 'Updated Folder',
+        url: getStarredFolderURL(folderA_folderA.item.uid),
+      })
+    );
   });
 });
 

@@ -79,7 +79,7 @@ import { AlertVersionHistory } from './tabs/AlertVersionHistory';
 import { History } from './tabs/History';
 import { InstancesList } from './tabs/Instances';
 import { Notifications } from './tabs/Notifications';
-import { QueryResults } from './tabs/Query';
+import { QueryAndCondition } from './tabs/QueryAndCondition';
 import { Routing } from './tabs/Routing';
 import { RulePageEnrichmentSectionExtension } from './tabs/extensions/RuleViewerExtension';
 
@@ -170,7 +170,7 @@ const RuleViewer = () => {
         <Stack direction="column" gap={2} minWidth={0}>
           {/* tabs and tab content */}
           <TabContent>
-            {activeTab === ActiveTab.Query && <QueryResults rule={rule} />}
+            {activeTab === ActiveTab.Query && <QueryAndCondition rule={rule} />}
             {activeTab === ActiveTab.Instances && <InstancesList rule={rule} />}
             {activeTab === ActiveTab.History && rulerRuleType.grafana.rule(rule.rulerRule) && (
               <History rule={rule.rulerRule} />

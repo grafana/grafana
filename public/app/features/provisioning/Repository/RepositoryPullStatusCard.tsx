@@ -3,10 +3,10 @@ import { css, cx } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data/';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Card, Grid, Text, TextLink, useStyles2 } from '@grafana/ui';
-import { type Repository, type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
+import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { MessageList } from '../Shared/MessageList';
-import { formatRepoUrl, getRepoCommitUrl, getRepoHrefForProvider } from '../utils/git';
+import { formatRepoUrl, getRemoteConfig, getRepoCommitUrl, getRepoHrefForProvider } from '../utils/git';
 import { getStatusColor, getStatusIcon } from '../utils/repositoryStatus';
 import { formatTimestamp } from '../utils/time';
 
@@ -170,18 +170,3 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
-
-function getRemoteConfig(spec?: RepositorySpec) {
-  switch (spec?.type) {
-    case 'github':
-      return spec.github;
-    case 'gitlab':
-      return spec.gitlab;
-    case 'bitbucket':
-      return spec.bitbucket;
-    case 'git':
-      return spec.git;
-    default:
-      return undefined;
-  }
-}

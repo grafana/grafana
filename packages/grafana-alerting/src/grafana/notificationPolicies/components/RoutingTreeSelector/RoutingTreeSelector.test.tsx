@@ -2,12 +2,13 @@ import { mockComboboxRect } from '@grafana/test-utils';
 import { setupMockServer } from '@grafana/test-utils/server';
 
 import { render, screen } from '../../../../../tests/test-utils';
-import { USER_DEFINED_TREE_NAME } from '../../consts';
+import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '../../routingTrees';
 
 import { RoutingTreeSelector } from './RoutingTreeSelector';
 import {
   routingTreeWithErrorScenario,
   simpleRoutingTreesList,
+  simpleRoutingTreesListDefaultAliasScenario,
   simpleRoutingTreesListScenario,
   singleDefaultTreeList,
   singleDefaultTreeScenario,
@@ -179,5 +180,27 @@ describe('error handling', () => {
 
     expect(await screen.findByRole('alert')).toBeInTheDocument();
     expect(screen.getByText(/failed to load notification policies/i)).toBeInTheDocument();
+  });
+});
+
+describe('default tree presented with the "default" canonical name', () => {
+  beforeEach(() => {
+    server.use(...simpleRoutingTreesListDefaultAliasScenario);
+  });
+
+  it('labels the default tree "Default policy" (not its raw name)', async () => {
+    // The input display value is the option LABEL only (no description), so this unambiguously
+    // distinguishes the friendly "Default policy" label from the raw "default" name.
+    render(<RoutingTreeSelector value={DEFAULT_ROUTING_TREE_NAME_ALIAS} onChange={jest.fn()} />);
+    expect(await screen.findByDisplayValue('Default policy')).toBeInTheDocument();
+  });
+
+  it('force-sorts the default tree first even when a named tree sorts before it alphabetically', async () => {
+    const { user } = render(<RoutingTreeSelector onChange={jest.fn()} />);
+    await user.click(screen.getByRole('combobox'));
+
+    const options = await screen.findAllByRole('option');
+    // `billing` sorts before `default` alphabetically; the default tree is first only if recognised.
+    expect(options[0]).toHaveTextContent(/default policy/i);
   });
 });

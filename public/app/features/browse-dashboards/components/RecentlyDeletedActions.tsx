@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 
 import { Trans } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { logMeasurement, logWarning, reportInteraction } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { buildNotificationButton } from 'app/core/components/AppNotifications/NotificationButton';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
+import { getStatusFromError } from 'app/core/utils/errors';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isRootFolderUID } from 'app/features/search/constants';
@@ -17,7 +18,7 @@ import { useRestoreDashboardMutation } from '../api/browseDashboardsAPI';
 import { useRecentlyDeletedStateManager } from '../api/useRecentlyDeletedStateManager';
 import { useActionSelectionState } from '../state/hooks';
 import { clearFolders, setAllSelection } from '../state/slice';
-import { getRestoreNotificationData } from '../utils/notifications';
+import { getRestoreNotificationData, RESTORE_FETCH_NOT_FOUND } from '../utils/notifications';
 
 import { RestoreModal } from './RestoreModal';
 
@@ -91,15 +92,14 @@ export function RecentlyDeletedActions() {
     setIsBulkRestoreLoading(true);
 
     const promises = selectedDashboards.map(async (uid) => {
-      const table = await deletedDashboardsCache.getAsTable();
-      const row = table.rows.find((r) => r.object.metadata.name === uid);
-      if (!row) {
-        console.warn(`Dashboard ${uid} not found in deleted items`);
-        return { uid, error: 'not_found' };
-      }
-
       const api = await getDashboardAPI();
-      const dashboard = await api.getDashboard(uid, { resourceVersion: row.object.metadata.resourceVersion });
+      const dashboard = await api.getDeletedDashboard(uid);
+      if (!dashboard) {
+        // The recently-deleted listing is deleter/permission-aware: empty result means
+        // this user cannot read the deleted dashboard (or it is no longer recently deleted).
+        logWarning('Deleted dashboard not visible in the recently-deleted listing during restore', { uid });
+        return { uid, error: RESTORE_FETCH_NOT_FOUND, step: 'fetch' as const };
+      }
 
       const copy = structuredClone(dashboard);
       copy.metadata = {
@@ -114,25 +114,52 @@ export function RecentlyDeletedActions() {
 
     // Separate successful and failed restores
     const successful: string[] = [];
-    const failed: Array<{ uid: string; error: string }> = [];
+    const failed: Array<{ uid: string; error: string; status?: number; step: 'fetch' | 'create' }> = [];
 
     results.forEach((result, index) => {
       const dashboardUid = selectedDashboards[index];
       if (result.status === 'rejected') {
-        const errorMessage = getErrorMessage(result.reason);
-        if (errorMessage) {
-          failed.push({ uid: dashboardUid, error: errorMessage });
-        }
+        // Rejections come from the recently-deleted listing fetch — the read path of the
+        // restore pipeline.
+        failed.push({
+          uid: dashboardUid,
+          error: getErrorMessage(result.reason),
+          status: getStatusFromError(result.reason),
+          step: 'fetch',
+        });
       } else if (result.value.error) {
-        const errorMessage = getErrorMessage(result.value.error);
-        if (errorMessage) {
-          failed.push({ uid: dashboardUid, error: errorMessage });
-        }
-      } else if ('data' in result.value && result.value.data?.name) {
-        // Track the UID of successfully restored dashboards
+        failed.push({
+          uid: dashboardUid,
+          error: getErrorMessage(result.value.error),
+          status: getStatusFromError(result.value.error),
+          step: 'step' in result.value ? result.value.step : 'create',
+        });
+      } else {
+        // Every settled promise lands in exactly one bucket: an empty error
+        // message or an untitled dashboard must not fall through, or the
+        // measurement below and the deletedDashboardsCache cleanup drift out of sync.
         successful.push(dashboardUid);
       }
     });
+
+    // Outcome telemetry for the restore flow: failures are caught and surfaced
+    // only as a toast, so this measurement is the only regression signal
+    // (PIR follow-up for #127601, removable once FEP ships wider coverage).
+    const errorStatusCodes = [...new Set(failed.map((f) => f.status?.toString() ?? 'unknown'))].join(',');
+    const failedSteps = [...new Set(failed.map((f) => f.step))].join(',');
+    logMeasurement(
+      'browse_dashboards.restore_result',
+      {
+        total_count: selectedDashboards.length,
+        success_count: successful.length,
+        failure_count: failed.length,
+      },
+      {
+        status: failed.length === 0 ? 'success' : successful.length === 0 ? 'failure' : 'partial_failure',
+        error_status_codes: errorStatusCodes, // e.g. '404' | '404,500' | 'unknown' | ''
+        failed_steps: failedSteps, // e.g. 'fetch' | 'fetch,create' | ''
+      }
+    );
 
     const parentUIDs = new Set<string | undefined>();
     for (const uid of selectedDashboards) {

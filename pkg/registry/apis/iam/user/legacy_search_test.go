@@ -2,8 +2,10 @@ package user
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -17,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	res "github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 func TestUserLegacySearchClient_Search(t *testing.T) {
@@ -151,5 +154,37 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 
 		_, err := client.Search(ctx, req)
 		require.NoError(t, err)
+	})
+
+	t.Run("populates internalId, created and disabled cells from the org user", func(t *testing.T) {
+		mockOrgService := orgtest.NewMockService(t)
+		client := NewUserLegacySearchClient(mockOrgService, tracing.InitializeTracerForTest(), &setting.Cfg{})
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1})
+		created := time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC)
+		req := &resourcepb.ResourceSearchRequest{
+			Limit:   10,
+			Page:    1,
+			Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "default"}},
+			Fields:  []string{legacyIDField, res.SEARCH_FIELD_CREATED, fieldDisabled},
+		}
+
+		mockOrgService.On("SearchOrgUsers", mock.Anything, mock.Anything).Return(&org.SearchOrgUsersQueryResult{
+			OrgUsers:   []*org.OrgUserDTO{{UID: "uid1", UserID: 42, Created: created, IsDisabled: true}},
+			TotalCount: 1,
+		}, nil)
+
+		resp, err := client.Search(ctx, req)
+		require.NoError(t, err)
+		require.Len(t, resp.Results.Rows, 1)
+
+		require.Equal(t,
+			[]string{legacyIDField, res.SEARCH_FIELD_CREATED, builders.USER_DISABLED},
+			[]string{resp.Results.Columns[0].Name, resp.Results.Columns[1].Name, resp.Results.Columns[2].Name})
+
+		cells := resp.Results.Rows[0].Cells
+		require.Len(t, cells, 3)
+		require.Equal(t, "42", string(cells[0]))
+		require.Equal(t, created.UnixMilli(), int64(binary.BigEndian.Uint64(cells[1])))
+		require.Equal(t, []byte{1}, cells[2])
 	})
 }

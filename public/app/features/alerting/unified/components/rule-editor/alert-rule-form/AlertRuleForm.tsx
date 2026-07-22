@@ -30,7 +30,6 @@ import {
   LogMessages,
   logInfo,
   logWarning,
-  trackAlertRuleFormCancelled,
   trackAlertRuleFormError,
   trackAlertRuleFormSaved,
   trackNewGrafanaAlertRuleFormCancelled,
@@ -292,7 +291,6 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
   const cancelRuleCreation = () => {
     logInfo(LogMessages.cancelSavingAlertRule);
-    trackAlertRuleFormCancelled({ formAction: existing ? 'update' : 'create' });
     if (!existing && grafanaTypeRule) {
       // new Grafana-managed rule
       trackNewGrafanaAlertRuleFormCancelled();

@@ -1,7 +1,10 @@
-import { InteractiveTable, Stack } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { Icon, InteractiveTable, Stack } from '@grafana/ui';
 import { type JobResourceSummary } from 'app/api/clients/provisioning/v0alpha1';
 
-type SummaryCell<T extends keyof JobResourceSummary = keyof JobResourceSummary> = {
+import { getKindInfoByGroupKind } from '../utils/resourceKinds';
+
+type SummaryCell = {
   row: {
     original: JobResourceSummary;
   };
@@ -10,42 +13,51 @@ type SummaryCell<T extends keyof JobResourceSummary = keyof JobResourceSummary> 
 const getSummaryColumns = () => [
   {
     id: 'resource',
-    header: 'Resource',
-    cell: ({ row: { original: item } }: SummaryCell) => item.kind,
+    header: t('provisioning.job-summary.column-resource', 'Resource'),
+    cell: ({ row: { original: item } }: SummaryCell) => {
+      const info = getKindInfoByGroupKind(item.group, item.kind);
+      const kind = item.kind || t('provisioning.job-summary.unknown-kind', 'Unknown');
+      return (
+        <Stack direction="row" alignItems="center" gap={1}>
+          <Icon name={info?.icon ?? 'question-circle'} />
+          <span>{kind}</span>
+        </Stack>
+      );
+    },
   },
   {
     id: 'created',
-    header: 'Created',
+    header: t('provisioning.job-summary.column-created', 'Created'),
     cell: ({ row: { original: item } }: SummaryCell) => item.create?.toString() || '-',
   },
   {
     id: 'deleted',
-    header: 'Deleted',
+    header: t('provisioning.job-summary.column-deleted', 'Deleted'),
     cell: ({ row: { original: item } }: SummaryCell) => item.delete?.toString() || '-',
   },
   {
     id: 'updated',
-    header: 'Updated',
+    header: t('provisioning.job-summary.column-updated', 'Updated'),
     cell: ({ row: { original: item } }: SummaryCell) => item.update?.toString() || '-',
   },
   {
     id: 'unchanged',
-    header: 'Unchanged',
+    header: t('provisioning.job-summary.column-unchanged', 'Unchanged'),
     cell: ({ row: { original: item } }: SummaryCell) => item.noop?.toString() || '-',
   },
   {
     id: 'warnings',
-    header: 'Warnings',
+    header: t('provisioning.job-summary.column-warnings', 'Warnings'),
     cell: ({ row: { original: item } }: SummaryCell) => item.warning?.toString() || '-',
   },
   {
     id: 'errors',
-    header: 'Errors',
+    header: t('provisioning.job-summary.column-errors', 'Errors'),
     cell: ({ row: { original: item } }: SummaryCell) => item.error?.toString() || '-',
   },
   {
     id: 'total',
-    header: 'Total',
+    header: t('provisioning.job-summary.column-total', 'Total'),
     cell: ({ row: { original: item } }: SummaryCell) => {
       const total = (item.create || 0) + (item.delete || 0) + (item.update || 0) + (item.noop || 0) + (item.error || 0);
       return total.toString();
@@ -63,7 +75,7 @@ export function JobSummary({ summary }: Props) {
       <InteractiveTable
         data={summary}
         columns={getSummaryColumns()}
-        getRowId={(item) => item.kind || ''}
+        getRowId={(item) => `${item.group ?? ''}/${item.kind ?? ''}`}
         pageSize={10}
       />
     </Stack>

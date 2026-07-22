@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 )
 
 // cacheKey is the context key for knowing if it should use cache or not.
@@ -22,6 +23,34 @@ func withCache(ctx context.Context) context.Context {
 func hasCache(ctx context.Context) bool {
 	_, ok := ctx.Value(cacheKey{}).(bool)
 	return ok
+}
+
+// panelFoldersKey is the context key carrying a request-scoped map of library
+// panel UID -> folder UID.
+type panelFoldersKey struct{}
+
+// withPanelFolders returns a context carrying the folder UID of each given
+// library element. The permission scope resolver uses this to skip re-querying
+// the database for a panel's folder when the caller already has it (e.g. the
+// list endpoint, which has just loaded the elements). The map is request-scoped,
+// so it never goes stale and needs no invalidation.
+func withPanelFolders(ctx context.Context, elements []model.LibraryElementDTO) context.Context {
+	folders := make(map[string]string, len(elements))
+	for _, e := range elements {
+		folders[e.UID] = e.FolderUID
+	}
+	return context.WithValue(ctx, panelFoldersKey{}, folders)
+}
+
+// panelFolderFromContext returns the folder UID for a library panel UID if it
+// was recorded by withPanelFolders for this request.
+func panelFolderFromContext(ctx context.Context, panelUID string) (string, bool) {
+	folders, ok := ctx.Value(panelFoldersKey{}).(map[string]string)
+	if !ok {
+		return "", false
+	}
+	folderUID, ok := folders[panelUID]
+	return folderUID, ok
 }
 
 // folderTreeCache provides caching for folder trees.

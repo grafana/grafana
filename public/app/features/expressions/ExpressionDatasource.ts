@@ -16,11 +16,11 @@ import {
   DataSourceWithBackend,
   type FetchResponse,
   getBackendSrv,
-  getDataSourceSrv,
   getTemplateSrv,
   toDataQueryResponse,
 } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import icnDatasourceSvg from 'img/icn-datasource.svg';
 
@@ -50,7 +50,7 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
 
   query(request: DataQueryRequest<ExpressionQuery>): Observable<DataQueryResponse> {
     let targets = request.targets.map(async (query: ExpressionQuery): Promise<ExpressionQuery> => {
-      const ds = await getDataSourceSrv().get(query.datasource, request.scopedVars);
+      const ds = await getDataSourceInstance(query.datasource, request.scopedVars);
 
       if (!ds.interpolateVariablesInQueries) {
         return query;

@@ -47,8 +47,6 @@ repository: {
 					token?: string
 					// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
 					encryptedToken?: [...string]
-					// Whether we should show dashboard previews for pull requests.
-					generateDashboardPreviews?: bool
 					// Path is the subdirectory for the Grafana data inside the repository.
 					path?: string
 				}
@@ -73,6 +71,8 @@ repository: {
 					branch: string
 					// TokenUser is the user that will be used to access the repository if it's a personal access token.
 					tokenUser?: string
+					// Email is the Atlassian account email used to authenticate the Bitbucket REST API. Required to enable webhooks.
+					email?: string
 					// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
 					token?: string
 					// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
@@ -108,6 +108,11 @@ repository: {
 					// The API path is appended automatically. Trailing slashes are stripped.
 					// Must be a valid HTTP or HTTPS URL (e.g. `https://grafana.example.com`).
 					baseUrl?: string
+					// Disabled turns off webhook integration for this repository. When true,
+					// Grafana will not register or receive webhook events from the Git provider
+					// and will poll the repository on an interval instead. Use this when Grafana
+					// is not reachable from the public internet.
+					disabled?: bool
 				}
 				#CommitOptions: {
 					// Template for commit messages produced by single-resource UI operations
@@ -127,6 +132,9 @@ repository: {
 					signerEmail?: string
 					// Method used to sign commits with the key in secure.commitSigningKey. When unset, commits are not signed.
 					signingMethod?: "gpg" | "ssh" | "smime"
+					// When true, commits are authored by the signer identity
+					// (signerName/signerEmail).
+					signerIsAuthor?: bool
 					// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
 					// signingMethod is "smime". This is public, not a secret.
 					smimeCertificate?: string
@@ -164,7 +172,9 @@ repository: {
 					count:    int
 				}
 				#WebhookStatus: {
-					id?:     int
+					id?: int
+					// TODO: consolidate id and uuid into a single string identifier in the next version.
+					uuid?:   string
 					url?:    string
 					secret?: string
 					encryptedSecret?: [...string]

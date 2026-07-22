@@ -83,15 +83,6 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/cloud-monitoring/**/*",
-      "pkg/tsdb/cloud-monitoring/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/GoogleCloudMonitoring"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/datasource/cloudwatch/**/*",
       "pkg/tsdb/cloudwatch/**/*"
     ],
@@ -119,14 +110,6 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/jaeger/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Jaeger"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/datasource/loki/**/*",
       "pkg/tsdb/loki/**/*"
     ],
@@ -136,46 +119,11 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/mssql/**/*",
-      "pkg/tsdb/mssql/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/MSSQL"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/datasource/mysql/**/*",
       "pkg/tsdb/mysql/**/*"
     ],
     "action": "updateLabel",
     "addLabel": "datasource/MySQL"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/opentsdb/**/*",
-      "pkg/tsdb/opentsdb/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/OpenTSDB"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/parca/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Parca"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/grafana-pyroscope-datasource/**/*",
-      "pkg/tsdb/grafana-pyroscope-datasource/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Pyroscope"
   },
   {
     "type": "changedfiles",
@@ -194,15 +142,6 @@
     ],
     "action": "updateLabel",
     "addLabel": "datasource/Prometheus"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/tempo/**/*",
-      "pkg/tsdb/tempo/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Tempo"
   },
   {
     "type": "changedfiles",
@@ -414,28 +353,6 @@
     "matches": [
       "public/app/plugins/datasource/influxdb/**/*",
       "pkg/tsdb/influx/**/*"
-    ],
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/190"
-    }
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/cloud-monitoring/**/*",
-      "pkg/tsdb/cloud-monitoring/**/*"
-    ],
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/190"
-    }
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/opentsdb/**/*",
-      "pkg/tsdb/opentsdb/**/*"
     ],
     "action": "addToProject",
     "addToProject": {

@@ -21,7 +21,7 @@ import {
   type URLRange,
   type URLRangeValue,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataQuery, type DataSourceJsonData, type DataSourceRef, type TimeZone } from '@grafana/schema';
 import { getLocalRichHistoryStorage } from 'app/core/history/richHistoryStorageProvider';
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
@@ -295,7 +295,7 @@ export async function getCorrelationsData(state: StoreState, exploreId: string) 
   const isCorrelationEditorMode = state.explore.correlationEditorDetails?.editorMode || false;
   const isLeftPane = Object.keys(state.explore.panes)[0] === exploreId;
   const showCorrelationEditorLinks = isCorrelationEditorMode && isLeftPane;
-  const defaultCorrelationEditorDatasource = showCorrelationEditorLinks ? await getDataSourceSrv().get() : undefined;
+  const defaultCorrelationEditorDatasource = showCorrelationEditorLinks ? await getDataSourceInstance() : undefined;
   const interpolateCorrelationHelperVars =
     isCorrelationEditorMode && !isLeftPane && correlationEditorHelperData !== undefined;
 

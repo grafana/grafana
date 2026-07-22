@@ -138,6 +138,7 @@ type GetCorrelationsResponseBody struct {
 	TotalCount   int64         `json:"totalCount"`
 	Page         int64         `json:"page"`
 	Limit        int64         `json:"limit"`
+	DoesContinue *bool         `json:"doesContinue"`
 }
 
 // CreateCorrelationResponse is the response struct for CreateCorrelationCommand
@@ -152,11 +153,13 @@ type CreateCorrelationResponseBody struct {
 // swagger:model
 type CreateCorrelationCommand struct {
 	// UID of the data source for which correlation is created.
-	SourceUID string `json:"-"`
-	OrgId     int64  `json:"-"`
+	SourceUID  string `json:"-"`
+	SourceType string `json:"-"`
+	OrgId      int64  `json:"-"`
 	// Target data source UID to which the correlation is created. required if type = query
 	// example: PE1C5CBDA0504A6A3
-	TargetUID *string `json:"targetUID"`
+	TargetUID  *string `json:"targetUID"`
+	TargetType *string `json:"-"`
 	// Optional label identifying the correlation
 	// example: My label
 	Label string `json:"label"`
@@ -258,8 +261,9 @@ type GetCorrelationQuery struct {
 
 // GetCorrelationsBySourceUIDQuery is the query to retrieve all correlations originating by the given Data Source
 type GetCorrelationsBySourceUIDQuery struct {
-	SourceUID string `json:"-"`
-	OrgId     int64  `json:"-"`
+	SourceUID  string `json:"-"`
+	SourceType string `json:"-"`
+	OrgId      int64  `json:"-"`
 }
 
 // GetCorrelationsQuery is the query to retrieve all correlations
@@ -284,11 +288,13 @@ type GetCorrelationsQuery struct {
 
 type DeleteCorrelationsBySourceUIDCommand struct {
 	SourceUID       string
+	SourceType      string
 	OrgId           int64
 	OnlyProvisioned bool
 }
 
 type DeleteCorrelationsByTargetUIDCommand struct {
-	TargetUID string
-	OrgId     int64
+	TargetUID  string
+	TargetType string
+	OrgId      int64
 }

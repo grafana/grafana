@@ -21,6 +21,8 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/grafana/grafana/pkg/tsdb/sqlmacro"
 )
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
@@ -226,8 +228,14 @@ func (e *DataSourceHandler) executeQuery(queryContext context.Context, query bac
 		panic("Query model property rawSql should not be empty at this point")
 	}
 
+	// A trailing SQLCommenter attribution tag must reach the database verbatim,
+	// so split it off before interpolation and re-append it afterwards. This
+	// keeps it out of comment stripping and macro substitution, and prevents a
+	// macro from completing across the comment boundary in either direction.
+	rawSQL, sqlCommenterTag := sqlmacro.SplitTrailingSQLCommenter(queryJSON.RawSql, "--")
+
 	// global substitutions
-	interpolatedQuery := Interpolate(query, query.TimeRange, e.dsInfo.JsonData.TimeInterval, queryJSON.RawSql)
+	interpolatedQuery := Interpolate(query, query.TimeRange, e.dsInfo.JsonData.TimeInterval, rawSQL)
 
 	// data source specific substitutions
 	interpolatedQuery, err := e.macroEngine.Interpolate(&query, query.TimeRange, interpolatedQuery)
@@ -235,6 +243,7 @@ func (e *DataSourceHandler) executeQuery(queryContext context.Context, query bac
 		e.handleQueryError("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery, backend.ErrorSourceDownstream, ch, queryResult)
 		return
 	}
+	interpolatedQuery += sqlCommenterTag
 
 	results, err := e.execQuery(queryContext, interpolatedQuery)
 	if err != nil {

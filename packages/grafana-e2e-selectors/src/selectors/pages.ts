@@ -184,6 +184,9 @@ export const versionedPages = {
       addButton: {
         '12.4.0': 'data-testid Dashboard Sidebar new button',
       },
+      viewPanelControls: {
+        '13.0.0': 'data-testid Dashboard Sidebar view panel controls',
+      },
       conditionalRendering: {
         variable: {
           valueInput: {
@@ -197,6 +200,11 @@ export const versionedPages = {
           select: {
             '12.4.0': 'data-testid Dashboard Conditional Rendering Time range select',
           },
+        },
+      },
+      outline: {
+        searchInput: {
+          '13.1.0': 'data-testid Dashboard Outline Search input',
         },
       },
     },
@@ -501,6 +509,9 @@ export const versionedPages = {
             },
           },
           QueryVariable: {
+            applyButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Query Variable editor apply button',
+            },
             closeButton: {
               [MIN_GRAFANA_VERSION]: 'data-testid Query Variable editor close button',
             },

@@ -7,7 +7,10 @@ import { type WizardFormData } from '../Wizard/types';
 import { type ConnectionFormData, type RepositoryFormData } from '../types';
 
 type RepositoryField = keyof WizardFormData['repository'];
-type RepositoryFormPath = `repository.${RepositoryField}` | 'repository.sync.intervalSeconds';
+type RepositoryFormPath =
+  | `repository.${RepositoryField}`
+  | 'repository.sync.intervalSeconds'
+  | 'repository.webhook.disabled';
 
 type GenericFormPath = string;
 type GenericFormErrors<T extends GenericFormPath> = Array<[T, { message: string }]>;
@@ -114,6 +117,7 @@ export const getFormErrors = (data: ErrorDetails[] | Status): FormErrors => {
     'git.branch': 'repository.branch',
     'git.url': 'repository.url',
     'sync.intervalSeconds': 'repository.sync.intervalSeconds',
+    'webhook.disabled': 'repository.webhook.disabled',
   };
 
   const errors = extractFormErrors(data);
@@ -132,6 +136,7 @@ export const getConfigFormErrors = (data: ErrorDetails[] | Status): ConfigFormEr
     token: 'token',
     tokenUser: 'tokenUser',
     'sync.intervalSeconds': 'sync.intervalSeconds',
+    'webhook.disabled': 'webhook.disabled',
   };
 
   const errors = extractFormErrors(data);
@@ -150,10 +155,15 @@ export const getConnectionFormErrors = (data: ErrorDetails[] | Status): Connecti
     description: 'description',
     appID: 'appID',
     installationID: 'installationID',
+    serverUrl: 'serverUrl',
     'github.appID': 'appID',
     'github.installationID': 'installationID',
+    'githubEnterprise.appID': 'appID',
+    'githubEnterprise.installationID': 'installationID',
+    'githubEnterprise.serverUrl': 'serverUrl',
     'secure.privateKey': 'privateKey',
     privateKey: 'privateKey',
+    'webhook.disabled': 'webhookDisabled',
   };
 
   const errors = extractFormErrors(data);

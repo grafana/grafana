@@ -76,6 +76,8 @@ export enum AccessControlAction {
   DashboardsWrite = 'dashboards:write',
   DashboardsDelete = 'dashboards:delete',
   DashboardsCreate = 'dashboards:create',
+  DashboardTemplatesRead = 'dashboardtemplates:read',
+  DashboardTemplatesWrite = 'dashboardtemplates:write',
   DashboardsPermissionsRead = 'dashboards.permissions:read',
   DashboardsPermissionsWrite = 'dashboards.permissions:write',
   DashboardsPublicWrite = 'dashboards.public:write',
@@ -194,6 +196,12 @@ export enum AccessControlAction {
   // Saved Queries
   QueriesRead = 'queries:read',
   QueriesWrite = 'queries:write',
+
+  // Provisioning
+  ProvisioningRepositoriesRead = 'provisioning.repositories:read',
+  ProvisioningRepositoriesWrite = 'provisioning.repositories:write',
+  ProvisioningConnectionsCreate = 'provisioning.connections:create',
+  ProvisioningConnectionsWrite = 'provisioning.connections:write',
 }
 
 export interface Role extends RoleDto {

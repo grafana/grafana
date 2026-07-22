@@ -78,5 +78,27 @@ describe('navModelReducer', () => {
         .whenActionIsDispatched(updateConfigurationSubtitle(newOrgName))
         .thenStateShouldEqual(expectedState);
     });
+
+    it('then it should skip nav entries missing from the nav index', () => {
+      const originalCfg = { id: 'cfg', subTitle: 'Organization: Org 1', text: 'Configuration' };
+      const users = { id: 'users', text: 'Users' };
+
+      const initialState = {
+        cfg: { ...originalCfg, children: [users] },
+        users: { ...users, parentItem: originalCfg },
+      };
+
+      const newOrgName = 'Org 2';
+      const subTitle = `Organization: ${newOrgName}`;
+      const newCfg = { ...originalCfg, subTitle };
+
+      reducerTester<NavIndex>()
+        .givenReducer(navIndexReducer, { ...initialState })
+        .whenActionIsDispatched(updateConfigurationSubtitle(newOrgName))
+        .thenStateShouldEqual({
+          cfg: { ...newCfg, children: [users] },
+          users: { ...users, parentItem: newCfg },
+        });
+    });
   });
 });

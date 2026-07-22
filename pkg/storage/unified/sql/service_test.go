@@ -47,6 +47,7 @@ var _ resource.SearchServer = (*mockSearchServer)(nil)
 type mockResourceServer struct {
 	mockSearchServer
 	resourcepb.UnimplementedResourceStoreServer
+	resourcepb.UnimplementedResourceStatsServer
 	resourcepb.UnimplementedBulkStoreServer
 	resourcepb.UnimplementedBlobStoreServer
 	resourcepb.UnimplementedQuotasServer
@@ -150,8 +151,8 @@ func TestRegisterSearchServerWithAuth(t *testing.T) {
 }
 
 // TestRegisterUnifiedResourceServerWithAuth verifies that registerUnifiedResourceServer
-// wraps all registered services (ResourceStore, BulkStore, BlobStore, Quotas,
-// ResourceIndex, ManagedObjectIndex, Diagnostics) with per-service auth.
+// wraps all registered services (ResourceStore, ResourceStats, BulkStore, BlobStore,
+// Quotas, ResourceIndex, ManagedObjectIndex, Diagnostics) with per-service auth.
 func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 	var authCalled atomic.Int32
 	testAuth := interceptors.AuthenticatorFunc(func(ctx context.Context) (context.Context, error) {
@@ -172,6 +173,14 @@ func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 		client := resourcepb.NewResourceStoreClient(conn)
 		_, err := client.Read(ctx, &resourcepb.ReadRequest{})
 		requireAuthPassed(t, err, "Read should pass per-service auth")
+		require.Greater(t, authCalled.Load(), int32(0))
+	})
+
+	t.Run("ResourceStats/RecordEvent", func(t *testing.T) {
+		authCalled.Store(0)
+		client := resourcepb.NewResourceStatsClient(conn)
+		_, err := client.RecordEvent(ctx, &resourcepb.RecordEventRequest{})
+		requireAuthPassed(t, err, "RecordEvent should pass per-service auth")
 		require.Greater(t, authCalled.Load(), int32(0))
 	})
 
@@ -285,21 +294,21 @@ func TestBuildKVSnapshotStore(t *testing.T) {
 			IndexSnapshotBucketURL: "file:///tmp/snapshot",
 			EnableKVLeases:         true,
 		}
-		_, err := buildKVSnapshotStore(cfg, &stubKVBackend{}, logger)
+		_, err := BuildKVSnapshotStore(cfg, &stubKVBackend{}, logger)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "mutually exclusive")
 	})
 
 	t.Run("rejects when enable_kv_leases is off", func(t *testing.T) {
 		cfg := &setting.Cfg{}
-		_, err := buildKVSnapshotStore(cfg, &stubKVBackend{}, logger)
+		_, err := BuildKVSnapshotStore(cfg, &stubKVBackend{}, logger)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "requires enable_kv_leases")
 	})
 
 	t.Run("rejects when backend is not a KVBackend", func(t *testing.T) {
 		cfg := &setting.Cfg{EnableKVLeases: true}
-		_, err := buildKVSnapshotStore(cfg, &nonKVBackend{}, logger)
+		_, err := BuildKVSnapshotStore(cfg, &nonKVBackend{}, logger)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "requires a KV-backed storage backend")
 	})
@@ -307,7 +316,7 @@ func TestBuildKVSnapshotStore(t *testing.T) {
 	t.Run("rejects when backend has no lease manager", func(t *testing.T) {
 		cfg := &setting.Cfg{EnableKVLeases: true}
 		backend := &stubKVBackend{kv: newTestKV(t)}
-		_, err := buildKVSnapshotStore(cfg, backend, logger)
+		_, err := BuildKVSnapshotStore(cfg, backend, logger)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "no lease manager")
 	})
@@ -319,7 +328,7 @@ func TestBuildKVSnapshotStore(t *testing.T) {
 		t.Cleanup(mgr.Stop)
 		backend := &stubKVBackend{kv: store, mgr: mgr}
 
-		got, err := buildKVSnapshotStore(cfg, backend, logger)
+		got, err := BuildKVSnapshotStore(cfg, backend, logger)
 		require.NoError(t, err)
 		assert.NotNil(t, got)
 	})

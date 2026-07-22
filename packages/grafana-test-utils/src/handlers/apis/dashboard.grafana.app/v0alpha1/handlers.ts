@@ -78,6 +78,56 @@ export function getCustomSearchHandler(hits: DashboardHit[]) {
   });
 }
 
+export const vectorSearchRoute = '/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/search/vector';
+
+/**
+ * Friendly input shape for the semantic (vector) search handler. One entry is
+ * one matched panel; the handler maps it to the SearchResults response shape the
+ * real `/search/vector` endpoint returns (one hit per panel, best match first).
+ */
+export interface VectorSearchHitInput {
+  /** Dashboard UID. */
+  name: string;
+  /** Dashboard title. */
+  title: string;
+  /** Embedded panel text that matched. */
+  snippet?: string;
+  /** Cosine distance (lower = closer). */
+  score?: number;
+  /** Panel id; serialized into the hit's `panel/<id>` subresource. */
+  panelId?: number;
+  /** Folder UID (title is resolved client-side via the folder lookup). */
+  folder?: string;
+}
+
+/**
+ * Mocks the dashboard API's semantic (vector) search endpoint. Returns the same
+ * SearchResults shape as lexical search: each hit carries the panel snippet,
+ * score and `panel/<id>` subresource on its `field`.
+ */
+export function getVectorSearchHandler(hits: VectorSearchHitInput[] = []) {
+  return http.get(vectorSearchRoute, () => {
+    const mapped = hits.map((hit) => ({
+      resource: 'dashboards',
+      name: hit.name,
+      title: hit.title,
+      folder: hit.folder,
+      score: hit.score ?? 0,
+      field: {
+        ...(hit.panelId !== undefined && { subresource: `panel/${hit.panelId}` }),
+        ...(hit.snippet !== undefined && { snippet: hit.snippet }),
+        score: hit.score ?? 0,
+      },
+    }));
+
+    return HttpResponse.json({
+      totalHits: mapped.length,
+      hits: mapped,
+      maxScore: mapped[0]?.score ?? 0,
+    });
+  });
+}
+
 const getDefaultSearchHandler = () =>
   http.get(searchRoute, ({ request }) => {
     const limitFilter = new URL(request.url).searchParams.get('limit') || null;
@@ -86,12 +136,22 @@ const getDefaultSearchHandler = () =>
     const nameFilter = new URL(request.url).searchParams.getAll('name');
     const mappedTypeFilters = typeFilters.map((f) => typeFilterMap[f] || f);
     const tagFilter = new URL(request.url).searchParams.getAll('tag');
+    const ownerReferenceFilter = new URL(request.url).searchParams.getAll('ownerReference');
 
     const filtered = mockTree.filter((filterItem) => {
       const filters: FilterArray = [
         // Filter UI items out of fixtures as... they're UI items 🤷
         ({ item }) => item.kind !== 'ui',
       ];
+
+      if (ownerReferenceFilter.length > 0) {
+        filters.push(({ item }) =>
+          Boolean(
+            item.kind === 'folder' &&
+              item.ownerReferences?.some((ownerReference) => ownerReferenceFilter.includes(ownerReference))
+          )
+        );
+      }
 
       if (nameFilter.length > 0) {
         const filteredNameFilter = nameFilter.filter((name) => name !== 'general');
@@ -126,11 +186,13 @@ const getDefaultSearchHandler = () =>
     const mapped = filtered.map(({ item }) => {
       const random = Chance(item.uid);
       const parentFolder = 'parentUID' in item ? item.parentUID : undefined;
+      const ownerReferences = 'ownerReferences' in item ? item.ownerReferences : undefined;
       return {
         resource: typeMap[item.kind],
         name: item.uid,
         title: item.title,
         folder: parentFolder,
+        ownerReferences,
         field: {
           // Generate mock deprecated IDs only in the mock handlers - not generating in
           // mock data as it would require updating/tracking in the types as well
@@ -147,4 +209,4 @@ const getDefaultSearchHandler = () =>
     });
   });
 
-export default [getDefaultSearchHandler()];
+export default [getDefaultSearchHandler(), getVectorSearchHandler()];

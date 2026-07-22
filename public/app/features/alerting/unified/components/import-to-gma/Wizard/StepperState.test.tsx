@@ -25,10 +25,10 @@ describe('StepperStateProvider', () => {
     expect(screen.getByTestId('test')).toHaveTextContent(StepKey.Notifications);
   });
 
-  it('should default to Notifications step when no initialStep is provided', () => {
+  it('should default to the Method step when no initialStep is provided', () => {
     const { result } = renderHook(() => useStepperState(), { wrapper });
 
-    expect(result.current.activeStep).toBe(StepKey.Notifications);
+    expect(result.current.activeStep).toBe(StepKey.Method);
   });
 
   it('should use provided initialStep', () => {
@@ -55,7 +55,7 @@ describe('useStepperState', () => {
   it('should update active step when setActiveStep is called', () => {
     const { result } = renderHook(() => useStepperState(), { wrapper });
 
-    expect(result.current.activeStep).toBe(StepKey.Notifications);
+    expect(result.current.activeStep).toBe(StepKey.Method);
 
     act(() => {
       result.current.setActiveStep(StepKey.Rules);

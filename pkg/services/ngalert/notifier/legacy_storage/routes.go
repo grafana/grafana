@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
 
-const UserDefinedRoutingTreeName = models.DefaultRoutingTreeName
 const NamedRouteMatcher = models.NamedRouteLabel
 
 type ManagedRoute struct {
@@ -56,7 +55,7 @@ func (r *ManagedRoute) GeneratedSubRoute() *v1.Route {
 		ri := model.Duration(defaultOpts.RepeatInterval)
 		amRoute.RepeatInterval = &ri
 	}
-	if r.Name != UserDefinedRoutingTreeName {
+	if !models.IsDefaultRoutingTreeName(r.Name) {
 		// Set label matcher.
 		amRoute.ObjectMatchers = v1.ObjectMatchers{managedRouteMatcher(r.Name)}
 	}
@@ -64,7 +63,9 @@ func (r *ManagedRoute) GeneratedSubRoute() *v1.Route {
 }
 
 func (r *ManagedRoute) GetUID() string {
-	return r.Name
+	// Canonicalize so the default tree has a single stable identity regardless of whether
+	// it was addressed by its canonical name or the legacy alias. This identity backs RBAC scopes.
+	return models.CanonicalizeRoutingTreeName(r.Name)
 }
 
 func (r *ManagedRoute) ResourceType() string {
@@ -72,8 +73,8 @@ func (r *ManagedRoute) ResourceType() string {
 }
 
 func (r *ManagedRoute) ResourceID() string {
-	if r.Name == UserDefinedRoutingTreeName {
-		// Backwards compatibility with legacy user-defined routing tree.
+	if models.IsDefaultRoutingTreeName(r.Name) {
+		// Backwards compatibility with the legacy default (root) routing tree.
 		return ""
 	}
 	return r.Name
@@ -107,12 +108,12 @@ func managedRouteMatcher(name string) *labels.Matcher {
 type ManagedRoutes []*ManagedRoute
 
 func (m ManagedRoutes) Sort() {
-	// Sort the keys of the map to ensure consistent ordering. Always ensure that the legacy user-defined routing tree is last.
+	// Sort the keys of the map to ensure consistent ordering. Always ensure that the default routing tree is last.
 	slices.SortFunc(m, func(a, b *ManagedRoute) int {
-		if a.Name == UserDefinedRoutingTreeName {
+		if models.IsDefaultRoutingTreeName(a.Name) {
 			return 1
 		}
-		if b.Name == UserDefinedRoutingTreeName {
+		if models.IsDefaultRoutingTreeName(b.Name) {
 			return -1
 		}
 		return strings.Compare(a.Name, b.Name)
@@ -137,21 +138,23 @@ func WithManagedRoutes(root *v1.Route, managedRoutes map[string]*v1.Route) *v1.R
 	newManagedRoutes := make([]*v1.Route, 0, len(newRoot.Routes)+len(managedRoutes))
 	for _, k := range slices.Sorted(maps.Keys(managedRoutes)) {
 		// On the off chance that the route is nil or invalid managed route with the restricted name, we skip it.
-		if managedRoutes[k] == nil || k == UserDefinedRoutingTreeName {
+		if managedRoutes[k] == nil || models.IsDefaultRoutingTreeName(k) {
 			continue
 		}
 		newManagedRoutes = append(newManagedRoutes, NewManagedRoute(k, managedRoutes[k]).GeneratedSubRoute())
 	}
 
-	// Add the user-defined routing tree at the end.
+	// Add the default routing tree at the end.
 	newManagedRoutes = append(newManagedRoutes, newRoot.Routes...)
 	newRoot.Routes = newManagedRoutes
 	return &newRoot
 }
 
 func (rev *ConfigRevision) GetManagedRoute(name string) *ManagedRoute {
-	if name == UserDefinedRoutingTreeName {
-		return NewManagedRoute(UserDefinedRoutingTreeName, rev.Config.AlertmanagerConfig.Route)
+	if models.IsDefaultRoutingTreeName(name) {
+		// Echo the requested name (canonical or alias) so the response preserves the name
+		// the client used, while GetUID/ResourceID canonicalize for identity purposes.
+		return NewManagedRoute(name, rev.Config.AlertmanagerConfig.Route)
 	}
 	route, ok := rev.Config.ManagedRoutes[name]
 	if !ok {
@@ -160,18 +163,16 @@ func (rev *ConfigRevision) GetManagedRoute(name string) *ManagedRoute {
 	return NewManagedRoute(name, route)
 }
 
-func (rev *ConfigRevision) GetManagedRoutes(includeManagedRoutes bool) ManagedRoutes {
+func (rev *ConfigRevision) GetManagedRoutes() ManagedRoutes {
 	managedRoutes := make(ManagedRoutes, 0, len(rev.Config.ManagedRoutes)+1)
-	if includeManagedRoutes {
-		for _, k := range slices.Sorted(maps.Keys(rev.Config.ManagedRoutes)) {
-			// On the off chance that the route is nil or invalid managed route with the restricted name, we skip it.
-			if rev.Config.ManagedRoutes[k] == nil || k == UserDefinedRoutingTreeName {
-				continue
-			}
-			managedRoutes = append(managedRoutes, NewManagedRoute(k, rev.Config.ManagedRoutes[k]))
+	for _, k := range slices.Sorted(maps.Keys(rev.Config.ManagedRoutes)) {
+		// On the off chance that the route is nil or invalid managed route with the restricted name, we skip it.
+		if rev.Config.ManagedRoutes[k] == nil || models.IsDefaultRoutingTreeName(k) {
+			continue
 		}
+		managedRoutes = append(managedRoutes, NewManagedRoute(k, rev.Config.ManagedRoutes[k]))
 	}
-	managedRoutes = append(managedRoutes, NewManagedRoute(UserDefinedRoutingTreeName, rev.Config.AlertmanagerConfig.Route))
+	managedRoutes = append(managedRoutes, NewManagedRoute(models.DefaultRoutingTreeName, rev.Config.AlertmanagerConfig.Route))
 
 	return managedRoutes
 }
@@ -203,8 +204,8 @@ func (rev *ConfigRevision) CreateManagedRoute(name string, subtree v1.Route) (*M
 		return nil, models.MakeErrRouteInvalidFormat(err)
 	}
 
-	if name == UserDefinedRoutingTreeName {
-		return nil, models.ErrRouteExists.Errorf("cannot create a managed route with the name %q, this name is reserved for the user-defined routing tree", UserDefinedRoutingTreeName)
+	if models.IsDefaultRoutingTreeName(name) {
+		return nil, models.ErrRouteExists.Errorf("cannot create a managed route with the name %q, this name is reserved for the default routing tree", name)
 	}
 
 	if _, exists := rev.Config.ManagedRoutes[name]; exists {
@@ -244,7 +245,7 @@ func (rev *ConfigRevision) UpdateNamedRoute(name string, subtree v1.Route) (*Man
 		return nil, models.MakeErrRouteInvalidFormat(err)
 	}
 
-	if name == UserDefinedRoutingTreeName {
+	if models.IsDefaultRoutingTreeName(name) {
 		rev.Config.AlertmanagerConfig.Route = &amRoute
 	} else {
 		if rev.Config.ManagedRoutes == nil {
@@ -273,7 +274,7 @@ func (rev *ConfigRevision) ResetUserDefinedRoute(defaultCfg *v1.AMConfigV1) (*Ma
 		rev.Config.AlertmanagerConfig.Receivers = append(rev.Config.AlertmanagerConfig.Receivers, defaultRcv)
 	}
 
-	return rev.UpdateNamedRoute(UserDefinedRoutingTreeName, *defaultCfg.AlertmanagerConfig.Route)
+	return rev.UpdateNamedRoute(models.DefaultRoutingTreeName, *defaultCfg.AlertmanagerConfig.Route)
 }
 
 func (rev *ConfigRevision) ValidateRoute(route v1.Route) error {
@@ -312,15 +313,13 @@ func (rev *ConfigRevision) validateTimeIntervalReferences(route v1.Route) error 
 }
 
 // RenameReceiverInRoutes renames all references to a receiver in all routes. Returns number of routes that were updated
-func (rev *ConfigRevision) RenameReceiverInRoutes(oldName, newName string, includeManagedRoutes bool) map[*v1.Route]int {
+func (rev *ConfigRevision) RenameReceiverInRoutes(oldName, newName string) map[*v1.Route]int {
 	res := make(map[*v1.Route]int)
 	if cnt := renameReceiverInRoute(oldName, newName, rev.Config.AlertmanagerConfig.Route); cnt > 0 {
 		res[rev.Config.AlertmanagerConfig.Route] = cnt
 	}
 	for _, r := range rev.Config.ManagedRoutes {
-		// Still attempt to rename receivers in any managed routes if not supported for data consistency, but
-		// don't return them int he results.
-		if cnt := renameReceiverInRoute(oldName, newName, r); includeManagedRoutes && cnt > 0 {
+		if cnt := renameReceiverInRoute(oldName, newName, r); cnt > 0 {
 			res[r] = cnt
 		}
 	}
@@ -343,15 +342,13 @@ func renameReceiverInRoute(oldName, newName string, routes ...*v1.Route) int {
 }
 
 // RenameTimeIntervalInRoutes renames all references to a time interval in all routes. Returns number of routes that were updated
-func (rev *ConfigRevision) RenameTimeIntervalInRoutes(oldName, newName string, includeManagedRoutes bool) map[*v1.Route]int {
+func (rev *ConfigRevision) RenameTimeIntervalInRoutes(oldName, newName string) map[*v1.Route]int {
 	res := make(map[*v1.Route]int)
 	if cnt := renameTimeIntervalInRoute(oldName, newName, rev.Config.AlertmanagerConfig.Route); cnt > 0 {
 		res[rev.Config.AlertmanagerConfig.Route] = cnt
 	}
 	for _, r := range rev.Config.ManagedRoutes {
-		// Still attempt to rename time intervals in any managed routes if not supported for data consistency, but
-		// don't return them int he results.
-		if cnt := renameTimeIntervalInRoute(oldName, newName, r); includeManagedRoutes && cnt > 0 {
+		if cnt := renameTimeIntervalInRoute(oldName, newName, r); cnt > 0 {
 			res[r] = cnt
 		}
 	}

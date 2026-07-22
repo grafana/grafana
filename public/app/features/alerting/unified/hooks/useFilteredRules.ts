@@ -2,7 +2,7 @@ import { produce } from 'immer';
 import { chain, compact, isEmpty } from 'lodash';
 import { useCallback, useDeferredValue, useEffect, useMemo } from 'react';
 
-import { USER_DEFINED_TREE_NAME } from '@grafana/alerting';
+import { isDefaultRoutingTreeName } from '@grafana/alerting';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { type CombinedRuleGroup, type CombinedRuleNamespace, type Rule } from 'app/types/unified-alerting';
@@ -19,7 +19,7 @@ import { labelsMatchMatchers, matcherToMatcherField } from '../utils/alertmanage
 import { Annotation } from '../utils/constants';
 import { isCloudRulesSource } from '../utils/datasource';
 import { fuzzyFilter } from '../utils/fuzzySearch';
-import { parseMatcher, parsePromQLStyleMatcherLoose } from '../utils/matchers';
+import { parseMatcher, parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
 import {
   getRuleHealth,
   isPluginProvidedRule,
@@ -66,7 +66,7 @@ export function useRulesFilter() {
       dataSource: queryParams.get('dataSource') ?? undefined,
       alertState: queryParams.get('alertState') ?? undefined,
       ruleType: queryParams.get('ruleType') ?? undefined,
-      labels: parsePromQLStyleMatcherLoose(queryParams.get('queryString') ?? '').map(matcherToMatcherField),
+      labels: parsePromQLStyleMatcherLooseSafe(queryParams.get('queryString') ?? '').map(matcherToMatcherField),
     };
 
     const hasLegacyFilters = Object.values(legacyFilters).some((legacyFilter) => !isEmpty(legacyFilter));
@@ -252,7 +252,7 @@ const reduceGroups = (filterState: RulesFilter) => {
       if ('policy' in matchesFilterFor) {
         const policy = filterState.policy;
         if (rulerRuleType.grafana.rule(rule.rulerRule)) {
-          const isDefaultPolicyFilter = policy === USER_DEFINED_TREE_NAME;
+          const isDefaultPolicyFilter = isDefaultRoutingTreeName(policy ?? undefined);
 
           if (isDefaultPolicyFilter) {
             if (ruleUsesDefaultPolicy(rule.rulerRule.grafana_alert.notification_settings)) {

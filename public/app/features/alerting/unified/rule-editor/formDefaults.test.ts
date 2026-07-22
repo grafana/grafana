@@ -1,5 +1,3 @@
-import { testWithFeatureToggles } from 'test/test-utils';
-
 import { config, getDataSourceSrv } from '@grafana/runtime';
 
 import { mockAlertQuery, mockDataSource, mockReduceExpression, mockThresholdExpression } from '../mocks';
@@ -50,6 +48,22 @@ describe('formValuesFromQueryParams', () => {
     expect(result).toEqual(defaultFormValues);
   });
 
+  it('should preserve evaluateEvery when provided', () => {
+    // "Continue in Alerting" from the panel drawer passes the rule's interval through this param;
+    // it must not be overwritten with the default.
+    const ruleDefinition = JSON.stringify({ evaluateEvery: '5m' });
+
+    const result = formValuesFromQueryParams(ruleDefinition, RuleFormType.grafana);
+
+    expect(result.evaluateEvery).toBe('5m');
+  });
+
+  it('should fall back to the default evaluateEvery when not provided', () => {
+    const result = formValuesFromQueryParams(JSON.stringify({}), RuleFormType.grafana);
+
+    expect(result.evaluateEvery).toBe(defaultFormValues.evaluateEvery);
+  });
+
   it('should normalize annotations', () => {
     const ruleDefinition = JSON.stringify({
       annotations: [
@@ -74,16 +88,7 @@ describe('formValuesFromQueryParams', () => {
     expect(rest).toContainEqual({ key: 'custom-3', value: 'custom annotation v3' });
   });
 
-  it('should disable simplified query editor when query switch mode is disabled', () => {
-    const result = formValuesFromQueryParams(JSON.stringify({}), RuleFormType.grafana);
-
-    expect(result.editorSettings).toBeDefined();
-    expect(result.editorSettings!.simplifiedQueryEditor).toBe(false);
-  });
-
   describe('when simplified query editor is enabled', () => {
-    testWithFeatureToggles({ enable: ['alertingQueryAndExpressionsStepMode'] });
-
     it('should enable simplified query editor if queries are transformable to simple condition', () => {
       const result = formValuesFromQueryParams(
         JSON.stringify({

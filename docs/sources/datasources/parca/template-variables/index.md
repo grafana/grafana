@@ -54,12 +54,19 @@ The Parca query editor's label selector field supports template variable interpo
 
 Create a custom variable to switch between services in your profiling dashboard.
 
-1. Navigate to **Dashboard settings** > **Variables**.
-1. Click **Add variable**.
-1. Set **Type** to **Custom**.
+1. Navigate to the dashboard you want to update and click **Edit**.
+1. Click the **Add new element** icon (blue plus sign).
+1. Click **Variable**.
+1. Select **Custom** as the variable type.
 1. Enter a **Name**, for example `service`.
-1. In the **Custom options** field, enter comma-separated values, for example `frontend, backend, api-gateway`.
+1. Select an option in the **Display** drop-down list to control where on the dashboard the variable is displayed.
+1. Click **Open variable editor** to open the **Custom options** dialog box.
+1. Enter comma-separated values, for example `frontend, backend, api-gateway`.
 1. Click **Apply**.
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.
 
 In your Parca query's label selector, reference the variable:
 
@@ -86,12 +93,16 @@ In your Parca query's label selector, reference both variables:
 
 Create a text box variable for free-form label filtering.
 
-1. Navigate to **Dashboard settings** > **Variables**.
-1. Click **Add variable**.
-1. Set **Type** to **Text box**.
+1. Navigate to the dashboard you want to update and click **Edit**.
+1. Click the **Add new element** icon (blue plus sign).
+1. Click **Variable**.
+1. Select **Textbox** as the variable type.
 1. Enter a **Name**, for example `label_filter`.
-1. Optionally set a default value, for example `job="my-service"`.
-1. Click **Apply**.
+1. Optionally set a default **Value**, for example `job="my-service"`.
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.
 
 In your Parca query's label selector, reference the variable:
 
@@ -107,7 +118,7 @@ Parca template variable support has the following limitations:
 
 - **No query variable support:** You can't use Parca as a data source for populating variable options. Define values manually with custom variables or use another data source.
 - **Label selector only:** Variables are interpolated in the label selector field. The profile type drop-down doesn't support variables.
-- **No free-form filters:** Parca doesn't support [free-form filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
+- **No free-form filters:** Parca doesn't support free-form [filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/).
 
 ## Next steps
 

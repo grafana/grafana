@@ -20,6 +20,7 @@ import (
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -28,11 +29,23 @@ const (
 	// The label must be formatted as milliseconds from Epoch. This grants a natural ordering, allowing for less-than operators in label selectors.
 	// The natural ordering would be broken if the number rolls over into 1 more digit. This won't happen before Nov, 2286.
 	LabelJobClaim = "provisioning.grafana.app/claim"
+	// LabelJobClaimOwner is a token unique to a single claim, identifying which worker owns it.
+	// Job names are deterministic (repository + action), so a reaped job and its re-created
+	// namesake share a name. Without an owner token, a worker cannot tell its own claim apart
+	// from a fresh claim placed by another worker on the same name, and would renew/complete a
+	// job it no longer owns -- leading to two workers running the same job. The token lets
+	// RenewLease and Complete verify the claim in the store is still the one we placed.
+	LabelJobClaimOwner = "provisioning.grafana.app/claim-owner"
 	// LabelRepository contains the repository name as a label. This allows for label selectors to find the archived version of a job.
 	LabelRepository = "provisioning.grafana.app/repository"
 	// LabelJobOriginalUID contains the Job's original uid as a label. This allows for label selectors to find the archived version of a job.
 	LabelJobOriginalUID = "provisioning.grafana.app/original-uid"
 )
+
+// ErrLeaseLost indicates the job's claim in the store is no longer the one we placed:
+// the job was reaped and re-created, or another worker has taken it over. A worker that
+// sees this must stop processing immediately so two workers do not run the same job.
+var ErrLeaseLost = errors.New("job lease lost: claimed by another worker")
 
 var ErrNoJobs = &apierrors.StatusError{
 	ErrStatus: metav1.Status{
@@ -137,6 +150,7 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 			job.Labels = make(map[string]string)
 		}
 		job.Labels[LabelJobClaim] = strconv.FormatInt(s.clock().UnixMilli(), 10)
+		job.Labels[LabelJobClaimOwner] = util.GenerateShortUID()
 		s.queueMetrics.RecordWaitTime(string(job.Spec.Action), s.clock().Sub(job.CreationTimestamp.Time).Seconds())
 
 		// Set up the provisioning identity for this namespace
@@ -193,9 +207,19 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 				return
 			}
 
+			// Only roll back if the job in the store is still the one we claimed. Job names are
+			// deterministic, so this same name may now be a re-created job claimed by another
+			// worker. Stripping its claim would hand that worker's job to a third one and
+			// reintroduce duplicate execution, so leave it alone.
+			if refetched.UID != updatedJob.UID || refetched.Labels[LabelJobClaimOwner] != updatedJob.Labels[LabelJobClaimOwner] {
+				logger.Info("claim no longer owned by this worker - skipping rollback")
+				return
+			}
+
 			// Rollback the claim.
 			refetchedJob := refetched.DeepCopy()
 			delete(refetchedJob.Labels, LabelJobClaim)
+			delete(refetchedJob.Labels, LabelJobClaimOwner)
 			refetchedJob.Status.State = provisioning.JobStatePending
 
 			timeoutCtx, cancel = context.WithTimeout(ctx, 5*time.Second)
@@ -306,23 +330,44 @@ func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) e
 		return apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
 	}
 
+	// Verify we still own the job before deleting it. Job names are deterministic, so a
+	// reaped job and its re-created namesake share a name. Deleting purely by name would let
+	// a worker that has lost its lease delete the job another worker is now running. A matching
+	// UID proves it is the same object we claimed, and a matching owner token proves the claim
+	// is still ours. If the job is gone or a different incarnation exists, report NotFound so
+	// callers treat it as already cleaned up.
+	latest, err := s.client.Jobs(job.GetNamespace()).Get(ctx, job.GetName(), metav1.GetOptions{})
+	if err != nil {
+		span.RecordError(err)
+		return apifmt.Errorf("failed to get job '%s' in '%s' for completion: %w", job.GetName(), job.GetNamespace(), err)
+	}
+	if latest.UID != job.UID || latest.Labels[LabelJobClaimOwner] != job.Labels[LabelJobClaimOwner] {
+		logger.Info("job no longer owned by this worker - skipping completion")
+		return apierrors.NewNotFound(provisioning.JobResourceInfo.GroupResource(), job.GetName())
+	}
+
 	// Delete the job from the active job store.
 	// Callers are responsible for writing the job to history after calling this.
 	//
-	// We will assume that the caller is the claimant. If this is not true, an error is returned.
-	// This is a best-effort operation; if the job is not in the claimed state, we will still attempt to delete it.
-	err = s.client.Jobs(job.GetNamespace()).Delete(ctx, job.GetName(), metav1.DeleteOptions{})
+	// The UID precondition makes the delete atomic against the ownership check above: if the
+	// object is replaced by a namesake between the Get and the Delete, the precondition fails.
+	uid := job.UID
+	err = s.client.Jobs(job.GetNamespace()).Delete(ctx, job.GetName(), metav1.DeleteOptions{
+		Preconditions: &metav1.Preconditions{UID: &uid},
+	})
 	if err != nil {
 		span.RecordError(err)
 		return apifmt.Errorf("failed to delete job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 	}
 	logger.Debug("deleted job from job store")
 
-	// We need to remove the claim label before moving the job to the historic job store.
+	// We need to remove the claim labels before moving the job to the historic job store,
+	// so the per-claim owner token does not leak into the archived object.
 	if job.Labels == nil {
 		job.Labels = make(map[string]string)
 	}
 	delete(job.Labels, LabelJobClaim)
+	delete(job.Labels, LabelJobClaimOwner)
 	s.queueMetrics.DecreaseQueueSize(string(job.Spec.Action))
 
 	logger.Debug("complete job complete")
@@ -419,14 +464,23 @@ func (s *persistentStore) RenewLease(ctx context.Context, job *provisioning.Job)
 		return apifmt.Errorf("failed to fetch job for lease renewal '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 	}
 
-	// Verify we still own the lease
-	if latestJob.Labels == nil || latestJob.Labels[LabelJobClaim] == "" {
-		err := apifmt.Errorf("lease lost for job '%s' in '%s': no longer claimed", job.GetName(), job.GetNamespace())
+	// Verify we still own the lease. Checking that the job is claimed is not enough:
+	// job names are deterministic, so the claim in the store may belong to a different
+	// worker that took over after ours was reaped. A matching UID proves it is the same
+	// object we claimed (a re-created namesake gets a fresh UID), and a matching owner
+	// token proves the claim is still the one we placed. If either differs, we have lost
+	// the lease and must not renew it.
+	owner := job.Labels[LabelJobClaimOwner]
+	if latestJob.Labels == nil ||
+		latestJob.Labels[LabelJobClaim] == "" ||
+		latestJob.Labels[LabelJobClaimOwner] != owner ||
+		latestJob.UID != job.UID {
+		err := apifmt.Errorf("lease lost for job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), ErrLeaseLost)
 		span.RecordError(err)
 		return err
 	}
 
-	// Update the claim timestamp to current time
+	// Update the claim timestamp to current time, preserving our owner token.
 	updatedJob := latestJob.DeepCopy()
 	updatedJob.Labels[LabelJobClaim] = strconv.FormatInt(s.clock().UnixMilli(), 10)
 
@@ -480,13 +534,12 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 		return nil, err
 	}
 
-	// Set up the provisioning identity for this namespace
-	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
-	if err != nil {
-		span.RecordError(err)
-		return nil, apifmt.Errorf("failed to get provisioning identity for '%s': %w", namespace, err)
-	}
-
+	// The job is created with the caller's identity so that the admission
+	// mutator can attribute it to the acting user (see AdmissionMutator).
+	// Unlike the other store operations, Insert does not switch to the
+	// provisioning identity: user-triggered flows keep the requesting user in
+	// context, while background callers (repository controller, webhooks)
+	// establish the provisioning identity themselves before calling Insert.
 	job := &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
@@ -534,6 +587,11 @@ func generateJobName(job *provisioning.Job) {
 		}
 		// There may be multiple pull requests at the same time. They need different names.
 		job.Name = fmt.Sprintf("%s-pr-%d", job.Spec.Repository, pr)
+	case provisioning.JobActionTest:
+		// Test jobs exist to generate concurrent load, so many must be queued
+		// against the same repository at once. A unique suffix avoids the
+		// already-exists collision a deterministic name would cause.
+		job.Name = fmt.Sprintf("%s-test-%s", job.Spec.Repository, util.GenerateShortUID())
 	default:
 		job.Name = fmt.Sprintf("%s-%s", job.Spec.Repository, job.Spec.Action)
 	}

@@ -25,7 +25,7 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
   return (
     <Card noMargin key={name} isSelected={isSelected} onClick={onClick}>
       <Card.Figure>
-        <RepoIcon type={providerType} />
+        <RepoIcon type={providerType} autoHeight />
       </Card.Figure>
       <Card.Heading>
         <Stack gap={2} direction="row" alignItems="center">

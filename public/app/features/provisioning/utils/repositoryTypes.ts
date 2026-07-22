@@ -38,6 +38,19 @@ const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
     icon: 'github' as const,
   },
   {
+    type: 'githubEnterprise',
+    label: t('provisioning.repository-types.github-enterprise', 'GitHub Enterprise'),
+    description: t(
+      'provisioning.repository-types.github-enterprise-description',
+      'Connect to GitHub Enterprise Server or GitHub Enterprise Cloud repositories'
+    ),
+    tooltip: t(
+      'provisioning.repository-types.github-enterprise-tooltip',
+      'Enhanced GitHub integration for self-hosted GitHub Enterprise Server or GitHub Enterprise Cloud with webhook-driven sync, PR comments, deep links to source files, and repository settings validations.'
+    ),
+    icon: 'github-enterprise' as const,
+  },
+  {
     type: 'gitlab',
     label: t('provisioning.repository-types.gitlab', 'GitLab'),
     description: t('provisioning.repository-types.gitlab-description', 'Connect to GitLab repositories'),
@@ -75,10 +88,21 @@ export const getRepositoryTypeConfig = (type: RepoType): RepositoryTypeConfig | 
   return getRepositoryTypeConfigs().find((config) => config.type === type);
 };
 
-const GIT_PROVIDER_TYPES = ['github', 'gitlab', 'bitbucket', 'git'];
+const GIT_PROVIDER_TYPES = ['github', 'githubEnterprise', 'gitlab', 'bitbucket', 'git'];
 
 export const isGitProvider = (type: RepoType) => {
   return GIT_PROVIDER_TYPES.includes(type);
+};
+
+// GitHub and GitHub Enterprise share the same auth flow (GitHub App or PAT),
+// connection handling, and deep-link URL structure.
+export const isGitHubBased = (type?: RepoType): type is 'github' | 'githubEnterprise' => {
+  return type === 'github' || type === 'githubEnterprise';
+};
+
+// Providers whose repositories can register and receive webhooks.
+export const supportsWebhooks = (type?: RepoType): type is 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' => {
+  return type === 'github' || type === 'githubEnterprise' || type === 'gitlab' || type === 'bitbucket';
 };
 
 /**

@@ -40,7 +40,7 @@
       "name": "created",
       "type": "number",
       "format": "int64",
-      "description": "created timestamp",
+      "description": "created timestamp (unix millis)",
       "priority": 0
     },
     {
@@ -66,7 +66,7 @@
         null,
         null,
         null,
-        null,
+        0,
         321,
         null
       ],
@@ -86,7 +86,7 @@
         null,
         null,
         null,
-        null,
+        0,
         123,
         "repo"
       ],

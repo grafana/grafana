@@ -83,7 +83,9 @@ func TestExportFolders(t *testing.T) {
 				progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 			},
 			setupResources: func(repoResources *resources.MockRepositoryResources) {
-				repoResources.On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "grafana", mock.Anything, mock.Anything).Return(fmt.Errorf("failed to ensure folder tree"))
+				repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.Anything, mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
+					return opts.Ref == "feature/branch" && opts.Path == "grafana"
+				})).Return(fmt.Errorf("failed to ensure folder tree"))
 			},
 		},
 		{
@@ -137,11 +139,13 @@ func TestExportFolders(t *testing.T) {
 				progress.On("TooManyErrors").Return(nil)
 			},
 			setupResources: func(repoResources *resources.MockRepositoryResources) {
-				repoResources.On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "grafana", mock.MatchedBy(func(tree resources.FolderTree) bool {
+				repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.MatchedBy(func(tree resources.FolderTree) bool {
 					return tree.Count() == 2
-				}), mock.MatchedBy(func(fn func(folder resources.Folder, created bool, err error) error) bool {
-					require.NoError(t, fn(resources.Folder{ID: "folder-1-uid", Path: "grafana/folder-1"}, true, nil))
-					require.NoError(t, fn(resources.Folder{ID: "folder-2-uid", Path: "grafana/folder-2"}, true, nil))
+				}), mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
+					require.Equal(t, "feature/branch", opts.Ref)
+					require.Equal(t, "grafana", opts.Path)
+					require.NoError(t, opts.OnFolder(resources.Folder{ID: "folder-1-uid", Path: "grafana/folder-1"}, true, nil))
+					require.NoError(t, opts.OnFolder(resources.Folder{ID: "folder-2-uid", Path: "grafana/folder-2"}, true, nil))
 
 					return true
 				})).Return(nil)
@@ -189,7 +193,7 @@ func TestExportFolders(t *testing.T) {
 				progress.On("SetMessage", mock.Anything, "read folder tree from API server").Return()
 				progress.On("SetMessage", mock.Anything, "write folders to repository").Return()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Name() == "folder-1-uid" && result.Action() == repository.FileActionIgnored && result.Error() != nil && result.Error().Error() == "creating folder folder-1-uid at path grafana/folder-1: didn't work"
+					return result.Name() == "folder-1-uid" && result.Action() == repository.FileActionCreated && result.Error() != nil && result.Error().Error() == "creating folder folder-1-uid at path grafana/folder-1: didn't work"
 				})).Return()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Name() == "folder-2-uid" && result.Action() == repository.FileActionCreated
@@ -198,11 +202,13 @@ func TestExportFolders(t *testing.T) {
 				progress.On("TooManyErrors").Return(nil)
 			},
 			setupResources: func(repoResources *resources.MockRepositoryResources) {
-				repoResources.On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "grafana", mock.MatchedBy(func(tree resources.FolderTree) bool {
+				repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.MatchedBy(func(tree resources.FolderTree) bool {
 					return tree.Count() == 2
-				}), mock.MatchedBy(func(fn func(folder resources.Folder, created bool, err error) error) bool {
-					require.NoError(t, fn(resources.Folder{ID: "folder-1-uid", Path: "grafana/folder-1"}, false, errors.New("didn't work")))
-					require.NoError(t, fn(resources.Folder{ID: "folder-2-uid", Path: "grafana/folder-2"}, true, nil))
+				}), mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
+					require.Equal(t, "feature/branch", opts.Ref)
+					require.Equal(t, "grafana", opts.Path)
+					require.NoError(t, opts.OnFolder(resources.Folder{ID: "folder-1-uid", Path: "grafana/folder-1"}, false, errors.New("didn't work")))
+					require.NoError(t, opts.OnFolder(resources.Folder{ID: "folder-2-uid", Path: "grafana/folder-2"}, true, nil))
 
 					return true
 				})).Return(nil)
@@ -241,10 +247,12 @@ func TestExportFolders(t *testing.T) {
 				progress.On("TooManyErrors").Return(fmt.Errorf("too many errors encountered"))
 			},
 			setupResources: func(repoResources *resources.MockRepositoryResources) {
-				repoResources.On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "grafana", mock.MatchedBy(func(tree resources.FolderTree) bool {
+				repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.MatchedBy(func(tree resources.FolderTree) bool {
 					return tree.Count() == 1
-				}), mock.MatchedBy(func(fn func(folder resources.Folder, created bool, err error) error) bool {
-					require.Error(t, fn(resources.Folder{ID: "folder-1-uid", Path: "grafana/folder-1"}, true, nil), "too many errors encountered")
+				}), mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
+					require.Equal(t, "feature/branch", opts.Ref)
+					require.Equal(t, "grafana", opts.Path)
+					require.Error(t, opts.OnFolder(resources.Folder{ID: "folder-1-uid", Path: "grafana/folder-1"}, true, nil), "too many errors encountered")
 					return true
 				})).Return(fmt.Errorf("too many errors encountered"))
 			},
@@ -307,11 +315,13 @@ func TestExportFolders(t *testing.T) {
 				progress.On("TooManyErrors").Return(nil)
 			},
 			setupResources: func(repoResources *resources.MockRepositoryResources) {
-				repoResources.On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "grafana", mock.MatchedBy(func(tree resources.FolderTree) bool {
+				repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.MatchedBy(func(tree resources.FolderTree) bool {
 					return tree.Count() == 2
-				}), mock.MatchedBy(func(fn func(folder resources.Folder, created bool, err error) error) bool {
-					require.NoError(t, fn(resources.Folder{ID: "parent-folder", Path: "grafana/parent-folder"}, true, nil))
-					require.NoError(t, fn(resources.Folder{ID: "child-folder", Path: "grafana/parent-folder/child-folder"}, true, nil))
+				}), mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
+					require.Equal(t, "feature/branch", opts.Ref)
+					require.Equal(t, "grafana", opts.Path)
+					require.NoError(t, opts.OnFolder(resources.Folder{ID: "parent-folder", Path: "grafana/parent-folder"}, true, nil))
+					require.NoError(t, opts.OnFolder(resources.Folder{ID: "child-folder", Path: "grafana/parent-folder/child-folder"}, true, nil))
 
 					return true
 				})).Return(nil)
@@ -387,9 +397,11 @@ func TestFolderMetaAccessor(t *testing.T) {
 		}
 
 		mockRepoResources := resources.NewMockRepositoryResources(t)
-		mockRepoResources.On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "grafana", mock.MatchedBy(func(tree resources.FolderTree) bool {
+		mockRepoResources.On("EnsureFolderTreeExists", mock.Anything, mock.MatchedBy(func(tree resources.FolderTree) bool {
 			return tree.Count() == 0 // Should be 0 since folder is managed by other manager
-		}), mock.Anything).Return(nil)
+		}), mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
+			return opts.Ref == "feature/branch" && opts.Path == "grafana"
+		})).Return(nil)
 
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Twice()
@@ -430,7 +442,9 @@ func TestFolderMetaAccessor(t *testing.T) {
 		mockRepoResources := resources.NewMockRepositoryResources(t)
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Twice()
-		mockRepoResources.On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "grafana", mock.Anything, mock.Anything).Return(nil)
+		mockRepoResources.On("EnsureFolderTreeExists", mock.Anything, mock.Anything, mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
+			return opts.Ref == "feature/branch" && opts.Path == "grafana"
+		})).Return(nil)
 
 		err = ExportFolders(context.Background(), "test-repo", v0alpha1.ExportJobOptions{
 			Path:   "grafana",
@@ -492,9 +506,51 @@ func TestFolderMetaAccessor(t *testing.T) {
 		mockRepoResources := resources.NewMockRepositoryResources(t)
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Twice()
-		mockRepoResources.On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "grafana", mock.MatchedBy(func(tree resources.FolderTree) bool {
+		mockRepoResources.On("EnsureFolderTreeExists", mock.Anything, mock.MatchedBy(func(tree resources.FolderTree) bool {
 			return tree.Count() == 0 // Should be empty since folder was skipped
-		}), mock.Anything).Return(nil)
+		}), mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
+			return opts.Ref == "feature/branch" && opts.Path == "grafana"
+		})).Return(nil)
+
+		err = ExportFolders(context.Background(), "test-repo", v0alpha1.ExportJobOptions{
+			Path:   "grafana",
+			Branch: "feature/branch",
+		}, fakeFolderClient, mockRepoResources, progress)
+
+		require.NoError(t, err)
+		mockRepoResources.AssertExpectations(t)
+		progress.AssertExpectations(t)
+	})
+	t.Run("should skip classic-managed folder that has no identity", func(t *testing.T) {
+		// Classic shim kinds are reported as managed without an identity.
+		// Such a folder must still be skipped, since it is owned elsewhere.
+		obj := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name": "test-folder",
+					"annotations": map[string]interface{}{
+						"folder.grafana.app/uid": "test-folder-uid",
+					},
+				},
+			},
+		}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetManagerProperties(utils.ManagerProperties{
+			Kind: utils.ManagerKindClassicAPI, //nolint:staticcheck
+		})
+		fakeFolderClient := &mockDynamicInterface{
+			items: []unstructured.Unstructured{*obj},
+		}
+
+		mockRepoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Twice()
+		mockRepoResources.On("EnsureFolderTreeExists", mock.Anything, mock.MatchedBy(func(tree resources.FolderTree) bool {
+			return tree.Count() == 0 // Should be empty since folder was skipped
+		}), mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
+			return opts.Ref == "feature/branch" && opts.Path == "grafana"
+		})).Return(nil)
 
 		err = ExportFolders(context.Background(), "test-repo", v0alpha1.ExportJobOptions{
 			Path:   "grafana",
@@ -529,4 +585,38 @@ func (m *mockDynamicInterface) Get(ctx context.Context, name string, opts metav1
 		return nil, fmt.Errorf("no items found")
 	}
 	return &m.items[0], nil
+}
+
+// TestWriteFolderTree_PathCollisionFails verifies that two distinct folders whose
+// titles normalize to the same repository path fail the export loudly, instead of
+// silently letting one folder's _folder.json represent the wrong UID/title.
+func TestWriteFolderTree_PathCollisionFails(t *testing.T) {
+	tree := resources.NewEmptyFolderTree()
+	// Two distinct root folders whose titles both sanitize to "Reports".
+	tree.Add(resources.Folder{ID: "uid-a", Title: "» Reports"}, "")
+	tree.Add(resources.Folder{ID: "uid-b", Title: "Reports"}, "")
+
+	// Leaving both mocks without expectations asserts EnsureFolderTreeExists (and
+	// therefore any per-folder Record) is never reached once a collision is found.
+	repoResources := resources.NewMockRepositoryResources(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+
+	err := writeFolderTree(context.Background(), v0alpha1.ExportJobOptions{}, repoResources, tree, progress)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "both export to path")
+}
+
+// TestWriteFolderTree_NoCollisionProceeds verifies that folders with distinct
+// normalized paths pass the collision check and reach EnsureFolderTreeExists.
+func TestWriteFolderTree_NoCollisionProceeds(t *testing.T) {
+	tree := resources.NewEmptyFolderTree()
+	tree.Add(resources.Folder{ID: "uid-a", Title: "Reports"}, "")
+	tree.Add(resources.Folder{ID: "uid-b", Title: "Metrics"}, "")
+
+	repoResources := resources.NewMockRepositoryResources(t)
+	repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	progress := jobs.NewMockJobProgressRecorder(t)
+
+	err := writeFolderTree(context.Background(), v0alpha1.ExportJobOptions{}, repoResources, tree, progress)
+	require.NoError(t, err)
 }

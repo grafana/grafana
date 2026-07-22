@@ -23,7 +23,7 @@ labels:
 menuTitle: Template variables
 title: Azure Monitor template variables
 weight: 400
-last_reviewed: 2025-12-04
+review_date: 2026-05-12
 ---
 
 # Azure Monitor template variables
@@ -43,18 +43,23 @@ For an introduction to templating and template variables, refer to the [Templati
 
 To create a template variable for Azure Monitor:
 
-1. Open the dashboard where you want to add the variable.
-1. Click **Dashboard settings** (gear icon) in the top navigation.
-1. Select **Variables** in the left menu.
-1. Click **Add variable**.
+1. Navigate to the dashboard you want to update and click **Edit**.
+1. Click the **Add new element** icon (blue plus sign).
+1. Click **Variable**.
+1. Select **Query** as the variable type.
 1. Enter a **Name** for your variable (e.g., `subscription`, `resourceGroup`, `resource`).
-1. In the **Type** dropdown, select **Query**.
-1. In the **Data source** dropdown, select your Azure Monitor data source.
-1. In the **Query Type** dropdown, select the appropriate query type (see [Available query types](#available-query-types)).
+1. Select an option in the **Display** drop-down list to control where on the dashboard the variable is displayed.
+1. Click **Open variable editor** to open the **Query Variable** dialog box.
+1. In the **Data source** drop-down list, select your Azure Monitor data source.
+1. In the **Query Type** drop-down list, select the appropriate query type (see [Available query types](#available-query-types)).
 1. Configure any additional fields required by the selected query type.
-1. Click **Run query** to preview the variable values.
-1. Configure display options such as **Multi-value** or **Include All option** as needed.
-1. Click **Apply** to save the variable.
+1. Click **Preview** to preview the variable values.
+1. Click **Close** to close the query variable editor dialog box.
+1. Configure display options such as **Multi-value**, **Include All value**, or **Allow custom values** as needed.
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.
 
 ## Available query types
 
@@ -69,7 +74,7 @@ The Azure Monitor data source provides the following query types for template va
 | **Resource Names**      | Returns resource names for a specified subscription, resource group, and namespace. Supports multi-value selection.                    |
 | **Metric Names**        | Returns available metric names for a specified resource.                                                                               |
 | **Workspaces**          | Returns Log Analytics workspaces for the specified subscription.                                                                       |
-| **Logs**                | Executes a KQL query and returns the results as variable values. See [Create a Logs variable](#create-a-logs-variable).                |
+| **Logs**                | Executes a KQL query and returns the results as variable values. Refer to [Create a Logs variable](#create-a-logs-variable).           |
 | **Custom Namespaces**   | Returns custom metric namespaces for a specified resource.                                                                             |
 | **Custom Metric Names** | Returns custom metric names for a specified resource.                                                                                  |
 
@@ -100,7 +105,7 @@ Cascading variables (also called dependent or chained variables) allow you to cr
 1. Set **Query Type** to **Resource Names**.
 1. In the **Subscription** field, select `$subscription`.
 1. In the **Resource Group** field, select `$resourceGroup`.
-1. Select the appropriate **Namespace** for your resources (e.g., `Microsoft.Compute/virtualMachines`).
+1. Select the appropriate **Namespace** for your resources (for example, `Microsoft.Compute/virtualMachines`).
 
 Now when you change the subscription, the resource group dropdown updates automatically, and when you change the resource group, the resource name dropdown updates.
 
@@ -185,7 +190,7 @@ When a multi-value variable is used as a parameter in another variable query (fo
 
 ## Troubleshoot template variables
 
-If you encounter issues with template variables, try the following solutions.
+If you encounter issues with template variables, try the following solutions. For additional troubleshooting, refer to the [Azure Monitor troubleshooting guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/#template-variable-errors).
 
 ### Variable returns no values
 
@@ -197,6 +202,10 @@ If you encounter issues with template variables, try the following solutions.
 
 - Check the **Refresh** setting and adjust if needed.
 - Click the refresh icon next to the variable dropdown to manually refresh.
+
+### Variables break after a Grafana upgrade
+
+If template variables return errors such as `Properties found in series but missing valueProp and textProp` after upgrading Grafana, this typically indicates a version-specific bug. Update to the latest patch release for your Grafana version. For Grafana Cloud, verify you're on the **stable** release channel. Refer to [Template variable errors](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/#template-variable-errors) for detailed solutions.
 
 ### Multi-value selection not working in queries
 

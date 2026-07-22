@@ -46,6 +46,7 @@ function buildMockScene(
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
+    activateEditPane: jest.fn(),
     forceRender: jest.fn(),
     publishEvent: undefined,
     setState: jest.fn((partial: Record<string, unknown>) => {

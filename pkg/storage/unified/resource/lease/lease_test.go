@@ -19,9 +19,7 @@ import (
 )
 
 func TestLease(t *testing.T) {
-	test.RunLeaseTest(t, func(ctx context.Context) kv.KV {
-		return newMapKV()
-	})
+	test.RunLeaseTest(t, newMapKV())
 }
 
 func TestAcquireNameValidation(t *testing.T) {

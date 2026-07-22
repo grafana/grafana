@@ -23,9 +23,7 @@ aliases:
 
 {{< admonition type="note" >}}
 
-**Git Sync is now GA for Grafana Cloud, OSS and Enterprise.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) to understand usage limits for the different tiers.
-
-[Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
+Git Sync functionalities are constantly evolving. [Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
 
 {{< /admonition >}}
 
@@ -49,7 +47,7 @@ To access the Import dashboard tool from the Git Sync UI:
 1. Select **Import dashboard** and you'll be redirected to the wizard.
 1. Upload or paste the dashboard JSON.
 1. Fill in the relevant fields, including the branch and repository folder, and press **Import**.
-1. Open the pull request, follow your regular workflow, and merge. Note that it could take a few minutes until the imported dashboard appear.
+1. Open the pull request, follow your regular workflow, and merge. Note that it could take a few minutes until the imported dashboard appears.
 
 Keep in mind the following:
 
@@ -57,6 +55,12 @@ Keep in mind the following:
 - Two dashboards can share a title as long as they live at different paths in the repo. If a file with the same name already exists at the target path, the import is stopped before it overwrites anything.
 
 For more information refer to [Import dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/import-dashboards/) in the Data Visualization documentation.
+
+{{< admonition type="note" >}}
+
+It may take a few minutes for your changes to reflect on your screen. If they don't, refresh the UI manually.
+
+{{< /admonition >}}
 
 ## Copy an existing dashboard from the Grafana UI
 

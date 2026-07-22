@@ -78,8 +78,8 @@ func convertSQLite3URL(dsn string) (string, error) {
 		value := values[0]
 		switch mapped {
 		case "_pragma":
-			value = strings.TrimPrefix(value, "_")
-			q.Add("_pragma", fmt.Sprintf("%s(%s)", key, value))
+			pragma := strings.TrimPrefix(key, "_")
+			q.Add("_pragma", fmt.Sprintf("%s(%s)", pragma, value))
 		case "_txlock":
 			q.Set("_txlock", value)
 		case "_time_format":

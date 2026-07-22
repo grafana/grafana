@@ -1,18 +1,27 @@
-import type { PreferencesSpec } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import type { Preferences } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
 
-export const initPreferences = async () => {
+export const initPreferences = async (): Promise<Preferences | undefined> => {
   const preferences = await fetchMergedPreferences();
   if (!preferences) {
-    return;
+    return undefined;
   }
+  // URL prefs take precedence over saved preferences, matching the backend's
+  // getURLPrefs behavior used when the flag is disabled.
+  const params = new URLSearchParams(window.location.search);
+  const themeParam = params.get('theme');
+  const langParam = params.get('lang');
+
   const { theme, language, weekStart, timezone } = preferences.spec;
-  if (theme !== undefined) {
-    window.grafanaBootData.user.theme = theme;
-    applyTheme(theme);
+  const themeWithOverride = themeParam ?? theme;
+  const languageWithOverride = langParam ?? language;
+
+  if (themeWithOverride !== undefined) {
+    window.grafanaBootData.user.theme = themeWithOverride;
+    applyTheme(themeWithOverride);
   }
-  if (language !== undefined) {
-    window.grafanaBootData.user.language = language;
-    document.documentElement.lang = language;
+  if (languageWithOverride !== undefined) {
+    window.grafanaBootData.user.language = languageWithOverride;
+    document.documentElement.lang = languageWithOverride;
   }
   if (weekStart !== undefined) {
     window.grafanaBootData.user.weekStart = weekStart;
@@ -20,9 +29,13 @@ export const initPreferences = async () => {
   if (timezone !== undefined) {
     window.grafanaBootData.user.timezone = timezone;
   }
+
+  // Return the fetched preferences so the app boot can seed the RTK Query cache,
+  // avoiding a duplicate preferences/merged request from useMergedPreferencesQuery.
+  return preferences;
 };
 
-export async function fetchMergedPreferences(): Promise<{ spec: PreferencesSpec } | undefined> {
+export async function fetchMergedPreferences(): Promise<Preferences | undefined> {
   const namespace = window.grafanaBootData?.settings?.namespace;
   const isSignedIn = window.grafanaBootData?.user?.isSignedIn;
 

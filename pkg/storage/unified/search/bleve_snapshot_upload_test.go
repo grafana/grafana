@@ -23,7 +23,7 @@ func newUploadTestIndex(t *testing.T, be *bleveBackend, key resource.NamespacedR
 	resourceDir := be.getResourceDir(key)
 	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
 
-	idx, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil)
+	idx, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil, "")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = idx.Close() })
 
@@ -40,7 +40,7 @@ func newCachedUploadTestIndex(t *testing.T, be *bleveBackend, key resource.Names
 	resourceDir := be.getResourceDir(key)
 	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
 
-	idx, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil)
+	idx, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil, "")
 	require.NoError(t, err)
 
 	require.NoError(t, idx.Index("dash-1", map[string]string{"title": "Production Overview"}))
@@ -89,6 +89,9 @@ func TestUploadSnapshot_Success(t *testing.T) {
 	assert.Equal(t, int64(42), uploadedMeta.LatestResourceVersion)
 	assert.Equal(t, be.opts.BuildVersion, uploadedMeta.BuildVersion)
 	assert.NotZero(t, uploadedMeta.IndexFormat)
+	// The test index holds a single document; DocCount is recorded for
+	// debugging only, but verify it reflects the index contents.
+	assert.Equal(t, uint64(1), uploadedMeta.DocCount)
 	assert.Equal(t, be.opts.BuildVersion, store.getLastLockBuildVersion())
 	// BuildTime must be populated from the index's internal build
 	// info (set by newBleveIndex), not left zero. Compare with second-level
@@ -122,6 +125,7 @@ func TestUploadSnapshot_PreservesOriginalBuildStartTime(t *testing.T) {
 		originalBuildTime,
 		be.opts.BuildVersion,
 		nil,
+		"",
 	)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = index.Close() })

@@ -9,6 +9,7 @@ import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/sc
 import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
+import { useFlagGrafanaViewPanelPane } from '../../../../../packages/grafana-runtime/src/internal/openFeature/openfeature.gen';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
@@ -18,30 +19,31 @@ import { DashboardInteractions } from '../utils/interactions';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardCodePane } from './DashboardCodePane';
-import { type DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
-import { DashboardOutline } from './DashboardOutline';
 import { AddNewEditPane } from './add-new/AddNewEditPane';
-import { type DashboardSidebarPane } from './types';
+import { ToggleViewPanePaneEvent } from './events';
+import { DashboardOutline } from './outline/DashboardOutline';
+import { type DashboardEditPaneLike, type DashboardSidebarPane } from './types';
 
 export interface Props {
-  editPane: DashboardEditPane;
   dashboard: DashboardScene;
 }
 
 /**
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
-export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
+export function DashboardEditPaneRenderer({ dashboard }: Props) {
+  const editPane = dashboard.state.editPane;
   const { openPane, selectionContext, outlinePane } = useSceneObjectState(editPane, {
     shouldActivateOrKeepAlive: true,
   });
-  const { isEditing, meta, uid } = dashboard.useState();
+  const { isEditing, meta, uid, viewPanel } = dashboard.useState();
   const styles = useStyles2(getStyles, isEditing);
   const hasUid = Boolean(uid);
   const isEmbedded = meta.isEmbedded;
   const selectedObject = editPane.getSelectedObject();
   const sidebarContext = useSidebarContext();
+  const viewPanelPane = useFlagGrafanaViewPanelPane();
   const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
       editPane.closePane();
@@ -80,7 +82,6 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               data-testid={selectors.pages.Dashboard.Sidebar.addButton}
               active={openPane instanceof AddNewEditPane}
             />
-
             <Sidebar.Button
               icon="cog"
               onClick={() => editPane.selectObject(dashboard)}
@@ -138,13 +139,20 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
             data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
             active={openPane instanceof DashboardOutline}
           />
-          {config.featureToggles.dashboardNewLayouts &&
-            (config.featureToggles.dashboardFiltersOverview ||
-              config.featureToggles.dashboardUnifiedDrilldownControls) && (
-              <FiltersOverviewButton editPane={editPane} openPane={openPane} />
-            )}
+          {config.featureToggles.dashboardNewLayouts && config.featureToggles.dashboardUnifiedDrilldownControls && (
+            <FiltersOverviewButton editPane={editPane} openPane={openPane} />
+          )}
           {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
           {renderEnterpriseItems()}
+          {viewPanel && viewPanelPane && (
+            <Sidebar.Button
+              icon="layer-group"
+              onClick={() => editPane.publishEvent(new ToggleViewPanePaneEvent())}
+              title={t('dashboard.sidebar.view-panel.title', 'View panel controls')}
+              data-testid={selectors.pages.Dashboard.Sidebar.viewPanelControls}
+              active={openPane?.getId() === 'view-panel-pane'}
+            />
+          )}
           {Boolean(meta.isSnapshot) && (
             <Sidebar.Button
               data-testid="button-snapshot"
@@ -171,7 +179,7 @@ function FiltersOverviewButton({
   editPane,
   openPane,
 }: {
-  editPane: DashboardEditPane;
+  editPane: DashboardEditPaneLike;
   openPane: DashboardSidebarPane | undefined;
 }) {
   const variables: SceneVariable[] = sceneGraph.getVariables(editPane)?.useState().variables ?? [];

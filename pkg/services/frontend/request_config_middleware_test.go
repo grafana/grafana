@@ -14,11 +14,14 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	settingservice "github.com/grafana/grafana/pkg/services/setting"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
@@ -43,39 +46,10 @@ func setupTestContext(r *http.Request, namespace string) *http.Request {
 
 var openfeatureTestMutex sync.Mutex
 
-func enableSettingsOverridesToggle(t *testing.T) {
+func enableSourceFilterToggle(t *testing.T) {
 	t.Helper()
 	openfeatureTestMutex.Lock()
 
-	flag := memprovider.InMemoryFlag{
-		Key:            featuremgmt.FlagFrontendServiceUseSettingsService,
-		DefaultVariant: "on",
-		Variants:       map[string]any{"on": true, "off": false},
-	}
-
-	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagFrontendServiceUseSettingsService: flag,
-	})
-	require.NoError(t, err)
-
-	err = openfeature.SetProviderAndWait(provider)
-	require.NoError(t, err)
-
-	t.Cleanup(func() {
-		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
-		openfeatureTestMutex.Unlock()
-	})
-}
-
-func enableSettingsOverridesAndSourceFilterToggle(t *testing.T) {
-	t.Helper()
-	openfeatureTestMutex.Lock()
-
-	settingsFlag := memprovider.InMemoryFlag{
-		Key:            featuremgmt.FlagFrontendServiceUseSettingsService,
-		DefaultVariant: "on",
-		Variants:       map[string]any{"on": true, "off": false},
-	}
 	sourceFilterFlag := memprovider.InMemoryFlag{
 		Key:            featuremgmt.FlagFrontendServiceSettingsSourceFilter,
 		DefaultVariant: "on",
@@ -83,7 +57,6 @@ func enableSettingsOverridesAndSourceFilterToggle(t *testing.T) {
 	}
 
 	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagFrontendServiceUseSettingsService:   settingsFlag,
 		featuremgmt.FlagFrontendServiceSettingsSourceFilter: sourceFilterFlag,
 	})
 	require.NoError(t, err)
@@ -97,6 +70,45 @@ func enableSettingsOverridesAndSourceFilterToggle(t *testing.T) {
 	})
 }
 
+func enableReducedBootDataToggle(t *testing.T) {
+	t.Helper()
+	openfeatureTestMutex.Lock()
+
+	flag := memprovider.InMemoryFlag{
+		Key:            featuremgmt.FlagFrontendServiceReducedBootDataAPI,
+		DefaultVariant: "on",
+		Variants:       map[string]any{"on": true, "off": false},
+	}
+
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagFrontendServiceReducedBootDataAPI: flag,
+	})
+	require.NoError(t, err)
+
+	err = openfeature.SetProviderAndWait(provider)
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+		openfeatureTestMutex.Unlock()
+	})
+}
+
+// setupTestContextWithUser is like setupTestContext but attaches a SignedInUser,
+// which GetBaseFrontendSettings dereferences when the reduced boot data flag is enabled.
+func setupTestContextWithUser(r *http.Request, namespace string) *http.Request {
+	reqCtx := &contextmodel.ReqContext{
+		Context:      &web.Context{Req: r},
+		SignedInUser: &user.SignedInUser{},
+		Logger:       log.NewNopLogger(),
+	}
+	ctx := ctxkey.Set(r.Context(), reqCtx)
+	if namespace != "" {
+		ctx = request.WithNamespace(ctx, namespace)
+	}
+	return r.WithContext(ctx)
+}
+
 func TestRequestConfigMiddleware(t *testing.T) {
 	t.Run("should store base config in request context", func(t *testing.T) {
 		license := &licensing.OSSLicensingService{}
@@ -108,7 +120,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			AppURL:      "https://grafana.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(cfg, license, nil)
+		middleware := RequestConfigMiddleware(cfg, license, nil, nil)
 
 		var capturedConfig FSRequestConfig
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -142,7 +154,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			AppURL:      "https://grafana.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(cfg, license, nil)
+		middleware := RequestConfigMiddleware(cfg, license, nil, nil)
 
 		nextCalled := false
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -163,8 +175,6 @@ func TestRequestConfigMiddleware(t *testing.T) {
 	})
 
 	t.Run("should fetch and apply tenant overrides from settings service", func(t *testing.T) {
-		enableSettingsOverridesToggle(t)
-
 		// Create mock settings service that returns CSP overrides
 		mockSettingsService := &mockSettingsService{
 			settings: []*settingservice.Setting{
@@ -181,7 +191,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			AppURL:      "https://grafana.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService, nil)
 
 		var capturedConfig FSRequestConfig
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -217,8 +227,6 @@ func TestRequestConfigMiddleware(t *testing.T) {
 	})
 
 	t.Run("should fallback to base config on settings service error", func(t *testing.T) {
-		enableSettingsOverridesToggle(t)
-
 		// Create mock that returns an error
 		mockSettingsService := &mockSettingsService{
 			err: assert.AnError,
@@ -233,7 +241,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			AppURL:      "https://base.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService, nil)
 
 		var capturedConfig FSRequestConfig
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -268,8 +276,6 @@ func TestRequestConfigMiddleware(t *testing.T) {
 	})
 
 	t.Run("should not call settings service when no namespace is present", func(t *testing.T) {
-		enableSettingsOverridesToggle(t)
-
 		mockSettingsService := &mockSettingsService{}
 
 		license := &licensing.OSSLicensingService{}
@@ -279,7 +285,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			AppURL:   "https://base.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService, nil)
 
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
@@ -298,49 +304,8 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		assert.False(t, mockSettingsService.called)
 	})
 
-	t.Run("should not call settings service when feature toggle is disabled", func(t *testing.T) {
-		// No call to enableSettingsOverridesToggle - toggle defaults to off
-		mockSettingsService := &mockSettingsService{}
-
-		license := &licensing.OSSLicensingService{}
-		cfg := &setting.Cfg{
-			Raw:         ini.Empty(),
-			HTTPPort:    "1234",
-			CSPEnabled:  true,
-			CSPTemplate: "default-src 'self'; frame-ancestors $ALLOW_EMBEDDING_HOSTS",
-			AppURL:      "https://grafana.example.com",
-		}
-
-		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
-
-		var capturedConfig FSRequestConfig
-		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var err error
-			capturedConfig, err = FSRequestConfigFromContext(r.Context())
-			require.NoError(t, err)
-			w.WriteHeader(http.StatusOK)
-		})
-
-		handler := middleware(testHandler)
-
-		req := httptest.NewRequest("GET", "/", nil)
-		req = setupTestContext(req, "stacks-123")
-		recorder := httptest.NewRecorder()
-
-		handler.ServeHTTP(recorder, req)
-
-		assert.Equal(t, http.StatusOK, recorder.Code)
-
-		// Settings service should not be called when toggle is off
-		assert.False(t, mockSettingsService.called)
-
-		// Base config should be used unchanged
-		assert.True(t, capturedConfig.CSPEnabled)
-		assert.Equal(t, "default-src 'self'; frame-ancestors $ALLOW_EMBEDDING_HOSTS", capturedConfig.CSPTemplate)
-	})
-
 	t.Run("should include source filter in selector when source filter toggle is enabled", func(t *testing.T) {
-		enableSettingsOverridesAndSourceFilterToggle(t)
+		enableSourceFilterToggle(t)
 
 		mockSettingsService := &mockSettingsService{
 			settings: []*settingservice.Setting{},
@@ -353,7 +318,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			AppURL:   "https://grafana.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService, nil)
 
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
@@ -379,8 +344,6 @@ func TestRequestConfigMiddleware(t *testing.T) {
 	})
 
 	t.Run("should not include source filter in selector when source filter toggle is disabled", func(t *testing.T) {
-		enableSettingsOverridesToggle(t)
-
 		mockSettingsService := &mockSettingsService{
 			settings: []*settingservice.Setting{},
 		}
@@ -392,7 +355,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			AppURL:   "https://grafana.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService, nil)
 
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
@@ -411,6 +374,94 @@ func TestRequestConfigMiddleware(t *testing.T) {
 
 		// Verify the selector does NOT include a source=us filter (only 2 expressions)
 		require.Len(t, mockSettingsService.capturedSelector.MatchExpressions, 2)
+	})
+
+	t.Run("populates full frontend settings and namespace when reduced boot data flag is enabled", func(t *testing.T) {
+		enableReducedBootDataToggle(t)
+
+		license := &licensing.OSSLicensingService{}
+		cfg := setting.NewCfg()
+		cfg.AppURL = "https://grafana.example.com"
+
+		pluginsCDN := pluginscdn.ProvideService(&config.PluginManagementCfg{
+			PluginsCDNURLTemplate: "https://cdn.example.com",
+		})
+
+		middleware := RequestConfigMiddleware(cfg, license, nil, pluginsCDN)
+
+		var capturedConfig FSRequestConfig
+		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var err error
+			capturedConfig, err = FSRequestConfigFromContext(r.Context())
+			require.NoError(t, err)
+			w.WriteHeader(http.StatusOK)
+		})
+
+		handler := middleware(testHandler)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		req = setupTestContextWithUser(req, "stacks-123")
+		recorder := httptest.NewRecorder()
+
+		handler.ServeHTTP(recorder, req)
+
+		assert.Equal(t, http.StatusOK, recorder.Code)
+		require.NotNil(t, capturedConfig.FullFrontendSettings)
+		assert.Equal(t, "https://grafana.example.com", capturedConfig.FullFrontendSettings.AppUrl)
+		// Namespace is taken from the request baggage when the flag is enabled.
+		assert.Equal(t, "stacks-123", capturedConfig.FullFrontendSettings.Namespace)
+		// The plugins CDN base URL is sourced from the plugins CDN service.
+		assert.Equal(t, "https://cdn.example.com", capturedConfig.FullFrontendSettings.PluginsCDNBaseURL)
+	})
+
+	t.Run("merges the per-request OpenFeature evaluation context into the base context when the reduced boot data flag is enabled", func(t *testing.T) {
+		enableReducedBootDataToggle(t)
+
+		license := &licensing.OSSLicensingService{}
+		cfg := setting.NewCfg()
+		cfg.AppURL = "https://grafana.example.com"
+		// Base context attributes are configured globally and should be preserved.
+		cfg.OpenFeature.ContextAttrs = map[string]string{
+			"grafana_version": "12.0.0",
+			"hostname":        "base.example.com",
+		}
+
+		middleware := RequestConfigMiddleware(cfg, license, nil, nil)
+
+		var capturedConfig FSRequestConfig
+		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var err error
+			capturedConfig, err = FSRequestConfigFromContext(r.Context())
+			require.NoError(t, err)
+			w.WriteHeader(http.StatusOK)
+		})
+
+		handler := middleware(testHandler)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		req = setupTestContextWithUser(req, "stacks-123")
+
+		// Simulate the per-request evaluation context that the context middleware
+		// sets earlier in the chain.
+		evalCtx := openfeature.NewEvaluationContext("stacks-123", map[string]any{
+			"namespace": "stacks-123",
+			"hostname":  "foo.example.com",
+		})
+		req = req.WithContext(openfeature.MergeTransactionContext(req.Context(), evalCtx))
+
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, req)
+
+		assert.Equal(t, http.StatusOK, recorder.Code)
+		require.NotNil(t, capturedConfig.FullFrontendSettings)
+		assert.Equal(t, map[string]string{
+			// Preserved from the base context.
+			"grafana_version": "12.0.0",
+			// Per-request value overrides the base context value.
+			"hostname": "foo.example.com",
+			// Added by the per-request context.
+			"namespace": "stacks-123",
+		}, capturedConfig.FullFrontendSettings.OpenFeatureContext)
 	})
 }
 

@@ -28,11 +28,13 @@ import (
 	"github.com/grafana/authlib/authz"
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
+	"github.com/grafana/dskit/services"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/infra/log"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/usagestats"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
@@ -68,6 +70,7 @@ const defaultBookmarkFrequency = 10 * time.Second
 type ResourceServer interface {
 	SearchServer
 	resourcepb.ResourceStoreServer
+	resourcepb.ResourceStatsServer
 	resourcepb.BulkStoreServer
 	resourcepb.BlobStoreServer
 	resourcepb.QuotasServer
@@ -179,6 +182,14 @@ type StorageBackend interface {
 	// Get resource stats within the storage backend.  When namespace is empty, it will apply to all
 	GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error)
 
+	// ListStoredResources discovers which resource identities exist in storage,
+	// without returning counts. It is a cheaper alternative to GetResourceStats
+	// for callers that only need to know what is stored. The filter's Namespace
+	// is required; Group and Resource are optional (empty means no filter on that
+	// field). Results are discovery-only and may contain false positives: a
+	// returned identity may have no live objects by the time the caller queries it.
+	ListStoredResources(ctx context.Context, filter NamespacedResource) ([]NamespacedResource, error)
+
 	// GetResourceLastImportTimes returns import times for all namespaced resources in the backend.
 	GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error]
 }
@@ -272,8 +283,11 @@ type SearchOptions struct {
 	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
 	InjectFailuresPercent int
 
-	// Map "group/kind" -> list of selectable fields. Keys must be lower-case.
-	SelectableFieldsForKinds map[string][]string
+	// SearchFields holds the per-kind search-field wiring shared with the index
+	// backend. The search server reads the selectable fields and the definition
+	// hash from it and triggers a rebuild when either differs from the values
+	// stored in an index's IndexBuildInfo. May be nil.
+	SearchFields *SearchFieldsRegistry
 
 	// Index snapshot settings — enable downloading pre-built search indexes from object storage on startup.
 	// IndexSnapshotEnabled gates the entire snapshot feature.
@@ -306,6 +320,10 @@ type SearchOptions struct {
 	RateLimiter        vector.RateLimiter
 	RateLimitPerTenant int
 	RateLimitWindow    time.Duration
+
+	// Vector API collection allowlists: "group/resource" entries; empty allows nothing.
+	AllowedInternalCollections []string
+	AllowedExternalCollections []string
 }
 
 type ResourceServerOptions struct {
@@ -385,6 +403,11 @@ type ResourceServerOptions struct {
 	// reconciler's watch path lights up. The reconciler owns the
 	// backfiller and runs it. nil = reconciler feature off.
 	VectorReconciler BroadcasterConsumer
+
+	// UsageStatsEnabled turns on the usage stats ingestion path (RecordEvent /
+	// GetResourceDailyStats). It requires a KV-backed StorageBackend so the
+	// ingester can share its KV store and lease manager.
+	UsageStatsEnabled bool
 }
 
 // Runnable is anything the server can launch in a goroutine and that
@@ -550,6 +573,25 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		return nil, fmt.Errorf("overrides service requires search for quota checking")
 	}
 
+	if opts.UsageStatsEnabled {
+		kvBackend, ok := opts.Backend.(KVBackend)
+		if !ok {
+			return nil, fmt.Errorf("usage stats require a KV-backed storage backend")
+		}
+		// The flush loop relies on a lease to serialize the read-add-write per
+		// namespace; without one, concurrent flushes across pods would lose
+		// increments. NewIngester rejects a nil lease manager.
+		s.statsIngester, err = usagestats.NewIngester(usagestats.IngesterOptions{
+			Store:  usagestats.NewStore(kvBackend.KV()),
+			Leases: kvBackend.LeaseManager(),
+			Reg:    opts.Reg,
+			Log:    logger,
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return s, nil
 }
 
@@ -644,6 +686,10 @@ type server struct {
 	// joined in Stop via indexersWG.
 	vectorWriteReconciler BroadcasterConsumer
 	indexersWG            sync.WaitGroup
+
+	// statsIngester buffers and flushes usage stats events. nil when the
+	// usage stats feature is off or the backend is not KV-backed.
+	statsIngester *usagestats.Ingester
 }
 
 // Init implements ResourceServer.
@@ -669,6 +715,10 @@ func (s *server) Init(ctx context.Context) error {
 		// and Stop() joins them via indexersWG.
 		if s.initErr == nil {
 			s.startVectorIndexers()
+		}
+
+		if s.initErr == nil && s.statsIngester != nil {
+			s.initErr = services.StartAndAwaitRunning(s.ctx, s.statsIngester)
 		}
 
 		if s.initErr != nil {
@@ -749,6 +799,12 @@ func (s *server) Stop(ctx context.Context) error {
 	}
 
 	var stopFailed bool
+
+	if s.statsIngester != nil {
+		if err := services.StopAndAwaitTerminated(ctx, s.statsIngester); err != nil {
+			s.log.Warn("usage stats ingester failed to stop cleanly", "error", err)
+		}
+	}
 
 	if s.search != nil {
 		s.search.stop()
@@ -1375,6 +1431,90 @@ func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb
 	}, nil
 }
 
+func (s *server) checkStatsReadAccess(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey) error {
+	// must be able to read object in order to read its stats
+	rsp := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{Key: key})
+	if rsp.Error != nil {
+		if rsp.Error.Code == http.StatusNotFound {
+			return status.Error(codes.NotFound, rsp.Error.Message)
+		}
+		return status.Error(codes.Internal, rsp.Error.Message)
+	}
+
+	a, err := s.access.Check(ctx, user, claims.CheckRequest{
+		Verb:      "get",
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+		Name:      key.Name,
+	}, rsp.Folder)
+	if err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+	if !a.Allowed {
+		return status.Error(codes.PermissionDenied, "not allowed to access object stats")
+	}
+	return nil
+}
+
+func (s *server) RecordEvent(ctx context.Context, req *resourcepb.RecordEventRequest) (*resourcepb.RecordEventResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.server.RecordEvent")
+	defer span.End()
+
+	if s.statsIngester == nil {
+		return nil, status.Error(codes.Unimplemented, "usage stats are not enabled")
+	}
+
+	// deliberately require only that a caller identity is present, with
+	// no object-level authz. The client emits events for objects the user is
+	// already viewing (having passed a read check at the API layer), so the
+	// per-object permission was effectively enforced upstream.
+	if user, ok := claims.AuthInfoFrom(ctx); !ok || user == nil {
+		return nil, status.Error(codes.Unauthenticated, "no user found in context")
+	}
+	if r := verifyRequestKey(req.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
+	}
+
+	if err := s.statsIngester.RecordEvent(ctx, req.Key, req.Events); err != nil {
+		if errors.Is(err, usagestats.ErrInvalidEvent) {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &resourcepb.RecordEventResponse{}, nil
+}
+
+func (s *server) GetResourceDailyStats(req *resourcepb.GetResourceDailyStatsRequest, stream resourcepb.ResourceStats_GetResourceDailyStatsServer) error {
+	ctx, span := tracer.Start(stream.Context(), "resource.server.GetResourceDailyStats")
+	defer span.End()
+
+	if s.statsIngester == nil {
+		return status.Error(codes.Unimplemented, "usage stats are not enabled")
+	}
+
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return status.Error(codes.Unauthenticated, "no user found in context")
+	}
+	if r := verifyRequestKey(req.Key); r != nil {
+		return status.Error(codes.InvalidArgument, r.Message)
+	}
+	if err := s.checkStatsReadAccess(ctx, user, req.Key); err != nil {
+		return err
+	}
+
+	for day, err := range s.statsIngester.GetResourceDailyStats(ctx, req.Key, req.FromDay, req.ToDay) {
+		if err != nil {
+			return status.Error(codes.Internal, err.Error())
+		}
+		if err := stream.Send(day); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.List")
 	defer span.End()
@@ -1441,6 +1581,42 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	default:
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid list source: %v", req.Source))
 	}
+}
+
+// ListStoredResources implements the ResourceStore gRPC service by delegating
+// to the storage backend. A namespace is required.
+func (s *server) ListStoredResources(ctx context.Context, req *resourcepb.ListStoredResourcesRequest) (*resourcepb.ListStoredResourcesResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.server.ListStoredResources")
+	defer span.End()
+
+	if req.Namespace == "" {
+		return nil, status.Error(codes.InvalidArgument, "namespace is required")
+	}
+
+	if err := s.Init(ctx); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	stored, err := s.backend.ListStoredResources(ctx, NamespacedResource{
+		Namespace: req.Namespace,
+		Group:     req.Group,
+		Resource:  req.Resource,
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	rsp := &resourcepb.ListStoredResourcesResponse{
+		Items: make([]*resourcepb.ListStoredResourcesResponse_StoredResource, 0, len(stored)),
+	}
+	for _, r := range stored {
+		rsp.Items = append(rsp.Items, &resourcepb.ListStoredResourcesResponse_StoredResource{
+			Namespace: r.Namespace,
+			Group:     r.Group,
+			Resource:  r.Resource,
+		})
+	}
+	return rsp, nil
 }
 
 // listBackendFunc is the signature shared by ListIterator and ListHistory.
@@ -1633,6 +1809,16 @@ func (s *server) checkFolderAdmin(ctx context.Context, user claims.AuthInfo, fol
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
 	}, folder)
+	if err != nil {
+		// The error is swallowed (user treated as non-admin), so without this
+		// the failure is invisible. Record it as a degraded operation, tagging
+		// whether authz was unavailable vs. a logical error.
+		s.degraded(ctx, "folder_admin_check", classifyAuthError(err), NamespacedResource{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+		}, err)
+	}
 	isAdmin := err == nil && resp.Allowed
 	cache[folder] = isAdmin
 	return isAdmin
@@ -2257,6 +2443,10 @@ func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildInde
 }
 
 func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
+	if nsr.Namespace == "" {
+		return nil
+	}
+
 	span := trace.SpanFromContext(ctx)
 	span.AddEvent("checkQuota", trace.WithAttributes(
 		attribute.String("namespace", nsr.Namespace),
@@ -2271,7 +2461,7 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 
 	quota, err := s.overridesService.GetQuota(ctx, nsr)
 	if err != nil {
-		s.log.FromContext(ctx).Error("failed to get quota for resource", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
+		s.degraded(ctx, "check_quota", "get_quota_failed", nsr, err)
 		return nil
 	}
 
@@ -2280,11 +2470,11 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 		Kinds:     []string{nsr.GroupResource()},
 	})
 	if err != nil {
-		s.log.FromContext(ctx).Error("failed to get resource stats for quota checking", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
+		s.degraded(ctx, "check_quota", "get_stats_failed", nsr, err)
 		return nil
 	}
 	if statsRsp.Error != nil {
-		s.log.FromContext(ctx).Error("call to GetStats returned error", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", statsRsp.Error.Message)
+		s.degraded(ctx, "check_quota", "stats_error", nsr, errors.New(statsRsp.Error.Message))
 		return nil
 	}
 	stats := statsRsp.Stats
@@ -2307,6 +2497,54 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 	}
 
 	return nil
+}
+
+// degraded records that an operation proceeded despite a failed external
+// dependency, skipping a guard/check. Use this anywhere the server swallows an
+// external-call error and continues, so the degradation is alertable instead of
+// log-only.
+func (s *server) degraded(ctx context.Context, operation, reason string, nsr NamespacedResource, err error) {
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		s.log.FromContext(ctx).Debug("skipping degraded report: request context done",
+			"operation", operation, "reason", reason, "ctx_error", ctxErr, "error", err)
+		return
+	}
+	s.log.FromContext(ctx).Error("degraded operation: external dependency failed, guard skipped",
+		"operation", operation, "reason", reason,
+		"namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource,
+		"error", err)
+	if s.storageMetrics != nil {
+		s.storageMetrics.DegradedOperations.
+			WithLabelValues(operation, reason, nsr.Group, nsr.Resource).Inc()
+	}
+	if span := trace.SpanFromContext(ctx); span != nil {
+		span.AddEvent("degraded_operation", trace.WithAttributes(
+			attribute.String("operation", operation),
+			attribute.String("reason", reason),
+		))
+	}
+}
+
+// classifyAuthError maps an access-check error to a stable, low-cardinality
+// reason label so a downstream authz outage ("service unavailable") alerts
+// separately from a logical/decision error. Logical failures are returned
+// locally as typed sentinels before the remote call, while a down/slow service
+// surfaces as a gRPC transport status.
+func classifyAuthError(err error) string {
+	if err == nil {
+		return ""
+	}
+	if errors.Is(err, claims.ErrNamespaceMismatch) {
+		return "auth_namespace_mismatch"
+	}
+	switch status.Code(err) {
+	case codes.Unavailable, codes.DeadlineExceeded, codes.Canceled, codes.ResourceExhausted:
+		return "auth_unavailable"
+	case codes.Unauthenticated, codes.PermissionDenied, codes.InvalidArgument:
+		return "auth_rejected"
+	default:
+		return "auth_error"
+	}
 }
 
 // resourceVersionTime extracts the timestamp embedded in a resource version.

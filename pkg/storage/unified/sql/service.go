@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/dskit/netutil"
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
+	appsdk "github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/authz"
@@ -125,18 +126,19 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 	}
 	s.searchStandalone = true
 	if cfg.EnableSharding {
-		err := s.withRingLifecycle(memberlistKVConfig, httpServerRouter)
-		if err != nil {
+		if err := s.withRingLifecycle(memberlistKVConfig, httpServerRouter); err != nil {
 			return nil, err
-		}
-		err = s.initializeSubservicesManager()
-		if err != nil {
-			return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
 		}
 	}
 
+	// registerServer may add the manifest watcher to subservices, so it must run
+	// before the manager is built.
 	if err := s.registerServer(provider); err != nil {
 		return nil, err
+	}
+
+	if err := s.initializeSubservicesManager(); err != nil {
+		return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
 	}
 
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(modules.SearchServer)
@@ -193,12 +195,14 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 		s.subservices = append(s.subservices, s.queue, s.scheduler)
 	}
 
-	if err := s.initializeSubservicesManager(); err != nil {
-		return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
-	}
-
+	// registerServer may add the manifest watcher to subservices, so it must run
+	// before the manager is built.
 	if err := s.registerServer(provider); err != nil {
 		return nil, err
+	}
+
+	if err := s.initializeSubservicesManager(); err != nil {
+		return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
 	}
 
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(modules.StorageServer)
@@ -386,7 +390,7 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 
 	var snapshotStore search.RemoteIndexStore
 	if s.cfg.IndexSnapshotEnabled && s.cfg.IndexSnapshotStorageKV {
-		snapshotStore, err = buildKVSnapshotStore(s.cfg, s.backend, s.log)
+		snapshotStore, err = BuildKVSnapshotStore(s.cfg, s.backend, s.log)
 		if err != nil {
 			return err
 		}
@@ -395,6 +399,26 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.docBuilders, s.indexMetrics, s.OwnsIndex, snapshotStore)
 	if err != nil {
 		return err
+	}
+
+	// When configured, run the manifest watcher as a subservice. It reloads into
+	// the search registry that NewSearchOptions just created; registerServer runs
+	// before initializeSubservicesManager, so the watcher joins the manager and
+	// its initial poll completes before the index is built.
+	if registry := searchOptions.SearchFields; registry != nil {
+		if mwCfg := resource.NewManifestWatcherConfig(s.cfg); mwCfg != nil {
+			watcher, err := resource.NewManifestWatcher(*mwCfg, func(live []appsdk.Manifest) {
+				if err := resource.ApplyManifests(registry, resource.AppManifests(), live); err != nil {
+					s.log.Error("manifest reload failed, keeping current search fields", "error", err)
+					return
+				}
+				s.log.Info("manifest reload applied", "live_manifests", len(live))
+			})
+			if err != nil {
+				return err
+			}
+			s.subservices = append(s.subservices, watcher)
+		}
 	}
 
 	serverOptions := ServerOptions{
@@ -585,6 +609,7 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 	// so we get group/resource-labeled metrics for Read/Create/Update/Delete/List.
 	metricsInt := resource.UnaryRequestDurationInterceptor(s.storageMetrics)
 	srv.RegisterService(grpchan.InterceptServer(&resourcepb.ResourceStore_ServiceDesc, metricsInt, nil), handler)
+	resourcepb.RegisterResourceStatsServer(srv, handler)
 	resourcepb.RegisterBulkStoreServer(srv, handler)
 	resourcepb.RegisterBlobStoreServer(srv, handler)
 	resourcepb.RegisterDiagnosticsServer(srv, handler)
@@ -595,13 +620,18 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
 }
 
-// buildKVSnapshotStore wires a KVRemoteIndexStore that shares the KV
+// BuildKVSnapshotStore wires a KVRemoteIndexStore that shares the KV
 // store and lease manager with the storage backend. The caller is
 // responsible for ensuring cfg.IndexSnapshotStorageKV is true. This
 // function validates the remaining preconditions and fails loudly so
 // misconfiguration is caught at process start rather than at the first
 // snapshot operation.
-func buildKVSnapshotStore(cfg *setting.Cfg, backend resource.StorageBackend, logger log.Logger) (search.RemoteIndexStore, error) {
+//
+// Exported so wiring paths outside this package (notably the
+// unified-kv-grpc client in pkg/extensions/storage/unified/kv) can
+// reuse the same construction and validation when they build their
+// own search options.
+func BuildKVSnapshotStore(cfg *setting.Cfg, backend resource.StorageBackend, logger log.Logger) (search.RemoteIndexStore, error) {
 	if cfg.IndexSnapshotBucketURL != "" {
 		return nil, fmt.Errorf("index_snapshot_storage_kv and index_snapshot_bucket_url are mutually exclusive")
 	}
@@ -624,6 +654,7 @@ func buildKVSnapshotStore(cfg *setting.Cfg, backend resource.StorageBackend, log
 	store, err := search.NewKVRemoteIndexStore(search.KVRemoteIndexStoreConfig{
 		KV:               kvBackend.KV(),
 		LeaseManager:     leaseMgr,
+		ChunkSize:        int64(cfg.IndexSnapshotKVChunkSizeMiB) * 1024 * 1024,
 		ChunkConcurrency: cfg.IndexSnapshotKVChunkConcurrency,
 	})
 	if err != nil {

@@ -47,6 +47,18 @@ Updated using `yarn`:
 
 - `package.json`
 
+## Yarn
+
+The Yarn version is set in the `packageManager` field in `package.json` and the `yarnPath` setting in `.yarnrc.yml`. Several workspaces (built-in plugins, e2e test plugins, and some packages) pin their own Yarn version in their `package.json`. A constraint in `yarn.config.cjs` keeps them in sync with the root.
+
+To upgrade Yarn:
+
+1. Run `yarn set version <version>`. This updates `yarnPath` in `.yarnrc.yml`, adds the new release to `.yarn/releases/`, and updates the `packageManager` field in the root `package.json`.
+1. Run `yarn constraints --fix` to propagate the new version to the `packageManager` field of every workspace that pins its own Yarn version. Running `yarn constraints` without `--fix` reports any files that are out of sync.
+1. Check that the previous release file was removed from `.yarn/releases/`.
+1. Update any documentation that mentions the Yarn version.
+1. Run `yarn install` to verify the new version installs dependencies cleanly.
+
 ## Where to make changes
 
 ### Drone

@@ -9,6 +9,7 @@ import {
   getStackedItemsKey,
   getStackedQueryEditorType,
   isCurrentStackedItem,
+  isStackedItemHidden,
   parseStackedItemType,
   type StackedItem,
 } from './utils';
@@ -91,6 +92,31 @@ describe('isCurrentStackedItem', () => {
   it('returns false when no selection is provided', () => {
     expect(isCurrentStackedItem({ item: queryItem })).toBe(false);
     expect(isCurrentStackedItem({ item: transformationItem })).toBe(false);
+  });
+});
+
+describe('isStackedItemHidden', () => {
+  it('treats a query as hidden only when its hide flag is set', () => {
+    expect(isStackedItemHidden({ type: QueryEditorType.Query, id: 'A', query: queryA })).toBe(false);
+    expect(isStackedItemHidden({ type: QueryEditorType.Query, id: 'A', query: { ...queryA, hide: true } })).toBe(true);
+  });
+
+  it('treats an expression as hidden only when its hide flag is set', () => {
+    expect(isStackedItemHidden({ type: QueryEditorType.Expression, id: 'C', query: expressionQuery })).toBe(false);
+    expect(
+      isStackedItemHidden({ type: QueryEditorType.Expression, id: 'C', query: { ...expressionQuery, hide: true } })
+    ).toBe(true);
+  });
+
+  it('treats a transformation as hidden only when its config is disabled', () => {
+    expect(isStackedItemHidden({ type: QueryEditorType.Transformation, id: 'organize-0', transformation })).toBe(false);
+    expect(
+      isStackedItemHidden({
+        type: QueryEditorType.Transformation,
+        id: 'organize-0',
+        transformation: { ...transformation, transformConfig: { ...transformation.transformConfig, disabled: true } },
+      })
+    ).toBe(true);
   });
 });
 

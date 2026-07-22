@@ -82,6 +82,7 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withSearchClient,
 		withQuotaConfig,
 		withStorageMetrics,
+		withUsageStats,
 	)
 	if err != nil {
 		return nil, err
@@ -159,7 +160,9 @@ func withSecureValueService(opts *ServerOptions, resourceOpts *resource.Resource
 
 func withAccessClient(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	if opts.AccessClient != nil {
-		resourceOpts.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Registry: opts.Reg})
+		resourceOpts.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{
+			Registry: opts.Reg,
+		})
 	}
 	return nil
 }
@@ -185,6 +188,12 @@ func withMaxPageSizeBytes(opts *ServerOptions, resourceOpts *resource.ResourceSe
 	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
 	maxPageSizeBytes := unifiedStorageCfg.Key("max_page_size_bytes")
 	resourceOpts.MaxPageSizeBytes = maxPageSizeBytes.MustInt(0)
+	return nil
+}
+
+func withUsageStats(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
+	resourceOpts.UsageStatsEnabled = unifiedStorageCfg.Key("usage_stats_enabled").MustBool(false)
 	return nil
 }
 
@@ -268,6 +277,8 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 	resourceOpts.OwnsIndexFn = opts.OwnsIndexFn
 
 	if opts.VectorBackend != nil {
+		resourceOpts.Search.AllowedInternalCollections = opts.Cfg.VectorAllowedInternalCollections
+		resourceOpts.Search.AllowedExternalCollections = opts.Cfg.VectorAllowedExternalCollections
 		if opts.Cfg.VectorQueryCacheEnabled {
 			if cache, ok := opts.VectorBackend.(vector.QueryEmbeddingCache); ok {
 				resourceOpts.Search.QueryCache = cache

@@ -8,7 +8,6 @@ test.use({
     alertingListViewV2: true,
     alertingFilterV2: true,
     alertingSavedSearches: true,
-    dashboardNewLayouts: false,
   },
 });
 
@@ -19,7 +18,10 @@ test.use({
 const ui = {
   // Main elements
   savedSearchesButton: (page: Page) => page.getByRole('button', { name: /saved searches/i }),
-  dropdown: (page: Page) => page.getByRole('dialog', { name: /saved searches/i }),
+  // The popover that opens under the "Saved searches" button, listing/managing saved searches.
+  // Despite being styled/labelled "dropdown" in SavedSearches.tsx, it renders with role="dialog" —
+  // not a native dropdown/listbox/combobox — hence the role-matching name here.
+  savedSearchesDialog: (page: Page) => page.getByRole('dialog', { name: /saved searches/i }),
   searchInput: (page: Page) => page.getByTestId('search-query-input'),
 
   // Save functionality
@@ -27,8 +29,17 @@ const ui = {
   saveConfirmButton: (page: Page) => page.getByRole('button', { name: /^save$/i }),
   saveNameInput: (page: Page) => page.getByPlaceholder(/enter a name/i),
 
-  // Action menu
-  actionsButton: (page: Page) => page.getByRole('button', { name: /actions/i }),
+  // Action menu. Scoped through the dialog's own accessible list container
+  // (SavedSearches.tsx: role="list", aria-label "Saved searches list") down to the row of
+  // the given saved search — unscoped it matches every row's "Actions" button and becomes
+  // ambiguous once more than one saved search exists.
+  actionsButton: (page: Page, savedSearchName: string) =>
+    ui
+      .savedSearchesDialog(page)
+      .getByRole('list', { name: /saved searches list/i })
+      .getByRole('listitem')
+      .filter({ hasText: savedSearchName })
+      .getByRole('button', { name: /actions/i }),
   renameMenuItem: (page: Page) => page.getByText(/rename/i),
   deleteMenuItem: (page: Page) => page.getByText(/^delete$/i),
   setAsDefaultMenuItem: (page: Page) => page.getByText(/set as default/i),
@@ -108,7 +119,7 @@ test.describe(
     test('should open dropdown when clicking Saved searches button', async ({ page }) => {
       await ui.savedSearchesButton(page).click();
 
-      await expect(ui.dropdown(page)).toBeVisible();
+      await expect(ui.savedSearchesDialog(page)).toBeVisible();
     });
 
     test('should show empty state when no saved searches exist', async ({ page }) => {
@@ -212,7 +223,7 @@ test.describe(
       await ui.saveConfirmButton(page).click();
 
       // Open action menu and click rename
-      await ui.actionsButton(page).click();
+      await ui.actionsButton(page, 'Original Name').click();
       await ui.renameMenuItem(page).click();
 
       // Enter new name
@@ -242,7 +253,7 @@ test.describe(
       await expect(page.getByText('To Delete')).toBeVisible();
 
       // Open action menu and click delete
-      await ui.actionsButton(page).click();
+      await ui.actionsButton(page, 'To Delete').click();
       await ui.deleteMenuItem(page).click();
 
       // Confirm delete
@@ -265,7 +276,7 @@ test.describe(
       await ui.saveConfirmButton(page).click();
 
       // Set as default
-      await ui.actionsButton(page).click();
+      await ui.actionsButton(page, 'Default Test').click();
       await ui.setAsDefaultMenuItem(page).click();
 
       // Verify the star icon appears (indicating default)
@@ -275,11 +286,11 @@ test.describe(
     test('should close dropdown when pressing Escape', async ({ page }) => {
       await ui.savedSearchesButton(page).click();
 
-      await expect(ui.dropdown(page)).toBeVisible();
+      await expect(ui.savedSearchesDialog(page)).toBeVisible();
 
       await page.keyboard.press('Escape');
 
-      await expect(ui.dropdown(page)).not.toBeVisible();
+      await expect(ui.savedSearchesDialog(page)).not.toBeVisible();
     });
 
     test('should cancel save mode when pressing Escape', async ({ page }) => {
@@ -298,7 +309,7 @@ test.describe(
       await page.keyboard.press('Escape');
 
       // Verify the entire dialog is closed
-      await expect(ui.dropdown(page)).not.toBeVisible();
+      await expect(ui.savedSearchesDialog(page)).not.toBeVisible();
       await expect(ui.saveButton(page)).not.toBeVisible();
     });
   }

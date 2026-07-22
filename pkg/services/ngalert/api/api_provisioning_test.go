@@ -2084,9 +2084,8 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 }
 
 func TestApiNotificationPolicyExportSnapshot(t *testing.T) {
-	// These tests are focused on exports using featuremgmt.FlagAlertingMultiplePolicies.
+	// These tests are focused on exports of named notification policies.
 	env := createTestEnv(t, testConfig) // testConfig should be unused here, we're overriding the policy service.
-	env.features = featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
 
 	sut := createProvisioningSrvSutFromEnv(t, &env)
 	rev := legacy_storage.ConfigRevision{
@@ -2095,7 +2094,7 @@ func TestApiNotificationPolicyExportSnapshot(t *testing.T) {
 	p := newFakeNotificationPolicyService(rev)
 	sut.policies = p
 
-	policies := []string{legacy_storage.UserDefinedRoutingTreeName} //nolint:prealloc
+	policies := []string{models.DefaultRoutingTreeName} //nolint:prealloc
 	for policy := range policy_exports.Config().ManagedRoutes {
 		policies = append(policies, policy)
 	}
@@ -2152,9 +2151,9 @@ func TestApiGetSnapshots(t *testing.T) {
 	cfg.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(cfg.AlertmanagerConfig.Route, cfg.ManagedRoutes)
 
 	// Templates
-	t1 := v1.NewTemplateGroup("templateA", "{{ define \"templateA\" }}A{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
-	t2 := v1.NewTemplateGroup("templateB", "{{ define \"templateB\" }}B{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
-	t3 := v1.NewTemplateGroup("templateC", "{{ define \"templateC\" }}C{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
+	t1 := v1.NewTemplateGroup("", "templateA", "{{ define \"templateA\" }}A{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
+	t2 := v1.NewTemplateGroup("", "templateB", "{{ define \"templateB\" }}B{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
+	t3 := v1.NewTemplateGroup("", "templateC", "{{ define \"templateC\" }}C{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
 	cfg.Templates = map[v1.ResourceUID]v1.TemplateGroup{
 		t1.UID: t1,
 		t2.UID: t2,

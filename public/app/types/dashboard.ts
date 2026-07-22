@@ -108,6 +108,7 @@ export enum DashboardRoutes {
   Embedded = 'embedded-dashboard',
   Report = 'report-dashboard',
   AssistantPreview = 'assistant-preview',
+  Notebook = 'notebook',
 }
 
 export enum DashboardInitPhase {
@@ -118,7 +119,7 @@ export enum DashboardInitPhase {
   Completed = 'Completed',
 }
 
-export interface DashboardInitError {
+interface DashboardInitError {
   message: string;
   error: unknown;
 }

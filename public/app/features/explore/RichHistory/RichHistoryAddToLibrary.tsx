@@ -13,9 +13,10 @@ import { selectExploreDSMaps } from '../state/selectors';
 
 type Props = {
   query: DataQuery;
+  comment?: string;
 };
 
-export const RichHistoryAddToLibrary = ({ query }: Props) => {
+export const RichHistoryAddToLibrary = ({ query, comment }: Props) => {
   const [hasBeenSaved, setHasBeenSaved] = useState(false);
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
   const dispatch = useDispatch();
@@ -45,6 +46,7 @@ export const RichHistoryAddToLibrary = ({ query }: Props) => {
             query,
             onSelectQuery,
             options: {
+              description: comment,
               onSave: () => {
                 setHasBeenSaved(true);
               },

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -51,6 +52,7 @@ type gitRepository struct {
 	gitConfig     RepositoryConfig
 	client        nanogit.Client
 	writerOptions []nanogit.WriterOption
+	maxBytes      atomic.Int64
 }
 
 func NewRepository(
@@ -405,12 +407,22 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*reposi
 		return nil, fmt.Errorf("read blob: %w", mapNanogitError(err))
 	}
 
+	if max := r.maxBytes.Load(); max > 0 && int64(len(blob.Content)) > max {
+		return nil, apierrors.NewRequestEntityTooLargeError(
+			fmt.Sprintf("file %q is %d bytes; max allowed is %d bytes", filePath, len(blob.Content), max),
+		)
+	}
+
 	return &repository.FileInfo{
 		Path: filePath,
 		Ref:  ref,
 		Data: blob.Content,
 		Hash: blob.Hash.String(),
 	}, nil
+}
+
+func (r *gitRepository) WithMaxFileSize(maxBytes int64) {
+	r.maxBytes.Store(maxBytes)
 }
 
 func (r *gitRepository) ReadTree(ctx context.Context, ref string) ([]repository.FileTreeEntry, error) {
@@ -955,7 +967,8 @@ func (r *gitRepository) ensureBranchExists(ctx context.Context, branchName strin
 // createSignature creates author and committer signatures using the context signature if available,
 // falling back to default Grafana signature. The committer is overridden by
 // spec.commit.signerName/Email when set; that identity must match the signing
-// key for providers to mark commits as Verified.
+// key for providers to mark commits as Verified. The author is overridden by
+// the signer identity when spec.commit.signerIsAuthor is true.
 func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, nanogit.Committer) {
 	author := nanogit.Author{
 		Name:  "Grafana",
@@ -984,6 +997,10 @@ func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, na
 	if commit := r.config.Spec.Commit; commit != nil && (commit.SignerName != "" || commit.SignerEmail != "") {
 		committer.Name = cmp.Or(commit.SignerName, "Grafana")
 		committer.Email = cmp.Or(commit.SignerEmail, "noreply@grafana.com")
+		if commit.SignerIsAuthor {
+			author.Name = committer.Name
+			author.Email = committer.Email
+		}
 	}
 
 	return author, committer

@@ -25,8 +25,10 @@ export interface UseAutoSyncConfigurationResult {
   mimirCortexDatasources: Array<DataSourceSettings<AlertManagerDataSourceJsonData>>;
   selectedUid: string;
   setSelectedUid: (uid: string) => void;
-  save: () => Promise<void>;
-  disableSync: () => Promise<void>;
+  /** Persists the given UID (or the current selection). Resolves to true on success. */
+  save: (uidOverride?: string) => Promise<boolean>;
+  /** Clears the synced UID. Resolves to true on success. */
+  disableSync: () => Promise<boolean>;
   isPending: boolean;
   isLoading: boolean;
 }
@@ -92,7 +94,7 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
 
   const notify = useAppNotification();
 
-  const persist = async (uid: string) => {
+  const persist = async (uid: string): Promise<boolean> => {
     try {
       await updateConfiguration({
         external_alertmanager_uid: uid,
@@ -104,17 +106,19 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
           : t('alerting.settings.auto-sync.disable-success', 'Mimir Alertmanager auto-sync disabled')
       );
       setSelectedOverride(null);
+      return true;
     } catch (err) {
       // 409 means the operator-level ini key is authoritative for this org; the request will
       // never succeed via the UI, and the user needs to be told via the operator-managed state.
       if (isStatusCode(err, 409)) {
         setOperatorManagedUid(configuredUid || uid);
-        return;
+        return false;
       }
       notify.error(
         t('alerting.settings.auto-sync.save-error', 'Failed to save Mimir Alertmanager auto-sync'),
         stringifyErrorLike(err)
       );
+      return false;
     }
   };
 
@@ -123,7 +127,7 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
     mimirCortexDatasources,
     selectedUid,
     setSelectedUid: (uid: string) => setSelectedOverride(uid),
-    save: () => persist(selectedUid),
+    save: (uidOverride?: string) => persist(uidOverride ?? selectedUid),
     // Backend convention: empty string clears the configured UID.
     disableSync: () => persist(''),
     isPending: updateConfigurationState.isLoading,

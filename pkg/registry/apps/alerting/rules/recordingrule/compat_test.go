@@ -75,3 +75,36 @@ func TestConvertDeletedToK8sResources(t *testing.T) {
 	assert.Equal(t, rule.GUID, got.Name)
 	require.NotNil(t, got.DeletionTimestamp, "deleted rule should carry a deletion timestamp")
 }
+
+func TestPrometheusRuleDefinitionRoundTrip(t *testing.T) {
+	mapper := nsMapperForTest()
+	gen := ngmodels.RuleGen
+	const def = "record: job:errors:rate5m\nexpr: rate(errors[5m])\n"
+
+	t.Run("original definition survives a k8s round-trip", func(t *testing.T) {
+		rule := gen.With(gen.WithOrgID(1), gen.WithAllRecordingRules()).GenerateRef()
+		rule.Record.From = rule.Data[0].RefID // mark the single query as the source so the round-trip is valid
+		rule.Metadata.PrometheusStyleRule = &ngmodels.PrometheusStyleRule{OriginalRuleDefinition: def}
+
+		k8sRule, err := convertToK8sResource(1, rule, ngmodels.ProvenanceToManagerProperties(ngmodels.ProvenanceConvertedPrometheus), mapper)
+		require.NoError(t, err)
+
+		domainRule, _, err := convertToDomainModel(1, k8sRule)
+		require.NoError(t, err)
+		require.NotNil(t, domainRule.Metadata.PrometheusStyleRule)
+		assert.Equal(t, def, domainRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition)
+	})
+
+	t.Run("rule without an original definition stays without one", func(t *testing.T) {
+		rule := gen.With(gen.WithOrgID(1), gen.WithAllRecordingRules()).GenerateRef()
+		rule.Record.From = rule.Data[0].RefID
+		rule.Metadata.PrometheusStyleRule = nil
+
+		k8sRule, err := convertToK8sResource(1, rule, ngmodels.ProvenanceToManagerProperties(ngmodels.ProvenanceNone), mapper)
+		require.NoError(t, err)
+
+		domainRule, _, err := convertToDomainModel(1, k8sRule)
+		require.NoError(t, err)
+		assert.Nil(t, domainRule.Metadata.PrometheusStyleRule)
+	})
+}

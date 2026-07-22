@@ -8,11 +8,11 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { type DashboardScene } from '../../scene/DashboardScene';
 import {
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
+import { type DashboardSceneLike } from '../../scene/types/dashboard';
 
 import {
   LinkBooleanSwitch,
@@ -31,12 +31,12 @@ export function createDefaultLink(): DashboardLink {
   return { ...NEW_LINK, asDropdown: true };
 }
 
-function createLinkEdit(dashboard: DashboardScene, linkIndex: number): LinkEdit {
+function createLinkEdit(dashboard: DashboardSceneLike, linkIndex: number): LinkEdit {
   const selectionId = linkSelectionId(linkIndex);
   return new LinkEdit({ dashboardRef: dashboard.getRef(), linkIndex, key: selectionId });
 }
 
-export function openAddLinkPane(dashboard: DashboardScene) {
+export function openAddLinkPane(dashboard: DashboardSceneLike) {
   const newLink = createDefaultLink();
   const linkIndex = (dashboard.state.links ?? []).length;
   const element = createLinkEdit(dashboard, linkIndex);
@@ -48,13 +48,13 @@ export function linkSelectionId(linkIndex: number) {
   return `dashboard-link-${linkIndex}`;
 }
 
-export function openLinkEditPane(dashboard: DashboardScene, linkIndex: number) {
+export function openLinkEditPane(dashboard: DashboardSceneLike, linkIndex: number) {
   const element = createLinkEdit(dashboard, linkIndex);
   dashboard.state.editPane.selectObject(element, { force: true, multi: false });
 }
 
 export interface LinkEditState extends SceneObjectState {
-  dashboardRef: SceneObjectRef<DashboardScene>;
+  dashboardRef: SceneObjectRef<DashboardSceneLike>;
   linkIndex: number;
 }
 

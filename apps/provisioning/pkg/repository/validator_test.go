@@ -155,7 +155,7 @@ func TestValidator_Validate(t *testing.T) {
 			},
 		},
 		{
-			name: "githubEnterprise enabled when image rendering is not allowed",
+			name: "githubEnterprise previews enabled via pull request options when image rendering is not allowed",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
@@ -164,7 +164,8 @@ func TestValidator_Validate(t *testing.T) {
 					Spec: provisioning.RepositorySpec{
 						Title:            "Test Repo",
 						Type:             provisioning.GitHubEnterpriseRepositoryType,
-						GitHubEnterprise: &provisioning.GitHubEnterpriseRepositoryConfig{GenerateDashboardPreviews: true},
+						GitHubEnterprise: &provisioning.GitHubEnterpriseRepositoryConfig{},
+						PullRequest:      &provisioning.PullRequestOptions{GenerateDashboardPreviews: true},
 					},
 				}
 			}(),

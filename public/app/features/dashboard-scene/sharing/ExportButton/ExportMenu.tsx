@@ -2,8 +2,11 @@ import { useCallback, useContext, useMemo } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type IconName, Menu, ModalsContext } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
+import { isOnPrem } from 'app/core/utils/isOnPrem';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
@@ -54,8 +57,21 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
       testId: newExportButtonSelector.exportAsImage,
       icon: 'camera',
       label: t('share-dashboard.menu.export-image-title', 'Export as image'),
-      renderCondition: Boolean(config.featureToggles.sharingDashboardImage),
+      renderCondition: true,
       onClick: () => onMenuItemClick(shareDashboardType.image),
+    });
+
+    // Whole-dashboard diagnostics: admin-only, on-prem-only, gated on the on-demand diagnostics flag
+    // (matches the per-panel entry in PanelMenuBehavior). No panelRef -> dashboard-scoped share view.
+    menuItems.push({
+      shareId: shareDashboardType.downloadDiagnostics,
+      icon: 'download-alt',
+      label: t('dashboard.toolbar.new.export.download-diagnostics', 'Download diagnostics'),
+      renderCondition:
+        isOnPrem() &&
+        contextSrv.isGrafanaAdmin &&
+        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaOnDemandDiagnostics, false),
+      onClick: () => onMenuItemClick(shareDashboardType.downloadDiagnostics),
     });
 
     return menuItems.filter((item) => item.renderCondition);

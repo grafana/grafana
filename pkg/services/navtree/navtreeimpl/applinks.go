@@ -9,13 +9,25 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+// The Knowledge Graph's version of the "Application" page.
+const assertsServicesPath = "/a/grafana-asserts-app/services"
+const appObservabilityAppID = "grafana-app-observability-app"
+const assistantAppID = "grafana-assistant-app"
+const assistantOnboardingAppID = "grafana-assistant-onboarding-app"
+const assistantAppHomePath = "/a/" + assistantAppID
+
+var assistantOSSNavigationPaths = map[string]struct{}{
+	assistantAppHomePath:                 {},
+	"/a/grafana-assistant-app/workspace": {},
+	"/a/grafana-assistant-app/settings":  {},
+}
 
 func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) error {
 	hasAccess := ac.HasAccess(s.accessControl, c)
@@ -39,10 +51,19 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 	}
 
 	enabledAccessibleAppPluginMap := make(map[string]*pluginstore.Plugin)
+	assistantAppEnabled := false
+	assistantOnboardingAppEnabled := false
 
 	for _, plugin := range s.pluginStore.Plugins(c.Req.Context(), plugins.TypeApp) {
 		if !isPluginEnabled(plugin) {
 			continue
+		}
+
+		switch plugin.ID {
+		case assistantAppID:
+			assistantAppEnabled = true
+		case assistantOnboardingAppID:
+			assistantOnboardingAppEnabled = true
 		}
 
 		if !hasAccess(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginaccesscontrol.ScopeProvider.GetResourceScope(plugin.ID))) {
@@ -55,11 +76,40 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 		}
 	}
 
+	if assistantOnboardingAppEnabled && !assistantAppEnabled {
+		treeRoot.AddSection(&navtree.NavLink{
+			Text:       "Assistant",
+			Id:         "plugin-page-" + assistantAppID,
+			SubTitle:   "AI-powered assistant for Grafana",
+			Icon:       "ai-sparkle",
+			SortWeight: navtree.WeightAssistant,
+			IsSection:  true,
+			PluginID:   assistantAppID,
+			Url:        s.cfg.AppSubURL + "/a/" + assistantAppID,
+		})
+	}
+
 	if adaptiveTelemetryPlugin := enabledAccessibleAppPluginMap["grafana-adaptivetelemetry-app"]; adaptiveTelemetryPlugin != nil {
 		if adaptiveTelemetrySection := treeRoot.FindById(navtree.NavIDAdaptiveTelemetry); adaptiveTelemetrySection != nil {
 			// If the adaptivetelemetry app is enabled, and the adaptiveTelemetrySection exists, then update the section to point to the plugin
 			adaptiveTelemetrySection.Url = s.cfg.AppSubURL + "/a/" + adaptiveTelemetryPlugin.ID
 			adaptiveTelemetrySection.PluginID = adaptiveTelemetryPlugin.ID
+		}
+	}
+
+	// When the App Observability plugin is present it owns the "Application" entry
+	// in the Observability section, so hide the equivalent asserts "Application" page.
+	if treeRoot.FindById("plugin-page-"+appObservabilityAppID) != nil {
+		if obsSection := treeRoot.FindById(navtree.NavIDObservability); obsSection != nil {
+			assertsApplicationsURL := s.cfg.AppSubURL + assertsServicesPath
+			children := make([]*navtree.NavLink, 0, len(obsSection.Children))
+			for _, child := range obsSection.Children {
+				if child.Url == assertsApplicationsURL {
+					continue
+				}
+				children = append(children, child)
+			}
+			obsSection.Children = children
 		}
 	}
 
@@ -73,7 +123,33 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 		treeRoot.AddSection(appLink)
 	}
 
+	s.nestMaintenanceWindowsUnderSLO(treeRoot)
+
 	return nil
+}
+
+func (s *ServiceImpl) nestMaintenanceWindowsUnderSLO(treeRoot *navtree.NavTreeRoot) {
+	const sloPluginID = "grafana-slo-app"
+	const mwPluginID = "grafana-maintenancewindows-app"
+
+	sloNode := treeRoot.FindById("plugin-page-" + sloPluginID)
+	mwNode := treeRoot.FindById("plugin-page-" + mwPluginID)
+	if sloNode == nil || mwNode == nil {
+		return
+	}
+
+	treeRoot.RemoveSectionByID(mwNode.Id)
+
+	mwNode.Id = "standalone-plugin-page-" + mwPluginID
+	mwNode.IsNew = true
+	// Reset the standalone app's plugin SortWeight so it falls back to its
+	// appended position and sorts last among SLO's child pages.
+	mwNode.SortWeight = 0
+	sloNode.Children = append(sloNode.Children, mwNode)
+
+	if appsNode := treeRoot.FindById(navtree.NavIDApps); appsNode != nil && len(appsNode.Children) == 0 {
+		treeRoot.RemoveSectionByID(navtree.NavIDApps)
+	}
 }
 
 // shouldIncludeInvestigations checks if the investigations feature should be included for the assistant app
@@ -107,6 +183,7 @@ func (s *ServiceImpl) shouldIncludeInvestigations(plugin pluginstore.Plugin, inc
 
 func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
 	hasAccessToInclude := s.hasAccessToInclude(c, plugin.ID)
+	assistantTrialMode := s.isAssistantTrialMode(plugin, c)
 	appLink := &navtree.NavLink{
 		Text:       plugin.Name,
 		Id:         "plugin-page-" + plugin.ID,
@@ -120,6 +197,10 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 
 	for _, include := range plugin.Includes {
 		if !hasAccessToInclude(include) {
+			continue
+		}
+
+		if !s.shouldIncludeAssistantNavigation(plugin, include, assistantTrialMode) {
 			continue
 		}
 
@@ -230,6 +311,38 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 	return nil
 }
 
+func (s *ServiceImpl) isAssistantTrialMode(plugin pluginstore.Plugin, c *contextmodel.ReqContext) bool {
+	if plugin.ID != assistantAppID {
+		return false
+	}
+
+	ps, err := s.pluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &pluginsettings.GetByPluginIDArgs{
+		PluginID: plugin.ID,
+		OrgID:    c.GetOrgID(),
+	})
+	if err != nil {
+		return false
+	}
+
+	trialMode, ok := ps.JSONData["trialMode"].(bool)
+	return ok && trialMode
+}
+
+func (s *ServiceImpl) shouldIncludeAssistantNavigation(plugin pluginstore.Plugin, include *plugins.Includes, trialMode bool) bool {
+	if plugin.ID != assistantAppID {
+		return true
+	}
+	if trialMode {
+		return include.Path == assistantAppHomePath
+	}
+	if s.cfg.IsEnterprise || s.cfg.StackID != "" {
+		return true
+	}
+
+	_, allowed := assistantOSSNavigationPaths[include.Path]
+	return allowed
+}
+
 func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot, plugin pluginstore.Plugin, appLink *navtree.NavLink) {
 	// Handle moving apps into specific navtree sections
 	var alertingNodes []*navtree.NavLink
@@ -260,13 +373,21 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 	sectionChildren := []*navtree.NavLink{appLink}
 	// asserts pages expand to root Observability section instead of it's own node
 	if plugin.ID == "grafana-asserts-app" {
-		sectionChildren = appLink.Children
+		servicesURL := s.cfg.AppSubURL + assertsServicesPath
 
-		// keep current sorting if the pages, but above all the other apps
-		for _, child := range sectionChildren {
-			child.SortWeight = -100 + child.SortWeight
+		for _, child := range appLink.Children {
+			if child.Url == servicesURL {
+				// Place the asserts Application page in the same slot as the App Observability
+				// "Application" page, so it lands right after Frontend. Only one of the two is
+				// ever shown.
+				child.SortWeight = s.navigationAppConfig[appObservabilityAppID].SortWeight
+			} else {
+				// keep current sorting of the pages, but above all the other apps
+				child.SortWeight = -100 + child.SortWeight
+			}
 			child.Id = "standalone-plugin-page-" + strings.ReplaceAll(strings.ToLower(child.Text), " ", "-")
 		}
+		sectionChildren = appLink.Children
 	}
 
 	if sectionID == navtree.NavIDRoot {
@@ -370,10 +491,11 @@ func (s *ServiceImpl) hasAccessToInclude(c *contextmodel.ReqContext, pluginID st
 
 func (s *ServiceImpl) readNavigationSettings() {
 	s.navigationAppConfig = map[string]NavigationAppConfig{
-		"grafana-sigil-app":                {SectionID: navtree.NavIDObservability, SortWeight: 1, Text: "AI", IsNew: true},
+		"grafana-sigil-app":                {SectionID: navtree.NavIDObservability, SortWeight: 1, Text: "AI", IsNew: true}, // TODO: remove this after sigil is renamed to grafana-agento11y-app, but we need to keep it for now to avoid breaking changes
+		"grafana-agento11y-app":            {SectionID: navtree.NavIDObservability, SortWeight: 1, Text: "Agent", IsNew: true},
 		"grafana-asserts-app":              {SectionID: navtree.NavIDObservability, SortWeight: 2, Icon: "asserts"},
 		"grafana-kowalski-app":             {SectionID: navtree.NavIDObservability, SortWeight: 3, Text: "Frontend"},
-		"grafana-app-observability-app":    {SectionID: navtree.NavIDObservability, SortWeight: 4, Text: "Application"},
+		appObservabilityAppID:              {SectionID: navtree.NavIDObservability, SortWeight: 4, Text: "Application"},
 		"grafana-dbo11y-app":               {SectionID: navtree.NavIDObservability, SortWeight: 5, Text: "Database", IsNew: true},
 		"grafana-k8s-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 6, Text: "Kubernetes"},
 		"grafana-csp-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 7, Icon: "cloud-provider"},
@@ -400,15 +522,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-adaptiveprofiles-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 4},
 		"grafana-cmab-app":                 {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightCMAB, Icon: "cmab-logo", IsNew: true},
 		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApps + 1, Text: "Connections", Icon: "adjust-circle"},
-	}
-
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) {
-		s.navigationAppConfig["grafana-advisor-app"] = NavigationAppConfig{
-			SectionID: navtree.NavIDCfg,
-			Text:      "Advisor",
-			SubTitle:  "Run checks and get suggestions to fix issues",
-		}
+		"grafana-advisor-app":              {SectionID: navtree.NavIDCfg, Text: "Advisor", SubTitle: "Run checks and get suggestions to fix issues"},
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{

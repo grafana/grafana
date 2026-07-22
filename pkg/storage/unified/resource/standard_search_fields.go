@@ -7,9 +7,9 @@ package resource
 // Not every standard field appears here. Fields excluded:
 //
 //   - Pseudo / wire-only columns (_id, _legacy_id, _score, _explain,
-//     _all_columns, rv, kind, namespace, group/resource, created): they exist
-//     solely to populate ResourceTable column metadata in the gRPC response
-//     and are not indexed.
+//     _all_columns, rv, kind, namespace, group/resource): they exist solely
+//     to populate ResourceTable column metadata in the gRPC response and are
+//     not indexed.
 //   - Sub-document fields under "manager." and "source.": nested documents
 //     whose bleve mappings are emitted hardcoded.
 //   - Fields under "labels." and "reference.": open key sets, served by
@@ -19,7 +19,7 @@ func StandardSearchFieldDefinitions() []SearchFieldDefinition {
 		{
 			Name:         SEARCH_FIELD_NAME,
 			Type:         SearchFieldTypeString,
-			Capabilities: []SearchCapability{SearchCapabilityFilter},
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilitySort},
 			Description:  "Kubernetes name. Unique identifier within a namespace+group+resource.",
 		},
 		{
@@ -50,7 +50,7 @@ func StandardSearchFieldDefinitions() []SearchFieldDefinition {
 			Name:         SEARCH_FIELD_TAGS,
 			Type:         SearchFieldTypeString,
 			Array:        true,
-			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityFacet, SearchCapabilityRetrieve},
 			Description:  "Unique tags.",
 		},
 		{
@@ -81,6 +81,24 @@ func StandardSearchFieldDefinitions() []SearchFieldDefinition {
 			Type:         SearchFieldTypeString,
 			Capabilities: []SearchCapability{SearchCapabilityFacet},
 			Description:  "Manager identity in format {kind}:{id}; used for faceting.",
+		},
+		// created and updated are unix-millis timestamps, mapped as numeric bleve
+		// fields and stored so retrieve returns the value in search results. They
+		// are retrieve-only: filtering would need range queries, which the search
+		// API does not support (and exact-millisecond equality is not a useful
+		// query), and sort would first require every index to carry the numeric
+		// mapping.
+		{
+			Name:         SEARCH_FIELD_CREATED,
+			Type:         SearchFieldTypeInt64,
+			Capabilities: []SearchCapability{SearchCapabilityRetrieve},
+			Description:  "Creation timestamp (unix millis).",
+		},
+		{
+			Name:         SEARCH_FIELD_UPDATED,
+			Type:         SearchFieldTypeInt64,
+			Capabilities: []SearchCapability{SearchCapabilityRetrieve},
+			Description:  "Update timestamp (unix millis).",
 		},
 	}
 }

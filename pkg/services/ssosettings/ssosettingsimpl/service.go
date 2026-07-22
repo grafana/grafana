@@ -11,11 +11,15 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -31,6 +35,8 @@ import (
 )
 
 var _ ssosettings.Service = (*Service)(nil)
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl")
 
 type Service struct {
 	logger           log.Logger
@@ -55,8 +61,25 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	usageStats usagestats.Service, registerer prometheus.Registerer,
 	settingsProvider setting.Provider, licensing licensing.Licensing,
 ) *Service {
+	logger := log.New("ssosettings.service")
+
+	// ProvideService cannot return an error: a broken MT-Settings client
+	// configuration leaves the strategies without a client, and they fail
+	// loudly on read while the legacy strategies keep serving when the
+	// ssoSettingsToMTSettings toggle is off.
+	mtSettingsClient, err := newMTSettingsClient(cfg, registerer)
+	if err != nil {
+		logger.Error("Failed to initialize the MT-Settings client", "error", err)
+	}
+
+	// Each provider family pairs an MT-Settings adapter with its legacy
+	// strategy. The adapter sits first: while the ssoSettingsToMTSettings
+	// feature toggle is enabled it wins the match for its family, otherwise
+	// it matches nothing and the legacy strategy behaves as before.
 	fbStrategies := []ssosettings.FallbackStrategy{
+		strategies.NewMTSettingsOAuthStrategy(mtSettingsClient),
 		strategies.NewOAuthStrategy(cfg),
+		strategies.NewMTSettingsLDAPStrategy(mtSettingsClient),
 		strategies.NewLDAPStrategy(cfg),
 	}
 
@@ -70,7 +93,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	configurableProviders[social.LDAPProviderName] = true
 
 	if licensing.FeatureEnabled(social.SAMLProviderName) {
-		fbStrategies = append(fbStrategies, strategies.NewSAMLStrategy(settingsProvider))
+		fbStrategies = append(fbStrategies, strategies.NewMTSettingsSAMLStrategy(mtSettingsClient), strategies.NewSAMLStrategy(settingsProvider))
 		providersList = append(providersList, social.SAMLProviderName)
 		configurableProviders[social.SAMLProviderName] = true
 	}
@@ -78,7 +101,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	store := database.ProvideStore(sqlStore)
 
 	svc := &Service{
-		logger:                log.New("ssosettings.service"),
+		logger:                logger,
 		cfg:                   cfg,
 		store:                 store,
 		ac:                    ac,
@@ -378,14 +401,19 @@ func (s *Service) RegisterFallbackStrategy(providerRegex string, strategy ssoset
 }
 
 func (s *Service) loadSettingsUsingFallbackStrategy(ctx context.Context, provider string) (*models.SSOSettings, error) {
-	loadStrategy, ok := s.getFallbackStrategyFor(provider)
+	ctx, span := tracer.Start(ctx, "ssosettings.Service.loadSettingsUsingFallbackStrategy",
+		trace.WithAttributes(attribute.String("provider", provider)))
+	defer span.End()
+
+	loadStrategy, ok := s.getFallbackStrategyFor(ctx, provider)
 	if !ok {
-		return nil, errors.New("no fallback strategy found for provider: " + provider)
+		return nil, tracing.Errorf(span, "no fallback strategy found for provider: %s", provider)
 	}
+	span.SetAttributes(attribute.String("strategy", fmt.Sprintf("%T", loadStrategy)))
 
 	settingsFromSystem, err := loadStrategy.GetProviderConfig(ctx, provider)
 	if err != nil {
-		return nil, err
+		return nil, tracing.Error(span, err)
 	}
 
 	return &models.SSOSettings{
@@ -404,9 +432,9 @@ func getSettingByProvider(provider string, settings []*models.SSOSettings) *mode
 	return nil
 }
 
-func (s *Service) getFallbackStrategyFor(provider string) (ssosettings.FallbackStrategy, bool) {
+func (s *Service) getFallbackStrategyFor(ctx context.Context, provider string) (ssosettings.FallbackStrategy, bool) {
 	for _, strategy := range s.fbStrategies {
-		if strategy.IsMatch(provider) {
+		if strategy.IsMatch(ctx, provider) {
 			return strategy, true
 		}
 	}

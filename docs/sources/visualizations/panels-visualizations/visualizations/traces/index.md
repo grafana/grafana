@@ -182,19 +182,14 @@ You should now see a list of matching traces in the table visualization. While s
 
 The **Span filters** options control the initial state of the span filters when the visualization loads, allowing you to customize your trace analysis view.
 
-The following options support variable interpolation, where you can set the service name to a variable `$var` and the visualization will replace it with the value for the variable named `$var` in the span filters: **Service name**, **Span name**, **Min duration**, **Max duration**, and **Tags**.
-
 <!-- prettier-ignore-start -->
 
 | Option | Description |
 | ------ | ----------- |
-| Find in trace | Set the initial value to focus on spans relevant to your query. |
+| Filters | <p>Add free-form filters that set the initial span filter state. Use **Text search** for text queries, `duration` for duration filters, or span attributes such as `service.name` and `span.name`.</p><p>Supports variable interpolation. For example, you can set a filter value to `$var`, and the visualization replaces it with the value for the dashboard variable named `$var`.</p> |
 | Show matches only | Toggle the switch on to display only spans that match the defined filter criteria. This helps simplify trace interpretation. |
-| Show critical path only | Toggle the switch on to highlight only the spans in the critical path, which helps identify performance bottlenecks and their impact on overall latency. |
-| Service name | Along with the **Service name operator**, define a specific service or pattern to narrow analysis to spans related to particular services. |
-| Span name | Along with the **Span name operator**, filter spans by name or pattern to focus on specific span types or processes. |
-| Min duration | Set the minimum duration threshold to exclude spans outside the desired time range. |
-| Max duration | Set the maximum duration threshold to exclude spans outside the desired time range. |
-| Tags | Add one or more tags to further refine the filtering criteria so only relevant spans are displayed. |
+| Select critical path | Toggle the switch on to highlight spans in the critical path, which helps identify performance bottlenecks and their impact on overall latency. |
 
 <!-- prettier-ignore-end -->
+
+Duration filters use the `duration` key with operators such as `=`, `>=`, `<=`, `>`, and `<`. In the visualization, users can toggle **Show all spans** to switch from the filtered view back to all spans.

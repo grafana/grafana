@@ -7,6 +7,8 @@ export type WizardStep = 'authType' | 'githubApp' | 'connection' | 'bootstrap' |
 
 export type RepoType = RepositorySpec['type'];
 
+export type GitHubBasedConnectionType = 'github' | 'githubEnterprise';
+
 export type GitHubAuthType = 'pat' | 'github-app';
 
 export type GitHubAppMode = 'existing' | 'new';
@@ -52,8 +54,8 @@ export type StepStatusInfo =
   | { status: 'idle' | 'running' }
   | { status: 'success'; success?: string | StatusInfo }
   | { status: 'error'; error: string | StatusInfo; warning?: string | StatusInfo; action?: AlertAction }
-  | { status: 'warning'; warning: string | StatusInfo };
+  | { status: 'warning'; warning: string | StatusInfo; action?: AlertAction };
 
 export type ConnectionCreationResult = { success: true; connectionName: string } | { success: false; error: string };
 
-export type InstructionAvailability = Extract<RepoType, 'bitbucket' | 'gitlab' | 'github'>;
+export type InstructionAvailability = Extract<RepoType, 'bitbucket' | 'gitlab' | 'github' | 'githubEnterprise'>;

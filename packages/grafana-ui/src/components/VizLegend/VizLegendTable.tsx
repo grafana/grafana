@@ -34,6 +34,7 @@ export const VizLegendTable = <T extends unknown>({
   limit = 0,
   filterAction,
   placement,
+  overflow,
 }: VizLegendTableProps<T>): JSX.Element => {
   const styles = useStyles2(getStyles, placement);
   const header: Record<string, string> = {
@@ -95,6 +96,7 @@ export const VizLegendTable = <T extends unknown>({
         onLabelMouseOut={onLabelMouseOut}
         readonly={readonly}
         hasMixedAxes={hasMixedAxes}
+        overflow={overflow}
       />
     );
   }
@@ -110,6 +112,7 @@ export const VizLegendTable = <T extends unknown>({
         <thead className={styles.header}>
           <tr>
             <th>
+              {filterAction && <span className={styles.filterAction}>{filterAction}</span>}
               <span className="sr-only">
                 <Trans i18nKey={'legend.container.series-color-and-icon'}>Series color</Trans>
               </span>
@@ -132,12 +135,6 @@ export const VizLegendTable = <T extends unknown>({
                   }
                 }}
               >
-                {columnTitle === nameSortKey && filterAction && (
-                  // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-                  <span className={styles.filterAction} onClick={(e) => e.stopPropagation()}>
-                    {filterAction}
-                  </span>
-                )}
                 {columnTitle}
                 {sortKey === columnTitle && <Icon size="xs" name={sortDesc ? 'angle-down' : 'angle-up'} />}
               </th>
@@ -161,7 +158,7 @@ const getStyles = (theme: GrafanaTheme2, placement: LegendPlacement = 'bottom') 
   header: css({
     position: 'sticky',
     top: 0,
-    backgroundColor: theme.colors.background.primary,
+    backgroundColor: theme.components.panel.background,
 
     color: theme.colors.primary.text,
   }),
@@ -178,7 +175,6 @@ const getStyles = (theme: GrafanaTheme2, placement: LegendPlacement = 'bottom') 
     cursor: 'pointer',
   }),
   filterAction: css({
-    marginLeft: theme.spacing(0.5),
     display: 'inline-flex',
     verticalAlign: 'middle',
   }),

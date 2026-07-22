@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -14,7 +15,7 @@ import (
 )
 
 //go:generate mockery --name FullSyncFn --structname MockFullSyncFn --inpackage --filename full_sync_fn_mock.go --with-expecter
-type FullSyncFn func(ctx context.Context, repo repository.Reader, compare CompareFn, clients resources.ResourceClients, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool) error
+type FullSyncFn func(ctx context.Context, repo repository.Reader, compare CompareFn, clients resources.ResourceClients, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool, resourceTimeout time.Duration) error
 
 //go:generate mockery --name CompareFn --structname MockCompareFn --inpackage --filename compare_fn_mock.go --with-expecter
 type CompareFn func(ctx context.Context, repo repository.Reader, repositoryResources resources.RepositoryResources, ref string, folderMetadataEnabled bool) ([]ResourceFileChange, []string, []*resources.InvalidFolderMetadata, error)
@@ -35,9 +36,10 @@ type syncer struct {
 	metrics               jobs.JobMetrics
 	maxSyncWorkers        int
 	folderMetadataEnabled bool
+	resourceTimeout       time.Duration
 }
 
-func NewSyncer(compare CompareFn, fullSync FullSyncFn, incrementalSync IncrementalSyncFn, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, folderMetadataEnabled bool) Syncer {
+func NewSyncer(compare CompareFn, fullSync FullSyncFn, incrementalSync IncrementalSyncFn, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, folderMetadataEnabled bool, resourceTimeout time.Duration) Syncer {
 	return &syncer{
 		compare:               compare,
 		fullSync:              fullSync,
@@ -46,6 +48,7 @@ func NewSyncer(compare CompareFn, fullSync FullSyncFn, incrementalSync Increment
 		metrics:               metrics,
 		maxSyncWorkers:        maxSyncWorkers,
 		folderMetadataEnabled: folderMetadataEnabled,
+		resourceTimeout:       resourceTimeout,
 	}
 }
 
@@ -64,6 +67,10 @@ func (r *syncer) Sync(ctx context.Context, repo repository.ReaderWriter, options
 
 		if cfg.Status.Sync.LastRef != "" && options.Incremental && !quotas.IsQuotaExceeded(cfg.Status.Conditions) {
 			progress.SetMessage(ctx, "incremental sync")
+			// resourceTimeout is deliberately not passed to incremental sync: it has no
+			// per-resource timeout today (applies are bounded only by the overall job
+			// timeout). Imposing the default here would newly cap large incremental
+			// writes and regress repositories that currently sync them successfully.
 			return currentRef, r.incrementalSync(ctx, versionedRepo, cfg.Status.Sync.LastRef, currentRef, repositoryResources, progress, r.tracer, r.metrics, quotaTracker, r.folderMetadataEnabled)
 		}
 
@@ -72,5 +79,5 @@ func (r *syncer) Sync(ctx context.Context, repo repository.ReaderWriter, options
 		}
 	}
 	progress.SetMessage(ctx, "full sync")
-	return currentRef, r.fullSync(ctx, repo, r.compare, clients, currentRef, repositoryResources, progress, r.tracer, r.maxSyncWorkers, r.metrics, quotaTracker, r.folderMetadataEnabled)
+	return currentRef, r.fullSync(ctx, repo, r.compare, clients, currentRef, repositoryResources, progress, r.tracer, r.maxSyncWorkers, r.metrics, quotaTracker, r.folderMetadataEnabled, r.resourceTimeout)
 }

@@ -4,10 +4,11 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { config } from '@grafana/runtime';
 
-import { type DashboardScene, type DashboardSceneState } from '../../scene/DashboardScene';
+import { type DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardSceneState } from '../../scene/types/dashboard';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { activateFullSceneTree } from '../../utils/test-utils';
-import { type DashboardEditPane } from '../DashboardEditPane';
+import { type DashboardEditPaneLike } from '../types';
 
 import { DashboardDescriptionInput, DashboardTitleInput } from './DashboardBasicOptions';
 
@@ -136,13 +137,13 @@ function setup(overrides?: Partial<DashboardSceneState>) {
   return { dashboard, renderTitleInput, renderDescriptionInput };
 }
 
-function undo(editPane: DashboardEditPane) {
+function undo(editPane: DashboardEditPaneLike) {
   act(() => {
     editPane.undoAction();
   });
 }
 
-function redo(editPane: DashboardEditPane) {
+function redo(editPane: DashboardEditPaneLike) {
   act(() => {
     editPane.redoAction();
   });

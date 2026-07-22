@@ -46,6 +46,7 @@ var (
 	sqlQueryCacheInsert                  = mustTemplate("query_cache_insert.sql")
 	sqlRateBucketIncrement               = mustTemplate("rate_bucket_increment.sql")
 	sqlRateBucketSweep                   = mustTemplate("rate_bucket_sweep.sql")
+	sqlVectorCatalogList                 = mustTemplate("vector_catalog_list.sql")
 )
 
 // All queries target `embeddings` and include `resource = $1 AND
@@ -159,6 +160,25 @@ func (r *sqlVectorBackfillJobsListRequest) Results() (*sqlVectorBackfillJobsList
 	return &cp, nil
 }
 
+type sqlVectorCatalogListRequest struct {
+	sqltemplate.SQLTemplate
+	Response *sqlVectorCatalogListResponse
+}
+
+func (r *sqlVectorCatalogListRequest) Validate() error { return nil }
+
+func (r *sqlVectorCatalogListRequest) Results() (*sqlVectorCatalogListResponse, error) {
+	cp := *r.Response
+	return &cp, nil
+}
+
+type sqlVectorCatalogListResponse struct {
+	GroupName    string
+	Resource     string
+	PartitionKey string
+	IsExternal   bool
+}
+
 type sqlVectorBackfillJobsCreateRequest struct {
 	sqltemplate.SQLTemplate
 	Model      string
@@ -221,6 +241,7 @@ func (r *sqlVectorBackfillJobsCompleteRequest) Validate() error {
 type sqlVectorCollectionGetContentResponse struct {
 	Subresource string
 	Content     string
+	Folder      string
 }
 
 type sqlVectorCollectionGetContentRequest struct {

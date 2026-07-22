@@ -25,7 +25,8 @@ import {
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type PopoverContent } from '@grafana/ui';
 
 import { checkLogsError, checkLogsSampled, downloadLogs as download, type DownloadFormat } from '../../utils';
@@ -148,7 +149,7 @@ export interface Props {
   app: CoreApp;
   allowDownload?: boolean;
   children?: ReactNode;
-  // Only ControlledLogRows can send an undefined containerElement. See LogList.tsx
+  // Optional. Table-only consumers omit this; LogList passes its scroll container.
   containerElement?: HTMLDivElement;
   dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
@@ -683,7 +684,7 @@ export function isDedupStrategy(value: unknown): value is LogsDedupStrategy {
 }
 
 async function handleOpenAssistant(openAssistant: (props: OpenAssistantProps) => void, log: LogListModel) {
-  const datasource = await getDataSourceSrv().get(log.datasourceUid);
+  const datasource = await getDataSourceInstance(log.datasourceUid);
   const context = [];
   if (datasource) {
     context.push(
@@ -716,5 +717,5 @@ ${log.entry.replaceAll('`', '\\`')}
 
 export function getDefaultControlsExpandedMode(container: HTMLDivElement | null): boolean {
   const width = container?.clientWidth ?? window.innerWidth;
-  return width > 1200;
+  return width >= 1920;
 }

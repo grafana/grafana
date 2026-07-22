@@ -179,19 +179,36 @@
       [[end]]
 
       [[if .ReduceBootdataAPI]]
-        // TODO add comment
         window.__grafanaReduceBootdataAPI = true;
       [[end]]
 
+      [[if .NewPreferencesPage]]
+        window.__grafanaNewPreferencesPage = true;
+      [[end]]
+
+      window.__grafanaLegacyAPIMode = [[.LegacyAPIMode]];
       window.__grafanaPublicDashboardAccessToken = [[.PublicDashboardAccessToken]];
-      // global config
-      window.grafanaBootData = {
-        _femt: true, // isFrontendService() needs this
-        assets: [[.Assets]],
-        navTree: [],
-        settings: [[.Settings]],
-        user: [[.DefaultUser]],
-      }
+
+      [[if .FullSettings]]
+        // global config
+        window.grafanaBootData = {
+          _femt: true, // isFrontendService() needs this
+          assets: [[.Assets]],
+          navTree: [],
+          settings: [[.FullSettings]],
+          user: [[.DefaultUser]],
+        }
+      [[else]]
+        // global config
+        window.grafanaBootData = {
+          _femt: true, // isFrontendService() needs this
+          assets: [[.Assets]],
+          navTree: [],
+          settings: [[.Settings]],
+          user: [[.DefaultUser]],
+        }
+      [[end]]
+
     </script>
 
     <script nonce="[[.Nonce]]">

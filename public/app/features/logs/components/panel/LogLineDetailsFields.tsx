@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { ClipboardButton, DataLinkButton, IconButton, type IconSize, useStyles2 } from '@grafana/ui';
+import { ClipboardButton, DataLinkButton, IconButton, useStyles2 } from '@grafana/ui';
 
 import { logRowToSingleRowDataFrame } from '../../logsModel';
 import { calculateLogsLabelStats, calculateStats } from '../../utils';
@@ -22,6 +22,7 @@ import { LogLabelStats } from '../LogLabelStats';
 import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { type FieldDef } from '../logParser';
 
+import { AsyncIconButton } from './AsyncIconButton';
 import { useLogDetailsContext } from './LogDetailsContext';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
@@ -250,12 +251,41 @@ const LogLineDetailsField = ({
     });
   }, [onClickFilterOutLabel, reportInteractionWrapper, log, keys, values]);
 
-  const labelFilterActive = useCallback(async () => {
-    if (isLabelFilterActive) {
-      return await isLabelFilterActive(keys[0], values[0], log.dataFrame?.refId);
-    }
-    return false;
-  }, [isLabelFilterActive, keys, values, log.dataFrame?.refId]);
+  const includeAdhocValue = useCallback(
+    (value: string) => {
+      onClickFilterLabel?.(keys[0], value, logRowToSingleRowDataFrame(log) || undefined);
+
+      reportInteractionWrapper('logs_log_line_details_filter_clicked', {
+        datasourceType: log.datasourceType,
+        filterType: 'include',
+        logRowUid: log.uid,
+      });
+    },
+    [onClickFilterLabel, reportInteractionWrapper, log, keys]
+  );
+
+  const excludeAdhocValue = useCallback(
+    (value: string) => {
+      onClickFilterOutLabel?.(keys[0], value, logRowToSingleRowDataFrame(log) || undefined);
+
+      reportInteractionWrapper('logs_log_line_details_filter_clicked', {
+        datasourceType: log.datasourceType,
+        filterType: 'exclude',
+        logRowUid: log.uid,
+      });
+    },
+    [onClickFilterOutLabel, reportInteractionWrapper, log, keys]
+  );
+
+  const labelFilterActive = useCallback(
+    async (value?: string) => {
+      if (isLabelFilterActive) {
+        return await isLabelFilterActive(keys[0], value ?? values[0], log.dataFrame?.refId);
+      }
+      return false;
+    },
+    [isLabelFilterActive, keys, values, log.dataFrame?.refId]
+  );
 
   const showStats = useCallback(() => {
     setShowFieldStats((showFieldStats: boolean) => !showFieldStats);
@@ -268,6 +298,20 @@ const LogLineDetailsField = ({
       app,
     });
   }, [app, isLabel, log.datasourceType, log.uid, reportInteractionWrapper, showFieldsStats]);
+
+  const reportLinkClick = useCallback(
+    (link: LinkModelWithIcon) => {
+      reportInteractionWrapper('logs_log_line_details_extension_link_clicked', {
+        app,
+        linkApp: resolveAppFromLink(link.href),
+        fieldKey: keys[0],
+        fieldType: isLabel ? 'label' : 'field',
+        datasourceType: log.datasourceType,
+        logLevel: log.logLevel,
+      });
+    },
+    [app, isLabel, keys, log.datasourceType, log.logLevel, reportInteractionWrapper]
+  );
 
   const refIdTooltip = useMemo(
     () => (app === CoreApp.Explore && log.dataFrame?.refId ? ` in query ${log.dataFrame?.refId}` : ''),
@@ -378,6 +422,7 @@ const LogLineDetailsField = ({
                       : undefined,
                   variant: 'secondary',
                   fill: 'outline',
+                  onClick: () => reportLinkClick(link),
                   ...(link.icon && { icon: link.icon }),
                 }}
                 link={link}
@@ -390,6 +435,10 @@ const LogLineDetailsField = ({
         <div className={styles.row}>
           <div className={disableActions ? undefined : styles.statsColumn}>
             <LogLabelStats
+              include={includeAdhocValue}
+              exclude={excludeAdhocValue}
+              isValueActive={labelFilterActive}
+              iconSize={fontSize === 'small' ? 'sm' : undefined}
               className={styles.stats}
               stats={fieldStats}
               label={keys[0]}
@@ -403,6 +452,10 @@ const LogLineDetailsField = ({
     </>
   );
 };
+
+export function resolveAppFromLink(href: string): string | undefined {
+  return href.match(/\/a\/([^/?#]+)/)?.[1];
+}
 
 const getFieldStyles = (theme: GrafanaTheme2) => ({
   row: css({
@@ -543,24 +596,6 @@ export const SingleValue = ({ value: originalValue, prettifyJSON }: { value: str
       <ClipboardButtonWrapper value={value} />
     </>
   );
-};
-
-interface AsyncIconButtonProps extends Pick<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> {
-  name: IconName;
-  isActive(): Promise<boolean>;
-  size?: IconSize;
-  tooltipSuffix: string;
-}
-
-const AsyncIconButton = ({ isActive, tooltipSuffix, ...rest }: AsyncIconButtonProps) => {
-  const [active, setActive] = useState(false);
-  const tooltip = active ? 'Remove filter' : 'Filter for value';
-
-  useEffect(() => {
-    isActive().then(setActive);
-  }, [isActive]);
-
-  return <IconButton {...rest} variant={active ? 'primary' : undefined} tooltip={tooltip + tooltipSuffix} />;
 };
 
 export function filterFields(fields: FieldDef[], search: string) {

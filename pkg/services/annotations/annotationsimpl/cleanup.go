@@ -11,7 +11,7 @@ import (
 
 // CleanupServiceImpl is responsible for cleaning old annotations.
 type CleanupServiceImpl struct {
-	store store
+	store Store
 }
 
 func ProvideCleanupService(db db.DB, cfg *setting.Cfg) *CleanupServiceImpl {

@@ -139,9 +139,8 @@ const NotificationPoliciesTabs = () => {
  * Unified policy tree view that handles both single and multiple policy trees.
  * Owns the single Web Worker instance and alert groups query shared by all PoliciesTree children.
  *
- * When the `alertingMultiplePolicies` feature toggle is enabled (Grafana AM only),
- * lists all policy trees with create/filter/expand controls.
- * Otherwise, renders a single default policy tree.
+ * For the Grafana Alertmanager, lists all policy trees with create/filter/expand controls.
+ * Otherwise (external Alertmanagers), renders a single default policy tree.
  */
 function PolicyTreeTab() {
   const { selectedAlertmanager = '', isGrafanaAlertmanager } = useAlertmanager();
@@ -154,7 +153,7 @@ function PolicyTreeTab() {
     { skip: !canSeeAlertGroups || !selectedAlertmanager }
   );
 
-  const useMultiplePolicies = isGrafanaAlertmanager && config.featureToggles.alertingMultiplePolicies;
+  const useMultiplePolicies = isGrafanaAlertmanager;
 
   const {
     currentData: allPolicies,

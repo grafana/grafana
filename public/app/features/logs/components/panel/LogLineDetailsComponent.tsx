@@ -11,12 +11,13 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { Box, ControlledCollapse, useStyles2 } from '@grafana/ui';
 
 import { getLabelTypeFromRow } from '../../utils';
-import { useAttributesExtensionLinks } from '../LogDetails';
 import { createLogLineLinks } from '../logParser';
+import { useAttributesExtensionLinks } from '../useAttributesExtensionLinks';
 
 import { LogLineDetailsDisplayedFields } from './LogLineDetailsDisplayedFields';
 import { type LabelWithLinks, LogLineDetailsFields, LogLineDetailsLabelFields } from './LogLineDetailsFields';
@@ -155,8 +156,7 @@ export const LogLineDetailsComponent = memo(
     }, []);
 
     useEffect(() => {
-      getDataSourceSrv()
-        .get(log.datasourceUid)
+      getDataSourceInstance(log.datasourceUid)
         .then(setDs)
         .catch(() => setDs(null));
     }, [log.datasourceUid]);

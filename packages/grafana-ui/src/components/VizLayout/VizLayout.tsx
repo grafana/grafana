@@ -74,15 +74,19 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
       break;
     case 'right':
       containerStyle.flexDirection = 'row';
-      if (legend.props.width == null) {
-        legendStyle.maxWidth = maxWidth;
-      }
 
       if (legendMeasure.width) {
         size = { width: width - legendMeasure.width, height };
       }
 
-      if (legend.props.width) {
+      if (typeof legend.props.width === 'string') {
+        legendStyle.width = legend.props.width;
+        break;
+      }
+
+      legendStyle.maxWidth = maxWidth;
+
+      if (legend.props.width != null) {
         legendStyle.width = legend.props.width;
         size = { width: width - legend.props.width, height };
       }
@@ -103,7 +107,10 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
     <div style={containerStyle} data-testid={selectors.components.VizLayout.container}>
       <div className={styles.viz}>{size && children(size.width, size.height)}</div>
       <div style={legendStyle} ref={legendRef} data-testid={selectors.components.VizLayout.legend}>
-        <ScrollContainer>{legend}</ScrollContainer>
+        {/* a right-placed legend spans the full panel height, but the scroll container
+            sizes to its content by default, so percentage heights inside the legend
+            (e.g. a vertical color scale) would not resolve without an explicit height */}
+        <ScrollContainer height={placement === 'right' ? '100%' : undefined}>{legend}</ScrollContainer>
       </div>
     </div>
   );
@@ -134,7 +141,7 @@ export interface VizLayoutLegendProps {
   children: React.ReactNode;
   maxHeight?: string;
   maxWidth?: string;
-  width?: number;
+  width?: number | string;
 }
 
 /**

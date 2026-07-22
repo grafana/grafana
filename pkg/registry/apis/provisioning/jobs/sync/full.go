@@ -37,6 +37,7 @@ func FullSync(
 	metrics jobs.JobMetrics,
 	quotaTracker quotas.QuotaTracker,
 	folderMetadataEnabled bool,
+	resourceTimeout time.Duration,
 ) error {
 	syncStart := time.Now()
 	cfg := repo.Config()
@@ -147,7 +148,7 @@ func FullSync(
 	}
 	span.SetAttributes(attribute.Bool("pre_check_quota", true))
 
-	return applyChanges(ctx, changes, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, metrics, quotaTracker, folderMetadataEnabled)
+	return applyChanges(ctx, changes, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, metrics, quotaTracker, folderMetadataEnabled, resourceTimeout)
 }
 
 // shouldSkipChange checks if a change should be skipped based on previous failures on parent/child folders.
@@ -350,6 +351,7 @@ func applyChanges(
 	metrics jobs.JobMetrics,
 	quotaTracker quotas.QuotaTracker,
 	folderMetadataEnabled bool,
+	resourceTimeout time.Duration,
 ) error {
 	progress.SetTotal(ctx, len(changes))
 
@@ -378,7 +380,7 @@ func applyChanges(
 
 	if len(buckets.fileDeletions) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileDeletions, func() error {
-			return applyResourcesInParallel(ctx, buckets.fileDeletions, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled)
+			return applyResourcesInParallel(ctx, buckets.fileDeletions, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled, resourceTimeout)
 		}, metrics); err != nil {
 			return err
 		}
@@ -389,7 +391,7 @@ func applyChanges(
 		// before children are walked to ensure consistency in moves and renames.
 		safepath.SortByDepth(buckets.folderCreations, func(c ResourceFileChange) string { return c.Path }, true)
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderCreations, func() error {
-			return applyFoldersSerially(ctx, buckets.folderCreations, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
+			return applyFoldersSerially(ctx, buckets.folderCreations, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, resourceTimeout)
 		}, metrics); err != nil {
 			return err
 		}
@@ -397,7 +399,7 @@ func applyChanges(
 
 	if len(buckets.fileRenames) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileRenames, func() error {
-			return applyResourcesInParallel(ctx, buckets.fileRenames, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled)
+			return applyResourcesInParallel(ctx, buckets.fileRenames, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled, resourceTimeout)
 		}, metrics); err != nil {
 			return err
 		}
@@ -405,7 +407,7 @@ func applyChanges(
 
 	if len(buckets.folderDeletions) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderDeletions, func() error {
-			return applyFoldersSerially(ctx, buckets.folderDeletions, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
+			return applyFoldersSerially(ctx, buckets.folderDeletions, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, resourceTimeout)
 		}, metrics); err != nil {
 			return err
 		}
@@ -413,7 +415,7 @@ func applyChanges(
 
 	if len(buckets.fileCreations) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileCreations, func() error {
-			return applyResourcesInParallel(ctx, buckets.fileCreations, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled)
+			return applyResourcesInParallel(ctx, buckets.fileCreations, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled, resourceTimeout)
 		}, metrics); err != nil {
 			return err
 		}
@@ -567,6 +569,7 @@ func applyFoldersSerially(
 	tracer tracing.Tracer,
 	quotaTracker quotas.QuotaTracker,
 	folderMetadataEnabled bool,
+	resourceTimeout time.Duration,
 ) error {
 	for _, folder := range folders {
 		if ctx.Err() != nil {
@@ -577,7 +580,7 @@ func applyFoldersSerially(
 			return err
 		}
 
-		wrapWithTimeout(ctx, 15*time.Second, func(timeoutCtx context.Context) {
+		wrapWithTimeout(ctx, resourceTimeout, func(timeoutCtx context.Context) {
 			applyChange(timeoutCtx, folder, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
 		})
 	}
@@ -598,6 +601,7 @@ func applyResourcesInParallel(
 	maxSyncWorkers int,
 	quotaTracker quotas.QuotaTracker,
 	folderMetadataEnabled bool,
+	resourceTimeout time.Duration,
 ) error {
 	if len(resources) == 0 {
 		return nil
@@ -627,7 +631,7 @@ loop:
 			defer wg.Done()
 			defer func() { <-sem }()
 
-			wrapWithTimeout(ctx, 15*time.Second, func(timeoutCtx context.Context) {
+			wrapWithTimeout(ctx, resourceTimeout, func(timeoutCtx context.Context) {
 				applyChange(timeoutCtx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
 			})
 		}(change)
@@ -642,8 +646,22 @@ loop:
 	return ctx.Err()
 }
 
-// wrapWithTimeout runs fn with a derived context that times out after the given duration.
+// defaultResourceTimeout is the fallback per-resource apply timeout used when a
+// non-positive timeout is passed to wrapWithTimeout. Callers normally supply the
+// configured value (see the [provisioning] sync_resource_timeout setting); this
+// only guards against a caller passing <=0. Kept in sync with the setting's
+// default by convention, not by reference (this package does not import setting).
+const defaultResourceTimeout = 30 * time.Second
+
+// wrapWithTimeout runs fn with a context derived from ctx that is cancelled after
+// the given duration, or earlier if ctx itself is cancelled or already has a
+// nearer deadline. A non-positive timeout falls back to defaultResourceTimeout so
+// a resource apply is always bounded.
 func wrapWithTimeout(ctx context.Context, timeout time.Duration, fn func(context.Context)) {
+	if timeout <= 0 {
+		timeout = defaultResourceTimeout
+	}
+
 	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 

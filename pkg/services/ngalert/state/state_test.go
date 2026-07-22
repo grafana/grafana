@@ -864,22 +864,12 @@ func TestGetRuleExtraLabels(t *testing.T) {
 			},
 		},
 		"with_policy_routing": {
-			rule:     ngmodels.CopyRule(rule, ngmodels.RuleGen.WithPolicyRouting(ngmodels.PolicyRouting{Policy: "policy-a"})),
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
+			rule: ngmodels.CopyRule(rule, ngmodels.RuleGen.WithPolicyRouting(ngmodels.PolicyRouting{Policy: "policy-a"})),
 			expected: map[string]string{
 				models.NamespaceUIDLabel: rule.NamespaceUID,
 				model.AlertNameLabel:     rule.Title,
 				models.RuleUIDLabel:      rule.UID,
 				ngmodels.NamedRouteLabel: "policy-a",
-			},
-		},
-		"with_policy_routing_no_ff": {
-			rule:     ngmodels.CopyRule(rule, ngmodels.RuleGen.WithPolicyRouting(ngmodels.PolicyRouting{Policy: "policy-a"})),
-			features: featuremgmt.WithFeatures(),
-			expected: map[string]string{ // Doesn't add ngmodels.NamedRouteLabel when FF is disabled.
-				models.NamespaceUIDLabel: rule.NamespaceUID,
-				model.AlertNameLabel:     rule.Title,
-				models.RuleUIDLabel:      rule.UID,
 			},
 		},
 		"with_both_routing": { // This is technically an invalid state, but we want to ensure that we fallback to something sane instead of failing.
@@ -888,7 +878,6 @@ func TestGetRuleExtraLabels(t *testing.T) {
 				r.NotificationSettings.PolicyRouting = new(ngmodels.PolicyRouting{Policy: "policy-a"})
 				return r
 			}(),
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
 			expected: map[string]string{ // Fallback to using contact point routing.
 				models.NamespaceUIDLabel:                     rule.NamespaceUID,
 				model.AlertNameLabel:                         rule.Title,
@@ -904,7 +893,6 @@ func TestGetRuleExtraLabels(t *testing.T) {
 				r.NotificationSettings = &ngmodels.NotificationSettings{}
 				return r
 			}(),
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
 			expected: map[string]string{ // Fallback to using no special routing.
 				models.NamespaceUIDLabel: rule.NamespaceUID,
 				model.AlertNameLabel:     rule.Title,

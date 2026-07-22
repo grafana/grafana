@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import { formattedValueToString, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { type LegendOverflow } from '@grafana/schema';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { hoverColor } from '../../themes/mixins';
@@ -26,6 +27,7 @@ export interface Props {
   ) => void;
   readonly?: boolean;
   hasMixedAxes?: boolean;
+  overflow?: LegendOverflow;
 }
 
 /**
@@ -39,8 +41,9 @@ export const LegendTableItem = ({
   className,
   readonly,
   hasMixedAxes,
+  overflow,
 }: Props) => {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, overflow);
 
   const onMouseOver = useCallback(
     (event: React.MouseEvent<HTMLButtonElement, MouseEvent> | React.FocusEvent<HTMLButtonElement>) => {
@@ -109,7 +112,7 @@ export const LegendTableItem = ({
 
 LegendTableItem.displayName = 'LegendTableItem';
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, overflow?: LegendOverflow) => {
   const rowHoverBg = hoverColor(theme.colors.background.primary, theme);
 
   return {
@@ -122,16 +125,19 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     label: css({
       label: 'LegendLabel',
-      whiteSpace: 'nowrap',
       background: 'none',
       border: 'none',
       fontSize: 'inherit',
       padding: 0,
       width: '100%',
+
       textOverflow: 'ellipsis',
+      whiteSpace: overflow === 'wrap' ? 'normal' : 'nowrap',
+
       overflow: 'hidden',
       userSelect: 'text',
       textAlign: 'left',
+      overflowWrap: 'break-word',
     }),
     labelDisabled: css({
       label: 'LegendLabelDisabled',

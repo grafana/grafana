@@ -35,10 +35,16 @@ const esModules = [
   'pbf',
   'geotiff',
   'uuid',
+  '@react-hookz/web',
+  '@ver0/deep-equal',
 ].join('|');
 
 module.exports = {
   verbose: false,
+  // Recycle a worker once it exceeds this cap so heap growth over a run (most acute during
+  // coverage) can't accumulate unbounded. Applies even at --maxWorkers=1, where Jest restarts
+  // the single worker between test files. Per-worker cap, not a reservation; tune via --logHeapUsage.
+  workerIdleMemoryLimit: '1GB',
   testEnvironment: 'jsdom',
   testEnvironmentOptions: {
     customExportConditions: ['@grafana-app/source', 'browser'],
@@ -84,18 +90,11 @@ module.exports = {
     '/node_modules/',
     // Decoupled plugins run their own tests so ignoring them here.
     '<rootDir>/public/app/plugins/datasource/azuremonitor',
-    '<rootDir>/public/app/plugins/datasource/cloud-monitoring',
     '<rootDir>/public/app/plugins/datasource/grafana-postgresql-datasource',
-    '<rootDir>/public/app/plugins/datasource/grafana-pyroscope-datasource',
     '<rootDir>/public/app/plugins/datasource/grafana-testdata-datasource',
     '<rootDir>/public/app/plugins/datasource/influxdb',
     '<rootDir>/public/app/plugins/datasource/graphite',
-    '<rootDir>/public/app/plugins/datasource/jaeger',
     '<rootDir>/public/app/plugins/datasource/loki',
-    '<rootDir>/public/app/plugins/datasource/mssql',
     '<rootDir>/public/app/plugins/datasource/mysql',
-    '<rootDir>/public/app/plugins/datasource/opentsdb',
-    '<rootDir>/public/app/plugins/datasource/parca',
-    '<rootDir>/public/app/plugins/datasource/tempo',
   ],
 };

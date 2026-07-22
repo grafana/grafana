@@ -51,6 +51,7 @@ func (i *fakeListIterator) Value() []byte          { return i.item().Value }
 // resourceembedder tests. ReadResource looks up by full key; ListIterator yields
 // the configured items in order.
 type fakeStorage struct {
+	resource.UnimplementedStorageBackend
 	mu sync.Mutex
 	// resources[ns/group/resource/name] = (value, rv).
 	resources map[string]storedResource
@@ -158,6 +159,7 @@ func (f *fakeStorage) WatchWriteEvents(context.Context) (<-chan *resource.Writte
 func (f *fakeStorage) GetResourceStats(context.Context, resource.NamespacedResource, int) ([]resource.ResourceStats, error) {
 	panic("not implemented")
 }
+
 func (f *fakeStorage) GetResourceLastImportTimes(context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
 	panic("not implemented")
 }
@@ -221,11 +223,15 @@ func (f *fakeVector) markExists(ns, model, res, uid string) {
 	f.existsSet[existsKey(ns, model, res, uid)] = true
 }
 
+func (f *fakeVector) ResolveCollection(_ context.Context, group, resource string) (vector.Collection, bool, error) {
+	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
+}
+
 func (f *fakeVector) Search(context.Context, string, string, string, []float32, int, ...vector.SearchFilter) ([]vector.VectorSearchResult, error) {
 	return nil, nil
 }
-func (f *fakeVector) UpsertReplaceSubresources(ctx context.Context, vs []vector.Vector) error {
-	return f.Upsert(ctx, vs)
+func (f *fakeVector) UpsertReplaceSubresources(ctx context.Context, _, _, _, _ string, changed []vector.Vector, _ []string) error {
+	return f.Upsert(ctx, changed)
 }
 func (f *fakeVector) Upsert(_ context.Context, vs []vector.Vector) error {
 	f.mu.Lock()
@@ -248,7 +254,7 @@ func (f *fakeVector) DeleteSubresources(_ context.Context, namespace, model, res
 	f.subresourceDeletes = append(f.subresourceDeletes, deleteSubsCall{namespace, model, res, uid, subs})
 	return nil
 }
-func (f *fakeVector) GetSubresourceContent(_ context.Context, _, _, _, uid string) (map[string]string, error) {
+func (f *fakeVector) GetSubresourceContent(_ context.Context, _, _, _, uid string) (map[string]string, string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if existing, ok := f.existing[uid]; ok {
@@ -256,9 +262,9 @@ func (f *fakeVector) GetSubresourceContent(_ context.Context, _, _, _, uid strin
 		for k, v := range existing {
 			out[k] = v
 		}
-		return out, nil
+		return out, "", nil
 	}
-	return nil, nil
+	return nil, "", nil
 }
 func (f *fakeVector) Exists(_ context.Context, ns, model, res, uid string) (bool, error) {
 	f.mu.Lock()

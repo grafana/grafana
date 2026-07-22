@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { RadioButtonGroup, Box, ConfirmModal } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -24,10 +23,6 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
   const [newLayout, setNewLayout] = useState<LayoutRegistryItem | undefined>();
 
   const disableTabsReason = useMemo(() => {
-    if (config.featureToggles.unlimitedLayoutsNesting) {
-      return undefined;
-    }
-
     // Check parent hierarchy
     let parent = layoutManager.parent;
     while (parent) {

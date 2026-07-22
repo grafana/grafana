@@ -15,28 +15,36 @@ import (
 // equivalent to running them on the un-padded native vectors.
 const EmbeddingDim = 1024
 
+// maxTitleLen is the width of the `title VARCHAR(1024)` column. Titles are
+// display-only (search results), so an over-long one (e.g. a verbose
+// "Dashboard — Panel" subresource title) is truncated to fit rather than
+// failing the whole transactional upsert.
+const maxTitleLen = 1024
+
 // VectorBackend is vector storage isolated per (namespace, model) so an HNSW
 // never mixes embeddings from different vector spaces.
 type VectorBackend interface {
+	// ResolveCollection maps a (group, resource) pair to its
+	// embedding_collections catalog entry. found=false means the pair is
+	// not provisioned — callers surface NOT_FOUND.
+	ResolveCollection(ctx context.Context, group, resource string) (c Collection, found bool, err error)
+
 	// Search returns top-N nearest neighbors by cosine distance. Query
-	// embedding must come from the same model as stored vectors.
+	// embedding must come from the same model as stored vectors. resource
+	// is the partition key (Collection.PartitionKey), not the resource
+	// name callers send.
 	Search(ctx context.Context, namespace, model, resource string,
 		embedding []float32, limit int, filters ...SearchFilter) ([]VectorSearchResult, error)
 
 	Upsert(ctx context.Context, vectors []Vector) error
 
-	// UpsertReplaceSubresources replaces, in a single transaction, the
-	// stored subresource set for each (model, namespace, resource, uid)
-	// present in `vectors`: any stored subresource for those tuples that
-	// isn't being upserted is deleted, then the input vectors are
-	// upserted. Used by the reconciler so stale-row cleanup and
-	// the new write commit atomically.
-	//
-	// TODO: only re-embed and upsert subresources whose content actually
-	// changed since the last write. Today the reconciler re-embeds every
-	// panel on any dashboard write, which is wasteful when only one
-	// panel changed.
-	UpsertReplaceSubresources(ctx context.Context, vectors []Vector) error
+	// UpsertReplaceSubresources upserts `changed` and deletes any stored
+	// subresource of (namespace, model, resource, uid) not listed in
+	// `desired`, in one transaction. `changed` (a subset of `desired`)
+	// holds only the rows that need rewriting; `desired` is the full set
+	// that should remain. Every vector in `changed` must belong to the
+	// given tuple.
+	UpsertReplaceSubresources(ctx context.Context, namespace, model, resource, uid string, changed []Vector, desired []string) error
 
 	// Delete removes every resource and subresource under `uid`. model must be non-empty.
 	Delete(ctx context.Context, namespace, model, resource, uid string) error
@@ -45,10 +53,12 @@ type VectorBackend interface {
 	// slice is a no-op. model must be non-empty.
 	DeleteSubresources(ctx context.Context, namespace, model, resource, uid string, subresources []string) error
 
-	// GetSubresourceContent returns subresource → stored content. Callers
-	// diff against candidate content to skip re-embedding unchanged rows.
-	// Used for deleting stale subresource embeddings.
-	GetSubresourceContent(ctx context.Context, namespace, model, resource, uid string) (map[string]string, error)
+	// GetSubresourceContent returns subresource → stored content and the
+	// resource's stored folder ("" when no rows exist; folder is uniform
+	// across a resource's rows). Callers diff content to skip re-embedding
+	// unchanged rows and compare folder to catch a move, which changes the
+	// authz folder but not content.
+	GetSubresourceContent(ctx context.Context, namespace, model, resource, uid string) (content map[string]string, folder string, err error)
 
 	// Exists returns true if any row exists for the (namespace, model,
 	// resource, uid). Cheap indexed lookup; backfill uses it to skip

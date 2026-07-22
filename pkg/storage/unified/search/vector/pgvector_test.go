@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"testing"
+	"unicode/utf8"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
@@ -39,24 +40,21 @@ func TestVector_Validate(t *testing.T) {
 }
 
 func TestValidateResource(t *testing.T) {
-	cases := []struct {
-		in      string
-		wantErr bool
-	}{
-		{"dashboards", false},
-		{"folders", true}, // not provisioned yet
-		{"", true},
-	}
-	for _, tc := range cases {
-		t.Run(tc.in, func(t *testing.T) {
-			err := validateResource(tc.in)
-			if tc.wantErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-		})
-	}
+	// Partition keys with a catalog row pass; anything else is rejected.
+	rdb := test.NewDBProviderNopSQL(t)
+	b := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(seededCatalogRows())
+	require.NoError(t, b.validateResource(ctx, "dashboards"))
+
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(seededCatalogRows())
+	require.ErrorContains(t, b.validateResource(ctx, "folders"), "unsupported resource")
+
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(emptyCatalogRows())
+	require.ErrorContains(t, b.validateResource(ctx, ""), "unsupported resource")
+
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
 func TestPgvectorBackend_Upsert_EmptySlice(t *testing.T) {
@@ -82,14 +80,25 @@ func TestPgvectorBackend_Upsert_InvalidVector_Rejected(t *testing.T) {
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
+// emptyCatalogRows is a zero-row embedding_collections result for sqlmock.
+func emptyCatalogRows() *sqlmock.Rows {
+	return sqlmock.NewRows([]string{"group_name", "resource", "partition_key", "is_external"})
+}
+
+// seededCatalogRows mirrors the migration's dashboards seed row.
+func seededCatalogRows() *sqlmock.Rows {
+	return emptyCatalogRows().AddRow("dashboard.grafana.app", "dashboards", "dashboards", false)
+}
+
 func TestPgvectorBackend_Upsert_UnknownResource_Rejected(t *testing.T) {
-	// Unknown resource has no shared table; Upsert errors before any DB work.
+	// Unknown resource has no catalog row; validation happens before the
+	// transaction opens, so no Begin/Rollback is expected — only the
+	// catalog lookup.
 	rdb := test.NewDBProviderNopSQL(t)
 	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
 	ctx := testutil.NewDefaultTestContext(t)
 
-	rdb.SQLMock.ExpectBegin()
-	rdb.SQLMock.ExpectRollback()
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(emptyCatalogRows())
 
 	err := backend.Upsert(ctx, []Vector{
 		{Namespace: "ns", Model: "m", Resource: "folders", UID: "x", Title: "t", Embedding: []float32{0.1}},
@@ -104,8 +113,8 @@ func TestPgvectorBackend_UpsertReplaceSubresources_EmptySlice(t *testing.T) {
 	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
 	ctx := testutil.NewDefaultTestContext(t)
 
-	require.NoError(t, backend.UpsertReplaceSubresources(ctx, nil))
-	require.NoError(t, backend.UpsertReplaceSubresources(ctx, []Vector{}))
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "ns", "m", "dashboards", "dash", nil, nil))
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "ns", "m", "dashboards", "dash", []Vector{}, []string{}))
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
@@ -115,26 +124,27 @@ func TestPgvectorBackend_UpsertReplaceSubresources_InvalidVector_Rejected(t *tes
 	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
 	ctx := testutil.NewDefaultTestContext(t)
 
-	err := backend.UpsertReplaceSubresources(ctx, []Vector{
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(seededCatalogRows())
+
+	err := backend.UpsertReplaceSubresources(ctx, "ns", "m", "dashboards", "dash", []Vector{
 		{Namespace: "ns", Model: "m", Resource: "dashboards", UID: "", Title: "t", Content: "x", Embedding: []float32{0.1}},
-	})
+	}, []string{"panel/1"})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "uid must not be empty")
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
 func TestPgvectorBackend_UpsertReplaceSubresources_UnknownResource_Rejected(t *testing.T) {
-	// Unknown resource fires inside the transaction; tx is rolled back.
+	// Unknown resource is rejected before any DB work; no tx is opened.
 	rdb := test.NewDBProviderNopSQL(t)
 	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
 	ctx := testutil.NewDefaultTestContext(t)
 
-	rdb.SQLMock.ExpectBegin()
-	rdb.SQLMock.ExpectRollback()
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(emptyCatalogRows())
 
-	err := backend.UpsertReplaceSubresources(ctx, []Vector{
+	err := backend.UpsertReplaceSubresources(ctx, "ns", "m", "folders", "x", []Vector{
 		{Namespace: "ns", Model: "m", Resource: "folders", UID: "x", Title: "t", Embedding: []float32{0.1}},
-	})
+	}, []string{"panel/1"})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "unsupported resource")
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
@@ -257,5 +267,26 @@ func TestFitEmbedding(t *testing.T) {
 	t.Run("dim of zero rejects any non-empty input", func(t *testing.T) {
 		_, err := fitEmbedding([]float32{1}, 0)
 		require.Error(t, err)
+	})
+}
+
+func TestTruncateRunes(t *testing.T) {
+	t.Run("short string is unchanged", func(t *testing.T) {
+		require.Equal(t, "hello", truncateRunes("hello", 1024))
+	})
+
+	t.Run("truncates and marks with ellipsis, staying within max", func(t *testing.T) {
+		got := truncateRunes("abcdefghij", 6)
+		require.Equal(t, "abc...", got)
+		require.Equal(t, 6, utf8.RuneCountInString(got))
+	})
+
+	t.Run("does not split a multi-byte rune", func(t *testing.T) {
+		// Each "é" / "—" is multi-byte; the kept prefix must stay valid
+		// UTF-8 and the whole result must fit within max runes.
+		got := truncateRunes("é—éxyz", 5)
+		require.Equal(t, "é—...", got)
+		require.True(t, utf8.ValidString(got))
+		require.Equal(t, 5, utf8.RuneCountInString(got))
 	})
 }

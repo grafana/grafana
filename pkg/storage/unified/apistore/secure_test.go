@@ -1,19 +1,28 @@
 package apistore
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/storage"
 
+	claims "github.com/grafana/authlib/types"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestSecureLifecycle(t *testing.T) {
@@ -362,6 +371,72 @@ func TestSecureLifecycle(t *testing.T) {
 		err = handleSecureValuesDelete(context.Background(), nil, objWithCreateSecret)
 		require.Error(t, err, "should error when secure value storage is not configured")
 	})
+
+	// A conflicting update attempt already persisted an inline secure value; it must
+	// be deleted before we retry, otherwise every retry leaks an orphaned secret.
+	t.Run("guaranteed update cleans up secure values created on a conflicting attempt", func(t *testing.T) {
+		prev := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "example.grafana.app/v1",
+			"kind":       "Example",
+			"metadata": map[string]any{
+				"namespace": "default",
+				"name":      "test",
+				"uid":       "u1",
+			},
+		}}
+		var raw bytes.Buffer
+		require.NoError(t, unstructured.UnstructuredJSONScheme.Encode(prev, &raw))
+
+		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore.On("CreateInline", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return("inline-1", nil).Once()
+		secureStore.On("CreateInline", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return("inline-2", nil).Once()
+		secureStore.On("DeleteWhenOwnedByResource", mock.Anything, mock.Anything, "inline-1").
+			Return(nil).Once()
+
+		s := &Storage{
+			codec:     unstructured.UnstructuredJSONScheme,
+			newFunc:   func() runtime.Object { return &unstructured.Unstructured{} },
+			versioner: &storage.APIObjectVersioner{},
+			store:     &conflictOnceClient{prev: raw.Bytes()},
+			getKey: func(string) (*resourcepb.ResourceKey, error) {
+				return &resourcepb.ResourceKey{Namespace: "default", Group: "example.grafana.app", Resource: "examples", Name: "test"}, nil
+			},
+			opts: StorageOptions{SecureValues: secureStore},
+		}
+
+		tryUpdate := func(input runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
+			out := input.(*unstructured.Unstructured).DeepCopy()
+			out.Object["secure"] = map[string]any{"token": map[string]any{"create": "s3cr3t"}}
+			return out, nil, nil
+		}
+
+		requester := &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, OrgRole: identity.RoleAdmin, IsGrafanaAdmin: true}
+		ctx := identity.WithRequester(context.Background(), requester)
+
+		err := s.GuaranteedUpdate(ctx, "example/test", &unstructured.Unstructured{}, false, &storage.Preconditions{}, tryUpdate, nil)
+		require.NoError(t, err)
+		secureStore.AssertExpectations(t)
+	})
+}
+
+type conflictOnceClient struct {
+	resource.ResourceClient
+	prev    []byte
+	updates int
+}
+
+func (c *conflictOnceClient) Read(context.Context, *resourcepb.ReadRequest, ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
+	return &resourcepb.ReadResponse{Value: c.prev, ResourceVersion: 1}, nil
+}
+
+func (c *conflictOnceClient) Update(context.Context, *resourcepb.UpdateRequest, ...grpc.CallOption) (*resourcepb.UpdateResponse, error) {
+	c.updates++
+	if c.updates == 1 {
+		return &resourcepb.UpdateResponse{Error: &resourcepb.ErrorResult{Code: http.StatusConflict}}, nil
+	}
+	return &resourcepb.UpdateResponse{ResourceVersion: 2}, nil
 }
 
 func asJSON(v any, pretty bool) string {

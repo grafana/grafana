@@ -34,7 +34,7 @@ import { stringifyErrorLike } from '../../../utils/misc';
 import { CreateNewFolder } from '../../create-folder/CreateNewFolder';
 import { useGetNameSpacesByDatasourceName, useGetRulerRules } from '../../rule-editor/useAlertRuleSuggestions';
 import { type ImportFormValues } from '../ImportToGMA';
-import { getRulesSourceOptions } from '../Wizard/constants';
+import { getRulesSourceOptions } from '../Wizard/steps';
 import { useGetRulesThatMightBeOverwritten } from '../hooks';
 import { filterRulerRulesConfig } from '../useImport';
 import { useRoutingTrees } from '../useRoutingTrees';

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 )
 
@@ -243,6 +244,153 @@ func newServiceAccountTranslation() translation {
 	return saTranslation
 }
 
+// newRoutingTreeTranslation maps the notifications.alerting.grafana.app
+// routingtrees resource to the granular, per-resource managed route actions
+// (notifications.alerting.grafana.app/routingtrees:get, ...:uid:<name>) and to
+// the view/edit/admin action sets registered by RoutePermissionsService.
+func newRoutingTreeTranslation() translation {
+	verbMapping := map[string]string{
+		utils.VerbGet:              accesscontrol.ActionAlertingManagedRoutesRead,
+		utils.VerbList:             accesscontrol.ActionAlertingManagedRoutesRead,
+		utils.VerbWatch:            accesscontrol.ActionAlertingManagedRoutesRead,
+		utils.VerbCreate:           accesscontrol.ActionAlertingManagedRoutesCreate,
+		utils.VerbUpdate:           accesscontrol.ActionAlertingManagedRoutesWrite,
+		utils.VerbPatch:            accesscontrol.ActionAlertingManagedRoutesWrite,
+		utils.VerbDelete:           accesscontrol.ActionAlertingManagedRoutesDelete,
+		utils.VerbDeleteCollection: accesscontrol.ActionAlertingManagedRoutesDelete,
+		utils.VerbGetPermissions:   accesscontrol.ActionAlertingRoutesPermissionsWrite,
+		utils.VerbSetPermissions:   accesscontrol.ActionAlertingRoutesPermissionsRead,
+	}
+
+	const (
+		viewSet  = "notifications.alerting.grafana.app/routingtrees:view"
+		editSet  = "notifications.alerting.grafana.app/routingtrees:edit"
+		adminSet = "notifications.alerting.grafana.app/routingtrees:admin"
+	)
+
+	actionSetMapping := make(map[string][]string)
+	for verb, action := range verbMapping {
+		switch {
+		case slices.Contains(ossaccesscontrol.RoutesViewActions, action):
+			actionSetMapping[verb] = []string{viewSet, editSet, adminSet}
+		case slices.Contains(ossaccesscontrol.RoutesEditActions, action):
+			actionSetMapping[verb] = []string{editSet, adminSet}
+		case slices.Contains(ossaccesscontrol.RoutesAdminActions, action):
+			actionSetMapping[verb] = []string{adminSet}
+		}
+	}
+
+	return translation{
+		resource:         accesscontrol.AlertingRoutesKind,
+		attribute:        "uid",
+		verbMapping:      verbMapping,
+		actionSetMapping: actionSetMapping,
+		folderSupport:    false,
+		skipScopeOnVerb:  map[string]bool{utils.VerbCreate: true},
+	}
+}
+
+// newAlertmanagerImportsTranslation maps the notifications.alerting.grafana.app
+// alertmanagerimports resource to its granular, per-resource actions. There is
+// no resource permissions service for this resource, so it has no action sets.
+func newAlertmanagerImportsTranslation() translation {
+	return translation{
+		resource:  accesscontrol.AlertingAlertmanagerImportsKind,
+		attribute: "uid",
+		verbMapping: map[string]string{
+			utils.VerbGet:              accesscontrol.ActionAlertingAlertmanagerImportsRead,
+			utils.VerbList:             accesscontrol.ActionAlertingAlertmanagerImportsRead,
+			utils.VerbWatch:            accesscontrol.ActionAlertingAlertmanagerImportsRead,
+			utils.VerbCreate:           accesscontrol.ActionAlertingAlertmanagerImportsCreate,
+			utils.VerbUpdate:           accesscontrol.ActionAlertingAlertmanagerImportsWrite,
+			utils.VerbPatch:            accesscontrol.ActionAlertingAlertmanagerImportsWrite,
+			utils.VerbDelete:           accesscontrol.ActionAlertingAlertmanagerImportsDelete,
+			utils.VerbDeleteCollection: accesscontrol.ActionAlertingAlertmanagerImportsDelete,
+		},
+		folderSupport:   false,
+		skipScopeOnVerb: map[string]bool{utils.VerbCreate: true},
+	}
+}
+
+// newAlertRuleTranslation maps the rule resources in rules.alerting.grafana.app
+// (alertrules, recordingrules, rulesequences) to the alert.rules:* actions.
+//
+// Alert-rule permissions are always folder-scoped: they are granted on the folder
+// scope (folders:uid:<uid>), never on a per-rule scope. Authorization therefore
+// flows entirely through folder inheritance (folderSupport: true), which the check
+// path evaluates against the object's parent folder using a hardcoded folders:uid:
+// prefix — independent of this translation's resource.
+//
+// The resource is deliberately "alert.rules" (not "folders"). The direct-scope
+// check builds Scope(name) from the request's object name (the rule UID); with a
+// "folders" resource that would produce folders:uid:<ruleUID>, which could collide
+// with a real folder grant when a rule UID happens to equal a folder UID and grant
+// unintended access. Using "alert.rules" yields alert.rules:uid:<ruleUID>, a scope
+// no grant ever has, so the direct-scope check is a guaranteed no-op and only the
+// folder-inheritance path decides access.
+//
+// The alert.rules:* actions are also part of the folder view/edit/admin action
+// sets, so users granted via managed folder roles are matched too.
+func newAlertRuleTranslation() translation {
+	t := translation{
+		// See doc comment: "alert.rules" makes the per-object direct-scope check a
+		// no-op; folder inheritance (below) does the real authorization.
+		resource:  "alert.rules",
+		attribute: "uid",
+		verbMapping: map[string]string{
+			utils.VerbGet:              accesscontrol.ActionAlertingRuleRead,
+			utils.VerbList:             accesscontrol.ActionAlertingRuleRead,
+			utils.VerbWatch:            accesscontrol.ActionAlertingRuleRead,
+			utils.VerbCreate:           accesscontrol.ActionAlertingRuleCreate,
+			utils.VerbUpdate:           accesscontrol.ActionAlertingRuleUpdate,
+			utils.VerbPatch:            accesscontrol.ActionAlertingRuleUpdate,
+			utils.VerbDelete:           accesscontrol.ActionAlertingRuleDelete,
+			utils.VerbDeleteCollection: accesscontrol.ActionAlertingRuleDelete,
+		},
+		folderSupport: true,
+	}
+
+	actionSetMapping := make(map[string][]string)
+	for verb, rbacAction := range t.verbMapping {
+		var actionSets []string
+		if slices.Contains(ossaccesscontrol.FolderViewActions, rbacAction) {
+			actionSets = append(actionSets, "folders:view")
+		}
+		if slices.Contains(ossaccesscontrol.FolderEditActions, rbacAction) {
+			actionSets = append(actionSets, "folders:edit")
+		}
+		if slices.Contains(ossaccesscontrol.FolderAdminActions, rbacAction) {
+			actionSets = append(actionSets, "folders:admin")
+		}
+		actionSetMapping[verb] = actionSets
+	}
+	t.actionSetMapping = actionSetMapping
+	return t
+}
+
+// newSettingsTranslation maps setting.grafana.app/settings to the legacy
+// settings:read / settings:write actions. The K8s object name is the section,
+// so it lands in the conventional "uid" (object-name) attribute and the scope
+// is settings:uid:<section>. Settings are authorized per section; key-level
+// granularity is intentionally dropped.
+func newSettingsTranslation() translation {
+	return translation{
+		resource:  "settings",
+		attribute: "uid",
+		verbMapping: map[string]string{
+			utils.VerbGet:              accesscontrol.ActionSettingsRead,
+			utils.VerbList:             accesscontrol.ActionSettingsRead,
+			utils.VerbWatch:            accesscontrol.ActionSettingsRead,
+			utils.VerbCreate:           accesscontrol.ActionSettingsWrite,
+			utils.VerbUpdate:           accesscontrol.ActionSettingsWrite,
+			utils.VerbPatch:            accesscontrol.ActionSettingsWrite,
+			utils.VerbDelete:           accesscontrol.ActionSettingsWrite,
+			utils.VerbDeleteCollection: accesscontrol.ActionSettingsWrite,
+		},
+		folderSupport: false,
+	}
+}
+
 func NewMapperRegistry() MapperRegistry {
 	skipScopeOnAllVerbs := map[string]bool{
 		utils.VerbCreate:           true,
@@ -258,6 +406,16 @@ func NewMapperRegistry() MapperRegistry {
 	}
 
 	mapper := mapper(map[string]map[string]translation{
+		"notifications.alerting.grafana.app": {
+			"routingtrees":        newRoutingTreeTranslation(),
+			"alertmanagerimports": newAlertmanagerImportsTranslation(),
+		},
+		"rules.alerting.grafana.app": {
+			// All rule resources share the folder-scoped alert.rules:* actions.
+			"alertrules":     newAlertRuleTranslation(),
+			"recordingrules": newAlertRuleTranslation(),
+			"rulesequences":  newAlertRuleTranslation(),
+		},
 		"dashboard.grafana.app": {
 			"dashboards":    newDashboardTranslation(),
 			"librarypanels": newResourceTranslation("library.panels", "uid", true, nil),
@@ -453,6 +611,9 @@ func NewMapperRegistry() MapperRegistry {
 			// Uses "type" as scope attribute for org-level annotations (e.g. annotations:type:organization).
 			// No actionSetMapping — dashboard action sets don't apply to org-level annotations.
 			"annotations": newResourceTranslation("annotations", "type", false, nil),
+		},
+		"setting.grafana.app": {
+			"settings": newSettingsTranslation(),
 		},
 	})
 

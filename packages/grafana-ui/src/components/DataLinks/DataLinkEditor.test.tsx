@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 
 import { DataLinkEditor } from './DataLinkEditor';
 
@@ -23,17 +24,36 @@ describe('DataLinkEditor', () => {
     expect(screen.getByLabelText('Open in new tab')).toBeInTheDocument();
   });
 
-  it('calls onChange when title is changed', async () => {
+  it('calls onChange when the title is edited', async () => {
     const onChange = jest.fn();
-    render(<DataLinkEditor {...defaultProps} onChange={onChange} />);
+    const user = userEvent.setup();
 
-    await waitFor(() => {
-      expect(screen.getByLabelText('Title')).toBeInTheDocument();
-    });
+    function Controlled() {
+      const [link, setLink] = useState<{ title: string; url: string; targetBlank?: boolean }>({
+        title: '',
+        url: '',
+        targetBlank: false,
+      });
+      return (
+        <DataLinkEditor
+          {...defaultProps}
+          value={link}
+          onChange={(_index, next) => {
+            onChange(next);
+            setLink(next);
+          }}
+        />
+      );
+    }
 
-    await userEvent.type(screen.getByLabelText('Title'), '!');
+    render(<Controlled />);
+    const title = await screen.findByLabelText('Title');
+    // Pin the Title to the CodeMirror contenteditable wiring — a plain <Input> would fail this.
+    expect(title).toHaveAttribute('contenteditable', 'true');
+    await user.click(title);
+    await user.keyboard('abc');
 
-    expect(onChange).toHaveBeenCalledWith(0, expect.objectContaining({ title: 'My Title!' }));
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ title: 'abc' })));
   });
 
   it('calls onChange when open in new tab is toggled', async () => {

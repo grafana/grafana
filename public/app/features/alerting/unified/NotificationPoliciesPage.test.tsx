@@ -4,7 +4,6 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { render, screen, testWithFeatureToggles, userEvent, within } from 'test/test-utils';
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
-import { config } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/hooks/abilities/alertmanager/useNotificationPolicyAbility';
@@ -83,7 +82,7 @@ const openEditModal = async (
   await user.click(await ui.editButton.find());
 };
 
-// This is the page for the default policy when alertingMultiplePolicies is disabled.
+// This renders the notification policies tree/list page.
 const renderNotificationPolicies = (alertManagerSourceName: string = GRAFANA_RULES_SOURCE_NAME) =>
   render(
     <>
@@ -100,7 +99,7 @@ const renderNotificationPolicies = (alertManagerSourceName: string = GRAFANA_RUL
     }
   );
 
-// This is the page for the default policy when alertingMultiplePolicies is enabled.
+// This renders the dedicated policy editor page for a single named policy.
 const renderPolicyPage = (routeName: string) => () =>
   render(
     <Routes>
@@ -200,6 +199,13 @@ describe.each([
       ...PERMISSIONS_NOTIFICATION_POLICIES,
     ]);
     resetRoutingTreeMap();
+    // These tests exercise a single policy tree in isolation, so trim away the other
+    // fixture trees that resetRoutingTreeMap() registers by default (they're only relevant
+    // to multi-tree scenarios, covered separately in "Notification policy tree rendering").
+    deleteRoutingTree('Managed Policy - Empty Provisioned');
+    deleteRoutingTree('Managed Policy - Override + Inherit');
+    deleteRoutingTree('Managed Policy - Many Top-Level');
+    deleteRoutingTree('Managed Policy - Deeply Nested');
     // Copy default config to other policy name and clear the default, so we guarantee the tests are validating against
     // the custom route.
     const defaultRoute = getRoutingTree(ROOT_ROUTE_NAME)!;
@@ -349,7 +355,12 @@ describe.each([
     makeAllK8sGetEndpointsFail('alerting.config.notfound', errMessage);
 
     renderPage();
-    const alert = await screen.findByRole('alert', { name: /error loading alertmanager config/i });
+
+    // NotificationPoliciesPage lists all policy trees first, so a failing k8s request
+    // surfaces as a failure to fetch that list rather than the per-tree Alertmanager config error.
+    const alertName =
+      testName === 'NotificationPoliciesPage' ? /failed to fetch policies/i : /error loading alertmanager config/i;
+    const alert = await screen.findByRole('alert', { name: alertName });
     expect(await within(alert).findByText(new RegExp(errMessage))).toBeInTheDocument();
     expect(ui.rootRouteContainer.query()).not.toBeInTheDocument();
   });
@@ -592,13 +603,7 @@ const uiMultiRoute = {
   policyFilter: byRole('textbox', { name: /search routing trees/ }),
 };
 
-describe('alertingMultiplePolicies Feature Flag', () => {
-  const originalFeatureToggle = config.featureToggles.alertingMultiplePolicies;
-
-  afterAll(() => {
-    config.featureToggles.alertingMultiplePolicies = originalFeatureToggle;
-  });
-
+describe('Notification policy tree rendering', () => {
   afterEach(() => {
     resetRoutingTreeMap();
   });
@@ -611,27 +616,14 @@ describe('alertingMultiplePolicies Feature Flag', () => {
   // TODO: Re-enable this test once the am-root-route-container rendering issue is fixed.
   // Temporarily skipped due to failure in grafana-enterprise#11248
   // https://github.com/grafana/grafana-enterprise/actions/runs/23009165147/job/66815001544
-  it.skip('Should render MultiplePoliciesView when alertingMultiplePolicies feature flag is enabled', async () => {
-    config.featureToggles.alertingMultiplePolicies = true;
-
+  it.skip('Should render MultiplePoliciesView', async () => {
     renderNotificationPolicies();
     await screen.findByTestId('search-query-input');
 
     expect(screen.getAllByTestId('am-root-route-container').length).toBeGreaterThan(0);
   });
 
-  it('Should not render PoliciesList when alertingMultiplePolicies feature flag is disabled', async () => {
-    config.featureToggles.alertingMultiplePolicies = false;
-
-    renderNotificationPolicies();
-    await getRootRoute();
-
-    expect(uiMultiRoute.policyFilter.query()).not.toBeInTheDocument();
-  });
-
   it('Should not render PoliciesList when alertmanager is external', async () => {
-    config.featureToggles.alertingMultiplePolicies = true;
-
     setAlertmanagerStatus(dataSources.promAlertManager.uid, {
       ...someCloudAlertManagerStatus,
       config: someCloudAlertManagerConfig.alertmanager_config,
@@ -643,8 +635,6 @@ describe('alertingMultiplePolicies Feature Flag', () => {
   });
 
   it('Should render tree inline with create button when there is only one policy tree', async () => {
-    config.featureToggles.alertingMultiplePolicies = true;
-
     resetRoutingTreeMap();
     deleteRoutingTree('Managed Policy - Empty Provisioned');
     deleteRoutingTree('Managed Policy - Override + Inherit');
@@ -659,61 +649,37 @@ describe('alertingMultiplePolicies Feature Flag', () => {
   });
 });
 
-describe('alertingNavigationV2 respects alertingMultiplePolicies', () => {
+describe('alertingNavigationV2', () => {
   beforeAll(() => {
     setupDataSources(...Object.values(dataSources));
     grantUserPermissions([AccessControlAction.AlertingNotificationsExternalRead, ...PERMISSIONS_NOTIFICATION_POLICIES]);
   });
 
-  describe('when alertingMultiplePolicies is undefined', () => {
-    testWithFeatureToggles({ enable: ['alertingNavigationV2'] });
+  testWithFeatureToggles({ enable: ['alertingNavigationV2'] });
 
-    it('Should render PoliciesTree', async () => {
-      renderNotificationPolicies();
-      await getRootRoute();
-
-      expect(uiMultiRoute.policyFilter.query()).not.toBeInTheDocument();
-    });
-  });
-
-  describe('when alertingMultiplePolicies is disabled', () => {
-    testWithFeatureToggles({ enable: ['alertingNavigationV2'], disable: ['alertingMultiplePolicies'] });
-
-    it('Should render PoliciesTree', async () => {
-      renderNotificationPolicies();
-      await getRootRoute();
-
-      expect(uiMultiRoute.policyFilter.query()).not.toBeInTheDocument();
-    });
-  });
-
-  describe('when alertingMultiplePolicies is enabled', () => {
-    testWithFeatureToggles({ enable: ['alertingNavigationV2', 'alertingMultiplePolicies'] });
-
-    it('Should render MultiplePoliciesView', async () => {
-      render(
-        <>
-          <AppNotificationList />
-          <NotificationPolicies />
-        </>,
-        {
-          historyOptions: {
-            initialEntries: [`/alerting/routes?${ALERTMANAGER_NAME_QUERY_KEY}=${GRAFANA_RULES_SOURCE_NAME}`],
-          },
-          preloadedState: {
-            navIndex: {
-              'notification-config': {
-                id: 'notification-config',
-                text: 'Notification configuration',
-                url: '/alerting/notifications',
-              },
+  it('Should render MultiplePoliciesView', async () => {
+    render(
+      <>
+        <AppNotificationList />
+        <NotificationPolicies />
+      </>,
+      {
+        historyOptions: {
+          initialEntries: [`/alerting/routes?${ALERTMANAGER_NAME_QUERY_KEY}=${GRAFANA_RULES_SOURCE_NAME}`],
+        },
+        preloadedState: {
+          navIndex: {
+            'notification-config': {
+              id: 'notification-config',
+              text: 'Notification configuration',
+              url: '/alerting/notifications',
             },
           },
-        }
-      );
-      await screen.findByTestId('search-query-input');
+        },
+      }
+    );
+    await screen.findByTestId('search-query-input');
 
-      expect((await screen.findAllByTestId('am-root-route-container')).length).toBeGreaterThan(0);
-    });
+    expect((await screen.findAllByTestId('am-root-route-container')).length).toBeGreaterThan(0);
   });
 });

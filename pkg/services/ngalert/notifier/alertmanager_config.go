@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -27,6 +28,7 @@ type ExtraConfigAuthz interface {
 	AuthorizeCreate(ctx context.Context, user identity.Requester) error
 	AuthorizeUpdate(ctx context.Context, user identity.Requester, identifier string) error
 	AuthorizeDelete(ctx context.Context, user identity.Requester, identifier string) error
+	AuthorizePromote(ctx context.Context, user identity.Requester, result merge.MergeResult) error
 }
 
 var (
@@ -51,6 +53,10 @@ var (
 		errutil.WithPublic(
 			"Identifier [{{ .Public.Identifier }}] is already used by existing managed routes. Use another identifier or delete the existing route.",
 		))
+
+	ErrAlertmanagerExtraConfigNotFound = errutil.NotFound("alerting.notifications.alertmanager.extraConfigNotFound",
+		errutil.WithPublicMessage("Extra configuration not found"),
+	)
 )
 
 type UnknownReceiverError struct {
@@ -85,11 +91,11 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) && moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
+	if len(prepared.ExtraConfigs) > 0 && moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 		if err := moa.Crypto.DecryptExtraConfigs(ctx, prepared); err != nil {
 			return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to decrypt external configurations: %w", err)
 		}
-		mergedConfig, _, err := merge.MergeExtraConfig(ctx, prepared, models.ProvenanceConvertedPrometheus)
+		mergedConfig, _, err := merge.MergeExtraConfig(ctx, prepared)
 		if err != nil {
 			return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to merge external configuration: %w", err)
 		}
@@ -99,10 +105,7 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 	// Add managed routes and extra route as managed route to the configuration.
 	// Also add extra inhibition rules to the configuration if extra route exists and doesn't conflict with existing
 	// route
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
-		prepared.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(prepared.AlertmanagerConfig.Route, prepared.ManagedRoutes)
-	}
+	prepared.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(prepared.AlertmanagerConfig.Route, prepared.ManagedRoutes)
 
 	if err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, &prepared.AlertmanagerConfig, onInvalid, moa.featureManager); err != nil {
 		return alertingNotify.NotificationsConfiguration{}, err
@@ -346,11 +349,15 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 
 // modifyAndApplyExtraConfiguration is a helper function that loads the current configuration,
 // applies a modification function to the ExtraConfigs, and saves the result.
+// If promote is true, the saved config is immediately promoted into the main Grafana config.
 func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 	ctx context.Context,
 	org int64,
+	user identity.Requester,
+	authz ExtraConfigAuthz,
 	modifyFn func([]v1.ExtraConfiguration) ([]v1.ExtraConfiguration, error),
 	dryRun bool,
+	promote bool,
 ) (merge.MergeResult, error) {
 	currentCfg, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, org)
 	if err != nil {
@@ -364,6 +371,10 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 
 	cfg.ExtraConfigs, err = modifyFn(cfg.ExtraConfigs)
 	if err != nil {
+		var grafanaErr errutil.Error
+		if errors.As(err, &grafanaErr) {
+			return merge.MergeResult{}, err
+		}
 		return merge.MergeResult{}, fmt.Errorf("failed to apply extra configuration: %w", err)
 	}
 
@@ -375,11 +386,20 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 		}
 	}
 
-	_, mergeResult, err := merge.MergeExtraConfig(ctx, cfg, models.ProvenanceConvertedPrometheus)
+	if err = moa.Crypto.DecryptExtraConfigs(ctx, cfg); err != nil {
+		return merge.MergeResult{}, fmt.Errorf("failed to decrypt external configurations: %w", err)
+	}
+
+	mergedConfig, mergeResult, err := merge.MergeExtraConfig(ctx, cfg)
 	if err != nil {
 		return merge.MergeResult{}, fmt.Errorf("cannot merge imported configuration into Grafana: %w", err)
 	}
-
+	if promote {
+		if err := authz.AuthorizePromote(ctx, user, mergeResult); err != nil {
+			return merge.MergeResult{}, err
+		}
+		cfg = &mergedConfig
+	}
 	if dryRun {
 		moa.logger.Debug("Dry run: extra configuration validated successfully", "org", org)
 		return mergeResult, nil
@@ -402,12 +422,13 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 		return merge.MergeResult{}, AlertmanagerConfigRejectedError{err}
 	}
 
-	moa.logger.Info("Applied alertmanager configuration with extra config", "org", org)
+	moa.logger.Info("Applied alertmanager configuration with extra config", "org", org, "promoted", promote)
 	return mergeResult, nil
 }
 
 // SaveAndApplyExtraConfiguration adds or replaces an ExtraConfiguration while preserving the main AlertmanagerConfig.
-func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz ExtraConfigAuthz, extraConfig v1.ExtraConfiguration, replace bool, dryRun bool) (merge.MergeResult, error) {
+// If promote is true, the configuration is immediately promoted into the main config before saving.
+func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz ExtraConfigAuthz, extraConfig v1.ExtraConfiguration, replace, dryRun, promote bool) (merge.MergeResult, error) {
 	modifyFunc := func(configs []v1.ExtraConfiguration) ([]v1.ExtraConfiguration, error) {
 		if replace {
 			// When replacing all configs, authorize deletion for each config with a different identifier.
@@ -447,7 +468,7 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Cont
 		return []v1.ExtraConfiguration{extraConfig}, nil
 	}
 
-	result, err := moa.modifyAndApplyExtraConfiguration(ctx, org, modifyFunc, dryRun)
+	result, err := moa.modifyAndApplyExtraConfiguration(ctx, org, user, authz, modifyFunc, dryRun, promote)
 	if err != nil {
 		return merge.MergeResult{}, err
 	}
@@ -455,7 +476,7 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Cont
 	if dryRun {
 		moa.logger.Info("Dry run: validated alertmanager configuration with extra config", "org", org, "identifier", extraConfig.Identifier)
 	} else {
-		moa.logger.Info("Applied alertmanager configuration with extra config", "org", org, "identifier", extraConfig.Identifier)
+		moa.logger.Info("Applied alertmanager configuration with extra config", "org", org, "identifier", extraConfig.Identifier, "promoted", promote)
 	}
 	return result, nil
 }
@@ -475,8 +496,23 @@ func (moa *MultiOrgAlertmanager) DeleteExtraConfiguration(ctx context.Context, o
 		return filtered, nil
 	}
 
-	_, err := moa.modifyAndApplyExtraConfiguration(ctx, org, modifyFunc, false)
+	_, err := moa.modifyAndApplyExtraConfiguration(ctx, org, user, authz, modifyFunc, false, false)
 	return err
+}
+
+// PromoteExtraConfiguration promotes an extra configuration to the Grafana configuration.
+func (moa *MultiOrgAlertmanager) PromoteExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz ExtraConfigAuthz, identifier string) (merge.MergeResult, error) {
+	result, err := moa.modifyAndApplyExtraConfiguration(ctx, org, user, authz, func(configurations []v1.ExtraConfiguration) ([]v1.ExtraConfiguration, error) {
+		if len(configurations) == 0 || configurations[0].Identifier != identifier { // TODO when we support multiple extra configs, this will need to be changed.
+			return nil, ErrAlertmanagerExtraConfigNotFound.Errorf("extra configuration with identifier %q not found", identifier)
+		}
+		return configurations, nil
+	}, false, true)
+	if err != nil {
+		return merge.MergeResult{}, err
+	}
+	moa.logger.Info("Alertmanager configuration has been merged into Grafana", append(result.LogContext(), "org", org)...)
+	return result, nil
 }
 
 type provisioningStore interface {
@@ -485,6 +521,9 @@ type provisioningStore interface {
 	GetProvenancesByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]models.Provenance, error)
 	SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
 	DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error
+	GetManagerProperties(ctx context.Context, o models.Provisionable, org int64) (utils.ManagerProperties, error)
+	GetManagerPropertiesByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]utils.ManagerProperties, error)
+	SetManagerProperties(ctx context.Context, o models.Provisionable, org int64, m utils.ManagerProperties) error
 }
 
 func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config definitions.GettableUserConfig, org int64) (definitions.GettableUserConfig, error) {

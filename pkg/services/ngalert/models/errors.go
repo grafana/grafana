@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var (
@@ -67,8 +66,6 @@ var (
 		"Invalid format of the submitted route: {{.Public.Error}}.",
 		errutil.WithPublic("Invalid format of the submitted route: {{.Public.Error}}. Correct the payload and try again."),
 	)
-
-	ErrMultipleRoutesNotSupported = errutil.NotImplemented("alerting.notifications.routes.multipleNotSupported", errutil.WithPublicMessage(fmt.Sprintf("Multiple routes are not supported, see feature toggle %q", featuremgmt.FlagAlertingMultiplePolicies)))
 
 	ErrRouteVersionConflict = errutil.Conflict("alerting.notifications.routes.conflict").MustTemplate(
 		"Provided version '{{ .Public.Version }}' of route '{{ .Public.Name }}' does not match current version '{{ .Public.CurrentVersion }}'",

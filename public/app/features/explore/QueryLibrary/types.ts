@@ -8,6 +8,9 @@ type User = {
 
 export type OnSelectQueryType = (query: DataQuery, title?: string) => void;
 
+// Multi-query selection (e.g. a recent-queries entry that ran several queries together).
+export type OnSelectQueriesType = (queries: DataQuery[], title?: string) => void;
+
 export type QueryLibraryEventsPropertyMap = Record<string, string | boolean | undefined>;
 
 // flattened data from API response to facilitate structs
@@ -32,6 +35,10 @@ export type SavedQuery = {
   queryText?: string;
   datasourceRef?: DataSourceRef | null;
   datasourceType?: string;
+  // Set when metadata enrichment failed for this row (e.g. its datasource was deleted).
+  // The row is still surfaced so the user can see and delete it, but its datasource-derived
+  // fields are absent and edit/select are disabled.
+  loadError?: Error;
 } & Omit<Partial<SavedQueryBase>, 'targets'>;
 
 export enum QueryLibraryTab {

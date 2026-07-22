@@ -162,4 +162,48 @@ END $$;`))
 		migrator.NewAddTableMigration(rateBuckets))
 	mg.AddMigration("create vector_search_rate_buckets window_start index",
 		migrator.NewAddIndexMigration(rateBuckets, rateBuckets.Indices[0]))
+
+	// created_at = first embed, updated_at = last re-embed. ADD COLUMN on
+	// the partitioned parent propagates to every leaf. updated_at is bumped
+	// in the upsert's DO UPDATE (see vector_collection_upsert.sql); created_at
+	// is never touched after insert.
+	mg.AddMigration("add created_at and updated_at to embeddings",
+		migrator.NewRawSQLMigration("").Postgres(`
+			ALTER TABLE embeddings
+				ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP;
+		`))
+
+	// Catalog of provisioned collections. Two purposes:
+	// (1) map resource names to the value stored in embeddings.resource (the LIST partition key), since resource names
+	// may contain chars a table name can't (e.g. hyphens);
+	// (2) disambiguate same-named resources across groups, since the partition name doesn't encode the group.
+	// External collections get "_external" appended to their partition_key, so an internal
+	// resource can never conflict with an external one.
+	embeddingCollections := migrator.Table{
+		Name: "embedding_collections",
+		Columns: []*migrator.Column{
+			{Name: "group_name", Type: migrator.DB_Varchar, Length: 256, Nullable: false, IsPrimaryKey: true},
+			{Name: "resource", Type: migrator.DB_Varchar, Length: 256, Nullable: false, IsPrimaryKey: true},
+			{Name: "partition_key", Type: migrator.DB_Varchar, Length: 256, Nullable: false},
+			{Name: "is_external", Type: migrator.DB_Bool, Nullable: false, Default: "false"},
+			{Name: "created_at", Type: migrator.DB_TimeStampz, Nullable: false, Default: "CURRENT_TIMESTAMP"},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"partition_key"}, Type: migrator.UniqueIndex},
+		},
+	}
+	mg.AddMigration("create embedding_collections table",
+		migrator.NewAddTableMigration(embeddingCollections))
+	mg.AddMigration("create embedding_collections partition_key unique index",
+		migrator.NewAddIndexMigration(embeddingCollections, embeddingCollections.Indices[0]))
+
+	// Seed the pre-catalog dashboards partition. partition_key matches the
+	// resource value already stored on every row, so no data moves.
+	mg.AddMigration("seed embedding_collections with dashboards",
+		migrator.NewRawSQLMigration("").Postgres(`
+			INSERT INTO embedding_collections (group_name, resource, partition_key, is_external)
+			VALUES ('dashboard.grafana.app', 'dashboards', 'dashboards', false)
+			ON CONFLICT DO NOTHING;
+		`))
 }

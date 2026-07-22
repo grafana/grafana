@@ -1,20 +1,49 @@
-import { type SceneObject } from '@grafana/scenes';
+import { type SceneObjectState, type SceneObject } from '@grafana/scenes';
+import { type ElementSelectionContextState, type ElementSelectionOnSelectOptions } from '@grafana/ui';
+
+import { type DashboardEditActionEvent, type DashboardEditActionEventPayload } from './events';
+import { type DashboardOutline } from './outline/DashboardOutline';
+
+export interface DashboardEditPaneState extends SceneObjectState {
+  selectionContext: ElementSelectionContextState;
+
+  undoStack: DashboardEditActionEventPayload[];
+  redoStack: DashboardEditActionEventPayload[];
+  outlinePane?: DashboardOutline;
+  openPane?: DashboardSidebarPane;
+  /** Temp hack for Link and LinkSet that are not part of the scene but need to be selected for now  */
+  selectedDisconnectedObject?: SceneObject;
+  /** Previous state */
+  previousState?: DashboardEditPaneState;
+  /** True when a new element is being added and selected */
+  isNewElement: boolean;
+  isDocked?: boolean;
+}
 
 /**
  * Subset of DashboardEditPane used by assistant view-mode components
  * so they can avoid importing the full DashboardEditPane (which would
  * create circular dependencies through DashboardScene).
  */
-export interface EditPaneSelectionActions {
+export interface DashboardEditPaneLike extends SceneObject<DashboardEditPaneState> {
   enableSelection(): void;
   disableSelection(): void;
   clearSelection(noEvent?: boolean): void;
+  selectObject(obj: SceneObject, options?: ElementSelectionOnSelectOptions): void;
+  openPane(openPane: DashboardSidebarPane): void;
+  closePane(): void;
+  getSelectedObject(key?: string): SceneObject | undefined;
+  undoAction(): void;
+  redoAction(): void;
+  goBackToPrevious(): void;
+  fixSelectionOfRemovedObject(): void;
+  addNewPanel(target: SceneObject | undefined): void;
+  pastePanel(target: SceneObject | undefined): void;
+  setPanelEditAction(editAction: DashboardEditActionEvent): void;
 }
 
-type DashboardSidebarPaneName = 'element' | 'outline' | 'filters' | 'add' | 'code' | 'variable-type-selection';
-
 export interface DashboardSidebarPane extends SceneObject {
-  getId(): DashboardSidebarPaneName;
+  getId(): string;
   /** Some panes like code editor require a wider pane  */
   minWidth?: number;
   /** Exclude this pane from the go back history */

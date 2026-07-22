@@ -122,10 +122,6 @@ function getDefaultEditorSettings(ruleType?: RuleFormType) {
     return undefined;
   }
 
-  const editorSettingsEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
-  if (!editorSettingsEnabled) {
-    return undefined;
-  }
   //then, check in local storage if the user has saved last rule with sections simplified
   const queryEditorSettings = localStorage.getItem(SIMPLIFIED_QUERY_EDITOR_KEY);
   const notificationStepSettings = localStorage.getItem(MANUAL_ROUTING_KEY);
@@ -155,7 +151,7 @@ export function formValuesFromQueryParams(ruleDefinition: string, type: RuleForm
         annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
         queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
         type: ruleFromQueryParams.type ?? type ?? RuleFormType.grafana,
-        evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
+        evaluateEvery: ruleFromQueryParams.evaluateEvery ?? DEFAULT_GROUP_EVALUATION_INTERVAL,
       })
     )
   );

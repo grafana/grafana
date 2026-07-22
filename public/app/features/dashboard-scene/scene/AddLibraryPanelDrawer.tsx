@@ -8,10 +8,7 @@ import {
 } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
 import { Drawer } from '@grafana/ui';
-import {
-  LibraryPanelsSearch,
-  LibraryPanelsSearchVariant,
-} from 'app/features/library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
+import { LibraryPanelsSearch } from 'app/features/library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
 
 import { getDashboardSceneFor, getDefaultVizPanel } from '../utils/utils';
 
@@ -61,11 +58,7 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
 
     return (
       <Drawer title={title} onClose={model.onClose}>
-        <LibraryPanelsSearch
-          onClick={model.onAddLibraryPanel}
-          variant={LibraryPanelsSearchVariant.Tight}
-          showPanelFilter
-        />
+        <LibraryPanelsSearch onClick={model.onAddLibraryPanel} showPanelFilter />
       </Drawer>
     );
   };

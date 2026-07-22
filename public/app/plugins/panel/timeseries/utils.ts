@@ -11,11 +11,8 @@ import {
   nullToValue,
 } from '@grafana/data';
 import { convertFieldType } from '@grafana/data/internal';
-import { type GraphFieldConfig, LineInterpolation, TooltipDisplayMode, type VizTooltipOptions } from '@grafana/schema';
-import { type AdHocFilterItem } from '@grafana/ui';
-import { buildScaleKey, FILTER_FOR_OPERATOR } from '@grafana/ui/internal';
-
-import { type HeatmapTooltip } from '../heatmap/panelcfg.gen';
+import { type GraphFieldConfig, LineInterpolation } from '@grafana/schema';
+import { buildScaleKey } from '@grafana/ui/internal';
 
 type ScaleKey = string;
 
@@ -338,33 +335,4 @@ export function getTimezones(timezones: string[] | undefined, defaultTimezone: s
     return [defaultTimezone];
   }
   return timezones.map((v) => (v?.length ? v : defaultTimezone));
-}
-
-export const isTooltipScrollable = (tooltipOptions: VizTooltipOptions | HeatmapTooltip) => {
-  return tooltipOptions.mode === TooltipDisplayMode.Multi && tooltipOptions.maxHeight != null;
-};
-
-export function getGroupedFilters(
-  frame: DataFrame,
-  seriesIdx: number,
-  getFiltersBasedOnGrouping: (filters: AdHocFilterItem[]) => AdHocFilterItem[]
-) {
-  const groupingFilters: AdHocFilterItem[] = [];
-  const xField = frame.fields[seriesIdx];
-
-  if (xField && xField.labels && xField.config.filterable) {
-    const seriesFilters: AdHocFilterItem[] = [];
-
-    Object.entries(xField.labels).forEach(([key, value]) => {
-      seriesFilters.push({
-        key,
-        operator: FILTER_FOR_OPERATOR,
-        value,
-      });
-    });
-
-    groupingFilters.push(...getFiltersBasedOnGrouping(seriesFilters));
-  }
-
-  return groupingFilters;
 }

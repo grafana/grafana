@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.26.4
+GO_VERSION = 1.26.5
 GO_HOST_OS := $(shell $(GO) env GOHOSTOS)
 GO_HOST_ARCH := $(shell $(GO) env GOHOSTARCH)
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
@@ -845,3 +845,5 @@ GENERATE_POLICY_BOT_CONFIG_SHA := sha256:d05ff5c7d4247da155c85f8c6f1f9f7c6d013d1
 	sed -i.bak '/name: Workflow \.github\/workflows\/govulncheck\.yml/,/workflows:/{s/- success/- success\n            - failure/;}' .policy.yml; rm -f .policy.yml.bak
 # Make check-frontend-test-coverage non-blocking - accept failure so it doesn't prevent merge
 	sed -i.bak '/name: Workflow \.github\/workflows\/check-frontend-test-coverage\.yml/,/workflows:/{s/- success/- success\n            - failure/;}' .policy.yml; rm -f .policy.yml.bak
+# Make detect-breaking-changes-levitate non-blocking - accept failure so it doesn't prevent merge
+	sed -i.bak '/name: Workflow \.github\/workflows\/detect-breaking-changes-levitate\.yml/,/workflows:/{s/- success/- success\n            - failure/;}' .policy.yml; rm -f .policy.yml.bak

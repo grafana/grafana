@@ -1,15 +1,25 @@
 import { css } from '@emotion/css';
+import { Suspense } from 'react';
 
 import { PageLayoutType, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
-import { Box, Stack, useStyles2 } from '@grafana/ui';
+import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
+import { Grid, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
+import { ASSISTANT_PLUGIN_ID, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
+import { AlertIncidentTabs } from './AlertsIncidents/AlertIncidentTabs';
+import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
+import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
+import { canViewFiringAlerts } from './AlertsIncidents/useFiringAlerts';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
+import { type HomepageTabExtensionProps } from './DashboardTabs/types';
+import { HomePageSkeleton } from './HomePageSkeleton';
+import { HomeSection } from './HomeSection';
+import { Recommendations } from './Recommendations/Recommendations';
 import useHomeGreeting from './useHomeGreeting';
 
 const getEdition = () => {
@@ -28,13 +38,43 @@ export default function HomePage() {
   const styles = useStyles2(getStyles);
   const greeting = useHomeGreeting();
 
-  const { components: preComponents } = usePluginComponents({
-    extensionPointId: PluginExtensionPoints.HomepagePre,
+  const redesignEnabled = useFlagGrafanaGrowthHomepage();
+
+  const { components: assistantComponents, isLoading: isLoadingAssistant } = usePluginComponents({
+    extensionPointId: PluginExtensionPoints.HomepageAssistant,
   });
 
-  const { components: extraComponents } = usePluginComponents({
+  const { components: extraComponents, isLoading: isLoadingExtra } = usePluginComponents({
     extensionPointId: PluginExtensionPoints.HomepageExtra,
   });
+
+  const { components: tabComponents, isLoading: isLoadingTabs } = usePluginComponents<HomepageTabExtensionProps>({
+    extensionPointId: PluginExtensionPoints.HomepageTabs,
+  });
+
+  const isWaitingForTabs = !redesignEnabled && isLoadingTabs;
+  const isLoadingExtensions = isLoadingAssistant || isLoadingExtra || isWaitingForTabs;
+
+  // SetupGuide injects assorted sections for Cloud users. Computed once so showExtra matches
+  // what actually renders below.
+  const extraContent = renderLimitedComponents({
+    props: {},
+    components: extraComponents,
+    pluginId: SETUPGUIDE_PLUGIN_ID,
+    wrapper: ({ children }) =>
+      redesignEnabled ? (
+        children
+      ) : (
+        <div className={styles.extra}>
+          <HomeSection>{children}</HomeSection>
+        </div>
+      ),
+  });
+  const showExtra = extraContent !== null;
+  const showAlertsCard = canViewFiringAlerts();
+  const skeleton = (
+    <HomePageSkeleton showAlertsCard={showAlertsCard} showExtra={showExtra} redesignEnabled={redesignEnabled} />
+  );
 
   return (
     <Page
@@ -47,29 +87,56 @@ export default function HomePage() {
       layout={PageLayoutType.Home}
     >
       <Page.Contents>
-        <Stack direction="column" gap={2}>
-          <Box backgroundColor="canvas" borderRadius="default" padding={4} direction="column" display="flex" gap={2}>
-            {renderLimitedComponents({
-              props: {},
-              components: preComponents,
-              pluginId: SETUPGUIDE_PLUGIN_ID,
-            })}
-            <DashboardTabs />
-          </Box>
+        {isLoadingExtensions ? (
+          skeleton
+        ) : (
+          <Suspense fallback={skeleton}>
+            <Stack direction="column" gap={2}>
+              {redesignEnabled ? (
+                <>
+                  {renderLimitedComponents({
+                    props: {},
+                    limit: 1,
+                    components: assistantComponents,
+                    pluginId: ASSISTANT_PLUGIN_ID,
+                    wrapper: ({ children }) => (
+                      <div className={styles.extra}>
+                        <HomeSection>{children}</HomeSection>
+                      </div>
+                    ),
+                  })}
 
-          {renderLimitedComponents({
-            props: {},
-            components: extraComponents,
-            pluginId: SETUPGUIDE_PLUGIN_ID,
-            wrapper: ({ children }) => (
-              <div className={styles.extra}>
-                <Box backgroundColor="canvas" borderRadius="default" padding={4}>
-                  {children}
-                </Box>
-              </div>
-            ),
-          })}
-        </Stack>
+                  <Recommendations />
+
+                  <Grid gap={2} columns={{ xs: 1, md: 2 }}>
+                    {/* Skip the HomepageTabs extension point for the redesign UI */}
+                    <DashboardTabs extensionComponents={[]} />
+                    <AlertIncidentTabs />
+                  </Grid>
+                </>
+              ) : (
+                <>
+                  <HomeSection direction="column" display="flex" gap={2}>
+                    {/* Assistant injects an Assistant-based prompt input when available */}
+                    {renderLimitedComponents({
+                      props: {},
+                      limit: 1,
+                      components: assistantComponents,
+                      pluginId: ASSISTANT_PLUGIN_ID,
+                    })}
+                    <DashboardTabs extensionComponents={tabComponents} />
+                  </HomeSection>
+
+                  <Grid gap={2} columns={{ xs: 1, md: 2 }}>
+                    <FiringAlertsCard />
+                    <IncidentsCard />
+                  </Grid>
+                </>
+              )}
+              {extraContent}
+            </Stack>
+          </Suspense>
+        )}
       </Page.Contents>
     </Page>
   );

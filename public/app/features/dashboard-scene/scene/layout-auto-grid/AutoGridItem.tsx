@@ -14,7 +14,7 @@ import {
 import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
-import { DashboardStateChangedEvent, RepeatsUpdatedEvent } from '../../edit-pane/shared';
+import { RepeatsUpdatedEvent, DashboardStateChangedEvent } from '../../edit-pane/events';
 import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';

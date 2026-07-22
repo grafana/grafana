@@ -4,14 +4,22 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"slices"
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 )
 
+// provisioningServiceAudience is the API group the provisioning (Git Sync) service token carries
+// as an audience in multi-tenant deployments. It mirrors the provisioning apiserver's group
+// ("provisioning.grafana.app"); it is duplicated here as a literal to keep apimachinery free of
+// dependencies on app packages.
+const provisioningServiceAudience = "provisioning.grafana.app"
+
 type ctxUserKey struct{}
 type metadataIdentityUIDKey struct{}
 type ctxOrgIDKey struct{}
+type innermostServiceIdentityKey struct{}
 
 // WithOrgID stores the org ID in context as a fallback when no requester is available.
 func WithOrgID(ctx context.Context, orgID int64) context.Context {
@@ -54,6 +62,19 @@ func GetRequester(ctx context.Context) (Requester, error) {
 		return u, nil
 	}
 	return nil, fmt.Errorf("a Requester was not found in the context")
+}
+
+// WithInnermostServiceIdentity sets the innermost service identity in the context.
+// This is useful for gRPC services to propagate and recover the caller service identity, in the context of audit logging.
+func WithInnermostServiceIdentity(ctx context.Context, svcIdentity string) context.Context {
+	return context.WithValue(ctx, innermostServiceIdentityKey{}, svcIdentity)
+}
+
+// InnermostServiceIdentityFrom returns the innermost service identity stored in the context, and whether it was present.
+// This is useful for gRPC services to propagate and recover the caller service identity, in the context of audit logging.
+func InnermostServiceIdentityFrom(ctx context.Context) (string, bool) {
+	svcIdentity, ok := ctx.Value(innermostServiceIdentityKey{}).(string)
+	return svcIdentity, ok && svcIdentity != ""
 }
 
 func checkNilRequester(r Requester) bool {
@@ -173,10 +194,14 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"library.panels:read",   // ActionLibraryPanelsRead
 	"library.panels:write",  // ActionLibraryPanelsWrite
 	"library.panels:delete", // ActionLibraryPanelsDelete
+	"alert.rules:delete",    // ActionAlertingRuleDelete — folder cascade delete removes contained alert rules.
 	"playlists:read",        // playlist.ActionPlaylistsRead
 	"playlists:write",       // playlist.ActionPlaylistsWrite
 	"alert.provisioning:write",
 	"alert.provisioning.secrets:read",
+	"notifications.alerting.grafana.app/configs:get",           // accesscontrol.ActionAlertingConfigRead — ExternalAMSyncer reads spec.externalAlertmanagerSync.datasourceUid.
+	"notifications.alerting.grafana.app/configs:update",        // accesscontrol.ActionAlertingConfigUpdate — ExternalAMSyncer creates the Config singleton on first sync.
+	"notifications.alerting.grafana.app/configs/status:update", // accesscontrol.ActionAlertingConfigStatusUpdate — service-only; humans never write status directly.
 	"users:read",           // accesscontrol.ActionUsersRead,
 	"org.users:read",       // accesscontrol.ActionOrgUsersRead,
 	"teams:read",           // accesscontrol.ActionTeamsRead,
@@ -192,17 +217,16 @@ var serviceIdentityTokenPermissions = []string{
 	"query.grafana.app:*",
 	"datasource.grafana.app:*",
 	"iam.grafana.app:*",
-	"provisioning.grafana.app/repositories:read",
-	"provisioning.grafana.app/repositories:watch",
-	"provisioning.grafana.app/settings:read",
-	"provisioning.grafana.app/settings:watch",
+	"provisioning.grafana.app:*",
 	"preferences.grafana.app:*", // user, team, and org preferences
 	"collections.grafana.app:*", // user stars
 	"plugins.grafana.app:*",
 	"historian.alerting.grafana.app:*",
 	"notifications.alerting.grafana.app:*",
+	"rules.alerting.grafana.app:*",
 	"advisor.grafana.app:*",
 	"annotation.grafana.app:*",
+	"setting.grafana.app:*",
 
 	// allow access to all datasource types
 	"*.datasource.grafana.app:*",
@@ -235,4 +259,18 @@ func IsServiceIdentity(ctx context.Context) bool {
 	}
 
 	return t == types.TypeAccessPolicy && (uid == serviceName || uid == serviceNameForProvisioning)
+}
+
+// IsProvisioningServiceIdentity reports whether auth is the provisioning (Git Sync) service
+// identity — identified either by its access-policy UID (single-tenant / OSS) or by carrying the
+// provisioning API group as a token audience (multi-tenant). Use it to grant the provisioning
+// service write paths that are otherwise closed to regular users. The unified storage backend
+// enforces the same rule on managed resources (pkg/storage/unified/apistore); this is the shared
+// predicate so legacy services that bypass that backend can apply it consistently.
+func IsProvisioningServiceIdentity(auth types.AuthInfo) bool {
+	if auth == nil {
+		return false
+	}
+	return auth.GetUID() == types.NewTypeID(types.TypeAccessPolicy, serviceNameForProvisioning) ||
+		slices.Contains(auth.GetAudience(), provisioningServiceAudience)
 }

@@ -67,7 +67,7 @@ export function ToolbarActions({ dashboard }: Props) {
     editPanel,
     editable,
     title,
-    meta: { isEmbedded, isSnapshot, canEdit, canMakeEditable, canStar, canSave, folderUid },
+    meta: { isEmbedded, isSnapshot, canMakeEditable, canStar, canSave, folderUid },
   } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
   const [isAddPanelMenuOpen, setIsAddPanelMenuOpen] = useState(false);
@@ -135,7 +135,9 @@ export function ToolbarActions({ dashboard }: Props) {
     });
   }
 
-  if (dashboard.isManaged() && canEdit) {
+  // Visible to viewers too, so they know the dashboard is externally managed;
+  // the badge itself gates its actions (source/repo links) by permission.
+  if (dashboard.isManaged()) {
     toolbarActions.push({
       group: 'icon-actions',
       condition: true,

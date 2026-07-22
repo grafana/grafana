@@ -5,7 +5,8 @@ import {
   generatedAPI as correlationsAPIv0alpha1,
 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { type DataLinkTransformationConfig } from '@grafana/data';
-import { type CorrelationData, getDataSourceSrv, reportInteraction, config } from '@grafana/runtime';
+import { type CorrelationData, reportInteraction, config } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { getMessageFromError } from 'app/core/utils/errors';
@@ -71,8 +72,8 @@ export function saveCurrentCorrelation(
       : targetPane.datasourceInstance?.getRef();
 
     const [sourceDatasource, targetDatasource] = await Promise.all([
-      getDataSourceSrv().get(sourceDatasourceRef),
-      getDataSourceSrv().get(targetDataSourceRef),
+      getDataSourceInstance(sourceDatasourceRef),
+      getDataSourceInstance(targetDataSourceRef),
     ]);
 
     if (sourceDatasource?.uid && targetDatasource?.uid && targetPane.correlationEditorHelperData?.resultField) {

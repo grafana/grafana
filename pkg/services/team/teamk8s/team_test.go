@@ -546,6 +546,112 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 			},
 		},
 		{
+			name:           "preserves existing title when updating only externalUID",
+			requesterOrgID: 1,
+			ctxUID:         "team-uid-ext-only",
+			cmd: &team.UpdateTeamCommand{
+				ID:          1,
+				ExternalUID: "new-ext-uid",
+			},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				if r.Method == http.MethodGet {
+					resp := iamv0alpha1.Team{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: iamv0alpha1.GroupVersion.Identifier(),
+							Kind:       "Team",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "team-uid-ext-only",
+							Namespace: "org-1",
+						},
+						Spec: iamv0alpha1.TeamSpec{Title: "Existing Title", ExternalUID: "old-ext-uid"},
+					}
+					_ = json.NewEncoder(w).Encode(resp)
+					return
+				}
+				assert.Equal(t, http.MethodPut, r.Method)
+				var body map[string]any
+				_ = json.NewDecoder(r.Body).Decode(&body)
+				spec := body["spec"].(map[string]any)
+				assert.Equal(t, "Existing Title", spec["title"])
+				assert.Equal(t, "new-ext-uid", spec["externalUID"])
+				_ = json.NewEncoder(w).Encode(body)
+			},
+		},
+		{
+			name:           "preserves existing externalUID when updating only name",
+			requesterOrgID: 1,
+			ctxUID:         "team-uid-name-only",
+			cmd: &team.UpdateTeamCommand{
+				ID:   1,
+				Name: "New Title",
+			},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				if r.Method == http.MethodGet {
+					resp := iamv0alpha1.Team{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: iamv0alpha1.GroupVersion.Identifier(),
+							Kind:       "Team",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "team-uid-name-only",
+							Namespace: "org-1",
+						},
+						Spec: iamv0alpha1.TeamSpec{Title: "Old Title", ExternalUID: "keep-ext-uid"},
+					}
+					_ = json.NewEncoder(w).Encode(resp)
+					return
+				}
+				assert.Equal(t, http.MethodPut, r.Method)
+				var body map[string]any
+				_ = json.NewDecoder(r.Body).Decode(&body)
+				spec := body["spec"].(map[string]any)
+				assert.Equal(t, "New Title", spec["title"])
+				assert.Equal(t, "keep-ext-uid", spec["externalUID"])
+				_ = json.NewEncoder(w).Encode(body)
+			},
+		},
+		{
+			// Pins the deliberate asymmetry vs. title/externalUID: email is written
+			// unconditionally (legacy MustCols parity), so an empty command email
+			// clears it rather than being preserved. Guarding email with != "" would
+			// break clearing a team's email via PUT /api/teams.
+			name:           "blanks email when command email is empty (MustCols parity)",
+			requesterOrgID: 1,
+			ctxUID:         "team-uid-email-clear",
+			cmd: &team.UpdateTeamCommand{
+				ID:   1,
+				Name: "New Title",
+			},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				if r.Method == http.MethodGet {
+					resp := iamv0alpha1.Team{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: iamv0alpha1.GroupVersion.Identifier(),
+							Kind:       "Team",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "team-uid-email-clear",
+							Namespace: "org-1",
+						},
+						Spec: iamv0alpha1.TeamSpec{Title: "Old Title", Email: "old@example.com"},
+					}
+					_ = json.NewEncoder(w).Encode(resp)
+					return
+				}
+				assert.Equal(t, http.MethodPut, r.Method)
+				var body map[string]any
+				_ = json.NewDecoder(r.Body).Decode(&body)
+				spec := body["spec"].(map[string]any)
+				assert.Equal(t, "New Title", spec["title"])
+				assert.Equal(t, "", spec["email"], "empty command email must clear it, not be preserved")
+				_ = json.NewEncoder(w).Encode(body)
+			},
+		},
+		{
 			name:           "preserves provisioned field during update",
 			requesterOrgID: 1,
 			cmd: &team.UpdateTeamCommand{
@@ -1247,15 +1353,16 @@ func userTeamsResponse(rows []iamv0alpha1.GetUserTeamsUserTeam) iamv0alpha1.GetU
 
 func TestTeamK8sService_GetTeamsByUser(t *testing.T) {
 	tests := []struct {
-		name           string
-		query          *team.GetTeamsByUserQuery
-		requesterOrgID int64
-		serverResponse func(w http.ResponseWriter, r *http.Request)
-		nilProvider    bool
-		noReqContext   bool
-		expectErr      bool
-		expectTeams    int
-		expectUID      string
+		name                   string
+		query                  *team.GetTeamsByUserQuery
+		requesterOrgID         int64
+		serverResponse         func(w http.ResponseWriter, r *http.Request)
+		nilProvider            bool
+		noReqContext           bool
+		enforceServiceIdentity bool
+		expectErr              bool
+		expectTeams            int
+		expectUID              string
 	}{
 		{
 			name:           "returns teams for user",
@@ -1264,6 +1371,15 @@ func TestTeamK8sService_GetTeamsByUser(t *testing.T) {
 			serverResponse: membershipServerHandler(t),
 			expectTeams:    1,
 			expectUID:      "team-uid-1",
+		},
+		{
+			name:                   "lists memberships under a service identity",
+			requesterOrgID:         1,
+			query:                  &team.GetTeamsByUserQuery{OrgID: 1, UserID: 42},
+			serverResponse:         membershipServerHandler(t),
+			enforceServiceIdentity: true,
+			expectTeams:            1,
+			expectUID:              "team-uid-1",
 		},
 		{
 			name:           "returns empty list when user has no bindings",
@@ -1308,7 +1424,11 @@ func TestTeamK8sService_GetTeamsByUser(t *testing.T) {
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
 				defer ts.Close()
-				provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
+				cfg := &clientrest.Config{Host: ts.URL}
+				if tt.enforceServiceIdentity {
+					cfg.Transport = serviceIdentityRBAC{base: http.DefaultTransport}
+				}
+				provider := &mockDirectRestConfigProvider{restConfig: cfg}
 				svc = NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), provider, tracing.InitializeTracerForTest())
 			}
 
@@ -1446,14 +1566,15 @@ func TestTeamK8sService_GetTeamIDsByUser(t *testing.T) {
 
 func TestTeamK8sService_IsTeamMember(t *testing.T) {
 	tests := []struct {
-		name           string
-		orgID          int64
-		teamID         int64
-		userID         int64
-		serverResponse func(w http.ResponseWriter, r *http.Request)
-		nilProvider    bool
-		expectErr      bool
-		expectMember   bool
+		name                   string
+		orgID                  int64
+		teamID                 int64
+		userID                 int64
+		serverResponse         func(w http.ResponseWriter, r *http.Request)
+		nilProvider            bool
+		enforceServiceIdentity bool
+		expectErr              bool
+		expectMember           bool
 	}{
 		{
 			name:           "returns true when user is a team member",
@@ -1554,6 +1675,15 @@ func TestTeamK8sService_IsTeamMember(t *testing.T) {
 			expectMember: false,
 		},
 		{
+			name:                   "resolves member under a service identity while team read stays as caller",
+			orgID:                  1,
+			teamID:                 10,
+			userID:                 42,
+			serverResponse:         membershipServerHandler(t),
+			enforceServiceIdentity: true,
+			expectMember:           true,
+		},
+		{
 			name:        "returns error when config provider not initialized",
 			orgID:       1,
 			teamID:      10,
@@ -1571,7 +1701,11 @@ func TestTeamK8sService_IsTeamMember(t *testing.T) {
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
 				defer ts.Close()
-				provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
+				cfg := &clientrest.Config{Host: ts.URL}
+				if tt.enforceServiceIdentity {
+					cfg.Transport = serviceIdentityRBAC{base: http.DefaultTransport}
+				}
+				provider := &mockDirectRestConfigProvider{restConfig: cfg}
 				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider, tracing.InitializeTracerForTest())
 			}
 
@@ -2505,4 +2639,13 @@ func (m *mockDirectRestConfigProvider) IsReady() bool {
 func contextWithReqContext() context.Context {
 	reqCtx := &contextmodel.ReqContext{}
 	return context.WithValue(context.Background(), ctxkey.Key{}, reqCtx)
+}
+
+type serviceIdentityRBAC struct{ base http.RoundTripper }
+
+func (g serviceIdentityRBAC) RoundTrip(req *http.Request) (*http.Response, error) {
+	if strings.Contains(req.URL.Path, "/users") != identity.IsServiceIdentity(req.Context()) {
+		return &http.Response{StatusCode: http.StatusForbidden, Body: http.NoBody, Header: make(http.Header)}, nil
+	}
+	return g.base.RoundTrip(req)
 }

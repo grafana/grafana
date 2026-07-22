@@ -14,6 +14,7 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { beforeSendHandler } from './beforeSendHandler';
+import { setupFaroPageMeta } from './faroPageMeta';
 import { type GrafanaJavascriptAgentBackendOptions, type GrafanaJavascriptAgentEchoEvent } from './types';
 
 function isCrossOriginIframe() {
@@ -54,12 +55,26 @@ export class GrafanaJavascriptAgentBackend
       ignoreUrls.unshift(new RegExp(`.*${escapeRegex(options.customEndpoint)}.*`));
     }
 
+    const sessionReplayEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.FaroSessionReplay, false);
+
     const transports: BaseTransport[] = [new EchoSrvTransport({ ignoreUrls })];
 
     // If in cross origin iframe, default to writing to instance logging endpoint
     if (options.customEndpoint && !isCrossOriginIframe()) {
-      transports.push(new FetchTransport({ url: options.customEndpoint, apiKey: options.apiKey }));
+      transports.push(
+        new FetchTransport({
+          url: options.customEndpoint,
+          apiKey: options.apiKey,
+          // When session replay is enabled, gzip-compress request bodies via the browser's
+          // CompressionStream — session replay produces the large payloads that benefit most.
+          // Falls back to uncompressed when CompressionStream is unavailable.
+          ...(sessionReplayEnabled ? { requestCompression: true } : {}),
+        })
+      );
     }
+
+    // Assigned after init; onSessionChange can fire during initializeFaro, before page meta exists.
+    let refreshFaroPageMeta: (() => void) | undefined;
 
     // initialize GrafanaJavascriptAgent so it can set up its hooks and start collecting errors
     const grafanaJavaScriptAgentOptions: BrowserConfig = {
@@ -88,9 +103,13 @@ export class GrafanaJavascriptAgentBackend
       ignoreUrls,
       sessionTracking: {
         persistent: true,
+        // Faro rotates sessions on expiration/inactivity without navigation; re-anchor the
+        // sessionStart page attribute so it never describes the previous session.
+        onSessionChange: () => refreshFaroPageMeta?.(),
       },
       batching: {
-        sendTimeout: 1000,
+        sendTimeout: 2000,
+        itemLimit: 250,
       },
       beforeSend: (item) => beforeSendHandler(options.botFilterEnabled, item),
       internalLoggerLevel: options.internalLoggerLevel ?? defaultInternalLoggerLevel,
@@ -98,8 +117,14 @@ export class GrafanaJavascriptAgentBackend
 
     const faro = initializeFaro(grafanaJavaScriptAgentOptions);
 
-    if (faro && getFeatureFlagClient().getBooleanValue(FlagKeys.FaroSessionReplay, false)) {
-      this.initReplayAfterDomRendered(faro);
+    if (faro) {
+      // Attach navigation + session context (referrer, previousUrl, sessionStart) to the meta of
+      // every emitted signal.
+      refreshFaroPageMeta = setupFaroPageMeta(faro);
+
+      if (sessionReplayEnabled) {
+        this.initReplayAfterDomRendered(faro);
+      }
     }
   }
 

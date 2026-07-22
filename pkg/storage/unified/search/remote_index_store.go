@@ -92,6 +92,11 @@ type IndexMeta struct {
 	IndexFormat string `json:"index_format,omitempty"`
 	// LatestResourceVersion is the latest resource version included in the index.
 	LatestResourceVersion int64 `json:"latest_resource_version"`
+	// DocCount is the number of documents in the index at upload time. Recorded
+	// for debugging and troubleshooting only; there is no reader that relies on
+	// it. Zero-value means "unknown" (legacy snapshot uploaded before this field
+	// was added).
+	DocCount uint64 `json:"doc_count,omitempty"`
 	// Files maps relative file paths to their sizes in bytes.
 	Files map[string]int64 `json:"files"`
 }

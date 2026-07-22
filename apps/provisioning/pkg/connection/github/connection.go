@@ -19,7 +19,7 @@ import (
 
 //go:generate mockery --name GithubFactory --structname MockGithubFactory --inpackage --filename factory_mock.go --with-expecter
 type GithubFactory interface {
-	New(ctx context.Context, ghToken common.RawSecureValue) Client
+	New(ctx context.Context, ghToken common.RawSecureValue, opts ...ClientOption) (Client, error)
 }
 
 type ConnectionSecrets struct {
@@ -27,12 +27,25 @@ type ConnectionSecrets struct {
 	Token      common.RawSecureValue
 }
 
+// ConnectionConfig exposes the GitHub parameters a connection needs. The github.com
+// implementation (config) reads them from spec.Github; GitHub Enterprise injects its
+// own implementation via NewConnectionWithCustomConfig.
+//
+//go:generate mockery --name ConnectionConfig --structname MockConnectionConfig --inpackage --filename connectionconfig_mock.go --with-expecter
+type ConnectionConfig interface {
+	AppID() string
+	InstallationID() string
+	CustomServerURL() string
+}
+
 type Connection struct {
 	obj       *provisioning.Connection
 	ghFactory GithubFactory
 	secrets   ConnectionSecrets
+	cfg       ConnectionConfig
 }
 
+// NewConnection builds a github.com connection whose parameters are resolved from spec.Github.
 func NewConnection(
 	obj *provisioning.Connection,
 	factory GithubFactory,
@@ -42,13 +55,50 @@ func NewConnection(
 		obj:       obj,
 		ghFactory: factory,
 		secrets:   secrets,
+		cfg:       config{obj: obj},
 	}
 }
 
-const (
-	//TODO(ferruvich): these probably need to be setup in API configuration.
-	githubInstallationURL = "https://github.com/settings/installations"
-)
+// NewConnectionWithCustomConfig builds a connection whose GitHub parameters are resolved by
+// the given config. Used by GitHub Enterprise to read from spec.githubEnterprise.
+func NewConnectionWithCustomConfig(
+	obj *provisioning.Connection,
+	factory GithubFactory,
+	secrets ConnectionSecrets,
+	config ConnectionConfig,
+) Connection {
+	return Connection{
+		obj:       obj,
+		ghFactory: factory,
+		secrets:   secrets,
+		cfg:       config,
+	}
+}
+
+// config is the github.com ConnectionConfig, reading from spec.github.
+type config struct {
+	obj *provisioning.Connection
+}
+
+func (c config) AppID() string {
+	if c.obj.Spec.GitHub == nil {
+		return ""
+	}
+	return c.obj.Spec.GitHub.AppID
+}
+
+func (c config) InstallationID() string {
+	if c.obj.Spec.GitHub == nil {
+		return ""
+	}
+	return c.obj.Spec.GitHub.InstallationID
+}
+
+func (c config) CustomServerURL() string {
+	return ""
+}
+
+var _ ConnectionConfig = config{}
 
 // Test validates the appID and installationID against the given github token.
 func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error) {
@@ -58,10 +108,10 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 	if c.secrets.Token.IsZero() || !c.obj.Secure.PrivateKey.Create.IsZero() {
 		// In case the token is not generated, we create one on the fly
 		// to testing that the other fields are valid.
-		token, err := GenerateJWTToken(c.obj.Spec.GitHub.AppID, c.secrets.PrivateKey)
+		token, err := GenerateJWTToken(c.cfg.AppID(), c.secrets.PrivateKey)
 		if err != nil {
 			// Error generating JWT token means the privateKey is not valid.
-			logger.Info("JWT token generation failed during connection test", "appID", c.obj.Spec.GitHub.AppID)
+			logger.Info("JWT token generation failed during connection test", "appID", c.cfg.AppID())
 			return &provisioning.TestResults{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: provisioning.APIVERSION,
@@ -85,7 +135,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 		claims, err := parseJWTToken(c.secrets.Token, c.secrets.PrivateKey)
 		if err != nil {
 			// Error parsing JWT token means the given private key is invalid
-			logger.Info("JWT token parsing failed during connection test", "appID", c.obj.Spec.GitHub.AppID)
+			logger.Info("JWT token parsing failed during connection test", "appID", c.cfg.AppID())
 			return &provisioning.TestResults{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: provisioning.APIVERSION,
@@ -102,8 +152,8 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				},
 			}, nil
 		}
-		if claims.Issuer != c.obj.Spec.GitHub.AppID {
-			logger.Info("JWT issuer mismatch", "expected", c.obj.Spec.GitHub.AppID, "got", claims.Issuer)
+		if claims.Issuer != c.cfg.AppID() {
+			logger.Info("JWT issuer mismatch", "expected", c.cfg.AppID(), "got", claims.Issuer)
 			return &provisioning.TestResults{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: provisioning.APIVERSION,
@@ -114,16 +164,19 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Errors: []provisioning.ErrorDetails{
 					{
 						Type:     metav1.CauseTypeFieldValueInvalid,
-						Field:    field.NewPath("spec", "github", "appID").String(),
+						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "appID").String(),
 						Detail:   "invalid app ID",
-						BadValue: c.obj.Spec.GitHub.AppID,
+						BadValue: c.cfg.AppID(),
 					},
 				},
 			}, nil
 		}
 	}
 
-	ghClient := c.ghFactory.New(ctx, c.secrets.Token)
+	ghClient, err := c.ghFactory.New(ctx, c.secrets.Token, WithCustomServerURL(c.cfg.CustomServerURL()))
+	if err != nil {
+		return nil, err
+	}
 
 	app, err := ghClient.GetApp(ctx)
 	if err != nil {
@@ -144,14 +197,15 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Errors: []provisioning.ErrorDetails{
 					{
 						Type:     metav1.CauseTypeFieldValueInvalid,
-						Field:    field.NewPath("spec", "github", "appID").String(),
-						Detail:   "verify appID is correct",
-						BadValue: c.obj.Spec.GitHub.AppID,
+						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "appID").String(),
+						Detail:   "authentication failed. The appID exists but could not be accessed with the privateKey. Verify appID is correct",
+						BadValue: c.cfg.AppID(),
 					},
 					{
-						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("secure", "privateKey").String(),
-						Detail: "verify privateKey is correct",
+						Type:     metav1.CauseTypeFieldValueInvalid,
+						Field:    field.NewPath("secure", "privateKey").String(),
+						Detail:   "authentication failed. Verify privateKey is the generated private key for the appID",
+						BadValue: "****",
 					},
 				},
 			}, nil
@@ -166,9 +220,9 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Errors: []provisioning.ErrorDetails{
 					{
 						Type:     metav1.CauseTypeFieldValueNotFound,
-						Field:    field.NewPath("spec", "github", "appID").String(),
+						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "appID").String(),
 						Detail:   "app not found",
-						BadValue: c.obj.Spec.GitHub.AppID,
+						BadValue: c.cfg.AppID(),
 					},
 				},
 			}, nil
@@ -188,7 +242,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				},
 			}, nil
 		default:
-			// Generic error - invalid spec
+			// Generic error
 			return &provisioning.TestResults{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: provisioning.APIVERSION,
@@ -198,23 +252,16 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Success: false,
 				Errors: []provisioning.ErrorDetails{
 					{
-						Type:     metav1.CauseTypeFieldValueInvalid,
-						Field:    field.NewPath("spec", "github", "appID").String(),
-						Detail:   "verify appID is correct",
-						BadValue: c.obj.Spec.GitHub.AppID,
-					},
-					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("secure", "privateKey").String(),
-						Detail: "verify privateKey is correct",
+						Detail: fmt.Errorf("failed to GET app: %w", err).Error(),
 					},
 				},
 			}, nil
 		}
 	}
 
-	if fmt.Sprintf("%d", app.ID) != c.obj.Spec.GitHub.AppID {
-		logger.Info("app ID mismatch", "expected", c.obj.Spec.GitHub.AppID, "got", app.ID)
+	if fmt.Sprintf("%d", app.ID) != c.cfg.AppID() {
+		logger.Info("app ID mismatch", "expected", c.cfg.AppID(), "got", app.ID)
 		return &provisioning.TestResults{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: provisioning.APIVERSION,
@@ -225,18 +272,18 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 			Errors: []provisioning.ErrorDetails{
 				{
 					Type:     metav1.CauseTypeFieldValueInvalid,
-					Field:    field.NewPath("spec", "github", "appID").String(),
+					Field:    field.NewPath("spec", string(c.obj.Spec.Type), "appID").String(),
 					Detail:   "appID mismatch",
-					BadValue: c.obj.Spec.GitHub.AppID,
+					BadValue: c.cfg.AppID(),
 				},
 			},
 		}, nil
 	}
 
 	// Validate the app's permissions.
-	permissionErrors := validatePermissions(permissionTargetApp, c.obj.Spec.GitHub.AppID, app.Permissions, c.obj.Spec.GitHub.WebhookDisabled)
+	permissionErrors := c.validatePermissions(permissionTargetApp, c.cfg.AppID(), app.Permissions)
 	if len(permissionErrors) > 0 {
-		logger.Info("GitHub App permission validation failed", "appID", c.obj.Spec.GitHub.AppID, "errorCount", len(permissionErrors))
+		logger.Info("GitHub App permission validation failed", "appID", c.cfg.AppID(), "errorCount", len(permissionErrors))
 		return &provisioning.TestResults{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: provisioning.APIVERSION,
@@ -248,9 +295,9 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 		}, nil
 	}
 
-	installation, err := ghClient.GetAppInstallation(ctx, c.obj.Spec.GitHub.InstallationID)
+	installation, err := ghClient.GetAppInstallation(ctx, c.cfg.InstallationID())
 	if err != nil {
-		logger.Info("error getting app installation", "installationID", c.obj.Spec.GitHub.InstallationID, "error", err)
+		logger.Info("error getting app installation", "installationID", c.cfg.InstallationID(), "error", err)
 		// Check for specific error types
 		switch {
 		case errors.Is(err, ErrAuthentication):
@@ -264,9 +311,9 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Errors: []provisioning.ErrorDetails{
 					{
 						Type:     metav1.CauseTypeFieldValueInvalid,
-						Field:    field.NewPath("spec", "github", "installationID").String(),
+						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "installationID").String(),
 						Detail:   ErrAuthentication.Error(),
-						BadValue: c.obj.Spec.GitHub.InstallationID,
+						BadValue: c.cfg.InstallationID(),
 					},
 				},
 			}, nil
@@ -281,9 +328,9 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Errors: []provisioning.ErrorDetails{
 					{
 						Type:     metav1.CauseTypeFieldValueInvalid,
-						Field:    field.NewPath("spec", "github", "installationID").String(),
+						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "installationID").String(),
 						Detail:   "installation not found",
-						BadValue: c.obj.Spec.GitHub.InstallationID,
+						BadValue: c.cfg.InstallationID(),
 					},
 				},
 			}, nil
@@ -298,14 +345,14 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Errors: []provisioning.ErrorDetails{
 					{
 						Type:     metav1.CauseTypeFieldValueInvalid,
-						Field:    field.NewPath("spec", "github", "installationID").String(),
+						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "installationID").String(),
 						Detail:   ErrServiceUnavailable.Error(),
-						BadValue: c.obj.Spec.GitHub.InstallationID,
+						BadValue: c.cfg.InstallationID(),
 					},
 				},
 			}, nil
 		default:
-			// Generic error - invalid spec
+			// Generic error
 			return &provisioning.TestResults{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: provisioning.APIVERSION,
@@ -315,10 +362,8 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Success: false,
 				Errors: []provisioning.ErrorDetails{
 					{
-						Type:     metav1.CauseTypeFieldValueInvalid,
-						Field:    field.NewPath("spec", "github", "installationID").String(),
-						Detail:   "invalid installation ID",
-						BadValue: c.obj.Spec.GitHub.InstallationID,
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Detail: fmt.Errorf("failed to GET app installation: %w", err).Error(),
 					},
 				},
 			}, nil
@@ -328,7 +373,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 	// Validate that the installation has accepted the required permissions.
 	// Installation permissions may lag behind App permissions when the App owner added new
 	// permissions but the installation owner has not yet accepted them on GitHub.
-	installationPermErrors := validatePermissions(permissionTargetInstallation, c.obj.Spec.GitHub.InstallationID, installation.Permissions, c.obj.Spec.GitHub.WebhookDisabled)
+	installationPermErrors := c.validatePermissions(permissionTargetInstallation, c.cfg.InstallationID(), installation.Permissions)
 	if len(installationPermErrors) > 0 {
 		return &provisioning.TestResults{
 			TypeMeta: metav1.TypeMeta{
@@ -356,23 +401,26 @@ func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisio
 	if repo == nil {
 		return nil, errors.New("a repository is required to generate a token")
 	}
-	if c.obj.Spec.GitHub == nil {
-		return nil, errors.New("connection is not a GitHub connection")
+	if !c.obj.Spec.IsGitHub() {
+		return nil, errors.New("connection is not a GitHub-based connection")
 	}
-	if repo.Spec.GitHub == nil {
-		return nil, errors.New("repository is not a GitHub repo")
+	if !repo.Spec.Type.IsGitHub() {
+		return nil, errors.New("repository is not a GitHub-based repo")
 	}
 
-	_, repoName, err := github.ParseOwnerRepoGithub(repo.Spec.GitHub.URL)
+	_, repoName, err := github.ParseOwnerRepoGithub(repo.URL())
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse repo URL: %w", err)
 	}
 
 	// Create the GitHub client with the JWT token
-	ghClient := c.ghFactory.New(ctx, c.secrets.Token)
+	ghClient, err := c.ghFactory.New(ctx, c.secrets.Token, WithCustomServerURL(c.cfg.CustomServerURL()))
+	if err != nil {
+		return nil, err
+	}
 
 	// Create an installation access token scoped to this repository
-	installationToken, err := ghClient.CreateInstallationAccessToken(ctx, c.obj.Spec.GitHub.InstallationID, repoName)
+	installationToken, err := ghClient.CreateInstallationAccessToken(ctx, c.cfg.InstallationID(), repoName)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrUnprocessableEntity):
@@ -394,19 +442,25 @@ func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisio
 
 // ListRepositories returns the list of repositories accessible through this GitHub App connection.
 func (c *Connection) ListRepositories(ctx context.Context) ([]provisioning.ExternalRepository, error) {
-	if c.obj.Spec.GitHub == nil {
+	if !c.obj.Spec.IsGitHub() {
 		return nil, fmt.Errorf("github configuration is required")
 	}
 
 	// Create the GitHub client with the JWT token
-	ghClient := c.ghFactory.New(ctx, c.secrets.Token)
+	ghClient, err := c.ghFactory.New(ctx, c.secrets.Token, WithCustomServerURL(c.cfg.CustomServerURL()))
+	if err != nil {
+		return nil, err
+	}
 
-	token, err := ghClient.CreateInstallationAccessToken(ctx, c.obj.Spec.GitHub.InstallationID, "")
+	token, err := ghClient.CreateInstallationAccessToken(ctx, c.cfg.InstallationID(), "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create installation access token: %w", err)
 	}
 
-	installationGhClient := c.ghFactory.New(ctx, common.RawSecureValue(token.Token))
+	installationGhClient, err := c.ghFactory.New(ctx, common.RawSecureValue(token.Token), WithCustomServerURL(c.cfg.CustomServerURL()))
+	if err != nil {
+		return nil, err
+	}
 
 	repos, err := installationGhClient.ListInstallationRepositories(ctx)
 	if err != nil {
@@ -428,11 +482,11 @@ func (c *Connection) ListRepositories(ctx context.Context) ([]provisioning.Exter
 // GenerateConnectionToken generates a JWT token for GitHub App authentication.
 // Implements the connection.TokenConnection interface.
 func (c *Connection) GenerateConnectionToken(_ context.Context) (common.RawSecureValue, error) {
-	if c.obj.Spec.GitHub == nil {
+	if !c.obj.Spec.IsGitHub() {
 		return "", errors.New("connection is not a GitHub connection")
 	}
 
-	return GenerateJWTToken(c.obj.Spec.GitHub.AppID, c.secrets.PrivateKey)
+	return GenerateJWTToken(c.cfg.AppID(), c.secrets.PrivateKey)
 }
 
 // TokenCreationTime returns when the underlying token has been created.
@@ -464,7 +518,7 @@ func (c *Connection) TokenValid(_ context.Context) bool {
 	}
 
 	// For the token to be valid, the issuer must be equal to the object appID
-	return claims.Issuer == c.obj.Spec.GitHub.AppID
+	return claims.Issuer == c.cfg.AppID()
 }
 
 type permissionTarget int
@@ -479,7 +533,7 @@ const (
 // were updated but the installation owner has not yet accepted them on GitHub.
 // When webhookDisabled is true, the webhooks:write check is skipped because webhook
 // integration has been explicitly disabled for this connection.
-func validatePermissions(target permissionTarget, id string, permissions Permissions, webhookDisabled bool) []provisioning.ErrorDetails {
+func (c *Connection) validatePermissions(target permissionTarget, id string, permissions Permissions) []provisioning.ErrorDetails {
 	var errs []provisioning.ErrorDetails
 
 	requiredPerms := map[string]struct {
@@ -500,7 +554,7 @@ func validatePermissions(target permissionTarget, id string, permissions Permiss
 		},
 	}
 
-	if !webhookDisabled {
+	if c.obj.Spec.Webhook == nil || !c.obj.Spec.Webhook.Disabled {
 		requiredPerms["webhooks"] = struct {
 			current  Permission
 			required Permission
@@ -523,17 +577,16 @@ func validatePermissions(target permissionTarget, id string, permissions Permiss
 					toAppPermissionString(perm.required),
 					toAppPermissionString(perm.current),
 				)
-				fieldPath = field.NewPath("spec", "github", "appID").String()
+				fieldPath = field.NewPath("spec", string(c.obj.Spec.Type), "appID").String()
 			case permissionTargetInstallation:
 				detail = fmt.Sprintf(
-					"GitHub App installation lacks required '%s' permission: requires '%s', has '%s'. Accept the updated permissions at %s/%s",
+					"GitHub App installation lacks required '%s' permission: requires '%s', has '%s'. Accept the updated permissions at %s",
 					name,
 					toAppPermissionString(perm.required),
 					toAppPermissionString(perm.current),
-					githubInstallationURL,
-					id,
+					c.obj.Spec.URL,
 				)
-				fieldPath = field.NewPath("spec", "github", "installationID").String()
+				fieldPath = field.NewPath("spec", string(c.obj.Spec.Type), "installationID").String()
 			}
 
 			errs = append(errs, provisioning.ErrorDetails{

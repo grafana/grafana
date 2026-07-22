@@ -18,6 +18,7 @@ import (
 // and a latestRv equal to the highest RV in the slice. Empty namespace
 // on the request runs cross-namespace, mirroring the real backends.
 type fakeStorage struct {
+	resource.UnimplementedStorageBackend
 	mu       sync.Mutex
 	changes  []*resource.ModifiedResource
 	listErr  error
@@ -101,6 +102,7 @@ func (f *fakeStorage) GetResourceStats(_ context.Context, nsr resource.Namespace
 	}
 	return out, nil
 }
+
 func (f *fakeStorage) GetResourceLastImportTimes(context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
 	panic("not implemented")
 }
@@ -159,14 +161,15 @@ func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.Namespac
 type fakeVector struct {
 	mu sync.Mutex
 
-	latestRV    int64
-	upserts     [][]vector.Vector
-	deletes     []deleteCall
-	delsubs     []deleteSubsCall
-	storedSubs  map[string]map[string]string // ns|model|res|uid -> sub -> content
-	upsertErr   error
-	upsertErrFn func(vs []vector.Vector) error // dynamic error decision
-	deleteErr   error
+	latestRV     int64
+	upserts      [][]vector.Vector
+	deletes      []deleteCall
+	delsubs      []deleteSubsCall
+	storedSubs   map[string]map[string]string // ns|model|res|uid -> sub -> content
+	storedFolder map[string]string            // ns|model|res|uid -> folder
+	upsertErr    error
+	upsertErrFn  func(vs []vector.Vector) error // dynamic error decision
+	deleteErr    error
 
 	lockUnavailable bool
 	lockAttempts    int
@@ -196,10 +199,17 @@ type deleteSubsCall struct {
 }
 
 func newFakeVector() *fakeVector {
-	return &fakeVector{storedSubs: map[string]map[string]string{}}
+	return &fakeVector{
+		storedSubs:   map[string]map[string]string{},
+		storedFolder: map[string]string{},
+	}
 }
 
 func subsKey(ns, model, res, uid string) string { return ns + "|" + model + "|" + res + "|" + uid }
+
+func (f *fakeVector) ResolveCollection(_ context.Context, group, resource string) (vector.Collection, bool, error) {
+	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
+}
 
 func (f *fakeVector) Search(context.Context, string, string, string, []float32, int, ...vector.SearchFilter) ([]vector.VectorSearchResult, error) {
 	return nil, nil
@@ -210,38 +220,32 @@ func (f *fakeVector) Upsert(_ context.Context, vs []vector.Vector) error {
 	return f.upsertLocked(vs)
 }
 
-func (f *fakeVector) UpsertReplaceSubresources(_ context.Context, vs []vector.Vector) error {
+func (f *fakeVector) UpsertReplaceSubresources(_ context.Context, ns, model, res, uid string, changed []vector.Vector, desired []string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	// Atomic stale-removal + upsert: stage the delete-stale step, then
-	// the upsert. Failure on either rolls back via the lock-protected
-	// snapshot.
-	type uidKey struct{ ns, model, res, uid string }
-	groups := map[uidKey]map[string]struct{}{}
-	for _, v := range vs {
-		k := uidKey{v.Namespace, v.Model, v.Resource, v.UID}
-		if groups[k] == nil {
-			groups[k] = map[string]struct{}{}
-		}
-		groups[k][v.Subresource] = struct{}{}
+	// Mirror the real backend: delete subresources not in `desired`, then upsert `changed`.
+	keep := make(map[string]struct{}, len(desired))
+	for _, s := range desired {
+		keep[s] = struct{}{}
 	}
-	for k, keep := range groups {
-		key := subsKey(k.ns, k.model, k.res, k.uid)
-		stored := f.storedSubs[key]
-		var stale []string
-		for sub := range stored {
-			if _, ok := keep[sub]; !ok {
-				stale = append(stale, sub)
-			}
-		}
-		if len(stale) > 0 {
-			f.delsubs = append(f.delsubs, deleteSubsCall{k.ns, k.model, k.res, k.uid, stale})
-			for _, s := range stale {
-				delete(stored, s)
-			}
+	key := subsKey(ns, model, res, uid)
+	stored := f.storedSubs[key]
+	var stale []string
+	for sub := range stored {
+		if _, ok := keep[sub]; !ok {
+			stale = append(stale, sub)
 		}
 	}
-	return f.upsertLocked(vs)
+	if len(stale) > 0 {
+		f.delsubs = append(f.delsubs, deleteSubsCall{ns, model, res, uid, stale})
+		for _, s := range stale {
+			delete(stored, s)
+		}
+	}
+	if len(changed) == 0 {
+		return nil
+	}
+	return f.upsertLocked(changed)
 }
 
 func (f *fakeVector) upsertLocked(vs []vector.Vector) error {
@@ -260,6 +264,7 @@ func (f *fakeVector) upsertLocked(vs []vector.Vector) error {
 			f.storedSubs[k] = map[string]string{}
 		}
 		f.storedSubs[k][v.Subresource] = v.Content
+		f.storedFolder[k] = v.Folder
 	}
 	return nil
 }
@@ -284,17 +289,18 @@ func (f *fakeVector) DeleteSubresources(_ context.Context, ns, model, res, uid s
 	}
 	return nil
 }
-func (f *fakeVector) GetSubresourceContent(_ context.Context, ns, model, res, uid string) (map[string]string, error) {
+func (f *fakeVector) GetSubresourceContent(_ context.Context, ns, model, res, uid string) (map[string]string, string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	key := subsKey(ns, model, res, uid)
 	out := map[string]string{}
-	for k, v := range f.storedSubs[subsKey(ns, model, res, uid)] {
+	for k, v := range f.storedSubs[key] {
 		out[k] = v
 	}
 	if len(out) == 0 {
-		return nil, nil
+		return nil, "", nil
 	}
-	return out, nil
+	return out, f.storedFolder[key], nil
 }
 func (f *fakeVector) Exists(context.Context, string, string, string, string) (bool, error) {
 	return false, nil
