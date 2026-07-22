@@ -2097,11 +2097,6 @@
       "count": 3
     }
   },
-  "public/app/features/plugins/admin/components/GetStartedWithPlugin/GetStartedWithDataSource.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/features/plugins/admin/components/InstallControls/InstallControlsWarning.tsx": {
     "react/no-unescaped-entities": {
       "count": 1

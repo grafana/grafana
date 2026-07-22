@@ -13014,7 +13014,12 @@
     },
     "get-started-with-data-source": {
       "add-new-data-source": "Add new data source",
-      "title-button-disabled": "The plugin isn't usable yet, it may take some time to complete the installation."
+      "setup-assistant": "Set up with assistant",
+      "setup-assistant-description": "Guided configuration",
+      "setup-manually": "Set up manually",
+      "setup-manually-description": "Configure all settings yourself",
+      "title-button-disabled": "The plugin isn't usable yet, it may take some time to complete the installation.",
+      "plugin-id": "Plugin ID"
     },
     "install-controls": {
       "contact-us": "Contact us",
