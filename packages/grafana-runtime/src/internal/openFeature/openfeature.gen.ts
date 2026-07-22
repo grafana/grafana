@@ -576,10 +576,10 @@ export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOption
  *
  * **Details:**
  * - flag key: `grafana.unifiedHomepage`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaUnifiedHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.unifiedHomepage", false, options).value;
+  return useFlag("grafana.unifiedHomepage", true, options).value;
 };
 
 /**
