@@ -16,19 +16,15 @@ jest.mock('@grafana/ui/src/utils/measureText', () =>
 describe('TimeSeriesPanel (canvas) — Annotations', () => {
   setupCanvasCapture();
 
-  // TODO: point annotation lines are no longer being drawn to the canvas; skipped
-  // to unblock unrelated PRs while the rendering regression is investigated.
-  it.skip('point annotations', () =>
-    renderCanvasCase({
+  it.each<CanvasCase>([
+    {
       name: 'point annotations',
       data: {
         annotations: [
           createAnnotationFrame({ timeValues: [START_MS + DAY_MS, START_MS + 2 * DAY_MS, START_MS + 3 * DAY_MS] }),
         ],
       },
-    }));
-
-  it.each<CanvasCase>([
+    },
     {
       name: 'region annotations',
       data: {
