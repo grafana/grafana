@@ -39,9 +39,16 @@ export type FiringAlertsData = ReturnType<typeof useFiringAlerts>;
  * shared between the old-layout card and the redesigned tabs.
  */
 export function useFiringAlerts() {
+  // The hook gates its own fetching so it's safe to call unconditionally,
+  // e.g. from the tabs component when only incidents are available.
+  const enabled = canViewFiringAlerts();
+
   // Fetched once — teams change at login granularity. A failed fetch leaves teams
   // undefined, so the card intentionally shows all org alerts unfiltered.
-  const { value: teams, loading: teamsLoading } = useAsync(() => getBackendSrv().get<Team[]>('/api/user/teams'), []);
+  const { value: teams, loading: teamsLoading } = useAsync(
+    () => (enabled ? getBackendSrv().get<Team[]>('/api/user/teams') : Promise.resolve<Team[]>([])),
+    [enabled]
+  );
 
   const teamNames = (teams ?? []).map((t) => t.name);
   const hasTeams = teamNames.length > 0;
@@ -56,7 +63,7 @@ export function useFiringAlerts() {
     error,
     refetch,
   } = alertmanagerApi.useGetAlertmanagerAlertsQuery(
-    teamsLoading
+    !enabled || teamsLoading
       ? skipToken
       : {
           amSourceName: GRAFANA_RULES_SOURCE_NAME,
@@ -65,7 +72,8 @@ export function useFiringAlerts() {
         }
   );
 
-  const loading = teamsLoading || alertsLoading;
+  // enabled && ... so the useAsync microtask tick doesn't report loading for gated users
+  const loading = enabled && (teamsLoading || alertsLoading);
 
   // Severity and timestamp are derived once per alert so the sort comparator,
   // the badge counts, and the rows don't recompute them.

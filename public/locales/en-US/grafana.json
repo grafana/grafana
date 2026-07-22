@@ -10859,6 +10859,7 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Firing alerts",
+      "incident-tab-label": "Incidents",
       "title": "Alerts & incidents"
     },
     "dashboard-tabs": {
