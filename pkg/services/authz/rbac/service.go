@@ -1039,6 +1039,7 @@ func (s *Service) checkPermissionWithFolderAuthz(ctx context.Context, scopeMap m
 	// non-folder-scoped kinds can never carry one (EnableFolderSupport=false).
 	// An empty parent folder on a named check therefore means the kind does not
 	// live in folders, and the stack role alone decides.
+	// Source: pkg/storage/unified/apistore/prepare.go (fn verifyFolder)
 	if req.ParentFolder == "" {
 		ctxLogger.Debug("folderAuthz: named object without parent folder, stack role decides")
 		return true, nil
