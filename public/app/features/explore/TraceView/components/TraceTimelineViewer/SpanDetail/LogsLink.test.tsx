@@ -2,7 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { of, throwError } from 'rxjs';
 
-import { type DataSourceInstanceSettings, type LinkModel, toDataFrame } from '@grafana/data';
+import { type DataSourceApi, type DataSourceInstanceSettings, type LinkModel, toDataFrame } from '@grafana/data';
+import { useFlagGrafanaDynamicTraceToLogs } from '@grafana/runtime/internal';
 import { getDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 
@@ -16,8 +17,14 @@ jest.mock('@grafana/runtime/unstable', () => ({
   useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
 }));
 
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  useFlagGrafanaDynamicTraceToLogs: jest.fn(),
+}));
+
 const getDataSourceInstanceMock = jest.mocked(getDataSourceInstance);
 const useDataSourceInstanceSettingsMock = jest.mocked(useDataSourceInstanceSettings);
+const useFlagGrafanaDynamicTraceToLogsMock = jest.mocked(useFlagGrafanaDynamicTraceToLogs);
 
 const CTA_RELATED_LOGS = 'Related logs';
 
@@ -30,8 +37,7 @@ function createSpanLinkModel(overrides: Partial<LinkModel> = {}): SpanLinkModel 
       href: '/logs',
       title: CTA_RELATED_LOGS,
       target: '_blank',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      origin: {} as any,
+      origin: {},
       ...overrides,
     },
   };
@@ -41,10 +47,9 @@ function createSpanLinkModel(overrides: Partial<LinkModel> = {}): SpanLinkModel 
  * Builds a fake datasource whose `query` emits a single response containing the
  * given frames, so the presence check can resolve deterministically.
  */
-function mockDatasourceReturningFrames(frames: Array<ReturnType<typeof toDataFrame>>, type?: string) {
+function mockDatasourceReturningFrames(frames: Array<ReturnType<typeof toDataFrame>>, type: string) {
   const query = jest.fn().mockReturnValue(of({ data: frames }));
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getDataSourceInstanceMock.mockResolvedValue({ query, type } as any);
+  getDataSourceInstanceMock.mockResolvedValue({ query, type } as unknown as DataSourceApi);
   return query;
 }
 
@@ -62,6 +67,8 @@ describe('LogsLinkButton', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     useDataSourceInstanceSettingsMock.mockReturnValue({ isLoading: false, settings: undefined });
+    // The presence check is gated behind this flag; enable it so most tests exercise the check.
+    useFlagGrafanaDynamicTraceToLogsMock.mockReturnValue(true);
   });
 
   it('renders the link button with its CTA copy', () => {
@@ -77,8 +84,31 @@ describe('LogsLinkButton', () => {
     expect(getDataSourceInstanceMock).not.toHaveBeenCalled();
   });
 
+  it('does not check for logs when the dynamicTraceToLogs flag is disabled', async () => {
+    useFlagGrafanaDynamicTraceToLogsMock.mockReturnValue(false);
+    useDataSourceInstanceSettingsMock.mockReturnValue({
+      isLoading: false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      settings: { jsonData: {} } as any,
+    });
+    mockDatasourceReturningFrames([emptyFrame], 'loki');
+    const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
+
+    render(
+      <LogsLinkButton spanLinkModel={createSpanLinkModel({ interpolatedParams: { query: interpolatedQuery } })} />
+    );
+
+    // The datasource is never queried, and the button stays enabled (present).
+    expect(getDataSourceInstanceMock).not.toHaveBeenCalled();
+    await userEvent.hover(await screen.findByRole('button'));
+    expect(await screen.findByText('View related logs using the trace data source configuration.')).toBeInTheDocument();
+    expect(
+      screen.queryByText('No related logs found using the trace data source configuration.')
+    ).not.toBeInTheDocument();
+  });
+
   it('runs the interpolated query against its datasource to check for logs', async () => {
-    const query = mockDatasourceReturningFrames([logsFrame]);
+    const query = mockDatasourceReturningFrames([logsFrame], 'loki');
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
 
     render(
@@ -124,7 +154,7 @@ describe('LogsLinkButton', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       settings: { jsonData: {} } as any,
     });
-    mockDatasourceReturningFrames([emptyFrame]);
+    mockDatasourceReturningFrames([emptyFrame], 'loki');
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
 
     render(
@@ -143,7 +173,7 @@ describe('LogsLinkButton', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       settings: { jsonData: {} } as any,
     });
-    mockDatasourceReturningFrames([logsFrame]);
+    mockDatasourceReturningFrames([logsFrame], 'loki');
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
 
     render(

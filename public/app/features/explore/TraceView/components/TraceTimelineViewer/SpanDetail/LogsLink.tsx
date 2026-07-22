@@ -15,10 +15,10 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTraceToLogsOptions } from '@grafana/o11y-ds-frontend';
+import { useFlagGrafanaDynamicTraceToLogs } from '@grafana/runtime/internal';
 import { getDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { useStyles2, DataLinkButton } from '@grafana/ui';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
-import { type LokiQuery } from 'app/plugins/datasource/loki/types';
 
 import { type SpanLinkModel } from '../../types/links';
 
@@ -67,16 +67,17 @@ type LogsPresence = 'loading' | 'present' | 'absent';
  * any logs exist for the span, so the button can be disabled when there is nothing to link to.
  */
 function useHasLogs(spanLinkModel: SpanLinkModel): LogsPresence {
+  const dynamicTraceToLogsEnabled = useFlagGrafanaDynamicTraceToLogs();
   const [presence, setPresence] = useState<LogsPresence>('loading');
 
-  const { query, timeRange } = spanLinkModel.linkModel.interpolatedParams ?? {};
+  const { query, timeRange } = spanLinkModel.linkModel.interpolatedParams ?? {};  
 
   const queryKey = query ? JSON.stringify(query) : undefined;
   const timeRangeKey = timeRange ? `${timeRange.from.valueOf()}-${timeRange.to.valueOf()}` : undefined;
 
   useEffect(() => {
     // Without an interpolated query we can't check, so assume logs may exist and leave the link enabled.
-    if (!query) {
+    if (!query || !dynamicTraceToLogsEnabled) {
       setPresence('present');
       return;
     }
@@ -202,8 +203,7 @@ function getRequest(query: DataQuery, timeRange: TimeRange, datasource: DataSour
   };
 
   if (datasource.type === 'loki') {
-    const target: DataQuery & Pick<LokiQuery, 'maxLines'> = { ...query };
-    target.maxLines = 1;
+    const target = { ...query, maxLines: 1 };
     request.targets = [target];
   }
 
