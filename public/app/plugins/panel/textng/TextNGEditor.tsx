@@ -7,7 +7,7 @@ import { type ReactNode, useMemo, useRef, useState } from 'react';
 
 import { type GrafanaTheme2, type IconName, renderTextPanelMarkdown, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, RadioButtonGroup, ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
+import { RadioButtonGroup, ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
 import { CodeLanguage, TextMode } from './panelcfg.gen';
@@ -43,9 +43,7 @@ function renderPreviewHtml(mode: TextMode, content: string): string {
 
 export function TextNGEditor({ content, mode, wordWrap, showLineNumbers, codeLanguage, onChange }: TextNGEditorProps) {
   const styles = useStyles2(getStyles);
-  const [view, setView] = useState<ViewMode>('write');
-  // Empty panels have nothing to render, so open them straight into the editor.
-  const [isEditing, setIsEditing] = useState(() => content.trim().length === 0);
+  const [view, setView] = useState<ViewMode>(() => (content.trim().length === 0 ? 'write' : 'preview'));
   const editorViewRef = useRef<EditorView | null>(null);
 
   const previewHtml = useMemo(() => (mode === TextMode.Code ? '' : renderPreviewHtml(mode, content)), [mode, content]);
@@ -203,9 +201,9 @@ export function TextNGEditor({ content, mode, wordWrap, showLineNumbers, codeLan
   ];
 
   const viewOptions = [
-    { label: t('textng.editor.view-write', 'Write'), value: 'write' as const },
-    { label: t('textng.editor.view-split', 'Split'), value: 'split' as const },
     { label: t('textng.editor.view-preview', 'Preview'), value: 'preview' as const },
+    { label: t('textng.editor.view-split', 'Split'), value: 'split' as const },
+    { label: t('textng.editor.view-write', 'Write'), value: 'write' as const },
   ];
 
   const showEditor = view !== 'preview';
@@ -227,19 +225,6 @@ export function TextNGEditor({ content, mode, wordWrap, showLineNumbers, codeLan
       />
     );
 
-  if (!isEditing) {
-    return (
-      <div className={styles.wrapper} data-testid="TextNGEditor">
-        <div className={styles.viewHeader}>
-          <Button size="sm" variant="secondary" fill="outline" icon="pen" onClick={() => setIsEditing(true)}>
-            {t('textng.editor.edit', 'Edit')}
-          </Button>
-        </div>
-        <div className={cx(styles.pane, styles.previewPane)}>{renderOutput('TextNGEditor-view')}</div>
-      </div>
-    );
-  }
-
   return (
     <div className={styles.wrapper} data-testid="TextNGEditor">
       <div className={styles.toolbar}>
@@ -256,11 +241,6 @@ export function TextNGEditor({ content, mode, wordWrap, showLineNumbers, codeLan
               </ToolbarButton>
             ))}
         </ToolbarButtonRow>
-        <div className={styles.toolbarRight}>
-          <Button size="sm" variant="primary" icon="eye" onClick={() => setIsEditing(false)}>
-            {t('textng.editor.done', 'Done')}
-          </Button>
-        </div>
       </div>
 
       <div className={cx(styles.body, view === 'split' && styles.splitBody)}>
@@ -316,14 +296,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     gap: theme.spacing(1),
     flexWrap: 'wrap',
-    marginBottom: theme.spacing(1),
-  }),
-  toolbarRight: css({
-    marginLeft: 'auto',
-  }),
-  viewHeader: css({
-    display: 'flex',
-    justifyContent: 'flex-end',
     marginBottom: theme.spacing(1),
   }),
   formatting: css({

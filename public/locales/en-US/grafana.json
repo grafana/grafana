@@ -15753,8 +15753,6 @@
     "category-text": "Text",
     "editor": {
       "aria-label-content": "Text content",
-      "done": "Done",
-      "edit": "Edit",
       "format-bold": "B",
       "format-heading": "H",
       "format-italic": "I",

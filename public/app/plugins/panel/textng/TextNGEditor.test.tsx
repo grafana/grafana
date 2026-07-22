@@ -51,15 +51,15 @@ const setup = (value: string, mode: TextMode, onChange = jest.fn(), wordWrap = t
   return { onChange };
 };
 
-const enterEditMode = () => userEvent.click(screen.getByRole('button', { name: 'Edit' }));
+const enterWriteMode = () => userEvent.click(screen.getByRole('radio', { name: 'Write' }));
 
 describe('TextNGEditor', () => {
   describe('default (view-first) state', () => {
-    it('lands on the rendered output with an Edit button, not the editor', () => {
+    it('lands on the rendered preview, not the editor', () => {
       setup('# Hello', TextMode.Markdown);
 
-      expect(screen.getByTestId('TextNGEditor-view').innerHTML).toContain('<h1');
-      expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument();
+      expect(screen.getByTestId('TextNGEditor-preview').innerHTML).toContain('<h1');
+      expect(screen.getByRole('radio', { name: 'Preview' })).toBeChecked();
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     });
 
@@ -67,35 +67,29 @@ describe('TextNGEditor', () => {
       setup('', TextMode.Markdown);
 
       expect(screen.getByRole('textbox')).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: 'Write' })).toBeChecked();
     });
 
-    it('reveals the editor after clicking Edit and returns to view via Done', async () => {
+    it('reveals the editor after selecting Write', async () => {
       setup('# Hello', TextMode.Markdown);
 
-      await enterEditMode();
+      await enterWriteMode();
       expect(screen.getByRole('textbox')).toHaveValue('# Hello');
-
-      await userEvent.click(screen.getByRole('button', { name: 'Done' }));
-      expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument();
+      expect(screen.queryByTestId('TextNGEditor-preview')).not.toBeInTheDocument();
     });
   });
 
   describe('editing', () => {
-    it('defaults to Write view, showing only the editor', async () => {
+    it('shows only the editor in Write view', async () => {
       setup('# Hello', TextMode.Markdown);
-      await enterEditMode();
+      await enterWriteMode();
 
       expect(screen.getByRole('textbox')).toHaveValue('# Hello');
       expect(screen.queryByTestId('TextNGEditor-preview')).not.toBeInTheDocument();
     });
 
-    it('shows only the rendered preview in Preview view', async () => {
+    it('shows only the rendered preview in Preview view', () => {
       setup('# Hello', TextMode.Markdown);
-      await enterEditMode();
-
-      await userEvent.click(screen.getByRole('radio', { name: 'Preview' }));
 
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
       expect(screen.getByTestId('TextNGEditor-preview').innerHTML).toContain('<h1');
@@ -103,7 +97,6 @@ describe('TextNGEditor', () => {
 
     it('shows editor and preview side by side in Split view', async () => {
       setup('# Hello', TextMode.Markdown);
-      await enterEditMode();
 
       await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
 
@@ -111,22 +104,16 @@ describe('TextNGEditor', () => {
       expect(screen.getByTestId('TextNGEditor-preview')).toBeInTheDocument();
     });
 
-    it('sanitizes script tags in the HTML mode preview', async () => {
+    it('sanitizes script tags in the HTML mode preview', () => {
       setup('<script>alert(1)</script><p>safe</p>', TextMode.HTML);
-      await enterEditMode();
-
-      await userEvent.click(screen.getByRole('radio', { name: 'Preview' }));
 
       const preview = screen.getByTestId('TextNGEditor-preview');
       expect(preview.innerHTML).not.toContain('<script>');
       expect(preview.innerHTML).toContain('safe');
     });
 
-    it('renders code mode preview as raw, unrendered text', async () => {
+    it('renders code mode preview as raw, unrendered text', () => {
       setup('# Not a heading in code mode', TextMode.Code);
-      await enterEditMode();
-
-      await userEvent.click(screen.getByRole('radio', { name: 'Preview' }));
 
       const preview = screen.getByTestId('TextNGEditor-preview');
       expect(preview).toHaveTextContent('# Not a heading in code mode');
@@ -135,22 +122,21 @@ describe('TextNGEditor', () => {
 
     it('shows a formatting toolbar in markdown write mode', async () => {
       setup('hello', TextMode.Markdown);
-      await enterEditMode();
+      await enterWriteMode();
 
       expect(screen.getByRole('button', { name: 'Insert variable' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Insert Mermaid diagram' })).toBeInTheDocument();
     });
 
-    it('reflects word-wrap state in the status bar', async () => {
+    it('reflects word-wrap state in the status bar', () => {
       setup('hello', TextMode.Markdown, jest.fn(), false);
-      await enterEditMode();
 
       expect(screen.getByText('Word wrap off')).toBeInTheDocument();
     });
 
     it('forwards editor changes via onChange', async () => {
       const { onChange } = setup('initial', TextMode.Markdown);
-      await enterEditMode();
+      await enterWriteMode();
 
       const editor = screen.getByRole('textbox');
       await userEvent.clear(editor);
