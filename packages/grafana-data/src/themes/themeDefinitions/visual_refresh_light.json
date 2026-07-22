@@ -11,37 +11,56 @@
       "elevated": "palette.white"
     },
     "primary": {
-      "main": "palette.neutral950"
+      "main": "palette.neutral950",
+      "transparent": "palette.neutral950",
+      "shade": "palette.neutral900",
+      "border": "palette.neutral950"
     },
     "secondary": {
       "main": "palette.neutral200",
+      "transparent": "palette.neutral200",
+      "shade": "palette.neutral300",
       "border": "palette.neutral300",
       "text": "palette.neutral800",
       "contrastText": "palette.neutral800"
     },
     "tertiary": {
-      "main": "palette.violet700"
+      "main": "palette.violet700",
+      "transparent": "palette.violet100",
+      "shade": "palette.violet200",
+      "border": "palette.violet200"
     },
     "accent": {
       "main": "palette.orange600",
       "text": "palette.orange700",
+      "transparent": "palette.orange100",
+      "shade": "palette.orange200",
+      "border": "palette.orange200",
       "contrastText": "palette.white"
     },
     "error": {
-      "main": "palette.coral600",
-      "border": "palette.coral100"
+      "main": "palette.coral700",
+      "transparent": "palette.coral100",
+      "shade": "palette.coral200",
+      "border": "palette.coral200"
     },
     "warning": {
-      "main": "palette.amber600",
-      "border": "palette.amber100"
+      "main": "palette.amber700",
+      "transparent": "palette.amber100",
+      "shade": "palette.amber200",
+      "border": "palette.amber200"
     },
     "success": {
-      "main": "palette.sage600",
-      "border": "palette.sage100"
+      "main": "palette.sage700",
+      "transparent": "palette.sage100",
+      "shade": "palette.sage200",
+      "border": "palette.sage200"
     },
     "info": {
-      "main": "palette.blue600",
-      "border": "palette.blue100"
+      "main": "palette.blue700",
+      "transparent": "palette.blue100",
+      "shade": "palette.blue200",
+      "border": "palette.blue200"
     },
     "text": {
       "primary": "palette.neutral900",

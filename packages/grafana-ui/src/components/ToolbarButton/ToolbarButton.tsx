@@ -140,12 +140,13 @@ function renderIcon(icon: IconName | React.ReactNode, iconSize?: IconSize) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const primaryVariant = getPropertiesForVariant(theme, 'primary', 'solid');
   const destructiveVariant = getPropertiesForVariant(theme, 'destructive', 'solid');
 
   const defaultOld = css({
     color: theme.colors.text.primary,
-    background: theme.colors.secondary.main,
+    background: visualRefreshEnabled ? theme.colors.secondary.transparent : theme.colors.secondary.main,
 
     '&:hover, &:focus': {
       color: theme.colors.text.primary,
@@ -154,7 +155,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     },
 
     '&:active': {
-      ...getActiveButtonStyles(theme.colors.secondary, 'solid'),
+      ...getActiveButtonStyles(theme.colors.secondary, 'solid', visualRefreshEnabled),
     },
   });
 
@@ -212,7 +213,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
 
       '&:active': {
-        ...getActiveButtonStyles(theme.colors.secondary, 'solid'),
+        ...getActiveButtonStyles(theme.colors.secondary, 'solid', visualRefreshEnabled),
       },
     }),
     canvas: defaultOld,

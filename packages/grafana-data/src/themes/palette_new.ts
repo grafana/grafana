@@ -42,6 +42,7 @@ export const palette = {
   orange700: '#b04a17',
   orange800: '#8e3c17',
   orange900: '#743218',
+  orange950: '#4a200f',
 
   // Warm red-orange. Status: error, critical
   coral50: '#fff1f0',

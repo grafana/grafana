@@ -314,16 +314,18 @@ export const getButtonStyles = (props: StyleProps) => {
   };
 };
 
-export function getActiveButtonStyles(color: ThemeRichColor, fill: ButtonFill) {
+export function getActiveButtonStyles(color: ThemeRichColor, fill: ButtonFill, visualRefreshEnabled?: boolean) {
   return {
-    background: fill === 'solid' ? color.main : 'transparent',
+    background: fill === 'solid' ? (visualRefreshEnabled ? color.shade : color.main) : 'transparent',
   };
 }
 
 function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill) {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   let outlineBorderColor = color.border;
   let borderColor = 'transparent';
   let hoverBorderColor = 'transparent';
+  let textColor = visualRefreshEnabled ? color.main : color.contrastText;
 
   // Secondary button has some special rules as we lack the color token to
   // specify border color for normal button vs border color for outline button
@@ -331,6 +333,10 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
     borderColor = color.border;
     hoverBorderColor = theme.colors.emphasize(color.border, 0.25);
     outlineBorderColor = theme.colors.border.strong;
+  }
+
+  if (color.name === 'primary' || color.name === 'secondary') {
+    textColor = color.contrastText;
   }
 
   if (fill === 'outline') {
@@ -346,7 +352,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       },
 
       '&:active': {
-        ...getActiveButtonStyles(color, fill),
+        ...getActiveButtonStyles(color, fill, visualRefreshEnabled),
       },
     };
   }
@@ -364,30 +370,28 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       },
 
       '&:active': {
-        ...getActiveButtonStyles(color, fill),
+        ...getActiveButtonStyles(color, fill, visualRefreshEnabled),
       },
     };
   }
 
   return {
-    background: color.main,
-    color: color.contrastText,
+    background: visualRefreshEnabled ? color.transparent : color.main,
+    color: textColor,
     border: `1px solid ${borderColor}`,
 
     '&:hover': {
       background: color.shade,
-      color: color.contrastText,
       boxShadow: theme.shadows.z1,
       borderColor: hoverBorderColor,
     },
 
     '&:focus': {
       background: color.shade,
-      color: color.contrastText,
     },
 
     '&:active': {
-      ...getActiveButtonStyles(color, fill),
+      ...getActiveButtonStyles(color, fill, visualRefreshEnabled),
     },
   };
 }

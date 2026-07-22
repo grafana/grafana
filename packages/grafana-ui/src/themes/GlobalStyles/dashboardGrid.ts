@@ -45,7 +45,7 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
     },
 
     '.react-grid-item.react-grid-placeholder': {
-      boxShadow: `0 0 4px ${theme.colors.accent.border} !important`,
+      boxShadow: `0 0 4px ${theme.colors.accent.main} !important`,
       borderRadius: theme.shape.radius.lg,
       background: `${theme.colors.accent.transparent} !important`,
       zIndex: '-1 !important',
@@ -78,7 +78,7 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
     },
 
     '.dashboard-selected-element': {
-      outline: `1px dashed ${theme.colors.accent.border}`,
+      outline: `1px dashed ${theme.colors.accent.main}`,
       outlineOffset: '0px',
       borderRadius: theme.shape.radius.default,
     },

@@ -680,10 +680,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     menuItem: css({
       label: 'panel-menu',
       border: 'none',
-      background: theme.colors.secondary.main,
-      '&:hover': {
-        background: theme.colors.secondary.shade,
-      },
+      // background: theme.colors.secondary.main,
+      // '&:hover': {
+      //   background: theme.colors.secondary.shade,
+      // },
     }),
     errorContainerFloating: css({
       label: 'error-container',
