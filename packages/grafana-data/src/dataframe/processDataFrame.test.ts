@@ -4,6 +4,7 @@ import { FieldType, type DataFrameDTO } from '../types/dataFrame';
 import { type PanelData } from '../types/panel';
 
 import { ArrayDataFrame } from './ArrayDataFrame';
+import * as guessFieldTypeModule from './guessFieldType';
 import {
   isDataFrame,
   isTableData,
@@ -433,17 +434,12 @@ describe('getProcessedDataFrames', () => {
     expect(getProcessedDataFrames([])).toEqual([]);
   });
 
-  it('converts raw data to DataFrames and guesses field types', () => {
-    const raw = {
-      fields: [
-        { name: 'time', type: FieldType.time, values: [1000, 2000] },
-        { name: 'value', type: FieldType.number, values: [1, 2] },
-      ],
-    };
-    const result = getProcessedDataFrames([raw]);
-    expect(result).toHaveLength(1);
-    expect(result[0].fields[0].type).toBe(FieldType.time);
-    expect(result[0].fields[1].type).toBe(FieldType.number);
+  it('calls guessFieldTypes on each frame to infer field types', () => {
+    const spy = jest.spyOn(guessFieldTypeModule, 'guessFieldTypes');
+    const raw = { fields: [{ name: 'value', values: [1, 2] }] } as unknown as DataFrameDTO;
+    getProcessedDataFrames([raw]);
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
   });
 
   it('clears cached field state on processed frames', () => {
@@ -475,9 +471,13 @@ describe('preProcessPanelData', () => {
     timeRange: { from: dateTime(0), to: dateTime(1000), raw: { from: dateTime(0), to: dateTime(1000) } },
   };
 
-  it('processes series through getProcessedDataFrame', () => {
-    const result = preProcessPanelData(baseData);
-    expect(result.series).toHaveLength(1);
+  it('clears field state on each series frame, proving getProcessedDataFrame ran', () => {
+    const frameWithState = toDataFrame({
+      fields: [{ name: 'value', type: FieldType.number, values: [1], state: { calcs: { sum: 1 } } }],
+    });
+    const data = { ...baseData, series: [frameWithState] };
+    const result = preProcessPanelData(data);
+    expect(result.series[0].fields[0].state).toBeNull();
   });
 
   it('returns last result with loading state when loading and no series', () => {
@@ -495,7 +495,7 @@ describe('preProcessPanelData', () => {
     expect(result.series).toBe(lastResult.series);
   });
 
-  it('uses loading data as lastResult when loading with no series and no lastResult', () => {
+  it('falls back to the loading data itself as lastResult when no lastResult is provided', () => {
     const loadingData = {
       state: LoadingState.Loading,
       series: [],
@@ -503,6 +503,7 @@ describe('preProcessPanelData', () => {
     };
     const result = preProcessPanelData(loadingData, undefined);
     expect(result.state).toBe(LoadingState.Loading);
+    expect(result.series).toBe(loadingData.series);
   });
 
   it('includes timings in processed result', () => {

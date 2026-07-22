@@ -162,12 +162,19 @@ describe('getThresholdsDrawHook', () => {
       hardMin: 0,
       hardMax: 200,
     })(asUPlot(u));
-    expect(u.ctx.stroke).toHaveBeenCalled();
-    expect(u.valToPos).toHaveBeenCalled();
+    const calledValues = u.valToPos.mock.calls.map((c: unknown[]) => c[0]);
+    expect(calledValues).toContain(100);
+    expect(calledValues).toContain(160);
   });
 
   it('falls back to the previous step color when a step is transparent', () => {
+    const strokeStyles: string[] = [];
     const u = makeUPlot();
+    const originalStroke = u.ctx.stroke;
+    u.ctx.stroke = jest.fn(() => {
+      strokeStyles.push(u.ctx.strokeStyle as string);
+      return originalStroke();
+    });
     getThresholdsDrawHook({
       scaleKey: 'y',
       thresholds: {
@@ -181,7 +188,9 @@ describe('getThresholdsDrawHook', () => {
       config: { mode: GraphThresholdsStyleMode.Line },
       theme,
     })(asUPlot(u));
-    expect(u.ctx.stroke).toHaveBeenCalled();
+    expect(strokeStyles.length).toBeGreaterThan(0);
+    expect(strokeStyles.every((s) => !s.includes('transparent'))).toBe(true);
+    expect(strokeStyles[0]).toContain('rgba(');
   });
 
   it('draws correctly in vertical scale orientation', () => {

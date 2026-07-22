@@ -185,16 +185,13 @@ describe('getMarkerAsPath', () => {
 });
 
 describe('textMarker', () => {
-  it('returns a Style with text when text is provided', () => {
-    const { Style } = require('ol/style');
+  it('sets the text label to the provided string', () => {
     const style = textMarker({ color: '#ff0000', opacity: 1, text: 'hello' });
-    expect(style).toBeInstanceOf(Style);
+    expect(style.getText()?.getText()).toBe('hello');
   });
 
-  it('returns a Style with undefined text when text is not provided', () => {
-    const { Style } = require('ol/style');
+  it('has no text label when text is not provided', () => {
     const style = textMarker({ color: '#ff0000', opacity: 1 });
-    expect(style).toBeInstanceOf(Style);
     expect(style.getText()).toBeNull();
   });
 });

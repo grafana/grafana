@@ -762,6 +762,6 @@ describe('guessTextBoundingBox', () => {
     const mockContext = { measureText: mockMeasureText } as unknown as OffscreenCanvasRenderingContext2D;
     const withPadding = guessTextBoundingBox('hello world', makeHeaderGroup(300), mockContext, 20, 36, 10);
     const withoutPadding = guessTextBoundingBox('hello world', makeHeaderGroup(300), mockContext, 20, 36, 0);
-    expect(withPadding.height).toBeGreaterThanOrEqual(withoutPadding.height);
+    expect(withPadding.height).toBeGreaterThan(withoutPadding.height);
   });
 });

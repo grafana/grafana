@@ -1,5 +1,6 @@
 import {
   createTheme,
+  FieldColorModeId,
   FieldType,
   ThresholdsMode,
   type TimeRange,
@@ -571,7 +572,7 @@ describe('prepareTimelineFields with percentage threshold merging', () => {
     raw: { from: dateTime(1), to: dateTime(3) },
   };
 
-  it('merges numeric values using percentage thresholds', () => {
+  it('converts numeric values to threshold label strings using percentage thresholds', () => {
     const frames = [
       toDataFrame({
         fields: [
@@ -583,6 +584,7 @@ describe('prepareTimelineFields with percentage threshold merging', () => {
             config: {
               min: 0,
               max: 100,
+              color: { mode: FieldColorModeId.Thresholds },
               thresholds: {
                 mode: ThresholdsMode.Percentage,
                 steps: [
@@ -598,10 +600,14 @@ describe('prepareTimelineFields with percentage threshold merging', () => {
     ];
     const result = prepareTimelineFields(frames, true, timeRange, theme);
     expect(result.warn).toBeUndefined();
-    expect(result.frames).toBeDefined();
+    const mergedField = result.frames![0].fields[1];
+    expect(mergedField.type).toBe(FieldType.string);
+    expect(mergedField.values[0]).toBe('0%+');
+    expect(mergedField.values[1]).toBe('50%+');
+    expect(mergedField.values[2]).toBe('80%+');
   });
 
-  it('handles null values in percentage threshold merge', () => {
+  it('preserves null values when merging percentage thresholds', () => {
     const frames = [
       toDataFrame({
         fields: [
@@ -613,6 +619,7 @@ describe('prepareTimelineFields with percentage threshold merging', () => {
             config: {
               min: 0,
               max: 100,
+              color: { mode: FieldColorModeId.Thresholds },
               thresholds: {
                 mode: ThresholdsMode.Percentage,
                 steps: [
@@ -626,6 +633,10 @@ describe('prepareTimelineFields with percentage threshold merging', () => {
       }),
     ];
     const result = prepareTimelineFields(frames, true, timeRange, theme);
-    expect(result.frames).toBeDefined();
+    const mergedField = result.frames![0].fields[1];
+    expect(mergedField.type).toBe(FieldType.string);
+    expect(mergedField.values[0]).toBe('0%+');
+    expect(mergedField.values[1]).toBeNull();
+    expect(mergedField.values[2]).toBe('80%+');
   });
 });

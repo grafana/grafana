@@ -1000,21 +1000,28 @@ describe('bars.getConfig', () => {
   });
 
   describe('stacked radius callback', () => {
-    it('returns rounded top corners for topmost series when stacking is Normal', () => {
+    it('builds config without error when stacking is Normal with barRadius', () => {
       const opts = createMinimalBarsOptions({
         stacking: StackingMode.Normal,
         barRadius: 0.3,
       });
       const config = getConfig(opts, theme);
+      expect(config.barsBuilder).toBeDefined();
+
       const u = createMockU([
         ['a', 'b', 'c'],
         [10, 20, 30],
         [5, 10, 15],
       ]);
-      if (config.drawClear) {
-        config.drawClear(asUPlot(u));
-      }
-      expect(config.barsBuilder).toBeDefined();
+      expect(() => {
+        if (config.drawClear) {
+          config.drawClear(asUPlot(u));
+        }
+        if (config.barsBuilder) {
+          config.barsBuilder(asUPlot(u), 1, 0, u.data[0].length - 1);
+          config.barsBuilder(asUPlot(u), 2, 0, u.data[0].length - 1);
+        }
+      }).not.toThrow();
     });
   });
 });
