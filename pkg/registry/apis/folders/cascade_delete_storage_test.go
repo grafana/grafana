@@ -294,44 +294,6 @@ func TestCascadeDelete_PropagatesDeleteOptionsToDashboards(t *testing.T) {
 	require.Equal(t, int64(0), *got.GracePeriodSeconds)
 }
 
-// recordingContentsDeleter records the folders whose contents were requested for deletion.
-type recordingContentsDeleter struct{ folders []string }
-
-func (r *recordingContentsDeleter) DeleteInFolder(_ context.Context, _, folderUID string) error {
-	r.folders = append(r.folders, folderUID)
-	return nil
-}
-
-func TestCascadeDelete_DeletesContentsPerFolder(t *testing.T) {
-	setKubernetesFolderCascadeDeleteToggle(t, true)
-
-	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{
-		"root": newFolder("root"), "child": newFolder("child"),
-	}}
-	searcher := &fakeCascadeSearcher{childrenByParent: map[string][]string{"root": {"child"}}}
-	deleter := &recordingContentsDeleter{}
-	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient, contentsDeleter: deleter}
-
-	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
-	require.NoError(t, err)
-	require.ElementsMatch(t, []string{"root", "child"}, deleter.folders)
-}
-
-func TestCascadeDelete_SkipsContentsOnDryRun(t *testing.T) {
-	setKubernetesFolderCascadeDeleteToggle(t, true)
-
-	// A server-side dry-run must not mutate contents: DeleteInFolders has no dry-run mode.
-	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
-	deleter := &recordingContentsDeleter{}
-	s := &cascadeDeleteStorage{Storage: store, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient, contentsDeleter: deleter}
-
-	opts := forceDelete()
-	opts.DryRun = []string{metav1.DryRunAll}
-	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, opts)
-	require.NoError(t, err)
-	require.Empty(t, deleter.folders, "contents must not be deleted on dry-run")
-}
-
 func TestCascadeDelete_DashboardNotFoundTolerated(t *testing.T) {
 	setKubernetesFolderCascadeDeleteToggle(t, true)
 
@@ -523,7 +485,7 @@ func TestCascadeDelete_ForwardsOptionalInterfaces(t *testing.T) {
 	setKubernetesFolderCascadeDeleteToggle(t, false)
 
 	inner := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{}}}
-	s := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient, nil)
+	s := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient)
 
 	watcher, ok := s.(rest.Watcher)
 	require.True(t, ok, "watch must be exposed when the wrapped store supports it")
@@ -543,7 +505,7 @@ func TestCascadeDelete_RejectsForcedCollectionDelete(t *testing.T) {
 
 	// A forced collection delete can't cascade, so it's rejected rather than orphaning content.
 	inner := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{}}}
-	deleter := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient, nil).(rest.CollectionDeleter)
+	deleter := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient).(rest.CollectionDeleter)
 
 	_, err := deleter.DeleteCollection(ctxWithNamespace(), nil, forceDelete(), nil)
 	require.True(t, apierrors.IsBadRequest(err))
@@ -557,7 +519,7 @@ func TestCascadeDelete_RejectsForcedCollectionDelete(t *testing.T) {
 
 func TestCascadeDelete_OptionalInterfacesNotExposedWhenUnsupported(t *testing.T) {
 	// Wrapped store lacks Watcher/CollectionDeleter: the wrapper must not advertise those verbs.
-	s := newCascadeDeleteStorage(&fakeFolderStorage{}, &fakeCascadeSearcher{}, nilDashboardClient, nil)
+	s := newCascadeDeleteStorage(&fakeFolderStorage{}, &fakeCascadeSearcher{}, nilDashboardClient)
 
 	_, isWatcher := s.(rest.Watcher)
 	require.False(t, isWatcher)
