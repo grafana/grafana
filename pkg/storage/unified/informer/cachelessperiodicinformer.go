@@ -42,6 +42,9 @@ type CachelessPeriodicInformer struct {
 	list   PeriodicListFunc
 	log    log.Logger
 
+	// metrics records re-list success/failure for staleness dashboards; nil disables.
+	metrics Metrics
+
 	// retryInterval is how often the initial list is retried while it fails;
 	// defaults to periodicRetryInterval.
 	retryInterval time.Duration
@@ -50,10 +53,12 @@ type CachelessPeriodicInformer struct {
 	handlers []cache.ResourceEventHandler
 }
 
-// NewCachelessPeriodicInformer builds a list-only source. name is used only
-// for logging; resync is the re-list cadence (a non-positive value falls back to
-// defaultPeriodicResync); list reads the resource from the API.
-func NewCachelessPeriodicInformer(name string, resync time.Duration, list PeriodicListFunc) *CachelessPeriodicInformer {
+// NewCachelessPeriodicInformer builds a list-only source. name is used both for
+// logging and as the resource label on its re-list metrics; resync is the re-list
+// cadence (a non-positive value falls back to defaultPeriodicResync); list reads
+// the resource from the API. metrics records re-list success/failure; pass nil to
+// disable.
+func NewCachelessPeriodicInformer(name string, resync time.Duration, list PeriodicListFunc, metrics Metrics) *CachelessPeriodicInformer {
 	if resync <= 0 {
 		resync = defaultPeriodicResync
 	}
@@ -62,6 +67,7 @@ func NewCachelessPeriodicInformer(name string, resync time.Duration, list Period
 		resync:        resync,
 		list:          list,
 		log:           log.New("provisioning.informer.periodiclister"),
+		metrics:       metrics,
 		retryInterval: periodicRetryInterval,
 	}
 }
@@ -125,12 +131,21 @@ func (s *CachelessPeriodicInformer) relist(ctx context.Context) error {
 	objs, err := s.list(ctx)
 	if err != nil {
 		s.log.Warn("periodic lister: list failed", "name", s.name, "error", err)
+		if s.metrics != nil {
+			s.metrics.ObserveRelistError(s.name)
+		}
 		return err
 	}
 	s.log.Debug("periodic lister re-listed", "name", s.name, "count", len(objs))
 	for _, obj := range objs {
 		o := obj
 		s.dispatch(func(h cache.ResourceEventHandler) { h.OnAdd(o, false) })
+	}
+	// This source only ever re-lists (no live stream), so every pass is a periodic
+	// re-list. Per-object events are intentionally not recorded: it re-delivers the
+	// whole set each pass, so counting them would not mean "changes".
+	if s.metrics != nil {
+		s.metrics.ObserveRelist(s.name, TriggerPeriodic)
 	}
 	return nil
 }

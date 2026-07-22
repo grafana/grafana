@@ -97,6 +97,25 @@ func TestMetrics_SourceLabelsAreDistinct(t *testing.T) {
 	assert.Equal(t, float64(1), eventCount(m, "apiserver", "repositories", "add", "live"))
 }
 
+// Drop, relist and relist-error signals land on their own series (all NATS-only),
+// and a successful relist stamps the last-success gauge — the staleness bound.
+func TestMetrics_DropRelistAndStaleness(t *testing.T) {
+	m := newMetrics(prometheus.NewPedanticRegistry())
+	r := m.NATSRecorder()
+
+	r.ObserveDrop("repositories", "unmarshal_error")
+	r.ObserveDrop("repositories", "unknown_type")
+	r.ObserveRelist("repositories", "resync")
+	r.ObserveRelistError("repositories")
+
+	assert.Equal(t, float64(1), testutil.ToFloat64(m.dropped.WithLabelValues("nats", "repositories", "unmarshal_error")))
+	assert.Equal(t, float64(1), testutil.ToFloat64(m.dropped.WithLabelValues("nats", "repositories", "unknown_type")))
+	assert.Equal(t, float64(1), testutil.ToFloat64(m.relists.WithLabelValues("nats", "repositories", "resync")))
+	assert.Equal(t, float64(1), testutil.ToFloat64(m.relistErrors.WithLabelValues("nats", "repositories")))
+	// The last-relist gauge is stamped with a real wall-clock time on success.
+	assert.Greater(t, testutil.ToFloat64(m.lastRelist.WithLabelValues("nats", "repositories")), float64(0))
+}
+
 // The NATS relist recorder skips latency on the initial list (object age, not a
 // delivery delay) but still counts the event.
 func TestMetrics_NATSRelistInitialSkipsLatency(t *testing.T) {

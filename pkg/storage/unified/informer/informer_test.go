@@ -278,8 +278,8 @@ func TestInformer_RelistDiffEmitsDeletes(t *testing.T) {
 	_, err := n.AddEventHandler(handler)
 	require.NoError(t, err)
 
-	require.NoError(t, n.relist(context.Background(), true))  // initial: adds a, b; no deletes
-	require.NoError(t, n.relist(context.Background(), false)) // resync: b is gone -> delete
+	require.NoError(t, n.relist(context.Background(), TriggerInitial)) // initial: adds a, b; no deletes
+	require.NoError(t, n.relist(context.Background(), TriggerResync))  // resync: b is gone -> delete
 
 	assert.ElementsMatch(t, []string{"a", "b"}, handler.addedNames())
 	assert.Equal(t, []string{"b"}, handler.deletedNames(), "vanished object must be delivered as a delete")
@@ -305,8 +305,8 @@ func TestInformer_RelistEmitsAddForNewKeys(t *testing.T) {
 	_, err := n.AddEventHandler(handler)
 	require.NoError(t, err)
 
-	require.NoError(t, n.relist(context.Background(), true))  // initial: a added
-	require.NoError(t, n.relist(context.Background(), false)) // resync: b new -> add, a -> update
+	require.NoError(t, n.relist(context.Background(), TriggerInitial)) // initial: a added
+	require.NoError(t, n.relist(context.Background(), TriggerResync))  // resync: b new -> add, a -> update
 
 	assert.ElementsMatch(t, []string{"a", "b"}, handler.addedNames(), "b must be an add, not an update")
 	assert.Equal(t, []string{"a"}, handler.updatedNames(), "the already-known object is an update")

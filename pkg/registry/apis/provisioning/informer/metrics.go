@@ -38,10 +38,14 @@ const (
 // the publisher-side storage_server_watch_notifications_published_total
 // denominator — whether events were missed (events_total{delivery="live"}).
 type Metrics struct {
-	events      *prometheus.CounterVec // source, resource, verb, delivery
-	latency     *prometheus.HistogramVec
-	reconnects  *prometheus.CounterVec // source, resource (nats only)
-	watchErrors *prometheus.CounterVec // source, resource (apiserver only)
+	events       *prometheus.CounterVec // source, resource, verb, delivery
+	latency      *prometheus.HistogramVec
+	reconnects   *prometheus.CounterVec // source, resource (nats only)
+	watchErrors  *prometheus.CounterVec // source, resource (apiserver only)
+	dropped      *prometheus.CounterVec // source, resource, reason
+	relists      *prometheus.CounterVec // source, resource, trigger
+	relistErrors *prometheus.CounterVec // source, resource
+	lastRelist   *prometheus.GaugeVec   // source, resource
 }
 
 var (
@@ -85,8 +89,24 @@ func newMetrics(reg prometheus.Registerer) *Metrics {
 			Name: "grafana_provisioning_informer_watch_errors_total",
 			Help: "Apiserver watch errors observed by a provisioning informer (e.g. watch restarts / 410 Gone), the apiserver analog of a lossy window.",
 		}, []string{"source", "resource"}),
+		dropped: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_provisioning_informer_dropped_events_total",
+			Help: "NATS notifications an informer received but could not dispatch, by reason (unmarshal_error, unknown_type). A dropped event is invisible until the next re-list.",
+		}, []string{"source", "resource", "reason"}),
+		relists: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_provisioning_informer_relists_total",
+			Help: "Successful informer re-lists, by trigger (initial, resync, reconnect, periodic).",
+		}, []string{"source", "resource", "trigger"}),
+		relistErrors: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_provisioning_informer_relist_errors_total",
+			Help: "Failed informer re-lists (the API LIST errored); while failing, missed live events are not healed.",
+		}, []string{"source", "resource"}),
+		lastRelist: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "grafana_provisioning_informer_last_relist_success_timestamp_seconds",
+			Help: "Unix timestamp of the last successful re-list; time since this is a hard upper bound on event staleness.",
+		}, []string{"source", "resource"}),
 	}
-	reg.MustRegister(m.events, m.latency, m.reconnects, m.watchErrors)
+	reg.MustRegister(m.events, m.latency, m.reconnects, m.watchErrors, m.dropped, m.relists, m.relistErrors, m.lastRelist)
 	return m
 }
 
@@ -132,6 +152,28 @@ func (r natsRecorder) ObserveReconnect(res string) {
 		return
 	}
 	r.m.reconnects.WithLabelValues(sourceNATS, res).Inc()
+}
+
+func (r natsRecorder) ObserveDrop(res, reason string) {
+	if r.m == nil {
+		return
+	}
+	r.m.dropped.WithLabelValues(sourceNATS, res, reason).Inc()
+}
+
+func (r natsRecorder) ObserveRelist(res, trigger string) {
+	if r.m == nil {
+		return
+	}
+	r.m.relists.WithLabelValues(sourceNATS, res, trigger).Inc()
+	r.m.lastRelist.WithLabelValues(sourceNATS, res).SetToCurrentTime()
+}
+
+func (r natsRecorder) ObserveRelistError(res string) {
+	if r.m == nil {
+		return
+	}
+	r.m.relistErrors.WithLabelValues(sourceNATS, res).Inc()
 }
 
 // MeterAPIServer wraps an apiserver-backed SharedIndexInformer so its delivered

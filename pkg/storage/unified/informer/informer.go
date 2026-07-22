@@ -33,11 +33,33 @@ import (
 //     is object age, not delivery delay).
 //   - ObserveReconnect   — the bus reconnected, a window in which live events may
 //     have been missed (and are recovered on the following re-list).
+//   - ObserveDrop        — a live notification was received but could not be
+//     dispatched (reason: unmarshal_error, unknown_type).
+//   - ObserveRelist      — a re-list completed successfully (trigger: initial,
+//     resync, reconnect, periodic); marks the last-success time for staleness.
+//   - ObserveRelistError — a re-list failed, so missed events are not yet healed.
 type Metrics interface {
 	ObserveLiveEvent(resource, verb string, rv int64)
 	ObserveRelistEvent(resource, verb string, rv int64, initial bool)
 	ObserveReconnect(resource string)
+	ObserveDrop(resource, reason string)
+	ObserveRelist(resource, trigger string)
+	ObserveRelistError(resource string)
 }
+
+// Re-list triggers, used as the trigger label on relist metrics.
+const (
+	TriggerInitial   = "initial"
+	TriggerResync    = "resync"
+	TriggerReconnect = "reconnect"
+	TriggerPeriodic  = "periodic"
+)
+
+// Drop reasons, used as the reason label on dropped-notification metrics.
+const (
+	DropUnmarshalError = "unmarshal_error"
+	DropUnknownType    = "unknown_type"
+)
 
 // objectRV reads the resource version off an object's metadata as the int64 the
 // latency helpers expect, returning 0 (which callers treat as "unknown, skip
@@ -282,7 +304,7 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 	// the next successful resync. A transient API error must therefore hold
 	// HasSynced false and retry, mirroring a reflector's initial ListAndWatch.
 	for {
-		if err := n.relist(ctx, true); err == nil {
+		if err := n.relist(ctx, TriggerInitial); err == nil {
 			break
 		}
 		select {
@@ -302,10 +324,10 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 			return
 		case <-resync.C:
 			// Error already logged in relist; the next tick retries.
-			_ = n.relist(ctx, false)
+			_ = n.relist(ctx, TriggerResync)
 		case <-n.reconnect:
 			n.log.Debug("nats reconnected; re-listing", "gvr", n.gvr.String())
-			_ = n.relist(ctx, false)
+			_ = n.relist(ctx, TriggerReconnect)
 		}
 	}
 }
@@ -347,6 +369,9 @@ func (n *Informer) onNotification() nats.MessageHandler {
 		var evt resourcepb.WatchNotification
 		if err := proto.Unmarshal(data, &evt); err != nil {
 			n.log.Warn("dropping malformed nats notification", "subject", subject, "error", err)
+			if n.metrics != nil {
+				n.metrics.ObserveDrop(n.gvr.Resource, DropUnmarshalError)
+			}
 			return
 		}
 
@@ -354,6 +379,9 @@ func (n *Informer) onNotification() nats.MessageHandler {
 		case resourcepb.WatchNotification_ADDED, resourcepb.WatchNotification_MODIFIED, resourcepb.WatchNotification_DELETED:
 		default:
 			n.log.Warn("dropping nats notification with unknown type", "subject", subject, "type", evt.Type)
+			if n.metrics != nil {
+				n.metrics.ObserveDrop(n.gvr.Resource, DropUnknownType)
+			}
 			return
 		}
 
@@ -388,11 +416,16 @@ func (n *Informer) onNotification() nats.MessageHandler {
 //     live notification reliably reaches under round-robin delivery) is caught.
 //
 // On the initial list the store starts empty, so every object is an add (with
-// isInInitialList=true) and there is nothing to delete.
-func (n *Informer) relist(ctx context.Context, initial bool) error {
+// isInInitialList=true) and there is nothing to delete. trigger labels what
+// caused the re-list (initial, resync, reconnect) on the relist metrics.
+func (n *Informer) relist(ctx context.Context, trigger string) error {
+	initial := trigger == TriggerInitial
 	objs, err := n.list(ctx)
 	if err != nil {
 		n.log.Warn("nats informer: list failed", "gvr", n.gvr.String(), "error", err)
+		if n.metrics != nil {
+			n.metrics.ObserveRelistError(n.gvr.Resource)
+		}
 		return err
 	}
 
@@ -431,6 +464,9 @@ func (n *Informer) relist(ctx context.Context, initial bool) error {
 			n.metrics.ObserveRelistEvent(n.gvr.Resource, "delete", objectRV(o), initial)
 		}
 		n.dispatch(func(h cache.ResourceEventHandler) { h.OnDelete(o) })
+	}
+	if n.metrics != nil {
+		n.metrics.ObserveRelist(n.gvr.Resource, trigger)
 	}
 	return nil
 }

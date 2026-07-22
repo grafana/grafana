@@ -2,6 +2,7 @@ package informer
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"sync"
 	"testing"
@@ -17,11 +18,13 @@ import (
 )
 
 type recordedCall struct {
-	kind     string // live | relist | reconnect
+	kind     string // live | relist | reconnect | drop | relist_done | relist_error
 	resource string
 	verb     string
 	rv       int64
 	initial  bool
+	reason   string // drop reason
+	trigger  string // relist trigger
 }
 
 // fakeMetrics records the informer's Metrics hook calls for assertion.
@@ -46,6 +49,24 @@ func (m *fakeMetrics) ObserveReconnect(resource string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.calls = append(m.calls, recordedCall{kind: "reconnect", resource: resource})
+}
+
+func (m *fakeMetrics) ObserveDrop(resource, reason string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.calls = append(m.calls, recordedCall{kind: "drop", resource: resource, reason: reason})
+}
+
+func (m *fakeMetrics) ObserveRelist(resource, trigger string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.calls = append(m.calls, recordedCall{kind: "relist_done", resource: resource, trigger: trigger})
+}
+
+func (m *fakeMetrics) ObserveRelistError(resource string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.calls = append(m.calls, recordedCall{kind: "relist_error", resource: resource})
 }
 
 func (m *fakeMetrics) snapshot() []recordedCall {
@@ -130,7 +151,7 @@ func TestInformer_Metrics_RelistReconciledSetOnly(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx := context.Background()
-	require.NoError(t, n.relist(ctx, true)) // initial
+	require.NoError(t, n.relist(ctx, TriggerInitial)) // initial
 
 	initial := m.byKind("relist")
 	require.Len(t, initial, 2)
@@ -144,7 +165,7 @@ func TestInformer_Metrics_RelistReconciledSetOnly(t *testing.T) {
 	mu.Lock()
 	seed = []runtime.Object{objWithRV("a", 10), objWithRV("c", 30)}
 	mu.Unlock()
-	require.NoError(t, n.relist(ctx, false))
+	require.NoError(t, n.relist(ctx, TriggerResync))
 
 	var steady []recordedCall
 	for _, c := range m.byKind("relist") {
@@ -172,4 +193,63 @@ func TestInformer_Metrics_Reconnect(t *testing.T) {
 	rc := m.byKind("reconnect")
 	require.Len(t, rc, 1)
 	assert.Equal(t, testGVR.Resource, rc[0].resource)
+}
+
+// A malformed envelope and an unknown verb are each recorded as a drop with the
+// reason the dashboard's "Dropped / Malformed" panel reads.
+func TestInformer_Metrics_DroppedNotifications(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		m := &fakeMetrics{}
+		list := func(context.Context) ([]runtime.Object, error) { return nil, nil }
+		n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list, m)
+		_, err := n.AddEventHandler(&recordingHandler{})
+		require.NoError(t, err)
+
+		stopCh := make(chan struct{})
+		go n.Run(stopCh)
+		defer func() { close(stopCh); synctest.Wait() }()
+		synctest.Wait()
+		require.True(t, sub.subscribed(subject()))
+
+		sub.deliver(t, subject(), []byte("not proto"))
+		sub.publish(t, subject(), event(resourcepb.WatchNotification_UNKNOWN, "x"))
+		synctest.Wait()
+
+		drops := m.byKind("drop")
+		require.Len(t, drops, 2)
+		assert.ElementsMatch(t, []string{DropUnmarshalError, DropUnknownType},
+			[]string{drops[0].reason, drops[1].reason})
+	})
+}
+
+// Each re-list records its trigger on success and a distinct error signal on
+// failure, backing the relist-rate and relist-error dashboard panels.
+func TestInformer_Metrics_RelistSuccessAndError(t *testing.T) {
+	m := &fakeMetrics{}
+	var mu sync.Mutex
+	fail := false
+	list := func(context.Context) ([]runtime.Object, error) {
+		mu.Lock()
+		defer mu.Unlock()
+		if fail {
+			return nil, fmt.Errorf("list boom")
+		}
+		return []runtime.Object{objWithRV("a", 10)}, nil
+	}
+	n := NewInformer(newFakeSubscriber(), testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list, m)
+
+	ctx := context.Background()
+	require.NoError(t, n.relist(ctx, TriggerInitial))
+	require.NoError(t, n.relist(ctx, TriggerReconnect))
+	mu.Lock()
+	fail = true
+	mu.Unlock()
+	require.Error(t, n.relist(ctx, TriggerResync))
+
+	done := m.byKind("relist_done")
+	require.Len(t, done, 2)
+	assert.Equal(t, TriggerInitial, done[0].trigger)
+	assert.Equal(t, TriggerReconnect, done[1].trigger)
+	assert.Len(t, m.byKind("relist_error"), 1)
 }
