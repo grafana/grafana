@@ -402,6 +402,7 @@
 /pkg/plugins/ @grafana/grafana-catalog
 /pkg/services/datasourceproxy/ @grafana/grafana-catalog
 /pkg/services/datasources/ @grafana/grafana-catalog
+/pkg/services/datasources/awsexternalid/ @grafana/data-sources-plugins
 /pkg/services/diagnostics/ @grafana/data-sources
 /pkg/services/pluginsintegration/ @grafana/grafana-catalog
 /pkg/plugins/codegen/pfs/ @grafana/grafana-catalog @grafana/grafana-as-code
