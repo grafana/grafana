@@ -425,9 +425,14 @@ func TestWebhookAttribution(t *testing.T) {
 		require.Nil(t, webhookAttributionFromContext(t.Context()))
 	})
 
-	t.Run("empty sender is not recorded", func(t *testing.T) {
-		ctx := WithWebhookAttribution(t.Context(), WebhookAttribution{SenderID: "123", Origin: "GitHub"})
+	t.Run("empty attribution is not recorded", func(t *testing.T) {
+		ctx := WithWebhookAttribution(t.Context(), WebhookAttribution{})
 		require.Nil(t, webhookAttributionFromContext(ctx))
+	})
+
+	t.Run("origin is recorded without a sender", func(t *testing.T) {
+		ctx := WithWebhookAttribution(t.Context(), WebhookAttribution{Origin: "github"})
+		require.Equal(t, map[string]string{appjobs.AnnoAuthorOrigin: "github"}, webhookAttributionFromContext(ctx))
 	})
 
 	t.Run("sender without id or origin", func(t *testing.T) {

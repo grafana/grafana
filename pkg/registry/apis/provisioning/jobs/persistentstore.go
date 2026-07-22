@@ -637,15 +637,18 @@ type WebhookAttribution struct {
 // WithWebhookAttribution attaches the webhook request's identity to the
 // context. Insert stamps it onto the created job as annotations.
 func WithWebhookAttribution(ctx context.Context, attribution WebhookAttribution) context.Context {
-	if attribution.Sender == "" {
-		return ctx
+	annotations := map[string]string{}
+	if attribution.Sender != "" {
+		annotations[appjobs.AnnoAuthor] = attribution.Sender
 	}
-	annotations := map[string]string{appjobs.AnnoAuthor: attribution.Sender}
 	if attribution.SenderID != "" {
 		annotations[appjobs.AnnoAuthorID] = attribution.SenderID
 	}
 	if attribution.Origin != "" {
 		annotations[appjobs.AnnoAuthorOrigin] = attribution.Origin
+	}
+	if len(annotations) == 0 {
+		return ctx
 	}
 	return context.WithValue(ctx, webhookAttributionCtxKey{}, annotations)
 }
