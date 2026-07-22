@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import * as runtime from '@grafana/runtime';
+import { TestVariable } from '@grafana/scenes';
 
 import * as utils from '../../variables/utils';
 import { type UsagesToNetwork } from '../../variables/utils';
@@ -80,6 +81,10 @@ describe('VariablesUnknownTable', () => {
 
     describe('and there are renamed or missing variables', () => {
       it('then it should render the table', async () => {
+        const variable = new TestVariable({ name: 'Renamed Variable', query: 'A.*', value: '', text: '', options: [] });
+        const usages = [{ variable, nodes: [], edges: [], showGraph: false }];
+        await getTestContext({}, usages);
+
         await userEvent.click(screen.getByLabelText('Renamed or missing variables'));
 
         expect(screen.queryByText('No renamed or missing variables found.')).not.toBeInTheDocument();

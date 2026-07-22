@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event';
 
 import * as runtime from '@grafana/runtime';
 
+import { customBuilder } from '../shared/testing/builders';
+
 import { VariablesUnknownTable, type VariablesUnknownTableProps } from './VariablesUnknownTable';
 import { type UsagesToNetwork } from './types';
 import * as utils from './utils';
@@ -80,6 +82,10 @@ describe('VariablesUnknownTable', () => {
 
     describe('and there are renamed or missing variables', () => {
       it('then it should render the table', async () => {
+        const variable = customBuilder().withId('Renamed Variable').withName('Renamed Variable').build();
+        const usages = [{ variable, nodes: [], edges: [], showGraph: false }];
+        await getTestContext({}, usages);
+
         await userEvent.click(screen.getByLabelText('Renamed or missing variables'));
 
         expect(screen.queryByText('No renamed or missing variables found.')).not.toBeInTheDocument();
