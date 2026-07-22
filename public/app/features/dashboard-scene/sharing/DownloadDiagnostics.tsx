@@ -94,6 +94,14 @@ function findV1PanelSaveModel(panels: unknown, id: number): unknown {
 // V1 dashboards store panels in panels[], while v2 dashboards store them in elements keyed by the
 // serializer's element id. Kept dependency-free to avoid the serialization/utils import cycle the
 // rest of this file works around.
+//
+// The v2 branch depends on an ordering invariant: getSaveModel() (called just before this) keys every
+// element through the same serializer.getElementIdForPanel(id) that this lookup uses, so the id we
+// resolve here always matches a key serialization just produced. This is why library panels and
+// repeat clones both resolve even though initializeElementMapping seeds the map only from kind:'Panel'
+// elements: getSaveModel visits every panel first and, for any id not already mapped, getElementIdForPanel
+// generates and stores a "panel-<id>" key — which this lookup then finds. Keep getSaveModel ahead of
+// this call or the v2 mapping may be empty.
 function findPanelSaveModel(dashboardModel: unknown, panel: VizPanel, dashboard: DashboardScene): unknown {
   if (!isRecord(dashboardModel)) {
     return undefined;
@@ -150,6 +158,8 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
     // Bundle this panel's JSON and the dashboard JSON for context. The panel's save model is resolved
     // from the dashboard save model rather than serialized separately (avoids the serialization
     // import cycle this view already works around); undefined models are simply not sent.
+    // getSaveModel() must run before findPanelSaveModel — it populates the v2 element mapping the
+    // lookup relies on (see findPanelSaveModel).
     const dashboard = dashboardRef?.resolve();
     const dashboardModel = dashboard?.getSaveModel();
     const panelModel = dashboard ? findPanelSaveModel(dashboardModel, panel, dashboard) : undefined;
