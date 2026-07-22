@@ -82,4 +82,22 @@ describe('year/month/date accessors', () => {
     d.date(15);
     expect(d.toISOString()).toBe('2025-01-15T00:00:00.000Z');
   });
+
+  it('exposes plural aliases for every unit (used by decoupled plugin repos)', () => {
+    const d = moment.utc('2024-05-06 10:30:45.123', 'YYYY-MM-DD HH:mm:ss.SSS');
+    expect(d.years()).toBe(d.year());
+    expect(d.months()).toBe(d.month());
+    expect(d.dates()).toBe(d.date());
+    expect(d.days()).toBe(d.day());
+    expect(d.weeks()).toBe(d.week());
+    expect(d.isoWeeks()).toBe(d.isoWeek());
+    expect(d.hours()).toBe(10);
+    expect(d.minutes()).toBe(30);
+    expect(d.seconds()).toBe(45);
+    expect(d.milliseconds()).toBe(123);
+
+    d.hours(3).minutes(4);
+    expect(d.hour()).toBe(3);
+    expect(d.minute()).toBe(4);
+  });
 });
