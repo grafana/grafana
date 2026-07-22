@@ -94,6 +94,29 @@ describe('TransformationsEditor', () => {
       const list = screen.getByRole('list', { name: 'Transformations' });
       expect(within(list).getAllByRole('listitem').length).toBeGreaterThan(0);
     });
+
+    it('replaces the results list with an empty state when the search matches nothing', async () => {
+      setup([
+        {
+          id: 'reduce',
+          options: {},
+        },
+      ]);
+
+      const addTransformationButton = screen.getByTestId(selectors.components.Transforms.addTransformationButton);
+      await userEvent.click(addTransformationButton);
+
+      const search = screen.getByTestId(selectors.components.Transforms.searchInput);
+      await userEvent.type(search, 'this matches nothing');
+
+      expect(screen.queryByRole('list', { name: 'Transformations' })).not.toBeInTheDocument();
+
+      // The live region announces the same message, so look for the visible empty state specifically
+      const emptyStateMessage = screen
+        .getAllByText('No transformations found')
+        .filter((element) => !element.closest('[role="status"]'));
+      expect(emptyStateMessage).toHaveLength(1);
+    });
   });
 
   describe('actions', () => {

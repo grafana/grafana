@@ -5,7 +5,7 @@ import { type DataFrame, type GrafanaTheme2, type TransformerRegistryItem, type 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Drawer, FilterPill, Grid, InlineLabel, Input, Stack, Switch, useStyles2 } from '@grafana/ui';
+import { Drawer, EmptyState, FilterPill, Grid, InlineLabel, Input, Stack, Switch, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { getCategoriesLabels } from 'app/features/transformers/utils';
 
@@ -114,19 +114,26 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
 
         <TransformationSearchStatus count={xforms.length} />
 
-        <TransformationsGrid
-          showIllustrations={showIllustrations}
-          transformations={xforms}
-          data={data}
-          onClick={(id) => {
-            reportInteraction('grafana_panel_transformations_clicked', {
-              context: 'transformations_drawer',
-              type: id,
-              action: 'add',
-            });
-            onTransformationAdd({ value: id });
-          }}
-        />
+        {xforms.length === 0 ? (
+          <EmptyState
+            variant="not-found"
+            message={t('dashboard.transformation-picker-ng.no-transformations-found', 'No transformations found')}
+          />
+        ) : (
+          <TransformationsGrid
+            showIllustrations={showIllustrations}
+            transformations={xforms}
+            data={data}
+            onClick={(id) => {
+              reportInteraction('grafana_panel_transformations_clicked', {
+                context: 'transformations_drawer',
+                type: id,
+                action: 'add',
+              });
+              onTransformationAdd({ value: id });
+            }}
+          />
+        )}
       </Stack>
     </Drawer>
   );
