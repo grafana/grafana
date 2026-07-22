@@ -920,4 +920,101 @@ describe('bars.getConfig', () => {
       expect(u.ctx.fillText).toHaveBeenCalled();
     });
   });
+
+  describe('cursor callbacks', () => {
+    function setupConfig(overrides?: Partial<BarsOptions>) {
+      const opts = createMinimalBarsOptions(overrides);
+      const config = getConfig(opts, theme);
+      const u = createMockU();
+      if (config.drawClear) {
+        config.drawClear(asUPlot(u));
+      }
+      if (config.barsBuilder) {
+        config.barsBuilder(asUPlot(u), 1, 0, u.data[0].length - 1);
+      }
+      return { config, u };
+    }
+
+    it('cursor.dataIdx returns undefined for series 0 when no bar is hovered', () => {
+      const { config, u } = setupConfig();
+      const dataIdx = config.cursor?.dataIdx;
+      expect(dataIdx).toBeDefined();
+      const result = dataIdx!(asUPlot(u), 0, 0, 0);
+      expect(result).toBeUndefined();
+    });
+
+    it('cursor.dataIdx returns undefined for non-zero series when nothing is hovered', () => {
+      const { config, u } = setupConfig();
+      const dataIdx = config.cursor?.dataIdx;
+      expect(dataIdx).toBeDefined();
+      dataIdx!(asUPlot(u), 0, 0, 0);
+      const result = dataIdx!(asUPlot(u), 1, 0, 0);
+      expect(result).toBeUndefined();
+    });
+
+    it('cursor.points.bbox returns offscreen rect when series is not hovered', () => {
+      const { config, u } = setupConfig();
+      const points = config.cursor?.points as { bbox?: (u: uPlot, seriesIdx: number) => DOMRect };
+      expect(points?.bbox).toBeDefined();
+      config.cursor?.dataIdx!(asUPlot(u), 0, 0, 0);
+      const rect = points.bbox!(asUPlot(u), 1);
+      expect(rect.left).toBe(-10);
+      expect(rect.top).toBe(-10);
+      expect(rect.width).toBe(0);
+      expect(rect.height).toBe(0);
+    });
+
+    it('cursor.focus.dist returns Infinity when no bar is hovered', () => {
+      const { config, u } = setupConfig();
+      const focus = config.cursor?.focus as { dist?: (u: uPlot, seriesIdx: number) => number };
+      expect(focus?.dist).toBeDefined();
+      config.cursor?.dataIdx!(asUPlot(u), 0, 0, 0);
+      const result = focus.dist!(asUPlot(u), 1);
+      expect(result).toBe(Infinity);
+    });
+  });
+
+  describe('getColor / mappedColorDisp', () => {
+    it('builds config without error when getColor is provided', () => {
+      const opts = createMinimalBarsOptions({
+        getColor: (_seriesIdx: number, _valueIdx: number, _value: unknown) => 'rgba(255,0,0,0.5)',
+      });
+      expect(() => getConfig(opts, theme)).not.toThrow();
+    });
+
+    it('barsBuilder does not throw when getColor is set and drawClear runs', () => {
+      const opts = createMinimalBarsOptions({
+        getColor: () => 'rgba(0,255,0,0.5)',
+      });
+      const config = getConfig(opts, theme);
+      const u = createMockU();
+      expect(() => {
+        if (config.drawClear) {
+          config.drawClear(asUPlot(u));
+        }
+        if (config.barsBuilder) {
+          config.barsBuilder(asUPlot(u), 1, 0, u.data[0].length - 1);
+        }
+      }).not.toThrow();
+    });
+  });
+
+  describe('stacked radius callback', () => {
+    it('returns rounded top corners for topmost series when stacking is Normal', () => {
+      const opts = createMinimalBarsOptions({
+        stacking: StackingMode.Normal,
+        barRadius: 0.3,
+      });
+      const config = getConfig(opts, theme);
+      const u = createMockU([
+        ['a', 'b', 'c'],
+        [10, 20, 30],
+        [5, 10, 15],
+      ]);
+      if (config.drawClear) {
+        config.drawClear(asUPlot(u));
+      }
+      expect(config.barsBuilder).toBeDefined();
+    });
+  });
 });

@@ -1,6 +1,7 @@
 import { dateTime } from '../datetime/moment_wrapper';
-import { type TimeSeries, type TableData } from '../types/data';
+import { LoadingState, type TimeSeries, type TableData } from '../types/data';
 import { FieldType, type DataFrameDTO } from '../types/dataFrame';
+import { type PanelData } from '../types/panel';
 
 import { ArrayDataFrame } from './ArrayDataFrame';
 import {
@@ -10,6 +11,8 @@ import {
   sortDataFrame,
   toDataFrame,
   toLegacyResponseData,
+  getProcessedDataFrames,
+  preProcessPanelData,
 } from './processDataFrame';
 
 describe('toDataFrame', () => {
@@ -414,5 +417,106 @@ describe('reverse DataFrame', () => {
     expect(rev.fields[0].nanos).toEqual([30, 20, 10]);
     expect(rev.fields[1].values).toEqual(['c', 'b', 'a']);
     expect(rev.fields[1].nanos).toBeUndefined();
+  });
+});
+
+describe('getProcessedDataFrames', () => {
+  it('returns empty array when results is undefined', () => {
+    expect(getProcessedDataFrames(undefined)).toEqual([]);
+  });
+
+  it('returns empty array when results is not an array', () => {
+    expect(getProcessedDataFrames({} as unknown as unknown[])).toEqual([]);
+  });
+
+  it('returns empty array for empty input', () => {
+    expect(getProcessedDataFrames([])).toEqual([]);
+  });
+
+  it('converts raw data to DataFrames and guesses field types', () => {
+    const raw = {
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'value', type: FieldType.number, values: [1, 2] },
+      ],
+    };
+    const result = getProcessedDataFrames([raw]);
+    expect(result).toHaveLength(1);
+    expect(result[0].fields[0].type).toBe(FieldType.time);
+    expect(result[0].fields[1].type).toBe(FieldType.number);
+  });
+
+  it('clears cached field state on processed frames', () => {
+    const raw = {
+      fields: [{ name: 'value', type: FieldType.number, values: [1], state: { calcs: { sum: 1 } } }],
+    };
+    const result = getProcessedDataFrames([raw]);
+    expect(result[0].fields[0].state).toBeNull();
+  });
+
+  it('processes multiple frames', () => {
+    const frames = [
+      { fields: [{ name: 'a', type: FieldType.number, values: [1] }] },
+      { fields: [{ name: 'b', type: FieldType.string, values: ['x'] }] },
+    ];
+    const result = getProcessedDataFrames(frames);
+    expect(result).toHaveLength(2);
+  });
+});
+
+describe('preProcessPanelData', () => {
+  const baseData = {
+    state: LoadingState.Done,
+    series: [
+      toDataFrame({
+        fields: [{ name: 'time', type: FieldType.time, values: [1000, 2000] }],
+      }),
+    ],
+    timeRange: { from: dateTime(0), to: dateTime(1000), raw: { from: dateTime(0), to: dateTime(1000) } },
+  };
+
+  it('processes series through getProcessedDataFrame', () => {
+    const result = preProcessPanelData(baseData);
+    expect(result.series).toHaveLength(1);
+  });
+
+  it('returns last result with loading state when loading and no series', () => {
+    const loadingData = {
+      state: LoadingState.Loading,
+      series: [],
+      timeRange: baseData.timeRange,
+    };
+    const lastResult = {
+      ...baseData,
+      state: LoadingState.Done,
+    };
+    const result = preProcessPanelData(loadingData, lastResult);
+    expect(result.state).toBe(LoadingState.Loading);
+    expect(result.series).toBe(lastResult.series);
+  });
+
+  it('uses loading data as lastResult when loading with no series and no lastResult', () => {
+    const loadingData = {
+      state: LoadingState.Loading,
+      series: [],
+      timeRange: baseData.timeRange,
+    };
+    const result = preProcessPanelData(loadingData, undefined);
+    expect(result.state).toBe(LoadingState.Loading);
+  });
+
+  it('includes timings in processed result', () => {
+    const result = preProcessPanelData(baseData);
+    expect(result.timings).toBeDefined();
+    expect(result.timings!.dataProcessingTime).toBeGreaterThanOrEqual(0);
+  });
+
+  it('processes annotations when present', () => {
+    const dataWithAnnotations = {
+      ...baseData,
+      annotations: [{ fields: [{ name: 'time', type: FieldType.time, values: [500] }] }],
+    };
+    const result = preProcessPanelData(dataWithAnnotations as unknown as PanelData);
+    expect(result.annotations).toHaveLength(1);
   });
 });

@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { type Row } from 'react-table';
+import { type HeaderGroup, type Row } from 'react-table';
 
 import { type Field, type FieldConfigSource, FieldType, MutableDataFrame, type SelectableValue } from '@grafana/data';
 
@@ -15,6 +15,10 @@ import {
   sortOptions,
   valuesToOptions,
   guessLongestField,
+  isPointTimeValAroundTableTimeVal,
+  calculateAroundPointThreshold,
+  createFooterCalculationValues,
+  guessTextBoundingBox,
 } from './utils';
 
 function getData() {
@@ -633,5 +637,131 @@ describe('Table utils', () => {
       const longestField = guessLongestField(config, data);
       expect(longestField?.name).toBe('Lorem 10');
     });
+  });
+});
+
+describe('isPointTimeValAroundTableTimeVal', () => {
+  it('returns true when point time is within threshold of row time', () => {
+    expect(isPointTimeValAroundTableTimeVal(1000, 1000, 10)).toBe(true);
+  });
+
+  it('returns true when difference is less than threshold', () => {
+    expect(isPointTimeValAroundTableTimeVal(1005, 1000, 10)).toBe(true);
+  });
+
+  it('returns false when difference equals threshold', () => {
+    expect(isPointTimeValAroundTableTimeVal(1010, 1000, 10)).toBe(false);
+  });
+
+  it('returns false when difference exceeds threshold', () => {
+    expect(isPointTimeValAroundTableTimeVal(1020, 1000, 10)).toBe(false);
+  });
+
+  it('floors the point time — a fractional value floored past threshold boundary returns false', () => {
+    expect(isPointTimeValAroundTableTimeVal(1000.6, 1001, 1)).toBe(false);
+  });
+
+  it('handles negative difference (point before row time)', () => {
+    expect(isPointTimeValAroundTableTimeVal(995, 1000, 10)).toBe(true);
+  });
+});
+
+describe('calculateAroundPointThreshold', () => {
+  it('returns 0 when fewer than 2 values', () => {
+    const field: Field = {
+      name: 't',
+      type: FieldType.time,
+      config: {},
+      values: [1000],
+    };
+    expect(calculateAroundPointThreshold(field)).toBe(0);
+  });
+
+  it('returns 0 for empty values', () => {
+    const field: Field = {
+      name: 't',
+      type: FieldType.time,
+      config: {},
+      values: [],
+    };
+    expect(calculateAroundPointThreshold(field)).toBe(0);
+  });
+
+  it('computes (max - min) / length for uniform time series', () => {
+    const field: Field = {
+      name: 't',
+      type: FieldType.time,
+      config: {},
+      values: [0, 100, 200, 300],
+    };
+    expect(calculateAroundPointThreshold(field)).toBe(75);
+  });
+
+  it('handles unordered values', () => {
+    const field: Field = {
+      name: 't',
+      type: FieldType.time,
+      config: {},
+      values: [200, 0, 400],
+    };
+    expect(calculateAroundPointThreshold(field)).toBeCloseTo(400 / 3);
+  });
+});
+
+describe('createFooterCalculationValues', () => {
+  it('builds per-column arrays from rows', () => {
+    const rows = [
+      { values: { 0: 10, 1: 'a' } },
+      { values: { 0: 20, 1: 'b' } },
+      { values: { 0: 30, 1: 'c' } },
+    ] as unknown as Row[];
+
+    const result = createFooterCalculationValues(rows);
+    expect(result[0]).toEqual([10, 20, 30]);
+    expect(result[1]).toEqual(['a', 'b', 'c']);
+  });
+
+  it('returns empty array for empty rows', () => {
+    const result = createFooterCalculationValues([]);
+    expect(result).toEqual([]);
+  });
+
+  it('handles single row', () => {
+    const rows = [{ values: { 0: 42 } }] as unknown as Row[];
+    const result = createFooterCalculationValues(rows);
+    expect(result[0]).toEqual([42]);
+  });
+});
+
+describe('guessTextBoundingBox', () => {
+  function makeHeaderGroup(width: number) {
+    return { width } as unknown as HeaderGroup;
+  }
+
+  it('returns defaultRowHeight when osContext is null, using the headerGroup width', () => {
+    expect(guessTextBoundingBox('hello world', makeHeaderGroup(300), null, 20, 36)).toEqual({ width: 300, height: 36 });
+    expect(guessTextBoundingBox('hello world', makeHeaderGroup(500), null, 20, 36)).toEqual({ width: 500, height: 36 });
+  });
+
+  it('defaults width to 300 when headerGroup.width is undefined', () => {
+    const result = guessTextBoundingBox('text', {} as unknown as HeaderGroup, null, 20, 36);
+    expect(result.width).toBe(300);
+  });
+
+  it('uses canvas measurement when osContext is provided', () => {
+    const mockMeasureText = jest.fn().mockReturnValue({ width: 50 });
+    const mockContext = { measureText: mockMeasureText } as unknown as OffscreenCanvasRenderingContext2D;
+    const result = guessTextBoundingBox('hello world', makeHeaderGroup(300), mockContext, 20, 36);
+    expect(result.width).toBe(300);
+    expect(typeof result.height).toBe('number');
+    expect(result.height).toBeGreaterThan(0);
+  });
+
+  it('includes padding in returned height', () => {
+    const mockMeasureText = jest.fn().mockReturnValue({ width: 50 });
+    const mockContext = { measureText: mockMeasureText } as unknown as OffscreenCanvasRenderingContext2D;
+    const withPadding = guessTextBoundingBox('hello world', makeHeaderGroup(300), mockContext, 20, 36, 10);
+    const withoutPadding = guessTextBoundingBox('hello world', makeHeaderGroup(300), mockContext, 20, 36, 0);
+    expect(withPadding.height).toBeGreaterThanOrEqual(withoutPadding.height);
   });
 });

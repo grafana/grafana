@@ -15,6 +15,9 @@ import {
   getFillColor,
   getStrokeStyle,
   getMarkerAsPath,
+  textMarker,
+  polyStyle,
+  routeStyle,
 } from './markers';
 import { defaultStyleConfig } from './types';
 
@@ -178,5 +181,72 @@ describe('getMarkerAsPath', () => {
     expect(known).toMatch(/\.svg$/);
 
     expect(getMarkerAsPath('not-a-marker-shape')).toBeUndefined();
+  });
+});
+
+describe('textMarker', () => {
+  it('returns a Style with text when text is provided', () => {
+    const { Style } = require('ol/style');
+    const style = textMarker({ color: '#ff0000', opacity: 1, text: 'hello' });
+    expect(style).toBeInstanceOf(Style);
+  });
+
+  it('returns a Style with undefined text when text is not provided', () => {
+    const { Style } = require('ol/style');
+    const style = textMarker({ color: '#ff0000', opacity: 1 });
+    expect(style).toBeInstanceOf(Style);
+    expect(style.getText()).toBeNull();
+  });
+});
+
+describe('polyStyle', () => {
+  it('returns a Style with fill and stroke', () => {
+    const { Style, Stroke } = require('ol/style');
+    const style = polyStyle({ color: '#0000ff', opacity: 0.5, lineWidth: 2 });
+    expect(style).toBeInstanceOf(Style);
+    expect(style.getStroke()).toBeInstanceOf(Stroke);
+  });
+});
+
+describe('routeStyle', () => {
+  it('returns a Style with a stroke', () => {
+    const { Style, Stroke } = require('ol/style');
+    const style = routeStyle({ color: '#00ff00', opacity: 1, lineWidth: 3 });
+    expect(style).toBeInstanceOf(Style);
+    expect(style.getStroke()).toBeInstanceOf(Stroke);
+  });
+
+  it('returns a Style with no stroke when opacity is 0', () => {
+    const { Style } = require('ol/style');
+    const style = routeStyle({ color: '#00ff00', opacity: 0 });
+    expect(style).toBeInstanceOf(Style);
+    expect(style.getStroke()).toBeNull();
+  });
+});
+
+describe('shape marker makers', () => {
+  const baseCfg = { color: '#ff0000', opacity: 0.8, lineWidth: 2, size: 12, rotation: 45 };
+
+  it.each(['circle', 'square', 'triangle', 'star', 'cross', 'x'])(
+    'getMarkerMaker resolves and make() returns a Style for shape "%s"',
+    async (shapeId) => {
+      const { Style } = require('ol/style');
+      const path = getMarkerAsPath(shapeId);
+      expect(path).toBeDefined();
+      const maker = await getMarkerMaker(path!);
+      const result = maker(baseCfg);
+      const styles = Array.isArray(result) ? result : [result];
+      expect(styles.length).toBeGreaterThan(0);
+      for (const s of styles) {
+        expect(s).toBeInstanceOf(Style);
+      }
+    }
+  );
+
+  it('maker uses default size when cfg.size is not set', async () => {
+    const { Style } = require('ol/style');
+    const maker = await getMarkerMaker(getMarkerAsPath('square')!);
+    const result = maker({ color: '#000', opacity: 1 });
+    expect(result).toBeInstanceOf(Style);
   });
 });

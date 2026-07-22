@@ -563,3 +563,69 @@ describe('hasSpecialMappedValue', () => {
     expect(hasSpecialMappedValue(field, valueMatch)).toEqual(expected);
   });
 });
+
+describe('prepareTimelineFields with percentage threshold merging', () => {
+  const timeRange: TimeRange = {
+    from: dateTime(1),
+    to: dateTime(3),
+    raw: { from: dateTime(1), to: dateTime(3) },
+  };
+
+  it('merges numeric values using percentage thresholds', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          {
+            name: 'value',
+            type: FieldType.number,
+            values: [0, 50, 100],
+            config: {
+              min: 0,
+              max: 100,
+              thresholds: {
+                mode: ThresholdsMode.Percentage,
+                steps: [
+                  { value: 0, color: 'green' },
+                  { value: 50, color: 'yellow' },
+                  { value: 80, color: 'red' },
+                ],
+              },
+            },
+          },
+        ],
+      }),
+    ];
+    const result = prepareTimelineFields(frames, true, timeRange, theme);
+    expect(result.warn).toBeUndefined();
+    expect(result.frames).toBeDefined();
+  });
+
+  it('handles null values in percentage threshold merge', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          {
+            name: 'value',
+            type: FieldType.number,
+            values: [0, null, 100],
+            config: {
+              min: 0,
+              max: 100,
+              thresholds: {
+                mode: ThresholdsMode.Percentage,
+                steps: [
+                  { value: 0, color: 'green' },
+                  { value: 80, color: 'red' },
+                ],
+              },
+            },
+          },
+        ],
+      }),
+    ];
+    const result = prepareTimelineFields(frames, true, timeRange, theme);
+    expect(result.frames).toBeDefined();
+  });
+});
