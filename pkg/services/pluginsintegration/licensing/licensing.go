@@ -46,3 +46,13 @@ func (l *Service) AppURL() string {
 func (l *Service) ContentDeliveryPrefix() string {
 	return l.license.ContentDeliveryPrefix()
 }
+
+func (l *Service) HasValidLicense() bool {
+	if l == nil || l.license == nil {
+		return false
+	}
+
+	// Enterprise and Pro expose license validity, but the lower-level OSS-compatible interface does not.
+	validLicense, ok := l.license.(interface{ HasValidLicense() bool })
+	return ok && validLicense.HasValidLicense()
+}

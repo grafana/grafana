@@ -116,7 +116,7 @@
   },
   prConcurrentLimit: 10,
   rebaseWhen: "conflicted",
-  reviewers: ["team:grafana/frontend-ops"],
+  reviewers: ["team:grafana/grafana-frontend-platform"],
   separateMajorMinor: false,
   vulnerabilityAlerts: {
     addLabels: ["area/security"],

@@ -27,7 +27,7 @@ describe('loadLanguageExtension', () => {
 
       await loadLanguageExtension('sql');
 
-      expect(sql).toHaveBeenCalledWith({ dialect: StandardSQL });
+      expect(sql).toHaveBeenCalledWith({ dialect: StandardSQL, upperCaseKeywords: true });
     });
   });
 
@@ -38,7 +38,7 @@ describe('loadLanguageExtension', () => {
 
       await loadLanguageExtension('sql', { sqlDialect: 'standardSql' });
 
-      expect(sql).toHaveBeenCalledWith({ dialect: StandardSQL });
+      expect(sql).toHaveBeenCalledWith({ dialect: StandardSQL, upperCaseKeywords: true });
     });
   });
 
@@ -49,7 +49,7 @@ describe('loadLanguageExtension', () => {
 
       await loadLanguageExtension('sql', { sqlDialect: 'mySql' });
 
-      expect(sql).toHaveBeenCalledWith({ dialect: MySQL });
+      expect(sql).toHaveBeenCalledWith({ dialect: MySQL, upperCaseKeywords: true });
     });
   });
 

@@ -51,13 +51,10 @@ jobs:
               # decoupled plugins are deployed via backend
               - '!public/app/plugins/datasource/azuremonitor/**'
               - '!public/app/plugins/datasource/grafana-postgresql-datasource/**'
-              - '!public/app/plugins/datasource/grafana-pyroscope-datasource/**'
               - '!public/app/plugins/datasource/grafana-testdata-datasource/**'
               - '!public/app/plugins/datasource/graphite/**'
               - '!public/app/plugins/datasource/influxdb/**'
-              - '!public/app/plugins/datasource/jaeger/**'
               - '!public/app/plugins/datasource/loki/**'
-              - '!public/app/plugins/datasource/mssql/**'
               - '!public/app/plugins/datasource/mysql/**'
             backend_strict:
               - 'pkg/**'
@@ -78,13 +75,10 @@ jobs:
               # decoupled plugins are deployed via backend
               - 'public/app/plugins/datasource/azuremonitor/**'
               - 'public/app/plugins/datasource/grafana-postgresql-datasource/**'
-              - 'public/app/plugins/datasource/grafana-pyroscope-datasource/**'
               - 'public/app/plugins/datasource/grafana-testdata-datasource/**'
               - 'public/app/plugins/datasource/graphite/**'
               - 'public/app/plugins/datasource/influxdb/**'
-              - 'public/app/plugins/datasource/jaeger/**'
               - 'public/app/plugins/datasource/loki/**'
-              - 'public/app/plugins/datasource/mssql/**'
               - 'public/app/plugins/datasource/mysql/**'
 
       - name: Check for exception label

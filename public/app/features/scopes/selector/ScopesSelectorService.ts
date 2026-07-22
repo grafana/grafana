@@ -2,6 +2,7 @@ import { type ScopeNode, store as storeImpl } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { type performanceUtils } from '@grafana/scenes';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
+import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
 
 import { type ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
@@ -406,85 +407,117 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     // Apply the scopes right away even though we don't have the metadata yet.
     this.updateState({ appliedScopes: scopes, selectedScopes: scopes, loading: scopes.length > 0 });
 
-    // Fetches both dashboards and scope navigations
-    // We call this even if we have 0 scope because in that case it also closes the dashboard drawer.
-    // Only fetch dashboards based on the scopes if we don't have a navigation scope set.
-    if (!this.dashboardsService.state.navigationScope) {
-      this.dashboardsService.fetchDashboards(scopes.map((s) => s.scopeId)).then(() => {
-        const selectedScopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
-        if (redirectOnApply) {
-          this.redirectAfterApply(selectedScopeNode);
-        }
-      });
+    // Start loading scope navigations in parallel with scope metadata. Later
+    // awaits on dashboardsPromise only wait for this in-flight request — they
+    // do not trigger a new fetch.
+    const shouldFetchDashboards = !this.dashboardsService.state.navigationScope;
+    const dashboardsPromise = shouldFetchDashboards
+      ? this.dashboardsService.fetchDashboards(scopes.map((s) => s.scopeId))
+      : undefined;
+
+    if (scopes.length === 0) {
+      if (dashboardsPromise) {
+        // fetchDashboards([]) clears the drawer — wait for that reset to finish.
+        await dashboardsPromise;
+      }
+      return;
     }
 
-    if (scopes.length > 0) {
-      const fetchedScopes = await this.apiClient.fetchMultipleScopes(scopes.map((s) => s.scopeId));
+    const fetchedScopes = await this.apiClient.fetchMultipleScopes(scopes.map((s) => s.scopeId));
 
-      // Fetch the scope node if it is not available
-      let newNodesState = { ...this.state.nodes };
-      let scopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
+    // Fetch the scope node if it is not available
+    let newNodesState = { ...this.state.nodes };
+    let scopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
 
-      if (!scopeNode && scopes[0]?.scopeNodeId) {
-        scopeNode = await this.apiClient.fetchScopeNode(scopes[0]?.scopeNodeId);
-        if (scopeNode) {
-          newNodesState[scopeNode.metadata.name] = scopeNode;
-        }
+    if (!scopeNode && scopes[0]?.scopeNodeId) {
+      scopeNode = await this.apiClient.fetchScopeNode(scopes[0]?.scopeNodeId);
+      if (scopeNode) {
+        newNodesState[scopeNode.metadata.name] = scopeNode;
       }
+    }
 
-      const newScopesState = { ...this.state.scopes };
+    const newScopesState = { ...this.state.scopes };
 
-      // Validate API response is an array
-      if (!Array.isArray(fetchedScopes)) {
-        console.error('Expected fetchedScopes to be an array, got:', typeof fetchedScopes);
-        this.updateState({ scopes: newScopesState, loading: false });
-        return;
+    // Validate API response is an array
+    if (!Array.isArray(fetchedScopes)) {
+      console.error('Expected fetchedScopes to be an array, got:', typeof fetchedScopes);
+      this.updateState({ scopes: newScopesState, loading: false });
+      return;
+    }
+
+    for (const scope of fetchedScopes) {
+      newScopesState[scope.metadata.name] = scope;
+    }
+
+    // Pre-fetch the first scope's defaultPath to improve performance
+    // This makes the selector open instantly since all nodes are already cached
+    // We only need the first scope since that's what's used for expansion
+    const firstScope = fetchedScopes[0];
+    if (firstScope?.spec.defaultPath && firstScope.spec.defaultPath.length > 0) {
+      // Deduplicate and filter out already cached nodes
+      const uniqueNodeIds = [...new Set(firstScope.spec.defaultPath)];
+      const nodesToFetch = uniqueNodeIds.filter((nodeId) => !this.state.nodes[nodeId]);
+
+      if (nodesToFetch.length > 0) {
+        await this.getScopeNodes(nodesToFetch);
       }
+    }
 
-      for (const scope of fetchedScopes) {
-        newScopesState[scope.metadata.name] = scope;
+    // Derive scopeNodeId, preferring defaultPath as the source of truth
+    let scopeNodeId: string | undefined;
+    const defaultPath = firstScope?.spec.defaultPath || [];
+
+    if (defaultPath.length > 1) {
+      // Extract from defaultPath (most reliable source)
+      // defaultPath format: ['', 'parent-id', 'scope-node-id', ...]
+      scopeNodeId = defaultPath[defaultPath.length - 1];
+    } else {
+      // Fallback to the scopeNodeId passed in
+      scopeNodeId = scopes[0]?.scopeNodeId;
+    }
+
+    // Backfill scopeNodeId from defaultPath so open() can expand the tree.
+    if (scopeNodeId && scopes[0] && !scopes[0].scopeNodeId) {
+      scopes[0] = { ...scopes[0], scopeNodeId };
+    }
+
+    let scopeNodeForRedirect =
+      scopeNodeId != null ? (newNodesState[scopeNodeId] ?? this.state.nodes[scopeNodeId]) : undefined;
+
+    if (!scopeNodeForRedirect && scopeNodeId) {
+      scopeNodeForRedirect = await this.apiClient.fetchScopeNode(scopeNodeId);
+      if (scopeNodeForRedirect) {
+        newNodesState[scopeNodeForRedirect.metadata.name] = scopeNodeForRedirect;
       }
+    }
 
-      // Pre-fetch the first scope's defaultPath to improve performance
-      // This makes the selector open instantly since all nodes are already cached
-      // We only need the first scope since that's what's used for expansion
-      const firstScope = fetchedScopes[0];
-      if (firstScope?.spec.defaultPath && firstScope.spec.defaultPath.length > 0) {
-        // Deduplicate and filter out already cached nodes
-        const uniqueNodeIds = [...new Set(firstScope.spec.defaultPath)];
-        const nodesToFetch = uniqueNodeIds.filter((nodeId) => !this.state.nodes[nodeId]);
+    writeRecentScope(this.store, fetchedScopes, scopeNodeId);
+    this.updateState({ appliedScopes: scopes, selectedScopes: scopes, scopes: newScopesState, loading: false });
 
-        if (nodesToFetch.length > 0) {
-          await this.getScopeNodes(nodesToFetch);
-        }
-      }
+    if (dashboardsPromise) {
+      // scopeNavigations must be loaded before redirectAfterApply checks active navigation.
+      await dashboardsPromise;
+    }
 
-      // Derive scopeNodeId, preferring defaultPath as the source of truth
-      let scopeNodeId: string | undefined;
-      const defaultPath = firstScope?.spec.defaultPath || [];
-
-      if (defaultPath.length > 1) {
-        // Extract from defaultPath (most reliable source)
-        // defaultPath format: ['', 'parent-id', 'scope-node-id', ...]
-        scopeNodeId = defaultPath[defaultPath.length - 1];
-      } else {
-        // Fallback to the scopeNodeId passed in
-        scopeNodeId = scopes[0]?.scopeNodeId;
-      }
-
-      // Backfill scopeNodeId from defaultPath so open() can expand the tree.
-      if (scopeNodeId && scopes[0] && !scopes[0].scopeNodeId) {
-        scopes[0] = { ...scopes[0], scopeNodeId };
-      }
-
-      writeRecentScope(this.store, fetchedScopes, scopeNodeId);
-      this.updateState({ appliedScopes: scopes, selectedScopes: scopes, scopes: newScopesState, loading: false });
+    if (redirectOnApply && shouldFetchDashboards) {
+      this.redirectAfterApply(scopeNodeForRedirect);
     }
   };
 
-  // Redirect to the scope node's redirect URL if it exists, otherwise redirect to the first scope navigation.
+  // Redirect only when the scope node has an explicit redirectPath configured.
   private redirectAfterApply = (scopeNode: ScopeNode | undefined) => {
     if (!this.redirectEnabled) {
+      return;
+    }
+
+    // Never redirect during image/PDF capture — the renderer must stay on the requested dashboard
+    // so its panels can render. Checked synchronously here (not via setRedirectEnabled) because
+    // applyScopes runs during ScopesService boot, before any React effect can toggle the flag.
+    if (isRenderTarget()) {
+      return;
+    }
+
+    if (!scopeNode?.spec.redirectPath) {
       return;
     }
 
@@ -500,32 +533,9 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     });
 
     // Only redirect to redirectPath if we are not currently on an active scope navigation
-    if (
-      !activeScopeNavigation &&
-      scopeNode &&
-      scopeNode.spec.redirectPath &&
-      // Don't redirect if we're already on the target path
-      !isCurrentPath(currentPath, scopeNode.spec.redirectPath)
-    ) {
+    // and not already on the target path.
+    if (!activeScopeNavigation && !isCurrentPath(currentPath, scopeNode.spec.redirectPath)) {
       locationService.push(scopeNode.spec.redirectPath);
-      return;
-    }
-
-    // Redirect to first scopeNavigation if current URL isn't a scopeNavigation
-    if (!activeScopeNavigation && this.dashboardsService.state.scopeNavigations.length > 0) {
-      // Redirect to the first available scopeNavigation
-      const firstScopeNavigation = this.dashboardsService.state.scopeNavigations[0];
-
-      if (
-        firstScopeNavigation &&
-        'url' in firstScopeNavigation.spec &&
-        // Only redirect to dashboards TODO: Remove this once Logs Drilldown has Scopes support
-        firstScopeNavigation.spec.url.includes('/d/') &&
-        // Don't redirect if we're already on the target path
-        !isCurrentPath(currentPath, firstScopeNavigation.spec.url)
-      ) {
-        locationService.push(firstScopeNavigation.spec.url);
-      }
     }
   };
 

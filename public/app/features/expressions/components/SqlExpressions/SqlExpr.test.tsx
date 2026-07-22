@@ -93,6 +93,7 @@ jest.mock('@grafana/runtime', () => ({
 
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: (ref: unknown) => mockDataSourceSrv.get(ref),
   getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'mock-ds-uid', type: 'mock-ds-type' }),
 }));
 
@@ -132,6 +133,16 @@ describe('SqlExpr', () => {
     expect(updatedQuery.expression.toUpperCase()).toContain('SELECT');
   });
 
+  it('uses a placeholder table when initializing without refIds', async () => {
+    const onChange = jest.fn();
+    const query = { refId: 'expr1', type: 'sql', expression: '' } as ExpressionQuery;
+
+    render(<SqlExpr onChange={onChange} refIds={[]} query={query} queries={[]} />);
+
+    await waitFor(() => expect(onChange).toHaveBeenCalled());
+    expect(onChange.mock.calls[0][0].expression).toContain('FROM\n  `table name`');
+  });
+
   it('preserves existing expressions when mounted', async () => {
     const onChange = jest.fn();
     const refIds = [{ value: 'A' }];
@@ -161,6 +172,32 @@ describe('SqlExpr', () => {
       })
     );
     expect(SqlEditorMock).not.toHaveBeenCalled();
+  });
+
+  it('quotes legacy editor table completions that contain spaces', async () => {
+    render(
+      <SqlExpr
+        onChange={jest.fn()}
+        refIds={[{ value: 'table A' }]}
+        query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM `table A`' } as ExpressionQuery}
+        queries={[]}
+      />
+    );
+
+    const getCompletionProvider = SQLEditorMock.mock.calls[0][0].language?.completionProvider;
+    if (!getCompletionProvider) {
+      throw new Error('Expected legacy completion provider');
+    }
+
+    const monaco = {} as Parameters<typeof getCompletionProvider>[0];
+    const sqlLanguage = {} as Parameters<typeof getCompletionProvider>[1];
+    const completionProvider = getCompletionProvider(monaco, sqlLanguage);
+    const resolveTables = completionProvider.tables?.resolve;
+    if (!resolveTables) {
+      throw new Error('Expected legacy table completion resolver');
+    }
+
+    await expect(resolveTables(null)).resolves.toEqual([{ name: 'table A', completion: '`table A`' }]);
   });
 
   it('uses the CodeMirror SQL editor when sqlExpressionsCodeMirror is enabled', () => {
@@ -232,14 +269,33 @@ describe('SqlExpr', () => {
       })
     );
 
-    expect(SqlEditorMock.mock.calls[0][0].completionProvider?.tables?.()).toEqual([
+    // Assert against the latest render: a prior test's component can emit a late re-render
+    // (see the afterEach note on lingering components) that would otherwise land as calls[0].
+    expect(SqlEditorMock.mock.lastCall?.[0].completionProvider?.tables?.()).toEqual([
       expect.objectContaining({ label: 'Query A', insertText: 'A' }),
     ]);
   });
 
-  describe('autocomplete metadata', () => {
-    testWithFeatureToggles({ enable: ['sqlExpressionsColumnAutoComplete'] });
+  it('quotes refId names with spaces in the seeded query and table completions', async () => {
+    setTestFlags({ sqlExpressionsCodeMirror: true });
 
+    const onChange = jest.fn();
+    const refIds = [{ label: 'table A', value: 'table A' }];
+    const query = { refId: 'expr1', type: 'sql', expression: '' } as ExpressionQuery;
+
+    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
+
+    // Read the editor props synchronously, before the await below can let a late re-render
+    // (see the afterEach note on lingering components) land as a newer mock call.
+    expect(SqlEditorMock.mock.lastCall?.[0].completionProvider?.tables?.()).toEqual([
+      expect.objectContaining({ label: 'table A', insertText: '`table A`' }),
+    ]);
+
+    await waitFor(() => expect(onChange).toHaveBeenCalled());
+    expect(onChange.mock.calls[0][0].expression).toContain('`table A`');
+  });
+
+  describe('autocomplete metadata', () => {
     afterEach(() => {
       jest.restoreAllMocks();
       mockDataSourceSrv.get.mockResolvedValue({
@@ -248,7 +304,7 @@ describe('SqlExpr', () => {
     });
 
     it('uses interpolated source queries for column autocomplete', async () => {
-      setTestFlags({ sqlExpressionsCodeMirror: true });
+      setTestFlags({ sqlExpressionsCodeMirror: true, sqlExpressionsColumnAutoComplete: true });
 
       const onChange = jest.fn();
       const sourceQuery = {
@@ -324,8 +380,6 @@ describe('SqlExpr', () => {
   });
 
   describe('autocomplete completions', () => {
-    testWithFeatureToggles({ enable: ['sqlExpressionsColumnAutoComplete'] });
-
     afterEach(() => {
       jest.restoreAllMocks();
       mockDataSourceSrv.get.mockResolvedValue({
@@ -334,7 +388,7 @@ describe('SqlExpr', () => {
     });
 
     it('returns no column completions when the field fetch fails', async () => {
-      setTestFlags({ sqlExpressionsCodeMirror: true });
+      setTestFlags({ sqlExpressionsCodeMirror: true, sqlExpressionsColumnAutoComplete: true });
 
       jest.spyOn(dataSource, 'runMetaSQLExprQuery').mockRejectedValue(new Error('boom'));
 
@@ -356,7 +410,7 @@ describe('SqlExpr', () => {
     });
 
     it('maps fetched fields to column completions', async () => {
-      setTestFlags({ sqlExpressionsCodeMirror: true });
+      setTestFlags({ sqlExpressionsCodeMirror: true, sqlExpressionsColumnAutoComplete: true });
 
       jest.spyOn(dataSource, 'runMetaSQLExprQuery').mockResolvedValue({
         fields: [{ name: 'cpu', type: 'number', config: {}, values: [] }],
@@ -380,6 +434,76 @@ describe('SqlExpr', () => {
       await expect(completionProvider.columns({ table: 'A' })).resolves.toEqual([
         { label: 'cpu', insertText: 'cpu', kind: 'column', boost: 50 },
       ]);
+    });
+
+    it('maps fetched fields to column completions for table names with spaces', async () => {
+      setTestFlags({ sqlExpressionsCodeMirror: true, sqlExpressionsColumnAutoComplete: true });
+
+      const runMetaSQLExprQuery = jest.spyOn(dataSource, 'runMetaSQLExprQuery').mockResolvedValue({
+        fields: [
+          { name: 'time', type: 'time', config: {}, values: [] },
+          { name: '__value__', type: 'number', config: {}, values: [] },
+        ],
+        length: 1,
+      } as unknown as DataFrame);
+
+      render(
+        <SqlExpr
+          onChange={jest.fn()}
+          refIds={[{ value: 'table A' }]}
+          query={{ refId: 'expr1', type: 'sql', expression: 'SELECT t. FROM `table A` as t' } as ExpressionQuery}
+          queries={[{ refId: 'table A' }]}
+        />
+      );
+
+      const completionProvider = SqlEditorMock.mock.calls[0][0].completionProvider;
+      if (!completionProvider?.columns) {
+        throw new Error('Expected columns completion provider');
+      }
+
+      await expect(completionProvider.columns({ table: 'table A' })).resolves.toEqual([
+        { label: 'time', insertText: 'time', kind: 'column', boost: 50 },
+        { label: '__value__', insertText: '__value__', kind: 'column', boost: 50 },
+      ]);
+      expect(runMetaSQLExprQuery.mock.calls[0][0].rawSql).toBe('SELECT * FROM `table A` LIMIT 1');
+      expect(runMetaSQLExprQuery.mock.calls[0][2]).toEqual([{ refId: 'table A' }]);
+    });
+
+    it('maps fetched fields to legacy editor column completions', async () => {
+      setTestFlags({ sqlExpressionsColumnAutoComplete: true });
+
+      const runMetaSQLExprQuery = jest.spyOn(dataSource, 'runMetaSQLExprQuery').mockResolvedValue({
+        fields: [{ name: 'metric value', type: 'number', config: {}, values: [] }],
+        length: 1,
+      } as unknown as DataFrame);
+
+      render(
+        <SqlExpr
+          onChange={jest.fn()}
+          refIds={[{ value: 'A' }]}
+          query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+          queries={[{ refId: 'A' }]}
+        />
+      );
+
+      const getCompletionProvider = SQLEditorMock.mock.calls[0][0].language?.completionProvider;
+
+      if (typeof getCompletionProvider === 'undefined') {
+        throw new Error('Expected legacy completion provider');
+      }
+
+      const monaco = {} as Parameters<typeof getCompletionProvider>[0];
+      const sqlLanguage = {} as Parameters<typeof getCompletionProvider>[1];
+      const completionProvider = getCompletionProvider(monaco, sqlLanguage);
+      const resolveColumns = completionProvider.columns?.resolve;
+      if (!resolveColumns) {
+        throw new Error('Expected legacy column completion resolver');
+      }
+
+      await expect(resolveColumns({ table: 'A' })).resolves.toEqual([
+        { name: 'metric value', completion: '`metric value`', kind: 'Field' },
+      ]);
+      expect(runMetaSQLExprQuery).toHaveBeenCalled();
     });
   });
 
@@ -696,5 +820,44 @@ describe('fetchSQLFields', () => {
 
     expect(interpolateVariablesInQueries).toHaveBeenCalledWith([sourceQuery], scopedVars, filters);
     expect(runMetaSQLExprQuery.mock.calls[0][2]).toEqual([interpolatedQuery]);
+  });
+
+  it('returns no fields without a table and skips metadata queries', async () => {
+    const runMetaSQLExprQuery = jest.spyOn(dataSource, 'runMetaSQLExprQuery');
+
+    await expect(fetchSQLFields({}, [{ refId: 'A' }])).resolves.toEqual([]);
+    expect(runMetaSQLExprQuery).not.toHaveBeenCalled();
+  });
+
+  it('maps SQL field types, icons, and quoted completion values', async () => {
+    jest.spyOn(dataSource, 'runMetaSQLExprQuery').mockResolvedValue({
+      fields: [
+        { name: 'enabled', type: 'BOOLEAN', config: {}, values: [] },
+        { name: 'cpu', type: 'FLOAT', config: {}, values: [] },
+        { name: 'business_date', type: 'DATE', config: {}, values: [] },
+        { name: 'event_time', type: 'TIMESTAMP', config: {}, values: [] },
+        { name: 'duration', type: 'TIME', config: {}, values: [] },
+        { name: 'message text', type: 'STRING', config: {}, values: [] },
+        { name: 'location', type: 'GEOGRAPHY', config: {}, values: [] },
+        { name: 'raw', type: 'OTHER', config: {}, values: [] },
+      ],
+      length: 1,
+    } as unknown as DataFrame);
+
+    await expect(fetchSQLFields({ table: 'A' }, [{ refId: 'A' }])).resolves.toEqual([
+      expect.objectContaining({ name: 'enabled', value: 'enabled', raqbFieldType: 'boolean', icon: 'toggle-off' }),
+      expect.objectContaining({ name: 'cpu', value: 'cpu', raqbFieldType: 'number', icon: 'calculator-alt' }),
+      expect.objectContaining({ name: 'business_date', value: 'business_date', raqbFieldType: 'date' }),
+      expect.objectContaining({
+        name: 'event_time',
+        value: 'event_time',
+        raqbFieldType: 'datetime',
+        icon: 'clock-nine',
+      }),
+      expect.objectContaining({ name: 'duration', value: 'duration', raqbFieldType: 'time', icon: 'clock-nine' }),
+      expect.objectContaining({ name: 'message text', value: '`message text`', raqbFieldType: 'text', icon: 'text' }),
+      expect.objectContaining({ name: 'location', value: 'location', raqbFieldType: 'text', icon: 'map' }),
+      expect.objectContaining({ name: 'raw', value: 'raw', raqbFieldType: 'text', icon: undefined }),
+    ]);
   });
 });

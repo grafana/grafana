@@ -196,14 +196,10 @@ func newClient(opts options.StorageOptions,
 		}
 
 		storageOpts := []sql.StorageBackendOption{sql.WithEventPublisher(eventPublisher)}
-		// Run the shadow notifier in-process too when enabled, mirroring the
-		// storage-server module. Gated on the flag; the subscriber's own Enabled()
-		// check downstream stops it when the bus is off.
-		if cfg.NATS.NotifierShadow && eventSubscriber != nil {
-			storageOpts = append(storageOpts, sql.WithNatsNotifierShadow(natsEventSubscriber{sub: eventSubscriber}))
-		}
 		if cfg.NATS.Notifier && eventSubscriber != nil {
 			storageOpts = append(storageOpts, sql.WithNatsNotifier(natsEventSubscriber{sub: eventSubscriber}))
+		} else if cfg.NATS.NotifierShadow && eventSubscriber != nil {
+			storageOpts = append(storageOpts, sql.WithNatsNotifierShadow(natsEventSubscriber{sub: eventSubscriber}))
 		}
 		backend, err := sql.NewStorageBackend(cfg, eDB, reg, storageMetrics, false, kvStore, gcGate, storageOpts...)
 		if err != nil {

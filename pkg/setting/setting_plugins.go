@@ -44,6 +44,9 @@ var (
 		"opentsdb":                     {ID: "opentsdb"},
 		"stackdriver":                  {ID: "stackdriver"},
 		"mssql":                        {ID: "mssql"},
+		"jaeger":                       {ID: "jaeger"},
+		"grafana-advisor-app":          {ID: "grafana-advisor-app"},
+		"grafana-pyroscope-datasource": {ID: "grafana-pyroscope-datasource"},
 	}
 )
 
@@ -153,9 +156,6 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		// Add the default preinstalled plugins to pre install plugins async list
 		for _, plugin := range defaultPreinstallPlugins {
 			preinstallPluginsAsync[plugin.ID] = plugin
-		}
-		if cfg.IsFeatureToggleEnabled("grafanaAdvisor") { // Use literal string to avoid circular dependency
-			preinstallPluginsAsync["grafana-advisor-app"] = InstallPlugin{"grafana-advisor-app", "", ""}
 		}
 		if cfg.IsFeatureToggleEnabled("interactiveLearning") { // Use literal string to avoid circular dependency
 			preinstallPluginsAsync["grafana-pathfinder-app"] = InstallPlugin{"grafana-pathfinder-app", "", ""}

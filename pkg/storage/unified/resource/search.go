@@ -205,8 +205,7 @@ type searchServer struct {
 	maxIndexAge          time.Duration
 	minBuildVersion      *semver.Version
 	buildVersion         *semver.Version
-	selectableFields     map[string][]string
-	searchFieldsHashes   map[string]string
+	searchFields         *SearchFieldsRegistry
 
 	bgTaskWg     sync.WaitGroup
 	bgTaskCancel func()
@@ -275,6 +274,11 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		}
 	}
 
+	searchFields := opts.SearchFields
+	if searchFields == nil {
+		searchFields = NewSearchFieldsRegistry(nil, nil, nil)
+	}
+
 	s := &searchServer{
 		access:         access,
 		storage:        storage,
@@ -293,8 +297,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		maxIndexAge:               opts.MaxIndexAge,
 		minBuildVersion:           opts.MinBuildVersion,
 		buildVersion:              opts.BuildVersion,
-		selectableFields:          opts.SelectableFieldsForKinds,
-		searchFieldsHashes:        opts.SearchFieldsHashesForKinds,
+		searchFields:              searchFields,
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
 
@@ -308,7 +311,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 	s.rebuildQueue = debouncer.NewQueue(combineRebuildRequests)
 	s.inFlightRebuilds = map[NamespacedResource]*rebuildState{}
 
-	info, err := opts.Resources.GetDocumentBuilders()
+	info, err := opts.Resources.GetDocumentBuilders(searchFields)
 	if err != nil {
 		return nil, err
 	}
@@ -385,10 +388,16 @@ func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.L
 	}
 
 	rsp := &resourcepb.ListManagedObjectsResponse{}
+	if req.Namespace == "" {
+		rsp.Error = NewBadRequestError("missing namespace")
+		return rsp, nil
+	}
 	nsr := NamespacedResource{
 		Namespace: req.Namespace,
 	}
-	resourceStats, err := s.storage.GetResourceStats(ctx, nsr, 0)
+	// Discover which resource types exist in the namespace, then query each
+	// managed-object index. Discovery avoids the cost of counting via stats.
+	stored, err := s.storage.ListStoredResources(ctx, nsr)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 		return rsp, nil
@@ -397,7 +406,7 @@ func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.L
 	stats := NewSearchStats("ListManagedObjects")
 	defer s.logStats(ctx, stats, span, "namespace", req.Namespace)
 
-	for _, info := range resourceStats {
+	for _, info := range stored {
 		idx, err := s.getOrCreateIndex(ctx, stats, NamespacedResource{
 			Namespace: req.Namespace,
 			Group:     info.Group,
@@ -471,16 +480,22 @@ func (s *searchServer) CountManagedObjects(ctx context.Context, req *resourcepb.
 	defer s.logStats(ctx, stats, span, "namespace", req.Namespace)
 
 	rsp := &resourcepb.CountManagedObjectsResponse{}
+	if req.Namespace == "" {
+		rsp.Error = NewBadRequestError("missing namespace")
+		return rsp, nil
+	}
 	nsr := NamespacedResource{
 		Namespace: req.Namespace,
 	}
-	resourceStats, err := s.storage.GetResourceStats(ctx, nsr, 0)
+	// Discover which resource types exist in the namespace, then count
+	// managed objects from each index. Discovery avoids the cost of counting via stats.
+	stored, err := s.storage.ListStoredResources(ctx, nsr)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 		return rsp, nil
 	}
 
-	for _, info := range resourceStats {
+	for _, info := range stored {
 		idx, err := s.getOrCreateIndex(ctx, stats, NamespacedResource{
 			Namespace: req.Namespace,
 			Group:     info.Group,
@@ -656,6 +671,9 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		req.Key.Namespace, s.embedder.Model, req.Key.Resource,
 		dense, limit, translateVectorSearchFilters(req.Filters)...)
 	if err != nil {
+		if ctx.Err() != nil {
+			return nil, status.FromContextError(ctx.Err()).Err()
+		}
 		s.log.Error("vector search: backend", "err", err)
 		return nil, status.Error(codes.Internal, "vector search backend")
 	}
@@ -670,6 +688,9 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 
 	allowed, err := s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
 	if err != nil {
+		if ctx.Err() != nil {
+			return nil, status.FromContextError(ctx.Err()).Err()
+		}
 		s.log.Error("vector search: authz batch check", "err", err)
 		return nil, status.Error(codes.Internal, "authz batch check")
 	}
@@ -760,6 +781,11 @@ func (s *searchServer) embedVectorSearchQuery(ctx context.Context, namespace, qu
 		Task:      embedder.TaskRetrievalQuery,
 	})
 	if err != nil {
+		// Client disconnects/timeouts must map to Canceled/DeadlineExceeded
+		// per the gRPC spec — reporting Internal here trips error SLOs.
+		if ctx.Err() != nil {
+			return nil, status.FromContextError(ctx.Err()).Err()
+		}
 		s.log.Error("vector search: embed query", "err", err)
 		return nil, status.Error(codes.Internal, "embed query")
 	}
@@ -1115,7 +1141,10 @@ func (s *searchServer) startupIndexStats(ctx context.Context) ([]ResourceStats, 
 		s.log.FromContext(ctx).Debug("open index stats unavailable, falling back to resource stats")
 	}
 
-	return s.storage.GetResourceStats(ctx, NamespacedResource{}, s.initMinSize)
+	start := time.Now()
+	stats, err = s.storage.GetResourceStats(ctx, NamespacedResource{}, s.initMinSize)
+	s.log.Debug("startupIndexStats: got resource stats from storage", "elapsed", time.Since(start).String(), "stats", len(stats), "err", err)
+	return stats, err
 }
 
 func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
@@ -1327,9 +1356,8 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 			continue
 		}
 
-		sfKey := fmt.Sprintf("%s/%s", strings.ToLower(key.Group), strings.ToLower(key.Resource))
-		sfields := s.selectableFields[sfKey]
-		expectedSearchFieldsHash := s.searchFieldsHashes[sfKey]
+		sfKey := NewLowerGroupResource(key.Group, key.Resource)
+		sfields, expectedSearchFieldsHash, _ := s.searchFields.For(sfKey)
 
 		if shouldRebuildIndex(bi, s.minBuildVersion, s.buildVersion, minBuildTime, lastImportTime, sfields, expectedSearchFieldsHash, nil) {
 			completeCh := make(chan struct{})
@@ -1523,9 +1551,8 @@ func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion, maxBuildVersi
 	}
 
 	// Search-field metadata that affects what gets indexed (paths, types,
-	// capabilities, EmitZeroIfAbsent, CopyFromStandard) has changed since the
-	// index was built. Rebuild so documents are re-extracted with the new
-	// declarations.
+	// capabilities, EmitZeroIfAbsent) has changed since the index was built.
+	// Rebuild so documents are re-extracted with the new declarations.
 	//
 	// An empty expected hash means "no opinion" for this kind: either no
 	// SearchFieldsProvider is registered today, or the running binary doesn't
@@ -2084,7 +2111,7 @@ type TestDocumentBuilderSupplier struct {
 	GroupsResources map[string]string
 }
 
-func (s *TestDocumentBuilderSupplier) GetDocumentBuilders() ([]DocumentBuilderInfo, error) {
+func (s *TestDocumentBuilderSupplier) GetDocumentBuilders(_ *SearchFieldsRegistry) ([]DocumentBuilderInfo, error) {
 	builders := make([]DocumentBuilderInfo, 0, len(s.GroupsResources))
 
 	// Add builders for all possible group/resource combinations

@@ -92,7 +92,7 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled?: boolean) => ({
     marginBottom: theme.spacing(0.5),
     marginRight: theme.spacing(1),
     borderBottom: `2px solid ${theme.colors.border.weak}`,
-    background: visualRefreshEnabled ? theme.components.panel.contentBackground : theme.colors.background.primary,
+    background: visualRefreshEnabled ? theme.components.panel.background : theme.colors.background.primary,
     flexDirection: 'column',
     flexShrink: 0,
   }),

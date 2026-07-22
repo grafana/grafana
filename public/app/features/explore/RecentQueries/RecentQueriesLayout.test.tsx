@@ -14,11 +14,15 @@ jest.mock('./RecentQueriesList', () => ({
   RecentQueriesList: jest.fn(() => <div data-testid="list" />),
 }));
 
-jest.mock('app/core/utils/richHistory', () => ({
-  createDatasourcesList: jest.fn(() => [
-    { name: 'Prometheus', uid: 'prom-uid' },
-    { name: 'Loki', uid: 'loki-uid' },
-  ]),
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceList: jest.fn(() => ({
+    isLoading: false,
+    items: [
+      { name: 'Prometheus', uid: 'prom-uid' },
+      { name: 'Loki', uid: 'loki-uid' },
+    ],
+  })),
 }));
 
 const mockRichHistoryQuery: RichHistoryQuery = {

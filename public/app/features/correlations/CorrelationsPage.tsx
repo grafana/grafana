@@ -75,6 +75,13 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
   const [isAdding, setIsAddingValue] = useState(false);
   const page = useRef(1);
 
+  /*
+    We need to support pagination for cursor based (app platform), and offset based (legacy) apis
+    cursor based pagination just does page forward/back with no list
+    offset based has a list of pages along with forward/back
+   The legacy api returns correlations.doesContinue as undefined, so we know to show pages
+  */
+
   const setIsAdding = (value: boolean) => {
     setIsAddingValue(value);
     if (value) {

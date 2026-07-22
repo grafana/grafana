@@ -127,6 +127,29 @@ describe('AzureLogAnalyticsDatasource', () => {
       const workspaces = await ctx.datasource.azureLogAnalyticsDatasource.getWorkspaces('sub');
       expect(workspaces).toEqual([{ text: 'foobar', value: 'foo' }]);
     });
+
+    it('follows nextLink and aggregates workspaces across pages', async () => {
+      const getResource = jest
+        .fn()
+        .mockResolvedValueOnce({
+          value: [{ name: 'ws-1', id: 'id-1', properties: { customerId: 'c1' } }],
+          nextLink:
+            'https://management.azure.com/subscriptions/sub/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview&$skiptoken=TOKEN',
+        })
+        .mockResolvedValueOnce({ value: [{ name: 'ws-2', id: 'id-2', properties: { customerId: 'c2' } }] });
+      ctx.datasource.azureLogAnalyticsDatasource.getResource = getResource;
+
+      const workspaces = await ctx.datasource.azureLogAnalyticsDatasource.getWorkspaces('sub');
+
+      expect(getResource).toHaveBeenCalledTimes(2);
+      expect(getResource.mock.calls[1][0]).toBe(
+        'azuremonitor/subscriptions/sub/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview&$skiptoken=TOKEN'
+      );
+      expect(workspaces).toEqual([
+        { text: 'ws-1', value: 'id-1' },
+        { text: 'ws-2', value: 'id-2' },
+      ]);
+    });
   });
 
   describe('When performing getFirstWorkspace', () => {

@@ -1,7 +1,9 @@
 package annotation
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -92,12 +94,108 @@ func TestIntegrationPostgresStore(t *testing.T) {
 		require.ErrorIs(t, err, ErrNotFound)
 	})
 
-	t.Run("List filters by dashboard UID", func(t *testing.T) {
-		create(t, "list-dash", func(a *annotationV0.Annotation) { a.Spec.DashboardUID = &dashboardUID })
+	t.Run("List", func(t *testing.T) {
+		t.Run("Filters by dashboard UID", func(t *testing.T) {
+			create(t, "list-dash", func(a *annotationV0.Annotation) { a.Spec.DashboardUID = &dashboardUID })
 
-		list, err := store.List(ctx, ns, ListOptions{DashboardUID: dashboardUID})
-		require.NoError(t, err)
-		assert.Contains(t, annotationNames(list), "list-dash")
+			list, err := store.List(ctx, ns, ListOptions{DashboardUID: dashboardUID})
+			require.NoError(t, err)
+			assert.Contains(t, annotationNames(list), "list-dash")
+		})
+
+		t.Run("Filters by panel ID", func(t *testing.T) {
+			panelID := int64(42)
+			create(t, "panel-match", func(a *annotationV0.Annotation) { a.Spec.PanelID = &panelID })
+			create(t, "panel-other", func(a *annotationV0.Annotation) { other := int64(43); a.Spec.PanelID = &other })
+
+			list, err := store.List(ctx, ns, ListOptions{PanelID: panelID})
+			require.NoError(t, err)
+			names := annotationNames(list)
+			assert.Contains(t, names, "panel-match")
+			assert.NotContains(t, names, "panel-other")
+		})
+
+		t.Run("Filters by time window", func(t *testing.T) {
+			twDash := "tw-dash"
+			from, to := int64(1000), int64(2000)
+			timeEnd := func(v int64) func(*annotationV0.Annotation) {
+				return func(a *annotationV0.Annotation) { a.Spec.TimeEnd = &v }
+			}
+			at := func(v int64) func(*annotationV0.Annotation) {
+				return func(a *annotationV0.Annotation) {
+					a.Spec.Time = v
+					a.Spec.DashboardUID = &twDash
+				}
+			}
+
+			create(t, "tw-point-before", at(500))
+			create(t, "tw-point-inside", at(1500))
+			create(t, "tw-point-after", at(2500))
+			create(t, "tw-region-overlap-start", at(500), timeEnd(1500))
+			create(t, "tw-region-overlap-end", at(1500), timeEnd(2500))
+			create(t, "tw-region-before", at(100), timeEnd(500))
+			create(t, "tw-region-after", at(2500), timeEnd(3000))
+
+			list, err := store.List(ctx, ns, ListOptions{DashboardUID: twDash, From: from, To: to})
+			require.NoError(t, err)
+
+			names := annotationNames(list)
+			assert.Contains(t, names, "tw-point-inside")
+			assert.Contains(t, names, "tw-region-overlap-start")
+			assert.Contains(t, names, "tw-region-overlap-end")
+			assert.NotContains(t, names, "tw-point-before")
+			assert.NotContains(t, names, "tw-point-after")
+			assert.NotContains(t, names, "tw-region-before")
+			assert.NotContains(t, names, "tw-region-after")
+		})
+
+		t.Run("Filters by tags requiring all to match", func(t *testing.T) {
+			tags := func(vs ...string) func(*annotationV0.Annotation) {
+				return func(a *annotationV0.Annotation) { a.Spec.Tags = vs }
+			}
+			create(t, "tags-all-both", tags("red", "blue"))
+			create(t, "tags-all-one", tags("red"))
+
+			list, err := store.List(ctx, ns, ListOptions{Tags: []string{"red", "blue"}})
+			require.NoError(t, err)
+			names := annotationNames(list)
+			assert.Contains(t, names, "tags-all-both")
+			assert.NotContains(t, names, "tags-all-one")
+		})
+
+		t.Run("Filters by tags matching any", func(t *testing.T) {
+			tags := func(vs ...string) func(*annotationV0.Annotation) {
+				return func(a *annotationV0.Annotation) { a.Spec.Tags = vs }
+			}
+			create(t, "tags-any-match", tags("green"))
+			create(t, "tags-any-miss", tags("yellow"))
+
+			list, err := store.List(ctx, ns, ListOptions{Tags: []string{"green", "orange"}, TagsMatchAny: true})
+			require.NoError(t, err)
+			names := annotationNames(list)
+			assert.Contains(t, names, "tags-any-match")
+			assert.NotContains(t, names, "tags-any-miss")
+		})
+
+		t.Run("Paginates with a continue token", func(t *testing.T) {
+			pageDash := "page-dash"
+			for _, name := range []string{"page-a", "page-b", "page-c"} {
+				create(t, name, func(a *annotationV0.Annotation) { a.Spec.DashboardUID = &pageDash })
+			}
+
+			first, err := store.List(ctx, ns, ListOptions{DashboardUID: pageDash, Limit: 2})
+			require.NoError(t, err)
+			require.Len(t, first.Items, 2)
+			require.NotEmpty(t, first.Continue, "expected a continue token when more results remain")
+
+			second, err := store.List(ctx, ns, ListOptions{DashboardUID: pageDash, Limit: 2, Continue: first.Continue})
+			require.NoError(t, err)
+			require.Len(t, second.Items, 1)
+			assert.Empty(t, second.Continue, "expected no continue token on the final page")
+
+			all := append(annotationNames(first), annotationNames(second)...)
+			assert.ElementsMatch(t, []string{"page-a", "page-b", "page-c"}, all)
+		})
 	})
 
 	t.Run("Delete of a missing annotation returns ErrNotFound", func(t *testing.T) {
@@ -176,6 +274,68 @@ func TestIntegrationPostgresStore(t *testing.T) {
 			require.NotNil(t, found.DeletionTimestamp, "expected tombstone deletionTimestamp")
 		})
 	})
+}
+
+func TestIntegrationPostgresCleanup(t *testing.T) {
+	ns := metav1.NamespaceDefault
+
+	seed := func(t *testing.T, store *PostgreSQLStore, ctx context.Context, name string, ts time.Time) {
+		t.Helper()
+		_, err := store.Create(ctx, &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: name, Time: ts.UnixMilli()},
+		})
+		require.NoError(t, err, "create %s", name)
+	}
+
+	t.Run("drops partitions past the retention cutoff", func(t *testing.T) {
+		store := newTestPostgresStore(t)
+		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+
+		now := time.Date(2026, 1, 15, 12, 0, 0, 0, time.UTC)
+		old := now.AddDate(0, 0, -120)   // past a 90-day cutoff: dropped
+		recent := now.AddDate(0, 0, -30) // within the cutoff: kept
+		seed(t, store, ctx, "old", old)
+		seed(t, store, ctx, "recent", recent)
+
+		deleted, err := store.Cleanup(ctx, now.AddDate(0, 0, -90))
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), deleted, "only the old partition's row should be counted")
+
+		remaining := partitionNameSet(ctx, t, store)
+		assert.NotContains(t, remaining, getPartitionName(old.UnixMilli()), "old partition should be dropped")
+		assert.Contains(t, remaining, getPartitionName(recent.UnixMilli()), "recent partition should be kept")
+	})
+
+	t.Run("keeps recent partitions protected by the 24h floor even when past the cutoff", func(t *testing.T) {
+		store := newTestPostgresStore(t)
+		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+
+		now := time.Now().UTC()
+		current := now                // this week: past a 1h cutoff, but inside the 24h floor
+		old := now.AddDate(0, 0, -21) // several weeks back: past both the cutoff and the floor
+		seed(t, store, ctx, "current", current)
+		seed(t, store, ctx, "old", old)
+
+		deleted, err := store.Cleanup(ctx, now.Add(-time.Hour))
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), deleted, "only the old partition's row should be counted")
+
+		remaining := partitionNameSet(ctx, t, store)
+		assert.Contains(t, remaining, getPartitionName(current.UnixMilli()), "current partition should be kept by the 24h floor")
+		assert.NotContains(t, remaining, getPartitionName(old.UnixMilli()), "old partition should be dropped")
+	})
+}
+
+func partitionNameSet(ctx context.Context, t *testing.T, store *PostgreSQLStore) map[string]struct{} {
+	t.Helper()
+	partitions, err := listPartitions(ctx, store.pool)
+	require.NoError(t, err)
+	set := make(map[string]struct{}, len(partitions))
+	for _, p := range partitions {
+		set[p.Name] = struct{}{}
+	}
+	return set
 }
 
 func annotationNames(list *AnnotationList) []string {

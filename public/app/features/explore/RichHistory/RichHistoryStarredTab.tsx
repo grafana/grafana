@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { type DataSourceApi, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance, useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { useStyles2, Select, MultiSelect, FilterInput, Button } from '@grafana/ui';
-import { createDatasourcesList } from 'app/core/utils/richHistory';
 import { SortOrder, type RichHistorySearchFilters, type RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 import { type RichHistoryQuery } from 'app/types/explore';
 import { useSelector } from 'app/types/store';
@@ -81,11 +80,21 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
   const styles = useStyles2(getStyles);
   const exploreActiveDS = useSelector(selectExploreDSMaps);
 
-  const listOfDatasources = createDatasourcesList();
+  const { items: dataSourceItems, isLoading: isLoadingDatasources } = useDataSourceInstanceList({ mixed: true });
+  const listOfDatasources = useMemo(
+    () => dataSourceItems.map((ds) => ({ name: ds.name, uid: ds.uid })),
+    [dataSourceItems]
+  );
 
+  // Set the initial filters once the datasource list has loaded, so active-datasource
+  // names resolve correctly. `isLoadingDatasources` flips false exactly once, so this
+  // runs a single time on mount (the datasource list is fetched asynchronously now).
   useEffect(() => {
+    if (isLoadingDatasources) {
+      return;
+    }
     const datasourceFilters =
-      richHistorySettings.activeDatasourcesOnly && richHistorySettings.lastUsedDatasourceFilters
+      !richHistorySettings.activeDatasourcesOnly && richHistorySettings.lastUsedDatasourceFilters
         ? richHistorySettings.lastUsedDatasourceFilters
         : exploreActiveDS.dsToExplore
             .map((eDs) => listOfDatasources.find((ds) => ds.uid === eDs.datasource?.uid)?.name)
@@ -99,6 +108,13 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
       starred: true,
     };
     updateFilters(filters);
+    // Intentionally only depends on `isLoadingDatasources` so the initial filters are seeded
+    // exactly once, when the datasource list resolves. Re-running when the other values change
+    // would clobber user-adjusted filters.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoadingDatasources]);
+
+  useEffect(() => {
     return () => {
       clearRichHistoryResults();
     };
@@ -110,7 +126,7 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
       richHistorySearchFilters?.datasourceFilters && richHistorySearchFilters?.datasourceFilters.length > 0
         ? richHistorySearchFilters?.datasourceFilters
         : listOfDatasources.map((ds) => ds.uid);
-    const dsGetProm = await datasourcesToGet.map(async (dsf) => {
+    const dsGetProm = datasourcesToGet.map(async (dsf) => {
       try {
         return await getDataSourceInstance(dsf);
       } catch (e) {
@@ -125,12 +141,12 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
     } else {
       return [];
     }
-  }, [richHistorySearchFilters?.datasourceFilters]);
+  }, [richHistorySearchFilters?.datasourceFilters, listOfDatasources]);
 
   if (!richHistorySearchFilters) {
     return (
       <span>
-        <Trans i18nKey="explore.rich-history-starred-tab.loading">Loading...</Trans>;
+        <Trans i18nKey="explore.rich-history-starred-tab.loading">Loading...</Trans>
       </span>
     );
   }
@@ -181,12 +197,12 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
             />
           </div>
         </div>
-        {loading && loadingDs && (
+        {(loading || loadingDs) && (
           <span>
             <Trans i18nKey="explore.rich-history-starred-tab.loading-results">Loading results...</Trans>
           </span>
         )}
-        {!(loading && loadingDs) &&
+        {!(loading || loadingDs) &&
           queries.map((q) => {
             return <RichHistoryCard queryHistoryItem={q} key={q.id} datasourceInstances={datasourceFilterApis} />;
           })}

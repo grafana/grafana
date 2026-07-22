@@ -17,15 +17,13 @@ import { type Correlation } from './types';
 import { attachCorrelationsToDataFrames, generateDefaultLabel, generatePartialEditSpec } from './utils';
 import * as utils from './utils';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn().mockReturnValue({
-    get: jest.fn().mockResolvedValue({
-      name: 'getTest',
-      getRef: () => {
-        return { type: 'testTypeFromLookup', uid: 'testUidFromLookup' };
-      },
-    }),
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn().mockResolvedValue({
+    name: 'getTest',
+    getRef: () => {
+      return { type: 'testTypeFromLookup', uid: 'testUidFromLookup' };
+    },
   }),
 }));
 

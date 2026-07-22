@@ -162,10 +162,14 @@ const commentTemplateMissingImageRenderer = `
 const commentTemplateFooter = `
 
 ---
-_{{if .RepositoryTitle}}🔄 Synced from {{if .RepositoryURL}}[**{{.SafeRepositoryTitle}}**]({{.RepositoryURL}}){{else}}**{{.SafeRepositoryTitle}}**{{end}} · {{end}}Posted by [{{.GrafanaHost}}]({{.GrafanaBaseURL}})_`
+_{{if .RepositoryTitle}}🔄 Synced from {{if .RepositoryAdminURL}}[**{{.SafeRepositoryTitle}}**]({{.RepositoryAdminURL}}){{else}}**{{.SafeRepositoryTitle}}**{{end}} · {{end}}Posted by [{{.GrafanaHost}}]({{.GrafanaBaseURL}})_`
 
 func (f *fileChangeInfo) Action() string {
-	if f.Parsed != nil {
+	// Prefer the parsed ResourceAction, but fall back to the raw FileAction when
+	// it is empty. Deleted files are parsed from the previous ref without a
+	// DryRun, so Parsed.Action is never set and only Change.Action ("deleted")
+	// carries the action.
+	if f.Parsed != nil && f.Parsed.Action != "" {
 		return string(f.Parsed.Action)
 	}
 	return string(f.Change.Action)

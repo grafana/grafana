@@ -1641,7 +1641,7 @@
                                   "repeat": {
                                     "mode": "variable",
                                     "value": "sec_panel_repeat_source",
-                                    "direction": "horizontal",
+                                    "direction": "h",
                                     "maxPerRow": 4
                                   }
                                 }

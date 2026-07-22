@@ -786,8 +786,8 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAnnotationPanelFilter(ref common
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: 0,
-										Type:    []string{"integer"},
-										Format:  "int64",
+										Type:    []string{"number"},
+										Format:  "double",
 									},
 								},
 							},

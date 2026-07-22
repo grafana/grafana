@@ -11,6 +11,7 @@ import (
 	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -209,6 +210,36 @@ func TestAddCapabilityFieldMappings_FacetOnly(t *testing.T) {
 	m := got["managedBy"]
 	assert.Equal(t, keyword.Name, m.Analyzer)
 	assert.False(t, m.Store)
+}
+
+func TestFacetFieldsForMapping(t *testing.T) {
+	gvr := schema.GroupVersionResource{Group: "example.test", Version: "v1", Resource: "widgets"}
+	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+		gvr: {
+			{
+				Name: "summary",
+				Type: resource.SearchFieldTypeString,
+				Capabilities: []resource.SearchCapability{
+					resource.SearchCapabilityText,
+					resource.SearchCapabilityFacet,
+				},
+			},
+			{
+				Name:         "category",
+				Type:         resource.SearchFieldTypeString,
+				Capabilities: []resource.SearchCapability{resource.SearchCapabilityFacet},
+			},
+		},
+	}, nil)
+
+	fields := facetFieldsForMapping(provider, gvr.Group, gvr.Resource)
+	assert.Equal(t, resource.SEARCH_FIELD_TAGS, fields[resource.SEARCH_FIELD_TAGS])
+	assert.Equal(t, resource.SEARCH_FIELD_MANAGED_BY, fields[resource.SEARCH_FIELD_MANAGED_BY])
+	assert.Equal(t, "fields.summary_keyword", fields["summary"])
+	assert.Equal(t, "fields.summary_keyword", fields["fields.summary"])
+	assert.Equal(t, "fields.category", fields["category"])
+	assert.NotContains(t, fields, resource.SEARCH_FIELD_FOLDER)
+	assert.NotContains(t, fields, "labels.region")
 }
 
 func TestAddCapabilityFieldMappings_RetrieveOnly_StoreOnly(t *testing.T) {

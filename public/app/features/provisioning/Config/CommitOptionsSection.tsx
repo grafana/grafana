@@ -109,7 +109,7 @@ export function CommitOptionsSection<T extends FieldValues>({
             }
           )}
         >
-          <Input
+          <TextArea
             id="commit-message-template"
             {...register(messageTemplateName)}
             placeholder={t(
@@ -117,6 +117,7 @@ export function CommitOptionsSection<T extends FieldValues>({
               'feat(dashboards): {{actionVar}} {{titleVar}}',
               { actionVar: '{{action}}', titleVar: '{{title}}' }
             )}
+            rows={3}
           />
         </Field>
 

@@ -139,8 +139,6 @@ func TestIntegration_CrossNamespaceIsolation_FolderSync(t *testing.T) {
 
 	// Step 4: Verify cross-namespace access is blocked
 	t.Run("verify no cross-namespace visibility", func(t *testing.T) {
-		ctx := context.Background()
-
 		// Try to access orgB repository from orgA viewer context - should fail
 		orgAViewOfOrgBRepos := helper.GetResourceClient(apis.ResourceClientArgs{
 			User:      helper.Org1.Viewer,
@@ -148,7 +146,7 @@ func TestIntegration_CrossNamespaceIsolation_FolderSync(t *testing.T) {
 			GVR:       schema.GroupVersionResource{Group: "provisioning.grafana.app", Resource: "repositories", Version: "v0alpha1"},
 		})
 
-		_, err := orgAViewOfOrgBRepos.Resource.Get(ctx, orgBRepoName, metav1.GetOptions{})
+		_, err := orgAViewOfOrgBRepos.Resource.Get(t.Context(), orgBRepoName, metav1.GetOptions{})
 		assert.Error(t, err, "orgA user should not be able to access orgB repository")
 		t.Logf("✓ orgA correctly denied access to orgB namespace (error: %v)", err)
 
@@ -160,7 +158,7 @@ func TestIntegration_CrossNamespaceIsolation_FolderSync(t *testing.T) {
 			GVR:       schema.GroupVersionResource{Group: "provisioning.grafana.app", Resource: "repositories", Version: "v0alpha1"},
 		})
 
-		_, err = orgBViewOfOrgARepos.Resource.Get(ctx, orgARepoName, metav1.GetOptions{})
+		_, err = orgBViewOfOrgARepos.Resource.Get(t.Context(), orgARepoName, metav1.GetOptions{})
 		assert.Error(t, err, "orgB user should not be able to access orgA repository")
 		t.Logf("✓ orgB correctly denied access to orgA namespace (error: %v)", err)
 	})

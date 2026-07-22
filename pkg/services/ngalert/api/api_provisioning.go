@@ -99,8 +99,7 @@ func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) respo
 
 func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext) response.Response {
 	routeName := c.Query("routeName")
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) || routeName == "" {
+	if routeName == "" {
 		// Default to the old behavior of exporting the single user-defined policy tree without a "name" field.
 		policy, _, err := srv.policies.GetPolicyTree(c.Req.Context(), c.GetOrgID())
 		if err != nil {

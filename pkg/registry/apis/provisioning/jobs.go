@@ -36,6 +36,7 @@ type jobsConnector struct {
 	access                auth.AccessChecker
 	clients               resources.ClientFactory
 	folderMetadataEnabled bool
+	perfTestingEnabled    func(ctx context.Context) bool
 }
 
 func NewJobsConnector(
@@ -46,6 +47,7 @@ func NewJobsConnector(
 	access auth.AccessChecker,
 	clients resources.ClientFactory,
 	folderMetadataEnabled bool,
+	perfTestingEnabled func(ctx context.Context) bool,
 ) *jobsConnector {
 	return &jobsConnector{
 		repoGetter:            repoGetter,
@@ -55,6 +57,7 @@ func NewJobsConnector(
 		access:                access,
 		clients:               clients,
 		folderMetadataEnabled: folderMetadataEnabled,
+		perfTestingEnabled:    perfTestingEnabled,
 	}
 }
 
@@ -170,7 +173,7 @@ func (c *jobsConnector) handleCreateJob(ctx context.Context, r *http.Request, na
 		return
 	}
 
-	if spec.Action == provisioning.JobActionPull {
+	if spec.Action == provisioning.JobActionPull || spec.Action == provisioning.JobActionTest {
 		if err := c.authorizeAdminJob(ctx, cfg); err != nil {
 			responder.Error(err)
 			return
@@ -237,7 +240,13 @@ func (c *jobsConnector) validateWriteAccess(cfg *provisioning.Repository, spec p
 			targetRef = spec.FixFolderMetadata.Ref
 		}
 	case provisioning.JobActionMigrate:
-		// no ref needed
+		if spec.Migrate != nil {
+			// An empty branch, or one equal to the configured branch, is a direct
+			// write with takeover (not a pull request); a different branch is the
+			// branch workflow. IsWriteAllowed normalizes the equal-to-configured
+			// case, so pass the branch straight through.
+			targetRef = spec.Migrate.Branch
+		}
 	default:
 		return nil
 	}
@@ -299,21 +308,26 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 	if spec.Action == provisioning.JobActionFixFolderMetadata && !c.folderMetadataEnabled {
 		return apierrors.NewBadRequest("fixFolderMetadata jobs require the provisioningFolderMetadata feature flag")
 	}
+	if spec.Action == provisioning.JobActionTest && (c.perfTestingEnabled == nil || !c.perfTestingEnabled(ctx)) {
+		return apierrors.NewBadRequest("test jobs require the provisioning.performance feature flag")
+	}
 
 	switch spec.Action {
-	case provisioning.JobActionPush, provisioning.JobActionMigrate:
-		return c.authorizeResourceJob(ctx, repo, cfg, spec)
+	case provisioning.JobActionPush:
+		return c.authorizePushJob(ctx, repo, cfg)
+	case provisioning.JobActionMigrate:
+		return c.authorizeMigrateJob(ctx, repo, cfg, spec)
 	case provisioning.JobActionDelete:
 		if spec.Delete != nil {
-			return c.authorizeDeleteJob(ctx, repo, cfg, spec.Delete)
+			return c.authorizeDeleteJob(ctx, repo, cfg, spec.Delete.Paths, spec.Delete.Resources)
 		}
 	case provisioning.JobActionMove:
 		if spec.Move != nil {
 			return c.authorizeMoveJob(ctx, repo, cfg, spec.Move)
 		}
-	case provisioning.JobActionPull, provisioning.JobActionPullRequest, provisioning.JobActionFixFolderMetadata:
-		// Read-only operations don't require pre-flight resource authorization.
-		// Pull is authorized inline in Connect.
+	case provisioning.JobActionPull, provisioning.JobActionPullRequest, provisioning.JobActionFixFolderMetadata, provisioning.JobActionTest:
+		// Read-only / no-op operations don't require pre-flight resource authorization.
+		// Pull and test are authorized inline in handleCreateJob (admin-only).
 	case provisioning.JobActionReleaseResources, provisioning.JobActionDeleteResources:
 		// Orphan cleanup actions are handled separately via handleOrphanCleanupJob
 		// and never reach authorizeJob.
@@ -396,8 +410,25 @@ func (c *jobsConnector) authorizeAdminJob(ctx context.Context, cfg *provisioning
 	}, "")
 }
 
+// authorizePushJob checks that the requesting user may read every supported
+// resource type. A push job only exports resources to the repository (it reads
+// them and writes files to git); it never creates or deletes Grafana resources,
+// so read permission is sufficient.
+//
+// This runs at job creation time while the user's identity is still in the
+// request context, since the job executes later as the provisioning service
+// identity (which can read everything) — without this check a user could export
+// resources they are not allowed to read.
+func (c *jobsConnector) authorizePushJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository) error {
+	authorizer, err := c.newJobAuthorizer(ctx, repo, cfg)
+	if err != nil {
+		return err
+	}
+	return authorizer.AuthorizeReadAllSupported(ctx)
+}
+
 // authorizeResourceJob checks that the requesting user has the required permissions
-// for operations that read and write all supported resource types (export and migrate).
+// for a migration, which reads and writes all supported resource types.
 // This runs at job creation time while the user's identity is still in the request
 // context, since the job executes later as the provisioning service identity.
 //
@@ -405,10 +436,6 @@ func (c *jobsConnector) authorizeAdminJob(ctx context.Context, cfg *provisioning
 //  1. Read permission on all supported resource types at root level.
 //  2. Create permission on all supported resource types in the target folder.
 func (c *jobsConnector) authorizeResourceJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, spec provisioning.JobSpec) error {
-	if spec.Push == nil && spec.Migrate == nil {
-		return nil
-	}
-
 	authorizer, err := c.newJobAuthorizer(ctx, repo, cfg)
 	if err != nil {
 		return err
@@ -419,20 +446,74 @@ func (c *jobsConnector) authorizeResourceJob(ctx context.Context, repo repositor
 	return authorizer.AuthorizeCreateAllSupported(ctx)
 }
 
+func (c *jobsConnector) authorizeMigrateJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, spec provisioning.JobSpec) error {
+	if spec.Migrate == nil {
+		return nil
+	}
+
+	if err := c.authorizeResourceJob(ctx, repo, cfg, spec); err != nil {
+		return err
+	}
+
+	// When deletion is skipped the migration removes nothing, so no delete
+	// permission is required (read + create above is enough).
+	if spec.Migrate.SkipResourceDeletion {
+		return nil
+	}
+
+	// Require delete permission only for what the migration will actually remove,
+	// mirroring UnifiedStorageMigrator:
+	//   - instance/unset targets always clean the whole namespace → delete-all.
+	//   - folder/folderless coexist with unmanaged resources and only delete on a
+	//     branch migration (the exported resources); a configured-branch migration
+	//     just exports and pulls, so it needs no delete permission.
+	branchMigration := spec.Migrate.Branch != "" && spec.Migrate.Branch != cfg.Branch()
+	selective := len(spec.Migrate.Resources) > 0
+
+	switch cfg.Spec.Sync.Target {
+	case provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeFolderless:
+		switch {
+		case !branchMigration:
+			// Export + pull (takeover) only; nothing is deleted from the instance.
+			return nil
+		case selective:
+			// Deletes only the chosen resources.
+			return c.authorizeDeleteJob(ctx, repo, cfg, nil, spec.Migrate.Resources)
+		default:
+			// A full branch migration deletes every exported resource.
+			return c.authorizeDeleteAllSupported(ctx, repo, cfg)
+		}
+	default:
+		// Instance (and an unset target, which defaults to instance) always wipes
+		// the namespace.
+		return c.authorizeDeleteAllSupported(ctx, repo, cfg)
+	}
+}
+
+// authorizeDeleteAllSupported checks that the user may delete every supported
+// resource type (used before migrations that remove all instance resources).
+func (c *jobsConnector) authorizeDeleteAllSupported(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository) error {
+	authorizer, err := c.newJobAuthorizer(ctx, repo, cfg)
+	if err != nil {
+		return err
+	}
+	return authorizer.AuthorizeDeleteAllSupported(ctx)
+}
+
 // authorizeDeleteJob checks delete permissions on targeted paths and resources.
-func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, opts *provisioning.DeleteJobOptions) error {
+func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, paths []string, resources []provisioning.ResourceRef) error {
 	authorizer, err := c.newJobAuthorizer(ctx, repo, cfg)
 	if err != nil {
 		return err
 	}
 
-	for _, path := range opts.Paths {
+	for _, path := range paths {
 		if err := authorizer.AuthorizeDeleteByPath(ctx, path); err != nil {
 			return fmt.Errorf("authorize delete %q: %w", path, err)
 		}
 	}
 
-	return c.authorizeResourceRefs(ctx, authorizer, cfg.Namespace, opts.Resources, utils.VerbDelete, "delete")
+	return c.authorizeResourceRefs(ctx, authorizer, cfg.Namespace, resources, utils.VerbDelete, "delete")
 }
 
 // authorizeMoveJob checks update permission on sources and create permission on targets.

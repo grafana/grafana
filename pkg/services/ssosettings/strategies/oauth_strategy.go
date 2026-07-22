@@ -36,7 +36,7 @@ func NewOAuthStrategy(cfg *setting.Cfg) *OAuthStrategy {
 	return oauthStrategy
 }
 
-func (s *OAuthStrategy) IsMatch(provider string) bool {
+func (s *OAuthStrategy) IsMatch(_ context.Context, provider string) bool {
 	_, ok := s.settingsByProvider[provider]
 	return ok
 }

@@ -5,8 +5,16 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { CodeMirrorEditor, signatureHelp, type CodeMirrorSqlDialect } from '@grafana/ui/unstable';
 
+import { SQL_EXPRESSIONS_DIALECT } from '../../../utils/sqlIdentifier';
+
 import { getSqlSignatureHelpProvider, type SqlFunctionSignature } from './signatureHelp';
 import { getSqlCompletionSource, type SqlCompletionProvider } from './utils';
+
+// SQL Expressions run against a MySQL backend, where identifiers are quoted with backticks.
+// Maps the identifier-quoting dialect (single source of truth) to the CodeMirror SQL dialect so
+// parsing and writing can't drift, while still letting callers override it via the `dialect` prop.
+const DEFAULT_CODE_MIRROR_SQL_DIALECT: CodeMirrorSqlDialect =
+  SQL_EXPRESSIONS_DIALECT === 'mysql' ? 'mySql' : 'standardSql';
 
 export interface SqlEditorProps {
   value: string;
@@ -18,7 +26,7 @@ export interface SqlEditorProps {
   ariaLabel?: string;
   /**
    * SQL dialect used for syntax highlighting and keyword completion.
-   * Defaults to `'standardSql'`.
+   * Defaults to the dialect SQL Expressions run against (MySQL).
    */
   dialect?: CodeMirrorSqlDialect;
   children?: (props: { formatQuery: () => void }) => ReactNode;
@@ -32,7 +40,7 @@ export const SqlEditor = ({
   formatter,
   height = '200px',
   ariaLabel,
-  dialect,
+  dialect = DEFAULT_CODE_MIRROR_SQL_DIALECT,
   children,
 }: SqlEditorProps) => {
   const styles = useStyles2(getStyles);
@@ -80,7 +88,7 @@ export const SqlEditor = ({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   editorBorder: css({
-    border: `1px solid ${theme.colors.border.medium}`,
+    border: `1px solid ${theme.components.input.borderColor}`,
     borderTopLeftRadius: theme.shape.radius.default,
     borderTopRightRadius: theme.shape.radius.default,
     overflow: 'hidden',

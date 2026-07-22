@@ -85,6 +85,31 @@ describe('MenuItem', () => {
     expect(await screen.findByTestId(selectors.components.Menu.SubMenu.container)).toBeInTheDocument();
   });
 
+  it('announces subMenu parents to screen readers via aria-haspopup and aria-expanded', async () => {
+    const childItems = [
+      <MenuItem key="subitem1" label="subitem1" icon="history" />,
+      <MenuItem key="subitem2" label="subitem2" icon="apps" />,
+    ];
+
+    render(getMenuItem({ childItems }));
+
+    const item = screen.getByLabelText(selectors.components.Menu.MenuItem('Test'));
+    expect(item).toHaveAttribute('aria-haspopup', 'menu');
+    expect(item).toHaveAttribute('aria-expanded', 'false');
+
+    await user.hover(item);
+
+    expect(item).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('does not set aria-haspopup or aria-expanded on items without a subMenu', () => {
+    render(getMenuItem({ onClick: jest.fn() }));
+
+    const item = screen.getByLabelText(selectors.components.Menu.MenuItem('Test'));
+    expect(item).not.toHaveAttribute('aria-haspopup');
+    expect(item).not.toHaveAttribute('aria-expanded');
+  });
+
   it('renders with role="menuitem" when URL is passed (default for menu semantics)', () => {
     render(<MenuItem label="URL Item" url="/some-url" />);
     expect(screen.getByRole('menuitem', { name: 'URL Item' })).toBeInTheDocument();

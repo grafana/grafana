@@ -959,7 +959,9 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 // translation registered in mapper.go. Behaviour is preserved verbatim from the
 // pre-fork checkPermission.
 func (s *Service) checkPermissionWithMapping(ctx context.Context, scopeMap map[string]bool, req *checkRequest, t Mapping, getTree folderTreeGetter) (bool, error) {
-	if req.Name == "" && req.Verb != utils.VerbCreate {
+	// A request with a folder but no name is a folder-scoped question, not a capabilities probe.
+	folderScoped := req.ParentFolder != "" && t.HasFolderSupport()
+	if req.Name == "" && req.Verb != utils.VerbCreate && !folderScoped {
 		// For resources that require a wildcard scope, we can perform the check immediately
 		if t.Scope("") == "*" {
 			return scopeMap["*"], nil
@@ -1104,6 +1106,15 @@ func (s *Service) getScopeMap(permissions []accesscontrol.Permission) map[string
 		if perm.Kind == "" && perm.Scope != "" {
 			s.logger.Warn("found unsplit permission scope", "scope", perm.Scope)
 			perm.Kind, perm.Attribute, perm.Identifier = accesscontrol.SplitScope(perm.Scope)
+		}
+		// Collapse per-section grants (settings:<section>:*) to settings:uid:<section>.
+		// Handled here—before generic wildcards—to prevent section wildcards from
+		// escalating into global grants. True globals and per-key grants fall through.
+		if perm.Kind == "settings" && perm.Attribute != "*" {
+			if perm.Identifier == "*" {
+				permMap["settings:uid:"+perm.Attribute] = true
+			}
+			continue
 		}
 		// If has any wildcard, return immediately
 		if perm.Kind == "*" || perm.Attribute == "*" || perm.Identifier == "*" {

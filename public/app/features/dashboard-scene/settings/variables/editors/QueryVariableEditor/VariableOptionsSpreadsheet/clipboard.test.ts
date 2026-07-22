@@ -269,7 +269,10 @@ describe('useClipboardPaste', () => {
       mockPermissionState('granted');
 
       const { result } = renderHook(() => useClipboardPaste());
-      await waitFor(() => expect(result.current.canPaste).toBe(true));
+      await waitFor(() => {
+        expect(result.current.access).toBe('granted');
+        expect(result.current.canPaste).toBe(true);
+      });
 
       expect(result.current.access).toBe('granted');
       expect(result.current.clipboardFormat).toBe('csv');
@@ -291,7 +294,10 @@ describe('useClipboardPaste', () => {
       mockPermissionState('granted');
 
       const { result } = renderHook(() => useClipboardPaste());
-      await waitFor(() => expect(result.current.canPaste).toBe(true));
+      await waitFor(() => {
+        expect(result.current.access).toBe('granted');
+        expect(result.current.canPaste).toBe(true);
+      });
       act(() => {
         result.current.markImported('a,b,c');
       });
@@ -319,7 +325,10 @@ describe('useClipboardPaste', () => {
       mockPermissionState('granted');
 
       const { result } = renderHook(() => useClipboardPaste());
-      await waitFor(() => expect(result.current.canPaste).toBe(true));
+      await waitFor(() => {
+        expect(result.current.access).toBe('granted');
+        expect(result.current.canPaste).toBe(true);
+      });
       act(() => {
         result.current.markImported('a,b,c');
       });
@@ -339,7 +348,10 @@ describe('useClipboardPaste', () => {
       mockPermissionState('granted');
 
       const { result } = renderHook(() => useClipboardPaste());
-      await waitFor(() => expect(result.current.canPaste).toBe(true));
+      await waitFor(() => {
+        expect(result.current.access).toBe('granted');
+        expect(result.current.canPaste).toBe(true);
+      });
       act(() => {
         result.current.markImported('a,b,c');
       });

@@ -2,7 +2,7 @@ import { type FolderRow } from './hooks/useMigrationData';
 import { compareFolders } from './sorting';
 
 function folder(uid: string, title: string, resourceCount: number): FolderRow {
-  return { uid, title, resourceCount, directResources: [] };
+  return { uid, title, path: [], resourceCount, directResources: [] };
 }
 
 describe('compareFolders', () => {

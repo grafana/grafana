@@ -2,7 +2,9 @@ import { render as RTLRender, screen } from '@testing-library/react';
 import * as React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
+import { config } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
+import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { VERSIONS_FETCH_LIMIT } from 'app/features/dashboard/types/revisionModels';
 import { type DashboardMeta } from 'app/types/dashboard';
 
@@ -250,6 +252,30 @@ describe('VersionsEditView', () => {
       render(<versionsView.Component model={versionsView} />);
 
       expect(await screen.findByText('user:uid-unknown')).toBeInTheDocument();
+    });
+  });
+
+  describe('Provisioned dashboards', () => {
+    beforeEach(() => {
+      config.featureToggles.provisioning = true;
+    });
+
+    afterEach(() => {
+      config.featureToggles.provisioning = false;
+      jest.clearAllMocks();
+    });
+
+    it('does not fetch version history and shows the not-available alert', async () => {
+      mockUseGetDisplayMappingQuery.mockReturnValue({ data: undefined });
+
+      const { versionsView } = await buildTestScene({
+        k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Repo } },
+      });
+      render(<versionsView.Component model={versionsView} />);
+
+      expect(await screen.findByText(/Version history is not available/)).toBeInTheDocument();
+      expect(mockListDashboardHistory).not.toHaveBeenCalled();
+      expect(versionsView.versions).toHaveLength(0);
     });
   });
 

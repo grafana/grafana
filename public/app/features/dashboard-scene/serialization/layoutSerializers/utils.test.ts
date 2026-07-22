@@ -474,7 +474,7 @@ describe('buildVizPanel', () => {
 
   describe('hoverHeader interaction with time range', () => {
     // hoverHeader is shown only when there's no title AND no visible time override.
-    // timeOverrideShown = (timeFrom || timeShift) && !hideTimeOverride — note timeCompare is NOT included.
+    // timeOverrideShown = (timeFrom || timeShift || timeCompare) && !hideTimeOverride.
 
     it('shows hoverHeader when there is no title and no time fields', () => {
       const viz = buildVizPanel(buildPanelWithQueryOptions({}, ''));
@@ -500,10 +500,10 @@ describe('buildVizPanel', () => {
       expect(viz.state.hoverHeader).toBe(true);
     });
 
-    it('shows hoverHeader when only timeCompare is set (timeCompare is not a visible time override)', () => {
+    it('hides hoverHeader when only timeCompare is set', () => {
       const viz = buildVizPanel(buildPanelWithQueryOptions({ timeCompare: '1d' }, ''));
 
-      expect(viz.state.hoverHeader).toBe(true);
+      expect(viz.state.hoverHeader).toBe(false);
     });
 
     it('hides hoverHeader when the panel has a title, regardless of time fields', () => {

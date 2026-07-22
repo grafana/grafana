@@ -5,6 +5,7 @@ import {
   type ClearHistoryClicked,
   type EmptyCtaClicked,
   type IncidentsCardClicked,
+  type RecommendationEnableClicked,
   type TabChanged,
 } from './types';
 
@@ -18,6 +19,11 @@ export const clearHistoryClicked = createHomepageEvent<ClearHistoryClicked>('cle
 
 /** Fired when the user clicks the empty-state call-to-action on the Recent tab. */
 export const emptyCtaClicked = createHomepageEvent<EmptyCtaClicked>('empty_cta_clicked');
+
+/** Fired when the user clicks the Enable CTA on a homepage recommendation card. */
+export const recommendationEnableClicked = createHomepageEvent<RecommendationEnableClicked>(
+  'recommendation_enable_clicked'
+);
 
 /** Fired when the user clicks any control on the homepage Firing alerts card. */
 export const alertsCardClicked = createHomepageEvent<AlertsCardClicked>('alerts_card_clicked');

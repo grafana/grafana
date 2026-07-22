@@ -1268,6 +1268,7 @@ func TestSetTeamMember(t *testing.T) {
 		fakeResource    func(t *testing.T) *fakeResourceInterface
 		expectedErrMsg  string
 		expectUpdate    bool
+		expectRemoved   bool
 		validateMembers func(t *testing.T, members []iamv0.TeamTeamMember)
 		validateCalls   func(t *testing.T, getCalls, updateCalls int)
 	}{
@@ -1346,7 +1347,8 @@ func TestSetTeamMember(t *testing.T) {
 					},
 				}
 			},
-			expectUpdate: true,
+			expectUpdate:  true,
+			expectRemoved: true,
 			validateMembers: func(t *testing.T, members []iamv0.TeamTeamMember) {
 				require.Len(t, members, 1)
 				assert.Equal(t, "user-uid-2", members[0].Name)
@@ -1615,17 +1617,19 @@ func TestSetTeamMember(t *testing.T) {
 				},
 			}
 
-			err := testApi.setTeamMember(makeReqCtx(), fakeClient, "stacks-123-org-1", "10", tt.userID, tt.permission)
+			removed, err := testApi.setTeamMember(makeReqCtx(), fakeClient, "stacks-123-org-1", "10", tt.userID, tt.permission)
 
 			if tt.expectedErrMsg != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.expectedErrMsg)
+				assert.False(t, removed, "should not report a removal on error")
 				if tt.validateCalls != nil {
 					tt.validateCalls(t, getCalls, updateCalls)
 				}
 				return
 			}
 			require.NoError(t, err)
+			assert.Equal(t, tt.expectRemoved, removed, "removed return value")
 
 			if tt.expectUpdate {
 				require.NotNil(t, lastUpdated, "expected an Update call")
@@ -1653,7 +1657,8 @@ func TestTeamMemberWrappers_RestConfigNotAvailable(t *testing.T) {
 		{
 			name: "setUserPermissionInTeamMembers",
 			call: func(a *api) error {
-				return a.setUserPermissionInTeamMembers(makeReqCtx(), "stacks-123-org-1", "10", 1, "Admin")
+				_, err := a.setUserPermissionInTeamMembers(makeReqCtx(), "stacks-123-org-1", "10", 1, "Admin")
+				return err
 			},
 		},
 		{

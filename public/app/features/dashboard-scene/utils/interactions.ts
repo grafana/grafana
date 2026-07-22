@@ -78,6 +78,12 @@ export const DashboardInteractions = {
     reportDashboardInteraction('exit_edit_button_clicked');
   },
 
+  // grafana_dashboards_edit_discarded
+  // when a user discards changes by confirming exit from edit mode without saving
+  dashboardEditDiscarded: () => {
+    reportDashboardInteraction('edit_discarded');
+  },
+
   // grafana_dashboards_outline_clicked
   // when a user opens the outline view
   dashboardOutlineClicked: () => {
@@ -158,11 +164,12 @@ export const DashboardInteractions = {
   },
 
   panelActionClicked(
-    item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view',
+    item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view' | 'use_library_panel',
     id: number,
-    source: 'panel' | 'edit_pane' | 'keyboard'
+    source: 'panel' | 'edit_pane' | 'keyboard',
+    panelType?: string
   ) {
-    reportDashboardInteraction('panel_action_clicked', { item, id, source });
+    reportDashboardInteraction('panel_action_clicked', { item, id, source, panelType });
   },
 
   // Panel styles copy/paste interactions
@@ -190,9 +197,9 @@ export const DashboardInteractions = {
     reportDashboardInteraction('edit_action_clicked', { item: 'ungroup' });
   },
   trackPastePanelClick(
-    source: 'sidebar' | 'canvas' | 'editPaneHeader' = 'canvas',
+    source: 'sidebar' | 'canvas' | 'editPaneHeader' | 'keyboard' = 'canvas',
     target?: 'row' | 'tab' | 'dashboard',
-    action: 'drop' | 'click' = 'click'
+    action: 'drop' | 'click' | 'keyboard' = 'click'
   ) {
     reportDashboardInteraction('edit_action_clicked', { item: 'paste_panel', source, target, action });
   },

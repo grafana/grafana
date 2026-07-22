@@ -50,6 +50,10 @@ type DataSourceAPIBuilderConfig struct {
 	EnableResourceEndpoint      bool
 	EnableHealthEndpoint        bool
 	EnableChunkedQueryStreaming bool
+
+	// HandlerOrigin, when non-empty, is written as the X-Grafana-DS-Apiserver
+	// response header on every subresource request. Set to "remote" when MultiTenancy is enabled.
+	HandlerOrigin string
 }
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
@@ -95,6 +99,7 @@ func RegisterAPIService(
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	flags := DataSourceAPIBuilderConfig{
+		HandlerOrigin:               "local",
 		LoadQueryTypes:              features.IsEnabledGlobally(featuremgmt.FlagDatasourcesQueryTypes),
 		LoadOpenAPISpec:             features.IsEnabledGlobally(featuremgmt.FlagDatasourcesLoadOpenAPI),
 		UseDualWriter:               features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs),

@@ -378,7 +378,7 @@ describe('RuleList', () => {
     expect(labels[0]).toHaveTextContent('severitywarning');
     expect(labels[1]).toHaveTextContent('foobar');
 
-    expect(ruleDetails).toHaveTextContent('Expressiontopk ( 5 , foo ) [ 5m ]');
+    expect(ruleDetails).toHaveTextContent('Expressiontopk(5, foo)[5m]');
     expect(ruleDetails).toHaveTextContent('messagegreat alert');
     expect(ruleDetails).toHaveTextContent('Instances');
 

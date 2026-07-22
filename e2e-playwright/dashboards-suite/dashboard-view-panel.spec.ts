@@ -103,6 +103,12 @@ test.describe('View panel', { tag: ['@dashboards'] }, () => {
     const headerTitles = await Promise.all(headers.map((header) => header.innerText()));
 
     expect(headerTitles).toEqual(['method=GET', 'method=POST']);
+
+    // Go back to dashboard
+    await dashboardPage.getByGrafanaSelector(selectors.components.ViewPanelSidePane.goBackButton).click();
+
+    // Verify fanout param is removed
+    await expect(page).toHaveURL((url) => url.searchParams.has('fanout') === false);
   });
 });
 

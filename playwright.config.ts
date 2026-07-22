@@ -96,10 +96,6 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(pluginDirRoot, '/mysql'),
     }),
     withAuth({
-      name: 'mssql',
-      testDir: path.join(pluginDirRoot, '/mssql'),
-    }),
-    withAuth({
       name: 'extensions-test-app',
       testDir: path.join(testDirRoot, '/test-plugins/grafana-extensionstest-app'),
     }),
@@ -122,10 +118,6 @@ export default defineConfig<PluginOptions>({
     withAuth({
       name: 'influxdb',
       testDir: path.join(pluginDirRoot, '/influxdb'),
-    }),
-    withAuth({
-      name: 'jaeger',
-      testDir: path.join(pluginDirRoot, '/jaeger'),
     }),
     withAuth({
       name: 'grafana-postgresql-datasource',
@@ -190,6 +182,15 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(testDirRoot, '/dashboard-cujs'),
       testMatch: ['global-teardown.spec.ts'],
       dependencies: ['dashboard-cujs'],
+    }),
+    withAuth({
+      name: 'journey-tracking',
+      testDir: path.join(testDirRoot, '/journey-tracking'),
+      use: {
+        featureToggles: {
+          cujTracking: true,
+        },
+      },
     }),
     withAuth({
       name: 'grafana-e2etest-panel',

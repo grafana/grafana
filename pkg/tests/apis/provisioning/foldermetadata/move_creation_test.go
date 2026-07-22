@@ -1,7 +1,6 @@
 package foldermetadata
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -25,11 +24,10 @@ func move(t *testing.T, helper *common.ProvisioningTestHelper, repo, originalPat
 
 func TestIntegrationProvisioning_MoveFile_FolderMetadataFlag(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "folder-metadata-move-test-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name: repo, SyncTarget: "instance", Workflows: []string{"write"}, SkipResourceAssertions: true,
+		Name: repo, SyncTarget: "instance", Workflows: []string{"write"},
 	})
 
 	files := helper.NewFilesClient(repo)
@@ -41,13 +39,13 @@ func TestIntegrationProvisioning_MoveFile_FolderMetadataFlag(t *testing.T) {
 		move(t, helper, repo, "move-src-1.json", "move-dest-1/dashboard.json",
 			common.DashboardJSON("move-dash-1", "Move Dash 1 Updated", 2))
 
-		uid, title := files.RequireValidFolderMetadata(t, ctx, "move-dest-1/_folder.json")
+		uid, title := files.RequireValidFolderMetadata(t, "move-dest-1/_folder.json")
 		require.Equal(t, "move-dest-1", title)
 
-		_, err := helper.Folders.Resource.Get(ctx, uid, metav1.GetOptions{})
+		_, err := helper.Folders.Resource.Get(t.Context(), uid, metav1.GetOptions{})
 		require.NoError(t, err, "Grafana folder should exist with the UID from _folder.json")
 
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "move-src-1.json")
+		_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "move-src-1.json")
 		require.Error(t, err, "original file should no longer exist after the move")
 	})
 
@@ -58,21 +56,21 @@ func TestIntegrationProvisioning_MoveFile_FolderMetadataFlag(t *testing.T) {
 		move(t, helper, repo, "move-src-2.json", "anc-x/anc-y/dashboard.json",
 			common.DashboardJSON("move-dash-2", "Move Dash 2 Updated", 2))
 
-		parentUID, _ := files.RequireValidFolderMetadata(t, ctx, "anc-x/_folder.json")
-		childUID, childTitle := files.RequireValidFolderMetadata(t, ctx, "anc-x/anc-y/_folder.json")
+		parentUID, _ := files.RequireValidFolderMetadata(t, "anc-x/_folder.json")
+		childUID, childTitle := files.RequireValidFolderMetadata(t, "anc-x/anc-y/_folder.json")
 		require.Equal(t, "anc-y", childTitle)
 		require.NotEqual(t, parentUID, childUID, "each ancestor folder gets a distinct UID")
 
-		_, err := helper.Folders.Resource.Get(ctx, parentUID, metav1.GetOptions{})
+		_, err := helper.Folders.Resource.Get(t.Context(), parentUID, metav1.GetOptions{})
 		require.NoError(t, err, "parent Grafana folder should exist")
-		_, err = helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		_, err = helper.Folders.Resource.Get(t.Context(), childUID, metav1.GetOptions{})
 		require.NoError(t, err, "child Grafana folder should exist")
 	})
 
 	t.Run("move into existing managed folder does not change its _folder.json UID", func(t *testing.T) {
 		resp := files.Post(t, "existing-move-folder/", nil)
 		require.Equal(t, http.StatusOK, resp.StatusCode, "creating destination folder should succeed")
-		existingUID := files.ReadFolderUID(t, ctx, "existing-move-folder/_folder.json")
+		existingUID := files.ReadFolderUID(t, "existing-move-folder/_folder.json")
 		require.NotEmpty(t, existingUID)
 
 		resp = files.Post(t, "move-src-3.json", common.DashboardJSON("move-dash-3", "Move Dash 3", 1))
@@ -81,7 +79,7 @@ func TestIntegrationProvisioning_MoveFile_FolderMetadataFlag(t *testing.T) {
 		move(t, helper, repo, "move-src-3.json", "existing-move-folder/dashboard.json",
 			common.DashboardJSON("move-dash-3", "Move Dash 3 Updated", 2))
 
-		uidAfter := files.ReadFolderUID(t, ctx, "existing-move-folder/_folder.json")
+		uidAfter := files.ReadFolderUID(t, "existing-move-folder/_folder.json")
 		require.Equal(t, existingUID, uidAfter, "moving into an existing folder must not change its UID")
 	})
 
@@ -91,13 +89,13 @@ func TestIntegrationProvisioning_MoveFile_FolderMetadataFlag(t *testing.T) {
 
 		move(t, helper, repo, "move-src-4.json", "rename-dest/move-src-4.json", nil)
 
-		uid, title := files.RequireValidFolderMetadata(t, ctx, "rename-dest/_folder.json")
+		uid, title := files.RequireValidFolderMetadata(t, "rename-dest/_folder.json")
 		require.Equal(t, "rename-dest", title)
 
-		_, err := helper.Folders.Resource.Get(ctx, uid, metav1.GetOptions{})
+		_, err := helper.Folders.Resource.Get(t.Context(), uid, metav1.GetOptions{})
 		require.NoError(t, err, "Grafana folder should exist with the UID from _folder.json")
 
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "move-src-4.json")
+		_, err = helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "move-src-4.json")
 		require.Error(t, err, "original file should no longer exist after the rename move")
 	})
 }

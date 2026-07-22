@@ -5,6 +5,7 @@ keywords:
   - git integration
   - git sync
   - github
+  - github enterprise
   - as code
 labels:
   products:
@@ -62,6 +63,7 @@ spec:
   github:
     appID: '<GITHUB_APP_ID>'
     installationID: '<GITHUB_INSTALL_ID>'
+    serverUrl: '<GITHUB_ENTERPRISE_SERVER_URL>' # Only required for GitHub Enterprise
 secure:
   privateKey:
     create: '<GITHUB_PRIVATE_KEY>'
@@ -108,6 +110,20 @@ spec:
 secure:
   token: { create: 'GIT_PAT' }
 
+# Git Sync for GitHub Enterprise:
+spec:
+  type: githubEnterprise
+  githubEnterprise:
+    url: '<GIT_REPO_URL>'
+    branch: '<BRANCH>'
+    path: grafana/
+  # GitHub Enterprise App connection only:
+  connection:
+    name: '<GITHUB_ENTERPRISE_CONNECTION_NAME>'
+# GitHub Personal Access Token only:
+secure:
+  token: { create: 'GIT_PAT' }
+
 # GitLab Personal Access Token only:
 spec:
   type: gitlab
@@ -146,6 +162,7 @@ Replace the placeholders with your values:
 - _`<GIT_REPO_URL>`_: GitHub repository URL
 - _`<BRANCH>`_: Branch to sync
 - _`<GITHUB_CONNECTION_NAME>`_: The name of your GitHub connection
+- _`<GITHUB_ENTERPRISE_CONNECTION_NAME>`_: The name of your GitHub Enterprise connection
 - _`<GIT_PAT>`_: Git provider Personal Access Token
 
 {{< admonition type="note" >}}
@@ -158,20 +175,20 @@ Git Sync supports two sync targets: `target: folder` (the default) creates a fol
 
 The following configuration parameters are available:
 
-| Field                                   | Description                                                 |
-| --------------------------------------- | ----------------------------------------------------------- |
-| `metadata.name`                         | Unique identifier for this repository resource              |
-| `spec.title`                            | Human-readable name displayed in Grafana UI                 |
-| `spec.type`                             | Repository type (`github`)                                  |
-| `spec.github.url`                       | GitHub repository URL                                       |
-| `spec.github.branch`                    | Branch to sync                                              |
-| `spec.github.path`                      | Directory path containing dashboards                        |
-| `spec.github.generateDashboardPreviews` | Generate preview images (true/false)                        |
-| `spec.sync.enabled`                     | Enable synchronization (true/false)                         |
-| `spec.sync.intervalSeconds`             | Sync interval in seconds                                    |
-| `spec.sync.target`                      | Where to place synced dashboards (`folder` or `folderless`) |
-| `spec.workflows`                        | Enabled workflows: `write` (direct commits), `branch` (PRs) |
-| `secure.token.create`                   | GitHub Personal Access Token                                |
+| Field                                   | Description                                                     |
+| --------------------------------------- | --------------------------------------------------------------- |
+| `metadata.name`                         | Unique identifier for this repository resource                  |
+| `spec.title`                            | Human-readable name displayed in Grafana UI                     |
+| `spec.type`                             | Repository type (`github`, `githubEnterprise`)                  |
+| `spec.github.url`                       | GitHub repository URL                                           |
+| `spec.github.branch`                    | Branch to sync                                                  |
+| `spec.github.path`                      | Directory path containing dashboards                            |
+| `spec.github.generateDashboardPreviews` | Generate preview images (true/false) (Only available in GitHub) |
+| `spec.sync.enabled`                     | Enable synchronization (true/false)                             |
+| `spec.sync.intervalSeconds`             | Sync interval in seconds                                        |
+| `spec.sync.target`                      | Where to place synced dashboards (`folder` or `folderless`)     |
+| `spec.workflows`                        | Enabled workflows: `write` (direct commits), `branch` (PRs)     |
+| `secure.token.create`                   | GitHub Personal Access Token                                    |
 
 ## Push the resources to Grafana
 

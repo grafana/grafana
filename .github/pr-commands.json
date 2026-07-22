@@ -110,14 +110,6 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/jaeger/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Jaeger"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/datasource/loki/**/*",
       "pkg/tsdb/loki/**/*"
     ],
@@ -127,29 +119,11 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/mssql/**/*",
-      "pkg/tsdb/mssql/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/MSSQL"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/datasource/mysql/**/*",
       "pkg/tsdb/mysql/**/*"
     ],
     "action": "updateLabel",
     "addLabel": "datasource/MySQL"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/grafana-pyroscope-datasource/**/*",
-      "pkg/tsdb/grafana-pyroscope-datasource/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Pyroscope"
   },
   {
     "type": "changedfiles",
