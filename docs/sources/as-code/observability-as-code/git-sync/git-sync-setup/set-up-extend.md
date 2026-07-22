@@ -54,7 +54,7 @@ To check the configured webhooks, go to **Administration > General > Provisionin
 
 {{< admonition type="warning" >}}
 
-GitHub limits each repository to **20 webhooks per event type** (for example, `push` and `pull_request`). Git Sync registers its own webhooks for each repository connection, so when several Grafana instances sync the same repository, each connection adds to this total. Once the limit is exceeded, GitHub rejects new webhooks with an error such as:
+GitHub limits each repository to **20 webhooks per event type** (for example, `push` and `pull_request`). Git Sync registers its own webhooks for each repository connection, so when several Grafana instances sync the same repository, each connection adds to this total. After the limit is exceeded, GitHub rejects new webhooks with an error such as:
 
 ```
 GitHub API error (HTTP 422: Validation Failed: The "pull_request" event cannot have more than 20 hooks; The "push" event cannot have more than 20 hooks)
