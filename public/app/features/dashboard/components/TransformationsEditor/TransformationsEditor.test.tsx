@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type DataTransformerConfig, standardTransformersRegistry } from '@grafana/data';
@@ -78,6 +78,21 @@ describe('TransformationsEditor', () => {
       await userEvent.type(search, 'this matches nothing');
 
       await waitFor(() => expect(status).toHaveTextContent('No transformations found'));
+    });
+
+    it('exposes the picker results as a list so screen readers announce the item count', async () => {
+      setup([
+        {
+          id: 'reduce',
+          options: {},
+        },
+      ]);
+
+      const addTransformationButton = screen.getByTestId(selectors.components.Transforms.addTransformationButton);
+      await userEvent.click(addTransformationButton);
+
+      const list = screen.getByRole('list', { name: 'Transformations' });
+      expect(within(list).getAllByRole('listitem').length).toBeGreaterThan(0);
     });
   });
 

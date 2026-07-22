@@ -165,13 +165,19 @@ interface TransformationsGridProps {
 
 function TransformationsGrid({ showIllustrations, transformations, onClick, data }: TransformationsGridProps) {
   return (
-    <Grid columns={3} gap={1}>
+    <Grid
+      columns={3}
+      gap={1}
+      role="list"
+      aria-label={t('dashboard.transformation-picker-ng.transformations-list', 'Transformations')}
+    >
       {transformations.map((transform) => (
         <TransformationCard
           data={data}
           fullWidth
           key={transform.id}
           onClick={onClick}
+          role="listitem"
           showIllustrations={showIllustrations}
           transform={transform}
         />

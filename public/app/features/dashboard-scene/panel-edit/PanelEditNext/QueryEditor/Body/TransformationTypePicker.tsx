@@ -128,13 +128,19 @@ export function TransformationTypePicker() {
           message={t('dashboard.transformation-picker-ng.no-transformations-found', 'No transformations found')}
         />
       ) : (
-        <Grid columns={3} gap={1}>
+        <Grid
+          columns={3}
+          gap={1}
+          role="list"
+          aria-label={t('dashboard.transformation-picker-ng.transformations-list', 'Transformations')}
+        >
           {filteredTransformations.map((item) => (
             <TransformationCard
               key={item.id}
               transform={item}
               data={data?.series ?? []}
               onClick={(id) => finalizePendingTransformation(id)}
+              role="listitem"
               showIllustrations={showIllustrations}
               fullWidth
             />
