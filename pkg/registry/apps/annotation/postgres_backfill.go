@@ -5,35 +5,20 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/lib/pq"
+
+	"github.com/grafana/grafana/pkg/registry/apps/annotation/migrator"
 )
 
-// BackfillRecord is a fully-resolved annotation ready to be written into the
-// multi-tenant store during migration from the legacy backend.
-type BackfillRecord struct {
-	Namespace    string
-	Name         string
-	Time         int64
-	TimeEnd      *int64
-	DashboardUID *string
-	PanelID      *int64
-	Text         string
-	Tags         []string
-	Scopes       []string
-	CreatedBy    string
-	CreatedAt    time.Time
-	LegacyID     int64
-	LegacyData   *string
-}
+var _ migrator.BackfillWriter = (*PostgreSQLStore)(nil)
 
-// BulkInsert writes a batch of backfilled annotations in a single transaction.
+// InsertBatch writes a batch of backfilled annotations in a single transaction.
 //
 // It is idempotent: rows are inserted with ON CONFLICT DO NOTHING against the
 // (namespace, name, time) primary key.
-func (s *PostgreSQLStore) BulkInsert(ctx context.Context, recs []BackfillRecord) (int64, error) {
+func (s *PostgreSQLStore) InsertBatch(ctx context.Context, recs []migrator.BackfillRecord) (int64, error) {
 	if len(recs) == 0 {
 		return 0, nil
 	}
@@ -56,7 +41,7 @@ func (s *PostgreSQLStore) BulkInsert(ctx context.Context, recs []BackfillRecord)
 // UpsertBatch reconciles a batch of changed legacy annotations: for each record
 // it removes any existing rows with the same name and re-inserts the current
 // version, all in one transaction. Returns the number of rows written.
-func (s *PostgreSQLStore) UpsertBatch(ctx context.Context, recs []BackfillRecord) (int64, error) {
+func (s *PostgreSQLStore) UpsertBatch(ctx context.Context, recs []migrator.BackfillRecord) (int64, error) {
 	if len(recs) == 0 {
 		return 0, nil
 	}
@@ -91,7 +76,7 @@ func (s *PostgreSQLStore) UpsertBatch(ctx context.Context, recs []BackfillRecord
 // ensureBatchPartitions creates the partition for every distinct week spanned
 // by the batch. ensurePartition is idempotent (CREATE ... IF NOT EXISTS) and
 // commits its own transaction, so it is safe to call up-front.
-func (s *PostgreSQLStore) ensureBatchPartitions(ctx context.Context, recs []BackfillRecord) error {
+func (s *PostgreSQLStore) ensureBatchPartitions(ctx context.Context, recs []migrator.BackfillRecord) error {
 	seen := make(map[string]struct{}, len(recs))
 	for _, rec := range recs {
 		key := getPartitionName(rec.Time)
@@ -107,7 +92,7 @@ func (s *PostgreSQLStore) ensureBatchPartitions(ctx context.Context, recs []Back
 }
 
 // buildInsertSQL builds a multi-row INSERT
-func buildInsertSQL(recs []BackfillRecord) (string, []any) {
+func buildInsertSQL(recs []migrator.BackfillRecord) (string, []any) {
 	var sb strings.Builder
 	sb.WriteString("INSERT INTO annotations (")
 	sb.WriteString(annotationColumnsSQL)

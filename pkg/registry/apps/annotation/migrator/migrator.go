@@ -5,21 +5,54 @@ package migrator
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	annotation "github.com/grafana/grafana/pkg/registry/apps/annotation"
 )
 
 const defaultBatchSize = 1000
 
+// BackfillRecord is a fully-resolved annotation ready to be written into the
+// multi-tenant store during migration from the legacy backend.
+type BackfillRecord struct {
+	Namespace    string
+	Name         string
+	Time         int64
+	TimeEnd      *int64
+	DashboardUID *string
+	PanelID      *int64
+	Text         string
+	Tags         []string
+	Scopes       []string
+	CreatedBy    string
+	CreatedAt    time.Time
+	LegacyID     int64
+	LegacyData   *string
+}
+
+// LegacyReader reads user-created annotations from a legacy backend in
+// paginated batches. It is implemented by MySQLReader.
+type LegacyReader interface {
+	// CountUserAnnotations returns the number of user-created annotations
+	CountUserAnnotations(ctx context.Context, orgID int64) (int64, error)
+	// ReadBatch returns up to limit user-created annotations for the org with
+	// id > afterID, ordered by id ascending. Tags are resolved from the
+	// normalized annotation_tag/tag tables.
+	ReadBatch(ctx context.Context, orgID, afterID int64, limit int) ([]LegacyAnnotation, error)
+	// ReadChangedBatch returns up to limit user-created annotations changed
+	// since the (sinceUpdated, afterID) cursor, ordered by (updated, id).
+	// Used for incremental resync of edits made after the initial backfill.
+	ReadChangedBatch(ctx context.Context, orgID, sinceUpdated, afterID int64, limit int) ([]LegacyAnnotation, error)
+}
+
 // BackfillWriter defines the destination side of the migration.
 type BackfillWriter interface {
-	// BulkInsert writes a batch idempotently and returns the number of rows
+	// InsertBatch writes a batch idempotently and returns the number of rows
 	// actually inserted (skips on conflicts)
-	BulkInsert(ctx context.Context, recs []annotation.BackfillRecord) (int64, error)
+	InsertBatch(ctx context.Context, recs []BackfillRecord) (int64, error)
 	// UpsertBatch re-applies a batch of changed rows (delete-by-name then
 	// insert), reconciling edits that may have moved the annotation's time
-	UpsertBatch(ctx context.Context, recs []annotation.BackfillRecord) (int64, error)
+	UpsertBatch(ctx context.Context, recs []BackfillRecord) (int64, error)
 	// CountMigrated counts backfilled rows in the namespace by the
 	// legacy_migrated flag, used for the convergence check
 	CountMigrated(ctx context.Context, namespace string) (int64, error)
@@ -89,11 +122,11 @@ func (m *Migrator) Migrate(ctx context.Context, req Request) (Result, error) {
 		lastID := batch[len(batch)-1].ID
 
 		if !req.DryRun {
-			recs := make([]annotation.BackfillRecord, len(batch))
+			recs := make([]BackfillRecord, len(batch))
 			for i, a := range batch {
 				recs[i] = toBackfillRecord(req.Namespace, a)
 			}
-			inserted, err := m.dest.BulkInsert(ctx, recs)
+			inserted, err := m.dest.InsertBatch(ctx, recs)
 			if err != nil {
 				return result, fmt.Errorf("writing batch ending at id %d: %w", lastID, err)
 			}
@@ -153,7 +186,7 @@ func (m *Migrator) SyncUpdates(ctx context.Context, req Request, since UpdateCur
 		last := batch[len(batch)-1]
 
 		if !req.DryRun {
-			recs := make([]annotation.BackfillRecord, len(batch))
+			recs := make([]BackfillRecord, len(batch))
 			for i, a := range batch {
 				recs[i] = toBackfillRecord(req.Namespace, a)
 			}

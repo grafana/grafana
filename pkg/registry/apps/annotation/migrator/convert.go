@@ -6,8 +6,6 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
-
-	annotation "github.com/grafana/grafana/pkg/registry/apps/annotation"
 )
 
 const legacyNamePrefix = "legacy-"
@@ -36,8 +34,8 @@ func legacyName(id int64) string {
 
 // toBackfillRecord converts a legacy annotation into a destination record for
 // the given namespace, applying the sanitization rules required by the new schema
-func toBackfillRecord(namespace string, a LegacyAnnotation) annotation.BackfillRecord {
-	rec := annotation.BackfillRecord{
+func toBackfillRecord(namespace string, a LegacyAnnotation) BackfillRecord {
+	rec := BackfillRecord{
 		Namespace: namespace,
 		Name:      legacyName(a.ID),
 		Time:      a.Epoch,

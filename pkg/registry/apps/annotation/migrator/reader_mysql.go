@@ -7,21 +7,6 @@ import (
 	"strings"
 )
 
-// LegacyReader reads user-created annotations from a legacy backend in
-// paginated batches.
-type LegacyReader interface {
-	// CountUserAnnotations returns the number of user-created annotations
-	CountUserAnnotations(ctx context.Context, orgID int64) (int64, error)
-	// ReadBatch returns up to limit user-created annotations for the org with
-	// id > afterID, ordered by id ascending. Tags are resolved from the
-	// normalized annotation_tag/tag tables.
-	ReadBatch(ctx context.Context, orgID, afterID int64, limit int) ([]LegacyAnnotation, error)
-	// ReadChangedBatch returns up to limit user-created annotations changed
-	// since the (sinceUpdated, afterID) cursor, ordered by (updated, id).
-	// Used for incremental resync of edits made after the initial backfill.
-	ReadChangedBatch(ctx context.Context, orgID, sinceUpdated, afterID int64, limit int) ([]LegacyAnnotation, error)
-}
-
 type MySQLReader struct {
 	db *sql.DB
 }
@@ -65,6 +50,9 @@ func (r *MySQLReader) ReadBatch(ctx context.Context, orgID, afterID int64, limit
 }
 
 func (r *MySQLReader) ReadChangedBatch(ctx context.Context, orgID, sinceUpdated, afterID int64, limit int) ([]LegacyAnnotation, error) {
+	// Keyset pagination over (updated, id). Because `updated` is a non-unique
+	// millisecond timestamp, the (updated = ? AND id > ?) branch resumes within a
+	// group of rows sharing the same updated value
 	const query = legacySelectFrom +
 		"WHERE a.org_id = ? AND a.alert_id = 0 " +
 		"AND (a.updated > ? OR (a.updated = ? AND a.id > ?)) " +

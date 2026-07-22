@@ -7,8 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	annotation "github.com/grafana/grafana/pkg/registry/apps/annotation"
 )
 
 // fakeReader serves a fixed set of legacy annotations with keyset pagination,
@@ -67,14 +65,14 @@ func (f *fakeReader) ReadChangedBatch(_ context.Context, _ int64, sinceUpdated, 
 }
 
 // storedRow is a persisted annotation plus its legacy_migrated provenance flag.
-// Rows written through the backfill paths (BulkInsert/UpsertBatch) are migrated;
+// Rows written through the backfill paths (InsertBatch/UpsertBatch) are migrated;
 // a proxied/native write injected directly into rows is not.
 type storedRow struct {
-	rec      annotation.BackfillRecord
+	rec      BackfillRecord
 	migrated bool
 }
 
-// fakeWriter mimics BulkInsert against the (namespace, name, time) primary key
+// fakeWriter mimics InsertBatch against the (namespace, name, time) primary key
 // with ON CONFLICT DO NOTHING; the convergence count matches on the
 // legacy_migrated flag, as the real store does.
 type fakeWriter struct {
@@ -88,11 +86,11 @@ func newFakeWriter() *fakeWriter {
 	return &fakeWriter{rows: map[string]storedRow{}}
 }
 
-func pk(r annotation.BackfillRecord) string {
+func pk(r BackfillRecord) string {
 	return fmt.Sprintf("%s|%s|%d", r.Namespace, r.Name, r.Time)
 }
 
-func (w *fakeWriter) BulkInsert(_ context.Context, recs []annotation.BackfillRecord) (int64, error) {
+func (w *fakeWriter) InsertBatch(_ context.Context, recs []BackfillRecord) (int64, error) {
 	w.insertCalls++
 	if w.insertErr != nil && w.insertCalls == w.errOnCallNum {
 		return 0, w.insertErr
@@ -109,7 +107,7 @@ func (w *fakeWriter) BulkInsert(_ context.Context, recs []annotation.BackfillRec
 	return inserted, nil
 }
 
-func (w *fakeWriter) UpsertBatch(_ context.Context, recs []annotation.BackfillRecord) (int64, error) {
+func (w *fakeWriter) UpsertBatch(_ context.Context, recs []BackfillRecord) (int64, error) {
 	w.insertCalls++
 	if w.insertErr != nil && w.insertCalls == w.errOnCallNum {
 		return 0, w.insertErr
@@ -294,7 +292,7 @@ func TestVerifyCounts_IgnoresNativeSnowflakeRows(t *testing.T) {
 	// snowflake legacy ID falls *inside* the legacy autoincrement range (here 3,
 	// within 1..5). A value-range convergence check would miscount it as
 	// migrated; provenance keys on legacy_migrated, which native rows never set.
-	native := annotation.BackfillRecord{Namespace: "stacks-1", Name: "a-native", Time: 9999, LegacyID: 3}
+	native := BackfillRecord{Namespace: "stacks-1", Name: "a-native", Time: 9999, LegacyID: 3}
 	w.rows[pk(native)] = storedRow{rec: native, migrated: false}
 
 	legacy, migrated, err := m.VerifyCounts(context.Background(), req("stacks-1", 0))
@@ -336,10 +334,10 @@ func TestSyncUpdates_AppliesEditAndMovesTimeWithoutDuplicating(t *testing.T) {
 	// No duplicate: still exactly two rows, legacy-1 sits at its new time with
 	// the new text, and the old-time row is gone.
 	require.Len(t, w.rows, 2)
-	got, ok := w.rows[pk(annotation.BackfillRecord{Namespace: "stacks-1", Name: "legacy-1", Time: 1500})]
+	got, ok := w.rows[pk(BackfillRecord{Namespace: "stacks-1", Name: "legacy-1", Time: 1500})]
 	require.True(t, ok, "legacy-1 should exist at the new time")
 	require.Equal(t, "a1-edited", got.rec.Text)
-	_, oldExists := w.rows[pk(annotation.BackfillRecord{Namespace: "stacks-1", Name: "legacy-1", Time: 1000})]
+	_, oldExists := w.rows[pk(BackfillRecord{Namespace: "stacks-1", Name: "legacy-1", Time: 1000})]
 	require.False(t, oldExists, "old-time row must be removed")
 }
 

@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/registry/apps/annotation/migrator"
 )
 
 // TestIntegrationBackfill exercises the backfill write path against a real
@@ -24,7 +26,7 @@ func TestIntegrationBackfill(t *testing.T) {
 	panelID := int64(3)
 	data := `{"alertId":7}`
 
-	recs := []BackfillRecord{
+	recs := []migrator.BackfillRecord{
 		{
 			Namespace: ns, Name: "legacy-1", Time: historical, TimeEnd: &end,
 			DashboardUID: &dashUID, PanelID: &panelID,
@@ -37,12 +39,12 @@ func TestIntegrationBackfill(t *testing.T) {
 		},
 	}
 
-	inserted, err := store.BulkInsert(ctx, recs)
+	inserted, err := store.InsertBatch(ctx, recs)
 	require.NoError(t, err)
 	require.Equal(t, int64(2), inserted)
 
 	// Re-running is idempotent: nothing new inserted.
-	inserted, err = store.BulkInsert(ctx, recs)
+	inserted, err = store.InsertBatch(ctx, recs)
 	require.NoError(t, err)
 	require.Equal(t, int64(0), inserted)
 
@@ -79,7 +81,7 @@ func TestIntegrationBackfill(t *testing.T) {
 	// UpsertBatch reconciles an edit that moves the annotation's time into a
 	// different (here, new) weekly partition without leaving a duplicate behind.
 	movedTime := time.Date(2022, 1, 10, 12, 0, 0, 0, time.UTC).UnixMilli()
-	_, err = store.UpsertBatch(ctx, []BackfillRecord{{
+	_, err = store.UpsertBatch(ctx, []migrator.BackfillRecord{{
 		Namespace: ns, Name: "legacy-1", Time: movedTime,
 		Text: "deploy-edited", CreatedAt: time.UnixMilli(historical - 1000).UTC(), LegacyID: 1,
 	}})
