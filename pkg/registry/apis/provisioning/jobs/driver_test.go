@@ -504,9 +504,9 @@ func TestWithJobAuthorSignature(t *testing.T) {
 			expected: &repository.CommitSignature{Name: "Test User", Email: "test@example.com"},
 		},
 		{
-			name:        "only name is enough to set the signature",
+			name:        "a name without an email keeps the default commit identity",
 			annotations: map[string]string{appjobs.AnnoAuthor: "Test User"},
-			expected:    &repository.CommitSignature{Name: "Test User"},
+			expected:    nil,
 		},
 		{
 			name:        "no author annotations leaves the context untouched",

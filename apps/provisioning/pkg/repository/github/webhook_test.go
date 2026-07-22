@@ -229,7 +229,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				Type:     repo.WebhookEventPush,
 				RepoSlug: "grafana/grafana",
 				Branch:   "main",
-				SenderID: "0",
 			},
 		},
 		{
@@ -293,7 +292,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				PRURL:     "https://github.com/grafana/grafana/pull/123",
 				SourceRef: "feature-branch",
 				Hash:      "abcdef1234567890",
-				SenderID:  "0",
 			},
 		},
 		{
@@ -337,7 +335,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				PRURL:     "https://github.com/grafana/grafana/pull/123",
 				SourceRef: "feature-branch",
 				Hash:      "abcdef1234567890",
-				SenderID:  "0",
 			},
 		},
 		{
@@ -437,7 +434,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				Type:     repo.WebhookEventPush,
 				RepoSlug: "grafana/grafana",
 				Branch:   "main",
-				SenderID: "0",
 			},
 		},
 		{
