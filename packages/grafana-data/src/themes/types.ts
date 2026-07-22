@@ -57,7 +57,7 @@ export const ThemeRichColorInputSchema = z.object({
   transparent: z.string().optional(),
   /** Used for weak colored borders like larger alert/banner boxes and smaller badges and tags */
   borderTransparent: z.string().optional(),
-  /** Text color for text ontop of transparent */
+  /** Text color for text ontop of main */
   contrastText: z.string().optional(),
 });
 
