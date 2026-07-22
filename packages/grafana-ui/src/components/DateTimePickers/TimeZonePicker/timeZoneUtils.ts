@@ -1,16 +1,5 @@
-import { InternalTimeZones, type TimeZone, getTimeZone } from '@grafana/data';
+import { InternalTimeZones, type TimeZone, getTimeZone, guessBrowserTimeZone } from '@grafana/data';
 import { findTimeZoneAt } from '@grafana/data/unstable';
-
-let browserTimeZone: string | undefined;
-
-/**
- * Returns the runtime's IANA timezone (replaces moment.tz.guess()). Cached for
- * the lifetime of the page since constructing Intl.DateTimeFormat is costly
- * and this gets called on every render of the Browser Time / Default options.
- */
-export const guessBrowserTimeZone = (): string => {
-  return (browserTimeZone ??= Intl.DateTimeFormat().resolvedOptions().timeZone);
-};
 
 // Resolves Grafana's internal time zones ('', 'browser', 'utc') to a concrete
 // IANA name.

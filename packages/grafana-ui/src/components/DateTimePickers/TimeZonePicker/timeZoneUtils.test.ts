@@ -1,5 +1,7 @@
+import { guessBrowserTimeZone } from '@grafana/data';
+
 import { formatUtcOffset } from './TimeZoneOffset';
-import { getTimeZoneDisplayInfo, guessBrowserTimeZone, resolveIanaName } from './timeZoneUtils';
+import { getTimeZoneDisplayInfo, resolveIanaName } from './timeZoneUtils';
 
 // Fixed timestamps so DST-dependent results are deterministic.
 const JAN = Date.UTC(2026, 0, 15); // northern winter / southern summer
@@ -41,16 +43,6 @@ describe('getTimeZoneDisplayInfo', () => {
 
   it('returns undefined for unknown zones', () => {
     expect(getTimeZoneDisplayInfo('Foo/Bar', JAN)).toBeUndefined();
-  });
-});
-
-describe('guessBrowserTimeZone', () => {
-  it('returns a non-empty IANA zone name', () => {
-    const zone = guessBrowserTimeZone();
-    expect(typeof zone).toBe('string');
-    expect(zone.length).toBeGreaterThan(0);
-    // Cached: repeated calls return the identical value.
-    expect(guessBrowserTimeZone()).toBe(zone);
   });
 });
 
