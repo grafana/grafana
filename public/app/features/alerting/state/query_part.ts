@@ -59,8 +59,9 @@ export class QueryPart {
       return;
     }
 
-    // Validate index is a safe non-negative integer to prevent prototype/property injection
-    if (!Number.isInteger(index) || index < 0) {
+    // Validate index is a safe non-negative integer bounded by the array length
+    // to prevent prototype/property injection via bracket notation.
+    if (!Number.isInteger(index) || index < 0 || index > this.params.length) {
       return;
     }
 
