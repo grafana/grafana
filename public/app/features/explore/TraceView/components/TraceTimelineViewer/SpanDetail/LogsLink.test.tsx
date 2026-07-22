@@ -1,7 +1,6 @@
 import { of, throwError } from 'rxjs';
 import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
-
 import { type DataSourceApi, type DataSourceInstanceSettings, type LinkModel, toDataFrame } from '@grafana/data';
 import { getDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
