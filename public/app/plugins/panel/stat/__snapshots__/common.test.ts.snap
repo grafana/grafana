@@ -1,0 +1,10 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`addStandardDataReduceOptions registers value, limit, calculation and fields options by default 1`] = `
+[
+  "reduceOptions.values",
+  "reduceOptions.limit",
+  "reduceOptions.calcs",
+  "reduceOptions.fields",
+]
+`;
