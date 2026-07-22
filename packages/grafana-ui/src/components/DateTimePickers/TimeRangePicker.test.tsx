@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { dateTime, makeTimeRange, type TimeRange } from '@grafana/data';
+import { dateTime, guessBrowserTimeZone, makeTimeRange, type TimeRange } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 
 import { TimeRangeProvider } from './TimeRangeContext';
@@ -181,10 +181,16 @@ describe('TimePickerTooltip', () => {
     };
 
     jest.spyOn(Intl, 'DateTimeFormat').mockImplementation(() => mockIntl as Intl.DateTimeFormat);
+
+    // the browser timezone is cached process-wide and was already resolved (to jest's
+    // Pacific/Easter TZ) before this mock was installed, so force a refresh through the mock
+    guessBrowserTimeZone(true);
   });
 
   afterAll(() => {
     jest.restoreAllMocks();
+    // re-resolve the real zone so the mocked America/New_York doesn't leak into later tests
+    guessBrowserTimeZone(true);
   });
 
   const timeRange: TimeRange = {
