@@ -872,6 +872,24 @@ func TestSearchOrgUsersUsingK8s(t *testing.T) {
 		assert.Equal(t, int64(1500), res.TotalCount)
 	})
 
+	// A UserID lookup is a single-page request, not a paged sweep.
+	t.Run("fetches a single page when a UserID is requested", func(t *testing.T) {
+		svc := &pagedUserService{
+			FakeUserService: &usertest.FakeUserService{},
+			pages: []user.SearchUserQueryResult{
+				{Users: searchHits(1000, 1), TotalCount: 1500, Page: 1, PerPage: 1000},
+				{Users: searchHits(500, 1001), TotalCount: 1500, Page: 2, PerPage: 1000}, // must not be fetched
+			},
+		}
+		hs := &HTTPServer{Cfg: setting.NewCfg(), userService: svc}
+
+		res, err := hs.searchOrgUsersUsingK8s(reqCtx(), &org.SearchOrgUsersQuery{OrgID: 1, UserID: 5})
+		require.NoError(t, err)
+		assert.Equal(t, 1, svc.calls, "a UserID lookup must not page through all results")
+		require.Len(t, res.OrgUsers, 1)
+		assert.Equal(t, int64(5), res.OrgUsers[0].UserID)
+	})
+
 	// An explicit limit means a paged request, so only that single page is fetched.
 	t.Run("fetches a single page when an explicit limit is requested", func(t *testing.T) {
 		svc := &pagedUserService{

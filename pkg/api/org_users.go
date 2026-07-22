@@ -399,7 +399,7 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 }
 
 func (hs *HTTPServer) searchOrgUsersUsingK8s(c *contextmodel.ReqContext, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
-	if query.Limit > 0 {
+	if query.Limit > 0 || query.UserID != 0 {
 		return hs.searchOrgUsersPageUsingK8s(c, query)
 	}
 
