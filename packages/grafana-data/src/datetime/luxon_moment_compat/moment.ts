@@ -98,6 +98,14 @@ interface MomentTzFactory {
 
 // deliberately narrower than moment's real API: it only carries the methods Grafana's own code
 // (and the public `DateTime`/`DateTimeDuration` interfaces in moment_wrapper.ts) actually use.
+
+// getter when called with no argument, setter (mutating and returning the instance) when called
+// with one, matching moment's own overloaded typings
+interface UnitAccessor {
+  (): number;
+  (value: number): MomentLike;
+}
+
 export interface MomentLike {
   _isAMomentObject?: boolean;
 
@@ -113,18 +121,18 @@ export interface MomentLike {
   tz(): string | undefined;
   tz(zone: string, keepLocalTime?: boolean): MomentLike;
   clone(): MomentLike;
-  year(value?: number): number | MomentLike;
-  month(value?: number): number | MomentLike;
-  date(value?: number): number | MomentLike;
-  day(value?: number): number | MomentLike;
-  weekday(value?: number): number | MomentLike;
-  isoWeekday(value?: number): number | MomentLike;
-  week(value?: number): number | MomentLike;
-  isoWeek(value?: number): number | MomentLike;
-  hour(value?: number): number | MomentLike;
-  minute(value?: number): number | MomentLike;
-  second(value?: number): number | MomentLike;
-  millisecond(value?: number): number | MomentLike;
+  year: UnitAccessor;
+  month: UnitAccessor;
+  date: UnitAccessor;
+  day: UnitAccessor;
+  weekday: UnitAccessor;
+  isoWeekday: UnitAccessor;
+  week: UnitAccessor;
+  isoWeek: UnitAccessor;
+  hour: UnitAccessor;
+  minute: UnitAccessor;
+  second: UnitAccessor;
+  millisecond: UnitAccessor;
   isValid(): boolean;
   isBefore(input: MomentInput, unit?: DateTimeUnit): boolean;
   isAfter(input: MomentInput, unit?: DateTimeUnit): boolean;
@@ -390,6 +398,15 @@ function toRelativeString(
   return stripRelativeAffixes(relative);
 }
 
+function makeAccessor(get: () => number, set: (value: number) => MomentLike): UnitAccessor {
+  function accessor(): number;
+  function accessor(value: number): MomentLike;
+  function accessor(value?: number): number | MomentLike {
+    return value == null ? get() : set(value);
+  }
+  return accessor;
+}
+
 function toMomentDay(weekday: number): number {
   return weekday % 7;
 }
@@ -570,6 +587,17 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
     return setDt(dt.setZone(zone, { keepLocalTime }));
   }
 
+  // shared by day/weekday and week/isoWeek respectively, which moment treats as synonyms here
+  const dayAccessor = makeAccessor(
+    () => toMomentDay(dt.weekday),
+    (value) => setDt(dt.plus({ days: value - toMomentDay(dt.weekday) }))
+  );
+
+  const weekAccessor = makeAccessor(
+    () => dt.weekNumber,
+    (value) => setDt(dt.plus({ weeks: value - dt.weekNumber }))
+  );
+
   const getLocaleWeekStart = () => getLocaleFirstDayOfWeek(dt.locale || currentLocale);
 
   // millis of this instant and `other`, truncated to `unit` when given, for comparisons
@@ -658,54 +686,55 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
       return makeMoment(dt);
     },
 
-    year: (value?: number) => (value == null ? dt.year : setDt(dt.set({ year: value }))),
+    year: makeAccessor(
+      () => dt.year,
+      (value) => setDt(dt.set({ year: value }))
+    ),
 
     // moment months are 0-based
-    month: (value?: number) => (value == null ? dt.month - 1 : setDt(dt.set({ month: value + 1 }))),
+    month: makeAccessor(
+      () => dt.month - 1,
+      (value) => setDt(dt.set({ month: value + 1 }))
+    ),
 
-    date: (value?: number) => (value == null ? dt.day : setDt(dt.set({ day: value }))),
+    date: makeAccessor(
+      () => dt.day,
+      (value) => setDt(dt.set({ day: value }))
+    ),
 
     // moment days are 0-based starting on Sunday
-    day(value?: number) {
-      const current = toMomentDay(dt.weekday);
-      if (value == null) {
-        return current;
-      }
+    day: dayAccessor,
 
-      return setDt(dt.plus({ days: value - current }));
-    },
+    weekday: dayAccessor,
 
-    weekday(value?: number) {
-      return api.day(value);
-    },
+    isoWeekday: makeAccessor(
+      () => dt.weekday,
+      (value) => setDt(dt.plus({ days: value - dt.weekday }))
+    ),
 
-    isoWeekday(value?: number) {
-      if (value == null) {
-        return dt.weekday;
-      }
+    week: weekAccessor,
 
-      return setDt(dt.plus({ days: value - dt.weekday }));
-    },
+    isoWeek: weekAccessor,
 
-    week(value?: number) {
-      if (value == null) {
-        return dt.weekNumber;
-      }
+    hour: makeAccessor(
+      () => dt.hour,
+      (value) => setDt(dt.set({ hour: value }))
+    ),
 
-      return setDt(dt.plus({ weeks: value - dt.weekNumber }));
-    },
+    minute: makeAccessor(
+      () => dt.minute,
+      (value) => setDt(dt.set({ minute: value }))
+    ),
 
-    isoWeek(value?: number) {
-      return api.week(value);
-    },
+    second: makeAccessor(
+      () => dt.second,
+      (value) => setDt(dt.set({ second: value }))
+    ),
 
-    hour: (value?: number) => (value == null ? dt.hour : setDt(dt.set({ hour: value }))),
-
-    minute: (value?: number) => (value == null ? dt.minute : setDt(dt.set({ minute: value }))),
-
-    second: (value?: number) => (value == null ? dt.second : setDt(dt.set({ second: value }))),
-
-    millisecond: (value?: number) => (value == null ? dt.millisecond : setDt(dt.set({ millisecond: value }))),
+    millisecond: makeAccessor(
+      () => dt.millisecond,
+      (value) => setDt(dt.set({ millisecond: value }))
+    ),
 
     isValid() {
       return dt.isValid;
