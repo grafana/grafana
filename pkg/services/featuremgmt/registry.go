@@ -2922,6 +2922,16 @@ var (
 			Expression:      "false",
 		},
 		{
+			Name:            "alerting.syncExternalRuler",
+			Description:     "Automatically syncs alert rules from an external Mimir/Cortex ruler datasource into Grafana",
+			Stage:           FeatureStageExperimental,
+			Generate:        Generate{Go: true, React: true, LegacyFrontend: true},
+			Owner:           grafanaAlertingSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Expression:      "false",
+		},
+		{
 			Name:         "grafana.enableScopesFirstMode",
 			Description:  "Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button)",
 			Stage:        FeatureStageExperimental,
