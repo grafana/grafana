@@ -17,6 +17,8 @@ import { DashboardVersionError, type DashboardWithAccessInfo } from '../api/type
 import { getDashboardSrv } from './DashboardSrv';
 import { getDashboardSnapshotSrv } from './SnapshotSrv';
 
+type ScriptedDashboardExecution = { data: unknown };
+
 interface DashboardLoaderSrvLike<T> {
   loadDashboard(
     type: UrlQueryValue,
@@ -43,7 +45,7 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
       .get(url, undefined, undefined, { validatePath: true })
       .then(this.executeScript.bind(this))
       .then(
-        (result: any) => {
+        (result) => {
           return {
             meta: {
               fromScript: true,
@@ -65,9 +67,9 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
       );
   }
 
-  private async executeScript(result: any) {
+  private async executeScript(result: string): Promise<ScriptedDashboardExecution> {
     // Async-load dependencies used only in scripted dashboards to avoid them being in the main bundle, if not needed
-    const [jQuery, moment, lodash, kbn] = await Promise.all([
+    const [{ default: jQuery }, { default: moment }, { default: lodash }, { default: kbn }] = await Promise.all([
       import('jquery'),
       import('moment'),
       import('lodash'),
@@ -91,7 +93,7 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
       'services',
       result
     );
-    const scriptResult = scriptFunc(
+    const scriptResult: unknown = scriptFunc(
       locationService.getSearchObject(),
       kbn,
       dateMath,
@@ -107,7 +109,7 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
     // Handle async dashboard scripts
     if (isFunction(scriptResult)) {
       return new Promise((resolve) => {
-        scriptResult((dashboard: any) => {
+        scriptResult((dashboard: unknown) => {
           resolve({ data: dashboard });
         });
       });
