@@ -83,6 +83,64 @@ func (c *AMConfigV1) Validate() error {
 
 type ManagedRoutes map[string]*Route
 
+type ExtraAlertmanagerConfig struct {
+	Global       *config.GlobalConfig
+	Route        *Route
+	InhibitRules []config.InhibitRule
+
+	// MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.
+	MuteTimeIntervals []MuteTimeInterval
+	TimeIntervals     []TimeInterval
+	Templates         []string
+
+	Receivers []*PostableApiReceiver
+}
+
+func (c *ExtraAlertmanagerConfig) GetReceivers() []*PostableApiReceiver {
+	return c.Receivers
+}
+
+func (c *ExtraAlertmanagerConfig) GetMuteTimeIntervals() []MuteTimeInterval {
+	return c.MuteTimeIntervals
+}
+
+func (c *ExtraAlertmanagerConfig) GetTimeIntervals() []TimeInterval { return c.TimeIntervals }
+
+func (c *ExtraAlertmanagerConfig) GetRoute() *Route {
+	return c.Route
+}
+
+// Validate ensures that the two routing trees use the correct receiver types.
+func (c *ExtraAlertmanagerConfig) Validate() error {
+	receivers := make(map[string]struct{}, len(c.Receivers))
+
+	for _, r := range c.Receivers {
+		receivers[r.Name] = struct{}{}
+	}
+
+	// Taken from https://github.com/prometheus/alertmanager/blob/14cbe6301c732658d6fe877ec55ad5b738abcf06/config/config.go#L171-L192
+	// Check if we have a root route. We cannot check for it in the
+	// UnmarshalYAML method because it won't be called if the input is empty
+	// (e.g. the config file is empty or only contains whitespace).
+	if c.Route == nil {
+		return fmt.Errorf("no route provided in config")
+	}
+
+	// Check if continue in root route.
+	if c.Route.Continue {
+		return fmt.Errorf("cannot have continue in root route")
+	}
+
+	for _, receiver := range AllReceivers(c.Route) {
+		_, ok := receivers[receiver]
+		if !ok {
+			return fmt.Errorf("unexpected receiver (%s) is undefined", receiver)
+		}
+	}
+
+	return nil
+}
+
 type ExtraConfiguration struct {
 	Identifier         string
 	TemplateFiles      map[string]string
@@ -91,10 +149,10 @@ type ExtraConfiguration struct {
 
 // GetAlertmanagerConfig parses the stored Prometheus/Mimir alertmanager YAML and converts it
 // to Grafana's PostableApiAlertingConfig, including route wrapping and receiver format conversion.
-func (c *ExtraConfiguration) GetAlertmanagerConfig() (PostableApiAlertingConfig, error) {
+func (c *ExtraConfiguration) GetAlertmanagerConfig() (ExtraAlertmanagerConfig, error) {
 	prometheusConfig, err := c.parsePrometheusConfig()
 	if err != nil {
-		return PostableApiAlertingConfig{}, err
+		return ExtraAlertmanagerConfig{}, err
 	}
 	cfg, _, err := alertmanagerConfigFromPrometheus(prometheusConfig)
 	return cfg, err
@@ -103,17 +161,15 @@ func (c *ExtraConfiguration) GetAlertmanagerConfig() (PostableApiAlertingConfig,
 // alertmanagerConfigFromPrometheus converts a parsed Prometheus/Mimir config to
 // Grafana's PostableApiAlertingConfig. It also returns the intermediate
 // definition-format receivers (index-aligned) so callers can reuse the conversion.
-func alertmanagerConfigFromPrometheus(prometheusConfig config.Config) (PostableApiAlertingConfig, []definition.Receiver, error) {
-	config := PostableApiAlertingConfig{
-		Config: Config{
-			Global:            prometheusConfig.Global,
-			Route:             RouteToModel(definition.AsGrafanaRoute(prometheusConfig.Route)),
-			InhibitRules:      prometheusConfig.InhibitRules,
-			TimeIntervals:     TimeIntervalsToModel(prometheusConfig.TimeIntervals),
-			MuteTimeIntervals: MuteTimeIntervalsToModel(prometheusConfig.MuteTimeIntervals),
-			Templates:         prometheusConfig.Templates,
-		},
-		Receivers: make([]*PostableApiReceiver, 0, len(prometheusConfig.Receivers)),
+func alertmanagerConfigFromPrometheus(prometheusConfig config.Config) (ExtraAlertmanagerConfig, []definition.Receiver, error) {
+	config := ExtraAlertmanagerConfig{
+		Global:            prometheusConfig.Global,
+		Route:             RouteToModel(definition.AsGrafanaRoute(prometheusConfig.Route)),
+		InhibitRules:      prometheusConfig.InhibitRules,
+		TimeIntervals:     TimeIntervalsToModel(prometheusConfig.TimeIntervals),
+		MuteTimeIntervals: MuteTimeIntervalsToModel(prometheusConfig.MuteTimeIntervals),
+		Templates:         prometheusConfig.Templates,
+		Receivers:         make([]*PostableApiReceiver, 0, len(prometheusConfig.Receivers)),
 	}
 	defs := make([]definition.Receiver, 0, len(prometheusConfig.Receivers))
 	for _, receiver := range prometheusConfig.Receivers {
@@ -121,7 +177,7 @@ func alertmanagerConfigFromPrometheus(prometheusConfig config.Config) (PostableA
 		defs = append(defs, def)
 		grafana, err := PostableMimirReceiverToPostableGrafanaReceiver(&PostableApiReceiver{Receiver: def})
 		if err != nil {
-			return PostableApiAlertingConfig{}, nil, fmt.Errorf("failed to convert Mimir receiver %s to Grafana receiver: %w", def.Name, err)
+			return ExtraAlertmanagerConfig{}, nil, fmt.Errorf("failed to convert Mimir receiver %s to Grafana receiver: %w", def.Name, err)
 		}
 		config.Receivers = append(config.Receivers, grafana)
 	}
