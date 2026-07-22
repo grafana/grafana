@@ -1,4 +1,4 @@
-import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type Dashboard } from '@grafana/schema';
 import { type Status, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isRecord } from 'app/core/utils/isRecord';
@@ -26,7 +26,7 @@ export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {
   if (responseFormat === 'v1') {
     return 'v1';
   }
-  if (responseFormat === 'v2' || config.featureToggles.dashboardNewLayouts) {
+  if (responseFormat === 'v2' || getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false)) {
     return 'v2';
   }
   return 'unified';

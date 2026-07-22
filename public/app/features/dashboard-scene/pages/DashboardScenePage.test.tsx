@@ -19,7 +19,7 @@ import {
 import { setGetObservablePluginLinks, setPanelPluginMetas } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
-import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { type DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
@@ -348,6 +348,10 @@ describe('DashboardScenePage', () => {
   });
 
   describe('empty state', () => {
+    beforeEach(() => {
+      setTestFlags({ dashboardNewLayouts: false });
+    });
+
     it('Shows empty state when dashboard is empty', async () => {
       loadDashboardMock.mockResolvedValue({ dashboard: { uid: 'my-dash-uid', panels: [] }, meta: {} });
       setup();

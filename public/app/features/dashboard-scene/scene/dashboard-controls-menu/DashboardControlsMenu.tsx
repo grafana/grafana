@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { useFlagDashboardNewLayouts } from '@grafana/runtime/internal';
 import { type SceneDataLayerProvider, type SceneVariable } from '@grafana/scenes';
 import { type DashboardLink } from '@grafana/schema';
 import { Menu, ScrollContainer, useStyles2 } from '@grafana/ui';
@@ -29,7 +29,8 @@ export function DashboardControlsMenu({
   isEditing,
   dashboard,
 }: DashboardControlsMenuProps) {
-  const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
+  const dashboardNewLayouts = useFlagDashboardNewLayouts();
+  const isEditingNewLayouts = isEditing && dashboardNewLayouts;
   const fullLinks = dashboard.state.links ?? [];
   const styles = useStyles2(getStyles);
 

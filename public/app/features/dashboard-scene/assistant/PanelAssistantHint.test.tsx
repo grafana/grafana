@@ -1,6 +1,7 @@
 import { getPanelPlugin } from '@grafana/data/test';
-import { config, setPluginImportUtils } from '@grafana/runtime';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneDataTransformer, SceneGridLayout, VizPanel, sceneGraph } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
@@ -28,7 +29,7 @@ setPluginImportUtils({
 
 describe('PanelAssistantHint', () => {
   beforeEach(() => {
-    config.featureToggles.dashboardNewLayouts = true;
+    setTestFlags({ dashboardNewLayouts: true });
   });
 
   describe('addAssistantHintToPanel', () => {
@@ -116,7 +117,7 @@ function buildTestSceneWithPanels() {
     }),
   });
 
-  config.featureToggles.dashboardNewLayouts = true;
+  setTestFlags({ dashboardNewLayouts: true });
   activateFullSceneTree(scene);
 
   return scene;

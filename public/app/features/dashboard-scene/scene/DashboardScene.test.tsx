@@ -25,6 +25,7 @@ import {
 } from '@grafana/scenes';
 import { type Dashboard, DashboardCursorSync, type LibraryPanel } from '@grafana/schema';
 import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
@@ -324,8 +325,7 @@ describe('DashboardScene', () => {
       });
 
       it('Should exit edit mode after saving from unsaved changes modal when dashboardNewLayouts is enabled', () => {
-        const originalFeatureToggle = config.featureToggles.dashboardNewLayouts;
-        config.featureToggles.dashboardNewLayouts = true;
+        setTestFlags({ dashboardNewLayouts: true });
 
         scene.setState({ meta: { ...scene.state.meta, canSave: true } });
 
@@ -354,12 +354,11 @@ describe('DashboardScene', () => {
 
         publishSpy.mockRestore();
         hasActualSaveChangesSpy.mockRestore();
-        config.featureToggles.dashboardNewLayouts = originalFeatureToggle;
+        setTestFlags({});
       });
 
       it('Should not show Save option in unsaved changes modal when user cannot save', () => {
-        const originalFeatureToggle = config.featureToggles.dashboardNewLayouts;
-        config.featureToggles.dashboardNewLayouts = true;
+        setTestFlags({ dashboardNewLayouts: true });
 
         scene.setState({ meta: { ...scene.state.meta, canSave: false } });
 
@@ -379,7 +378,7 @@ describe('DashboardScene', () => {
 
         publishSpy.mockRestore();
         hasActualSaveChangesSpy.mockRestore();
-        config.featureToggles.dashboardNewLayouts = originalFeatureToggle;
+        setTestFlags({});
       });
 
       it('Should start the detect changes worker', () => {

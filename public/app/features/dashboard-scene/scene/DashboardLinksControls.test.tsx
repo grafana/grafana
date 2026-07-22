@@ -1,3 +1,4 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { act, render } from '@testing-library/react';
 import { type ReactNode } from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
@@ -5,6 +6,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { toUtc } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneTimeRange } from '@grafana/scenes';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 
 import { DashboardControls } from './DashboardControls';
@@ -24,6 +26,10 @@ jest.mock('app/features/panel/panellinks/link_srv', () => ({
 }));
 
 describe('DashboardLinksControls', () => {
+  beforeEach(() => {
+    setTestFlags({ dashboardNewLayouts: false });
+  });
+
   it('renders dashboard links correctly', () => {
     const { controls } = buildTestScene();
     const renderer = renderInGrafanaContext(<controls.Component model={controls} />);
@@ -63,7 +69,11 @@ describe('DashboardLinksControls', () => {
 
 function renderInGrafanaContext(child: ReactNode) {
   const context = getGrafanaContextMock();
-  return render(<GrafanaContext.Provider value={context}>{child}</GrafanaContext.Provider>);
+  return render(
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+      <GrafanaContext.Provider value={context}>{child}</GrafanaContext.Provider>
+    </OpenFeatureProvider>
+  );
 }
 
 function buildTestScene(): { controls: DashboardControls; dashboard: DashboardScene } {

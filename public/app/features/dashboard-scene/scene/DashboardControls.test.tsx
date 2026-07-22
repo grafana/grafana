@@ -165,6 +165,7 @@ describe('DashboardControls', () => {
     });
 
     it('should render with hidden controls', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
       const scene = buildTestScene({
         hideTimeControls: true,
         hideVariableControls: true,
@@ -179,7 +180,7 @@ describe('DashboardControls', () => {
     it('should not render an empty controls container in kiosk mode when controls are hidden', () => {
       const originalFeatureToggles = { ...config.featureToggles };
       try {
-        config.featureToggles.dashboardNewLayouts = true;
+        setTestFlags({ dashboardNewLayouts: true });
 
         const scene = buildTestScene({
           hideTimeControls: true,
@@ -199,7 +200,7 @@ describe('DashboardControls', () => {
     it('in edit mode, should render the "Add variable" button when hasControls returns false and time controls are hidden', async () => {
       const originalFeatureToggles = { ...config.featureToggles };
       try {
-        config.featureToggles.dashboardNewLayouts = true;
+        setTestFlags({ dashboardNewLayouts: true });
 
         const controls = buildTestSceneWithEditable({
           editable: true,
@@ -464,13 +465,13 @@ describe('DashboardControls', () => {
     const originalFeatureToggles = { ...config.featureToggles };
 
     beforeEach(() => {
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
       jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: false });
     });
 
     afterEach(() => {
       config.featureToggles = originalFeatureToggles;
-      jest.resetAllMocks();
+      jest.clearAllMocks();
     });
 
     it('should show EditDashboardSwitch when editable is true', async () => {
@@ -551,12 +552,12 @@ describe('DashboardControls', () => {
 
     beforeEach(() => {
       jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: false });
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
     });
 
     afterEach(() => {
       config.featureToggles = originalFeatureToggles;
-      jest.resetAllMocks();
+      jest.clearAllMocks();
     });
 
     it('should hide Edit and Share buttons in kiosk mode', async () => {
@@ -580,7 +581,7 @@ describe('DashboardControls', () => {
     const mockedContextSrv = jest.mocked(contextSrv);
 
     beforeEach(() => {
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
       jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: false });
       mockedContextSrv.hasEditPermissionInFolders = false;
     });

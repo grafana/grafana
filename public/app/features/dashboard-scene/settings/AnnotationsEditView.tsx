@@ -6,8 +6,8 @@ import {
   PageLayoutType,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
-import { useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/internal';
+import { getDataSourceSrv, locationService } from '@grafana/runtime';
+import { useFlagDashboardNewLayouts, useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/internal';
 import { type SceneComponentProps, SceneObjectBase, type VizPanel, dataLayers } from '@grafana/scenes';
 import { Alert, Button } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -153,7 +153,7 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
 
   const annotations: AnnotationQuery[] = dataLayersToAnnotations(annotationLayers);
 
-  const isDynamicDashboardsEnabled = config.featureToggles.dashboardNewLayouts;
+  const isDynamicDashboardsEnabled = useFlagDashboardNewLayouts();
   const isSettingsPageRedesignEnabled = useFlagGrafanaDashboardSettingsRedesign();
 
   const goToSidebar = () => {

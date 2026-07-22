@@ -2,7 +2,8 @@ import { useState } from 'react';
 
 import { type SelectableValue, type UrlQueryMap, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
+import { useFlagDashboardNewLayouts } from '@grafana/runtime/internal';
 import { Box, Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
 
 import { type Playlist } from '../../api/clients/playlist/v1';
@@ -15,6 +16,7 @@ export interface Props {
 }
 
 export const StartModal = ({ playlist, onDismiss }: Props) => {
+  const dashboardNewLayouts = useFlagDashboardNewLayouts();
   const [mode, setMode] = useState<PlaylistMode>(false);
   const [autoFit, setAutofit] = useState(false);
   const [hideLogo, setHideLogo] = useState(false);
@@ -102,7 +104,7 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
               />
             </Field>
           )}
-          {config.featureToggles.dashboardNewLayouts && (
+          {dashboardNewLayouts && (
             <Field noMargin>
               <Checkbox
                 label={t('playlist.start-modal.label-playlist-nav', 'Navigation buttons')}

@@ -1,5 +1,5 @@
 import { getPanelPlugin } from '@grafana/data/test';
-import { config, setPluginImportUtils } from '@grafana/runtime';
+import { setPluginImportUtils } from '@grafana/runtime';
 import {
   ConstantVariable,
   CustomVariable,
@@ -10,6 +10,7 @@ import {
   TestVariable,
   VizPanel,
 } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -601,7 +602,7 @@ describe('DashboardEditPane', () => {
         isEditing: true,
         body: new TabsLayoutManager({ tabs: [tabWithPanel] }),
       });
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
       activateFullSceneTree(sourceDashboard);
       sourceDashboard.copyPanel(panel);
 
@@ -619,7 +620,7 @@ function buildTestScene() {
     tags: ['tag1', 'tag2'],
     editable: true,
   });
-  config.featureToggles.dashboardNewLayouts = true;
+  setTestFlags({ dashboardNewLayouts: true });
   activateFullSceneTree(scene);
 
   return scene;
@@ -681,7 +682,7 @@ function setupEmptyDashboard(): {
     isEditing: true,
     body: AutoGridLayoutManager.createEmpty(),
   });
-  config.featureToggles.dashboardNewLayouts = true;
+  setTestFlags({ dashboardNewLayouts: true });
   activateFullSceneTree(dashboard);
   return { dashboard, editPane: dashboard.state.editPane };
 }
@@ -705,7 +706,7 @@ function setupWithTwoTabs(): {
     isEditing: true,
     body: new TabsLayoutManager({ tabs: [tab1, tab2] }),
   });
-  config.featureToggles.dashboardNewLayouts = true;
+  setTestFlags({ dashboardNewLayouts: true });
   activateFullSceneTree(dashboard);
   return { dashboard, tab1, tab2, tab1Viz: panel, editPane: dashboard.state.editPane };
 }
@@ -729,7 +730,7 @@ function setupWithTwoRows(): {
     isEditing: true,
     body: new RowsLayoutManager({ rows: [row1, row2] }),
   });
-  config.featureToggles.dashboardNewLayouts = true;
+  setTestFlags({ dashboardNewLayouts: true });
   activateFullSceneTree(dashboard);
   return { dashboard, row1, row2, row1Viz: panel, editPane: dashboard.state.editPane };
 }

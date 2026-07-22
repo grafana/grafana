@@ -2,7 +2,7 @@ import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { DashboardPicker } from './DashboardPicker';
@@ -48,7 +48,12 @@ describe('DashboardPicker', () => {
   });
 
   xdescribe('dashboard v2 (v2beta1 API)', () => {
-    testWithFeatureToggles({ enable: ['dashboardNewLayouts'] });
+    beforeEach(() => {
+      setTestFlags({ dashboardNewLayouts: true });
+    });
+    afterEach(() => {
+      setTestFlags({});
+    });
     it('renders dashboard correctly', async () => {
       render(<DashboardPicker value="v2-special-case-override" />);
       expect(await screen.findByText('TODO')).toBeInTheDocument();

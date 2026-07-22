@@ -16,7 +16,7 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneVariableSet, CustomVariable, VizPanel, AdHocFiltersVariable, SceneTimeRange } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
@@ -29,7 +29,7 @@ import { VariablesEditView } from './VariablesEditView';
 function render(component: React.ReactNode) {
   return RTLRender(
     <TestProvider>
-      <OpenFeatureProvider>{component}</OpenFeatureProvider>
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>{component}</OpenFeatureProvider>
     </TestProvider>
   );
 }
@@ -81,7 +81,7 @@ setRunRequest(runRequestMock);
 
 describe('VariablesEditView', () => {
   beforeAll(() => {
-    setTestFlags({ [FlagKeys.GrafanaDashboardSettingsRedesign]: false });
+    setTestFlags({ [FlagKeys.GrafanaDashboardSettingsRedesign]: false, dashboardNewLayouts: false });
   });
   afterAll(() => {
     setTestFlags({});

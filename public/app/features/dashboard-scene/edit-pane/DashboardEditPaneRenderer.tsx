@@ -5,6 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { useFlagDashboardNewLayouts } from '@grafana/runtime/internal';
 import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -34,6 +35,7 @@ export interface Props {
  */
 export function DashboardEditPaneRenderer({ dashboard }: Props) {
   const editPane = dashboard.state.editPane;
+  const dashboardNewLayouts = useFlagDashboardNewLayouts();
   const { openPane, selectionContext, outlinePane } = useSceneObjectState(editPane, {
     shouldActivateOrKeepAlive: true,
   });
@@ -139,7 +141,7 @@ export function DashboardEditPaneRenderer({ dashboard }: Props) {
             data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
             active={openPane instanceof DashboardOutline}
           />
-          {config.featureToggles.dashboardNewLayouts && config.featureToggles.dashboardUnifiedDrilldownControls && (
+          {dashboardNewLayouts && config.featureToggles.dashboardUnifiedDrilldownControls && (
             <FiltersOverviewButton editPane={editPane} openPane={openPane} />
           )}
           {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}

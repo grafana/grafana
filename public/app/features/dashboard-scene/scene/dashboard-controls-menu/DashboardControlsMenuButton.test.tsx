@@ -1,8 +1,11 @@
-import { render, screen } from '@testing-library/react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { render as RTLRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { type ReactNode } from 'react';
 
 import { VariableHide } from '@grafana/data';
 import { SceneVariableSet, TextBoxVariable, QueryVariable, CustomVariable, type SceneVariable } from '@grafana/scenes';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardScene } from '../DashboardScene';
 
@@ -12,7 +15,15 @@ import {
   DashboardControlsButton,
 } from './DashboardControlsMenuButton';
 
+function render(ui: ReactNode) {
+  return RTLRender(<OpenFeatureProvider client={getTestFeatureFlagClient()}>{ui}</OpenFeatureProvider>);
+}
+
 describe('DashboardControlsMenu', () => {
+  beforeEach(() => {
+    setTestFlags({ dashboardNewLayouts: false });
+  });
+
   it('should return null and not render anything when there are no variables', () => {
     const { container } = render(<DashboardControlsButton dashboard={getDashboard([])} />);
     expect(container.firstChild).toBeNull();

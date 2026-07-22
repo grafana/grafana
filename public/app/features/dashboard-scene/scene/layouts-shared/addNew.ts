@@ -1,4 +1,4 @@
-import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type SceneGridRow } from '@grafana/scenes';
 
 import { NewObjectAddedToCanvasEvent } from '../../edit-pane/events';
@@ -36,7 +36,7 @@ export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGrid
   /**
    * If new layouts feature is disabled we add old school rows to the custom grid layout
    */
-  if (!config.featureToggles.dashboardNewLayouts) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false)) {
     if (layout instanceof DefaultGridLayoutManager) {
       return layout.addNewRow();
     } else {

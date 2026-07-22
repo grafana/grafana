@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { config, useScopes } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
@@ -93,5 +94,8 @@ export function useChromeHeaderHeight() {
  **/
 export function getChromeHeaderLevelHeight() {
   // Waiting with switch to 48 until we have a story for scopes
-  return config.featureToggles.unifiedNavbars || config.featureToggles.dashboardNewLayouts ? 48 : 40;
+  return config.featureToggles.unifiedNavbars ||
+    getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false)
+    ? 48
+    : 40;
 }

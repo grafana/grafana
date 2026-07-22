@@ -5,7 +5,7 @@ import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient, useFlagDashboardNewLayouts } from '@grafana/runtime/internal';
 import {
   type SceneObjectState,
   SceneObjectBase,
@@ -217,6 +217,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   } = model.useState();
 
   const dashboard = getDashboardSceneFor(model);
+  const dashboardNewLayouts = useFlagDashboardNewLayouts();
   const { links, editPanel } = dashboard.useState();
   const isQueryEditorNext = Boolean(editPanel?.state.useQueryExperienceNext);
   const styles = useStyles2(getStyles, isQueryEditorNext);
@@ -236,7 +237,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
     // If dynamic dashboards is enabled, we need to show the edit/share/playlist buttons
     // However we shouldn't do it if we're in edit panel view
     // `DashboardControlActions` already check for edit panel view but we need to prevent showing the container as well
-    if (config.featureToggles.dashboardNewLayouts && !editPanel && kioskMode !== KioskMode.Full) {
+    if (dashboardNewLayouts && !editPanel && kioskMode !== KioskMode.Full) {
       return (
         <>
           <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
@@ -273,12 +274,12 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             <refreshPicker.Component model={refreshPicker} />
           </div>
         )}
-        {config.featureToggles.dashboardNewLayouts && (
+        {dashboardNewLayouts && (
           <div className={styles.fixedControls}>
             <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
           </div>
         )}
-        {config.featureToggles.dashboardUnifiedDrilldownControls && !config.featureToggles.dashboardNewLayouts && (
+        {config.featureToggles.dashboardUnifiedDrilldownControls && !dashboardNewLayouts && (
           <div className={styles.fixedControls}>
             <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
           </div>
