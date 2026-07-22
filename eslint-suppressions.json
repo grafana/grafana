@@ -2925,11 +2925,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/canvas/editor/element/ParamsEditor.tsx": {
-    "@grafana/no-locale-compare": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/canvas/editor/element/PlacementEditor.tsx": {
     "@grafana/require-no-margin": {
       "count": 2

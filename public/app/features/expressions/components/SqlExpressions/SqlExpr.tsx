@@ -7,7 +7,8 @@ import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { CompletionItemKind, type TableIdentifier } from '@grafana/plugin-ui';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
+import { useFlagSqlExpressionsColumnAutoComplete } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
 import { formatSQL, quoteIdentifierIfNecessary } from '@grafana/sql';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
@@ -53,6 +54,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
   const interpolationFilters = metadata?.data?.request?.filters;
   const interpolationRange = metadata?.range;
   const useCodeMirrorEditor = useBooleanFlagValue('sqlExpressionsCodeMirror', false);
+  const columnAutoCompleteEnabled = useFlagSqlExpressionsColumnAutoComplete();
 
   // Signature metadata is large, so it is loaded lazily only for the CodeMirror path.
   const functionSignatures = useFunctionSignatures(useCodeMirrorEditor);
@@ -72,7 +74,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
           };
         }),
       columns: async ({ table }) => {
-        if (!config.featureToggles.sqlExpressionsColumnAutoComplete) {
+        if (!columnAutoCompleteEnabled) {
           return [];
         }
 
@@ -93,7 +95,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
           kind: 'function',
         })),
     }),
-    [interpolationFilters, interpolationRange, interpolationScopedVars, queries, refIds]
+    [columnAutoCompleteEnabled, interpolationFilters, interpolationRange, interpolationScopedVars, queries, refIds]
   );
 
   const legacyCompletionProvider = useMemo(
@@ -106,8 +108,9 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
             filters: interpolationFilters,
           }),
         refIds,
+        columnAutoCompleteEnabled,
       }),
-    [interpolationFilters, interpolationRange, interpolationScopedVars, queries, refIds]
+    [columnAutoCompleteEnabled, interpolationFilters, interpolationRange, interpolationScopedVars, queries, refIds]
   );
 
   // Define the language definition for MySQL syntax highlighting and autocomplete
