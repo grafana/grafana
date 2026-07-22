@@ -5051,14 +5051,14 @@ __metadata:
   linkType: hard
 
 "@msagl/core@npm:^1.1.19, @msagl/core@npm:^1.1.23":
-  version: 1.1.23
-  resolution: "@msagl/core@npm:1.1.23"
+  version: 1.1.24
+  resolution: "@msagl/core@npm:1.1.24"
   dependencies:
     queue-typescript: "npm:^1.0.1"
     reliable-random: "npm:^0.0.1"
     stack-typescript: "npm:^1.0.4"
     typescript-string-operations: "npm:^1.4.1"
-  checksum: 10/6a7d7daacde555027bf2c867bc543047573a90b48214019f0f9bab45671233b8fcf201b014070b87fd2ffa824501e65ffcf8c41ce11ef836ece532b343a29504
+  checksum: 10/1a80801c7f6f4775c9af4b0b25dc7de4216b56aefb95ed10394e1e87c549a882c71aee9061a6e2f3074025113aef9691f06a0ccc06f3da65c296442a1a1bbbed
   languageName: node
   linkType: hard
 
@@ -15618,19 +15618,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:3.4.0":
-  version: 3.4.0
-  resolution: "dompurify@npm:3.4.0"
-  dependencies:
-    "@types/trusted-types": "npm:^2.0.7"
-  dependenciesMeta:
-    "@types/trusted-types":
-      optional: true
-  checksum: 10/ead40b78ec51cd451f2c74fada4233ee0afeafdbab54af2f4a4bd5d4d138ac04d0d85140e79f533803ecfd1c3758edc1176087039c1e7217824f9794a9d34d2c
-  languageName: node
-  linkType: hard
-
-"dompurify@npm:^3.4.0":
+"dompurify@npm:3.4.12, dompurify@npm:^3.4.0":
   version: 3.4.12
   resolution: "dompurify@npm:3.4.12"
   dependencies:
@@ -18669,7 +18657,7 @@ __metadata:
     dangerously-set-html-content: "npm:1.1.0"
     date-fns: "npm:4.1.0"
     debounce-promise: "npm:3.1.2"
-    dompurify: "npm:3.4.0"
+    dompurify: "npm:3.4.12"
     downsample: "npm:1.4.0"
     enquirer: "npm:^2.4.1"
     esbuild: "npm:0.25.8"
@@ -27422,8 +27410,8 @@ __metadata:
   linkType: hard
 
 "react-calendar@npm:^6.0.0":
-  version: 6.0.0
-  resolution: "react-calendar@npm:6.0.0"
+  version: 6.0.1
+  resolution: "react-calendar@npm:6.0.1"
   dependencies:
     "@wojtekmaj/date-utils": "npm:^2.0.2"
     clsx: "npm:^2.0.0"
@@ -27436,7 +27424,7 @@ __metadata:
   peerDependenciesMeta:
     "@types/react":
       optional: true
-  checksum: 10/ba555e280a829b84a9675636c3166ef728cb40f200cdf31696fe4f45e09a39fd73594b764e5b2793c35414e96101c472332507e5bb42e5e182d43a85b060de40
+  checksum: 10/c0beb9bc4d600641881b4989525e384ca74d04de879956f087aad1ae84fa6a3c7de52bc79e9f39a3c284a5cc6c3f917885d5760593c0b0aafdcc315a631faac3
   languageName: node
   linkType: hard
 
@@ -32525,12 +32513,12 @@ __metadata:
   linkType: hard
 
 "vis-data@npm:^8.0.0":
-  version: 8.0.3
-  resolution: "vis-data@npm:8.0.3"
+  version: 8.0.4
+  resolution: "vis-data@npm:8.0.4"
   peerDependencies:
-    uuid: ^3.4.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0 || ^13.0.0
+    uuid: ^3.4.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0 || ^13.0.0 || ^14.0.0
     vis-util: ">=6.0.0"
-  checksum: 10/5b011fe0d8e2b95f4826a685a0c5a8e1b532177fe7a3a2e07b66f25f87c7c0943b30b95564e3994038f2ef91d4bf835becd75fca6b31ac0813f33d245621f5da
+  checksum: 10/cd2fbce6787395f220acf9e9920212324cd32ce9d73470e358e1b095d0eab13ed6369dcc27e3b935fd79611349d532fa2f7d70e6afc73049faa75906e5b5bed6
   languageName: node
   linkType: hard
 

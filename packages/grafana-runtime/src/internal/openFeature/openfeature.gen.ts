@@ -33,8 +33,6 @@ export const FlagKeys = {
   DashboardSectionVariables: "dashboardSectionVariables",
   /** Enables the Assistant button in the dashboard templates card */
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
-  /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
-  DashboardsFilterablePanels: "dashboards.filterablePanels",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
   DatasourcesApiserverUseNewAPIsForDatasourceResources: "datasources.apiserver.useNewAPIsForDatasourceResources",
   /** Use the new datasource API groups for datasource CRUD requests, frontend flag */
@@ -263,17 +261,6 @@ export const useFlagDashboardSectionVariables = (options?: ReactFlagEvaluationOp
  */
 export const useFlagDashboardTemplatesAssistantButton = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboardTemplatesAssistantButton", false, options).value;
-};
-
-/**
- * Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels
- *
- * **Details:**
- * - flag key: `dashboards.filterablePanels`
- * - default value: `false`
- */
-export const useFlagDashboardsFilterablePanels = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("dashboards.filterablePanels", false, options).value;
 };
 
 /**
