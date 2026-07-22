@@ -2,16 +2,21 @@ import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
+import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 
 import { type RecommendationItem } from './types';
 
-interface PluginRecommendationItem extends RecommendationItem {
+export interface PluginRecommendationItem extends RecommendationItem {
   pluginId: string;
+  /** CTA label when the app is already enabled but not receiving data yet. */
+  setupAction: string;
+  /** CTA target into the app itself, for the enabled-but-no-data state. */
+  appHref: string;
 }
 
 export function getRecommendations(): PluginRecommendationItem[] {
-  const recommendationDefinitions: Array<Omit<PluginRecommendationItem, 'href'>> = [
+  const recommendationDefinitions: Array<Omit<PluginRecommendationItem, 'href' | 'appHref'>> = [
     {
       id: 'hosted-traces',
       pluginId: 'grafana-exploretraces-app',
@@ -24,6 +29,7 @@ export function getRecommendations(): PluginRecommendationItem[] {
         'Add distributed tracing to see how requests flow between services and where they slow down.'
       ),
       action: t('home.recommendations.hosted-traces.action', 'Enable Hosted Traces'),
+      setupAction: t('home.recommendations.hosted-traces.setup-action', 'Set up Hosted Traces'),
     },
     {
       id: 'synthetic-monitoring',
@@ -37,6 +43,7 @@ export function getRecommendations(): PluginRecommendationItem[] {
         'Probe your endpoints from 20+ global locations before your users notice.'
       ),
       action: t('home.recommendations.synthetic-monitoring.action', 'Add Synthetic Monitoring'),
+      setupAction: t('home.recommendations.synthetic-monitoring.setup-action', 'Set up Synthetic Monitoring'),
     },
     {
       id: 'application-observability',
@@ -50,6 +57,7 @@ export function getRecommendations(): PluginRecommendationItem[] {
         'Turn OpenTelemetry data into RED metrics, service maps, and correlated traces automatically.'
       ),
       action: t('home.recommendations.application-observability.action', 'Enable Application Observability'),
+      setupAction: t('home.recommendations.application-observability.setup-action', 'Set up Application Observability'),
     },
     {
       id: 'frontend-observability',
@@ -63,12 +71,14 @@ export function getRecommendations(): PluginRecommendationItem[] {
         'Capture Core Web Vitals and errors from the browser and tie them back to backend traces.'
       ),
       action: t('home.recommendations.frontend-observability.action', 'Enable Frontend Observability'),
+      setupAction: t('home.recommendations.frontend-observability.setup-action', 'Set up Frontend Observability'),
     },
   ];
 
   return recommendationDefinitions.map((recommendation) => ({
     ...recommendation,
     href: locationUtil.assureBaseUrl(`/plugins/${recommendation.pluginId}/`),
+    appHref: locationUtil.assureBaseUrl(createBridgeURL(recommendation.pluginId, '')),
   }));
 }
 
