@@ -14,7 +14,7 @@ import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
 import { type DashboardDataDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
-import { getDashboardResourceText } from '../edit-pane/codePaneUtils';
+import { getDashboardResourceText, validateDashboardResourceEnvelope } from '../edit-pane/codePaneUtils';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import {
   NameAlreadyExistsError,
@@ -72,6 +72,22 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
   public getEditedSaveModel(): DashboardDataDTO | DashboardV2Spec {
     const parsed = JSON.parse(this.state.jsonText);
     return isDashboardV2Spec(this.getSaveModel()) ? parsed.spec : parsed;
+  }
+
+  // v2 dashboards are edited as the full resource envelope but only spec edits are supported.
+  // Validate the envelope before saving so metadata/kind/apiVersion changes fail loudly rather
+  // than being silently dropped by getEditedSaveModel() (consistent with the edit-pane code editor).
+  public validateEditedResource(): { success: boolean; error?: string } {
+    if (!isDashboardV2Spec(this.getSaveModel())) {
+      return { success: true };
+    }
+    let resource;
+    try {
+      resource = JSON.parse(this.state.jsonText);
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Invalid JSON' };
+    }
+    return validateDashboardResourceEnvelope(this.getDashboard(), resource);
   }
 
   public onCodeEditorBlur = (value: string) => {
@@ -141,6 +157,7 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
   const { state, onSaveDashboard } = useSaveDashboard(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasValidationErrors, setHasValidationErrors] = useState(false);
+  const [resourceError, setResourceError] = useState<string | undefined>();
   const [editorFormat, setSchemaEditorFormat] = useState<SchemaEditorFormat>('json');
 
   const dashboard = model.getDashboard();
@@ -164,6 +181,13 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
   );
 
   const onSave = async (overwrite: boolean) => {
+    const validation = model.validateEditedResource();
+    if (!validation.success) {
+      setResourceError(validation.error);
+      return;
+    }
+    setResourceError(undefined);
+
     if (isProvisionedNG) {
       const drawer = new SaveDashboardDrawer({
         dashboardRef: new SceneObjectRef(dashboard),
@@ -303,25 +327,39 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
           The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel
           settings, layout, queries, and so on.
         </Trans>
-        {isV2Dashboard ? (
-          <DashboardSchemaEditor
-            value={jsonText}
-            onChange={handleEditorChange}
-            onValidationChange={handleValidationChange}
-            onFormatChange={setSchemaEditorFormat}
-            containerStyles={styles.codeEditor}
-            showFormatToggle={true}
-          />
-        ) : (
-          <CodeEditor
-            width="100%"
-            value={jsonText}
-            language="json"
-            showLineNumbers={true}
-            showMiniMap={true}
-            containerStyles={styles.codeEditor}
-            onBlur={model.onCodeEditorBlur}
-          />
+        <div className={styles.editorContainer}>
+          {isV2Dashboard ? (
+            <DashboardSchemaEditor
+              value={jsonText}
+              onChange={handleEditorChange}
+              onValidationChange={handleValidationChange}
+              onFormatChange={setSchemaEditorFormat}
+              containerStyles={styles.codeEditor}
+              showFormatToggle={true}
+            />
+          ) : (
+            <CodeEditor
+              width="100%"
+              value={jsonText}
+              language="json"
+              showLineNumbers={true}
+              showMiniMap={true}
+              containerStyles={styles.codeEditor}
+              onBlur={model.onCodeEditorBlur}
+            />
+          )}
+        </div>
+        {resourceError && (
+          <Alert
+            title={t('dashboard-scene.json-model-edit-view.resource-validation-error-title', 'Unable to save changes')}
+            severity="error"
+            topSpacing={0}
+            bottomSpacing={0}
+            className={styles.errorAlert}
+            onRemove={() => setResourceError(undefined)}
+          >
+            {resourceError}
+          </Alert>
         )}
         {canSave && <Box paddingTop={2}>{renderSaveButtonAndError(state.error, isSaveDisabled)}</Box>}
       </div>
@@ -336,7 +374,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     gap: theme.spacing(2),
   }),
+  // The editor grows to fill the space above the (natural-height) error alert and save button,
+  // so a validation error renders as a compact box at the bottom rather than resizing the editor.
+  editorContainer: css({
+    flex: 1,
+    minHeight: 0,
+    display: 'flex',
+    flexDirection: 'column',
+  }),
+  errorAlert: css({
+    flex: '0 0 auto',
+  }),
   codeEditor: css({
-    flexGrow: 1,
+    height: '100%',
   }),
 });
