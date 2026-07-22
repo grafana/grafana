@@ -2,6 +2,8 @@ package resourcepermissions
 
 import (
 	"context"
+	"errors"
+	"strconv"
 	"sync"
 	"testing"
 
@@ -10,13 +12,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/routing"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
@@ -919,4 +924,313 @@ func TestIsActionSetEnabledResource_Datasource(t *testing.T) {
 	assert.True(t, isActionSetEnabledResource(datasources.ScopeRoot+":query"))
 	assert.True(t, isActionSetEnabledResource(datasources.ScopeRoot+":edit"))
 	assert.True(t, isActionSetEnabledResource(datasources.ScopeRoot+":admin"))
+}
+
+// TestIntegrationService_SetUserPermissionForTeams_Redirect exercises the teams
+// membership redirect on the service methods directly (not the HTTP handlers) —
+// the path a direct in-process caller takes. When kubernetesTeamsRedirect is on,
+// membership must be written to Team.Spec.Members via the K8s API; in
+// unified-authoritative modes the legacy team_member table has no row, so a K8s
+// failure must surface instead of silently falling back, whereas dual-write modes
+// fall back to legacy.
+func TestIntegrationService_SetUserPermissionForTeams_Redirect(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	tests := []struct {
+		name            string
+		mode            grafanarest.DualWriterMode
+		expectErr       bool
+		expectHookCalls bool // legacy fallback runs the OnSetUser hook; the k8s path does not
+	}{
+		{name: "Mode3 falls back to legacy", mode: grafanarest.Mode3, expectErr: false, expectHookCalls: true},
+		{name: "Mode5 does not fall back", mode: grafanarest.Mode5, expectErr: true, expectHookCalls: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// The teams redirect is gated on the kubernetesTeamsRedirect toggle.
+			setOpenFeatureFlag(t, featuremgmt.FlagKubernetesTeamsRedirect, true)
+
+			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptionsForTeams, featuremgmt.WithFeatures())
+			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+				iamv0.TeamResourceInfo.GroupResource().String(): {DualWriterMode: tt.mode},
+			}
+
+			var hookCalled bool
+			service.options.OnSetUser = func(_ *db.Session, _ int64, _ accesscontrol.User, _, _ string) error {
+				hookCalled = true
+				return nil
+			}
+
+			createdUser, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test", OrgID: 1})
+			require.NoError(t, err)
+			createdTeam, err := teamSvc.CreateTeam(context.Background(), &team.CreateTeamCommand{Name: "test", Email: "test@test.com", OrgID: 1})
+			require.NoError(t, err)
+
+			// The redirect builds its K8s client from the ReqContext the contexthandler
+			// middleware stores on ctx (as an in-process request carries). No rest config
+			// provider is wired in the test, so the K8s write fails with
+			// ErrRestConfigNotAvailable — which is exactly what distinguishes the two modes.
+			ctx := ctxkey.Set(context.Background(), makeReqCtx())
+
+			_, err = service.SetUserPermission(ctx, 1, accesscontrol.User{ID: createdUser.ID}, strconv.FormatInt(createdTeam.ID, 10), "Member")
+			if tt.expectErr {
+				require.ErrorIs(t, err, ErrRestConfigNotAvailable)
+			} else {
+				require.NoError(t, err)
+			}
+			assert.Equal(t, tt.expectHookCalls, hookCalled)
+		})
+	}
+}
+
+// TestIntegrationService_SetPermissionsForTeams_Redirect is the batch counterpart
+// of TestIntegrationService_SetUserPermissionForTeams_Redirect — a bulk membership
+// reconcile goes through SetPermissions.
+func TestIntegrationService_SetPermissionsForTeams_Redirect(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	tests := []struct {
+		name            string
+		mode            grafanarest.DualWriterMode
+		expectErr       bool
+		expectHookCalls bool
+	}{
+		{name: "Mode3 falls back to legacy", mode: grafanarest.Mode3, expectErr: false, expectHookCalls: true},
+		{name: "Mode5 does not fall back", mode: grafanarest.Mode5, expectErr: true, expectHookCalls: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setOpenFeatureFlag(t, featuremgmt.FlagKubernetesTeamsRedirect, true)
+
+			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptionsForTeams, featuremgmt.WithFeatures())
+			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+				iamv0.TeamResourceInfo.GroupResource().String(): {DualWriterMode: tt.mode},
+			}
+
+			var hookCalled bool
+			service.options.OnSetUser = func(_ *db.Session, _ int64, _ accesscontrol.User, _, _ string) error {
+				hookCalled = true
+				return nil
+			}
+
+			createdUser, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test", OrgID: 1})
+			require.NoError(t, err)
+			createdTeam, err := teamSvc.CreateTeam(context.Background(), &team.CreateTeamCommand{Name: "test", Email: "test@test.com", OrgID: 1})
+			require.NoError(t, err)
+
+			ctx := ctxkey.Set(context.Background(), makeReqCtx())
+
+			_, err = service.SetPermissions(ctx, 1, strconv.FormatInt(createdTeam.ID, 10), accesscontrol.SetResourcePermissionCommand{
+				UserID:     createdUser.ID,
+				Permission: "Member",
+			})
+			if tt.expectErr {
+				require.ErrorIs(t, err, ErrRestConfigNotAvailable)
+			} else {
+				require.NoError(t, err)
+			}
+			assert.Equal(t, tt.expectHookCalls, hookCalled)
+		})
+	}
+}
+
+// TestIntegrationService_SetUserPermissionForTeams_RedirectWrites covers the
+// outcomes of the K8s membership write itself (stubbed): in unified-authoritative
+// modes the K8s result is final and the legacy store is never touched, while in
+// dual-write modes the legacy write still runs — including the case where the
+// redirect already removed the member so the legacy removal finds nothing.
+func TestIntegrationService_SetUserPermissionForTeams_RedirectWrites(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	errK8sUnavailable := errors.New("k8s api unavailable")
+
+	tests := []struct {
+		name           string
+		mode           grafanarest.DualWriterMode
+		permission     string
+		k8sRemoved     bool
+		k8sErr         error
+		hookErr        error
+		expectErr      error
+		expectHookCall bool
+	}{
+		{
+			name:       "Mode5 writes to k8s only",
+			mode:       grafanarest.Mode5,
+			permission: "Member",
+		},
+		{
+			name:       "Mode5 surfaces k8s errors",
+			mode:       grafanarest.Mode5,
+			permission: "Member",
+			k8sErr:     errK8sUnavailable,
+			expectErr:  errK8sUnavailable,
+		},
+		{
+			name:       "externally-synced members are never mutated",
+			mode:       grafanarest.Mode3,
+			permission: "Member",
+			k8sErr:     ErrExternalTeamMember.Errorf("user %q is externally-synced", "test"),
+			expectErr:  ErrExternalTeamMember,
+		},
+		{
+			name:           "Mode3 dual-writes to legacy after k8s",
+			mode:           grafanarest.Mode3,
+			permission:     "Member",
+			expectHookCall: true,
+		},
+		{
+			name:           "Mode3 tolerates a member already removed by the redirect",
+			mode:           grafanarest.Mode3,
+			permission:     "",
+			k8sRemoved:     true,
+			hookErr:        team.ErrTeamMemberNotFound,
+			expectHookCall: true,
+		},
+		{
+			name:           "Mode3 surfaces not-found when the redirect removed nothing",
+			mode:           grafanarest.Mode3,
+			permission:     "",
+			hookErr:        team.ErrTeamMemberNotFound,
+			expectErr:      team.ErrTeamMemberNotFound,
+			expectHookCall: true,
+		},
+	}
+
+	origSetTeamMembership := setTeamMembership
+	t.Cleanup(func() { setTeamMembership = origSetTeamMembership })
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setOpenFeatureFlag(t, featuremgmt.FlagKubernetesTeamsRedirect, true)
+
+			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptionsForTeams, featuremgmt.WithFeatures())
+			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+				iamv0.TeamResourceInfo.GroupResource().String(): {DualWriterMode: tt.mode},
+			}
+
+			var hookCalled bool
+			service.options.OnSetUser = func(_ *db.Session, _ int64, _ accesscontrol.User, _, _ string) error {
+				hookCalled = true
+				return tt.hookErr
+			}
+
+			var k8sCalls int
+			setTeamMembership = func(_ *Service, _ context.Context, _ int64, _ string, _ int64, _ string) (bool, error) {
+				k8sCalls++
+				return tt.k8sRemoved, tt.k8sErr
+			}
+
+			createdUser, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test", OrgID: 1})
+			require.NoError(t, err)
+			createdTeam, err := teamSvc.CreateTeam(context.Background(), &team.CreateTeamCommand{Name: "test", Email: "test@test.com", OrgID: 1})
+			require.NoError(t, err)
+
+			_, err = service.SetUserPermission(context.Background(), 1, accesscontrol.User{ID: createdUser.ID}, strconv.FormatInt(createdTeam.ID, 10), tt.permission)
+			if tt.expectErr != nil {
+				require.ErrorIs(t, err, tt.expectErr)
+			} else {
+				require.NoError(t, err)
+			}
+			assert.Equal(t, 1, k8sCalls)
+			assert.Equal(t, tt.expectHookCall, hookCalled)
+		})
+	}
+}
+
+// TestIntegrationService_SetPermissionsForTeams_RedirectWrites is the batch
+// counterpart of TestIntegrationService_SetUserPermissionForTeams_RedirectWrites:
+// every user command is reconciled through the K8s write individually.
+func TestIntegrationService_SetPermissionsForTeams_RedirectWrites(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	errK8sUnavailable := errors.New("k8s api unavailable")
+
+	tests := []struct {
+		name           string
+		mode           grafanarest.DualWriterMode
+		permission     string
+		k8sRemoved     bool
+		k8sErr         error
+		hookErr        error
+		expectErr      error
+		expectHookCall bool
+	}{
+		{
+			name:       "Mode5 reconciles each user command via k8s only",
+			mode:       grafanarest.Mode5,
+			permission: "Member",
+		},
+		{
+			name:       "externally-synced members abort the batch",
+			mode:       grafanarest.Mode3,
+			permission: "Member",
+			k8sErr:     ErrExternalTeamMember.Errorf("user %q is externally-synced", "test"),
+			expectErr:  ErrExternalTeamMember,
+		},
+		{
+			name:           "Mode3 falls back to legacy when k8s fails",
+			mode:           grafanarest.Mode3,
+			permission:     "Member",
+			k8sErr:         errK8sUnavailable,
+			expectHookCall: true,
+		},
+		{
+			name:           "Mode3 tolerates members already removed by the redirect",
+			mode:           grafanarest.Mode3,
+			permission:     "",
+			k8sRemoved:     true,
+			hookErr:        team.ErrTeamMemberNotFound,
+			expectHookCall: true,
+		},
+	}
+
+	origSetTeamMembership := setTeamMembership
+	t.Cleanup(func() { setTeamMembership = origSetTeamMembership })
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setOpenFeatureFlag(t, featuremgmt.FlagKubernetesTeamsRedirect, true)
+
+			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptionsForTeams, featuremgmt.WithFeatures())
+			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+				iamv0.TeamResourceInfo.GroupResource().String(): {DualWriterMode: tt.mode},
+			}
+
+			var hookCalled bool
+			service.options.OnSetUser = func(_ *db.Session, _ int64, _ accesscontrol.User, _, _ string) error {
+				hookCalled = true
+				return tt.hookErr
+			}
+
+			var k8sCalls int
+			setTeamMembership = func(_ *Service, _ context.Context, _ int64, _ string, _ int64, _ string) (bool, error) {
+				k8sCalls++
+				return tt.k8sRemoved, tt.k8sErr
+			}
+
+			firstUser, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test1", OrgID: 1})
+			require.NoError(t, err)
+			secondUser, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test2", OrgID: 1})
+			require.NoError(t, err)
+			createdTeam, err := teamSvc.CreateTeam(context.Background(), &team.CreateTeamCommand{Name: "test", Email: "test@test.com", OrgID: 1})
+			require.NoError(t, err)
+
+			_, err = service.SetPermissions(context.Background(), 1, strconv.FormatInt(createdTeam.ID, 10),
+				accesscontrol.SetResourcePermissionCommand{UserID: firstUser.ID, Permission: tt.permission},
+				accesscontrol.SetResourcePermissionCommand{UserID: secondUser.ID, Permission: tt.permission},
+			)
+			if tt.expectErr != nil {
+				require.ErrorIs(t, err, tt.expectErr)
+				// external members abort on the first command
+				assert.Equal(t, 1, k8sCalls)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, 2, k8sCalls)
+			}
+			assert.Equal(t, tt.expectHookCall, hookCalled)
+		})
+	}
 }
