@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { uniqueId } from 'lodash';
 
 import {
@@ -114,8 +114,11 @@ describe('BarGaugePanel', () => {
 
       render(<BarGaugePanel {...panelData} />);
 
-      expect(screen.getByText(/series-a/i)).toBeInTheDocument();
-      expect(screen.getByText(/series-b/i)).toBeInTheDocument();
+      // Series names also render as bar titles, so scope the assertions to the
+      // legend container to prove the legend itself is present.
+      const legend = within(screen.getByTestId(selectors.components.VizLayout.legend));
+      expect(legend.getByText(/series-a/i)).toBeInTheDocument();
+      expect(legend.getByText(/series-b/i)).toBeInTheDocument();
     });
 
     it('does not render a legend when showLegend is disabled', () => {
