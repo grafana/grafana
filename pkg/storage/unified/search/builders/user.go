@@ -48,6 +48,6 @@ var UserSortableExtraFields = []string{
 // Exported for the IAM legacy SQL search backend; do not mutate.
 var UserSearchFields = iamProvider.Fields(iamv0.UserResourceInfo.GroupVersionResource())
 
-func GetUserBuilder() (resource.DocumentBuilderInfo, error) {
-	return iamBuilder(iamv0.UserResourceInfo, UserSearchFields)
+func GetUserBuilder(registry *resource.SearchFieldsRegistry) (resource.DocumentBuilderInfo, error) {
+	return iamBuilder(registry, iamv0.UserResourceInfo)
 }
