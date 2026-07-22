@@ -106,7 +106,9 @@ func (m *Metrics) getUsageStats(ctx context.Context) (map[string]any, error) {
 }
 
 func (m *Metrics) increment(ctx context.Context, key string) error {
-	return m.store.Increment(ctx, key)
+	// Usage counters describe an accepted or completed run and must survive the initiating HTTP
+	// request being canceled. Preserve context values while detaching cancellation and deadlines.
+	return m.store.Increment(context.WithoutCancel(ctx), key)
 }
 
 type counterStore interface {

@@ -68,6 +68,22 @@ func TestMetricsPublishesPersistedUsageStats(t *testing.T) {
 	}, report.Metrics)
 }
 
+func TestMetricsPersistsUsageStatsAfterRequestCancellation(t *testing.T) {
+	requestCtx, cancel := context.WithCancel(context.Background())
+	cancel()
+	store := newMemoryCounterStore()
+	usage := &usagestats.UsageStatsMock{T: t}
+	metrics := newMetrics(store, usage, prometheus.NewPedanticRegistry())
+
+	metrics.RecordStarted(requestCtx, ScopePanel)
+	metrics.RecordCompleted(requestCtx, ScopePanel, ResultError)
+
+	report, err := usage.GetUsageReport(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, int64(1), report.Metrics["stats.ds_diagnostics.panel_runs.count"])
+	require.Equal(t, int64(1), report.Metrics["stats.ds_diagnostics.panel_errors.count"])
+}
+
 func TestMetricsCountersSurviveRecreation(t *testing.T) {
 	ctx := context.Background()
 	sqlStore := db.InitTestDB(t)
@@ -134,7 +150,10 @@ func newMemoryCounterStore() *memoryCounterStore {
 	return &memoryCounterStore{values: map[string]int64{}}
 }
 
-func (s *memoryCounterStore) Increment(_ context.Context, key string) error {
+func (s *memoryCounterStore) Increment(ctx context.Context, key string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.values[key]++
