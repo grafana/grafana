@@ -101,7 +101,11 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	if bundleErr == nil {
 		bundleErr = respErr
 	}
-	bundle, err := diagnostics.NewBundler().Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, bundleErr)
+	queryRequestJSON, err := json.Marshal(reqDTO.MetricRequest)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "failed to serialize diagnostics query request", err)
+	}
+	bundle, err := diagnostics.NewBundler().Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, queryRequestJSON, bundleErr)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to build diagnostics bundle", err)
 	}

@@ -185,6 +185,32 @@ func TestBuildDashboardDiagnosticsArchive_recordsPerRefIDQueryError(t *testing.T
 		"a per-refId query failure must be recorded in the manifest, not silently dropped")
 }
 
+func TestBuildDashboardDiagnosticsArchive_recordsSubmittedQueryRequest(t *testing.T) {
+	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(backend.NewQueryDataResponse(), nil)
+	hs := &HTTPServer{queryDataService: fakeQuery}
+
+	reqDTO := dashboardDiagnosticsRequest{
+		Panels: []panelDiagnosticsSpec{{
+			ID:    1,
+			Title: "Panel 1",
+			MetricRequest: dtos.MetricRequest{
+				From:    "now-1h",
+				To:      "now",
+				Queries: []*simplejson.Json{simplejson.NewFromAny(map[string]any{"refId": "A", "expr": "up"})},
+			},
+		}},
+	}
+
+	archive, err := hs.buildDashboardDiagnosticsArchive(context.Background(), &user.SignedInUser{OrgID: 1, UserUID: "u1"}, false, false, reqDTO, "job-querydata")
+	require.NoError(t, err)
+
+	files := readTarGzFiles(t, archive)
+	require.Contains(t, files, "panels/1-panel-1/querydata.json")
+	require.Contains(t, string(files["panels/1-panel-1/querydata.json"]), `"expr": "up"`)
+}
+
 // TestBuildDashboardDiagnosticsArchive_queryV2Dispatch guards against a regression where the
 // dashboard-level path always called QueryData, ignoring the X-Query-V2 signal that QueryDiagnostics
 // (the single-panel path) honors -- so captured traffic wouldn't match a panel using Query V2's

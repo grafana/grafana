@@ -382,12 +382,17 @@ func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
+		queryRequestJSON, err := json.Marshal(p.MetricRequest)
+		if err != nil {
+			return nil, fmt.Errorf("marshal panel %d query request: %w", p.ID, err)
+		}
 
 		panel := diagnostics.DashboardPanel{
-			ID:          p.ID,
-			Title:       p.Title,
-			PanelJSON:   p.Panel,
-			Datasources: panelDatasourceUIDs(p.MetricRequest),
+			ID:           p.ID,
+			Title:        p.Title,
+			PanelJSON:    p.Panel,
+			QueryRequest: queryRequestJSON,
+			Datasources:  panelDatasourceUIDs(p.MetricRequest),
 		}
 
 		if len(p.Queries) == 0 {
