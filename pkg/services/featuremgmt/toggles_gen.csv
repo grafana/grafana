@@ -246,7 +246,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-31,graphiteBackendMode,privatePreview,@grafana/data-sources-plugins,false,false,false
 2025-07-31,azureResourcePickerUpdates,GA,@grafana/data-sources-plugins,false,false,true
 2025-07-31,prometheusTypeMigration,deprecated,@grafana/data-sources-plugins,false,true,false
-2025-07-31,pluginContainers,privatePreview,@grafana/grafana-catalog,false,true,false
 2025-08-29,cdnPluginsLoadFirst,experimental,@grafana/grafana-catalog,false,false,false
 2025-08-29,cdnPluginsUrls,experimental,@grafana/grafana-catalog,false,false,false
 2025-10-24,pluginInstallAPISync,experimental,@grafana/grafana-catalog,false,false,false

@@ -1121,11 +1121,6 @@ export interface FeatureToggles {
   */
   prometheusTypeMigration?: boolean;
   /**
-  * Enables running plugins in containers
-  * @default false
-  */
-  pluginContainers?: boolean;
-  /**
   * Prioritize loading plugins from the CDN before other sources
   * @default false
   */
