@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -17,6 +18,7 @@ var ErrTeamOwnsFolders = errors.New("team owns one or more folders")
 // ValidateNoOwnedFolders checks whether a team is referenced as a folder owner.
 func ValidateNoOwnedFolders(ctx context.Context, searcher resourcepb.ResourceIndexClient, namespace, teamUID string) error {
 	if searcher == nil {
+		logging.FromContext(ctx).Warn("Skipping team folder-ownership check: no folder searcher configured", teamUID)
 		return nil
 	}
 
