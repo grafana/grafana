@@ -37,6 +37,7 @@ declare module "@openfeature/core" {
     | "otelLogsFormatting"
     | "grafana.starredFolders"
     | "plugins.useMTPlugins"
+    | "dashboardSectionVariables"
     | "globalDashboardVariables"
     | "queryEditorNext"
     | "managedPluginsV2"

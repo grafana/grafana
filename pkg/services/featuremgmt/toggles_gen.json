@@ -1672,8 +1672,7 @@
       "metadata": {
         "name": "dashboardSectionVariables",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z",
-        "deletionTimestamp": "2026-07-16T20:47:32Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z"
       },
       "spec": {
         "description": "Enables support for section level variables (rows and tabs)",

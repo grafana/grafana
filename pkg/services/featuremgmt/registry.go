@@ -2278,6 +2278,14 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:        "dashboardSectionVariables",
+			Description: "Enables support for section level variables (rows and tabs)",
+			Stage:       FeatureStageGeneralAvailability,
+			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "true", // enabled by default
+		},
+		{
 			Name:            "globalDashboardVariables",
 			Description:     "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
 			Stage:           FeatureStageExperimental,

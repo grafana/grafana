@@ -1206,6 +1206,11 @@ export interface FeatureToggles {
   */
   kubernetesAlertingHistorian?: boolean;
   /**
+  * Enables support for section level variables (rows and tabs)
+  * @default true
+  */
+  dashboardSectionVariables?: boolean;
+  /**
   * Enables global and folder-scoped dashboard variables via dashboard.grafana.app
   * @default false
   */
