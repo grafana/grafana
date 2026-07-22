@@ -167,7 +167,7 @@ export function parseAmConfigRoute(route: Route): Route {
 export function useUpdateExistingNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs) {
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
   const [updatedNamespacedRoute] = useReplaceRoutingTreeMutation();
-  const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
+  const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration(alertmanager);
   const [readRoutingTree] = useLazyGetRoutingTreeQuery();
 
   const updateUsingK8sApi = useAsync(async (update: Partial<FormAmRoute>) => {
@@ -201,7 +201,7 @@ export function useUpdateExistingNotificationPolicy({ alertmanager }: BaseAlertm
 
 export function useDeleteNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs) {
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
-  const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
+  const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration(alertmanager);
   const [readRoutingTree] = useLazyGetRoutingTreeQuery();
   const [updatedNamespacedRoute] = useReplaceRoutingTreeMutation();
 
@@ -236,7 +236,7 @@ export function useDeleteNotificationPolicy({ alertmanager }: BaseAlertmanagerAr
 
 export function useAddNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs) {
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
-  const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
+  const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration(alertmanager);
   const [readRoutingTree] = useLazyGetRoutingTreeQuery();
   const [updatedNamespacedRoute] = useReplaceRoutingTreeMutation();
 
