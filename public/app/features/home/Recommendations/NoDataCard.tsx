@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2, type IconName, locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { useAppPluginMetas } from '@grafana/runtime/internal';
 import { Badge, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
@@ -11,46 +12,70 @@ import { noDataCtaClicked } from '../analytics/main';
 import { KUBERNETES_APP_ID } from './kubernetesData';
 
 interface PopularSolution {
-  id: string; // stable telemetry id (solution_id)
+  id: string; // stable telemetry id (solution_id), aligned with pluginRecommendations ids
+  pluginId: string;
   label: string;
   icon: IconName;
-  href: string;
+  appPath: string; // path inside the app, used when the app is available
+  searchTerm: string; // catalog search keyword, deliberately untranslated
 }
 
 function getPopularSolutions(): PopularSolution[] {
   return [
     {
       id: 'kubernetes-monitoring',
+      pluginId: KUBERNETES_APP_ID,
       label: t('home.recommendations.no-data.solution-kubernetes', 'Kubernetes Monitoring'),
       icon: 'kubernetes',
-      href: locationUtil.assureBaseUrl(createBridgeURL(KUBERNETES_APP_ID, '/home')),
+      appPath: '/home',
+      searchTerm: 'kubernetes',
     },
     {
-      id: 'synthetics',
+      id: 'synthetic-monitoring',
+      pluginId: 'grafana-synthetic-monitoring-app',
       label: t('home.recommendations.no-data.solution-synthetics', 'Synthetic Monitoring'),
       icon: 'globe',
-      href: locationUtil.assureBaseUrl(createBridgeURL('grafana-synthetic-monitoring-app', '/home')),
+      appPath: '/home',
+      searchTerm: 'synthetic monitoring',
     },
     {
       id: 'k6',
+      pluginId: 'grafana-k6-app',
       label: t('home.recommendations.no-data.solution-k6', 'k6'),
       icon: 'k6',
-      href: locationUtil.assureBaseUrl(createBridgeURL('grafana-k6-app', '')),
+      appPath: '',
+      searchTerm: 'k6',
     },
   ];
+}
+
+// Available apps link into the app itself (its routes still enforce page-level
+// authorization). Absent apps link to the plugin catalog with the search prefilled:
+// a per-plugin detail page cannot be assumed to exist on every instance (air-gapped
+// or catalog-disabled stacks), and a dead app route is worse than a browsable catalog.
+function getSolutionHref(solution: PopularSolution, appAvailable: boolean): string {
+  if (appAvailable) {
+    return locationUtil.assureBaseUrl(createBridgeURL(solution.pluginId, solution.appPath));
+  }
+  const search = new URLSearchParams({ q: solution.searchTerm });
+  return locationUtil.assureBaseUrl(`/plugins?${search}`);
 }
 
 /** Left recommendations card for instances where no solution is reporting data yet. */
 export function NoDataCard() {
   const styles = useStyles2(getStyles);
+  // Availability only picks the link target; while the lookup is pending the pills
+  // fall back to the catalog, so the card never blocks on it.
+  const { value: appMetas } = useAppPluginMetas();
+  const availableApps = new Set((appMetas ?? []).map((app) => app.id));
 
   return (
-    <Stack direction="column" justifyContent="space-between" flex={1} data-testid="recommendation-no-data">
+    <Stack direction="column" justifyContent="space-between" flex={1}>
       <Stack direction="column" gap={2}>
         <Badge
           className={styles.badge}
           color="darkgrey"
-          text={t('home.recommendations.no-data.badge', 'No solution enabled')}
+          text={t('home.recommendations.no-data.badge', 'Getting started')}
         />
 
         <Text element="h3" variant="h3" color="primary">
@@ -77,7 +102,7 @@ export function NoDataCard() {
                 size="sm"
                 fill="solid"
                 icon={solution.icon}
-                href={solution.href}
+                href={getSolutionHref(solution, availableApps.has(solution.pluginId))}
                 onClick={() => noDataCtaClicked({ cta: 'solution', solution_id: solution.id })}
                 className={styles.pill}
               >
@@ -89,19 +114,17 @@ export function NoDataCard() {
       </Stack>
 
       <div className={styles.cta}>
-        <Stack direction="row" alignItems="center">
-          <LinkButton
-            variant="secondary"
-            size="md"
-            fill="solid"
-            icon="arrow-right"
-            iconPlacement="right"
-            href={locationUtil.assureBaseUrl(CONNECTIONS_ROUTES.AddNewConnection)}
-            onClick={() => noDataCtaClicked({ cta: 'connect_data_source' })}
-          >
-            <Trans i18nKey="home.recommendations.no-data.connect">Connect a data source</Trans>
-          </LinkButton>
-        </Stack>
+        <LinkButton
+          variant="secondary"
+          size="md"
+          fill="solid"
+          icon="arrow-right"
+          iconPlacement="right"
+          href={locationUtil.assureBaseUrl(CONNECTIONS_ROUTES.AddNewConnection)}
+          onClick={() => noDataCtaClicked({ cta: 'connect_data_source' })}
+        >
+          <Trans i18nKey="home.recommendations.no-data.connect">Connect a data source</Trans>
+        </LinkButton>
       </div>
     </Stack>
   );

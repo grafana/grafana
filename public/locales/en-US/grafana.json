@@ -10973,7 +10973,7 @@
       },
       "next": "Next",
       "no-data": {
-        "badge": "No solution enabled",
+        "badge": "Getting started",
         "connect": "Connect a data source",
         "description": "Connect a data source to light up your dashboards and alerts, pick from available solutions, or follow a getting started guide.",
         "popular-solutions": "Popular solutions",
