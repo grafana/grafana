@@ -706,7 +706,7 @@ var (
 			Name:        "feedbackButton",
 			Description: "Enables the feedback button in the dashboard edit sidebar",
 			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
 		},

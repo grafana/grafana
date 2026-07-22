@@ -45,6 +45,8 @@ export const FlagKeys = {
   ExperimentRecentlyViewedDashboards: "experimentRecentlyViewedDashboards",
   /** Enable Faro session replay for Grafana */
   FaroSessionReplay: "faroSessionReplay",
+  /** Enables the feedback button in the dashboard edit sidebar */
+  FeedbackButton: "feedbackButton",
   /** Enables the new Flame Graph UI containing the Call Tree view */
   FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
@@ -327,6 +329,17 @@ export const useFlagExperimentRecentlyViewedDashboards = (options?: ReactFlagEva
  */
 export const useFlagFaroSessionReplay = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("faroSessionReplay", false, options).value;
+};
+
+/**
+ * Enables the feedback button in the dashboard edit sidebar
+ *
+ * **Details:**
+ * - flag key: `feedbackButton`
+ * - default value: `true`
+ */
+export const useFlagFeedbackButton = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("feedbackButton", true, options).value;
 };
 
 /**
