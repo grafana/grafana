@@ -119,7 +119,7 @@ describe('FiringAlertsCard', () => {
 
     render(<FiringAlertsCard />);
 
-    expect(await screen.findByRole('link', { name: 'Linked alert' })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /^Linked alert/ })).toHaveAttribute(
       'href',
       '/alerting/grafana/abc123/view?orgId=1'
     );
@@ -355,7 +355,7 @@ describe('FiringAlertsCard', () => {
 
       const { user } = render(<FiringAlertsCard />);
 
-      await user.click(await screen.findByRole('link', { name: 'Linked alert' }));
+      await user.click(await screen.findByRole('link', { name: /^Linked alert/ }));
 
       expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
         surface: 'alerts_card',

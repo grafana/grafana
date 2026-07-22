@@ -11389,10 +11389,10 @@
           {
             "element": "checkbox",
             "inputType": "",
-            "label": "Disable Notification",
+            "label": "Disable Notifications",
             "description": "Sends the message silently. Users will receive a notification with no sound.",
             "placeholder": "",
-            "propertyName": "disable_notification",
+            "propertyName": "disable_notifications",
             "selectOptions": null,
             "showWhen": {
               "field": "",
