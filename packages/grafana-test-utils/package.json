@@ -54,7 +54,9 @@
   "scripts": {
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "test": "jest --watch --onlyChanged",
-    "test:ci": "jest --maxWorkers 4"
+    "test:ci": "jest --maxWorkers 4",
+    "mock-plugin-catalog": "node ./src/mock-plugin-catalog/server.mjs",
+    "mock-plugin-catalog:build": "./src/mock-plugin-catalog/make-zips.sh"
   },
   "dependencies": {
     "@grafana/api-clients": "workspace:*",

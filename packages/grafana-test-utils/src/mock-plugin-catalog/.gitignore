@@ -1,0 +1,4 @@
+# Plugin sources are scaffolded fresh by make-zips.sh (transient, not committed).
+# Only the built artifacts are committed: zips/ (the packages) and meta/ (each
+# plugin's extracted plugin.json, read by the server for catalog metadata).
+plugins/

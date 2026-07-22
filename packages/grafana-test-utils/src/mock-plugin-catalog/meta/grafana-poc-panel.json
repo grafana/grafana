@@ -1,0 +1,28 @@
+{
+    "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
+    "type": "panel",
+    "name": "Pocpanel",
+    "id": "grafana-poc-panel",
+    "info": {
+        "keywords": [
+            "panel"
+        ],
+        "description": "",
+        "author": {
+            "name": "Grafana"
+        },
+        "logos": {
+            "small": "img/logo.svg",
+            "large": "img/logo.svg"
+        },
+        "links": [],
+        "screenshots": [],
+        "version": "1.0.0",
+        "updated": "2026-07-22"
+    },
+    "dependencies": {
+        "grafanaDependency": ">=12.3.0",
+        "plugins": []
+    },
+    "buildMode": "production"
+}

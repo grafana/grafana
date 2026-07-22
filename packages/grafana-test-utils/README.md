@@ -2,6 +2,18 @@
 
 This package is a collection of test utils and a mock API (using MSW) for use with core Grafana UI development.
 
+## Mock plugin catalog
+
+`src/mock-plugin-catalog/` is a standalone HTTP server that stands in for the grafana.com plugin catalog, letting a local Grafana list and install plugins with zero real-network dependency (for plugin install/uninstall e2e tests). Unlike the rest of this package it is not MSW — Grafana's Go backend reaches it over the network via `GF_GRAFANA_COM_API_URL`.
+
+Start it (serves the committed zips on `:8765`):
+
+```bash
+yarn workspace @grafana/test-utils mock-plugin-catalog
+```
+
+Regenerate the packaged plugins with `mock-plugin-catalog:build`. See `src/mock-plugin-catalog/README.md` for setup, wiring, and verification.
+
 ## Matchers
 
 To add the matchers to your Jest config, import them then extend `expect`. This should be done in the `setupFilesAfterEnv` file declared in `jest.config.{js,ts}`.
