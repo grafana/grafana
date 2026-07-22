@@ -43,10 +43,7 @@ export function getFilterByGroupedLabels(
   onAddAdHocFilters: ((items: AdHocFilterItem[]) => void) | undefined,
   { checkFilterablePanelsFlag = true }: FilterByGroupedLabelsOptions = {}
 ): FilterByGroupedLabelsModel | undefined {
-  if (
-    checkFilterablePanelsFlag &&
-    !getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaFilterablePanels, false)
-  ) {
+  if (checkFilterablePanelsFlag && !getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaFilterablePanels, false)) {
     return undefined;
   }
 
