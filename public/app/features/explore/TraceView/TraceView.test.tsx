@@ -152,6 +152,17 @@ describe('TraceView', () => {
     expect(reportInteraction).not.toHaveBeenCalledWith('grafana_traces_summary_span_detail_opened', expect.anything());
   });
 
+  it('reports toggling the Summary attributes accordion', async () => {
+    renderTraceView([frameSummary]);
+    const summarySpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[0];
+    await userEvent.click(summarySpan);
+    await userEvent.click(screen.getByText(/Summary attributes/));
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_traces_summary_attributes_toggled',
+      expect.objectContaining({ isOpen: true })
+    );
+  });
+
   it('shows timeline ticks', () => {
     renderTraceViewNew();
     function ticks() {

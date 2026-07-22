@@ -216,6 +216,20 @@ export function TraceView(props: Props) {
     [detailStates, toggleDetail, traceProp, datasourceType]
   );
 
+  // The Summary attributes accordion renders only on summary spans and is otherwise untracked;
+  // report each toggle (with the resulting open state) so summary-attribute engagement is observable.
+  const handleSummaryAttributesToggle = useCallback(
+    (spanID: string) => {
+      reportInteraction('grafana_traces_summary_attributes_toggled', {
+        datasourceType,
+        grafana_version: config.buildInfo.version,
+        isOpen: !detailStates.get(spanID)?.isSummaryAttributesOpen,
+      });
+      detailSummaryAttributesToggle(spanID);
+    },
+    [detailStates, detailSummaryAttributesToggle, datasourceType]
+  );
+
   return (
     <>
       {props.dataFrames?.length && traceProp ? (
@@ -270,7 +284,7 @@ export function TraceView(props: Props) {
             detailReferenceItemToggle={detailReferenceItemToggle}
             detailProcessToggle={detailProcessToggle}
             detailTagsToggle={detailTagsToggle}
-            detailSummaryAttributesToggle={detailSummaryAttributesToggle}
+            detailSummaryAttributesToggle={handleSummaryAttributesToggle}
             detailToggle={handleDetailToggle}
             addHoverIndentGuideId={addHoverIndentGuideId}
             removeHoverIndentGuideId={removeHoverIndentGuideId}
