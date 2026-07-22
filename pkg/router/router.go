@@ -7,23 +7,20 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
 	"strings"
 	"sync/atomic"
 
-	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"k8s.io/client-go/transport"
 )
 
 const apisPrefix = "/apis"
 
-// groupEntry is the router's persistent, reconcile-only record for one group:
+// handlerEntry is the router's persistent, reconcile-only record for one group:
 // the live Backend plus lastRV, the RouteConfig fingerprint last applied. lastRV
 // lets reconcile skip rebuilding a group whose config has not changed. Touched
 // only by reconcile (single goroutine), so it needs no lock.
-type groupEntry struct {
-	backend Backend
+type handlerEntry struct {
+	handler http.Handler
 	lastRV  string
 }
 
@@ -37,23 +34,23 @@ type BasicRouter struct {
 
 	// entries is the desired-state map, keyed by group. Owned by reconcile
 	// (single goroutine); never read from the serving path.
-	entries map[string]*groupEntry
+	entries map[string]*handlerEntry
 
 	// snapshot is the immutable group -> Backend map used to serve requests.
 	// reconcile rebuilds and atomically stores it; serving loads it lock-free.
 	// Keeping the routing table keyed by group (not flattened path prefixes)
 	// keeps the config's shape visible at dispatch, so Handler can give primacy
 	// to the group when deciding own-vs-fallthrough.
-	snapshot atomic.Pointer[map[string]Backend]
+	snapshot atomic.Pointer[map[string]http.Handler]
 }
 
 func NewRouter(loader RoutesLoader) *BasicRouter {
 	r := &BasicRouter{
 		loader:     loader,
 		transports: map[tlsCacheKey]*http.Transport{},
-		entries:    map[string]*groupEntry{},
+		entries:    map[string]*handlerEntry{},
 	}
-	empty := map[string]Backend{}
+	empty := map[string]http.Handler{}
 	r.snapshot.Store(&empty)
 	return r
 }
@@ -121,8 +118,8 @@ func (cr *BasicRouter) HandleFunc(w http.ResponseWriter, req *http.Request, next
 	}
 
 	group := groupFromPath(path)
-	backends := *cr.snapshot.Load()
-	b, ok := backends[group]
+	handlers := *cr.snapshot.Load()
+	h, ok := handlers[group]
 	if !ok {
 		// A group we don't serve. Fall through rather than 404 so a caller
 		// mounted ahead of us keeps its own routes.
@@ -131,7 +128,7 @@ func (cr *BasicRouter) HandleFunc(w http.ResponseWriter, req *http.Request, next
 	}
 	// /apis/<group> group discovery and /apis/<group>/... both proxy to the
 	// single owning backend (one backend owns all versions of a group).
-	b.Handler().ServeHTTP(w, req)
+	h.ServeHTTP(w, req)
 }
 
 // groupFromPath returns the group segment of an /apis/<group>[/...] path.
@@ -192,16 +189,16 @@ func (r *BasicRouter) Alive(context.Context) error { return nil }
 // groups that disappeared, then publish a fresh snapshot. Level-triggered, so
 // it is safe to run on any wake.
 func (r *BasicRouter) reconcile(ctx context.Context) {
-	cfgs, err := r.loader.Load(ctx)
+	backends, err := r.loader.Load(ctx)
 	if err != nil {
 		// Keep serving last-known-good; a later wake retries.
 		slog.Error("router: load failed, keeping current routes", "error", err)
 		return
 	}
 
-	seen := make(map[string]struct{}, len(cfgs))
-	for _, cfg := range cfgs {
-		group := cfg.Group
+	seen := make(map[string]struct{}, len(backends))
+	for _, b := range backends {
+		group := b.Group()
 		if _, dup := seen[group]; dup {
 			// One backend owns all versions of a group; a duplicate group in a
 			// single load is a config error. Last-wins, warn — do not crash the
@@ -211,19 +208,19 @@ func (r *BasicRouter) reconcile(ctx context.Context) {
 		seen[group] = struct{}{}
 
 		e, ok := r.entries[group]
-		if ok && e.lastRV == cfg.RV {
+		if ok && e.lastRV == b.RV() {
 			continue // unchanged: keep the live Backend (and its pool)
 		}
 
-		backend := r.buildBackend(cfg)
-		if !ok {
-			r.entries[group] = &groupEntry{backend: backend, lastRV: cfg.RV}
+		handler, err := b.Load(ctx)
+		if err != nil {
+			r.entries[group] = &handlerEntry{handler: handler, lastRV: b.RV()}
 			continue
 		}
 		// Changed: rebuild. The transport (and its pool) is reused from the
 		// shared cache when the TLS key is unchanged, so the pool survives.
-		e.backend = backend
-		e.lastRV = cfg.RV
+		e.handler = handler
+		e.lastRV = b.RV()
 	}
 
 	for group := range r.entries {
@@ -238,49 +235,11 @@ func (r *BasicRouter) reconcile(ctx context.Context) {
 // publish builds a fresh immutable group -> Backend snapshot from entries and
 // stores it atomically for the serving path.
 func (r *BasicRouter) publish() {
-	snap := make(map[string]Backend, len(r.entries))
+	snap := make(map[string]http.Handler, len(r.entries))
 	for group, e := range r.entries {
-		snap[group] = e.backend
+		snap[group] = e.handler
 	}
 	r.snapshot.Store(&snap)
-}
-
-// buildBackend turns a RouteConfig into a servable Backend. Build errors are
-// captured on the Backend so it serves a 500 rather than the reconcile loop
-// failing the whole set.
-func (r *BasicRouter) buildBackend(cfg RouteConfig) Backend {
-	rs := cfg.Backend
-	if rs.Mode != v1alpha2.RouteBackendSpecModeForward {
-		// TODO: handle operator/plugin modes.
-		return &forwardBackend{name: cfg.Group, buildErr: fmt.Errorf("unsupported route backend mode %q", rs.Mode)}
-	}
-
-	backend := rs.Forward
-
-	transportKey := tlsCacheKey{
-		insecure: backend.Tls.SkipTLSVerify,
-	}
-	if backend.Tls.CaData != nil {
-		transportKey.caData = *backend.Tls.CaData
-	}
-	tr, err := r.transportFor(transportKey)
-	if err != nil {
-		return &forwardBackend{name: cfg.Group, buildErr: fmt.Errorf("build transport for group=%s, err=%w", cfg.Group, err)}
-	}
-
-	u, err := url.Parse(backend.Url)
-	if err != nil {
-		return &forwardBackend{name: cfg.Group, buildErr: fmt.Errorf("error parsing backend url: group=%s, err=%w", cfg.Group, err)}
-	}
-	return &forwardBackend{
-		name:   cfg.Group,
-		target: u,
-		proxy: &httputil.ReverseProxy{
-			Rewrite:        func(pr *httputil.ProxyRequest) { pr.SetURL(u) },
-			Transport:      tr,
-			ModifyResponse: rejectBackendRedirects,
-		},
-	}
 }
 
 func rejectBackendRedirects(resp *http.Response) error {

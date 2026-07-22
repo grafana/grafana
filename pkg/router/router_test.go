@@ -23,7 +23,7 @@ func (b stubBackend) Ready(context.Context) error    { return nil }
 func withGroups(groups ...string) *BasicRouter {
 	r := NewRouter(nil)
 	for _, g := range groups {
-		r.entries[g] = &groupEntry{backend: stubBackend{name: g}, lastRV: "1"}
+		r.entries[g] = &handlerEntry{backend: stubBackend{name: g}, lastRV: "1"}
 	}
 	r.publish()
 	return r
