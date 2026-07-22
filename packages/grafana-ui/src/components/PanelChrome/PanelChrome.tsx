@@ -546,6 +546,7 @@ const getContentStyle = (
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const { background, borderColor } = theme.components.panel;
 
   return {
@@ -677,14 +678,18 @@ const getStyles = (theme: GrafanaTheme2) => {
     hiddenMenu: css({
       visibility: 'hidden',
     }),
-    menuItem: css({
-      label: 'panel-menu',
-      border: 'none',
-      // background: theme.colors.secondary.main,
-      // '&:hover': {
-      //   background: theme.colors.secondary.shade,
-      // },
-    }),
+    menuItem: css(
+      {
+        label: 'panel-menu',
+        border: 'none',
+      },
+      !visualRefreshEnabled && {
+        background: theme.colors.secondary.main,
+        '&:hover': {
+          background: theme.colors.secondary.shade,
+        },
+      }
+    ),
     errorContainerFloating: css({
       label: 'error-container',
       position: 'absolute',
