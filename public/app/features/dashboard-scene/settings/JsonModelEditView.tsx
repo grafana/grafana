@@ -16,7 +16,7 @@ import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
 import { type DashboardDataDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
-import { DashboardCodePane } from '../edit-pane/DashboardCodePane';
+import { SIDEBAR_PANE_URL_KEY } from '../edit-pane/DashboardEditPaneUrlSync';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import {
   NameAlreadyExistsError,
@@ -159,10 +159,9 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
   );
 
   const goToSidebar = () => {
-    // close settings and open the "Edit as code" sidebar pane
-    const dashboard = getDashboardSceneFor(model);
-    dashboard.state.editPane.openPane(new DashboardCodePane({}));
-    locationService.partial({ editview: null });
+    // Close settings and open the "Edit as code" sidebar pane. Driving this through the URL means
+    // the resulting link is stable: reloading it re-enters edit mode and reopens the pane.
+    locationService.partial({ editview: null, [SIDEBAR_PANE_URL_KEY]: 'code' });
 
     DashboardInteractions.takeMeToSidebarClicked({ item: 'json-model' });
   };

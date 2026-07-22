@@ -18,6 +18,10 @@ export class DashboardCodePane extends SceneObjectBase {
   public getId() {
     return 'code' as const;
   }
+
+  public getUrlKey() {
+    return 'code';
+  }
 }
 
 function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodePane>) {

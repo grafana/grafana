@@ -15,6 +15,7 @@ import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '../utils/utils';
 
+import { DashboardEditPaneUrlSync } from './DashboardEditPaneUrlSync';
 import { ElementEditPane } from './ElementEditPane';
 import {
   ConditionalRenderingChangedEvent,
@@ -31,6 +32,8 @@ import { getEditableElementFor } from './shared';
 import { type DashboardSidebarPane, type DashboardEditPaneLike, type DashboardEditPaneState } from './types';
 
 export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> implements DashboardEditPaneLike {
+  protected _urlSync = new DashboardEditPaneUrlSync(this);
+
   public constructor(state?: Partial<DashboardEditPaneState>) {
     super({
       selectionContext: {

@@ -48,4 +48,9 @@ export interface DashboardSidebarPane extends SceneObject {
   minWidth?: number;
   /** Exclude this pane from the go back history */
   excludeFromHistory?: boolean;
+  /**
+   * When defined, the pane can be opened via a stable URL (?sidebar=<key>) and is restored on
+   * reload. Panes whose contents depend on the current selection should not implement this.
+   */
+  getUrlKey?(): string;
 }
