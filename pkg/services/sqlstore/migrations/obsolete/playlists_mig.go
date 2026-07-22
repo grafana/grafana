@@ -1,8 +1,13 @@
-package testcases
+package obsolete
 
 import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
-func addPlaylistMigrations(mg *Migrator) {
+func PlaylistMigrations() *ObsoleteMigrations {
+	mg := &ObsoleteMigrations{
+		Table:      "playlist",
+		Migrations: make([]Migration, 0),
+	}
+
 	mg.AddMigration("Drop old table playlist table", NewDropTableMigration("playlist"))
 	mg.AddMigration("Drop old table playlist_item table", NewDropTableMigration("playlist_item"))
 
@@ -41,9 +46,7 @@ func addPlaylistMigrations(mg *Migrator) {
 	mg.AddMigration("Add playlist column updated_at", NewAddColumnMigration(playlistV2(), &Column{
 		Name: "updated_at", Type: DB_BigInt, Nullable: false, Default: "0",
 	}))
-}
 
-func addPlaylistUIDMigration(mg *Migrator) {
 	// Replacing auto-incremented playlistIDs with string UIDs
 	mg.AddMigration("Add UID column to playlist", NewAddColumnMigration(playlistV2(), &Column{
 		Name: "uid", Type: DB_NVarchar, Length: 80, Nullable: false, Default: "0",
@@ -58,6 +61,7 @@ func addPlaylistUIDMigration(mg *Migrator) {
 	mg.AddMigration("Add index for uid in playlist", NewAddIndexMigration(playlistV2(), &Index{
 		Cols: []string{"org_id", "uid"}, Type: UniqueIndex,
 	}))
+	return mg
 }
 
 func playlistV2() Table {
