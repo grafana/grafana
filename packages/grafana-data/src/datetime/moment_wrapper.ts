@@ -1,6 +1,12 @@
 import { type TimeZone } from '../types/time';
 
-import moment, { type MomentInput, type MomentLike as Moment } from './luxon_moment_compat/moment';
+import moment, {
+  type MomentInput,
+  type MomentLike as Moment,
+  type MomentUnit,
+} from './luxon_moment_compat/moment';
+
+export type { Moment };
 
 /* eslint-disable id-blacklist, no-restricted-imports */
 export interface DateTimeBuiltinFormat {
@@ -10,35 +16,8 @@ export const ISO_8601: DateTimeBuiltinFormat = moment.ISO_8601;
 export type DateTimeInput = Date | string | number | Array<string | number> | DateTime | null; // | undefined;
 export type FormatInput = string | DateTimeBuiltinFormat | undefined;
 export type DurationInput = string | number | DateTimeDuration;
-export type DurationUnit =
-  | 'year'
-  | 'years'
-  | 'y'
-  | 'month'
-  | 'months'
-  | 'M'
-  | 'week'
-  | 'weeks'
-  | 'isoWeek'
-  | 'w'
-  | 'day'
-  | 'days'
-  | 'd'
-  | 'hour'
-  | 'hours'
-  | 'h'
-  | 'minute'
-  | 'minutes'
-  | 'm'
-  | 'second'
-  | 'seconds'
-  | 's'
-  | 'millisecond'
-  | 'milliseconds'
-  | 'ms'
-  | 'quarter'
-  | 'quarters'
-  | 'Q';
+// same member set as the shim's MomentUnit; aliased so the two cannot drift apart
+export type DurationUnit = MomentUnit;
 
 export interface DateTimeLocale {
   firstDayOfWeek: () => number;
@@ -158,18 +137,11 @@ export const dateTimeForTimeZone = (
   formatInput?: FormatInput
 ): DateTime => {
   if (timezone && timezone !== 'browser') {
-    let result: Moment;
-    const normalizedInput = toMomentInput(input);
-
     if (typeof input === 'string' && formatInput) {
-      result = moment.tz(input, formatInput, timezone);
-    } else {
-      result = moment.tz(normalizedInput, timezone);
+      return asDateTime(moment.tz(input, formatInput, timezone));
     }
 
-    if (isDateTime(result)) {
-      return result;
-    }
+    return asDateTime(moment.tz(toMomentInput(input), timezone));
   }
 
   return dateTime(input, formatInput);

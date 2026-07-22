@@ -5,7 +5,7 @@ import { type TimeZone } from '../types/time';
 import { type DateTimeOptions, getTimeZone } from './common';
 import { systemDateFormats } from './formats';
 import moment from './luxon_moment_compat/moment';
-import { type DateTimeInput, toUtc, dateTimeAsMoment } from './moment_wrapper';
+import { type DateTimeInput, type Moment, toUtc, dateTimeAsMoment } from './moment_wrapper';
 
 /**
  * The type describing the options that can be passed to the {@link dateTimeFormat}
@@ -97,7 +97,7 @@ const getFormat = <T extends DateTimeOptionsWithFormat>(options?: T): string => 
   return options?.format ?? systemDateFormats.fullDate;
 };
 
-const toTz = (dateInUtc: DateTimeInput, timeZone: TimeZone): ReturnType<typeof dateTimeAsMoment> => {
+const toTz = (dateInUtc: DateTimeInput, timeZone: TimeZone): Moment => {
   const date = dateInUtc;
   const zone = moment.tz.zone(timeZone);
 

@@ -2,7 +2,7 @@ import { type DateTimeUnit, type DurationLikeObject, type DurationUnit, DateTime
 
 import { convertMomentToLuxonWithOrdinal, formatWithOrdinal } from './format';
 
-type MomentUnit =
+export type MomentUnit =
   | 'years'
   | 'year'
   | 'y'
@@ -286,44 +286,27 @@ function isInputObject(value: unknown): value is InputObject {
   return !Array.isArray(value);
 }
 
+// positional units of a moment array input: [year, month, day, hour, minute, second, millisecond]
+const ARRAY_INPUT_UNITS = ['year', 'month', 'day', 'hour', 'minute', 'second', 'millisecond'] as const;
+
 function normalizeArrayInput(input: InputArray, options?: MomentOptions): DateTime {
   if (input.length === 0) {
     return DateTime.now();
   }
 
-  const toUnitNumber = (value: string | number): number => Number(value);
-  const [rawYear, rawMonth, rawDay, rawHour, rawMinute, rawSecond, rawMillisecond] = input.map(toUnitNumber);
+  const values = input.slice(0, ARRAY_INPUT_UNITS.length).map(Number);
 
-  if (
-    [rawYear, rawMonth, rawDay, rawHour, rawMinute, rawSecond, rawMillisecond].some((v) => v != null && Number.isNaN(v))
-  ) {
+  if (values.some((v) => Number.isNaN(v))) {
     return DateTime.invalid('unsupported array input');
   }
 
   const normalized: InputObject = {};
 
-  if (rawYear != null) {
-    normalized.year = rawYear;
-  }
-  if (rawMonth != null) {
+  values.forEach((value, i) => {
+    const unit = ARRAY_INPUT_UNITS[i];
     // moment array months are zero-based, luxon months are one-based.
-    normalized.month = rawMonth + 1;
-  }
-  if (rawDay != null) {
-    normalized.day = rawDay;
-  }
-  if (rawHour != null) {
-    normalized.hour = rawHour;
-  }
-  if (rawMinute != null) {
-    normalized.minute = rawMinute;
-  }
-  if (rawSecond != null) {
-    normalized.second = rawSecond;
-  }
-  if (rawMillisecond != null) {
-    normalized.millisecond = rawMillisecond;
-  }
+    normalized[unit] = unit === 'month' ? value + 1 : value;
+  });
 
   return DateTime.fromObject(normalized, options);
 }
@@ -413,10 +396,7 @@ function parseClockDuration(value: string, format?: string): Duration | null {
 
 function normalizeDurationInput(input: number | MomentDurationLike | string, unit?: MomentUnit | string): Duration {
   if (typeof input === 'string') {
-    const parsedClock = parseClockDuration(input, unit);
-    if (parsedClock) {
-      return parsedClock;
-    }
+    return parseClockDuration(input, unit) ?? Duration.fromMillis(0);
   }
 
   if (typeof input === 'number') {
@@ -426,10 +406,6 @@ function normalizeDurationInput(input: number | MomentDurationLike | string, uni
 
     const normalizedUnit = normalizeUnit(unit);
     return Duration.fromObject({ [normalizedUnit]: input });
-  }
-
-  if (typeof input === 'string') {
-    return Duration.fromMillis(0);
   }
 
   return Duration.fromMillis(input.valueOf());
@@ -485,6 +461,26 @@ function parseWithFallbacks(value: string, options?: MomentOptions): DateTime {
 
 function stripRelativeAffixes(value: string): string {
   return value.replace(/^in\s+/, '').replace(/\s+ago$/, '');
+}
+
+function toRelativeString(
+  target: DateTime,
+  base: DateTime | undefined,
+  locale: string | null,
+  withoutSuffix: boolean
+): string {
+  const relative = target.toRelative({
+    base,
+    style: 'long',
+    locale: locale ?? undefined,
+    rounding: 'round',
+  });
+
+  if (!withoutSuffix || relative == null) {
+    return relative ?? '';
+  }
+
+  return stripRelativeAffixes(relative);
 }
 
 function toMomentDay(weekday: number): number {
@@ -673,6 +669,17 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
 
   const getLocaleWeekStart = () => getLocaleFirstDayOfWeek(dt.locale || currentLocale);
 
+  // millis of this instant and `other`, truncated to `unit` when given, for comparisons
+  const comparableMillis = (other: MomentInput, unit?: DateTimeUnit): [number, number] => {
+    const b = normalizeInput(other);
+
+    if (unit) {
+      return [dt.startOf(unit).toMillis(), b.startOf(unit).toMillis()];
+    }
+
+    return [dt.toMillis(), b.toMillis()];
+  };
+
   const startOfLocaleWeek = () => {
     const weekStart = getLocaleWeekStart();
     const currentDay = toMomentDay(dt.weekday);
@@ -803,11 +810,7 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
     },
 
     isoWeek(value?: number) {
-      if (value == null) {
-        return dt.weekNumber;
-      }
-
-      return setDt(dt.plus({ weeks: value - dt.weekNumber }));
+      return api.week(value);
     },
 
     isValid() {
@@ -815,33 +818,18 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
     },
 
     isBefore(other, unit) {
-      const b = normalizeInput(other);
-
-      if (unit) {
-        return dt.startOf(unit).toMillis() < b.startOf(unit).toMillis();
-      }
-
-      return dt.toMillis() < b.toMillis();
+      const [a, b] = comparableMillis(other, unit);
+      return a < b;
     },
 
     isAfter(other, unit) {
-      const b = normalizeInput(other);
-
-      if (unit) {
-        return dt.startOf(unit).toMillis() > b.startOf(unit).toMillis();
-      }
-
-      return dt.toMillis() > b.toMillis();
+      const [a, b] = comparableMillis(other, unit);
+      return a > b;
     },
 
     isSame(other, unit) {
-      const b = normalizeInput(other);
-
-      if (unit) {
-        return dt.startOf(unit).toMillis() === b.startOf(unit).toMillis();
-      }
-
-      return dt.toMillis() === b.toMillis();
+      const [a, b] = comparableMillis(other, unit);
+      return a === b;
     },
 
     isBetween(a, b, unit, inclusivity = '()') {
@@ -912,48 +900,15 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
     },
 
     fromNow(withoutSuffix = false) {
-      const relative = dt.toRelative({
-        style: 'long',
-        locale: dt.locale ?? undefined,
-        rounding: 'round',
-      });
-
-      if (!withoutSuffix || relative == null) {
-        return relative ?? '';
-      }
-
-      return stripRelativeAffixes(relative);
+      return toRelativeString(dt, undefined, dt.locale, withoutSuffix);
     },
 
     toNow(withoutSuffix = false) {
-      const relative = DateTime.now().toRelative({
-        base: dt,
-        style: 'long',
-        locale: dt.locale ?? undefined,
-        rounding: 'round',
-      });
-
-      if (!withoutSuffix || relative == null) {
-        return relative ?? '';
-      }
-
-      return stripRelativeAffixes(relative);
+      return toRelativeString(DateTime.now(), dt, dt.locale, withoutSuffix);
     },
 
     from(input, withoutSuffix = false) {
-      const base = normalizeInput(input);
-      const relative = dt.toRelative({
-        base,
-        style: 'long',
-        locale: dt.locale ?? undefined,
-        rounding: 'round',
-      });
-
-      if (!withoutSuffix || relative == null) {
-        return relative ?? '';
-      }
-
-      return stripRelativeAffixes(relative);
+      return toRelativeString(dt, normalizeInput(input), dt.locale, withoutSuffix);
     },
   };
 
@@ -1104,6 +1059,19 @@ interface MomentFactory {
   weekdaysMin(locale?: string): string[];
 }
 
+function toParseOptions(formatOrStrict?: MomentFormat | boolean, strict?: boolean): ParseOptions {
+  const parseOptions: ParseOptions = {};
+
+  if (typeof formatOrStrict === 'string' || Array.isArray(formatOrStrict)) {
+    parseOptions.format = formatOrStrict;
+    parseOptions.strict = strict ?? false;
+  } else if (typeof formatOrStrict === 'boolean') {
+    parseOptions.strict = formatOrStrict;
+  }
+
+  return parseOptions;
+}
+
 // a single implementation with union-typed parameters satisfies every overload of the factory
 // interfaces, so building the callable-with-properties shape via Object.assign needs no assertion.
 const momentTz: MomentTzFactory = Object.assign(
@@ -1137,16 +1105,7 @@ const momentTz: MomentTzFactory = Object.assign(
 
 const moment: MomentFactory = Object.assign(
   (input?: MomentInput, formatOrStrict?: MomentFormat | boolean, strict?: boolean): MomentLike => {
-    const parseOptions: ParseOptions = {};
-
-    if (typeof formatOrStrict === 'string' || Array.isArray(formatOrStrict)) {
-      parseOptions.format = formatOrStrict;
-      parseOptions.strict = strict ?? false;
-    } else if (typeof formatOrStrict === 'boolean') {
-      parseOptions.strict = formatOrStrict;
-    }
-
-    return makeMoment(input, { locale: currentLocale }, parseOptions);
+    return makeMoment(input, { locale: currentLocale }, toParseOptions(formatOrStrict, strict));
   },
   {
     ISO_8601,
@@ -1173,16 +1132,7 @@ const moment: MomentFactory = Object.assign(
     },
 
     utc: (input?: MomentInput, formatOrStrict?: MomentFormat | boolean, strict?: boolean): MomentLike => {
-      const parseOptions: ParseOptions = {};
-
-      if (typeof formatOrStrict === 'string' || Array.isArray(formatOrStrict)) {
-        parseOptions.format = formatOrStrict;
-        parseOptions.strict = strict ?? false;
-      } else if (typeof formatOrStrict === 'boolean') {
-        parseOptions.strict = formatOrStrict;
-      }
-
-      return makeMoment(input, { zone: 'utc', locale: currentLocale }, parseOptions).utc();
+      return makeMoment(input, { zone: 'utc', locale: currentLocale }, toParseOptions(formatOrStrict, strict)).utc();
     },
 
     unix: (seconds: number): MomentLike => makeMoment(seconds * 1000, { locale: currentLocale }),

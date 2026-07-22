@@ -22,14 +22,7 @@ const TOKEN_MAP: Record<string, string> = {
   D: 'd',
   dddd: 'cccc',
   ddd: 'ccc',
-  HH: 'HH',
-  H: 'H',
-  hh: 'hh',
-  h: 'h',
-  mm: 'mm',
-  m: 'm',
-  ss: 'ss',
-  s: 's',
+  // HH/H, hh/h, mm/m, ss/s are identical in moment and luxon and pass through unmapped
   A: 'a',
   a: "'__mls__'a'__mle__'",
 
@@ -79,9 +72,6 @@ export function formatWithOrdinal(luxonDateTime: DateTime, momentFormat: string)
   // https://github.com/facebook/hermes/issues/1601
   // console.log(luxonDateTime.offsetNameShort);
   const formatted = luxonDateTime.toFormat(luxonFormat);
-
-  // Global regexes carry `lastIndex`; reset so repeated calls are deterministic.
-  ORDINAL_MARKER_PATTERN.lastIndex = 0;
 
   const withOrdinals = formatted.replace(ORDINAL_MARKER_PATTERN, (_: string, rawDay: string) => {
     const day = parseInt(rawDay, 10);
