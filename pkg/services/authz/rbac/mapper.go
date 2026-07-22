@@ -518,10 +518,9 @@ func NewMapperRegistry() MapperRegistry {
 			"metas":   newResourceTranslation("plugins.metas", "uid", false, nil),
 		},
 		"advisor.grafana.app": {
-			"checks":       newResourceTranslation("advisor.checks", "uid", false, nil),
-			"checktypes":   newResourceTranslation("advisor.checktypes", "uid", false, nil),
-			"register":     newResourceTranslation("advisor.register", "uid", false, nil),
-			"translations": newResourceTranslation("advisor.translations", "uid", false, nil),
+			"checks":     newResourceTranslation("advisor.checks", "uid", false, nil),
+			"checktypes": newResourceTranslation("advisor.checktypes", "uid", false, nil),
+			"register":   newResourceTranslation("advisor.register", "uid", false, nil),
 		},
 		"annotation.grafana.app": {
 			// Uses "type" as scope attribute for org-level annotations (e.g. annotations:type:organization).

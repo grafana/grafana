@@ -20,21 +20,16 @@ const (
 
 	// Register
 	ActionAdvisorRegisterCreate = "advisor.register:create" // CREATE (register check types).
-
-	// Translations (read-only i18n data; safe to expose to any authenticated user).
-	ActionAdvisorTranslationsRead = "advisor.translations:read" // GET + LIST.
 )
 
 var (
-	ScopeProviderAdvisorCheck        = accesscontrol.NewScopeProvider("advisor.checks")
-	ScopeProviderAdvisorCheckTypes   = accesscontrol.NewScopeProvider("advisor.checktypes")
-	ScopeProviderAdvisorRegister     = accesscontrol.NewScopeProvider("advisor.register")
-	ScopeProviderAdvisorTranslations = accesscontrol.NewScopeProvider("advisor.translations")
+	ScopeProviderAdvisorCheck      = accesscontrol.NewScopeProvider("advisor.checks")
+	ScopeProviderAdvisorCheckTypes = accesscontrol.NewScopeProvider("advisor.checktypes")
+	ScopeProviderAdvisorRegister   = accesscontrol.NewScopeProvider("advisor.register")
 
-	ScopeAllAdvisorCheck        = ScopeProviderAdvisorCheck.GetResourceAllScope()
-	ScopeAllAdvisorCheckTypes   = ScopeProviderAdvisorCheckTypes.GetResourceAllScope()
-	ScopeAllAdvisorRegister     = ScopeProviderAdvisorRegister.GetResourceAllScope()
-	ScopeAllAdvisorTranslations = ScopeProviderAdvisorTranslations.GetResourceAllScope()
+	ScopeAllAdvisorCheck      = ScopeProviderAdvisorCheck.GetResourceAllScope()
+	ScopeAllAdvisorCheckTypes = ScopeProviderAdvisorCheckTypes.GetResourceAllScope()
+	ScopeAllAdvisorRegister   = ScopeProviderAdvisorRegister.GetResourceAllScope()
 )
 
 // FixedRoleRegistrations returns the advisor role registrations.
@@ -145,35 +140,12 @@ func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
 		Grants: []string{string(org.RoleAdmin)},
 	}
 
-	// Translations: read-only i18n data. Granted to every standard role so any
-	// authenticated user can fetch translations for the UI they see.
-	translationsReader := accesscontrol.RoleRegistration{
-		Role: accesscontrol.RoleDTO{
-			Name:        "fixed:advisor.translations:reader",
-			DisplayName: "Advisor Translations Reader",
-			Description: "Read advisor UI translations.",
-			Group:       "Advisor",
-			Permissions: []accesscontrol.Permission{
-				{
-					Action: ActionAdvisorTranslationsRead,
-					Scope:  ScopeAllAdvisorTranslations,
-				},
-			},
-		},
-		Grants: []string{
-			string(org.RoleViewer),
-			string(org.RoleEditor),
-			string(org.RoleAdmin),
-		},
-	}
-
 	return []accesscontrol.RoleRegistration{
 		checkReader,
 		checkWriter,
 		checkTypesReader,
 		checkTypesWriter,
 		registerWriter,
-		translationsReader,
 	}
 }
 
