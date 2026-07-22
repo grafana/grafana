@@ -4,8 +4,10 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -220,4 +222,47 @@ func TestManifestWatcher_SkipsManifestThatFailsToConvert(t *testing.T) {
 	got := w.Manifests()
 	require.Len(t, got, 1)
 	require.Equal(t, "dashboard.grafana.app", got[0].ManifestData.Group)
+}
+
+func TestNewManifestWatcherConfig(t *testing.T) {
+	newCfg := func() *setting.Cfg {
+		cfg := setting.NewCfg()
+		sec, err := cfg.Raw.NewSection("grpc_client_authentication")
+		require.NoError(t, err)
+		_, err = sec.NewKey("token", "tok")
+		require.NoError(t, err)
+		_, err = sec.NewKey("token_exchange_url", "http://exchange")
+		require.NoError(t, err)
+		return cfg
+	}
+
+	t.Run("nil when address missing", func(t *testing.T) {
+		require.Nil(t, NewManifestWatcherConfig(newCfg()))
+	})
+
+	t.Run("nil config returns nil", func(t *testing.T) {
+		require.Nil(t, NewManifestWatcherConfig(nil))
+	})
+
+	t.Run("configured when all set", func(t *testing.T) {
+		cfg := newCfg()
+		cfg.ManifestApiServerAddress = "https://apiserver"
+		cfg.ManifestWatcherPollInterval = 5 * time.Minute
+		wc := NewManifestWatcherConfig(cfg)
+		require.NotNil(t, wc)
+		require.Equal(t, "https://apiserver", wc.APIServerURL)
+		require.Equal(t, "tok", wc.Token)
+		require.Equal(t, "http://exchange", wc.TokenExchangeURL)
+		require.Equal(t, 5*time.Minute, wc.PollInterval)
+	})
+
+	t.Run("insecure TLS ignored outside development", func(t *testing.T) {
+		cfg := newCfg()
+		cfg.ManifestApiServerAddress = "https://apiserver"
+		cfg.ManifestWatcherAllowInsecureTLS = true
+		cfg.Env = setting.Prod
+		wc := NewManifestWatcherConfig(cfg)
+		require.NotNil(t, wc)
+		require.False(t, wc.AllowInsecure)
+	})
 }

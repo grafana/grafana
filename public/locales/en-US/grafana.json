@@ -1164,7 +1164,8 @@
       "api-machinery": {
         "with-causes": "{{-baseMessage}}: {{-causes}}"
       },
-      "failedWith": "{{-config}} failed with {{status}}: {{-message}}"
+      "failedWith": "{{-config}} failed with {{status}}: {{-message}}",
+      "time-interval-in-use": "This time interval cannot be deleted because it is still used by one or more notification policies or alert rules."
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -2514,10 +2515,6 @@
       "delete-modal": {
         "permanently-remove": "This action will permanently remove the <1>{{routeName}}</1> notification policy.",
         "title-delete-notification-policy": "Delete notification policy"
-      },
-      "error-modal": {
-        "failed-to-update-your-configuration": "Failed to update your configuration:",
-        "title-something-went-wrong": "Something went wrong"
       },
       "filter-description": "Filter routes by using a comma separated list of matchers, e.g.:<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Auto-generated policies",
@@ -4526,6 +4523,8 @@
       "all-failed_other": "Failed to restore {{count}} dashboard.",
       "failed-count_one": "{{count}} dashboard failed",
       "failed-count_other": "{{count}} dashboard failed",
+      "failed-create-permission": "You don't have permission to add dashboards to the selected folder. Choose a folder where you have edit permissions, or ask an administrator to restore the dashboards.",
+      "failed-fetch": "The dashboards could no longer be found or you don't have permission to restore them. Ask an administrator to restore them.",
       "success-count_one": "{{count}} dashboard restored successfully",
       "success-count_other": "{{count}} dashboard restored successfully",
       "success-multiple": "Dashboards restored",
@@ -5111,9 +5110,7 @@
     "connect-data": {
       "apps-header": "Apps",
       "datasources-header": "Data Sources",
-      "empty-message": "No results matching your query were found",
-      "request-data-source": "Request a new data source",
-      "roadmap": "View roadmap"
+      "empty-message": "No results matching your query were found"
     },
     "connections-home-page": {
       "welcome-to-connections": "Welcome to Connections"
@@ -6061,6 +6058,10 @@
     },
     "panel": {
       "time-range-settings": {
+        "compare-day-before": "Day before",
+        "compare-month-before": "Month before",
+        "compare-week-before": "Week before",
+        "compared-to": "compared to {{option}}",
         "hide-time-info": "Hide panel time range",
         "hide-time-info-description": "Do not show the panel time range in the panel header",
         "time-from": "Panel time range",
@@ -8841,16 +8842,22 @@
       "label-resource-attributes": "Resource attributes",
       "label-span-attributes": "Span attributes",
       "label-stack-trace": "Stack trace",
+      "label-summary-attributes": "Summary attributes",
       "label-warnings": "Warnings",
       "overview-items": {
         "label": {
           "child-count": "Child Count:",
           "duration": "Duration:",
+          "end-time": "End Time:",
           "service": "Service:",
           "start-time": "Start Time:"
         }
       },
-      "share-span": "Share"
+      "resource-attributes-inherited": "(inherited from slowest span)",
+      "share-span": "Share",
+      "summary-count-aria_one": "{{count}} aggregated span",
+      "summary-count-aria_other": "{{count}} aggregated spans",
+      "summary-label": "(summary)"
     },
     "span-detail-link-buttons": {
       "logs-for-this-span": "Logs for this span",
@@ -8865,8 +8872,11 @@
     },
     "summary-span": {
       "stat-max": "Max",
+      "stat-max-lower": "max",
       "stat-median": "Median",
-      "stat-min": "Min"
+      "stat-median-lower": "median",
+      "stat-min": "Min",
+      "stat-min-lower": "min"
     },
     "supplementary-result-error": {
       "show-details": "Show details"
@@ -10739,6 +10749,7 @@
     "placeholder-start-color-from-value": "Auto (min)",
     "placeholder-value-name": "Value",
     "placement-options": {
+      "label-bottom": "Bottom",
       "label-hidden": "Hidden",
       "label-left": "Left",
       "label-right": "Right"
@@ -15812,7 +15823,7 @@
     },
     "zone": {
       "select-aria-label": "Time zone picker",
-      "select-search-input": "Type to search (country, city, abbreviation)"
+      "select-search-input": "Type to search (city, abbreviation)"
     }
   },
   "timeline": {

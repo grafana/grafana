@@ -1369,6 +1369,30 @@ func (m *mockWatchServer) SetTrailer(metadata.MD)       {}
 func (m *mockWatchServer) SendMsg(any) error            { return nil }
 func (m *mockWatchServer) RecvMsg(any) error            { return nil }
 
+// mockDailyStatsServer implements resourcepb.ResourceStats_GetResourceDailyStatsServer
+// for testing, collecting everything sent by the server.
+type mockDailyStatsServer struct {
+	grpc.ServerStream
+	ctx  context.Context
+	days []*resourcepb.DailyStat
+}
+
+func newMockDailyStatsServer(ctx context.Context) *mockDailyStatsServer {
+	return &mockDailyStatsServer{ctx: ctx}
+}
+
+func (m *mockDailyStatsServer) Send(d *resourcepb.DailyStat) error {
+	m.days = append(m.days, d)
+	return nil
+}
+
+func (m *mockDailyStatsServer) Context() context.Context     { return m.ctx }
+func (m *mockDailyStatsServer) SetHeader(metadata.MD) error  { return nil }
+func (m *mockDailyStatsServer) SendHeader(metadata.MD) error { return nil }
+func (m *mockDailyStatsServer) SetTrailer(metadata.MD)       {}
+func (m *mockDailyStatsServer) SendMsg(any) error            { return nil }
+func (m *mockDailyStatsServer) RecvMsg(any) error            { return nil }
+
 const (
 	watchTestGroup     = "playlist.grafana.app"
 	watchTestResource  = "playlists"
@@ -2235,7 +2259,7 @@ func TestStatsAccessChecks(t *testing.T) {
 			return allow()
 		}
 
-		_, err := srv.GetResourceDailyStats(ctx, &resourcepb.GetResourceDailyStatsRequest{Key: key})
+		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, newMockDailyStatsServer(ctx))
 		require.NoError(t, err)
 		require.Equal(t, utils.VerbGet, capturedReq.Verb)
 		require.Equal(t, name, capturedReq.Name)
@@ -2248,7 +2272,7 @@ func TestStatsAccessChecks(t *testing.T) {
 
 		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() }
 
-		_, err := srv.GetResourceDailyStats(ctx, &resourcepb.GetResourceDailyStatsRequest{Key: key})
+		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, newMockDailyStatsServer(ctx))
 		require.Equal(t, codes.PermissionDenied, status.Code(err))
 	})
 
@@ -2281,6 +2305,118 @@ func TestStatsAccessChecks(t *testing.T) {
 			Events: []*resourcepb.ResourceEvent{{Metric: "views", Value: 1}},
 		})
 		require.Equal(t, codes.Unauthenticated, status.Code(err))
+	})
+}
+
+func TestGetResourceDailyStats(t *testing.T) {
+	user := &identity.StaticRequester{
+		Type:      authlib.TypeUser,
+		Login:     "testuser",
+		UserID:    123,
+		UserUID:   "u123",
+		OrgRole:   identity.RoleEditor,
+		Namespace: "default",
+	}
+	ctx := authlib.WithAuthInfo(context.Background(), user)
+
+	const (
+		group     = "dashboard.grafana.app"
+		resource  = "dashboards"
+		namespace = "default"
+		name      = "test-dashboard"
+		folderA   = "folder-a"
+	)
+
+	value := []byte(`{"apiVersion":"dashboard.grafana.app/v1beta1","kind":"Dashboard","metadata":{"name":"` + name + `","uid":"test-uid","namespace":"` + namespace + `","annotations":{"grafana.app/folder":"` + folderA + `"}},"spec":{"title":"t"}}`)
+
+	key := &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: namespace, Name: name}
+
+	newStatsServer := func(t *testing.T, ac *callbackAccessClient, enabled bool) *server {
+		t.Helper()
+		db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = db.Close() })
+
+		kv := NewBadgerKV(db)
+		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv, EnableKVLeases: true, Holder: "test"})
+		require.NoError(t, err)
+
+		srv, err := NewResourceServer(ResourceServerOptions{
+			Backend:           store,
+			AccessClient:      ac,
+			UsageStatsEnabled: enabled,
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			_ = srv.Stop(stopCtx)
+		})
+
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
+		created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
+		return srv
+	}
+
+	t.Run("returns the recorded daily stats", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := newStatsServer(t, ac, true)
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
+
+		_, err := srv.RecordEvent(ctx, &resourcepb.RecordEventRequest{
+			Key:    key,
+			Events: []*resourcepb.ResourceEvent{{Metric: "views", Value: 3}, {Metric: "queries", Value: 1}},
+		})
+		require.NoError(t, err)
+
+		// Buffered events only surface after a flush to the KV store.
+		require.NoError(t, srv.statsIngester.Flush(ctx))
+
+		stream := newMockDailyStatsServer(ctx)
+		err = srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, stream)
+		require.NoError(t, err)
+		require.Len(t, stream.days, 1)
+		require.Equal(t, uint64(3), stream.days[0].Metrics["views"])
+		require.Equal(t, uint64(1), stream.days[0].Metrics["queries"])
+	})
+
+	t.Run("returns no days when nothing has been recorded", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := newStatsServer(t, ac, true)
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
+
+		stream := newMockDailyStatsServer(ctx)
+		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, stream)
+		require.NoError(t, err)
+		require.Empty(t, stream.days)
+	})
+
+	t.Run("is unimplemented when usage stats are disabled", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := newStatsServer(t, ac, false)
+
+		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, newMockDailyStatsServer(ctx))
+		require.Equal(t, codes.Unimplemented, status.Code(err))
+	})
+
+	t.Run("requires an authenticated caller", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := newStatsServer(t, ac, true)
+
+		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, newMockDailyStatsServer(context.Background()))
+		require.Equal(t, codes.Unauthenticated, status.Code(err))
+	})
+
+	t.Run("rejects an invalid request key", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := newStatsServer(t, ac, true)
+
+		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{
+			Key: &resourcepb.ResourceKey{Namespace: namespace, Resource: resource, Name: name},
+		}, newMockDailyStatsServer(ctx))
+		require.Equal(t, codes.InvalidArgument, status.Code(err))
 	})
 }
 

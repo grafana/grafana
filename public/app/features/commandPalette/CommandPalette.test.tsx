@@ -461,6 +461,60 @@ describe('CommandPalette', () => {
     });
   });
 
+  describe('command_palette_deep_search_results_shown analytics', () => {
+    afterEach(() => {
+      server.events.removeAllListeners();
+    });
+
+    it('reports once when deep search results settle, with deep-search context', async () => {
+      server.use(
+        getVectorSearchHandler([
+          { name: 'dash-1', title: 'API latency', snippet: 'panel one', score: 0.1 },
+          { name: 'dash-2', title: 'Checkout', snippet: 'panel two', score: 0.1 },
+        ])
+      );
+
+      setup();
+      const user = userEvent.setup();
+      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
+
+      // Wait for the settled deep search render (500ms debounce)
+      await screen.findByText('API latency', {}, { timeout: 3000 });
+
+      expect(reportInteraction).toHaveBeenCalledWith('command_palette_deep_search_results_shown', {
+        isDeepSearchEnabled: true,
+        isDeepSearchLoaded: true,
+        deepSearchItemsCount: 2,
+        queryLength: 7,
+      });
+
+      // One event per settled result set, not one per keystroke
+      const shownCalls = (reportInteraction as jest.Mock).mock.calls.filter(
+        ([event]) => event === 'command_palette_deep_search_results_shown'
+      );
+      expect(shownCalls).toHaveLength(1);
+    });
+
+    it('does not report when deep search is disabled', async () => {
+      (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(false);
+
+      setup();
+      const user = userEvent.setup();
+      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
+
+      // Outwait the deep search debounce to prove nothing settles/reports
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 600));
+      });
+
+      expect(reportInteraction).not.toHaveBeenCalledWith(
+        'command_palette_deep_search_results_shown',
+        expect.anything(),
+        expect.anything()
+      );
+    });
+  });
+
   describe('keyboard model', () => {
     it('uses the legacy model (auto-selects an item) when deep search is disabled', async () => {
       // Either flag off → deepSearchEnabled is false → legacy keyboard handling

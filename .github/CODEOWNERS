@@ -301,7 +301,6 @@
 /devenv/docker/blocks/graphite1/ @grafana/data-sources-plugins
 /devenv/docker/blocks/influxdb/ @grafana/data-sources-plugins
 /devenv/docker/blocks/influxdb1/ @grafana/data-sources-plugins
-/devenv/docker/blocks/jaeger/ @grafana/data-sources-plugins
 /devenv/docker/blocks/jaegeronly/ @grafana/grafana-operator-experience-squad
 /devenv/docker/blocks/maildev/ @grafana/alerting-frontend
 /devenv/docker/blocks/mariadb/ @grafana/data-sources-plugins
@@ -368,7 +367,6 @@
 /pkg/tsdb/mysql/ @grafana/data-sources-plugins
 /pkg/tsdb/grafana-postgresql-datasource/ @grafana/data-sources-plugins
 /pkg/tsdb/sqlmacro/ @grafana/data-sources-plugins
-/pkg/tsdb/jaeger/ @grafana/data-sources-plugins
 
 # Partner Datasources backend code
 /pkg/tsdb/influxdb/ @grafana/data-sources-plugins
@@ -425,6 +423,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/cloud-plugins-suite/ @grafana/data-sources-plugins
 /e2e-playwright/dashboard-new-layouts/ @grafana/dashboards-squad
 /e2e-playwright/dashboard-cujs/ @grafana/dashboards-squad
+/e2e-playwright/journey-tracking/ @grafana/dashboards-squad
 /e2e-playwright/dashboard-cujs/scope-*.spec.ts @grafana/dashboards-squad @grafana/grafana-operator-experience-squad
 /e2e-playwright/utils/scope* @grafana/grafana-operator-experience-squad
 /e2e-playwright/dashboards-search-suite/ @grafana/dashboards-squad
@@ -452,6 +451,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/dashboard-keybindings.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/dashboard-links-without-slug.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/dashboard-live-streaming.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/dashboard-restore-permissions.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/dashboards-suite/dashboard-restore-v1.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/dashboards-suite/dashboard-restore-v2.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/dashboards-suite/dashboard-share-externally-create.spec.ts @grafana/sharing-squad
@@ -478,9 +478,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/dashboard-view-panel.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/textbox-variables.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/utils/makeDashboard.ts @grafana/grafana-frontend-navigation
-/e2e-playwright/fixtures/exemplars-query-response.json @grafana/data-sources-plugins
-/e2e-playwright/fixtures/long-trace-response.json @grafana/observability-traces-and-profiling
-/e2e-playwright/fixtures/tempo-response.json @grafana/data-sources-plugins
 /e2e-playwright/fixtures/prometheus-response.json @grafana/datapro
 /e2e-playwright/panels-suite/ @grafana/dataviz-squad
 /e2e-playwright/panels-suite/dashlist.spec.ts @grafana/grafana-frontend-navigation
@@ -500,7 +497,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/advisor.spec.ts @grafana/grafana-catalog
 /e2e-playwright/various-suite/bar-gauge.spec.ts @grafana/dataviz-squad
 /e2e-playwright/various-suite/bookmarks.spec.ts @grafana/grafana-frontend-navigation
-/e2e-playwright/various-suite/exemplars.spec.ts @grafana/data-sources-plugins
 /e2e-playwright/various-suite/explore.spec.ts @grafana/datapro
 /e2e-playwright/various-suite/filter-annotations.spec.ts @grafana/dashboards-squad
 /e2e-playwright/various-suite/frontend-sandbox-app.spec.ts @grafana/grafana-frontend-platform
@@ -525,7 +521,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/solo-route.spec.ts @grafana/dashboards-squad
 /e2e-playwright/various-suite/splash-screen.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/swagger.spec.ts @grafana/grafana-frontend-platform
-/e2e-playwright/various-suite/trace-view-scrolling.spec.ts @grafana/observability-traces-and-profiling
 /e2e-playwright/various-suite/verify-i18n.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/visualization-suggestions*.spec.ts @grafana/dataviz-squad
 /e2e-playwright/various-suite/panel-presets.spec.ts @grafana/dataviz-squad
@@ -1162,7 +1157,6 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/azuremonitor/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/graphite/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/influxdb/ @grafana/data-sources-plugins
-/public/app/plugins/datasource/jaeger/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/loki/ @grafana/data-sources-plugins @grafana/observability-logs
 /public/app/plugins/datasource/mixed/ @grafana/dashboards-squad
 /public/app/plugins/datasource/mysql/ @grafana/data-sources-plugins
