@@ -1773,7 +1773,8 @@
       "metadata": {
         "name": "dashboards.filterablePanels",
         "resourceVersion": "1784277442129",
-        "creationTimestamp": "2026-07-17T08:37:22Z"
+        "creationTimestamp": "2026-07-17T08:37:22Z",
+        "deletionTimestamp": "2026-07-22T08:31:47Z"
       },
       "spec": {
         "description": "Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels",

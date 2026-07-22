@@ -120,10 +120,6 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(pluginDirRoot, '/influxdb'),
     }),
     withAuth({
-      name: 'jaeger',
-      testDir: path.join(pluginDirRoot, '/jaeger'),
-    }),
-    withAuth({
       name: 'grafana-postgresql-datasource',
       testDir: path.join(pluginDirRoot, '/grafana-postgresql-datasource'),
     }),

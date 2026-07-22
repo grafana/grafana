@@ -5110,9 +5110,7 @@
     "connect-data": {
       "apps-header": "Apps",
       "datasources-header": "Data Sources",
-      "empty-message": "No results matching your query were found",
-      "request-data-source": "Request a new data source",
-      "roadmap": "View roadmap"
+      "empty-message": "No results matching your query were found"
     },
     "connections-home-page": {
       "welcome-to-connections": "Welcome to Connections"
@@ -6468,7 +6466,13 @@
       "sql-expressions-message-link": "Learn more",
       "sql-expressions-title": "SQL Expressions",
       "title-add-another-transformation": "Add another transformation",
+      "transformations-list": "Transformations",
       "view-all": "View all"
+    },
+    "transformation-search-status": {
+      "no-results": "No transformations found",
+      "results-found_one": "{{count}} transformation found",
+      "results-found_other": "{{count}} transformations found"
     },
     "transformation-type-picker": {
       "sql-cta-button": "Add SQL expression",
@@ -8725,6 +8729,7 @@
       "query-deleted": "Query deleted"
     },
     "rich-history-queries-tab": {
+      "datasource-list-error": "Unable to load data sources",
       "displaying-partial-queries_one": "Displaying {{ count }} queries",
       "displaying-partial-queries_other": "Displaying {{ count }} queries",
       "displaying-queries_one": "{{ count }} queries",
@@ -8733,6 +8738,7 @@
       "filter-history": "Filter history",
       "filter-placeholder": "Filter queries for data sources(s)",
       "history-local": "The history is local to your browser and is not shared with others.",
+      "load-error": "Unable to load query history",
       "loading": "Loading...",
       "loading-results": "Loading results...",
       "search-placeholder": "Search queries",
@@ -8761,8 +8767,10 @@
       }
     },
     "rich-history-starred-tab": {
+      "datasource-list-error": "Unable to load data sources",
       "filter-queries-aria-label": "Filter queries for data sources(s)",
       "filter-queries-placeholder": "Filter queries for data sources(s)",
+      "load-error": "Unable to load query history",
       "loading": "Loading...",
       "loading-results": "Loading results...",
       "local-history-message": "The history is local to your browser and is not shared with others.",
@@ -15826,7 +15834,7 @@
     },
     "zone": {
       "select-aria-label": "Time zone picker",
-      "select-search-input": "Type to search (country, city, abbreviation)"
+      "select-search-input": "Type to search (city, abbreviation)"
     }
   },
   "timeline": {

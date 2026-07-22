@@ -72,7 +72,6 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.4 // @grafana/identity-access-team
 	github.com/go-kit/log v0.2.1 //  @grafana/grafana-backend-group
 	github.com/go-ldap/ldap/v3 v3.4.4 // @grafana/identity-access-team
-	github.com/go-logfmt/logfmt v0.6.1 // @grafana/data-sources-plugins
 	github.com/go-openapi/loads v0.24.0 // @grafana/alerting-backend
 	github.com/go-openapi/runtime v0.32.4 // @grafana/alerting-backend
 	github.com/go-openapi/strfmt v0.26.4 // @grafana/alerting-backend
@@ -90,10 +89,10 @@ require (
 	github.com/google/safetext v0.0.0-20260330151545-1fb717a317c5 // @grafana/grafana-app-platform-squad
 	github.com/google/uuid v1.6.0 // @grafana/grafana-backend-group
 	github.com/google/wire v0.7.0 // @grafana/grafana-backend-group
-	github.com/googleapis/gax-go/v2 v2.22.0 // @grafana/grafana-backend-group
+	github.com/googleapis/gax-go/v2 v2.23.0 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20260713132205-673c077411fe // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20260721133051-bf8d0237d7c6 // @grafana/alerting-backend
 	github.com/grafana/alerting/apps/historian v0.0.0-20260624092630-e3cde2289ada // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20260715184607-1dffa9543b9f // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20260621220415-f6aaf60e82b2 // @grafana/identity-access-team
@@ -212,10 +211,10 @@ require (
 	golang.org/x/text v0.40.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.15.0 // @grafana/grafana-backend-group
 	gonum.org/v1/gonum v0.17.0 // @grafana/data-sources-plugins
-	google.golang.org/api v0.287.0 // @grafana/grafana-backend-group
-	google.golang.org/genproto/googleapis/api v0.0.0-20260615183401-62b3387ff324 // @grafana/identity-access-team
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260622175928-b703f567277d // @grafana/identity-access-team
-	google.golang.org/grpc v1.82.0 // @grafana/grafana-catalog
+	google.golang.org/api v0.287.1 // @grafana/grafana-backend-group
+	google.golang.org/genproto/googleapis/api v0.0.0-20260630182238-925bb5da69e7 // @grafana/identity-access-team
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260630182238-925bb5da69e7 // @grafana/identity-access-team
+	google.golang.org/grpc v1.82.1 // @grafana/grafana-catalog
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // @grafana/grafana-catalog
 	gopkg.in/ini.v1 v1.67.2 // @grafana/alerting-backend
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
@@ -438,6 +437,7 @@ require (
 	github.com/gammazero/deque v0.2.1 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.4 // indirect
 	github.com/go-json-experiment/json v0.0.0-20260214004413-d219187c3433 // indirect
+	github.com/go-logfmt/logfmt v0.6.1 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
@@ -445,6 +445,7 @@ require (
 	github.com/go-openapi/errors v0.22.8 // indirect
 	github.com/go-openapi/jsonpointer v0.23.1 // indirect
 	github.com/go-openapi/jsonreference v0.21.6 // indirect
+	github.com/go-openapi/runtime/server-middleware v0.30.0 // indirect
 	github.com/go-openapi/spec v0.22.6 // indirect
 	github.com/go-openapi/swag v0.26.0 // indirect
 	github.com/go-openapi/swag/cmdutils v0.26.0 // indirect
@@ -717,8 +718,6 @@ require (
 require gitlab.com/gitlab-org/api/client-go v1.46.0 // @grafana/grafana-app-platform-squad
 
 require github.com/ktrysmt/go-bitbucket v0.10.0 // @grafana/grafana-app-platform-squad
-
-require github.com/go-openapi/runtime/server-middleware v0.30.0 // indirect
 
 replace (
 	// Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
