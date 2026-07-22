@@ -134,7 +134,7 @@ export const AlertInstanceNotificationAction = ({
   // tree name must match the current routing policy. The default tree may be named `user-defined`
   // or `default`, so compare via routingTreeNamesMatch rather than strict equality.
   const expectedTreeName = routingPolicyName ?? ROOT_ROUTE_NAME;
-  const isFresh = matched !== undefined && routingTreeNamesMatch(journeys[0]?.policyName, expectedTreeName);
+  const isFresh = matched !== undefined && routingTreeNamesMatch(journeys.at(0)?.policyName, expectedTreeName);
 
   // When all journeys resolve to the same single receiver, surface it next to the button.
   const policyReceivers = isFresh
