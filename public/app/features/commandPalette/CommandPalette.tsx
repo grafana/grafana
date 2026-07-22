@@ -257,7 +257,14 @@ const RenderResults = ({
   // Analytics: single place to assemble the command_palette_action_selected payload,
   // shared by the keyword list and the deep search column.
   const reportActionSelected = useCallback(
-    (params: { actionId?: string; actionName?: string; index: number; section?: string; deepSearch: boolean }) => {
+    (params: {
+      actionId?: string;
+      actionName?: string;
+      index: number;
+      section?: string;
+      deepSearch: boolean;
+      url?: string;
+    }) => {
       reportInteraction('command_palette_action_selected', {
         actionId: params.actionId,
         actionName: params.actionName,
@@ -266,6 +273,8 @@ const RenderResults = ({
         // Stable, language-agnostic section slug from the action's sectionId, e.g.
         // "recent-dashboards" / "pages" / "deep-search"
         section: params.section,
+        // Destination URL of the dashboard/page, unset for actions that don't navigate
+        target: params.url,
         isDeepSearchEnabled: deepSearchEnabled,
         isDeepSearchAction: params.deepSearch,
         // Whether the deep search column had finished loading at selection time
@@ -485,13 +494,14 @@ const RenderResults = ({
             maxHeight={650}
             scrollRef={keywordListRef}
             legacyKeyboard={!deepSearchEnabled}
-            onItemSelected={(item, rawIndex) =>
+            onItemSelected={(item, rawIndex, url) =>
               reportActionSelected({
                 actionId: item.id,
                 actionName: item.name,
                 index: items.slice(0, rawIndex).filter((entry) => typeof entry !== 'string').length,
                 section: getActionSectionId(item),
                 deepSearch: false,
+                url,
               })
             }
             onRender={({ item, active }) => {
@@ -522,6 +532,7 @@ const RenderResults = ({
                 index,
                 section: SECTION_DEEP_SEARCH,
                 deepSearch: true,
+                url: deepSearchResults[index]?.url,
               })
             }
             navRef={deepSearchNavRef}
