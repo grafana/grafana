@@ -28,7 +28,6 @@ interface Props {
   repo: Repository;
 }
 
-
 type JobCell = {
   row: {
     original: Job;
