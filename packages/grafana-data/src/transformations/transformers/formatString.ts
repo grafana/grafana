@@ -42,6 +42,9 @@ const splitToCapitalWords = (input: string) => {
 export const getFormatStringFunction = (options: FormatStringTransformerOptions) => {
   return (field: Field) =>
     field.values.map((value: string) => {
+      if (value == null) {
+        return value;
+      }
       switch (options.outputFormat) {
         case FormatStringOutput.UpperCase:
           return value.toUpperCase();

@@ -21,6 +21,16 @@ const frame = toDataFrame({
   ],
 });
 
+const frameWithNulls = toDataFrame({
+  fields: [
+    {
+      name: 'names',
+      type: FieldType.string,
+      values: ['alice', null, 'BOB', undefined, 'david'],
+    },
+  ],
+});
+
 const fieldMatches = fieldMatchers.get(FieldMatcherID.byName).get('names');
 
 const options = (format: FormatStringOutput, substringStart?: number, substringEnd?: number) => {
@@ -81,5 +91,26 @@ describe('Format String Transformer', () => {
     const newValues = newFrame[0].values;
 
     expect(newValues).toEqual(['ice', 'B', 'cha', 'vid', 'ma ', '']);
+  });
+
+  it('will pass null and undefined values through unchanged', () => {
+    const formats = [
+      FormatStringOutput.UpperCase,
+      FormatStringOutput.LowerCase,
+      FormatStringOutput.TitleCase,
+      FormatStringOutput.Trim,
+      FormatStringOutput.Substring,
+    ];
+
+    for (const format of formats) {
+      const formatter = createStringFormatter(
+        fieldMatches,
+        getFormatStringFunction(options(format, 1, 3))
+      );
+      const newFrame = formatter(frameWithNulls, [frameWithNulls]);
+      const newValues = newFrame[0].values;
+
+      expect(newValues).toEqual(['alice', null, 'BOB', undefined, 'david']);
+    }
   });
 });
