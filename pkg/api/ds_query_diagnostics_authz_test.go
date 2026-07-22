@@ -19,10 +19,12 @@ import (
 // (see registerRoutes / api.go). It drives the REAL router + middleware chain via SetupAPITestServer
 // rather than calling the handlers directly, so it fails if the gate is ever dropped.
 //
-// The contract under test: an anonymous caller must FAIL with 401, a signed-in non-admin must FAIL
-// with 403, and a server admin must NOT be blocked by authz. Because reqGrafanaAdmin runs before the
-// handler, unauthorized callers short-circuit before any handler/flag/dependency logic — so no
-// handler dependencies need wiring.
+// The contract under test: an anonymous caller (with anonymous access disabled, as here) must FAIL
+// with 401, a signed-in non-admin must FAIL with 403, and a server admin must NOT be blocked by authz.
+// Either way the caller is blocked — the 401-vs-403 split just reflects config: with anonymous access
+// enabled the same caller clears the sign-in check and is denied by the admin gate with 403 instead.
+// Because reqGrafanaAdmin runs before the handler, unauthorized callers short-circuit before any
+// handler/flag/dependency logic — so no handler dependencies need wiring.
 func TestDiagnosticsRoutesAreServerAdminOnly(t *testing.T) {
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		cfg := setting.NewCfg()
@@ -56,6 +58,8 @@ func TestDiagnosticsRoutesAreServerAdminOnly(t *testing.T) {
 	for _, rt := range routes {
 		t.Run(fmt.Sprintf("%s %s as anonymous is unauthorized", rt.method, rt.path), func(t *testing.T) {
 			req := server.NewRequest(rt.method, rt.path, nil)
+			// AllowAnonymous defaults to false here, so the sign-in check fires first and returns 401.
+			// With anonymous access enabled the caller would instead be denied by the admin gate (403).
 			req = webtest.RequestWithWebContext(req, &contextmodel.ReqContext{
 				SignedInUser: &user.SignedInUser{},
 				IsSignedIn:   false,
