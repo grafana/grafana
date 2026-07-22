@@ -27,6 +27,16 @@ func newConflictError() error {
 	)
 }
 
+func TestResourceChangeCount(t *testing.T) {
+	require.Equal(t, 0, resourceChangeCount(nil))
+	require.Equal(t, 0, resourceChangeCount([]*provisioning.JobResourceSummary{nil}))
+	require.Equal(t, 6, resourceChangeCount([]*provisioning.JobResourceSummary{
+		{Create: 1, Update: 2},
+		{Delete: 3},
+		nil,
+	}))
+}
+
 func makeTestJob(rv string) *provisioning.Job {
 	return &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{

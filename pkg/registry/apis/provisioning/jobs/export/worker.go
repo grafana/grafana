@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
 //go:generate mockery --name ExportFn --structname MockExportFn --inpackage --filename mock_export_fn.go --with-expecter
@@ -86,12 +85,6 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		attribute.Int("export.resources_count", len(options.Resources)),
 	)
 
-	start := time.Now()
-	outcome := utils.ErrorOutcome
-	resourcesExported := 0
-	defer func() {
-		r.metrics.RecordJob(string(provisioning.JobActionPush), outcome, resourcesExported, time.Since(start).Seconds())
-	}()
 	cfg := repo.Config()
 	// Can write to external branch
 	if err := repository.IsWriteAllowed(cfg, options.Branch); err != nil {
@@ -154,11 +147,9 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return err
 	}
 
-	outcome = utils.SuccessOutcome
-	jobStatus := progress.Complete(ctx, nil)
-	for _, summary := range jobStatus.Summary {
-		resourcesExported += int(summary.Write)
-	}
+	// Finalize the progress recorder. The job metric is recorded by the driver from
+	// the job's final status, so the returned status is not needed here.
+	progress.Complete(ctx, nil)
 
 	return nil
 }

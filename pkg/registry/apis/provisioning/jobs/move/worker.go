@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
 type Worker struct {
@@ -59,13 +58,6 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		attribute.Int("move.paths_count", len(opts.Paths)),
 		attribute.Int("move.resources_count", len(opts.Resources)),
 	)
-
-	outcome := utils.ErrorOutcome
-	start := time.Now()
-	resourcesMoved := 0
-	defer func() {
-		w.metrics.RecordJob(string(provisioning.JobActionMove), outcome, resourcesMoved, time.Since(start).Seconds())
-	}()
 
 	if opts.TargetPath == "" {
 		return errors.New("target path is required for move operation")
@@ -146,12 +138,9 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		}
 	}
 
-	outcome = utils.SuccessOutcome
-	jobStatus := progress.Complete(ctx, nil)
-	for _, summary := range jobStatus.Summary {
-		// FileActionRenamed increments both delete & create, use create here
-		resourcesMoved += int(summary.Create)
-	}
+	// Finalize the progress recorder. The job metric is recorded by the driver from
+	// the job's final status, so the returned status is not needed here.
+	progress.Complete(ctx, nil)
 
 	return nil
 }
