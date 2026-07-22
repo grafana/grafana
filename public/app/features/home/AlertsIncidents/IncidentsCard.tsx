@@ -45,13 +45,15 @@ export function IncidentsCardView({
   hideFooterActions?: boolean;
 }) {
   const redesignEnabled = useFlagGrafanaGrowthHomepage();
-  const { pluginId, canAccess, canDeclare, displayed, count, loading, error, refetch } = data;
+  const { pluginId, canAccess, canDeclare, displayed, count, hasMore, loading, error, refetch } = data;
 
   return (
     <SummaryCard
       title={t('home.incidents-card.title', 'Active incidents')}
       count={count}
-      countLimit={ACTIVE_INCIDENTS_QUERY_LIMIT}
+      // Only cap the badge when the server actually truncated the result; a full page with
+      // nothing beyond it should read the exact count, not "{limit}+".
+      countLimit={hasMore ? ACTIVE_INCIDENTS_QUERY_LIMIT : undefined}
       loading={loading}
       error={
         error

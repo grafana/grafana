@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { ScrollContainer, Stack, Tab, TabContent, TabsBar, Text, useStyles2 } from '@grafana/ui';
+import { ACTIVE_INCIDENTS_QUERY_LIMIT } from 'app/features/alerting/unified/api/incidentsApi';
 import { useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
@@ -50,6 +51,7 @@ function AlertIncidentTabsInner({
     loading: incidentsLoading,
     error: incidentsError,
     count: incidentsCount,
+    hasMore: incidentsHasMore,
     pluginId: incidentsPluginId,
     canDeclare: incidentsCanDeclare,
     canAccess: incidentsCanAccess,
@@ -75,7 +77,10 @@ function AlertIncidentTabsInner({
             id: INCIDENTS_TAB_ID,
             label: t('home.alerts-incidents.incident-tab-label', 'Incidents'),
             // Undefined while loading so the counter doesn't flash 0 before the incidents arrive.
-            counter: incidentsLoading ? undefined : incidentsCount,
+            // When the server truncated the result (hasMore), bump the counter past the limit so
+            // the strictly-greater-than cap renders "{limit}+" instead of the misleading exact count.
+            counter: incidentsLoading ? undefined : incidentsHasMore ? incidentsCount + 1 : incidentsCount,
+            counterCappedAt: ACTIVE_INCIDENTS_QUERY_LIMIT,
           },
         ]
       : []),
@@ -101,6 +106,7 @@ function AlertIncidentTabsInner({
                 setActiveTab(tab.id);
                 tabChanged({ tab: tab.id });
               }}
+              counterCappedAt={tab.counterCappedAt}
             />
           ))}
         </TabsBar>

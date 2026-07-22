@@ -8,7 +8,7 @@ import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
-import { type IncidentPreview } from 'app/features/alerting/unified/api/incidentsApi';
+import { ACTIVE_INCIDENTS_QUERY_LIMIT, type IncidentPreview } from 'app/features/alerting/unified/api/incidentsApi';
 import { pluginMeta } from 'app/features/alerting/unified/testSetup/plugins';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { AlertState, type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
@@ -69,10 +69,10 @@ function mockIncidentPlugin(settings?: Partial<PluginMeta>) {
   );
 }
 
-function mockIncidents(incidents: IncidentPreview[]) {
+function mockIncidents(incidents: IncidentPreview[], { hasMore = false } = {}) {
   server.use(
     http.post('/api/plugins/:pluginId/resources/api/v1/IncidentsService.QueryIncidentPreviews', () =>
-      HttpResponse.json({ incidentPreviews: incidents })
+      HttpResponse.json({ incidentPreviews: incidents, cursor: { hasMore, nextValue: hasMore ? 'next' : '' } })
     )
   );
 }
@@ -146,6 +146,41 @@ describe('AlertIncidentTabs', () => {
     // Counter is undefined while loading, so wait until it reflects the loaded count.
     const tab = await screen.findByRole('tab', { name: /firing alerts/i });
     await waitFor(() => expect(tab).toHaveTextContent('2'));
+  });
+
+  it("shows '50+' on the Incidents tab counter when the server reports more incidents beyond the query limit", async () => {
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+    mockIncidentPlugin();
+    const fullPage: IncidentPreview[] = Array.from({ length: ACTIVE_INCIDENTS_QUERY_LIMIT }, (_, i) => ({
+      incidentID: String(i),
+      title: `Incident ${i}`,
+      severityLabel: 'Critical',
+      createdTime: '2024-01-02T10:00:00Z',
+    }));
+    mockIncidents(fullPage, { hasMore: true });
+
+    render(<AlertIncidentTabs />);
+
+    const tab = await screen.findByRole('tab', { name: /incidents/i });
+    await waitFor(() => expect(tab).toHaveTextContent(`${ACTIVE_INCIDENTS_QUERY_LIMIT}+`));
+  });
+
+  it('shows the exact count on the Incidents tab counter when a full page has nothing beyond it', async () => {
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+    mockIncidentPlugin();
+    const fullPage: IncidentPreview[] = Array.from({ length: ACTIVE_INCIDENTS_QUERY_LIMIT }, (_, i) => ({
+      incidentID: String(i),
+      title: `Incident ${i}`,
+      severityLabel: 'Critical',
+      createdTime: '2024-01-02T10:00:00Z',
+    }));
+    mockIncidents(fullPage, { hasMore: false });
+
+    render(<AlertIncidentTabs />);
+
+    const tab = await screen.findByRole('tab', { name: /incidents/i });
+    await waitFor(() => expect(tab).toHaveTextContent(String(ACTIVE_INCIDENTS_QUERY_LIMIT)));
+    expect(tab).not.toHaveTextContent(`${ACTIVE_INCIDENTS_QUERY_LIMIT}+`);
   });
 
   it('defaults to the Incidents tab for a user without alerting permission when the plugin is installed', async () => {

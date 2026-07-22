@@ -27,14 +27,15 @@ export function useIncidents() {
 
   // Skipped until the plugin probe confirms availability, so the hook can run unconditionally
   // in callers that render even when incidents are unavailable.
-  const {
-    data: incidents = [],
-    isLoading,
-    error,
-    refetch,
-  } = incidentsApi.useGetActiveIncidentsQuery(pluginLoading || !installed ? skipToken : { pluginId }, {
-    refetchOnMountOrArgChange: true,
-  });
+  const { data, isLoading, error, refetch } = incidentsApi.useGetActiveIncidentsQuery(
+    pluginLoading || !installed ? skipToken : { pluginId },
+    {
+      refetchOnMountOrArgChange: true,
+    }
+  );
+  const incidents = useMemo(() => data?.incidents ?? [], [data]);
+  // True when the server truncated the result at the query limit, i.e. the real total exceeds count.
+  const hasMore = data?.hasMore ?? false;
 
   const loading = pluginLoading || isLoading;
   const count = incidents.length;
@@ -59,6 +60,7 @@ export function useIncidents() {
     canDeclare,
     displayed,
     count,
+    hasMore,
     hasIncidents,
     loading,
     error: loadError,
