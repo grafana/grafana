@@ -1,7 +1,7 @@
 import { type Page } from '@playwright/test';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { type DashboardPage, type E2ESelectorGroups, expect } from '@grafana/plugin-e2e';
+import { Components, type DashboardPage, type E2ESelectorGroups, expect } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
@@ -14,8 +14,11 @@ export const flows = {
     selectors: E2ESelectorGroups,
     variable: Variable
   ) {
-    const controls = new Controls(page, dashboardPage, selectors);
-    const sidebar = new Sidebar(page, dashboardPage, selectors);
+    // Keep the flows signature unchanged for unmigrated callers: build the
+    // `components` fixture equivalent from the page context
+    const components = new Components(dashboardPage.ctx);
+    const controls = new Controls({ page, dashboardPage, selectors, components });
+    const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
     await controls.enterEditMode();
 

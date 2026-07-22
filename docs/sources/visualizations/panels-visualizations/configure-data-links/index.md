@@ -278,7 +278,18 @@ When linking to another dashboard that uses template variables, select variable 
 | selected multiple values | `var-myvar=value1&var-myvar=value2` |
 | selected `All`           | `var-myvar=All`                     |
 
-If you want to add all of the current dashboard's variables to the URL, then use `${__all_variables}`.
+The `queryparam` format generates the ampersand (`&`) _within_ a single multi-value variable, as shown in the previous table.
+However, it doesn't automatically insert an ampersand _between_ different template variables.
+When you combine multiple template variables in one URL, you must add the ampersand yourself:
+
+```text
+/d/xxxx/dashboard-b?${var-server:queryparam}&${var-host:queryparam}
+```
+
+In this example, the ampersand between `${var-server:queryparam}` and `${var-host:queryparam}` is required.
+Without it, the resulting URL is malformed.
+
+If you want to add all of the current dashboard's variables to the URL, use `${__all_variables}`.
 
 When you link to another dashboard, ensure that:
 

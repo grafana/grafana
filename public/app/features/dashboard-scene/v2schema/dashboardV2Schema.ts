@@ -111,18 +111,24 @@ const variableOptionSchema = z.object({
 }) satisfies z.ZodType<VariableOption>;
 
 const variableHideSchema = z.enum(['dontHide', 'hideLabel', 'hideVariable', 'inControlsMenu']);
-const variableRefreshSchema = z.enum(['never', 'onDashboardLoad', 'onTimeRangeChanged']);
-const variableSortSchema = z.enum([
-  'disabled',
-  'alphabeticalAsc',
-  'alphabeticalDesc',
-  'numericalAsc',
-  'numericalDesc',
-  'alphabeticalCaseInsensitiveAsc',
-  'alphabeticalCaseInsensitiveDesc',
-  'naturalAsc',
-  'naturalDesc',
-]);
+// `.catch(...)` absorbs an unknown/invalid enum value (not just a missing one,
+// which `.default(...)` at the usage already handles) by falling back to the
+// canonical default. These enums have unambiguous CUE-generated defaults, so a
+// bad value from an authoring caller should not fail the whole mutation.
+const variableRefreshSchema = z.enum(['never', 'onDashboardLoad', 'onTimeRangeChanged']).catch('never');
+const variableSortSchema = z
+  .enum([
+    'disabled',
+    'alphabeticalAsc',
+    'alphabeticalDesc',
+    'numericalAsc',
+    'numericalDesc',
+    'alphabeticalCaseInsensitiveAsc',
+    'alphabeticalCaseInsensitiveDesc',
+    'naturalAsc',
+    'naturalDesc',
+  ])
+  .catch('disabled');
 const variableRegexApplyToSchema = z.enum(['value', 'text']);
 
 const defaultVariableOptionValue = { text: '', value: '' };
@@ -386,7 +392,8 @@ const conditionalRenderingTimeRangeSizeKindSchema = z.object({
 const conditionalRenderingGroupKindSchema = z.object({
   kind: z.literal('ConditionalRenderingGroup'),
   spec: z.object({
-    visibility: z.enum(['show', 'hide']),
+    // Tolerate a missing/invalid value by defaulting to the canonical 'show'.
+    visibility: z.enum(['show', 'hide']).catch('show'),
     condition: z.enum(['and', 'or']),
     items: nullableArray(
       z.discriminatedUnion('kind', [
@@ -470,7 +477,11 @@ const fieldConfigSourceSchema = z.object({
 const vizConfigKindSchema = z.object({
   kind: z.literal('VizConfig'),
   group: z.string(),
-  version: z.string(),
+  // The panel plugin version is runtime metadata (used only for panel
+  // migrations) and is stamped from the running plugin when absent, so an
+  // authoring caller need not supply it. Optional here; the scene transform
+  // treats an empty value as "current version".
+  version: z.string().optional().default(''),
   spec: z.object({
     // `transformSceneToSaveModelSchemaV2` passes `vizPanel.state.options` through
     // verbatim, which is `undefined` for a panel that never set options. Normalize

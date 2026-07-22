@@ -1771,6 +1771,21 @@
     },
     {
       "metadata": {
+        "name": "dashboards.filterablePanels",
+        "resourceVersion": "1784277442129",
+        "creationTimestamp": "2026-07-17T08:37:22Z",
+        "deletionTimestamp": "2026-07-22T08:31:47Z"
+      },
+      "spec": {
+        "description": "Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashgpt",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2023-08-30T20:22:05Z",
@@ -2693,6 +2708,34 @@
     },
     {
       "metadata": {
+        "name": "grafana.exploreMetricsSidebar",
+        "resourceVersion": "1784553980624",
+        "creationTimestamp": "2026-07-20T13:26:20Z"
+      },
+      "spec": {
+        "description": "Enables the sidebar in Explore metrics (Metrics Drilldown)",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.filterablePanels",
+        "resourceVersion": "1784637166683",
+        "creationTimestamp": "2026-07-21T12:32:46Z"
+      },
+      "spec": {
+        "description": "Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.frontendLegacyAPIHandling",
         "resourceVersion": "1783501568190",
         "creationTimestamp": "2026-07-08T09:06:08Z"
@@ -2835,6 +2878,23 @@
         "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.newTextPanel",
+        "resourceVersion": "1784552406696",
+        "creationTimestamp": "2026-07-17T19:10:43Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-20 13:00:06.696376 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the new text panel",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
