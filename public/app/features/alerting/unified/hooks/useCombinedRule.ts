@@ -129,10 +129,19 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
       refetchOnMountOrArgChange: true,
     }
   );
-  // in case of Grafana folder, we need to use the folder name instead of uid, as in promrules we don't use uid
   const isGrafanaRule = isGrafanaRulesSource(ruleSourceName);
   const folder = useFolder(isGrafanaRule ? ruleLocation?.namespace : undefined);
-  const namespaceName = isGrafanaRule && folder.folder ? stringifyFolder(folder.folder) : ruleLocation?.namespace;
+  // The Prometheus and Ruler APIs identify a Grafana folder differently: Prometheus uses the
+  // folder's (escaped) fullpath as the namespace name, while the Ruler is queried by folder UID.
+  // To correlate the two, the Ruler group must be keyed under the same namespace name Prometheus
+  // returned. We reuse that name directly rather than re-deriving the fullpath on the client, so
+  // the match no longer depends on the frontend's title escaping byte-matching the backend's.
+  // Falls back to the client-derived fullpath when there is no Prometheus rule yet (e.g. a rule
+  // that hasn't been evaluated), in which case there are no instances to correlate anyway.
+  const promNamespaceName = promRuleNs[0]?.name;
+  const namespaceName = isGrafanaRule
+    ? (promNamespaceName ?? (folder.folder ? stringifyFolder(folder.folder) : ruleLocation?.namespace))
+    : ruleLocation?.namespace;
 
   const [
     fetchRulerRuleGroup,
