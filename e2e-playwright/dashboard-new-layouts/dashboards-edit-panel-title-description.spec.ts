@@ -18,12 +18,12 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can edit panel title', async ({ gotoDashboardPage, selectors, page }) => {
+    test('can edit panel title', async ({ gotoDashboardPage, selectors, page, components }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
 
-      const controls = new Controls(page, dashboardPage, selectors);
-      const panel = new Panel(page, dashboardPage, selectors);
-      const sidebar = new Sidebar(page, dashboardPage, selectors);
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const panel = new Panel({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
       await controls.enterEditMode();
 
@@ -42,12 +42,12 @@ test.describe(
       await expect(header).toBeVisible();
     });
 
-    test('can edit panel description', async ({ gotoDashboardPage, selectors, page }) => {
+    test('can edit panel description', async ({ gotoDashboardPage, selectors, page, components }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
 
-      const controls = new Controls(page, dashboardPage, selectors);
-      const panel = new Panel(page, dashboardPage, selectors);
-      const sidebar = new Sidebar(page, dashboardPage, selectors);
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const panel = new Panel({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
       await controls.enterEditMode();
 
@@ -64,12 +64,12 @@ test.describe(
       await expect(page.getByRole('tooltip')).toHaveText(newDescription);
     });
 
-    test('can edit switch to subtitle description', async ({ gotoDashboardPage, selectors, page }) => {
+    test('can edit switch to subtitle description', async ({ gotoDashboardPage, selectors, page, components }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
 
-      const controls = new Controls(page, dashboardPage, selectors);
-      const panel = new Panel(page, dashboardPage, selectors);
-      const sidebar = new Sidebar(page, dashboardPage, selectors);
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const panel = new Panel({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
       await controls.enterEditMode();
 
