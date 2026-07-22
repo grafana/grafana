@@ -165,6 +165,9 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 }
 
 // indexPanelJSON indexes the raw panel JSON from v1 and v2 dashboard save models by panel id.
+// Each entry is stored as it appears in its own schema, so panel.json shape differs by version:
+// the bare panel object for v1 (from "panels"), and the full {kind, spec} element for v2 (from
+// "elements") -- the same split the bundle's dashboard.json already has.
 // Collapsed v1 rows carry their children in a nested "panels" array, so the index includes them recursively.
 func indexPanelJSON(dashboardJSON json.RawMessage) map[int64]json.RawMessage {
 	panelsByID := make(map[int64]json.RawMessage)
@@ -201,6 +204,9 @@ func indexPanelsByID(panels []json.RawMessage, panelsByID map[int64]json.RawMess
 	}
 }
 
+// indexElementsByID indexes v2 "elements" entries by their spec.id. Both a regular "Panel" and a
+// "LibraryPanel" carry a resolved panel spec with an id, so both are indexed; other element kinds
+// (rows, tabs, ...) have no panel id and are skipped.
 func indexElementsByID(elements map[string]json.RawMessage, panelsByID map[int64]json.RawMessage) {
 	for _, raw := range elements {
 		var meta struct {
