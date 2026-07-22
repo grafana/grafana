@@ -24,7 +24,7 @@ func TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadataEnabled(t *test
 	)
 	helper.CreateExportGitRepo(t, repoName, nil)
 
-	createUnmanagedFolder(t, helper.ProvisioningTestHelper, folderUID, folderTitle)
+	helper.CreateUnmanagedFolderWithName(t, folderUID, folderTitle, "")
 
 	job := triggerExport(t, helper.ProvisioningTestHelper, repoName)
 	require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")

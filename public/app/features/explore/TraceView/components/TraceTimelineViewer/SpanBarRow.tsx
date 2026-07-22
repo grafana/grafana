@@ -29,10 +29,12 @@ import { SpanLinkType, type SpanLinkFunc } from '../types/links';
 import { type TraceSpan, type CriticalPathSection } from '../types/trace';
 import { formatDuration } from '../utils/date';
 import { getServiceDisplayName } from '../utils/service-name';
+import { getSummaryCountBadgeStyle, getSummaryDurationStats } from '../utils/summary-span';
 
 import SpanBar from './SpanBar';
 import { SpanLinksMenu } from './SpanLinks';
 import SpanTreeOffset from './SpanTreeOffset';
+import { SummaryDurationStatsTooltip } from './SummaryDurationStatsTooltip';
 import Ticks from './Ticks';
 import TimelineRow from './TimelineRow';
 import { type ViewedBoundsFunctionType } from './utils';
@@ -328,6 +330,59 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       width: '1em',
       verticalAlign: 'middle',
     }),
+    summaryCountBadge: cx(
+      getSummaryCountBadgeStyle(theme),
+      css({ label: 'summaryCountBadge', marginInlineStart: '0.5rem', marginInlineEnd: '0.25rem' })
+    ),
+    // Summary-span label: a non-interactive flex wrapper holding the toggle button and the stats
+    // sibling. Carries the row underline + horizontal scroll that styles.name provides for normal
+    // spans, so the two look consistent.
+    summaryLabel: css({
+      label: 'summaryLabel',
+      alignItems: 'baseline',
+      display: 'flex',
+      flex: '1 1 auto',
+      overflowX: 'auto',
+      overflowY: 'hidden',
+      position: 'relative',
+      scrollbarWidth: 'none',
+      '&::-webkit-scrollbar': {
+        display: 'none',
+      },
+      borderBottomColor: `${serviceColor}CF`,
+      borderBottomWidth: '2px',
+      borderBottomStyle: 'solid',
+    }),
+    summaryToggle: css({
+      label: 'summaryToggle',
+      background: 'transparent',
+      border: 'none',
+      color: autoColor(theme, '#000'),
+      cursor: 'pointer',
+      // Do not shrink: the wrapper (summaryLabel) owns horizontal scroll, so the toggle keeps its
+      // natural width and pushes the stats along rather than shrinking and letting its nowrap text
+      // overflow on top of the adjacent stats when the name column is narrow.
+      flex: '0 0 auto',
+      outline: 'none',
+      padding: '4px',
+      textAlign: 'left',
+      whiteSpace: 'nowrap',
+      '&:focus': {
+        textDecoration: 'none',
+      },
+      '&:hover > span': {
+        color: autoColor(theme, '#000'),
+      },
+    }),
+    summaryStats: css({
+      label: 'summaryStats',
+      color: autoColor(theme, '#484848'),
+      flex: '0 0 auto',
+      fontSize: '0.9em',
+      paddingBlock: '4px',
+      paddingInlineEnd: '4px',
+      whiteSpace: 'nowrap',
+    }),
     labelRight: css({
       label: 'labelRight',
       left: '100%',
@@ -417,7 +472,12 @@ export const SpanBarRow = memo((props: SpanBarRowProps) => {
 
   const { duration, hasChildren: isParent, operationName, process } = span;
   const serviceDisplayName = getServiceDisplayName(process);
-  const label = formatDuration(duration);
+  const isSummarySpan = span.aggregation?.isSummary === true;
+  // Summary spans show aggregated (min | median | max) stats in place of the single
+  // duration, falling back to the wall-clock duration when min/max are unavailable.
+  const summaryDurationStats = isSummarySpan && span.aggregation ? getSummaryDurationStats(span.aggregation) : null;
+  const summaryStats = summaryDurationStats?.map((stat) => stat.value).join(' | ') ?? null;
+  const label = summaryStats ?? formatDuration(duration);
   const showAdaptiveTracesRestoredHint = spanHasAdaptiveTraceRestoredTag(span.tags ?? []);
 
   const viewBounds = getViewedBounds(span.startTime, span.startTime + span.duration);
@@ -482,6 +542,62 @@ export const SpanBarRow = memo((props: SpanBarRowProps) => {
     [createSpanLink, span]
   );
 
+  // Shared identity content of the label (icon, service, operation, count badge). Rendered inside the
+  // toggle button for both normal and summary spans; summary spans additionally render the duration
+  // stats as a sibling OUTSIDE the button (see below).
+  const labelIdentity = (
+    <>
+      {showErrorIcon && (
+        <Icon
+          name={'exclamation-circle'}
+          style={{
+            backgroundColor: span.errorIconColor ? autoColor(theme, span.errorIconColor) : autoColor(theme, '#db2828'),
+          }}
+          className={styles.errorIcon}
+        />
+      )}
+      {showServiceName && (
+        <span
+          className={cx(styles.svcName, {
+            [styles.svcNameChildrenCollapsed]: isParent && !isChildrenExpanded,
+          })}
+        >
+          {`${serviceDisplayName} `}
+        </span>
+      )}
+      {rpc && (
+        <span>
+          <Icon name={'arrow-right'} /> <i className={styles.rpcColorMarker} style={{ background: rpc.color }} />
+          {rpc.serviceName}
+        </span>
+      )}
+      {noInstrumentedServer && (
+        <span>
+          <Icon name={'arrow-right'} />{' '}
+          <i className={styles.rpcColorMarker} style={{ background: noInstrumentedServer.color }} />
+          {noInstrumentedServer.serviceName}
+        </span>
+      )}
+      <span className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</span>
+      {/* The processor only aggregates groups of >= min_spans_to_aggregate (>= 2), so a real
+          summary span never has a 0 or absent count; guard defensively anyway since span_count
+          arrives as an untrusted tag value and a bare "0" pill conveys nothing. */}
+      {isSummarySpan && span.aggregation && (span.aggregation.spanCount ?? 0) > 0 && (
+        <span
+          className={styles.summaryCountBadge}
+          style={{ background: color, color: theme.colors.getContrastText(color) }}
+          aria-label={t('explore.span-bar-row.summary-count-aria', '', {
+            count: span.aggregation.spanCount,
+            defaultValue_one: '{{count}} aggregated span',
+            defaultValue_other: '{{count}} aggregated spans',
+          })}
+        >
+          {span.aggregation.spanCount}
+        </span>
+      )}
+    </>
+  );
+
   return (
     <TimelineRow
       className={cx(
@@ -514,51 +630,45 @@ export const SpanBarRow = memo((props: SpanBarRowProps) => {
             removeHoverIndentGuideId={removeHoverIndentGuideId}
             visibleSpanIds={visibleSpanIds}
           />
-          <button
-            type="button"
-            className={cx(styles.name, { [styles.nameDetailExpanded]: isDetailExpanded })}
-            aria-checked={isDetailExpanded}
-            title={labelDetail}
-            onClick={handleDetailToggle}
-            role="switch"
-            tabIndex={0}
-          >
-            {showErrorIcon && (
-              <Icon
-                name={'exclamation-circle'}
-                style={{
-                  backgroundColor: span.errorIconColor
-                    ? autoColor(theme, span.errorIconColor)
-                    : autoColor(theme, '#db2828'),
-                }}
-                className={styles.errorIcon}
-              />
-            )}
-            {showServiceName && (
-              <span
-                className={cx(styles.svcName, {
-                  [styles.svcNameChildrenCollapsed]: isParent && !isChildrenExpanded,
-                })}
+          {isSummarySpan ? (
+            // Summary spans render the toggle button (identity only) plus the duration stats as
+            // siblings inside a non-interactive wrapper. The stats tooltip trigger must NOT sit
+            // inside the button: @grafana/ui Tooltip clones its child with tabIndex={0}, and a
+            // <button> may not contain a tabindex/focusable descendant (invalid HTML + extra tab stop).
+            <div className={cx(styles.summaryLabel, { [styles.nameDetailExpanded]: isDetailExpanded })}>
+              <button
+                type="button"
+                className={styles.summaryToggle}
+                aria-checked={isDetailExpanded}
+                title={labelDetail}
+                onClick={handleDetailToggle}
+                role="switch"
+                tabIndex={0}
               >
-                {`${serviceDisplayName} `}
-              </span>
-            )}
-            {rpc && (
-              <span>
-                <Icon name={'arrow-right'} /> <i className={styles.rpcColorMarker} style={{ background: rpc.color }} />
-                {rpc.serviceName}
-              </span>
-            )}
-            {noInstrumentedServer && (
-              <span>
-                <Icon name={'arrow-right'} />{' '}
-                <i className={styles.rpcColorMarker} style={{ background: noInstrumentedServer.color }} />
-                {noInstrumentedServer.serviceName}
-              </span>
-            )}
-            <span className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</span>
-            <span className={styles.endpointName}> {getSpanBarLabel(span, spanBarOptions, label)}</span>
-          </button>
+                {labelIdentity}
+              </button>
+              {summaryDurationStats ? (
+                <SummaryDurationStatsTooltip stats={summaryDurationStats}>
+                  <span className={styles.summaryStats}>({label})</span>
+                </SummaryDurationStatsTooltip>
+              ) : (
+                <span className={styles.summaryStats}>({label})</span>
+              )}
+            </div>
+          ) : (
+            <button
+              type="button"
+              className={cx(styles.name, { [styles.nameDetailExpanded]: isDetailExpanded })}
+              aria-checked={isDetailExpanded}
+              title={labelDetail}
+              onClick={handleDetailToggle}
+              role="switch"
+              tabIndex={0}
+            >
+              {labelIdentity}
+              <span className={styles.endpointName}> {getSpanBarLabel(span, spanBarOptions, label)}</span>
+            </button>
+          )}
           {showAdaptiveTracesRestoredHint && (
             <Tooltip
               placement="top"
@@ -620,6 +730,7 @@ export const SpanBarRow = memo((props: SpanBarRowProps) => {
           color={color}
           shortLabel={label}
           longLabel={longLabel}
+          labelDetail={labelDetail}
           traceStartTime={traceStartTime}
           span={span}
           labelClassName={`${spanBarLabelClassName} ${hintClassName}`}

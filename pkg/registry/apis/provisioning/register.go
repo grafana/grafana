@@ -856,7 +856,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		if err != nil {
 			return fmt.Errorf("create historic job wrapper: %w", err)
 		}
-		storage[provisioning.HistoricJobResourceInfo.StoragePath()] = historicJobStore
+		storage[provisioning.HistoricJobResourceInfo.StoragePath()] = &historicJobStorage{Store: historicJobStore}
 	}
 
 	connectionsStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.ConnectionResourceInfo, opts.OptsGetter)

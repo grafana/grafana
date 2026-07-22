@@ -22,8 +22,6 @@ var embedMigrations embed.FS
 // PartitionInfo contains metadata about a partition
 type PartitionInfo struct {
 	Name       string
-	StartTime  int64
-	EndTime    int64
 	ParentName string
 }
 
@@ -43,9 +41,7 @@ FOR VALUES FROM (%d) TO (%d);
 	createScopesIndexSQL    = `CREATE INDEX IF NOT EXISTS %s ON %s USING GIN (namespace, scopes);`
 
 	listPartitionsSQL = `
-SELECT
-    child.relname AS partition_name,
-    pg_get_expr(child.relpartbound, child.oid) AS partition_bounds
+SELECT child.relname AS partition_name
 FROM pg_inherits
 JOIN pg_class parent ON pg_inherits.inhparent = parent.oid
 JOIN pg_class child ON pg_inherits.inhrelid = child.oid
@@ -138,20 +134,13 @@ func listPartitions(ctx context.Context, pool *pgxpool.Pool) ([]PartitionInfo, e
 
 	var partitions []PartitionInfo
 	for rows.Next() {
-		var name, bounds string
-		if err := rows.Scan(&name, &bounds); err != nil {
+		var name string
+		if err := rows.Scan(&name); err != nil {
 			return nil, fmt.Errorf("failed to scan partition row: %w", err)
-		}
-
-		var start, end int64
-		if _, err := fmt.Sscanf(bounds, "FOR VALUES FROM (%d) TO (%d)", &start, &end); err != nil {
-			return nil, fmt.Errorf("failed to parse partition bounds %q: %w", bounds, err)
 		}
 
 		partitions = append(partitions, PartitionInfo{
 			Name:       name,
-			StartTime:  start,
-			EndTime:    end,
 			ParentName: "annotations",
 		})
 	}

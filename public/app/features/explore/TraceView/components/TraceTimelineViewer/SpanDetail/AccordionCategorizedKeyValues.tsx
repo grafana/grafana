@@ -19,7 +19,7 @@ export type AccordionCategorizedKeyValuesProps = {
   data: TraceKeyValuePair[];
   sectionType: AttributeSectionType;
   isOpen: boolean;
-  label: string;
+  label: React.ReactNode;
   linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[]) | TNil;
   onToggle?: null | (() => void);
 };

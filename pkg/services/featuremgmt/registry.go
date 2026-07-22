@@ -889,7 +889,7 @@ var (
 			Name:        "sqlExpressionsColumnAutoComplete",
 			Description: "Enables column autocomplete for SQL Expressions",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
 		},
@@ -973,6 +973,14 @@ var (
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
 			Expression:   "true",
+		},
+		{
+			Name:        "grafana.filterablePanels",
+			Description: "Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
 		},
 		{
 			Name:        "cloudWatchNewLabelParsing",
@@ -2049,6 +2057,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.newTextPanel",
+			Description: "Enables the new text panel",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDatavizSquad,
+			Generate:    Generate{React: true},
+			Expression:  "false",
+		},
+		{
 			Name:        "interactiveLearning",
 			Description: "Enables the interactive learning app",
 			Stage:       FeatureStagePublicPreview,
@@ -2908,7 +2924,7 @@ var (
 		},
 		{
 			Name:         "grafana.useDefaultScopesEndpoint",
-			Description:  "Use the find default scope endpoint to seed the initial scope selection when none is set and grafana.enableScopesFirstMode is enabled.",
+			Description:  "Use the find default scope endpoint to seed the initial scope selection when none is set.",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaOperatorExperienceSquad,
 			HideFromDocs: true,
@@ -3036,7 +3052,6 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
-
 			Name:        "cujTracking",
 			Description: "Enables Critical User Journey (CUJ) tracking",
 			Stage:       FeatureStageExperimental,
@@ -3096,6 +3111,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "features.bulkFlagEvalFiltering",
+			Description:  "Filters bulk OFREP flag evaluations to public-metadata flags only",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBackendServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "grafana.multiTenantNavTree",
 			Description:  "Builds the navigation tree client-side instead of reading it from /bootdata",
 			Stage:        FeatureStageExperimental,
@@ -3103,6 +3127,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},
+		},
+		{
+			Name:        "grafana.exploreMetricsSidebar",
+			Description: "Enables the sidebar in Explore metrics (Metrics Drilldown)",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

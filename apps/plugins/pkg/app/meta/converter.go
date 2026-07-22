@@ -1,6 +1,8 @@
 package meta
 
 import (
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -804,6 +806,17 @@ func blankPluginPlaceholder(v, placeholder string) string {
 	return v
 }
 
+// convertHashForSRI takes a hex-encoded SHA-256 hash (as stored in the plugin
+// manifest) and returns it in the Subresource Integrity format expected by the
+// browser: "sha256-<base64>".
+func convertHashForSRI(h string) (string, error) {
+	hb, err := hex.DecodeString(h)
+	if err != nil {
+		return "", fmt.Errorf("hex decode string: %w", err)
+	}
+	return "sha256-" + base64.StdEncoding.EncodeToString(hb), nil
+}
+
 // grafanaComPluginVersionMetaToMetaSpec converts a grafanaComPluginVersionMeta to a pluginsv0alpha1.MetaSpec.
 func grafanaComPluginVersionMetaToMetaSpec(logger logging.Logger, gcomMeta grafanaComPluginVersionMeta, pluginRelBasePath string) (pluginsv0alpha1.MetaSpec, error) {
 	metaSpec := pluginsv0alpha1.MetaSpec{
@@ -879,7 +892,14 @@ func grafanaComPluginVersionMetaToMetaSpec(logger logging.Logger, gcomMeta grafa
 		LoadingStrategy: loadingStrategy,
 	}
 	if ok {
-		module.Hash = &moduleHash
+		// The manifest stores the module hash as a raw hex SHA-256, but the frontend
+		// uses it as a Subresource Integrity value, which must be "sha256-<base64>".
+		sri, err := convertHashForSRI(moduleHash)
+		if err != nil {
+			logger.Warn("Failed to convert module hash to SRI format", "pluginId", gcomMeta.PluginSlug, "version", gcomMeta.Version, "error", err)
+		} else {
+			module.Hash = &sri
+		}
 	}
 	metaSpec.Module = module
 	metaSpec.BaseURL = gcomMeta.CDNURL

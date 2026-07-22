@@ -1,7 +1,10 @@
 import { HttpResponse, http } from 'msw';
 import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
+import { DEFAULT_ROUTING_TREE_NAME_ALIAS } from '@grafana/alerting';
+
 import { setupMswServer } from '../../mockApi';
+import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 
 import {
   buildRoutingParams,
@@ -37,58 +40,36 @@ function yamlFile() {
 const wrapper = getWrapper({ renderWithRouter: true });
 
 describe('buildRoutingParams', () => {
-  describe('when policy routing is enabled (feature flag ON)', () => {
-    const usePolicyRouting = true;
+  it('should return notificationSettings with policy when a routing tree is selected', () => {
+    const result = buildRoutingParams('my-policy');
 
-    it('should return notificationSettings with policy when a routing tree is selected', () => {
-      const result = buildRoutingParams('my-policy', usePolicyRouting);
-
-      expect(result).toEqual({
-        notificationSettings: JSON.stringify({ policy: 'my-policy' }),
-      });
-      expect(result).not.toHaveProperty('extraLabels');
-    });
-
-    it('should fall back to extraLabels=undefined when no routing tree is selected', () => {
-      const result = buildRoutingParams(undefined, usePolicyRouting);
-
-      expect(result).toEqual({ extraLabels: undefined });
-      expect(result).not.toHaveProperty('notificationSettings');
-    });
-
-    it('should fall back to extraLabels=undefined for empty string routing tree', () => {
-      const result = buildRoutingParams('', usePolicyRouting);
-
-      expect(result).toEqual({ extraLabels: undefined });
-      expect(result).not.toHaveProperty('notificationSettings');
+    expect(result).toEqual({
+      notificationSettings: JSON.stringify({ policy: 'my-policy' }),
     });
   });
 
-  describe('when policy routing is disabled (feature flag OFF)', () => {
-    const usePolicyRouting = false;
+  it('should return notificationSettings=undefined when no routing tree is selected', () => {
+    const result = buildRoutingParams(undefined);
 
-    it('should return extraLabels with the legacy label when a routing tree is selected', () => {
-      const result = buildRoutingParams('my-policy', usePolicyRouting);
+    expect(result).toEqual({ notificationSettings: undefined });
+  });
 
-      expect(result).toEqual({
-        extraLabels: '__grafana_managed_route__=my-policy',
-      });
-      expect(result).not.toHaveProperty('notificationSettings');
-    });
+  it('should return notificationSettings=undefined for empty string routing tree', () => {
+    const result = buildRoutingParams('');
 
-    it('should return extraLabels=undefined when no routing tree is selected', () => {
-      const result = buildRoutingParams(undefined, usePolicyRouting);
+    expect(result).toEqual({ notificationSettings: undefined });
+  });
 
-      expect(result).toEqual({ extraLabels: undefined });
-      expect(result).not.toHaveProperty('notificationSettings');
-    });
+  it('should return notificationSettings=undefined for the default routing tree', () => {
+    const result = buildRoutingParams(ROOT_ROUTE_NAME);
 
-    it('should return extraLabels=undefined for empty string routing tree', () => {
-      const result = buildRoutingParams('', usePolicyRouting);
+    expect(result).toEqual({ notificationSettings: undefined });
+  });
 
-      expect(result).toEqual({ extraLabels: undefined });
-      expect(result).not.toHaveProperty('notificationSettings');
-    });
+  it('should return notificationSettings=undefined for the default routing tree alias', () => {
+    const result = buildRoutingParams(DEFAULT_ROUTING_TREE_NAME_ALIAS);
+
+    expect(result).toEqual({ notificationSettings: undefined });
   });
 });
 

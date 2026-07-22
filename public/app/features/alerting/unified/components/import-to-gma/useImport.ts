@@ -1,6 +1,7 @@
 import { load } from 'js-yaml';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
+import { isDefaultRoutingTreeName } from '@grafana/alerting';
 import { t } from '@grafana/i18n';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
@@ -8,7 +9,6 @@ import { fetchAlertManagerConfig } from '../../api/alertmanager';
 import { convertToGMAApi } from '../../api/convertToGMAApi';
 import { stringifyErrorLike } from '../../utils/misc';
 
-import { MERGE_MATCHERS_LABEL_NAME } from './Wizard/steps';
 import { findDuplicateTemplateFileName } from './steps/utils';
 import type { ConvertAlertmanagerResponse, DryRunValidationResult, MergeStats, PromoteStatsSummary } from './types';
 
@@ -155,28 +155,15 @@ interface MigrateRulesBaseParams {
   targetDatasourceUID?: string;
 }
 
-/**
- * Policy routing via notification_settings.policy (new) and label-based routing via extraLabels (legacy)
- * are mutually exclusive — only one mechanism should be used per import.
- */
-type MigrateRulesParams = MigrateRulesBaseParams &
-  ({ extraLabels?: string; notificationSettings?: never } | { extraLabels?: never; notificationSettings?: string });
+type MigrateRulesParams = MigrateRulesBaseParams & { notificationSettings?: string };
 
-/**
- * Build the routing-specific params for rule import.
- * When the `alertingPolicyRoutingSettings` feature flag is ON and a routing tree is selected,
- * uses the new `notification_settings.policy` mechanism; otherwise falls back to `extraLabels`.
- */
 export function buildRoutingParams(
-  selectedRoutingTree: string | undefined,
-  usePolicyRouting: boolean
-): Pick<MigrateRulesParams, 'extraLabels' | 'notificationSettings'> {
-  if (usePolicyRouting && selectedRoutingTree) {
-    return { notificationSettings: JSON.stringify({ policy: selectedRoutingTree }) };
-  }
-
+  selectedRoutingTreeName: string | undefined
+): Pick<MigrateRulesParams, 'notificationSettings'> {
   return {
-    extraLabels: selectedRoutingTree ? `${MERGE_MATCHERS_LABEL_NAME}=${selectedRoutingTree}` : undefined,
+    notificationSettings: isDefaultRoutingTreeName(selectedRoutingTreeName)
+      ? undefined
+      : JSON.stringify({ policy: selectedRoutingTreeName }),
   };
 }
 
@@ -219,7 +206,6 @@ export function useImportRules() {
         pauseRecordingRules,
         payload,
         targetDatasourceUID,
-        extraLabels,
         notificationSettings,
       } = params;
 
@@ -230,7 +216,6 @@ export function useImportRules() {
         pauseAlerts: pauseAlertingRules,
         payload,
         targetDatasourceUID,
-        extraLabels,
         notificationSettings,
       }).unwrap();
     },

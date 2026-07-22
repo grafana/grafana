@@ -980,52 +980,104 @@ func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
 	}
 }
 
-// countManagedResources counts resources managed by repoName.
-func countManagedResources(items []unstructured.Unstructured, repoName string) int {
-	var count int
+// filterManagedResources returns the resources managed by repoName.
+func filterManagedResources(items []unstructured.Unstructured, repoName string) []unstructured.Unstructured {
+	var managed []unstructured.Unstructured
 	for i := range items {
 		annotations := items[i].GetAnnotations()
 		if annotations["grafana.app/managedBy"] == "repo" && annotations["grafana.app/managerId"] == repoName {
-			count++
+			managed = append(managed, items[i])
 		}
 	}
-	return count
+	return managed
 }
 
-// RequireDashboards polls until every named dashboard exists, regardless of manager.
-func (h *ProvisioningTestHelper) RequireDashboards(t *testing.T, names ...string) {
+// ListRepoDashboards lists dashboards and returns only those managed by the given repo.
+func (h *ProvisioningTestHelper) ListRepoDashboards(t *testing.T, repoName string) []unstructured.Unstructured {
 	t.Helper()
+	dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+	require.NoError(t, err, "failed to list dashboards")
+	return filterManagedResources(dashboards.Items, repoName)
+}
+
+// ListRepoFolders lists folders and returns only those managed by the given repo.
+func (h *ProvisioningTestHelper) ListRepoFolders(t *testing.T, repoName string) []unstructured.Unstructured {
+	t.Helper()
+	folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+	require.NoError(t, err, "failed to list folders")
+	return filterManagedResources(folders.Items, repoName)
+}
+
+// RequireDashboards polls until every named dashboard exists, regardless of
+// manager, and returns them in the same order as names.
+func (h *ProvisioningTestHelper) RequireDashboards(t *testing.T, names ...string) []unstructured.Unstructured {
+	t.Helper()
+	matched := make([]unstructured.Unstructured, len(names))
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
 		if !assert.NoError(c, err, "failed to list dashboards") {
 			return
 		}
-		var found []string
+		byName := make(map[string]unstructured.Unstructured, len(dashboards.Items))
 		for _, d := range dashboards.Items {
-			found = append(found, d.GetName())
+			byName[d.GetName()] = d
 		}
-		for _, name := range names {
-			assert.Contains(c, found, name, "expected dashboard %q to exist", name)
+		for i, name := range names {
+			d, ok := byName[name]
+			if !assert.True(c, ok, "expected dashboard %q to exist", name) {
+				continue
+			}
+			matched[i] = d
 		}
 	}, WaitTimeoutDefault, WaitIntervalDefault, "expected dashboards %v to exist", names)
+	return matched
 }
 
-// RequireFolders polls until every named folder exists, regardless of manager.
-func (h *ProvisioningTestHelper) RequireFolders(t *testing.T, names ...string) {
+// RequireFolders polls until every named folder exists, regardless of manager,
+// and returns them in the same order as names.
+func (h *ProvisioningTestHelper) RequireFolders(t *testing.T, names ...string) []unstructured.Unstructured {
 	t.Helper()
+	matched := make([]unstructured.Unstructured, len(names))
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
 		if !assert.NoError(c, err, "failed to list folders") {
 			return
 		}
-		var found []string
+		byName := make(map[string]unstructured.Unstructured, len(folders.Items))
 		for _, f := range folders.Items {
-			found = append(found, f.GetName())
+			byName[f.GetName()] = f
 		}
-		for _, name := range names {
-			assert.Contains(c, found, name, "expected folder %q to exist", name)
+		for i, name := range names {
+			f, ok := byName[name]
+			if !assert.True(c, ok, "expected folder %q to exist", name) {
+				continue
+			}
+			matched[i] = f
 		}
 	}, WaitTimeoutDefault, WaitIntervalDefault, "expected folders %v to exist", names)
+	return matched
+}
+
+// RequireDashboardsNotFound polls until every named dashboard is gone.
+func (h *ProvisioningTestHelper) RequireDashboardsNotFound(t *testing.T, names ...string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		for _, name := range names {
+			_, err := h.DashboardsV1.Resource.Get(t.Context(), name, metav1.GetOptions{})
+			assert.True(c, apierrors.IsNotFound(err), "expected dashboard %q to be not found, got: %v", name, err)
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected dashboards %v to be deleted", names)
+}
+
+// RequireFoldersNotFound polls until every named folder is gone.
+func (h *ProvisioningTestHelper) RequireFoldersNotFound(t *testing.T, names ...string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		for _, name := range names {
+			_, err := h.Folders.Resource.Get(t.Context(), name, metav1.GetOptions{})
+			assert.True(c, apierrors.IsNotFound(err), "expected folder %q to be not found, got: %v", name, err)
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected folders %v to be deleted", names)
 }
 
 // WaitForResourceQuotaLimit waits until the repository's Status.Quota.MaxResourcesPerRepository
@@ -1088,18 +1140,20 @@ func (h *ProvisioningTestHelper) WaitForConditionReason(t *testing.T, repoName s
 // default wait timeout elapses. Polling is required because SyncAndWait only
 // waits for the sync job resource to complete; the dashboards-list API may
 // not yet reflect newly-created/deleted resources at that instant.
-func (h *ProvisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoName string, expectedCount int) {
+func (h *ProvisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoName string, expectedCount int) []unstructured.Unstructured {
 	t.Helper()
+	var managed []unstructured.Unstructured
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
 		if !assert.NoError(c, err, "failed to list dashboards") {
 			return
 		}
 
-		count := countManagedResources(dashboards.Items, repoName)
-		assert.Equal(c, expectedCount, count, "unexpected number of dashboards managed by repo %s", repoName)
+		managed = filterManagedResources(dashboards.Items, repoName)
+		assert.Equal(c, expectedCount, len(managed), "unexpected number of dashboards managed by repo %s", repoName)
 	}, WaitTimeoutDefault, WaitIntervalDefault,
 		"expected %d dashboard(s) managed by repo %s", expectedCount, repoName)
+	return managed
 }
 
 // RequireRepoFolderCount polls the folders list until the number of folders
@@ -1107,18 +1161,61 @@ func (h *ProvisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoNam
 // timeout elapses. Like the dashboard variant, this avoids races where the
 // sync job has completed but the folders-list API has not yet observed the
 // newly-created folders or their grafana.app/managerId annotation.
-func (h *ProvisioningTestHelper) RequireRepoFolderCount(t *testing.T, repoName string, expectedCount int) {
+func (h *ProvisioningTestHelper) RequireRepoFolderCount(t *testing.T, repoName string, expectedCount int) []unstructured.Unstructured {
 	t.Helper()
+	var managed []unstructured.Unstructured
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
 		if !assert.NoError(c, err, "failed to list folders") {
 			return
 		}
 
-		count := countManagedResources(folders.Items, repoName)
-		assert.Equal(c, expectedCount, count, "unexpected number of folders managed by repo %s", repoName)
+		managed = filterManagedResources(folders.Items, repoName)
+		assert.Equal(c, expectedCount, len(managed), "unexpected number of folders managed by repo %s", repoName)
 	}, WaitTimeoutDefault, WaitIntervalDefault,
 		"expected %d folder(s) managed by repo %s", expectedCount, repoName)
+	return managed
+}
+
+// RequireSingleRepoFolder polls until exactly one folder is managed by the
+// given repo and returns it. Poll-and-return in one step so callers never
+// index into a separately fetched list that may transiently be empty.
+func (h *ProvisioningTestHelper) RequireSingleRepoFolder(t *testing.T, repoName string) *unstructured.Unstructured {
+	t.Helper()
+	var folder unstructured.Unstructured
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list folders") {
+			return
+		}
+		managed := filterManagedResources(folders.Items, repoName)
+		if !assert.Len(c, managed, 1, "expected exactly one folder managed by repo %s", repoName) {
+			return
+		}
+		folder = managed[0]
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"expected exactly one folder managed by repo %s", repoName)
+	return &folder
+}
+
+// RequireSingleRepoDashboard polls until exactly one dashboard is managed by
+// the given repo and returns it.
+func (h *ProvisioningTestHelper) RequireSingleRepoDashboard(t *testing.T, repoName string) *unstructured.Unstructured {
+	t.Helper()
+	var dashboard unstructured.Unstructured
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		managed := filterManagedResources(dashboards.Items, repoName)
+		if !assert.Len(c, managed, 1, "expected exactly one dashboard managed by repo %s", repoName) {
+			return
+		}
+		dashboard = managed[0]
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"expected exactly one dashboard managed by repo %s", repoName)
+	return &dashboard
 }
 
 // TriggerConnectionReconciliation forces the controller to re-process a connection
@@ -1250,6 +1347,39 @@ func (h *ProvisioningTestHelper) WaitForRepositoryDeleted(t *testing.T, name str
 		_, err := h.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
 		assert.True(collect, apierrors.IsNotFound(err), "repository %s should be deleted", name)
 	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should be deleted", name)
+}
+
+// ReleaseAndDeleteRepository sets the release-orphan-resources finalizer on the
+// repository, deletes it, and waits until the deletion completes. Managed
+// resources are released (manager annotations stripped) rather than deleted;
+// callers that depend on the release having finished should follow up with
+// WaitForResourcesReleased on the relevant client.
+func (h *ProvisioningTestHelper) ReleaseAndDeleteRepository(t *testing.T, name string) {
+	t.Helper()
+	_, err := h.Repositories.Resource.Patch(t.Context(), name, types.JSONPatchType, []byte(`[
+		{"op": "replace", "path": "/metadata/finalizers", "value": ["cleanup", "release-orphan-resources"]}
+	]`), metav1.PatchOptions{})
+	require.NoError(t, err, "should successfully patch finalizers")
+	require.NoError(t, h.Repositories.Resource.Delete(t.Context(), name, metav1.DeleteOptions{}))
+	h.WaitForRepositoryDeleted(t, name)
+}
+
+// RequireRepoFileExists asserts the repository serves a file at the given path
+// via the files subresource.
+func (h *ProvisioningTestHelper) RequireRepoFileExists(t *testing.T, repo string, path ...string) {
+	t.Helper()
+	subresources := append([]string{"files"}, path...)
+	_, err := h.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, subresources...)
+	require.NoError(t, err, "file %s should exist in repository %s", strings.Join(path, "/"), repo)
+}
+
+// RequireRepoFileNotFound asserts the repository has no file at the given path.
+func (h *ProvisioningTestHelper) RequireRepoFileNotFound(t *testing.T, repo string, path ...string) {
+	t.Helper()
+	subresources := append([]string{"files"}, path...)
+	_, err := h.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, subresources...)
+	require.True(t, apierrors.IsNotFound(err),
+		"file %s should not exist in repository %s, got: %v", strings.Join(path, "/"), repo, err)
 }
 
 // WaitForResourcesReleased polls until every item returned by client no longer
@@ -2921,6 +3051,19 @@ func NewUnmanagedDashboard(apiVersion, title, folderUID string) *unstructured.Un
 			},
 		},
 	}
+}
+
+// CreateUnmanagedFolderWithName creates a folder with no manager annotations
+// using an explicit name instead of a generated one. Pass "" for parentUID to
+// create a root folder.
+func (h *ProvisioningTestHelper) CreateUnmanagedFolderWithName(t *testing.T, name, title, parentUID string) {
+	t.Helper()
+	folder := NewUnmanagedFolder(title, parentUID)
+	metadata := folder.Object["metadata"].(map[string]interface{})
+	delete(metadata, "generateName")
+	metadata["name"] = name
+	_, err := h.Folders.Resource.Create(t.Context(), folder, metav1.CreateOptions{})
+	require.NoError(t, err, "should create unmanaged folder %q", name)
 }
 
 // CreateUnmanagedFolder creates a folder with no manager annotations under the
