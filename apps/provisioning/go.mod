@@ -23,7 +23,7 @@ require (
 	k8s.io/apiserver v0.36.2
 	k8s.io/client-go v0.36.2
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a
-	sigs.k8s.io/structured-merge-diff/v6 v6.4.0
+	sigs.k8s.io/structured-merge-diff/v6 v6.4.2
 )
 
 require (
