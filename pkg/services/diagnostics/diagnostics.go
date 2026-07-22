@@ -114,6 +114,7 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 	}
 
 	usedDirs := map[string]bool{}
+	panelJSONByID := indexPanelJSON(dashboardJSON)
 	for _, p := range panels {
 		entry := manifestPanelEntry{ID: p.ID, Title: p.Title, Datasources: p.Datasources}
 
@@ -129,7 +130,7 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 		// separately, so resolve this panel's JSON from that model by id when it wasn't supplied inline.
 		panelJSON := p.PanelJSON
 		if len(panelJSON) == 0 {
-			panelJSON = extractPanelJSON(dashboardJSON, p.ID)
+			panelJSON = panelJSONByID[p.ID]
 		}
 		if len(panelJSON) > 0 {
 			files[dir+"/panel.json"] = indentJSON(panelJSON)
@@ -163,24 +164,24 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 	return buildTarGz(files)
 }
 
-// extractPanelJSON returns the raw JSON of the panel with the given id from a dashboard save model,
-// or nil if absent. The whole-dashboard client sends the dashboard model once (not each panel's JSON),
-// so per-panel panel.json is resolved here by id. Collapsed rows carry their children in a nested
-// "panels" array, so the search recurses into them.
-func extractPanelJSON(dashboardJSON json.RawMessage, id int64) json.RawMessage {
+// indexPanelJSON indexes the raw panel JSON from a dashboard save model by panel id. Collapsed rows
+// carry their children in a nested "panels" array, so the index includes them recursively.
+func indexPanelJSON(dashboardJSON json.RawMessage) map[int64]json.RawMessage {
+	panelsByID := make(map[int64]json.RawMessage)
 	if len(dashboardJSON) == 0 {
-		return nil
+		return panelsByID
 	}
 	var doc struct {
 		Panels []json.RawMessage `json:"panels"`
 	}
 	if err := json.Unmarshal(dashboardJSON, &doc); err != nil {
-		return nil
+		return panelsByID
 	}
-	return findPanelByID(doc.Panels, id)
+	indexPanelsByID(doc.Panels, panelsByID)
+	return panelsByID
 }
 
-func findPanelByID(panels []json.RawMessage, id int64) json.RawMessage {
+func indexPanelsByID(panels []json.RawMessage, panelsByID map[int64]json.RawMessage) {
 	for _, raw := range panels {
 		var meta struct {
 			ID     *int64            `json:"id"`
@@ -189,14 +190,13 @@ func findPanelByID(panels []json.RawMessage, id int64) json.RawMessage {
 		if err := json.Unmarshal(raw, &meta); err != nil {
 			continue
 		}
-		if meta.ID != nil && *meta.ID == id {
-			return raw
+		if meta.ID != nil {
+			if _, exists := panelsByID[*meta.ID]; !exists {
+				panelsByID[*meta.ID] = raw
+			}
 		}
-		if found := findPanelByID(meta.Panels, id); found != nil {
-			return found
-		}
+		indexPanelsByID(meta.Panels, panelsByID)
 	}
-	return nil
 }
 
 // uniquePanelDir builds a stable, filesystem-safe directory name (panels/<id>-<slug>),

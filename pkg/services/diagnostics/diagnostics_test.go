@@ -445,13 +445,14 @@ func TestBuildDashboard_resolvesPanelJSONFromDashboardModel(t *testing.T) {
 	require.Contains(t, string(files["panels/2-logs/panel.json"]), `"logs"`)
 }
 
-func TestExtractPanelJSON(t *testing.T) {
+func TestIndexPanelJSON(t *testing.T) {
 	dash := json.RawMessage(`{"panels":[{"id":1,"type":"a"},{"id":5,"type":"row","panels":[{"id":6,"type":"b"}]}]}`)
-	require.Contains(t, string(extractPanelJSON(dash, 1)), `"a"`)
-	require.Contains(t, string(extractPanelJSON(dash, 6)), `"b"`, "must find panels nested in a row")
-	require.Nil(t, extractPanelJSON(dash, 99), "unknown id -> nil")
-	require.Nil(t, extractPanelJSON(nil, 1), "empty dashboard -> nil")
-	require.Nil(t, extractPanelJSON(json.RawMessage(`not json`), 1), "malformed -> nil, not panic")
+	panelsByID := indexPanelJSON(dash)
+	require.Contains(t, string(panelsByID[1]), `"a"`)
+	require.Contains(t, string(panelsByID[6]), `"b"`, "must index panels nested in a row")
+	require.NotContains(t, panelsByID, int64(99), "unknown id is omitted")
+	require.Empty(t, indexPanelJSON(nil), "empty dashboard produces an empty index")
+	require.Empty(t, indexPanelJSON(json.RawMessage(`not json`)), "malformed dashboard produces an empty index")
 }
 
 func TestBuildDashboard_recordsPanelQueryError(t *testing.T) {
