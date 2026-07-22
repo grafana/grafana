@@ -226,7 +226,7 @@ function SectionList({ sections, depth = 0 }: { sections: WizardSummarySection[]
           {sections.map((section, index) => (
             <Tab
               key={index}
-              label={section.title}
+              label={section.repeatFor ? `${section.title} (${repeatLabel(section.repeatFor)})` : section.title}
               active={index === active}
               onChangeTab={() => setActiveIndex(index)}
             />
@@ -249,6 +249,11 @@ function SectionList({ sections, depth = 0 }: { sections: WizardSummarySection[]
   );
 }
 
+/** "for each $var" — how a repeat reads on badges and tab labels. */
+function repeatLabel(repeatFor: string): string {
+  return t('dashboard-wizard.summary-step.repeat-label', 'for each {{variable}}', { variable: `$${repeatFor}` });
+}
+
 /** The inside of a section: its planned panels, or the sections nested in it. */
 function SectionContent({ section, depth }: { section: WizardSummarySection; depth: number }) {
   const styles = useStyles2(getStyles);
@@ -261,7 +266,10 @@ function SectionContent({ section, depth }: { section: WizardSummarySection; dep
             <li key={panelIndex} className={styles.panel}>
               {/* Always render the chip cell so the title always lands in the second grid column. */}
               <span className={panel.visualization ? styles.vizChip : undefined}>{panel.visualization}</span>
-              <span className={styles.panelTitle}>{panel.title}</span>
+              <span className={styles.panelTitle}>
+                {panel.title}
+                {panel.repeatFor && <span className={styles.repeatBadge}>{repeatLabel(panel.repeatFor)}</span>}
+              </span>
             </li>
           ))}
         </ul>
@@ -276,6 +284,10 @@ function SectionBlock({ section, depth }: { section: WizardSummarySection; depth
   const styles = useStyles2(getStyles);
   const isTab = section.kind === 'tab';
 
+  const repeatBadge = section.repeatFor ? (
+    <span className={styles.repeatBadge}>{repeatLabel(section.repeatFor)}</span>
+  ) : null;
+
   const title = (
     <Text variant={depth === 0 ? 'body' : 'bodySmall'} weight="medium">
       {section.title}
@@ -289,7 +301,12 @@ function SectionBlock({ section, depth }: { section: WizardSummarySection; depth
       <div className={styles.rowBlock}>
         <CollapsableSection
           isOpen={true}
-          label={title}
+          label={
+            <span className={styles.sectionHeader}>
+              {title}
+              {repeatBadge}
+            </span>
+          }
           className={styles.rowHeader}
           contentClassName={styles.rowContent}
         >
@@ -304,6 +321,7 @@ function SectionBlock({ section, depth }: { section: WizardSummarySection; depth
       <div className={styles.sectionHeader}>
         {title}
         <span className={styles.kindBadge}>{t('dashboard-wizard.summary-step.kind-tab', 'Tab')}</span>
+        {repeatBadge}
       </div>
       <SectionContent section={section} depth={depth} />
     </div>
@@ -392,6 +410,17 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(1, 0, 0),
     }),
     kindBadge: css({
+      padding: theme.spacing(0, 0.75),
+      borderRadius: theme.shape.radius.default,
+      border: `1px solid ${theme.colors.border.weak}`,
+      background: theme.colors.background.primary,
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.pxToRem(11),
+      whiteSpace: 'nowrap',
+    }),
+    // Marks a section or panel that repeats per value of a template variable.
+    repeatBadge: css({
+      marginLeft: theme.spacing(0.75),
       padding: theme.spacing(0, 0.75),
       borderRadius: theme.shape.radius.default,
       border: `1px solid ${theme.colors.border.weak}`,

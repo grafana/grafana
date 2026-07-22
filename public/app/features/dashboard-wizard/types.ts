@@ -53,6 +53,8 @@ export interface WizardSummaryPanel {
   title: string;
   /** Visualization in plain language, e.g. "time series", "stat", "table". */
   visualization: string;
+  /** Variable name (no $ prefix) this panel repeats for — one panel instance per value. */
+  repeatFor?: string;
 }
 
 /**
@@ -70,6 +72,8 @@ export interface WizardSummarySection {
   panels: WizardSummaryPanel[];
   /** Inner sections nested inside this one; unset when the section holds panels. */
   sections?: WizardSummarySection[];
+  /** Variable name (no $ prefix) this section repeats for — one tab/row instance per value. */
+  repeatFor?: string;
 }
 
 /**

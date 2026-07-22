@@ -91,12 +91,29 @@ function inferStructureFromSections(raw: unknown): 'tabs' | 'rows' {
 /** Matches the dashboard editor's MAX_NESTING_DEPTH for layout grouping. */
 const MAX_SECTION_DEPTH = 3;
 
+/**
+ * Validates a repeat-by-variable reference: a bare variable name (tolerating
+ * a stray $ prefix) that must be one of the plan's declared variables — a
+ * repeat by an unplanned variable is unbuildable, so it is dropped.
+ */
+function normalizeRepeatFor(raw: unknown, variables: ReadonlySet<string>): string | undefined {
+  if (typeof raw !== 'string') {
+    return undefined;
+  }
+  const name = raw.trim().replace(/^\$/, '');
+  return variables.has(name) ? name : undefined;
+}
+
 function normalizeSummarySections(
   raw: unknown,
   fallbackKind: 'tab' | 'row',
+  /** The plan's declared variable names — the only legal repeatFor targets. */
+  variables: ReadonlySet<string>,
   depth = 0,
   /** True when any ancestor section is a tab — the editor forbids tabs anywhere under a tab. */
-  underTab = false
+  underTab = false,
+  /** True when any ancestor section repeats — repeats never nest. */
+  underRepeat = false
 ): WizardSummarySection[] {
   if (!Array.isArray(raw) || depth >= MAX_SECTION_DEPTH) {
     return [];
@@ -114,17 +131,20 @@ function normalizeSummarySections(
     // The dashboard editor never allows tabs nested under a tab, at any depth;
     // coerce such sections to rows so the plan is always buildable.
     const kind = underTab && requestedKind === 'tab' ? 'row' : requestedKind;
+    const repeatFor = underRepeat ? undefined : normalizeRepeatFor(entry.repeatFor, variables);
     // Nested sections default to the opposite kind (rows inside tabs, tabs inside rows).
     const nested = normalizeSummarySections(
       entry.sections,
       kind === 'tab' ? 'row' : 'tab',
+      variables,
       depth + 1,
-      underTab || kind === 'tab'
+      underTab || kind === 'tab',
+      underRepeat || repeatFor !== undefined
     );
     // The V2 layout schema allows a section to hold panels OR nested sections,
     // never both. When the model emits both, the nested structure wins.
     if (nested.length > 0) {
-      sections.push({ title: entry.title.trim(), kind, panels: [], sections: nested });
+      sections.push({ title: entry.title.trim(), kind, panels: [], sections: nested, repeatFor });
       continue;
     }
     const panels: WizardSummaryPanel[] = [];
@@ -136,10 +156,12 @@ function normalizeSummarySections(
         panels.push({
           title: panel.title.trim(),
           visualization: typeof panel.visualization === 'string' ? panel.visualization.trim() : '',
+          // A panel inside a repeating section must not repeat again.
+          repeatFor: underRepeat || repeatFor ? undefined : normalizeRepeatFor(panel.repeatFor, variables),
         });
       }
     }
-    sections.push({ title: entry.title.trim(), kind, panels });
+    sections.push({ title: entry.title.trim(), kind, panels, repeatFor });
   }
   return sections;
 }
@@ -250,12 +272,17 @@ function normalizeSummary(raw: unknown): WizardSummary | undefined {
   }
   const normalizedStructure =
     structure === 'rows' || structure === 'tabs' ? structure : inferStructureFromSections(sections);
+  const variableNames = normalizeSummaryVariables(variables);
   return {
     title: title.trim(),
     description: typeof description === 'string' ? description.trim() : '',
     structure: normalizedStructure,
-    sections: normalizeSummarySections(sections, normalizedStructure === 'tabs' ? 'tab' : 'row'),
-    variables: normalizeSummaryVariables(variables),
+    sections: normalizeSummarySections(
+      sections,
+      normalizedStructure === 'tabs' ? 'tab' : 'row',
+      new Set(variableNames)
+    ),
+    variables: variableNames,
   };
 }
 

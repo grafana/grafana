@@ -1,4 +1,4 @@
-import { buildDisplayPrompt, buildRepairPrompt } from './prompts';
+import { buildDisplayPrompt, buildGenerationPrompt, buildRepairPrompt } from './prompts';
 import { validateGeneratedDashboard } from './validateGeneratedDashboard';
 
 describe('buildDisplayPrompt', () => {
@@ -28,6 +28,41 @@ describe('buildDisplayPrompt', () => {
         'My choices:\n- Which environment? production\n\n' +
         'Changes I asked for on the plan:\n- Add a latency section\n- Drop the logs tab'
     );
+  });
+});
+
+describe('buildGenerationPrompt', () => {
+  it('renders plan repeats and instructs the builder to use the layout repeat option', () => {
+    const prompt = buildGenerationPrompt({
+      intent: 'Monitor the checkout service.',
+      clarifications: [],
+      datasources: [{ uid: 'prom-1', type: 'prometheus' }],
+      summary: {
+        title: 'Checkout service health',
+        description: 'Monitors checkout.',
+        structure: 'tabs',
+        sections: [
+          {
+            title: 'Latency — $endpoint',
+            kind: 'tab',
+            repeatFor: 'endpoint',
+            panels: [{ title: 'Latency percentiles', visualization: 'time series', repeatFor: undefined }],
+          },
+          {
+            title: 'Traffic',
+            kind: 'tab',
+            panels: [{ title: 'Requests per instance', visualization: 'time series', repeatFor: 'instance' }],
+          },
+        ],
+        variables: ['endpoint', 'instance'],
+      },
+    });
+
+    expect(prompt).toContain('Tab "Latency — $endpoint", repeated for each value of $endpoint:');
+    expect(prompt).toContain('- Requests per instance (time series; repeated for each value of $instance)');
+    // The builder must realize repeats with the layout repeat option, not copies.
+    expect(prompt).toContain('layout repeat option');
+    expect(prompt).toContain('NEVER hand-build one copy per value');
   });
 });
 
