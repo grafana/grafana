@@ -2,6 +2,7 @@ import { HttpResponse, http } from 'msw';
 import { type PropsWithChildren } from 'react';
 import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
+import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '@grafana/alerting';
 import {
   API_GROUP,
   API_VERSION,
@@ -323,6 +324,47 @@ describe.each(['user-defined', 'default'])('send side stays user-defined (backen
     // Non-vacuous: wait until the hook has actually issued the GET, THEN assert the name it used.
     await waitFor(() => expect(requestedNames.length).toBeGreaterThan(0));
     expect(requestedNames).toEqual(['user-defined']);
+  });
+});
+
+describe('read side canonicalizes the requested routing tree name', () => {
+  // Capture every name the GET-by-name handler is asked for; the payload doesn't matter here, only the name.
+  const captureRequestedNames = () => {
+    const requestedNames: string[] = [];
+    server.use(
+      http.get(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees/:name`, ({ params }) => {
+        requestedNames.push(String(params.name));
+        return HttpResponse.json(getRoutingTree(ROOT_ROUTE_NAME));
+      })
+    );
+    return requestedNames;
+  };
+
+  it.each([USER_DEFINED_TREE_NAME, DEFAULT_ROUTING_TREE_NAME_ALIAS])(
+    'GETs the default tree as user-defined when a caller addresses it as %p',
+    async (alias) => {
+      resetRoutingTreeMap();
+      const requestedNames = captureRequestedNames();
+
+      renderHook(() => useNotificationPolicyRoute({ alertmanager: GRAFANA_RULES_SOURCE_NAME }, alias), {
+        wrapper: getWrapper({ renderWithRouter: true }),
+      });
+
+      await waitFor(() => expect(requestedNames.length).toBeGreaterThan(0));
+      expect(requestedNames).toEqual([ROOT_ROUTE_NAME]);
+    }
+  );
+
+  it('GETs a named tree under its own name', async () => {
+    resetRoutingTreeMap();
+    const requestedNames = captureRequestedNames();
+
+    renderHook(() => useNotificationPolicyRoute({ alertmanager: GRAFANA_RULES_SOURCE_NAME }, 'team-backend'), {
+      wrapper: getWrapper({ renderWithRouter: true }),
+    });
+
+    await waitFor(() => expect(requestedNames.length).toBeGreaterThan(0));
+    expect(requestedNames).toEqual(['team-backend']);
   });
 });
 

@@ -96,8 +96,13 @@ export const useNotificationPolicyRoute = (
 ) => {
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
 
+  // Callers may address the default (root) tree by any alias the backend recognizes (e.g. "default"),
+  // for instance from a rule's notification_settings.policy or the /policy/:name route. Canonicalize to
+  // ROOT_ROUTE_NAME so the GET resolves the same tree the send side (add/update/delete) targets.
+  const name = isDefaultRoutingTreeName(routeName) ? ROOT_ROUTE_NAME : routeName;
+
   const k8sRouteQuery = useGetRoutingTreeQuery(
-    { name: routeName },
+    { name },
     {
       skip: skip || !k8sApiSupported,
       selectFromResult: (result) => {
