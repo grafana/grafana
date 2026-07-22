@@ -22,8 +22,8 @@ func GetStringValue(m map[string]interface{}, key string, defaultValue ...string
 
 func GetStringValueOrNil(m map[string]interface{}, key string) *string {
 	if value, ok := m[key]; ok {
-		if s, ok := value.(*string); ok {
-			return s
+		if s, ok := value.(string); ok {
+			return &s
 		}
 	}
 

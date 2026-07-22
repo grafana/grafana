@@ -1090,7 +1090,7 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 	panel["pluginVersion"] = spec.VizConfig.Spec.PluginVersion
 
 	if spec.Description != nil && *spec.Description != "" {
-		panel["description"] = spec.Description
+		panel["description"] = *spec.Description
 	}
 
 	// Convert vizConfig - use the plugin ID from VizConfig.Kind, not PanelKind.Kind
