@@ -445,6 +445,27 @@ func TestBuildDashboard_resolvesPanelJSONFromDashboardModel(t *testing.T) {
 	require.Contains(t, string(files["panels/2-logs/panel.json"]), `"logs"`)
 }
 
+func TestBuildDashboard_resolvesPanelJSONFromDashboardV2Model(t *testing.T) {
+	dashboardJSON := json.RawMessage(`{
+		"title": "My dash",
+		"elements": {
+			"panel-3": {
+				"kind": "Panel",
+				"spec": {"id": 3, "title": "CPU Usage", "vizConfig": {"group": "timeseries"}}
+			}
+		}
+	}`)
+	panels := []DashboardPanel{
+		{ID: 3, Title: "CPU Usage", HARBuffer: bufferWithEntry(t, "http://ds/3")},
+	}
+	blob, err := NewBundler().BuildDashboard(dashboardJSON, panels)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.Contains(t, files, "panels/3-cpu-usage/panel.json")
+	require.Contains(t, string(files["panels/3-cpu-usage/panel.json"]), `"timeseries"`)
+}
+
 func TestIndexPanelJSON(t *testing.T) {
 	dash := json.RawMessage(`{"panels":[{"id":1,"type":"a"},{"id":5,"type":"row","panels":[{"id":6,"type":"b"}]}]}`)
 	panelsByID := indexPanelJSON(dash)

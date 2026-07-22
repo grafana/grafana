@@ -164,20 +164,22 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 	return buildTarGz(files)
 }
 
-// indexPanelJSON indexes the raw panel JSON from a dashboard save model by panel id. Collapsed rows
-// carry their children in a nested "panels" array, so the index includes them recursively.
+// indexPanelJSON indexes the raw panel JSON from v1 and v2 dashboard save models by panel id.
+// Collapsed v1 rows carry their children in a nested "panels" array, so the index includes them recursively.
 func indexPanelJSON(dashboardJSON json.RawMessage) map[int64]json.RawMessage {
 	panelsByID := make(map[int64]json.RawMessage)
 	if len(dashboardJSON) == 0 {
 		return panelsByID
 	}
 	var doc struct {
-		Panels []json.RawMessage `json:"panels"`
+		Panels   []json.RawMessage          `json:"panels"`
+		Elements map[string]json.RawMessage `json:"elements"`
 	}
 	if err := json.Unmarshal(dashboardJSON, &doc); err != nil {
 		return panelsByID
 	}
 	indexPanelsByID(doc.Panels, panelsByID)
+	indexElementsByID(doc.Elements, panelsByID)
 	return panelsByID
 }
 
@@ -196,6 +198,23 @@ func indexPanelsByID(panels []json.RawMessage, panelsByID map[int64]json.RawMess
 			}
 		}
 		indexPanelsByID(meta.Panels, panelsByID)
+	}
+}
+
+func indexElementsByID(elements map[string]json.RawMessage, panelsByID map[int64]json.RawMessage) {
+	for _, raw := range elements {
+		var meta struct {
+			Kind string `json:"kind"`
+			Spec struct {
+				ID *int64 `json:"id"`
+			} `json:"spec"`
+		}
+		if err := json.Unmarshal(raw, &meta); err != nil || meta.Kind != "Panel" || meta.Spec.ID == nil {
+			continue
+		}
+		if _, exists := panelsByID[*meta.Spec.ID]; !exists {
+			panelsByID[*meta.Spec.ID] = raw
+		}
 	}
 }
 
