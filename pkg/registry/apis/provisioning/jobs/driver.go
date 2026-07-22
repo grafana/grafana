@@ -235,6 +235,19 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 	progressUpdates := d.currentJob.Status.ProgressUpdates
 	d.currentJob.Status = recorder.Complete(ctx, err)
 	d.currentJob.Status.ProgressUpdates = progressUpdates + 1
+	// Record the job metric here, from the authoritative final status, rather than in
+	// each worker: this covers every action uniformly, uses the driver-measured
+	// duration (accurate even on timeout), and makes the `outcome` label reflect the
+	// job status (success/warning/error) — so a job that "completed with errors" is
+	// recorded as an error, not a success.
+	if d.metrics != nil {
+		d.metrics.RecordJob(
+			string(d.currentJob.Spec.Action),
+			string(d.currentJob.Status.State),
+			resourceChangeCount(d.currentJob.Status.Summary),
+			duration.Seconds(),
+		)
+	}
 	defer func() {
 		d.currentJob = nil
 		d.mu.Unlock()
@@ -487,6 +500,19 @@ func (d *jobProcessor) processJob(ctx context.Context, recorder JobProgressRecor
 	err := apifmt.Errorf("no workers were registered to handle the job")
 	span.RecordError(err)
 	return err
+}
+
+// resourceChangeCount sums the create/update/delete counts across a job's status
+// summaries, giving the total resources changed for the duration histogram bucket.
+func resourceChangeCount(summaries []*provisioning.JobResourceSummary) int {
+	total := 0
+	for _, s := range summaries {
+		if s == nil {
+			continue
+		}
+		total += int(s.Create + s.Update + s.Delete)
+	}
+	return total
 }
 
 func (d *jobProcessor) onProgress() ProgressFn {
