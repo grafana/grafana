@@ -41,10 +41,10 @@ function createSpanLinkModel(overrides: Partial<LinkModel> = {}): SpanLinkModel 
  * Builds a fake datasource whose `query` emits a single response containing the
  * given frames, so the presence check can resolve deterministically.
  */
-function mockDatasourceReturningFrames(frames: Array<ReturnType<typeof toDataFrame>>) {
+function mockDatasourceReturningFrames(frames: Array<ReturnType<typeof toDataFrame>>, type?: string) {
   const query = jest.fn().mockReturnValue(of({ data: frames }));
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getDataSourceInstanceMock.mockResolvedValue({ query } as any);
+  getDataSourceInstanceMock.mockResolvedValue({ query, type } as any);
   return query;
 }
 
@@ -87,6 +87,35 @@ describe('LogsLinkButton', () => {
 
     await waitFor(() => expect(getDataSourceInstanceMock).toHaveBeenCalledWith(interpolatedQuery.datasource));
     expect(query).toHaveBeenCalledWith(expect.objectContaining({ targets: [interpolatedQuery] }));
+  });
+
+  it('limits the presence check to a single log line for loki datasources', async () => {
+    const query = mockDatasourceReturningFrames([logsFrame], 'loki');
+    const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
+
+    render(
+      <LogsLinkButton spanLinkModel={createSpanLinkModel({ interpolatedParams: { query: interpolatedQuery } })} />
+    );
+
+    await waitFor(() => expect(query).toHaveBeenCalled());
+    expect(query).toHaveBeenCalledWith(
+      expect.objectContaining({ targets: [expect.objectContaining({ ...interpolatedQuery, maxLines: 1 })] })
+    );
+  });
+
+  it('does not set maxLines for non-loki logging datasources', async () => {
+    const query = mockDatasourceReturningFrames([logsFrame], 'elasticsearch');
+    const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'elasticsearch' } };
+
+    render(
+      <LogsLinkButton spanLinkModel={createSpanLinkModel({ interpolatedParams: { query: interpolatedQuery } })} />
+    );
+
+    await waitFor(() => expect(query).toHaveBeenCalled());
+    expect(query).toHaveBeenCalledWith(expect.objectContaining({ targets: [interpolatedQuery] }));
+    expect(query).not.toHaveBeenCalledWith(
+      expect.objectContaining({ targets: [expect.objectContaining({ maxLines: expect.anything() })] })
+    );
   });
 
   it('marks the button as absent (no logs) when the query returns no rows', async () => {

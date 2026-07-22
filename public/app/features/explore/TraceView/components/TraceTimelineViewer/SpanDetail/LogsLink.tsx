@@ -6,6 +6,7 @@ import {
   CoreApp,
   type DataFrame,
   type DataQuery,
+  type DataSourceApi,
   type DataSourceInstanceSettings,
   type DataSourceJsonData,
   getDefaultTimeRange,
@@ -17,6 +18,7 @@ import { getTraceToLogsOptions } from '@grafana/o11y-ds-frontend';
 import { getDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { useStyles2, DataLinkButton } from '@grafana/ui';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
+import { type LokiQuery } from 'app/plugins/datasource/loki/types';
 
 import { type SpanLinkModel } from '../../types/links';
 
@@ -106,24 +108,11 @@ function checkForLogs(query: DataQuery, timeRange: TimeRange): Observable<boolea
     return of(false);
   }
 
-  const request = {
-    requestId: getNextRequestId(),
-    app: CoreApp.Explore,
-    targets: [query],
-    range: timeRange,
-    timezone: 'browser',
-    interval: '1m',
-    intervalMs: 60000,
-    maxDataPoints: 1,
-    scopedVars: {},
-    startTime: Date.now(),
-  };
-
   // Resolving the datasource is async, and `query` can return either an Observable
   // or a Promise, so normalize both with `from`. Returning an Observable lets the
   // caller unsubscribe to cancel the request while it's still in flight.
   return from(getDataSourceInstance(query.datasource)).pipe(
-    switchMap((datasource) => from(datasource.query(request))),
+    switchMap((datasource) => from(datasource.query(getRequest(query, timeRange, datasource)))),
     map((response) => {
       const series: DataFrame[] = response.data ?? [];
       return series.some((frame) => frame.length > 0);
@@ -196,4 +185,27 @@ export function getLogsButtonTooltip(
   }
 
   return defaultCTA;
+}
+
+function getRequest(query: DataQuery, timeRange: TimeRange, datasource: DataSourceApi) {
+  const request = {
+    requestId: getNextRequestId(),
+    app: CoreApp.Explore,
+    targets: [query],
+    range: timeRange,
+    timezone: 'browser',
+    interval: '1m',
+    intervalMs: 60000,
+    maxDataPoints: 1,
+    scopedVars: {},
+    startTime: Date.now(),
+  };
+
+  if (datasource.type === 'loki') {
+    const target: DataQuery & Pick<LokiQuery, 'maxLines'> = { ...query };
+    target.maxLines = 1;
+    request.targets = [target];
+  }
+
+  return request;
 }
