@@ -25,6 +25,7 @@ export interface CtaClicked extends EventProperty {
     | 'create_dashboard'
     | 'browse_dashboards'
     | 'enable'
+    | 'setup'
     | 'open_solution'
     | 'view_alerts'
     | 'switch_solution'
