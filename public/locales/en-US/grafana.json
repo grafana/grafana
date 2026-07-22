@@ -6944,6 +6944,11 @@
         "description-moved": "Annotation settings have moved to the dashboard's sidebar.",
         "title-moved": "Looking for annotations?"
       },
+      "json": {
+        "button-moved": "Take me there",
+        "description-moved": "The JSON model has moved to the dashboard's sidebar, under \"Edit as code\".",
+        "title-moved": "Looking for the JSON model?"
+      },
       "variables": {
         "button-moved": "Take me there",
         "description-moved": "Variable settings have moved to the dashboard's sidebar.",
