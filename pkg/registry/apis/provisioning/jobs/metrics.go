@@ -38,7 +38,7 @@ const (
 	ClaimOutcomeClaimed   = "claimed"   // a job was claimed
 	ClaimOutcomeEmpty     = "empty"     // no unclaimed jobs were available
 	ClaimOutcomeContended = "contended" // candidates existed but all were claimed by others first
-	ClaimOutcomeError     = "error"     // listing candidates failed
+	ClaimOutcomeError     = "error"     // a claim attempt failed (list, identity, or update error)
 )
 
 // durationBucketUnknown is the resources_changed_bucket used when a job did not
