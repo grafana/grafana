@@ -49,7 +49,9 @@ export function getLocalStorageProvider() {
 let ofrepWebProvider: OFREPWebProvider;
 export function getOFREPWebProvider() {
   return (ofrepWebProvider ??= new OFREPWebProvider({
-    baseUrl: `${config.appSubUrl || ''}/apis/features.grafana.app/v0alpha1/namespaces/${config.namespace}`,
+    // OFREPWebProvider appends /ofrep/v1/evaluate/flags itself, so baseUrl is just the
+    // app's subpath (or '' at root) — not the OFREP path itself.
+    baseUrl: `${config.appSubUrl || ''}`,
     disableVisibilityRefresh: true, // Do not refresh
     cacheMode: 'disabled', // Do not write to localStorage
     timeoutMs: 5_000,
