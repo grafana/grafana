@@ -109,6 +109,21 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			},
 		},
 		{
+			name:      "attribution disabled strips webhook attribution from the provisioning service identity",
+			operation: admission.Create,
+			requester: &identity.StaticRequester{
+				Type:    authlib.TypeAccessPolicy,
+				UserUID: "provisioning",
+			},
+			enabled: false,
+			annotations: map[string]string{
+				AnnoAuthor:       "grot",
+				AnnoAuthorID:     "123",
+				AnnoAuthorOrigin: "github",
+			},
+			expected: map[string]string{},
+		},
+		{
 			name:      "provisioning service identity without attribution records Grafana as the origin",
 			operation: admission.Create,
 			requester: &identity.StaticRequester{

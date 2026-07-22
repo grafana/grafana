@@ -55,14 +55,16 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 	// only from the request identity below. The provisioning service identity
 	// is exempt so the webhook dispatcher can attribute jobs to the webhook
 	// sender, but only for the fields a webhook carries: name, id, and origin.
+	enabled := m.userAttributionEnabled != nil && m.userAttributionEnabled(ctx)
+
 	delete(job.Annotations, AnnoAuthorEmail)
-	if info, ok := types.AuthInfoFrom(ctx); !ok || !identity.IsProvisioningServiceIdentity(info) {
+	if info, ok := types.AuthInfoFrom(ctx); !enabled || !ok || !identity.IsProvisioningServiceIdentity(info) {
 		delete(job.Annotations, AnnoAuthor)
 		delete(job.Annotations, AnnoAuthorID)
 		delete(job.Annotations, AnnoAuthorOrigin)
 	}
 
-	if m.userAttributionEnabled == nil || !m.userAttributionEnabled(ctx) {
+	if !enabled {
 		return nil
 	}
 
