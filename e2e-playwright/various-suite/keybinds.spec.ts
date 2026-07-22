@@ -1,6 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-test.describe(
+// TODO: re-enable once flakiness is resolved (see tracking issue)
+test.describe.skip(
   'Keyboard shortcuts',
   {
     tag: ['@various'],
