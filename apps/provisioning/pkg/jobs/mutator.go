@@ -51,12 +51,12 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		job.Annotations = map[string]string{}
 	}
 
+	enabled := m.userAttributionEnabled != nil && m.userAttributionEnabled(ctx)
+
 	// Never trust client-supplied author annotations: clear them and set them
 	// only from the request identity below. The provisioning service identity
 	// is exempt so the webhook dispatcher can attribute jobs to the webhook
 	// sender, but only for the fields a webhook carries: name, id, and origin.
-	enabled := m.userAttributionEnabled != nil && m.userAttributionEnabled(ctx)
-
 	delete(job.Annotations, AnnoAuthorEmail)
 	if info, ok := types.AuthInfoFrom(ctx); !enabled || !ok || !identity.IsProvisioningServiceIdentity(info) {
 		delete(job.Annotations, AnnoAuthor)
