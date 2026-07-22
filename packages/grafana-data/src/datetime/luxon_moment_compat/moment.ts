@@ -66,7 +66,7 @@ type InputArray = ReadonlyArray<string | number>;
 
 export type MomentInput = MomentLike | DateTime | Date | number | string | InputObject | InputArray | undefined | null;
 interface MomentBuiltinFormat {
-  __momentBuiltinFormatBrand: any;
+  __momentBuiltinFormatBrand: unknown;
 }
 type MomentFormat = string | string[] | MomentBuiltinFormat;
 type FormatArg = string | undefined;
@@ -228,6 +228,9 @@ const START_END_UNIT_MAP: Record<StartEndUnit, DateTimeUnit> = {
 };
 
 const DEFAULT_LOCALE = 'en';
+// branding a runtime string as the moment-style sentinel requires an assertion; the brand only
+// exists at the type level, and callers compare against this constant by identity.
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 const ISO_8601 = 'ISO_8601' as unknown as MomentBuiltinFormat;
 
 let currentLocale = DEFAULT_LOCALE;
@@ -348,8 +351,38 @@ function getSupportedTimeZones(): string[] {
   return cachedTimeZones;
 }
 
-function normalizeUnit(unit: MomentUnit): DurationUnit {
-  return UNIT_MAP[unit] ?? 'milliseconds';
+function isMomentUnit(unit: string): unit is MomentUnit {
+  return unit in UNIT_MAP;
+}
+
+// Record<DurationUnit, true> so the compiler flags this map if luxon's DurationUnit ever changes.
+const DURATION_UNITS: Record<DurationUnit, true> = {
+  year: true,
+  years: true,
+  quarter: true,
+  quarters: true,
+  month: true,
+  months: true,
+  week: true,
+  weeks: true,
+  day: true,
+  days: true,
+  hour: true,
+  hours: true,
+  minute: true,
+  minutes: true,
+  second: true,
+  seconds: true,
+  millisecond: true,
+  milliseconds: true,
+};
+
+function isDurationUnit(unit: string): unit is DurationUnit {
+  return unit in DURATION_UNITS;
+}
+
+function normalizeUnit(unit: string): DurationUnit {
+  return isMomentUnit(unit) ? UNIT_MAP[unit] : 'milliseconds';
 }
 
 function normalizeStartEndUnit(unit: StartEndUnit): DateTimeUnit {
@@ -391,7 +424,7 @@ function normalizeDurationInput(input: number | MomentDurationLike | string, uni
       return Duration.fromMillis(input);
     }
 
-    const normalizedUnit = normalizeUnit(unit as MomentUnit);
+    const normalizedUnit = normalizeUnit(unit);
     return Duration.fromObject({ [normalizedUnit]: input });
   }
 
@@ -406,10 +439,15 @@ function parseWithFormats(value: string, format: MomentFormat, options?: MomentO
   const formats = Array.isArray(format) ? format : [format];
 
   for (let fmt of formats) {
+    // ISO_8601 is the only non-string MomentFormat member and its runtime value is the string
+    // 'ISO_8601', so this fallback never changes behavior; it only narrows the type for the
+    // format conversions below.
+    const fmtStr = typeof fmt === 'string' ? fmt : 'ISO_8601';
+
     const parsed =
       fmt === ISO_8601
         ? DateTime.fromISO(value, options)
-        : DateTime.fromFormat(value, convertMomentToLuxonWithOrdinal(fmt as string), options);
+        : DateTime.fromFormat(value, convertMomentToLuxonWithOrdinal(fmtStr), options);
 
     if (parsed.isValid) {
       return parsed;
@@ -417,9 +455,9 @@ function parseWithFormats(value: string, format: MomentFormat, options?: MomentO
       // try to handle partial parse 'yyyy' from '2017-07-19 00:00:00.000'
       const fallbackParsed = parseWithFallbacks(value, options);
       if (fallbackParsed.isValid) {
-        const formatted = fallbackParsed.toFormat(convertMomentToLuxonWithOrdinal(fmt as string), options);
+        const formatted = fallbackParsed.toFormat(convertMomentToLuxonWithOrdinal(fmtStr), options);
         // re-parse with only requested tokens
-        return DateTime.fromFormat(formatted, convertMomentToLuxonWithOrdinal(fmt as string), options);
+        return DateTime.fromFormat(formatted, convertMomentToLuxonWithOrdinal(fmtStr), options);
       }
     }
   }
@@ -623,13 +661,15 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
     return api;
   };
 
-  const setZone: MomentLike['tz'] = ((zone?: string, keepLocalTime: boolean = false) => {
+  function setZone(): string | undefined;
+  function setZone(zone: string, keepLocalTime?: boolean): MomentLike;
+  function setZone(zone?: string, keepLocalTime = false): string | undefined | MomentLike {
     if (zone == null) {
       return dt.zoneName ?? undefined;
     }
 
     return setDt(dt.setZone(zone, { keepLocalTime }));
-  }) as MomentLike['tz'];
+  }
 
   const getLocaleWeekStart = () => getLocaleFirstDayOfWeek(dt.locale || currentLocale);
 
@@ -677,7 +717,7 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
           return api;
         }
 
-        const unit = valuesOrUnit as UnitGetter;
+        const unit = valuesOrUnit;
         if (unit === 'month' || unit === 'months' || unit === 'M') {
           return setDt(dt.set({ month: value + 1 }));
         }
@@ -685,7 +725,7 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
           return setDt(dt.set({ day: value }));
         }
 
-        const normalized = normalizeUnit(unit as MomentUnit);
+        const normalized = normalizeUnit(unit);
         return setDt(dt.set({ [normalized]: value }));
       }
 
@@ -921,22 +961,29 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
 }
 
 function makeDuration(input?: MomentDurationInput, unit?: MomentUnit): MomentDurationLike {
-  let duration = normalizeDurationInput((input as number | MomentDurationLike) ?? 0, unit);
+  let duration: Duration;
 
   if (input == null) {
     duration = Duration.fromMillis(0);
   } else if (typeof input === 'string') {
     const parsed = Duration.fromISO(input);
     duration = parsed.isValid ? parsed : Duration.fromMillis(0);
-  } else if (typeof input === 'object' && !isMomentDurationLike(input) && !Array.isArray(input)) {
+  } else if (typeof input === 'number' || isMomentDurationLike(input)) {
+    duration = normalizeDurationInput(input, unit);
+  } else {
+    // a plain map of unit name → value; moment ignores unrecognized keys, so skip anything
+    // that is neither a moment unit nor a luxon duration unit instead of letting luxon throw.
     const obj: DurationLikeObject = {};
     for (const [rawUnit, value] of Object.entries(input)) {
       if (typeof value !== 'number') {
         continue;
       }
 
-      const normalized = UNIT_MAP[rawUnit as MomentUnit] ?? (rawUnit as DurationUnit);
-      obj[normalized] = value;
+      if (isMomentUnit(rawUnit)) {
+        obj[UNIT_MAP[rawUnit]] = value;
+      } else if (isDurationUnit(rawUnit)) {
+        obj[rawUnit] = value;
+      }
     }
 
     duration = Duration.fromObject(obj);
@@ -1030,8 +1077,10 @@ function isMomentDurationLike(value: unknown): value is MomentDurationLike {
   return (
     typeof value === 'object' &&
     value != null &&
-    typeof (value as MomentDurationLike).humanize === 'function' &&
-    typeof (value as MomentDurationLike).valueOf === 'function'
+    'humanize' in value &&
+    typeof value.humanize === 'function' &&
+    'valueOf' in value &&
+    typeof value.valueOf === 'function'
   );
 }
 
@@ -1055,97 +1104,105 @@ interface MomentFactory {
   weekdaysMin(locale?: string): string[];
 }
 
-const moment: MomentFactory = ((
-  input?: MomentInput,
-  formatOrStrict?: MomentFormat | boolean,
-  strict?: boolean
-): MomentLike => {
-  const parseOptions: ParseOptions = {};
+// a single implementation with union-typed parameters satisfies every overload of the factory
+// interfaces, so building the callable-with-properties shape via Object.assign needs no assertion.
+const momentTz: MomentTzFactory = Object.assign(
+  (input?: MomentInput, formatOrZone?: MomentFormat, zoneMaybe?: string): MomentLike => {
+    if (zoneMaybe != null) {
+      return makeMoment(input, { zone: zoneMaybe, locale: currentLocale }, { format: formatOrZone });
+    }
 
-  if (typeof formatOrStrict === 'string' || Array.isArray(formatOrStrict)) {
-    parseOptions.format = formatOrStrict;
-    parseOptions.strict = strict ?? false;
-  } else if (typeof formatOrStrict === 'boolean') {
-    parseOptions.strict = formatOrStrict;
+    // per the 2-arg overload the second argument is a zone name; non-string formats only occur
+    // in the 3-arg overload handled above.
+    if (typeof formatOrZone === 'string') {
+      return makeMoment(input, { zone: formatOrZone, locale: currentLocale });
+    }
+
+    return makeMoment(input, { locale: currentLocale });
+  },
+  {
+    guess: (ignoreCache = false): string => {
+      if (ignoreCache || cachedGuessedZone == null) {
+        cachedGuessedZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+      }
+
+      return cachedGuessedZone;
+    },
+
+    zone: (name: string): MomentTimeZoneInfo | null => createTimeZoneInfo(name),
+
+    names: (): string[] => getSupportedTimeZones(),
   }
+);
 
-  return makeMoment(input, { locale: currentLocale }, parseOptions);
-}) as MomentFactory;
+const moment: MomentFactory = Object.assign(
+  (input?: MomentInput, formatOrStrict?: MomentFormat | boolean, strict?: boolean): MomentLike => {
+    const parseOptions: ParseOptions = {};
 
-moment.ISO_8601 = ISO_8601;
+    if (typeof formatOrStrict === 'string' || Array.isArray(formatOrStrict)) {
+      parseOptions.format = formatOrStrict;
+      parseOptions.strict = strict ?? false;
+    } else if (typeof formatOrStrict === 'boolean') {
+      parseOptions.strict = formatOrStrict;
+    }
 
-moment.locale = (locale?: string): string => {
-  const normalizedLocale = normalizeLocale(locale);
-  if (normalizedLocale != null) {
-    currentLocale = normalizedLocale;
-    Settings.defaultLocale = normalizedLocale;
+    return makeMoment(input, { locale: currentLocale }, parseOptions);
+  },
+  {
+    ISO_8601,
+
+    tz: momentTz,
+
+    locale: (locale?: string): string => {
+      const normalizedLocale = normalizeLocale(locale);
+      if (normalizedLocale != null) {
+        currentLocale = normalizedLocale;
+        Settings.defaultLocale = normalizedLocale;
+      }
+      return currentLocale;
+    },
+
+    localeData: (locale = currentLocale) => ({
+      firstDayOfWeek: () => getLocaleFirstDayOfWeek(locale),
+    }),
+
+    updateLocale: (locale: string, config: { parentLocale?: string; week?: { dow?: number } }): string => {
+      const parentLocale = config.parentLocale ?? locale;
+      localeWeekStart[locale] = config.week?.dow ?? getLocaleFirstDayOfWeek(parentLocale);
+      return locale;
+    },
+
+    utc: (input?: MomentInput, formatOrStrict?: MomentFormat | boolean, strict?: boolean): MomentLike => {
+      const parseOptions: ParseOptions = {};
+
+      if (typeof formatOrStrict === 'string' || Array.isArray(formatOrStrict)) {
+        parseOptions.format = formatOrStrict;
+        parseOptions.strict = strict ?? false;
+      } else if (typeof formatOrStrict === 'boolean') {
+        parseOptions.strict = formatOrStrict;
+      }
+
+      return makeMoment(input, { zone: 'utc', locale: currentLocale }, parseOptions).utc();
+    },
+
+    unix: (seconds: number): MomentLike => makeMoment(seconds * 1000, { locale: currentLocale }),
+
+    duration: (input?: MomentDurationInput, unit?: MomentUnit): MomentDurationLike => makeDuration(input, unit),
+
+    isDuration: (input: unknown): input is MomentDurationLike => isMomentDurationLike(input),
+
+    isMoment: (input: unknown): input is MomentLike => isMomentLike(input),
+
+    months: (locale = currentLocale): string[] => createNames('month', 'long', locale),
+
+    monthsShort: (locale = currentLocale): string[] => createNames('month', 'short', locale),
+
+    weekdays: (locale = currentLocale): string[] => createNames('weekday', 'long', locale),
+
+    weekdaysShort: (locale = currentLocale): string[] => createNames('weekday', 'short', locale),
+
+    weekdaysMin: (locale = currentLocale): string[] => createNames('weekday', 'narrow', locale),
   }
-  return currentLocale;
-};
-
-moment.localeData = (locale = currentLocale) => ({
-  firstDayOfWeek: () => getLocaleFirstDayOfWeek(locale),
-});
-
-moment.updateLocale = (locale: string, config: { parentLocale?: string; week?: { dow?: number } }): string => {
-  const parentLocale = config.parentLocale ?? locale;
-  localeWeekStart[locale] = config.week?.dow ?? getLocaleFirstDayOfWeek(parentLocale);
-  return locale;
-};
-
-moment.tz = ((input?: MomentInput, formatOrZone?: string, zoneMaybe?: string): MomentLike => {
-  if (zoneMaybe != null) {
-    return makeMoment(input, { zone: zoneMaybe, locale: currentLocale }, { format: formatOrZone });
-  }
-
-  if (formatOrZone != null) {
-    return makeMoment(input, { zone: formatOrZone, locale: currentLocale });
-  }
-
-  return makeMoment(input, { locale: currentLocale });
-}) as MomentTzFactory;
-
-moment.tz.guess = (ignoreCache = false): string => {
-  if (ignoreCache || cachedGuessedZone == null) {
-    cachedGuessedZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-  }
-
-  return cachedGuessedZone;
-};
-
-moment.tz.zone = (name: string): MomentTimeZoneInfo | null => createTimeZoneInfo(name);
-
-moment.tz.names = (): string[] => getSupportedTimeZones();
-
-moment.utc = (input?: MomentInput, formatOrStrict?: MomentFormat | boolean, strict?: boolean): MomentLike => {
-  const parseOptions: ParseOptions = {};
-
-  if (typeof formatOrStrict === 'string' || Array.isArray(formatOrStrict)) {
-    parseOptions.format = formatOrStrict;
-    parseOptions.strict = strict ?? false;
-  } else if (typeof formatOrStrict === 'boolean') {
-    parseOptions.strict = formatOrStrict;
-  }
-
-  return makeMoment(input, { zone: 'utc', locale: currentLocale }, parseOptions).utc();
-};
-
-moment.unix = (seconds: number): MomentLike => makeMoment(seconds * 1000, { locale: currentLocale });
-
-moment.duration = (input?: MomentDurationInput, unit?: MomentUnit): MomentDurationLike => makeDuration(input, unit);
-
-moment.isDuration = (input: unknown): input is MomentDurationLike => isMomentDurationLike(input);
-
-moment.isMoment = (input: unknown): input is MomentLike => isMomentLike(input);
-
-moment.months = (locale = currentLocale): string[] => createNames('month', 'long', locale);
-
-moment.monthsShort = (locale = currentLocale): string[] => createNames('month', 'short', locale);
-
-moment.weekdays = (locale = currentLocale): string[] => createNames('weekday', 'long', locale);
-
-moment.weekdaysShort = (locale = currentLocale): string[] => createNames('weekday', 'short', locale);
-
-moment.weekdaysMin = (locale = currentLocale): string[] => createNames('weekday', 'narrow', locale);
+);
 
 export default moment;

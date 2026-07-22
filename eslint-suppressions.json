@@ -34,9 +34,6 @@
     }
   },
   "packages/grafana-data/src/datetime/moment_wrapper.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 8
-    },
     "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
