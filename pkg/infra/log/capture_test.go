@@ -64,6 +64,30 @@ func TestOverlappingCapturesHaveIndependentWindows(t *testing.T) {
 	require.Empty(t, rootCapture.entries, "the last stop clears retained log data")
 }
 
+func TestCaptureDropsInFlightRecordFromSupersededGeneration(t *testing.T) {
+	resetRootCapture(t)
+
+	// A record is admitted while the first capture is live, snapshotting its generation.
+	first := StartCapture()
+	staleGen := rootCapture.generation.Load()
+
+	// The first capture stops (ring goes idle) and a second one starts before the in-flight write
+	// reaches the ring, so the ring now advertises a newer generation.
+	require.Empty(t, first.Stop())
+	second := StartCapture()
+	require.NotEqual(t, staleGen, rootCapture.generation.Load())
+
+	// The stale write must not be reassigned into the second capture's window.
+	_, err := rootCapture.write(staleGen, []byte("stale-from-first"))
+	require.NoError(t, err)
+
+	// A record admitted under the current generation is still captured normally.
+	_, err = rootCapture.write(rootCapture.generation.Load(), []byte("live-in-second"))
+	require.NoError(t, err)
+
+	require.Equal(t, []string{"live-in-second"}, second.Stop())
+}
+
 func TestCaptureRingEvictsByEntryAndByteCaps(t *testing.T) {
 	t.Run("entries", func(t *testing.T) {
 		ring := &captureRing{}
