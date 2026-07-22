@@ -5,10 +5,7 @@ import (
 	"encoding/json"
 	"sort"
 
-	"github.com/grafana/grafana-app-sdk/app"
-
 	rulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
-	rulesmanifest "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -25,31 +22,19 @@ const (
 	ruleSearchDatasourceUIDs = "datasourceUIDs"
 )
 
-// rulesManifests carries the rule kinds' manifest, the source of truth for
-// their searchFields (declared in CUE) and their selectable-field declarations.
-var rulesManifests = []app.Manifest{rulesmanifest.LocalManifest()}
-
-// rulesSearchFieldsProvider is the single manifest-backed provider covering
-// every rule kind. It drives both the declared-path extraction (via the
-// standard document builder) and the bleve mapping / column metadata (via
-// DocumentBuilderInfo.SearchFieldsProvider).
-var rulesSearchFieldsProvider = resource.NewManifestBackedProvider(rulesManifests)
-
-func GetAlertRuleSearchBuilder() (resource.DocumentBuilderInfo, error) {
+func GetAlertRuleSearchBuilder(registry *resource.SearchFieldsRegistry) (resource.DocumentBuilderInfo, error) {
 	gr := rulesv0alpha1.AlertRuleKind().GroupVersionResource().GroupResource()
 	return resource.DocumentBuilderInfo{
-		GroupResource:        gr,
-		Builder:              &alertRuleSearchBuilder{declared: resource.StandardDocumentBuilderWithFields(rulesManifests, rulesSearchFieldsProvider)},
-		SearchFieldsProvider: rulesSearchFieldsProvider,
+		GroupResource: gr,
+		Builder:       &alertRuleSearchBuilder{declared: resource.StandardDocumentBuilder(registry)},
 	}, nil
 }
 
-func GetRecordingRuleSearchBuilder() (resource.DocumentBuilderInfo, error) {
+func GetRecordingRuleSearchBuilder(registry *resource.SearchFieldsRegistry) (resource.DocumentBuilderInfo, error) {
 	gr := rulesv0alpha1.RecordingRuleKind().GroupVersionResource().GroupResource()
 	return resource.DocumentBuilderInfo{
-		GroupResource:        gr,
-		Builder:              &recordingRuleSearchBuilder{declared: resource.StandardDocumentBuilderWithFields(rulesManifests, rulesSearchFieldsProvider)},
-		SearchFieldsProvider: rulesSearchFieldsProvider,
+		GroupResource: gr,
+		Builder:       &recordingRuleSearchBuilder{declared: resource.StandardDocumentBuilder(registry)},
 	}, nil
 }
 

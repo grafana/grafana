@@ -4,6 +4,8 @@ import * as React from 'react';
 import { t } from '@grafana/i18n';
 import { IconButton, Input, Stack } from '@grafana/ui';
 
+const collator = new Intl.Collator();
+
 interface Props {
   onChange: (v: Array<[string, string]>) => void;
   value: Array<[string, string]>;
@@ -35,7 +37,7 @@ export const ParamsEditor = ({ value, onChange }: Props) => {
       newParams = [];
     }
     newParams.push([key, paramValue]);
-    newParams.sort((a, b) => a[0].localeCompare(b[0]));
+    newParams.sort((a, b) => collator.compare(a[0], b[0]));
 
     setParamName('');
     setParamValue('');

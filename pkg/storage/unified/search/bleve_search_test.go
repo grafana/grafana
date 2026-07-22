@@ -13,12 +13,10 @@ import (
 	apischema "k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
-	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 const threshold = 9999
@@ -447,7 +445,7 @@ func TestWildcardQuery(t *testing.T) {
 		checkSearchQuery(t, index, newTestQuery("*Dev Overview*"), []string{"name1"})
 	})
 
-	t.Run("default wildcard searches email and login fields", func(t *testing.T) {
+	t.Run("wildcard searches email and login only with explicit QueryFields", func(t *testing.T) {
 		// Use an index with keyword-analyzed email/login fields (matching
 		// production IAM config) so wildcards match full email addresses.
 		index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
@@ -469,12 +467,26 @@ func TestWildcardQuery(t *testing.T) {
 			},
 		}))
 
-		// Default wildcard (no QueryFields) should match email field
-		checkSearchQuery(t, index, newTestQuery("*uniquemail@grafana.com*"), []string{"user1"})
-		// Default wildcard should match login field
-		checkSearchQuery(t, index, newTestQuery("*secondlogin*"), []string{"user2"})
-		// Wildcard matching domain across both users (order is non-deterministic)
-		res, err := index.Search(context.Background(), nil, newTestQuery("*grafana.com*"), nil, nil)
+		emailField := resource.SEARCH_FIELD_PREFIX + "email"
+		loginField := resource.SEARCH_FIELD_PREFIX + "login"
+
+		// Default wildcard (no QueryFields) searches title only, so email/login queries don't match.
+		checkSearchQuery(t, index, newTestQuery("*uniquemail@grafana.com*"), nil)
+		checkSearchQuery(t, index, newTestQuery("*secondlogin*"), nil)
+
+		// With explicit QueryFields, wildcards match the named identity fields.
+		reqEmail := newTestQuery("*uniquemail@grafana.com*")
+		reqEmail.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{{Name: emailField}}
+		checkSearchQuery(t, index, reqEmail, []string{"user1"})
+
+		reqLogin := newTestQuery("*secondlogin*")
+		reqLogin.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{{Name: loginField}}
+		checkSearchQuery(t, index, reqLogin, []string{"user2"})
+
+		// Wildcard on email matching domain across both users (order is non-deterministic).
+		reqDomain := newTestQuery("*grafana.com*")
+		reqDomain.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{{Name: emailField}}
+		res, err := index.Search(context.Background(), nil, reqDomain, nil, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(2), res.TotalHits)
 	})
@@ -661,21 +673,11 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
 	}
-	info, err := builders.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
-		return &builders.DashboardDocumentBuilder{
-			Namespace:        namespace,
-			Blob:             blob,
-			Stats:            make(map[string]map[string]int64), // empty stats
-			DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{{}}),
-		}, nil
-	})
-	require.NoError(t, err)
-
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:          t.TempDir(),
 		FileThreshold: threshold, // use in-memory for tests
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
-			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): info.SearchFieldsProvider,
+			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
 	}, nil)
 	require.NoError(t, err)
@@ -1009,23 +1011,13 @@ func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg sear
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
 	}
-	info, err := builders.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
-		return &builders.DashboardDocumentBuilder{
-			Namespace:        namespace,
-			Blob:             blob,
-			Stats:            make(map[string]map[string]int64),
-			DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{{}}),
-		}, nil
-	})
-	require.NoError(t, err)
-
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:                 t.TempDir(),
 		FileThreshold:        threshold, // use in-memory for tests
 		PostRankAuthzEnabled: true,
 		PostRankAuthz:        cfg,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
-			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): info.SearchFieldsProvider,
+			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
 	}, nil)
 	require.NoError(t, err)

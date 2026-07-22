@@ -33,8 +33,6 @@ export const FlagKeys = {
   DashboardSectionVariables: "dashboardSectionVariables",
   /** Enables the Assistant button in the dashboard templates card */
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
-  /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
-  DashboardsFilterablePanels: "dashboards.filterablePanels",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
   DatasourcesApiserverUseNewAPIsForDatasourceResources: "datasources.apiserver.useNewAPIsForDatasourceResources",
   /** Use the new datasource API groups for datasource CRUD requests, frontend flag */
@@ -61,6 +59,8 @@ export const FlagKeys = {
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
   /** Enables the sidebar in Explore metrics (Metrics Drilldown) */
   GrafanaExploreMetricsSidebar: "grafana.exploreMetricsSidebar",
+  /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
+  GrafanaFilterablePanels: "grafana.filterablePanels",
   /** Enables PLG-focused growth redesign of the unified homepage */
   GrafanaGrowthHomepage: "grafana.growthHomepage",
   /** Enables usage of the new annotations API client */
@@ -141,6 +141,8 @@ export const FlagKeys = {
   SplashScreen: "splashScreen",
   /** Enables CodeMirror editor for SQL Expressions */
   SqlExpressionsCodeMirror: "sqlExpressionsCodeMirror",
+  /** Enables column autocomplete for SQL Expressions */
+  SqlExpressionsColumnAutoComplete: "sqlExpressionsColumnAutoComplete",
   /** Enables option to position series names above bars in the state timeline panel */
   StateTimelineNameAboveBars: "stateTimeline.nameAboveBars",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
@@ -261,17 +263,6 @@ export const useFlagDashboardSectionVariables = (options?: ReactFlagEvaluationOp
  */
 export const useFlagDashboardTemplatesAssistantButton = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboardTemplatesAssistantButton", false, options).value;
-};
-
-/**
- * Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels
- *
- * **Details:**
- * - flag key: `dashboards.filterablePanels`
- * - default value: `false`
- */
-export const useFlagDashboardsFilterablePanels = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("dashboards.filterablePanels", false, options).value;
 };
 
 /**
@@ -415,6 +406,17 @@ export const useFlagGrafanaEnableScopesFirstMode = (options?: ReactFlagEvaluatio
  */
 export const useFlagGrafanaExploreMetricsSidebar = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.exploreMetricsSidebar", false, options).value;
+};
+
+/**
+ * Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels
+ *
+ * **Details:**
+ * - flag key: `grafana.filterablePanels`
+ * - default value: `false`
+ */
+export const useFlagGrafanaFilterablePanels = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.filterablePanels", false, options).value;
 };
 
 /**
@@ -855,6 +857,17 @@ export const useFlagSplashScreen = (options?: ReactFlagEvaluationOptions): boole
  */
 export const useFlagSqlExpressionsCodeMirror = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("sqlExpressionsCodeMirror", false, options).value;
+};
+
+/**
+ * Enables column autocomplete for SQL Expressions
+ *
+ * **Details:**
+ * - flag key: `sqlExpressionsColumnAutoComplete`
+ * - default value: `false`
+ */
+export const useFlagSqlExpressionsColumnAutoComplete = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("sqlExpressionsColumnAutoComplete", false, options).value;
 };
 
 /**
