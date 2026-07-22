@@ -124,7 +124,7 @@ func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logge
 		// executableArgs have been validated to contain no shell metacharacters.
 		// exec.Command does not invoke a shell, so arguments are passed directly
 		// to the OS without further interpretation, preventing command injection.
-		cfg.Cmd = exec.Command(cleanPath, descriptor.executableArgs...) //nolint:gosec
+		cfg.Cmd = exec.Command(cleanPath, descriptor.executableArgs...) //nolint:gosec // nosemgrep: dangerous-exec-command
 		cfg.Cmd.Env = env
 	}
 
