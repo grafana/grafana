@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
@@ -54,6 +55,7 @@ type Options struct {
 	SecureValues   secrets.InlineSecureValueSupport
 	VectorBackend  vector.VectorBackend
 	Embedder       *embedder.Embedder
+	Reranker       *rerank.Reranker
 	DashboardStats builders.DashboardStats
 	KV             kv.KV
 	EDB            sqldb.DBProvider
@@ -103,7 +105,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(options.DefaultGrpcClientKeepaliveTime),
-	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.DashboardStats, opts.KV, opts.EDB, gcGate, opts.Publisher, opts.Subscriber)
+	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.Reranker, opts.DashboardStats, opts.KV, opts.EDB, gcGate, opts.Publisher, opts.Subscriber)
 	if err == nil {
 		// Used to get the folder stats
 		// Pass cfg directly so the federated client reads the current dual-writer mode
@@ -132,6 +134,7 @@ func newClient(opts options.StorageOptions,
 	secure secrets.InlineSecureValueSupport,
 	vectorBackend vector.VectorBackend,
 	embedderInstance *embedder.Embedder,
+	rerankerInstance *rerank.Reranker,
 	dashboardStats builders.DashboardStats,
 	kvStore kv.KV,
 	eDB sqldb.DBProvider,
@@ -216,6 +219,7 @@ func newClient(opts options.StorageOptions,
 			Backend:        backend,
 			VectorBackend:  vectorBackend,
 			Embedder:       embedderInstance,
+			Reranker:       rerankerInstance,
 			Cfg:            cfg,
 			Tracer:         tracer,
 			Reg:            reg,

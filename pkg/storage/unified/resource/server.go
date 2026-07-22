@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource/usagestats"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -394,6 +395,11 @@ type ResourceServerOptions struct {
 	// the RPC then returns Unimplemented.
 	Embedder *embedder.Embedder
 
+	// Reranker is the optional cross-encoder used by the HybridSearch RPC's
+	// rerank stage. nil when no [vector_reranker] provider is configured;
+	// HybridSearch then returns RRF ordering and min_relevance is a no-op.
+	Reranker *rerank.Reranker
+
 	// VectorReconciler, when non-nil, is launched after Init; the server
 	// attaches its own broadcaster to it before starting Run so the
 	// reconciler's watch path lights up. The reconciler owns the
@@ -448,7 +454,7 @@ func NewUninitializedSearchServer(opts ResourceServerOptions) (SearchServer, err
 	}
 
 	// Create the search server using the search.go factory
-	searchServer, err := newSearchServer(opts.Search, opts.Backend, opts.VectorBackend, opts.Embedder, opts.AccessClient, blobstore, opts.IndexMetrics, opts.VectorMetrics, opts.OwnsIndexFn)
+	searchServer, err := newSearchServer(opts.Search, opts.Backend, opts.VectorBackend, opts.Embedder, opts.Reranker, opts.AccessClient, blobstore, opts.IndexMetrics, opts.VectorMetrics, opts.OwnsIndexFn)
 	if err != nil || searchServer == nil {
 		return nil, fmt.Errorf("search server could not be created: %w", err)
 	}
@@ -558,7 +564,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchServer(opts.Search, s.backend, opts.VectorBackend, opts.Embedder, s.access, s.blob, opts.IndexMetrics, opts.VectorMetrics, opts.OwnsIndexFn)
+		s.search, err = newSearchServer(opts.Search, s.backend, opts.VectorBackend, opts.Embedder, opts.Reranker, s.access, s.blob, opts.IndexMetrics, opts.VectorMetrics, opts.OwnsIndexFn)
 		if err != nil {
 			return nil, err
 		}
@@ -2121,6 +2127,17 @@ func (s *server) VectorSearch(ctx context.Context, req *resourcepb.VectorSearchR
 		return nil, fmt.Errorf("vector search is not configured")
 	}
 	return s.search.VectorSearch(ctx, req)
+}
+
+// HybridSearch delegates to the embedded searchServer, where both the
+// search backend and the vector backend live.
+func (s *server) HybridSearch(ctx context.Context, req *resourcepb.HybridSearchRequest) (*resourcepb.HybridSearchResponse, error) {
+	// Unimplemented (not a bare error) so API-layer callers can map a
+	// search-disabled server to 501, same as an unconfigured vector store.
+	if s.search == nil {
+		return nil, status.Error(codes.Unimplemented, "hybrid search is not configured")
+	}
+	return s.search.HybridSearch(ctx, req)
 }
 
 // StatsGetter provides resource statistics (via search index or backend).
