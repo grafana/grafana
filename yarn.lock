@@ -2284,7 +2284,6 @@ __metadata:
     luxon: "npm:^3.7.2"
     marked: "npm:^16.3.0"
     marked-mangle: "npm:^1.1.12"
-    moment-timezone: "npm:^0.5.47"
     ol: "npm:^10.7.0"
     papaparse: "npm:^5.5.3"
     react: "npm:18.3.1"
@@ -24135,7 +24134,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moment-timezone@npm:0.5.47, moment-timezone@npm:^0.5.47":
+"moment-timezone@npm:0.5.47":
   version: 0.5.47
   resolution: "moment-timezone@npm:0.5.47"
   dependencies:
