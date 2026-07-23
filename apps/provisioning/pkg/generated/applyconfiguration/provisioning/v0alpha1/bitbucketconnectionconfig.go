@@ -9,6 +9,8 @@ package v0alpha1
 type BitbucketConnectionConfigApplyConfiguration struct {
 	// App client ID
 	ClientID *string `json:"clientID,omitempty"`
+	// The workspace the OAuth consumer belongs to
+	Workspace *string `json:"workspace,omitempty"`
 }
 
 // BitbucketConnectionConfigApplyConfiguration constructs a declarative configuration of the BitbucketConnectionConfig type for use with
@@ -22,5 +24,13 @@ func BitbucketConnectionConfig() *BitbucketConnectionConfigApplyConfiguration {
 // If called multiple times, the ClientID field is set to the value of the last call.
 func (b *BitbucketConnectionConfigApplyConfiguration) WithClientID(value string) *BitbucketConnectionConfigApplyConfiguration {
 	b.ClientID = &value
+	return b
+}
+
+// WithWorkspace sets the Workspace field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Workspace field is set to the value of the last call.
+func (b *BitbucketConnectionConfigApplyConfiguration) WithWorkspace(value string) *BitbucketConnectionConfigApplyConfiguration {
+	b.Workspace = &value
 	return b
 }

@@ -6,6 +6,7 @@ import (
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	ghconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/githuboauth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
@@ -61,6 +62,7 @@ func ProvideProvisioningOSSConnectionExtras(
 	decrypter := connection.ProvideDecrypter(decryptSvc, connection.RegisterDecryptMetrics(reg))
 	return []connection.Extra{
 		ghconnection.Extra(decrypter, ghFactory),
+		githuboauth.Extra(decrypter),
 	}
 }
 
@@ -95,10 +97,6 @@ func ProvideConnectionFactoryFromConfig(cfg *setting.Cfg, extras []connection.Ex
 		// Enforcing default connection values if settings are not set
 		types = []string{"github"}
 	}
-	enabledTypes := make(map[apisprovisioning.ConnectionType]struct{}, len(types))
-	for _, e := range types {
-		enabledTypes[apisprovisioning.ConnectionType(e)] = struct{}{}
-	}
 
-	return connection.ProvideFactory(enabledTypes, extras)
+	return connection.ProvideFactory(connection.EnabledTypesFromRepositoryTypes(types), extras)
 }

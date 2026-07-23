@@ -15,7 +15,10 @@ import { useConnectionList } from './useConnectionList';
 export function useConnectionOptions(enabled: boolean, connectionType?: GitHubBasedConnectionType | OAuthConnectionType) {
   const [connections, connectionsLoading, error, refetch] = useConnectionList(enabled ? {} : skipToken);
   const githubConnections = useMemo(
-    () => connections?.filter((c) => c.spec?.type === connectionType) ?? [],
+    () =>
+      connections?.filter(
+        (c) => c.spec?.type === connectionType || (connectionType === 'github' && c.spec?.type === 'githubOAuth')
+      ) ?? [],
     [connections, connectionType]
   );
 

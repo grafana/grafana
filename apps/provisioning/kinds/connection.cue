@@ -26,6 +26,10 @@ connection: {
 					// GitHub App installation ID
 					installationID: int
 				}
+				#GitHubOAuthConnectionConfig: {
+					// The app clientID
+					clientID: string
+				}
 				#GitHubEnterpriseConnectionConfig: {
 					// App-level information
 					// GitHub App ID
@@ -41,6 +45,9 @@ connection: {
 				#BitbucketConnectionConfig: {
 					// The app clientID
 					clientID: string
+
+					// The workspace the OAuth consumer belongs to
+					workspace: string
 				}
 				#GitlabConnectionConfig: {
 					// The app clientID
@@ -63,12 +70,15 @@ connection: {
 				}
 				spec: {
 					// The connection provider type
-					type: "github" | "githubEnterprise" | "bitbucket" | "gitlab"
+					type: "github" | "githubEnterprise" | "githubOAuth" | "bitbucket" | "gitlab"
 					// The connection URL.
 					url: *"" | string
 					// GitHub connection configuration.
 					// Only applicable when provider is "github".
 					github?: #GitHubConnectionConfig
+					// GitHub OAuth app connection configuration.
+					// Only applicable when provider is "githubOAuth".
+					githubOAuth?: #GitHubOAuthConnectionConfig
 					// GitHub Enterprise Server connection configuration.
 					// Only applicable when provider is "githubEnterprise".
 					githubEnterprise?: #GitHubEnterpriseConnectionConfig

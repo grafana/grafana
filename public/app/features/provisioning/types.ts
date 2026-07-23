@@ -49,6 +49,7 @@ type ConnectionFormDataBase = {
   privateKey?: string;
   clientID?: string;
   clientSecret?: string;
+  workspace?: string;
   webhookDisabled?: boolean;
 };
 
@@ -61,7 +62,7 @@ type GitHubEnterpriseConnectionFormData = ConnectionFormDataBase &
 type OAuthConnectionFormData = ConnectionFormDataBase &
   Partial<GitHubConnectionConfig> & { type: OAuthConnectionType; serverUrl?: string };
 
-export type OAuthConnectionType = 'gitlab' | 'bitbucket';
+export type OAuthConnectionType = 'githubOAuth' | 'gitlab' | 'bitbucket';
 
 export type ConnectionFormData =
   | GitHubConnectionFormData

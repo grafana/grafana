@@ -50,7 +50,9 @@ export const OAuthConnectionFields = memo<OAuthConnectionFieldsProps>(
             placeholder={
               type === 'gitlab'
                 ? t('provisioning.connection-form.placeholder-title-gitlab', 'My GitLab App')
-                : t('provisioning.connection-form.placeholder-title-bitbucket', 'My Bitbucket App')
+                : type === 'githubOAuth'
+                  ? t('provisioning.connection-form.placeholder-title-github-oauth', 'My GitHub OAuth App')
+                  : t('provisioning.connection-form.placeholder-title-bitbucket', 'My Bitbucket App')
             }
           />
         </Field>
@@ -87,6 +89,27 @@ export const OAuthConnectionFields = memo<OAuthConnectionFieldsProps>(
             })}
           />
         </Field>
+
+        {type === 'bitbucket' && (
+          <Field
+            noMargin
+            label={t('provisioning.connection-form.label-workspace', 'Workspace')}
+            description={t(
+              'provisioning.connection-form.description-workspace',
+              'The workspace your OAuth consumer belongs to'
+            )}
+            invalid={!!errors.workspace}
+            error={errors.workspace?.message}
+            required={required}
+          >
+            <Input
+              id="workspace"
+              {...register('workspace', {
+                required: requiredValidation,
+              })}
+            />
+          </Field>
+        )}
 
         <Field
           noMargin

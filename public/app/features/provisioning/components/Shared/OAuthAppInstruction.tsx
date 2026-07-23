@@ -5,6 +5,7 @@ import { type OAuthConnectionType } from '../../types';
 import { getOAuthCallbackUri } from '../../utils/connectionOAuth';
 
 const docsUrls: Record<OAuthConnectionType, string> = {
+  githubOAuth: 'https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app',
   gitlab: 'https://docs.gitlab.com/integration/oauth_provider/',
   bitbucket: 'https://support.atlassian.com/bitbucket-cloud/docs/use-oauth-on-bitbucket-cloud/',
 };
@@ -19,7 +20,15 @@ export function OAuthAppInstruction({ type }: { type: OAuthConnectionType }) {
       </Text>
 
       <Text element="p" color="secondary">
-        {type === 'gitlab' ? (
+        {type === 'githubOAuth' ? (
+          <Trans i18nKey="provisioning.oauth-app.help-instructions-github">
+            In GitHub, go to your developer settings and create an OAuth app with the callback URL below, then paste
+            its client ID and a generated client secret here.{' '}
+            <TextLink external href={docsUrls.githubOAuth}>
+              View step-by-step instructions
+            </TextLink>
+          </Trans>
+        ) : type === 'gitlab' ? (
           <Trans i18nKey="provisioning.oauth-app.help-instructions-gitlab">
             In GitLab, go to your user or group settings and create an application with the <code>api</code> scope and
             the callback URL below, then paste its application ID and secret here.{' '}

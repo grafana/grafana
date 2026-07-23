@@ -44,6 +44,14 @@ type AuthCodeConnection interface {
 	ExchangeAuthorizationCode(ctx context.Context, code, redirectURI string) (common.RawSecureValue, error)
 }
 
+// AppURLConnection is an optional interface for connections that can resolve the
+// URL of the provider page where the OAuth application is managed.
+type AppURLConnection interface {
+	// ResolveAppURL returns the management URL for the OAuth application, or an
+	// empty string when it cannot be determined.
+	ResolveAppURL(ctx context.Context, token common.RawSecureValue) string
+}
+
 // TokenConnection is an optional interface that connections can implement if they need
 // to handle tokens in their secrets.
 //

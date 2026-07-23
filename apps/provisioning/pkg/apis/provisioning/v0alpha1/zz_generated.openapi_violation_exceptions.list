@@ -27,6 +27,7 @@ API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioni
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,WebhookStatus,SubscribedEvents
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,ConnectionSpec,GitHub
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,ConnectionSpec,GitHubEnterprise
+API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,ConnectionSpec,GitHubOAuth
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,GitHubEnterpriseConnectionConfig,ServerURL
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,GitHubEnterpriseRepositoryConfig,ServerURL
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,JobSpec,PullRequest

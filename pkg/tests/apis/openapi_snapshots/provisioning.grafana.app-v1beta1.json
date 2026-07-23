@@ -768,6 +768,55 @@
         }
       ]
     },
+    "/apis/provisioning.grafana.app/v1beta1/namespaces/{namespace}/connections/{name}/authorize": {
+      "post": {
+        "tags": [
+          "Connection"
+        ],
+        "description": "connect POST requests to authorize of Connection",
+        "operationId": "createConnectionAuthorize",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.TestResults"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta1",
+          "kind": "TestResults"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the TestResults",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/apis/provisioning.grafana.app/v1beta1/namespaces/{namespace}/connections/{name}/repositories": {
       "get": {
         "tags": [
@@ -4029,11 +4078,17 @@
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.BitbucketConnectionConfig": {
         "type": "object",
         "required": [
-          "clientID"
+          "clientID",
+          "workspace"
         ],
         "properties": {
           "clientID": {
             "description": "App client ID",
+            "type": "string",
+            "default": ""
+          },
+          "workspace": {
+            "description": "The workspace the OAuth consumer belongs to",
             "type": "string",
             "default": ""
           }
@@ -4227,6 +4282,9 @@
           "githubEnterprise": {
             "description": "GitHub Enterprise Server connection configuration Only applicable when provider is \"githubEnterprise\""
           },
+          "githubOAuth": {
+            "description": "GitHub OAuth app connection configuration Only applicable when provider is \"githubOAuth\""
+          },
           "gitlab": {
             "description": "Gitlab connection configuration Only applicable when provider is \"gitlab\""
           },
@@ -4236,13 +4294,14 @@
             "default": ""
           },
           "type": {
-            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`",
+            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubOAuth\"`\n - `\"gitlab\"`",
             "type": "string",
             "default": "",
             "enum": [
               "bitbucket",
               "github",
               "githubEnterprise",
+              "githubOAuth",
               "gitlab"
             ]
           },
@@ -4574,6 +4633,19 @@
           "url": {
             "description": "The repository URL on the GHES server (e.g. `https://ghes.example.com/example/test`).",
             "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.GitHubOAuthConnectionConfig": {
+        "type": "object",
+        "required": [
+          "clientID"
+        ],
+        "properties": {
+          "clientID": {
+            "description": "App client ID",
+            "type": "string",
+            "default": ""
           }
         }
       },

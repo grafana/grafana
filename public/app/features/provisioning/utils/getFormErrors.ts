@@ -166,8 +166,11 @@ export const getConnectionFormErrors = (data: ErrorDetails[] | Status): Connecti
     clientID: 'clientID',
     'gitlab.clientID': 'clientID',
     'bitbucket.clientID': 'clientID',
+    'githubOAuth.clientID': 'clientID',
     'secure.clientSecret': 'clientSecret',
     clientSecret: 'clientSecret',
+    'bitbucket.workspace': 'workspace',
+    workspace: 'workspace',
     'webhook.disabled': 'webhookDisabled',
   };
 

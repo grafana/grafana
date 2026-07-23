@@ -5,6 +5,7 @@ import { CONNECTIONS_URL } from '../constants';
 import { type OAuthConnectionType } from '../types';
 
 const AUTHORIZE_URLS: Record<OAuthConnectionType, string> = {
+  githubOAuth: 'https://github.com/login/oauth/authorize',
   gitlab: 'https://gitlab.com/oauth/authorize',
   bitbucket: 'https://bitbucket.org/site/oauth2/authorize',
 };
@@ -28,6 +29,9 @@ export function startOAuthAuthorization(type: OAuthConnectionType, clientID: str
   });
   if (type === 'gitlab') {
     params.set('scope', 'api');
+  }
+  if (type === 'githubOAuth') {
+    params.set('scope', 'repo');
   }
 
   window.location.href = `${AUTHORIZE_URLS[type]}?${params.toString()}`;
