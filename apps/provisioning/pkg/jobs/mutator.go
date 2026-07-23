@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/authlib/types"
 
-	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
@@ -75,22 +74,20 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		return nil
 	}
 
-	author, ok := auth.GetAuthorFromRequester(ctx)
-	if !ok {
+	requester, err := identity.GetRequester(ctx)
+	if err != nil || !requester.IsIdentityType(types.TypeUser) {
 		job.Annotations[AnnoAuthorOrigin] = "Unknown"
 		return nil
 	}
 
-	if author.Name != "" {
-		job.Annotations[AnnoAuthor] = author.Name
+	if name := requester.GetName(); name != "" {
+		job.Annotations[AnnoAuthor] = name
 	}
-	if author.Email != "" {
-		job.Annotations[AnnoAuthorEmail] = author.Email
+	if email := requester.GetEmail(); email != "" {
+		job.Annotations[AnnoAuthorEmail] = email
 	}
-	if requester, err := identity.GetRequester(ctx); err == nil {
-		if uid := requester.GetUID(); uid != "" {
-			job.Annotations[AnnoAuthorID] = uid
-		}
+	if uid := requester.GetUID(); uid != "" {
+		job.Annotations[AnnoAuthorID] = uid
 	}
 	job.Annotations[AnnoAuthorOrigin] = "Grafana"
 
