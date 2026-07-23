@@ -69,6 +69,13 @@ jest.mock('../services', () => ({
     };
   },
 }));
+jest.mock('./../unstable', () => ({
+  ...jest.requireActual('./../unstable'),
+  getDataSourceInstanceSettings: (ref?: DataSourceRef) => ({
+    type: ref?.type ?? '<mocktype>',
+    uid: ref?.uid ?? '<mockuid>',
+  }),
+}));
 jest.mock('./publicDashboardQueryHandler');
 
 const mockIsQueryServiceCompatible = jest.fn().mockReturnValue(false);
@@ -832,15 +839,15 @@ describe('DataSourceWithBackend', () => {
         [{ refId: 'A' }, { refId: 'B', datasource: loki }],
         ['dummy', 'loki'],
       ],
-    ])('%s', (_, targets, expectedTypes) => {
+    ])('%s', async (_, targets, expectedTypes) => {
       const { ds } = createMockDatasource();
 
-      ds.query({
+      await firstValueFrom(ds.query({
         maxDataPoints: 10,
         intervalMs: 5000,
         targets,
         range: getDefaultTimeRange(),
-      } as DataQueryRequest);
+      } as DataQueryRequest));
 
       const { calls } = mockIsQueryServiceCompatible.mock;
       expect(calls).toHaveLength(1);
