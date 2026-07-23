@@ -168,37 +168,41 @@ export function ContentOutline({
     }
   }, [outlineItems, verticalScroll]);
 
+  const toggleButton = (
+    <ContentOutlineItemButton
+      icon={'arrow-from-right'}
+      tooltip={
+        contentOutlineExpanded
+          ? t('explore.content-outline.tooltip-collapse-outline', 'Collapse outline')
+          : t('explore.content-outline.tooltip-expand-outline', 'Expand outline')
+      }
+      tooltipPlacement={contentOutlineExpanded ? 'right' : 'bottom'}
+      onClick={toggle}
+      className={cx(styles.toggleContentOutlineButton, {
+        [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsShouldIndent,
+      })}
+      aria-expanded={contentOutlineExpanded}
+    />
+  );
+
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
-      <div className={styles.header}>
-        {metricsExplorerVisible && (
-          <span className={styles.headerTitle}>
-            {t('explore.content-outline.title-datasource-explorer', 'Datasource explorer')}
-          </span>
-        )}
-        <div className={styles.toggleWrapper}>
-          <ContentOutlineItemButton
-            icon={'arrow-from-right'}
-            tooltip={
-              contentOutlineExpanded
-                ? t('explore.content-outline.tooltip-collapse-outline', 'Collapse outline')
-                : t('explore.content-outline.tooltip-expand-outline', 'Expand outline')
-            }
-            tooltipPlacement={contentOutlineExpanded ? 'right' : 'bottom'}
-            onClick={toggle}
-            className={cx(styles.toggleContentOutlineButton, {
-              [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsShouldIndent,
-            })}
-            aria-expanded={contentOutlineExpanded}
-          />
-        </div>
-      </div>
-
-      {metricsExplorerVisible && <MetricsExplorer />}
+      {metricsExplorerVisible && (
+        <>
+          <div className={styles.header}>
+            <span className={styles.headerTitle}>
+              {t('explore.content-outline.title-datasource-explorer', 'Datasource explorer')}
+            </span>
+            <div className={styles.toggleWrapper}>{toggleButton}</div>
+          </div>
+          <MetricsExplorer />
+        </>
+      )}
 
       <div className={styles.outlineSection}>
         <ScrollContainer>
           <div className={styles.content}>
+            {!metricsExplorerVisible && toggleButton}
             {outlineItems.map((item) => {
               return (
                 <Fragment key={item.id}>
@@ -339,7 +343,7 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean, metricsExplorerVisib
     }),
     content: css({
       label: 'content',
-      padding: theme.spacing(0.5, 1),
+      padding: theme.spacing(0, 0.5),
       top: 0,
     }),
     buttonStyles: css({
@@ -350,11 +354,11 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean, metricsExplorerVisib
       },
     }),
     toggleContentOutlineButton: css({
-      justifyContent: 'center',
       '&:hover': {
         color: theme.colors.text.primary,
       },
       transform: expanded ? 'rotate(180deg)' : '',
+      marginRight: expanded ? theme.spacing(0.5) : undefined,
     }),
     indentRoot: css({
       paddingLeft: theme.spacing(3),
