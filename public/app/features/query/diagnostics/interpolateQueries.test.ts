@@ -90,5 +90,8 @@ describe('interpolateDiagnosticsQueries', () => {
       scopedVars,
       filters
     );
+    // The datasource lookup also receives scopedVars so a datasource ref that is itself a template
+    // variable (e.g. `$ds`) resolves to this panel's concrete instance (#1530 follow-up).
+    expect(getDataSourceInstance).toHaveBeenCalledWith({ uid: 'prom', type: 'prometheus' }, scopedVars);
   });
 });

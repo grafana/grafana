@@ -15,7 +15,9 @@ import { type DataQuery } from '@grafana/schema';
  * Each query is interpolated by its own datasource's `interpolateVariablesInQueries` (per-query, so
  * mixed-datasource panels resolve correctly). `scopedVars` must carry `__sceneObject` (e.g.
  * `{ __sceneObject: { value: vizPanel } }`) so the core `TemplateSrv` delegates to the scene
- * interpolator and resolves scene variables, including a repeated panel's clone-local value.
+ * interpolator and resolves scene variables, including a repeated panel's clone-local value. It is
+ * also passed to `getDataSourceInstance` so a datasource ref that is itself a template variable
+ * (e.g. `$ds`) resolves to this panel's concrete instance rather than failing to resolve.
  *
  * Queries are never dropped or reordered, so the captured set matches what ran: expression
  * (`__expr__`) queries pass through unchanged (they execute server-side and reference other refIds),
@@ -32,7 +34,7 @@ export async function interpolateDiagnosticsQueries(
         return query;
       }
       try {
-        const ds = await getDataSourceInstance(query.datasource);
+        const ds = await getDataSourceInstance(query.datasource, scopedVars);
         return ds.interpolateVariablesInQueries?.([query], scopedVars, adhocFilters)?.[0] ?? query;
       } catch {
         return query;
