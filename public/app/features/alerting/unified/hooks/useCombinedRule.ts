@@ -134,7 +134,7 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
   // Use Prometheus's fullpath instead of deriving it in the client to avoid escaping mismatches.
   let namespaceName = ruleLocation?.namespace;
   if (isGrafanaRule) {
-    const promNamespaceName = promRuleNs[0]?.name;
+    const promNamespaceName = promRuleNs.at(0)?.name;
     if (promNamespaceName !== undefined) {
       namespaceName = promNamespaceName;
     } else if (folder.folder) {
