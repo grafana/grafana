@@ -6944,6 +6944,11 @@
         "description-moved": "Annotation settings have moved to the dashboard's sidebar.",
         "title-moved": "Looking for annotations?"
       },
+      "json": {
+        "button-moved": "Take me there",
+        "description-moved": "The JSON model has moved to the dashboard's sidebar, under \"Edit as code\".",
+        "title-moved": "Looking for the JSON model?"
+      },
       "variables": {
         "button-moved": "Take me there",
         "description-moved": "Variable settings have moved to the dashboard's sidebar.",
@@ -10982,6 +10987,16 @@
         "view": "View"
       },
       "next": "Next",
+      "no-data": {
+        "badge": "Getting started",
+        "connect": "Connect a data source",
+        "description": "Connect a data source to light up your dashboards and alerts, pick from available solutions, or follow a getting started guide.",
+        "popular-solutions": "Popular solutions",
+        "solution-k6": "k6",
+        "solution-kubernetes": "Kubernetes Monitoring",
+        "solution-synthetics": "Synthetic Monitoring",
+        "title": "No data flowing yet"
+      },
       "pause": "Pause",
       "previous": "Previous",
       "recommended": "Recommended",
