@@ -1,4 +1,4 @@
-import { HttpResponse, http } from 'msw';
+import { HttpResponse, delay, http } from 'msw';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
@@ -178,6 +178,48 @@ describe('FolderReadmePanel', () => {
           Object.defineProperty(window, 'location', originalLocation);
         }
       }
+    });
+
+    it('resolves against the current repository after switching repos (no stale listing)', async () => {
+      // Same path in each repo maps to a different dashboard. repo-b is delayed so
+      // that, without a remount, a stale synchronous read of repo-a's listing would
+      // push /d/aaa immediately (before repo-b's refetch resolves).
+      server.use(
+        http.get(`${BASE}/repositories/:name/resources`, async ({ params }) => {
+          const isB = params.name === 'repo-b';
+          if (isB) {
+            await delay(50);
+          }
+          return HttpResponse.json({
+            items: [
+              {
+                path: 'dashboards/team-a/cpu.json',
+                resource: 'dashboards',
+                name: isB ? 'bbb' : 'aaa',
+                group: '',
+                hash: '',
+              },
+            ],
+          });
+        })
+      );
+
+      setReadmeResult({ repository: { ...mockRepository, name: 'repo-a' }, markdownContent: 'See [CPU](./cpu.json)' });
+      const { user, rerender } = setup();
+      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
+
+      await user.click(screen.getByRole('link', { name: 'CPU' }));
+      await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/aaa'));
+
+      // Switch to a different repository; the component must not reuse repo-a's listing.
+      setReadmeResult({ repository: { ...mockRepository, name: 'repo-b' }, markdownContent: 'See [CPU](./cpu.json)' });
+      rerender(<FolderReadmePanel folderUID="test-folder" />);
+      pushSpy.mockClear();
+
+      await user.click(screen.getByRole('link', { name: 'CPU' }));
+      await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/bbb'));
+      // Must never have resolved against repo-a's stale listing.
+      expect(pushSpy).not.toHaveBeenCalledWith('/d/aaa');
     });
 
     it('records a host outcome for a non-resource link (markdown doc) and never pushes', async () => {

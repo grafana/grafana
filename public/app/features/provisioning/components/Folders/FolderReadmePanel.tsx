@@ -169,7 +169,11 @@ function ReadmeBody({
   switch (status) {
     case 'ok':
       return markdownContent !== undefined ? (
+        // Key by repository so switching to a folder in a different repo remounts
+        // (resetting the cached listing/refs), rather than resolving links against
+        // the previous repository's resources.
         <RenderedMarkdown
+          key={repository.name}
           markdown={markdownContent}
           repository={repository}
           baseDirInRepo={getReadmeBaseDir(repository.path, readmePath)}
