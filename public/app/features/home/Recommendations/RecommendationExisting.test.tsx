@@ -98,45 +98,46 @@ describe('RecommendationExisting', () => {
     expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
   });
 
-  it('shows stubs immediately when settings are unavailable without awaiting resolution', async () => {
+  it('shows the no-data card immediately when settings are unavailable without awaiting resolution', async () => {
     mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
     mockResolveDatasource.mockImplementation(() => new Promise(() => {}));
 
     render(<RecommendationExisting />);
 
-    expect(await screen.findByRole('heading', { name: 'Hosted Metrics' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'No data flowing yet' })).toBeInTheDocument();
     expect(screen.queryByTestId('recommendation-existing-skeleton')).not.toBeInTheDocument();
     expect(mockResolveDatasource).not.toHaveBeenCalled();
   });
 
-  it('shows stubs and never queries Kubernetes when the app is installed but disabled', async () => {
+  it('shows the no-data card and never queries Kubernetes when the app is installed but disabled', async () => {
     mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings });
 
     render(<RecommendationExisting />);
 
-    expect(await screen.findByRole('heading', { name: 'Hosted Metrics' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'No data flowing yet' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
     expect(mockResolveDatasource).not.toHaveBeenCalled();
     expect(mockFetchInventory).not.toHaveBeenCalled();
   });
 
-  it('shows stubs when resolution returns null', async () => {
+  it('shows the no-data card when resolution returns null', async () => {
     mockResolveDatasource.mockResolvedValue(null);
     mockFetchInventory.mockRejectedValue(new Error('No Prometheus datasource with Kubernetes data'));
     mockFetchHealth.mockRejectedValue(new Error('No Prometheus datasource with Kubernetes data'));
 
     render(<RecommendationExisting />);
 
-    expect(await screen.findByRole('heading', { name: 'Hosted Metrics' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'No data flowing yet' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Hosted Metrics' })).not.toBeInTheDocument();
   });
 
-  it('shows stubs when resolution rejects without flashing the Kubernetes title', async () => {
+  it('shows the no-data card when resolution rejects without flashing the Kubernetes title', async () => {
     mockResolveDatasource.mockRejectedValue(new Error('probe failed'));
 
     render(<RecommendationExisting />);
 
-    expect(await screen.findByRole('heading', { name: 'Hosted Metrics' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'No data flowing yet' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
   });
 
