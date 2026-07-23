@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 // ErrNotFound is returned by proxy methods when the annotation is not in the new storage
@@ -43,7 +44,7 @@ func (e *partialDecodeError) Unwrap() error { return e.Err }
 
 // MigrationProxy routes annotation writes to the new API server.
 type MigrationProxy struct {
-	client *annotationAPIClient
+	client annotationClient
 	logger log.Logger
 }
 
@@ -163,7 +164,6 @@ func (h *MigrationProxy) Create(ctx context.Context, orgID int64, item *annotati
 }
 
 // Update writes to new store. Returns ErrNotFound if the record is not there yet, caller falls back to legacy.
-// TODO: only text/tags are updated; editing time needs annotation delete + re-insert since the store partitions on time.
 func (h *MigrationProxy) Update(ctx context.Context, orgID int64, annotationID int64, item *annotations.Item) error {
 	existing, err := h.client.GetByLegacyID(ctx, orgID, annotationID)
 	if err != nil {
@@ -186,8 +186,37 @@ func (h *MigrationProxy) Update(ctx context.Context, orgID int64, annotationID i
 	if anno.Spec.PanelID == nil {
 		anno.Spec.PanelID = existing.Spec.PanelID
 	}
+
+	// If time or timeEnd changed, re-create the annotation as the new API does not support updates to time/timeEnd
+	timeChanged := existing.Spec.Time != anno.Spec.Time || !ptr.Equal(existing.Spec.TimeEnd, anno.Spec.TimeEnd)
+	if timeChanged {
+		return h.recreateWithNewTime(ctx, orgID, existing, anno)
+	}
+
 	_, err = h.client.Update(ctx, orgID, anno)
 	return err
+}
+
+// recreateWithNewTime moves an annotation to a new time by creating a new record and then
+// deleting the old one. The new record keeps the same legacy ID, so the change is transparent to the
+// legacy API.
+//
+// Note: A potential side-effect of this is that if a user other than the creator edits an annotation,
+// the annotation becomes attributed to that user instead.
+func (h *MigrationProxy) recreateWithNewTime(ctx context.Context, orgID int64, existing, anno *annotationV0.Annotation) error {
+	anno.SetName("")
+	anno.SetResourceVersion("")
+	if _, err := h.client.Create(ctx, orgID, anno); err != nil {
+		return err
+	}
+
+	if err := h.client.Delete(ctx, orgID, existing.GetName()); err != nil {
+		// Best-effort delete. If this fails, there would be two live records
+		// with different k8s resource names in the new store.
+		h.logger.Warn("failed to delete old annotation after time edit",
+			"orgID", orgID, "name", existing.GetName(), "err", err)
+	}
+	return nil
 }
 
 // Delete soft-deletes in the new store. Returns ErrNotFound if the record is not

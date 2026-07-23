@@ -1,11 +1,16 @@
 package annotationsapi
 
 import (
+	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	annotationpkg "github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/services/annotations"
 )
@@ -150,5 +155,118 @@ func TestItemAnnotationConversion(t *testing.T) {
 		require.NotNil(t, dto)
 		require.Equal(t, "hello", dto.Text)
 		require.Nil(t, dto.Data)
+	})
+}
+
+// fakeClient records the create/update/delete calls MigrationProxy makes against
+// the new store, letting the tests below observe the re-create path.
+type fakeClient struct {
+	annotationClient
+
+	existing *annotationV0.Annotation
+
+	created *annotationV0.Annotation
+	updated *annotationV0.Annotation
+
+	deletedNames []string
+	deleteErr    error
+	createErr    error
+}
+
+func (f *fakeClient) GetByLegacyID(context.Context, int64, int64) (*annotationV0.Annotation, error) {
+	return f.existing, nil
+}
+func (f *fakeClient) Create(_ context.Context, _ int64, anno *annotationV0.Annotation) (*annotationV0.Annotation, error) {
+	f.created = anno
+	return anno, f.createErr
+}
+func (f *fakeClient) Update(_ context.Context, _ int64, anno *annotationV0.Annotation) (*annotationV0.Annotation, error) {
+	f.updated = anno
+	return anno, nil
+}
+func (f *fakeClient) Delete(_ context.Context, _ int64, name string) error {
+	f.deletedNames = append(f.deletedNames, name)
+	return f.deleteErr
+}
+
+func TestMigrationProxy(t *testing.T) {
+	t.Run("Update", func(t *testing.T) {
+		const orgID, legacyID = int64(1), int64(42)
+
+		existingAnno := func(name string) *annotationV0.Annotation {
+			anno := &annotationV0.Annotation{
+				ObjectMeta: metav1.ObjectMeta{Name: name, ResourceVersion: "7"},
+				Spec:       annotationV0.AnnotationSpec{Text: "before", Time: 1000},
+			}
+			annotationpkg.SetLegacyID(anno, legacyID)
+			return anno
+		}
+
+		newProxy := func(client annotationClient) *MigrationProxy {
+			return &MigrationProxy{client: client, logger: log.New("test")}
+		}
+
+		t.Run("time unchanged updates in place, no re-create", func(t *testing.T) {
+			client := &fakeClient{existing: existingAnno("anno-1")}
+			proxy := newProxy(client)
+
+			err := proxy.Update(context.Background(), orgID, legacyID, &annotations.Item{Text: "after", Epoch: 1000})
+			require.NoError(t, err)
+
+			require.NotNil(t, client.updated, "an in-place edit must call Update")
+			assert.Equal(t, "anno-1", client.updated.GetName(), "in-place edit reuses the stored k8s name")
+			assert.Nil(t, client.created, "no re-create when the time is unchanged")
+			assert.Empty(t, client.deletedNames, "no delete when the time is unchanged")
+		})
+
+		t.Run("time change re-creates under a new name and deletes the old record", func(t *testing.T) {
+			client := &fakeClient{existing: existingAnno("anno-1")}
+			proxy := newProxy(client)
+
+			err := proxy.Update(context.Background(), orgID, legacyID, &annotations.Item{Text: "before", Epoch: 5000})
+			require.NoError(t, err)
+
+			require.NotNil(t, client.created, "a time edit must create a new record")
+			assert.Empty(t, client.created.GetName(), "the new record must not carry the old k8s name")
+			assert.Empty(t, client.created.GetResourceVersion(), "the new record must not carry the old resourceVersion")
+			assert.Equal(t, int64(5000), client.created.Spec.Time, "the new record carries the new time")
+			assert.Equal(t, legacyID, annotationpkg.GetLegacyID(client.created), "the legacy ID is preserved across the re-create")
+
+			assert.Nil(t, client.updated, "a time edit must not update in place")
+			assert.Equal(t, []string{"anno-1"}, client.deletedNames, "the old record must be deleted")
+		})
+
+		t.Run("timeEnd change re-creates as well", func(t *testing.T) {
+			client := &fakeClient{existing: existingAnno("anno-1")}
+			proxy := newProxy(client)
+
+			err := proxy.Update(context.Background(), orgID, legacyID, &annotations.Item{Text: "before", Epoch: 1000, EpochEnd: 2000})
+			require.NoError(t, err)
+
+			require.NotNil(t, client.created)
+			require.NotNil(t, client.created.Spec.TimeEnd)
+			assert.Equal(t, int64(2000), *client.created.Spec.TimeEnd)
+			assert.Equal(t, []string{"anno-1"}, client.deletedNames)
+		})
+
+		t.Run("re-create succeeds even when the best-effort delete of the old record fails", func(t *testing.T) {
+			client := &fakeClient{existing: existingAnno("anno-1"), deleteErr: assert.AnError}
+			proxy := newProxy(client)
+
+			err := proxy.Update(context.Background(), orgID, legacyID, &annotations.Item{Text: "before", Epoch: 5000})
+			require.NoError(t, err, "a failed cleanup delete must not fail the update")
+
+			require.NotNil(t, client.created, "the new record is still created")
+			assert.Equal(t, []string{"anno-1"}, client.deletedNames, "the delete was attempted")
+		})
+
+		t.Run("re-create propagates a failure to create the new record", func(t *testing.T) {
+			client := &fakeClient{existing: existingAnno("anno-1"), createErr: assert.AnError}
+			proxy := newProxy(client)
+
+			err := proxy.Update(context.Background(), orgID, legacyID, &annotations.Item{Text: "before", Epoch: 5000})
+			require.ErrorIs(t, err, assert.AnError)
+			assert.Empty(t, client.deletedNames, "the old record must not be deleted if the new one was not created")
+		})
 	})
 }

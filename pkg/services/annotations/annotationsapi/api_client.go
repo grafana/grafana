@@ -29,6 +29,18 @@ import (
 
 const annotationServerAudience = "annotation.grafana.app"
 
+// annotationClient defines the interface for interacting with the annotation API server.
+type annotationClient interface {
+	Create(ctx context.Context, orgID int64, anno *annotationV0.Annotation) (*annotationV0.Annotation, error)
+	Update(ctx context.Context, orgID int64, anno *annotationV0.Annotation) (*annotationV0.Annotation, error)
+	Delete(ctx context.Context, orgID int64, name string) error
+	GetByLegacyID(ctx context.Context, orgID int64, annotationID int64) (*annotationV0.Annotation, error)
+	GetUsersFromMeta(ctx context.Context, usersMeta []string) (map[string]*user.User, error)
+	Search(ctx context.Context, orgID int64, query *annotations.ItemQuery) ([]*annotationV0.Annotation, error)
+}
+
+var _ annotationClient = (*annotationAPIClient)(nil)
+
 // TODO: consider replacing k8sClient with a rest.RESTClient built from restCfg for consistency -
 // CRUD ops (Create, Update, Delete, also GetByLegacyID) currently go through k8sClient (dynamic),
 // while Search uses rest.RESTClient directly.
