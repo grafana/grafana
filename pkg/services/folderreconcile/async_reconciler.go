@@ -19,6 +19,13 @@ type ChildFolder struct {
 	Terminating bool
 }
 
+// ContentDeleter deletes one resource type's contents in a folder. It is the subset of Consumer the
+// async reconciler needs, so a resource type can plug in without a FoldersInUse implementation.
+type ContentDeleter interface {
+	Name() string
+	DeleteInFolder(ctx context.Context, orgID int64, folderUID string) error
+}
+
 // CascadeFolders is the folder API surface the async reconciler drives to walk and drain a subtree
 // marked terminating by async cascade delete.
 type CascadeFolders interface {
@@ -37,23 +44,23 @@ type CascadeFolders interface {
 // AsyncReconciler drains folders marked terminating: it deletes leaves' contained resources, cascades
 // deletion down to children, and removes the finalizer once a folder is empty. registry.BackgroundService.
 type AsyncReconciler struct {
-	folders   CascadeFolders
-	orgs      orgLister
-	consumers []Consumer
-	interval  time.Duration
-	log       log.Logger
+	folders  CascadeFolders
+	orgs     orgLister
+	deleters []ContentDeleter
+	interval time.Duration
+	log      log.Logger
 }
 
-func newAsyncReconciler(folders CascadeFolders, orgs orgLister, interval time.Duration, consumers ...Consumer) *AsyncReconciler {
+func newAsyncReconciler(folders CascadeFolders, orgs orgLister, interval time.Duration, deleters ...ContentDeleter) *AsyncReconciler {
 	if interval <= 0 {
 		interval = time.Minute
 	}
 	return &AsyncReconciler{
-		folders:   folders,
-		orgs:      orgs,
-		consumers: consumers,
-		interval:  interval,
-		log:       log.New("folder-async-reconciler"),
+		folders:  folders,
+		orgs:     orgs,
+		deleters: deleters,
+		interval: interval,
+		log:      log.New("folder-async-reconciler"),
 	}
 }
 
@@ -127,7 +134,7 @@ func (r *AsyncReconciler) reconcileFolder(ctx context.Context, orgID int64, uid 
 	}
 
 	// Leaf: delete contained resources in order; on failure mark the folder and stop for this tick.
-	for _, c := range r.consumers {
+	for _, c := range r.deleters {
 		if err := c.DeleteInFolder(ctx, orgID, uid); err != nil {
 			r.log.Error("Failed to delete folder contents", "consumer", c.Name(), "org_id", orgID, "folder_uid", uid, "error", err)
 			return r.folders.MarkFailed(ctx, orgID, uid, fmt.Sprintf("%s: %v", c.Name(), err))

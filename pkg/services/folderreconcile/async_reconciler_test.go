@@ -84,6 +84,30 @@ func TestAsyncReconcile_MarksFailedAndKeepsFinalizer(t *testing.T) {
 	require.Empty(t, folders.finalized)
 }
 
+func TestAsyncReconcile_MinimalDeleterRuns(t *testing.T) {
+	// A ContentDeleter without FoldersInUse (like the dashboards consumer) drains a leaf.
+	folders := &fakeCascadeFolders{terminating: map[int64][]string{1: {"leaf"}}}
+	dashboards := &minimalDeleter{name: "dashboards"}
+
+	r := newAsyncReconciler(folders, &fakeOrgs{ids: []int64{1}}, 0, dashboards)
+	require.NoError(t, r.reconcile(context.Background()))
+
+	require.Equal(t, []string{"leaf"}, dashboards.deleted)
+	require.Equal(t, []string{"leaf"}, folders.finalized)
+}
+
+// minimalDeleter implements only ContentDeleter (no FoldersInUse).
+type minimalDeleter struct {
+	name    string
+	deleted []string
+}
+
+func (d *minimalDeleter) Name() string { return d.name }
+func (d *minimalDeleter) DeleteInFolder(_ context.Context, _ int64, folderUID string) error {
+	d.deleted = append(d.deleted, folderUID)
+	return nil
+}
+
 type failingConsumer struct{ name string }
 
 func (c *failingConsumer) Name() string                                          { return c.name }

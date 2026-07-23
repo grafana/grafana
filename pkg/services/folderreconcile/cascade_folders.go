@@ -14,6 +14,7 @@ import (
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -22,9 +23,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// ProvideAsyncReconciler wires the async reconciler with the concrete folder client and consumers.
-// Consumers run in design order (library panels, then alert rules); a dashboards consumer is still
-// pending, so leaf folders containing dashboards must not be drained until it is added.
+// ProvideAsyncReconciler wires the async reconciler with the concrete folder client and content
+// deleters, run in design order: library panels, then alert rules, then dashboards.
 func ProvideAsyncReconciler(
 	cfg *setting.Cfg,
 	searcher resource.ResourceClient,
@@ -32,10 +32,11 @@ func ProvideAsyncReconciler(
 	orgs org.Service,
 	alertRules *ngalert.AlertRuleFolderConsumer,
 	libraryPanels *libraryelements.FolderConsumer,
+	dashboards *dashboardservice.FolderConsumer,
 ) *AsyncReconciler {
 	interval := cfg.SectionWithEnvOverrides("folder").Key("cascade_delete_reconcile_interval").MustDuration(time.Minute)
 	folders := newCascadeFolders(cfg, searcher, configProvider)
-	return newAsyncReconciler(folders, orgs, interval, libraryPanels, alertRules)
+	return newAsyncReconciler(folders, orgs, interval, libraryPanels, alertRules, dashboards)
 }
 
 const cascadePageSize int64 = 1000
