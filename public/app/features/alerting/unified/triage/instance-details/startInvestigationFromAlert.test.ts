@@ -156,7 +156,7 @@ describe('investigation state helpers', () => {
       expect(getAlertInstanceStartsAtIso([])).toBeUndefined();
     });
 
-    it('uses the most recent transition into Alerting', () => {
+    it('uses the most recent open enter-Alerting episode', () => {
       const startsAt = getAlertInstanceStartsAtIso([
         { timestamp: 1_000, line: { previous: GrafanaAlertState.Normal, current: GrafanaAlertState.Alerting } },
         { timestamp: 5_000, line: { previous: GrafanaAlertState.Alerting, current: GrafanaAlertState.Normal } },
@@ -164,6 +164,15 @@ describe('investigation state helpers', () => {
       ]);
 
       expect(startsAt).toBe(new Date(9_000).toISOString());
+    });
+
+    it('returns undefined when the latest Alerting episode already ended', () => {
+      const startsAt = getAlertInstanceStartsAtIso([
+        { timestamp: 1_000, line: { previous: GrafanaAlertState.Normal, current: GrafanaAlertState.Alerting } },
+        { timestamp: 5_000, line: { previous: GrafanaAlertState.Alerting, current: GrafanaAlertState.Normal } },
+      ]);
+
+      expect(startsAt).toBeUndefined();
     });
 
     it('returns undefined when history is clipped and never shows an enter-Alerting transition', () => {

@@ -56,25 +56,29 @@ function isAlertingState(state: string | undefined): boolean {
 
 /**
  * ISO start time for the current firing episode from state history.
- * Only trusts an observed transition *into* Alerting. If history is clipped
- * to a drawer time range and never shows that transition, returns undefined
- * so the caller omits startsAt rather than guessing.
+ * Only returns a start when history shows an enter-Alerting transition that
+ * has not yet been closed by a later leave-Alerting event in the same window.
+ * Truncated or ambiguous history returns undefined so startsAt is omitted.
  */
 export function getAlertInstanceStartsAtIso(historyRecords: LogRecord[] | undefined): string | undefined {
   if (!historyRecords?.length) {
     return undefined;
   }
 
-  let latestEpisodeStart: number | undefined;
+  const ordered = [...historyRecords].sort((a, b) => a.timestamp - b.timestamp);
+  let openEpisodeStart: number | undefined;
 
-  for (const record of historyRecords) {
-    const enteredAlerting = isAlertingState(record.line.current) && !isAlertingState(record.line.previous);
-    if (enteredAlerting && (latestEpisodeStart === undefined || record.timestamp > latestEpisodeStart)) {
-      latestEpisodeStart = record.timestamp;
+  for (const record of ordered) {
+    const wasAlerting = isAlertingState(record.line.previous);
+    const isAlerting = isAlertingState(record.line.current);
+    if (!wasAlerting && isAlerting) {
+      openEpisodeStart = record.timestamp;
+    } else if (wasAlerting && !isAlerting) {
+      openEpisodeStart = undefined;
     }
   }
 
-  return latestEpisodeStart !== undefined ? new Date(latestEpisodeStart).toISOString() : undefined;
+  return openEpisodeStart !== undefined ? new Date(openEpisodeStart).toISOString() : undefined;
 }
 
 export interface BuildFromAlertRequestArgs {
