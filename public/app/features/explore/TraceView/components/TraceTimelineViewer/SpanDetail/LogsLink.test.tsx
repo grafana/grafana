@@ -8,7 +8,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { SpanLinkType, type SpanLinkModel } from '../../types/links';
 
-import { getLogsButtonCTA, getLogsButtonTooltip, LogsLinkButton } from './LogsLink';
+import { getLogsButtonCTA, getLogsButtonTooltip, LogsLinkButton, LogsLinkMenuItem } from './LogsLink';
 
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
@@ -212,6 +212,130 @@ describe('LogsLinkButton', () => {
     expect(
       screen.queryByText('No related logs found using the trace data source configuration.')
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('LogsLinkMenuItem', () => {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    useDataSourceInstanceSettingsMock.mockReturnValue({ isLoading: false, settings: undefined });
+    // The presence check is gated behind this flag; enable it so most tests exercise the check.
+    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates.
+    await act(async () => {
+      setTestFlags({ [DYNAMIC_TRACE_TO_LOGS_FLAG]: true });
+    });
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
+  it('renders the menu item with its CTA copy', () => {
+    render(<LogsLinkMenuItem spanLinkModel={createSpanLinkModel()} />);
+
+    expect(screen.getByRole('menuitem')).toBeInTheDocument();
+    expect(screen.getByText(CTA_RELATED_LOGS)).toBeInTheDocument();
+  });
+
+  it('does not query the datasource when the link has no query', () => {
+    render(<LogsLinkMenuItem spanLinkModel={createSpanLinkModel()} />);
+
+    expect(getDataSourceInstanceMock).not.toHaveBeenCalled();
+  });
+
+  it('does not check for logs when the dynamicTraceToLogs flag is disabled', async () => {
+    await act(async () => {
+      setTestFlags({ [DYNAMIC_TRACE_TO_LOGS_FLAG]: false });
+    });
+    useDataSourceInstanceSettingsMock.mockReturnValue({
+      isLoading: false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      settings: { jsonData: {} } as any,
+    });
+    mockDatasourceReturningFrames([emptyFrame], 'loki');
+    const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
+
+    render(
+      <LogsLinkMenuItem spanLinkModel={createSpanLinkModel({ interpolatedParams: { query: interpolatedQuery } })} />
+    );
+
+    // The datasource is never queried, and the item stays enabled (present).
+    expect(getDataSourceInstanceMock).not.toHaveBeenCalled();
+    expect(screen.getByRole('menuitem')).toBeEnabled();
+  });
+
+  it('runs the query against its datasource to check for logs', async () => {
+    const query = mockDatasourceReturningFrames([logsFrame], 'elasticsearch');
+    const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'elasticsearch' } };
+
+    render(
+      <LogsLinkMenuItem spanLinkModel={createSpanLinkModel({ interpolatedParams: { query: interpolatedQuery } })} />
+    );
+
+    await waitFor(() => expect(getDataSourceInstanceMock).toHaveBeenCalledWith(interpolatedQuery.datasource));
+    expect(query).toHaveBeenCalledWith(expect.objectContaining({ targets: [interpolatedQuery] }));
+  });
+
+  it('disables the item when the query returns no rows', async () => {
+    useDataSourceInstanceSettingsMock.mockReturnValue({
+      isLoading: false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      settings: { jsonData: {} } as any,
+    });
+    mockDatasourceReturningFrames([emptyFrame], 'loki');
+    const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
+
+    render(
+      <LogsLinkMenuItem spanLinkModel={createSpanLinkModel({ interpolatedParams: { query: interpolatedQuery } })} />
+    );
+
+    await waitFor(() => expect(screen.getByRole('menuitem')).toBeDisabled());
+  });
+
+  it('keeps the item enabled when the query returns logs', async () => {
+    useDataSourceInstanceSettingsMock.mockReturnValue({
+      isLoading: false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      settings: { jsonData: {} } as any,
+    });
+    mockDatasourceReturningFrames([logsFrame], 'loki');
+    const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
+
+    render(
+      <LogsLinkMenuItem spanLinkModel={createSpanLinkModel({ interpolatedParams: { query: interpolatedQuery } })} />
+    );
+
+    await waitFor(() => expect(getDataSourceInstanceMock).toHaveBeenCalled());
+    expect(screen.getByRole('menuitem')).toBeEnabled();
+  });
+
+  it('fails open (keeps the item enabled) when the presence check errors', async () => {
+    useDataSourceInstanceSettingsMock.mockReturnValue({
+      isLoading: false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      settings: { jsonData: {} } as any,
+    });
+    const query = jest.fn().mockReturnValue(throwError(() => new Error('boom')));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    getDataSourceInstanceMock.mockResolvedValue({ query } as any);
+    const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
+
+    render(
+      <LogsLinkMenuItem spanLinkModel={createSpanLinkModel({ interpolatedParams: { query: interpolatedQuery } })} />
+    );
+
+    await waitFor(() => expect(query).toHaveBeenCalled());
+    expect(screen.getByRole('menuitem')).toBeEnabled();
+  });
+
+  it('invokes the link onClick handler when clicked', async () => {
+    const onClick = jest.fn();
+    render(<LogsLinkMenuItem spanLinkModel={createSpanLinkModel({ onClick })} />);
+
+    await userEvent.click(screen.getByRole('menuitem'));
+    expect(onClick).toHaveBeenCalled();
   });
 });
 

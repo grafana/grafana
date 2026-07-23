@@ -44,6 +44,7 @@ export const LogsLinkButton = ({ spanLinkModel }: Props) => {
         buttonProps={{
           icon: isLoading ? 'spinner' : icon,
           className,
+          disabled: presence === 'absent',
           variant: presence === 'absent' ? 'secondary' : 'primary',
           tooltip,
         }}
