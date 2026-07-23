@@ -17,6 +17,14 @@ const { selectAll, selectById } = pluginsAdapter.getSelectors(selectItems);
 
 export { selectById };
 
+export const selectByIdOrAlias = (state: PluginCatalogStoreState, id: string) => {
+  const direct = selectById(state, id);
+  if (direct) {
+    return direct;
+  }
+  return selectAll(state).find((p) => p.aliasIDs?.includes(id));
+};
+
 const debouncedTrackSearch = debounce((count) => {
   reportInteraction('plugins_search', {
     resultsCount: count,
