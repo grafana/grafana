@@ -162,14 +162,7 @@ class DataSourceWithBackend<
     this.datasourceInstanceSettings = instanceSettings;
   }
 
-  /**
-   * Ideally final -- any other implementation may not work as expected
-   */
-  query(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> {
-    if (config.publicDashboardAccessToken) {
-      return publicDashboardQueryHandler(request);
-    }
-
+  private createBackendRequest(request: DataQueryRequest<TQuery>): [BackendSrvRequest, DataQuery[]]{
     const { intervalMs, maxDataPoints, queryCachingTTL, range, requestId, hideFromInspector = false } = request;
     let targets = request.targets;
 
@@ -229,11 +222,6 @@ class DataSourceWithBackend<
       };
     });
 
-    // Return early if no queries exist
-    if (!queries.length) {
-      return of({ data: [] });
-    }
-
     const body = {
       queries,
       from: range?.from.valueOf().toString(),
@@ -288,15 +276,37 @@ class DataSourceWithBackend<
     if (request.skipQueryCache) {
       headers[PluginRequestHeaders.SkipQueryCache] = 'true';
     }
-    return getBackendSrv()
-      .fetch<BackendDataSourceResponse>({
+
+    return [
+      {
         url,
         method: 'POST',
         data: body,
         requestId,
         hideFromInspector,
         headers,
-      })
+      },
+      queries,
+    ];
+  }
+
+
+  /**
+   * Ideally final -- any other implementation may not work as expected
+   */
+  query(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> {
+    if (config.publicDashboardAccessToken) {
+      return publicDashboardQueryHandler(request);
+    }
+
+    if (request.targets.length === 0) {
+      return of({ data: [] });
+    }
+
+    const [req, queries] = this.createBackendRequest(request)
+
+    return getBackendSrv()
+      .fetch<BackendDataSourceResponse>(req)
       .pipe(
         switchMap((raw) => {
           const rsp = toDataQueryResponse(raw, queries);
