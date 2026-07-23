@@ -1,4 +1,10 @@
-import { generateUniqueTitle } from './utils';
+import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
+
+import { generateUniqueTitle, getIsLazy } from './utils';
+
+jest.mock('app/features/dashboard/services/isRenderTarget', () => ({
+  isRenderTarget: jest.fn(),
+}));
 
 describe('generateUniqueTitle', () => {
   it('should return the original title if it is not in the existing titles', () => {
@@ -47,4 +53,27 @@ describe('generateUniqueTitle', () => {
     const existingTitles = new Set<string>();
     expect(generateUniqueTitle(title, existingTitles)).toBe(title);
   });
+});
+
+describe('getIsLazy', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it.each`
+    preload      | isRenderTargetValue | expected
+    ${false}     | ${false}            | ${true}
+    ${undefined} | ${false}            | ${true}
+    ${true}      | ${false}            | ${false}
+    ${false}     | ${true}             | ${false}
+    ${undefined} | ${true}             | ${false}
+    ${true}      | ${true}             | ${false}
+  `(
+    'should return $expected when preload is $preload and isRenderTarget returns $isRenderTargetValue',
+    ({ preload, isRenderTargetValue, expected }) => {
+      jest.mocked(isRenderTarget).mockReturnValue(isRenderTargetValue);
+
+      expect(getIsLazy(preload)).toBe(expected);
+    }
+  );
 });
