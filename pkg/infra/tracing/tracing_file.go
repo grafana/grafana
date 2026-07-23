@@ -59,6 +59,17 @@ func (c *fileClient) Stop(_ context.Context) error {
 }
 
 func (c *fileClient) UploadTraces(_ context.Context, protoSpans []*tracepb.ResourceSpans) error {
+	// Once the capture has ended (size/duration cap or shutdown), skip the
+	// proto/JSON conversions entirely: the tracer keeps exporting batches for
+	// the rest of the process lifetime, and encoding them just to discard the
+	// result would waste CPU and allocations on every batch.
+	c.mu.Lock()
+	done := c.writer.Done()
+	c.mu.Unlock()
+	if done {
+		return nil
+	}
+
 	// The OTLP/JSON spec requires hex-encoded trace/span IDs. Raw protojson
 	// would base64-encode them, so round-trip through pdata, whose JSON
 	// marshaler is spec-compliant.
@@ -162,6 +173,12 @@ func (w *boundedFileWriter) WriteRecord(record []byte) error {
 	}
 	w.written += int64(len(record)) + 1
 	return nil
+}
+
+// Done reports whether the capture has ended (cap reached or closed). Like the
+// other methods, it must be called with the owning fileClient's mutex held.
+func (w *boundedFileWriter) Done() bool {
+	return w.done
 }
 
 // Close flushes and closes the underlying file. Safe to call more than once.

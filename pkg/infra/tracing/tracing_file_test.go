@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	tracepb "go.opentelemetry.io/proto/otlp/trace/v1"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -115,6 +116,28 @@ func TestFileExporter_DisablesWhenCaptureDurationIsInvalid(t *testing.T) {
 	span.End()
 	require.NoError(t, ots.GetTracerProvider().Shutdown(t.Context()))
 	assert.NoFileExists(t, path)
+}
+
+func TestFileClient_SkipsUploadsOnceCaptureEnds(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "traces.json")
+	cfg := newFileTracingConfig(path)
+	// Any record is larger than this, so the first upload trips the cap.
+	cfg.FileMaxSize = 4
+
+	client, err := newFileClient(cfg, log.New("test"))
+	require.NoError(t, err)
+
+	spans := []*tracepb.ResourceSpans{{}}
+	require.NoError(t, client.UploadTraces(context.Background(), spans))
+	require.True(t, client.writer.Done(), "first upload should trip the size cap")
+
+	// Later batches must be discarded without error or writes.
+	require.NoError(t, client.UploadTraces(context.Background(), spans))
+	require.NoError(t, client.Stop(context.Background()))
+
+	contents, err := os.ReadFile(path) //nolint:gosec // G304: path is a test-controlled t.TempDir() path
+	require.NoError(t, err)
+	assert.Empty(t, contents, "no record fits under the cap, so nothing may be written")
 }
 
 func TestBoundedFileWriter_StopsAtMaxSize(t *testing.T) {
