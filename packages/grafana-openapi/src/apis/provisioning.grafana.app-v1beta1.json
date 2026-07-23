@@ -4031,6 +4031,9 @@
           "githubEnterprise": {
             "description": "GitHub Enterprise Server connection configuration Only applicable when provider is \"githubEnterprise\""
           },
+          "githubEnterpriseOAuth": {
+            "description": "GitHub Enterprise Server OAuth app connection configuration Only applicable when provider is \"githubEnterpriseOAuth\""
+          },
           "oauth": {
             "description": "OAuth app configuration shared by all OAuth app providers"
           },
@@ -4040,10 +4043,17 @@
             "default": ""
           },
           "type": {
-            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubOAuth\"`\n - `\"gitlabOAuth\"`",
+            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubEnterpriseOAuth\"`\n - `\"githubOAuth\"`\n - `\"gitlabOAuth\"`",
             "type": "string",
             "default": "",
-            "enum": ["bitbucketOAuth", "github", "githubEnterprise", "githubOAuth", "gitlabOAuth"]
+            "enum": [
+              "bitbucketOAuth",
+              "github",
+              "githubEnterprise",
+              "githubEnterpriseOAuth",
+              "githubOAuth",
+              "gitlabOAuth"
+            ]
           },
           "url": {
             "description": "The connection URL",
@@ -4320,6 +4330,17 @@
             "type": "string",
             "default": ""
           },
+          "serverUrl": {
+            "description": "The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "GitHubEnterpriseOAuthConnectionConfig": {
+        "type": "object",
+        "required": ["serverUrl"],
+        "properties": {
           "serverUrl": {
             "description": "The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).",
             "type": "string",
@@ -5282,7 +5303,14 @@
             "items": {
               "type": "string",
               "default": "",
-              "enum": ["bitbucketOAuth", "github", "githubEnterprise", "githubOAuth", "gitlabOAuth"]
+              "enum": [
+                "bitbucketOAuth",
+                "github",
+                "githubEnterprise",
+                "githubEnterpriseOAuth",
+                "githubOAuth",
+                "gitlabOAuth"
+              ]
             }
           },
           "availableRepositoryTypes": {
