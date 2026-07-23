@@ -174,11 +174,21 @@ func (r *BasicRouter) reconcile(ctx context.Context) {
 
 		handler, err := b.Load(ctx)
 		if err != nil {
+			// Load failed: keep last-known-good for this group (leave the
+			// existing entry, if any, untouched) and don't publish a nil
+			// handler. lastRV is not advanced, so a later wake retries.
+			slog.Error("router: backend load failed, keeping current route", "group", group, "error", err)
+			continue
+		}
+
+		if !ok {
+			// New group: create the entry.
 			r.entries[group] = &handlerEntry{handler: handler, lastRV: b.RV()}
 			continue
 		}
-		// Changed: rebuild. The transport (and its pool) is reused from the
-		// shared cache when the TLS key is unchanged, so the pool survives.
+		// Changed: swap the handler in place. The transport (and its pool) is
+		// reused from the shared cache when the TLS key is unchanged, so the
+		// pool survives.
 		e.handler = handler
 		e.lastRV = b.RV()
 	}
