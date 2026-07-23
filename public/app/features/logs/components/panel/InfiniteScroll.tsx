@@ -106,21 +106,19 @@ export const InfiniteScroll = ({
         return;
       }
       if (loadingState === LoadingState.Error) {
-        // The request failed and returns no new rows: return to idle so the user can retry by
-        // scrolling again, rather than getting stuck on the loading indicator.
+        // The request failed and returns no new rows: reset tracking and return to idle so the user
+        // can retry by scrolling again, rather than getting stuck on the loading indicator.
         settledRef.current = false;
         loadMoreCountRef.current = null;
         setInfiniteLoaderState('idle');
         return;
       }
-      // Wait until the settled rows have propagated before deciding. `logs` lags `loadingState` by a
-      // render (LogList turns the `logs` prop into `processedLogs` via an effect), so on the settle
-      // render `logs` still holds the pre-request rows; deciding then would read a stale count and
-      // wrongly flag "out-of-bounds". Compare against the count captured when the load-more started
-      // (not prevLogs): Loki query splitting streams partial pages, growing the rows across renders.
+      // New logs have been returned from the load-more request.
+      // Reset tracking so the next scroll can start a fresh load-more.
       if (prevLogs !== logs) {
-        settledRef.current = false;
         const startCount = loadMoreCountRef.current;
+        // Reset tracking so the next scroll can start a fresh load-more.
+        settledRef.current = false;
         loadMoreCountRef.current = null;
         const outOfBounds = startCount !== null && logs.length === startCount && infiniteScrollMode === 'interval';
         setInfiniteLoaderState(outOfBounds ? 'out-of-bounds' : 'idle');
