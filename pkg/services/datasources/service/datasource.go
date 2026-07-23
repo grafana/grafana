@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
+
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -28,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/datasources/awsexternalid"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -387,6 +389,13 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			return nil, err
 		}
 	}
+	if cmd.JsonData == nil {
+		cmd.JsonData = simplejson.New()
+	}
+	// Run after the store assigns the final UID so the minted ID matches what is inserted.
+	cmd.BeforeSave = func(ctx context.Context, uid string, jsonData *simplejson.Json) {
+		awsexternalid.BeforeSave(ctx, uid, s.cfg, nil, jsonData)
+	}
 
 	var dataSource *datasources.DataSource
 	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
@@ -667,6 +676,13 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 			if err != nil {
 				return err
 			}
+		}
+		if cmd.JsonData == nil {
+			cmd.JsonData = simplejson.New()
+		}
+		existingJSON := dataSource.JsonData
+		cmd.BeforeSave = func(ctx context.Context, uid string, jsonData *simplejson.Json) {
+			awsexternalid.BeforeSave(ctx, uid, s.cfg, existingJSON, jsonData)
 		}
 
 		// preserve existing lbac rules when updating datasource if we're not updating lbac rules

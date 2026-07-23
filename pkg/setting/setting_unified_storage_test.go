@@ -458,3 +458,30 @@ func TestIsTargetEligibleForMigrations(t *testing.T) {
 		})
 	}
 }
+
+func TestVectorAllowedCollections(t *testing.T) {
+	t.Run("defaults: dashboards internal, no external", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+		cfg.setUnifiedStorageConfig()
+
+		assert.Equal(t, []string{"dashboard.grafana.app/dashboards"}, cfg.VectorAllowedInternalCollections)
+		assert.Empty(t, cfg.VectorAllowedExternalCollections)
+	})
+
+	t.Run("explicit lists are parsed as CSV", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+		section := cfg.Raw.Section("unified_storage")
+		_, err = section.NewKey("vector_allowed_internal_collections", "dashboard.grafana.app/dashboards, folder.grafana.app/folders")
+		assert.NoError(t, err)
+		_, err = section.NewKey("vector_allowed_external_collections", "ext.example.com/my-things")
+		assert.NoError(t, err)
+		cfg.setUnifiedStorageConfig()
+
+		assert.Equal(t, []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}, cfg.VectorAllowedInternalCollections)
+		assert.Equal(t, []string{"ext.example.com/my-things"}, cfg.VectorAllowedExternalCollections)
+	})
+}

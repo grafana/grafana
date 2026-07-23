@@ -440,7 +440,7 @@ func createAlertRule(t *testing.T, ctx context.Context, service *Service, user *
 		ExecErrState:    models.OkErrState,
 	}
 
-	createdRule, err := service.ngAlert.Api.AlertRules.CreateAlertRule(ctx, user, rule, "")
+	createdRule, err := service.ngAlert.Api.AlertRules.CreateAlertRule(ctx, user, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 	require.NoError(t, err)
 
 	return createdRule
@@ -469,7 +469,7 @@ func createAlertRuleGroup(t *testing.T, ctx context.Context, service *Service, u
 		Rules:     rules,
 	}
 
-	err := service.ngAlert.Api.AlertRules.ReplaceRuleGroup(ctx, user, group, "", "")
+	err := service.ngAlert.Api.AlertRules.ReplaceRuleGroup(ctx, user, group, models.ProvenanceToManagerProperties(models.ProvenanceNone), "")
 	require.NoError(t, err)
 
 	return group

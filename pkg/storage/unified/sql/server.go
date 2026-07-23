@@ -277,6 +277,8 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 	resourceOpts.OwnsIndexFn = opts.OwnsIndexFn
 
 	if opts.VectorBackend != nil {
+		resourceOpts.Search.AllowedInternalCollections = opts.Cfg.VectorAllowedInternalCollections
+		resourceOpts.Search.AllowedExternalCollections = opts.Cfg.VectorAllowedExternalCollections
 		if opts.Cfg.VectorQueryCacheEnabled {
 			if cache, ok := opts.VectorBackend.(vector.QueryEmbeddingCache); ok {
 				resourceOpts.Search.QueryCache = cache

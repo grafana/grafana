@@ -19,12 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
-	postgres "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
-	"github.com/grafana/grafana/pkg/tsdb/jaeger"
 	"github.com/grafana/grafana/pkg/tsdb/loki"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
@@ -39,10 +37,8 @@ const (
 	Prometheus    = "prometheus"
 	TestData      = "grafana-testdata-datasource"
 	TestDataAlias = "testdata"
-	PostgreSQL    = "grafana-postgresql-datasource"
 	MySQL         = "mysql"
 	Grafana       = "grafana"
-	Jaeger        = "jaeger"
 )
 
 func init() {
@@ -84,8 +80,8 @@ func ProvideCoreProvider(coreRegistry *Registry) plugins.BackendFactoryProvider 
 
 func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *cloudwatch.Service,
 	grap *graphite.Service, idb *influxdb.Service, lk *loki.Service,
-	pr *prometheus.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
-	graf *grafanads.Service, jaeger *jaeger.Service) *Registry {
+	pr *prometheus.Service, td *testdatasource.Service, my *mysql.Service,
+	graf *grafanads.Service) *Registry {
 	// Non-optimal global solution to replace plugin SDK default tracer for core plugins.
 	sdktracing.InitDefaultTracer(tracer)
 
@@ -97,10 +93,8 @@ func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *clou
 		Loki:         asBackendPlugin(lk),
 		Prometheus:   asBackendPlugin(pr),
 		TestData:     asBackendPlugin(td),
-		PostgreSQL:   asBackendPlugin(pg),
 		MySQL:        asBackendPlugin(my),
 		Grafana:      asBackendPlugin(graf),
-		Jaeger:       asBackendPlugin(jaeger),
 	})
 }
 
@@ -212,12 +206,8 @@ func NewPlugin(pluginID string, httpClientProvider *httpclient.Provider, tracer 
 		svc = loki.ProvideService(httpClientProvider, tracer)
 	case Prometheus:
 		svc = prometheus.ProvideService(httpClientProvider)
-	case PostgreSQL:
-		svc = postgres.ProvideService()
 	case MySQL:
 		svc = mysql.ProvideService()
-	case Jaeger:
-		svc = jaeger.ProvideService(httpClientProvider)
 	default:
 		return nil, ErrCorePluginNotFound
 	}

@@ -1,7 +1,8 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 // eslint-disable-next-line no-restricted-imports -- wildcard is used to spy on `useAsync`, not `useObservable`
 import * as reactUse from 'react-use';
 import { TestProvider } from 'test/helpers/TestProvider';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
@@ -18,12 +19,14 @@ const makeProps = (propOverrides?: Partial<RichHistoryQueriesTabProps>): RichHis
     queries: [],
     totalQueries: 0,
     loading: false,
+    loadError: false,
     updateFilters: jest.fn(),
     clearRichHistoryResults: jest.fn(),
     loadMoreRichHistory: jest.fn(),
     activeDatasources: ['test-ds'],
     listOfDatasources: [{ name: 'test-ds', uid: 'test-123' }],
     isLoadingDatasources: false,
+    dsListError: false,
     richHistorySearchFilters: {
       search: '',
       sortOrder: SortOrder.Descending,
@@ -127,5 +130,57 @@ describe('RichHistoryQueriesTab', () => {
     // Once resolved, it seeds exactly once, using the now-populated active datasources.
     expect(updateFiltersSpy).toHaveBeenCalledTimes(1);
     expect(updateFiltersSpy).toHaveBeenCalledWith(expect.objectContaining({ datasourceFilters: ['test-ds'] }));
+  });
+
+  it('updates the sort order filter when a new sort option is picked', async () => {
+    const updateFiltersSpy = jest.fn();
+    setup({ updateFilters: updateFiltersSpy });
+    updateFiltersSpy.mockClear(); // ignore the mount seed
+
+    const sortSelect = within(await screen.findByLabelText('Sort queries')).getByRole('combobox');
+    await selectOptionInTest(sortSelect, 'Oldest first');
+
+    expect(updateFiltersSpy).toHaveBeenCalledWith(expect.objectContaining({ sortOrder: SortOrder.Ascending }));
+  });
+
+  it('shows a datasource-list error instead of results when the list fails in active-only mode', () => {
+    setup({
+      dsListError: true,
+      richHistorySettings: {
+        retentionPeriod: 7,
+        starredTabAsFirstTab: false,
+        activeDatasourcesOnly: true,
+        lastUsedDatasourceFilters: [],
+      },
+    });
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+  });
+
+  it('hides the partial-results "Load more" footer when loadError is true, even with stale partial results', () => {
+    setup({
+      loadError: true,
+      queries: [
+        {
+          id: '1',
+          createdAt: 1,
+          datasourceUid: 'test-123',
+          datasourceName: 'test-ds',
+          starred: false,
+          comment: '',
+          queries: [],
+        },
+      ],
+      totalQueries: 2,
+      richHistorySearchFilters: {
+        search: '',
+        sortOrder: SortOrder.Descending,
+        datasourceFilters: ['test-ds'],
+        from: 0,
+        to: 30,
+        starred: false,
+      },
+    });
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /load more/i })).not.toBeInTheDocument();
   });
 });

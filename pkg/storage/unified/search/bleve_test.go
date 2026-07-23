@@ -52,14 +52,11 @@ func TestBleveBackend(t *testing.T) {
 
 	// Register the dashboard provider so the static fields.* mapping is built
 	// from declared fields, as in production; without it custom fields drop.
-	dashInfo, err := builders.DashboardBuilder(nil)
-	require.NoError(t, err)
-
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
-			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): dashInfo.SearchFieldsProvider,
+			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): DashboardSearchFieldsProviderForTest(),
 		}),
 	}, nil)
 	require.NoError(t, err)
@@ -74,14 +71,11 @@ func TestBleveSearchRootFolderExpansion(t *testing.T) {
 
 	// Register the dashboard provider so the index is built from declared
 	// fields, as in production.
-	dashInfo, err := builders.DashboardBuilder(nil)
-	require.NoError(t, err)
-
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
-			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): dashInfo.SearchFieldsProvider,
+			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): DashboardSearchFieldsProviderForTest(),
 		}),
 	}, nil)
 	require.NoError(t, err)
@@ -816,9 +810,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 }
 
 func TestGetSortFields(t *testing.T) {
-	dashboardInfo, err := builders.DashboardBuilder(nil)
-	require.NoError(t, err)
-	dashboardFields, err := resource.SearchableFieldsFromProvider(dashboardInfo.SearchFieldsProvider, dashboardInfo.GroupResource.Group, dashboardInfo.GroupResource.Resource)
+	dashboardFields, err := resource.SearchableFieldsFromProvider(DashboardSearchFieldsProviderForTest(), "dashboard.grafana.app", "dashboards")
 	require.NoError(t, err)
 
 	t.Run("will prepend 'fields.' to sort fields when they are dashboard fields", func(t *testing.T) {

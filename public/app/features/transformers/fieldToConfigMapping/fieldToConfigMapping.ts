@@ -8,6 +8,7 @@ import {
   getFieldDisplayName,
   MappingType,
   ReducerID,
+  sortThresholds,
   ThresholdsMode,
   type ValueMapping,
   type ValueMap,
@@ -76,6 +77,14 @@ export function getFieldConfigFromFrame(
 
   if (context.mappingValues) {
     config.mappings = combineValueMappings(context);
+  }
+
+  // Threshold steps are pushed in the order their fields appear in the frame.
+  // Downstream consumers (getActiveThreshold, the filled-region gradient, ...)
+  // assume steps are sorted ascending by value, so mapping more than one field
+  // to a threshold could otherwise emit out-of-order steps and break rendering.
+  if (config.thresholds) {
+    config.thresholds.steps = sortThresholds(config.thresholds.steps);
   }
 
   return config;

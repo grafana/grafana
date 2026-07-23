@@ -211,7 +211,7 @@ export const useShortcuts = () => {
           },
           {
             keys: ['p', 'u'],
-            description: t('help-modal.shortcuts-description.open-share-link-drawer', 'Share panel link'),
+            description: t('help-modal.shortcuts-description.copy-share-link', 'Copy panel share link'),
           },
           {
             keys: ['p', 'e'],

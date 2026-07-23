@@ -58,6 +58,38 @@ Counter.args = {
   value: 10,
 };
 
+export const WithCappedCounter: StoryFn = () => {
+  const [state, updateState] = useState([
+    { label: '1st child', key: 'first', active: true, counter: 3 },
+    { label: '2nd child', key: 'second', active: false, counter: 120 },
+    { label: '3rd child', key: 'third', active: false, counter: 50 },
+  ]);
+
+  return (
+    <DashboardStoryCanvas>
+      <TabsBar>
+        {state.map((tab, index) => {
+          return (
+            <Tab
+              key={index}
+              label={tab.label}
+              active={tab.active}
+              counter={tab.counter}
+              counterCappedAt={50}
+              onChangeTab={() => updateState(state.map((tab, idx) => ({ ...tab, active: idx === index })))}
+            />
+          );
+        })}
+      </TabsBar>
+      <TabContent>
+        {state[0].active && <div>First tab content</div>}
+        {state[1].active && <div>Second tab content</div>}
+        {state[2].active && <div>Third tab content</div>}
+      </TabContent>
+    </DashboardStoryCanvas>
+  );
+};
+
 export const WithDisabled: StoryFn = () => {
   const [state, updateState] = useState([
     { label: 'Enabled Tab', key: 'first', active: true },

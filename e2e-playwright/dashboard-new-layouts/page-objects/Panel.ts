@@ -33,8 +33,8 @@ export class Panel extends PageObject {
     }
   }
 
-  async clickMenuItem(panelTitle: string, menuPath: string[]) {
-    await test.step(`Click menu item "${menuPath.join(' > ')}" on panel "${panelTitle}"`, async () => {
+  async selectMenuItem(panelTitle: string, menuPath: string[]) {
+    await test.step(`Select menu item "${menuPath.join(' > ')}" on panel "${panelTitle}"`, async () => {
       await this.dashboardPage
         .getByGrafanaSelector(this.selectors.components.Panels.Panel.menu(panelTitle))
         .click({ force: true });

@@ -44,9 +44,9 @@
       "border": "palette.blue100"
     },
     "text": {
-      "primary": "palette.neutral900",
-      "secondary": "palette.neutral800",
-      "disabled": "palette.neutral700",
+      "primary": "palette.neutral800",
+      "secondary": "palette.neutral600",
+      "disabled": "palette.neutral500",
       "link": "palette.orange700"
     },
     "border": {

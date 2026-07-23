@@ -72,6 +72,27 @@ describe('Format String Transformer', () => {
     expect(newValues).toEqual(answers);
   });
 
+  it('will pass null and undefined values through unchanged without throwing', () => {
+    const frameWithNulls = toDataFrame({
+      fields: [
+        {
+          name: 'names',
+          type: FieldType.string,
+          values: ['alice', null, undefined, 'BOB'],
+        },
+      ],
+    });
+
+    const formatter = createStringFormatter(
+      fieldMatches,
+      getFormatStringFunction(options(FormatStringOutput.UpperCase))
+    );
+    const run = () => formatter(frameWithNulls, [frameWithNulls]);
+
+    expect(run).not.toThrow();
+    expect(run()[0].values).toEqual(['ALICE', null, undefined, 'BOB']);
+  });
+
   it('will convert string to substring', () => {
     const formatter = createStringFormatter(
       fieldMatches,

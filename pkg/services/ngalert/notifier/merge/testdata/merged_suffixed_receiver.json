@@ -133,7 +133,7 @@
         ]
       },
       {
-        "name": "grafana-default-emailmimir-12345"
+        "name": "grafana-default-email_mimir-12345"
       },
       {
         "name": "recv",
@@ -186,7 +186,7 @@
         ]
       },
       {
-        "name": "grafana-default-emailmimir-12345_01"
+        "name": "grafana-default-email_mimir-12345_01"
       }
     ]
   },

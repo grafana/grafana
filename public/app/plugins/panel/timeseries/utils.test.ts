@@ -1,9 +1,7 @@
 import { createTheme, FieldType, createDataFrame, toDataFrame } from '@grafana/data';
 import { LineInterpolation } from '@grafana/ui';
 
-import { type AdHocFilterItem } from '../../../../../packages/grafana-ui/src/components/Table/TableNG/types';
-
-import { getGroupedFilters, getTimezones, prepareGraphableFields, setClassicPaletteIdxs } from './utils';
+import { getTimezones, prepareGraphableFields, setClassicPaletteIdxs } from './utils';
 
 describe('prepare timeseries graph', () => {
   it('errors with no time fields', () => {
@@ -286,85 +284,6 @@ describe('prepare timeseries graph', () => {
       expect(frames).not.toBeNull();
       // Second enum field values should be offset by the length of the first enum's text
       expect(frames![1].fields[1].values).toEqual([2, 3]);
-    });
-  });
-
-  describe('getGroupedFilters', () => {
-    it('returns empty array if no field', () => {
-      const df = createDataFrame({
-        fields: [{ name: 'time', type: FieldType.time, values: [1, 2, 3] }],
-      });
-
-      expect(getGroupedFilters(df, 1, jest.fn())).toEqual([]);
-    });
-
-    it('returns empty array if no labels', () => {
-      const df = createDataFrame({
-        fields: [
-          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-          {
-            name: 'value',
-            type: FieldType.number,
-            values: [1, 2, 3],
-          },
-        ],
-      });
-
-      expect(getGroupedFilters(df, 1, jest.fn())).toEqual([]);
-    });
-
-    it('returns empty array if field not filterable', () => {
-      const df = createDataFrame({
-        fields: [
-          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-          {
-            name: 'value',
-            type: FieldType.number,
-            values: [1, 2, 3],
-            labels: {
-              test: 'value',
-              label: 'value2',
-            },
-          },
-        ],
-      });
-
-      expect(getGroupedFilters(df, 1, jest.fn())).toEqual([]);
-    });
-
-    it('returns grouped filters', () => {
-      const df = createDataFrame({
-        fields: [
-          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-          {
-            name: 'value',
-            type: FieldType.number,
-            values: [1, 2, 3],
-            labels: {
-              test: 'value',
-              label: 'value2',
-            },
-            config: {
-              filterable: true,
-            },
-          },
-        ],
-      });
-
-      const filtersGroupingFn = (filters: AdHocFilterItem[]) => filters;
-
-      expect(getGroupedFilters(df, 1, filtersGroupingFn)).toEqual([
-        {
-          key: 'test',
-          operator: '=',
-          value: 'value',
-        },
-        {
-          key: 'label',
-          operator: '=',
-          value: 'value2',
-        },
-      ]);
     });
   });
 });

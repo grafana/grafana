@@ -98,6 +98,39 @@ describe('PanelTimeRange', () => {
     expect(extraQueries).toHaveLength(1);
     expect(extraQueries[0].req.range.from.toISOString()).toBe('2019-02-10T11:00:00.000Z');
     expect(extraQueries[0].req.range.to.toISOString()).toBe('2019-02-10T17:00:00.000Z');
+    expect(extraQueries[0].req.targets).toEqual([{ refId: 'A-compare' }]);
+  });
+
+  it('should give compare requests distinct refIds from the primary', () => {
+    const panelTime = new PanelTimeRange({ compareWith: '1d' });
+
+    buildAndActivateSceneFor(panelTime);
+
+    const extraQueries = panelTime.getExtraQueries({
+      targets: [{ refId: 'A' }, { refId: 'B', timeRangeCompare: false }, { refId: 'C' }],
+      range: panelTime.state.value,
+    } as DataQueryRequest);
+
+    expect(extraQueries).toHaveLength(1);
+    expect(extraQueries[0].req.targets).toEqual([{ refId: 'A-compare' }, { refId: 'C-compare' }]);
+  });
+
+  it('should set rangeRaw on compare requests from the shifted compare range', () => {
+    // Without this, spreading the primary request leaves rangeRaw.to as 'now', which makes
+    // Prometheus incremental caching treat the compare query as cache-eligible.
+    const panelTime = new PanelTimeRange({ compareWith: '1d' });
+
+    buildAndActivateSceneFor(panelTime);
+
+    const extraQueries = panelTime.getExtraQueries({
+      targets: [{ refId: 'A' }],
+      range: panelTime.state.value,
+      rangeRaw: { from: 'now-6h', to: 'now' },
+    } as DataQueryRequest);
+
+    expect(extraQueries).toHaveLength(1);
+    expect(extraQueries[0].req.rangeRaw).toEqual({ from: 'now-6h-1d', to: 'now-1d' });
+    expect(extraQueries[0].req.range.raw).toEqual({ from: 'now-6h-1d', to: 'now-1d' });
   });
 
   it('should update timeInfo when timeShift and timeFrom are variable expressions', async () => {

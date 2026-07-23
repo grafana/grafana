@@ -271,7 +271,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
     </>
   );
   return (
-    <Stack direction="column" gap={2}>
+    <Stack direction="column" gap={2} minWidth={0}>
       {redesignEnabled ? (
         <>
           <Stack justifyContent="space-between">

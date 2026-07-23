@@ -22,6 +22,11 @@ import (
 // ErrNotFound is returned by proxy methods when the annotation is not in the new storage
 var ErrNotFound = errors.New("annotation not found in new store")
 
+// ErrGone is returned when the annotation was soft-deleted (tombstoned) in the new store.
+// Unlike ErrNotFound, callers must NOT fall back to legacy as the new store is authoritative
+// and the record is deleted.
+var ErrGone = errors.New("annotation has been deleted in new store")
+
 // partialDecodeError signals that one or more optional fields could not be decoded
 // from an annotation. The annotation is still usable without those fields, so callers
 // can return the DTO (minus the affected fields) rather than dropping it.
@@ -164,6 +169,9 @@ func (h *MigrationProxy) Update(ctx context.Context, orgID int64, annotationID i
 	if err != nil {
 		return err
 	}
+	if existing.GetDeletionTimestamp() != nil {
+		return ErrGone
+	}
 	anno, err := itemToAnnotation(item)
 	if err != nil {
 		return err
@@ -182,20 +190,29 @@ func (h *MigrationProxy) Update(ctx context.Context, orgID int64, annotationID i
 	return err
 }
 
-// Delete removes from new store. Returns ErrNotFound if the record is not there yet — caller falls back to legacy.
+// Delete soft-deletes in the new store. Returns ErrNotFound if the record is not
+// there yet (caller falls back to legacy) or ErrGone if it was already deleted.
 func (h *MigrationProxy) Delete(ctx context.Context, orgID int64, annotationID int64) error {
 	existing, err := h.client.GetByLegacyID(ctx, orgID, annotationID)
 	if err != nil {
 		return err
 	}
+	if existing.GetDeletionTimestamp() != nil {
+		return ErrGone
+	}
 	return h.client.Delete(ctx, orgID, existing.GetName())
 }
 
-// TODO: soft-delete not yet implemented
+// Get reads a single annotation from the new store. Returns ErrNotFound if the
+// record is not there yet (caller falls back to legacy) or ErrGone if it was
+// soft-deleted (caller must not fall back).
 func (h *MigrationProxy) Get(ctx context.Context, orgID int64, annotationID int64) (*annotations.ItemDTO, error) {
 	anno, err := h.client.GetByLegacyID(ctx, orgID, annotationID)
 	if err != nil {
 		return nil, err
+	}
+	if anno.GetDeletionTimestamp() != nil {
+		return nil, ErrGone
 	}
 
 	dto, err := annoToItemDTO(anno)
@@ -237,6 +254,10 @@ func annoToItemDTO(anno *annotationV0.Annotation) (*annotations.ItemDTO, error) 
 	}
 	if anno.Spec.TimeEnd != nil {
 		dto.TimeEnd = *anno.Spec.TimeEnd
+	} else {
+		// Set TimeEnd to Time for point annotations to align with the legacy API response,
+		// so the downsteam Merge sorts new-store and legacy-store points consistently.
+		dto.TimeEnd = anno.Spec.Time
 	}
 	if anno.Spec.PanelID != nil {
 		dto.PanelID = *anno.Spec.PanelID

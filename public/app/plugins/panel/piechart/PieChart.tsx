@@ -377,6 +377,7 @@ function PieLabel({ arc, outerRadius, innerRadius, displayLabels, total, color, 
   return (
     <g className={getSvgStyle(highlightState, styles)}>
       <text
+        data-testid={selectors.components.Panels.Visualization.PieChart.svgLabel}
         fill={color}
         x={labelX}
         y={labelY}

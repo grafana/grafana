@@ -35,7 +35,7 @@ func (f *fakeSettingsLister) List(_ context.Context, selector metav1.LabelSelect
 var provider = oftesting.NewTestProvider()
 
 func TestMain(m *testing.M) {
-	if err := openfeature.SetProvider(provider); err != nil {
+	if err := openfeature.SetProviderAndWait(provider); err != nil {
 		panic(err)
 	}
 

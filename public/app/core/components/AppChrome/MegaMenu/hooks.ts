@@ -197,7 +197,7 @@ const usePinning = ({
   // Reorder the pinned entries (staged; persisted on save). Each entry is one pinned url, so this is
   // a plain move within the stored url list.
   const onReorderPinned = useCallback((fromIndex: number, toIndex: number) => {
-    reportInteraction('grafana_nav_pinned_reordered');
+    reportInteraction('grafana_nav_pinned_reordered', { ...getNavExperimentPayload() });
     setDraftPinnedUrls((current) => moveItem(current, fromIndex, toIndex));
   }, []);
 
@@ -244,6 +244,11 @@ const useHiddenSections = ({
   const onToggleHidden = useCallback(
     (item: NavModelItem, effectivelyHidden: boolean) => {
       const key = hiddenKey(item);
+      // effectivelyHidden means the item is currently hidden, so this toggle reveals it; otherwise it hides it.
+      reportInteraction(effectivelyHidden ? 'grafana_nav_item_shown' : 'grafana_nav_item_hidden', {
+        path: item.url ?? item.id,
+        ...getNavExperimentPayload(),
+      });
       setDraftHiddenIds((current) =>
         effectivelyHidden ? revealItem(current, baseItems, key) : hideItem(current, baseItems, key)
       );
@@ -278,7 +283,7 @@ const useSectionOrdering = ({
 
   const onReorderSection = useCallback(
     (fromIndex: number, toIndex: number) => {
-      reportInteraction('grafana_nav_section_reordered');
+      reportInteraction('grafana_nav_section_reordered', { ...getNavExperimentPayload() });
       setDraftSectionOrder((current) => reorderSections(baseItems, current, fromIndex, toIndex));
     },
     [baseItems]
@@ -446,6 +451,7 @@ export const useNavCustomization = () => {
     reportInteraction('grafana_nav_customise_saved', {
       hiddenCount: draftHiddenIds.length,
       pinnedCount: draftPinnedUrls.length,
+      ...getNavExperimentPayload(),
     });
     setEditMode(false);
   }, [commitPinning, commitHiding, commitOrdering, draftHiddenIds, draftPinnedUrls]);
@@ -455,7 +461,7 @@ export const useNavCustomization = () => {
 
   // Stage the reset (cleared on save, discarded on cancel) rather than persisting immediately.
   const onResetToDefault = useCallback(() => {
-    reportInteraction('grafana_nav_customise_reset');
+    reportInteraction('grafana_nav_customise_reset', { ...getNavExperimentPayload() });
     resetPinning();
     resetHiding();
     resetOrdering();

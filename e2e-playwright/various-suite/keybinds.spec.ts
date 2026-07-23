@@ -101,6 +101,7 @@ test.describe(
         .waitFor({ state: 'visible' });
 
       // Test the keyboard shortcut first in the main dashboard view
+      await page.waitForURL('/dashboard/new?orgId=1&from=now-6h&to=now&timezone=browser');
       const currentUrl = page.url();
       const modKey = process.platform === 'darwin' ? 'Meta' : 'Control';
 

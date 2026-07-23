@@ -99,6 +99,7 @@ export type SpanDetailRowProps = {
   traceToProfilesOptions?: TraceToProfilesOptions;
   timeZone: TimeZone;
   tagsToggle: (spanID: string) => void;
+  summaryAttributesToggle: (spanID: string) => void;
   traceStartTime: number;
   traceDuration: number;
   traceName: string;
@@ -134,6 +135,7 @@ const UnthemedSpanDetailRow = React.memo<SpanDetailRowProps>((props) => {
     traceToProfilesOptions,
     timeZone,
     tagsToggle,
+    summaryAttributesToggle,
     traceStartTime,
     traceDuration,
     traceName,
@@ -186,6 +188,7 @@ const UnthemedSpanDetailRow = React.memo<SpanDetailRowProps>((props) => {
               traceToProfilesOptions={traceToProfilesOptions}
               timeZone={timeZone}
               tagsToggle={tagsToggle}
+              summaryAttributesToggle={summaryAttributesToggle}
               traceStartTime={traceStartTime}
               traceDuration={traceDuration}
               traceName={traceName}

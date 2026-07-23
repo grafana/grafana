@@ -3528,6 +3528,14 @@
             "type": "string",
             "default": ""
           },
+          "externalAuthModules": {
+            "description": "Auth module identifiers the user is externally synced with.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          },
           "internalId": {
             "description": "Deprecated internal (legacy SQL) id of the user.",
             "type": "integer",

@@ -170,26 +170,6 @@ datasources:
     secureJsonData:
       password: password
 
-  - name: gdev-postgres
-    type: postgres
-    url: localhost:5432
-    user: grafana
-    secureJsonData:
-      password: password
-    jsonData:
-      sslmode: 'disable'
-      database: grafana
-
-  - name: gdev-postgres-ds-tests
-    type: postgres
-    url: localhost:5432
-    user: grafanatest
-    secureJsonData:
-      password: grafanatest
-    jsonData:
-      sslmode: 'disable'
-      database: grafanadstest
-
   - name: gdev-cloudwatch
     uid: gdev-cloudwatch
     type: cloudwatch
@@ -206,9 +186,6 @@ datasources:
     url: http://localhost:3100
     editable: false
     correlations:
-      - targetUID: gdev-jaeger
-        label: 'Jaeger traces'
-        description: 'Related traces stored in Jaeger'
       - targetUID: gdev-prometheus
         label: 'Logs to metrics'
         description: 'Related metrics stored in Prometheus'
@@ -219,18 +196,6 @@ datasources:
           field: 'traceID'
     jsonData:
       manageAlerts: false
-      derivedFields:
-        - name: 'traceID'
-          matcherRegex: "traceID=(\\w+)"
-          url: '$${__value.raw}'
-          datasourceUid: gdev-jaeger
-
-  - name: gdev-jaeger
-    type: jaeger
-    uid: gdev-jaeger
-    access: proxy
-    url: http://localhost:16686
-    editable: false
 
   - name: gdev-e2etestdatasource
     type: grafana-e2etest-datasource

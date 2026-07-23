@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -18,24 +17,27 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/marketplacelicensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 )
 
 var _ envvars.Provider = (*EnvVarsProvider)(nil)
 
 type EnvVarsProvider struct {
-	cfg         *PluginInstanceCfg
-	license     plugins.Licensing
-	logger      log.Logger
-	ssoSettings pluginsso.SettingsProvider
+	cfg                  *PluginInstanceCfg
+	license              plugins.Licensing
+	marketplaceLicensing marketplacelicensing.Licensing
+	logger               log.Logger
+	ssoSettings          pluginsso.SettingsProvider
 }
 
-func NewEnvVarsProvider(cfg *PluginInstanceCfg, license plugins.Licensing, ssoSettings pluginsso.SettingsProvider) *EnvVarsProvider {
+func NewEnvVarsProvider(cfg *PluginInstanceCfg, license plugins.Licensing, ssoSettings pluginsso.SettingsProvider, marketplace marketplacelicensing.Licensing) *EnvVarsProvider {
 	return &EnvVarsProvider{
-		cfg:         cfg,
-		license:     license,
-		logger:      log.New("plugins.envvars"),
-		ssoSettings: ssoSettings,
+		cfg:                  cfg,
+		license:              license,
+		logger:               log.New("plugins.envvars"),
+		marketplaceLicensing: marketplace,
+		ssoSettings:          ssoSettings,
 	}
 }
 
@@ -67,7 +69,11 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 	}
 
 	hostEnv = append(hostEnv, p.featureToggleEnableVars(ctx)...)
-	hostEnv = append(hostEnv, p.marketplaceLicenseEnvVars(ctx, plugin.PluginID())...)
+
+	marketplaceEnvVars := p.marketplaceLicenseEnvVars(ctx, plugin.PluginID())
+	p.logger.Debug("Providing marketplace env vars", "pluginId", plugin.PluginID(), "envVars", envVarNames(marketplaceEnvVars))
+	hostEnv = append(hostEnv, marketplaceEnvVars...)
+
 	hostEnv = append(hostEnv, p.awsEnvVars(plugin.PluginID())...)
 	hostEnv = append(hostEnv, p.secureSocksProxyEnvVars()...)
 	azureSettings := p.getAzureSettings()
@@ -87,41 +93,39 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 }
 
 func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginID string) []string {
-	if p.cfg.Features == nil || !p.cfg.Features.GetEnabled(ctx)[featuremgmt.FlagPluginsMarketplaceLicensing] || p.cfg.MarketplaceLicenseDirectory == "" {
+	// Marketplace plugins require feature toggle and a valid Enterprise license
+	if p.cfg.Features == nil || !p.cfg.Features.GetEnabled(ctx)[featuremgmt.FlagPluginsMarketplaceLicensing] {
 		return nil
 	}
 	if p.license == nil || !p.license.HasValidLicense() {
 		return nil
 	}
 
-	licensePath, ok := marketplaceLicenseFilePath(p.cfg.MarketplaceLicenseDirectory, pluginID)
-	if !ok {
+	// Try to get the license token, falling-back to the JWT path on disk if token is not available.
+	token, err := p.marketplaceLicensing.LicenseToken(ctx, pluginID)
+	if err != nil {
+		p.logger.Warn("Failed to get marketplace license token, falling-back to disk license", "pluginId", pluginID, "error", err)
+		token = ""
+	}
+	var licensePath string
+	var hasPath bool
+	if p.cfg.MarketplaceLicenseDirectory != "" {
+		licensePath, hasPath = marketplacelicensing.LicensePath(p.cfg.MarketplaceLicenseDirectory, pluginID)
+	}
+	if token == "" && !hasPath {
 		return nil
 	}
 
-	return []string{
-		p.envVar("GF_MARKETPLACE_LICENSE_PATH", licensePath),
-		p.envVar("GF_MARKETPLACE_APP_URL", p.cfg.GrafanaAppURL),
+	// Pass the most relevant marketplace license information to the plugin.
+	// The SDK gives higher priority to the license token over the license path.
+	variables := []string{p.envVar("GF_MARKETPLACE_APP_URL", p.marketplaceLicensing.AppURL())}
+	if token != "" {
+		variables = append(variables, p.envVar("GF_MARKETPLACE_LICENSE_TEXT", token))
 	}
-}
-
-func marketplaceLicenseFilePath(directory, pluginID string) (string, bool) {
-	if pluginID == "" || pluginID == "." || pluginID == ".." || strings.Contains(pluginID, "\x00") ||
-		strings.ContainsAny(pluginID, "/\\:") || filepath.IsAbs(pluginID) || filepath.Base(pluginID) != pluginID {
-		return "", false
+	if hasPath {
+		variables = append(variables, p.envVar("GF_MARKETPLACE_LICENSE_PATH", licensePath))
 	}
-
-	absDirectory, err := filepath.Abs(directory)
-	if err != nil {
-		return "", false
-	}
-	absDirectory = filepath.Clean(absDirectory)
-	licensePath := filepath.Join(absDirectory, "license-"+pluginID+".jwt")
-	if filepath.Dir(licensePath) != absDirectory {
-		return "", false
-	}
-
-	return licensePath, true
+	return variables
 }
 
 func (p *EnvVarsProvider) featureToggleEnableVars(ctx context.Context) []string {
@@ -308,11 +312,24 @@ func (p *EnvVarsProvider) pluginSettingsEnvVars(pluginID string) []string {
 	return env
 }
 
+// envVar returns a string in the format "key=value" for an environment variable.
 func (p *EnvVarsProvider) envVar(key, value string) string {
 	if strings.Contains(value, "\x00") {
 		p.logger.Error("Variable with key '%s' contains NUL", key)
 	}
 	return fmt.Sprintf("%s=%s", key, value)
+}
+
+// envVarNames returns the names of the environment variables from a list of "key=value" strings.
+func envVarNames(envVars []string) []string {
+	names := make([]string, 0, len(envVars))
+	for _, envVar := range envVars {
+		parts := strings.SplitN(envVar, "=", 2)
+		if len(parts) > 0 {
+			names = append(names, parts[0])
+		}
+	}
+	return names
 }
 
 func (p *EnvVarsProvider) getAzureSettings() *azsettings.AzureSettings {

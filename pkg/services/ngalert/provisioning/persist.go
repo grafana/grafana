@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -14,6 +15,9 @@ type alertmanagerConfigStore interface {
 }
 
 // ProvisioningStore is a store of provisioning data for arbitrary objects.
+// It also carries richer manager properties (kind + identity) for app-platform
+// consumers, with the legacy provenance column kept in sync for backwards
+// compatibility.
 //
 //go:generate mockery --name ProvisioningStore --structname MockProvisioningStore --inpackage --filename provisioning_store_mock.go --with-expecter
 type ProvisioningStore interface {
@@ -22,6 +26,19 @@ type ProvisioningStore interface {
 	GetProvenancesByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]models.Provenance, error)
 	SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
 	DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error
+
+	// GetManagerProperties returns the full ManagerProperties for an object.
+	// For rows written by legacy code (manager_kind is empty), it falls back to
+	// deriving ManagerProperties from the provenance column.
+	GetManagerProperties(ctx context.Context, o models.Provisionable, org int64) (utils.ManagerProperties, error)
+
+	// GetManagerPropertiesByUIDs returns ManagerProperties for specific UIDs of a resource type.
+	GetManagerPropertiesByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]utils.ManagerProperties, error)
+
+	// SetManagerProperties stores ManagerProperties for an object, also deriving and
+	// storing the legacy provenance column for backwards compatibility.
+	// Prefer this over SetProvenance when the caller has full manager info.
+	SetManagerProperties(ctx context.Context, o models.Provisionable, org int64, m utils.ManagerProperties) error
 }
 
 // TransactionManager represents the ability to issue and close transactions through contexts.

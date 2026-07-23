@@ -51,7 +51,9 @@ jobs:
               scope=grafana
               ;;
             grafana/grafana-enterprise)
-              app=grafana-pr-automation
+              # Must be grafana-enterprise-writer: the writer-enterprise-* permission-sets
+              # request workflows:write, which grafana-pr-automation does not have.
+              app=grafana-enterprise-writer
               scope=enterprise
               ;;
             *)

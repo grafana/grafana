@@ -298,6 +298,11 @@ export const Examples = () => {
               />
             ),
           })}
+          {renderPanel('Content', {
+            title: 'With empty subheader element',
+            menu,
+            subHeaderContent: <></>,
+          })}
         </Stack>
       </div>
     </DashboardStoryCanvas>

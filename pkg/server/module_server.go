@@ -360,7 +360,7 @@ func (s *ModuleServer) initUnifiedBackendModule(storageServerEnabled bool) func(
 			if err != nil {
 				return nil, err
 			}
-			opts := []sql.StorageBackendOption{sql.WithEventPublisher(s.natsPublisher)}
+			opts := []sql.StorageBackendOption{sql.WithEventPublisher(s.natsPublisher), sql.WithVectorBackend(s.vectorBackend)}
 			if s.cfg.NATS.Notifier && s.natsSubscriber != nil {
 				opts = append(opts, sql.WithNatsNotifier(natsEventSubscriber{s.natsSubscriber}))
 			} else if s.cfg.NATS.NotifierShadow && s.natsSubscriber != nil {

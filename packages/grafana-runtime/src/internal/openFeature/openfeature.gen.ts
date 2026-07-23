@@ -33,8 +33,6 @@ export const FlagKeys = {
   DashboardSectionVariables: "dashboardSectionVariables",
   /** Enables the Assistant button in the dashboard templates card */
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
-  /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
-  DashboardsFilterablePanels: "dashboards.filterablePanels",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
   DatasourcesApiserverUseNewAPIsForDatasourceResources: "datasources.apiserver.useNewAPIsForDatasourceResources",
   /** Use the new datasource API groups for datasource CRUD requests, frontend flag */
@@ -59,6 +57,10 @@ export const FlagKeys = {
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
+  /** Enables the sidebar in Explore metrics (Metrics Drilldown) */
+  GrafanaExploreMetricsSidebar: "grafana.exploreMetricsSidebar",
+  /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
+  GrafanaFilterablePanels: "grafana.filterablePanels",
   /** Enables PLG-focused growth redesign of the unified homepage */
   GrafanaGrowthHomepage: "grafana.growthHomepage",
   /** Enables usage of the new annotations API client */
@@ -71,6 +73,8 @@ export const FlagKeys = {
   GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
+  /** Enables the new text panel */
+  GrafanaNewTextPanel: "grafana.newTextPanel",
   /** Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more */
   GrafanaOnDemandDiagnostics: "grafana.onDemandDiagnostics",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
@@ -135,6 +139,8 @@ export const FlagKeys = {
   SplashScreen: "splashScreen",
   /** Enables CodeMirror editor for SQL Expressions */
   SqlExpressionsCodeMirror: "sqlExpressionsCodeMirror",
+  /** Enables column autocomplete for SQL Expressions */
+  SqlExpressionsColumnAutoComplete: "sqlExpressionsColumnAutoComplete",
   /** Enables option to position series names above bars in the state timeline panel */
   StateTimelineNameAboveBars: "stateTimeline.nameAboveBars",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
@@ -255,17 +261,6 @@ export const useFlagDashboardSectionVariables = (options?: ReactFlagEvaluationOp
  */
 export const useFlagDashboardTemplatesAssistantButton = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboardTemplatesAssistantButton", false, options).value;
-};
-
-/**
- * Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels
- *
- * **Details:**
- * - flag key: `dashboards.filterablePanels`
- * - default value: `false`
- */
-export const useFlagDashboardsFilterablePanels = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("dashboards.filterablePanels", false, options).value;
 };
 
 /**
@@ -401,6 +396,28 @@ export const useFlagGrafanaEnableScopesFirstMode = (options?: ReactFlagEvaluatio
 };
 
 /**
+ * Enables the sidebar in Explore metrics (Metrics Drilldown)
+ *
+ * **Details:**
+ * - flag key: `grafana.exploreMetricsSidebar`
+ * - default value: `false`
+ */
+export const useFlagGrafanaExploreMetricsSidebar = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.exploreMetricsSidebar", false, options).value;
+};
+
+/**
+ * Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels
+ *
+ * **Details:**
+ * - flag key: `grafana.filterablePanels`
+ * - default value: `false`
+ */
+export const useFlagGrafanaFilterablePanels = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.filterablePanels", false, options).value;
+};
+
+/**
  * Enables PLG-focused growth redesign of the unified homepage
  *
  * **Details:**
@@ -464,6 +481,17 @@ export const useFlagGrafanaNewPanelQueryErrorsUI = (options?: ReactFlagEvaluatio
  */
 export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.newPreferencesPage", true, options).value;
+};
+
+/**
+ * Enables the new text panel
+ *
+ * **Details:**
+ * - flag key: `grafana.newTextPanel`
+ * - default value: `false`
+ */
+export const useFlagGrafanaNewTextPanel = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.newTextPanel", false, options).value;
 };
 
 /**
@@ -816,6 +844,17 @@ export const useFlagSplashScreen = (options?: ReactFlagEvaluationOptions): boole
  */
 export const useFlagSqlExpressionsCodeMirror = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("sqlExpressionsCodeMirror", false, options).value;
+};
+
+/**
+ * Enables column autocomplete for SQL Expressions
+ *
+ * **Details:**
+ * - flag key: `sqlExpressionsColumnAutoComplete`
+ * - default value: `false`
+ */
+export const useFlagSqlExpressionsColumnAutoComplete = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("sqlExpressionsColumnAutoComplete", false, options).value;
 };
 
 /**

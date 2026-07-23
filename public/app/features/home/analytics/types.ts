@@ -22,6 +22,13 @@ export interface RecommendationEnableClicked extends EventProperty {
   source: 'card' | 'pill';
 }
 
+export interface NoDataCtaClicked extends EventProperty {
+  /** Which control on the no-data recommendation card was clicked. */
+  cta: 'connect_data_source' | 'solution';
+  /** Stable id of the popular solution (solution clicks only). */
+  solution_id?: string;
+}
+
 export interface AlertsCardClicked extends EventProperty {
   /** Which control on the Firing alerts card was clicked. */
   action: 'alert_detail' | 'create_rule' | 'view_all_alerts' | 'view_all_rules';

@@ -221,6 +221,16 @@ type MigrateJobOptions struct {
 	// backwards compatibility and is only used when JobSpec.Message is empty.
 	Message string `json:"message,omitempty"`
 
+	// Target branch for the migration (git only). When set to a branch other
+	// than the repository's configured branch, the migration writes the exported
+	// resources to that branch (a pull request workflow) and removes the migrated
+	// resources from the instance instead of taking ownership of them — they
+	// return as managed resources once the branch is merged and a regular sync
+	// runs on the configured branch. When empty (or equal to the configured
+	// branch), the migration writes directly to the configured branch and takes
+	// ownership of the exported resources.
+	Branch string `json:"branch,omitempty"`
+
 	// Resources to migrate. When empty, every unmanaged resource in the namespace
 	// is migrated (legacy behavior). When non-empty, only the listed resources
 	// are exported to the repository — the folder hierarchy is still emitted so
@@ -234,6 +244,13 @@ type MigrateJobOptions struct {
 	// existing folder UID. The subsequent pull creates new folders rather than
 	// taking over the originals. Has no effect when folder metadata is not written.
 	GenerateNewFolderIDs bool `json:"generateNewFolderIDs,omitempty"`
+
+	// SkipResourceDeletion keeps the migrated resources on the instance instead of
+	// removing them. By default a migration deletes the resources it moved (the
+	// whole namespace for an instance target, or the exported resources for a
+	// branch migration); when true, no deletion happens and the resources are
+	// left in place.
+	SkipResourceDeletion bool `json:"skipResourceDeletion,omitempty"`
 }
 
 func (MigrateJobOptions) OpenAPIModelName() string {

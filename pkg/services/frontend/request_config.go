@@ -95,6 +95,16 @@ func NewFSRequestConfig(ctx context.Context, cfg *setting.Cfg, license licensing
 			return FSRequestConfig{}, err
 		}
 
+		// TEMPORARY CODE
+		// Hardcode "Login with Grafana.com" until dynamic SSO settings are available
+		fullFrontendSettings.Oauth = map[string]any{
+			"grafana_com": map[string]any{
+				"icon": "grafana",
+				"name": "Grafana.com",
+			},
+		}
+		fullFrontendSettings.DisableLoginForm = true
+
 		requestConfig.FullFrontendSettings = fullFrontendSettings
 	}
 

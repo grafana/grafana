@@ -59,6 +59,20 @@ func V18(_ context.Context, dashboard map[string]interface{}) error {
 		}
 
 		migrateGaugePanelOptions(panel)
+
+		// Handle nested panels in collapsed rows
+		if !IsArray(panel["panels"]) {
+			continue
+		}
+		nestedPanels := panel["panels"].([]interface{})
+
+		for _, nestedPanel := range nestedPanels {
+			np, ok := nestedPanel.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			migrateGaugePanelOptions(np)
+		}
 	}
 
 	return nil

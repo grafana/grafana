@@ -271,3 +271,35 @@ func TestSearchFieldsForManifests(t *testing.T) {
 	require.NotEmpty(t, hashes)
 	require.NotEmpty(t, selectable)
 }
+
+func TestApplyManifests(t *testing.T) {
+	registry := NewSearchFieldsRegistry(nil, nil, nil)
+	builtin := []app.Manifest{
+		mergeTestManifest("builtin", "a.test", app.ManifestVersion{Name: "v1", Kinds: []app.ManifestVersionKind{mergeTestKind("Foo", "builtinfield")}}),
+	}
+	require.NoError(t, ApplyManifests(registry, builtin, nil))
+
+	key := NewLowerGroupResource("a.test", "foos")
+	gvr := schema.GroupVersionResource{Group: "a.test", Version: "v1", Resource: "foos"}
+	_, hashBuiltin, provider := registry.For(key)
+	require.NotNil(t, provider)
+	require.NotEmpty(t, hashBuiltin)
+
+	// A live source overrides the same kind with a different field. The registry
+	// must reflect the live declaration and its hash must change.
+	live := []app.Manifest{
+		mergeTestManifest("live", "a.test", app.ManifestVersion{Name: "v1", Kinds: []app.ManifestVersionKind{mergeTestKind("Foo", "livefield")}}),
+	}
+	require.NoError(t, ApplyManifests(registry, builtin, live))
+
+	_, hashLive, provider := registry.For(key)
+	require.NotEqual(t, hashBuiltin, hashLive)
+
+	fields := provider.Fields(gvr)
+	names := make([]string, 0, len(fields))
+	for _, f := range fields {
+		names = append(names, f.Name)
+	}
+	require.Contains(t, names, "livefield")
+	require.NotContains(t, names, "builtinfield")
+}

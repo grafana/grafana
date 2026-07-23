@@ -157,6 +157,19 @@ func SearchFieldsHashesForProviders(providers map[LowerGroupResource]SearchField
 	return out
 }
 
+// ApplyManifests rebuilds the registry from the built-in and live manifest sets
+// and swaps them in. On error the registry is left unchanged, so a bad reload
+// keeps the current search fields.
+func ApplyManifests(registry *SearchFieldsRegistry, builtin, live []app.Manifest) error {
+	merged := MergeManifestsByKind(builtin, live)
+	selectable, hashes, providers, err := SearchFieldsForManifests(merged)
+	if err != nil {
+		return err
+	}
+	registry.Replace(selectable, hashes, providers)
+	return nil
+}
+
 // SearchFieldsForManifests builds a SearchFieldsRegistry's three inputs from one
 // manifest list, so a reload can rebuild them together and keep them consistent.
 func SearchFieldsForManifests(manifests []app.Manifest) (

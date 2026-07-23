@@ -110,14 +110,6 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/jaeger/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Jaeger"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/datasource/loki/**/*",
       "pkg/tsdb/loki/**/*"
     ],
@@ -132,15 +124,6 @@
     ],
     "action": "updateLabel",
     "addLabel": "datasource/MySQL"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/grafana-postgresql-datasource/**/*",
-      "pkg/tsdb/grafana-postgresql-datasource/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Postgres"
   },
   {
     "type": "changedfiles",

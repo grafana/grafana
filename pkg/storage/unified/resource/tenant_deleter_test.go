@@ -128,6 +128,20 @@ func (f *failOnceBatchDeleteKV) Batch(ctx context.Context, section string, ops [
 	return f.KV.Batch(ctx, section, ops)
 }
 
+// fakeEmbeddingDeleter records DeleteNamespace calls and optionally returns an error.
+type fakeEmbeddingDeleter struct {
+	calls []string
+	err   error
+}
+
+func (f *fakeEmbeddingDeleter) DeleteNamespace(_ context.Context, namespace string) (int64, error) {
+	f.calls = append(f.calls, namespace)
+	if f.err != nil {
+		return 0, f.err
+	}
+	return int64(len(f.calls)), nil
+}
+
 func newTestTenantDeleter(t *testing.T, dryRun bool) (*TenantDeleter, *dataStore, *PendingDeleteStore) {
 	t.Helper()
 	kv := setupBadgerKV(t)
@@ -146,7 +160,7 @@ func newTestTenantDeleter(t *testing.T, dryRun bool) (*TenantDeleter, *dataStore
 			},
 		},
 	}
-	td := NewTenantDeleter(ds, pds, cfg)
+	td := NewTenantDeleter(ds, pds, cfg, &fakeEmbeddingDeleter{})
 	return td, ds, pds
 }
 
@@ -414,7 +428,7 @@ func TestRunDeletionPass_IdempotentAfterPartialFailure(t *testing.T) {
 			},
 		},
 	}
-	td := NewTenantDeleter(ds, pds, cfg)
+	td := NewTenantDeleter(ds, pds, cfg, nil)
 
 	// Create data across two group/resources.
 	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
@@ -537,6 +551,100 @@ func TestDeleteTenant_MultipleGroupResources(t *testing.T) {
 	assert.NotEmpty(t, record.DeletedAt, "DeletedAt should be set after successful deletion")
 }
 
+// TestDeleteTenant_DeletesEmbeddings verifies deleteTenant wipes the tenant's
+// embeddings via the vector backend on a real (non-dry) run.
+func TestDeleteTenant_DeletesEmbeddings(t *testing.T) {
+	td, ds, pds := newTestTenantDeleter(t, false)
+	fake := td.embeddingDeleter.(*fakeEmbeddingDeleter)
+
+	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
+	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{DeleteAfter: pastTime()}))
+
+	groupResources, err := ds.getGroupResources(t.Context())
+	require.NoError(t, err)
+
+	require.NoError(t, td.deleteTenant(t.Context(), testStacksNS1, groupResources))
+	assert.Equal(t, []string{testStacksNS1}, fake.calls, "embeddings should be deleted for the tenant namespace")
+}
+
+// TestDeleteTenant_DryRunSkipsEmbeddings verifies dry-run mode does not touch
+// the vector backend.
+func TestDeleteTenant_DryRunSkipsEmbeddings(t *testing.T) {
+	td, ds, pds := newTestTenantDeleter(t, true)
+	fake := td.embeddingDeleter.(*fakeEmbeddingDeleter)
+
+	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
+	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{DeleteAfter: pastTime()}))
+
+	groupResources, err := ds.getGroupResources(t.Context())
+	require.NoError(t, err)
+
+	require.NoError(t, td.deleteTenant(t.Context(), testStacksNS1, groupResources))
+	assert.Empty(t, fake.calls, "dry run must not delete embeddings")
+}
+
+// TestDeleteTenant_NilEmbeddingDeleter verifies a nil vector backend (disabled)
+// is a no-op and does not break tenant deletion.
+func TestDeleteTenant_NilEmbeddingDeleter(t *testing.T) {
+	kv := setupBadgerKV(t)
+	ds := newDataStore(kv, nil)
+	pds := newPendingDeleteStore(kv)
+	td := NewTenantDeleter(ds, pds, TenantDeleterConfig{
+		DryRun:   false,
+		Interval: time.Hour,
+		Log:      log.NewNopLogger(),
+	}, nil)
+
+	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
+	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{DeleteAfter: pastTime()}))
+
+	groupResources, err := ds.getGroupResources(t.Context())
+	require.NoError(t, err)
+
+	require.NoError(t, td.deleteTenant(t.Context(), testStacksNS1, groupResources), "nil embedding deleter must be a no-op")
+}
+
+// TestDeleteTenant_EmbeddingErrorRetries verifies a vector-store failure aborts
+// deleteTenant before the pending record is stamped, so the (idempotent) tenant
+// deletion is retried on a later pass instead of leaving embeddings behind.
+func TestDeleteTenant_EmbeddingErrorRetries(t *testing.T) {
+	td, ds, pds := newTestTenantDeleter(t, false)
+	fake := td.embeddingDeleter.(*fakeEmbeddingDeleter)
+	fake.err = fmt.Errorf("vector store down")
+
+	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
+	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{DeleteAfter: pastTime()}))
+
+	groupResources, err := ds.getGroupResources(t.Context())
+	require.NoError(t, err)
+
+	require.Error(t, td.deleteTenant(t.Context(), testStacksNS1, groupResources), "embedding failure must abort deletion")
+
+	// KV data deletion runs first and is idempotent, so it is already gone.
+	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: testStacksNS1}
+	prefix := listKey.Prefix()
+	var count int
+	for _, err := range ds.kv.Keys(t.Context(), dataSection, ListOptions{StartKey: prefix, EndKey: PrefixRangeEnd(prefix)}) {
+		require.NoError(t, err)
+		count++
+	}
+	assert.Equal(t, 0, count, "KV data should still be deleted despite embedding failure")
+
+	// Pending record must remain unstamped so the tenant is retried.
+	record, err := pds.Get(t.Context(), testStacksNS1)
+	require.NoError(t, err)
+	assert.Empty(t, record.DeletedAt, "DeletedAt must not be set when embedding cleanup fails")
+
+	// A retry with a healthy vector store completes the deletion.
+	fake.err = nil
+	require.NoError(t, td.deleteTenant(t.Context(), testStacksNS1, groupResources))
+	assert.Equal(t, []string{testStacksNS1, testStacksNS1}, fake.calls, "embeddings retried on the second pass")
+
+	record, err = pds.Get(t.Context(), testStacksNS1)
+	require.NoError(t, err)
+	assert.NotEmpty(t, record.DeletedAt, "DeletedAt should be set after a successful retry")
+}
+
 // TestRunDeletionPass_DeletesExpiredOrphanedRecord verifies that the deleter
 // removes both tenant data and the pending-delete record for orphaned tenants.
 func TestRunDeletionPass_DeletesExpiredOrphanedRecord(t *testing.T) {
@@ -585,7 +693,7 @@ func TestRunDeletionPass_AllowsWhenGcomReturnsDeletedStatus(t *testing.T) {
 				return gcom.Instance{ID: 1, Slug: "test", Status: "deleted"}, nil
 			},
 		},
-	})
+	}, nil)
 
 	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
 	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{DeleteAfter: pastTime()}))
@@ -625,7 +733,7 @@ func TestRunDeletionPass_SkipsWhenGcomInstanceStillExists(t *testing.T) {
 				return gcom.Instance{ID: 42, Slug: "active-stack", Status: "active"}, nil
 			},
 		},
-	})
+	}, nil)
 
 	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
 	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{DeleteAfter: pastTime()}))
@@ -664,7 +772,7 @@ func TestRunDeletionPass_SkipsWhenGcomCheckFails(t *testing.T) {
 				return gcom.Instance{}, fmt.Errorf("injected GCOM transport error")
 			},
 		},
-	})
+	}, nil)
 
 	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
 	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{DeleteAfter: pastTime()}))
@@ -704,7 +812,7 @@ func TestRunDeletionPass_SkipsWhenNamespaceHasNoStackID(t *testing.T) {
 				return gcom.Instance{}, fmt.Errorf("instance not found")
 			},
 		},
-	})
+	}, nil)
 
 	const orgStyleNS = "org-999"
 	saveTestResource(t, ds, orgStyleNS, "apps", "dashboards", "dash1", 100, nil)

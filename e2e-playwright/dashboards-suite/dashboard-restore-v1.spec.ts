@@ -1,6 +1,6 @@
 import { type Page } from 'playwright-core';
 
-import { test, expect, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { test, expect, type DashboardPage, type E2ESelectorGroups, type Components } from '@grafana/plugin-e2e';
 
 import { Sidebar } from '../dashboard-new-layouts/page-objects';
 
@@ -8,8 +8,13 @@ import { makeNewDashboardRequestBody } from './utils/makeDashboard';
 
 // New-layouts has no settings toolbar button; settings open from the dashboard edit-pane
 // "Dashboard options" sidebar button, then the "View all settings" button it reveals.
-async function openDashboardSettings(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-  const sidebar = new Sidebar(page, dashboardPage, selectors);
+async function openDashboardSettings(
+  page: Page,
+  dashboardPage: DashboardPage,
+  selectors: E2ESelectorGroups,
+  components: Components
+) {
+  const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
   const editButton = dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton);
   const optionsButton = sidebar.toolbar.getButton('Options');
   // The first edit-button click can be swallowed before the scene is interactive; re-click only
@@ -143,11 +148,12 @@ test.describe(
         gotoDashboardPage,
         page,
         selectors,
+        components,
       }) => {
         const dashboardPage = await gotoDashboardPage({ uid: dashboardUID });
 
         // Enter edit mode then open settings (new-layouts flow)
-        await openDashboardSettings(page, dashboardPage, selectors);
+        await openDashboardSettings(page, dashboardPage, selectors, components);
 
         // Click delete dashboard button (settings-view element — use the grafana selector helper,
         // not getByTestId, which mis-resolves data-testid-prefixed selector values)

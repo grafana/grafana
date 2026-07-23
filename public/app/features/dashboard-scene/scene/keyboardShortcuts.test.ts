@@ -6,6 +6,7 @@ import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
 
+import { buildShareUrl } from '../sharing/ShareButton/utils';
 import { DashboardInteractions } from '../utils/interactions';
 import { findVizPanelByPathId } from '../utils/pathId';
 
@@ -20,6 +21,7 @@ jest.mock('app/core/app_events', () => ({
   },
 }));
 jest.mock('app/core/services/KeybindingSet');
+jest.mock('../sharing/ShareButton/utils');
 jest.mock('../utils/pathId', () => ({
   findVizPanelByPathId: jest.fn(),
 }));
@@ -212,6 +214,49 @@ describe('setupKeyboardShortcuts', () => {
       expect(taBinding).toBeDefined();
       expect(tLeftBinding).toBeDefined();
       expect(tRightBinding).toBeDefined();
+    });
+  });
+
+  describe('p u shortcut (copy panel share link)', () => {
+    let puHandler: () => void;
+    let focusedPanel: VizPanel;
+
+    beforeEach(() => {
+      focusedPanel = new VizPanel({ pluginId: 'timeseries' });
+      jest.mocked(findVizPanelByPathId).mockReturnValue(focusedPanel);
+      jest.spyOn(mockScene, 'showModal');
+
+      setupKeyboardShortcuts(mockScene);
+
+      // Simulate a panel gaining focus so withFocusedPanel resolves a panel.
+      const attentionHandler = jest.mocked(appEvents.subscribe).mock.calls[0][1];
+      attentionHandler(new SetPanelAttentionEvent({ panelId: 'panel-1' }));
+
+      const puBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 'p u');
+      expect(puBinding).toBeDefined();
+      puHandler = puBinding![0].onTrigger;
+    });
+
+    it('should copy the panel share link for the focused panel', async () => {
+      await puHandler();
+
+      expect(buildShareUrl).toHaveBeenCalledWith(mockScene, focusedPanel);
+    });
+
+    it('should not open a modal (drawer)', async () => {
+      await puHandler();
+
+      expect(mockScene.showModal).not.toHaveBeenCalled();
+    });
+
+    it('should do nothing when no panel is focused', async () => {
+      jest.clearAllMocks();
+      // Re-setup without dispatching a panel attention event.
+      setupKeyboardShortcuts(mockScene);
+      const puBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 'p u');
+      await puBinding![0].onTrigger();
+
+      expect(buildShareUrl).not.toHaveBeenCalled();
     });
   });
 

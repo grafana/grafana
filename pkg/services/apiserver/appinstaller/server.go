@@ -119,6 +119,10 @@ func (s *serverWrapper) configureStoragePath(
 	if dualWriteSupported {
 		if unifiedStorage, ok := storage.(grafanarest.Storage); ok {
 			log.Debug("Configuring dual writer for storage", "resource", gr.String(), "version", v, "storagePath", storagePath)
+			key := gr.String()
+			if resourceConfig, ok := s.storageOpts.UnifiedStorageConfig[key]; ok {
+				s.builderMetrics.RecordDualWriterTargetMode(gr.Resource, gr.Group, resourceConfig.DualWriterMode)
+			}
 			legacyStorage := legacyProvider.GetLegacyStorage(gr.WithVersion(v))
 			// unified must never serve an apiVersion the scheme never registered; with no
 			// legacy fallback there is nothing safe to serve, so refuse to install.
@@ -131,14 +135,7 @@ func (s *serverWrapper) configureStoragePath(
 			} else if legacyStorage == nil {
 				log.Debug("Skipping dual writer; no legacy storage", "resource", gr.String(), "version", v, "storagePath", storagePath)
 			} else {
-				storage, err = NewDualWriter(
-					gr,
-					s.storageOpts,
-					legacyStorage,
-					unifiedStorage,
-					s.dualWriteService,
-					s.builderMetrics,
-				)
+				storage, err = s.dualWriteService.NewStorage(gr, legacyStorage, unifiedStorage)
 				if err != nil {
 					return err
 				}
