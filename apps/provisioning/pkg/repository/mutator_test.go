@@ -65,7 +65,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			},
 			operation:       admission.Create,
 			minSyncInterval: 60 * time.Second,
-			wantFinalizers:  []string{RemoveOrphanResourcesFinalizer, CleanFinalizer},
+			wantFinalizers:  []string{RemoveOrphanResourcesFinalizer, RemovePendingJobsFinalizer, CleanFinalizer},
 			wantInterval:    60,
 			wantWorkflows:   []provisioning.Workflow{},
 			wantErr:         false,

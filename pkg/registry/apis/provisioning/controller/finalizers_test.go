@@ -1220,3 +1220,38 @@ func TestReleaseExistingItems_ReturnsErrorWhenConflictPersists(t *testing.T) {
 	assert.Error(t, err)
 	assert.Greater(t, atomic.LoadInt32(&calls), int32(1), "finalizer should have retried at least once before giving up")
 }
+
+// TestProcess_RemovePendingJobsFinalizer verifies that the remove-jobs finalizer clears
+// the repository's job queue via the job queue cleaner.
+func TestProcess_RemovePendingJobsFinalizer(t *testing.T) {
+	jobs := NewMockJobQueueCleaner(t)
+	jobs.On("CleanupQueue", mock.Anything, "default", "my-repo").Once().Return(3, nil)
+
+	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
+	f := &finalizer{
+		jobs:    jobs,
+		metrics: &metrics,
+	}
+
+	repo := mockRepo{name: "my-repo", namespace: "default"}
+	err := f.process(context.Background(), repo, []string{repository.RemovePendingJobsFinalizer})
+	assert.NoError(t, err)
+}
+
+// TestProcess_RemovePendingJobsFinalizer_Error verifies that a failure clearing the
+// queue is surfaced as a finalizer error.
+func TestProcess_RemovePendingJobsFinalizer_Error(t *testing.T) {
+	jobs := NewMockJobQueueCleaner(t)
+	jobs.On("CleanupQueue", mock.Anything, "default", "my-repo").Once().Return(0, assert.AnError)
+
+	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
+	f := &finalizer{
+		jobs:    jobs,
+		metrics: &metrics,
+	}
+
+	repo := mockRepo{name: "my-repo", namespace: "default"}
+	err := f.process(context.Background(), repo, []string{repository.RemovePendingJobsFinalizer})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "clear job queue")
+}
