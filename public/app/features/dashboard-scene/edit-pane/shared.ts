@@ -24,7 +24,16 @@ import { LinkEdit, LinkEditEditableElement } from '../settings/links/LinkAddEdit
 import { LocalVariableEditableElement } from '../settings/variables/LocalVariableEditableElement';
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
 import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
-import { isSceneVariable } from '../settings/variables/utils';
+import {
+  dropPredefinedVariableNamed,
+  dropShadowedPredefinedVariables,
+  isSceneVariable,
+  isVariableEditable,
+  restoreUnshadowedPredefinedVariables,
+  restoreVariableSetSnapshots,
+  snapshotVariableSetsAlongPath,
+} from '../settings/variables/utils';
+import { isPredefinedOrigin } from '../utils/predefinedVariables';
 
 import { type DashboardEditPane } from './DashboardEditPane';
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
@@ -102,6 +111,9 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined | null):
   }
 
   if (isSceneVariable(sceneObj)) {
+    if (!isVariableEditable(sceneObj)) {
+      return undefined;
+    }
     return new VariableEditableElement(sceneObj);
   }
 
@@ -216,12 +228,18 @@ export const dashboardEditActions = {
 
   addVariable({ source, addedObject }: AddVariableActionHelperProps) {
     const varsBeforeAddition = [...(source.state.variables ?? [])];
+    const name = addedObject.state.name;
 
     dashboardEditActions.addElement({
       source,
       addedObject,
       perform() {
-        source.setState({ variables: [...varsBeforeAddition, addedObject] });
+        // Stash then drop any predefined of the same name so the local wins live.
+        dropPredefinedVariableNamed(source, name);
+        const withoutShadowed = varsBeforeAddition.filter(
+          (v) => !(v.state.name === name && isPredefinedOrigin(v.state.origin))
+        );
+        source.setState({ variables: [...withoutShadowed, addedObject] });
       },
       undo() {
         source.setState({ variables: [...varsBeforeAddition] });
@@ -236,9 +254,11 @@ export const dashboardEditActions = {
       removedObject,
       perform() {
         source.setState({ variables: varsBeforeRemoval.filter((v) => v !== removedObject) });
+        // Local no longer shadows — re-inject any stashed predefined of the freed name.
+        restoreUnshadowedPredefinedVariables(source);
       },
       undo() {
-        source.setState({ variables: varsBeforeRemoval });
+        source.setState({ variables: [...varsBeforeRemoval] });
       },
     });
   },
@@ -266,10 +286,24 @@ export const dashboardEditActions = {
       },
     });
   },
-  changeVariableName: makeEditAction<SceneVariable, 'name'>({
-    description: t('dashboard.variable.name.action', 'Change variable name'),
-    prop: 'name',
-  }),
+  changeVariableName({ source, oldValue, newValue }: EditActionProps<SceneVariable, 'name'>) {
+    // Snapshot set + ancestors before mutate so undo restores drops and re-injections.
+    const snapshots = snapshotVariableSetsAlongPath(source);
+
+    dashboardEditActions.edit({
+      description: t('dashboard.variable.name.action', 'Change variable name'),
+      source,
+      perform: () => {
+        source.setState({ name: newValue });
+        restoreUnshadowedPredefinedVariables(source);
+        dropShadowedPredefinedVariables(source, newValue);
+      },
+      undo: () => {
+        source.setState({ name: oldValue });
+        restoreVariableSetSnapshots(snapshots);
+      },
+    });
+  },
   changeVariableLabel: makeEditAction<SceneVariable, 'label'>({
     description: t('dashboard.variable.label.action', 'Change variable label'),
     prop: 'label',

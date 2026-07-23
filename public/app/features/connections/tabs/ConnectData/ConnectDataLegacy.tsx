@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { PluginType, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationSearchToObject, reportInteraction } from '@grafana/runtime';
+import { locationSearchToObject } from '@grafana/runtime';
 import { LoadingPlaceholder, EmptyState, Field, RadioButtonGroup, Tooltip, Combobox, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -92,11 +92,6 @@ export function AddNewConnectionLegacy() {
       e.preventDefault();
       e.stopPropagation();
       openModal(item);
-      reportInteraction('connections_plugin_card_clicked', {
-        plugin_id: item.id,
-        creator_team: 'grafana_plugins_catalog',
-        schema_version: '1.0.0',
-      });
     }
   };
 

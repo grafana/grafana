@@ -78,8 +78,6 @@ export const ThemeComponentsInputSchema = z
       borderColor: z.string().optional(),
       boxShadow: z.string().optional(),
       background: z.string().optional(),
-      contentBackground: z.string().optional(),
-      contentBorderColor: z.string().optional(),
     }),
     dropdown: z.object({
       background: z.string().optional(),
@@ -151,8 +149,6 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
       background: colors.background.primary,
       borderColor: colors.border.weak,
       boxShadow: 'none',
-      contentBackground: colors.background.secondary,
-      contentBorderColor: colors.border.medium,
     },
     dropdown: {
       background: colors.background.elevated,

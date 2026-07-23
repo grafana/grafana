@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/gcom"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -36,6 +37,56 @@ const (
 	testStacksNS1 = "stacks-1"
 	testStacksNS2 = "stacks-2"
 )
+
+func TestNewTenantDeleterConfig(t *testing.T) {
+	t.Run("returns nil when tenant deleter is disabled", func(t *testing.T) {
+		require.Nil(t, NewTenantDeleterConfig(setting.NewCfg()))
+	})
+
+	tests := []struct {
+		name   string
+		token  string
+		apiURL string
+		want   bool
+	}{
+		{
+			name:   "configures GCOM client when token and API URL are present",
+			token:  " token ",
+			apiURL: " https://grafana.example.com/api ",
+			want:   true,
+		},
+		{
+			name:   "leaves GCOM client nil when token is missing",
+			apiURL: "https://grafana.example.com/api",
+		},
+		{
+			name:  "leaves GCOM client nil when API URL is missing",
+			token: "token",
+		},
+		{
+			name:   "leaves GCOM client nil when settings contain only whitespace",
+			token:  " ",
+			apiURL: "\t",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.EnableTenantDeleter = true
+			cfg.GrafanaComSSOAPIToken = tt.token
+			cfg.GrafanaComAPIURL = tt.apiURL
+
+			deleterCfg := NewTenantDeleterConfig(cfg)
+			require.NotNil(t, deleterCfg)
+			if tt.want {
+				require.NotNil(t, deleterCfg.Gcom)
+			} else {
+				require.Nil(t, deleterCfg.Gcom)
+			}
+		})
+	}
+}
 
 // failOnceBatchDeleteKV wraps a KV and makes BatchDelete fail on the Nth call,
 // then succeed on all subsequent calls. This simulates a transient failure

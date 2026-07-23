@@ -24,7 +24,7 @@ import { getDashboardSceneFor } from '../../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../../variables/utils';
 
 import { openAddVariablePane } from './VariableTypeSelectionPane';
-import { isEditableVariableType } from './utils';
+import { isVariableEditable } from './utils';
 
 function useEditPaneOptions(this: VariableSetEditableElement, set: SceneVariableSet): OptionsPaneCategoryDescriptor[] {
   const variableListId = useId();
@@ -58,7 +58,7 @@ export class VariableSetEditableElement implements EditableDashboardElement {
 
   public getOutlineChildren() {
     let variables = filterSectionRepeatLocalVariables(this.set.state.variables, this.set).filter((variable) =>
-      isEditableVariableType(variable.state.type)
+      isVariableEditable(variable)
     );
 
     if (config.featureToggles.dashboardUnifiedDrilldownControls) {
@@ -103,7 +103,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
 
   const editableVariables = useMemo(() => {
     return filterSectionRepeatLocalVariables(variables, set).filter((variable) => {
-      if (!isEditableVariableType(variable.state.type)) {
+      if (!isVariableEditable(variable)) {
         return false;
       }
       if (config.featureToggles.dashboardUnifiedDrilldownControls && sceneUtils.isAdHocVariable(variable)) {

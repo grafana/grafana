@@ -13,9 +13,10 @@ import {
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, locationService, RefreshEvent } from '@grafana/runtime';
+import { config, getDataSourceSrv, locationService, RefreshEvent, reportInteraction } from '@grafana/runtime';
 import { getPanelPluginMeta } from '@grafana/runtime/internal';
 import {
+  type CancelActivationHandler,
   SceneDataTransformer,
   sceneGraph,
   type SceneObject,
@@ -26,6 +27,7 @@ import {
   sceneUtils,
   type SceneVariable,
   type SceneVariableDependencyConfigLike,
+  MultiValueVariable,
   type VizPanel,
 } from '@grafana/scenes';
 import { type Dashboard, type DashboardLink, type LibraryPanel } from '@grafana/schema';
@@ -89,6 +91,7 @@ import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { DashboardInteractions } from '../utils/interactions';
 import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
+import { isPredefinedOrigin } from '../utils/predefinedVariables';
 import {
   getClosestVizPanel,
   getDashboardSceneFor,
@@ -176,11 +179,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    */
   private _changeTracker: DashboardSceneChangeTracker;
 
+  private _editPaneActivation?: CancelActivationHandler;
+
   /**
    * Remember scroll position when going into panel edit
    */
   private _scrollRef?: ScrollRefElement;
   private _prevScrollPos?: number;
+
+  /**
+   * What initiated the current edit session, e.g. the assistant building a dashboard for the user
+   */
+  private _editSessionSource?: 'user' | 'assistant';
 
   public serializer: DashboardSceneSerializerLike<
     Dashboard | DashboardV2Spec,
@@ -226,7 +236,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     if (isNew) {
-      this.onEnterEditMode();
+      // Silent CUJ signal so the dashboard_edit journey starts on /dashboard/new
+      // (the regular `dashboards_edit_button_clicked` doesn't fire here — auto-edit
+      // mode bypasses the button).
+      reportInteraction('dashboards_new_dashboard_init', {}, { silent: true });
+      // New dashboards enter edit mode on activation, before any caller can tag the
+      // session, so the initiator is carried in the url (set by the assistant when it
+      // opens the editor to build a dashboard itself)
+      const editSource = locationService.getSearchObject().editSource;
+      this.onEnterEditMode(editSource === 'assistant' ? 'assistant' : 'user');
       this.setState({ isDirty: true });
     }
 
@@ -250,6 +268,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
       this._changeTracker.terminate();
+      this.deactivateEditPane();
       oldDashboardWrapper.destroy();
       dashboardWatcher.leave();
     };
@@ -270,7 +289,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public setDefaultVariables(defaultVariables: VariableKind[]) {
     const variableSet = sceneGraph.getVariables(this);
-    const userVars = variableSet.state.variables.filter((v) => !v.state.origin);
+    // Only replace datasource-provided defaults. Variables with other origins (e.g.
+    // predefined global/folder variables) are injected elsewhere and must survive.
+    const keptVars = variableSet.state.variables.filter((v) => v.state.origin?.type !== 'datasource');
+    const keptNames = new Set(keptVars.map((v) => v.state.name));
     const defaultVarObjects = defaultVariables
       .map((v) => {
         try {
@@ -280,9 +302,50 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
           return null;
         }
       })
-      .filter((v): v is SceneVariable => Boolean(v));
+      .filter((v): v is SceneVariable => Boolean(v))
+      // Nearest scope wins: existing variables shadow incoming defaults of the same name.
+      .filter((v) => !keptNames.has(v.state.name));
 
-    variableSet.setState({ variables: [...defaultVarObjects, ...userVars] });
+    variableSet.setState({ variables: [...defaultVarObjects, ...keptVars] });
+  }
+
+  /**
+   * Replaces predefined (global/folder) variables on a live/cached scene.
+   * Used when the scene cache is reused but predefined variables were re-fetched —
+   * the scene cache has no TTL, while the predefined-variables cache is only 30s.
+   */
+  public setPredefinedVariables(predefinedVariables: VariableKind[]) {
+    const variableSet = sceneGraph.getVariables(this);
+    const previousByName = new Map(
+      variableSet.state.variables.filter((v) => isPredefinedOrigin(v.state.origin)).map((v) => [v.state.name, v])
+    );
+    const keptVars = variableSet.state.variables.filter((v) => !isPredefinedOrigin(v.state.origin));
+    const keptNames = new Set(keptVars.map((v) => v.state.name));
+    const predefinedVarObjects = predefinedVariables
+      .map((v) => {
+        try {
+          return createSceneVariableFromVariableModelV2(v);
+        } catch (err) {
+          console.error(err);
+          return null;
+        }
+      })
+      .filter((v): v is SceneVariable => Boolean(v))
+      // Nearest scope wins: dashboard-local / datasource defaults shadow predefined names.
+      .filter((v) => !keptNames.has(v.state.name))
+      .map((v) => {
+        const previous = previousByName.get(v.state.name);
+        // Preserve the user's current selection when refreshing definitions on a cached scene.
+        if (previous instanceof MultiValueVariable && v instanceof MultiValueVariable) {
+          v.setState({
+            value: previous.state.value,
+            text: previous.state.text,
+          });
+        }
+        return v;
+      });
+
+    variableSet.setState({ variables: [...predefinedVarObjects, ...keptVars] });
   }
 
   public setDefaultLinks(defaultLinks: DashboardLink[]) {
@@ -292,8 +355,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public clearDefaultControls() {
     const variableSet = sceneGraph.getVariables(this);
-    const nonDefaultVars = variableSet.state.variables.filter((v) => !v.state.origin);
-    variableSet.setState({ variables: nonDefaultVars });
+    // Predefined (global/folder) variables are not datasource defaults — keep them.
+    const keptVars = variableSet.state.variables.filter((v) => v.state.origin?.type !== 'datasource');
+    variableSet.setState({ variables: keptVars });
 
     const nonDefaultLinks = this.state.links.filter((l) => !l.origin);
     this.setState({ links: nonDefaultLinks });
@@ -301,6 +365,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public onEnterEditMode = (source: 'user' | 'assistant' = 'user') => {
     const wasEditing = this.state.isEditing;
+
+    this._editSessionSource = source;
 
     // Save this state
     this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false });
@@ -318,6 +384,30 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       DashboardInteractions.editSessionStarted({ dashboard_uid: this.state.uid, source });
     }
   };
+
+  public getEditSessionSource() {
+    return this._editSessionSource;
+  }
+
+  /**
+   * Activate the edit pane if it is not already active (e.g. not rendered), so programmatic
+   * mutations that dispatch DashboardEditActionEvents get performed. The activation is
+   * reference-counted, so we retain the handler and release it on exit (see deactivateEditPane).
+   */
+  public activateEditPane() {
+    const { editPane } = this.state;
+    if (editPane.isActive) {
+      return;
+    }
+    // Release the previous pane's activation before acquiring a new one.
+    this.deactivateEditPane();
+    this._editPaneActivation = editPane.activate();
+  }
+
+  private deactivateEditPane() {
+    this._editPaneActivation?.();
+    this._editPaneActivation = undefined;
+  }
 
   public saveCompleted(saveModel: Dashboard | DashboardV2Spec, result: SaveDashboardResponseDTO, folderUid?: string) {
     this.serializer.onSaveComplete(saveModel, result);
@@ -410,6 +500,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // No need to listen to changes anymore
     this._changeTracker.stopTrackingChanges();
 
+    // CUJ-only signal: ends dashboard_edit journey when the user actually leaves
+    // edit mode, regardless of whether changes were discarded or there were
+    // none to begin with. dashboardEditDiscarded only fires on the dirty path,
+    // so we'd otherwise lose the no-op exit case.
+    reportInteraction('dashboards_edit_exited', { restoreInitialState }, { silent: true });
+    // Release any edit pane we activated programmatically before the pane is swapped/unmounted.
+    this.deactivateEditPane();
+
     // We are updating url and removing editview and editPanel.
     // The initial url may be including edit view, edit panel or inspect query params if the user pasted the url,
     // hence we need to cleanup those query params to get back to the dashboard view. Otherwise url sync can trigger overlays.
@@ -427,6 +525,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       //  Restore initial state and disable editing
       this.setState({ ...this._initialState, isEditing: false });
       appEvents.publish(new DashboardDiscardedEvent());
+      DashboardInteractions.dashboardEditDiscarded();
     } else {
       // Do not restore
       this.setState({ isEditing: false });
@@ -461,6 +560,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // Stop tracking while we reset state.
     this._changeTracker.stopTrackingChanges();
 
+    // The restored state swaps in a cloned edit pane, so release the one we activated programmatically.
+    const hadProgrammaticEditPane = this._editPaneActivation !== undefined;
+    this.deactivateEditPane();
+
     const restoredState = sceneUtils.cloneSceneObjectState(this._initialState!, { isDirty: false });
 
     // Ensure the restored layout stays editable.
@@ -475,6 +578,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       editview: undefined,
       overlay: undefined,
     });
+
+    // We stay in edit mode, so re-activate the swapped-in pane to keep programmatic mutations working.
+    if (hadProgrammaticEditPane) {
+      this.activateEditPane();
+    }
 
     this._changeTracker.startTrackingChanges();
   }
@@ -702,6 +810,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public pastePanel() {
+    if (!store.exists(LS_PANEL_COPY_KEY)) {
+      return;
+    }
+
     if (config.featureToggles.dashboardNewLayouts) {
       const layout = getLayoutForObject(this);
       if (layout) {
@@ -896,10 +1008,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     if (!skipDataQuery && !panel.state.$data) {
+      const defaultDs = getDataSourceSrv().getInstanceSettings(null);
       panel.setState({
         $data: new SceneDataTransformer({
           $data: new SceneQueryRunner({
-            datasource: { uid: config.defaultDatasource },
+            datasource: defaultDs ? { uid: defaultDs.uid, type: defaultDs.type } : undefined, // @TODO - fixes new text panel query editor error
             queries: [{ refId: 'A' }],
           }),
           transformations: [],

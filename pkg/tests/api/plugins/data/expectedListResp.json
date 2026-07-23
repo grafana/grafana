@@ -114,6 +114,9 @@
     "name": "Annotations list",
     "type": "panel",
     "id": "annolist",
+    "aliasIDs": [
+      "ryantxu-annolist-panel"
+    ],
     "enabled": true,
     "pinned": false,
     "info": {
@@ -742,68 +745,6 @@
     "angularDetected": false
   },
   {
-    "name": "Grafana Pyroscope",
-    "type": "datasource",
-    "id": "grafana-pyroscope-datasource",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://www.grafana.com"
-      },
-      "description": "Data source for Grafana Pyroscope, horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation system.",
-      "links": [
-        {
-          "name": "GitHub Project",
-          "url": "https://github.com/grafana/pyroscope"
-        },
-        {
-          "name": "Raise issue",
-          "url": "https://github.com/grafana/pyroscope/issues/new"
-        },
-        {
-          "name": "Documentation",
-          "url": "https://grafana.com/docs/grafana/latest/datasources/pyroscope/"
-        }
-      ],
-      "logos": {
-        "small": "public/plugins/grafana-pyroscope-datasource/img/grafana_pyroscope_icon.svg",
-        "large": "public/plugins/grafana-pyroscope-datasource/img/grafana_pyroscope_icon.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "12.4.0-pre",
-      "updated": "",
-      "keywords": [
-        "grafana",
-        "datasource",
-        "phlare",
-        "flamegraph",
-        "profiling",
-        "continuous profiling",
-        "pyroscope"
-      ]
-    },
-    "dependencies": {
-      "grafanaDependency": "\u003e=12.3.0",
-      "grafanaVersion": "*",
-      "plugins": [],
-      "extensions": {
-        "exposedComponents": []
-      }
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/grafana-pyroscope-datasource/",
-    "category": "profiling",
-    "state": "",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
-  },
-  {
     "name": "Graphite",
     "type": "datasource",
     "id": "graphite",
@@ -1010,68 +951,6 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/influxdb/",
     "category": "tsdb",
-    "state": "",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
-  },
-  {
-    "name": "Jaeger",
-    "type": "datasource",
-    "id": "jaeger",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "Open source, end-to-end distributed tracing",
-      "links": [
-        {
-          "name": "Learn more",
-          "url": "https://www.jaegertracing.io"
-        },
-        {
-          "name": "Jaeger GitHub Project",
-          "url": "https://github.com/jaegertracing/jaeger"
-        },
-        {
-          "name": "Repository",
-          "url": "https://github.com/grafana/grafana"
-        },
-        {
-          "name": "Raise issue",
-          "url": "https://github.com/grafana/grafana/issues/new"
-        },
-        {
-          "name": "Documentation",
-          "url": "https://grafana.com/docs/grafana/latest/datasources/jaeger/"
-        }
-      ],
-      "logos": {
-        "small": "public/plugins/jaeger/img/jaeger_logo.svg",
-        "large": "public/plugins/jaeger/img/jaeger_logo.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "12.4.0-pre",
-      "updated": "",
-      "keywords": null
-    },
-    "dependencies": {
-      "grafanaDependency": "\u003e=12.3.0",
-      "grafanaVersion": "*",
-      "plugins": [],
-      "extensions": {
-        "exposedComponents": []
-      }
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/jaeger/",
-    "category": "tracing",
     "state": "",
     "signature": "internal",
     "signatureType": "",
@@ -1433,56 +1312,6 @@
     "angularDetected": false
   },
   {
-    "name": "PostgreSQL",
-    "type": "datasource",
-    "id": "grafana-postgresql-datasource",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "Data source for PostgreSQL and compatible databases",
-      "links": [
-        {
-          "name": "Raise issue",
-          "url": "https://github.com/grafana/grafana/issues/new"
-        },
-        {
-          "name": "Documentation",
-          "url": "https://grafana.com/docs/grafana/latest/datasources/postgres/"
-        }
-      ],
-      "logos": {
-        "small": "public/plugins/grafana-postgresql-datasource/img/postgresql_logo.svg",
-        "large": "public/plugins/grafana-postgresql-datasource/img/postgresql_logo.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "12.4.0-pre",
-      "updated": "",
-      "keywords": null
-    },
-    "dependencies": {
-      "grafanaDependency": "\u003e=12.3.0",
-      "grafanaVersion": "*",
-      "plugins": [],
-      "extensions": {
-        "exposedComponents": []
-      }
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/grafana-postgresql-datasource/",
-    "category": "sql",
-    "state": "",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
-  },
-  {
     "name": "Prometheus",
     "type": "datasource",
     "id": "prometheus",
@@ -1740,6 +1569,9 @@
     "name": "TestData",
     "type": "datasource",
     "id": "grafana-testdata-datasource",
+    "aliasIDs": [
+      "testdata"
+    ],
     "enabled": true,
     "pinned": false,
     "info": {

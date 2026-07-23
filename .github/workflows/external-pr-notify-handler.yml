@@ -25,7 +25,7 @@ env:
   # community-triage logic version this repo is pinned to (main as of PR #6).
   # Bump deliberately; re-resolve with:
   #   git ls-remote https://github.com/grafana/community-triage main
-  TRIAGE_REF: 34b9d3b337897c6a45232d6f4601aec6593b7c1d # trufflehog:ignore
+  TRIAGE_REF: da6b3f7224d74c43d89374af39fc048911ea110b # trufflehog:ignore
 
 jobs:
   triage:
@@ -367,7 +367,7 @@ jobs:
             -v "/tmp/oz-context:/context:ro" \
             -v "/tmp/oz-output:/output" \
             -e WARP_API_KEY="${WARP_API_KEY}" \
-            -e OZ_MODEL="claude-4-6-opus-high" \
+            -e OZ_MODEL="claude-4-8-opus-high" \
             -e OZ_SKILL="pr-review-${PR_TYPE}" \
             -e OZ_PROMPT="Review Pull Request #${PR_NUMBER} in ${REPO}.
           PR title: ${PR_TITLE}

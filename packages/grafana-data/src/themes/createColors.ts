@@ -50,8 +50,11 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
       }),
 
       border: z.object({
+        /** Use for decoration */
         weak: z.string().optional(),
+        /** Use for widget borders */
         medium: z.string().optional(),
+        /** Use for active/focused widget borders */
         strong: z.string().optional(),
       }),
 

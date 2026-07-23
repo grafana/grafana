@@ -42,9 +42,9 @@ type notifierOptions struct {
 	log                log.Logger
 	useChannelNotifier bool
 
-	useNatsNotifier bool
-	eventSubscriber EventSubscriber
-	natsDropped     *prometheus.CounterVec
+	enableNatsNotifier bool
+	eventSubscriber    EventSubscriber
+	natsDropped        *prometheus.CounterVec
 }
 
 type WatchOptions struct {
@@ -71,7 +71,7 @@ func (opts WatchOptions) normalize() WatchOptions {
 }
 
 func newNotifier(eventStore *eventStore, opts notifierOptions) notifier {
-	if opts.useNatsNotifier {
+	if opts.enableNatsNotifier {
 		if opts.eventSubscriber != nil && opts.eventSubscriber.Enabled() {
 			return newNatsNotifier(opts.eventSubscriber, opts.natsDropped, opts.log.New("notifier", "natsNotifier"))
 		}

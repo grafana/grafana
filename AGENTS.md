@@ -86,7 +86,7 @@ make update-workspace             # Go workspace (after adding modules)
 
 ```bash
 yarn install --immutable                          # Install frontend deps
-make devenv sources=postgres,influxdb,loki        # Start backing services
+make devenv sources=influxdb        # Start backing services
 make devenv-down                                  # Stop backing services
 make lefthook-install                             # Pre-commit hooks
 ```
@@ -130,7 +130,7 @@ Standalone Go apps using Grafana App SDK: `apps/dashboard/`, `apps/folder/`, `ap
 
 ### Plugin Workspaces
 
-These built-in plugins require separate build steps: `azuremonitor`, `grafana-postgresql-datasource`, `loki`, `jaeger`, `mysql`, `grafana-pyroscope-datasource`, `grafana-testdata-datasource`.
+These built-in plugins require separate build steps: `azuremonitor`, `loki`, `mysql`, `grafana-testdata-datasource`.
 
 Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
 

@@ -209,21 +209,21 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name: "awsAssumeRolePerDatasourceExternalId",
+			Description: "Generate a per-datasource external ID for Grafana Assume Role " +
+				"(jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID.",
+			Stage:      FeatureStageExperimental,
+			Expression: "false",
+			Owner:      grafanaDataSourcesPlugins,
+			Generate:   Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+		},
+		{
 			Name:        "mlExpressions",
 			Description: "Enable support for Machine Learning in server-side expressions",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaAlertingSquad,
 			Expression:  "false",
-		},
-		{
-			Name:            "datasourceAPIServers",
-			Description:     "Expose some datasources as apiservers.",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true, // changes the API routing
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:            "grafanaAPIServerWithExperimentalAPIs",
@@ -286,6 +286,14 @@ var (
 			Owner:       grafanaAppPlatformSquad,
 			Expression:  "false",
 			Generate:    Generate{Go: true, React: true},
+		},
+		{
+			Name:        "provisioning.performance",
+			Description: "Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
 		},
 		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
@@ -872,7 +880,7 @@ var (
 			Name:        "sqlExpressionsColumnAutoComplete",
 			Description: "Enables column autocomplete for SQL Expressions",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
 		},
@@ -958,6 +966,14 @@ var (
 			Expression:   "true",
 		},
 		{
+			Name:        "grafana.filterablePanels",
+			Description: "Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "cloudWatchNewLabelParsing",
 			Description: "Updates CloudWatch label parsing to be more accurate",
 			Stage:       FeatureStageGeneralAvailability,
@@ -989,6 +1005,14 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Expression:  "false",
+		},
+		{
+			Name:        "grafana.savedQueriesPage",
+			Description: "Enables the dedicated Saved queries page and its navigation entry",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Generate:    Generate{Go: true, React: true},
 			Expression:  "false",
 		},
 		{
@@ -1465,14 +1489,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "elasticsearchCrossClusterSearch",
-			Description: "Enables cross cluster search in the Elasticsearch data source",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaDataSourcesPlugins,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			// Remove this flag once Loki v4 is released and the min supported version is v3.0+,
 			// since users on v2.9 need it to disable the feature, as it doesn't work for them.
 			Name:        "lokiLabelNamesQueryApi",
@@ -1521,14 +1537,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       identityAccessTeam,
 			Expression:  "false",
-		},
-		{
-			Name:        "grafanaAdvisor",
-			Description: "Enables Advisor app",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaCatalogSquad,
-			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:        "elasticsearchImprovedParsing",
@@ -2037,6 +2045,14 @@ var (
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{React: true},
 			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+		},
+		{
+			Name:        "grafana.newTextPanel",
+			Description: "Enables the new text panel",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDatavizSquad,
+			Generate:    Generate{React: true},
 			Expression:  "false",
 		},
 		{
@@ -2630,14 +2646,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "advisorDatasourceIntegration",
-			Description: "Enables the advisor report integration with datasource pages",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaCatalogSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "inlineLogDetailsNoScrolls",
 			Description: "Enables an inline version of Log Details that creates no new scrolls",
 			Stage:       FeatureStageExperimental,
@@ -2774,10 +2782,10 @@ var (
 		{
 			Name:        "grafana.newPreferencesPage",
 			Description: "Whether to use the new SharedPreferences functional component",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{React: true, Go: true},
 			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "datasource.useNewCRUDAPIs",
@@ -2872,10 +2880,10 @@ var (
 		{
 			Name:        "preferences.rerouteLegacyAPIs",
 			Description: "Use K8s client implementation for legacy preferences API",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{Go: true},
 			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:            "plugins.marketplaceLicensing",
@@ -2907,7 +2915,7 @@ var (
 		},
 		{
 			Name:         "grafana.useDefaultScopesEndpoint",
-			Description:  "Use the find default scope endpoint to seed the initial scope selection when none is set and grafana.enableScopesFirstMode is enabled.",
+			Description:  "Use the find default scope endpoint to seed the initial scope selection when none is set.",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaOperatorExperienceSquad,
 			HideFromDocs: true,
@@ -2975,6 +2983,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "assistant.fullscreenWorkspace",
+			Description: "Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendPlatformSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:         "splunk.useLegacyResultsApi",
 			Description:  "Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2",
 			Stage:        FeatureStageExperimental,
@@ -3027,7 +3043,6 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
-
 			Name:        "cujTracking",
 			Description: "Enables Critical User Journey (CUJ) tracking",
 			Stage:       FeatureStageExperimental,
@@ -3085,6 +3100,32 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "features.bulkFlagEvalFiltering",
+			Description:  "Filters bulk OFREP flag evaluations to public-metadata flags only",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBackendServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "grafana.multiTenantNavTree",
+			Description:  "Builds the navigation tree client-side instead of reading it from /bootdata",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendNavigation,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:        "grafana.exploreMetricsSidebar",
+			Description: "Enables the sidebar in Explore metrics (Metrics Drilldown)",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

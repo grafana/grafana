@@ -137,7 +137,7 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 		provider := NewCoreProviderWithTTL(&logging.NoOpLogger{}, staticRootPath, false, defaultCoreTTL)
 		err = provider.loadPlugins(ctx)
 		require.NoError(t, err)
-		assert.Len(t, provider.loadedPlugins, 45)
+		assert.Len(t, provider.loadedPlugins, 42)
 	})
 
 	t.Run("loads plugins from staticRootPath", func(t *testing.T) {

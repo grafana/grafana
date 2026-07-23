@@ -739,25 +739,26 @@ func (a *api) listTeamMemberPermissions(c *contextmodel.ReqContext, dynamicClien
 	return dto, nil
 }
 
-func (a *api) setUserPermissionInTeamMembers(c *contextmodel.ReqContext, namespace string, resourceID string, userID int64, permission string) error {
+func (a *api) setUserPermissionInTeamMembers(c *contextmodel.ReqContext, namespace string, resourceID string, userID int64, permission string) (bool, error) {
 	dynamicClient, err := a.getDynamicClient(c)
 	if err != nil {
-		return err
+		return false, err
 	}
 	return a.setTeamMember(c, dynamicClient, namespace, resourceID, userID, permission)
 }
 
-func (a *api) setTeamMember(c *contextmodel.ReqContext, dynamicClient dynamic.Interface, namespace string, resourceID string, userID int64, permission string) error {
+// setTeamMember writes the membership change; the bool reports if an existing member was removed.
+func (a *api) setTeamMember(c *contextmodel.ReqContext, dynamicClient dynamic.Interface, namespace string, resourceID string, userID int64, permission string) (bool, error) {
 	ctx := c.Req.Context()
 
 	userDetails, err := a.service.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
 	if err != nil {
-		return fmt.Errorf("failed to get user details: %w", err)
+		return false, fmt.Errorf("failed to get user details: %w", err)
 	}
 
 	teamID, err := strconv.ParseInt(resourceID, 10, 64)
 	if err != nil {
-		return fmt.Errorf("invalid team resource ID: %w", err)
+		return false, fmt.Errorf("invalid team resource ID: %w", err)
 	}
 
 	teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
@@ -765,23 +766,25 @@ func (a *api) setTeamMember(c *contextmodel.ReqContext, dynamicClient dynamic.In
 		ID:    teamID,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to get team details: %w", err)
+		return false, fmt.Errorf("failed to get team details: %w", err)
 	}
 
 	var memberPerm iamv0.TeamTeamPermission
 	if permission != "" {
 		mp, err := stringToTeamMemberPermission(permission)
 		if err != nil {
-			return err
+			return false, err
 		}
 		memberPerm = mp
 	}
 
 	teamResource := dynamicClient.Resource(iamv0.TeamResourceInfo.GroupVersionResource()).Namespace(namespace)
 
+	var removed bool
 	// Read-modify-write: spec.members is a slice on the Team object so a
 	// concurrent writer can lose updates if we don't refetch on conflict.
-	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		removed = false
 		teamObj, err := teamResource.Get(ctx, teamDetails.UID, metav1.GetOptions{})
 		if err != nil {
 			// Removing a member from a team that no longer exists is a no-op.
@@ -813,6 +816,7 @@ func (a *api) setTeamMember(c *contextmodel.ReqContext, dynamicClient dynamic.In
 			return nil
 		case permission == "":
 			t.Spec.Members = slices.Delete(t.Spec.Members, idx, idx+1)
+			removed = true
 		case idx >= 0:
 			if t.Spec.Members[idx].Permission == memberPerm {
 				return nil
@@ -837,6 +841,7 @@ func (a *api) setTeamMember(c *contextmodel.ReqContext, dynamicClient dynamic.In
 		}
 		return nil
 	})
+	return removed, err
 }
 
 // teamMemberPermissionToString returns the lowercase schema value ("admin",

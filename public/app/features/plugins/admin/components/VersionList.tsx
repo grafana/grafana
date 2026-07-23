@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useState, useMemo } from 'react';
-import { major, compare, lte } from 'semver';
+import { major, compare, lte, valid } from 'semver';
 
 import { dateTimeFormatTimeAgo, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -23,7 +23,11 @@ export const VersionList = ({ plugin }: Props) => {
   const disableInstallation = useMemo(() => shouldDisablePluginInstall(plugin), [plugin]);
 
   const isManagedPlugin = plugin.managed.enabled;
-  const installedVersion = isManagedPlugin ? undefined : plugin.installedVersion;
+  // For managed plugins the stored installedVersion may be stale, so it is never displayed as
+  // ground truth ("installed version" labels). The raw plugin.installedVersion must still feed
+  // the install gating below, otherwise every version except the latest compatible one gets
+  // disabled.
+  const displayedInstalledVersion = isManagedPlugin ? undefined : plugin.installedVersion;
 
   const latestCompatibleVersion = getLatestCompatibleVersion(versions);
   const latestMajorVersions = getLatestMajorVersions(versions);
@@ -36,11 +40,11 @@ export const VersionList = ({ plugin }: Props) => {
 
   // Check if installed version is in the versions list
   const isInstalledVersionMissing = useMemo(() => {
-    if (!installedVersion) {
+    if (!displayedInstalledVersion) {
       return false;
     }
-    return !versions.some((v) => v.version === installedVersion);
-  }, [versions, installedVersion]);
+    return !versions.some((v) => v.version === displayedInstalledVersion);
+  }, [versions, displayedInstalledVersion]);
 
   if (versions.length === 0 && !isInstalledVersionMissing) {
     return (
@@ -73,7 +77,7 @@ export const VersionList = ({ plugin }: Props) => {
       <tbody>
         {versions.map((version) => {
           let tooltip: string | undefined = undefined;
-          const isInstalledVersion = installedVersion === version.version;
+          const isInstalledVersion = displayedInstalledVersion === version.version;
 
           if (version.angularDetected) {
             tooltip = 'This plugin version is AngularJS type which is not supported';
@@ -122,7 +126,7 @@ export const VersionList = ({ plugin }: Props) => {
                     hideInstallState={isManagedPlugin}
                     onConfirmInstallation={onInstallClick}
                     disabled={
-                      isInstalledVersion ||
+                      version.version === plugin.installedVersion ||
                       isInstalling ||
                       version.angularDetected ||
                       !version.isCompatible ||
@@ -131,7 +135,7 @@ export const VersionList = ({ plugin }: Props) => {
                         version,
                         latestMajorVersions,
                         latestCompatibleVersion: latestCompatibleVersion?.version,
-                        installedVersion,
+                        installedVersion: plugin.installedVersion,
                         updateStrategy: plugin.managed.strategy,
                       })
                     }
@@ -227,8 +231,8 @@ function shouldDisableVersionInstallation({
   }
 
   if (updateStrategy === PluginUpdateStrategy.MajorAligned) {
-    if (!installedVersion) {
-      // When no version is installed, only the latest compatible version can be installed
+    if (!installedVersion || !valid(installedVersion)) {
+      // When no valid version is installed, only the latest compatible version can be installed
       return version.version !== latestCompatibleVersion;
     }
 

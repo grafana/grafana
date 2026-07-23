@@ -67,140 +67,138 @@ import "context"
 func V8(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 8
 
-	panels, ok := dashboard["panels"].([]interface{})
-	if !ok {
-		return nil
-	}
-
-	for _, p := range panels {
-		panel, ok := p.(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		targets, ok := panel["targets"].([]interface{})
-		if !ok {
-			continue
-		}
-
-		for _, t := range targets {
-			target, ok := t.(map[string]interface{})
-			if !ok {
-				continue
-			}
-
-			// Check if this target has the old InfluxDB schema
-			fields, hasFields := target["fields"]
-			_, hasTags := target["tags"]
-			groupBy, hasGroupBy := target["groupBy"]
-
-			if !hasFields || !hasTags || !hasGroupBy {
-				continue
-			}
-
-			// Check if this is a raw query
-			rawQuery, isRawQuery := target["rawQuery"].(bool)
-			if isRawQuery && rawQuery {
-				// For raw queries, just delete fields and fill
-				delete(target, "fields")
-				delete(target, "fill")
-			} else {
-				// For structured queries, convert fields to select format
-				fieldsArray, ok := fields.([]interface{})
-				if ok {
-					selectArray := make([]interface{}, 0, len(fieldsArray))
-
-					for _, f := range fieldsArray {
-						field, ok := f.(map[string]interface{})
-						if !ok {
-							continue
-						}
-
-						parts := make([]interface{}, 0)
-
-						// Add field part
-						if name, ok := field["name"].(string); ok {
-							parts = append(parts, map[string]interface{}{
-								"type":   "field",
-								"params": []interface{}{name},
-							})
-						}
-
-						// Add function part
-						if funcName, ok := field["func"].(string); ok {
-							parts = append(parts, map[string]interface{}{
-								"type":   funcName,
-								"params": []interface{}{},
-							})
-						}
-
-						// Add math expression if present
-						if mathExpr, ok := field["mathExpr"].(string); ok {
-							parts = append(parts, map[string]interface{}{
-								"type":   "math",
-								"params": []interface{}{mathExpr},
-							})
-						}
-
-						// Add alias if present
-						if asExpr, ok := field["asExpr"].(string); ok {
-							parts = append(parts, map[string]interface{}{
-								"type":   "alias",
-								"params": []interface{}{asExpr},
-							})
-						}
-
-						if len(parts) > 0 {
-							selectArray = append(selectArray, parts)
-						}
-					}
-
-					target["select"] = selectArray
-				}
-
-				// Remove the old fields property
-				delete(target, "fields")
-
-				// Update groupBy format
-				if groupByArray, ok := groupBy.([]interface{}); ok {
-					for _, gb := range groupByArray {
-						groupByPart, ok := gb.(map[string]interface{})
-						if !ok {
-							continue
-						}
-
-						// Convert time groupBy
-						if partType, ok := groupByPart["type"].(string); ok && partType == "time" {
-							if interval, ok := groupByPart["interval"].(string); ok {
-								groupByPart["params"] = []interface{}{interval}
-								delete(groupByPart, "interval")
-							}
-						}
-
-						// Convert tag groupBy
-						if partType, ok := groupByPart["type"].(string); ok && partType == "tag" {
-							if key, ok := groupByPart["key"].(string); ok {
-								groupByPart["params"] = []interface{}{key}
-								delete(groupByPart, "key")
-							}
-						}
-					}
-
-					// Add fill to groupBy if present
-					if fill, hasFill := target["fill"]; hasFill {
-						newGroupByArray := make([]interface{}, len(groupByArray)) //nolint:prealloc
-						copy(newGroupByArray, groupByArray)
-						newGroupByArray = append(newGroupByArray, map[string]interface{}{
-							"type":   "fill",
-							"params": []interface{}{fill},
-						})
-						target["groupBy"] = newGroupByArray
-						delete(target, "fill")
-					}
-				}
-			}
-		}
+	// This migration runs before V16 hoists row panels to the top level, so in
+	// pre-v16 dashboards the panels still live inside rows. Visit both locations
+	// to match the frontend, which applies this upgrade after the row->grid
+	// conversion.
+	for _, panel := range collectPanelsIncludingRows(dashboard) {
+		migrateInfluxdbQueriesInPanel(panel)
 	}
 
 	return nil
+}
+
+func migrateInfluxdbQueriesInPanel(panel map[string]interface{}) {
+	targets, ok := panel["targets"].([]interface{})
+	if !ok {
+		return
+	}
+
+	for _, t := range targets {
+		target, ok := t.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// Check if this target has the old InfluxDB schema
+		fields, hasFields := target["fields"]
+		_, hasTags := target["tags"]
+		groupBy, hasGroupBy := target["groupBy"]
+
+		if !hasFields || !hasTags || !hasGroupBy {
+			continue
+		}
+
+		// Check if this is a raw query
+		rawQuery, isRawQuery := target["rawQuery"].(bool)
+		if isRawQuery && rawQuery {
+			// For raw queries, just delete fields and fill
+			delete(target, "fields")
+			delete(target, "fill")
+		} else {
+			// For structured queries, convert fields to select format
+			fieldsArray, ok := fields.([]interface{})
+			if ok {
+				selectArray := make([]interface{}, 0, len(fieldsArray))
+
+				for _, f := range fieldsArray {
+					field, ok := f.(map[string]interface{})
+					if !ok {
+						continue
+					}
+
+					parts := make([]interface{}, 0)
+
+					// Add field part
+					if name, ok := field["name"].(string); ok {
+						parts = append(parts, map[string]interface{}{
+							"type":   "field",
+							"params": []interface{}{name},
+						})
+					}
+
+					// Add function part
+					if funcName, ok := field["func"].(string); ok {
+						parts = append(parts, map[string]interface{}{
+							"type":   funcName,
+							"params": []interface{}{},
+						})
+					}
+
+					// Add math expression if present
+					if mathExpr, ok := field["mathExpr"].(string); ok {
+						parts = append(parts, map[string]interface{}{
+							"type":   "math",
+							"params": []interface{}{mathExpr},
+						})
+					}
+
+					// Add alias if present
+					if asExpr, ok := field["asExpr"].(string); ok {
+						parts = append(parts, map[string]interface{}{
+							"type":   "alias",
+							"params": []interface{}{asExpr},
+						})
+					}
+
+					if len(parts) > 0 {
+						selectArray = append(selectArray, parts)
+					}
+				}
+
+				target["select"] = selectArray
+			}
+
+			// Remove the old fields property
+			delete(target, "fields")
+
+			// Update groupBy format
+			if groupByArray, ok := groupBy.([]interface{}); ok {
+				for _, gb := range groupByArray {
+					groupByPart, ok := gb.(map[string]interface{})
+					if !ok {
+						continue
+					}
+
+					// Convert time groupBy
+					if partType, ok := groupByPart["type"].(string); ok && partType == "time" {
+						if interval, ok := groupByPart["interval"].(string); ok {
+							groupByPart["params"] = []interface{}{interval}
+							delete(groupByPart, "interval")
+						}
+					}
+
+					// Convert tag groupBy
+					if partType, ok := groupByPart["type"].(string); ok && partType == "tag" {
+						if key, ok := groupByPart["key"].(string); ok {
+							groupByPart["params"] = []interface{}{key}
+							delete(groupByPart, "key")
+						}
+					}
+				}
+
+				// Add fill to groupBy if present
+				if fill, hasFill := target["fill"]; hasFill {
+					newGroupByArray := make([]interface{}, len(groupByArray)) //nolint:prealloc
+					copy(newGroupByArray, groupByArray)
+					newGroupByArray = append(newGroupByArray, map[string]interface{}{
+						"type":   "fill",
+						"params": []interface{}{fill},
+					})
+					target["groupBy"] = newGroupByArray
+					delete(target, "fill")
+				}
+			}
+		}
+	}
 }

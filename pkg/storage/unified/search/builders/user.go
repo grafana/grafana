@@ -1,8 +1,6 @@
 package builders
 
 import (
-	"slices"
-
 	"github.com/grafana/grafana-app-sdk/app"
 
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis"
@@ -15,13 +13,17 @@ import (
 // populate IndexableDocument.SelectableFields for IAM kinds.
 var iamManifests = []app.Manifest{iam.LocalManifest()}
 
+// iamProvider is shared by all IAM builders and their exported field sets, so
+// the manifest is parsed once.
+var iamProvider = resource.NewManifestBackedProvider(iamManifests)
+
 const (
-	USER_EMAIL        = "email"
-	USER_LOGIN        = "login"
-	USER_LAST_SEEN_AT = "lastSeenAt"
-	USER_ROLE         = "role"
-	USER_DISABLED     = "disabled"
-	USER_CREATED      = "createdAt"
+	USER_EMAIL                 = "email"
+	USER_LOGIN                 = "login"
+	USER_LAST_SEEN_AT          = "lastSeenAt"
+	USER_ROLE                  = "role"
+	USER_DISABLED              = "disabled"
+	USER_EXTERNAL_AUTH_MODULES = "externalAuthModules"
 )
 
 // UserSortableExtraFields are the additional fields that can be used for sorting user search results.
@@ -32,8 +34,8 @@ var UserSortableExtraFields = []string{
 	USER_LAST_SEEN_AT,
 }
 
-// userSearchFields are read from the generated IAM manifest (declared in
-// apps/iam/kinds/user.cue), plus the createdAt field appended below.
+// UserSearchFields are read from the generated IAM manifest (declared in
+// apps/iam/kinds/user.cue).
 //
 // lastSeenAt (int64) and disabled (boolean) declare the filter capability to
 // record that they are meant to be filterable and to drive the bleve mapping
@@ -43,24 +45,10 @@ var UserSortableExtraFields = []string{
 // would not match a numeric-indexed term yet. No in-tree client filters by
 // lastSeenAt or disabled today, so this is a known gap rather than a rollout
 // concern.
-var userSearchFields = slices.Concat(
-	resource.NewManifestBackedProvider(iamManifests).Fields(iamv0.UserResourceInfo.GroupVersionResource()),
-	[]resource.SearchFieldDefinition{
-		// createdAt reads from the standard document's Created value rather than a
-		// resource path, so it cannot be declared in the manifest and stays here.
-		// It mirrors that value into the per-kind fields.* sub-document because
-		// the top-level created field has no bleve mapping today.
-		{Name: USER_CREATED, CopyFromStandard: resource.StandardFieldCreated, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}, Description: "The creation timestamp of the user, in epoch milliseconds"},
-	},
-)
+//
+// Exported for the IAM legacy SQL search backend; do not mutate.
+var UserSearchFields = iamProvider.Fields(iamv0.UserResourceInfo.GroupVersionResource())
 
-// UserTableColumnDefinitions exposes column-defs by name for wire-API
-// consumers (the IAM legacy SQL backend in user/legacy_search.go).
-// Derived from userSearchFields via tableColumnsByName. UniqueValues was
-// set on the historical hand-written email/login entries but has no
-// production consumer and is not preserved.
-var UserTableColumnDefinitions = tableColumnsByName(userSearchFields)
-
-func GetUserBuilder() (resource.DocumentBuilderInfo, error) {
-	return iamBuilder(iamv0.UserResourceInfo, userSearchFields)
+func GetUserBuilder(registry *resource.SearchFieldsRegistry) (resource.DocumentBuilderInfo, error) {
+	return iamBuilder(registry, iamv0.UserResourceInfo)
 }

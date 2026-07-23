@@ -2,6 +2,7 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { config, setPluginImportUtils } from '@grafana/runtime';
 import {
   ConstantVariable,
+  CustomVariable,
   type MultiValueVariable,
   SceneGridLayout,
   SceneTimeRange,
@@ -24,6 +25,7 @@ import { TabItem } from '../scene/layout-tabs/TabItem';
 import { performTabRepeats } from '../scene/layout-tabs/TabItemRepeater';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { toControlSourceRef } from '../utils/predefinedVariables';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardOutline } from './outline/DashboardOutline';
@@ -274,6 +276,104 @@ describe('DashboardEditPane', () => {
 
     expect(variableSet.state.variables[0]).toBe(changedVariable);
     expect(editPane.getSelectedObject()).toBe(changedVariable);
+  });
+
+  it('restores dropped predefined variables when undoing a shadowing rename', () => {
+    const predefined = new CustomVariable({
+      name: 'env',
+      query: 'prod,dev',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+    const local = new CustomVariable({ name: 'localVar', query: 'a,b' });
+    const variableSet = new SceneVariableSet({ variables: [predefined, local] });
+    const dashboard = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      $variables: variableSet,
+      isEditing: true,
+      body: AutoGridLayoutManager.createEmpty(),
+    });
+
+    activateFullSceneTree(dashboard);
+
+    dashboardEditActions.changeVariableName({
+      source: local,
+      oldValue: 'localVar',
+      newValue: 'env',
+    });
+
+    expect(local.state.name).toBe('env');
+    expect(variableSet.state.variables).toEqual([local]);
+
+    dashboard.state.editPane.undoAction();
+
+    expect(local.state.name).toBe('localVar');
+    expect(variableSet.state.variables).toEqual([predefined, local]);
+  });
+
+  it('re-injects predefined variables when a shadowing local is renamed away', () => {
+    const predefined = new CustomVariable({
+      name: 'env',
+      query: 'prod,dev',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+    const local = new CustomVariable({ name: 'localVar', query: 'a,b' });
+    const variableSet = new SceneVariableSet({ variables: [predefined, local] });
+    const dashboard = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      $variables: variableSet,
+      isEditing: true,
+      body: AutoGridLayoutManager.createEmpty(),
+    });
+
+    activateFullSceneTree(dashboard);
+
+    dashboardEditActions.changeVariableName({
+      source: local,
+      oldValue: 'localVar',
+      newValue: 'env',
+    });
+    expect(variableSet.state.variables).toEqual([local]);
+
+    dashboardEditActions.changeVariableName({
+      source: local,
+      oldValue: 'env',
+      newValue: 'localVar',
+    });
+
+    expect(local.state.name).toBe('localVar');
+    expect(variableSet.state.variables).toEqual([predefined, local]);
+  });
+
+  it('re-injects predefined variables when a shadowing local is deleted', () => {
+    const predefined = new CustomVariable({
+      name: 'env',
+      query: 'prod,dev',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+    const local = new CustomVariable({ name: 'localVar', query: 'a,b' });
+    const variableSet = new SceneVariableSet({ variables: [predefined, local] });
+    const dashboard = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      $variables: variableSet,
+      isEditing: true,
+      body: AutoGridLayoutManager.createEmpty(),
+    });
+
+    activateFullSceneTree(dashboard);
+
+    dashboardEditActions.changeVariableName({
+      source: local,
+      oldValue: 'localVar',
+      newValue: 'env',
+    });
+    expect(variableSet.state.variables).toEqual([local]);
+
+    dashboardEditActions.removeVariable({
+      source: variableSet,
+      removedObject: local,
+    });
+
+    expect(variableSet.state.variables).toEqual([predefined]);
   });
 
   describe('Selecting repeated elements', () => {

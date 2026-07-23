@@ -24,12 +24,9 @@ func TestNewPlugin(t *testing.T) {
 		{ID: InfluxDB},
 		{ID: Loki},
 		{ID: MySQL},
-		{ID: PostgreSQL},
 		{ID: Prometheus},
-		{ID: Pyroscope},
 		{ID: TestData, ExpectedAlias: TestDataAlias},
 		{ID: TestDataAlias, ExpectedID: TestData, ExpectedAlias: TestDataAlias},
-		{ID: Jaeger},
 	}
 
 	for _, tc := range tcs {

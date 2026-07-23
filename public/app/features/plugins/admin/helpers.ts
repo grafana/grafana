@@ -311,10 +311,12 @@ export enum Sorters {
   downloads = 'downloads',
 }
 
+const nameCollator = new Intl.Collator();
+
 export const sortPlugins = (plugins: CatalogPlugin[], sortBy: Sorters) => {
   const sorters: { [name: string]: (a: CatalogPlugin, b: CatalogPlugin) => number } = {
-    nameAsc: (a: CatalogPlugin, b: CatalogPlugin) => a.name.trim().localeCompare(b.name.trim()),
-    nameDesc: (a: CatalogPlugin, b: CatalogPlugin) => b.name.trim().localeCompare(a.name.trim()),
+    nameAsc: (a: CatalogPlugin, b: CatalogPlugin) => nameCollator.compare(a.name.trim(), b.name.trim()),
+    nameDesc: (a: CatalogPlugin, b: CatalogPlugin) => nameCollator.compare(b.name.trim(), a.name.trim()),
     updated: (a: CatalogPlugin, b: CatalogPlugin) =>
       dateTimeParse(b.updatedAt).valueOf() - dateTimeParse(a.updatedAt).valueOf(),
     published: (a: CatalogPlugin, b: CatalogPlugin) =>

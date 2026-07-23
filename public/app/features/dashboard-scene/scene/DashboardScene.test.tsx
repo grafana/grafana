@@ -21,6 +21,7 @@ import {
   behaviors,
   SceneDataTransformer,
   LocalValueVariable,
+  MultiValueVariable,
 } from '@grafana/scenes';
 import { type Dashboard, DashboardCursorSync, type LibraryPanel } from '@grafana/schema';
 import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -42,6 +43,7 @@ import * as DashboardTemplateExtensionModule from '../settings/enterprise-compon
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
+import { toControlSourceRef } from '../utils/predefinedVariables';
 import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 import * as utils from '../utils/utils';
 
@@ -174,6 +176,39 @@ describe('DashboardScene', () => {
 
         expect(spy).not.toHaveBeenCalled();
       });
+
+      it('exposes the edit session source', () => {
+        const scene = buildTestScene();
+        scene.activate();
+
+        expect(scene.getEditSessionSource()).toBeUndefined();
+
+        scene.onEnterEditMode('assistant');
+
+        expect(scene.getEditSessionSource()).toBe('assistant');
+      });
+
+      it('tags the session from the editSource url param when a new dashboard auto-enters edit mode', () => {
+        const scene = buildTestScene();
+        locationService.push('/dashboard/new?editSource=assistant');
+        const spy = jest.spyOn(DashboardInteractions, 'editSessionStarted');
+
+        scene.activate();
+
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ source: 'assistant' }));
+        expect(scene.getEditSessionSource()).toBe('assistant');
+      });
+
+      it('defaults to source "user" when a new dashboard auto-enters edit mode without the param', () => {
+        const scene = buildTestScene();
+        locationService.push('/dashboard/new');
+        const spy = jest.spyOn(DashboardInteractions, 'editSessionStarted');
+
+        scene.activate();
+
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ source: 'user' }));
+        expect(scene.getEditSessionSource()).toBe('user');
+      });
     });
 
     describe('Given scene in edit mode', () => {
@@ -232,6 +267,42 @@ describe('DashboardScene', () => {
         // Resets tracking
         expect(stopSpy).toHaveBeenCalled();
         expect(startSpy).toHaveBeenCalled();
+      });
+
+      it('activateEditPane activates an inactive edit pane and releases it on exit', () => {
+        const editPane = scene.state.editPane;
+        expect(editPane.isActive).toBe(false);
+
+        scene.activateEditPane();
+        expect(editPane.isActive).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        expect(editPane.isActive).toBe(false);
+      });
+
+      it('activateEditPane is a no-op when the edit pane is already active', () => {
+        const editPane = scene.state.editPane;
+        const activateSpy = jest.spyOn(editPane, 'activate');
+        editPane.activate();
+
+        scene.activateEditPane();
+
+        expect(activateSpy).toHaveBeenCalledTimes(1);
+      });
+
+      it('re-activates the swapped-in edit pane when discarding and keeping edit', () => {
+        const editPane = scene.state.editPane;
+        scene.activateEditPane();
+        expect(editPane.isActive).toBe(true);
+
+        scene.discardChangesAndKeepEditing();
+
+        // The original pane is released, but a fresh clone is swapped in and re-activated so
+        // programmatic mutations keep working while we stay in edit mode.
+        expect(editPane.isActive).toBe(false);
+        const newEditPane = scene.state.editPane;
+        expect(newEditPane).not.toBe(editPane);
+        expect(newEditPane.isActive).toBe(true);
       });
 
       it('Exiting already saved dashboard should not restore initial state', () => {
@@ -704,6 +775,13 @@ describe('DashboardScene', () => {
         expect(addedPanel).toBeDefined();
         expect(addedPanel.state.key).toBe('panel-7');
         expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
+      });
+
+      it('Should do nothing when pasting with an empty clipboard', () => {
+        store.delete(LS_PANEL_COPY_KEY);
+
+        expect(() => scene.pastePanel()).not.toThrow();
+        expect(buildGridItemForPanel).not.toHaveBeenCalled();
       });
 
       describe('Copy/Paste panel styles', () => {
@@ -2520,6 +2598,169 @@ describe('DashboardScene', () => {
       // Only 1 default + existing user vars (not 2 defaults)
       expect(variables.length).toBe(existingVarCount + 1);
       expect(variables[0].state.name).toBe('varFromDs2');
+    });
+
+    it('should preserve predefined-origin variables while replacing datasource defaults', () => {
+      const predefinedVar = new TestVariable({
+        name: 'globalVar',
+        origin: toControlSourceRef({ type: 'global' }),
+      });
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [predefinedVar] }) });
+
+      scene.setDefaultVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'varFromDs',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: { type: 'datasource' as const, group: 'prometheus' },
+          },
+        },
+      ] as VariableKind[]);
+
+      const names = sceneGraph
+        .getVariables(scene)
+        .state.variables.map((v) => v.state.name)
+        .filter((name) => name === 'globalVar' || name === 'varFromDs');
+      expect(names).toEqual(['varFromDs', 'globalVar']);
+
+      scene.clearDefaultControls();
+
+      const remaining = sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name);
+      expect(remaining).toContain('globalVar');
+      expect(remaining).not.toContain('varFromDs');
+    });
+
+    it('should skip default variables shadowed by an existing variable of the same name', () => {
+      const userVar = new TestVariable({ name: 'shadowed' });
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [userVar] }) });
+
+      scene.setDefaultVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'shadowed',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: { type: 'datasource' as const, group: 'prometheus' },
+          },
+        },
+      ] as VariableKind[]);
+
+      const shadowed = sceneGraph.getVariables(scene).state.variables.filter((v) => v.state.name === 'shadowed');
+      expect(shadowed).toHaveLength(1);
+      expect(shadowed[0].state.origin).toBeUndefined();
+    });
+  });
+
+  describe('setPredefinedVariables', () => {
+    it('should replace previous predefined variables on subsequent calls', () => {
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [] }) });
+      const existingVarCount = sceneGraph.getVariables(scene).state.variables.length;
+
+      scene.setPredefinedVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'globalVar',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: toControlSourceRef({ type: 'global' }),
+          },
+        },
+      ] as VariableKind[]);
+
+      scene.setPredefinedVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'globalVar',
+            current: { text: 'x', value: 'x' },
+            query: 'x,y,z',
+            origin: toControlSourceRef({ type: 'global' }),
+          },
+        },
+      ] as VariableKind[]);
+
+      const variables = sceneGraph.getVariables(scene).state.variables;
+      expect(variables.length).toBe(existingVarCount + 1);
+      expect(variables[0].state.name).toBe('globalVar');
+      expect(variables[0].state).toMatchObject({ query: 'x,y,z' });
+    });
+
+    it('should preserve the current selection when refreshing a predefined variable', () => {
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [] }) });
+
+      scene.setPredefinedVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'globalVar',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: toControlSourceRef({ type: 'global' }),
+          },
+        },
+      ] as VariableKind[]);
+
+      const existing = sceneGraph.getVariables(scene).state.variables.find((v) => v.state.name === 'globalVar');
+      expect(existing).toBeInstanceOf(MultiValueVariable);
+      (existing as MultiValueVariable).setState({ value: 'b', text: 'b' });
+
+      scene.setPredefinedVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'globalVar',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c,d',
+            origin: toControlSourceRef({ type: 'global' }),
+          },
+        },
+      ] as VariableKind[]);
+
+      const refreshed = sceneGraph.getVariables(scene).state.variables.find((v) => v.state.name === 'globalVar');
+      expect(refreshed?.state).toMatchObject({ query: 'a,b,c,d', value: 'b', text: 'b' });
+    });
+
+    it('should keep datasource defaults and local variables while replacing predefined ones', () => {
+      const localVar = new TestVariable({ name: 'localVar' });
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [localVar] }) });
+
+      scene.setDefaultVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'dsVar',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: { type: 'datasource' as const, group: 'prometheus' },
+          },
+        },
+      ] as VariableKind[]);
+
+      scene.setPredefinedVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'globalVar',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: toControlSourceRef({ type: 'global' }),
+          },
+        },
+      ] as VariableKind[]);
+
+      const names = sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name);
+      expect(names).toEqual(expect.arrayContaining(['globalVar', 'dsVar', 'localVar']));
+
+      scene.setPredefinedVariables([]);
+
+      const remaining = sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name);
+      expect(remaining).toContain('dsVar');
+      expect(remaining).toContain('localVar');
+      expect(remaining).not.toContain('globalVar');
     });
   });
 

@@ -23,7 +23,7 @@ import { VariableEditorForm } from 'app/features/dashboard-scene/settings/variab
 import { type EditableVariableType, getVariableScene } from 'app/features/dashboard-scene/settings/variables/utils';
 import { dispatch } from 'app/store/store';
 
-import { recreateVariable } from './api';
+import { invalidatePredefinedVariableCaches, recreateVariable } from './api';
 import { useVariableNameCollisionCheck } from './useVariableNameCollisionCheck';
 import {
   buildVariableResource,
@@ -120,6 +120,7 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
     try {
       if (isNew) {
         await createVariable({ variable: buildVariableResource(kind, folderUid) }).unwrap();
+        invalidatePredefinedVariableCaches();
         onBack();
         return;
       }
@@ -132,6 +133,7 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
       const sourceFolderUid = getVariableFolderUid(source) ?? '';
       if (kind.spec.name === getVariableSpecName(source) && folderUid === sourceFolderUid) {
         await updateVariable({ name: sourceName, patch: { spec: toWireVariableSpec(kind) } }).unwrap();
+        invalidatePredefinedVariableCaches();
         onBack();
         return;
       }
@@ -168,6 +170,7 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
     try {
       if (source?.metadata.name) {
         await deleteVariable({ name: source.metadata.name }).unwrap();
+        invalidatePredefinedVariableCaches();
       }
       onBack();
     } catch {

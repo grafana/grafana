@@ -1,5 +1,6 @@
 import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
+import { type PluginMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
@@ -7,6 +8,12 @@ import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { Recommendations } from './Recommendations';
+import {
+  fetchClusterCpuSeries,
+  fetchKubernetesHealth,
+  fetchKubernetesInventory,
+  resolveKubernetesDatasource,
+} from './kubernetesData';
 
 const mockGet = jest.fn();
 jest.mock('@grafana/runtime', () => ({
@@ -19,13 +26,13 @@ jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
   usePluginBridge: jest.fn(),
 }));
 
-// The RecommendationExisting child fetches its overview from Prometheus; resolve to an empty
-// cluster so tests exercise the (deterministic) stub entries instead of hitting a datasource.
+// The RecommendationExisting child fetches its overview from Prometheus; resolve to no
+// datasource so tests exercise the (deterministic) no-data card instead of hitting one.
 jest.mock('./kubernetesData', () => ({
   ...jest.requireActual('./kubernetesData'),
-  fetchKubernetesOverview: jest.fn().mockResolvedValue({
-    clusters: 0,
-    pods: 0,
+  resolveKubernetesDatasource: jest.fn().mockResolvedValue(null),
+  fetchKubernetesInventory: jest.fn().mockResolvedValue({ clusters: 0, pods: 0 }),
+  fetchKubernetesHealth: jest.fn().mockResolvedValue({
     alertsFiring: null,
     unhealthyPods: null,
     restarts1h: null,
@@ -52,7 +59,11 @@ const mockUsePluginBridge = jest.mocked(usePluginBridge);
 beforeEach(() => {
   window.localStorage.clear();
   mockUsePluginBridge.mockReset();
-  mockUsePluginBridge.mockReturnValue({ loading: false, installed: true });
+  mockUsePluginBridge.mockReturnValue({
+    loading: false,
+    installed: true,
+    settings: { id: 'grafana-k8s-app' } as PluginMeta<{}>,
+  });
   mockGet.mockReset();
   mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id)));
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
@@ -69,13 +80,20 @@ describe('Recommendations', () => {
     await waitFor(() => expect(container).toBeEmptyDOMElement());
   });
 
-  it('renders nothing when Kubernetes Monitoring is not installed', async () => {
+  it('renders the section even when Kubernetes Monitoring is not installed', async () => {
     mockUsePluginBridge.mockReturnValue({ loading: false, installed: false });
 
-    const { container } = render(<Recommendations />);
+    render(<Recommendations />);
 
-    await waitFor(() => expect(container).toBeEmptyDOMElement());
-    expect(mockGet).not.toHaveBeenCalled();
+    expect(await screen.findByText('Recommendations for your stack')).toBeInTheDocument();
+  });
+
+  it('shows the no-data card when no datasource has Kubernetes data', async () => {
+    render(<Recommendations />);
+
+    expect(await screen.findByRole('heading', { name: 'No data flowing yet' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Hosted Metrics' })).not.toBeInTheDocument();
   });
 
   it('renders nothing when the user cannot manage plugins', async () => {
@@ -136,7 +154,7 @@ describe('Recommendations', () => {
     await waitFor(() => expect(container).toBeEmptyDOMElement());
   });
 
-  it('renders nothing when the plugin list is empty despite Kubernetes Monitoring being installed', async () => {
+  it('renders nothing when the plugin list is empty', async () => {
     mockGet.mockResolvedValue([]);
 
     const { container } = render(<Recommendations />);
@@ -167,14 +185,6 @@ describe('Recommendations', () => {
 
     expect(await screen.findByRole('link', { name: /Enable Hosted Traces/ })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Add Synthetic Monitoring/ })).not.toBeInTheDocument();
-  });
-
-  it('renders nothing when every recommended app is enabled', async () => {
-    mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id, { enabled: true })));
-
-    const { container } = render(<Recommendations />);
-
-    await waitFor(() => expect(container).toBeEmptyDOMElement());
   });
 
   it('hides install cards when plugin admin is disabled', async () => {
@@ -213,6 +223,53 @@ describe('Recommendations', () => {
     expect(screen.getByRole('button', { name: 'Hide' })).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Previous' })).toBeInTheDocument();
+  });
+
+  it('does not refetch the existing-solution data when collapsed and expanded', async () => {
+    const mockResolve = jest.mocked(resolveKubernetesDatasource);
+    const mockInventory = jest.mocked(fetchKubernetesInventory);
+    const mockHealth = jest.mocked(fetchKubernetesHealth);
+    const mockCpu = jest.mocked(fetchClusterCpuSeries);
+    mockResolve.mockClear();
+    mockInventory.mockClear();
+    mockHealth.mockClear();
+    mockCpu.mockClear();
+    const { user } = render(<Recommendations />);
+
+    await screen.findByRole('button', { name: 'Next' });
+    expect(mockResolve).toHaveBeenCalledTimes(1);
+    expect(mockInventory).toHaveBeenCalledTimes(1);
+    expect(mockHealth).toHaveBeenCalledTimes(1);
+    expect(mockCpu).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByRole('button', { name: 'Hide' }));
+    await user.click(screen.getByRole('button', { name: 'Show' }));
+
+    expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument();
+    expect(mockResolve).toHaveBeenCalledTimes(1);
+    expect(mockInventory).toHaveBeenCalledTimes(1);
+    expect(mockHealth).toHaveBeenCalledTimes(1);
+    expect(mockCpu).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not run Kubernetes queries while collapsed from a stored preference, mounts once on Show', async () => {
+    window.localStorage.setItem('grafana.home.recommendations.collapsed', 'true');
+    const mockResolve = jest.mocked(resolveKubernetesDatasource);
+    mockResolve.mockClear();
+
+    const { user } = render(<Recommendations />);
+
+    await screen.findByText('Recommendations for your stack');
+    expect(mockResolve).not.toHaveBeenCalled();
+
+    await user.click(await screen.findByRole('button', { name: 'Show' }));
+    await waitFor(() => expect(mockResolve).toHaveBeenCalledTimes(1));
+
+    await user.click(screen.getByRole('button', { name: 'Hide' }));
+    await screen.findByRole('button', { name: 'Show' });
+    await user.click(screen.getByRole('button', { name: 'Show' }));
+    expect(mockResolve).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('recommendation-existing-skeleton')).not.toBeInTheDocument();
   });
 
   it('loads the collapsed state from local storage', async () => {

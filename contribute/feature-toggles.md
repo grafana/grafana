@@ -199,6 +199,29 @@ class FooSrv {
 }
 ```
 
+#### In tests
+
+When writing tests, use `setTestFlags` from `@grafana/test-utils/unstable` to set the feature flags for the duration of the test.
+
+If you're testing a component that uses the feature flag React hooks, you may need to use the `render` function from `test/test-utils` to ensure the React context is set up correctly.
+
+```ts
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { render } from 'test/test-utils';
+
+beforeAll(() => {
+  setTestFlags({
+    [FlagKeys.GrafanaNewPreferencesPage]: true,
+  });
+})
+
+test("The new page works", () => {
+  render(<MyComponent />);
+  // ...
+});
+```
+
 ## Enabling toggles in development
 
 Add the feature flag to the feature_toggle section in your custom.ini, for example:

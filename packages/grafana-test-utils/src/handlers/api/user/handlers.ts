@@ -1,4 +1,4 @@
-import { HttpResponse, http, type HttpResponseResolver } from 'msw';
+import { HttpResponse, http } from 'msw';
 
 import { type PreferencesSpec } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
 
@@ -42,14 +42,6 @@ const patchPreferencesHandler = () =>
     setMockUserPreferences(patch);
     return HttpResponse.json({ message: 'Preferences updated' });
   });
-
-// Override the GET in a test — e.g. to simulate a pending/slow or failing request.
-export const customGetUserPreferencesHandler = (resolver: HttpResponseResolver) =>
-  http.get('/api/user/preferences', resolver);
-
-// Override the PATCH in a test — e.g. to simulate a pending/slow save or a failing request.
-export const customPatchUserPreferencesHandler = (resolver: HttpResponseResolver) =>
-  http.patch('/api/user/preferences', resolver);
 
 const getSignedInUserTeamListHandler = () =>
   http.get('/api/user/teams', async () => {

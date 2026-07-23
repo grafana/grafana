@@ -204,13 +204,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
-	postgres "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource"
-	pyroscope "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
-	"github.com/grafana/grafana/pkg/tsdb/jaeger"
 	"github.com/grafana/grafana/pkg/tsdb/loki"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
@@ -266,7 +263,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(pluginDashboards.FileStore), new(*pluginDashboards.FileStoreManager)),
 	cloudwatch.ProvideService,
 	azuremonitor.ProvideService,
-	postgres.ProvideService,
 	mysql.ProvideService,
 	legacydualwrite.ProvideService,
 	httpclientprovider.New,
@@ -333,8 +329,6 @@ var wireBasicSet = wire.NewSet(
 	loki.ProvideService,
 	graphite.ProvideService,
 	prometheus.ProvideService,
-	pyroscope.ProvideService,
-	jaeger.ProvideService,
 	datasourceservice.ProvideCacheService,
 	wire.Bind(new(datasources.CacheService), new(*datasourceservice.CacheServiceImpl)),
 	encryptionservice.ProvideEncryptionService,

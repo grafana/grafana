@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	legacyuser "github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -55,7 +54,7 @@ func TestSearchFallback(t *testing.T) {
 			dual := dualwrite.ProvideServiceForTests(cfg)
 
 			searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), mockClient, mockLegacyClient)
-			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, featuremgmt.WithFeatures(), cfg, nil)
+			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, cfg, nil)
 
 			rr := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", "/searchUsers", nil)
@@ -112,6 +111,12 @@ func (m *MockClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRe
 	return response, nil
 }
 func (m *MockClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) RecordEvent(ctx context.Context, in *resourcepb.RecordEventRequest, opts ...grpc.CallOption) (*resourcepb.RecordEventResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) GetResourceDailyStats(ctx context.Context, in *resourcepb.GetResourceDailyStatsRequest, opts ...grpc.CallOption) (resourcepb.ResourceStats_GetResourceDailyStatsClient, error) {
 	return nil, nil
 }
 func (m *MockClient) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {
@@ -213,7 +218,6 @@ func TestSearchSort(t *testing.T) {
 			searchHandler := NewSearchHandler(
 				tracing.NewNoopTracerService(),
 				mockClient,
-				featuremgmt.WithFeatures(),
 				&setting.Cfg{},
 				authlib.FixedAccessClient(true),
 			)
@@ -404,7 +408,6 @@ func TestAccessControl(t *testing.T) {
 			searchHandler := NewSearchHandler(
 				tracing.NewNoopTracerService(),
 				mockClientWithHits(),
-				featuremgmt.WithFeatures(),
 				&setting.Cfg{},
 				tc.client,
 			)

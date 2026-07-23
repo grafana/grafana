@@ -6,6 +6,7 @@ import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 
 import { deserializeAutoGridLayout } from './AutoGridLayoutSerializer';
 import { deserializeDefaultGridLayout } from './DefaultGridLayoutSerializer';
+import { deserializeNotebookLayout } from './NotebookLayoutSerializer';
 import { deserializeRowsLayout } from './RowsLayoutSerializer';
 import { deserializeTabsLayout } from './TabsLayoutSerializer';
 
@@ -40,6 +41,11 @@ export const layoutDeserializerRegistry: Registry<LayoutSerializerRegistryItem> 
         id: 'TabsLayout',
         name: 'Tabs Layout',
         deserialize: deserializeTabsLayout,
+      },
+      {
+        id: 'NotebookLayout',
+        name: 'Notebook Layout',
+        deserialize: deserializeNotebookLayout,
       },
     ];
   });

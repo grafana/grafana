@@ -67,13 +67,13 @@ const (
 	// Support temporary security credentials in AWS plugins for Grafana Cloud customers
 	FlagAwsDatasourcesTempCredentials = "awsDatasourcesTempCredentials"
 
+	// FlagAwsAssumeRolePerDatasourceExternalId
+	// Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID.
+	FlagAwsAssumeRolePerDatasourceExternalId = "awsAssumeRolePerDatasourceExternalId"
+
 	// FlagMlExpressions
 	// Enable support for Machine Learning in server-side expressions
 	FlagMlExpressions = "mlExpressions"
-
-	// FlagDatasourceAPIServers
-	// Expose some datasources as apiservers.
-	FlagDatasourceAPIServers = "datasourceAPIServers"
 
 	// FlagGrafanaAPIServerWithExperimentalAPIs
 	// Register experimental APIs with the k8s API server, including all datasources
@@ -98,6 +98,10 @@ const (
 	// FlagProvisioningUserAttribution
 	// Author Git Sync commits as the acting Grafana user
 	FlagProvisioningUserAttribution = "provisioning.userAttribution"
+
+	// FlagProvisioningPerformance
+	// Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers
+	FlagProvisioningPerformance = "provisioning.performance"
 
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
@@ -331,6 +335,10 @@ const (
 	// Enables Saved queries (query library) feature
 	FlagQueryLibrary = "queryLibrary"
 
+	// FlagGrafanaSavedQueriesPage
+	// Enables the dedicated Saved queries page and its navigation entry
+	FlagGrafanaSavedQueriesPage = "grafana.savedQueriesPage"
+
 	// FlagPlaylistsRBAC
 	// Enables RBAC for playlists
 	FlagPlaylistsRBAC = "playlistsRBAC"
@@ -495,10 +503,6 @@ const (
 	// Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.
 	FlagAlertingRuleQuality = "alerting.ruleQuality"
 
-	// FlagElasticsearchCrossClusterSearch
-	// Enables cross cluster search in the Elasticsearch data source
-	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
-
 	// FlagLokiLabelNamesQueryApi
 	// Defaults to using the Loki `/labels` API instead of `/series`
 	FlagLokiLabelNamesQueryApi = "lokiLabelNamesQueryApi"
@@ -522,10 +526,6 @@ const (
 	// FlagTeamLBACApiWriteFromAppPlatform
 	// Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server
 	FlagTeamLBACApiWriteFromAppPlatform = "teamLBACApiWriteFromAppPlatform"
-
-	// FlagGrafanaAdvisor
-	// Enables Advisor app
-	FlagGrafanaAdvisor = "grafanaAdvisor"
 
 	// FlagElasticsearchImprovedParsing
 	// Enables less memory intensive Elasticsearch result parsing
@@ -862,10 +862,6 @@ const (
 	// Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.
 	FlagDatasourcesApiServerEnableHealthEndpointRedirect = "datasourcesApiServerEnableHealthEndpointRedirect"
 
-	// FlagAdvisorDatasourceIntegration
-	// Enables the advisor report integration with datasource pages
-	FlagAdvisorDatasourceIntegration = "advisorDatasourceIntegration"
-
 	// FlagStreamingForwardTeamHeadersTempo
 	// Enables forwarding team headers from tempo for streaming requests with LBAC rules
 	FlagStreamingForwardTeamHeadersTempo = "streamingForwardTeamHeadersTempo"
@@ -973,4 +969,8 @@ const (
 	// FlagGrafanaFrontendLegacyAPIHandling
 	// Controls whether the frontend blocks calls to legacy /api/ endpoints
 	FlagGrafanaFrontendLegacyAPIHandling = "grafana.frontendLegacyAPIHandling"
+
+	// FlagFeaturesBulkFlagEvalFiltering
+	// Filters bulk OFREP flag evaluations to public-metadata flags only
+	FlagFeaturesBulkFlagEvalFiltering = "features.bulkFlagEvalFiltering"
 )

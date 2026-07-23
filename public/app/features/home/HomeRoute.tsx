@@ -6,6 +6,7 @@ import { locationService } from '@grafana/runtime';
 import { useFlagGrafanaUnifiedHomepage } from '@grafana/runtime/internal';
 import { PageLoader } from '@grafana/ui';
 import { SETUP_GUIDE_HOME_URL } from 'app/core/hooks/useHomeNav';
+import { markAsUrlRewrite } from 'app/core/navigation/urlRewrite';
 
 import { type DashboardPageProxyProps } from '../dashboard/containers/DashboardPageProxy';
 
@@ -31,7 +32,8 @@ function UnifiedHomeRoute(props: DashboardPageProxyProps) {
       return;
     }
     const newUrl = locationUtil.processRedirectUri(redirectUri, locationService.getLocation());
-    locationService.replace(newUrl);
+    // Landing-page resolution, not a navigation: journey trackers keep previousUrl absent.
+    locationService.replace(markAsUrlRewrite(newUrl));
   }, [willRedirect, redirectUri]);
 
   if (isLoading || willRedirect) {
