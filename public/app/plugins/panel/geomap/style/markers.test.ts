@@ -1,4 +1,4 @@
-import { Fill, Stroke } from 'ol/style';
+import { Fill, Stroke, Style } from 'ol/style';
 
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions/resource';
 
@@ -197,27 +197,40 @@ describe('textMarker', () => {
 });
 
 describe('polyStyle', () => {
-  it('returns a Style with fill and stroke', () => {
-    const { Style, Stroke } = require('ol/style');
+  it('builds a stroke from the configured color/width and an opacity-adjusted fill', () => {
     const style = polyStyle({ color: '#0000ff', opacity: 0.5, lineWidth: 2 });
     expect(style).toBeInstanceOf(Style);
-    expect(style.getStroke()).toBeInstanceOf(Stroke);
+
+    const stroke = style.getStroke();
+    expect(stroke).toBeInstanceOf(Stroke);
+    expect(stroke?.getColor()).toBe('#0000ff');
+    expect(stroke?.getWidth()).toBe(2);
+
+    const fill = style.getFill();
+    expect(fill).toBeInstanceOf(Fill);
+    // opacity 0.5 is folded into the fill color via tinycolor
+    expect(String(fill?.getColor())).toMatch(/rgba\(.*0\.5\)/);
   });
 });
 
 describe('routeStyle', () => {
-  it('returns a Style with a stroke', () => {
-    const { Style, Stroke } = require('ol/style');
+  it('applies the configured stroke color and width and a solid fill at opacity 1', () => {
     const style = routeStyle({ color: '#00ff00', opacity: 1, lineWidth: 3 });
     expect(style).toBeInstanceOf(Style);
-    expect(style.getStroke()).toBeInstanceOf(Stroke);
+
+    const stroke = style.getStroke();
+    expect(stroke).toBeInstanceOf(Stroke);
+    expect(stroke?.getColor()).toBe('#00ff00');
+    expect(stroke?.getWidth()).toBe(3);
+
+    expect(style.getFill()?.getColor()).toBe('#00ff00');
   });
 
-  it('returns a Style with no stroke when opacity is 0', () => {
-    const { Style } = require('ol/style');
+  it('omits both stroke and fill when opacity is 0', () => {
     const style = routeStyle({ color: '#00ff00', opacity: 0 });
     expect(style).toBeInstanceOf(Style);
     expect(style.getStroke()).toBeNull();
+    expect(style.getFill()).toBeNull();
   });
 });
 

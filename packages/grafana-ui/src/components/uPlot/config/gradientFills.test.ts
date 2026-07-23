@@ -98,7 +98,8 @@ describe('getScaleGradientFn', () => {
     expect(() => getScaleGradientFn(1, theme, colorMode, undefined)).toThrow('Missing thresholds');
   });
 
-  it('returned function resolves gradient for threshold color mode', () => {
+  it('builds a gradient from absolute threshold steps, clamping the -Infinity base to the scale min', () => {
+    const getColorByName = jest.spyOn(theme.visualization, 'getColorByName');
     const colorMode = { id: FieldColorModeId.Thresholds } as unknown as FieldColorMode;
     const thresholds = {
       mode: ThresholdsMode.Absolute,
@@ -110,11 +111,22 @@ describe('getScaleGradientFn', () => {
     const fn = getScaleGradientFn(0.5, theme, colorMode, thresholds, 0, 100);
     const u = makeUPlot(0, 100);
     u.series = [{ show: true, scale: 'y', data: [], min: undefined, max: undefined }];
+
     const result = fn(asUPlot(u), 0);
-    expect(result).toBeDefined();
+
+    // two spanning stops => a real CanvasGradient, not a solid color string
+    expect(typeof result).not.toBe('string');
+    expect(typeof (result as CanvasGradient).addColorStop).toBe('function');
+    // the visible (non-base) step color is resolved through the theme
+    expect(getColorByName).toHaveBeenCalledWith('red');
+    // absolute step values are positioned as-is; the -Infinity base is clamped to the scale min (0)
+    expect(u.valToPos).toHaveBeenCalledWith(50, 'y', true);
+    expect(u.valToPos).toHaveBeenCalledWith(0, 'y', true);
+    expect(u.valToPos).not.toHaveBeenCalledWith(-Infinity, 'y', true);
+    getColorByName.mockRestore();
   });
 
-  it('returned function handles percentage threshold mode', () => {
+  it('remaps percentage threshold steps onto the absolute scale range before building the gradient', () => {
     const colorMode = { id: FieldColorModeId.Thresholds } as unknown as FieldColorMode;
     const thresholds = {
       mode: ThresholdsMode.Percentage,
@@ -123,26 +135,34 @@ describe('getScaleGradientFn', () => {
         { value: 80, color: 'red' },
       ],
     };
+    // hardMin=0, hardMax=200 => 80% should map to the absolute value 160
     const fn = getScaleGradientFn(0.5, theme, colorMode, thresholds, 0, 200);
     const u = makeUPlot(0, 200);
     u.series = [{ show: true, scale: 'y', data: [], min: undefined, max: undefined }];
+
     const result = fn(asUPlot(u), 0);
-    expect(result).toBeDefined();
+
+    expect(typeof (result as CanvasGradient).addColorStop).toBe('function');
+    expect(u.valToPos).toHaveBeenCalledWith(160, 'y', true);
+    expect(u.valToPos).not.toHaveBeenCalledWith(80, 'y', true);
   });
 
-  it('returned function handles getColors color mode', () => {
-    const colorMode = {
-      id: 'some-scheme',
-      getColors: () => ['red', 'green', 'blue'],
-    } as unknown as FieldColorMode;
+  it('spreads scheme colors evenly across the scale range in getColors mode', () => {
+    const getColors = jest.fn(() => ['red', 'green', 'blue']);
+    const colorMode = { id: 'some-scheme', getColors } as unknown as FieldColorMode;
     const thresholds = {
       mode: ThresholdsMode.Absolute,
       steps: [{ value: 0, color: 'green' }],
     };
+    // 3 colors over the range 0..100 => stops at 0, 50, 100
     const fn = getScaleGradientFn(1, theme, colorMode, thresholds, 0, 100);
     const u = makeUPlot(0, 100);
     u.series = [{ show: true, scale: 'y', data: [], min: undefined, max: undefined }];
+
     const result = fn(asUPlot(u), 0);
-    expect(result).toBeDefined();
+
+    expect(getColors).toHaveBeenCalledWith(theme);
+    expect(typeof (result as CanvasGradient).addColorStop).toBe('function');
+    expect(u.valToPos).toHaveBeenCalledWith(50, 'y', true);
   });
 });

@@ -14,20 +14,14 @@ function makeField(values: unknown[]): Field {
 }
 
 describe('getAlignmentFactor', () => {
-  it('caches a new alignmentFactor on field.state when none exists', () => {
+  it('initializes field.state and caches the alignmentFactor when the field has no state', () => {
     const field = makeField([1, 2, 3]);
+    expect(field.state).toBeUndefined();
     const displayValue: DisplayValue = { text: '1', numeric: 1 };
     const result = getAlignmentFactor(field, displayValue, 0);
     expect(result).toMatchObject({ text: '1', numeric: 1 });
+    // the freshly created state caches the returned factor by reference
     expect(field.state?.alignmentFactors).toBe(result);
-  });
-
-  it('initializes field.state when the field has no state at all', () => {
-    const field = makeField([42]);
-    field.state = undefined;
-    getAlignmentFactor(field, { text: '42', numeric: 42 }, 0);
-    expect(field.state).toBeDefined();
-    expect(field.state!.alignmentFactors).toBeDefined();
   });
 
   it('merges alignmentFactors into an existing state object without clobbering other state', () => {
@@ -38,12 +32,14 @@ describe('getAlignmentFactor', () => {
     expect(field.state.calcs).toEqual({ sum: 99 });
   });
 
-  it('returns the existing factor when the current value is not longer', () => {
+  it('keeps the cached factor when the new display value has fewer characters', () => {
     const field = makeField([1]);
     const cached = { text: 'long text' };
     field.state = { alignmentFactors: cached };
     const result = getAlignmentFactor(field, { text: 'x', numeric: 0 }, 0);
+    // 'x' is shorter than the cached 'long text', so the cached factor is retained unchanged
     expect(result).toBe(cached);
+    expect(field.state.alignmentFactors).toBe(cached);
   });
 
   it('replaces the cached factor when the current display value is longer', () => {

@@ -434,12 +434,27 @@ describe('getProcessedDataFrames', () => {
     expect(getProcessedDataFrames([])).toEqual([]);
   });
 
-  it('calls guessFieldTypes on each frame to infer field types', () => {
+  it('calls guessFieldTypes once per frame to infer field types', () => {
     const spy = jest.spyOn(guessFieldTypeModule, 'guessFieldTypes');
-    const raw = { fields: [{ name: 'value', values: [1, 2] }] } as unknown as DataFrameDTO;
-    getProcessedDataFrames([raw]);
-    expect(spy).toHaveBeenCalled();
+    const frames = [
+      { fields: [{ name: 'value', values: [1, 2] }] },
+      { fields: [{ name: 'label', values: ['a', 'b'] }] },
+    ] as unknown as DataFrameDTO[];
+    getProcessedDataFrames(frames);
+    expect(spy).toHaveBeenCalledTimes(frames.length);
     spy.mockRestore();
+  });
+
+  it('infers untyped fields via guessFieldTypes (time from timestamps, number from numeric values)', () => {
+    const raw = {
+      fields: [
+        { name: 'time', values: [1000, 2000] },
+        { name: 'value', values: [1, 2] },
+      ],
+    } as unknown as DataFrameDTO;
+    const [frame] = getProcessedDataFrames([raw]);
+    expect(frame.fields[0].type).toBe(FieldType.time);
+    expect(frame.fields[1].type).toBe(FieldType.number);
   });
 
   it('clears cached field state on processed frames', () => {
@@ -480,7 +495,7 @@ describe('preProcessPanelData', () => {
     expect(result.series[0].fields[0].state).toBeNull();
   });
 
-  it('returns last result with loading state when loading and no series', () => {
+  it('reuses the previous series while loading with no data, to avoid a no-data flicker', () => {
     const loadingData = {
       state: LoadingState.Loading,
       series: [],
@@ -492,10 +507,12 @@ describe('preProcessPanelData', () => {
     };
     const result = preProcessPanelData(loadingData, lastResult);
     expect(result.state).toBe(LoadingState.Loading);
+    // the previous (non-empty) series is carried over rather than the incoming empty one
     expect(result.series).toBe(lastResult.series);
+    expect(result.series).toHaveLength(1);
   });
 
-  it('falls back to the loading data itself as lastResult when no lastResult is provided', () => {
+  it('keeps its own empty series while loading when there is no previous result to fall back to', () => {
     const loadingData = {
       state: LoadingState.Loading,
       series: [],
@@ -503,7 +520,9 @@ describe('preProcessPanelData', () => {
     };
     const result = preProcessPanelData(loadingData, undefined);
     expect(result.state).toBe(LoadingState.Loading);
+    // with no lastResult, there is nothing to carry over, so the empty series is preserved
     expect(result.series).toBe(loadingData.series);
+    expect(result.series).toHaveLength(0);
   });
 
   it('includes timings in processed result', () => {

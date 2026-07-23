@@ -1,4 +1,4 @@
-import type uPlot from 'uplot';
+import uPlot from 'uplot';
 
 import { createDataFrame, createTheme, type DataFrame, FieldType, type GrafanaTheme2 } from '@grafana/data';
 import { ScaleDirection, ScaleOrientation, StackingMode, VisibilityMode } from '@grafana/schema';
@@ -975,53 +975,75 @@ describe('bars.getConfig', () => {
   });
 
   describe('getColor / mappedColorDisp', () => {
-    it('builds config without error when getColor is provided', () => {
-      const opts = createMinimalBarsOptions({
-        getColor: (_seriesIdx: number, _valueIdx: number, _value: unknown) => 'rgba(255,0,0,0.5)',
-      });
-      expect(() => getConfig(opts, theme)).not.toThrow();
+    it('invokes getColor for every non-null value with (seriesIdx, valueIdx, value) when the color map is built', () => {
+      const getColor = jest.fn((_seriesIdx: number, _valueIdx: number, value: unknown) => `rgba(${value},0,0,0.5)`);
+      const opts = createMinimalBarsOptions({ getColor });
+      const config = getConfig(opts, theme);
+      const u = createMockU([
+        ['a', 'b', 'c'],
+        [10, 20, 30],
+      ]);
+
+      config.drawClear!(asUPlot(u));
+
+      expect(getColor).toHaveBeenCalledTimes(3);
+      expect(getColor).toHaveBeenNthCalledWith(1, 1, 0, 10);
+      expect(getColor).toHaveBeenNthCalledWith(2, 1, 1, 20);
+      expect(getColor).toHaveBeenNthCalledWith(3, 1, 2, 30);
     });
 
-    it('barsBuilder does not throw when getColor is set and drawClear runs', () => {
-      const opts = createMinimalBarsOptions({
-        getColor: () => 'rgba(0,255,0,0.5)',
-      });
+    it('skips getColor for null values when building the color map', () => {
+      const getColor = jest.fn((_seriesIdx: number, _valueIdx: number, _value: unknown) => 'rgba(0,255,0,0.5)');
+      const opts = createMinimalBarsOptions({ getColor });
       const config = getConfig(opts, theme);
-      const u = createMockU();
-      expect(() => {
-        if (config.drawClear) {
-          config.drawClear(asUPlot(u));
-        }
-        if (config.barsBuilder) {
-          config.barsBuilder(asUPlot(u), 1, 0, u.data[0].length - 1);
-        }
-      }).not.toThrow();
+      const u = createMockU([
+        ['a', 'b', 'c'],
+        [10, null, 30],
+      ]);
+
+      config.drawClear!(asUPlot(u));
+
+      // only the two non-null values (indices 0 and 2) are colored
+      expect(getColor).toHaveBeenCalledTimes(2);
+      expect(getColor.mock.calls.map((call) => call[1])).toEqual([0, 2]);
     });
   });
 
   describe('stacked radius callback', () => {
-    it('builds config without error when stacking is Normal with barRadius', () => {
+    /** Retrieves the config object passed into the (mocked) uPlot.paths.bars for the most recent getConfig call. */
+    function getBarsPathConfig(): { radius: unknown } {
+      const barsMock = (uPlot as unknown as { paths: { bars: jest.Mock } }).paths.bars;
+      return barsMock.mock.calls[barsMock.mock.calls.length - 1][0];
+    }
+
+    it('rounds only the top corners of the topmost stacked series', () => {
       const opts = createMinimalBarsOptions({
         stacking: StackingMode.Normal,
         barRadius: 0.3,
       });
-      const config = getConfig(opts, theme);
-      expect(config.barsBuilder).toBeDefined();
+      getConfig(opts, theme);
 
+      const radius = getBarsPathConfig().radius as (u: uPlot, seriesIdx: number) => [number, number];
+      expect(typeof radius).toBe('function');
+
+      // data has two value series (indices 1 and 2), so the topmost series index is 2
       const u = createMockU([
         ['a', 'b', 'c'],
         [10, 20, 30],
         [5, 10, 15],
       ]);
-      expect(() => {
-        if (config.drawClear) {
-          config.drawClear(asUPlot(u));
-        }
-        if (config.barsBuilder) {
-          config.barsBuilder(asUPlot(u), 1, 0, u.data[0].length - 1);
-          config.barsBuilder(asUPlot(u), 2, 0, u.data[0].length - 1);
-        }
-      }).not.toThrow();
+      expect(radius(asUPlot(u), 2)).toEqual([0.3, 0]);
+      expect(radius(asUPlot(u), 1)).toEqual([0, 0]);
+    });
+
+    it('uses a constant (non-callback) radius when bars are not stacked', () => {
+      const opts = createMinimalBarsOptions({
+        stacking: StackingMode.None,
+        barRadius: 0.3,
+      });
+      getConfig(opts, theme);
+
+      expect(getBarsPathConfig().radius).toBe(0.3);
     });
   });
 });

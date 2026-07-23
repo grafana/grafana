@@ -72,7 +72,7 @@ describe('getThresholdsDrawHook', () => {
     expect(noMax.ctx.save).not.toHaveBeenCalled();
   });
 
-  it('draws a line for each threshold step above the base in Line mode', () => {
+  it('draws a horizontal threshold line (constant y, spanning the plot width) in Line mode', () => {
     const u = makeUPlot();
     getThresholdsDrawHook({
       scaleKey: 'y',
@@ -81,7 +81,9 @@ describe('getThresholdsDrawHook', () => {
       theme,
     })(asUPlot(u));
     expect(u.ctx.save).toHaveBeenCalled();
-    expect(u.ctx.beginPath).toHaveBeenCalled();
+    // horizontal orientation => line runs at a constant y (the threshold position, 50) across the bbox width
+    expect(u.ctx.moveTo).toHaveBeenCalledWith(0, 50);
+    expect(u.ctx.lineTo).toHaveBeenCalledWith(200, 50);
     expect(u.ctx.stroke).toHaveBeenCalled();
     expect(u.ctx.fillRect).not.toHaveBeenCalled();
     expect(u.ctx.setLineDash).toHaveBeenCalledWith([]);
@@ -193,7 +195,7 @@ describe('getThresholdsDrawHook', () => {
     expect(strokeStyles[0]).toContain('rgba(');
   });
 
-  it('draws correctly in vertical scale orientation', () => {
+  it('draws a vertical threshold line (constant x, spanning the plot height) in vertical scale orientation', () => {
     const u = makeUPlot();
     u.scales.x.ori = ScaleOrientation.Vertical;
     getThresholdsDrawHook({
@@ -202,6 +204,9 @@ describe('getThresholdsDrawHook', () => {
       config: { mode: GraphThresholdsStyleMode.Line },
       theme,
     })(asUPlot(u));
+    // vertical orientation swaps the axes: the line runs at a constant x (50) from the top to the bottom of the bbox
+    expect(u.ctx.moveTo).toHaveBeenCalledWith(50, 0);
+    expect(u.ctx.lineTo).toHaveBeenCalledWith(50, 100);
     expect(u.ctx.stroke).toHaveBeenCalled();
   });
 });
