@@ -273,14 +273,12 @@ export const browseDashboardsAPI = createApi({
           const dashboard = isDashboardV2Resource(fullDash) ? fullDash.spec : fullDash.dashboard;
           const k8s = isDashboardV2Resource(fullDash) ? fullDash.metadata : undefined;
 
-          if (config.featureToggles.provisioning) {
-            if (isProvisionedDashboard(fullDash)) {
-              appEvents.publish({
-                type: AppEvents.alertWarning.name,
-                payload: ['Cannot move provisioned dashboard'],
-              });
-              continue;
-            }
+          if (isProvisionedDashboard(fullDash)) {
+            appEvents.publish({
+              type: AppEvents.alertWarning.name,
+              payload: ['Cannot move provisioned dashboard'],
+            });
+            continue;
           }
           await api.saveDashboard({
             dashboard,
@@ -395,17 +393,15 @@ export const browseDashboardsAPI = createApi({
           for (const dashboardUID of dashboardUIDs) {
             // It's not possible to select a mix of provisioned and non-provisioned dashboards
             // from the UI, so this is mostly a guard in case that somehow happens
-            if (config.featureToggles.provisioning) {
-              const dto = await api.getDashboardDTO(dashboardUID);
-              if (isProvisionedDashboard(dto)) {
-                appEvents.publish({
-                  type: AppEvents.alertWarning.name,
-                  payload: [
-                    'Cannot delete provisioned dashboard. To remove it, delete it from the repository and synchronise to apply the changes.',
-                  ],
-                });
-                continue;
-              }
+            const dto = await api.getDashboardDTO(dashboardUID);
+            if (isProvisionedDashboard(dto)) {
+              appEvents.publish({
+                type: AppEvents.alertWarning.name,
+                payload: [
+                  'Cannot delete provisioned dashboard. To remove it, delete it from the repository and synchronise to apply the changes.',
+                ],
+              });
+              continue;
             }
             await api.deleteDashboard(dashboardUID, false);
 

@@ -1,6 +1,5 @@
 import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { type FolderMetadataStatus } from '../../hooks/useFolderMetadataStatus';
@@ -89,16 +88,6 @@ describe('FolderPermissions', () => {
     expect(permissions).toHaveAttribute('data-can-set', 'true');
     expect(permissions).toHaveAttribute('data-resource-id', 'folder-1');
     expect(useFolderMetadataStatus).not.toHaveBeenCalled();
-  });
-
-  it('renders permissions directly when feature toggles are disabled', () => {
-    config.featureToggles.provisioning = false;
-
-    render(<FolderPermissions folderUID="folder-1" canSetPermissions={true} isProvisionedFolder={true} />);
-
-    const permissions = screen.getByTestId('permissions');
-    expect(permissions).toHaveAttribute('data-can-set', 'true');
-    expect(permissions).toHaveAttribute('data-resource-id', 'folder-1');
   });
 
   it('renders loading state', () => {

@@ -1,7 +1,6 @@
 import { type ResourceStats } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 
 import { appEvents } from '../../../../core/app_events';
 import { isProvisionedFolder } from '../../../../features/browse-dashboards/api/isProvisioned';
@@ -14,26 +13,22 @@ export async function isProvisionedFolderCheck(
   folderUID: string,
   options?: { warning?: string }
 ) {
-  if (config.featureToggles.provisioning) {
-    const folder = await dispatch(folderAPI.endpoints.getFolder.initiate({ name: folderUID }));
-    // TODO: taken from browseDashboardAPI as it is, but this error handling should be moved up to UI code.
-    if (folder.data && isProvisionedFolder(folder.data)) {
-      appEvents.publish({
-        type: AppEvents.alertWarning.name,
-        payload: [
-          options?.warning ||
-            t(
-              'folders.api.folder-delete-error-provisioned',
-              'Cannot delete provisioned folder. To remove it, delete it from the repository and synchronise to apply the changes.'
-            ),
-        ],
-      });
-      return true;
-    }
-    return false;
-  } else {
-    return false;
+  const folder = await dispatch(folderAPI.endpoints.getFolder.initiate({ name: folderUID }));
+  // TODO: taken from browseDashboardAPI as it is, but this error handling should be moved up to UI code.
+  if (folder.data && isProvisionedFolder(folder.data)) {
+    appEvents.publish({
+      type: AppEvents.alertWarning.name,
+      payload: [
+        options?.warning ||
+          t(
+            'folders.api.folder-delete-error-provisioned',
+            'Cannot delete provisioned folder. To remove it, delete it from the repository and synchronise to apply the changes.'
+          ),
+      ],
+    });
+    return true;
   }
+  return false;
 }
 
 // Maps legacy resource names emitted by the `sql-fallback` group onto the unified-storage

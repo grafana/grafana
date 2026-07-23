@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 
-import { config } from '@grafana/runtime';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useIsProvisionedInstance } from '../../hooks/useIsProvisionedInstance';
@@ -54,8 +53,6 @@ describe('ProvisioningAwareFolderPicker', () => {
       error: undefined,
       refetch: jest.fn(),
     });
-
-    config.featureToggles = { provisioning: true };
   });
 
   describe('Provisioned Instance', () => {
@@ -91,19 +88,6 @@ describe('ProvisioningAwareFolderPicker', () => {
 
       const excludeUIDs = JSON.parse(screen.getByTestId('exclude-uids').textContent || '[]');
       expect(excludeUIDs).toEqual(['repo1', 'repo2', 'repo3', 'custom1']);
-    });
-  });
-
-  describe('Feature Toggle Disabled', () => {
-    beforeEach(() => {
-      mockUseIsProvisionedInstance.mockReturnValue(false);
-      config.featureToggles.provisioning = false;
-    });
-
-    it('should not apply restrictions', () => {
-      setup({ isNonProvisionedFolder: true });
-      expect(screen.getByTestId('root-folder-uid')).toHaveTextContent('undefined');
-      expect(screen.getByTestId('exclude-uids')).toHaveTextContent('[]');
     });
   });
 

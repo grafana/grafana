@@ -1,6 +1,5 @@
 import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 
-import { config } from '@grafana/runtime';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { type RouteDescriptor } from 'app/core/navigation/types';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -29,11 +28,6 @@ const connectionRoles = () =>
   ]);
 
 export function getProvisioningRoutes(): RouteDescriptor[] {
-  const featureToggles = config.featureToggles || {};
-  if (!featureToggles.provisioning) {
-    return [];
-  }
-
   if (!checkRequiredFeatures()) {
     return [
       {

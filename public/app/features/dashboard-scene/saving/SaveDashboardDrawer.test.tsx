@@ -230,14 +230,6 @@ describe('SaveDashboardDrawer', () => {
   });
 
   describe('When a dashboard is managed by an external system', () => {
-    beforeEach(() => {
-      config.featureToggles.provisioning = true;
-    });
-
-    afterEach(() => {
-      config.featureToggles.provisioning = false;
-    });
-
     it('It should show the changes tab if the resource can be edited', async () => {
       const { dashboard, openAndRender } = setup({
         meta: {

@@ -1,7 +1,6 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
@@ -44,19 +43,15 @@ function setPermissions({ isEditor = false, canManageRepositories = false } = {}
 }
 
 describe('ManagedBadge', () => {
-  let originalProvisioning: boolean | undefined;
   let originalIsEditor: boolean;
 
   beforeEach(() => {
-    originalProvisioning = config.featureToggles.provisioning;
     originalIsEditor = contextSrv.isEditor;
-    config.featureToggles.provisioning = true;
     hasPermissionSpy = jest.spyOn(contextSrv, 'hasPermission');
     setPermissions();
   });
 
   afterEach(() => {
-    config.featureToggles.provisioning = originalProvisioning;
     contextSrv.isEditor = originalIsEditor;
     jest.restoreAllMocks();
   });
@@ -242,14 +237,5 @@ describe('ManagedBadge', () => {
       expect(screen.queryByRole('button')).not.toBeInTheDocument();
     });
 
-    it('renders a plain badge when the provisioning feature toggle is off', () => {
-      setPermissions({ isEditor: true, canManageRepositories: true });
-      config.featureToggles.provisioning = false;
-
-      render(<ManagedBadge managerKind={ManagerKind.Repo} repositoryName="my-repo" sourcePath="dashboards/foo.json" />);
-
-      expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
-      expect(screen.queryByRole('button')).not.toBeInTheDocument();
-    });
   });
 });

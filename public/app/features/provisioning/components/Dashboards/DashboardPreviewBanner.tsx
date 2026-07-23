@@ -1,5 +1,4 @@
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { type DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
@@ -58,8 +57,7 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
 }
 
 export function DashboardPreviewBanner({ queryParams, route, slug, path }: DashboardPreviewBannerProps) {
-  const provisioningEnabled = config.featureToggles.provisioning;
-  if (!provisioningEnabled || 'kiosk' in queryParams || !path || route !== DashboardRoutes.Provisioning || !slug) {
+  if ('kiosk' in queryParams || !path || route !== DashboardRoutes.Provisioning || !slug) {
     return null;
   }
 

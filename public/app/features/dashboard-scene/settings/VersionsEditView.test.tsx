@@ -256,12 +256,7 @@ describe('VersionsEditView', () => {
   });
 
   describe('Provisioned dashboards', () => {
-    beforeEach(() => {
-      config.featureToggles.provisioning = true;
-    });
-
     afterEach(() => {
-      config.featureToggles.provisioning = false;
       jest.clearAllMocks();
     });
 
