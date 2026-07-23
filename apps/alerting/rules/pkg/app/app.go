@@ -57,7 +57,8 @@ func New(cfg app.Config) (app.App, error) {
 				},
 			},
 		},
-		ManagedKinds: managedKinds,
+		ManagedKinds:          managedKinds,
+		VersionedCustomRoutes: buildSearchRoutes(runtimeCfg),
 	}
 
 	a, err := simple.NewApp(c)
@@ -71,6 +72,23 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	return a, nil
+}
+
+// buildSearchRoutes wires the rule search handler (provided by the registry) to
+// its namespaced POST /search custom route. The route is skipped when the
+// handler is unset so manifest validation without a backing instance does not
+// register a nil handler. The request/response shapes mirror the generic
+// search.grafana.app SearchQuery/SearchResults; the query is a POST body so the
+// typed where tree survives transport (see the createSearchRules route in the
+// kinds' searchRoutes CUE).
+func buildSearchRoutes(cfg config.RuntimeConfig) map[string]simple.AppVersionRouteHandlers {
+	if cfg.SearchRulesHandler == nil {
+		return nil
+	}
+	handlers := simple.AppVersionRouteHandlers{
+		simple.AppVersionRoute{Namespaced: true, Path: "/search", Method: simple.AppCustomRouteMethodPost}: cfg.SearchRulesHandler,
+	}
+	return map[string]simple.AppVersionRouteHandlers{"v0alpha1": handlers}
 }
 
 func buildKindValidator(kind resource.Kind, cfg config.RuntimeConfig, md app.ManifestData) (*simple.Validator, error) {

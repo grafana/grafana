@@ -5,6 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/simple"
+
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 )
 
@@ -46,4 +48,8 @@ type RuntimeConfig struct {
 	// watches all namespaces (on-prem default); in cloud it must be the stack
 	// namespace, else the all-namespace watch is rejected as a mismatch.
 	WatchNamespace string
+	// SearchRulesHandler is built by the registry with access to the alerting
+	// services. It backs the single namespaced POST /search custom route, which
+	// federates alert and recording rules into one result set.
+	SearchRulesHandler simple.AppCustomRouteHandler
 }
