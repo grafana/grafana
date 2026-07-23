@@ -139,6 +139,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 			Id:              pluginDef.ID,
 			Name:            pluginDef.Name,
 			Type:            string(pluginDef.Type),
+			AliasIDs:        pluginDef.AliasIDs,
 			Category:        pluginDef.Category,
 			Info:            pluginDef.Info,
 			Dependencies:    pluginDef.Dependencies,
