@@ -1,17 +1,13 @@
 //go:build wireinject && oss
 // +build wireinject,oss
 
-// This file should contain wiresets which contain OSS-specific implementations.
-package server
+// OSS edition Wire bindings. Composed with bootstrap/wire core sets at inject time.
+package wireext
 
 import (
 	"github.com/google/wire"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/configprovider"
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	pluginauth "github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/manager"
@@ -35,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/anonymous/validator"
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
 	builder "github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
 	"github.com/grafana/grafana/pkg/services/auth/idimpl"
@@ -45,8 +40,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/ldap"
@@ -62,7 +55,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsMigrator "github.com/grafana/grafana/pkg/services/secrets/migrator"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
@@ -87,7 +79,8 @@ var configProviderExtras = wire.NewSet(
 	configprovider.ProvideService,
 )
 
-var wireExtsBasicSet = wire.NewSet(
+// BasicSet contains OSS edition bindings composed with bootstrap/wire core sets.
+var BasicSet = wire.NewSet(
 	authimpl.ProvideUserAuthTokenService,
 	wire.Bind(new(auth.UserTokenService), new(*authimpl.UserAuthTokenService)),
 	wire.Bind(new(auth.UserTokenBackgroundService), new(*authimpl.UserAuthTokenService)),
@@ -171,81 +164,4 @@ var wireExtsBasicSet = wire.NewSet(
 	advisor.ProvideAppInstaller,
 	zStore.ProvideDefaultStoreProvider,
 	authz.ProvideReconcileCRDs,
-)
-
-var wireExtsSet = wire.NewSet(
-	wireSet,
-	wireExtsBasicSet,
-)
-
-var wireExtsCLISet = wire.NewSet(
-	wireCLISet,
-	wireExtsBasicSet,
-)
-
-var wireExtsTestSet = wire.NewSet(
-	wireTestSet,
-	wireExtsBasicSet,
-)
-
-// The wireExtsBaseCLISet is a simplified set of dependencies for the OSS CLI,
-// suitable for running background services and targeted dskit modules without
-// starting up the full Grafana server.
-var wireExtsBaseCLISet = wire.NewSet(
-	NewModuleRunner,
-
-	metrics.WireSet,
-	featuremgmt.ProvideManagerService,
-	featuremgmt.ProvideToggles,
-	hooks.ProvideService,
-	setting.ProvideProvider, wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
-	licensing.ProvideService, wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)),
-	configProviderExtras,
-)
-
-// wireModuleServerSet is a wire set for the ModuleServer.
-var wireExtsModuleServerSet = wire.NewSet(
-	NewModule,
-	wireExtsBaseCLISet,
-	// Tracing
-	tracing.ProvideTracingConfig,
-	tracing.ProvideService,
-	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
-	// Unified storage
-	resource.ProvideStorageMetrics,
-	resource.ProvideIndexMetrics,
-	resource.ProvideVectorMetrics,
-	// Overridden by enterprise
-	ProvideNoopModuleRegisterer,
-	sql.ProvideStorageBackend,
-	// Zanzana store provider
-	zStore.ProvideDefaultStoreProvider,
-	// Zanzana MT reconciler CRD list
-	authz.ProvideReconcileCRDs,
-)
-
-var wireExtsStandaloneAPIServerSet = wire.NewSet(
-	standalone.ProvideAPIServerFactory,
-)
-
-// wireExtsDashboardStatsSet provides the dashboard stats dependency for the
-// InitializeDashboardStats injector. Kept separate from wireExtsSet so the
-// injector can receive already-constructed dependencies as parameters
-// without duplicate bindings.
-var wireExtsDashboardStatsSet = wire.NewSet(
-	builders.ProvideDashboardStats,
-	wire.Bind(new(builders.DashboardStats), new(*builders.OssDashboardStats)),
-)
-
-// wireExtsSearchSupportSet provides the document builders together with the
-// dashboard stats they use, for the InitializeSearchSupport injector.
-var wireExtsSearchSupportSet = wire.NewSet(
-	wireExtsDashboardStatsSet,
-	migrations.ProvideOSSMigrations,
-	wire.Bind(new(registry.DatabaseMigrator), new(*migrations.OSSMigrations)),
-	bus.ProvideBus,
-	wire.Bind(new(bus.Bus), new(*bus.InProcBus)),
-	sqlstore.ProvideService,
-	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
-	search2.ProvideDocumentBuilders,
 )
