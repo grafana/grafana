@@ -26,9 +26,8 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 	}
 
 	pluginSettings := extractPluginSettings(settingProvider)
-	activeOverrides := externalOverridesFromIni(cfg, pluginSettings)
 
-	return config.NewPluginManagementCfg(
+	pCfg := config.NewPluginManagementCfg(
 		settingProvider.KeyValue("", "app_mode").MustBool(cfg.Env == setting.Dev),
 		cfg.PluginsPaths,
 		pluginSettings,
@@ -44,8 +43,9 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		cfg.DisablePlugins,
 		cfg.ForwardHostEnvVars,
 		cfg.GrafanaComProxyAPIToken,
-		activeOverrides,
-	), nil
+	)
+	pCfg.ActiveExternalOverrides = externalOverridesFromIni(cfg, pluginSettings)
+	return pCfg, nil
 }
 
 // externalOverridesFromIni builds the active external override list by scanning plugin ini settings.
