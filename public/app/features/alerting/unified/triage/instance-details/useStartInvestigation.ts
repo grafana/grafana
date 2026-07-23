@@ -189,18 +189,20 @@ export function useStartInvestigation({
     return { status: 'starting' };
   }
 
-  if (isStartError) {
-    return { status: 'startError', onStart };
-  }
-
+  // Prefer reportFailed over startError when a failed/cancelled investigation is
+  // already known — a retry mutation error must not hide "Open failed report".
   if (investigationFailed && investigation) {
-    // Always expose the failed report link. Retry POSTs from-alert again; the
-    // Assistant manual path creates a fresh investigation for failed/cancelled.
+    // Retry POSTs from-alert again; the Assistant manual path creates a fresh
+    // investigation for failed/cancelled.
     return {
       status: 'reportFailed',
       href: getAssistantInvestigationUrl(investigation.id),
       onStart,
     };
+  }
+
+  if (isStartError) {
+    return { status: 'startError', onStart };
   }
 
   if (isPollError && knownId && !isAssistantInvestigationTerminal(investigation?.state)) {
