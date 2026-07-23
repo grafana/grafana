@@ -32,18 +32,28 @@ func TestIntegrationFeatures(t *testing.T) {
 		},
 	})
 
-	t.Run("Test evaluate flags", func(t *testing.T) {
-		rsp := apis.DoRequest(helper, apis.RequestParams{
-			Method: http.MethodPost,
-			Path:   "/apis/features.grafana.app/v0alpha1/namespaces/default/ofrep/v1/evaluate/flags/" + flag,
-			User:   helper.Org1.Admin,
-		}, &map[string]any{})
+	// The evaluation endpoint is served on two prefixes: the canonical /ofrep path and
+	// the deprecated API-server-flavored path kept for backwards compatibility. Both
+	// must return the same result.
+	paths := map[string]string{
+		"canonical /ofrep path":               "/ofrep/v1/evaluate/flags/" + flag,
+		"deprecated api-server-flavored path": "/apis/features.grafana.app/v0alpha1/namespaces/default/ofrep/v1/evaluate/flags/" + flag,
+	}
 
-		require.Equal(t, 200, rsp.Response.StatusCode)
-		require.JSONEq(t, `{
-			"value": true,
-			"key":"`+flag+`",
-			"reason":"static provider evaluation result",
-			"variant":"default"}`, string(rsp.Body))
-	})
+	for name, path := range paths {
+		t.Run("Test evaluate flags: "+name, func(t *testing.T) {
+			rsp := apis.DoRequest(helper, apis.RequestParams{
+				Method: http.MethodPost,
+				Path:   path,
+				User:   helper.Org1.Admin,
+			}, &map[string]any{})
+
+			require.Equal(t, 200, rsp.Response.StatusCode)
+			require.JSONEq(t, `{
+				"value": true,
+				"key":"`+flag+`",
+				"reason":"static provider evaluation result",
+				"variant":"default"}`, string(rsp.Body))
+		})
+	}
 }

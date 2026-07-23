@@ -23,7 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func TestAPIBuilder_ValidateNamespaceIfPresent(t *testing.T) {
+func TestAPIBuilder_ValidateNamespace(t *testing.T) {
 	logger := log.NewNopLogger()
 	b := &APIBuilder{logger: logger}
 
@@ -109,7 +109,7 @@ func TestAPIBuilder_ValidateNamespaceIfPresent(t *testing.T) {
 			evalCtx, err := b.readEvalContext(httptest.NewRecorder(), req)
 			require.NoError(t, err)
 
-			_, valid := b.validateNamespaceIfPresent(req, evalCtx)
+			_, valid := b.validateNamespace(req, evalCtx)
 			assert.Equal(t, tt.expectedValid, valid)
 
 			// Body must still be readable after readEvalContext
@@ -120,7 +120,7 @@ func TestAPIBuilder_ValidateNamespaceIfPresent(t *testing.T) {
 	}
 }
 
-func TestRootOneFlagHandler_MissingFlagKey(t *testing.T) {
+func TestOneFlagHandler_MissingFlagKey(t *testing.T) {
 	b := &APIBuilder{
 		providerType: setting.OFREPProviderType,
 		logger:       log.NewNopLogger(),
@@ -129,18 +129,11 @@ func TestRootOneFlagHandler_MissingFlagKey(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/ofrep/v1/evaluate/flags/", bytes.NewBufferString(`{}`))
 	// No flagKey in mux.Vars
 	w := httptest.NewRecorder()
-	b.rootOneFlagHandler(w, req)
+	b.oneFlagHandler(w, req)
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 func TestOneFlagHandler_Unauth(t *testing.T) {
-	routes := []struct {
-		name string
-		call func(b *APIBuilder, w http.ResponseWriter, r *http.Request)
-	}{
-		{"root", func(b *APIBuilder, w http.ResponseWriter, r *http.Request) { b.rootOneFlagHandler(w, r) }},
-		{"namespaced", func(b *APIBuilder, w http.ResponseWriter, r *http.Request) { b.oneFlagHandler(w, r) }},
-	}
 	tests := []struct {
 		name       string
 		metadata   map[string]any
@@ -150,48 +143,35 @@ func TestOneFlagHandler_Unauth(t *testing.T) {
 		{"private flag returns 404, indistinguishable from a genuinely missing flag", nil, http.StatusNotFound},
 	}
 
-	for _, rt := range routes {
-		for _, tt := range tests {
-			t.Run(rt.name+": "+tt.name, func(t *testing.T) {
-				b := newSingleEvalBuilder(t, tt.metadata)
-				w := httptest.NewRecorder()
-				r := newUnauthReq("/ofrep/v1/evaluate/flags/brandnewflag", map[string]string{"flagKey": "brandnewflag", "namespace": ""})
-				rt.call(b, w, r)
-				assert.Equal(t, tt.wantStatus, w.Code)
-			})
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := newSingleEvalBuilder(t, tt.metadata)
+			w := httptest.NewRecorder()
+			r := newUnauthReq("/ofrep/v1/evaluate/flags/brandnewflag", map[string]string{"flagKey": "brandnewflag", "namespace": ""})
+			b.oneFlagHandler(w, r)
+			assert.Equal(t, tt.wantStatus, w.Code)
+		})
 	}
 }
 
 func TestAllFlagsHandler_Unauth(t *testing.T) {
-	routes := []struct {
-		name string
-		call func(b *APIBuilder, w http.ResponseWriter, r *http.Request)
-	}{
-		{"root", func(b *APIBuilder, w http.ResponseWriter, r *http.Request) { b.rootAllFlagsHandler(w, r) }},
-		{"namespaced", func(b *APIBuilder, w http.ResponseWriter, r *http.Request) { b.allFlagsHandler(w, r) }},
-	}
 	upstreamFlags := []goffmodel.OFREPFlagBulkEvaluateSuccessResponse{
 		{OFREPEvaluateSuccessResponse: goffmodel.OFREPEvaluateSuccessResponse{Key: "publicFlag", Metadata: map[string]any{"public": true}}},
 		{OFREPEvaluateSuccessResponse: goffmodel.OFREPEvaluateSuccessResponse{Key: "privateFlag", Metadata: map[string]any{"public": false}}},
 	}
 
-	for _, rt := range routes {
-		t.Run(rt.name, func(t *testing.T) {
-			b := newBulkEvalBuilder(t, upstreamFlags, http.StatusOK)
-			w := httptest.NewRecorder()
-			r := newUnauthReq("/ofrep/v1/evaluate/flags", map[string]string{"namespace": ""})
-			rt.call(b, w, r)
+	b := newBulkEvalBuilder(t, upstreamFlags, http.StatusOK)
+	w := httptest.NewRecorder()
+	r := newUnauthReq("/ofrep/v1/evaluate/flags", map[string]string{"namespace": ""})
+	b.allFlagsHandler(w, r)
 
-			require.Equal(t, http.StatusOK, w.Code)
-			var result goffmodel.OFREPBulkEvaluateSuccessResponse
-			require.NoError(t, json.Unmarshal(w.Body.Bytes(), &result))
-			assert.Equal(t, []string{"publicFlag"}, flagKeys(result.Flags))
-		})
-	}
+	require.Equal(t, http.StatusOK, w.Code)
+	var result goffmodel.OFREPBulkEvaluateSuccessResponse
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &result))
+	assert.Equal(t, []string{"publicFlag"}, flagKeys(result.Flags))
 }
 
-func TestRootAllFlagsHandler_NamespaceMismatch(t *testing.T) {
+func TestAllFlagsHandler_NamespaceMismatch(t *testing.T) {
 	b := &APIBuilder{
 		providerType: setting.OFREPProviderType,
 		logger:       log.NewNopLogger(),
@@ -209,11 +189,11 @@ func TestRootAllFlagsHandler_NamespaceMismatch(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
-	b.rootAllFlagsHandler(w, req)
+	b.allFlagsHandler(w, req)
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
 }
 
-func TestRootAllFlagsHandler_NoNamespaceInBody(t *testing.T) {
+func TestAllFlagsHandler_NoNamespaceInBody(t *testing.T) {
 	b := &APIBuilder{
 		providerType: setting.OFREPProviderType,
 		logger:       log.NewNopLogger(),
@@ -232,12 +212,12 @@ func TestRootAllFlagsHandler_NoNamespaceInBody(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
-	b.rootAllFlagsHandler(w, req)
+	b.allFlagsHandler(w, req)
 	// Validation passes (no namespace to mismatch), but proxy fails with 500 (nil URL)
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }
 
-func TestRootOneFlagHandler_NamespaceMismatch(t *testing.T) {
+func TestOneFlagHandler_NamespaceMismatch(t *testing.T) {
 	b := &APIBuilder{
 		providerType: setting.OFREPProviderType,
 		logger:       log.NewNopLogger(),
@@ -256,7 +236,7 @@ func TestRootOneFlagHandler_NamespaceMismatch(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
-	b.rootOneFlagHandler(w, req)
+	b.oneFlagHandler(w, req)
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
 }
 
@@ -270,8 +250,8 @@ func TestGrafanaHTTPHandler_UnauthenticatedDoesNotInjectIdentity(t *testing.T) {
 	b := &APIBuilder{logger: log.NewNopLogger()}
 
 	var gotIsAuthed bool
-	inner := func(c *contextmodel.ReqContext) {
-		gotIsAuthed = b.isAuthenticatedRequest(c.Req)
+	inner := func(w http.ResponseWriter, r *http.Request) {
+		gotIsAuthed = b.isAuthenticatedRequest(r)
 	}
 	handler := b.grafanaHTTPHandler(inner)
 
@@ -290,8 +270,8 @@ func TestGrafanaHTTPHandler_AuthenticatedInjectsIdentity(t *testing.T) {
 	b := &APIBuilder{logger: log.NewNopLogger()}
 
 	var gotIsAuthed bool
-	inner := func(c *contextmodel.ReqContext) {
-		gotIsAuthed = b.isAuthenticatedRequest(c.Req)
+	inner := func(w http.ResponseWriter, r *http.Request) {
+		gotIsAuthed = b.isAuthenticatedRequest(r)
 	}
 	handler := b.grafanaHTTPHandler(inner)
 

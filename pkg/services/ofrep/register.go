@@ -12,16 +12,13 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/gorilla/mux"
 	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"go.opentelemetry.io/otel/attribute"
-	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 )
 
 var _ registry.BackgroundService = (*APIBuilder)(nil)
@@ -40,7 +37,6 @@ type evalContext struct {
 type APIBuilder struct {
 	providerType    setting.OpenFeatureProviderType
 	url             *url.URL
-	rr              routing.RouteRegister
 	transport       *http.Transport
 	staticEvaluator featuremgmt.StaticFlagEvaluator
 	logger          log.Logger
@@ -81,96 +77,20 @@ func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister) (*APIBuilder, er
 	if err != nil {
 		return nil, err
 	}
-	b.rr = rr
+
+	// Register routes during construction (wire DI), which completes before any
+	// background service starts. Registering in Run would race the HTTP server's
+	// own background service, which binds the accumulated routes to its mux.
+	b.RegisterHTTPRoutes(rr)
 	return b, nil
 }
 
+// Run implements registry.BackgroundService. Routes are registered during
+// construction (see ProvideService), so there is nothing to do here beyond
+// staying alive until the server shuts down.
 func (b *APIBuilder) Run(ctx context.Context) error {
-	b.RegisterHTTPRoutes(b.rr)
+	<-ctx.Done()
 	return nil
-}
-
-func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
-	ctx, span := tracing.Start(r.Context(), "ofrep.handler.evalFlag")
-	defer span.End()
-
-	r = r.WithContext(ctx)
-
-	flagKey := mux.Vars(r)["flagKey"]
-	if flagKey == "" {
-		_ = tracing.Errorf(span, "flagKey parameter is required")
-		span.SetAttributes(semconv.HTTPStatusCode(http.StatusBadRequest))
-		http.Error(w, "flagKey parameter is required", http.StatusBadRequest)
-		return
-	}
-
-	span.SetAttributes(attribute.String("flag_key", flagKey))
-
-	isAuthedReq := b.isAuthenticatedRequest(r)
-	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
-
-	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
-		evalCtx, err := b.readEvalContext(w, r)
-		if err != nil {
-			_ = tracing.Errorf(span, bodyReadFailureMsg)
-			span.SetAttributes(semconv.HTTPStatusCode(http.StatusBadRequest))
-			b.logger.Error(bodyReadFailureMsg, "error", err, "flag", flagKey)
-			http.Error(w, bodyReadFailureMsg, http.StatusBadRequest)
-			return
-		}
-
-		authNamespace, valid := b.validateNamespace(r, evalCtx.namespace)
-		b.logger.Debug("validating namespace in oneFlagHandler handler", "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "valid", valid, "flag", flagKey)
-		if !valid {
-			_ = tracing.Errorf(span, namespaceMismatchMsg)
-			span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
-			b.logger.Error(namespaceMismatchMsg, "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "slug", evalCtx.slug, "flag", flagKey)
-			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
-			return
-		}
-
-		b.proxyFlagReq(ctx, flagKey, isAuthedReq, authNamespace, w, r)
-		return
-	}
-
-	b.evalFlagStatic(ctx, flagKey, w)
-}
-
-func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
-	ctx, span := tracing.Start(r.Context(), "ofrep.handler.evalAllFlags")
-	defer span.End()
-
-	r = r.WithContext(ctx)
-
-	isAuthedReq := b.isAuthenticatedRequest(r)
-	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
-
-	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
-		evalCtx, err := b.readEvalContext(w, r)
-		if err != nil {
-			_ = tracing.Errorf(span, bodyReadFailureMsg)
-			span.SetAttributes(semconv.HTTPStatusCode(http.StatusBadRequest))
-			b.logger.Error(bodyReadFailureMsg, "error", err)
-			http.Error(w, bodyReadFailureMsg, http.StatusBadRequest)
-			return
-		}
-
-		authNamespace, valid := b.validateNamespace(r, evalCtx.namespace)
-		b.logger.Debug("validating namespace in allFlagsHandler handler", "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "valid", valid)
-
-		if !valid {
-			_ = tracing.Errorf(span, namespaceMismatchMsg)
-			span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
-			b.logger.Error(namespaceMismatchMsg, "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "slug", evalCtx.slug)
-			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
-			return
-		}
-
-		b.proxyAllFlagReq(ctx, isAuthedReq, authNamespace, w, r)
-		return
-	}
-
-	b.evalAllFlagsStatic(ctx, w)
 }
 
 func writeResponse(statusCode int, result any, logger log.Logger, w http.ResponseWriter) {
@@ -241,38 +161,4 @@ func getCARoot(caFile string) (*x509.CertPool, error) {
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
 	return caCertPool, nil
-}
-
-// validateNamespace checks if the namespace in the evaluation context matches the auth namespace.
-// Returns the resolved auth namespace and whether validation passed.
-func (b *APIBuilder) validateNamespace(r *http.Request, evalCtxNamespace string) (string, bool) {
-	_, span := tracing.Start(r.Context(), "ofrep.validateNamespace")
-	defer span.End()
-
-	user, ok := types.AuthInfoFrom(r.Context())
-	if !ok {
-		span.SetAttributes(attribute.Bool("validation.success", false))
-		return "", false
-	}
-
-	var authNamespace string
-	if user.GetNamespace() != "" {
-		authNamespace = user.GetNamespace()
-	} else {
-		authNamespace = mux.Vars(r)["namespace"]
-	}
-
-	span.SetAttributes(
-		attribute.String("auth_namespace", authNamespace),
-		attribute.String("eval_ctx_namespace", evalCtxNamespace),
-	)
-
-	// Remote providers MUST include namespace in evaluation context
-	if evalCtxNamespace == authNamespace {
-		span.SetAttributes(attribute.Bool("validation.success", true))
-		return authNamespace, true
-	}
-
-	span.SetAttributes(attribute.Bool("validation.success", false))
-	return authNamespace, false
 }

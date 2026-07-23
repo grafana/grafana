@@ -5,70 +5,62 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"go.opentelemetry.io/otel/attribute"
-	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 )
 
-// RegisterHTTPRoutes registers the /ofrep/v1/... routes on Grafana's HTTP router.
-// Used when the features-apiserver runs embedded in Grafana.
-// Identity is populated by Grafana's ContextHandler middleware (c.SignedInUser),
-// which grafanaHTTPHandler injects into the request context before the handler runs.
-// In standalone mode, RootHTTPHandler is used instead.
+// RegisterHTTPRoutes mounts the OFREP evaluation endpoints on Grafana's HTTP router.
+// They are exposed under two prefixes:
+//   - /ofrep — the canonical path.
+//   - /apis/features.grafana.app/v0alpha1/namespaces/:namespace/ofrep — a deprecated,
+//     API-server-flavored path kept for backwards compatibility with existing clients
+//     (e.g. the frontend OFREP web provider). It should be removed once clients migrate.
+//
+// Both prefixes serve the same handlers. Identity is populated by Grafana's ContextHandler
+// middleware (c.SignedInUser); grafanaHTTPHandler injects it into the request context before
+// the handler runs. The :namespace URL segment is ignored — the trusted namespace comes from
+// the authenticated identity, not the client-supplied path.
 func (b *APIBuilder) RegisterHTTPRoutes(rr routing.RouteRegister) {
-	ofrep := func(r routing.RouteRegister) {
-		r.Post("/v1/evaluate/flags", b.grafanaHTTPHandler(func(c *contextmodel.ReqContext) {
-			b.rootAllFlagsHandler(c.Resp, c.Req)
-		}))
-		r.Post("/v1/evaluate/flags/:flagKey", b.grafanaHTTPHandler(func(c *contextmodel.ReqContext) {
-			req := mux.SetURLVars(c.Req, map[string]string{
-				"flagKey": web.Params(c.Req)[":flagKey"],
-			})
-			b.rootOneFlagHandler(c.Resp, req)
-		}))
+	routes := func(r routing.RouteRegister) {
+		r.Post("/v1/evaluate/flags", b.grafanaHTTPHandler(b.allFlagsHandler))
+		r.Post("/v1/evaluate/flags/:flagKey", b.grafanaHTTPHandler(b.oneFlagHandler))
 	}
 
-	rr.Group("/ofrep", ofrep)
-
-	// Register the same service in the API server URL flavor
-	rr.Group("/apis/features.grafana.app/v0alpha1", ofrep)
+	rr.Group("/ofrep", routes)
+	rr.Group("/apis/features.grafana.app/v0alpha1/namespaces/:namespace/ofrep", routes)
 }
 
-// RootHTTPHandler registers the /ofrep/v1/... routes directly on the k8s NonGoRestfulMux.
-// Used when the features-apiserver runs in standalone mode, where Grafana's HTTP router is
-// unavailable. Identity is expected to be populated upstream by the k8s request handler chain
-// before the request reaches the handler.
-// In embedded mode, RegisterHTTPRoutes is used instead.
-func (b *APIBuilder) RootHTTPHandler() (string, http.Handler) {
-	r := mux.NewRouter()
-	r.Methods(http.MethodPost).Path("/ofrep/v1/evaluate/flags").HandlerFunc(b.rootAllFlagsHandler)
-	r.Methods(http.MethodPost).Path("/ofrep/v1/evaluate/flags/{flagKey}").HandlerFunc(b.rootOneFlagHandler)
-	return "/ofrep/", r
-}
-
-// grafanaHTTPHandler wraps a ReqContext handler to set up the identity context
-// from Grafana's signed-in user before calling the inner handler.
-// We use IsSignedIn rather than SignedInUser != nil because Grafana always
-// populates SignedInUser (even for unauthenticated requests) with a zero-value
-// struct whose GetIdentityType() returns TypeEmpty, not TypeUnauthenticated.
-// Injecting that would cause isAuthenticatedRequest to incorrectly return true.
-func (b *APIBuilder) grafanaHTTPHandler(inner func(*contextmodel.ReqContext)) func(*contextmodel.ReqContext) {
+// grafanaHTTPHandler adapts an OFREP http.HandlerFunc to Grafana's router. It injects the
+// signed-in user into the request context so downstream namespace validation and proxying
+// see the caller's identity, and copies Grafana's :flagKey route param into gorilla/mux
+// vars, which the handlers read via mux.Vars.
+//
+// We gate on IsSignedIn rather than SignedInUser != nil because Grafana always populates
+// SignedInUser (even for anonymous requests) with a zero-value struct whose
+// GetIdentityType() returns TypeEmpty, not TypeUnauthenticated. Injecting that would make
+// isAuthenticatedRequest incorrectly return true and leak non-public flags.
+func (b *APIBuilder) grafanaHTTPHandler(inner http.HandlerFunc) func(*contextmodel.ReqContext) {
 	return func(c *contextmodel.ReqContext) {
+		req := c.Req
 		if c.IsSignedIn {
-			ctx := identity.WithRequester(c.Req.Context(), c.SignedInUser)
-			c.Req = c.Req.WithContext(ctx)
+			req = req.WithContext(identity.WithRequester(req.Context(), c.SignedInUser))
 		}
-		inner(c)
+		if flagKey := web.Params(req)[":flagKey"]; flagKey != "" {
+			req = mux.SetURLVars(req, map[string]string{"flagKey": flagKey})
+		}
+		inner(c.Resp, req)
 	}
 }
 
-func (b *APIBuilder) rootOneFlagHandler(w http.ResponseWriter, r *http.Request) {
-	ctx, span := tracing.Start(r.Context(), "ofrep.handler.root.evalFlag")
+func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, span := tracing.Start(r.Context(), "ofrep.handler.evalFlag")
 	defer span.End()
 
 	r = r.WithContext(ctx)
@@ -96,8 +88,7 @@ func (b *APIBuilder) rootOneFlagHandler(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
-		authNamespace, valid := b.validateNamespaceIfPresent(r, evalCtx)
-		b.logger.Debug("validating namespace in rootOneFlagHandler", "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "valid", valid, "flag", flagKey)
+		authNamespace, valid := b.validateNamespace(r, evalCtx)
 		if !valid {
 			_ = tracing.Errorf(span, namespaceMismatchMsg)
 			span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
@@ -112,8 +103,8 @@ func (b *APIBuilder) rootOneFlagHandler(w http.ResponseWriter, r *http.Request) 
 	b.evalFlagStatic(ctx, flagKey, w)
 }
 
-func (b *APIBuilder) rootAllFlagsHandler(w http.ResponseWriter, r *http.Request) {
-	ctx, span := tracing.Start(r.Context(), "ofrep.handler.root.evalAllFlags")
+func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, span := tracing.Start(r.Context(), "ofrep.handler.evalAllFlags")
 	defer span.End()
 
 	r = r.WithContext(ctx)
@@ -131,8 +122,7 @@ func (b *APIBuilder) rootAllFlagsHandler(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
-		authNamespace, valid := b.validateNamespaceIfPresent(r, evalCtx)
-		b.logger.Debug("validating namespace in rootAllFlagsHandler", "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "valid", valid)
+		authNamespace, valid := b.validateNamespace(r, evalCtx)
 		if !valid {
 			_ = tracing.Errorf(span, namespaceMismatchMsg)
 			span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
@@ -147,43 +137,37 @@ func (b *APIBuilder) rootAllFlagsHandler(w http.ResponseWriter, r *http.Request)
 	b.evalAllFlagsStatic(ctx, w)
 }
 
-// validateNamespaceIfPresent checks if the namespace in the evaluation context matches the authenticated user's
-// namespace, but only if the evaluation context includes a namespace. If no namespace is present in the body,
-// validation is skipped and the request is considered valid. This is used for cluster-global routes where
-// namespace is not part of the URL.
-// Returns the resolved auth namespace and whether validation passed.
-func (b *APIBuilder) validateNamespaceIfPresent(r *http.Request, evalCtx evalContext) (string, bool) {
-	_, span := tracing.Start(r.Context(), "ofrep.validateNamespaceIfPresent")
+// validateNamespace resolves the namespace to forward upstream and cross-checks any
+// namespace declared in the evaluation context against the caller's authenticated
+// namespace. The authenticated namespace is the trusted source and is always what gets
+// forwarded; the eval-context namespace is only a defense-in-depth check to reject a
+// caller claiming a namespace other than their own. Returns the resolved auth namespace
+// and whether validation passed.
+func (b *APIBuilder) validateNamespace(r *http.Request, evalCtx evalContext) (string, bool) {
+	_, span := tracing.Start(r.Context(), "ofrep.validateNamespace")
 	defer span.End()
-
-	if evalCtx.namespace == "" {
-		// No namespace in eval context -- nothing to validate
-		span.SetAttributes(attribute.Bool("validation.success", true))
-		return "", true
-	}
 
 	user, ok := types.AuthInfoFrom(r.Context())
 	if !ok {
-		// No auth info -- can't validate, but that's fine; unauthed requests are
-		// gated on public flags by the caller
+		// No auth info — nothing to forward. Unauthed access is gated to public flags downstream.
 		span.SetAttributes(attribute.Bool("validation.success", true))
 		return "", true
 	}
 
 	authNamespace := user.GetNamespace()
-	if authNamespace == "" {
-		// Unauthenticated user has no namespace -- skip validation
-		span.SetAttributes(attribute.Bool("validation.success", true))
-		return "", true
-	}
-
 	span.SetAttributes(
 		attribute.String("auth_namespace", authNamespace),
 		attribute.String("eval_ctx_namespace", evalCtx.namespace),
 	)
 
-	// Wildcard auth namespace grants cluster-wide access — valid for any specific namespace.
-	valid := evalCtx.namespace == authNamespace || authNamespace == "*"
+	// Only cross-check when both sides declare a namespace. A wildcard auth namespace
+	// grants cluster-wide access and matches any specific namespace.
+	if evalCtx.namespace == "" || authNamespace == "" || authNamespace == "*" {
+		span.SetAttributes(attribute.Bool("validation.success", true))
+		return authNamespace, true
+	}
+
+	valid := evalCtx.namespace == authNamespace
 	span.SetAttributes(attribute.Bool("validation.success", valid))
 	return authNamespace, valid
 }
