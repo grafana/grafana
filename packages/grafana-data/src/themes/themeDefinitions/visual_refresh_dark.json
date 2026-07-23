@@ -79,7 +79,8 @@
     "action": {
       "selected": "palette.ink700",
       "hover": "palette.ink600",
-      "focus": "palette.ink600"
+      "focus": "palette.ink600",
+      "selectedBorder": "palette.orange500"
     }
   },
   "shape": {

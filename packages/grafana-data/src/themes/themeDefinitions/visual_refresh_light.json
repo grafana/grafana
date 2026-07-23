@@ -81,7 +81,8 @@
     "action": {
       "selected": "palette.neutral200",
       "hover": "palette.neutral300",
-      "focus": "palette.neutral300"
+      "focus": "palette.neutral300",
+      "selectedBorder": "palette.orange600"
     }
   },
   "components": {
