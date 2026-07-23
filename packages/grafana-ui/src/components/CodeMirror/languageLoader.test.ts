@@ -81,4 +81,30 @@ describe('loadLanguageExtension', () => {
       expect(standardAgain).toBe(standard);
     });
   });
+
+  it.each(['go', 'html', 'json', 'markdown', 'typescript', 'xml', 'yaml'] as const)(
+    'loads and memoizes the %s extension',
+    async (language) => {
+      await jest.isolateModulesAsync(async () => {
+        const { loadLanguageExtension } = await import('./languageLoader');
+
+        const extension = await loadLanguageExtension(language);
+        const again = await loadLanguageExtension(language);
+
+        expect(extension).not.toBeNull();
+        expect(again).toBe(extension);
+      });
+    }
+  );
+
+  it('configures the typescript loader for TypeScript syntax', async () => {
+    await jest.isolateModulesAsync(async () => {
+      const { loadLanguageExtension } = await import('./languageLoader');
+      const { typescriptLanguage } = await import('@codemirror/lang-javascript');
+
+      const extension = await loadLanguageExtension('typescript');
+
+      expect(extension).toHaveProperty('language', typescriptLanguage);
+    });
+  });
 });

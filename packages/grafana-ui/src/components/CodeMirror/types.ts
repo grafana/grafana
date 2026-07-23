@@ -18,7 +18,7 @@ export type CodeMirrorCompletionMode = 'override' | 'merge';
  */
 export type CodeMirrorBasicSetup = boolean | BasicSetupOptions;
 
-export type CodeMirrorEditorLanguage = 'json' | 'sql';
+export type CodeMirrorEditorLanguage = 'go' | 'html' | 'json' | 'markdown' | 'sql' | 'typescript' | 'xml' | 'yaml';
 
 /**
  * SQL dialect used for syntax highlighting and keyword completion when
@@ -160,4 +160,12 @@ export interface CodeMirrorEditorProps {
    * element instead of being captured as indentation (avoids a keyboard trap).
    */
   indentWithTab?: boolean;
+  /**
+   * Renders the editor as a non-editable, read-only view of the content.
+   */
+  readOnly?: boolean;
+  /**
+   * Wraps long lines instead of scrolling horizontally.
+   */
+  lineWrapping?: boolean;
 }
