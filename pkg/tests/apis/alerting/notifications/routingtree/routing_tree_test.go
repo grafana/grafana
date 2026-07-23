@@ -892,7 +892,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 	// Prep config so that referenced receivers and time intervals exist.
 	cfg := policy_exports.Config()
 	createReceiverStubs(t, admin, cfg.AlertmanagerConfig.Receivers)
-	createTimeIntervalStubs(t, admin, cfg.AlertmanagerConfig.TimeIntervals)
+	createTimeIntervalStubs(t, admin, cfg.SortedTimeIntervals())
 
 	// Sanity check there aren't any existing managed routes other than the default.
 	list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
@@ -1419,12 +1419,13 @@ func TestIntegrationMultipleRoutesReferentialIntegrity(t *testing.T) {
 	// Prep config so that referenced receivers and time intervals exist.
 	cfg := policy_exports.Config()
 	receivers := createReceiverStubs(t, admin, cfg.AlertmanagerConfig.Receivers)
-	timeIntervals := createTimeIntervalStubs(t, admin, cfg.AlertmanagerConfig.TimeIntervals)
+	sortedIntervals := cfg.SortedTimeIntervals()
+	timeIntervals := createTimeIntervalStubs(t, admin, sortedIntervals)
 
 	recv0 := cfg.AlertmanagerConfig.Receivers[0].Name
 	recv1 := cfg.AlertmanagerConfig.Receivers[1].Name
-	ti0 := cfg.AlertmanagerConfig.TimeIntervals[0].Name
-	ti1 := cfg.AlertmanagerConfig.TimeIntervals[1].Name
+	ti0 := sortedIntervals[0].Title
+	ti1 := sortedIntervals[1].Title
 
 	// Create routes that reference the receivers and time intervals.
 	routeDef := v1model.Route{
@@ -1550,10 +1551,10 @@ func createTimeIntervalStubs(t *testing.T, user apis.User, timeIntervals []v1mod
 	for _, ti := range timeIntervals {
 		created, err := timeIntervalClient.Create(context.Background(), &v1beta1.TimeInterval{
 			ObjectMeta: v1.ObjectMeta{Namespace: apis.DefaultNamespace},
-			Spec:       v1beta1.TimeIntervalSpec{Name: ti.Name},
+			Spec:       v1beta1.TimeIntervalSpec{Name: ti.Title},
 		}, resource.CreateOptions{})
 		require.NoError(t, err)
-		res[ti.Name] = created
+		res[ti.Title] = created
 	}
 	return res
 }
