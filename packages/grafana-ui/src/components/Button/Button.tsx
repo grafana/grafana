@@ -323,7 +323,7 @@ export function getActiveButtonStyles(color: ThemeRichColor, fill: ButtonFill, v
 function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill) {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   let outlineBorderColor = color.border;
-  let borderColor = 'transparent';
+  let borderColor = visualRefreshEnabled ? color.border : 'transparent';
   let hoverBorderColor = 'transparent';
   let textColor = visualRefreshEnabled ? color.main : color.contrastText;
   let backgroundColor = visualRefreshEnabled ? color.transparent : color.main;

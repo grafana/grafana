@@ -21,7 +21,7 @@
       "transparent": "palette.neutral200",
       "shade": "palette.neutral300",
       "border": "palette.neutral300",
-      "text": "palette.neutral800",
+      "text": "palette.neutral600",
       "contrastText": "palette.neutral800"
     },
     "tertiary": {
@@ -39,10 +39,10 @@
       "contrastText": "palette.white"
     },
     "error": {
-      "main": "palette.coral700",
-      "transparent": "palette.coral100",
-      "shade": "palette.coral200",
-      "border": "palette.coral200"
+      "main": "palette.red1000",
+      "transparent": "palette.red300",
+      "shade": "palette.red400",
+      "border": "palette.red500"
     },
     "warning": {
       "main": "palette.amber700",
@@ -63,9 +63,9 @@
       "border": "palette.blue200"
     },
     "text": {
-      "primary": "palette.neutral900",
-      "secondary": "palette.neutral800",
-      "disabled": "palette.neutral700",
+      "primary": "palette.neutral800",
+      "secondary": "palette.neutral600",
+      "disabled": "palette.neutral500",
       "link": "palette.orange700"
     },
     "border": {
