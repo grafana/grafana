@@ -262,9 +262,8 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 		EvaluationDuration: 6 * time.Second,
 	})
 
-	for _, instance := range instances {
-		_ = ng.InstanceStore.SaveAlertInstance(ctx, instance)
-	}
+	err = ng.InstanceStore.SaveAlertInstancesForRule(ctx, rule.GetKeyWithGroup(), instances)
+	require.NoError(t, err)
 
 	cfg := state.ManagerCfg{
 		Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
@@ -2023,9 +2022,8 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 		},
 	}
 
-	for _, instance := range instances {
-		_ = ng.InstanceStore.SaveAlertInstance(ctx, instance)
-	}
+	err = ng.InstanceStore.SaveAlertInstancesForRule(ctx, rule.GetKeyWithGroup(), instances)
+	require.NoError(t, err)
 
 	testCases := []struct {
 		desc               string
@@ -2287,9 +2285,8 @@ func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
 		},
 	}
 
-	for _, instance := range instances {
-		_ = ng.InstanceStore.SaveAlertInstance(ctx, instance)
-	}
+	err = ng.InstanceStore.SaveAlertInstancesForRule(ctx, rule.GetKeyWithGroup(), instances)
+	require.NoError(t, err)
 
 	testCases := []struct {
 		desc          string
@@ -2435,9 +2432,8 @@ func TestIntegrationResetStateByRuleUID(t *testing.T) {
 		},
 	}
 
-	for _, instance := range instances {
-		_ = ng.InstanceStore.SaveAlertInstance(ctx, instance)
-	}
+	err = ng.InstanceStore.SaveAlertInstancesForRule(ctx, rule.GetKeyWithGroup(), instances)
+	require.NoError(t, err)
 
 	testCases := []struct {
 		desc          string
