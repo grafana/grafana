@@ -9,7 +9,13 @@ import { type IconName } from './icon';
 import { type NavLinkDTO } from './navModel';
 import { type OrgRole } from './orgs';
 import { type PanelPluginMeta } from './panel';
-import { type AngularMeta, type PluginDependencies, type PluginExtensions, type PluginLoadingStrategy } from './plugin';
+import {
+  type AngularMeta,
+  type PluginDependencies,
+  type PluginExtensions,
+  type PluginInclude,
+  type PluginLoadingStrategy,
+} from './plugin';
 import { type TimeOption } from './time';
 
 export interface AzureSettings {
@@ -39,6 +45,24 @@ export type AppPluginConfig = {
   extensions: PluginExtensions;
   moduleHash?: string;
   buildMode?: string;
+};
+
+/**
+ * An app plugin config sourced from the plugins.grafana.app metas API. Unlike
+ * the bootdata-sourced {@link AppPluginConfig} it always carries the plugin's
+ * display and navigation fields, so consumers of the metas-only accessors
+ * (e.g. the client-built nav tree) don't need bootdata fallbacks.
+ */
+export type AppPluginMetaConfig = AppPluginConfig & {
+  name: string;
+  includes: PluginInclude[];
+  info: {
+    description?: string;
+    logos: {
+      small: string;
+      large: string;
+    };
+  };
 };
 
 export type PreinstalledPlugin = {

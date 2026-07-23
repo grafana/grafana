@@ -1,13 +1,14 @@
-import { type AppPluginConfig, PluginType } from '@grafana/data';
+import { type AppPluginConfig, type AppPluginMetaConfig, PluginType } from '@grafana/data';
 
 import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
+import { getCachedPromise } from '../../utils/getCachedPromise';
 
 import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING } from './constants';
 import { logPluginMetaDebug, logPluginMetaWarning } from './logging';
 import { getAppPluginMapper } from './mappers/mappers';
-import { getPluginMetasUrl, initPluginMetas } from './plugins';
+import { fetchPluginMetas, getPluginMetasUrl, initPluginMetas } from './plugins';
 import type { AppPluginMetas, PluginMetasResponse } from './types';
 
 let apps: AppPluginMetas = {};
@@ -53,6 +54,28 @@ export async function getAppPluginMetas(): Promise<AppPluginConfig[]> {
   }
 
   return Object.values(structuredClone(apps));
+}
+
+/** Uncached fetch + map used by {@link getAppPluginMetasStrict}; rejects on fetch failure. */
+async function loadAppPluginMetasStrict(): Promise<AppPluginMetaConfig[]> {
+  const metas = await fetchPluginMetas();
+  const mapper = getAppPluginMapper();
+  return Object.values(mapper(metas));
+}
+
+/**
+ * Fetches the app plugin configs from the plugin metas API without the
+ * bootdata fallback: unlike {@link getAppPluginMetas}, a failed metas fetch
+ * rejects instead of resolving to an empty list (the cache entry is
+ * invalidated on failure, so a later call retries). With the
+ * plugins.useMTPlugins flag off it resolves to an empty array. The result is
+ * cached, so concurrent callers share one fetch and one resolved array — note
+ * the cache has no refetch hook: a successful response is reused for the rest
+ * of the session, and installing or uninstalling a plugin does not
+ * invalidate it.
+ */
+export function getAppPluginMetasStrict(): Promise<AppPluginMetaConfig[]> {
+  return getCachedPromise(loadAppPluginMetasStrict);
 }
 
 export async function getAppPluginMeta(pluginId: string): Promise<AppPluginConfig | null> {
