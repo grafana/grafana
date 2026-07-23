@@ -2,6 +2,7 @@ import { Navigate } from 'react-router-dom-v5-compat';
 
 import { config } from '@grafana/runtime';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
+import { routeAccess } from 'app/core/navigation/routeAccess';
 import { type GrafanaRouteComponent, type RouteDescriptor } from 'app/core/navigation/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -14,6 +15,7 @@ import {
   PERMISSIONS_TIME_INTERVALS_READ,
 } from './unified/hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { evaluateAccess, evaluateAccessAll } from './unified/utils/access-control';
+import { alertInstanceAccess, alertRulesAccess, silencesAccess } from './unified/utils/pageAccess';
 
 export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
   const routes = [
@@ -31,7 +33,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/list',
-      roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
+      roles: routeAccess(alertRulesAccess),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "AlertRuleListIndex" */ 'app/features/alerting/unified/RuleList')
       ),
@@ -108,11 +110,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/silences',
-      roles: evaluateAccess([
-        AccessControlAction.AlertingInstanceRead,
-        AccessControlAction.AlertingInstancesExternalRead,
-        AccessControlAction.AlertingSilenceRead,
-      ]),
+      roles: routeAccess(silencesAccess),
       component: importAlertingComponent(
         () =>
           import(
@@ -245,10 +243,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/groups/',
-      roles: evaluateAccess([
-        AccessControlAction.AlertingInstanceRead,
-        AccessControlAction.AlertingInstancesExternalRead,
-      ]),
+      roles: routeAccess(alertInstanceAccess),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "AlertGroups" */ 'app/features/alerting/unified/AlertGroups')
       ),

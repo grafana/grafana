@@ -5,6 +5,16 @@ import { isTruthy } from '@grafana/data';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import config from 'app/core/config';
+import { routeAccess } from 'app/core/navigation/routeAccess';
+import {
+  dashboardVariablesAccess,
+  dashboardsCreateAccess,
+  dataSourcesExploreAccess,
+  migrateToCloudAccess,
+  playlistsAccess,
+  serviceAccountsAccess,
+  snapshotsAccess,
+} from 'app/core/navtree/pageAccess';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
 import { isAdmin, isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/misc';
@@ -50,7 +60,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/new',
-      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
+      roles: routeAccess(dashboardsCreateAccess),
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.New,
       component: SafeDynamicImport(
@@ -78,7 +88,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/assistant-preview/*',
-      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
+      roles: routeAccess(dashboardsCreateAccess),
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.AssistantPreview,
       component: SafeDynamicImport(
@@ -88,7 +98,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/new-with-ds/:datasourceUid',
-      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
+      roles: routeAccess(dashboardsCreateAccess),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/NewDashboardWithDS')
       ),
@@ -97,7 +107,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       config.featureToggles.dashboardLibrary ||
       config.featureToggles.dashboardTemplates) && {
       path: DASHBOARD_LIBRARY_ROUTES.Template,
-      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
+      roles: routeAccess(dashboardsCreateAccess),
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Template,
       component: SafeDynamicImport(
@@ -177,8 +187,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboards/variables',
-      roles: () =>
-        contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate, AccessControlAction.DashboardsWrite]),
+      roles: routeAccess(dashboardVariablesAccess),
       component: SafeDynamicImport(
         () =>
           import(
@@ -188,8 +197,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboards/variables/new',
-      roles: () =>
-        contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate, AccessControlAction.DashboardsWrite]),
+      roles: routeAccess(dashboardVariablesAccess),
       component: SafeDynamicImport(
         () =>
           import(
@@ -201,8 +209,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       // Nested under a static /edit segment so a variable whose derived
       // metadata.name is literally "new" can never collide with the create route.
       path: '/dashboards/variables/edit/:name',
-      roles: () =>
-        contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate, AccessControlAction.DashboardsWrite]),
+      roles: routeAccess(dashboardVariablesAccess),
       component: SafeDynamicImport(
         () =>
           import(
@@ -225,7 +232,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/explore',
       pageClass: 'page-explore',
-      roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
+      roles: routeAccess(dataSourcesExploreAccess),
       component: SafeDynamicImport(() =>
         config.exploreEnabled
           ? import(/* webpackChunkName: "explore" */ 'app/features/explore/ExplorePage')
@@ -322,11 +329,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/serviceaccounts',
-      roles: () =>
-        contextSrv.evaluatePermission([
-          AccessControlAction.ServiceAccountsRead,
-          AccessControlAction.ServiceAccountsCreate,
-        ]),
+      roles: routeAccess(serviceAccountsAccess),
       component: SafeDynamicImport(
         () =>
           import(/* webpackChunkName: "ServiceAccountsPage" */ 'app/features/serviceaccounts/ServiceAccountsListPage')
@@ -447,7 +450,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     config.cloudMigrationEnabled && {
       path: '/admin/migrate-to-cloud',
-      roles: () => contextSrv.evaluatePermission([AccessControlAction.MigrationAssistantMigrate]),
+      roles: routeAccess(migrateToCloudAccess),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "MigrateToCloud" */ 'app/features/migrate-to-cloud/MigrateToCloud')
       ),
@@ -512,16 +515,14 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/snapshots',
-      roles: () => contextSrv.evaluatePermission([AccessControlAction.SnapshotsRead]),
+      roles: routeAccess(snapshotsAccess),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SnapshotListPage" */ 'app/features/manage-dashboards/SnapshotListPage')
       ),
     },
     {
       path: '/playlists',
-      roles: config.featureToggles.playlistsRBAC
-        ? () => contextSrv.evaluatePermission([AccessControlAction.PlaylistsRead])
-        : undefined,
+      roles: config.featureToggles.playlistsRBAC ? routeAccess(playlistsAccess) : undefined,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "PlaylistPage"*/ 'app/features/playlist/PlaylistPage')
       ),
@@ -606,7 +607,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       // A redirect to the Grafana Metrics Drilldown app from legacy Explore Metrics routes
       path: '/explore/metrics/*',
-      roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
+      roles: routeAccess(dataSourcesExploreAccess),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "MetricsDrilldownRedirect"*/ 'app/features/trails/RedirectToDrilldownApp')
       ),
