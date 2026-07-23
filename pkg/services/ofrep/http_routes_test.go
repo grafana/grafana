@@ -11,16 +11,15 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/grafana/authlib/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	goffmodel "github.com/thomaspoignant/go-feature-flag/cmd/relayproxy/model"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	goffmodel "github.com/thomaspoignant/go-feature-flag/cmd/relayproxy/model"
 )
 
 func TestAPIBuilder_ValidateNamespace(t *testing.T) {

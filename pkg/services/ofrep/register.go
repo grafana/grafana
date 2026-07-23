@@ -13,7 +13,6 @@ import (
 	"os"
 
 	"github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
@@ -34,6 +33,7 @@ type evalContext struct {
 	slug      string
 }
 
+// NOTE: this is not an apiserver/builder, but we are keeping the name temporarily to avoid too many git changes
 type APIBuilder struct {
 	providerType    setting.OpenFeatureProviderType
 	url             *url.URL

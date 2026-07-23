@@ -11,15 +11,14 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/grafana/authlib/types"
-	"github.com/open-feature/go-sdk/openfeature"
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
-	"github.com/stretchr/testify/require"
-	goffmodel "github.com/thomaspoignant/go-feature-flag/cmd/relayproxy/model"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
+	"github.com/stretchr/testify/require"
+	goffmodel "github.com/thomaspoignant/go-feature-flag/cmd/relayproxy/model"
 )
 
 var openfeatureTestMutex sync.Mutex

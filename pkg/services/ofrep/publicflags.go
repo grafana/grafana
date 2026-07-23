@@ -4,9 +4,8 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/open-feature/go-sdk/openfeature"
-
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 // isPublic reports whether flag metadata marks it public via the "public" key.
