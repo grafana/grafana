@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"errors"
+	"net/http"
 	"testing"
 	"time"
 
@@ -11,6 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	clienttesting "k8s.io/client-go/testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	fakeclientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
@@ -85,6 +88,85 @@ func TestClaim_RollbackSkipsJobOwnedByAnother(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "another-worker", after.Labels[LabelJobClaimOwner], "rollback must not strip another worker's claim")
 	assert.NotEmpty(t, after.Labels[LabelJobClaim], "rollback must not clear the active claim timestamp")
+}
+
+// lostRowOnUpdate simulates the list->update race in Claim: another worker
+// completed and deleted the job between our List and Update, so the
+// update-becomes-create is rejected because the object still carries the
+// resourceVersion from the List. Unified storage surfaces this as a plain
+// 500/Unknown (see apistore prepareObjectForStorage + the apiserver's
+// errToAPIStatus fallback), NOT a typed Conflict/Invalid/NotFound.
+func lostRowOnUpdate() error {
+	return &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusInternalServerError,
+		Reason:  metav1.StatusReasonUnknown,
+		Message: "resourceVersion should not be set on objects to be created",
+	}}
+}
+
+// TestClaim_SkipsJobLostBetweenListAndUpdate verifies that when the claim Update
+// for one candidate fails (the row was completed+deleted in the race window), the
+// claim moves on to the next candidate instead of failing the whole Claim call.
+func TestClaim_SkipsJobLostBetweenListAndUpdate(t *testing.T) {
+	cs := fakeclientset.NewSimpleClientset()
+	store := newTestStore(cs.ProvisioningV0alpha1())
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	for _, name := range []string{"job-a", "job-b"} {
+		_, err = cs.ProvisioningV0alpha1().Jobs("stacks-123").Create(ctx, &provisioning.Job{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "stacks-123"},
+			Spec:       provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+		}, metav1.CreateOptions{})
+		require.NoError(t, err)
+	}
+
+	// Fail the first claim Update as if that job was deleted in the race window,
+	// then let the tracker handle subsequent updates normally.
+	var updates int
+	cs.PrependReactor("update", "jobs", func(clienttesting.Action) (bool, runtime.Object, error) {
+		updates++
+		if updates == 1 {
+			return true, nil, lostRowOnUpdate()
+		}
+		return false, nil, nil
+	})
+
+	claimed, rollback, err := store.Claim(ctx)
+	require.NoError(t, err, "a failed claim on one candidate must not fail the whole Claim call")
+	require.NotNil(t, claimed)
+	defer rollback()
+
+	assert.NotEmpty(t, claimed.Labels[LabelJobClaim], "the surviving candidate should be claimed")
+	assert.GreaterOrEqual(t, updates, 2, "should have skipped the lost candidate and claimed the next")
+}
+
+// TestClaim_LostRowReturnsNoJobs verifies that when the only candidate cannot be
+// claimed (lost in the race window), Claim reports ErrNoJobs rather than a hard
+// error, so the driver simply retries on its next tick.
+func TestClaim_LostRowReturnsNoJobs(t *testing.T) {
+	cs := fakeclientset.NewSimpleClientset()
+	store := newTestStore(cs.ProvisioningV0alpha1())
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	_, err = cs.ProvisioningV0alpha1().Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "only-job", Namespace: "stacks-123"},
+		Spec:       provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	cs.PrependReactor("update", "jobs", func(clienttesting.Action) (bool, runtime.Object, error) {
+		return true, nil, lostRowOnUpdate()
+	})
+
+	claimed, rollback, err := store.Claim(ctx)
+	require.ErrorIs(t, err, ErrNoJobs, "an unclaimable sole candidate must surface as ErrNoJobs, not a hard error")
+	assert.Nil(t, claimed)
+	assert.Nil(t, rollback)
 }
 
 // TestRenewLease_LostToAnotherOwner verifies that a worker cannot renew a claim

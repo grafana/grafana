@@ -164,14 +164,20 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 		// If the resource version we pass in via the current job is not the same as the one currently in the store, it will fail with Conflict.
 		// This is the desired behavior, as it ensures that claims are atomic.
 		updatedJob, err := s.client.Jobs(job.GetNamespace()).Update(ctx, &job, metav1.UpdateOptions{})
-		if apierrors.IsConflict(err) {
-			// On conflict: another worker claimed the job before us.
-			// On would create: the job was completed and deleted before we could claim it.
-			// We'll just move on to the next job.
-			continue
-		}
 		if err != nil {
-			return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
+			// Failing to claim this specific job is never fatal, so skip it and try the
+			// next candidate. The claim carries the resourceVersion from the List above;
+			// between List and Update another worker can complete and delete the job. That
+			// turns our Update into a create, which the store rejects because a
+			// resourceVersion is set, or the other worker claims it first (a conflict).
+			// We do not match on the error type: unified storage surfaces the create
+			// rejection as a plain 500/Unknown rather than Conflict/Invalid/NotFound, so
+			// enumerating error kinds here is unreliable. No claim was placed when Update
+			// fails, so there is nothing to roll back. If no candidate can be claimed we
+			// fall through to ErrNoJobs and the driver retries on its next tick.
+			logger.Debug("failed to claim job, trying next candidate",
+				"job", job.GetName(), "namespace", job.GetNamespace(), "error", err)
+			continue
 		}
 
 		logger.Info("job claim complete",
