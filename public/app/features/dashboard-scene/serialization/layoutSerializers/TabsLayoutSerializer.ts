@@ -30,21 +30,21 @@ export function serializeTabsLayout(layoutManager: TabsLayoutManager, isSnapshot
 export function serializeTab(tab: TabItem, isSnapshot?: boolean): TabsLayoutTabKind {
   const layout = tab.state.layout.serialize(isSnapshot);
 
-  // A repeated tab's title typically references the repeat variable. The repeat's local variable value is
-  // not persisted in the snapshot, so bake the interpolated title here (matching the tab renderer) —
-  // otherwise every materialized tab would fall back to the global variable value (e.g. "All").
-  const isRepeatTab = Boolean(tab.state.repeatByVariable || tab.state.repeatSourceKey);
-  const title = isSnapshot && isRepeatTab ? interpolateSectionTitle(tab, tab.state.title) : tab.state.title;
+  // A repeated tab is "materialized" when it is a clone or has produced clones. When serializing a snapshot
+  // of a materialized repeat we bake the interpolated title (matching the tab renderer) and strip the repeat
+  // directive below. If the repeat hasn't been materialized, leave both untouched so it isn't silently dropped.
+  const isMaterializedRepeat = Boolean(tab.state.repeatSourceKey) || Boolean(tab.state.repeatedTabs?.length);
+  const title = isSnapshot && isMaterializedRepeat ? interpolateSectionTitle(tab, tab.state.title) : tab.state.title;
 
   const tabKind: TabsLayoutTabKind = {
     kind: 'TabsLayoutTab',
     spec: {
       title,
       layout: layout,
-      // In snapshot mode the repeat is already materialized into concrete tabs, so we must not emit the
-      // repeat directive (it would make the viewer re-expand and collapse back to a single tab).
+      // Once materialized into concrete tabs for a snapshot we must not emit the repeat directive (it would
+      // make the viewer re-expand and collapse back to a single tab). Otherwise keep it.
       ...(tab.state.repeatByVariable &&
-        !isSnapshot && {
+        !(isSnapshot && isMaterializedRepeat) && {
           repeat: {
             mode: 'variable',
             value: tab.state.repeatByVariable,

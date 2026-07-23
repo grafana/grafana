@@ -30,12 +30,13 @@ export function serializeRowsLayout(layoutManager: RowsLayoutManager, isSnapshot
 export function serializeRow(row: RowItem, isSnapshot?: boolean): RowsLayoutRowKind {
   const layout = row.state.layout.serialize(isSnapshot);
 
-  // A repeated row's title typically references the repeat variable (e.g. "Row for $server"). The repeat's
-  // local variable value is not persisted in the snapshot, so bake the interpolated title here — otherwise
-  // every materialized row would fall back to the global variable value (e.g. "All"). interpolateSectionTitle
-  // matches the row renderer (uses the display text and the repeat-local scoped vars).
-  const isRepeatRow = Boolean(row.state.repeatByVariable || row.state.repeatSourceKey);
-  const title = isSnapshot && isRepeatRow ? interpolateSectionTitle(row, row.state.title) : row.state.title;
+  // A repeated row is "materialized" when it is a clone or has produced clones. When serializing a snapshot
+  // of a materialized repeat we (a) bake the interpolated title — the repeat's local variable value is not
+  // persisted, so otherwise it would fall back to the global value (e.g. "All") — and (b) strip the repeat
+  // directive below. If the repeat hasn't been materialized (e.g. variables still loading), we leave both
+  // untouched so the directive isn't silently dropped. interpolateSectionTitle matches the row renderer.
+  const isMaterializedRepeat = Boolean(row.state.repeatSourceKey) || Boolean(row.state.repeatedRows?.length);
+  const title = isSnapshot && isMaterializedRepeat ? interpolateSectionTitle(row, row.state.title) : row.state.title;
 
   // Normalize Y coordinates to be relative within the row
   // Panels in the scene have absolute Y coordinates, but in V2 schema they should be relative to the row
@@ -61,10 +62,10 @@ export function serializeRow(row: RowItem, isSnapshot?: boolean): RowsLayoutRowK
       layout: layout,
       fillScreen: row.state.fillScreen,
       hideHeader: row.state.hideHeader,
-      // In snapshot mode the repeat is already materialized into concrete rows, so we must not emit
-      // the repeat directive (it would make the viewer re-expand and collapse back to a single row).
+      // Once materialized into concrete rows for a snapshot we must not emit the repeat directive (it would
+      // make the viewer re-expand and collapse back to a single row). Otherwise keep it.
       ...(row.state.repeatByVariable &&
-        !isSnapshot && {
+        !(isSnapshot && isMaterializedRepeat) && {
           repeat: {
             mode: 'variable',
             value: row.state.repeatByVariable,

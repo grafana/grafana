@@ -29,7 +29,7 @@ export function serializeAutoGridLayout(
 
   const items = isSnapshot
     ? layout.state.children.flatMap(getRepeatedPanelsForSnapshot)
-    : layout.state.children.map(serializeAutoGridItem);
+    : layout.state.children.map((item) => serializeAutoGridItem(item));
 
   return {
     kind: 'AutoGridLayout',
@@ -43,9 +43,12 @@ export function serializeAutoGridLayout(
   };
 }
 
-export function serializeAutoGridItem(item: AutoGridItem): AutoGridLayoutItemKind {
-  // For serialization we should retrieve the original element key
-  const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(item.state?.body);
+export function serializeAutoGridItem(item: AutoGridItem, isSnapshot = false): AutoGridLayoutItemKind {
+  // For serialization we should retrieve the original element key. In snapshot mode we must also
+  // disambiguate panels that live inside a repeated row/tab clone (they reuse the source keys).
+  const elementKey = isSnapshot
+    ? dashboardSceneGraph.getSnapshotElementIdentifierForVizPanel(item.state?.body)
+    : dashboardSceneGraph.getElementIdentifierForVizPanel(item.state?.body);
 
   const layoutItem: AutoGridLayoutItemKind = {
     kind: 'AutoGridLayoutItem',
@@ -74,7 +77,7 @@ export function serializeAutoGridItem(item: AutoGridItem): AutoGridLayoutItemKin
 }
 
 function getRepeatedPanelsForSnapshot(child: AutoGridItem): AutoGridLayoutItemKind[] {
-  const base = serializeAutoGridItem(child);
+  const base = serializeAutoGridItem(child, true);
   // Snapshots should contain explicit panels, not a repeater definition.
   delete base.spec.repeat;
 
@@ -92,7 +95,7 @@ function getRepeatedPanelsForSnapshot(child: AutoGridItem): AutoGridLayoutItemKi
       spec: {
         element: {
           kind: 'ElementReference',
-          name: panel.state.key,
+          name: dashboardSceneGraph.getSnapshotElementIdentifierForVizPanel(panel),
         },
       },
     };

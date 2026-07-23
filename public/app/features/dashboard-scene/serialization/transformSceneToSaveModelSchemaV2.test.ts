@@ -1751,6 +1751,71 @@ describe('snapshot mode: repeated rows', () => {
     const cloneGrid = rowsLayout.rows[1].spec.layout.spec as GridLayoutSpec;
     expect(cloneGrid.items[0].spec.element.name).toBe('row-1-clone-1-panel-9');
   });
+
+  it('keeps the repeat directive when a repeat row has not been materialized', () => {
+    // If the repeat hasn't produced clones yet (e.g. variables still loading), we must not strip the
+    // directive — otherwise the snapshot would silently lose the repeat configuration.
+    const sourceRow = new RowItem({
+      key: 'row-1',
+      title: 'Row $server',
+      repeatByVariable: 'server',
+      // no repeatedRows → not materialized
+      layout: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          children: [
+            new DashboardGridItem({ key: 'grid-item-1', body: new VizPanel({ key: 'panel-1', pluginId: 'timeseries' }) }),
+          ],
+        }),
+      }),
+    });
+
+    const scene = setupDashboardScene(getMinimalSceneState(new RowsLayoutManager({ rows: [sourceRow] })));
+    const rowsLayout = transformSceneToSaveModelSchemaV2(scene, true).layout.spec as RowsLayoutSpec;
+
+    expect(rowsLayout.rows).toHaveLength(1);
+    expect(rowsLayout.rows[0].spec.repeat).toEqual({ mode: 'variable', value: 'server' });
+  });
+
+  it('disambiguates AutoGrid panels inside a row clone (AutoGrid is the default row layout)', () => {
+    const buildRow = (rowKey: string, panelKey: string, repeatSourceKey?: string) =>
+      new RowItem({
+        key: rowKey,
+        title: 'Row $server',
+        repeatByVariable: 'server',
+        repeatSourceKey,
+        layout: new AutoGridLayoutManager({
+          columnWidth: 'standard',
+          rowHeight: 'standard',
+          maxColumnCount: 4,
+          fillScreen: false,
+          layout: new AutoGridLayout({
+            children: [
+              new AutoGridItem({
+                key: `auto-grid-item-${rowKey}`,
+                body: new VizPanel({ key: panelKey, pluginId: 'timeseries', title: 'p' }),
+              }),
+            ],
+          }),
+        }),
+      });
+
+    const sourceRow = buildRow('row-1', 'panel-1');
+    const cloneRow = buildRow('row-1-clone-1', 'panel-1', 'row-1');
+    sourceRow.setState({ repeatedRows: [cloneRow] });
+
+    const scene = setupDashboardScene(getMinimalSceneState(new RowsLayoutManager({ rows: [sourceRow] })));
+    const result = transformSceneToSaveModelSchemaV2(scene, true);
+    const rowsLayout = result.layout.spec as RowsLayoutSpec;
+
+    // Source and clone rows reference distinct AutoGrid elements, both present (no dangling refs).
+    const sourceItems = (rowsLayout.rows[0].spec.layout.spec as AutoGridLayoutSpec).items;
+    const cloneItems = (rowsLayout.rows[1].spec.layout.spec as AutoGridLayoutSpec).items;
+    expect(sourceItems[0].spec.element.name).toBe('panel-1');
+    expect(cloneItems[0].spec.element.name).toBe('row-1-clone-1-panel-1');
+    expect(result.elements['panel-1']).toBeDefined();
+    expect(result.elements['row-1-clone-1-panel-1']).toBeDefined();
+    expect(result.elements['panel-1'].spec.id).not.toBe(result.elements['row-1-clone-1-panel-1'].spec.id);
+  });
 });
 
 describe('snapshot mode: repeated tabs', () => {
