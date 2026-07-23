@@ -1,3 +1,4 @@
+import type Feature from 'ol/Feature';
 import type OpenLayersMap from 'ol/Map';
 import { LineString } from 'ol/geom';
 import { Group as LayerGroup } from 'ol/layer';
@@ -90,13 +91,13 @@ describe('routeLayer', () => {
 
     eventBus.publish(new DataHoverEvent({ point: { time: t0 } }));
     expect(crosshairFeature.getGeometry()).toBeDefined();
-    lineFeatures.forEach((f) => expect(f.getGeometry()).toBeDefined());
+    lineFeatures.forEach((f: Feature) => expect(f.getGeometry()).toBeDefined());
 
     eventBus.publish(new DataHoverClearEvent());
 
     // Stale geometry would pollute the "fit to data" extent (getLayersExtent).
     expect(crosshairFeature.getGeometry()).toBeUndefined();
-    lineFeatures.forEach((f) => expect(f.getGeometry()).toBeUndefined());
+    lineFeatures.forEach((f: Feature) => expect(f.getGeometry()).toBeUndefined());
   });
 
   it('clears the crosshair geometry on a subsequent update', async () => {
@@ -109,7 +110,7 @@ describe('routeLayer', () => {
     handler.update!(trackData([47.0, 47.1], [7.0, 7.1]));
 
     expect(crosshairFeature.getGeometry()).toBeUndefined();
-    lineFeatures.forEach((f) => expect(f.getGeometry()).toBeUndefined());
+    lineFeatures.forEach((f: Feature) => expect(f.getGeometry()).toBeUndefined());
   });
 
   it('clears the crosshair geometry on an update with no series', async () => {
@@ -122,6 +123,6 @@ describe('routeLayer', () => {
     handler.update!({ state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: [] });
 
     expect(crosshairFeature.getGeometry()).toBeUndefined();
-    lineFeatures.forEach((f) => expect(f.getGeometry()).toBeUndefined());
+    lineFeatures.forEach((f: Feature) => expect(f.getGeometry()).toBeUndefined());
   });
 });
