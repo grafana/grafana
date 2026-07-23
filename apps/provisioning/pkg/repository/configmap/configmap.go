@@ -2,8 +2,7 @@ package configmap
 
 import (
 	"context"
-	//nolint:gosec
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"net/http"
@@ -517,7 +516,6 @@ func (r *configMapRepository) writeFile(ctx context.Context, filePath string, da
 }
 
 func hashBytes(data []byte) string {
-	//nolint:gosec
-	sum := sha1.Sum(data)
+	sum := sha256.Sum256(data)
 	return hex.EncodeToString(sum[:])
 }
