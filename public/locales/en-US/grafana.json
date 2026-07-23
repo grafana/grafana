@@ -15724,6 +15724,8 @@
           "confirm-button": "Delete",
           "title": "Delete"
         },
+        "delete-modal-error-text": "Failed to delete team. Please try again.",
+        "delete-modal-error-title": "Failed to delete team",
         "delete-modal-invalid-text": "This team is the owner of one or more folders. Remove ownership first in order to proceed.",
         "delete-modal-invalid-title": "Cannot delete team",
         "delete-modal-text": "This action will delete the team \"<1>{{ teamName }}</1>\".",
