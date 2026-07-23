@@ -89,6 +89,10 @@ func cleanIntegrationState(t *testing.T, engine *xorm.Engine) {
 	_, _ = engine.DB().ExecContext(ctx,
 		`DELETE FROM vector_promoted WHERE namespace LIKE 'integration-test%'`)
 	_, _ = engine.DB().ExecContext(ctx,
+		`DELETE FROM query_embedding_cache WHERE namespace LIKE 'integration-test%'`)
+	_, _ = engine.DB().ExecContext(ctx,
+		`DELETE FROM vector_search_rate_buckets WHERE namespace LIKE 'integration-test%'`)
+	_, _ = engine.DB().ExecContext(ctx,
 		`UPDATE vector_latest_rv SET latest_rv = 0 WHERE id = 1`)
 	_, _ = engine.DB().ExecContext(ctx,
 		`DELETE FROM vector_backfill_jobs WHERE model = $1`, testModel)
@@ -266,6 +270,70 @@ func TestIntegrationVectorDeleteSubresources(t *testing.T) {
 
 	err = backend.Delete(ctx, "integration-test", testModel, testResource, "dash")
 	require.NoError(t, err)
+}
+
+// TestIntegrationDeleteNamespace verifies a tenant wipe removes every row for a
+// namespace across embeddings, query cache, rate buckets, and vector_promoted,
+// while leaving other namespaces untouched.
+func TestIntegrationDeleteNamespace(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+
+	const nsA = "integration-test-a"
+	const nsB = "integration-test-b"
+
+	cache := backend.(QueryEmbeddingCache)
+	limiter := backend.(RateLimiter)
+
+	seed := func(ns string) {
+		require.NoError(t, backend.Upsert(ctx, []Vector{
+			{Namespace: ns, Resource: testResource, UID: "dash", Title: "Dash", Subresource: "panel/1",
+				ResourceVersion: 10, Content: "content", Metadata: json.RawMessage(`{}`),
+				Embedding: makeEmbedding(0.5, 0.5), Model: testModel},
+		}))
+		require.NoError(t, cache.Put(ctx, ns, testModel, fmt.Sprintf("%064d", 1), makeEmbedding(0.5, 0.5)))
+		_, _, err := limiter.Allow(ctx, ns, time.Minute, 100)
+		require.NoError(t, err)
+		_, err = engine.DB().ExecContext(ctx,
+			`INSERT INTO vector_promoted (namespace, resource) VALUES ($1, $2)`, ns, testResource)
+		require.NoError(t, err)
+	}
+	seed(nsA)
+	seed(nsB)
+
+	deleted, err := backend.DeleteNamespace(ctx, nsA)
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), deleted, "one embedding row removed for nsA")
+
+	// nsA gone from every table.
+	existsA, err := backend.Exists(ctx, nsA, testModel, testResource, "dash")
+	require.NoError(t, err)
+	assert.False(t, existsA, "nsA embeddings should be gone")
+
+	countA, err := cache.Count(ctx, nsA)
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), countA, "nsA query cache should be gone")
+
+	assert.Equal(t, 0, rawCount(t, engine, `SELECT count(*) FROM vector_search_rate_buckets WHERE namespace = $1`, nsA))
+	assert.Equal(t, 0, rawCount(t, engine, `SELECT count(*) FROM vector_promoted WHERE namespace = $1`, nsA))
+
+	// nsB untouched.
+	existsB, err := backend.Exists(ctx, nsB, testModel, testResource, "dash")
+	require.NoError(t, err)
+	assert.True(t, existsB, "nsB embeddings should survive")
+
+	countB, err := cache.Count(ctx, nsB)
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), countB, "nsB query cache should survive")
+
+	assert.Equal(t, 1, rawCount(t, engine, `SELECT count(*) FROM vector_search_rate_buckets WHERE namespace = $1`, nsB))
+	assert.Equal(t, 1, rawCount(t, engine, `SELECT count(*) FROM vector_promoted WHERE namespace = $1`, nsB))
+}
+
+func rawCount(t *testing.T, engine *xorm.Engine, query string, args ...any) int {
+	t.Helper()
+	var n int
+	require.NoError(t, engine.DB().QueryRowContext(context.Background(), query, args...).Scan(&n))
+	return n
 }
 
 // TestIntegrationVectorUpsertReplaceSubresources pins the atomic

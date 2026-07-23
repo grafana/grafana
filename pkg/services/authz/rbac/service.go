@@ -1034,8 +1034,15 @@ func (s *Service) checkPermissionWithFolderAuthz(ctx context.Context, scopeMap m
 		return true, nil
 	}
 
+	// Named object with no parent folder. Storage enforces that folder-scoped
+	// kinds always carry a non-root folder (apistore RequireFolder), and that
+	// non-folder-scoped kinds can never carry one (EnableFolderSupport=false).
+	// An empty parent folder on a named check therefore means the kind does not
+	// live in folders, and the stack role alone decides.
+	// Source: pkg/storage/unified/apistore/prepare.go (fn verifyFolder)
 	if req.ParentFolder == "" {
-		return false, fmt.Errorf("k8s authorizer supports folder level not resource level authorization")
+		ctxLogger.Debug("folderAuthz: named object without parent folder, stack role decides")
+		return true, nil
 	}
 
 	// The stack-role grant lives under the resource-type action

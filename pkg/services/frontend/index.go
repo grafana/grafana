@@ -2,6 +2,7 @@ package frontend
 
 import (
 	"embed"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"html/template"
@@ -168,14 +169,19 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		LegacyAPIMode:                         legacyAPIMode,
 	}
 
-	// TODO -- reevaluate with mt authnz
-	// Check for login_error cookie and set a generic error message.
-	// The backend sets an encrypted cookie on oauth login failures that we can't read
-	// so we just show a generic error if the cookie is present.
+	// Check for login_error cookie. Two writers exist:
+	//  1. OSS HTTPServer writes hex-encoded encrypted values (trySetEncryptedCookie).
+	//  2. The multi-tenant authn-service writes plain-text error messages.
+	// If the value is valid hex, it's the encrypted form and we can't decrypt it here,
+	// so we fall back to the generic OAuthLoginErrorMessage. Otherwise, use the
+	// plain-text value directly.
 	if cookie, err := request.Cookie("login_error"); err == nil && cookie.Value != "" {
 		p.log.Info("request has login_error cookie")
-		// Defaults to a translation key that the frontend will resolve to a localized message
-		data.Settings.LoginError = p.config.OAuthLoginErrorMessage // TODO: get from request config
+		if _, hexErr := hex.DecodeString(cookie.Value); hexErr != nil {
+			data.Settings.LoginError = cookie.Value
+		} else {
+			data.Settings.LoginError = p.config.OAuthLoginErrorMessage
+		}
 
 		cookiePath := "/"
 		if p.config.AppSubURL != "" {

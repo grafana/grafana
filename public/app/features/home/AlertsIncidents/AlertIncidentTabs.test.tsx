@@ -12,11 +12,10 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { AlertIncidentTabs } from './AlertIncidentTabs';
 
 jest.mock('../analytics/main', () => ({
-  alertsCardClicked: jest.fn(),
-  incidentsCardClicked: jest.fn(),
+  ctaClicked: jest.fn(),
   tabChanged: jest.fn(),
   clearHistoryClicked: jest.fn(),
-  emptyCtaClicked: jest.fn(),
+  homepageViewed: jest.fn(),
 }));
 
 setBackendSrv(backendSrv);

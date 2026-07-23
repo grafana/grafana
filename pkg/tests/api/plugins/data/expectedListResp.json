@@ -1312,59 +1312,6 @@
     "angularDetected": false
   },
   {
-    "name": "PostgreSQL",
-    "type": "datasource",
-    "id": "grafana-postgresql-datasource",
-    "aliasIDs": [
-      "postgres"
-    ],
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "Data source for PostgreSQL and compatible databases",
-      "links": [
-        {
-          "name": "Raise issue",
-          "url": "https://github.com/grafana/grafana/issues/new"
-        },
-        {
-          "name": "Documentation",
-          "url": "https://grafana.com/docs/grafana/latest/datasources/postgres/"
-        }
-      ],
-      "logos": {
-        "small": "public/plugins/grafana-postgresql-datasource/img/postgresql_logo.svg",
-        "large": "public/plugins/grafana-postgresql-datasource/img/postgresql_logo.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "12.4.0-pre",
-      "updated": "",
-      "keywords": null
-    },
-    "dependencies": {
-      "grafanaDependency": "\u003e=12.3.0",
-      "grafanaVersion": "*",
-      "plugins": [],
-      "extensions": {
-        "exposedComponents": []
-      }
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/grafana-postgresql-datasource/",
-    "category": "sql",
-    "state": "",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
-  },
-  {
     "name": "Prometheus",
     "type": "datasource",
     "id": "prometheus",
