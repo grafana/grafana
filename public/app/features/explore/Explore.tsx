@@ -17,6 +17,7 @@ import {
   type SplitOpenOptions,
   store,
   SupplementaryQueryType,
+  urlUtil,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -147,6 +148,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
   graphEventBus: EventBus;
   logsEventBus: EventBus;
+  outlineHiddenFromUrl: boolean;
 
   constructor(props: Props) {
     super(props);
@@ -155,6 +157,8 @@ export class Explore extends PureComponent<Props, ExploreState> {
     };
     this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
     this.logsEventBus = props.eventBus.newScopedBus('logs', { onlyLocal: false });
+    const { contentOutline } = urlUtil.getUrlSearchParams();
+    this.outlineHiddenFromUrl = (Array.isArray(contentOutline) ? contentOutline[0] : contentOutline) === 'false';
   }
 
   onChangeTime = (rawRange: RawTimeRange) => {
@@ -685,7 +689,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
           }}
         >
           <div className={styles.wrapper}>
-            {contentOutlineVisible && !compact && (
+            {contentOutlineVisible && !compact && !this.outlineHiddenFromUrl && (
               <ContentOutline scroller={this.scrollElement} panelId={`content-outline-container-${exploreId}`} />
             )}
             <ScrollContainer
