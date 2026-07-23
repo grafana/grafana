@@ -17,7 +17,7 @@ import cx from 'clsx';
 import DOMPurify from 'dompurify';
 import { type PropsWithChildren, type ReactNode, useId, useLayoutEffect, useRef, useState } from 'react';
 
-import { type GrafanaTheme2, type PluginExtensionLink, type TraceKeyValuePair } from '@grafana/data';
+import { type GrafanaTheme2, type PluginExtensionLink, textUtil, type TraceKeyValuePair } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Dropdown, Icon, Menu, useStyles2 } from '@grafana/ui';
 
@@ -154,7 +154,7 @@ export const LinkValue = ({ link, children }: PropsWithChildren<LinkValueProps>)
 
   return (
     <a
-      href={path}
+      href={path ? textUtil.sanitizeUrl(path) : path}
       title={title}
       onClick={onClick}
       target="_blank"
@@ -205,7 +205,7 @@ export const LinkValuesMenu = ({ links, children }: LinkValuesMenuProps) => {
                   <Menu.Item
                     label={link.description || link.title || t('explore.key-values-table.link-fallback-label', 'Link')}
                     icon={link.icon}
-                    url={link.path}
+                    url={link.path ? textUtil.sanitizeUrl(link.path) : undefined}
                     target="_blank"
                     onClick={link.onClick}
                   />
