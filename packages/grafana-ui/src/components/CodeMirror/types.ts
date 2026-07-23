@@ -1,6 +1,7 @@
 import type { Completion, CompletionContext, CompletionResult, CompletionSource } from '@codemirror/autocomplete';
 import { type EditorState, type Extension } from '@codemirror/state';
 import { type BasicSetupOptions } from '@uiw/react-codemirror';
+import { type ReactNode } from 'react';
 
 export type CodeMirrorCompletion = Completion;
 export type CodeMirrorCompletionContext = CompletionContext;
@@ -168,4 +169,10 @@ export interface CodeMirrorEditorProps {
    * Wraps long lines instead of scrolling horizontally.
    */
   lineWrapping?: boolean;
+  /**
+   * Rendered while the editor bundle is being lazily loaded. Defaults to a
+   * loading placeholder; pass a styled preview of the content to avoid a
+   * visual flash when the editor appears.
+   */
+  loadingFallback?: ReactNode;
 }

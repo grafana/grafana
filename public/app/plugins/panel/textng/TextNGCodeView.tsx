@@ -1,6 +1,9 @@
+import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { useStyles2 } from '@grafana/ui';
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
 import { type CodeLanguage } from '../../schemas/textng/panelcfg.gen';
@@ -17,12 +20,28 @@ export interface TextNGCodeViewProps {
  * Read-only, syntax-highlighted rendering of code-mode content
  */
 export function TextNGCodeView({ content, language, showLineNumbers }: TextNGCodeViewProps) {
+  const styles = useStyles2(getStyles);
+
+  // Only syntax highlighting and (optionally) line numbers: the editing-assist
+  // features make no sense read-only, and bracketMatching in particular
+  // decorates the bracket at the default cursor position (0) even when the
+  // view is unfocused, which reads as the first character being selected.
   const basicSetup = useMemo(
     () => ({
       lineNumbers: showLineNumbers,
       foldGutter: false,
       highlightActiveLine: false,
       highlightActiveLineGutter: false,
+      bracketMatching: false,
+      closeBrackets: false,
+      autocompletion: false,
+      highlightSelectionMatches: false,
+      history: false,
+      indentOnInput: false,
+      allowMultipleSelections: false,
+      rectangularSelection: false,
+      crosshairCursor: false,
+      dropCursor: false,
     }),
     [showLineNumbers]
   );
@@ -37,6 +56,25 @@ export function TextNGCodeView({ content, language, showLineNumbers }: TextNGCod
       basicSetup={basicSetup}
       height="100%"
       aria-label={t('textng.code-view.aria-label-code-content', 'Code content')}
+      loadingFallback={<pre className={styles.loadingFallback}>{content}</pre>}
     />
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  // Mirrors the CodeMirror theme (font, line height, colors, content padding)
+  // so swapping in the loaded editor does not visibly shift the text.
+  loadingFallback: css({
+    margin: 0,
+    padding: '4px 2px 4px 6px',
+    height: '100%',
+    overflow: 'auto',
+    fontFamily: theme.typography.fontFamilyMonospace,
+    fontSize: theme.typography.code.fontSize,
+    lineHeight: theme.typography.code.lineHeight,
+    color: theme.components.input.text,
+    backgroundColor: theme.components.input.background,
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-word',
+  }),
+});

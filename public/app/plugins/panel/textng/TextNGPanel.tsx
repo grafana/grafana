@@ -9,10 +9,10 @@ import config from 'app/core/config';
 
 import { defaultCodeOptions, defaultOptions, type Options, TextMode } from '../../schemas/textng/panelcfg.gen';
 
+import { TextNGCodeView } from './TextNGCodeView';
 import { transformContent } from './textContent';
 
 const TextNGEditor = lazy(() => import('./TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
-const TextNGCodeView = lazy(() => import('./TextNGCodeView').then((m) => ({ default: m.TextNGCodeView })));
 
 export interface Props extends PanelProps<Options> {}
 
@@ -64,20 +64,13 @@ export function TextNGPanel(props: Props) {
 
   if (processed.mode === TextMode.Code) {
     const code = options.code ?? defaultCodeOptions;
-    const plainFallback = (
-      <ScrollContainer minHeight="100%">
-        <pre className={styles.codeContent}>{processed.content}</pre>
-      </ScrollContainer>
-    );
     return (
       <div className={styles.codeContainer} data-testid="TextNGPanel-code">
-        <Suspense fallback={plainFallback}>
-          <TextNGCodeView
-            content={processed.content}
-            language={code.language}
-            showLineNumbers={code.showLineNumbers ?? false}
-          />
-        </Suspense>
+        <TextNGCodeView
+          content={processed.content}
+          language={code.language}
+          showLineNumbers={code.showLineNumbers ?? false}
+        />
       </div>
     );
   }
@@ -112,13 +105,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   codeContainer: css({
     height: '100%',
     overflow: 'hidden',
-  }),
-  codeContent: css({
-    margin: 0,
-    padding: theme.spacing(1),
-    fontFamily: theme.typography.fontFamilyMonospace,
-    fontSize: theme.typography.bodySmall.fontSize,
-    whiteSpace: 'pre-wrap',
-    wordBreak: 'break-word',
   }),
 });
