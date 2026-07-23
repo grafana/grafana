@@ -54,11 +54,17 @@ function isAlertingState(state: string | undefined): boolean {
     .includes('alerting');
 }
 
+/** Alerting + Recovering are one keep-firing episode; Normal ends it. */
+function isFiringEpisodeState(state: string | undefined): boolean {
+  const normalized = String(state ?? '').toLowerCase();
+  return normalized.includes('alerting') || normalized.includes('recovering');
+}
+
 /**
  * ISO start time for the current firing episode from state history.
- * Only returns a start when history shows an enter-Alerting transition that
- * has not yet been closed by a later leave-Alerting event in the same window.
- * Truncated or ambiguous history returns undefined so startsAt is omitted.
+ * Starts on enter-Alerting and stays open through Recovering. Only a leave to
+ * a non-firing state (e.g. Normal) closes the episode. Truncated or ambiguous
+ * history returns undefined so startsAt is omitted.
  */
 export function getAlertInstanceStartsAtIso(historyRecords: LogRecord[] | undefined): string | undefined {
   if (!historyRecords?.length) {
@@ -69,11 +75,12 @@ export function getAlertInstanceStartsAtIso(historyRecords: LogRecord[] | undefi
   let openEpisodeStart: number | undefined;
 
   for (const record of ordered) {
-    const wasAlerting = isAlertingState(record.line.previous);
-    const isAlerting = isAlertingState(record.line.current);
-    if (!wasAlerting && isAlerting) {
+    const wasInEpisode = isFiringEpisodeState(record.line.previous);
+    const isInEpisode = isFiringEpisodeState(record.line.current);
+    // Episode clock starts only when entering Alerting (not Recovering alone).
+    if (!wasInEpisode && isAlertingState(record.line.current)) {
       openEpisodeStart = record.timestamp;
-    } else if (wasAlerting && !isAlerting) {
+    } else if (wasInEpisode && !isInEpisode) {
       openEpisodeStart = undefined;
     }
   }

@@ -175,6 +175,25 @@ describe('investigation state helpers', () => {
       expect(startsAt).toBeUndefined();
     });
 
+    it('keeps the episode start across Recovering', () => {
+      const startsAt = getAlertInstanceStartsAtIso([
+        { timestamp: 1_000, line: { previous: GrafanaAlertState.Normal, current: GrafanaAlertState.Alerting } },
+        { timestamp: 5_000, line: { previous: GrafanaAlertState.Alerting, current: GrafanaAlertState.Recovering } },
+      ]);
+
+      expect(startsAt).toBe(new Date(1_000).toISOString());
+    });
+
+    it('clears the episode after Recovering resolves to Normal', () => {
+      const startsAt = getAlertInstanceStartsAtIso([
+        { timestamp: 1_000, line: { previous: GrafanaAlertState.Normal, current: GrafanaAlertState.Alerting } },
+        { timestamp: 5_000, line: { previous: GrafanaAlertState.Alerting, current: GrafanaAlertState.Recovering } },
+        { timestamp: 8_000, line: { previous: GrafanaAlertState.Recovering, current: GrafanaAlertState.Normal } },
+      ]);
+
+      expect(startsAt).toBeUndefined();
+    });
+
     it('returns undefined when history is clipped and never shows an enter-Alerting transition', () => {
       const startsAt = getAlertInstanceStartsAtIso([
         { timestamp: 4_000, line: { previous: GrafanaAlertState.Alerting, current: GrafanaAlertState.Alerting } },
