@@ -355,6 +355,7 @@
     "lossless-json": "^4.1.1",
     "marked": "16.3.0",
     "memoize-one": "6.0.0",
+    "mermaid": "11.16.0",
     "micro-memoize": "^4.1.2",
     "ml-regression-polynomial": "^3.0.0",
     "ml-regression-simple-linear": "^3.0.0",
