@@ -38,8 +38,8 @@ func (b *APIBuilder) RegisterHTTPRoutes(rr routing.RouteRegister) {
 
 // grafanaHTTPHandler adapts an OFREP http.HandlerFunc to Grafana's router. It injects the
 // signed-in user into the request context so downstream namespace validation and proxying
-// see the caller's identity, and copies Grafana's :flagKey route param into gorilla/mux
-// vars, which the handlers read via mux.Vars.
+// see the caller's identity, and copies Grafana's :flagKey and :namespace route params into
+// gorilla/mux vars, which the handlers read via mux.Vars.
 //
 // We gate on IsSignedIn rather than SignedInUser != nil because Grafana always populates
 // SignedInUser (even for anonymous requests) with a zero-value struct whose
@@ -51,8 +51,19 @@ func (b *APIBuilder) grafanaHTTPHandler(inner http.HandlerFunc) func(*contextmod
 		if c.IsSignedIn {
 			req = req.WithContext(identity.WithRequester(req.Context(), c.SignedInUser))
 		}
+		vars := map[string]string{}
 		if flagKey := web.Params(req)[":flagKey"]; flagKey != "" {
-			req = mux.SetURLVars(req, map[string]string{"flagKey": flagKey})
+			vars["flagKey"] = flagKey
+		}
+		// The deprecated /apis/.../namespaces/:namespace/ofrep path carries the namespace
+		// in the URL. Unauthenticated requests have no identity to derive it from, so we
+		// forward the path namespace instead (see validateNamespace). The canonical /ofrep
+		// path has no :namespace segment, so this is empty there.
+		if namespace := web.Params(req)[":namespace"]; namespace != "" {
+			vars["namespace"] = namespace
+		}
+		if len(vars) > 0 {
+			req = mux.SetURLVars(req, vars)
 		}
 		inner(c.Resp, req)
 	}
@@ -146,14 +157,31 @@ func (b *APIBuilder) validateNamespace(r *http.Request, evalCtx evalContext) (st
 	_, span := tracing.Start(r.Context(), "ofrep.validateNamespace")
 	defer span.End()
 
-	user, ok := types.AuthInfoFrom(r.Context())
-	if !ok {
-		// No auth info — nothing to forward. Unauthed access is gated to public flags downstream.
-		span.SetAttributes(attribute.Bool("validation.success", true))
-		return "", true
+	authNamespace := ""
+	if user, ok := types.AuthInfoFrom(r.Context()); ok {
+		authNamespace = user.GetNamespace()
 	}
 
-	authNamespace := user.GetNamespace()
+	// An empty auth namespace means the request is unauthenticated (no identity was
+	// injected upstream). On the deprecated /apis/.../namespaces/:namespace/ofrep path
+	// the namespace still lives in the URL, so forward it upstream to keep the User-Agent
+	// namespace-scoped — mirroring the apiserver's useNamespaceFromPath handling. This
+	// does not authenticate the request; access stays gated to public flags downstream.
+	if authNamespace == "" {
+		pathNamespace := mux.Vars(r)["namespace"]
+		span.SetAttributes(
+			attribute.String("path_namespace", pathNamespace),
+			attribute.String("eval_ctx_namespace", evalCtx.namespace),
+		)
+		// Reject a body claiming a namespace other than the one in the path.
+		if pathNamespace != "" && evalCtx.namespace != "" && evalCtx.namespace != pathNamespace {
+			span.SetAttributes(attribute.Bool("validation.success", false))
+			return pathNamespace, false
+		}
+		span.SetAttributes(attribute.Bool("validation.success", true))
+		return pathNamespace, true
+	}
+
 	span.SetAttributes(
 		attribute.String("auth_namespace", authNamespace),
 		attribute.String("eval_ctx_namespace", evalCtx.namespace),
@@ -161,7 +189,7 @@ func (b *APIBuilder) validateNamespace(r *http.Request, evalCtx evalContext) (st
 
 	// Only cross-check when both sides declare a namespace. A wildcard auth namespace
 	// grants cluster-wide access and matches any specific namespace.
-	if evalCtx.namespace == "" || authNamespace == "" || authNamespace == "*" {
+	if evalCtx.namespace == "" || authNamespace == "*" {
 		span.SetAttributes(attribute.Bool("validation.success", true))
 		return authNamespace, true
 	}

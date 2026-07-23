@@ -88,13 +88,12 @@ func ProvideBackgroundServiceRegistry(
 	natsSubscriber *infranats.SubscriberService,
 	sqlStore *sqlstore.SQLStore,
 	folderReconciler *folderreconcile.Reconciler,
-	ofrep *ofrep.APIBuilder,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
 	_ serviceaccounts.Service,
 	_ *grpcserver.HealthService, _ *grpcserver.ReflectionService,
 	_ *ldapapi.Service, _ *apiregistry.Service, _ auth.IDService, _ *teamapi.TeamAPI, _ ssosettings.Service,
-	_ cloudmigration.Service, _ authnimpl.Registration,
+	_ cloudmigration.Service, _ authnimpl.Registration, _ *ofrep.APIBuilder,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,
@@ -144,7 +143,6 @@ func ProvideBackgroundServiceRegistry(
 		zanzanaService,
 		sqlStore,
 		folderReconciler,
-		ofrep,
 	)
 }
 

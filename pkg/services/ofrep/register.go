@@ -2,7 +2,6 @@ package ofrep
 
 import (
 	"bytes"
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -15,12 +14,9 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-var _ registry.BackgroundService = (*APIBuilder)(nil)
 
 const ofrepPath = "/ofrep/v1/evaluate/flags"
 
@@ -50,7 +46,7 @@ func newAPIBuilder(providerType setting.OpenFeatureProviderType, url *url.URL, i
 
 	// raise per-host idle conn limit above the default of 2 to avoid TCP connection piling up at high request rates
 	transport := &http.Transport{
-		TLSClientConfig:     &tls.Config{InsecureSkipVerify: insecure, RootCAs: caRoot},
+		TLSClientConfig:     &tls.Config{InsecureSkipVerify: insecure, RootCAs: caRoot, MinVersion: tls.VersionTLS12},
 		MaxIdleConnsPerHost: 10,
 	}
 
@@ -83,14 +79,6 @@ func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister) (*APIBuilder, er
 	// own background service, which binds the accumulated routes to its mux.
 	b.RegisterHTTPRoutes(rr)
 	return b, nil
-}
-
-// Run implements registry.BackgroundService. Routes are registered during
-// construction (see ProvideService), so there is nothing to do here beyond
-// staying alive until the server shuts down.
-func (b *APIBuilder) Run(ctx context.Context) error {
-	<-ctx.Done()
-	return nil
 }
 
 func writeResponse(statusCode int, result any, logger log.Logger, w http.ResponseWriter) {

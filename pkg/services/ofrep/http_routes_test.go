@@ -119,6 +119,66 @@ func TestAPIBuilder_ValidateNamespace(t *testing.T) {
 	}
 }
 
+// TestValidateNamespace_UnauthPathNamespace verifies that an unauthenticated request on
+// the deprecated /apis/.../namespaces/:namespace/ofrep path forwards the namespace taken
+// from the URL (mirroring the apiserver's useNamespaceFromPath behavior) without
+// authenticating the request.
+func TestValidateNamespace_UnauthPathNamespace(t *testing.T) {
+	b := &APIBuilder{logger: log.NewNopLogger()}
+
+	newReq := func(body, pathNS string) *http.Request {
+		target := "/apis/features.grafana.app/v0alpha1/namespaces/" + pathNS + "/ofrep/v1/evaluate/flags"
+		req := httptest.NewRequest(http.MethodPost, target, bytes.NewBufferString(body))
+		req.Header.Set("Content-Type", "application/json")
+		// Unauthenticated: no auth info injected, only the path namespace is available.
+		return mux.SetURLVars(req, map[string]string{"namespace": pathNS})
+	}
+
+	tests := []struct {
+		name        string
+		body        string
+		pathNS      string
+		expectedNS  string
+		expectValid bool
+	}{
+		{"no eval-context namespace forwards path namespace", `{"context":{}}`, "stacks-1", "stacks-1", true},
+		{"matching eval-context namespace is valid", `{"context":{"namespace":"stacks-1"}}`, "stacks-1", "stacks-1", true},
+		{"conflicting eval-context namespace is rejected", `{"context":{"namespace":"stacks-99"}}`, "stacks-1", "stacks-1", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := newReq(tt.body, tt.pathNS)
+			evalCtx, err := b.readEvalContext(httptest.NewRecorder(), req)
+			require.NoError(t, err)
+
+			ns, valid := b.validateNamespace(req, evalCtx)
+			assert.Equal(t, tt.expectValid, valid)
+			assert.Equal(t, tt.expectedNS, ns)
+		})
+	}
+}
+
+// TestAllFlagsHandler_UnauthForwardsPathNamespace verifies the resolved path namespace
+// reaches the upstream provider as a namespace-scoped User-Agent.
+func TestAllFlagsHandler_UnauthForwardsPathNamespace(t *testing.T) {
+	var gotUserAgent string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotUserAgent = r.Header.Get("User-Agent")
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(goffmodel.OFREPBulkEvaluateSuccessResponse{})
+	}))
+	t.Cleanup(srv.Close)
+	b := newTestBuilder(t, srv.URL)
+
+	w := httptest.NewRecorder()
+	r := newUnauthReq("/apis/features.grafana.app/v0alpha1/namespaces/stacks-7/ofrep/v1/evaluate/flags", map[string]string{"namespace": "stacks-7"})
+	b.allFlagsHandler(w, r)
+
+	require.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "features-grafana-app/stacks-7", gotUserAgent)
+}
+
 func TestOneFlagHandler_MissingFlagKey(t *testing.T) {
 	b := &APIBuilder{
 		providerType: setting.OFREPProviderType,
