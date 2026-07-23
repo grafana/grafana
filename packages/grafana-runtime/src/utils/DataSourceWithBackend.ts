@@ -27,7 +27,6 @@ import {
   type BackendSrvRequest,
   type FetchResponse,
   getBackendSrv,
-  getDataSourceSrv,
   getGrafanaLiveSrv,
   StreamingFrameAction,
   type StreamingFrameOptions,
@@ -37,6 +36,7 @@ import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
 import { isQueryServiceCompatible } from './qscheck';
 import { type BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 import { UserStorage } from './userStorage';
+import { getDataSourceInstanceSettings } from './../unstable'
 
 /**
  * @internal
@@ -170,7 +170,7 @@ class DataSourceWithBackend<
     const pluginIDs = new Set<string>();
     const dsUIDs = new Set<string>();
     const datasources: DataSourceInstanceSettings[] = [];
-    const queries: DataQuery[] = targets.map((q) => {
+    const queries: DataQuery[] = await Promise.all(targets.map(async (q) => {
       let datasource = this.getRef();
       let datasourceId = this.id;
       let shouldApplyTemplateVariables = true;
@@ -184,7 +184,7 @@ class DataSourceWithBackend<
       }
 
       if (q.datasource) {
-        const ds = getDataSourceSrv().getInstanceSettings(q.datasource, request.scopedVars);
+        const ds = await getDataSourceInstanceSettings(q.datasource, request.scopedVars);
 
         if (!ds) {
           throw new Error(`Unknown Datasource: ${JSON.stringify(q.datasource)}`);
@@ -220,7 +220,7 @@ class DataSourceWithBackend<
         maxDataPoints,
         queryCachingTTL,
       };
-    });
+    }));
 
     const body = {
       queries,
