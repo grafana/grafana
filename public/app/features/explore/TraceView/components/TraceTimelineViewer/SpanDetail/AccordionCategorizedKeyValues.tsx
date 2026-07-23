@@ -4,8 +4,6 @@ import * as React from 'react';
 import { type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';
 import { Counter, Icon, useStyles2 } from '@grafana/ui';
 
-import type TNil from '../../types/TNil';
-
 import { KeyValuesSummary } from './KeyValuesSummary';
 import KeyValuesTable, { type KeyValuesTableLink } from './KeyValuesTable';
 import {
@@ -21,7 +19,7 @@ export type AccordionCategorizedKeyValuesProps = {
   sectionType: AttributeSectionType;
   isOpen: boolean;
   label: string;
-  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[]) | TNil;
+  linksGetter?: (pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[];
   onToggle?: null | (() => void);
 };
 
