@@ -63,7 +63,7 @@ connection: {
 				}
 				spec: {
 					// The connection provider type
-					type: "github" | "githubEnterprise" | "bitbucket" | "gitlab"
+					type: "github" | "githubEnterprise" | "githubOAuth" | "bitbucket" | "gitlab"
 					// The connection URL.
 					url: *"" | string
 					// GitHub connection configuration.

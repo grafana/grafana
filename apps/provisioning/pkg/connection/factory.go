@@ -33,11 +33,15 @@ type factory struct {
 }
 
 // ToConnectionTypes maps the configured repository types to the connection
-// types they enable.
+// types they enable. Connection types that serve another repository type
+// (githubOAuth serves github repositories) are enabled alongside it.
 func ToConnectionTypes(repositoryTypes []string) map[provisioning.ConnectionType]struct{} {
 	enabled := make(map[provisioning.ConnectionType]struct{}, len(repositoryTypes))
 	for _, t := range repositoryTypes {
 		enabled[provisioning.ConnectionType(t)] = struct{}{}
+	}
+	if _, ok := enabled[provisioning.GithubConnectionType]; ok {
+		enabled[provisioning.GithubOAuthConnectionType] = struct{}{}
 	}
 	return enabled
 }

@@ -1517,8 +1517,9 @@ export type ConnectionSpec = {
      - `"bitbucket"`
      - `"github"`
      - `"githubEnterprise"`
+     - `"githubOAuth"`
      - `"gitlab"` */
-  type: 'bitbucket' | 'github' | 'githubEnterprise' | 'gitlab';
+  type: 'bitbucket' | 'github' | 'githubEnterprise' | 'githubOAuth' | 'gitlab';
   /** The connection URL */
   url?: string;
   /** Webhook configuration for this connection */

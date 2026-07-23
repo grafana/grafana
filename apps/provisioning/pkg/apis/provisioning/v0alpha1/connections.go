@@ -117,6 +117,7 @@ func (ConnectionType) OpenAPIModelName() string {
 const (
 	GithubConnectionType           ConnectionType = "github"
 	GithubEnterpriseConnectionType ConnectionType = "githubEnterprise"
+	GithubOAuthConnectionType      ConnectionType = "githubOAuth"
 	GitlabConnectionType           ConnectionType = "gitlab"
 	BitbucketConnectionType        ConnectionType = "bitbucket"
 )
