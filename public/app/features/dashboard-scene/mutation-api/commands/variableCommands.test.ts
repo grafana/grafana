@@ -188,6 +188,28 @@ describe('Variable mutation commands', () => {
     expect(result.changes[0].path).toBe('/variables/env');
   });
 
+  it('UPDATE_VARIABLE preserves the scene key across the replacement', async () => {
+    await client.execute({
+      type: 'ADD_VARIABLE',
+      payload: {
+        variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'dev,prod' } },
+      },
+    });
+    const keyBefore = scene.state.$variables?.state.variables.find((v) => v.state.name === 'env')?.state.key;
+    expect(keyBefore).toBeDefined();
+
+    await client.execute({
+      type: 'UPDATE_VARIABLE',
+      payload: {
+        name: 'env',
+        variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'dev,prod,canary' } },
+      },
+    });
+
+    const keyAfter = scene.state.$variables?.state.variables.find((v) => v.state.name === 'env')?.state.key;
+    expect(keyAfter).toBe(keyBefore);
+  });
+
   it('UPDATE_VARIABLE returns error when variable not found', async () => {
     const result = await client.execute({
       type: 'UPDATE_VARIABLE',

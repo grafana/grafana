@@ -71,6 +71,9 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod output is structurally compatible with VariableKind
       const newSceneVariable = createSceneVariableFromVariableModel(variableKind as VariableKind);
+      // Preserve scene identity across the replacement - element pickers, highlight
+      // overlays, and attached assistant context address the variable by scene key.
+      newSceneVariable.setState({ key: previousState.key });
       currentVariables[existingIndex] = newSceneVariable;
 
       replaceScopeVariableSet(scopeOwner, currentVariables);
