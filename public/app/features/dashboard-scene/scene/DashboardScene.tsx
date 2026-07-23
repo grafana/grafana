@@ -13,7 +13,7 @@ import {
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, locationService, RefreshEvent, reportInteraction } from '@grafana/runtime';
+import { config, getDataSourceSrv, locationService, RefreshEvent, reportInteraction } from '@grafana/runtime';
 import { getPanelPluginMeta } from '@grafana/runtime/internal';
 import {
   type CancelActivationHandler,
@@ -1008,10 +1008,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     if (!skipDataQuery && !panel.state.$data) {
+      const defaultDs = getDataSourceSrv().getInstanceSettings(null);
       panel.setState({
         $data: new SceneDataTransformer({
           $data: new SceneQueryRunner({
-            datasource: { uid: config.defaultDatasource },
+            datasource: defaultDs ? { uid: defaultDs.uid, type: defaultDs.type } : undefined, // @TODO - fixes new text panel query editor error
             queries: [{ refId: 'A' }],
           }),
           transformations: [],

@@ -41,6 +41,10 @@ function resolveAliasIDs(panels: PanelPluginMetas): PanelPluginMetas {
 }
 
 function setPanelsAndAliases(input: PanelPluginMetas) {
+  // @TODO skipDataQuery: false!!
+  if (input.text && getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewTextPanel, false)) {
+    input = { ...input, text: { ...input.text, skipDataQuery: false } };
+  }
   panels = input;
   panelsByAliasIDs = resolveAliasIDs(panels);
 }

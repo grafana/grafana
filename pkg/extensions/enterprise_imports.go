@@ -553,7 +553,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/tests/apis"
 	_ "github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	_ "github.com/grafana/grafana/pkg/tsdb/cloudwatch"
-	_ "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource"
 	_ "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	_ "github.com/grafana/grafana/pkg/tsdb/grafanads"
 	_ "github.com/grafana/grafana/pkg/tsdb/graphite"
