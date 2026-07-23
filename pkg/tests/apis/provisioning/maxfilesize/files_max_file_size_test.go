@@ -126,9 +126,9 @@ func TestIntegrationProvisioning_MaxFileSize_Write(t *testing.T) {
 
 // TestIntegrationProvisioning_MaxFileSize_Pull exercises the sync-side
 // enforcement: a pull job over a repository that contains a file larger than
-// [provisioning] max_file_size completes with state=error, recording a
-// per-file error for the oversized file. Under-cap files in the same
-// repository are still applied successfully.
+// [provisioning] max_file_size completes with state=warning, recording a
+// per-file warning for the oversized file rather than failing the whole job.
+// Under-cap files in the same repository are still applied successfully.
 func TestIntegrationProvisioning_MaxFileSize_Pull(t *testing.T) {
 	helper := sharedHelper(t)
 
@@ -171,20 +171,22 @@ func TestIntegrationProvisioning_MaxFileSize_Pull(t *testing.T) {
 	jobObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
-	require.Equal(t, provisioning.JobStateError, jobObj.Status.State,
-		"pull should end in error state when a file exceeds max_file_size; job: %+v", jobObj.Status)
-	require.NotEmpty(t, jobObj.Status.Errors,
-		"pull should record a per-file error for the oversized file")
+	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+		"pull should end in warning state when a file exceeds max_file_size; job: %+v", jobObj.Status)
+	require.Empty(t, jobObj.Status.Errors,
+		"an oversized file must not fail the pull with a hard error")
+	require.NotEmpty(t, jobObj.Status.Warnings,
+		"pull should record a per-file warning for the oversized file")
 
 	var foundOversized bool
-	for _, e := range jobObj.Status.Errors {
-		if strings.Contains(e, "huge.json") && strings.Contains(e, "max allowed") {
+	for _, w := range jobObj.Status.Warnings {
+		if strings.Contains(w, "huge.json") && strings.Contains(w, "max allowed") {
 			foundOversized = true
 			break
 		}
 	}
 	require.True(t, foundOversized,
-		"expected an error mentioning huge.json and the size cap; errors=%v", jobObj.Status.Errors)
+		"expected a warning mentioning huge.json and the size cap; warnings=%v", jobObj.Status.Warnings)
 
 	// Under-cap files in the same repository are still applied — the cap is
 	// enforced per file, not per sync.

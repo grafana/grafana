@@ -11,6 +11,7 @@ import { Drawer } from '@grafana/ui';
 import { shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { getDashboardSceneFor } from '../../utils/utils';
+import { DownloadDashboardDiagnostics } from '../DownloadDashboardDiagnostics';
 import { DownloadDiagnostics } from '../DownloadDiagnostics';
 import { ExportAsCode } from '../ExportButton/ExportAsCode';
 import { ExportAsImage } from '../ExportButton/ExportAsImage';
@@ -108,6 +109,8 @@ function getShareView(
       return new ExportAsCode({ onDismiss });
     case shareDashboardType.image:
       return new ExportAsImage({ onDismiss });
+    case shareDashboardType.downloadDiagnostics:
+      return new DownloadDashboardDiagnostics({ dashboardRef, onDismiss });
     default:
       return new ShareInternally({ onDismiss });
   }

@@ -67,7 +67,7 @@ func loadAnnotationAppPlatformSettings(cfg *Cfg) (AnnotationAppPlatformSettings,
 	settings := AnnotationAppPlatformSettings{
 		Enabled:           appPlatformSection.Key("enabled").MustBool(false),
 		StoreBackend:      appPlatformSection.Key("store_backend").MustString("legacy-sql"),
-		RetentionTTL:      appPlatformSection.Key("retention_ttl").MustDuration(2160 * time.Hour),
+		RetentionTTL:      appPlatformSection.Key("retention_ttl").MustDuration(0),
 		EnableLegacyID:    appPlatformSection.Key("enable_legacy_id").MustBool(false),
 		MaxScopeCount:     appPlatformSection.Key("max_scope_count").MustInt(5),
 		APIMigrationPhase: appPlatformSection.Key("api_migration_phase").MustString(AnnotationAPIMigrationPhaseOff),
@@ -90,6 +90,10 @@ func loadAnnotationAppPlatformSettings(cfg *Cfg) (AnnotationAppPlatformSettings,
 
 	if settings.MaxScopeCount < 0 {
 		return AnnotationAppPlatformSettings{}, fmt.Errorf("[annotations.app_platform.max_scope_count] must not be negative")
+	}
+
+	if settings.RetentionTTL < 0 {
+		return AnnotationAppPlatformSettings{}, fmt.Errorf("[annotations.app_platform.retention_ttl] must not be negative")
 	}
 
 	return settings, nil

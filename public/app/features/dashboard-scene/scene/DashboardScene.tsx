@@ -13,7 +13,7 @@ import {
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, locationService, RefreshEvent } from '@grafana/runtime';
+import { config, getDataSourceSrv, locationService, RefreshEvent, reportInteraction } from '@grafana/runtime';
 import { getPanelPluginMeta } from '@grafana/runtime/internal';
 import {
   type CancelActivationHandler,
@@ -236,6 +236,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     if (isNew) {
+      // Silent CUJ signal so the dashboard_edit journey starts on /dashboard/new
+      // (the regular `dashboards_edit_button_clicked` doesn't fire here — auto-edit
+      // mode bypasses the button).
+      reportInteraction('dashboards_new_dashboard_init', {}, { silent: true });
       // New dashboards enter edit mode on activation, before any caller can tag the
       // session, so the initiator is carried in the url (set by the assistant when it
       // opens the editor to build a dashboard itself)
@@ -496,6 +500,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // No need to listen to changes anymore
     this._changeTracker.stopTrackingChanges();
 
+    // CUJ-only signal: ends dashboard_edit journey when the user actually leaves
+    // edit mode, regardless of whether changes were discarded or there were
+    // none to begin with. dashboardEditDiscarded only fires on the dirty path,
+    // so we'd otherwise lose the no-op exit case.
+    reportInteraction('dashboards_edit_exited', { restoreInitialState }, { silent: true });
     // Release any edit pane we activated programmatically before the pane is swapped/unmounted.
     this.deactivateEditPane();
 
@@ -516,6 +525,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       //  Restore initial state and disable editing
       this.setState({ ...this._initialState, isEditing: false });
       appEvents.publish(new DashboardDiscardedEvent());
+      DashboardInteractions.dashboardEditDiscarded();
     } else {
       // Do not restore
       this.setState({ isEditing: false });
@@ -800,6 +810,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public pastePanel() {
+    if (!store.exists(LS_PANEL_COPY_KEY)) {
+      return;
+    }
+
     if (config.featureToggles.dashboardNewLayouts) {
       const layout = getLayoutForObject(this);
       if (layout) {
@@ -994,10 +1008,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     if (!skipDataQuery && !panel.state.$data) {
+      const defaultDs = getDataSourceSrv().getInstanceSettings(null);
       panel.setState({
         $data: new SceneDataTransformer({
           $data: new SceneQueryRunner({
-            datasource: { uid: config.defaultDatasource },
+            datasource: defaultDs ? { uid: defaultDs.uid, type: defaultDs.type } : undefined, // @TODO - fixes new text panel query editor error
             queries: [{ refId: 'A' }],
           }),
           transformations: [],

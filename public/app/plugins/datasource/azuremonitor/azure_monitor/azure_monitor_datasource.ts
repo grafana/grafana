@@ -2,7 +2,13 @@ import { find } from 'lodash';
 
 import { type AzureCredentials } from '@grafana/azure-sdk';
 import { type ScopedVars } from '@grafana/data';
-import { config, DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
+import {
+  config,
+  DataSourceWithBackend,
+  getTemplateSrv,
+  type TemplateSrv,
+  type VariableInterpolation,
+} from '@grafana/runtime';
 
 import { getCredentials } from '../credentials';
 import { type AzureMetricQuery, AzureQueryType } from '../dataquery.gen';
@@ -138,11 +144,38 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
     const dimensionFilters = (migratedQuery.dimensionFilters ?? [])
       .filter((f) => f.dimension && f.dimension !== 'None')
       .map((f) => {
-        const filters = f.filters?.map((filter) => this.templateSrv.replace(filter ?? '', scopedVars));
+        const filters = (f.filters ?? []).flatMap((filter) => {
+          const rawValue = filter ?? '';
+          const interpolated: VariableInterpolation[] = [];
+          const replaced = this.templateSrv.replace(rawValue, scopedVars, 'raw', interpolated);
+          const foundVariables = interpolated.filter((v) => v.found !== false);
+          if (!foundVariables.some((v) => v.value?.includes(','))) {
+            return [replaced];
+          }
+          // A multi-value template variable interpolates to a
+          // comma-separated list. Substitute each selected value back into
+          // the original expression so every combination becomes its own
+          // filter value (preserving any literal text around the variable),
+          // rather than a single glob literal that matches no dimension
+          // value. templateSrv records one interpolation entry per match, so
+          // a variable repeated in the expression must be expanded only once
+          // (replaceAll already substitutes every occurrence of the match).
+          const uniqueVariables = foundVariables.filter(
+            (variable, index) => foundVariables.findIndex((other) => other.match === variable.match) === index
+          );
+          let expanded = [rawValue];
+          for (const variable of uniqueVariables) {
+            const values = variable.value.split(',');
+            expanded = expanded.flatMap((expression) =>
+              values.map((value) => expression.replaceAll(variable.match, value))
+            );
+          }
+          return expanded;
+        });
         return {
           dimension: this.templateSrv.replace(f.dimension, scopedVars),
           operator: f.operator || 'eq',
-          filters: filters || [],
+          filters,
         };
       });
 

@@ -553,6 +553,9 @@ export const versionedComponents = {
         svgSlice: {
           '10.3.0': 'data testid Pie Chart Slice',
         },
+        svgLabel: {
+          '13.2.0': 'data-testid Pie Chart Label',
+        },
       },
       Text: {
         container: { [MIN_GRAFANA_VERSION]: () => '.markdown-html' },

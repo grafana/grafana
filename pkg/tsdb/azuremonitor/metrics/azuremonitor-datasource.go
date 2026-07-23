@@ -265,19 +265,31 @@ func buildDimensionFilterString(azJSONModel *dataquery.AzureMetricQuery) (string
 		return fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter), nil
 	}
 
+	// The metrics API accepts at most one 'sw' clause per dimension: it
+	// rejects both "sw ... or sw ..." (or is only valid between eq clauses)
+	// and "sw ... and sw ..." (multiple sw values for one dimension), so fail
+	// here with a clearer message than the API's. Values are counted across
+	// all filter entries because the same dimension may appear more than once
+	// in the list, and dimension names are compared case-insensitively
+	// because the API treats them that way.
+	swValueCounts := map[string]int{}
+	for _, filter := range azJSONModel.DimensionFilters {
+		if filter.Operator == nil || *filter.Operator != "sw" {
+			continue
+		}
+		filterDimension := ""
+		if filter.Dimension != nil {
+			filterDimension = *filter.Dimension
+		}
+		key := strings.ToLower(filterDimension)
+		swValueCounts[key] += len(filter.Filters)
+		if swValueCounts[key] > 1 {
+			return "", backend.DownstreamError(fmt.Errorf("the Azure Monitor API supports only one 'starts with' filter value per dimension, but dimension %q has %d", filterDimension, swValueCounts[key]))
+		}
+	}
+
 	dimSB := strings.Builder{}
 	for i, filter := range azJSONModel.DimensionFilters {
-		// The metrics API accepts at most one 'sw' clause per dimension: it
-		// rejects both "sw ... or sw ..." (or is only valid between eq
-		// clauses) and "sw ... and sw ..." (multiple sw values for one
-		// dimension), so fail here with a clearer message than the API's.
-		if filter.Operator != nil && *filter.Operator == "sw" && len(filter.Filters) > 1 {
-			filterDimension := ""
-			if filter.Dimension != nil {
-				filterDimension = *filter.Dimension
-			}
-			return "", backend.DownstreamError(fmt.Errorf("the Azure Monitor API supports only one 'starts with' filter value per dimension, but dimension %q has %d", filterDimension, len(filter.Filters)))
-		}
 		if len(filter.Filters) == 0 {
 			dimSB.WriteString(fmt.Sprintf("%s eq '*'", *filter.Dimension))
 		} else {
