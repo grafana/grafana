@@ -2870,14 +2870,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "grafana.unifiedHomepage",
-			Description: "Replaces the bundled home dashboard with the unified homepage React page",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendNavigation,
-			Generate:    Generate{React: true},
-			Expression:  "false",
-		},
-		{
 			Name:        "preferences.rerouteLegacyAPIs",
 			Description: "Use K8s client implementation for legacy preferences API",
 			Stage:       FeatureStageGeneralAvailability,

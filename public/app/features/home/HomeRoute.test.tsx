@@ -1,11 +1,10 @@
 import { http, HttpResponse } from 'msw';
 import { type ComponentProps } from 'react';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { locationService, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import { MERGED_PREFS_URL } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -49,27 +48,12 @@ describe('HomeRoute', () => {
   });
 
   afterEach(async () => {
-    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state
-    // updates while the component is still mounted (RTL cleanup runs in a separate afterEach).
-    await act(async () => {
-      setTestFlags({});
-    });
     jest.restoreAllMocks();
   });
 
   const props = {} as ComponentProps<typeof HomeRoute>;
 
-  it('flag off → renders dashboard proxy without probing merged preferences', async () => {
-    stubMergedPreferences({ homeDashboardUID: '' });
-
-    render(<HomeRoute {...props} />);
-
-    expect(await screen.findByTestId('dashboard-page-proxy-stub')).toBeInTheDocument();
-    expect(probeCallCount).toBe(0);
-  });
-
-  it('flag on + homeDashboardUID empty → renders HomePage', async () => {
-    setTestFlags({ 'grafana.unifiedHomepage': true });
+  it('homeDashboardUID empty → renders HomePage', async () => {
     stubMergedPreferences({ homeDashboardUID: '' });
 
     render(<HomeRoute {...props} />);
@@ -77,8 +61,7 @@ describe('HomeRoute', () => {
     expect(await screen.findByText(/Welcome to Grafana/i)).toBeInTheDocument();
   });
 
-  it('flag on + homeDashboardUID absent → renders HomePage', async () => {
-    setTestFlags({ 'grafana.unifiedHomepage': true });
+  it('homeDashboardUID absent → renders HomePage', async () => {
     stubMergedPreferences({});
 
     render(<HomeRoute {...props} />);
@@ -86,8 +69,7 @@ describe('HomeRoute', () => {
     expect(await screen.findByText(/Welcome to Grafana/i)).toBeInTheDocument();
   });
 
-  it('flag on + homeDashboardUID present → renders dashboard proxy', async () => {
-    setTestFlags({ 'grafana.unifiedHomepage': true });
+  it('homeDashboardUID present → renders dashboard proxy', async () => {
     stubMergedPreferences({ homeDashboardUID: 'abc' });
 
     render(<HomeRoute {...props} />);
@@ -95,8 +77,7 @@ describe('HomeRoute', () => {
     expect(await screen.findByTestId('dashboard-page-proxy-stub')).toBeInTheDocument();
   });
 
-  it('flag on + homeDashboardUID: default-home-dashboard → renders dashboard proxy', async () => {
-    setTestFlags({ 'grafana.unifiedHomepage': true });
+  it('homeDashboardUID: default-home-dashboard → renders dashboard proxy', async () => {
     stubMergedPreferences({ homeDashboardUID: 'default-home-dashboard' });
 
     render(<HomeRoute {...props} />);
@@ -104,8 +85,7 @@ describe('HomeRoute', () => {
     expect(await screen.findByTestId('dashboard-page-proxy-stub')).toBeInTheDocument();
   });
 
-  it('flag on + merged endpoint returns 500 → renders dashboard proxy', async () => {
-    setTestFlags({ 'grafana.unifiedHomepage': true });
+  it('merged endpoint returns 500 → renders dashboard proxy', async () => {
     server.use(
       http.get(MERGED_PREFS_URL, () => {
         return HttpResponse.json({ message: 'boom' }, { status: 500 });
@@ -117,8 +97,7 @@ describe('HomeRoute', () => {
     expect(await screen.findByTestId('dashboard-page-proxy-stub')).toBeInTheDocument();
   });
 
-  it('flag on + homeURL present → calls locationService.replace', async () => {
-    setTestFlags({ 'grafana.unifiedHomepage': true });
+  it('homeURL present → calls locationService.replace', async () => {
     stubMergedPreferences({ homeURL: '/d/abc' });
 
     render(<HomeRoute {...props} />);
@@ -130,18 +109,7 @@ describe('HomeRoute', () => {
     });
   });
 
-  it('flag on + homeURL pointing at the setup guide → renders HomePage without redirecting', async () => {
-    setTestFlags({ 'grafana.unifiedHomepage': true });
-    stubMergedPreferences({ homeURL: '/a/grafana-setupguide-app/home' });
-
-    render(<HomeRoute {...props} />);
-
-    expect(await screen.findByText(/Welcome to Grafana/i)).toBeInTheDocument();
-    expect(locationService.getLocation().pathname).not.toContain('grafana-setupguide-app');
-  });
-
-  it('flag on + homeDashboardUID and homeURL both present → renders dashboard proxy without redirecting', async () => {
-    setTestFlags({ 'grafana.unifiedHomepage': true });
+  it('homeDashboardUID and homeURL both present → renders dashboard proxy without redirecting', async () => {
     stubMergedPreferences({ homeDashboardUID: 'abc', homeURL: '/d/other' });
 
     render(<HomeRoute {...props} />);

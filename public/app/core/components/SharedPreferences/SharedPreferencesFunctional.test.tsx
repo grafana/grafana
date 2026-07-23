@@ -1,12 +1,12 @@
 import { HttpResponse } from 'msw';
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
-import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { preferencesHandlers } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
+import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 
@@ -50,14 +50,6 @@ const originalLocation = window.location;
 beforeEach(() => {
   mockReload.mockClear();
   jest.mocked(homeDashboardChanged).mockClear();
-});
-
-afterEach(async () => {
-  // Wrap in act() because setTestFlags fires OpenFeature events that can trigger React state
-  // updates while the component is still mounted (RTL cleanup runs in a separate afterEach).
-  await act(async () => {
-    setTestFlags({});
-  });
 });
 
 beforeAll(() => {
@@ -256,25 +248,6 @@ describe('SharedPreferencesFunctional', () => {
       expect(jest.mocked(homeDashboardChanged)).toHaveBeenCalledWith({
         preferenceType: 'user',
         action: 'set',
-        unifiedHomepageEnabled: false,
-      });
-    });
-  });
-
-  it('reports unifiedHomepageEnabled true when the flag is on', async () => {
-    setTestFlags({ 'grafana.unifiedHomepage': true });
-    const { user } = await setup();
-
-    await selectComboboxOptionInTest(
-      await screen.findByRole('combobox', { name: /home dashboard/i }),
-      new RegExp(dashbdE.item.title)
-    );
-    await user.click(screen.getByText('Save preferences'));
-
-    await waitFor(() => {
-      expect(jest.mocked(homeDashboardChanged)).toHaveBeenCalledWith({
-        preferenceType: 'user',
-        action: 'set',
         unifiedHomepageEnabled: true,
       });
     });
@@ -304,7 +277,7 @@ describe('SharedPreferencesFunctional', () => {
       expect(jest.mocked(homeDashboardChanged)).toHaveBeenCalledWith({
         preferenceType: 'user',
         action: 'cleared',
-        unifiedHomepageEnabled: false,
+        unifiedHomepageEnabled: true,
       });
     });
   });
