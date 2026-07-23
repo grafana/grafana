@@ -81,6 +81,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 		strategies.NewOAuthStrategy(cfg),
 		strategies.NewMTSettingsLDAPStrategy(mtSettingsClient),
 		strategies.NewLDAPStrategy(cfg),
+		strategies.NewJWTStrategy(cfg),
 	}
 
 	configurableProviders := make(map[string]bool)
@@ -91,6 +92,8 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	providersList := ssosettings.AllOAuthProviders
 	providersList = append(providersList, social.LDAPProviderName)
 	configurableProviders[social.LDAPProviderName] = true
+	providersList = append(providersList, social.JWTProviderName)
+	configurableProviders[social.JWTProviderName] = true
 
 	if licensing.FeatureEnabled(social.SAMLProviderName) {
 		fbStrategies = append(fbStrategies, strategies.NewMTSettingsSAMLStrategy(mtSettingsClient), strategies.NewSAMLStrategy(settingsProvider))
@@ -294,13 +297,7 @@ func (s *Service) Patch(ctx context.Context, provider string, data map[string]an
 		return err
 	}
 
-	newSettingsMap := make(map[string]any)
-	for k, v := range storedSettings.Settings {
-		newSettingsMap[k] = v
-	}
-	for k, v := range data {
-		newSettingsMap[k] = v
-	}
+	newSettingsMap := overrideMaps(storedSettings.Settings, data)
 
 	newSettings := &models.SSOSettings{
 		Provider: provider,
@@ -390,13 +387,10 @@ func (s *Service) Reload(ctx context.Context, provider string) {
 }
 
 func (s *Service) RegisterReloadable(provider string, reloadable ssosettings.Reloadable) {
-	if s.reloadables == nil {
-		s.reloadables = make(map[string]ssosettings.Reloadable)
-	}
 	s.reloadables[provider] = reloadable
 }
 
-func (s *Service) RegisterFallbackStrategy(providerRegex string, strategy ssosettings.FallbackStrategy) {
+func (s *Service) RegisterFallbackStrategy(_ string, strategy ssosettings.FallbackStrategy) {
 	s.fbStrategies = append(s.fbStrategies, strategy)
 }
 
@@ -526,7 +520,7 @@ func (s *Service) mergeSSOSettings(dbSettings, systemSettings *models.SSOSetting
 	result := &models.SSOSettings{
 		Provider: dbSettings.Provider,
 		Source:   dbSettings.Source,
-		Settings: mergeSettings(dbSettings.Settings, systemSettings.Settings),
+		Settings: mergeSettings(dbSettings.Provider, dbSettings.Settings, systemSettings.Settings),
 		Created:  dbSettings.Created,
 		Updated:  dbSettings.Updated,
 	}
@@ -610,7 +604,7 @@ func getConfigMaps(settings map[string]any) []map[string]any {
 // mergeSettings merges two maps in a way that the values from the first map are preserved
 // and the values from the second map are added only if they don't exist in the first map
 // or if they contain empty URLs.
-func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any {
+func mergeSettings(provider string, storedSettings, systemSettings map[string]any) map[string]any {
 	settings := make(map[string]any)
 
 	for k, v := range storedSettings {
@@ -619,10 +613,10 @@ func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any
 
 	for k, v := range systemSettings {
 		if _, ok := settings[k]; !ok {
-			if isMergingAllowed(k) {
+			if isMergingAllowed(provider, k) {
 				settings[k] = v
 			}
-		} else if isURL(k) && isEmptyString(settings[k]) {
+		} else if isURL(k) && isEmptyString(settings[k]) && isMergingAllowed(provider, k) {
 			// Overwrite all URL settings from the DB containing an empty string with their value
 			// from the system settings. This fixes an issue with empty auth_url, api_url and token_url
 			// from the DB not being replaced with their values defined in the system settings for
@@ -634,16 +628,33 @@ func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any
 	return settings
 }
 
+// jwtKeySourceFields are the mutually exclusive JWT key sources. The DB config
+// already holds exactly one, so none may be merged from the system settings or
+// the key source would become ambiguous on the next load.
+var jwtKeySourceFields = map[string]bool{
+	"jwk_set_url":   true,
+	"jwk_set_file":  true,
+	"jwk_set_value": true,
+	"key_file":      true,
+	"key_value":     true,
+}
+
 // isMergingAllowed returns true if the field provided can be merged from the system settings.
-// It won't allow SAML fields that are part of a group of settings to be merged from system settings
-// because the DB settings already contain one valid setting from each group.
-func isMergingAllowed(fieldName string) bool {
+// It won't allow fields that are part of a mutually exclusive group to be merged from system
+// settings, because the DB settings already contain one valid setting from each group: the SAML
+// certificate/key/metadata groups (any provider) and the JWT key-source group (JWT only, since
+// jwk_set_url is a non-exclusive field for OAuth providers).
+func isMergingAllowed(provider, fieldName string) bool {
 	forbiddenMergePatterns := []string{"certificate", "private_key", "idp_metadata"}
 
 	for _, v := range forbiddenMergePatterns {
-		if strings.Contains(strings.ToLower(fieldName), strings.ToLower(v)) {
+		if strings.Contains(strings.ToLower(fieldName), v) {
 			return false
 		}
+	}
+
+	if provider == social.JWTProviderName && jwtKeySourceFields[fieldName] {
+		return false
 	}
 	return true
 }
@@ -682,10 +693,10 @@ func overrideMaps(maps ...map[string]any) map[string]any {
 	return result
 }
 
+var secretFieldPatterns = []string{"secret", "private", "certificate", "password", "client_key"}
+
 // IsSecretField returns true if the SSO settings field provided is a secret
 func IsSecretField(fieldName string) bool {
-	secretFieldPatterns := []string{"secret", "private", "certificate", "password", "client_key"}
-
 	for _, v := range secretFieldPatterns {
 		if strings.Contains(strings.ToLower(fieldName), strings.ToLower(v)) {
 			return true

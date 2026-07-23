@@ -94,10 +94,10 @@ func ProvideRegistration(
 		}
 	}
 
-	if cfg.JWTAuth.Enabled {
-		orgRoleMapper := connectors.ProvideOrgRoleMapper(cfg, orgService)
-		authnSvc.RegisterClient(clients.ProvideJWT(jwtService, orgRoleMapper, cfg, tracer))
-	}
+	// Registered unconditionally so it can be enabled through the SSO settings
+	// API without a restart; the client gates on the live Enabled() snapshot.
+	orgRoleMapper := connectors.ProvideOrgRoleMapper(cfg, orgService)
+	authnSvc.RegisterClient(clients.ProvideJWT(jwtService, orgRoleMapper, tracer))
 
 	if cfg.ExtJWTAuth.Enabled {
 		authnSvc.RegisterClient(clients.ProvideExtendedJWT(cfg, tracer))

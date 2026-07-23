@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -32,7 +33,7 @@ func setupAuthMiddlewareTest(t *testing.T, identity *authn.Identity, authErr err
 	return contexthandler.ProvideService(setting.NewCfg(), &authntest.FakeService{
 		ExpectedErr:      authErr,
 		ExpectedIdentity: identity,
-	}, featuremgmt.WithFeatures())
+	}, featuremgmt.WithFeatures(), jwt.NewFakeJWTService())
 }
 
 func TestAuth_Middleware(t *testing.T) {

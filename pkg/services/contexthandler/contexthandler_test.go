@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -30,6 +31,7 @@ func TestContextHandler(t *testing.T) {
 			setting.NewCfg(),
 			&authntest.FakeService{ExpectedErr: errors.New("some error")},
 			featuremgmt.WithFeatures(),
+			jwt.NewFakeJWTService(),
 		)
 
 		server := webtest.NewServer(t, routing.NewRouteRegister())
@@ -51,6 +53,7 @@ func TestContextHandler(t *testing.T) {
 			setting.NewCfg(),
 			&authntest.FakeService{ExpectedIdentity: id},
 			featuremgmt.WithFeatures(),
+			jwt.NewFakeJWTService(),
 		)
 
 		server := webtest.NewServer(t, routing.NewRouteRegister())
@@ -76,6 +79,7 @@ func TestContextHandler(t *testing.T) {
 			setting.NewCfg(),
 			&authntest.FakeService{ExpectedIdentity: identity},
 			featuremgmt.WithFeatures(),
+			jwt.NewFakeJWTService(),
 		)
 
 		server := webtest.NewServer(t, routing.NewRouteRegister())
@@ -97,6 +101,7 @@ func TestContextHandler(t *testing.T) {
 			setting.NewCfg(),
 			&authntest.FakeService{ExpectedIdentity: identity},
 			featuremgmt.WithFeatures(),
+			jwt.NewFakeJWTService(),
 		)
 
 		server := webtest.NewServer(t, routing.NewRouteRegister())
@@ -116,7 +121,6 @@ func TestContextHandler(t *testing.T) {
 	t.Run("should store auth header in context", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.JWTAuth.Enabled = true
-		cfg.JWTAuth.HeaderName = "jwt-header"
 		cfg.AuthProxy.Enabled = true
 		cfg.AuthProxy.HeaderName = "proxy-header"
 		cfg.AuthProxy.Headers = map[string]string{
@@ -127,6 +131,7 @@ func TestContextHandler(t *testing.T) {
 			cfg,
 			&authntest.FakeService{ExpectedIdentity: &authn.Identity{}},
 			featuremgmt.WithFeatures(),
+			&jwt.FakeJWTService{SettingsValue: setting.AuthJWTSettings{Enabled: true, HeaderName: "jwt-header"}},
 		)
 
 		server := webtest.NewServer(t, routing.NewRouteRegister())
@@ -155,6 +160,7 @@ func TestContextHandler(t *testing.T) {
 				cfg,
 				&authntest.FakeService{ExpectedIdentity: &authn.Identity{ID: i, Type: typ}},
 				featuremgmt.WithFeatures(),
+				jwt.NewFakeJWTService(),
 			)
 
 			server := webtest.NewServer(t, routing.NewRouteRegister())
@@ -217,6 +223,7 @@ func TestContextHandler(t *testing.T) {
 			setting.NewCfg(),
 			&authntest.FakeService{ExpectedErr: errors.New("some error")},
 			featuremgmt.WithFeatures(),
+			jwt.NewFakeJWTService(),
 		)
 
 		server := webtest.NewServer(t, routing.NewRouteRegister())
@@ -243,6 +250,7 @@ func TestContextHandler(t *testing.T) {
 				},
 			},
 			featuremgmt.WithFeatures(),
+			jwt.NewFakeJWTService(),
 		)
 
 		server := webtest.NewServer(t, routing.NewRouteRegister())

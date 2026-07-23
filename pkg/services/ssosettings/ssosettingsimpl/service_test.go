@@ -916,6 +916,11 @@ func TestService_List(t *testing.T) {
 					Settings: map[string]any(nil),
 					Source:   models.System,
 				},
+				{
+					Provider: "jwt",
+					Settings: map[string]any(nil),
+					Source:   models.System,
+				},
 			},
 			wantErr: false,
 		},
@@ -1103,6 +1108,11 @@ func TestService_ListWithRedactedSecrets(t *testing.T) {
 					Settings: map[string]any{},
 					Source:   models.System,
 				},
+				{
+					Provider: "jwt",
+					Settings: map[string]any{},
+					Source:   models.System,
+				},
 			},
 			wantErr: false,
 		},
@@ -1225,6 +1235,11 @@ func TestService_ListWithRedactedSecrets(t *testing.T) {
 				},
 				{
 					Provider: "ldap",
+					Settings: map[string]any{},
+					Source:   models.System,
+				},
+				{
+					Provider: "jwt",
 					Settings: map[string]any{},
 					Source:   models.System,
 				},
@@ -2399,12 +2414,14 @@ func Test_ProviderService(t *testing.T) {
 				"azuread",
 				"okta",
 				"ldap",
+				"jwt",
 			},
 			expectedStrategies: []string{
 				"*strategies.MTSettingsOAuthStrategy",
 				"*strategies.OAuthStrategy",
 				"*strategies.MTSettingsLDAPStrategy",
 				"*strategies.LDAPStrategy",
+				"*strategies.JWTStrategy",
 			},
 		},
 		{
@@ -2419,6 +2436,7 @@ func Test_ProviderService(t *testing.T) {
 				"azuread",
 				"okta",
 				"ldap",
+				"jwt",
 				"saml",
 			},
 			expectedStrategies: []string{
@@ -2426,6 +2444,7 @@ func Test_ProviderService(t *testing.T) {
 				"*strategies.OAuthStrategy",
 				"*strategies.MTSettingsLDAPStrategy",
 				"*strategies.LDAPStrategy",
+				"*strategies.JWTStrategy",
 				"*strategies.MTSettingsSAMLStrategy",
 				"*strategies.SAMLStrategy",
 			},
