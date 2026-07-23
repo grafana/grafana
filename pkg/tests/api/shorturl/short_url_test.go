@@ -73,7 +73,7 @@ func TestShortURL(t *testing.T) {
 	defer func() {
 		_ = res.Body.Close()
 	}()
-	assert.Equal(t, "/explore", res.Header.Get("Location"))
+	assert.Equal(t, "http://localhost:3000/explore", res.Header.Get("Location"))
 	assert.Equal(t, http.StatusFound, res.StatusCode)
 
 	// If the go-to does not exist, it should redirect to the home page and return 308.

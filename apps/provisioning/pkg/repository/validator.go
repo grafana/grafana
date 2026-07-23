@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -15,7 +16,7 @@ import (
 
 	provisioningadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util"
 )
 
 // Validator is the interface for repository validation.
@@ -28,15 +29,28 @@ type Validator interface {
 type RepositoryValidator struct {
 	allowImageRendering bool
 	repoFactory         Factory
+	urlValidator        *URLValidator
 }
+
+type ValidatorOption func(*RepositoryValidator)
 
 // FIXME: The separation of concerns here is not ideal. RepositoryValidator should not depend on Factory,
 // but we need to call Factory.Validate() for structural validation (URL, branch, path, etc.) before
 // doing configuration validation. This coupling was introduced to avoid more extensive refactoring.
-func NewValidator(allowImageRendering bool, repoFactory Factory) Validator {
-	return &RepositoryValidator{
+func NewValidator(allowImageRendering bool, repoFactory Factory, opts ...ValidatorOption) Validator {
+	v := &RepositoryValidator{
 		allowImageRendering: allowImageRendering,
 		repoFactory:         repoFactory,
+	}
+	for _, opt := range opts {
+		opt(v)
+	}
+	return v
+}
+
+func WithURLValidator(urlValidator *URLValidator) ValidatorOption {
+	return func(v *RepositoryValidator) {
+		v.urlValidator = urlValidator
 	}
 }
 
@@ -141,8 +155,42 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 	if cfg.Spec.Webhook != nil && cfg.Spec.Webhook.BaseURL != "" {
 		list = append(list, validateWebhookBaseURL(cfg.Spec.Webhook.BaseURL)...)
 	}
+	list = append(list, v.validatePrivateEndpoint(ctx, cfg)...)
 
 	return list
+}
+
+func (v *RepositoryValidator) validatePrivateEndpoint(ctx context.Context, cfg *provisioning.Repository) field.ErrorList {
+	rawURL := cfg.URL()
+	if rawURL == "" {
+		return nil
+	}
+
+	if !hasURLHost(rawURL) {
+		return nil
+	}
+
+	// No validator is configured, the URL is not validated.
+	if util.IsInterfaceNil(v.urlValidator) {
+		return nil
+	}
+
+	if err := v.urlValidator.ValidateURL(ctx, rawURL); err != nil {
+		return field.ErrorList{
+			field.Invalid(
+				field.NewPath("spec", string(cfg.Spec.Type), "url"),
+				rawURL,
+				"repository URL host must resolve to a public or allowed address",
+			),
+		}
+	}
+
+	return nil
+}
+
+func hasURLHost(rawURL string) bool {
+	parsed, err := url.Parse(rawURL)
+	return err == nil && parsed.Hostname() != ""
 }
 
 // validateWorkflowOptions rejects branch, commit and pull request options on repository

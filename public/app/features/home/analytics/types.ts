@@ -12,7 +12,7 @@ export interface ClearHistoryClicked extends EventProperty {
 
 export interface CtaClicked extends EventProperty {
   /** Which homepage widget fired the CTA. */
-  surface: 'alerts_card' | 'incidents_card' | 'recent_tab' | 'recommendations' | 'existing_solution';
+  surface: 'alerts_card' | 'incidents_card' | 'recent_tab' | 'recommendations' | 'existing_solution' | 'no_data_card';
   /** What the user asked for. Which values are valid depends on the surface (not compiler-enforced). */
   action:
     | 'alert_detail'
@@ -27,15 +27,16 @@ export interface CtaClicked extends EventProperty {
     | 'enable'
     | 'open_solution'
     | 'view_alerts'
-    | 'switch_solution';
+    | 'switch_solution'
+    | 'connect_data_source';
   /**
    * Where on the widget the control lives. 'list' | 'empty_state' | 'footer' apply to the
-   * alerts/incidents cards and the recent tab; 'card' | 'pill' apply to recommendations;
-   * the existing-solution card uses 'card'.
+   * alerts/incidents cards and the recent tab; 'card' | 'pill' apply to recommendations and
+   * the no-data card; the existing-solution card uses 'card'.
    */
   placement: 'list' | 'empty_state' | 'footer' | 'card' | 'pill';
   /** Stable id of the recommendation whose Enable CTA was clicked (surface 'recommendations' only). */
   recommendation_id?: string;
-  /** Stable id of the enabled solution whose control was clicked (surface 'existing_solution' only). */
+  /** Stable id of the solution whose control was clicked (surfaces 'existing_solution' and 'no_data_card' only). */
   solution?: string;
 }

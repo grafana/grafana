@@ -33,8 +33,8 @@ jest.mock('../analytics/main', () => ({
   ctaClicked: jest.fn(),
 }));
 
-// The RecommendationExisting child fetches its overview from Prometheus; resolve to an empty
-// cluster so tests exercise the (deterministic) stub entries instead of hitting a datasource.
+// The RecommendationExisting child fetches its overview from Prometheus; resolve to no
+// datasource so tests exercise the (deterministic) no-data card instead of hitting one.
 jest.mock('./kubernetesData', () => ({
   ...jest.requireActual('./kubernetesData'),
   resolveKubernetesDatasource: jest.fn().mockResolvedValue(null),
@@ -94,6 +94,14 @@ describe('Recommendations', () => {
     render(<Recommendations />);
 
     expect(await screen.findByText('Recommendations for your stack')).toBeInTheDocument();
+  });
+
+  it('shows the no-data card when no datasource has Kubernetes data', async () => {
+    render(<Recommendations />);
+
+    expect(await screen.findByRole('heading', { name: 'No data flowing yet' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Hosted Metrics' })).not.toBeInTheDocument();
   });
 
   it('renders nothing when the user cannot manage plugins', async () => {
