@@ -53,6 +53,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		JobSpec{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref),
 		JobStatus{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref),
 		LocalRepositoryConfig{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_LocalRepositoryConfig(ref),
+		ConfigMapRepositoryConfig{}.OpenAPIModelName():        schema_pkg_apis_provisioning_v0alpha1_ConfigMapRepositoryConfig(ref),
+		ConfigMapMirrorOptions{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_ConfigMapMirrorOptions(ref),
 		ManagerStats{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_ManagerStats(ref),
 		MigrateJobOptions{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref),
 		MoveJobOptions{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_MoveJobOptions(ref),
@@ -1893,6 +1895,113 @@ func schema_pkg_apis_provisioning_v0alpha1_LocalRepositoryConfig(ref common.Refe
 	}
 }
 
+func schema_pkg_apis_provisioning_v0alpha1_ConfigMapRepositoryConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ConfigMapRepositoryConfig describes a repository backed by Kubernetes ConfigMap(s). File paths are mapped to ConfigMap data keys (path separators encoded as \"__\").",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Namespace of the ConfigMap(s). When empty, the repository's namespace is used.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name of a single ConfigMap to use as the repository. Mutually exclusive with LabelSelector.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"labelSelector": {
+						SchemaProps: spec.SchemaProps{
+							Description: "LabelSelector selects multiple ConfigMaps. Mutually exclusive with Name.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"keyPrefix": {
+						SchemaProps: spec.SchemaProps{
+							Description: "KeyPrefix is prepended to encoded keys when reading/writing a single ConfigMap.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ConfigMapMirrorOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ConfigMapMirrorOptions optionally mirrors successfully synced dashboards into Kubernetes ConfigMaps for classic sidecar compatibility.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"enabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Enabled turns on post-sync ConfigMap mirroring.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Namespace for mirrored ConfigMaps. When empty, the repository namespace is used.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"perDashboard": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PerDashboard creates one ConfigMap per dashboard UID.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"labels": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Labels applied to mirrored ConfigMaps.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"annotations": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Annotations applied to mirrored ConfigMaps.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_provisioning_v0alpha1_ManagerStats(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -2418,7 +2527,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"bitbucket", "git", "github", "githubEnterprise", "gitlab", "local"},
+							Enum:        []interface{}{"bitbucket", "configmap", "git", "github", "githubEnterprise", "gitlab", "local"},
 						},
 					},
 					"webhook": {
@@ -2431,6 +2540,12 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 						SchemaProps: spec.SchemaProps{
 							Description: "The repository on the local file system. Mutually exclusive with local | github.",
 							Ref:         ref(LocalRepositoryConfig{}.OpenAPIModelName()),
+						},
+					},
+					"configmap": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The repository backed by Kubernetes ConfigMap(s).",
+							Ref:         ref(ConfigMapRepositoryConfig{}.OpenAPIModelName()),
 						},
 					},
 					"github": {
@@ -2474,7 +2589,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			BitbucketRepositoryConfig{}.OpenAPIModelName(), BranchOptions{}.OpenAPIModelName(), CommitOptions{}.OpenAPIModelName(), ConnectionInfo{}.OpenAPIModelName(), GitHubEnterpriseRepositoryConfig{}.OpenAPIModelName(), GitHubRepositoryConfig{}.OpenAPIModelName(), GitLabRepositoryConfig{}.OpenAPIModelName(), GitRepositoryConfig{}.OpenAPIModelName(), LocalRepositoryConfig{}.OpenAPIModelName(), PullRequestOptions{}.OpenAPIModelName(), SyncOptions{}.OpenAPIModelName(), WebhookConfig{}.OpenAPIModelName()},
+			BitbucketRepositoryConfig{}.OpenAPIModelName(), BranchOptions{}.OpenAPIModelName(), CommitOptions{}.OpenAPIModelName(), ConfigMapMirrorOptions{}.OpenAPIModelName(), ConfigMapRepositoryConfig{}.OpenAPIModelName(), ConnectionInfo{}.OpenAPIModelName(), GitHubEnterpriseRepositoryConfig{}.OpenAPIModelName(), GitHubRepositoryConfig{}.OpenAPIModelName(), GitLabRepositoryConfig{}.OpenAPIModelName(), GitRepositoryConfig{}.OpenAPIModelName(), LocalRepositoryConfig{}.OpenAPIModelName(), PullRequestOptions{}.OpenAPIModelName(), SyncOptions{}.OpenAPIModelName(), WebhookConfig{}.OpenAPIModelName()},
 	}
 }
 
@@ -2673,7 +2788,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref common.ReferenceCa
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"bitbucket", "git", "github", "githubEnterprise", "gitlab", "local"},
+							Enum:        []interface{}{"bitbucket", "configmap", "git", "github", "githubEnterprise", "gitlab", "local"},
 						},
 					},
 					"target": {
@@ -2812,7 +2927,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 										Default: "",
 										Type:    []string{"string"},
 										Format:  "",
-										Enum:    []interface{}{"bitbucket", "git", "github", "githubEnterprise", "gitlab", "local"},
+										Enum:    []interface{}{"bitbucket", "configmap", "git", "github", "githubEnterprise", "gitlab", "local"},
 									},
 								},
 							},
@@ -3113,7 +3228,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceRepositoryInfo(ref common.Ref
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"bitbucket", "git", "github", "githubEnterprise", "gitlab", "local"},
+							Enum:        []interface{}{"bitbucket", "configmap", "git", "github", "githubEnterprise", "gitlab", "local"},
 						},
 					},
 					"title": {
@@ -3503,10 +3618,18 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref common.ReferenceCallb
 							Format:      "int64",
 						},
 					},
+					"configMapMirror": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ConfigMapMirror optionally writes synced dashboards to Kubernetes ConfigMaps after a successful Grafana apply (sidecar compatibility). Off by default.",
+							Ref:         ref(ConfigMapMirrorOptions{}.OpenAPIModelName()),
+						},
+					},
 				},
 				Required: []string{"enabled", "target"},
 			},
 		},
+		Dependencies: []string{
+			ConfigMapMirrorOptions{}.OpenAPIModelName()},
 	}
 }
 

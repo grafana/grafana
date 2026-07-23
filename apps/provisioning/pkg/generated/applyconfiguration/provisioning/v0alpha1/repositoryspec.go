@@ -37,6 +37,8 @@ type RepositorySpecApplyConfiguration struct {
 	// The repository on the local file system.
 	// Mutually exclusive with local | github.
 	Local *LocalRepositoryConfigApplyConfiguration `json:"local,omitempty"`
+	// The repository backed by Kubernetes ConfigMap(s).
+	ConfigMap *ConfigMapRepositoryConfigApplyConfiguration `json:"configmap,omitempty"`
 	// The repository on GitHub.
 	// Mutually exclusive with local | github | git.
 	GitHub *GitHubRepositoryConfigApplyConfiguration `json:"github,omitempty"`
@@ -142,6 +144,14 @@ func (b *RepositorySpecApplyConfiguration) WithWebhook(value *WebhookConfigApply
 // If called multiple times, the Local field is set to the value of the last call.
 func (b *RepositorySpecApplyConfiguration) WithLocal(value *LocalRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
 	b.Local = value
+	return b
+}
+
+// WithConfigMap sets the ConfigMap field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ConfigMap field is set to the value of the last call.
+func (b *RepositorySpecApplyConfiguration) WithConfigMap(value *ConfigMapRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
+	b.ConfigMap = value
 	return b
 }
 

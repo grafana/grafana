@@ -13972,7 +13972,10 @@
       "local-tooltip": "Provision dashboards from local file system without Git.",
       "pure-git": "Pure Git",
       "pure-git-description": "Connect to any Git repository",
-      "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
+      "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links).",
+      "configmap": "ConfigMap",
+      "configmap-description": "Sync from Kubernetes ConfigMaps",
+      "configmap-tooltip": "Provision dashboards from Kubernetes ConfigMap data keys. Requires Grafana to run in-cluster with ConfigMap RBAC."
     },
     "resource-kind": {
       "dashboard": "dashboard",
@@ -14213,6 +14216,14 @@
       "button-submitting": "Submitting...",
       "error-instance-repository-exists": "Instance repository already exists",
       "error-save-repository-setting": "Failed to save repository setting"
+    },
+    "configmap": {
+      "name-label": "ConfigMap name",
+      "name-description": "Name of a single ConfigMap. Mutually exclusive with label selector.",
+      "namespace-label": "Namespace",
+      "namespace-description": "Kubernetes namespace for the ConfigMap(s). Defaults to the repository namespace.",
+      "label-selector-label": "Label selector",
+      "label-selector-description": "Select multiple ConfigMaps (e.g. grafana_dashboard=1). Mutually exclusive with name."
     }
   },
   "public-dashboard": {

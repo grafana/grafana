@@ -71,6 +71,11 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 			cfg.Spec.GitHub, "Local config only valid when type is local"))
 	}
 
+	if cfg.Spec.Type != provisioning.ConfigMapRepositoryType && cfg.Spec.ConfigMap != nil {
+		list = append(list, field.Invalid(field.NewPath("spec", "configmap"),
+			cfg.Spec.ConfigMap, "ConfigMap config only valid when type is configmap"))
+	}
+
 	if cfg.Spec.Type != provisioning.GitHubRepositoryType && cfg.Spec.GitHub != nil {
 		list = append(list, field.Invalid(field.NewPath("spec", "github"),
 			cfg.Spec.GitHub, "Github config only valid when type is github"))

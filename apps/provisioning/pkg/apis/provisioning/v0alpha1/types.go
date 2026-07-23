@@ -57,6 +57,52 @@ func (LocalRepositoryConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "LocalRepositoryConfig"
 }
 
+// ConfigMapRepositoryConfig describes a repository backed by Kubernetes ConfigMap(s).
+// File paths are mapped to ConfigMap data keys (path separators encoded as "__").
+type ConfigMapRepositoryConfig struct {
+	// Namespace of the ConfigMap(s). When empty, the repository's namespace is used.
+	Namespace string `json:"namespace,omitempty"`
+
+	// Name of a single ConfigMap to use as the repository. Mutually exclusive with LabelSelector.
+	Name string `json:"name,omitempty"`
+
+	// LabelSelector selects multiple ConfigMaps. Mutually exclusive with Name.
+	// Each ConfigMap contributes its data keys as files, prefixed with the ConfigMap name.
+	LabelSelector string `json:"labelSelector,omitempty"`
+
+	// KeyPrefix is prepended to encoded keys when reading/writing a single ConfigMap.
+	KeyPrefix string `json:"keyPrefix,omitempty"`
+}
+
+func (ConfigMapRepositoryConfig) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ConfigMapRepositoryConfig"
+}
+
+// ConfigMapMirrorOptions optionally mirrors successfully synced dashboards into
+// Kubernetes ConfigMaps for classic sidecar compatibility. Grafana resource
+// apply still always runs; mirror is best-effort and does not replace it.
+type ConfigMapMirrorOptions struct {
+	// Enabled turns on post-sync ConfigMap mirroring.
+	Enabled bool `json:"enabled,omitempty"`
+
+	// Namespace for mirrored ConfigMaps. When empty, the repository namespace is used.
+	Namespace string `json:"namespace,omitempty"`
+
+	// PerDashboard creates one ConfigMap per dashboard UID (preferred to stay under the 1MiB limit).
+	// When false, all mirrored dashboards share one ConfigMap named after the repository.
+	PerDashboard bool `json:"perDashboard,omitempty"`
+
+	// Labels applied to mirrored ConfigMaps (e.g. grafana_dashboard: "1" for sidecars).
+	Labels map[string]string `json:"labels,omitempty"`
+
+	// Annotations applied to mirrored ConfigMaps.
+	Annotations map[string]string `json:"annotations,omitempty"`
+}
+
+func (ConfigMapMirrorOptions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ConfigMapMirrorOptions"
+}
+
 // Workflow used for changes in the repository.
 // +enum
 type Workflow string
@@ -184,6 +230,7 @@ func (r RepositoryType) String() string {
 // RepositoryType values
 const (
 	LocalRepositoryType            RepositoryType = "local"
+	ConfigMapRepositoryType        RepositoryType = "configmap"
 	GitHubRepositoryType           RepositoryType = "github"
 	GitHubEnterpriseRepositoryType RepositoryType = "githubEnterprise"
 	GitRepositoryType              RepositoryType = "git"
@@ -325,6 +372,10 @@ func (r *Repository) Path() string {
 	case LocalRepositoryType:
 		if r.Spec.Local != nil {
 			return r.Spec.Local.Path
+		}
+	case ConfigMapRepositoryType:
+		if r.Spec.ConfigMap != nil {
+			return r.Spec.ConfigMap.KeyPrefix
 		}
 	default:
 		return ""
@@ -483,6 +534,10 @@ type RepositorySpec struct {
 	// Mutually exclusive with local | github.
 	Local *LocalRepositoryConfig `json:"local,omitempty"`
 
+	// The repository backed by Kubernetes ConfigMap(s).
+	// Mutually exclusive with local | github | git | configmap.
+	ConfigMap *ConfigMapRepositoryConfig `json:"configmap,omitempty"`
+
 	// The repository on GitHub.
 	// Mutually exclusive with local | github | git.
 	GitHub *GitHubRepositoryConfig `json:"github,omitempty"`
@@ -554,6 +609,10 @@ type SyncOptions struct {
 	// The system defines a default value for this field, which will overwrite the
 	// user-defined one in case the latter is zero or lower than the system-defined one.
 	IntervalSeconds int64 `json:"intervalSeconds,omitempty"`
+
+	// ConfigMapMirror optionally writes synced dashboards to Kubernetes ConfigMaps
+	// after a successful Grafana apply (sidecar compatibility). Off by default.
+	ConfigMapMirror *ConfigMapMirrorOptions `json:"configMapMirror,omitempty"`
 }
 
 func (SyncOptions) OpenAPIModelName() string {
