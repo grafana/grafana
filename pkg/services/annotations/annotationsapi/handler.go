@@ -172,26 +172,23 @@ func (h *MigrationProxy) Update(ctx context.Context, orgID int64, annotationID i
 	if existing.GetDeletionTimestamp() != nil {
 		return ErrGone
 	}
-	anno, err := itemToAnnotation(item)
-	if err != nil {
-		return err
-	}
-	anno.SetName(existing.GetName())
-	anno.SetResourceVersion(existing.GetResourceVersion())
-	annotationpkg.SetLegacyID(anno, annotationID)
-	// Preserve fields absent from the update command so the PUT doesn't clear them.
+	// Mutate a copy of the stored record and apply only the fields the caller supplied.
 	// This aligns with the legacy API behavior where only the fields present in the request are updated.
-	if anno.Spec.DashboardUID == nil {
-		anno.Spec.DashboardUID = existing.Spec.DashboardUID
+	anno := existing.DeepCopy()
+	anno.Spec.Text = item.Text
+	anno.Spec.Tags = item.Tags
+	if item.Epoch != 0 {
+		anno.Spec.Time = item.Epoch
 	}
-	if anno.Spec.PanelID == nil {
-		anno.Spec.PanelID = existing.Spec.PanelID
+	if item.EpochEnd != 0 && item.EpochEnd != anno.Spec.Time {
+		anno.Spec.TimeEnd = &item.EpochEnd
 	}
-	if item.Epoch == 0 {
-		anno.Spec.Time = existing.Spec.Time
-	}
-	if item.EpochEnd == 0 {
-		anno.Spec.TimeEnd = existing.Spec.TimeEnd
+	if item.Data != nil {
+		raw, err := item.Data.Encode()
+		if err != nil {
+			return fmt.Errorf("encoding legacy data: %w", err)
+		}
+		annotationpkg.SetLegacyData(anno, string(raw))
 	}
 
 	// If time or timeEnd changed, re-create the annotation as the new API does not support updates to time/timeEnd
@@ -212,6 +209,7 @@ func (h *MigrationProxy) Update(ctx context.Context, orgID int64, annotationID i
 // the annotation becomes attributed to that user instead.
 func (h *MigrationProxy) recreateWithNewTime(ctx context.Context, orgID int64, existing, anno *annotationV0.Annotation) error {
 	anno.SetName("")
+	anno.SetGenerateName("a-")
 	anno.SetResourceVersion("")
 	if _, err := h.client.Create(ctx, orgID, anno); err != nil {
 		return err
@@ -317,7 +315,8 @@ func itemToAnnotation(item *annotations.Item) (*annotationV0.Annotation, error) 
 		Time: item.Epoch,
 		Tags: item.Tags,
 	}
-	if item.EpochEnd != 0 {
+	if item.EpochEnd != 0 && item.EpochEnd != item.Epoch {
+		// Only set TimeEnd if it's non-zero and different from Time
 		spec.TimeEnd = &item.EpochEnd
 	}
 	if item.DashboardUID != "" {
