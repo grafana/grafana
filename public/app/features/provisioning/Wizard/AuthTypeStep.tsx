@@ -7,12 +7,13 @@ import { Trans, t } from '@grafana/i18n';
 import { Alert, Field, RadioButtonGroup, Stack, TextLink, useStyles2 } from '@grafana/ui';
 
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
-import { isGitHubBased } from '../utils/repositoryTypes';
+import { isGitHubBased, supportsConnections } from '../utils/repositoryTypes';
 
 import { GitHubAppFields } from './GitHubAppFields';
+import { OAuthAppFields } from './OAuthAppFields';
 import { RepositoryField } from './components/RepositoryField';
 import { RepositoryTokenInput } from './components/RepositoryTokenInput';
-import { type ConnectionCreationResult, type GitHubAuthType, type WizardFormData } from './types';
+import { type ConnectionCreationResult, type GitHubAuthType, type RepoType, type WizardFormData } from './types';
 
 interface AuthTypeOption {
   id: GitHubAuthType;
@@ -25,26 +26,48 @@ interface AuthTypeStepProps {
   onGitHubAppSubmit: (result: ConnectionCreationResult) => void;
 }
 
-const getAuthTypeOptions = (): AuthTypeOption[] => [
-  {
-    id: 'github-app',
-    label: t('provisioning.wizard.auth-type-github-app-label', 'Connect with GitHub App'),
-    description: t(
-      'provisioning.wizard.auth-type-github-app-description',
-      'Use a GitHub App for enhanced security and team collaboration. Recommended for production environments.'
-    ),
-    icon: 'github',
-  },
-  {
-    id: 'pat',
-    label: t('provisioning.wizard.auth-type-pat-label', 'Connect with Personal Access Token'),
-    description: t(
-      'provisioning.wizard.auth-type-pat-description',
-      'Use a personal access token to authenticate with GitHub. Suitable for individual use and testing.'
-    ),
-    icon: 'key-skeleton-alt',
-  },
-];
+const getAuthTypeOptions = (repoType?: RepoType): AuthTypeOption[] =>
+  isGitHubBased(repoType)
+    ? [
+        {
+          id: 'github-app',
+          label: t('provisioning.wizard.auth-type-github-app-label', 'Connect with GitHub App'),
+          description: t(
+            'provisioning.wizard.auth-type-github-app-description',
+            'Use a GitHub App for enhanced security and team collaboration. Recommended for production environments.'
+          ),
+          icon: 'github',
+        },
+        {
+          id: 'pat',
+          label: t('provisioning.wizard.auth-type-pat-label', 'Connect with Personal Access Token'),
+          description: t(
+            'provisioning.wizard.auth-type-pat-description',
+            'Use a personal access token to authenticate with GitHub. Suitable for individual use and testing.'
+          ),
+          icon: 'key-skeleton-alt',
+        },
+      ]
+    : [
+        {
+          id: 'github-app',
+          label: t('provisioning.wizard.auth-type-oauth-app-label', 'Connect with OAuth App'),
+          description: t(
+            'provisioning.wizard.auth-type-oauth-app-description',
+            'Use an OAuth application shared through a connection. Recommended for production environments.'
+          ),
+          icon: 'key-skeleton-alt',
+        },
+        {
+          id: 'pat',
+          label: t('provisioning.wizard.auth-type-pat-label', 'Connect with Personal Access Token'),
+          description: t(
+            'provisioning.wizard.auth-type-pat-description-generic',
+            'Use a personal access token to authenticate. Suitable for individual use and testing.'
+          ),
+          icon: 'key-skeleton-alt',
+        },
+      ];
 
 export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
   const styles = useStyles2(getStyles);
@@ -55,9 +78,9 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
     'githubApp.connectionName',
     'repository.type',
   ]);
-  const authTypeOptions = useMemo(() => getAuthTypeOptions(), []);
+  const authTypeOptions = useMemo(() => getAuthTypeOptions(repoType), [repoType]);
   const shouldShowRepositories = githubAuthType !== 'github-app' || githubAppMode !== 'new';
-  const isGitHubBasedRepo = isGitHubBased(repoType);
+  const isConnectionSupportedRepo = supportsConnections(repoType);
 
   const { isConnected: isSelectedConnectionReady } = useConnectionStatus(
     githubAuthType === 'github-app' ? githubAppConnectionName : undefined
@@ -90,15 +113,22 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
         </Alert>
       )}
 
-      {/* PAT & Github App Switch - only for GitHub / GitHub Enterprise repositories */}
-      {isGitHubBasedRepo && (
+      {/* PAT & app-based auth switch - only for providers that support connections */}
+      {isConnectionSupportedRepo && (
         <Field
           noMargin
           label={t('provisioning.wizard.auth-type-label', 'Authentication method')}
-          description={t(
-            'provisioning.wizard.auth-type-description',
-            'Both methods provide secure access to your GitHub repositories. Choose the one that best fits your workflow and security requirements.'
-          )}
+          description={
+            isGitHubBased(repoType)
+              ? t(
+                  'provisioning.wizard.auth-type-description',
+                  'Both methods provide secure access to your GitHub repositories. Choose the one that best fits your workflow and security requirements.'
+                )
+              : t(
+                  'provisioning.wizard.auth-type-description-generic',
+                  'Both methods provide secure access to your repositories. Choose the one that best fits your workflow and security requirements.'
+                )
+          }
         >
           <Controller
             name="githubAuthType"
@@ -122,6 +152,11 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
       {isGitHubBased(repoType) && githubAuthType === 'github-app' ? (
         <>
           <GitHubAppFields connectionType={repoType} onGitHubAppSubmit={onGitHubAppSubmit} />
+          {shouldShowRepositories && <RepositoryField isSelectedConnectionReady={isSelectedConnectionReady} />}
+        </>
+      ) : (repoType === 'gitlab' || repoType === 'bitbucket') && githubAuthType === 'github-app' ? (
+        <>
+          <OAuthAppFields connectionType={repoType} />
           {shouldShowRepositories && <RepositoryField isSelectedConnectionReady={isSelectedConnectionReady} />}
         </>
       ) : (

@@ -68,6 +68,16 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: `${CONNECTIONS_URL}/oauth-callback`,
+      roles: connectionRoles,
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "ConnectionOAuthCallbackPage"*/ 'app/features/provisioning/Connection/ConnectionOAuthCallbackPage'
+          )
+      ),
+    },
+    {
       path: `${CONNECTIONS_URL}/:name/edit`,
       roles: connectionRoles,
       component: SafeDynamicImport(
