@@ -232,13 +232,24 @@ export function setupCanvasCapture(): void {
   });
 }
 
-const assertUPlotReady = async () => {
+const assertUPlotReady = async ({ hasAnnotations = false }: { hasAnnotations?: boolean } = {}) => {
   await waitFor(() =>
     expect(screen.getByTestId(selectors.components.VizLayout.container).querySelector('.u-over')).toBeVisible()
   );
-  // Some plugins redraw after their overlay mounts (e.g. the annotations plugin redraws once its markers
-  // are in the DOM). Under parallel test load that redraw can land after the first `.u-over` paint, so wait
-  // for the captured event stream to stabilize (two consecutive polls with the same count) before snapshotting.
+  // The annotations plugin draws its lines/regions from refs that are only populated after uPlot's
+  // ready/drawAxes hooks force a re-render, cluster the annotations, and trigger a follow-up redraw. Poll
+  // the captured frame until those draw calls appear before settling — the marker lines use a dashed
+  // stroke (setLineDash), which the series pass never emits with this config. A stable-draw-call-count
+  // poll alone is not enough: under parallel load the count can settle on the pre-annotation frame before
+  // that redraw lands (a flake seen only in heavier CI), capturing a frame with no annotation lines.
+  if (hasAnnotations) {
+    await waitFor(() => {
+      const seriesEvents = (uPlotInstance?.ctx.__getEvents() ?? []).slice(axisBoundary);
+      expect(seriesEvents.some((event: { type: string }) => event.type === 'setLineDash')).toBe(true);
+    });
+  }
+  // Wait for the captured event stream to stabilize (two consecutive polls with the same count) so any
+  // trailing redraw has flushed before snapshotting.
   let previousCount = -1;
   await waitFor(() => {
     const count = uPlotInstance?.ctx.__getEvents().length ?? 0;
@@ -267,7 +278,7 @@ export async function renderCanvasCase(
   layer: 'series' | 'axes' = 'series'
 ): Promise<void> {
   renderTimeSeriesPanel(data, options, panelProps);
-  await assertUPlotReady();
+  await assertUPlotReady({ hasAnnotations: Boolean(data?.annotations?.length) });
 
   const events = uPlotInstance!.ctx.__getEvents();
   const axisEvents = events.slice(0, axisBoundary);

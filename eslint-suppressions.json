@@ -1824,9 +1824,6 @@
     }
   },
   "public/app/features/datasources/state/selectors.ts": {
-    "@grafana/no-locale-compare": {
-      "count": 2
-    },
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
     }

@@ -254,6 +254,9 @@ func (f *fakeVector) DeleteSubresources(_ context.Context, namespace, model, res
 	f.subresourceDeletes = append(f.subresourceDeletes, deleteSubsCall{namespace, model, res, uid, subs})
 	return nil
 }
+func (f *fakeVector) DeleteNamespace(_ context.Context, _ string) (int64, error) {
+	return 0, nil
+}
 func (f *fakeVector) GetSubresourceContent(_ context.Context, _, _, _, uid string) (map[string]string, string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
