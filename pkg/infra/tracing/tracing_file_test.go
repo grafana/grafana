@@ -1,8 +1,10 @@
 package tracing
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -199,6 +201,55 @@ func TestBoundedFileWriter_StopsAtDeadline(t *testing.T) {
 	contents, err := os.ReadFile(path) //nolint:gosec // G304: path is a test-controlled t.TempDir() path
 	require.NoError(t, err)
 	assert.Empty(t, contents, "writer past its deadline must not write")
+}
+
+// flakyCaptureFile fails the Nth Write call so tests can exercise the
+// partial-write rollback without needing a real failing filesystem.
+type flakyCaptureFile struct {
+	buf         bytes.Buffer
+	writes      int
+	failOnWrite int // 1-based index of the Write call that fails
+	truncatedTo int64
+	closed      bool
+}
+
+func (f *flakyCaptureFile) Write(p []byte) (int, error) {
+	f.writes++
+	if f.writes == f.failOnWrite {
+		return 0, errors.New("disk full")
+	}
+	return f.buf.Write(p)
+}
+
+func (f *flakyCaptureFile) Truncate(size int64) error {
+	f.truncatedTo = size
+	f.buf.Truncate(int(size))
+	return nil
+}
+
+func (f *flakyCaptureFile) Close() error { f.closed = true; return nil }
+func (f *flakyCaptureFile) Name() string { return "flaky-capture-file" }
+
+func TestBoundedFileWriter_RollsBackPartialRecordOnWriteError(t *testing.T) {
+	// Writes: record "one" (1), newline (2), record "two" (3), newline fails (4).
+	f := &flakyCaptureFile{failOnWrite: 4}
+	w := &boundedFileWriter{
+		log:      log.New("test"),
+		f:        f,
+		maxSize:  defaultTraceFileMaxSize,
+		deadline: time.Now().Add(time.Hour),
+	}
+
+	require.NoError(t, w.WriteRecord([]byte("one")))
+	require.Error(t, w.WriteRecord([]byte("two")), "the failed newline write must surface an error")
+
+	assert.Equal(t, int64(4), f.truncatedTo, "file must be truncated back to the last committed record")
+	assert.Equal(t, "one\n", f.buf.String(), "the partially written record must be rolled back")
+	assert.True(t, w.Done(), "capture must end on a write error")
+	assert.True(t, f.closed)
+
+	require.NoError(t, w.WriteRecord([]byte("three")), "writes after a write error must be silent no-ops")
+	assert.Equal(t, "one\n", f.buf.String())
 }
 
 func TestBoundedFileWriter_RejectsInvalidDuration(t *testing.T) {

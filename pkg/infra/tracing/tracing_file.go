@@ -3,6 +3,7 @@ package tracing
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sync"
@@ -96,12 +97,20 @@ func (c *fileClient) UploadTraces(_ context.Context, protoSpans []*tracepb.Resou
 // first. It is not safe for concurrent use; fileClient serializes access.
 type boundedFileWriter struct {
 	log      log.Logger
-	f        *os.File
+	f        captureFile
 	maxSize  int64
 	deadline time.Time
 
 	written int64
 	done    bool
+}
+
+// captureFile is the subset of *os.File the writer needs; it exists so tests
+// can exercise write-failure handling with a fake file.
+type captureFile interface {
+	io.WriteCloser
+	Truncate(size int64) error
+	Name() string
 }
 
 func newBoundedFileWriter(path string, maxSize int64, dur time.Duration, logger log.Logger) (*boundedFileWriter, error) {
@@ -165,13 +174,28 @@ func (w *boundedFileWriter) WriteRecord(record []byte) error {
 		return w.finish("max_file_size reached")
 	}
 
+	if err := w.appendRecord(record); err != nil {
+		// A partially written record would leave a malformed line that makes
+		// every subsequent record — and for strict consumers the whole file —
+		// unreadable. Roll back to the last committed offset and end the
+		// capture rather than appending to corrupt output.
+		if truncErr := w.f.Truncate(w.written); truncErr != nil {
+			w.log.Warn("Failed to roll back partially written trace record", "path", w.f.Name(), "err", truncErr)
+		}
+		_ = w.finish("write error")
+		return err
+	}
+	w.written += int64(len(record)) + 1
+	return nil
+}
+
+func (w *boundedFileWriter) appendRecord(record []byte) error {
 	if _, err := w.f.Write(record); err != nil {
 		return fmt.Errorf("writing trace record: %w", err)
 	}
 	if _, err := w.f.Write([]byte{'\n'}); err != nil {
 		return fmt.Errorf("writing trace record: %w", err)
 	}
-	w.written += int64(len(record)) + 1
 	return nil
 }
 
