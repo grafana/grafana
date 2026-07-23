@@ -1042,16 +1042,19 @@
     {
       "metadata": {
         "name": "auditLoggingAppPlatform",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-12-29T15:28:29Z"
+        "resourceVersion": "1784025329122",
+        "creationTimestamp": "2025-12-29T15:28:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-14 10:35:29.122409 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable audit logging with Kubernetes under app platform",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "requiresRestart": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -1773,7 +1776,8 @@
       "metadata": {
         "name": "dashboards.filterablePanels",
         "resourceVersion": "1784277442129",
-        "creationTimestamp": "2026-07-17T08:37:22Z"
+        "creationTimestamp": "2026-07-17T08:37:22Z",
+        "deletionTimestamp": "2026-07-22T08:31:47Z"
       },
       "spec": {
         "description": "Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels",
@@ -1815,7 +1819,8 @@
       "metadata": {
         "name": "datasourceAPIServers",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-09-19T08:28:27Z"
+        "creationTimestamp": "2024-09-19T08:28:27Z",
+        "deletionTimestamp": "2026-07-21T07:41:20Z"
       },
       "spec": {
         "description": "Expose some datasources as apiservers.",

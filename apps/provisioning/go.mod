@@ -9,7 +9,7 @@ require (
 	github.com/google/go-github/v82 v82.0.0
 	github.com/google/uuid v1.6.0
 	github.com/grafana/authlib/types v0.0.0-20260621220415-f6aaf60e82b2
-	github.com/grafana/grafana-app-sdk v0.56.4
+	github.com/grafana/grafana-app-sdk v0.56.6
 	github.com/grafana/grafana-app-sdk/logging v0.56.3
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20260424050122-76eba5631b44
 	github.com/grafana/grafana/apps/secret v0.0.0-20260118065639-60cb766a97d6
@@ -19,9 +19,9 @@ require (
 	github.com/prometheus/client_golang v1.23.2
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/oauth2 v0.36.0
-	k8s.io/apimachinery v0.36.1
-	k8s.io/apiserver v0.36.0
-	k8s.io/client-go v0.36.1
+	k8s.io/apimachinery v0.36.2
+	k8s.io/apiserver v0.36.2
+	k8s.io/client-go v0.36.2
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.0
 )
@@ -101,14 +101,14 @@ require (
 	golang.org/x/text v0.40.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	golang.org/x/tools v0.48.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260622175928-b703f567277d // indirect
-	google.golang.org/grpc v1.82.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260630182238-925bb5da69e7 // indirect
+	google.golang.org/grpc v1.82.1 // indirect
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.36.1 // indirect
-	k8s.io/component-base v0.36.0 // indirect
+	k8s.io/api v0.36.2 // indirect
+	k8s.io/component-base v0.36.2 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect

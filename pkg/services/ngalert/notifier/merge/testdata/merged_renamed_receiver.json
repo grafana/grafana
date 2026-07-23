@@ -183,7 +183,7 @@
         ]
       },
       {
-        "name": "grafana-default-emailmimir-12345"
+        "name": "grafana-default-email_mimir-12345"
       }
     ]
   },
@@ -215,7 +215,7 @@
           "repeat_interval": "1m"
         },
         {
-          "receiver": "grafana-default-emailmimir-12345",
+          "receiver": "grafana-default-email_mimir-12345",
           "matchers": [
             "label=\"test\""
           ]
