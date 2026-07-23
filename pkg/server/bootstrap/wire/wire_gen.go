@@ -595,7 +595,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	authinfoimplService := authinfoimpl.ProvideService(loginStore, remoteCache, secretsService)
-	userAuthTokenService, err := authimpl.ProvideUserAuthTokenService(ctx, sqlStore, serverLockService, quotaService, secretsService, configProvider, tracingService, featureToggles)
+	userAuthTokenService, err := authimpl.ProvideUserAuthTokenService(ctx, legacyDatabaseProvider, serverLockService, quotaService, secretsService, configProvider, tracingService, featureToggles)
 	if err != nil {
 		return nil, err
 	}
@@ -1386,7 +1386,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	pluginInstaller := manager4.ProvideInstaller(pluginManagementCfg, inMemory, loaderLoader, repoManager, serviceregistrationService, acimplService)
 	ossProvider := guardian.ProvideGuardian()
 	cacheServiceImpl := service6.ProvideCacheService(cacheService, sqlStore, ossProvider)
-	userAuthTokenService, err := authimpl.ProvideUserAuthTokenService(ctx, sqlStore, serverLockService, quotaService, secretsService, configProvider, tracingService, featureToggles)
+	userAuthTokenService, err := authimpl.ProvideUserAuthTokenService(ctx, legacyDatabaseProvider, serverLockService, quotaService, secretsService, configProvider, tracingService, featureToggles)
 	if err != nil {
 		return nil, err
 	}
