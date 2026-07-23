@@ -2,6 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useMemo, useState } from 'react';
 
 import { type Labels } from '@grafana/data';
+import { useDispatch } from 'app/types/store';
 import { GrafanaAlertState, type GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { assistantApi, stableFromAlertRequest } from '../../api/assistantApi';
@@ -17,6 +18,7 @@ import {
   isAssistantInvestigationFailed,
   isAssistantInvestigationTerminal,
   isManualAssistantInvestigationEnabled,
+  selectAssistantInvestigation,
 } from './startInvestigationFromAlert';
 
 export interface UseStartInvestigationArgs {
@@ -41,7 +43,7 @@ export type StartInvestigationViewModel =
   | { status: 'starting' }
   | { status: 'startError'; onStart: () => void }
   | { status: 'reportFailed'; href: string; onStart: () => void }
-  | { status: 'pollError'; onRetry: () => void }
+  | { status: 'pollError'; href: string; onRetry: () => void }
   | { status: 'running'; href: string }
   | { status: 'open'; href: string }
   | { status: 'idle'; onStart: () => void };
@@ -57,6 +59,7 @@ export function useStartInvestigation({
   alertState,
   alertStartsAt,
 }: UseStartInvestigationArgs): StartInvestigationViewModel {
+  const dispatch = useDispatch();
   const featureEnabled = isManualAssistantInvestigationEnabled();
   const { installed } = usePluginBridge(SupportedPlugin.Assistant);
 
@@ -107,6 +110,8 @@ export function useStartInvestigation({
     refetch: refetchLookup,
   } = assistantApi.useLookupInvestigationFromAlertQuery(requestBody ?? skipToken, {
     skip: !featureEnabled || !installed,
+    // Drawer remount must not trust a start-time pending upsert forever.
+    refetchOnMountOrArgChange: true,
   });
 
   const knownId = startedInvestigation?.id ?? lookedUpInvestigation?.id;
@@ -119,19 +124,57 @@ export function useStartInvestigation({
   } = assistantApi.useGetAssistantInvestigationQuery(knownId ?? '', {
     skip: !featureEnabled || !installed || !knownId,
     pollingInterval: shouldPoll ? ASSISTANT_INVESTIGATION_POLL_INTERVAL_MS : 0,
+    refetchOnMountOrArgChange: true,
   });
 
   // Prefer the create/retry snapshot until poll has data for that same investigation
-  // id. Do not prefer mutation over poll for the same id — that would freeze the UI
-  // on the initial pending/in_progress snapshot after the report completes. Manual
-  // retry after failed/cancelled creates a new investigation id on the Assistant
-  // side, so the id-mismatch branch covers that handoff.
-  const investigation = useMemo(() => {
-    if (startedInvestigation && (!polledInvestigation || polledInvestigation.id !== startedInvestigation.id)) {
-      return startedInvestigation;
+  // id. Terminal same-id snapshots from lookup always beat stale pending caches —
+  // see selectAssistantInvestigation.
+  const investigation = useMemo(
+    () =>
+      selectAssistantInvestigation({
+        started: startedInvestigation,
+        polled: polledInvestigation,
+        lookedUp: lookedUpInvestigation,
+      }),
+    [polledInvestigation, startedInvestigation, lookedUpInvestigation]
+  );
+
+  // Keep lookup cache aligned with poll so reopen does not restore a stale
+  // pending/in_progress snapshot after the report already finished. Never write a
+  // stale non-terminal poll over a fresher terminal lookup for the same id.
+  useEffect(() => {
+    if (!requestBody || !polledInvestigation) {
+      return;
     }
-    return polledInvestigation ?? startedInvestigation ?? lookedUpInvestigation ?? undefined;
-  }, [polledInvestigation, startedInvestigation, lookedUpInvestigation]);
+    if (
+      lookedUpInvestigation &&
+      lookedUpInvestigation.id === polledInvestigation.id &&
+      isAssistantInvestigationTerminal(lookedUpInvestigation.state) &&
+      !isAssistantInvestigationTerminal(polledInvestigation.state)
+    ) {
+      // Heal the stale get cache from the fresher lookup so poll preference stays correct.
+      dispatch(
+        assistantApi.util.upsertQueryData('getAssistantInvestigation', lookedUpInvestigation.id, lookedUpInvestigation)
+      );
+      return;
+    }
+    dispatch(assistantApi.util.upsertQueryData('lookupInvestigationFromAlert', requestBody, polledInvestigation));
+  }, [dispatch, requestBody, polledInvestigation, lookedUpInvestigation]);
+
+  // Drop a stale create-time pending mutation once lookup/poll knows the same id is terminal.
+  useEffect(() => {
+    if (
+      !startedInvestigation ||
+      !investigation ||
+      investigation.id !== startedInvestigation.id ||
+      !isAssistantInvestigationTerminal(investigation.state) ||
+      isAssistantInvestigationTerminal(startedInvestigation.state)
+    ) {
+      return;
+    }
+    reset();
+  }, [investigation, startedInvestigation, reset]);
 
   const investigationFailed = isAssistantInvestigationFailed(investigation?.state);
 
@@ -206,7 +249,12 @@ export function useStartInvestigation({
   }
 
   if (isPollError && knownId && !isAssistantInvestigationTerminal(investigation?.state)) {
-    return { status: 'pollError', onRetry: () => refetchPoll() };
+    // Keep the workspace link — a refresh error does not invalidate the id.
+    return {
+      status: 'pollError',
+      href: getAssistantInvestigationUrl(knownId),
+      onRetry: () => refetchPoll(),
+    };
   }
 
   if (investigation && !isAssistantInvestigationTerminal(investigation.state)) {

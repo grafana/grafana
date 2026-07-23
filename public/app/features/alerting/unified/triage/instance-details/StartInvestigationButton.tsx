@@ -144,16 +144,31 @@ export function StartInvestigationButton({
 
     case 'pollError':
       return (
-        <Tooltip
-          content={t(
-            'alerting.triage.instance-details-drawer.investigation-poll-failed',
-            'Could not refresh investigation status. Try again.'
-          )}
-        >
-          <Button icon="ai-sparkle" variant="primary" fill="text" size="sm" onClick={view.onRetry}>
-            <Trans i18nKey="alerting.triage.instance-details-drawer.investigation-poll-retry">Retry status</Trans>
-          </Button>
-        </Tooltip>
+        <Stack direction="row" alignItems="center" gap={1}>
+          <Tooltip
+            content={t(
+              'alerting.triage.instance-details-drawer.investigation-poll-failed',
+              'Could not refresh investigation status. Try again.'
+            )}
+          >
+            <Button icon="ai-sparkle" variant="primary" fill="text" size="sm" onClick={view.onRetry}>
+              <Trans i18nKey="alerting.triage.instance-details-drawer.investigation-poll-retry">Retry status</Trans>
+            </Button>
+          </Tooltip>
+          <LinkButton
+            icon="comment-alt"
+            variant="primary"
+            fill="text"
+            size="sm"
+            href={view.href}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Trans i18nKey="alerting.triage.instance-details-drawer.investigation-watch-live">
+              Watch live in assistant workspace
+            </Trans>
+          </LinkButton>
+        </Stack>
       );
 
     case 'running':

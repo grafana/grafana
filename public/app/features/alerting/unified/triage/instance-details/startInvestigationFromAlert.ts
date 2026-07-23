@@ -43,6 +43,49 @@ export function isAssistantInvestigationTerminal(state: string | undefined): boo
   return !!state && TERMINAL_INVESTIGATION_STATES.has(state);
 }
 
+export interface AssistantInvestigationSnapshot {
+  id: string;
+  state: string;
+}
+
+/**
+ * Picks the investigation snapshot to show in the drawer.
+ * Terminal state for an id always beats a stale pending/in_progress snapshot from
+ * create mutation or get cache (common on remount). Create/retry with a new id
+ * still prefers the mutation until poll catches that id.
+ */
+export function selectAssistantInvestigation<T extends AssistantInvestigationSnapshot>({
+  started,
+  polled,
+  lookedUp,
+}: {
+  started?: T;
+  polled?: T;
+  lookedUp?: T | null;
+}): T | undefined {
+  const lookup = lookedUp ?? undefined;
+
+  const sameId = (id: string) => [polled, started, lookup].filter((inv): inv is T => inv?.id === id);
+
+  const preferTerminalOrFirst = (candidates: T[]): T | undefined => {
+    const terminal = candidates.find((inv) => isAssistantInvestigationTerminal(inv.state));
+    return terminal ?? candidates[0];
+  };
+
+  // Create/retry handoff: trust mutation for the new id until poll has it — but
+  // never prefer a stale non-terminal mutation over a same-id terminal lookup.
+  if (started && (!polled || polled.id !== started.id)) {
+    return preferTerminalOrFirst(sameId(started.id)) ?? started;
+  }
+
+  const id = polled?.id ?? started?.id ?? lookup?.id;
+  if (!id) {
+    return undefined;
+  }
+
+  return preferTerminalOrFirst(sameId(id)) ?? polled ?? started ?? lookup;
+}
+
 /** Builds a link to the investigation's report in the Assistant app. */
 export function getAssistantInvestigationUrl(investigationId: string): string {
   return createBridgeURL(SupportedPlugin.Assistant, `/investigations/${encodeURIComponent(investigationId)}`);

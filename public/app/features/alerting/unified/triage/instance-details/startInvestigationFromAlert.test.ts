@@ -11,6 +11,7 @@ import {
   isAssistantInvestigationCompleted,
   isAssistantInvestigationFailed,
   isAssistantInvestigationTerminal,
+  selectAssistantInvestigation,
 } from './startInvestigationFromAlert';
 
 describe('buildFromAlertRequest', () => {
@@ -142,6 +143,52 @@ describe('investigation state helpers', () => {
         expect(isAssistantInvestigationTerminal(state)).toBe(false);
       }
     );
+  });
+
+  describe('selectAssistantInvestigation', () => {
+    const pending = { id: 'inv-1', state: 'pending' };
+    const completed = { id: 'inv-1', state: 'completed' };
+    const retryPending = { id: 'inv-2', state: 'pending' };
+
+    it('prefers terminal lookup over a stale pending mutation when poll is missing', () => {
+      expect(
+        selectAssistantInvestigation({
+          started: pending,
+          polled: undefined,
+          lookedUp: completed,
+        })
+      ).toEqual(completed);
+    });
+
+    it('prefers terminal lookup over a stale non-terminal poll cache', () => {
+      expect(
+        selectAssistantInvestigation({
+          started: pending,
+          polled: pending,
+          lookedUp: completed,
+        })
+      ).toEqual(completed);
+    });
+
+    it('keeps create/retry mutation when poll has not caught the new id', () => {
+      expect(
+        selectAssistantInvestigation({
+          started: retryPending,
+          polled: completed,
+          lookedUp: completed,
+        })
+      ).toEqual(retryPending);
+    });
+
+    it('prefers poll once it matches the started id', () => {
+      expect(
+        selectAssistantInvestigation({
+          started: pending,
+          polled: completed,
+          lookedUp: pending,
+        })
+      ).toEqual(completed);
+    });
   });
 
   describe('getAssistantInvestigationUrl', () => {

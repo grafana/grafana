@@ -95,7 +95,8 @@ export const assistantApi = alertingApi.injectEndpoints({
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          // Keep the drawer's lookup query keyed to the stable alert-group identity.
+          // Seed lookup for this alert-group identity. Poll upserts terminal
+          // updates from useStartInvestigation so reopen does not restore pending.
           dispatch(
             assistantApi.util.upsertQueryData('lookupInvestigationFromAlert', stableFromAlertRequest(arg), data)
           );
