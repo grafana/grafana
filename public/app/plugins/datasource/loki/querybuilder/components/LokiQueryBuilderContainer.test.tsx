@@ -110,6 +110,27 @@ describe('LokiQueryBuilderContainer', () => {
     expect(screen.getAllByText('You have conflicting label filters')).toHaveLength(2);
   });
 
+  it('restores disabled operations that are absent from expr (e.g. after collapse/expand)', async () => {
+    const props = {
+      query: {
+        expr: '{job="testjob"}',
+        refId: 'A',
+        disabledOperations: [{ index: 0, operation: { id: '__line_contains', params: ['error'], disabled: true } }],
+      },
+      datasource: createLokiDatasource(),
+      onChange: jest.fn(),
+      onRunQuery: () => {},
+      showExplain: false,
+    };
+    props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
+
+    await act(async () => {
+      render(<LokiQueryBuilderContainer {...props} />);
+    });
+
+    expect(await screen.findByText('Line contains')).toBeInTheDocument();
+  });
+
   it('uses <expr> as placeholder for query in explain section', async () => {
     const props = {
       query: {
