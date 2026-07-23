@@ -27,13 +27,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// folderTerminatingLabel is stamped on a folder once cascade deletion of its subtree has started.
+// Cascade-delete labels/finalizer are defined in foldersv1 as the shared contract with the reconciler.
 const (
-	folderTerminatingLabel      = "grafana.app/folder-terminating"
-	folderTerminatingLabelValue = "true"
-	// folderCascadeDeleteFinalizer keeps a terminating folder alive so the background reconciler can
-	// drain its subtree before the folder is finally removed.
-	folderCascadeDeleteFinalizer = "folder.grafana.app/cascade-delete"
+	folderTerminatingLabel       = foldersv1.LabelTerminating
+	folderTerminatingLabelValue  = foldersv1.LabelValueTrue
+	folderCascadeDeleteFinalizer = foldersv1.FinalizerCascadeDelete
 )
 
 // childFolderPageSize bounds each search page when enumerating child folders or dashboards.
