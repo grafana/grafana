@@ -24,9 +24,13 @@ jest.mock('app/features/dashboard-scene/saving/SaveDashboardAsForm', () => ({
 
 const mockUseProvisionedDashboardData = jest.mocked(useProvisionedDashboardData);
 
-function createDashboard({ folderUid, uid }: { folderUid?: string; uid?: string } = {}) {
+function createDashboard({
+  folderUid,
+  uid,
+  k8s,
+}: { folderUid?: string; uid?: string; k8s?: DashboardMeta['k8s'] } = {}) {
   return {
-    state: { meta: { folderUid, uid } },
+    state: { meta: { folderUid, uid, k8s } },
     setState: jest.fn(),
   } as unknown as DashboardScene;
 }
@@ -150,6 +154,19 @@ describe('SaveProvisionedDashboard', () => {
 
     // Restoring the orphaned folder would bounce straight back to the orphaned notice
     expect(dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: 'repo-folder' } });
+  });
+
+  it('drops repo manager annotations when switching to the database form', async () => {
+    const dashboard = createDashboard({
+      folderUid: 'provisioned-folder',
+      k8s: { annotations: { 'grafana.app/managerKind': 'repo', 'grafana.app/managerId': 'test-repo' } },
+    });
+    const { user } = setup({}, { dashboard });
+
+    await user.click(screen.getByRole('button', { name: /grafana database/i }));
+
+    // Left behind, saveCompleted would carry them forward and the saved dashboard would look repo-managed
+    expect(dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: undefined, k8s: undefined } });
   });
 
   it('clears the orphaned folder when escaping to the database form', async () => {

@@ -67,9 +67,10 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
     const gitMeta = isDeadEnd ? { ...meta, folderUid: entryFolderUid, k8s: undefined } : { ...meta };
     dbSwitchRef.current = { active: true, savedUid: meta.uid, gitMeta };
 
-    // Only an unmanaged folder is a valid database target; provisioned and orphaned ones are rejected
+    // Only an unmanaged folder is a valid database target; provisioned and orphaned ones are rejected.
+    // Manager annotations go with it, or saveCompleted would carry them into the saved database dashboard.
     if (repoDataStatus !== RepoViewStatus.Error) {
-      dashboard.setState({ meta: { ...meta, folderUid: undefined } });
+      dashboard.setState({ meta: { ...meta, folderUid: undefined, k8s: undefined } });
     }
 
     setSaveToDatabase(true);
