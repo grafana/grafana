@@ -98,12 +98,15 @@ export const timeZoneAbbrevation: DateTimeFormatter = (dateInUtc, options?) => {
 
 // The luxon-backed `z` token can only produce ICU's localized offset names (e.g. "GMT+2") for
 // most zones, so the DST-correct abbreviation (CEST, EDT, ...) comes from the easy-tz dataset
-// instead. Mirrors toTz's zone resolution: a valid IANA name is looked up directly, anything
-// else ('browser', unknown names) resolves to the local zone; 'utc' isn't in the easy-tz list
-// and falls back to the shim's own `z` formatting ("UTC").
+// instead. Zone names that don't resolve to an IANA zone ('browser', unknown names) return ''
+// for parity with moment's deprecated `z` token, which rendered '' on plain (non-moment-timezone)
+// instances; 'utc' isn't in the easy-tz list and falls back to the shim's own `z` formatting ("UTC").
 const zoneAbbreviation = (time: Moment, timeZone: TimeZone): string => {
-  const ianaName = moment.tz.zone(timeZone)?.name ?? moment.tz.guess();
-  return findTimeZoneAt(ianaName, time.valueOf())?.abbr ?? time.format('z');
+  const zone = moment.tz.zone(timeZone);
+  if (!zone) {
+    return '';
+  }
+  return findTimeZoneAt(zone.name, time.valueOf())?.abbr ?? time.format('z');
 };
 
 const getFormat = <T extends DateTimeOptionsWithFormat>(options?: T): string => {
