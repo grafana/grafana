@@ -557,7 +557,27 @@ func (hs *HTTPServer) updateOrgUserHelper(c *contextmodel.ReqContext, cmd org.Up
 		}
 	}
 
-	if err := hs.orgService.UpdateOrgUser(c.Req.Context(), &cmd); err != nil {
+	ctx := c.Req.Context()
+	if cmd.OrgID == c.GetOrgID() &&
+		ofClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
+		if cmd.Role != org.RoleAdmin {
+			hasOtherAdmin, err := hs.orgHasOtherAdmin(c, cmd.OrgID, cmd.UserID)
+			if err != nil {
+				return response.Error(http.StatusInternalServerError, "Failed update org user", err)
+			}
+			if !hasOtherAdmin {
+				return response.Error(http.StatusBadRequest, "Cannot change role so that there is no organization admin left", nil)
+			}
+		}
+
+		role := string(cmd.Role)
+		if err := hs.userService.Update(ctx, &user.UpdateUserCommand{
+			UserID:  cmd.UserID,
+			OrgRole: &role,
+		}); err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed update org user", err)
+		}
+	} else if err := hs.orgService.UpdateOrgUser(ctx, &cmd); err != nil {
 		if errors.Is(err, org.ErrLastOrgAdmin) {
 			return response.Error(http.StatusBadRequest, "Cannot change role so that there is no organization admin left", nil)
 		}
@@ -570,6 +590,25 @@ func (hs *HTTPServer) updateOrgUserHelper(c *contextmodel.ReqContext, cmd org.Up
 	})
 
 	return response.Success("Organization user updated")
+}
+
+// orgHasOtherAdmin mirrors the legacy validateOneAdminLeftInOrg guard
+func (hs *HTTPServer) orgHasOtherAdmin(c *contextmodel.ReqContext, orgID, excludeUserID int64) (bool, error) {
+	result, err := hs.searchOrgUsersUsingK8s(c, &org.SearchOrgUsersQuery{
+		OrgID: orgID,
+		User:  c.SignedInUser,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	for _, u := range result.OrgUsers {
+		if u.UserID != excludeUserID && u.Role == string(org.RoleAdmin) {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 // swagger:route DELETE /org/users/{user_id} org removeOrgUserForCurrentOrg
