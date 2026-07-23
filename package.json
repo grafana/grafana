@@ -223,7 +223,7 @@
     "ora": "^9.0.0",
     "papaparse": "5.5.3",
     "pdf-parse": "^1.1.1",
-    "postcss": "8.5.10",
+    "postcss": "8.5.12",
     "postcss-loader": "8.1.1",
     "postcss-reporter": "7.1.0",
     "prettier": "3.6.2",
