@@ -36,7 +36,7 @@ func (b *APIBuilder) RegisterHTTPRoutes(rr routing.RouteRegister) {
 	rr.Group("/ofrep", ofrep)
 
 	// Register the same service in the API server URL flavor
-	rr.Group("/apis/features.grafana.app/v0alpha1/", ofrep)
+	rr.Group("/apis/features.grafana.app/v0alpha1", ofrep)
 }
 
 // RootHTTPHandler registers the /ofrep/v1/... routes directly on the k8s NonGoRestfulMux.

@@ -2,6 +2,7 @@ package ofrep
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -16,11 +17,14 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 )
+
+var _ registry.BackgroundService = (*APIBuilder)(nil)
 
 const ofrepPath = "/ofrep/v1/evaluate/flags"
 
@@ -36,6 +40,7 @@ type evalContext struct {
 type APIBuilder struct {
 	providerType    setting.OpenFeatureProviderType
 	url             *url.URL
+	rr              routing.RouteRegister
 	transport       *http.Transport
 	staticEvaluator featuremgmt.StaticFlagEvaluator
 	logger          log.Logger
@@ -76,9 +81,13 @@ func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister) (*APIBuilder, er
 	if err != nil {
 		return nil, err
 	}
-
-	b.RegisterHTTPRoutes(rr)
+	b.rr = rr
 	return b, nil
+}
+
+func (b *APIBuilder) Run(ctx context.Context) error {
+	b.RegisterHTTPRoutes(b.rr)
+	return nil
 }
 
 func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
