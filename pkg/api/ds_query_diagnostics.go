@@ -25,6 +25,10 @@ type diagnosticsRequest struct {
 	dtos.MetricRequest
 	Dashboard json.RawMessage `json:"dashboard"`
 	Panel     json.RawMessage `json:"panel"`
+	// PostProcessing carries the client-captured frontend pipeline evidence (transformation
+	// input/output frames + applied display context) that /api/ds/query never sees because
+	// transformations and field config run in the browser.
+	PostProcessing json.RawMessage `json:"postProcessing"`
 }
 
 // diagnosticsFeatureClient is a shared OpenFeature client reused across requests. Flags are
@@ -108,7 +112,7 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	if marshalErr != nil {
 		queryRequestJSON = nil
 	}
-	bundle, err := diagnostics.NewBundler().Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, queryRequestJSON, marshalErr, bundleErr)
+	bundle, err := diagnostics.NewBundler().Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, queryRequestJSON, reqDTO.PostProcessing, marshalErr, bundleErr)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to build diagnostics bundle", err)
 	}

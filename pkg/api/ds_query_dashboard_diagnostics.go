@@ -49,6 +49,9 @@ type panelDiagnosticsSpec struct {
 	ID                 int64           `json:"id"`
 	Title              string          `json:"title"`
 	Panel              json.RawMessage `json:"panel"`
+	// PostProcessing carries this panel's client-captured frontend pipeline evidence (see
+	// diagnosticsRequest.PostProcessing).
+	PostProcessing json.RawMessage `json:"postProcessing"`
 }
 
 // ---- async job store (in-memory; mirrors the support-bundle create/pending/complete model) -------
@@ -383,10 +386,11 @@ func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user
 			return nil, err
 		}
 		panel := diagnostics.DashboardPanel{
-			ID:          p.ID,
-			Title:       p.Title,
-			PanelJSON:   p.Panel,
-			Datasources: panelDatasourceUIDs(p.MetricRequest),
+			ID:             p.ID,
+			Title:          p.Title,
+			PanelJSON:      p.Panel,
+			PostProcessing: p.PostProcessing,
+			Datasources:    panelDatasourceUIDs(p.MetricRequest),
 		}
 
 		// A single panel's unserializable query request must not abort the whole archive: record it

@@ -49,7 +49,7 @@ func NewBundler() *Bundler {
 //
 // Server logs are intentionally omitted because they are not scoped to this request and would leak
 // unrelated activity into a bundle meant for external sharing; they will be tackled in a follow-up.
-func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer, panelJSON, dashboardJSON, queryRequestJSON json.RawMessage, queryRequestErr, queryErr error) ([]byte, error) {
+func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer, panelJSON, dashboardJSON, queryRequestJSON, postProcessingJSON json.RawMessage, queryRequestErr, queryErr error) ([]byte, error) {
 	files := map[string][]byte{}
 
 	// queryRequestErr is the caller's failure to serialize the request into queryRequestJSON. Record it
@@ -75,6 +75,10 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 	}
 	if queryDataErr != nil {
 		files["querydata-error.txt"] = []byte(queryDataErr.Error() + "\n")
+	}
+
+	if fp := marshalPostProcessingArtifact(postProcessingJSON, maxQueryDataArtifactBytes); len(fp) > 0 {
+		files["frontend-processing.json"] = fp
 	}
 
 	har, err := collectHAR(resp, harBuffer)
@@ -298,6 +302,7 @@ type DashboardPanel struct {
 	Datasources     []string                   // datasource UIDs the panel references (for the manifest)
 	Resp            *backend.QueryDataResponse // query response, carries external plugins' __har__ frames
 	HARBuffer       *harcapture.Buffer         // in-process capture buffer for this panel's queries
+	PostProcessing  json.RawMessage            // client-captured frontend pipeline evidence (transform IO + display)
 	QueryErr        error                      // top-level error running the panel's queries, if any
 	Skipped         string                     // non-empty => panel was not executed (e.g. non-data panel)
 }
@@ -404,6 +409,10 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 		// Joined with "; " rather than errors.Join's newline so the manifest keeps one readable line per
 		// panel instead of embedded \n escapes.
 		entry.QueryDataError = strings.Join(queryDataErrs, "; ")
+
+		if fp := marshalPostProcessingArtifact(p.PostProcessing, maxQueryDataArtifactBytes); len(fp) > 0 {
+			files[dir+"/frontend-processing.json"] = fp
+		}
 
 		// A single panel's capture that fails to serialize must not sink the whole multi-panel bundle:
 		// record it against this panel in the manifest and keep everything else (dashboard.json, the
@@ -829,4 +838,29 @@ func indentJSON(raw []byte) []byte {
 		return raw
 	}
 	return out.Bytes()
+}
+
+// marshalPostProcessingArtifact returns the frontend-processing.json bytes for the client-captured
+// pipeline evidence, or nil when the client sent nothing. The payload is embedded verbatim (pretty-
+// printed); if it exceeds maxBytes it is replaced with an explicit truncation marker so a large
+// transform result cannot bloat the archive without a visible signal. Transient peak serialization
+// memory is not yet strictly bounded (same limitation as querydata.json).
+func marshalPostProcessingArtifact(raw json.RawMessage, maxBytes int) []byte {
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 || string(trimmed) == "null" {
+		return nil
+	}
+	pretty := indentJSON(raw)
+	if len(pretty) <= maxBytes {
+		return pretty
+	}
+	marker, err := json.MarshalIndent(struct {
+		Truncated     bool `json:"truncated"`
+		OriginalBytes int  `json:"originalBytes"`
+		LimitBytes    int  `json:"limitBytes"`
+	}{Truncated: true, OriginalBytes: len(pretty), LimitBytes: maxBytes}, "", "  ")
+	if err != nil {
+		return nil
+	}
+	return marker
 }
