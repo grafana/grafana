@@ -81,8 +81,9 @@ export const assistantApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     // Manually start an investigation from an alert (POC: firing alert instance ->
     // Assistant investigation). Proxied through the Assistant plugin's authenticated
-    // resource route, which enforces the investigations:create permission. The
-    // endpoint dedups by alert group, so repeat calls return the existing investigation.
+    // resource route, which enforces the investigations:create permission. Active or
+    // completed investigations dedup by alert group; failed/cancelled ones create a
+    // fresh investigation on the manual path so "Try again" can recover.
     startInvestigationFromAlert: build.mutation<AssistantInvestigation, StartInvestigationFromAlertRequest>({
       query: (body) => ({
         url: getProxyApiUrl('/api/v1/investigations/from-alert'),

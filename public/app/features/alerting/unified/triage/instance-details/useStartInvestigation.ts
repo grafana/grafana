@@ -24,6 +24,8 @@ export interface UseStartInvestigationArgs {
   commonLabels?: Labels;
   rule?: GrafanaRuleDefinition;
   alertState?: GrafanaAlertState | null;
+  /** ISO timestamp when this firing episode began; omit when unknown. */
+  alertStartsAt?: string;
 }
 
 /**
@@ -38,7 +40,7 @@ export type StartInvestigationViewModel =
   | { status: 'completed'; href: string }
   | { status: 'starting' }
   | { status: 'startError'; onStart: () => void }
-  | { status: 'reportFailed'; onStart: () => void }
+  | { status: 'reportFailed'; href: string; onStart: () => void }
   | { status: 'pollError'; onRetry: () => void }
   | { status: 'running'; href: string }
   | { status: 'open'; href: string }
@@ -53,6 +55,7 @@ export function useStartInvestigation({
   commonLabels,
   rule,
   alertState,
+  alertStartsAt,
 }: UseStartInvestigationArgs): StartInvestigationViewModel {
   const featureEnabled = isManualAssistantInvestigationEnabled();
   const { installed } = usePluginBridge(SupportedPlugin.Assistant);
@@ -120,8 +123,9 @@ export function useStartInvestigation({
 
   // Prefer the create/retry snapshot until poll has data for that same investigation
   // id. Do not prefer mutation over poll for the same id — that would freeze the UI
-  // on the initial pending/in_progress snapshot after the report completes. Retry
-  // after failure creates a new id, so the id mismatch branch still covers that case.
+  // on the initial pending/in_progress snapshot after the report completes. Manual
+  // retry after failed/cancelled creates a new investigation id on the Assistant
+  // side, so the id-mismatch branch covers that handoff.
   const investigation = useMemo(() => {
     if (startedInvestigation && (!polledInvestigation || polledInvestigation.id !== startedInvestigation.id)) {
       return startedInvestigation;
@@ -145,13 +149,19 @@ export function useStartInvestigation({
     if (!requestBody) {
       return;
     }
-    const startsAt = new Date().toISOString();
     const status = alertState === GrafanaAlertState.Normal ? 'resolved' : 'firing';
     const generatorURL = rule?.uid ? createAbsoluteUrl(`/alerting/grafana/${rule.uid}/view`) : undefined;
     startInvestigation({
       ...requestBody,
       name: rule?.title,
-      alerts: requestBody.alerts.map((alert) => ({ ...alert, startsAt, status, generatorURL })),
+      alerts: requestBody.alerts.map((alert) => ({
+        ...alert,
+        // Prefer the real firing-episode start from state history. Omit rather
+        // than inventing click time — Assistant uses startsAt for context.
+        ...(alertStartsAt ? { startsAt: alertStartsAt } : {}),
+        status,
+        generatorURL,
+      })),
     });
   };
 
@@ -184,7 +194,13 @@ export function useStartInvestigation({
   }
 
   if (investigationFailed && investigation) {
-    return { status: 'reportFailed', onStart };
+    // Always expose the failed report link. Retry POSTs from-alert again; the
+    // Assistant manual path creates a fresh investigation for failed/cancelled.
+    return {
+      status: 'reportFailed',
+      href: getAssistantInvestigationUrl(investigation.id),
+      onStart,
+    };
   }
 
   if (isPollError && knownId && !isAssistantInvestigationTerminal(investigation?.state)) {

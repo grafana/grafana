@@ -4,6 +4,7 @@ import { type GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { type StartInvestigationFromAlertRequest } from '../../api/assistantApi';
 import { createBridgeURL } from '../../components/PluginBridge';
+import { type LogRecord } from '../../components/rules/state-history/common';
 import { SupportedPlugin } from '../../types/pluginBridges';
 
 /** How often to refresh investigation state while a report is still generating. */
@@ -45,6 +46,35 @@ export function isAssistantInvestigationTerminal(state: string | undefined): boo
 /** Builds a link to the investigation's report in the Assistant app. */
 export function getAssistantInvestigationUrl(investigationId: string): string {
   return createBridgeURL(SupportedPlugin.Assistant, `/investigations/${encodeURIComponent(investigationId)}`);
+}
+
+function isAlertingState(state: string | undefined): boolean {
+  return String(state ?? '')
+    .toLowerCase()
+    .includes('alerting');
+}
+
+/**
+ * ISO start time for the current firing episode from state history.
+ * Only trusts an observed transition *into* Alerting. If history is clipped
+ * to a drawer time range and never shows that transition, returns undefined
+ * so the caller omits startsAt rather than guessing.
+ */
+export function getAlertInstanceStartsAtIso(historyRecords: LogRecord[] | undefined): string | undefined {
+  if (!historyRecords?.length) {
+    return undefined;
+  }
+
+  let latestEpisodeStart: number | undefined;
+
+  for (const record of historyRecords) {
+    const enteredAlerting = isAlertingState(record.line.current) && !isAlertingState(record.line.previous);
+    if (enteredAlerting && (latestEpisodeStart === undefined || record.timestamp > latestEpisodeStart)) {
+      latestEpisodeStart = record.timestamp;
+    }
+  }
+
+  return latestEpisodeStart !== undefined ? new Date(latestEpisodeStart).toISOString() : undefined;
 }
 
 export interface BuildFromAlertRequestArgs {

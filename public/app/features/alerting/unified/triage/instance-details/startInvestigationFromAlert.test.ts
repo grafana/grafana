@@ -1,9 +1,11 @@
 import { config } from '@grafana/runtime';
+import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
 import { stableFromAlertRequest } from '../../api/assistantApi';
 
 import {
   buildFromAlertRequest,
+  getAlertInstanceStartsAtIso,
   getAssistantInvestigationUrl,
   isAssistantInvestigationActive,
   isAssistantInvestigationCompleted,
@@ -145,6 +147,32 @@ describe('investigation state helpers', () => {
   describe('getAssistantInvestigationUrl', () => {
     it('builds a plugin bridge URL with an encoded investigation id', () => {
       expect(getAssistantInvestigationUrl('inv/123')).toBe('/a/grafana-assistant-app/investigations/inv%2F123');
+    });
+  });
+
+  describe('getAlertInstanceStartsAtIso', () => {
+    it('returns undefined when history is empty', () => {
+      expect(getAlertInstanceStartsAtIso(undefined)).toBeUndefined();
+      expect(getAlertInstanceStartsAtIso([])).toBeUndefined();
+    });
+
+    it('uses the most recent transition into Alerting', () => {
+      const startsAt = getAlertInstanceStartsAtIso([
+        { timestamp: 1_000, line: { previous: GrafanaAlertState.Normal, current: GrafanaAlertState.Alerting } },
+        { timestamp: 5_000, line: { previous: GrafanaAlertState.Alerting, current: GrafanaAlertState.Normal } },
+        { timestamp: 9_000, line: { previous: GrafanaAlertState.Normal, current: GrafanaAlertState.Alerting } },
+      ]);
+
+      expect(startsAt).toBe(new Date(9_000).toISOString());
+    });
+
+    it('returns undefined when history is clipped and never shows an enter-Alerting transition', () => {
+      const startsAt = getAlertInstanceStartsAtIso([
+        { timestamp: 4_000, line: { previous: GrafanaAlertState.Alerting, current: GrafanaAlertState.Alerting } },
+        { timestamp: 2_000, line: { previous: GrafanaAlertState.Alerting, current: GrafanaAlertState.Alerting } },
+      ]);
+
+      expect(startsAt).toBeUndefined();
     });
   });
 });

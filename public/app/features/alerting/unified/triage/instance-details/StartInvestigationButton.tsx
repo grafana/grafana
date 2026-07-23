@@ -10,6 +10,8 @@ interface StartInvestigationButtonProps {
   commonLabels?: Labels;
   rule?: GrafanaRuleDefinition;
   alertState?: GrafanaAlertState | null;
+  /** ISO timestamp when this firing episode began (from state history). */
+  alertStartsAt?: string;
 }
 
 /**
@@ -24,8 +26,9 @@ export function StartInvestigationButton({
   commonLabels,
   rule,
   alertState,
+  alertStartsAt,
 }: StartInvestigationButtonProps) {
-  const view = useStartInvestigation({ instanceLabels, commonLabels, rule, alertState });
+  const view = useStartInvestigation({ instanceLabels, commonLabels, rule, alertState, alertStartsAt });
 
   switch (view.status) {
     case 'hidden':
@@ -112,16 +115,31 @@ export function StartInvestigationButton({
 
     case 'reportFailed':
       return (
-        <Tooltip
-          content={t(
-            'alerting.triage.instance-details-drawer.investigation-report-failed',
-            'The investigation report failed or was cancelled. You can try again.'
-          )}
-        >
-          <Button icon="ai-sparkle" variant="primary" fill="text" size="sm" onClick={view.onStart}>
-            <Trans i18nKey="alerting.triage.instance-details-drawer.start-investigation">Start investigation</Trans>
-          </Button>
-        </Tooltip>
+        <Stack direction="row" alignItems="center" gap={1}>
+          <Tooltip
+            content={t(
+              'alerting.triage.instance-details-drawer.investigation-report-failed',
+              'The investigation report failed or was cancelled. You can open it or try again.'
+            )}
+          >
+            <Button icon="ai-sparkle" variant="primary" fill="text" size="sm" onClick={view.onStart}>
+              <Trans i18nKey="alerting.triage.instance-details-drawer.start-investigation">Start investigation</Trans>
+            </Button>
+          </Tooltip>
+          <LinkButton
+            icon="file-alt"
+            variant="primary"
+            fill="text"
+            size="sm"
+            href={view.href}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Trans i18nKey="alerting.triage.instance-details-drawer.open-failed-investigation">
+              Open failed report
+            </Trans>
+          </LinkButton>
+        </Stack>
       );
 
     case 'pollError':
