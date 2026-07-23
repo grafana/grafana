@@ -102,8 +102,9 @@ func TestSubscribeStream(t *testing.T) {
 					Type: "loki",
 					URL:  "http://localhost:3100",
 				},
+				Namespace: "stacks-123",
 			},
-			Path: "tail/test",
+			Path: "tail/dsId/test/stacks-123",
 			Data: []byte(`{"grafanaSql":true,"table":"svc","refId":"A"}`),
 		}
 
