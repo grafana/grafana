@@ -9,6 +9,7 @@ import { config } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 
 import { getCredentials, updateCredentials } from '../../credentials';
+import { trackAzureMonitorBatchAPIToggled } from '../../tracking';
 import { type AzureMonitorDataSourceSettings } from '../../types/types';
 
 import { AzureCredentialsForm, getAzureCloudOptions } from './AzureCredentialsForm';
@@ -45,8 +46,10 @@ export const MonitorConfig = (props: Props) => {
   const onBasicLogsEnabledChange = (enableBasicLogs: boolean) =>
     updateOptions((options) => ({ ...options, jsonData: { ...options.jsonData, basicLogsEnabled: enableBasicLogs } }));
 
-  const onBatchAPIEnabledChange = (batchAPIEnabled: boolean) =>
+  const onBatchAPIEnabledChange = (batchAPIEnabled: boolean) => {
+    trackAzureMonitorBatchAPIToggled({ grafana_version: config.buildInfo.version, enabled: batchAPIEnabled });
     updateOptions((options) => ({ ...options, jsonData: { ...options.jsonData, batchAPIEnabled } }));
+  };
 
   // The auth type needs to be set on the first load of the data source
   useEffectOnce(() => {
