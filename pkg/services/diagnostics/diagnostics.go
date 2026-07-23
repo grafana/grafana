@@ -30,6 +30,10 @@ const (
 	maxDashboardQueryDataBytes = 32 << 20
 )
 
+// queryDataArtifactVersion is the schema version stamped into every querydata.json (including its
+// truncated fallbacks) so a reader can tell how to interpret the artifact.
+const queryDataArtifactVersion = 1
+
 // NewBundler returns a Bundler.
 func NewBundler() *Bundler {
 	return &Bundler{}
@@ -107,7 +111,7 @@ func marshalQueryDataArtifact(request json.RawMessage, resp *backend.QueryDataRe
 }
 
 func marshalQueryDataArtifactWithLimit(request json.RawMessage, resp *backend.QueryDataResponse, maxBytes int) ([]byte, error) {
-	artifact := queryDataArtifact{Version: 1, Request: request}
+	artifact := queryDataArtifact{Version: queryDataArtifactVersion, Request: request}
 	if resp != nil {
 		// The SDK encoder returns a complete byte slice. The artifact/archive is bounded below, but
 		// serializing an oversized response can still temporarily allocate its full JSON size.
@@ -123,13 +127,13 @@ func marshalQueryDataArtifactWithLimit(request json.RawMessage, resp *backend.Qu
 	}
 
 	truncated := queryDataArtifact{
-		Version:         1,
+		Version:         queryDataArtifactVersion,
 		Request:         request,
 		ResponseSummary: summarizeQueryDataResponse(resp),
 		Truncated:       true,
 		LimitBytes:      maxBytes,
 		OriginalBytes:   len(full),
-		ResponseOmitted: true,
+		ResponseOmitted: resp != nil,
 	}
 	out, err := json.MarshalIndent(truncated, "", "  ")
 	if err != nil {
@@ -150,7 +154,7 @@ func marshalQueryDataArtifactWithLimit(request json.RawMessage, resp *backend.Qu
 	}
 
 	return json.MarshalIndent(queryDataArtifact{
-		Version:         1,
+		Version:         queryDataArtifactVersion,
 		Truncated:       true,
 		LimitBytes:      maxBytes,
 		OriginalBytes:   len(full),

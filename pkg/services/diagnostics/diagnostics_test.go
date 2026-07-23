@@ -104,6 +104,21 @@ func TestBundler_Build_boundsOversizedQueryData(t *testing.T) {
 	require.Contains(t, string(queryData), `"refId": "A"`)
 }
 
+func TestBundler_Build_boundsOversizedRequestWithoutResponse(t *testing.T) {
+	// An oversized request with no response must truncate without claiming a response was omitted.
+	request := json.RawMessage(`{"expr":"` + strings.Repeat("x", maxQueryDataArtifactBytes) + `"}`)
+
+	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, request, nil)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	queryData := files["querydata.json"]
+	require.LessOrEqual(t, len(queryData), maxQueryDataArtifactBytes)
+	require.Contains(t, string(queryData), `"truncated": true`)
+	require.Contains(t, string(queryData), `"requestOmitted": true`)
+	require.NotContains(t, string(queryData), `"responseOmitted"`)
+}
+
 func TestBundler_Build_preservesUpstreamAndPluginResultsForComparison(t *testing.T) {
 	req, err := http.NewRequest(http.MethodGet, "http://prometheus/api/v1/query", nil)
 	require.NoError(t, err)
