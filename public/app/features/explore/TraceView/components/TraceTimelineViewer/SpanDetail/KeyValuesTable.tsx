@@ -219,8 +219,8 @@ export const LinkValuesMenu = ({ links, children }: LinkValuesMenuProps) => {
           id={triggerId}
           type="button"
           className={styles.multiLinkTrigger}
-          aria-label={openValueInLabel}
           title={openValueInLabel}
+          aria-haspopup="menu"
         >
           <Icon name="angle-down" size="sm" className={styles.multiLinkChevron} />
         </button>

@@ -125,7 +125,8 @@ describe('KeyValuesTable tests', () => {
     expect(screen.queryByRole('link', { name: 'Documentation' })).not.toBeInTheDocument();
     expect(screen.getByRole('row', { name: /span\.kind.*"client"/ })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Open value in' }));
+    // Accessible name comes from the associated value label, not a generic aria-label
+    await user.click(screen.getByRole('button', { name: /"client"/ }));
 
     expect(await screen.findByText('OPEN VALUE IN')).toBeInTheDocument();
     expect(await screen.findByRole('menuitem', { name: 'Documentation' })).toBeInTheDocument();
