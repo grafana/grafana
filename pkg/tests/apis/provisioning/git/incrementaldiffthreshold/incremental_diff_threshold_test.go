@@ -105,16 +105,15 @@ func createGitRepoWithSyncEnabled(
 	initialFiles map[string][]byte,
 ) (*gittest.RemoteRepository, *gittest.LocalRepo) {
 	t.Helper()
-	ctx := context.Background()
 
 	gitServer := h.GitServer()
-	user, err := gitServer.CreateUser(ctx)
+	user, err := gitServer.CreateUser(t.Context())
 	require.NoError(t, err, "failed to create git user")
 
-	remote, err := gitServer.CreateRepo(ctx, repoName, user)
+	remote, err := gitServer.CreateRepo(t.Context(), repoName, user)
 	require.NoError(t, err, "failed to create git remote repository")
 
-	local, err := gittest.NewLocalRepo(ctx)
+	local, err := gittest.NewLocalRepo(t.Context())
 	require.NoError(t, err, "failed to create git local repository")
 	t.Cleanup(func() {
 		if err := local.Cleanup(); err != nil {
@@ -151,7 +150,7 @@ func createGitRepoWithSyncEnabled(
 		"WorkflowsJSON":       `[]`,
 	})
 
-	_, err = h.Repositories.Resource.Create(ctx, repoObj, metav1.CreateOptions{})
+	_, err = h.Repositories.Resource.Create(t.Context(), repoObj, metav1.CreateOptions{})
 	require.NoError(t, err, "failed to create repository")
 
 	h.WaitForHealthyRepository(t, repoName)

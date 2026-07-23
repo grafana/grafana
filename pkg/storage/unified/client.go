@@ -196,10 +196,9 @@ func newClient(opts options.StorageOptions,
 		}
 
 		storageOpts := []sql.StorageBackendOption{sql.WithEventPublisher(eventPublisher)}
-		// Run the shadow notifier in-process too when enabled, mirroring the
-		// storage-server module. Gated on the flag; the subscriber's own Enabled()
-		// check downstream stops it when the bus is off.
-		if cfg.NATS.NotifierShadow && eventSubscriber != nil {
+		if cfg.NATS.Notifier && eventSubscriber != nil {
+			storageOpts = append(storageOpts, sql.WithNatsNotifier(natsEventSubscriber{sub: eventSubscriber}))
+		} else if cfg.NATS.NotifierShadow && eventSubscriber != nil {
 			storageOpts = append(storageOpts, sql.WithNatsNotifierShadow(natsEventSubscriber{sub: eventSubscriber}))
 		}
 		backend, err := sql.NewStorageBackend(cfg, eDB, reg, storageMetrics, false, kvStore, gcGate, storageOpts...)
@@ -369,9 +368,8 @@ func grpcConn(address string, metrics *clientMetrics, clientKeepaliveTime time.D
 
 	if clientKeepaliveTime > 0 {
 		opts = append(opts, grpc.WithKeepaliveParams(keepalive.ClientParameters{
-			Time:                clientKeepaliveTime,
-			Timeout:             10 * time.Second,
-			PermitWithoutStream: true,
+			Time:    clientKeepaliveTime,
+			Timeout: 10 * time.Second,
 		}))
 	}
 	// Create a connection to the gRPC server

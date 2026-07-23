@@ -13,6 +13,7 @@ import (
 	"github.com/apache/arrow-go/v18/arrow/flight/flightsql/example"
 	"github.com/apache/arrow-go/v18/arrow/memory"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -93,6 +94,7 @@ func (suite *FSQLTestSuite) TestIntegration_QueryData() {
 					},
 				},
 			},
+			log.NewNullLogger(),
 		)
 
 		require.NoError(suite.T(), err)
@@ -159,6 +161,7 @@ func TestInvalidSchema(t *testing.T) {
 				},
 			},
 		},
+		log.NewNullLogger(),
 	)
 	require.Equal(t, backend.ErrorSourceDownstream, resp.Responses["A"].ErrorSource)
 }

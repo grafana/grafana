@@ -9,6 +9,8 @@ import {
   SceneObjectBase,
   type SceneObjectRef,
   type SceneObjectState,
+  SceneObjectUrlSyncConfig,
+  type SceneObjectUrlValues,
   type VizPanel,
 } from '@grafana/scenes';
 import { Box, ScrollContainer, Sidebar, Text, RadioButtonDot, Button, Spinner } from '@grafana/ui';
@@ -27,6 +29,9 @@ export interface ViewPanelSidePaneState extends SceneObjectState {
 
 export class ViewPanelSidePane extends SceneObjectBase<ViewPanelSidePaneState> {
   public static Component = ViewPanelSidePaneRenderer;
+
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['fanout'] });
+
   public getId() {
     return 'view-panel-pane';
   }
@@ -34,6 +39,18 @@ export class ViewPanelSidePane extends SceneObjectBase<ViewPanelSidePaneState> {
   public onSetMode(value: string | undefined) {
     this.setState({ fanoutMode: value });
     DashboardInteractions.viewPanelAction({ action: 'set_fanout_mode', value: value ?? '' });
+  }
+
+  public getUrlState() {
+    return { fanout: this.state.fanoutMode };
+  }
+
+  public updateFromUrl(values: SceneObjectUrlValues) {
+    if (typeof values.fanout === 'string') {
+      this.setState({ fanoutMode: values.fanout });
+    } else if (Object.hasOwn(values, 'fanout')) {
+      this.setState({ fanoutMode: undefined });
+    }
   }
 }
 

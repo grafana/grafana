@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"math/rand/v2"
+	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/authlib/types"
@@ -39,10 +41,18 @@ func NewTenantDeleterConfig(cfg *setting.Cfg) *TenantDeleterConfig {
 		interval = 1 * time.Hour
 	}
 
+	var gcomClient gcom.Service
+	token := strings.TrimSpace(cfg.GrafanaComSSOAPIToken)
+	apiURL := strings.TrimSpace(cfg.GrafanaComAPIURL)
+	if token != "" && apiURL != "" {
+		gcomClient = gcom.New(gcom.Config{ApiURL: apiURL, Token: token}, &http.Client{Timeout: 30 * time.Second})
+	}
+
 	return &TenantDeleterConfig{
 		DryRun:   cfg.TenantDeleterDryRun,
 		Interval: interval,
 		Log:      log.New("tenant-deleter"),
+		Gcom:     gcomClient,
 	}
 }
 

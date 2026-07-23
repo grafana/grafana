@@ -48,6 +48,7 @@ func TestIntegrationTeams(t *testing.T) {
 			})
 
 			doTeamCRUDTestsUsingTheNewAPIs(t, helper)
+			doTeamTitleUniquenessTests(t, helper)
 			doTeamListFilteringTest(t, helper)
 			doTeamSpecMembersTests(t, helper)
 			doTeamSpecExternalGroupsOSSTests(t, helper)
@@ -290,6 +291,89 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		// Cleanup
 		_, err = env.SQLStore.GetSqlxSession().Exec(ctx, "DELETE FROM team WHERE uid IN (?, ?)", "t000000001", "t000000002")
 		require.NoError(t, err)
+	})
+}
+
+// doTeamTitleUniquenessTests verifies the admission-level title uniqueness
+// check end to end. Legacy storage also enforces UNIQUE(org_id, name), but in
+// unified-only mode there is no DB constraint — the 409 must come from
+// validation, so this runs in every dual-write mode.
+func doTeamTitleUniquenessTests(t *testing.T, helper *apis.K8sTestHelper) {
+	newTeam := func(generateName, title string) *unstructured.Unstructured {
+		return &unstructured.Unstructured{Object: map[string]interface{}{
+			"apiVersion": "iam.grafana.app/v0alpha1",
+			"kind":       "Team",
+			"metadata":   map[string]interface{}{"generateName": generateName},
+			"spec":       map[string]interface{}{"title": title},
+		}}
+	}
+
+	mustCreate := func(t *testing.T, ctx context.Context, teamClient *apis.K8sResourceClient, generateName, title string) *unstructured.Unstructured {
+		created, err := teamClient.Resource.Create(ctx, newTeam(generateName, title), metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
+		return created
+	}
+
+	requireConflict := func(t *testing.T, err error, title string) {
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(409), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, fmt.Sprintf("team name '%s' is already taken", title))
+	}
+
+	t.Run("should reject creating a team with a duplicate title", func(t *testing.T) {
+		ctx := context.Background()
+		teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeams,
+		})
+
+		mustCreate(t, ctx, teamClient, "team-dup-title-a-", "Duplicate Title Team")
+
+		_, err := teamClient.Resource.Create(ctx, newTeam("team-dup-title-b-", "Duplicate Title Team"), metav1.CreateOptions{})
+		requireConflict(t, err, "Duplicate Title Team")
+	})
+
+	t.Run("should reject creating a team with a case-variant of an existing title", func(t *testing.T) {
+		ctx := context.Background()
+		teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeams,
+		})
+
+		mustCreate(t, ctx, teamClient, "team-dup-case-a-", "Case Variant Team")
+
+		_, err := teamClient.Resource.Create(ctx, newTeam("team-dup-case-b-", "cASE vARIANT tEAM"), metav1.CreateOptions{})
+		requireConflict(t, err, "cASE vARIANT tEAM")
+	})
+
+	t.Run("should reject renaming a team to a taken title but allow a free one", func(t *testing.T) {
+		ctx := context.Background()
+		teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeams,
+		})
+
+		mustCreate(t, ctx, teamClient, "team-rename-target-", "Rename Target Team")
+		source := mustCreate(t, ctx, teamClient, "team-rename-source-", "Rename Source Team")
+
+		toUpdate, err := teamClient.Resource.Get(ctx, source.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		toUpdate.Object["spec"].(map[string]interface{})["title"] = "Rename Target Team"
+		_, err = teamClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+		requireConflict(t, err, "Rename Target Team")
+
+		toUpdate, err = teamClient.Resource.Get(ctx, source.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		toUpdate.Object["spec"].(map[string]interface{})["title"] = "Rename Free Team"
+		updated, err := teamClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, "Rename Free Team", updated.Object["spec"].(map[string]interface{})["title"])
 	})
 }
 

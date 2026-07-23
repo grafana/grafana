@@ -166,6 +166,60 @@ describe('provisioning data mapping', () => {
       expect(data.url).toBe('https://github.com/owner/repo');
       expect(data.generateDashboardPreviews).toBe(true);
     });
+
+    it('honors github.generateDashboardPreviews for github specs, ignoring pullRequest', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        description: '',
+        sync: baseSync,
+        workflows: [],
+        github: {
+          url: 'https://github.com/owner/repo',
+          branch: 'main',
+          path: '',
+          generateDashboardPreviews: false,
+        },
+        pullRequest: {
+          generateDashboardPreviews: true,
+        },
+      };
+
+      const data = specToData(spec);
+      expect(data.generateDashboardPreviews).toBe(false);
+    });
+  });
+
+  describe('githubEnterprise', () => {
+    it('writes generateDashboardPreviews onto pullRequest options, not the githubEnterprise config', () => {
+      const formData = makeFormData('githubEnterprise');
+      formData.generateDashboardPreviews = true;
+      const spec = dataToSpec(formData);
+
+      expect(spec.pullRequest?.generateDashboardPreviews).toBe(true);
+      expect(spec.githubEnterprise).not.toHaveProperty('generateDashboardPreviews');
+    });
+
+    it('reads generateDashboardPreviews from pullRequest options', () => {
+      const spec: RepositorySpec = {
+        type: 'githubEnterprise',
+        title: 'repo',
+        description: '',
+        sync: baseSync,
+        workflows: [],
+        githubEnterprise: {
+          url: 'https://ghes.example.com/owner/repo',
+          branch: 'main',
+          path: '',
+        },
+        pullRequest: {
+          generateDashboardPreviews: true,
+        },
+      };
+
+      const data = specToData(spec);
+      expect(data.generateDashboardPreviews).toBe(true);
+    });
   });
 
   describe('webhook', () => {

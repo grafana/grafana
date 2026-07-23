@@ -2,7 +2,6 @@ package git
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -95,10 +94,9 @@ func TestIntegrationGitTestEndpoint_EmptyRepository(t *testing.T) {
 	})
 
 	t.Run("test endpoint succeeds after pushing a commit to empty repository", func(t *testing.T) {
-		ctx := context.Background()
 		remote, user := createEmptyGitRepo(t, helper, "test-empty-then-push")
 
-		local, err := gittest.NewLocalRepo(ctx)
+		local, err := gittest.NewLocalRepo(t.Context())
 		require.NoError(t, err, "failed to create local repository")
 		t.Cleanup(func() {
 			if err := local.Cleanup(); err != nil {
@@ -184,12 +182,10 @@ func callTestEndpoint(t *testing.T, h *common.GitTestHelper, repoName string, re
 func createEmptyGitRepo(t *testing.T, h *common.GitTestHelper, repoName string) (*gittest.RemoteRepository, *gittest.User) {
 	t.Helper()
 
-	ctx := context.Background()
-
-	user, err := h.GitServer().CreateUser(ctx)
+	user, err := h.GitServer().CreateUser(t.Context())
 	require.NoError(t, err, "failed to create user")
 
-	remote, err := h.GitServer().CreateRepo(ctx, repoName, user)
+	remote, err := h.GitServer().CreateRepo(t.Context(), repoName, user)
 	require.NoError(t, err, fmt.Sprintf("failed to create remote repository %s", repoName))
 
 	return remote, user

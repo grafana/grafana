@@ -1,7 +1,6 @@
 package git
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"testing"
@@ -20,7 +19,6 @@ import (
 
 func TestIntegrationProvisioning_GitRequiresNewTokenWhenRepositoryURLChanges(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	repoName := "git-url-change-test"
 	helper.CreateGitRepo(t, repoName, map[string][]byte{
@@ -29,13 +27,13 @@ func TestIntegrationProvisioning_GitRequiresNewTokenWhenRepositoryURLChanges(t *
 
 	t.Run("update rejects url change without a new token", func(t *testing.T) {
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			repo, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+			repo, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 			require.NoError(collect, err)
 			updated := common.MustToUnstructured(t, repo)
 			require.NoError(collect, unstructured.SetNestedField(updated.Object, "https://some-new-url/", "spec", "git", "url"))
 			unstructured.RemoveNestedField(updated.Object, "secure", "token")
 
-			_, err = helper.Repositories.Resource.Update(ctx, updated, metav1.UpdateOptions{})
+			_, err = helper.Repositories.Resource.Update(t.Context(), updated, metav1.UpdateOptions{})
 			require.Error(collect, err)
 			require.True(collect, apierrors.IsInvalid(err), "expected invalid repository update, got %v", err)
 			require.ErrorContains(collect, err, "secure.token")
@@ -47,7 +45,7 @@ func TestIntegrationProvisioning_GitRequiresNewTokenWhenRepositoryURLChanges(t *
 		changedRemote, changedUser := createEmptyGitRepo(t, helper, "git-url-change-new-token-new")
 
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			repo, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+			repo, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 			require.NoError(collect, err)
 
 			repoObj := common.MustFromUnstructured[provisioning.Repository](t, repo)
@@ -55,7 +53,7 @@ func TestIntegrationProvisioning_GitRequiresNewTokenWhenRepositoryURLChanges(t *
 			repoObj.Spec.Git.TokenUser = changedUser.Username
 			repoObj.Secure.Token = apicommon.InlineSecureValue{Create: apicommon.RawSecureValue(changedUser.Password)}
 
-			result, err := helper.Repositories.Resource.Update(ctx, common.MustToUnstructured(t, repoObj), metav1.UpdateOptions{})
+			result, err := helper.Repositories.Resource.Update(t.Context(), common.MustToUnstructured(t, repoObj), metav1.UpdateOptions{})
 			require.NoError(collect, err)
 
 			updatedRepo := common.MustFromUnstructured[provisioning.Repository](t, result)
@@ -98,7 +96,7 @@ func TestIntegrationProvisioning_GitRequiresNewTokenWhenRepositoryURLChanges(t *
 			SubResource("test").
 			Body(configBytes).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error())
 		require.Equal(t, http.StatusBadRequest, statusCode)
@@ -109,7 +107,7 @@ func TestIntegrationProvisioning_GitRequiresNewTokenWhenRepositoryURLChanges(t *
 	t.Run("test subresource allows url change with a new token", func(t *testing.T) {
 		changedRemote, changedUser := createEmptyGitRepo(t, helper, "git-url-change-test-no-token-new")
 
-		local, err := gittest.NewLocalRepo(ctx)
+		local, err := gittest.NewLocalRepo(t.Context())
 		require.NoError(t, err, "failed to create local repository")
 		t.Cleanup(func() {
 			if err := local.Cleanup(); err != nil {
@@ -156,7 +154,7 @@ func TestIntegrationProvisioning_GitRequiresNewTokenWhenRepositoryURLChanges(t *
 			SubResource("test").
 			Body(configBytes).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.NoError(t, result.Error())
 		require.Equal(t, http.StatusOK, statusCode)

@@ -335,6 +335,7 @@ const TeamList = () => {
                 <FilterInput
                   placeholder={t('teams.team-list.placeholder-search-teams', 'Search teams')}
                   value={query}
+                  escapeRegex={false}
                   onChange={setQuery}
                 />
               </InlineField>

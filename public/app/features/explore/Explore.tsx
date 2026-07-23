@@ -20,7 +20,8 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import {
   type AdHocFilterItem,
@@ -202,7 +203,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
     if (!query) {
       return false;
     }
-    const ds = await getDataSourceSrv().get(query.datasource);
+    const ds = await getDataSourceInstance(query.datasource);
     if (hasToggleableQueryFiltersSupport(ds) && ds.queryHasFilter(query, { key, value: value.toString() })) {
       return true;
     }
@@ -270,7 +271,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
       if (datasource == null) {
         return query;
       }
-      const ds = await getDataSourceSrv().get(datasource);
+      const ds = await getDataSourceInstance(datasource);
       const toggleableFilters = ['ADD_FILTER', 'ADD_FILTER_OUT'];
       if (hasToggleableQueryFiltersSupport(ds) && toggleableFilters.includes(modification.type)) {
         return ds.toggleQueryFilter(query, {
@@ -322,14 +323,14 @@ export class Explore extends PureComponent<Props, ExploreState> {
        * More data source may struggle with this setting: https://github.com/grafana/grafana/issues/112075
        * We're making it enabled for tempo only and will try to make it optional for other data sources in the future.
        */
-      const dsType = getDataSourceSrv().getInstanceSettings({ uid: options?.datasourceUid })?.type;
+      const dsType = (await getDataSourceInstanceSettings({ uid: options?.datasourceUid }))?.type;
       if (dsType === 'tempo' || options?.queries?.every((q) => q.datasource?.type === 'tempo')) {
         compact = true;
       }
 
       this.props.splitOpen(options ? { ...options, compact } : options);
       if (options && this.props.datasourceInstance) {
-        const target = (await getDataSourceSrv().get(options.datasourceUid)).type;
+        const target = (await getDataSourceInstanceSettings(options.datasourceUid))?.type;
         const source =
           this.props.datasourceInstance.uid === MIXED_DATASOURCE_NAME
             ? get(this.props.queries, '0.datasource.type')

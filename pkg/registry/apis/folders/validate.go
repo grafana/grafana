@@ -284,10 +284,11 @@ func checkMoveAccess(
 
 	folderGVR := folders.FolderResourceInfo.GroupVersionResource()
 
+	// Separators must keep correlation IDs within OpenFGA's regex pattern ^[\w\d-]{1,36}$
 	const (
 		writeDestKey    = "writeDest"
-		newFolderPrefix = "newFolder|"
-		oldFolderPrefix = "oldFolder|"
+		newFolderPrefix = "newFolder-"
+		oldFolderPrefix = "oldFolder-"
 	)
 
 	checks := make([]authlib.BatchCheckItem, 0, 1+2*len(tierProbes))

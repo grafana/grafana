@@ -88,10 +88,12 @@ By hovering over a panel with the mouse you can use some shortcuts that target t
 
 - `e`: Toggle panel edit view
 - `v`: Toggle panel full screen view
-- `pu`: Share link
+- `pu`: Copy panel share link
 - `pe`: Share embed
 - `ps`: Share snapshot
 - `px`: Open panel in **Explore**
+- `pc`: Copy panel
+- `pv`: Paste panel
 - `pd`: Duplicate Panel
 - `i`: Inspect
 - `pl`: Hide or show legend
@@ -103,12 +105,12 @@ By hovering over a panel with the mouse you can use some shortcuts that target t
 
 You can configure the following settings to control the time range for a panel:
 
-| Option                | Description                                                                                                                              |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Panel time range      | Overrides the dashboard time range. Use one of the preset values or enter a custom value like `5m` or `2h`.                              |
-| Time shift            | Adds a time shift relative to the dashboard or panel time range. Use one of the preset values or enter a custom value like `5m` or `2h`. |
-| Time comparison       | <p>Compare data between two time ranges.</p><p>To try out this feature, enable the `timeComparison` feature toggle.</p>                  |
-| Hide panel time range | Don't show the panel time range in the panel header.                                                                                     |
+| Option                | Description                                                                                                                                                              |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Panel time range      | Overrides the dashboard time range. Use one of the preset values or enter a custom value like `5m` or `2h`.                                                              |
+| Time shift            | Adds a time shift relative to the dashboard or panel time range. Use one of the preset values or enter a custom value like `5m` or `2h`.                                 |
+| Time comparison       | <p>Compare data between two time ranges. Applied after **Time shift** when used together.</p><p>To try out this feature, enable the `timeComparison` feature toggle.</p> |
+| Hide panel time range | Don't show the panel time range in the panel header.                                                                                                                     |
 
 ## Pan and zoom panel time range
 

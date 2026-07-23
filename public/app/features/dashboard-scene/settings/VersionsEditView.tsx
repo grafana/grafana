@@ -62,6 +62,11 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
     });
 
     this.addActivationHandler(() => {
+      if (this._dashboard.isManagedRepository()) {
+        // The view only renders an unavailable alert for repo-managed dashboards.
+        this.setState({ isLoading: false, isAppending: false });
+        return;
+      }
       this.fetchVersions();
     });
   }

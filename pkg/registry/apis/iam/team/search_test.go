@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	teamsearch "github.com/grafana/grafana/pkg/services/team/search"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -60,7 +59,8 @@ func TestTeamSearchFallback(t *testing.T) {
 				},
 			}
 			dual := dualwrite.ProvideServiceForTests(cfg)
-			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil, nil)
+			searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0alpha1.TeamResourceInfo.GroupResource(), mockClient, mockLegacyClient)
+			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, nil)
 
 			rr := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", "/teams/search", nil)
@@ -83,12 +83,10 @@ func TestSearchHandler(t *testing.T) {
 	t.Run("search using default team search fields", func(t *testing.T) {
 		mockClient := &MockClient{}
 
-		features := featuremgmt.WithFeatures()
 		searchHandler := SearchHandler{
-			log:      log.New("grafana-apiserver.teams.search"),
-			client:   mockClient,
-			tracer:   tracing.NewNoopTracerService(),
-			features: features,
+			log:    log.New("grafana-apiserver.teams.search"),
+			client: mockClient,
+			tracer: tracing.NewNoopTracerService(),
 		}
 
 		rr := httptest.NewRecorder()
@@ -118,12 +116,10 @@ func TestSearchHandler(t *testing.T) {
 			MockError: errors.New("search failed"),
 		}
 
-		features := featuremgmt.WithFeatures()
 		searchHandler := SearchHandler{
-			log:      log.New("grafana-apiserver.teams.search"),
-			client:   mockClient,
-			tracer:   tracing.NewNoopTracerService(),
-			features: features,
+			log:    log.New("grafana-apiserver.teams.search"),
+			client: mockClient,
+			tracer: tracing.NewNoopTracerService(),
 		}
 
 		rr := httptest.NewRecorder()
@@ -203,7 +199,8 @@ func TestSearchHandler(t *testing.T) {
 				},
 			}
 			dual := dualwrite.ProvideServiceForTests(cfg)
-			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockClient, mockClient, nil, nil)
+			searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0alpha1.TeamResourceInfo.GroupResource(), mockClient, mockClient)
+			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, nil)
 
 			rr := httptest.NewRecorder()
 			endpoint := fmt.Sprintf("/teams/search?limit=%d", limit)
@@ -233,10 +230,9 @@ func TestSearchHandler(t *testing.T) {
 		mockClient := &MockClient{}
 
 		searchHandler := &SearchHandler{
-			log:      log.New("grafana-apiserver.teams.search"),
-			client:   mockClient,
-			tracer:   tracing.NewNoopTracerService(),
-			features: featuremgmt.WithFeatures(),
+			log:    log.New("grafana-apiserver.teams.search"),
+			client: mockClient,
+			tracer: tracing.NewNoopTracerService(),
 		}
 
 		rr := httptest.NewRecorder()
@@ -256,10 +252,9 @@ func TestSearchHandler(t *testing.T) {
 				mockClient := &MockClient{}
 
 				searchHandler := &SearchHandler{
-					log:      log.New("grafana-apiserver.teams.search"),
-					client:   mockClient,
-					tracer:   tracing.NewNoopTracerService(),
-					features: featuremgmt.WithFeatures(),
+					log:    log.New("grafana-apiserver.teams.search"),
+					client: mockClient,
+					tracer: tracing.NewNoopTracerService(),
 				}
 
 				rr := httptest.NewRecorder()
@@ -431,7 +426,6 @@ func TestTeamAccessControl(t *testing.T) {
 				log:          log.New("grafana-apiserver.teams.search"),
 				client:       mockTeamClientWithHits(),
 				tracer:       tracing.NewNoopTracerService(),
-				features:     featuremgmt.WithFeatures(),
 				accessClient: tc.client,
 			}
 
@@ -466,7 +460,6 @@ func TestTeamSearchMemberCount(t *testing.T) {
 			log:        log.New("grafana-apiserver.teams.search"),
 			client:     mockTeamClientWithHits(),
 			tracer:     tracing.NewNoopTracerService(),
-			features:   featuremgmt.WithFeatures(),
 			teamGetter: mockGetter,
 		}
 
@@ -492,7 +485,6 @@ func TestTeamSearchMemberCount(t *testing.T) {
 			log:        log.New("grafana-apiserver.teams.search"),
 			client:     mockTeamClientWithHits(),
 			tracer:     tracing.NewNoopTracerService(),
-			features:   featuremgmt.WithFeatures(),
 			teamGetter: mockGetter,
 		}
 
@@ -518,7 +510,6 @@ func TestTeamSearchMemberCount(t *testing.T) {
 			log:        log.New("grafana-apiserver.teams.search"),
 			client:     mockTeamClientWithHits(),
 			tracer:     tracing.NewNoopTracerService(),
-			features:   featuremgmt.WithFeatures(),
 			teamGetter: mockGetter,
 		}
 
@@ -551,7 +542,6 @@ func TestTeamSearchMemberCount(t *testing.T) {
 			log:        log.New("grafana-apiserver.teams.search"),
 			client:     mockTeamClientWithHits(),
 			tracer:     tracing.NewNoopTracerService(),
-			features:   featuremgmt.WithFeatures(),
 			teamGetter: errorGetter,
 		}
 
@@ -711,6 +701,12 @@ func (m *MockClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRe
 	return response, nil
 }
 func (m *MockClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) RecordEvent(ctx context.Context, in *resourcepb.RecordEventRequest, opts ...grpc.CallOption) (*resourcepb.RecordEventResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) GetResourceDailyStats(ctx context.Context, in *resourcepb.GetResourceDailyStatsRequest, opts ...grpc.CallOption) (resourcepb.ResourceStats_GetResourceDailyStatsClient, error) {
 	return nil, nil
 }
 func (m *MockClient) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {

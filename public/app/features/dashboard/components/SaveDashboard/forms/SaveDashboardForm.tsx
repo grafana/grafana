@@ -4,13 +4,11 @@ import { useMemo, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { Button, Checkbox, TextArea, useStyles2, Stack } from '@grafana/ui';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
-import { GenAIDashboardChangesButton } from '../../GenAI/GenAIDashboardChangesButton';
 import { type SaveDashboardData, type SaveDashboardOptions } from '../types';
 
 export type SaveProps = {
@@ -97,19 +95,6 @@ export const SaveDashboardForm = ({
           />
         )}
         <div className={styles.message}>
-          {config.featureToggles.aiGeneratedDashboardChanges && (
-            <GenAIDashboardChangesButton
-              dashboard={dashboard}
-              onGenerate={(text) => {
-                onOptionsChange({
-                  ...options,
-                  message: text,
-                });
-                setMessage(text);
-              }}
-              disabled={!saveModel.hasChanges}
-            />
-          )}
           <TextArea
             value={message}
             onChange={(e) => {

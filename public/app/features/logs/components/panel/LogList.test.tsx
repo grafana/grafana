@@ -516,6 +516,8 @@ describe('LogList', () => {
     });
 
     test('Toggles displayed fields on and off', async () => {
+      // Disable OTel suggested fields so each label renders once in the selector.
+      setBooleanFlags({ otelLogsFormatting: false });
       const { rerender } = render(<LogList {...defaultProps} {...extraProps} showFieldSelector />);
 
       await screen.findByText('log 1');
@@ -551,8 +553,8 @@ describe('LogList', () => {
       // Log line message
       expect(screen.getByText('log message 1')).toBeInTheDocument();
 
-      // Label
-      expect(screen.getByText('service')).toBeInTheDocument();
+      // Label (also rendered as a suggested field when OTel formatting is enabled)
+      expect(screen.getAllByText('service').length).toBeGreaterThan(0);
 
       // Default displayed fields
       expect(screen.getByText('Log line')).toBeInTheDocument();

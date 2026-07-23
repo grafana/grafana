@@ -36,6 +36,7 @@ import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/D
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
 import { refetchChildren, refreshParents } from '../state/actions';
 import { findItem } from '../state/utils';
+import { getFolderURL } from '../utils/dashboards';
 
 import { PAGE_SIZE } from './constants';
 import { isProvisionedDashboard } from './isProvisioned';
@@ -167,7 +168,7 @@ export const browseDashboardsAPI = createApi({
           version,
         },
       }),
-      onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
+      onQueryStarted: ({ uid, title, parentUid }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
           dispatch(
             refetchChildren({
@@ -176,6 +177,10 @@ export const browseDashboardsAPI = createApi({
             })
           );
           refreshTeamFolders();
+          // Browse-tree refetch doesn't touch the mounted Starred nav row; update its label directly.
+          if (title) {
+            dispatch(updateDashboardName({ id: uid, title, url: getFolderURL(uid) }));
+          }
         });
       },
     }),
@@ -216,6 +221,7 @@ export const browseDashboardsAPI = createApi({
           dispatch(refetchChildren({ parentUID: parentUid, pageSize: PAGE_SIZE }));
           refreshTeamFolders();
           invalidateQuotaUsage(dispatch);
+          dispatch(setStarred({ id: uid, title: '', url: '', isStarred: false }));
         } catch {
           // Error handled by mutation caller
         }
@@ -351,11 +357,15 @@ export const browseDashboardsAPI = createApi({
             continue;
           }
 
-          await baseQuery({
+          const response = await baseQuery({
             url: `/folders/${folderUID}`,
             method: 'DELETE',
             params: deleteFolderParams,
           });
+          if (!response.error) {
+            // Only clear the nav starred entry for folders that were actually deleted
+            api.dispatch(setStarred({ id: folderUID, title: '', url: '', isStarred: false }));
+          }
         }
 
         return { data: undefined };

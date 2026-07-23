@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
@@ -367,6 +369,19 @@ func (d *jobDriver) processJobWithLeaseCheck(ctx context.Context, recorder JobPr
 	}
 }
 
+// withJobAuthorSignature carries the job's recorded author into ctx as the git
+// commit signature when present. The author annotations are set at creation time
+// by the job admission mutator, which is where the user-attribution feature flag
+// is enforced; the driver simply applies whatever was recorded on the job.
+func withJobAuthorSignature(ctx context.Context, job *provisioning.Job) context.Context {
+	name := job.Annotations[appjobs.AnnoAuthor]
+	email := job.Annotations[appjobs.AnnoAuthorEmail]
+	if name == "" && email == "" {
+		return ctx
+	}
+	return repository.WithAuthorSignature(ctx, repository.CommitSignature{Name: name, Email: email})
+}
+
 func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder) error {
 	ctx, span := tracing.Start(ctx, "provisioning.jobs.process_job")
 	defer span.End()
@@ -388,6 +403,8 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 		attribute.String("job.repository", repoName),
 		attribute.String("job.action", string(job.Spec.Action)),
 	)
+
+	ctx = withJobAuthorSignature(ctx, job)
 
 	for _, worker := range d.workers {
 		if !worker.IsSupported(ctx, *job) {

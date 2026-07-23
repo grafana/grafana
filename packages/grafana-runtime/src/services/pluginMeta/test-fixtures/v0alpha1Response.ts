@@ -727,6 +727,7 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
           loadingStrategy: 'script',
         },
         baseURL: 'app/plugins/panel/annolist',
+        aliasIds: ['ryantxu-annolist-panel'],
         signature: {
           status: 'internal',
         },
@@ -2424,79 +2425,6 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
       kind: 'Meta',
       apiVersion: 'plugins.grafana.app/v0alpha1',
       metadata: {
-        name: 'grafana-pyroscope-datasource',
-        namespace: 'default',
-      },
-      spec: {
-        pluginJson: {
-          id: 'grafana-pyroscope-datasource',
-          type: 'datasource',
-          name: 'Grafana Pyroscope',
-          info: {
-            keywords: [
-              'grafana',
-              'datasource',
-              'phlare',
-              'flamegraph',
-              'profiling',
-              'continuous profiling',
-              'pyroscope',
-            ],
-            logos: {
-              small: 'app/plugins/datasource/grafana-pyroscope-datasource/dist/img/grafana_pyroscope_icon.svg',
-              large: 'app/plugins/datasource/grafana-pyroscope-datasource/dist/img/grafana_pyroscope_icon.svg',
-            },
-            updated: '',
-            version: '12.4.0-pre',
-            author: {
-              name: 'Grafana Labs',
-              url: 'https://www.grafana.com',
-            },
-            description:
-              'Data source for Grafana Pyroscope, horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation system.',
-            links: [
-              {
-                name: 'GitHub Project',
-                url: 'https://github.com/grafana/pyroscope',
-              },
-              {
-                name: 'Raise issue',
-                url: 'https://github.com/grafana/pyroscope/issues/new',
-              },
-              {
-                name: 'Documentation',
-                url: 'https://grafana.com/docs/grafana/latest/datasources/pyroscope/',
-              },
-            ],
-          },
-          dependencies: {
-            grafanaDependency: '>=10.3.0-0',
-            grafanaVersion: '*',
-          },
-          backend: true,
-          category: 'profiling',
-          executable: 'gpx_grafana-pyroscope-datasource',
-          metrics: true,
-        },
-        class: 'core',
-        module: {
-          path: 'app/plugins/datasource/grafana-pyroscope-datasource/dist/module.js',
-          loadingStrategy: 'script',
-        },
-        baseURL: 'app/plugins/datasource/grafana-pyroscope-datasource/dist',
-        signature: {
-          status: 'internal',
-        },
-        angular: {
-          detected: false,
-        },
-      },
-      status: {},
-    },
-    {
-      kind: 'Meta',
-      apiVersion: 'plugins.grafana.app/v0alpha1',
-      metadata: {
         name: 'grafana-testdata-datasource',
         namespace: 'default',
       },
@@ -2836,79 +2764,6 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
       kind: 'Meta',
       apiVersion: 'plugins.grafana.app/v0alpha1',
       metadata: {
-        name: 'jaeger',
-        namespace: 'default',
-      },
-      spec: {
-        pluginJson: {
-          id: 'jaeger',
-          type: 'datasource',
-          name: 'Jaeger',
-          info: {
-            keywords: [],
-            logos: {
-              small: 'app/plugins/datasource/jaeger/dist/img/jaeger_logo.svg',
-              large: 'app/plugins/datasource/jaeger/dist/img/jaeger_logo.svg',
-            },
-            updated: '',
-            version: '12.4.0-pre',
-            author: {
-              name: 'Grafana Labs',
-              url: 'https://grafana.com',
-            },
-            description: 'Open source, end-to-end distributed tracing',
-            links: [
-              {
-                name: 'Learn more',
-                url: 'https://www.jaegertracing.io',
-              },
-              {
-                name: 'Jaeger GitHub Project',
-                url: 'https://github.com/jaegertracing/jaeger',
-              },
-              {
-                name: 'Repository',
-                url: 'https://github.com/grafana/grafana',
-              },
-              {
-                name: 'Raise issue',
-                url: 'https://github.com/grafana/grafana/issues/new',
-              },
-              {
-                name: 'Documentation',
-                url: 'https://grafana.com/docs/grafana/latest/datasources/jaeger/',
-              },
-            ],
-          },
-          dependencies: {
-            grafanaDependency: '>=10.3.0-0',
-            grafanaVersion: '*',
-          },
-          backend: true,
-          category: 'tracing',
-          executable: 'gpx_jaeger',
-          metrics: true,
-          tracing: true,
-        },
-        class: 'core',
-        module: {
-          path: 'app/plugins/datasource/jaeger/dist/module.js',
-          loadingStrategy: 'script',
-        },
-        baseURL: 'app/plugins/datasource/jaeger/dist',
-        signature: {
-          status: 'internal',
-        },
-        angular: {
-          detected: false,
-        },
-      },
-      status: {},
-    },
-    {
-      kind: 'Meta',
-      apiVersion: 'plugins.grafana.app/v0alpha1',
-      metadata: {
         name: 'logs',
         namespace: 'default',
       },
@@ -3092,92 +2947,6 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
         },
         angular: {
           detected: false,
-        },
-      },
-      status: {},
-    },
-    {
-      kind: 'Meta',
-      apiVersion: 'plugins.grafana.app/v0alpha1',
-      metadata: {
-        name: 'mssql',
-        namespace: 'default',
-      },
-      spec: {
-        pluginJson: {
-          id: 'mssql',
-          type: 'datasource',
-          name: 'Microsoft SQL Server',
-          info: {
-            keywords: [],
-            logos: {
-              small: 'app/plugins/datasource/mssql/dist/img/sql_server_logo.svg',
-              large: 'app/plugins/datasource/mssql/dist/img/sql_server_logo.svg',
-            },
-            updated: '',
-            version: '12.4.0-pre',
-            author: {
-              name: 'Grafana Labs',
-              url: 'https://grafana.com',
-            },
-            description: 'Data source for Microsoft SQL Server compatible databases',
-            links: [
-              {
-                name: 'Raise issue',
-                url: 'https://github.com/grafana/grafana/issues/new',
-              },
-              {
-                name: 'Documentation',
-                url: 'https://grafana.com/docs/grafana/latest/datasources/mssql/',
-              },
-            ],
-          },
-          dependencies: {
-            grafanaDependency: '>=10.4.0',
-            grafanaVersion: '*',
-          },
-          alerting: true,
-          annotations: true,
-          backend: true,
-          category: 'sql',
-          executable: 'gpx_mssql',
-          metrics: true,
-          queryOptions: {
-            minInterval: true,
-          },
-        },
-        class: 'core',
-        module: {
-          path: 'app/plugins/datasource/mssql/dist/module.js',
-          loadingStrategy: 'script',
-        },
-        baseURL: 'app/plugins/datasource/mssql/dist',
-        signature: {
-          status: 'internal',
-        },
-        angular: {
-          detected: false,
-        },
-        translations: {
-          'cs-CZ': 'app/plugins/datasource/mssql/dist/locales/cs-CZ/mssql.json',
-          'de-DE': 'app/plugins/datasource/mssql/dist/locales/de-DE/mssql.json',
-          'en-US': 'app/plugins/datasource/mssql/dist/locales/en-US/mssql.json',
-          'es-ES': 'app/plugins/datasource/mssql/dist/locales/es-ES/mssql.json',
-          'fr-FR': 'app/plugins/datasource/mssql/dist/locales/fr-FR/mssql.json',
-          'hu-HU': 'app/plugins/datasource/mssql/dist/locales/hu-HU/mssql.json',
-          'id-ID': 'app/plugins/datasource/mssql/dist/locales/id-ID/mssql.json',
-          'it-IT': 'app/plugins/datasource/mssql/dist/locales/it-IT/mssql.json',
-          'ja-JP': 'app/plugins/datasource/mssql/dist/locales/ja-JP/mssql.json',
-          'ko-KR': 'app/plugins/datasource/mssql/dist/locales/ko-KR/mssql.json',
-          'nl-NL': 'app/plugins/datasource/mssql/dist/locales/nl-NL/mssql.json',
-          'pl-PL': 'app/plugins/datasource/mssql/dist/locales/pl-PL/mssql.json',
-          'pt-BR': 'app/plugins/datasource/mssql/dist/locales/pt-BR/mssql.json',
-          'pt-PT': 'app/plugins/datasource/mssql/dist/locales/pt-PT/mssql.json',
-          'ru-RU': 'app/plugins/datasource/mssql/dist/locales/ru-RU/mssql.json',
-          'sv-SE': 'app/plugins/datasource/mssql/dist/locales/sv-SE/mssql.json',
-          'tr-TR': 'app/plugins/datasource/mssql/dist/locales/tr-TR/mssql.json',
-          'zh-Hans': 'app/plugins/datasource/mssql/dist/locales/zh-Hans/mssql.json',
-          'zh-Hant': 'app/plugins/datasource/mssql/dist/locales/zh-Hant/mssql.json',
         },
       },
       status: {},

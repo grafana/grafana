@@ -65,6 +65,12 @@ message ListRequest {
   ListOptions options = 2;
 }
 
+enum DeletedFilter {
+  DELETED_EXCLUDE = 0; // live only (default)
+  DELETED_INCLUDE = 1; // live and tombstones
+  DELETED_ONLY = 2; // tombstones only
+}
+
 message ListOptions {
   string dashboard_uid = 1;
   int64 panel_id = 2;
@@ -77,9 +83,9 @@ message ListOptions {
   repeated string scopes = 9;
   bool scopes_match_any = 10;
   string created_by = 11;
-  // include_deleted surfaces soft-deleted annotations (with deleted_at set)
-  // in the results. A server that does not soft-delete ignores it.
-  bool include_deleted = 12;
+  // deleted controls whether soft-deleted annotations are included.
+  // A server that does not soft-delete ignores it.
+  DeletedFilter deleted = 12;
 }
 
 message ListResponse {

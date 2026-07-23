@@ -72,4 +72,86 @@ func TestIntegrationUpdateAdminConfiguration(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, ngmodels.ExternalAlertmanagers, *cfg3.SendAlertsTo)
 	})
+
+	uid := "some-mimir-ds-uid"
+
+	t.Run("insert with only ExternalAlertmanagerUID defaults SendAlertsTo to internal", func(t *testing.T) {
+		err := store.UpdateAdminConfiguration(UpdateAdminConfigurationCmd{
+			AdminConfiguration: &ngmodels.AdminConfiguration{
+				OrgID:                   10,
+				ExternalAlertmanagerUID: &uid,
+			},
+		})
+		require.NoError(t, err)
+
+		cfg, err := store.GetAdminConfiguration(10)
+		require.NoError(t, err)
+		require.NotNil(t, cfg.ExternalAlertmanagerUID)
+		require.Equal(t, uid, *cfg.ExternalAlertmanagerUID)
+		require.NotNil(t, cfg.SendAlertsTo)
+		require.Equal(t, ngmodels.InternalAlertmanager, *cfg.SendAlertsTo)
+	})
+
+	t.Run("UID-only update preserves existing SendAlertsTo", func(t *testing.T) {
+		external := ngmodels.ExternalAlertmanagers
+		err := store.UpdateAdminConfiguration(UpdateAdminConfigurationCmd{
+			AdminConfiguration: &ngmodels.AdminConfiguration{
+				OrgID:        11,
+				SendAlertsTo: &external,
+			},
+		})
+		require.NoError(t, err)
+
+		err = store.UpdateAdminConfiguration(UpdateAdminConfigurationCmd{
+			AdminConfiguration: &ngmodels.AdminConfiguration{
+				OrgID:                   11,
+				ExternalAlertmanagerUID: &uid,
+			},
+		})
+		require.NoError(t, err)
+
+		cfg, err := store.GetAdminConfiguration(11)
+		require.NoError(t, err)
+		require.NotNil(t, cfg.SendAlertsTo)
+		require.Equal(t, ngmodels.ExternalAlertmanagers, *cfg.SendAlertsTo)
+		require.NotNil(t, cfg.ExternalAlertmanagerUID)
+		require.Equal(t, uid, *cfg.ExternalAlertmanagerUID)
+	})
+
+	t.Run("choice-only update preserves existing UID", func(t *testing.T) {
+		err := store.UpdateAdminConfiguration(UpdateAdminConfigurationCmd{
+			AdminConfiguration: &ngmodels.AdminConfiguration{
+				OrgID:                   12,
+				ExternalAlertmanagerUID: &uid,
+			},
+		})
+		require.NoError(t, err)
+
+		external := ngmodels.ExternalAlertmanagers
+		err = store.UpdateAdminConfiguration(UpdateAdminConfigurationCmd{
+			AdminConfiguration: &ngmodels.AdminConfiguration{
+				OrgID:        12,
+				SendAlertsTo: &external,
+			},
+		})
+		require.NoError(t, err)
+
+		cfg, err := store.GetAdminConfiguration(12)
+		require.NoError(t, err)
+		require.NotNil(t, cfg.ExternalAlertmanagerUID)
+		require.Equal(t, uid, *cfg.ExternalAlertmanagerUID)
+		require.NotNil(t, cfg.SendAlertsTo)
+		require.Equal(t, ngmodels.ExternalAlertmanagers, *cfg.SendAlertsTo)
+	})
+
+	t.Run("insert without SendAlertsTo does not mutate the command", func(t *testing.T) {
+		cmd := UpdateAdminConfigurationCmd{
+			AdminConfiguration: &ngmodels.AdminConfiguration{
+				OrgID:                   13,
+				ExternalAlertmanagerUID: &uid,
+			},
+		}
+		require.NoError(t, store.UpdateAdminConfiguration(cmd))
+		require.Nil(t, cmd.AdminConfiguration.SendAlertsTo)
+	})
 }

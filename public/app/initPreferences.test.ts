@@ -125,6 +125,12 @@ describe('initPreferences', () => {
     expect(window.grafanaBootData.user.timezone).toBe('browser');
   });
 
+  it('returns the fetched preferences so the caller can seed the RTK Query cache', async () => {
+    server.use(http.get(PREFERENCES_URL, () => HttpResponse.json({ spec: { theme: 'light' } })));
+
+    await expect(initPreferences()).resolves.toEqual({ spec: { theme: 'light' } });
+  });
+
   it('does not reject when the API errors', async () => {
     server.use(http.get(PREFERENCES_URL, () => HttpResponse.json({ message: 'internal error' }, { status: 500 })));
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});

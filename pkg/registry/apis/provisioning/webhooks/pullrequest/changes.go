@@ -10,11 +10,14 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -29,6 +32,11 @@ type changeInfo struct {
 	// Attribution: identifies which provisioning repository posted this comment
 	RepositoryName  string
 	RepositoryTitle string
+	// RepositoryAdminURL links to the repository's management page in the
+	// Grafana UI (…/admin/provisioning/<name>), so readers land where they
+	// manage the sync rather than on the raw git remote. Empty only when the
+	// Grafana base URL cannot be parsed.
+	RepositoryAdminURL string
 
 	// Files we tried to read
 	Changes []fileChangeInfo
@@ -57,6 +65,10 @@ type fileChangeInfo struct {
 
 	// The title from inside the resource (or name if not found)
 	Title string
+
+	// SourceURL links to the file in the git repository (empty when the
+	// repository does not expose web URLs, e.g. non-GitHub backends)
+	SourceURL string
 
 	// The URL where this will appear (target)
 	GrafanaURL           string
@@ -114,15 +126,17 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 	}
 
 	rendererAvailable := e.render.IsAvailable(ctx)
-	shouldRender := rendererAvailable && len(changes) == 1 && cfg.Spec.GitHub.GenerateDashboardPreviews
+	shouldRender := rendererAvailable && len(changes) == 1 && cfg.ShouldGenerateDashboardPreviews()
+	baseURL := e.urls.Internal(ctx, cfg.Namespace)
+	orgID := orgIDForLinks(cfg.Namespace)
 	info := changeInfo{
-		GrafanaBaseURL:       e.urls.Internal(ctx, cfg.Namespace),
+		GrafanaBaseURL:       baseURL,
 		RepositoryName:       cfg.Name,
 		RepositoryTitle:      cfg.Spec.Title,
+		RepositoryAdminURL:   repositoryAdminURL(baseURL, cfg.Name, orgID),
 		MissingImageRenderer: !rendererAvailable,
 	}
 	screenshotBaseURL := e.urls.Public(ctx, cfg.Namespace)
-	orgID := orgIDForLinks(cfg.Namespace)
 
 	logger := logging.FromContext(ctx)
 
@@ -143,6 +157,71 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 }
 
 var dashboardKind = dashboard.DashboardResourceInfo.GroupVersionKind().Kind
+var folderKind = folder.FolderResourceInfo.GroupVersionKind().Kind
+
+// grafanaResourceURL builds the Grafana UI link for a provisioned resource that
+// already exists in Grafana. Dashboards live at /d/<uid>/<slug>; folders at
+// /dashboards/f/<uid>/<slug>. Returns "" for kinds without a known view route
+// (so the Resource column falls back to plain text) or when the base URL cannot
+// be parsed.
+func grafanaResourceURL(baseURL, kind, name, title string, orgID int64) string {
+	var pathParts []string
+	switch kind {
+	case dashboardKind:
+		pathParts = []string{"d", name, slugify.Slugify(title)}
+	case folderKind:
+		pathParts = []string{"dashboards", "f", name, slugify.Slugify(title)}
+	default:
+		return ""
+	}
+
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		return ""
+	}
+	u = u.JoinPath(pathParts...)
+	if orgID > 0 {
+		query := url.Values{}
+		query.Set("orgId", strconv.FormatInt(orgID, 10))
+		u.RawQuery = query.Encode()
+	}
+	return u.String()
+}
+
+// stripUserinfo removes any embedded credentials (userinfo) from a URL so a
+// repository configured with an HTTPS URL like https://user:token@host/org/repo
+// never renders that token into a public PR comment. Returns "" when the URL
+// cannot be parsed, to avoid leaking a malformed credential-bearing string.
+func stripUserinfo(raw string) string {
+	if raw == "" {
+		return ""
+	}
+	u, err := url.Parse(raw)
+	if err != nil {
+		return ""
+	}
+	u.User = nil
+	return u.String()
+}
+
+// repositoryAdminURL builds a link to the repository's management page in the
+// Grafana UI (…/admin/provisioning/<name>), mirroring how GrafanaURL/PreviewURL
+// are constructed. orgID pins the org for non-primary on-prem orgs the same way.
+// Returns "" when the base URL cannot be parsed, so the footer falls back to
+// plain text rather than rendering a broken link.
+func repositoryAdminURL(baseURL, name string, orgID int64) string {
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		return ""
+	}
+	u = u.JoinPath("admin/provisioning", name)
+	if orgID > 0 {
+		query := url.Values{}
+		query.Set("orgId", strconv.FormatInt(orgID, 10))
+		u.RawQuery = query.Encode()
+	}
+	return u.String()
+}
 
 // orgIDForLinks returns the org to pin on PR-comment links when the repo lives
 // in a non-primary org (on-prem org-N, N>=2). Main org (default), Cloud
@@ -167,6 +246,16 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 		logger.Info("unable to read file", "err", err)
 		info.Error = err.Error()
 		return info
+	}
+
+	// Best-effort link back to the file in the git repository. Computed before
+	// parsing so that parse/validation failures still link reviewers to the
+	// source file. Repositories that don't expose web URLs (e.g. non-GitHub
+	// backends) leave this empty.
+	if urlsRepo, ok := repo.(repository.RepositoryWithURLs); ok {
+		if urls, urlErr := urlsRepo.ResourceURLs(ctx, fileInfo); urlErr == nil && urls != nil {
+			info.SourceURL = stripUserinfo(urls.SourceURL)
+		}
 	}
 
 	// Read the file as a resource
@@ -200,7 +289,14 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 		info.Error = err.Error()
 	}
 
-	// Dashboards get special handling
+	// Link back to the resource in Grafana when it already exists there.
+	// Dashboards and folders both have view routes; other kinds fall back to
+	// plain text in the comment.
+	if info.Parsed.Existing != nil {
+		info.GrafanaURL = grafanaResourceURL(baseURL, info.Parsed.GVK.Kind, obj.GetName(), info.Title, orgID)
+	}
+
+	// Dashboards additionally get a preview link and (optionally) screenshots.
 	if info.Parsed.GVK.Kind == dashboardKind {
 		// FIXME: extract the logic out of a dashboard URL builder/injector or similar
 		// for testability and decoupling
@@ -209,16 +305,6 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 			logger.Warn("Error parsing baseURL", "err", err)
 			info.Error = err.Error()
 			return info
-		}
-
-		if info.Parsed.Existing != nil {
-			grafanaURL := urlBuilder.JoinPath("d", obj.GetName(), slugify.Slugify(info.Title))
-			if orgID > 0 {
-				query := url.Values{}
-				query.Set("orgId", strconv.FormatInt(orgID, 10))
-				grafanaURL.RawQuery = query.Encode()
-			}
-			info.GrafanaURL = grafanaURL.String()
 		}
 
 		// Load this file directly
@@ -264,6 +350,16 @@ func (e *evaluator) evaluateDeletedFile(ctx context.Context, repo repository.Rea
 		return info
 	}
 
+	// Best-effort link back to the file in the git repository. The file no
+	// longer exists on the PR branch, so this points at the previous ref where
+	// it still exists, letting reviewers see what was removed. Repositories that
+	// don't expose web URLs (e.g. non-GitHub backends) leave this empty.
+	if urlsRepo, ok := repo.(repository.RepositoryWithURLs); ok {
+		if urls, urlErr := urlsRepo.ResourceURLs(ctx, fileInfo); urlErr == nil && urls != nil {
+			info.SourceURL = stripUserinfo(urls.SourceURL)
+		}
+	}
+
 	info.Parsed, err = parser.Parse(ctx, fileInfo)
 	if err != nil {
 		return info
@@ -272,20 +368,23 @@ func (e *evaluator) evaluateDeletedFile(ctx context.Context, repo repository.Rea
 	obj := info.Parsed.Obj
 	info.Title = info.Parsed.Meta.FindTitle(obj.GetName())
 
-	if info.Parsed.GVK.Kind == dashboardKind {
-		urlBuilder, err := url.Parse(baseURL)
-		if err != nil {
-			return info
-		}
-		if info.Parsed.Existing != nil {
-			grafanaURL := urlBuilder.JoinPath("d", obj.GetName(), slugify.Slugify(info.Title))
-			if orgID > 0 {
-				query := url.Values{}
-				query.Set("orgId", strconv.FormatInt(orgID, 10))
-				grafanaURL.RawQuery = query.Encode()
+	// Parse only fills Parsed.Existing during DryRun/Run (via a live Get), and
+	// deletions run neither. Fetch the live object directly so we can link back
+	// to it in Grafana: at comment time the resource still exists because the
+	// sync that removes it has not run yet. Best-effort — a missing object or a
+	// permission error just leaves the Resource column as plain text.
+	if info.Parsed.Client != nil {
+		if idCtx, _, idErr := identity.WithProvisioningIdentity(ctx, obj.GetNamespace()); idErr == nil {
+			if existing, getErr := info.Parsed.Client.Get(idCtx, obj.GetName(), metav1.GetOptions{}); getErr == nil {
+				info.Parsed.Existing = existing
 			}
-			info.GrafanaURL = grafanaURL.String()
 		}
+	}
+
+	// Link back to the resource in Grafana when it still exists there (dashboards
+	// and folders both have view routes); other kinds fall back to plain text.
+	if info.Parsed.Existing != nil {
+		info.GrafanaURL = grafanaResourceURL(baseURL, info.Parsed.GVK.Kind, obj.GetName(), info.Title, orgID)
 	}
 
 	return info

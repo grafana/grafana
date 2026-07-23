@@ -1,5 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
+import { Panel } from './page-objects';
+
 test.use({
   featureToggles: {
     dashboardNewLayouts: true,
@@ -11,17 +13,14 @@ test.describe('Dashboard keybindings with new layouts', { tag: ['@dashboards'] }
     viewport: { width: 1280, height: 1080 },
   });
 
-  test('should collapse and expand all rows', async ({ gotoDashboardPage, page, selectors }) => {
+  test('should collapse and expand all rows', async ({ gotoDashboardPage, page, selectors, components }) => {
     const dashboardPage = await gotoDashboardPage({ uid: 'Repeating-rows-uid/repeating-rows' });
+    const panel = new Panel({ page, dashboardPage, selectors, components });
 
     const panelContents = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content);
     await expect(panelContents).toHaveCount(5);
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('server = A, pod = Bob'))
-    ).toBeVisible();
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('server = B, pod = Bob'))
-    ).toBeVisible();
+    await expect(panel.getContainerByTitle('server = A, pod = Bob')).toBeVisible();
+    await expect(panel.getContainerByTitle('server = B, pod = Bob')).toBeVisible();
 
     // Collapse all rows using keyboard shortcut: d + Shift+C
     await page.keyboard.press('d');
@@ -40,11 +39,11 @@ test.describe('Dashboard keybindings with new layouts', { tag: ['@dashboards'] }
     await expect(page.getByText('server = B, pod = Bob')).toBeVisible();
   });
 
-  test('should open panel inspect', async ({ gotoDashboardPage, page, selectors }) => {
+  test('should open panel inspect', async ({ gotoDashboardPage, page, selectors, components }) => {
     const dashboardPage = await gotoDashboardPage({ uid: 'edediimbjhdz4b/a-tall-dashboard' });
+    const panel = new Panel({ page, dashboardPage, selectors, components });
 
-    // Find Panel #1 and press 'i' to open inspector
-    const panel1 = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Panel #1'));
+    const panel1 = panel.getContainerByTitle('Panel #1');
     await expect(panel1).toBeVisible();
     await panel1.press('i');
 
@@ -55,6 +54,6 @@ test.describe('Dashboard keybindings with new layouts', { tag: ['@dashboards'] }
     // Press Escape to close inspector
     await page.keyboard.press('Escape');
 
-    await expect(page.getByTestId(selectors.components.PanelInspector.Json.content)).toBeHidden();
+    await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Json.content)).toBeHidden();
   });
 });

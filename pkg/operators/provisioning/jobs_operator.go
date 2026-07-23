@@ -33,20 +33,26 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	// Historic-job cleanup is resync-driven: each re-list delivers every job as an
-	// update so the handler can act on its age (resync == expiration). The source
-	// stays nil when cleanup is disabled.
-	var historyInformer informer.DeltaSource
+	// Historic-job cleanup is age-based and needs no live events: when NATS is off
+	// the source is an apiserver informer (watch-fed cache replayed on resync),
+	// when NATS is on it is a cron-style periodic re-list. Either way each pass
+	// delivers every job to the handler, which deletes the expired ones. It only
+	// runs when a history expiration is configured; the expired-job reaper below
+	// runs regardless. The source choice reads the NATS config flag directly, not a
+	// subscriber: this operator has no NATS consumer role and holds no subscriber.
+	var historySource informer.DeltaSource
 	if controllerCfg.historyExpiration > 0 {
 		historyJobController := controller.NewHistoryJobController(
 			provisioningClient.ProvisioningV0alpha1(),
 			controllerCfg.historyExpiration,
 		)
-		historyInformer = informer.NewHistoricJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.historyExpiration)
-		if _, err := historyInformer.AddEventHandler(historyJobController.EventHandler()); err != nil {
-			return fmt.Errorf("failed to add history job event handler: %w", err)
+		historySource = informer.NewHistoricJobDeltaSource(controllerCfg.Settings.NATS.Enabled, provisioningClient, controllerCfg.historyExpiration)
+		if _, err := historySource.AddEventHandler(historyJobController.EventHandler()); err != nil {
+			return fmt.Errorf("add history job event handler: %w", err)
 		}
 		logger.Info("history cleanup enabled", "expiration", controllerCfg.historyExpiration.String())
+	} else {
+		logger.Info("history cleanup disabled", "history_expiration", controllerCfg.historyExpiration.String())
 	}
 	// HistoryWriter can be either Loki or the API server
 	// TODO: Loki configuration and setup in the same way we do for the API server
@@ -80,9 +86,10 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 		logger.Info("job cleanup controller stopped")
 	}()
 
-	// Start the history informer; cleanup relies on its resync events.
-	if historyInformer != nil {
-		go historyInformer.Run(ctx.Done())
+	// Start the historic-job source when history cleanup is enabled; cleanup runs
+	// off its re-lists.
+	if historySource != nil {
+		go historySource.Run(ctx.Done())
 	}
 
 	logger.Info("jobs operator is ready")

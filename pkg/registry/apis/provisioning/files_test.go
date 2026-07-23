@@ -459,6 +459,27 @@ func TestParseRequestOptionsPathValidation(t *testing.T) {
 	}
 }
 
+// TestParseRequestOptionsPathWithSpace verifies the /files endpoint accepts a
+// path whose folder segment contains a space (e.g. a folder titled "My Group").
+// The apiserver decodes %20 into r.URL.Path before we extract the file path, and
+// IsSafe explicitly allows spaces, so the path is served as-is.
+func TestParseRequestOptionsPathWithSpace(t *testing.T) {
+	mockRepo := repository.NewMockRepository(t)
+	mockRepo.On("Config").Return(&provisioningapi.Repository{
+		Spec: provisioningapi.RepositorySpec{
+			Title: "test-repo",
+		},
+	}).Maybe()
+
+	connector := &filesConnector{}
+	// The space is percent-encoded on the wire; the server decodes it into URL.Path.
+	r := httptest.NewRequest(http.MethodGet, "/test-repo/files/My%20Group/dashboard.json", nil)
+
+	opts, err := connector.parseRequestOptions(r, "test-repo", mockRepo)
+	require.NoError(t, err)
+	require.Equal(t, "My Group/dashboard.json", opts.Path)
+}
+
 func TestParseRequestOptionsRefValidation(t *testing.T) {
 	tests := []struct {
 		name    string

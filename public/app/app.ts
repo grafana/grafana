@@ -8,6 +8,7 @@ import 'jquery';
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { type Preferences } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
 import {
   locationUtil,
   monacoLanguageRegistry,
@@ -142,10 +143,16 @@ const extensionsExports = extensionsIndex.keys().map((key) => {
   return extensionsIndex(key);
 });
 
+export interface AppInitOptions {
+  // Preferences fetched during boot (see initPreferences). Passed through so we
+  // can seed the RTK Query cache and avoid a duplicate preferences/merged request.
+  mergedPreferences?: Preferences;
+}
+
 export class GrafanaApp {
   context!: GrafanaContextType;
 
-  async init() {
+  async init(options?: AppInitOptions) {
     try {
       await preInitTasks();
 
@@ -196,7 +203,14 @@ export class GrafanaApp {
 
         // Eagerly import journey wirings - these only use onInteraction,
         // no heavy feature-level imports
-        await Promise.all([import('./core/journeys/searchToResource')]);
+        await Promise.all([
+          import('./core/journeys/searchToResource'),
+          import('./core/journeys/browseToResource'),
+          import('./core/journeys/dashboardEdit'),
+          import('./core/journeys/panelEdit'),
+          import('./core/journeys/datasourceConfigure'),
+          import('./core/journeys/exploreToDashboard'),
+        ]);
 
         // Warn about registry entries that have no start trigger wired up
         registry.warnUnregistered();
@@ -224,7 +238,7 @@ export class GrafanaApp {
 
       // Important that extension reducers are initialized before store
       addExtensionReducers();
-      configureStore();
+      configureStore(undefined, { mergedPreferences: options?.mergedPreferences });
       initExtensions();
 
       initAlerting();

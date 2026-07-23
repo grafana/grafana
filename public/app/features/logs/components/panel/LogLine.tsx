@@ -540,7 +540,7 @@ export const getStyles = (
     warning: '#FBAD37',
     debug: '#6E9FFF',
     trace: '#6ed0e0',
-    info: '#6CCF8E',
+    info: '#6E9FFF',
     metadata: theme.colors.text.secondary,
     default: colorDefault,
     parsedField: theme.colors.text.secondary,

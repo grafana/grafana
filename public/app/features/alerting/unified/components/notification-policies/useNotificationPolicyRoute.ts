@@ -1,6 +1,7 @@
 import { pick } from 'lodash';
 import { useMemo, useState } from 'react';
 
+import { isDefaultRoutingTreeName } from '@grafana/alerting';
 import { INHERITABLE_KEYS, type InheritableProperties } from '@grafana/alerting/internal';
 import {
   API_GROUP,
@@ -419,10 +420,9 @@ export function k8sRouteToRoute(route: RoutingTree): Route {
     routes: route.spec.routes?.map((subroute) => k8sSubRouteToRoute(subroute, route.metadata.name)),
     // This assumes if a `NAMED_ROOT_LABEL_NAME` label exists, it will NOT go to the default route, which is a fair but
     // not perfect assumption since we don't yet protect the label.
-    object_matchers:
-      route.metadata.name === ROOT_ROUTE_NAME || !route.metadata.name
-        ? [[NAMED_ROOT_LABEL_NAME, MatcherOperator.equal, '']]
-        : [[NAMED_ROOT_LABEL_NAME, MatcherOperator.equal, route.metadata.name]],
+    object_matchers: isDefaultRoutingTreeName(route.metadata.name)
+      ? [[NAMED_ROOT_LABEL_NAME, MatcherOperator.equal, '']]
+      : [[NAMED_ROOT_LABEL_NAME, MatcherOperator.equal, route.metadata.name ?? '']],
     [ROUTES_META_SYMBOL]: {
       provenance: getAnnotation(route, K8sAnnotations.Provenance),
       resourceVersion: route.metadata.resourceVersion,

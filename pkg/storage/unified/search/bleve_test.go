@@ -9,7 +9,6 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -53,15 +52,12 @@ func TestBleveBackend(t *testing.T) {
 
 	// Register the dashboard provider so the static fields.* mapping is built
 	// from declared fields, as in production; without it custom fields drop.
-	dashInfo, err := builders.DashboardBuilder(nil)
-	require.NoError(t, err)
-
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
-		SearchFieldsProvidersForKinds: map[string]resource.SearchFieldsProvider{
-			"dashboard.grafana.app/dashboards": dashInfo.SearchFieldsProvider,
-		},
+		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): DashboardSearchFieldsProviderForTest(),
+		}),
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
@@ -75,15 +71,12 @@ func TestBleveSearchRootFolderExpansion(t *testing.T) {
 
 	// Register the dashboard provider so the index is built from declared
 	// fields, as in production.
-	dashInfo, err := builders.DashboardBuilder(nil)
-	require.NoError(t, err)
-
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5,
-		SearchFieldsProvidersForKinds: map[string]resource.SearchFieldsProvider{
-			"dashboard.grafana.app/dashboards": dashInfo.SearchFieldsProvider,
-		},
+		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): DashboardSearchFieldsProviderForTest(),
+		}),
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
@@ -685,8 +678,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 				{Field: "title", Desc: false},
 			},
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
-				"region": {
-					Field: "labels.region",
+				"tags": {
+					Field: resource.SEARCH_FIELD_TAGS,
 					Limit: 100,
 				},
 			},
@@ -711,23 +704,21 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 
 		resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-federated.json"), rsp.Results)
 
-		facet, ok := rsp.Facet["region"]
+		facet, ok := rsp.Facet["tags"]
 		require.True(t, ok)
 		disp, err := json.MarshalIndent(facet, "", "  ")
 		require.NoError(t, err)
-		// fmt.Printf("%s\n", disp)
-		// NOTE, the west values come from *both* dashboards and folders
 		require.JSONEq(t, `{
-			"field": "labels.region",
-			"total": 3,
+			"field": "tags",
+			"total": 4,
 			"missing": 2,
 			"terms": [
 				{
-					"term": "west",
-					"count": 2
+					"term": "aa",
+					"count": 3
 				},
 				{
-					"term": "east",
+					"term": "bb",
 					"count": 1
 				}
 			]
@@ -749,8 +740,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 				{Field: "title", Desc: false},
 			},
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
-				"region": {
-					Field: "labels.region",
+				"tags": {
+					Field: resource.SEARCH_FIELD_TAGS,
 					Limit: 100,
 				},
 			},
@@ -778,8 +769,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 				{Field: "title", Desc: false},
 			},
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
-				"region": {
-					Field: "labels.region",
+				"tags": {
+					Field: resource.SEARCH_FIELD_TAGS,
 					Limit: 100,
 				},
 			},
@@ -806,8 +797,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 				{Field: "title", Desc: false},
 			},
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
-				"region": {
-					Field: "labels.region",
+				"tags": {
+					Field: resource.SEARCH_FIELD_TAGS,
 					Limit: 100,
 				},
 			},
@@ -819,9 +810,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 }
 
 func TestGetSortFields(t *testing.T) {
-	dashboardInfo, err := builders.DashboardBuilder(nil)
-	require.NoError(t, err)
-	dashboardFields, err := resource.SearchableFieldsFromProvider(dashboardInfo.SearchFieldsProvider, dashboardInfo.GroupResource.Group, dashboardInfo.GroupResource.Resource)
+	dashboardFields, err := resource.SearchableFieldsFromProvider(DashboardSearchFieldsProviderForTest(), "dashboard.grafana.app", "dashboards")
 	require.NoError(t, err)
 
 	t.Run("will prepend 'fields.' to sort fields when they are dashboard fields", func(t *testing.T) {
@@ -872,7 +861,10 @@ func TestGetSortFields(t *testing.T) {
 }
 
 func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
-	idx := &bleveIndex{fields: resource.StandardSearchFields()}
+	idx := &bleveIndex{
+		fields:                  resource.StandardSearchFields(),
+		facetFieldByRequestName: facetFieldsForMapping(nil, "", ""),
+	}
 
 	t.Run("sorts match-all by title then name", func(t *testing.T) {
 		searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
@@ -908,6 +900,32 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 		require.True(t, ok)
 		assert.Equal(t, resource.SEARCH_FIELD_NAME, nameSort.Field)
 		assert.False(t, nameSort.Desc)
+	})
+
+	t.Run("uses declared keyword facet fields", func(t *testing.T) {
+		searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{},
+			Limit:   10,
+			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+				"tagValues": {Field: resource.SEARCH_FIELD_TAGS, Limit: 10},
+			},
+		}, nil, false)
+		require.Nil(t, errResult)
+		require.Contains(t, searchReq.Facets, "tagValues")
+		assert.Equal(t, resource.SEARCH_FIELD_TAGS, searchReq.Facets["tagValues"].Field)
+	})
+
+	t.Run("rejects fields without facet capability", func(t *testing.T) {
+		searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{},
+			Limit:   10,
+			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+				"region": {Field: "labels.region", Limit: 10},
+			},
+		}, nil, false)
+		require.Nil(t, searchReq)
+		require.NotNil(t, errResult)
+		assert.Contains(t, errResult.Message, `field "labels.region" does not support faceting`)
 	})
 }
 
@@ -1114,15 +1132,9 @@ func withIndexMinUpdateInterval(d time.Duration) setupOption {
 	}
 }
 
-func withSearchFieldsHashesForKinds(m map[string]string) setupOption {
+func withSearchFields(reg *resource.SearchFieldsRegistry) setupOption {
 	return func(options *BleveOptions) {
-		options.SearchFieldsHashesForKinds = m
-	}
-}
-
-func withSearchFieldsProvidersForKinds(m map[string]resource.SearchFieldsProvider) setupOption {
-	return func(options *BleveOptions) {
-		options.SearchFieldsProvidersForKinds = m
+		options.SearchFields = reg
 	}
 }
 func TestMemoryBleveIndexCanBeCopiedToFilesystem(t *testing.T) {
@@ -1369,6 +1381,42 @@ func TestBuildIndex(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestBuildIndexDoesNotReuseFileIndexWithoutResourceVersion(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+	tmpDir := t.TempDir()
+	backend, _ := setupBleveBackend(t, withRootDir(tmpDir))
+
+	mapper, err := GetBleveMappings(nil, ns.Group, ns.Resource, nil)
+	require.NoError(t, err)
+	resourceDir := backend.getResourceDir(ns)
+	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
+	unfinished, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), mapper, time.Now(), buildVersion, nil, "")
+	require.NoError(t, err)
+	rv, err := getRV(unfinished)
+	require.NoError(t, err)
+	require.Zero(t, rv)
+	require.NoError(t, unfinished.Close())
+
+	buildCalls := 0
+	builder := func(index resource.ResourceIndex) (int64, error) {
+		buildCalls++
+		return indexTestDocs(ns, 10, 100)(index)
+	}
+	idx, err := backend.BuildIndex(t.Context(), ns, 10, "test", builder, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+	require.Equal(t, 1, buildCalls)
+
+	count, err := idx.DocCount(t.Context(), "", nil)
+	require.NoError(t, err)
+	require.Equal(t, int64(10), count)
+	require.Equal(t, int64(100), idx.(*bleveIndex).resourceVersion.Load())
+	verifyDirEntriesCount(t, resourceDir, 1)
 }
 
 func TestBuildIndexAdaptivePromotion(t *testing.T) {
@@ -2212,11 +2260,11 @@ func TestIndexBuildInfoSearchFieldsHashRoundTrip(t *testing.T) {
 		Resource:  "resource",
 	}
 	hash := "deadbeefcafef00d"
-	hashes := map[string]string{
-		strings.ToLower(ns.Group + "/" + ns.Resource): hash,
+	hashes := map[resource.LowerGroupResource]string{
+		resource.NewLowerGroupResource(ns.Group, ns.Resource): hash,
 	}
 
-	be, _ := setupBleveBackend(t, withFileThreshold(100), withSearchFieldsHashesForKinds(hashes))
+	be, _ := setupBleveBackend(t, withFileThreshold(100), withSearchFields(resource.NewSearchFieldsRegistry(nil, hashes, nil)))
 	index, err := be.BuildIndex(t.Context(), ns, 10, "test", indexTestDocs(ns, 10, 100), nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 

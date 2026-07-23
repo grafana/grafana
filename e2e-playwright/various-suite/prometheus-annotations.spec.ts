@@ -5,6 +5,14 @@ import { test, expect, type Components, type E2ESelectorGroups } from '@grafana/
 import { addDashboard } from '../utils/dashboard-helpers';
 import { getResources } from '../utils/prometheus-helpers';
 
+test.use({
+  openFeature: {
+    flags: {
+      'grafana.dashboardSettingsRedesign': false,
+    },
+  },
+});
+
 test.describe(
   'Prometheus annotations',
   {
@@ -109,9 +117,17 @@ test.describe(
       await expect(editButton).toBeVisible();
       await editButton.click();
 
-      const settingsButton = page.getByTestId(selectors.components.NavToolbar.editDashboard.settingsButton);
-      await expect(settingsButton).toBeVisible();
-      await settingsButton.click();
+      // Open dashboard options in the sidebar
+      const optionsButton = page.getByTestId(selectors.pages.Dashboard.Sidebar.optionsButton);
+      await expect(optionsButton).toBeVisible();
+      await optionsButton.click();
+
+      // Click "View all settings" to open the full settings page
+      const viewAllSettingsButton = page
+        .getByTestId(selectors.components.Sidebar.container)
+        .getByRole('button', { name: 'View all settings' });
+      await expect(viewAllSettingsButton).toBeVisible();
+      await viewAllSettingsButton.click();
 
       const annotationsTab = page.getByTestId(selectors.components.Tab.title('Annotations'));
       await annotationsTab.click();

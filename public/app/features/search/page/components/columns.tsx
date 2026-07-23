@@ -11,8 +11,9 @@ import {
   getFieldDisplayName,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { type PanelPluginMetas } from '@grafana/runtime/internal';
+import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { Checkbox, Icon, type IconName, TagList, Text, Tooltip } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { formatDate, formatDuration } from 'app/core/internationalization/dates';
@@ -365,6 +366,43 @@ function hasValue(f: Field): boolean {
   return false;
 }
 
+interface DataSourceItemProps {
+  dsUid: string;
+  iconClass: string;
+  invalidDatasourceItemClass: string;
+  onDatasourceChange: (datasource?: string) => void;
+}
+
+function DataSourceItem({ dsUid, iconClass, invalidDatasourceItemClass, onDatasourceChange }: DataSourceItemProps) {
+  const { isLoading, settings } = useDataSourceInstanceSettings(dsUid);
+  const icon = settings?.meta?.info?.logos?.small;
+
+  // While the settings are being resolved we don't yet know whether the datasource
+  // is valid, so avoid flashing the invalid-datasource fallback.
+  if (isLoading) {
+    return null;
+  }
+
+  if (settings && icon) {
+    return (
+      // TODO: fix keyboard a11y
+      // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+      <span
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          onDatasourceChange(settings.uid);
+        }}
+      >
+        <img src={icon} alt="" width={14} height={14} title={settings.type} className={iconClass} />
+        {settings.name}
+      </span>
+    );
+  }
+
+  return <span className={invalidDatasourceItemClass}>{dsUid}</span>;
+}
+
 function makeDataSourceColumn(
   field: Field<string[]>,
   width: number,
@@ -373,7 +411,6 @@ function makeDataSourceColumn(
   invalidDatasourceItemClass: string,
   onDatasourceChange: (datasource?: string) => void
 ): TableColumn {
-  const srv = getDataSourceSrv();
   return {
     id: `column-datasource`,
     field,
@@ -386,32 +423,15 @@ function makeDataSourceColumn(
       const { key, ...cellProps } = p.cellProps;
       return (
         <div key={key} {...cellProps} className={cx(datasourceItemClass)}>
-          {dslist.map((v, i) => {
-            const settings = srv.getInstanceSettings(v);
-            const icon = settings?.meta?.info?.logos?.small;
-            if (icon) {
-              return (
-                // TODO: fix keyboard a11y
-                // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-                <span
-                  key={i}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    onDatasourceChange(settings.uid);
-                  }}
-                >
-                  <img src={icon} alt="" width={14} height={14} title={settings.type} className={iconClass} />
-                  {settings.name}
-                </span>
-              );
-            }
-            return (
-              <span className={invalidDatasourceItemClass} key={i}>
-                {v}
-              </span>
-            );
-          })}
+          {dslist.map((v, i) => (
+            <DataSourceItem
+              key={i}
+              dsUid={v}
+              iconClass={iconClass}
+              invalidDatasourceItemClass={invalidDatasourceItemClass}
+              onDatasourceChange={onDatasourceChange}
+            />
+          ))}
         </div>
       );
     },

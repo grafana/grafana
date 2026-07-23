@@ -344,6 +344,11 @@ func TestStripSQLComments(t *testing.T) {
 			input: "SELECT $1 -- comment",
 			want:  "SELECT $1 ",
 		},
+		{
+			name:  "strips a block comment shaped like a SQLCommenter tag",
+			input: "SELECT 1 /*application='grafana',feature='panel'*/",
+			want:  "SELECT 1 ",
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

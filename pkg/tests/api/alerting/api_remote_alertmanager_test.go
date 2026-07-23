@@ -39,7 +39,6 @@ func TestIntegrationRemoteAlertmanagerConfigUpload(t *testing.T) {
 		AppModeProduction:     true,
 		EnableFeatureToggles: []string{
 			"alertmanagerRemotePrimary",
-			"alertingMultiplePolicies",
 			"alertingImportAlertmanagerAPI",
 		},
 		RemoteAlertmanagerURL: mimirEndpoint,
@@ -149,7 +148,6 @@ func TestIntegrationRemoteAlertmanagerHistoricalConfigActivation(t *testing.T) {
 		AppModeProduction:     true,
 		EnableFeatureToggles: []string{
 			"alertmanagerRemotePrimary",
-			"alertingMultiplePolicies",
 			"alertingImportAlertmanagerAPI",
 		},
 		RemoteAlertmanagerURL: mimirEndpoint,

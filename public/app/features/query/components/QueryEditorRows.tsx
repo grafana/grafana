@@ -17,6 +17,7 @@ import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { SafeSerializableSceneObject, type SceneObjectRef, type VizPanel } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { trackReorder } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/tracking';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { QueryEditorRow } from './QueryEditorRow';
@@ -228,6 +229,8 @@ export class QueryEditorRows extends PureComponent<Props> {
       numberOfQueries: queries.length,
       datasourceType: dsSettings.type,
     });
+
+    trackReorder('query', { silent: true });
   };
 
   render() {

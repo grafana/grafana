@@ -6,16 +6,13 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
-	commoncfg "github.com/prometheus/common/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.yaml.in/yaml/v3"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
@@ -361,15 +358,17 @@ var fullMimirWithOnlyExtraReceiver string
 //go:embed testdata/mimir_swapped_intervals.yaml
 var fullMimirSwappedIntervals string
 
-func load(t *testing.T, yaml string, mutate ...func(p *v1.PostableApiAlertingConfig)) *v1.PostableApiAlertingConfig {
+func load(t *testing.T, yaml string, mutate ...func(p *v1.PostableApiAlertingConfig)) *v1.AMConfigV1 {
 	t.Helper()
 	orig, err := definition.LoadCompat([]byte(yaml))
 	require.NoError(t, err)
-	p := v1.PostableApiAlertingConfigToModel(*orig)
+	cfg := v1.ToModel(&definitions.PostableUserConfig{
+		AlertmanagerConfig: *orig,
+	})
 	for _, m := range mutate {
-		m(&p)
+		m(&cfg.AlertmanagerConfig)
 	}
-	return &p
+	return cfg
 }
 
 //go:embed testdata/grafana_config.yaml
@@ -378,15 +377,38 @@ var fullGrafanaConfig string
 //go:embed testdata/mimir_config.yaml
 var fullMimirConfig string
 
-//go:embed testdata/merged_config.yaml
-var fullMergedConfig string
+//go:embed testdata/merged_config.json
+var mergedConfig string
+
+//go:embed testdata/merged_no_intervals.json
+var mergedNoIntervalsConfig string
+
+//go:embed testdata/merged_renamed_receiver.json
+var mergedRenamedReceiverConfig string
+
+//go:embed testdata/merged_suffixed_receiver.json
+var mergedSuffixedReceiverConfig string
+
+//go:embed testdata/merged_renamed_intervals.json
+var mergedRenamedIntervalsConfig string
+
+// assertMergedConfig serializes the merged config to its DB (PostableUserConfig) form and compares it against a
+// snapshot of the expected merge result.
+func assertMergedConfig(t *testing.T, config v1.AMConfigV1, expected string) {
+	t.Helper()
+	db, err := v1.ToDBModel(&config)
+	require.NoError(t, err)
+	actual, err := json.MarshalIndent(db, "", "  ")
+	require.NoError(t, err)
+	assert.JSONEq(t, expected, string(actual))
+}
 
 func TestMergeExtraConfig(t *testing.T) {
 	identifier := "mimir-12345"
 
 	// withExtra wraps grafana and a raw mimir YAML string into a PostableUserConfig with ExtraConfigs.
 	// Optional mutateFn can adjust the ExtraConfiguration before it's used.
-	withExtra := func(t *testing.T, grafana *v1.PostableApiAlertingConfig, mimirYAML string, mutateFn ...func(*v1.ExtraConfiguration)) v1.AMConfigV1 {
+	withExtra := func(t *testing.T, grafana *v1.AMConfigV1, mimirYAML string, mutateFn ...func(*v1.ExtraConfiguration)) v1.AMConfigV1 {
 		t.Helper()
 		extra := v1.ExtraConfiguration{
 			Identifier:         identifier,
@@ -395,49 +417,9 @@ func TestMergeExtraConfig(t *testing.T) {
 		for _, fn := range mutateFn {
 			fn(&extra)
 		}
-		return v1.AMConfigV1{
-			AlertmanagerConfig: *grafana,
-			ExtraConfigs:       []v1.ExtraConfiguration{extra},
-		}
-	}
-
-	buildExpectedManaged := func(t *testing.T, mimirYAML string, renames RenameResources) (v1.ManagedRoutes, map[v1.ResourceUID]v1.InhibitionRule) {
-		t.Helper()
-		extra := v1.ExtraConfiguration{Identifier: identifier, AlertmanagerConfig: mimirYAML}
-		mcfg, err := extra.GetAlertmanagerConfig()
-		require.NoError(t, err)
-		route := mcfg.Route
-		RenameResourceUsagesInRoutes([]*v1.Route{route}, renames)
-		inhibitRules, _, err := MergeInhibitionRules(nil, mcfg.InhibitRules, identifier)
-		require.NoError(t, err)
-		return v1.ManagedRoutes{identifier: route}, inhibitRules
-	}
-
-	assertConfig := func(t *testing.T, expected, actual v1.AMConfigV1) {
-		t.Helper()
-		diff := cmp.Diff(expected, actual,
-			cmpopts.IgnoreUnexported(commoncfg.ProxyConfig{}, labels.Matcher{}),
-			cmpopts.SortSlices(func(a, b *labels.Matcher) bool { return a.Name < b.Name }),
-			cmpopts.SortSlices(func(a, b *v1.PostableApiReceiver) bool { return a.Name < b.Name }),
-			cmpopts.EquateEmpty(),
-			cmp.Comparer(func(a, b definition.RawMessage) bool {
-				var va, vb any
-				if err := json.Unmarshal(a, &va); err != nil {
-					return string(a) == string(b)
-				}
-				if err := json.Unmarshal(b, &vb); err != nil {
-					return string(a) == string(b)
-				}
-				ba, _ := json.Marshal(va)
-				bb, _ := json.Marshal(vb)
-				return string(ba) == string(bb)
-			}),
-		)
-		if !assert.Empty(t, diff) {
-			data, err := yaml.Marshal(actual)
-			require.NoError(t, err)
-			t.Fatalf("YAML:\n%v", string(data))
-		}
+		g := *grafana
+		g.ExtraConfigs = []v1.ExtraConfiguration{extra}
+		return g
 	}
 
 	t.Run("should merge all resources, no renames", func(t *testing.T) {
@@ -445,12 +427,7 @@ func TestMergeExtraConfig(t *testing.T) {
 		config, _, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
 
-		expectedRoutes, expectedInhibitRules := buildExpectedManaged(t, fullMimirConfig, RenameResources{})
-		assertConfig(t, v1.AMConfigV1{
-			AlertmanagerConfig: *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) { p.Global = nil }),
-			ManagedRoutes:      expectedRoutes,
-			InhibitionRules:    expectedInhibitRules,
-		}, config)
+		assertMergedConfig(t, config, mergedConfig)
 	})
 
 	t.Run("should populate intervals by defaults", func(t *testing.T) {
@@ -458,12 +435,7 @@ func TestMergeExtraConfig(t *testing.T) {
 		config, _, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
 
-		expectedRoutes, expectedInhibitRules := buildExpectedManaged(t, fullMimirNoIntervals, RenameResources{})
-		assertConfig(t, v1.AMConfigV1{
-			AlertmanagerConfig: *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) { p.Global = nil }),
-			ManagedRoutes:      expectedRoutes,
-			InhibitionRules:    expectedInhibitRules,
-		}, config)
+		assertMergedConfig(t, config, mergedNoIntervalsConfig)
 	})
 
 	t.Run("should rename receivers and refactor usages", func(t *testing.T) {
@@ -471,18 +443,7 @@ func TestMergeExtraConfig(t *testing.T) {
 		config, _, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
 
-		expectedRoutes, expectedInhibitRules := buildExpectedManaged(t, fullMimirWithExtraReceiver,
-			RenameResources{Receivers: map[string]string{"grafana-default-email": "grafana-default-email" + identifier}})
-		assertConfig(t, v1.AMConfigV1{
-			AlertmanagerConfig: *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) {
-				p.Global = nil
-				p.Receivers = append(p.Receivers, &v1.PostableApiReceiver{
-					Receiver: definition.Receiver{Name: "grafana-default-email" + identifier},
-				})
-			}),
-			ManagedRoutes:   expectedRoutes,
-			InhibitionRules: expectedInhibitRules,
-		}, config)
+		assertMergedConfig(t, config, mergedRenamedReceiverConfig)
 	})
 
 	t.Run("should append index suffix if rename still collides", func(t *testing.T) {
@@ -495,19 +456,7 @@ func TestMergeExtraConfig(t *testing.T) {
 		config, _, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
 
-		expectedRoutes, expectedInhibitRules := buildExpectedManaged(t, fullMimirWithOnlyExtraReceiver,
-			RenameResources{Receivers: map[string]string{"grafana-default-email": "grafana-default-email" + identifier + "_01"}})
-		assertConfig(t, v1.AMConfigV1{
-			AlertmanagerConfig: *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) {
-				p.Global = nil
-				p.Receivers = append(p.Receivers,
-					&v1.PostableApiReceiver{Receiver: definition.Receiver{Name: "grafana-default-email" + identifier}},
-					&v1.PostableApiReceiver{Receiver: definition.Receiver{Name: "grafana-default-email" + identifier + "_01"}},
-				)
-			}),
-			ManagedRoutes:   expectedRoutes,
-			InhibitionRules: expectedInhibitRules,
-		}, config)
+		assertMergedConfig(t, config, mergedSuffixedReceiverConfig)
 	})
 
 	t.Run("should rename time intervals and refactor usages", func(t *testing.T) {
@@ -517,24 +466,7 @@ func TestMergeExtraConfig(t *testing.T) {
 		config, _, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
 
-		expectedRoutes, expectedInhibitRules := buildExpectedManaged(t, fullMimirSwappedIntervals,
-			RenameResources{TimeIntervals: map[string]string{"ti-1": "ti-1" + identifier, "mti-1": "mti-1" + identifier}})
-		assertConfig(t, v1.AMConfigV1{
-			AlertmanagerConfig: *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) {
-				p.Global = nil
-				// Keep mti-1 and ti-1 from base; mti-2 is absent in fullMimirSwappedIntervals.
-				// Incoming: mute ti-1 (renamed) → ti-1+id, time ti-2 (no conflict), time mti-1 (renamed) → mti-1+id.
-				p.TimeIntervals = []v1.TimeInterval{
-					p.TimeIntervals[0], // mti-1 (existing mute, folded)
-					p.TimeIntervals[1], // ti-1
-					{Name: "ti-1" + identifier},
-					p.TimeIntervals[3], // ti-2 (incoming time, no conflict)
-					{Name: "mti-1" + identifier},
-				}
-			}),
-			ManagedRoutes:   expectedRoutes,
-			InhibitionRules: expectedInhibitRules,
-		}, config)
+		assertMergedConfig(t, config, mergedRenamedIntervalsConfig)
 	})
 
 	t.Run("should not modify the base Grafana config", func(t *testing.T) {
@@ -546,7 +478,7 @@ func TestMergeExtraConfig(t *testing.T) {
 	})
 
 	t.Run("should return base config unchanged if no extra configs", func(t *testing.T) {
-		input := v1.AMConfigV1{AlertmanagerConfig: *load(t, fullGrafanaConfig)}
+		input := *load(t, fullGrafanaConfig)
 		config, _, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
 		assert.Equal(t, input, config)
@@ -616,7 +548,7 @@ func TestMergeExtraConfig(t *testing.T) {
 	})
 
 	t.Run("should return empty stats when no extra configs", func(t *testing.T) {
-		input := v1.AMConfigV1{AlertmanagerConfig: *load(t, fullGrafanaConfig)}
+		input := *load(t, fullGrafanaConfig)
 		_, result, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
 

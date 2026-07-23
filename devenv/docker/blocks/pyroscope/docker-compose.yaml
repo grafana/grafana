@@ -1,4 +1,0 @@
-  pyroscope:
-    image: "grafana/pyroscope:latest"
-    ports:
-      - "4040:4040"

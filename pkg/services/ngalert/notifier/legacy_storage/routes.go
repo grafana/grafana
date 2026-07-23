@@ -163,16 +163,14 @@ func (rev *ConfigRevision) GetManagedRoute(name string) *ManagedRoute {
 	return NewManagedRoute(name, route)
 }
 
-func (rev *ConfigRevision) GetManagedRoutes(includeManagedRoutes bool) ManagedRoutes {
+func (rev *ConfigRevision) GetManagedRoutes() ManagedRoutes {
 	managedRoutes := make(ManagedRoutes, 0, len(rev.Config.ManagedRoutes)+1)
-	if includeManagedRoutes {
-		for _, k := range slices.Sorted(maps.Keys(rev.Config.ManagedRoutes)) {
-			// On the off chance that the route is nil or invalid managed route with the restricted name, we skip it.
-			if rev.Config.ManagedRoutes[k] == nil || models.IsDefaultRoutingTreeName(k) {
-				continue
-			}
-			managedRoutes = append(managedRoutes, NewManagedRoute(k, rev.Config.ManagedRoutes[k]))
+	for _, k := range slices.Sorted(maps.Keys(rev.Config.ManagedRoutes)) {
+		// On the off chance that the route is nil or invalid managed route with the restricted name, we skip it.
+		if rev.Config.ManagedRoutes[k] == nil || models.IsDefaultRoutingTreeName(k) {
+			continue
 		}
+		managedRoutes = append(managedRoutes, NewManagedRoute(k, rev.Config.ManagedRoutes[k]))
 	}
 	managedRoutes = append(managedRoutes, NewManagedRoute(models.DefaultRoutingTreeName, rev.Config.AlertmanagerConfig.Route))
 
@@ -315,15 +313,13 @@ func (rev *ConfigRevision) validateTimeIntervalReferences(route v1.Route) error 
 }
 
 // RenameReceiverInRoutes renames all references to a receiver in all routes. Returns number of routes that were updated
-func (rev *ConfigRevision) RenameReceiverInRoutes(oldName, newName string, includeManagedRoutes bool) map[*v1.Route]int {
+func (rev *ConfigRevision) RenameReceiverInRoutes(oldName, newName string) map[*v1.Route]int {
 	res := make(map[*v1.Route]int)
 	if cnt := renameReceiverInRoute(oldName, newName, rev.Config.AlertmanagerConfig.Route); cnt > 0 {
 		res[rev.Config.AlertmanagerConfig.Route] = cnt
 	}
 	for _, r := range rev.Config.ManagedRoutes {
-		// Still attempt to rename receivers in any managed routes if not supported for data consistency, but
-		// don't return them int he results.
-		if cnt := renameReceiverInRoute(oldName, newName, r); includeManagedRoutes && cnt > 0 {
+		if cnt := renameReceiverInRoute(oldName, newName, r); cnt > 0 {
 			res[r] = cnt
 		}
 	}
@@ -346,15 +342,13 @@ func renameReceiverInRoute(oldName, newName string, routes ...*v1.Route) int {
 }
 
 // RenameTimeIntervalInRoutes renames all references to a time interval in all routes. Returns number of routes that were updated
-func (rev *ConfigRevision) RenameTimeIntervalInRoutes(oldName, newName string, includeManagedRoutes bool) map[*v1.Route]int {
+func (rev *ConfigRevision) RenameTimeIntervalInRoutes(oldName, newName string) map[*v1.Route]int {
 	res := make(map[*v1.Route]int)
 	if cnt := renameTimeIntervalInRoute(oldName, newName, rev.Config.AlertmanagerConfig.Route); cnt > 0 {
 		res[rev.Config.AlertmanagerConfig.Route] = cnt
 	}
 	for _, r := range rev.Config.ManagedRoutes {
-		// Still attempt to rename time intervals in any managed routes if not supported for data consistency, but
-		// don't return them int he results.
-		if cnt := renameTimeIntervalInRoute(oldName, newName, r); includeManagedRoutes && cnt > 0 {
+		if cnt := renameTimeIntervalInRoute(oldName, newName, r); cnt > 0 {
 			res[r] = cnt
 		}
 	}

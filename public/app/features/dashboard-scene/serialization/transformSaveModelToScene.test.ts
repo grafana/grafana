@@ -654,6 +654,7 @@ describe('transformSaveModelToScene', () => {
         type: 'test-plugin',
         timeFrom: '2h',
         timeShift: '1d',
+        timeCompare: '1d',
       };
 
       const { vizPanel } = buildGridItemForTest(panel);
@@ -662,6 +663,20 @@ describe('transformSaveModelToScene', () => {
       expect(timeRange).toBeInstanceOf(PanelTimeRange);
       expect(timeRange.state.timeFrom).toBe('2h');
       expect(timeRange.state.timeShift).toBe('1d');
+      expect(timeRange.state.compareWith).toBe('1d');
+    });
+
+    it('should set PanelTimeRange when only timeCompare is present', () => {
+      const panel = {
+        type: 'test-plugin',
+        timeCompare: '1w',
+      };
+
+      const { vizPanel } = buildGridItemForTest(panel);
+      const timeRange = vizPanel.state.$timeRange as PanelTimeRange;
+
+      expect(timeRange).toBeInstanceOf(PanelTimeRange);
+      expect(timeRange.state.compareWith).toBe('1w');
     });
 
     it('should handle a dashboard query data source', () => {

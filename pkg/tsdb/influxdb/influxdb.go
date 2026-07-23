@@ -20,19 +20,28 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
-var logger log.Logger = backend.NewLoggerWith("logger", "tsdb.influxdb")
-
 type Service struct {
-	im instancemgmt.InstanceManager
+	im             instancemgmt.InstanceManager
+	logger         log.Logger
+	fluxLogger     log.Logger
+	influxqlLogger log.Logger
+	fsqlLogger     log.Logger
 }
 
 func ProvideService(httpClient *httpclient.Provider) *Service {
+	// Constructed here (not as a package-level var) so it picks up Grafana's
+	// in-process logger override installed during coreplugin init.
+	logger := backend.NewLoggerWith("logger", "tsdb.influxdb")
 	return &Service{
-		im: datasource.NewInstanceManager(NewInstanceSettings(httpClient)),
+		im:             datasource.NewInstanceManager(NewInstanceSettings(httpClient, logger)),
+		logger:         logger,
+		fluxLogger:     backend.NewLoggerWith("logger", "tsdb.influx_flux"),
+		influxqlLogger: backend.NewLoggerWith("logger", "tsdb.influx_influxql"),
+		fsqlLogger:     backend.NewLoggerWith("logger", "tsdb.influx_flightsql"),
 	}
 }
 
-func NewInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
+func NewInstanceSettings(httpClientProvider *httpclient.Provider, logger log.Logger) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		opts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
@@ -97,7 +106,7 @@ func NewInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	logger := logger.FromContext(ctx)
+	logger := s.logger.FromContext(ctx)
 	logger.Debug("Received a query request", "numQueries", len(req.Queries))
 
 	tracer := tracing.DefaultTracer()
@@ -111,11 +120,11 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	switch dsInfo.Version {
 	case influxVersionFlux:
-		return flux.Query(ctx, dsInfo, *req)
+		return flux.Query(ctx, dsInfo, *req, s.fluxLogger)
 	case influxVersionInfluxQL:
-		return influxql.Query(ctx, tracer, dsInfo, req)
+		return influxql.Query(ctx, tracer, dsInfo, req, s.influxqlLogger)
 	case influxVersionSQL:
-		return fsql.Query(ctx, dsInfo, *req)
+		return fsql.Query(ctx, dsInfo, *req, s.fsqlLogger)
 	default:
 		return nil, fmt.Errorf("unknown influxdb version")
 	}

@@ -7,7 +7,7 @@ import DataSourcesResponse from './components/settings/mocks/api/datasources.jso
 import { setupGrafanaManagedServer, withExternalOnlySetting } from './components/settings/mocks/server';
 import { setupMswServer } from './mockApi';
 import { grantUserRole } from './mocks';
-import { addSettingsSection, clearSettingsExtensions } from './settings/extensions';
+import { addSettingsSection } from './settings/extensions';
 import { setupDataSources } from './testSetup/datasources';
 
 jest.mock('@grafana/runtime', () => ({
@@ -47,14 +47,19 @@ const ui = {
 };
 
 describe('Alerting settings', () => {
+  const unregisterSections: Array<() => void> = [];
+
+  function registerSettingsSection(section: Parameters<typeof addSettingsSection>[0]) {
+    unregisterSections.push(addSettingsSection(section));
+  }
+
   beforeEach(() => {
     grantUserRole('ServerAdmin');
     setupGrafanaManagedServer(server);
-    clearSettingsExtensions();
   });
 
   afterEach(() => {
-    clearSettingsExtensions();
+    unregisterSections.splice(0).forEach((unregisterSection) => unregisterSection());
   });
 
   it('should render the page with Built-in only enabled, others disabled', async () => {
@@ -147,15 +152,14 @@ describe('Alerting settings', () => {
   });
 
   it('should display additional tabs when settings extensions are registered', async () => {
-    // Register extensions before rendering
-    addSettingsSection({
+    registerSettingsSection({
       id: 'enrichment',
       text: 'Enrichment',
       url: '/alerting/admin/enrichment',
       icon: 'star',
     });
 
-    addSettingsSection({
+    registerSettingsSection({
       id: 'notifications',
       text: 'Notifications',
       url: '/alerting/admin/notifications',
@@ -177,8 +181,7 @@ describe('Alerting settings', () => {
   });
 
   it('should correctly show active state for extension tabs based on route', async () => {
-    // Register an extension
-    addSettingsSection({
+    registerSettingsSection({
       id: 'enrichment',
       text: 'Enrichment',
       url: '/alerting/admin/enrichment',
@@ -206,22 +209,21 @@ describe('Alerting settings', () => {
   });
 
   it('should handle multiple extensions correctly', async () => {
-    // Register multiple extensions
-    addSettingsSection({
+    registerSettingsSection({
       id: 'enrichment',
       text: 'Enrichment',
       url: '/alerting/admin/enrichment',
       icon: 'star',
     });
 
-    addSettingsSection({
+    registerSettingsSection({
       id: 'notifications',
       text: 'Notifications',
       url: '/alerting/admin/notifications',
       icon: 'bell',
     });
 
-    addSettingsSection({
+    registerSettingsSection({
       id: 'custom-settings',
       text: 'Custom Settings',
       url: '/alerting/admin/custom',

@@ -136,7 +136,13 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	defer logger.Info("pull request processed")
 
 	progress.SetMessage(ctx, "listing pull request files")
-	files, err := prRepo.CompareFiles(ctx, prRepo.Config().Branch(), opts.Ref)
+	base, err := prRepo.MergeBase(ctx, opts.Ref)
+	if err != nil {
+		base = prRepo.Config().Branch()
+		logger.Warn("failed to resolve pull request base, falling back to the configured branch", "error", err, "branch", base)
+	}
+
+	files, err := prRepo.CompareFiles(ctx, base, opts.Ref)
 	if err != nil {
 		logger.Error("failed to list pull request files", "error", err)
 		return fmt.Errorf("failed to list pull request files: %w", err)

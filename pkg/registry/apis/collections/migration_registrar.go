@@ -15,7 +15,11 @@ func StarsMigration(migrator legacy.StarsMigrator) migrations.MigrationDefinitio
 		ID:          "stars",
 		MigrationID: "stars migration",
 		Resources: []migrations.ResourceInfo{
-			{GroupResource: starsGR, LockTables: []string{"star", "user"}},
+			{
+				GroupResource: starsGR,
+				LockTables:    []string{"star", "user"},
+				FloorVersion:  collectionsV1.APIVersion,
+			},
 		},
 		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
 			starsGR: migrator.MigrateStars,

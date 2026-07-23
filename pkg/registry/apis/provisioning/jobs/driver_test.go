@@ -15,6 +15,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
@@ -485,5 +486,45 @@ func TestProcessJobWithLeaseCheck_LeaseExpiry_CancelsAndWaitsForWorker(t *testin
 		}
 	case <-time.After(3 * time.Second):
 		t.Fatal("processJobWithLeaseCheck did not abort after lease expiry")
+	}
+}
+
+func TestWithJobAuthorSignature(t *testing.T) {
+	tests := []struct {
+		name        string
+		annotations map[string]string
+		expected    *repository.CommitSignature
+	}{
+		{
+			name: "name and email set the signature",
+			annotations: map[string]string{
+				appjobs.AnnoAuthor:      "Test User",
+				appjobs.AnnoAuthorEmail: "test@example.com",
+			},
+			expected: &repository.CommitSignature{Name: "Test User", Email: "test@example.com"},
+		},
+		{
+			name:        "only name is enough to set the signature",
+			annotations: map[string]string{appjobs.AnnoAuthor: "Test User"},
+			expected:    &repository.CommitSignature{Name: "Test User"},
+		},
+		{
+			name:        "no author annotations leaves the context untouched",
+			annotations: map[string]string{"unrelated": "value"},
+			expected:    nil,
+		},
+		{
+			name:        "nil annotations leaves the context untouched",
+			annotations: nil,
+			expected:    nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			job := &provisioning.Job{ObjectMeta: metav1.ObjectMeta{Annotations: tt.annotations}}
+			ctx := withJobAuthorSignature(context.Background(), job)
+			assert.Equal(t, tt.expected, repository.GetAuthorSignature(ctx))
+		})
 	}
 }

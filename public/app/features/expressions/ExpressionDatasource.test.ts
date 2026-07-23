@@ -12,12 +12,14 @@ const mockGetDatasource = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
-  getDataSourceSrv: () => ({
-    get: mockGetDatasource,
-  }),
   getTemplateSrv: () => ({
     replace: (val: string) => (val ? val.replace('$input', '10').replace('$window', '10s') : val),
   }),
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: (...args: unknown[]) => mockGetDatasource(...args),
 }));
 
 describe('ExpressionDatasourceApi', () => {

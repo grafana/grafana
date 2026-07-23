@@ -198,40 +198,18 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 		}
 	}
 
-	// old model
-	dimension := ""
-	if azJSONModel.Dimension != nil {
-		dimension = strings.TrimSpace(*azJSONModel.Dimension)
-	}
-	dimensionFilter := ""
-	if azJSONModel.DimensionFilter != nil {
-		dimensionFilter = strings.TrimSpace(*azJSONModel.DimensionFilter)
-	}
-
-	dimSB := strings.Builder{}
-
-	if dimension != "" && dimensionFilter != "" && dimension != "None" && len(azJSONModel.DimensionFilters) == 0 {
-		dimSB.WriteString(fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
-	} else {
-		for i, filter := range azJSONModel.DimensionFilters {
-			if len(filter.Filters) == 0 {
-				dimSB.WriteString(fmt.Sprintf("%s eq '*'", *filter.Dimension))
-			} else {
-				dimSB.WriteString(types.ConstructFiltersString(filter))
-			}
-			if i != len(azJSONModel.DimensionFilters)-1 {
-				dimSB.WriteString(" and ")
-			}
-		}
+	dimensionFilterString, err := buildDimensionFilterString(azJSONModel)
+	if err != nil {
+		return nil, err
 	}
 
 	filterString := strings.Join(resourceIDs, " or ")
 
-	if dimSB.String() != "" {
+	if dimensionFilterString != "" {
 		if filterString != "" {
-			filterString = fmt.Sprintf("(%s) and (%s)", filterString, dimSB.String())
+			filterString = fmt.Sprintf("(%s) and (%s)", filterString, dimensionFilterString)
 		} else {
-			filterString = dimSB.String()
+			filterString = dimensionFilterString
 		}
 	}
 
@@ -267,6 +245,61 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 	}
 
 	return azureQuery, nil
+}
+
+// buildDimensionFilterString constructs the dimension portion of the metrics
+// API $filter from either the legacy single dimension/dimensionFilter fields
+// or the DimensionFilters list.
+func buildDimensionFilterString(azJSONModel *dataquery.AzureMetricQuery) (string, error) {
+	// old model
+	dimension := ""
+	if azJSONModel.Dimension != nil {
+		dimension = strings.TrimSpace(*azJSONModel.Dimension)
+	}
+	dimensionFilter := ""
+	if azJSONModel.DimensionFilter != nil {
+		dimensionFilter = strings.TrimSpace(*azJSONModel.DimensionFilter)
+	}
+
+	if dimension != "" && dimensionFilter != "" && dimension != "None" && len(azJSONModel.DimensionFilters) == 0 {
+		return fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter), nil
+	}
+
+	// The metrics API accepts at most one 'sw' clause per dimension: it
+	// rejects both "sw ... or sw ..." (or is only valid between eq clauses)
+	// and "sw ... and sw ..." (multiple sw values for one dimension), so fail
+	// here with a clearer message than the API's. Values are counted across
+	// all filter entries because the same dimension may appear more than once
+	// in the list, and dimension names are compared case-insensitively
+	// because the API treats them that way.
+	swValueCounts := map[string]int{}
+	for _, filter := range azJSONModel.DimensionFilters {
+		if filter.Operator == nil || *filter.Operator != "sw" {
+			continue
+		}
+		filterDimension := ""
+		if filter.Dimension != nil {
+			filterDimension = *filter.Dimension
+		}
+		key := strings.ToLower(filterDimension)
+		swValueCounts[key] += len(filter.Filters)
+		if swValueCounts[key] > 1 {
+			return "", backend.DownstreamError(fmt.Errorf("the Azure Monitor API supports only one 'starts with' filter value per dimension, but dimension %q has %d", filterDimension, swValueCounts[key]))
+		}
+	}
+
+	dimSB := strings.Builder{}
+	for i, filter := range azJSONModel.DimensionFilters {
+		if len(filter.Filters) == 0 {
+			dimSB.WriteString(fmt.Sprintf("%s eq '*'", *filter.Dimension))
+		} else {
+			dimSB.WriteString(types.ConstructFiltersString(filter))
+		}
+		if i != len(azJSONModel.DimensionFilters)-1 {
+			dimSB.WriteString(" and ")
+		}
+	}
+	return dimSB.String(), nil
 }
 
 func getParams(azJSONModel *dataquery.AzureMetricQuery, query backend.DataQuery) (url.Values, error) {

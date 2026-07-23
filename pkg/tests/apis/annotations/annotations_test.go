@@ -254,6 +254,19 @@ func TestIntegrationAnnotationTags(t *testing.T) {
 	for _, tag := range rsp.Result.Tags {
 		require.Contains(t, tag.Tag, "env")
 	}
+
+	// A caller without organization annotation read is rejected with the handler's 403.
+	errorRsp := apis.DoRequest(helper, apis.RequestParams{
+		User: helper.Org1.None,
+		Path: basePath,
+	}, &metav1.Status{})
+	require.Equal(t, http.StatusForbidden, errorRsp.Response.StatusCode)
+
+	status := errorRsp.Result
+	require.NotNil(t, status)
+	require.Equal(t, int32(http.StatusForbidden), status.Code)
+	require.Equal(t, metav1.StatusReasonForbidden, status.Reason)
+	require.Contains(t, status.Message, "requires the annotations:read permission with the organization scope")
 }
 
 func TestIntegrationAnnotationGraphite(t *testing.T) {

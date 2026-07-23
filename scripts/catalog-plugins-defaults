@@ -5,3 +5,6 @@ tempo
 zipkin
 opentsdb
 stackdriver
+mssql
+jaeger
+grafana-pyroscope-datasource

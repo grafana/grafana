@@ -109,15 +109,15 @@ export interface FeatureToggles {
   */
   awsDatasourcesTempCredentials?: boolean;
   /**
+  * Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID.
+  * @default false
+  */
+  awsAssumeRolePerDatasourceExternalId?: boolean;
+  /**
   * Enable support for Machine Learning in server-side expressions
   * @default false
   */
   mlExpressions?: boolean;
-  /**
-  * Expose some datasources as apiservers.
-  * @default false
-  */
-  datasourceAPIServers?: boolean;
   /**
   * Register experimental APIs with the k8s API server, including all datasources
   * @default false
@@ -148,11 +148,6 @@ export interface FeatureToggles {
   * @default false
   */
   configurableSchedulerTick?: boolean;
-  /**
-  * Enable AI powered features for dashboards to auto-summary changes when saving
-  * @default false
-  */
-  aiGeneratedDashboardChanges?: boolean;
   /**
   * Enables configuration of PDF report settings
   * @default false
@@ -314,11 +309,6 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
-  * Enable notebook-style layout for dashboards, mixing text cells, code cells, and visualization panels
-  * @default false
-  */
-  dashboardNotebookLayout?: boolean;
-  /**
   * Enables default layout selector in dashboard settings
   * @default true
   */
@@ -333,11 +323,6 @@ export interface FeatureToggles {
   * @default false
   */
   dashboardUndoRedo?: boolean;
-  /**
-  * Enables unlimited dashboard panel grouping
-  * @default false
-  */
-  unlimitedLayoutsNesting?: boolean;
   /**
   * Enables viewing non-applicable drilldowns on a panel level
   * @default false
@@ -775,15 +760,15 @@ export interface FeatureToggles {
   */
   alertingAIAnalyzeCentralStateHistory?: boolean;
   /**
+  * Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.
+  * @default false
+  */
+  ['alerting.ruleQuality']?: boolean;
+  /**
   * Enables simplified step mode in the notifications section
   * @default true
   */
   alertingNotificationsStepMode?: boolean;
-  /**
-  * Enables cross cluster search in the Elasticsearch data source
-  * @default false
-  */
-  elasticsearchCrossClusterSearch?: boolean;
   /**
   * Defaults to using the Loki `/labels` API instead of `/series`
   * @default true
@@ -815,11 +800,6 @@ export interface FeatureToggles {
   */
   teamLBACApiWriteFromAppPlatform?: boolean;
   /**
-  * Enables Advisor app
-  * @default true
-  */
-  grafanaAdvisor?: boolean;
-  /**
   * Enables less memory intensive Elasticsearch result parsing
   * @default false
   */
@@ -829,6 +809,11 @@ export interface FeatureToggles {
   * @default false
   */
   datasourceConnectionsTab?: boolean;
+  /**
+  * Enables the new sidebar filter panel in the Add new connection page
+  * @default false
+  */
+  connectionsFilterSidebar?: boolean;
   /**
   * Use a POST request to list rules by passing down the namespaces user has access to
   * @default false
@@ -1151,11 +1136,6 @@ export interface FeatureToggles {
   */
   pluginInstallAPISync?: boolean;
   /**
-  * Enable visualization presets
-  * @default true
-  */
-  vizPresets?: boolean;
-  /**
   * Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis
   * @default false
   */
@@ -1196,16 +1176,6 @@ export interface FeatureToggles {
   */
   panelTimeSettings?: boolean;
   /**
-  * Enables the raw DSL query editor in the Elasticsearch data source
-  * @default false
-  */
-  elasticsearchRawDSLQuery?: boolean;
-  /**
-  * Enables the ES|QL query editor in the Elasticsearch data source
-  * @default false
-  */
-  elasticsearchESQLQuery?: boolean;
-  /**
   * Enables http proxy settings for aws datasources
   * @default false
   */
@@ -1225,11 +1195,6 @@ export interface FeatureToggles {
   * @default false
   */
   lokiQueryLimitsContext?: boolean;
-  /**
-  * Enables the new version of rudderstack
-  * @default false
-  */
-  rudderstackUpgrade?: boolean;
   /**
   * Adds support for Kubernetes alerting historian APIs
   * @default false
@@ -1326,11 +1291,6 @@ export interface FeatureToggles {
   */
   kubernetesUsersRedirect?: boolean;
   /**
-  * Enables the ability to create multiple notification policies in alerting
-  * @default true
-  */
-  alertingMultiplePolicies?: boolean;
-  /**
   * Use notification settings policy field instead of labels for named policy routing in alert rules
   * @default false
   */
@@ -1406,20 +1366,10 @@ export interface FeatureToggles {
   */
   flameGraphWithCallTree?: boolean;
   /**
-  * Enables the advisor report integration with datasource pages
-  * @default false
-  */
-  advisorDatasourceIntegration?: boolean;
-  /**
   * Enables an inline version of Log Details that creates no new scrolls
   * @default false
   */
   inlineLogDetailsNoScrolls?: boolean;
-  /**
-  * Enables fine-grained Y-axis tick options beyond the auto-ticks
-  * @default false
-  */
-  yAxisTickControl?: boolean;
   /**
   * Enables the logs tableNG panel to replace existing tableRT
   * @default false

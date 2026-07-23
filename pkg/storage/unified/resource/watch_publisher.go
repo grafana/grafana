@@ -56,13 +56,14 @@ func (k *kvStorageBackend) publishWatchNotification(ctx context.Context, event E
 	}, event.Namespace)
 
 	payload, err := proto.Marshal(&resourcepb.WatchNotification{
-		Type:            actionToWatchNotificationType(event.Action),
-		Group:           event.Group,
-		Resource:        event.Resource,
-		Namespace:       event.Namespace,
-		Name:            event.Name,
-		ResourceVersion: event.ResourceVersion,
-		Folder:          event.Folder,
+		Type:                    actionToWatchNotificationType(event.Action),
+		Group:                   event.Group,
+		Resource:                event.Resource,
+		Namespace:               event.Namespace,
+		Name:                    event.Name,
+		ResourceVersion:         event.ResourceVersion,
+		Folder:                  event.Folder,
+		PreviousResourceVersion: event.PreviousRV,
 	})
 	if err != nil {
 		k.log.Warn("failed to marshal watch notification", "subject", subject, "error", err)

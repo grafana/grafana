@@ -5,6 +5,7 @@ import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   Button,
   Field,
@@ -24,12 +25,15 @@ import { changeTheme } from 'app/core/services/theme';
 
 import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
+import { homeDashboardChanged } from './analytics/main';
 import { getLanguageOptions, getStyles, getTranslatedThemeName, type Props, type State } from './utils';
 
 class SharedPreferences extends PureComponent<Props, State> {
   service: PreferencesService;
   themeOptions: ComboboxOption[];
   languageOptions: ComboboxOption[];
+  // Server value stashed at load so a save can tell whether the home dashboard actually changed.
+  initialHomeDashboardUID = '';
 
   constructor(props: Props) {
     super(props);
@@ -66,6 +70,7 @@ class SharedPreferences extends PureComponent<Props, State> {
       isLoading: true,
     });
     const prefs = await this.service.load();
+    this.initialHomeDashboardUID = prefs.homeDashboardUID ?? '';
 
     this.setState({
       isLoading: false,
@@ -104,6 +109,15 @@ class SharedPreferences extends PureComponent<Props, State> {
         .finally(() => {
           this.setState({ isSubmitting: false });
         });
+      const nextHomeDashboardUID = homeDashboardUID ?? '';
+      if (nextHomeDashboardUID !== this.initialHomeDashboardUID) {
+        homeDashboardChanged({
+          preferenceType: this.props.preferenceType,
+          action: nextHomeDashboardUID ? 'set' : 'cleared',
+          unifiedHomepageEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaUnifiedHomepage, false),
+        });
+      }
+
       window.location.reload();
     }
   };

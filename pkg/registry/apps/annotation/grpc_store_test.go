@@ -388,25 +388,47 @@ func TestGRPCStore_List(t *testing.T) {
 		assert.Equal(t, "user:alice", result.Items[1].GetCreatedBy())
 	})
 
-	t.Run("IncludeDeleted round-trips and surfaces tombstones", func(t *testing.T) {
+	t.Run("Deleted filter round-trips and surfaces tombstones", func(t *testing.T) {
 		require.NoError(t, store.Delete(ctx, namespace, "anno-3"))
+
+		findTombstone := func(items []annotationV0.Annotation) *annotationV0.Annotation {
+			for i := range items {
+				if items[i].Name == "anno-3" {
+					return &items[i]
+				}
+			}
+			return nil
+		}
+
+		findLive := func(items []annotationV0.Annotation, name string) *annotationV0.Annotation {
+			for i := range items {
+				if items[i].Name == name && items[i].DeletionTimestamp == nil {
+					return &items[i]
+				}
+			}
+			return nil
+		}
 
 		excluded, err := store.List(ctx, namespace, ListOptions{})
 		require.NoError(t, err)
-		for i := range excluded.Items {
-			assert.NotEqual(t, "anno-3", excluded.Items[i].Name, "tombstone must be hidden by default")
-		}
+		assert.Nil(t, findTombstone(excluded.Items), "tombstone must be hidden by default")
 
-		included, err := store.List(ctx, namespace, ListOptions{IncludeDeleted: true})
+		included, err := store.List(ctx, namespace, ListOptions{Deleted: DeletedInclude})
 		require.NoError(t, err)
-		var tombstone *annotationV0.Annotation
-		for i := range included.Items {
-			if included.Items[i].Name == "anno-3" {
-				tombstone = &included.Items[i]
-			}
-		}
-		require.NotNil(t, tombstone, "IncludeDeleted must surface the tombstone")
+		assert.Len(t, included.Items, 3, "DeletedInclude must return live annotations plus the tombstone")
+		tombstone := findTombstone(included.Items)
+		require.NotNil(t, tombstone, "DeletedInclude must surface the tombstone")
 		require.NotNil(t, tombstone.DeletionTimestamp, "tombstone must carry a deletionTimestamp over the wire")
+		assert.NotNil(t, findLive(included.Items, "anno-1"), "DeletedInclude must also return live annotations")
+		assert.NotNil(t, findLive(included.Items, "anno-2"), "DeletedInclude must also return live annotations")
+
+		only, err := store.List(ctx, namespace, ListOptions{Deleted: DeletedOnly})
+		require.NoError(t, err)
+		require.NotEmpty(t, only.Items, "DeletedOnly must surface the tombstone")
+		for i := range only.Items {
+			assert.NotNil(t, only.Items[i].DeletionTimestamp, "DeletedOnly must return only tombstones")
+		}
+		require.NotNil(t, findTombstone(only.Items), "DeletedOnly must include anno-3")
 	})
 }
 

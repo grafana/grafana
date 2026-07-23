@@ -8,10 +8,8 @@ import (
 	"iter"
 	"math"
 	"math/rand"
-	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -33,7 +31,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
-	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -50,18 +47,6 @@ import (
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql")
 
 const defaultPollingInterval = 100 * time.Millisecond
-
-// newTenantDeleterGcomClient returns a GCOM client for tenant-deleter verification when
-// [grafana_com] sso_api_token and api_url are configured.
-func newTenantDeleterGcomClient(cfg *setting.Cfg) gcom.Service {
-	token := strings.TrimSpace(cfg.GrafanaComSSOAPIToken)
-	apiURL := strings.TrimSpace(cfg.GrafanaComAPIURL)
-	if token == "" || apiURL == "" {
-		return nil
-	}
-	hc := &http.Client{Timeout: 30 * time.Second}
-	return gcom.New(gcom.Config{ApiURL: apiURL, Token: token}, hc)
-}
 
 const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
 const defaultGarbageCollectionBatchWait = 1 * time.Second
@@ -113,6 +98,16 @@ func WithNatsNotifierShadow(s resource.EventSubscriber) StorageBackendOption {
 	return func(o *resource.KVBackendOptions) {
 		o.EventSubscriber = s
 		o.EnableNatsNotifierShadow = true
+	}
+}
+
+// WithNatsNotifier feeds the watch pipeline directly from the NATS bus instead
+// of polling. Delivery is at-most-once; the backend falls back to polling when
+// the subscriber is disabled. KV backend only.
+func WithNatsNotifier(s resource.EventSubscriber) StorageBackendOption {
+	return func(o *resource.KVBackendOptions) {
+		o.EventSubscriber = s
+		o.EnableNatsNotifier = true
 	}
 }
 
@@ -187,13 +182,6 @@ func NewStorageBackend(
 		return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
 	}
 
-	tenantDeleterCfg := resource.NewTenantDeleterConfig(cfg)
-	if tenantDeleterCfg != nil {
-		if gcomClient := newTenantDeleterGcomClient(cfg); gcomClient != nil {
-			tenantDeleterCfg.Gcom = gcomClient
-		}
-	}
-
 	kvBackendOpts := resource.KVBackendOptions{
 		KvStore:              kvStore,
 		Reg:                  reg,
@@ -202,7 +190,7 @@ func NewStorageBackend(
 		DBKeepAlive:          eDB,
 		LastImportTimeMaxAge: cfg.MaxFileIndexAge,
 		TenantWatcherConfig:  resource.NewTenantWatcherConfig(cfg),
-		TenantDeleterConfig:  tenantDeleterCfg,
+		TenantDeleterConfig:  resource.NewTenantDeleterConfig(cfg),
 		GCGate:               gcGate,
 		GarbageCollection: resource.GarbageCollectionConfig{
 			Enabled:          cfg.EnableGarbageCollection,
@@ -240,6 +228,8 @@ func NewStorageBackend(
 	if cfg.EnableKVLeases {
 		kvBackendOpts.EnableKVLeases = true
 		kvBackendOpts.Holder = ResolveLeaseHolder(cfg)
+		kvBackendOpts.LeaseTTL = cfg.KVLeaseTTL
+		kvBackendOpts.LeaseAutoRenew = cfg.KVLeaseAutoRenew
 	}
 
 	return resource.NewKVStorageBackend(kvBackendOpts)

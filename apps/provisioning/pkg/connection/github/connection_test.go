@@ -436,15 +436,8 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: false,
 			expectedErrors: []provisioning.ErrorDetails{
 				{
-					Type:     metav1.CauseTypeFieldValueInvalid,
-					Field:    "spec.github.appID",
-					Detail:   "verify appID is correct",
-					BadValue: appID,
-				},
-				{
 					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  "secure.privateKey",
-					Detail: "verify privateKey is correct",
+					Detail: "failed to GET app: unauthorized",
 				},
 			},
 		},
@@ -505,13 +498,14 @@ func TestConnection_Test(t *testing.T) {
 				{
 					Type:     metav1.CauseTypeFieldValueInvalid,
 					Field:    "spec.github.appID",
-					Detail:   "verify appID is correct",
+					Detail:   "authentication failed. The appID exists but could not be accessed with the privateKey. Verify appID is correct",
 					BadValue: appID,
 				},
 				{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  "secure.privateKey",
-					Detail: "verify privateKey is correct",
+					Type:     metav1.CauseTypeFieldValueInvalid,
+					Field:    "secure.privateKey",
+					Detail:   "authentication failed. Verify privateKey is the generated private key for the appID",
+					BadValue: "****",
 				},
 			},
 		},
@@ -1022,10 +1016,8 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: false,
 			expectedErrors: []provisioning.ErrorDetails{
 				{
-					Type:     metav1.CauseTypeFieldValueInvalid,
-					Field:    "spec.github.installationID",
-					Detail:   "invalid installation ID",
-					BadValue: "456",
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Detail: "failed to GET app installation: unexpected error",
 				},
 			},
 		},

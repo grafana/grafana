@@ -38,6 +38,8 @@ import { isGrafanaRuleIdentifier } from './rules';
 export { GRAFANA_RULES_SOURCE_NAME };
 export const GRAFANA_DATASOURCE_NAME = '-- Grafana --';
 
+const collator = new Intl.Collator();
+
 export const GrafanaRulesSource: GrafanaRulesSourceIdentifier = {
   uid: GrafanaRulesSourceSymbol,
   name: GRAFANA_RULES_SOURCE_NAME,
@@ -74,7 +76,7 @@ export function getRulesDataSources() {
   return getAllDataSources()
     .filter((ds) => isSupportedExternalRulesSourceType(ds.type))
     .filter((ds) => isDataSourceManagingAlerts(ds))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => collator.compare(a.name, b.name));
 }
 
 export function getRulesSourceUniqueKey(rulesSource: RulesSource): string {
@@ -92,7 +94,7 @@ export function getRulesDataSourceByUID(uid: string) {
 export function getAlertManagerDataSources() {
   return getAllDataSources()
     .filter(isAlertmanagerDataSourceInstance)
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => collator.compare(a.name, b.name));
 }
 
 export function isAlertmanagerDataSourceInstance(

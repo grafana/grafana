@@ -6,6 +6,7 @@ import (
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -44,7 +45,9 @@ func TestFolderTree(t *testing.T) {
 		if assert.True(t, ok, "x should have DirPath with empty base") {
 			assert.Equal(t, "x", id.ID, "KubernetesName")
 			assert.Equal(t, "X!", id.Title, "Title")
-			assert.Equal(t, "X!", id.Path, "Path")
+			// Title is preserved, but the path segment is normalized: "!" is not
+			// an allowed path character and is dropped.
+			assert.Equal(t, "X", id.Path, "Path")
 		}
 	})
 
@@ -67,7 +70,7 @@ func TestFolderTree(t *testing.T) {
 		if assert.True(t, ok, "x should have DirPath with empty base") {
 			assert.Equal(t, "x", id.ID, "KubernetesName")
 			assert.Equal(t, "X!", id.Title, "Title")
-			assert.Equal(t, "X!", id.Path, "Path")
+			assert.Equal(t, "X", id.Path, "Path")
 		}
 
 		id, ok = tree.DirPath("c", "c")
@@ -81,7 +84,10 @@ func TestFolderTree(t *testing.T) {
 		if assert.True(t, ok, "a should have DirPath with x as base") {
 			assert.Equal(t, "a", id.ID, "KubernetesName")
 			assert.Equal(t, "[€]@£a", id.Title, "Title")
-			assert.Equal(t, "C :)/!!B#!/[€]@£a", id.Path, "Path")
+			// Each title is normalized into a safe segment (unsupported characters
+			// dropped, trailing spaces trimmed): "C :)"->"C", "!!B#!"->"B",
+			// "[€]@£a"->"a". Titles themselves are preserved above.
+			assert.Equal(t, "C/B/a", id.Path, "Path")
 		}
 		_, ok = tree.DirPath("x", "a")
 		assert.False(t, ok, "x should not have DirPath with a as base, because a is a subfolder of x")
@@ -91,6 +97,54 @@ func TestFolderTree(t *testing.T) {
 			assert.Empty(t, id.ID)
 			assert.Empty(t, id.Path)
 			assert.Empty(t, id.Title)
+		}
+	})
+
+	t.Run("normalizes unsafe folder titles into safe path segments", func(t *testing.T) {
+		// Reproduces a folder titled with a "»" prefix, which previously produced
+		// an unsafe path and silently failed selective export.
+		tree := &folderTree{
+			tree: map[string]string{"child": "parent", "parent": ""},
+			folders: map[string]Folder{
+				"parent": newFid("parent", "» Reports"),
+				"child":  newFid("child", "My Group"),
+			},
+		}
+
+		id, ok := tree.DirPath("child", "")
+		if assert.True(t, ok, "child should have DirPath with empty base") {
+			assert.Equal(t, "My Group", id.Title, "Title is preserved")
+			assert.Equal(t, "Reports/My Group", id.Path, "Path is normalized")
+			require.NoError(t, safepath.IsSafe(id.Path), "normalized path must be safe")
+		}
+	})
+
+	t.Run("falls back to the folder UID when a title has no usable characters", func(t *testing.T) {
+		tree := &folderTree{
+			tree:    map[string]string{"emoji-uid": ""},
+			folders: map[string]Folder{"emoji-uid": newFid("emoji-uid", "🎉")},
+		}
+
+		id, ok := tree.DirPath("emoji-uid", "")
+		if assert.True(t, ok) {
+			assert.Equal(t, "emoji-uid", id.Path, "Path falls back to the UID")
+			require.NoError(t, safepath.IsSafe(id.Path))
+		}
+	})
+
+	t.Run("a parent missing from the tree is not prepended as a UID segment", func(t *testing.T) {
+		// The child points at a parent that was never added to the tree (e.g. a
+		// managed-folder boundary skipped during a partial export). The child must
+		// root at its own segment, not under the missing parent's UID.
+		tree := &folderTree{
+			tree:    map[string]string{"child": "missing-parent"},
+			folders: map[string]Folder{"child": newFid("child", "Child")},
+		}
+
+		id, ok := tree.DirPath("child", "")
+		if assert.True(t, ok, "child should have DirPath with empty base") {
+			assert.Equal(t, "Child", id.Path, "missing parent must not contribute a UID segment")
+			require.NoError(t, safepath.IsSafe(id.Path))
 		}
 	})
 

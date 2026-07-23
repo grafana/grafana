@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import {
   CustomVariable,
   LocalValueVariable,
@@ -10,6 +12,8 @@ import {
   ScopesVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
+
+import { toControlSourceRef } from '../utils/predefinedVariables';
 
 import { DashboardScene } from './DashboardScene';
 import { SectionVariableControls, VariableControls } from './VariableControls';
@@ -98,6 +102,103 @@ describe('VariableControls', () => {
     render(<VariableControls dashboard={dashboard} />);
 
     expect(await screen.findByText('TextVarVisible')).toBeInTheDocument();
+  });
+
+  it('should allow changing predefined variable values in edit mode', async () => {
+    const dashboard = buildScene([
+      new CustomVariable({
+        name: 'globalVar',
+        query: 'a,b',
+        value: 'a',
+        text: 'a',
+        origin: toControlSourceRef({ type: 'global' }),
+      }),
+    ]);
+    dashboard.activate();
+    dashboard.setState({ isEditing: true });
+
+    render(<VariableControls dashboard={dashboard} />);
+
+    const valueSelect = await screen.findByTestId(
+      selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('a')
+    );
+    const inputElement = valueSelect.querySelector('input');
+    expect(inputElement).not.toBeDisabled();
+  });
+
+  it('should allow changing predefined variable values in view mode', async () => {
+    const dashboard = buildScene([
+      new CustomVariable({
+        name: 'globalVar',
+        query: 'a,b',
+        value: 'a',
+        text: 'a',
+        origin: toControlSourceRef({ type: 'global' }),
+      }),
+    ]);
+    dashboard.activate();
+
+    render(<VariableControls dashboard={dashboard} />);
+
+    expect(await screen.findByText('globalVar')).toBeInTheDocument();
+
+    const valueSelect = await screen.findByTestId(
+      selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('a')
+    );
+    const inputElement = valueSelect.querySelector('input');
+    expect(inputElement).not.toBeDisabled();
+  });
+
+  it('should not show edit/delete hover actions for predefined variables in edit mode', async () => {
+    const user = userEvent.setup();
+    const dashboard = buildScene([
+      new CustomVariable({
+        name: 'globalVar',
+        query: 'a,b',
+        origin: toControlSourceRef({ type: 'global' }),
+      }),
+    ]);
+    dashboard.activate();
+    dashboard.setState({ isEditing: true });
+
+    render(<VariableControls dashboard={dashboard} />);
+
+    await user.hover(await screen.findByText('globalVar'));
+
+    expect(screen.queryByLabelText('Edit')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Delete')).not.toBeInTheDocument();
+  });
+
+  it('should show an origin icon for global predefined variables without a description', async () => {
+    const dashboard = buildScene([
+      new CustomVariable({
+        name: 'globalVar',
+        query: 'a,b',
+        origin: toControlSourceRef({ type: 'global' }),
+      }),
+    ]);
+    dashboard.activate();
+
+    render(<VariableControls dashboard={dashboard} />);
+
+    expect(await screen.findByText('globalVar')).toBeInTheDocument();
+    expect(screen.getByLabelText('Global variable, shared across all dashboards')).toBeInTheDocument();
+  });
+
+  it('should show an origin icon for folder predefined variables without a description', async () => {
+    const dashboard = buildScene([
+      new CustomVariable({
+        name: 'folderVar',
+        query: 'a,b',
+        origin: toControlSourceRef({ type: 'folder', folderUid: 'folder-1' }),
+      }),
+    ]);
+    dashboard.activate();
+
+    render(<VariableControls dashboard={dashboard} />);
+
+    expect(await screen.findByText('folderVar')).toBeInTheDocument();
+    expect(screen.getByLabelText("Folder variable, inherited from this dashboard's folder")).toBeInTheDocument();
   });
 
   it('should prefer variablesOverride over dashboard variables', async () => {

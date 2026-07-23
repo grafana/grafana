@@ -1,16 +1,10 @@
 import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
-import {
-  type FieldConfigSource,
-  type GrafanaTheme2,
-  LogSortOrderChangeEvent,
-  LogsSortOrder,
-  type PanelProps,
-  store,
-} from '@grafana/data';
+import { type GrafanaTheme2, LogSortOrderChangeEvent, LogsSortOrder, type PanelProps, store } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { usePanelContext, useStyles2 } from '@grafana/ui';
+import { TableNG } from '@grafana/ui/unstable';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { getDefaultControlsExpandedMode } from 'app/features/logs/components/panel/LogListContext';
 import { CONTROLS_WIDTH_EXPANDED } from 'app/features/logs/components/panel/LogListControls';
@@ -18,8 +12,13 @@ import { LogTableControls } from 'app/features/logs/components/panel/LogTableCon
 import { LOG_LIST_CONTROLS_WIDTH } from 'app/features/logs/components/panel/virtualization';
 import { dataFrameToLogsModel } from 'app/features/logs/logsModel';
 import { type DownloadFormat, downloadLogs as download } from 'app/features/logs/utils';
-
-import { TablePanel } from '../table/TablePanel';
+import {
+  useCacheFieldDisplayNames,
+  useCellActions,
+  useCommonTableProps,
+  useTableSharedCrosshair,
+} from 'app/features/table/hooks';
+import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
@@ -32,8 +31,6 @@ interface Props extends Omit<PanelProps<Options>, 'timeRange'> {
 }
 
 export function TableNGWrap({
-  timeZone,
-  id,
   data,
   options,
   onOptionsChange,
@@ -41,17 +38,19 @@ export function TableNGWrap({
   width: tableWidth,
   transparent,
   fieldConfig,
-  renderCounter,
-  title,
-  eventBus,
   onFieldConfigChange,
   replaceVariables,
-  onChangeTimeRange,
   initialRowIndex,
   logOptionsStorageKey,
   containerElement,
   onWrapTextClick,
 }: Props) {
+  useCacheFieldDisplayNames(data.series);
+
+  const panelContext = usePanelContext();
+  const getActions = useCellActions(replaceVariables);
+  const commonTableProps = useCommonTableProps(options, fieldConfig);
+  const enableSharedCrosshair = useTableSharedCrosshair();
   const fieldSelectorWidth = options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth();
   const showControls = options.showControls ?? defaultOptions.showControls ?? true;
   const controlsExpandedFromStore = store.getBool(
@@ -73,13 +72,6 @@ export function TableNGWrap({
       onOptionsChange({ ...options, sortOrder });
     },
     [onOptionsChange, options]
-  );
-
-  const handleTableOnFieldConfigChange = useCallback(
-    (fieldConfig: FieldConfigSource) => {
-      onFieldConfigChange(fieldConfig);
-    },
-    [onFieldConfigChange]
   );
 
   const downloadLogs = useCallback(
@@ -109,25 +101,24 @@ export function TableNGWrap({
         </div>
       )}
 
-      <TablePanel
-        sortByBehavior={'managed'}
+      <TableNG
+        {...commonTableProps}
+        sortByBehavior="managed"
         initialRowIndex={initialRowIndex}
-        data={data}
+        data={data.series[getCurrentFrameIndex(data.series, options)]}
         timeRange={data.timeRange}
         width={Math.max(tableWidth - fieldSelectorWidth - controlsWidth, 0)}
         height={height}
-        id={id}
-        timeZone={timeZone}
-        options={options}
-        transparent={transparent}
+        onSortByChange={(sortBy) => onSortByChange(sortBy, { onOptionsChange, options })}
+        onColumnResize={(displayName, resizedWidth, fieldScope) =>
+          onColumnResize(displayName, resizedWidth, fieldScope, { fieldConfig, onFieldConfigChange })
+        }
+        onCellFilterAdded={panelContext.onAddAdHocFilter}
+        enableSharedCrosshair={enableSharedCrosshair}
         fieldConfig={fieldConfig}
-        renderCounter={renderCounter}
-        title={title}
-        eventBus={eventBus}
-        onOptionsChange={onOptionsChange}
-        onFieldConfigChange={handleTableOnFieldConfigChange}
-        replaceVariables={replaceVariables}
-        onChangeTimeRange={onChangeTimeRange}
+        getActions={getActions}
+        structureRev={data.structureRev}
+        transparent={transparent}
       />
     </div>
   );

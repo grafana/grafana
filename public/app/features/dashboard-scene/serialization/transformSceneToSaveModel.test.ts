@@ -38,6 +38,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { type RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
@@ -374,12 +375,27 @@ describe('transformSceneToSaveModel', () => {
         timeFrom: '2h',
         timeShift: '1d',
         hideTimeOverride: true,
+        timeCompare: '1d',
       });
 
       const saveModel = gridItemToPanel(gridItem);
       expect(saveModel.timeFrom).toBe('2h');
       expect(saveModel.timeShift).toBe('1d');
       expect(saveModel.hideTimeOverride).toBe(true);
+      expect(saveModel.timeCompare).toBe('1d');
+    });
+
+    it('preserves timeCompare through v1 save and load', () => {
+      const gridItem = buildGridItemFromPanelSchema({ timeCompare: '1w' });
+      const saveModel = gridItemToPanel(gridItem);
+
+      expect(saveModel.timeCompare).toBe('1w');
+
+      const reloaded = buildGridItemFromPanelSchema(saveModel);
+      const timeRange = (reloaded.state.body as VizPanel).state.$timeRange as PanelTimeRange;
+
+      expect(timeRange).toBeInstanceOf(PanelTimeRange);
+      expect(timeRange.state.compareWith).toBe('1w');
     });
 
     it('transparent panel', () => {

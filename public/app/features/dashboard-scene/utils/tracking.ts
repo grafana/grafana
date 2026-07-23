@@ -95,7 +95,7 @@ export async function trackDashboardSceneCreatedOrSaved(
         }),
   });
 
-  if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false)) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false) && isNew) {
     const { pathname, search } = locationService.getLocation();
     const isOnTemplateRoute = pathname === DASHBOARD_LIBRARY_ROUTES.Template;
     const templateUid = new URLSearchParams(search).get('dashboardTemplateUid');

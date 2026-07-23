@@ -9,6 +9,8 @@ import { canAccessPluginPage, useIrmPlugin } from 'app/features/alerting/unified
 import { canonicalSeverity } from 'app/features/alerting/unified/triage/scene/filters/severity';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
+import { incidentsCardClicked } from '../analytics/main';
+
 import { SummaryCard, SummaryCardAge, SummaryCardTitle } from './SummaryCard';
 import { HOME_CARD_MAX_ITEMS } from './constants';
 import { severityLevelColor } from './severity';
@@ -83,6 +85,13 @@ function IncidentsCardInner({ pluginId, canAccess, canDeclare }: IncidentsCardIn
           <Badge text={incident.severityLabel} color={severityLevelColor(canonicalSeverity(incident.severityLabel))} />
           <SummaryCardTitle
             href={canAccess ? createBridgeURL(pluginId, `/incidents/${incident.incidentID}`) : undefined}
+            onClick={() =>
+              incidentsCardClicked({
+                action: 'incident_detail',
+                placement: 'list',
+                severity: canonicalSeverity(incident.severityLabel),
+              })
+            }
           >
             {incident.title}
           </SummaryCardTitle>
@@ -91,7 +100,12 @@ function IncidentsCardInner({ pluginId, canAccess, canDeclare }: IncidentsCardIn
       )}
       emptyAction={
         canDeclare ? (
-          <LinkButton variant="primary" icon="fire" href={createBridgeURL(pluginId, '/incidents', { declare: 'new' })}>
+          <LinkButton
+            variant="primary"
+            icon="fire"
+            href={createBridgeURL(pluginId, '/incidents', { declare: 'new' })}
+            onClick={() => incidentsCardClicked({ action: 'declare_incident', placement: 'empty_state' })}
+          >
             <Trans i18nKey="home.incidents-card.declare">Declare an incident</Trans>
           </LinkButton>
         ) : undefined
@@ -105,12 +119,19 @@ function IncidentsCardInner({ pluginId, canAccess, canDeclare }: IncidentsCardIn
               fill="text"
               icon="fire"
               href={createBridgeURL(pluginId, '/incidents', { declare: 'new' })}
+              onClick={() => incidentsCardClicked({ action: 'declare_incident', placement: 'footer' })}
             >
               <Trans i18nKey="home.incidents-card.declare">Declare an incident</Trans>
             </LinkButton>
           )}
           {canAccess && (
-            <LinkButton variant="secondary" size="sm" fill="text" href={createBridgeURL(pluginId, '/incidents')}>
+            <LinkButton
+              variant="secondary"
+              size="sm"
+              fill="text"
+              href={createBridgeURL(pluginId, '/incidents')}
+              onClick={() => incidentsCardClicked({ action: 'view_all_incidents', placement: 'footer' })}
+            >
               <Trans i18nKey="home.incidents-card.view-all">View all incidents</Trans>
             </LinkButton>
           )}

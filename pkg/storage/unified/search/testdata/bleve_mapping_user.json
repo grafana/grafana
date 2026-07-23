@@ -47,16 +47,6 @@
         "enabled": true,
         "dynamic": false,
         "properties": {
-          "createdAt": {
-            "enabled": true,
-            "dynamic": true,
-            "fields": [
-              {
-                "type": "number",
-                "store": true
-              }
-            ]
-          },
           "disabled": {
             "enabled": true,
             "dynamic": true,
@@ -77,6 +67,18 @@
                 "analyzer": "keyword",
                 "store": true,
                 "index": true,
+                "skip_freq_norm": true
+              }
+            ]
+          },
+          "externalAuthModules": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "text",
+                "analyzer": "keyword",
+                "store": true,
                 "skip_freq_norm": true
               }
             ]

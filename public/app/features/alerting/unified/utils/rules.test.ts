@@ -1,6 +1,7 @@
 import { PluginLoadingStrategy } from '@grafana/data';
 import { setAppPluginMetas } from '@grafana/runtime/internal';
 import { type RuleGroupIdentifier } from 'app/types/unified-alerting';
+import { type GrafanaNotificationSettings } from 'app/types/unified-alerting-dto';
 
 import {
   mockCombinedCloudRuleNamespace,
@@ -21,6 +22,7 @@ import {
   getRulePluginOrigin,
   getRulerGroupReadOnlyStatus,
   isUngroupedRuleGroup,
+  ruleUsesDefaultPolicy,
 } from './rules';
 
 describe('getRuleOrigin', () => {
@@ -246,5 +248,24 @@ describe('getPromGroupReadOnlyStatus', () => {
 
   it('reports readOnly=false for a group with no rules', () => {
     expect(getPromGroupReadOnlyStatus({ rules: [] })).toEqual({ readOnly: false });
+  });
+});
+
+describe('ruleUsesDefaultPolicy', () => {
+  it.each(['user-defined', 'default', undefined])('is true when policy is %p and no receiver', (policy) => {
+    const settings = { policy } as GrafanaNotificationSettings;
+    expect(ruleUsesDefaultPolicy(settings)).toBe(true);
+  });
+
+  it('is true when notificationSettings is undefined', () => {
+    expect(ruleUsesDefaultPolicy(undefined)).toBe(true);
+  });
+
+  it('is false for a named policy', () => {
+    expect(ruleUsesDefaultPolicy({ policy: 'team-backend' } as GrafanaNotificationSettings)).toBe(false);
+  });
+
+  it('is false when a receiver is set (rule overrides the policy)', () => {
+    expect(ruleUsesDefaultPolicy({ receiver: 'oncall' } as GrafanaNotificationSettings)).toBe(false);
   });
 });

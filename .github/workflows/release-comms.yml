@@ -83,17 +83,8 @@ jobs:
     with:
       ownerRepo: 'grafana/grafana-enterprise'
       source: ${{ needs.setup.outputs.release_branch }}
-  create_security_branch_grafana:
-    name: Create security branch (Grafana Security Mirror)
-    needs: setup
-    permissions:
-      contents: read
-      id-token: write
-    uses: grafana/grafana/.github/workflows/create-security-branch.yml@main
-    with:
-      release_branch: ${{ needs.setup.outputs.release_branch }}
-      security_branch_number: "01"
-      repository: grafana/grafana-security-mirror
+  # No security-mirror job: grafana-security-mirror branches are created automatically
+  # from the release branch (the part before the +), so the branch always exists.
   create_security_branch_enterprise:
     name: Create security branch (Enterprise)
     needs: setup

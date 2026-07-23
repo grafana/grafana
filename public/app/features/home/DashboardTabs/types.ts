@@ -26,3 +26,8 @@ export interface HomepageTabExtensionProps {
   active: boolean;
   register: (tab: HomepageTab) => () => void;
 }
+
+// Fixed scroll-area heights for the tab content. Shared with DashboardTabs so the
+// skeleton matches the real card and loading doesn't shift neighboring content.
+export const DASHBOARD_TABS_SCROLL_HEIGHT_DEFAULT = 256;
+export const DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN = 350;
