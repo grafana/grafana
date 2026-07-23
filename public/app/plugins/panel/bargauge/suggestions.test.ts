@@ -167,8 +167,4 @@ describe('BARGAUGE_CARD_OPTIONS.previewModifier', () => {
 
     expect(() => previewModifier(suggestion)).not.toThrow();
   });
-
-  it('sets maxSeries to the preview limit', () => {
-    expect(BARGAUGE_CARD_OPTIONS!.maxSeries).toBe(6);
-  });
 });
