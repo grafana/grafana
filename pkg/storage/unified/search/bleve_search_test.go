@@ -669,6 +669,116 @@ func TestDoubleEqualsExactMatch(t *testing.T) {
 	})
 }
 
+func titleFilterQuery(operator string, values ...string) *resourcepb.ResourceSearchRequest {
+	return &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+			},
+			Fields: []*resourcepb.Requirement{{Key: "title", Operator: operator, Values: values}},
+		},
+		// Sort by name so multi-hit expectations are deterministic (filters alone
+		// impose no order).
+		SortBy: []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_NAME}},
+		Limit:  100000,
+	}
+}
+
+// TestTitleSetFilterExactMatch covers the "in"/"notin" title filters the v1
+// search API emits: set membership is exact (whole title, case-insensitive via
+// title_phrase), unlike the fuzzy "=" filter.
+func TestTitleSetFilterExactMatch(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+	seed := func(t *testing.T) resource.ResourceIndex {
+		index := newTestDashboardsIndex(t, threshold, 3, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Test",
+			"name2": "Test Team 1",
+			"name3": "Other",
+		})
+		return index
+	}
+
+	t.Run("in on title matches only the exact title", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), titleFilterQuery("in", "Test"), []string{"name1"})
+	})
+
+	t.Run("in on title is case insensitive", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), titleFilterQuery("in", "tEsT"), []string{"name1"})
+	})
+
+	t.Run("in on title matches any listed value", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), titleFilterQuery("in", "Test", "Other"), []string{"name1", "name3"})
+	})
+
+	t.Run("notin on title excludes the exact title only", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), titleFilterQuery("notin", "Test"), []string{"name2", "name3"})
+	})
+}
+
+// TestPublicFieldNameFilter checks the filter path resolves a public field name
+// to its physical fields.* location, so callers don't supply the prefix.
+func TestPublicFieldNameFilter(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
+		{Name: "team", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
+	})
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d1", Title: "One",
+			Key:    &resourcepb.ResourceKey{Name: "d1", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+			Fields: map[string]any{"team": "red"}}},
+		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d2", Title: "Two",
+			Key:    &resourcepb.ResourceKey{Name: "d2", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+			Fields: map[string]any{"team": "blue"}}},
+	}}))
+
+	filter := func(field string) *resourcepb.ResourceSearchRequest {
+		return &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+				Fields: []*resourcepb.Requirement{{Key: field, Operator: "in", Values: []string{"red"}}},
+			},
+			Limit: 100000,
+		}
+	}
+
+	// Public name resolves to the fields.* sub-document.
+	checkSearchQuery(t, index, filter("team"), []string{"d1"})
+	// An explicitly prefixed name still works (passthrough).
+	checkSearchQuery(t, index, filter(resource.SEARCH_FIELD_PREFIX+"team"), []string{"d1"})
+}
+
+// TestPublicFieldNameTextQuery checks a free-text query resolves a public
+// QueryField name to its physical fields.* location.
+func TestPublicFieldNameTextQuery(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
+		{Name: "team", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
+	})
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d1", Title: "One",
+			Key:    &resourcepb.ResourceKey{Name: "d1", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+			Fields: map[string]any{"team": "redteam"}}},
+		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d2", Title: "Two",
+			Key:    &resourcepb.ResourceKey{Name: "d2", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+			Fields: map[string]any{"team": "blueteam"}}},
+	}}))
+
+	req := &resourcepb.ResourceSearchRequest{
+		Options:     &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
+		Query:       "redteam",
+		QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{{Name: "team", Type: resourcepb.QueryFieldType_TEXT, Boost: 1}},
+		Limit:       100000,
+	}
+	checkSearchQuery(t, index, req, []string{"d1"})
+}
+
 func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer resource.BuildFn) resource.ResourceIndex {
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
