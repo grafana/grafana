@@ -1,6 +1,7 @@
 package relist
 
 import (
+	"context"
 	"encoding/base64"
 	"testing"
 
@@ -21,7 +22,6 @@ import (
 // same resync_interval as the repository and job informers.
 func TestIntegrationProvisioningNATSReList_ConnectionReconciledViaReList(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := t.Context()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	const connName = "nats-relist-connection"
@@ -47,10 +47,11 @@ func TestIntegrationProvisioningNATSReList_ConnectionReconciledViaReList(t *test
 		},
 	}}
 
-	created, err := helper.CreateGithubConnection(t, ctx, conn)
+	created, err := helper.CreateGithubConnection(t, conn)
 	require.NoError(t, err, "failed to create connection")
 	t.Cleanup(func() {
-		_ = helper.Connections.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		cleanupCtx := context.WithoutCancel(t.Context())
+		_ = helper.Connections.Resource.Delete(cleanupCtx, created.GetName(), metav1.DeleteOptions{})
 	})
 
 	helper.WaitForHealthyConnection(t, created.GetName())

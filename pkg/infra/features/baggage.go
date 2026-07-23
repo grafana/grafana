@@ -1,0 +1,43 @@
+package features
+
+import (
+	"context"
+	"net/http"
+
+	"go.opentelemetry.io/otel/baggage"
+
+	"github.com/open-feature/go-sdk/openfeature"
+)
+
+const (
+	NamespaceKey = "namespace"
+)
+
+// EvaluationContextFromBaggage extracts per-tenant attributes from OTel baggage
+// and injects them into an OpenFeature evaluation context. The HG gateway
+// populates these baggage members on every proxied request, so MT services get
+// a full per-tenant eval context with no extra metadata API calls. namespace is
+// used as the targeting key.
+func EvaluationContextFromBaggage(ctx context.Context) openfeature.EvaluationContext {
+	bag := baggage.FromContext(ctx)
+
+	contextAtributes := map[string]any{}
+
+	for _, member := range bag.Members() {
+		contextAtributes[member.Key()] = member.Value()
+	}
+
+	targetingKey := bag.Member(NamespaceKey).Value()
+	return openfeature.NewEvaluationContext(targetingKey, contextAtributes)
+}
+
+// WithTransactionContextMiddleware is an HTTP middleware that reads OTel baggage
+// from the incoming request and sets it as the OpenFeature transaction context.
+// Register it in each MT service's HTTP middleware chain.
+func WithTransactionContextMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		evalCtx := EvaluationContextFromBaggage(r.Context())
+		ctx := openfeature.MergeTransactionContext(r.Context(), evalCtx)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}

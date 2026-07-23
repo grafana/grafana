@@ -1,5 +1,5 @@
 import { assertIsDefined } from 'test/helpers/asserts';
-import { render, screen } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
@@ -60,6 +60,80 @@ describe('browse-dashboards DashboardsTree', () => {
     expect(screen.getByText(dashboard.item.title)).toBeInTheDocument();
     expect(screen.getByText(assertIsDefined(dashboard.item.tags)[0])).toBeInTheDocument();
     expect(screen.getByTestId(selectors.pages.BrowseDashboards.table.checkbox(dashboard.item.uid))).toBeInTheDocument();
+  });
+
+  it('grows the README row to its measured content height', async () => {
+    const offsetHeightSpy = jest.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(500);
+
+    render(
+      <DashboardsTree
+        permissions={mockPermissions}
+        items={[
+          dashboard,
+          { item: { kind: 'ui', uiKind: 'readme', uid: 'folder-readme-folder1' }, level: 0, isOpen: false },
+        ]}
+        folderUID="folder1"
+        isSelected={isSelected}
+        width={WIDTH}
+        height={HEIGHT}
+        onFolderClick={noop}
+        onTagClick={noop}
+        onItemSelectionChange={noop}
+        onAllSelectionChange={noop}
+        isItemLoaded={allItemsAreLoaded}
+        requestLoadMore={requestLoadMore}
+      />
+    );
+
+    // 500px measured content + 16px row padding, replacing the 320px estimate.
+    await waitFor(() => {
+      const rows = screen.getAllByRole('row');
+      expect(rows[rows.length - 1]).toHaveStyle({ height: '516px' });
+    });
+
+    offsetHeightSpy.mockRestore();
+  });
+
+  it('resets the README row height when navigating to another folder', async () => {
+    const offsetHeightSpy = jest.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(500);
+
+    const treeFor = (folderUID: string) => (
+      <DashboardsTree
+        permissions={mockPermissions}
+        items={[
+          dashboard,
+          { item: { kind: 'ui', uiKind: 'readme', uid: `folder-readme-${folderUID}` }, level: 0, isOpen: false },
+        ]}
+        folderUID={folderUID}
+        isSelected={isSelected}
+        width={WIDTH}
+        height={HEIGHT}
+        onFolderClick={noop}
+        onTagClick={noop}
+        onItemSelectionChange={noop}
+        onAllSelectionChange={noop}
+        isItemLoaded={allItemsAreLoaded}
+        requestLoadMore={requestLoadMore}
+      />
+    );
+
+    const { rerender } = render(treeFor('folder1'));
+
+    await waitFor(() => {
+      const rows = screen.getAllByRole('row');
+      expect(rows[rows.length - 1]).toHaveStyle({ height: '516px' });
+    });
+
+    // The next panel's 0 measurement is ignored, so the reset restores the estimate.
+    offsetHeightSpy.mockReturnValue(0);
+    rerender(treeFor('folder2'));
+
+    await waitFor(() => {
+      const rows = screen.getAllByRole('row');
+      expect(rows[rows.length - 1]).toHaveStyle({ height: '336px' });
+    });
+
+    offsetHeightSpy.mockRestore();
   });
 
   it('does not render checkbox when disabled', () => {

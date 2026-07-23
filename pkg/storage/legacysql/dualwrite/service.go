@@ -40,6 +40,10 @@ func (f *fakeMigrationStatusReader) GetStorageMode(ctx context.Context, gr schem
 	return mode, nil
 }
 
+func (f *fakeMigrationStatusReader) GetFloorVersion(gr schema.GroupResource) (string, bool) {
+	return "", false
+}
+
 // NewFakeMigrationStatusReader creates a MigrationStatusReader for tests.
 // Accepts pairs of (GroupResource string, StorageMode). Resources not listed default to Legacy.
 // Example: NewFakeMigrationStatusReader("dashboards.dashboard.grafana.app", contract.StorageModeUnified)

@@ -157,6 +157,36 @@ func SearchFieldsHashesForProviders(providers map[LowerGroupResource]SearchField
 	return out
 }
 
+// ApplyManifests rebuilds the registry from the built-in and live manifest sets
+// and swaps them in. On error the registry is left unchanged, so a bad reload
+// keeps the current search fields.
+func ApplyManifests(registry *SearchFieldsRegistry, builtin, live []app.Manifest) error {
+	merged := MergeManifestsByKind(builtin, live)
+	selectable, hashes, providers, err := SearchFieldsForManifests(merged)
+	if err != nil {
+		return err
+	}
+	registry.Replace(selectable, hashes, providers)
+	return nil
+}
+
+// SearchFieldsForManifests builds a SearchFieldsRegistry's three inputs from one
+// manifest list, so a reload can rebuild them together and keep them consistent.
+func SearchFieldsForManifests(manifests []app.Manifest) (
+	selectable map[LowerGroupResource][]string,
+	hashes map[LowerGroupResource]string,
+	providers map[LowerGroupResource]SearchFieldsProvider,
+	err error,
+) {
+	providers, err = SearchFieldProviders(manifests)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	hashes = SearchFieldsHashesForProviders(providers)
+	selectable = SelectableFieldsForManifests(manifests)
+	return selectable, hashes, providers, nil
+}
+
 // MergeManifestsByKind combines manifest sources for the search wiring, given
 // in increasing order of priority. Only kinds that declare search fields take
 // part: when more than one source declares search fields for the same kind
@@ -237,7 +267,9 @@ type kindClaim struct {
 }
 
 // pruneClaimedKinds drops kinds already claimed by a higher-priority source and
-// records the ones it keeps. ok is false when nothing is left to contribute.
+// records the ones it keeps. ok is false only when no kind survives, so a
+// manifest whose kinds carry only selectable fields is kept: the merge output
+// also drives selectable-field wiring, not just search fields.
 func pruneClaimedKinds(m app.Manifest, claimedBy map[LowerGroupResource]kindClaim) (app.Manifest, bool) {
 	group := m.ManifestData.Group
 	appName := m.ManifestData.AppName
@@ -246,12 +278,14 @@ func pruneClaimedKinds(m app.Manifest, claimedBy map[LowerGroupResource]kindClai
 	versions := make([]app.ManifestVersion, 0, len(md.Versions))
 	kept := map[LowerGroupResource]bool{}
 	declaredVersions := map[LowerGroupResource]map[string]bool{}
+	anyKind := false
 
 	for _, v := range md.Versions {
 		kinds := make([]app.ManifestVersionKind, 0, len(v.Kinds))
 		for _, k := range v.Kinds {
 			if !declaresSearchFields(k) {
-				kinds = append(kinds, k) // nothing to claim or override
+				kinds = append(kinds, k) // kept for its selectable fields, if any
+				anyKind = true
 				continue
 			}
 			key := NewLowerGroupResource(group, manifestResourceName(k))
@@ -264,6 +298,7 @@ func pruneClaimedKinds(m app.Manifest, claimedBy map[LowerGroupResource]kindClai
 			}
 			kept[key] = true
 			kinds = append(kinds, k)
+			anyKind = true
 		}
 		v.Kinds = kinds
 		versions = append(versions, v)
@@ -277,7 +312,7 @@ func pruneClaimedKinds(m app.Manifest, claimedBy map[LowerGroupResource]kindClai
 		logOverriddenKind(key, appName, claimedBy[key], declared)
 	}
 
-	if len(kept) == 0 {
+	if !anyKind {
 		return app.Manifest{}, false
 	}
 	md.Versions = versions

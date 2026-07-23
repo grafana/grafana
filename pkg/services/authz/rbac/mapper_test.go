@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 // Test-only wildcard pattern; not used in the real mapper.
@@ -258,6 +259,71 @@ func TestMapper_ServiceAccountTranslation_ActionSets(t *testing.T) {
 	}
 }
 
+// TestMapperRegistry_AlertRules verifies the rules.alerting.grafana.app rule
+// resources map to the alert.rules:* actions, support folder inheritance, use a
+// rules-specific direct-scope prefix (so the per-object check never spuriously
+// matches a folder grant), and flow through the folder action sets
+// (folders:view/edit/admin) for managed roles.
+func TestMapperRegistry_AlertRules(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	readActionSets := []string{"folders:view", "folders:edit", "folders:admin"}
+	writeActionSets := []string{"folders:edit", "folders:admin"}
+
+	for _, resource := range []string{"alertrules", "recordingrules", "rulesequences"} {
+		t.Run(resource, func(t *testing.T) {
+			mapping, ok := reg.Get("rules.alerting.grafana.app", resource, "")
+			require.True(t, ok, "%q should be registered in the mapper", resource)
+			require.NotNil(t, mapping)
+
+			// Alert-rule permissions are folder-scoped via folder inheritance, not via
+			// the per-object direct scope. The resource is "alert.rules" so Scope()
+			// yields alert.rules:uid:<name> — a scope no grant ever has — which makes
+			// the direct-scope check a no-op and avoids colliding a rule UID with a
+			// folder grant (folders:uid:<uid>).
+			assert.True(t, mapping.HasFolderSupport(), "alert rules are folder-scoped")
+			assert.Equal(t, "alert.rules:uid:", mapping.Prefix())
+			assert.Equal(t, "alert.rules:uid:abc", mapping.Scope("abc"))
+
+			actionTests := []struct {
+				verb   string
+				action string
+			}{
+				{utils.VerbGet, "alert.rules:read"},
+				{utils.VerbList, "alert.rules:read"},
+				{utils.VerbWatch, "alert.rules:read"},
+				{utils.VerbCreate, "alert.rules:create"},
+				{utils.VerbUpdate, "alert.rules:write"},
+				{utils.VerbPatch, "alert.rules:write"},
+				{utils.VerbDelete, "alert.rules:delete"},
+				{utils.VerbDeleteCollection, "alert.rules:delete"},
+			}
+			for _, tt := range actionTests {
+				action, ok := mapping.Action(tt.verb)
+				assert.True(t, ok, "verb %q should map to an action", tt.verb)
+				assert.Equal(t, tt.action, action, "verb %q", tt.verb)
+			}
+
+			actionSetTests := []struct {
+				verb     string
+				expected []string
+			}{
+				{utils.VerbGet, readActionSets},
+				{utils.VerbList, readActionSets},
+				{utils.VerbWatch, readActionSets},
+				{utils.VerbCreate, writeActionSets},
+				{utils.VerbUpdate, writeActionSets},
+				{utils.VerbPatch, writeActionSets},
+				{utils.VerbDelete, writeActionSets},
+				{utils.VerbDeleteCollection, writeActionSets},
+			}
+			for _, tt := range actionSetTests {
+				assert.ElementsMatch(t, tt.expected, mapping.ActionSets(tt.verb), "action sets for verb %q", tt.verb)
+			}
+		})
+	}
+}
+
 // TestMapper_AnnotationSubresource_ActionSets verifies that managed roles (dashboards:view etc.)
 // flow through to annotation verbs via the subresource action set mapping.
 func TestMapper_AnnotationSubresource_ActionSets(t *testing.T) {
@@ -286,4 +352,27 @@ func TestMapper_AnnotationSubresource_ActionSets(t *testing.T) {
 			assert.ElementsMatch(t, tt.expected, mapping.ActionSets(tt.verb))
 		})
 	}
+}
+
+func TestMapperRegistry_Settings(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mapping, ok := reg.Get("setting.grafana.app", "settings", "")
+	require.True(t, ok, "settings should be registered in the mapper")
+	require.NotNil(t, mapping)
+
+	for _, verb := range []string{utils.VerbGet, utils.VerbList, utils.VerbWatch} {
+		action, ok := mapping.Action(verb)
+		assert.True(t, ok)
+		assert.Equal(t, accesscontrol.ActionSettingsRead, action, "verb %q should map to settings:read", verb)
+	}
+	for _, verb := range []string{utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection} {
+		action, ok := mapping.Action(verb)
+		assert.True(t, ok)
+		assert.Equal(t, accesscontrol.ActionSettingsWrite, action, "verb %q should map to settings:write", verb)
+	}
+
+	assert.Equal(t, "settings:uid:auth.saml", mapping.Scope("auth.saml"))
+	assert.Equal(t, "settings:uid:", mapping.Prefix())
+	assert.False(t, mapping.HasFolderSupport())
 }

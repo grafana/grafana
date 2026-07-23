@@ -1,7 +1,6 @@
 package folderscope
 
 import (
-	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -17,7 +16,6 @@ import (
 // default and is covered by the foldermetadata suite and the parser unit tests.
 func TestIntegrationProvisioning_OrgScopedResourceGetsNoFolderAnnotation(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const (
 		repo       = "folder-guard-org-scoped"
@@ -29,9 +27,8 @@ func TestIntegrationProvisioning_OrgScopedResourceGetsNoFolderAnnotation(t *test
 		Copies: map[string]string{
 			"../testdata/all-panels.json": sourcePath,
 		},
-		SkipResourceAssertions: true,
 	})
 
 	// An empty expected folder UID asserts the dashboard carries no folder annotation.
-	common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repo, sourcePath, "")
+	common.RequireRepoDashboardParent(t, helper.DashboardsV1, repo, sourcePath, "")
 }
