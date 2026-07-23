@@ -24,8 +24,10 @@ export interface CascaderProps {
   /** Changes the value for every selection, including branch nodes. Defaults to true. */
   changeOnSelect?: boolean;
   onSelect(val: string): void;
-  /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
-  width?: number;
+  /** Sets the width to a multiple of 8px, or 'auto' to size to content. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
+  width?: number | 'auto';
+  /** Sets the minimum width of the input. Useful with width='auto'. */
+  minWidth?: string;
   /** Single string that needs to be the same as value of the last item in the selection chain. */
   initialValue?: string;
   allowCustomValue?: boolean;
@@ -111,6 +113,7 @@ export const Cascader = memo(
     changeOnSelect = true,
     onSelect,
     width,
+    minWidth,
     initialValue,
     allowCustomValue,
     formatCreateLabel,
@@ -252,6 +255,7 @@ export const Cascader = memo(
             onCreateOption={handleCreateOption}
             formatCreateLabel={formatCreateLabel}
             width={width}
+            minWidth={minWidth}
             onInputChange={handleSelectInputChange}
             disabled={disabled}
             inputValue={inputValue}
@@ -272,7 +276,8 @@ export const Cascader = memo(
             <div className={disableDivFocus}>
               <Input
                 autoFocus={autoFocus}
-                width={width}
+                width={typeof width === 'number' ? width : undefined}
+                className={minWidth ? css({ minWidth }) : undefined}
                 placeholder={placeholder}
                 onBlur={handleBlurCascade}
                 value={activeLabel}

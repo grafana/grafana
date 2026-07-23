@@ -47,7 +47,11 @@ export default function resetSelectStyles(theme: GrafanaTheme2): Partial<StylesC
   };
 }
 
-export function useCustomSelectStyles(theme: GrafanaTheme2, width: number | string | undefined): Partial<StylesConfig> {
+export function useCustomSelectStyles(
+  theme: GrafanaTheme2,
+  width: number | string | undefined,
+  minWidth?: string
+): Partial<StylesConfig> {
   return useMemo(() => {
     return {
       ...resetSelectStyles(theme),
@@ -71,6 +75,7 @@ export function useCustomSelectStyles(theme: GrafanaTheme2, width: number | stri
       },
       container: () => ({
         width: width ? theme.spacing(width) : '100%',
+        minWidth,
         display: width === 'auto' ? 'inline-flex' : 'flex',
       }),
       option: (provided, state) => ({
@@ -78,5 +83,5 @@ export function useCustomSelectStyles(theme: GrafanaTheme2, width: number | stri
         opacity: state.isDisabled ? 0.5 : 1,
       }),
     };
-  }, [theme, width]);
+  }, [theme, width, minWidth]);
 }

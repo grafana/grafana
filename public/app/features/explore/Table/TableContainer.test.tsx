@@ -44,6 +44,7 @@ const defaultProps = {
   splitOpenFn: () => {},
   range: getDefaultTimeRange(),
   timeZone: InternalTimeZones.utc,
+  graphUnit: undefined,
 };
 
 describe('TableContainer', () => {

@@ -8554,6 +8554,9 @@
     "get-matches-metadata": {
       "matches": "0 matches"
     },
+    "graph-label": {
+      "unit-placeholder": "Unit"
+    },
     "legacy-create-span-link-factory": {
       "text": {
         "tags": "Tags"

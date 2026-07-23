@@ -52,6 +52,7 @@ function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) 
     loading,
     tableResult,
     range,
+    graphUnit: item.panelsState?.graph?.unit,
     queryStreaming: item.queryResponse.state === LoadingState.Streaming || Boolean(hasTempoStreamingProgressTable),
   };
 }
@@ -69,6 +70,7 @@ export const TableContainer = memo(function TableContainer({
   timeZone,
   eventBus,
   queryStreaming = false,
+  graphUnit,
 }: Props) {
   const theme = useTheme2();
   const [showAll, setShowAll] = useState(false);
@@ -139,7 +141,7 @@ export const TableContainer = memo(function TableContainer({
       theme: config.theme2,
       replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
       fieldConfig: {
-        defaults: {},
+        defaults: graphUnit ? { unit: graphUnit } : {},
         overrides: [],
       },
       dataLinkPostProcessor,

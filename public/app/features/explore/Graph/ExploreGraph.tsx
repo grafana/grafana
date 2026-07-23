@@ -56,6 +56,7 @@ interface Props {
   splitOpenFn: SplitOpen;
   onChangeTime: (timeRange: AbsoluteTimeRange) => void;
   graphStyle: ExploreGraphStyle;
+  unit?: string;
   anchorToZero?: boolean;
   yAxisMaximum?: number;
   thresholdsConfig?: ThresholdsConfig;
@@ -78,6 +79,7 @@ export function ExploreGraph({
   onHiddenSeriesChanged,
   splitOpenFn,
   graphStyle,
+  unit,
   tooltipDisplayMode = TooltipDisplayMode.Single,
   anchorToZero = false,
   yAxisMaximum,
@@ -99,7 +101,7 @@ export function ExploreGraph({
     defaults: {
       min: anchorToZero ? 0 : undefined,
       max: yAxisMaximum || undefined,
-      unit: 'short',
+      unit: unit ?? 'short',
       color: {
         mode: FieldColorModeId.PaletteClassic,
       },
@@ -118,6 +120,13 @@ export function ExploreGraph({
       overrides: fieldConfig.overrides.filter((rule) => !isHideSeriesOverride(rule)),
     }));
   }, [queriesChangedIndexAtRun]);
+
+  useEffect(() => {
+    setFieldConfig((fieldConfig) => ({
+      ...fieldConfig,
+      defaults: { ...fieldConfig.defaults, unit: unit ?? 'short' },
+    }));
+  }, [unit]);
 
   const styledFieldConfig = useMemo(() => {
     const withGraphStyle = applyGraphStyle(fieldConfig, graphStyle, yAxisMaximum);

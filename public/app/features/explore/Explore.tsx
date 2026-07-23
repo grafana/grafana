@@ -389,11 +389,12 @@ export class Explore extends PureComponent<Props, ExploreState> {
   }
 
   renderGraphPanel(width: number) {
-    const { graphResult, timeZone, queryResponse, showFlameGraph, queriesChangedIndexAtRun } = this.props;
+    const { exploreId, graphResult, timeZone, queryResponse, showFlameGraph, queriesChangedIndexAtRun } = this.props;
 
     return (
       <ContentOutlineItem panelId="Graph" title={t('explore.explore.title-graph', 'Graph')} icon="graph-bar">
         <GraphContainer
+          exploreId={exploreId}
           data={graphResult!}
           height={showFlameGraph ? 180 : 400}
           width={width}
