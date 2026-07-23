@@ -1,14 +1,119 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/diagnostics"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/web"
 )
+
+func TestQueryDiagnosticsRecordsSuccessfulRun(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+
+	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(backend.NewQueryDataResponse(), nil)
+	usage := &usagestats.UsageStatsMock{T: t}
+	metrics := newTestDiagnosticsMetrics(t, usage)
+	hs := &HTTPServer{queryDataService: fakeQuery, diagnosticsMetrics: metrics}
+
+	body := `{"from":"now-1h","to":"now","queries":[{"refId":"A","datasource":{"uid":"prom"}}]}`
+	req, err := http.NewRequest(http.MethodPost, "/api/ds/diagnostics", strings.NewReader(body))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	c := &contextmodel.ReqContext{
+		Context: &web.Context{
+			Req:  req,
+			Resp: web.NewResponseWriter(req.Method, httptest.NewRecorder()),
+		},
+		SignedInUser: &user.SignedInUser{OrgID: 1, UserUID: "u1"},
+		Logger:       log.New("test"),
+	}
+
+	resp := hs.QueryDiagnostics(c)
+	require.Equal(t, http.StatusOK, resp.Status())
+	report, err := usage.GetUsageReport(req.Context())
+	require.NoError(t, err)
+	require.Equal(t, int64(1), report.Metrics["stats.ds_diagnostics.panel_runs.count"])
+}
+
+func TestQueryDiagnosticsRecordsFailedRun(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+
+	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, errors.New("query failed"))
+	usage := &usagestats.UsageStatsMock{T: t}
+	metrics := newTestDiagnosticsMetrics(t, usage)
+	hs := &HTTPServer{queryDataService: fakeQuery, diagnosticsMetrics: metrics}
+
+	body := `{"from":"now-1h","to":"now","queries":[{"refId":"A","datasource":{"uid":"prom"}}]}`
+	req, err := http.NewRequest(http.MethodPost, "/api/ds/diagnostics", strings.NewReader(body))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	c := &contextmodel.ReqContext{
+		Context:      &web.Context{Req: req, Resp: web.NewResponseWriter(req.Method, httptest.NewRecorder())},
+		SignedInUser: &user.SignedInUser{OrgID: 1, UserUID: "u1"},
+		Logger:       log.New("test"),
+	}
+
+	resp := hs.QueryDiagnostics(c)
+	require.Equal(t, http.StatusInternalServerError, resp.Status())
+	report, err := usage.GetUsageReport(req.Context())
+	require.NoError(t, err)
+	require.Equal(t, int64(1), report.Metrics["stats.ds_diagnostics.panel_runs.count"])
+	require.Equal(t, int64(1), report.Metrics["stats.ds_diagnostics.panel_errors.count"])
+}
+
+func TestQueryDiagnosticsDoesNotCountRejectedInput(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+	usage := &usagestats.UsageStatsMock{T: t}
+	hs := &HTTPServer{diagnosticsMetrics: newTestDiagnosticsMetrics(t, usage)}
+
+	req, err := http.NewRequest(http.MethodPost, "/api/ds/diagnostics", strings.NewReader(`{"queries":[]}`))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	c := &contextmodel.ReqContext{
+		Context:      &web.Context{Req: req, Resp: web.NewResponseWriter(req.Method, httptest.NewRecorder())},
+		SignedInUser: &user.SignedInUser{OrgID: 1, UserUID: "u1"},
+		Logger:       log.New("test"),
+	}
+
+	resp := hs.QueryDiagnostics(c)
+	require.Equal(t, http.StatusBadRequest, resp.Status())
+	report, err := usage.GetUsageReport(req.Context())
+	require.NoError(t, err)
+	require.Equal(t, int64(0), report.Metrics["stats.ds_diagnostics.panel_runs.count"])
+}
+
+func newTestDiagnosticsMetrics(t *testing.T, usage usagestats.Service) *diagnostics.Metrics {
+	t.Helper()
+	sqlStore := db.InitTestDB(t)
+	require.NoError(t, sqlStore.WithDbSession(context.Background(), func(session *db.Session) error {
+		_, err := session.Where("namespace = ?", "datasource-diagnostics").Delete(&kvstore.Item{})
+		return err
+	}))
+	return diagnostics.NewMetrics(sqlStore, usage, prometheus.NewPedanticRegistry())
+}
 
 // TestDiagnosticsNoCaptureError guards the status mapping used when a query fails and no HAR was
 // captured: a per-refId (bad-query) failure must surface as 400 like QueryMetricsV2, NOT 500, while

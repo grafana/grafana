@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -31,6 +32,81 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+func TestQueryDashboardDiagnosticsRecordsAcceptedAndCompletedRun(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+	previousJobs := dashboardDiagnosticsJobs
+	dashboardDiagnosticsJobs = &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
+	t.Cleanup(func() { dashboardDiagnosticsJobs = previousJobs })
+
+	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(backend.NewQueryDataResponse(), nil)
+	usage := &usagestats.UsageStatsMock{T: t}
+	metrics := newTestDiagnosticsMetrics(t, usage)
+	hs := &HTTPServer{queryDataService: fakeQuery, diagnosticsMetrics: metrics}
+
+	body := `{"panels":[{"id":1,"title":"Panel 1","from":"now-1h","to":"now","queries":[{"refId":"A","datasource":{"uid":"prom"}}]}]}`
+	req, err := http.NewRequest(http.MethodPost, "/api/ds/dashboard-diagnostics", strings.NewReader(body))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	c := &contextmodel.ReqContext{
+		Context:      &web.Context{Req: req, Resp: web.NewResponseWriter(req.Method, httptest.NewRecorder())},
+		SignedInUser: &user.SignedInUser{OrgID: 1, UserUID: "u1"},
+		Logger:       log.New("test"),
+	}
+
+	resp := hs.QueryDashboardDiagnostics(c)
+	require.Equal(t, http.StatusAccepted, resp.Status())
+	var accepted map[string]any
+	require.NoError(t, json.Unmarshal(resp.Body(), &accepted))
+	uid, _ := accepted["uid"].(string)
+	require.NotEmpty(t, uid)
+	require.Eventually(t, func() bool {
+		snapshot, ok := dashboardDiagnosticsJobs.snapshot(uid, c.SignedInUser)
+		return ok && snapshot.State == jobComplete
+	}, 2*time.Second, 10*time.Millisecond)
+
+	report, err := usage.GetUsageReport(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, int64(1), report.Metrics["stats.ds_diagnostics.dashboard_runs.count"])
+	require.Equal(t, int64(0), report.Metrics["stats.ds_diagnostics.dashboard_errors.count"])
+}
+
+func TestQueryDashboardDiagnosticsRecordsFailedRun(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+	previousJobs := dashboardDiagnosticsJobs
+	dashboardDiagnosticsJobs = &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
+	t.Cleanup(func() { dashboardDiagnosticsJobs = previousJobs })
+
+	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Run(func(mock.Arguments) { panic("query panic") })
+	usage := &usagestats.UsageStatsMock{T: t}
+	metrics := newTestDiagnosticsMetrics(t, usage)
+	hs := &HTTPServer{queryDataService: fakeQuery, diagnosticsMetrics: metrics}
+
+	body := `{"panels":[{"id":1,"title":"Panel 1","from":"now-1h","to":"now","queries":[{"refId":"A","datasource":{"uid":"prom"}}]}]}`
+	req, err := http.NewRequest(http.MethodPost, "/api/ds/dashboard-diagnostics", strings.NewReader(body))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	c := &contextmodel.ReqContext{
+		Context:      &web.Context{Req: req, Resp: web.NewResponseWriter(req.Method, httptest.NewRecorder())},
+		SignedInUser: &user.SignedInUser{OrgID: 1, UserUID: "u1"},
+		Logger:       log.New("test"),
+	}
+
+	resp := hs.QueryDashboardDiagnostics(c)
+	require.Equal(t, http.StatusAccepted, resp.Status())
+	require.Eventually(t, func() bool {
+		report, reportErr := usage.GetUsageReport(context.Background())
+		return reportErr == nil && report.Metrics["stats.ds_diagnostics.dashboard_errors.count"] == int64(1)
+	}, 2*time.Second, 10*time.Millisecond)
+
+	report, err := usage.GetUsageReport(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, int64(1), report.Metrics["stats.ds_diagnostics.dashboard_runs.count"])
+}
 
 // TestQueryDashboardDiagnostics_survivesRequestContextCancellation guards against a regression
 // where the background generation goroutine was derived from the initiating HTTP request's own
@@ -130,7 +206,8 @@ func TestQueryDashboardDiagnostics_rejectsWhenInFlightCapReached(t *testing.T) {
 	}
 
 	// create() rejects before the handler touches queryDataService, so no fake is needed.
-	hs := &HTTPServer{}
+	usage := &usagestats.UsageStatsMock{T: t}
+	hs := &HTTPServer{diagnosticsMetrics: newTestDiagnosticsMetrics(t, usage)}
 
 	body := `{"panels":[{"id":1,"title":"Panel 1","from":"now-1h","to":"now","queries":[{"refId":"A","datasource":{"uid":"prom"}}]}]}`
 	req, err := http.NewRequest(http.MethodPost, "/api/ds/dashboard-diagnostics", strings.NewReader(body))
@@ -152,6 +229,10 @@ func TestQueryDashboardDiagnostics_rejectsWhenInFlightCapReached(t *testing.T) {
 	// The rejected request must not have created a job.
 	require.Len(t, dashboardDiagnosticsJobs.jobs, diagnosticsMaxInFlightJobs,
 		"a rejected request must not add a job to the store")
+	report, err := usage.GetUsageReport(req.Context())
+	require.NoError(t, err)
+	require.Equal(t, int64(0), report.Metrics["stats.ds_diagnostics.dashboard_runs.count"],
+		"a rejected request must not count as a diagnostics run")
 }
 
 // TestBuildDashboardDiagnosticsArchive_recordsPerRefIDQueryError guards against a regression where
