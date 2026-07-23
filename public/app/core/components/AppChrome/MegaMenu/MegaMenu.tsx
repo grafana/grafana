@@ -190,7 +190,6 @@ export const MegaMenu = memo(
               </ul>
             )}
           </div>
-          <hr className={styles.pinnedDivider} />
         </>
       );
 
@@ -298,8 +297,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       listStyleType: 'none',
       // Left padding is tuned so the nav row icons line up with the pinned box's content (which is
-      // inset by the box margin + its own padding).
-      padding: theme.spacing(1, 1, 2, 1.5),
+      // inset by the box margin + its own padding). Extra right padding keeps the collapse chevrons
+      // clear of an always-visible OS scrollbar, which the ScrollContainer layers over this edge.
+      padding: theme.spacing(1, 2, 2, 1.5),
       [theme.breakpoints.up('md')]: {
         width: MENU_WIDTH,
       },
@@ -313,12 +313,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     // Subtle grey box around the pinned items. Left inset (margin-left + padding-left = 1.5) matches
     // the nav row icon inset (itemList padding-left 1 + label padding-left 0.5) so the breadcrumb leaf
-    // icons line up with the nav section icons. No bottom margin — the divider owns the gap below.
+    // icons line up with the nav section icons.
     pinnedBox: css({
       backgroundColor: theme.colors.background.secondary,
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
-      margin: theme.spacing(1, 1, 0, 1),
+      // Slightly tighter gap below than around the other sides, so the nav list sits closer beneath.
+      margin: theme.spacing(1, 1, 0.5, 1),
       padding: theme.spacing(1),
     }),
     // "Pinned" heading row — a small section label (the medium-weight secondary Text below reads as
@@ -336,12 +337,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     pinnedHeadingIcon: css({
       flexShrink: 0,
       width: theme.spacing(3),
-    }),
-    // Divider separating the pinned box from the rest of the nav, with a 16px gap above it.
-    pinnedDivider: css({
-      border: 'none',
-      borderTop: `1px solid ${theme.colors.border.weak}`,
-      margin: theme.spacing(2, 2, 0, 2),
     }),
     // Customise entry point, pinned to the bottom of the menu as a footer button.
     customiseButton: css({
