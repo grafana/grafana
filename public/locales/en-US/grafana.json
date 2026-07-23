@@ -8519,6 +8519,10 @@
     "get-matches-metadata": {
       "matches": "0 matches"
     },
+    "key-values-table": {
+      "link-fallback-label": "Link",
+      "open-value-in": "Open value in"
+    },
     "legacy-create-span-link-factory": {
       "text": {
         "tags": "Tags"
