@@ -31,11 +31,6 @@ if [ $1 -eq 1 ] ; then
 
   # Set user permissions on /var/log/grafana, /var/lib/grafana
   mkdir -p /var/log/grafana "$DATA_DIR"
-  # Move plugins-bundled into place - see https://github.com/grafana/grafana/issues/123110
-  if [ -d "$GRAFANA_HOME/data/plugins-bundled" ]; then
-    rm -rf "${DATA_DIR:?}/plugins-bundled"
-    mv "$GRAFANA_HOME/data/plugins-bundled" "$DATA_DIR"
-  fi
   chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" /var/log/grafana "$DATA_DIR"
   chmod 755 /var/log/grafana "$DATA_DIR"
 
@@ -86,14 +81,6 @@ elif [ $1 -ge 2 ] ; then
 
   if [ "$RESTART_ON_UPGRADE" == "true" ]; then
     stopGrafana
-  fi
-
-  # Replace bundled plugins with the new version - see https://github.com/grafana/grafana/issues/123110
-  mkdir -p "$DATA_DIR"
-  if [ -d "$GRAFANA_HOME/data/plugins-bundled" ]; then
-    rm -rf "${DATA_DIR:?}/plugins-bundled"
-    mv "$GRAFANA_HOME/data/plugins-bundled" "$DATA_DIR"
-    chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" "$DATA_DIR/plugins-bundled"
   fi
 
   if [ "$RESTART_ON_UPGRADE" == "true" ]; then

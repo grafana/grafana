@@ -25,11 +25,6 @@ if [ "$1" = configure ]; then
 
   # Set user permissions on /var/log/grafana, /var/lib/grafana
   mkdir -p /var/log/grafana "$DATA_DIR"
-  # Move plugins-bundled into place, see https://github.com/grafana/grafana/issues/123110
-  if [ -d "$GRAFANA_HOME/data/plugins-bundled" ]; then
-    rm -rf "${DATA_DIR:?}/plugins-bundled"
-    mv "$GRAFANA_HOME/data/plugins-bundled" "$DATA_DIR"
-  fi
   chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" /var/log/grafana "$DATA_DIR"
   chmod 755 /var/log/grafana "$DATA_DIR"
 
