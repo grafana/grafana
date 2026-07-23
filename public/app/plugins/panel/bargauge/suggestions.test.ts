@@ -31,8 +31,8 @@ describe('barGaugeSugggestionsSupplier', () => {
   it('does not suggest bar gauge if there are no numeric fields', () => {
     const df = createDataFrame({
       fields: [
-        { name: 'time', type: FieldType.time },
-        { name: 'status', type: FieldType.string },
+        { name: 'time', type: FieldType.time, values: [0, 100, 200] },
+        { name: 'status', type: FieldType.string, values: ['ok', 'warn', 'error'] },
       ],
     });
     expect(barGaugeSugggestionsSupplier(getPanelDataSummary([df]))).toBeFalsy();
