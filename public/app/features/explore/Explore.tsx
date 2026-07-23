@@ -144,6 +144,7 @@ export type Props = ExploreProps & ConnectedProps<typeof connector>;
  * `format`, to indicate eventual transformations by the datasources' result transformers.
  */
 
+// eslint-disable-next-line react-prefer-function-component/react-prefer-function-component -- large pre-existing class component; out of scope to convert
 export class Explore extends PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
   graphEventBus: EventBus;
@@ -644,6 +645,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                 scroller={this.scrollElement}
                 panelId={`content-outline-container-${exploreId}`}
                 isPrometheus={datasourceInstance?.type === 'prometheus'}
+                isMixed={Boolean(datasourceInstance?.meta?.mixed)}
               />
             )}
             <ScrollContainer

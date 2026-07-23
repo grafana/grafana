@@ -4,8 +4,12 @@
 // Persisted to URL query param so demo links are shareable:
 //   ?promProto=a|b|c
 // Falls back to localStorage between sessions.
+/* eslint-disable @grafana/no-direct-local-storage-access -- prototype-only persistence */
+/* eslint-disable @typescript-eslint/consistent-type-assertions -- prototype-only casts */
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+
+import { ensureFakeLokiRegistered } from './mockLokiDatasource';
 
 export type PromPrototypeOption = 'a' | 'b' | 'c';
 
@@ -108,6 +112,12 @@ export function PromPrototypeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     writeQueryParam(QP_OPTION, option);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Register the prototype-only fake Loki data source so a Mixed pane can add a
+  // non-Prometheus query for the demo. Idempotent.
+  useEffect(() => {
+    ensureFakeLokiRegistered();
   }, []);
 
   const value = useMemo<PromPrototypeContextValue>(

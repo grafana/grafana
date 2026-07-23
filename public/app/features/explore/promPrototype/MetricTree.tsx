@@ -10,6 +10,7 @@
 //   - Value + / exclude / copy → onValueAdd / onValueExclude / clipboard
 //
 // Tooltip on the metric name row surfaces the full metric name + help text.
+/* eslint-disable @grafana/i18n/no-untranslated-strings -- prototype-only, not internationalized */
 
 import { css, cx } from '@emotion/css';
 import { useMemo, useState } from 'react';
@@ -23,6 +24,8 @@ interface MetricTreeProps {
   filter: string;
   onFilterChange: (f: string) => void;
   hideSearch?: boolean;
+  // Extra className merged onto the search Input (e.g. to give it more height).
+  searchClassName?: string;
 
   // Click on the metric name → select for stats + expand labels; no insertion.
   onMetricClick: (metric: MockMetric) => void;
@@ -61,6 +64,7 @@ export function MetricTree({
   filter,
   onFilterChange,
   hideSearch,
+  searchClassName,
   onMetricClick,
   onMetricAdd,
   onLabelAdd,
@@ -96,7 +100,7 @@ export function MetricTree({
     <div className={styles.wrap}>
       {!hideSearch && (
         <Input
-          className={styles.search}
+          className={cx(styles.search, searchClassName)}
           placeholder="Search metrics"
           value={filter}
           onChange={(e) => onFilterChange(e.currentTarget.value)}
@@ -464,7 +468,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   valueDot: css({
     width: 4,
     height: 4,
-    borderRadius: '50%',
+    borderRadius: theme.shape.radius.circle,
     background: theme.colors.text.disabled,
     flexShrink: 0,
   }),

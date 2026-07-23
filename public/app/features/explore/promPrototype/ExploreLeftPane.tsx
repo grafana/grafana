@@ -5,7 +5,7 @@
 
 import { ContentOutline } from '../ContentOutline/ContentOutline';
 
-import { PromMetricsRail } from './PromMetricsRail';
+import { MixedQueryRail } from './MixedQueryRail';
 import { usePromPrototype } from './PromPrototypeContext';
 
 interface Props {
@@ -13,17 +13,19 @@ interface Props {
   scroller: HTMLElement | undefined;
   panelId: string;
   isPrometheus: boolean;
+  isMixed: boolean;
 }
 
-export function ExploreLeftPane({ exploreId, scroller, panelId, isPrometheus }: Props) {
+export function ExploreLeftPane({ exploreId, scroller, panelId, isPrometheus, isMixed }: Props) {
   const { option, pinnedInSession } = usePromPrototype();
-  // Option A shows the rail. Option C (assistant) builds ON TOP of A — same
-  // rail, just with the assistant popover trigger active. Option B (popover)
-  // only shows the rail after the user explicitly pins it. Non-Prometheus
-  // datasources always fall back to the vanilla outline.
-  const showRail = isPrometheus && (option === 'a' || option === 'c' || (option === 'b' && pinnedInSession));
+  // Both Mixed and single Prometheus panes use the same query-card rail so the
+  // experience is consistent. Mixed always shows it; single Prometheus shows it
+  // for Option A/C (and Option B once pinned). Everything else falls back to the
+  // vanilla outline.
+  const showRail =
+    isMixed || (isPrometheus && (option === 'a' || option === 'c' || (option === 'b' && pinnedInSession)));
   if (showRail) {
-    return <PromMetricsRail exploreId={exploreId} scroller={scroller} panelId={panelId} />;
+    return <MixedQueryRail exploreId={exploreId} scroller={scroller} />;
   }
   return <ContentOutline scroller={scroller} panelId={panelId} />;
 }

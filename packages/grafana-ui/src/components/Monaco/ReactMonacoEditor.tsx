@@ -4,6 +4,7 @@ import { useCallback, useEffect } from 'react';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
+import { isPromqlCoauthorEnabled } from './PromQLCoauthor/isEnabled';
 import defineThemes from './theme';
 import type { ReactMonacoEditorProps } from './types';
 
@@ -41,6 +42,15 @@ export const ReactMonacoEditor = (props: ReactMonacoEditorProps) => {
         document.fonts.ready.then(() => {
           monaco.editor.remeasureFonts();
         });
+        // Prototype-only, branch-scoped: AI PromQL query co-authoring. Gated on
+        // the promql language + a localStorage flag so no other editor is affected.
+        // Dynamically imported to keep it off the main path.
+        if (props.language === 'promql' && isPromqlCoauthorEnabled()) {
+          import('./PromQLCoauthor/attachPromQLCoauthor').then(({ attachPromQLCoauthor }) => {
+            const coauthor = attachPromQLCoauthor(editor, monaco, theme);
+            editor.onDidDispose(() => coauthor.dispose());
+          });
+        }
         onMount?.(editor, monaco);
       }}
     />

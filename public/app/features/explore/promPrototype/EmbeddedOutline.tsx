@@ -4,6 +4,7 @@
 // currently exposes (Queries / Graph / Raw Prometheus / etc.). Skips the
 // PanelContainer wrapper that ContentOutline uses so we don't get a nested
 // bordered card inside the rail.
+/* eslint-disable @typescript-eslint/consistent-type-assertions -- prototype-only cast */
 
 import { css, cx } from '@emotion/css';
 
@@ -15,9 +16,10 @@ import { useContentOutlineContext } from '../ContentOutline/ContentOutlineContex
 interface Props {
   scroller: HTMLElement | undefined;
   compact?: boolean; // icon-only when the rail is collapsed
+  omitPanelIds?: string[]; // root items to exclude (e.g. 'Queries' — shown as cards elsewhere)
 }
 
-export function EmbeddedOutline({ scroller, compact }: Props) {
+export function EmbeddedOutline({ scroller, compact, omitPanelIds }: Props) {
   const styles = useStyles2(getStyles);
   const ctx = useContentOutlineContext();
   const items = ctx?.outlineItems ?? [];
@@ -37,6 +39,7 @@ export function EmbeddedOutline({ scroller, compact }: Props) {
     <ul className={cx(styles.list, compact && styles.listCompact)}>
       {items
         .filter((item) => item.level === 'root')
+        .filter((item) => !omitPanelIds?.includes(item.panelId))
         .map((item) => {
           const icon: IconName | undefined =
             typeof item.icon === 'string' && isIconName(item.icon) ? (item.icon as IconName) : undefined;
