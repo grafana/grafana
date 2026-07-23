@@ -54,7 +54,8 @@ describe('query builder date handling', () => {
     expect(toSql(ruleTree('wakeAt', 'equal', '10:30:00', 'time'))).toBe("wakeAt = '10:30:00'");
   });
 
-  it('passes datetime macros through unformatted', () => {
-    expect(toSql(ruleTree('createdAt', 'macros', '$__timeFilter', 'datetime'))).toBe('$__timeFilter(createdAt)');
+  it('expands datetime macros instead of formatting them as dates', () => {
+    // the stored value is the bare macro name; the macros operator's sqlFormatOp expands it
+    expect(toSql(ruleTree('createdAt', 'macros', 'timeFilter', 'datetime'))).toBe('$__timeFilter(createdAt)');
   });
 });
