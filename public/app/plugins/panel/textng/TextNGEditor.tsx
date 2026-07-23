@@ -3,7 +3,7 @@ import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 
-import { type GrafanaTheme2, type InterpolateFunction, renderTextPanelMarkdown, textUtil } from '@grafana/data';
+import { type GrafanaTheme2, type InterpolateFunction } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { CodeMirrorEditor, type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
@@ -13,6 +13,7 @@ import { CodeLanguage, TextMode } from '../../schemas/textng/panelcfg.gen';
 
 import { TextNGCodeView } from './TextNGCodeView';
 import { getCodeMirrorLanguage } from './codeLanguages';
+import { transformContent } from './textContent';
 
 type ViewMode = 'write' | 'split' | 'preview';
 
@@ -23,16 +24,6 @@ export interface TextNGEditorProps {
   codeLanguage?: CodeLanguage;
   replaceVariables: InterpolateFunction;
   onChange: (content: string) => void;
-}
-
-function renderPreviewHtml(mode: TextMode, content: string, disableSanitizeHtml: boolean): string {
-  if (!content) {
-    return ' ';
-  }
-  if (mode === TextMode.HTML) {
-    return disableSanitizeHtml ? content : textUtil.sanitizeTextPanelContent(content);
-  }
-  return renderTextPanelMarkdown(content, { noSanitize: disableSanitizeHtml });
 }
 
 const COMMIT_DEBOUNCE_MS = 250;
@@ -81,7 +72,7 @@ export function TextNGEditor({
   );
 
   const previewHtml = useMemo(
-    () => (mode === TextMode.Code ? '' : renderPreviewHtml(mode, interpolatedContent, config.disableSanitizeHtml)),
+    () => (mode === TextMode.Code ? '' : transformContent(mode, interpolatedContent, config.disableSanitizeHtml)),
     [mode, interpolatedContent]
   );
 

@@ -153,7 +153,6 @@ describe('TextNGPanel', () => {
     expect(waited.innerHTML).toEqual('<p><em>hello</em></p>\n');
   });
 
-  // Tests https://github.com/grafana/grafana/issues/49759 explicitly
   it('interpolates variables correctly so they can be used in markdown urls', async () => {
     const contentTest = '[Example: ${__url_time_range}](https://example.com/?${__url_time_range})';
     replaceVariablesMock.mockImplementationOnce((str) => {
@@ -167,8 +166,6 @@ describe('TextNGPanel', () => {
     setup(props);
 
     const waited = await screen.getByTestId('TextNGPanel-converted-content');
-    // Yes, ampersands in query string in href attribute should be encoded
-    // https://stackoverflow.com/questions/3705591/do-i-encode-ampersands-in-a-href
     expect(waited.innerHTML).toEqual(
       '<p><a href="https://example.com/?from=now-6h&amp;to=now">Example: from=now-6h&amp;to=now</a></p>\n'
     );

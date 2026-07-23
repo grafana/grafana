@@ -3,18 +3,13 @@ import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 import { lazy, Suspense, useState } from 'react';
 import { useDebounce } from 'react-use';
 
-import {
-  CoreApp,
-  type GrafanaTheme2,
-  type PanelProps,
-  renderTextPanelMarkdown,
-  textUtil,
-  type InterpolateFunction,
-} from '@grafana/data';
+import { CoreApp, type GrafanaTheme2, type PanelProps, type InterpolateFunction } from '@grafana/data';
 import { ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { defaultCodeOptions, defaultOptions, type Options, TextMode } from '../../schemas/textng/panelcfg.gen';
+
+import { transformContent } from './textContent';
 
 const TextNGEditor = lazy(() => import('./TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
 const TextNGCodeView = lazy(() => import('./TextNGCodeView').then((m) => ({ default: m.TextNGCodeView })));
@@ -103,29 +98,6 @@ export function TextNGPanel(props: Props) {
 
 function interpolateContent(options: Options, interpolate: InterpolateFunction): string {
   return interpolate(options.content ?? '', {}, options.code?.language === 'json' ? 'json' : 'html');
-}
-
-function transformContent(mode: TextMode, content: string, disableSanitizeHtml: boolean): string {
-  if (!content) {
-    return ' ';
-  }
-
-  switch (mode) {
-    case TextMode.Code:
-      break;
-    case TextMode.HTML:
-      if (!disableSanitizeHtml) {
-        content = textUtil.sanitizeTextPanelContent(content);
-      }
-      break;
-    case TextMode.Markdown:
-    default:
-      content = renderTextPanelMarkdown(content, {
-        noSanitize: disableSanitizeHtml,
-      });
-  }
-
-  return content;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
