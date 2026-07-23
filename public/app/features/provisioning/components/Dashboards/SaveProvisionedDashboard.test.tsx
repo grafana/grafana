@@ -33,7 +33,8 @@ function createDashboard({ folderUid, uid }: { folderUid?: string; uid?: string 
 
 function setup(
   overrides: Partial<ReturnType<typeof useProvisionedDashboardData>> = {},
-  props: Partial<SaveProvisionedDashboardProps> = {}
+  props: Partial<SaveProvisionedDashboardProps> = {},
+  entryUrl?: string
 ) {
   mockUseProvisionedDashboardData.mockReturnValue({
     isNew: true,
@@ -67,14 +68,12 @@ function setup(
     ...props,
   };
 
-  return { ...render(<SaveProvisionedDashboard {...renderProps} />), props: renderProps };
+  const renderOptions = entryUrl ? { historyOptions: { initialEntries: [entryUrl] } } : {};
+
+  return { ...render(<SaveProvisionedDashboard {...renderProps} />, renderOptions), props: renderProps };
 }
 
 describe('SaveProvisionedDashboard', () => {
-  beforeEach(() => {
-    window.history.replaceState({}, '', '/');
-  });
-
   it('shows the provisioned form with a link to switch to the database for a new folderless dashboard', () => {
     setup();
 
@@ -136,6 +135,34 @@ describe('SaveProvisionedDashboard', () => {
     });
 
     expect(screen.getByRole('button', { name: /grafana database/i })).toBeInTheDocument();
+  });
+
+  it('does not restore the orphaned folder on switch-back', async () => {
+    const dashboard = createDashboard({ folderUid: 'orphaned-folder' });
+    const { user } = setup(
+      { isNew: false, defaultValues: null, repository: undefined, repoDataStatus: RepoViewStatus.Orphaned },
+      { dashboard },
+      '/?folderUid=repo-folder'
+    );
+
+    await user.click(screen.getByRole('button', { name: /grafana database/i }));
+    await user.click(screen.getByRole('button', { name: /git repository/i }));
+
+    // Restoring the orphaned folder would bounce straight back to the orphaned notice
+    expect(dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: 'repo-folder' } });
+  });
+
+  it('clears the orphaned folder when escaping to the database form', async () => {
+    const dashboard = createDashboard({ folderUid: 'orphaned-folder' });
+    const { user } = setup(
+      { isNew: false, defaultValues: null, repository: undefined, repoDataStatus: RepoViewStatus.Orphaned },
+      { dashboard }
+    );
+
+    await user.click(screen.getByRole('button', { name: /grafana database/i }));
+
+    // An orphaned folder still carries repo annotations, so a database save into it would be rejected
+    expect(dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: undefined } });
   });
 
   it('keeps the database form when the repository stops resolving after a folder pick', async () => {
@@ -227,11 +254,11 @@ describe('SaveProvisionedDashboard', () => {
   });
 
   it('restores the entry folder on switch-back so a folder-target Git form resolves again', async () => {
-    window.history.replaceState({}, '', '/?folderUid=repo-folder');
     const dashboard = createDashboard({ folderUid: 'unmanaged-folder' });
     const { user } = setup(
       { isNew: false, defaultValues: null, repository: undefined, repoDataStatus: RepoViewStatus.Error },
-      { dashboard }
+      { dashboard },
+      '/?folderUid=repo-folder'
     );
 
     await user.click(screen.getByRole('button', { name: /grafana database/i }));

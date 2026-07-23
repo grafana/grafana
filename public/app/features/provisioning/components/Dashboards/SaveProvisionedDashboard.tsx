@@ -1,6 +1,7 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 import { Trans } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
 import { SaveDashboardAsForm } from 'app/features/dashboard-scene/saving/SaveDashboardAsForm';
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
@@ -59,20 +60,18 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
 
   const handleSwitchToDatabase = () => {
     const meta = dashboard.state.meta;
-    if (repoDataStatus === RepoViewStatus.Error) {
-      // Dead-ended on an unmanaged folder pick: keep it (a valid database folder). Restore the
-      // entry folder (what useIsProvisionedNG resolves) on switch-back so the Git form works again.
-      const entryFolderUid = new URLSearchParams(window.location.search).get('folderUid') || undefined;
-      dbSwitchRef.current = {
-        active: true,
-        savedUid: meta.uid,
-        gitMeta: { ...meta, folderUid: entryFolderUid, k8s: undefined },
-      };
-    } else {
-      // Provisioned or still resolving: a database save into it would be rejected, so open the form at root
-      dbSwitchRef.current = { active: true, savedUid: meta.uid, gitMeta: { ...meta } };
+    const folderUid = locationService.getSearchObject().folderUid;
+    const entryFolderUid = typeof folderUid === 'string' ? folderUid : undefined;
+
+    // Dead-ends go back to the folder the drawer resolved from, so switch-back lands on a working Git form
+    const gitMeta = isDeadEnd ? { ...meta, folderUid: entryFolderUid, k8s: undefined } : { ...meta };
+    dbSwitchRef.current = { active: true, savedUid: meta.uid, gitMeta };
+
+    // Only an unmanaged folder is a valid database target; provisioned and orphaned ones are rejected
+    if (repoDataStatus !== RepoViewStatus.Error) {
       dashboard.setState({ meta: { ...meta, folderUid: undefined } });
     }
+
     setSaveToDatabase(true);
   };
 
