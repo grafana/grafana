@@ -7,6 +7,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
@@ -178,6 +179,12 @@ func TestBoundedFileWriter_StopsAtMaxSize(t *testing.T) {
 }
 
 func TestBoundedFileWriter_CreatesOwnerOnlyFile(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		// On Windows, permission bits map to the read-only attribute; Mode().Perm()
+		// typically reports 0666 for writable files, so the Unix 0600 check is not meaningful.
+		t.Skip("file permission bits are not preserved on Windows")
+	}
+
 	path := filepath.Join(t.TempDir(), "private.json")
 	w, err := newBoundedFileWriter(path, defaultTraceFileMaxSize, time.Hour, log.New("test"))
 	require.NoError(t, err)
