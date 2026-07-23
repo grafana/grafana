@@ -32,9 +32,11 @@ var dependencyMap = map[string][]string{
 	SearchServer:  {UnifiedBackend, UnifiedVectorBackend, InstrumentationServer, GRPCServer, SearchServerRing},
 
 	// UnifiedBackend publishes resource watch notifications through the NATS
-	// publisher, so NATS must be initialized first.
+	// publisher, so NATS must be initialized first. It also depends on
+	// UnifiedVectorBackend so the vector backend is constructed before
+	// the backend's tenant deleter.
 	NATS:           {InstrumentationServer},
-	UnifiedBackend: {NATS},
+	UnifiedBackend: {NATS, UnifiedVectorBackend},
 
 	ZanzanaServer:           {InstrumentationServer},
 	AuthnServer:             {InstrumentationServer},
