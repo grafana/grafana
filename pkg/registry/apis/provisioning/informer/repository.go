@@ -2,6 +2,7 @@ package informer
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -102,7 +103,12 @@ func (g clientGetCachedListRepositoryGetter) Get(ctx context.Context, namespace,
 	repo, err := g.client.Repositories(namespace).Get(ctx, name, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
 		g.store.Delete(ctx, namespace, name)
-		return nil, err
+		// This read is decoupled from the NATS notification that enqueued the key,
+		// so a 404 is usually a read-after-write race on a just-created repository,
+		// not a deletion. Surface it as ErrNotObserved so the controller retries
+		// (bounded) instead of dropping the key until the next resync; a genuine
+		// delete exhausts the retries and is then forgotten.
+		return nil, fmt.Errorf("%w: %s/%s", ErrNotObserved, namespace, name)
 	}
 	if err != nil {
 		return nil, err
