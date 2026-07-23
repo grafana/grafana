@@ -146,7 +146,14 @@ export const LinkValue = ({ link, children }: PropsWithChildren<LinkValueProps>)
   const styles = useStyles2(getStyles);
 
   return (
-    <a href={path} title={title} onClick={onClick} target="_blank" rel="noopener noreferrer" className={styles.linkValue}>
+    <a
+      href={path}
+      title={title}
+      onClick={onClick}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={styles.linkValue}
+    >
       <Icon name={icon} className={styles.linkIcon} />
       {children}
     </a>
@@ -171,9 +178,7 @@ export const LinkValuesMenu = ({ links, children }: LinkValuesMenuProps) => {
             {links.map((link, index) => (
               <div key={index} title={link.title}>
                 <Menu.Item
-                  label={
-                    link.description || link.title || t('explore.key-values-table.link-fallback-label', 'Link')
-                  }
+                  label={link.description || link.title || t('explore.key-values-table.link-fallback-label', 'Link')}
                   icon={link.icon}
                   url={link.path}
                   target="_blank"

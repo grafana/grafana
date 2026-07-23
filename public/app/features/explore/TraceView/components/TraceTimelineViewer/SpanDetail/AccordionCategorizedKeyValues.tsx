@@ -36,8 +36,7 @@ export default function AccordionCategorizedKeyValues({
   const styles = useStyles2(getStyles);
   const isEmpty = !Array.isArray(data) || !data.length;
   const groupedCategories = React.useMemo(() => groupAttributesByCategory(data, sectionType), [data, sectionType]);
-  const showFlatAttributes =
-    groupedCategories.length === 1 && groupedCategories[0].category.id === OTHER_CATEGORY_ID;
+  const showFlatAttributes = groupedCategories.length === 1 && groupedCategories[0].category.id === OTHER_CATEGORY_ID;
   const [closedCategories, setClosedCategories] = React.useState<Set<string>>(() => new Set());
 
   React.useEffect(() => {
