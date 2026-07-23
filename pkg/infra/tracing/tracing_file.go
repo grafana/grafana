@@ -120,6 +120,10 @@ func newBoundedFileWriter(path string, maxSize int64, dur time.Duration, logger 
 
 	// Trace captures can contain request paths, error messages, and attributes,
 	// so newly created files are owner-only instead of matching regular logs.
+	// The 0600 mode is only effective on Unix: on Windows, permission bits map
+	// to the read-only attribute and effective access is governed by the ACLs
+	// inherited from the capture directory — which is why the operator must
+	// provision that directory (with appropriate access) themselves.
 	//nolint:gosec // G304: the capture path is an explicit operator-provided config value (the capture destination)
 	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
