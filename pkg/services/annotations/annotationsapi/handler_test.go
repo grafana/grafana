@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -217,6 +218,23 @@ func TestMigrationProxy(t *testing.T) {
 			assert.Equal(t, "anno-1", client.updated.GetName(), "in-place edit reuses the stored k8s name")
 			assert.Nil(t, client.created, "no re-create when the time is unchanged")
 			assert.Empty(t, client.deletedNames, "no delete when the time is unchanged")
+		})
+
+		t.Run("text-only PUT with omitted times updates in place and preserves the stored time range", func(t *testing.T) {
+			existing := existingAnno("anno-1")
+			existing.Spec.TimeEnd = ptr.To(int64(2000))
+			client := &fakeClient{existing: existing}
+			proxy := newProxy(client)
+
+			err := proxy.Update(context.Background(), orgID, legacyID, &annotations.Item{Text: "after"})
+			require.NoError(t, err)
+
+			require.NotNil(t, client.updated, "omitted times must not trigger a re-create")
+			assert.Equal(t, int64(1000), client.updated.Spec.Time, "the stored time is preserved")
+			require.NotNil(t, client.updated.Spec.TimeEnd, "the stored timeEnd is preserved, not dropped")
+			assert.Equal(t, int64(2000), *client.updated.Spec.TimeEnd)
+			assert.Nil(t, client.created, "no re-create when the times are omitted")
+			assert.Empty(t, client.deletedNames, "no delete when the times are omitted")
 		})
 
 		t.Run("time change re-creates under a new name and deletes the old record", func(t *testing.T) {

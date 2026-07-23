@@ -180,11 +180,18 @@ func (h *MigrationProxy) Update(ctx context.Context, orgID int64, annotationID i
 	anno.SetResourceVersion(existing.GetResourceVersion())
 	annotationpkg.SetLegacyID(anno, annotationID)
 	// Preserve fields absent from the update command so the PUT doesn't clear them.
+	// This aligns with the legacy API behavior where only the fields present in the request are updated.
 	if anno.Spec.DashboardUID == nil {
 		anno.Spec.DashboardUID = existing.Spec.DashboardUID
 	}
 	if anno.Spec.PanelID == nil {
 		anno.Spec.PanelID = existing.Spec.PanelID
+	}
+	if item.Epoch == 0 {
+		anno.Spec.Time = existing.Spec.Time
+	}
+	if item.EpochEnd == 0 {
+		anno.Spec.TimeEnd = existing.Spec.TimeEnd
 	}
 
 	// If time or timeEnd changed, re-create the annotation as the new API does not support updates to time/timeEnd
