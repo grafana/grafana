@@ -23,7 +23,7 @@ import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { type SpanLinkDef, type SpanLinkFunc, type SpanLinkModel, SpanLinkType } from '../../types/links';
 import { type TraceSpan } from '../../types/trace';
 
-import { getLogsButtonCTA, LogsLinkButton } from './LogsLink';
+import { getLogsButtonCTA, LogsLinkButton, LogsLinkMenuItem } from './LogsLink';
 import { ShareSpanButton } from './ShareSpanButton';
 
 export type ProfilesButtonContext = {
@@ -214,16 +214,23 @@ const DropDownMenu = ({ links }: { links: SpanLinkModel[] }) => {
   const [_, setIsOpen] = React.useState(false);
   const styles = useStyles2(getResponsibleButtonStyles);
 
-  const menu = (
-    <Menu>
-      {links.map(({ linkModel }, index) => (
-        <Menu.Item
-          key={index}
-          label={linkModel.title}
-          onClick={(event: React.MouseEvent) => linkModel.onClick?.(event)}
-        />
-      ))}
-    </Menu>
+  const menu = useMemo(
+    () => (
+      <Menu>
+        {links.map((spanLinkModel, index) =>
+          spanLinkModel.type === SpanLinkType.Logs ? (
+            <LogsLinkMenuItem spanLinkModel={spanLinkModel} key={index} />
+          ) : (
+            <Menu.Item
+              key={index}
+              label={spanLinkModel.linkModel.title}
+              onClick={(event: React.MouseEvent) => spanLinkModel.linkModel.onClick?.(event)}
+            />
+          )
+        )}
+      </Menu>
+    ),
+    [links]
   );
 
   return (

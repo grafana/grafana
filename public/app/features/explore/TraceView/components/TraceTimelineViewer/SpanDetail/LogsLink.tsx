@@ -17,7 +17,7 @@ import { t } from '@grafana/i18n';
 import { getTraceToLogsOptions } from '@grafana/o11y-ds-frontend';
 import { useFlagGrafanaDynamicTraceToLogs } from '@grafana/runtime/internal';
 import { getDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
-import { useStyles2, DataLinkButton } from '@grafana/ui';
+import { useStyles2, DataLinkButton, Menu } from '@grafana/ui';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
 
 import { type SpanLinkModel } from '../../types/links';
@@ -59,6 +59,27 @@ function getStyles(theme: GrafanaTheme2) {
     },
   });
 }
+
+export const LogsLinkMenuItem = ({ spanLinkModel }: Props) => {
+  const presence = useHasLogs(spanLinkModel);
+  const { linkModel, icon, traceDatasourceUid } = spanLinkModel;
+
+  const { settings } = useDataSourceInstanceSettings(traceDatasourceUid);
+
+  const tooltip = useMemo(() => getLogsButtonTooltip(settings, presence), [presence, settings]);
+
+  const isLoading = presence === 'loading';
+
+  return (
+    <Menu.Item
+      label={linkModel.title}
+      icon={isLoading ? 'spinner' : icon}
+      ariaLabel={tooltip}
+      disabled={presence === 'absent'}
+      onClick={(event: React.MouseEvent) => linkModel.onClick?.(event)}
+    />
+  );
+};
 
 type LogsPresence = 'loading' | 'present' | 'absent';
 
