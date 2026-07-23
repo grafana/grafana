@@ -508,7 +508,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
             grammar={isGrammar(grammar) ? grammar : undefined}
             isLabelFilterActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
             initialScrollPosition={initialScrollPosition}
-            loading={infiniteScrolling}
+            loadingState={infiniteScrolling ? LoadingState.Loading : LoadingState.Done}
             logLineMenuCustomItems={
               isLogLineMenuCustomItems(logLineMenuCustomItems) ? logLineMenuCustomItems : undefined
             }

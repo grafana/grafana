@@ -454,7 +454,11 @@ export const LogLineContext = memo(
                 logLineMenuCustomItems={logLineMenuCustomItems}
                 logOptionsStorageKey={logOptionsStorageKey}
                 logs={allLogs}
-                loading={aboveState === LoadingState.Loading || belowState === LoadingState.Loading}
+                loadingState={
+                  aboveState === LoadingState.Loading || belowState === LoadingState.Loading
+                    ? LoadingState.Loading
+                    : LoadingState.Done
+                }
                 permalinkedLogId={log.uid}
                 onPermalinkClick={onPermalinkClick}
                 onLogOptionsChange={onLogOptionsChange}

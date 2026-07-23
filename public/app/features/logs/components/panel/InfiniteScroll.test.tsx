@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import { VariableSizeList } from 'react-window';
 
-import { createTheme, dateTimeForTimeZone, rangeUtil } from '@grafana/data';
+import { createTheme, dateTimeForTimeZone, LoadingState, rangeUtil } from '@grafana/data';
 import { LogsSortOrder } from '@grafana/schema';
 
 import { ScrollDirection, SCROLLING_THRESHOLD } from '../infiniteScrollUtils';
@@ -311,22 +311,31 @@ describe('InfiniteScroll', () => {
   );
 });
 
-// Regression test for https://github.com/grafana/grafana/issues/129033: in interval mode the loader
-// loaded more logs only once and then got stuck showing "End of the selected time range". While a
-// load-more was in flight, Loki query splitting re-emits the previous response (same rows, new array)
-// with state=Loading; the loader treated that same-length change as "no new logs" and latched
-// 'out-of-bounds' before the real page arrived. The fix waits for the request to settle (loading
-// true -> false) and compares against the row count captured when the load-more started.
+// Regression tests for https://github.com/grafana/grafana/issues/129033: in interval mode the loader
+// loaded more logs only once and then got stuck or wrongly showed "End of the selected time range".
+// The loader resolves a load-more when its request settles (loadingState leaves Loading/Streaming);
+// on Done it waits for the settled rows to propagate (the `logs` prop lags loadingState by a render,
+// since LogList turns it into processedLogs via an effect) and compares against the row count captured
+// when the load-more started (Loki query splitting streams partial pages, growing rows across renders);
+// on Error it returns to idle so the user can retry.
 describe('InfiniteScroll consecutive loads (regression #129033)', () => {
   // Page 1 sits early in the range so canScrollBottom returns a valid next window.
   const pageFrom = absoluteRange.from + 2 * SCROLLING_THRESHOLD;
   const pageTo = absoluteRange.from + 50 * SCROLLING_THRESHOLD;
 
+  // n log lines spread across [pageFrom, pageTo] (oldest first), a fresh array each call.
+  function makeLogs(n: number): LogListModel[] {
+    return Array.from({ length: n }, (_, i) => {
+      const ts = pageFrom + Math.round(((pageTo - pageFrom) * i) / Math.max(n - 1, 1));
+      return createLogLine({ entry: `line ${i}`, uid: `log-${i}`, timeEpochMs: ts });
+    });
+  }
+
   function ui(
     currentLogs: LogListModel[],
     element: ReturnType<typeof getMockElement>['element'],
     loadMore: jest.Mock,
-    loading = false
+    loadingState: LoadingState = LoadingState.Done
   ) {
     return (
       <InfiniteScroll
@@ -335,7 +344,7 @@ describe('InfiniteScroll consecutive loads (regression #129033)', () => {
         logs={currentLogs}
         scrollElement={element as unknown as HTMLDivElement}
         loadMore={loadMore}
-        loading={loading}
+        loadingState={loadingState}
         infiniteScrollMode="interval"
       >
         {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
@@ -370,12 +379,12 @@ describe('InfiniteScroll consecutive loads (regression #129033)', () => {
     });
   }
 
-  test('an intermediate same-length emission does not latch out-of-bounds (Ascending)', async () => {
+  test('resolves to idle when a settled load-more returns new rows (Ascending)', async () => {
     const loadMoreMock = jest.fn();
     const { element, events } = getMockElement(50);
 
     const page1 = createLogs(pageFrom, pageTo);
-    const { rerender } = render(ui(page1, element, loadMoreMock, false));
+    const { rerender } = render(ui(page1, element, loadMoreMock, LoadingState.Done));
 
     expect(await screen.findByText('log line 1')).toBeInTheDocument();
 
@@ -384,18 +393,18 @@ describe('InfiniteScroll consecutive loads (regression #129033)', () => {
     scroll(element, events, 60, 600);
     expect(loadMoreMock).toHaveBeenCalledTimes(1);
 
-    // While the request is loading, Loki query splitting re-emits the previous rows (same length,
-    // new array) with state=Loading. The buggy code latched 'out-of-bounds' here; it must not.
+    // In flight: an intermediate emission re-emits the previous rows (same length, new array). The
+    // loader must not latch 'out-of-bounds' here.
     act(() => {
-      rerender(ui(createLogs(pageFrom, pageTo), element, loadMoreMock, true));
+      rerender(ui(createLogs(pageFrom, pageTo), element, loadMoreMock, LoadingState.Loading));
     });
     expect(screen.queryByText('End of the selected time range.')).not.toBeInTheDocument();
 
-    // The real, larger page arrives and the request settles (loading true -> false). Because new
-    // rows were returned, the loader returns to idle rather than end-of-range.
+    // The larger page arrives and the request settles (Loading -> Done). New rows were returned, so
+    // the loader returns to idle rather than end-of-range.
     const grown = [...page1, createLogLine({ entry: 'log line 3', uid: 'log-3', timeEpochMs: pageTo })];
     act(() => {
-      rerender(ui(grown, element, loadMoreMock, false));
+      rerender(ui(grown, element, loadMoreMock, LoadingState.Done));
     });
     expect(screen.queryByText('End of the selected time range.')).not.toBeInTheDocument();
   });
@@ -405,7 +414,7 @@ describe('InfiniteScroll consecutive loads (regression #129033)', () => {
     const { element, events } = getMockElement(50);
 
     const page1 = createLogs(pageFrom, pageTo);
-    const { rerender } = render(ui(page1, element, loadMoreMock, false));
+    const { rerender } = render(ui(page1, element, loadMoreMock, LoadingState.Done));
 
     expect(await screen.findByText('log line 1')).toBeInTheDocument();
 
@@ -413,15 +422,72 @@ describe('InfiniteScroll consecutive loads (regression #129033)', () => {
     scroll(element, events, 60, 600);
     expect(loadMoreMock).toHaveBeenCalledTimes(1);
 
-    // Request settles (loading true -> false) with the same number of rows → genuine end of range.
+    // Settles (Loading -> Done) with the same number of rows → genuine end of range. Each emission is
+    // a fresh array (new reference, same content), as redux/decorate/memoization always produce.
     act(() => {
-      rerender(ui(page1, element, loadMoreMock, true));
+      rerender(ui(createLogs(pageFrom, pageTo), element, loadMoreMock, LoadingState.Loading));
     });
     act(() => {
-      rerender(ui(page1, element, loadMoreMock, false));
+      rerender(ui(createLogs(pageFrom, pageTo), element, loadMoreMock, LoadingState.Done));
     });
 
     expect(await screen.findByText('End of the selected time range.')).toBeInTheDocument();
+  });
+
+  test('does not flag end-of-range when query splitting grows rows across in-flight emissions (Ascending)', async () => {
+    const loadMoreMock = jest.fn();
+    const { element, events } = getMockElement(50);
+
+    const { rerender } = render(ui(makeLogs(2), element, loadMoreMock, LoadingState.Done));
+    expect(await screen.findByText('line 0')).toBeInTheDocument();
+
+    scroll(element, events, 59, 1);
+    scroll(element, events, 60, 600);
+    expect(loadMoreMock).toHaveBeenCalledTimes(1);
+
+    // Query splitting streams partial pages across several in-flight (Loading) emissions, growing the
+    // rows before the request finishes...
+    act(() => {
+      rerender(ui(makeLogs(4), element, loadMoreMock, LoadingState.Loading));
+    });
+    act(() => {
+      rerender(ui(makeLogs(6), element, loadMoreMock, LoadingState.Loading));
+    });
+    // ...and the final Done carries the same fully-merged rows as the last Loading emission. Comparing
+    // against the start count (2 -> 6) correctly returns to idle; comparing against prevLogs would not.
+    act(() => {
+      rerender(ui(makeLogs(6), element, loadMoreMock, LoadingState.Done));
+    });
+
+    expect(screen.queryByText('End of the selected time range.')).not.toBeInTheDocument();
+  });
+
+  test('recovers to idle (not stuck) when a load-more errors (Ascending)', async () => {
+    const loadMoreMock = jest.fn();
+    const { element, events } = getMockElement(50);
+
+    const page1 = createLogs(pageFrom, pageTo);
+    const { rerender } = render(ui(page1, element, loadMoreMock, LoadingState.Done));
+
+    expect(await screen.findByText('log line 1')).toBeInTheDocument();
+
+    scroll(element, events, 59, 1);
+    scroll(element, events, 60, 600);
+    expect(loadMoreMock).toHaveBeenCalledTimes(1);
+
+    // In flight: the loading spinner is shown.
+    act(() => {
+      rerender(ui(createLogs(pageFrom, pageTo), element, loadMoreMock, LoadingState.Loading));
+    });
+    expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
+
+    // The request errors (no new rows). The loader must leave 'loading' — returning to idle so the
+    // user can retry — rather than getting stuck on the spinner or latching end-of-range.
+    act(() => {
+      rerender(ui(page1, element, loadMoreMock, LoadingState.Error));
+    });
+    expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
+    expect(screen.queryByText('End of the selected time range.')).not.toBeInTheDocument();
   });
 });
 

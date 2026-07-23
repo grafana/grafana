@@ -2,7 +2,7 @@ import { type ReactNode, useCallback, useEffect, useRef, useState, type MouseEve
 import { usePrevious } from 'react-use';
 import { type ListChildComponentProps, type ListOnItemsRenderedProps } from 'react-window';
 
-import { type AbsoluteTimeRange, LogsSortOrder, type TimeRange } from '@grafana/data';
+import { type AbsoluteTimeRange, LoadingState, LogsSortOrder, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Spinner, useStyles2 } from '@grafana/ui';
@@ -32,7 +32,7 @@ export interface Props {
   displayedFields: string[];
   handleOverflow: (index: number, id: string, height?: number) => void;
   infiniteScrollMode: InfiniteScrollMode;
-  loading?: boolean;
+  loadingState?: LoadingState;
   loadMore?: LoadMoreLogsType;
   logs: LogListModel[];
   onClick: (e: MouseEvent<HTMLElement>, log: LogListModel) => void;
@@ -57,7 +57,7 @@ export const InfiniteScroll = ({
   displayedFields,
   handleOverflow,
   infiniteScrollMode,
-  loading,
+  loadingState,
   loadMore,
   logs,
   onClick,
@@ -82,8 +82,11 @@ export const InfiniteScroll = ({
   const resetStateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollToLogLineRef = useRef<LogListModel | undefined>(undefined);
   const noScrollRef = useRef<undefined | boolean>(undefined);
-  const prevLoading = usePrevious(loading);
   const loadMoreCountRef = useRef<number | null>(null);
+  const settledRef = useRef(false);
+  // The request backing a load-more is in flight while its state is Loading or Streaming.
+  const requestInFlight = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
+  const prevInFlight = usePrevious(requestInFlight);
 
   useEffect(() => {
     // Fresh logs from a new query (not infinite scrolling): reset paging and scroll.
@@ -92,25 +95,41 @@ export const InfiniteScroll = ({
       setAutoScroll(true);
       return;
     }
-    // Resolve a load-more only once the request has finished. Intermediate emissions
-    // (e.g. Loki query splitting re-emits the previous response with state=Loading
-    // before the new page arrives) carry the same rows, so deciding on every logs
-    // change would prematurely flag "out-of-bounds" and stop infinite scrolling. We
-    // wait for the request to settle (loading true -> false) and compare against the
-    // row count captured when the load-more started.
-    if (infiniteLoaderState === 'loading' && prevLoading && !loading) {
-      const startCount = loadMoreCountRef.current;
-      loadMoreCountRef.current = null;
-      setInfiniteLoaderState(
-        startCount !== null && logs.length === startCount && infiniteScrollMode === 'interval'
-          ? 'out-of-bounds'
-          : 'idle'
-      );
-      if (scrollToLogLineRef.current) {
-        setAutoScroll(true);
+    if (infiniteLoaderState === 'loading') {
+      // Only act once we've observed the request go in flight and then settle (Loading/Streaming ->
+      // not). Requiring that transition ignores the stale/settled states seen right after the
+      // load-more starts (cancelQueries flips the response to Done before the new request begins).
+      if (prevInFlight && !requestInFlight) {
+        settledRef.current = true;
+      }
+      if (!settledRef.current) {
+        return;
+      }
+      if (loadingState === LoadingState.Error) {
+        // The request failed and returns no new rows: return to idle so the user can retry by
+        // scrolling again, rather than getting stuck on the loading indicator.
+        settledRef.current = false;
+        loadMoreCountRef.current = null;
+        setInfiniteLoaderState('idle');
+        return;
+      }
+      // Wait until the settled rows have propagated before deciding. `logs` lags `loadingState` by a
+      // render (LogList turns the `logs` prop into `processedLogs` via an effect), so on the settle
+      // render `logs` still holds the pre-request rows; deciding then would read a stale count and
+      // wrongly flag "out-of-bounds". Compare against the count captured when the load-more started
+      // (not prevLogs): Loki query splitting streams partial pages, growing the rows across renders.
+      if (prevLogs !== logs) {
+        settledRef.current = false;
+        const startCount = loadMoreCountRef.current;
+        loadMoreCountRef.current = null;
+        const outOfBounds = startCount !== null && logs.length === startCount && infiniteScrollMode === 'interval';
+        setInfiniteLoaderState(outOfBounds ? 'out-of-bounds' : 'idle');
+        if (scrollToLogLineRef.current) {
+          setAutoScroll(true);
+        }
       }
     }
-  }, [infiniteLoaderState, infiniteScrollMode, loading, prevLoading, logs, prevLogs]);
+  }, [infiniteLoaderState, infiniteScrollMode, loadingState, requestInFlight, prevInFlight, logs, prevLogs]);
 
   useEffect(() => {
     if (prevSortOrder && prevSortOrder !== sortOrder) {
@@ -119,12 +138,12 @@ export const InfiniteScroll = ({
   }, [prevSortOrder, sortOrder]);
 
   useEffect(() => {
-    if (autoScroll && !loading) {
+    if (autoScroll && !requestInFlight) {
       setInitialScrollPosition(scrollToLogLineRef.current);
       scrollToLogLineRef.current = undefined;
       setAutoScroll(false);
     }
-  }, [autoScroll, loading, setInitialScrollPosition]);
+  }, [autoScroll, requestInFlight, setInitialScrollPosition]);
 
   const onLoadMore = useCallback(
     (scrollDirection: ScrollDirection) => {
