@@ -129,12 +129,6 @@ func TestItemAnnotationConversion(t *testing.T) {
 		require.Equal(t, int64(1234), dto.TimeEnd, "point TimeEnd must match Time to align with legacy")
 	})
 
-	t.Run("EpochEnd equal to Epoch produces a point annotation", func(t *testing.T) {
-		anno, err := itemToAnnotation(&annotations.Item{Text: "hello", Epoch: 1234, EpochEnd: 1234})
-		require.NoError(t, err)
-		require.Nil(t, anno.Spec.TimeEnd, "EpochEnd == Epoch is a point, not a range")
-	})
-
 	t.Run("range annotation preserves a distinct TimeEnd", func(t *testing.T) {
 		anno, err := itemToAnnotation(&annotations.Item{Text: "hello", Epoch: 1000, EpochEnd: 2000})
 		require.NoError(t, err)
@@ -244,7 +238,7 @@ func TestMigrationProxy(t *testing.T) {
 		})
 
 		t.Run("point-annotation PATCH round-trip does not falsely detect a time change", func(t *testing.T) {
-			existing := existingAnno("anno-1") // Time: 1000, TimeEnd: nil (a point)
+			existing := existingAnno("anno-1")
 			client := &fakeClient{existing: existing}
 			proxy := newProxy(client)
 
@@ -255,6 +249,33 @@ func TestMigrationProxy(t *testing.T) {
 			assert.Nil(t, client.updated.Spec.TimeEnd, "the point must stay a point, not become a range")
 			assert.Nil(t, client.created, "no re-create for an unchanged point")
 			assert.Empty(t, client.deletedNames)
+		})
+
+		t.Run("moving a point to a later time keeps it a point", func(t *testing.T) {
+			existing := existingAnno("anno-1")
+			client := &fakeClient{existing: existing}
+			proxy := newProxy(client)
+
+			err := proxy.Update(context.Background(), orgID, legacyID, &annotations.Item{Text: "after", Epoch: 5000, EpochEnd: 1000})
+			require.NoError(t, err)
+
+			require.NotNil(t, client.created, "moving the time re-creates the record")
+			assert.Equal(t, int64(5000), client.created.Spec.Time, "the new start is applied")
+			assert.Nil(t, client.created.Spec.TimeEnd, "the point stays a point, not a backwards range")
+			assert.Equal(t, []string{"anno-1"}, client.deletedNames)
+		})
+
+		t.Run("widening a point into a genuine range is honored", func(t *testing.T) {
+			existing := existingAnno("anno-1") // Time: 1000, TimeEnd: nil (a point)
+			client := &fakeClient{existing: existing}
+			proxy := newProxy(client)
+
+			err := proxy.Update(context.Background(), orgID, legacyID, &annotations.Item{Text: "after", Epoch: 1000, EpochEnd: 3000})
+			require.NoError(t, err)
+
+			require.NotNil(t, client.created, "adding a distinct end changes the time shape, so it re-creates")
+			require.NotNil(t, client.created.Spec.TimeEnd, "a strictly-later end makes it a range")
+			assert.Equal(t, int64(3000), *client.created.Spec.TimeEnd)
 		})
 
 		t.Run("time change with omitted data preserves the stored legacy data", func(t *testing.T) {

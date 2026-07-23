@@ -180,8 +180,12 @@ func (h *MigrationProxy) Update(ctx context.Context, orgID int64, annotationID i
 	if item.Epoch != 0 {
 		anno.Spec.Time = item.Epoch
 	}
-	if item.EpochEnd != 0 && item.EpochEnd != anno.Spec.Time {
+	if item.EpochEnd != 0 {
 		anno.Spec.TimeEnd = &item.EpochEnd
+	}
+	// An end time at or before the start is a point and the new store represents that by omitting TimeEnd.
+	if anno.Spec.TimeEnd != nil && *anno.Spec.TimeEnd <= anno.Spec.Time {
+		anno.Spec.TimeEnd = nil
 	}
 	if item.Data != nil {
 		raw, err := item.Data.Encode()
@@ -315,8 +319,7 @@ func itemToAnnotation(item *annotations.Item) (*annotationV0.Annotation, error) 
 		Time: item.Epoch,
 		Tags: item.Tags,
 	}
-	if item.EpochEnd != 0 && item.EpochEnd != item.Epoch {
-		// Only set TimeEnd if it's non-zero and different from Time
+	if item.EpochEnd != 0 {
 		spec.TimeEnd = &item.EpochEnd
 	}
 	if item.DashboardUID != "" {
