@@ -41,8 +41,40 @@ const TOKEN_MAP: Record<string, string> = {
 const TOKEN_PATTERN = new RegExp(`\\[([^\\]]+)\\]|Do|${Object.keys(TOKEN_MAP).join('|')}`, 'g');
 const ORDINAL_MARKER = '__ord__';
 const ORDINAL_MARKER_PATTERN = new RegExp(`(\\d+)${ORDINAL_MARKER}`, 'g');
+const MERIDIEM_START_MARKER = '__mls__';
 const LOWER_MERIDIEM_MARKER_PATTERN = /__mls__(.*?)__mle__/g;
 const ORDINAL_SUFFIXES = ['th', 'st', 'nd', 'rd'] as const;
+
+interface ConvertedFormat {
+  luxonFormat: string;
+  hasOrdinal: boolean;
+  hasMeridiem: boolean;
+}
+
+// format conversion runs on every format() call in hot paths (table cells, axis ticks) and format
+// strings are highly repetitive, so cache the regex work. Keys only come from config/code-supplied
+// format strings, so the cache stays small for the lifetime of the page.
+const convertedFormatCache = new Map<string, ConvertedFormat>();
+
+function convertFormat(format: string): ConvertedFormat {
+  let converted = convertedFormatCache.get(format);
+
+  if (!converted) {
+    // Moment escapes literals using backslashes while Luxon expects quoted literals.
+    // Normalize `\x` to `[x]` first so we can reuse the existing escaped-text handling.
+    const withEscapedLiterals = format.replace(/\\(.)/g, '[$1]');
+    const luxonFormat = withEscapedLiterals.replace(TOKEN_PATTERN, replaceMomentToken);
+
+    converted = {
+      luxonFormat,
+      hasOrdinal: luxonFormat.includes(ORDINAL_MARKER),
+      hasMeridiem: luxonFormat.includes(MERIDIEM_START_MARKER),
+    };
+    convertedFormatCache.set(format, converted);
+  }
+
+  return converted;
+}
 
 function replaceMomentToken(match: string, escapedText?: string): string {
   if (escapedText != null) {
@@ -57,10 +89,7 @@ function replaceMomentToken(match: string, escapedText?: string): string {
 }
 
 export function convertMomentToLuxonWithOrdinal(format: string): string {
-  // Moment escapes literals using backslashes while Luxon expects quoted literals.
-  // Normalize `\x` to `[x]` first so we can reuse the existing escaped-text handling.
-  const withEscapedLiterals = format.replace(/\\(.)/g, '[$1]');
-  return withEscapedLiterals.replace(TOKEN_PATTERN, replaceMomentToken);
+  return convertFormat(format).luxonFormat;
 }
 
 function getOrdinal(day: number): string {
@@ -69,19 +98,25 @@ function getOrdinal(day: number): string {
 }
 
 export function formatWithOrdinal(luxonDateTime: DateTime, momentFormat: string): string {
-  const luxonFormat = convertMomentToLuxonWithOrdinal(momentFormat);
+  const { luxonFormat, hasOrdinal, hasMeridiem } = convertFormat(momentFormat);
   // ZZZZ doesnt work
   // https://github.com/moment/luxon/discussions/1041
   // https://github.com/moment/luxon/issues/499#issuecomment-865017957
   // https://github.com/facebook/hermes/issues/1601
   // console.log(luxonDateTime.offsetNameShort);
-  const formatted = luxonDateTime.toFormat(luxonFormat);
+  let formatted = luxonDateTime.toFormat(luxonFormat);
 
-  const withOrdinals = formatted.replace(ORDINAL_MARKER_PATTERN, (_: string, rawDay: string) => {
-    const day = parseInt(rawDay, 10);
-    return `${rawDay}${getOrdinal(day)}`;
-  });
+  if (hasOrdinal) {
+    formatted = formatted.replace(ORDINAL_MARKER_PATTERN, (_: string, rawDay: string) => {
+      const day = parseInt(rawDay, 10);
+      return `${rawDay}${getOrdinal(day)}`;
+    });
+  }
 
-  // Moment's `a` is lowercase meridiem while Luxon's `a` is uppercase.
-  return withOrdinals.replace(LOWER_MERIDIEM_MARKER_PATTERN, (_: string, meridiem: string) => meridiem.toLowerCase());
+  if (hasMeridiem) {
+    // Moment's `a` is lowercase meridiem while Luxon's `a` is uppercase.
+    formatted = formatted.replace(LOWER_MERIDIEM_MARKER_PATTERN, (_: string, meridiem: string) => meridiem.toLowerCase());
+  }
+
+  return formatted;
 }

@@ -81,7 +81,9 @@ export const isDateTime = (value: unknown): value is DateTime => {
   return moment.isMoment(value);
 };
 
-const toMomentInput = (input?: DateTimeInput): MomentInput => {
+// package-internal (not re-exported from index.ts): lets hot paths hand a DateTimeInput straight
+// to the shim factories without building an intermediate MomentLike copy first
+export const toMomentInput = (input?: DateTimeInput): MomentInput => {
   // every `DateTime` this wrapper hands out is a shim `MomentLike` at runtime; the guard
   // intersection makes that visible to the compiler so the object (and its zone) passes through.
   if (moment.isMoment(input)) {
