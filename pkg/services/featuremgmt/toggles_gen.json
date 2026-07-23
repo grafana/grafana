@@ -2842,14 +2842,16 @@
     {
       "metadata": {
         "name": "grafana.multiTenantNavTree",
-        "resourceVersion": "1784042116563",
-        "creationTimestamp": "2026-07-14T15:15:16Z"
+        "resourceVersion": "1784635043218",
+        "creationTimestamp": "2026-07-14T15:15:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-21 11:57:23.218354 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Builds the navigation tree client-side instead of reading it from /bootdata",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-navigation",
-        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -4636,14 +4638,16 @@
     {
       "metadata": {
         "name": "plugins.useMTPlugins",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1784801546639",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-23 10:12:26.639861 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables plugins decoupling from bootdata",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-catalog",
-        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }

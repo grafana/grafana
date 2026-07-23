@@ -2279,7 +2279,7 @@ var (
 			Description:  "Enables plugins decoupling from bootdata",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaCatalogSquad,
-			Generate:     Generate{React: true},
+			Generate:     Generate{Go: true, React: true},
 			Expression:   "false",
 			HideFromDocs: true,
 		},
@@ -3117,7 +3117,7 @@ var (
 			Owner:        grafanaFrontendNavigation,
 			HideFromDocs: true,
 			Expression:   "false",
-			Generate:     Generate{React: true},
+			Generate:     Generate{Go: true, React: true},
 		},
 		{
 			Name:        "grafana.exploreMetricsSidebar",
