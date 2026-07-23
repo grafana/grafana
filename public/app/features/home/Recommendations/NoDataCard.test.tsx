@@ -4,12 +4,12 @@ import { type AppPluginConfig } from '@grafana/runtime';
 import { useAppPluginMetas } from '@grafana/runtime/internal';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 
-import { noDataCtaClicked } from '../analytics/main';
+import { ctaClicked } from '../analytics/main';
 
 import { NoDataCard } from './NoDataCard';
 
 jest.mock('../analytics/main', () => ({
-  noDataCtaClicked: jest.fn(),
+  ctaClicked: jest.fn(),
 }));
 
 jest.mock('@grafana/runtime/internal', () => ({
@@ -115,9 +115,11 @@ describe('NoDataCard', () => {
 
       await user.click(screen.getByRole('link', { name: 'Kubernetes Monitoring' }));
 
-      expect(jest.mocked(noDataCtaClicked)).toHaveBeenCalledWith({
-        cta: 'solution',
-        solution_id: 'kubernetes-monitoring',
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'no_data_card',
+        action: 'open_solution',
+        placement: 'pill',
+        solution: 'kubernetes-monitoring',
       });
     });
 
@@ -126,9 +128,11 @@ describe('NoDataCard', () => {
 
       await user.click(screen.getByRole('link', { name: 'Synthetic Monitoring' }));
 
-      expect(jest.mocked(noDataCtaClicked)).toHaveBeenCalledWith({
-        cta: 'solution',
-        solution_id: 'synthetic-monitoring',
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'no_data_card',
+        action: 'open_solution',
+        placement: 'pill',
+        solution: 'synthetic-monitoring',
       });
     });
 
@@ -136,7 +140,11 @@ describe('NoDataCard', () => {
       const { user } = render(<NoDataCard />);
 
       await user.click(screen.getByRole('link', { name: 'Connect a data source' }));
-      expect(jest.mocked(noDataCtaClicked)).toHaveBeenCalledWith({ cta: 'connect_data_source' });
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'no_data_card',
+        action: 'connect_data_source',
+        placement: 'card',
+      });
     });
   });
 });
