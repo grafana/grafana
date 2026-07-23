@@ -491,8 +491,12 @@ func (r *configMapRepository) writeFile(ctx context.Context, filePath string, da
 	}
 	cm, err := core.ConfigMaps(ns).Get(ctx, cmName, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
+		labels, labErr := matchLabelsFromSelector(cfg.LabelSelector)
+		if labErr != nil {
+			return apierrors.NewBadRequest(labErr.Error())
+		}
 		newCM := &corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{Name: cmName, Namespace: ns},
+			ObjectMeta: metav1.ObjectMeta{Name: cmName, Namespace: ns, Labels: labels},
 			Data:       map[string]string{key: string(data)},
 		}
 		if err := ensureUnderLimit(newCM.Data); err != nil {

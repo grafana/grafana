@@ -239,6 +239,9 @@ func applyChange(
 			resultBuilder.WithError(fmt.Errorf("deleting resource %s/%s %s: %w", change.Existing.Group, gvk.Kind, change.Existing.Name, err))
 		} else {
 			quotaTracker.Release()
+			if n, ok := repositoryResources.(resources.ResourceDeleteNotifier); ok {
+				n.OnResourceDeleted(deleteCtx, change.Existing.Name, gvk)
+			}
 			// Keep this tree mutation scoped to folder metadata for now.
 			// It clears the deleted folder's stale in-memory entry so the same
 			// full sync can recreate that folder at a new path when _folder.json

@@ -5,6 +5,9 @@ import (
 	"path"
 	"strings"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation"
+
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 )
 
@@ -33,7 +36,31 @@ func encodeKey(filePath, keyPrefix string) (string, error) {
 	if keyPrefix != "" {
 		key = keyPrefix + key
 	}
+	if errs := validation.IsConfigMapKey(key); len(errs) > 0 {
+		return "", fmt.Errorf("invalid configmap key %q: %s", key, strings.Join(errs, "; "))
+	}
 	return key, nil
+}
+
+// matchLabelsFromSelector extracts equality labels suitable for Create ObjectMeta.
+func matchLabelsFromSelector(sel string) (map[string]string, error) {
+	if sel == "" {
+		return nil, nil
+	}
+	ls, err := metav1.ParseToLabelSelector(sel)
+	if err != nil {
+		return nil, err
+	}
+	out := map[string]string{}
+	for k, v := range ls.MatchLabels {
+		out[k] = v
+	}
+	for _, expr := range ls.MatchExpressions {
+		if expr.Operator == metav1.LabelSelectorOpIn && len(expr.Values) == 1 {
+			out[expr.Key] = expr.Values[0]
+		}
+	}
+	return out, nil
 }
 
 func decodeKey(key, keyPrefix string) (string, bool) {

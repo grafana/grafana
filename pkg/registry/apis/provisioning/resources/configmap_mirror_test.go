@@ -71,7 +71,7 @@ func TestConfigMapMirrorUpsertAndDelete(t *testing.T) {
 	require.Equal(t, `{"uid":"uid1"}`, cm.Data[dashboardDataKey])
 	require.Equal(t, "1", cm.Labels["grafana_dashboard"])
 
-	m.mirrorDelete(context.Background(), "uid1")
+	m.OnResourceDeleted(context.Background(), "uid1", dashGVK)
 	_, err = client.CoreV1().ConfigMaps("ns1").Get(context.Background(), "grafana-dashboard-uid1", metav1.GetOptions{})
 	require.True(t, apierrors.IsNotFound(err))
 }

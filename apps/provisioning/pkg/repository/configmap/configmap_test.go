@@ -22,6 +22,39 @@ func TestEncodeDecodeKey(t *testing.T) {
 	path, ok := decodeKey(key, "pfx_")
 	require.True(t, ok)
 	require.Equal(t, "folder/dash.json", path)
+
+	_, err = encodeKey("folder/has space.json", "")
+	require.Error(t, err)
+}
+
+func TestLabelSelectorCreateAppliesLabels(t *testing.T) {
+	client := fake.NewSimpleClientset()
+	repo := NewRepository(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "cm-repo", Namespace: "default"},
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.ConfigMapRepositoryType,
+			ConfigMap: &provisioning.ConfigMapRepositoryConfig{
+				LabelSelector: "grafana_dashboard=1,app=demo",
+			},
+		},
+	}, StaticClientProvider(client))
+
+	ctx := context.Background()
+	require.NoError(t, repo.Create(ctx, "boards/a.json", "", []byte(`{"title":"a"}`), ""))
+	cm, err := client.CoreV1().ConfigMaps("default").Get(ctx, "boards", metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, "1", cm.Labels["grafana_dashboard"])
+	require.Equal(t, "demo", cm.Labels["app"])
+
+	tree, err := repo.ReadTree(ctx, "")
+	require.NoError(t, err)
+	var found bool
+	for _, e := range tree {
+		if e.Path == "boards/a.json" && e.Blob {
+			found = true
+		}
+	}
+	require.True(t, found)
 }
 
 func TestEnsureUnderLimit(t *testing.T) {

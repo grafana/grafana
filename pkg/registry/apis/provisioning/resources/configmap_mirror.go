@@ -57,11 +57,23 @@ func (m *configMapMirrorResources) ReplaceResourceFromFile(ctx context.Context, 
 	name, gvk, err := m.RepositoryResources.ReplaceResourceFromFile(ctx, path, ref, oldName, oldGVR, opts...)
 	if err == nil {
 		m.mirrorUpsert(ctx, path, ref, name, gvk)
-		if oldName != "" && oldName != name && isDashboardGVK(schema.GroupVersionKind{Group: oldGVR.Group, Kind: "Dashboard"}) {
+		if oldName != "" && oldName != name && isDashboardGVK(gvk) {
 			m.mirrorDelete(ctx, oldName)
 		}
 	}
 	return name, gvk, err
+}
+
+// OnResourceDeleted prunes ConfigMap mirrors after full-sync deletes that bypass RemoveResourceFromFile.
+func (m *configMapMirrorResources) OnResourceDeleted(ctx context.Context, name string, gvk schema.GroupVersionKind) {
+	if isDashboardGVK(gvk) {
+		m.mirrorDelete(ctx, name)
+	}
+}
+
+// ResourceDeleteNotifier is implemented by wrappers that must observe direct resource deletes.
+type ResourceDeleteNotifier interface {
+	OnResourceDeleted(ctx context.Context, name string, gvk schema.GroupVersionKind)
 }
 
 func (m *configMapMirrorResources) ReplaceResourceFromFileByRef(ctx context.Context, path, ref, previousRef string, opts ...WriteResourceOption) (string, schema.GroupVersionKind, error) {
@@ -147,12 +159,21 @@ func (m *configMapMirrorResources) mirrorUpsert(ctx context.Context, path, ref, 
 			logger.Error("configmap mirror: size limit", "error", err)
 			return
 		}
-		if _, err := cmClient.Create(ctx, cm, metav1.CreateOptions{}); err != nil {
-			logger.Error("configmap mirror: create failed", "name", cmName, "error", err)
+		_, createErr := cmClient.Create(ctx, cm, metav1.CreateOptions{})
+		if createErr == nil {
+			return
 		}
-		return
-	}
-	if err != nil {
+		if !apierrors.IsAlreadyExists(createErr) {
+			logger.Error("configmap mirror: create failed", "name", cmName, "error", createErr)
+			return
+		}
+		// Parallel sync workers raced; fall through to get+update.
+		existing, err = cmClient.Get(ctx, cmName, metav1.GetOptions{})
+		if err != nil {
+			logger.Error("configmap mirror: get after create race failed", "name", cmName, "error", err)
+			return
+		}
+	} else if err != nil {
 		logger.Error("configmap mirror: get failed", "name", cmName, "error", err)
 		return
 	}
