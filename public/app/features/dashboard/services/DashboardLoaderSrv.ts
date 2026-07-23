@@ -1,5 +1,3 @@
-import { isFunction } from 'lodash'; // eslint-disable-line lodash/import-scope
-
 import { AppEvents, dateMath, type UrlQueryMap, type UrlQueryValue } from '@grafana/data';
 import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -107,7 +105,7 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
     );
 
     // Handle async dashboard scripts
-    if (isFunction(scriptResult)) {
+    if (typeof scriptResult === 'function') {
       return new Promise((resolve) => {
         scriptResult((dashboard: unknown) => {
           resolve({ data: dashboard });
