@@ -136,6 +136,26 @@ func TestSplitFullpath(t *testing.T) {
 			input:    "folder\\/with\\/slashes/subfolder\\/with\\/slashes",
 			expected: []string{"folder/with/slashes", "subfolder/with/slashes"},
 		},
+		{
+			name:     "escaped backslash",
+			input:    "folder\\\\with/backslash",
+			expected: []string{"folder\\with", "backslash"},
+		},
+		{
+			name:     "unescaped backslash in title is preserved",
+			input:    "team\\ops",
+			expected: []string{"team\\ops"},
+		},
+		{
+			name:     "trailing backslash is preserved",
+			input:    "team\\",
+			expected: []string{"team\\"},
+		},
+		{
+			name:     "unescaped backslash preserved across a separator",
+			input:    "team\\ops/child",
+			expected: []string{"team\\ops", "child"},
+		},
 	}
 
 	for _, tt := range tests {
