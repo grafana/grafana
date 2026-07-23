@@ -48,11 +48,11 @@ func FuzzBleveRequirementQuery(f *testing.F) {
 			values = []string{v1, v2}
 		}
 		req := &resourcepb.Requirement{
-			Key:      key,
+			Key:      prefix + key,
 			Operator: op,
 			Values:   values,
 		}
-		q, errRes := requirementQuery(req, prefix)
+		q, errRes := (&bleveIndex{}).requirementQuery(req)
 		if (q == nil) == (errRes == nil) {
 			t.Fatalf("query/err invariant violated: query=%v err=%v for req=%+v prefix=%q",
 				q, errRes, req, prefix)
