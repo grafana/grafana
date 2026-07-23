@@ -48,6 +48,17 @@ jest.mock('./BuildDashboardButton', () => ({
   ),
 }));
 
+// Mock the assistant button so it renders regardless of assistant availability and exposes its props.
+jest.mock('@grafana/assistant', () => ({
+  ...jest.requireActual('@grafana/assistant'),
+  createAssistantContextItem: jest.fn((type, params) => ({ type, params })),
+  OpenAssistantButton: ({ title, prompt, origin, context }: Record<string, unknown>) => (
+    <button data-testid="configure-with-assistant" data-prompt={prompt} data-origin={origin}>
+      {String(title)}
+    </button>
+  ),
+}));
+
 // Set default plugin links hook
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
@@ -213,6 +224,23 @@ describe('EditDataSourceActions', () => {
 
       const dashboardLink = screen.getByText('Build a dashboard').closest('a');
       expect(dashboardLink).toHaveAttribute('href', 'dashboard/new-with-ds/test-uid');
+    });
+
+    it('should render the configure-with-assistant button with a prompt referencing the datasource name and uid', () => {
+      render(<EditDataSourceActions uid="test-uid" />);
+
+      const assistantButton = screen.getByTestId('configure-with-assistant');
+      expect(assistantButton).toHaveTextContent('Configure with assistant');
+      expect(assistantButton).toHaveAttribute(
+        'data-prompt',
+        'Help me finish configuring the Test Prometheus data source (uid: test-uid).'
+      );
+      expect(assistantButton).toHaveAttribute('data-origin', 'grafana/datasources-edit/configure-with-assistant');
+    });
+
+    it('should not render the configure-with-assistant button when the data source is not found', () => {
+      render(<EditDataSourceActions uid="not-found" />);
+      expect(screen.queryByTestId('configure-with-assistant')).not.toBeInTheDocument();
     });
   });
 
