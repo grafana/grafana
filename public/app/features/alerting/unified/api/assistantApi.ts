@@ -1,14 +1,10 @@
 import { isFetchError } from '@grafana/runtime';
 
-import { createBridgeURL } from '../components/PluginBridge';
 import { SupportedPlugin } from '../types/pluginBridges';
 
 import { alertingApi } from './alertingApi';
 
 const getProxyApiUrl = (path: string) => `/api/plugins/${SupportedPlugin.Assistant}/resources${path}`;
-
-/** How often to refresh investigation state while a report is still generating. */
-export const ASSISTANT_INVESTIGATION_POLL_INTERVAL_MS = 3000;
 
 /** An AlertManager-style alert, matching the payload the Assistant's from-alert endpoint accepts. */
 interface AssistantAlert {
@@ -25,6 +21,19 @@ export interface StartInvestigationFromAlertRequest {
   commonLabels?: Record<string, string>;
   groupLabels?: Record<string, string>;
   externalURL?: string;
+}
+
+/**
+ * Strips per-delivery / rule-metadata fields so create/lookup share one RTK cache
+ * identity. startsAt, status, name, and generatorURL can appear after Start or when
+ * the rule query resolves; group identity (labels) must not change mid-drawer.
+ */
+export function stableFromAlertRequest(body: StartInvestigationFromAlertRequest): StartInvestigationFromAlertRequest {
+  const { name: _name, ...rest } = body;
+  return {
+    ...rest,
+    alerts: body.alerts.map(({ startsAt: _startsAt, status: _status, generatorURL: _generatorURL, ...alert }) => alert),
+  };
 }
 
 /** Subset of the Assistant investigation response the alerting UI consumes. */
@@ -68,31 +77,6 @@ function unwrapAssistantDataResponse(response: unknown): AssistantInvestigation 
   return investigation;
 }
 
-// Includes paused — loops can pause mid-run and should keep the "in progress" UI.
-const ACTIVE_INVESTIGATION_STATES = new Set(['pending', 'running', 'in_progress', 'in-progress', 'paused']);
-
-const TERMINAL_INVESTIGATION_STATES = new Set(['completed', 'failed', 'cancelled', 'canceled']);
-
-/** True while the Assistant is still producing the report (or paused mid-run). */
-export function isAssistantInvestigationActive(state: string | undefined): boolean {
-  return !!state && ACTIVE_INVESTIGATION_STATES.has(state);
-}
-
-/** True when the investigation finished successfully. */
-export function isAssistantInvestigationCompleted(state: string | undefined): boolean {
-  return state === 'completed';
-}
-
-/** True when the investigation failed or was cancelled. */
-export function isAssistantInvestigationFailed(state: string | undefined): boolean {
-  return state === 'failed' || state === 'cancelled' || state === 'canceled';
-}
-
-/** True when polling can stop — completed, failed, or cancelled. */
-export function isAssistantInvestigationTerminal(state: string | undefined): boolean {
-  return !!state && TERMINAL_INVESTIGATION_STATES.has(state);
-}
-
 export const assistantApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     // Manually start an investigation from an alert (POC: firing alert instance ->
@@ -110,18 +94,12 @@ export const assistantApi = alertingApi.injectEndpoints({
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          // Lookup cache keys omit startsAt/status/name/generatorURL (set at create or
-          // when the rule loads). Normalize so the drawer's lookup query stays keyed.
-          const { name: _name, ...rest } = arg;
-          const lookupArg: StartInvestigationFromAlertRequest = {
-            ...rest,
-            alerts: arg.alerts.map(
-              ({ startsAt: _startsAt, status: _status, generatorURL: _generatorURL, ...alert }) => alert
-            ),
-          };
-          dispatch(assistantApi.util.upsertQueryData('lookupInvestigationFromAlert', lookupArg, data));
+          // Keep the drawer's lookup query keyed to the stable alert-group identity.
+          dispatch(
+            assistantApi.util.upsertQueryData('lookupInvestigationFromAlert', stableFromAlertRequest(arg), data)
+          );
         } catch {
-          // Mutation error is surfaced via isError in the button UI.
+          // Mutation error is surfaced via isError in the UI.
         }
       },
     }),
@@ -163,8 +141,3 @@ export const assistantApi = alertingApi.injectEndpoints({
     }),
   }),
 });
-
-/** Builds a link to the investigation's report in the Assistant app. */
-export function getAssistantInvestigationUrl(investigationId: string): string {
-  return createBridgeURL(SupportedPlugin.Assistant, `/investigations/${encodeURIComponent(investigationId)}`);
-}

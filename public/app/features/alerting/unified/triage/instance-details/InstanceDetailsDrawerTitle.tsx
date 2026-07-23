@@ -17,7 +17,8 @@ import { MATCHER_ALERT_RULE_UID } from '../../utils/constants';
 import { isLocalDevEnv, isOpenSourceEdition, makeLabelBasedSilenceLink } from '../../utils/misc';
 
 import { InstanceLocation } from './InstanceDetailsDrawer';
-import { StartInvestigationButton, isManualAssistantInvestigationEnabled } from './StartInvestigationButton';
+import { StartInvestigationButton } from './StartInvestigationButton';
+import { isManualAssistantInvestigationEnabled } from './startInvestigationFromAlert';
 
 type StateTextState = 'normal' | 'firing' | 'pending' | 'recovering' | 'unknown';
 type StateTextHealth = 'ok' | 'nodata' | 'error';
