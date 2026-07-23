@@ -183,7 +183,7 @@ func (h *MigrationProxy) Update(ctx context.Context, orgID int64, annotationID i
 	// Legacy API treats a point annotation as having EpochEnd == Epoch, so if the caller
 	// sends EpochEnd == Epoch, we treat it as a point and clear the end time. This prevents
 	// it from changing to a range when the caller only intended to move the point in time.
-	isPoint := existing.Spec.TimeEnd == nil && item.EpochEnd == existing.Spec.Time
+	isPoint := existing.Spec.TimeEnd == nil && (item.EpochEnd == existing.Spec.Time || item.EpochEnd == anno.Spec.Time)
 	if isPoint {
 		anno.Spec.TimeEnd = nil
 	} else if item.EpochEnd != 0 {

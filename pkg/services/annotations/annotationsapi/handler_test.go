@@ -265,8 +265,21 @@ func TestMigrationProxy(t *testing.T) {
 			assert.Equal(t, []string{"anno-1"}, client.deletedNames)
 		})
 
+		t.Run("moving a point with the end matching the new start keeps it a point", func(t *testing.T) {
+			existing := existingAnno("anno-1")
+			client := &fakeClient{existing: existing}
+			proxy := newProxy(client)
+
+			err := proxy.Update(context.Background(), orgID, legacyID, &annotations.Item{Text: "after", Epoch: 5000, EpochEnd: 5000})
+			require.NoError(t, err)
+
+			require.NotNil(t, client.created)
+			assert.Equal(t, int64(5000), client.created.Spec.Time)
+			assert.Nil(t, client.created.Spec.TimeEnd, "the point stays a point, not a zero-length range")
+		})
+
 		t.Run("widening a point into a genuine range is honored", func(t *testing.T) {
-			existing := existingAnno("anno-1") // Time: 1000, TimeEnd: nil (a point)
+			existing := existingAnno("anno-1")
 			client := &fakeClient{existing: existing}
 			proxy := newProxy(client)
 
@@ -279,12 +292,10 @@ func TestMigrationProxy(t *testing.T) {
 		})
 
 		t.Run("moving a point to an earlier time keeps it a point", func(t *testing.T) {
-			existing := existingAnno("anno-1") // Time: 1000, TimeEnd: nil (a point)
+			existing := existingAnno("anno-1")
 			client := &fakeClient{existing: existing}
 			proxy := newProxy(client)
 
-			// The stale coerced end (1000) now exceeds the new start (500), but the caller
-			// only moved the time, so it stays a point rather than becoming a range.
 			err := proxy.Update(context.Background(), orgID, legacyID, &annotations.Item{Text: "after", Epoch: 500, EpochEnd: 1000})
 			require.NoError(t, err)
 
@@ -295,11 +306,10 @@ func TestMigrationProxy(t *testing.T) {
 
 		t.Run("editing a range preserves its end", func(t *testing.T) {
 			existing := existingAnno("anno-1")
-			existing.Spec.TimeEnd = ptr.To(int64(2000)) // range 1000->2000
+			existing.Spec.TimeEnd = ptr.To(int64(2000))
 			client := &fakeClient{existing: existing}
 			proxy := newProxy(client)
 
-			// PATCH fills EpochEnd from the stored range; a text-only edit must keep the range.
 			err := proxy.Update(context.Background(), orgID, legacyID, &annotations.Item{Text: "after", Epoch: 1000, EpochEnd: 2000})
 			require.NoError(t, err)
 
