@@ -15,7 +15,7 @@
 import { css } from '@emotion/css';
 import cx from 'clsx';
 import DOMPurify from 'dompurify';
-import { type PropsWithChildren, type ReactNode } from 'react';
+import { type PropsWithChildren, type ReactNode, useLayoutEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2, type PluginExtensionLink, type TraceKeyValuePair } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -90,24 +90,29 @@ const getStyles = (theme: GrafanaTheme2) => {
     linkIcon: css({
       flexShrink: 0,
     }),
-    multiLinkTrigger: css({
+    multiLinkValue: css({
       display: 'inline-flex',
       alignItems: 'center',
       gap: theme.spacing(0.25),
+    }),
+    multiLinkContent: css({
+      color: theme.colors.text.link,
+      // Match single-link styling so json-markup spans use the link color
+      span: {
+        color: `${theme.colors.text.link} !important`,
+      },
+    }),
+    multiLinkTrigger: css({
+      display: 'inline-flex',
+      alignItems: 'center',
       padding: 0,
       margin: 0,
       background: 'none',
       border: 'none',
       cursor: 'pointer',
       color: theme.colors.text.link,
-      font: 'inherit',
-      textAlign: 'left',
       '&:hover': {
         textDecoration: 'underline',
-      },
-      // Match single-link styling so json-markup spans use the link color
-      span: {
-        color: `${theme.colors.text.link} !important`,
       },
     }),
     multiLinkChevron: css({
@@ -168,33 +173,48 @@ interface LinkValuesMenuProps {
 export const LinkValuesMenu = ({ links, children }: LinkValuesMenuProps) => {
   const styles = useStyles2(getStyles);
   const openValueInLabel = t('explore.key-values-table.open-value-in', 'Open value in');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [menuOffset, setMenuOffset] = useState<[number, number]>([8, 0]);
+
+  // Align the menu to the start of the attribute value, not the chevron button
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    const button = container?.querySelector('button');
+    if (!container || !button) {
+      return;
+    }
+    setMenuOffset([8, container.getBoundingClientRect().left - button.getBoundingClientRect().left]);
+  }, [links, children]);
 
   return (
-    <Dropdown
-      placement="bottom-start"
-      overlay={
-        <Menu>
-          <Menu.Group label={openValueInLabel.toLocaleUpperCase()}>
-            {links.map((link, index) => (
-              <div key={index} title={link.title}>
-                <Menu.Item
-                  label={link.description || link.title || t('explore.key-values-table.link-fallback-label', 'Link')}
-                  icon={link.icon}
-                  url={link.path}
-                  target="_blank"
-                  onClick={link.onClick}
-                />
-              </div>
-            ))}
-          </Menu.Group>
-        </Menu>
-      }
-    >
-      <button type="button" className={styles.multiLinkTrigger} aria-label={openValueInLabel} title={openValueInLabel}>
-        {children}
-        <Icon name="angle-down" size="sm" className={styles.multiLinkChevron} />
-      </button>
-    </Dropdown>
+    <div className={styles.multiLinkValue} ref={containerRef}>
+      <span className={styles.multiLinkContent}>{children}</span>
+      <Dropdown
+        placement="bottom-start"
+        offset={menuOffset}
+        overlay={
+          <Menu>
+            <Menu.Group label={openValueInLabel.toLocaleUpperCase()}>
+              {links.map((link, index) => (
+                <div key={index} title={link.title}>
+                  <Menu.Item
+                    label={link.description || link.title || t('explore.key-values-table.link-fallback-label', 'Link')}
+                    icon={link.icon}
+                    url={link.path}
+                    target="_blank"
+                    onClick={link.onClick}
+                  />
+                </div>
+              ))}
+            </Menu.Group>
+          </Menu>
+        }
+      >
+        <button type="button" className={styles.multiLinkTrigger} aria-label={openValueInLabel} title={openValueInLabel}>
+          <Icon name="angle-down" size="sm" className={styles.multiLinkChevron} />
+        </button>
+      </Dropdown>
+    </div>
   );
 };
 
