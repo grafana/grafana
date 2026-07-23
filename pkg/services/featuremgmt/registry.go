@@ -2549,6 +2549,15 @@ var (
 			Generate:     Generate{LegacyGo: true},
 		},
 		{
+			Name:         "deletedFolderResourceCleanupAsync",
+			Description:  "Periodically drains folders marked terminating by async cascade delete: deletes their contained resources and removes the cascade finalizer. Requires kubernetesFolderCascadeDeleteAsync",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true},
+		},
+		{
 			Name:        "react19",
 			Description: "Whether to use the new React 19 runtime",
 			Stage:       FeatureStageGeneralAvailability,

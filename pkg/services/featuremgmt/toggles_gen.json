@@ -2047,6 +2047,20 @@
     },
     {
       "metadata": {
+        "name": "deletedFolderResourceCleanupAsync",
+        "resourceVersion": "1784769029386",
+        "creationTimestamp": "2026-07-23T01:10:29Z"
+      },
+      "spec": {
+        "description": "Periodically drains folders marked terminating by async cascade delete: deletes their contained resources and removes the cascade finalizer. Requires kubernetesFolderCascadeDeleteAsync",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "disableNumericMetricsSortingInExpressions",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-04-16T14:52:47Z"

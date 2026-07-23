@@ -838,6 +838,10 @@ const (
 	// Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server
 	FlagDeletedFolderResourceCleanup = "deletedFolderResourceCleanup"
 
+	// FlagDeletedFolderResourceCleanupAsync
+	// Periodically drains folders marked terminating by async cascade delete: deletes their contained resources and removes the cascade finalizer. Requires kubernetesFolderCascadeDeleteAsync
+	FlagDeletedFolderResourceCleanupAsync = "deletedFolderResourceCleanupAsync"
+
 	// FlagReact19
 	// Whether to use the new React 19 runtime
 	FlagReact19 = "react19"
