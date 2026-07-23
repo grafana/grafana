@@ -22,11 +22,11 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can remove a panel', async ({ gotoDashboardPage, selectors, page }) => {
+    test('can remove a panel', async ({ gotoDashboardPage, selectors, page, components }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-      const controls = new Controls(page, dashboardPage, selectors);
-      const panel = new Panel(page, dashboardPage, selectors);
-      const sidebar = new Sidebar(page, dashboardPage, selectors);
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const panel = new Panel({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
       await controls.enterEditMode();
 
@@ -41,11 +41,11 @@ test.describe(
       await expect(panel.getHeaderByTitle(panelTitle)).toBeHidden();
     });
 
-    test('can remove several panels at once', async ({ gotoDashboardPage, selectors, page }) => {
+    test('can remove several panels at once', async ({ gotoDashboardPage, selectors, page, components }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-      const controls = new Controls(page, dashboardPage, selectors);
-      const panel = new Panel(page, dashboardPage, selectors);
-      const sidebar = new Sidebar(page, dashboardPage, selectors);
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const panel = new Panel({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
       await controls.enterEditMode();
 

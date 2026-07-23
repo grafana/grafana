@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { type Locator, test } from '@playwright/test';
 
 import { PageObject } from '../PageObject';
 
@@ -55,6 +55,49 @@ export class VariableOptions extends PageObject {
     },
   };
 
+  readonly custom = {
+    openEditor: async () => {
+      await test.step('Open custom variable editor', async () => {
+        await this.dashboardPage
+          .getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.optionsOpenButton)
+          .click();
+      });
+    },
+    selectFormat: async (format: 'CSV' | 'JSON') => {
+      await test.step(`Select "${format}" format`, async () => {
+        const modal = this.page.getByRole('dialog');
+        await this.dashboardPage
+          // <RadioButtonGroup /> auto-applies the RadioGroup container testid; we scope it to the modal
+          .getByGrafanaSelector(this.selectors.components.RadioGroup.container, { root: modal })
+          .getByRole('radio', { name: format, exact: true })
+          .check();
+      });
+    },
+    setValues: async (valuesInSelectedFormat: string) => {
+      await test.step('Fill custom variable options', async () => {
+        await this.dashboardPage
+          .getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput)
+          .fill(valuesInSelectedFormat);
+      });
+    },
+    getPreviewOfValues: (): Locator =>
+      this.dashboardPage.getByGrafanaSelector(
+        this.selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption
+      ),
+    getPreviewTable: (): Locator =>
+      // shown instead of the plain values preview when options carry properties beyond value/text
+      this.dashboardPage.getByGrafanaSelector(
+        this.selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.previewTable
+      ),
+    clickApplyButton: async () => {
+      await test.step('Apply variable changes', async () => {
+        await this.dashboardPage
+          .getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.applyButton)
+          .click();
+      });
+    },
+  };
+
   readonly groupby = {
     selectDatasource: async (dataSource: string) => {
       await test.step(`Select group by datasource "${dataSource}"`, async () => {
@@ -83,6 +126,50 @@ export class VariableOptions extends PageObject {
         await this.page
           .getByRole('alert', { name: /this data source does not support filters/ })
           .waitFor({ state: 'detached' });
+      });
+    },
+  };
+
+  readonly query = {
+    openEditor: async () => {
+      await test.step('Open query variable editor', async () => {
+        await this.dashboardPage
+          .getByGrafanaSelector(
+            this.selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsOpenButton
+          )
+          .click();
+      });
+    },
+    selectDatasource: async (dataSource: string) => {
+      await test.step(`Select query datasource "${dataSource}"`, async () => {
+        await this.components.dataSourcePicker.set(dataSource);
+      });
+    },
+    setQuery: async (query: string) => {
+      await test.step(`Set variable query to "${query}"`, async () => {
+        await this.dashboardPage
+          .getByGrafanaSelector(
+            this.selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput
+          )
+          .fill(query);
+      });
+    },
+    runQuery: async () => {
+      await test.step('Run query', async () => {
+        await this.dashboardPage
+          .getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton)
+          .click();
+      });
+    },
+    getPreviewOfValues: (): Locator =>
+      this.dashboardPage.getByGrafanaSelector(
+        this.selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption
+      ),
+    clickApplyButton: async () => {
+      await test.step('Apply variable changes', async () => {
+        await this.dashboardPage
+          .getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.applyButton)
+          .click();
       });
     },
   };

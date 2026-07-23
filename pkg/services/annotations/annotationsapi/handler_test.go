@@ -57,6 +57,13 @@ func TestMerge(t *testing.T) {
 			limit:  0,
 			want:   []*annotations.ItemDTO{item(1, 30), item(2, 20), item(3, 10)},
 		},
+		{
+			name:   "new-store point interleaves with legacy by end time",
+			new:    []*annotations.ItemDTO{{ID: 1, Time: 20, TimeEnd: 20}},
+			legacy: []*annotations.ItemDTO{item(2, 30), item(3, 10)},
+			limit:  10,
+			want:   []*annotations.ItemDTO{item(2, 30), {ID: 1, Time: 20, TimeEnd: 20}, item(3, 10)},
+		},
 	}
 
 	for _, tt := range tests {
@@ -103,6 +110,28 @@ func TestItemAnnotationConversion(t *testing.T) {
 		dto, err := annoToItemDTO(anno)
 		require.NoError(t, err)
 		require.Nil(t, dto.Data)
+	})
+
+	t.Run("point annotation reads back TimeEnd == Time", func(t *testing.T) {
+		anno, err := itemToAnnotation(&annotations.Item{Text: "hello", Epoch: 1234})
+		require.NoError(t, err)
+		require.Nil(t, anno.Spec.TimeEnd, "a point annotation has no spec TimeEnd")
+
+		dto, err := annoToItemDTO(anno)
+		require.NoError(t, err)
+		require.Equal(t, int64(1234), dto.Time)
+		require.Equal(t, int64(1234), dto.TimeEnd, "point TimeEnd must match Time to align with legacy")
+	})
+
+	t.Run("range annotation preserves a distinct TimeEnd", func(t *testing.T) {
+		anno, err := itemToAnnotation(&annotations.Item{Text: "hello", Epoch: 1000, EpochEnd: 2000})
+		require.NoError(t, err)
+		require.NotNil(t, anno.Spec.TimeEnd)
+
+		dto, err := annoToItemDTO(anno)
+		require.NoError(t, err)
+		require.Equal(t, int64(1000), dto.Time)
+		require.Equal(t, int64(2000), dto.TimeEnd)
 	})
 
 	t.Run("malformed stored legacy data returns a partialDecodeError and a usable DTO", func(t *testing.T) {

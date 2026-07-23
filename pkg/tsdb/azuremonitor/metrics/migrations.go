@@ -3,18 +3,18 @@ package metrics
 import "github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 
 func MigrateDimensionFilters(filters []dataquery.AzureMetricDimension) []dataquery.AzureMetricDimension {
-	var newFilters []dataquery.AzureMetricDimension
+	newFilters := []dataquery.AzureMetricDimension{}
 	for _, filter := range filters {
+		// Drop filters without dimension
+		if filter.Dimension == nil {
+			continue
+		}
+
 		newFilter := filter
 		// Ignore the deprecation check as this is a migration
 		// nolint:staticcheck
 		newFilter.Filter = nil
-		// If there is no deprecated single-value filter there is nothing to
-		// migrate, so keep the (possibly empty or nil) Filters slice as-is.
-		// Guarding on Filter alone also avoids a nil-pointer dereference below
-		// when a dimension has neither Filter nor Filters set - which happens in
-		// the batch flow when an empty Filters slice is dropped by `omitempty`
-		// during the cloneQueryWithResources JSON round-trip.
+		// If there is no legacy filter field, there is nothing to migrate, append as-is
 		// nolint:staticcheck
 		if filter.Filter == nil {
 			newFilters = append(newFilters, newFilter)

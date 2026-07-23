@@ -146,6 +146,14 @@ func validateExportJobOptions(opts *provisioning.ExportJobOptions, supportedReso
 func validateMigrateJobOptions(opts *provisioning.MigrateJobOptions, supportedResources []provisioning.SupportedResource) field.ErrorList {
 	list := field.ErrorList{} //nolint:prealloc
 
+	// Validate branch name if specified. An empty branch means migrate directly
+	// to the configured branch, which is always valid.
+	if opts.Branch != "" {
+		if !git.IsValidGitBranchName(opts.Branch) {
+			list = append(list, field.Invalid(field.NewPath("spec", "migrate", "branch"), opts.Branch, "invalid git branch name"))
+		}
+	}
+
 	// Empty Resources is valid: the worker falls back to migrating every
 	// unmanaged resource (legacy behavior).
 	list = append(list, validateExportResourceRefs(field.NewPath("spec", "migrate", "resources"), opts.Resources, supportedResources)...)

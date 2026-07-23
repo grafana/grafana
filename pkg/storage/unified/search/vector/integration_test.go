@@ -617,3 +617,43 @@ func readEmbeddingTimestamps(t *testing.T, engine *xorm.Engine, namespace, model
 	require.NoError(t, row.Scan(&createdAt, &updatedAt))
 	return createdAt, updatedAt
 }
+
+func TestIntegrationVectorCollectionCatalog(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+
+	// The migration seeds the dashboards row.
+	c, found, err := backend.ResolveCollection(ctx, "dashboard.grafana.app", "dashboards")
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.Equal(t, "dashboards", c.PartitionKey)
+	assert.False(t, c.IsExternal)
+
+	// Unknown pair: not found, no error.
+	_, found, err = backend.ResolveCollection(ctx, "nope.grafana.app", "nope")
+	require.NoError(t, err)
+	assert.False(t, found)
+
+	// Insert an external collection whose resource name is not a valid SQL
+	// identifier — the catalog decouples resource names from partition keys.
+	_, err = engine.DB().ExecContext(ctx, `
+		INSERT INTO embedding_collections (group_name, resource, partition_key, is_external)
+		VALUES ('ext.example.com', 'my-things', 'my_things', true)
+		ON CONFLICT DO NOTHING`)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_, _ = engine.DB().ExecContext(context.Background(),
+			`DELETE FROM embedding_collections WHERE group_name = 'ext.example.com'`)
+	})
+
+	c, found, err = backend.ResolveCollection(ctx, "ext.example.com", "my-things")
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.Equal(t, "my_things", c.PartitionKey)
+	assert.True(t, c.IsExternal)
+
+	// validateResource rides the catalog: operations on an unprovisioned
+	// partition key are rejected before touching the embeddings table.
+	_, err = backend.Search(ctx, "ns", testModel, "not-provisioned", make([]float32, 3), 5)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unsupported resource")
+}

@@ -900,6 +900,85 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 	})
 }
 
+func TestProcessAssistantAppPlugin(t *testing.T) {
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	reqCtx := &contextmodel.ReqContext{
+		SignedInUser: &user.SignedInUser{OrgRole: identity.RoleAdmin},
+		Context:      &web.Context{Req: httpReq},
+	}
+	assistantApp := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:   assistantAppID,
+			Name: "Assistant",
+			Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{Name: "Home", Path: "/a/grafana-assistant-app", Type: "page", AddToNav: true, DefaultNav: true},
+				{Name: "Workspace", Path: "/a/grafana-assistant-app/workspace", Type: "page", AddToNav: true},
+				{Name: "Settings", Path: "/a/grafana-assistant-app/settings", Type: "page", AddToNav: true},
+				{Name: "Irrelevant", Path: "/a/grafana-assistant-app/irrelevant", Type: "page", AddToNav: true},
+			},
+		},
+	}
+
+	for _, tt := range []struct {
+		name           string
+		cfg            *setting.Cfg
+		trialMode      bool
+		wantChildPaths []string
+	}{
+		{
+			name: "OSS only includes supported entries",
+			cfg:  setting.NewCfg(),
+			wantChildPaths: []string{
+				"/a/grafana-assistant-app/workspace",
+				"/a/grafana-assistant-app/settings",
+			},
+		},
+		{
+			name: "Enterprise includes all entries",
+			cfg:  &setting.Cfg{IsEnterprise: true},
+			wantChildPaths: []string{
+				"/a/grafana-assistant-app/workspace",
+				"/a/grafana-assistant-app/settings",
+				"/a/grafana-assistant-app/irrelevant",
+			},
+		},
+		{
+			name: "Cloud includes all entries",
+			cfg:  &setting.Cfg{StackID: "1"},
+			wantChildPaths: []string{
+				"/a/grafana-assistant-app/workspace",
+				"/a/grafana-assistant-app/settings",
+				"/a/grafana-assistant-app/irrelevant",
+			},
+		},
+		{
+			name:      "Trial mode only includes the homepage",
+			cfg:       setting.NewCfg(),
+			trialMode: true,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			service := ServiceImpl{
+				cfg: tt.cfg,
+				pluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+					assistantAppID: {OrgID: 1, PluginID: assistantAppID, JSONData: map[string]any{"trialMode": tt.trialMode}},
+				}},
+			}
+			treeRoot := navtree.NavTreeRoot{}
+			service.processAppPlugin(assistantApp, reqCtx, &treeRoot)
+			appLink := treeRoot.FindById("plugin-page-" + assistantAppID)
+
+			require.NotNil(t, appLink)
+			require.Equal(t, "/a/grafana-assistant-app", appLink.Url)
+			require.Len(t, appLink.Children, len(tt.wantChildPaths))
+			for i, wantPath := range tt.wantChildPaths {
+				require.Equal(t, wantPath, appLink.Children[i].Url)
+			}
+		})
+	}
+}
+
 func TestNestMaintenanceWindowsUnderSLO(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
 	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}

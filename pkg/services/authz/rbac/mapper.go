@@ -368,6 +368,29 @@ func newAlertRuleTranslation() translation {
 	return t
 }
 
+// newSettingsTranslation maps setting.grafana.app/settings to the legacy
+// settings:read / settings:write actions. The K8s object name is the section,
+// so it lands in the conventional "uid" (object-name) attribute and the scope
+// is settings:uid:<section>. Settings are authorized per section; key-level
+// granularity is intentionally dropped.
+func newSettingsTranslation() translation {
+	return translation{
+		resource:  "settings",
+		attribute: "uid",
+		verbMapping: map[string]string{
+			utils.VerbGet:              accesscontrol.ActionSettingsRead,
+			utils.VerbList:             accesscontrol.ActionSettingsRead,
+			utils.VerbWatch:            accesscontrol.ActionSettingsRead,
+			utils.VerbCreate:           accesscontrol.ActionSettingsWrite,
+			utils.VerbUpdate:           accesscontrol.ActionSettingsWrite,
+			utils.VerbPatch:            accesscontrol.ActionSettingsWrite,
+			utils.VerbDelete:           accesscontrol.ActionSettingsWrite,
+			utils.VerbDeleteCollection: accesscontrol.ActionSettingsWrite,
+		},
+		folderSupport: false,
+	}
+}
+
 func NewMapperRegistry() MapperRegistry {
 	skipScopeOnAllVerbs := map[string]bool{
 		utils.VerbCreate:           true,
@@ -588,6 +611,9 @@ func NewMapperRegistry() MapperRegistry {
 			// Uses "type" as scope attribute for org-level annotations (e.g. annotations:type:organization).
 			// No actionSetMapping — dashboard action sets don't apply to org-level annotations.
 			"annotations": newResourceTranslation("annotations", "type", false, nil),
+		},
+		"setting.grafana.app": {
+			"settings": newSettingsTranslation(),
 		},
 	})
 
