@@ -98,6 +98,15 @@ export function initPluginMetas(): Promise<PluginMetasResponse | null> {
   return getCachedPromise<PluginMetasResponse | null>(loadPluginMetas, { defaultValue: null });
 }
 
+/**
+ * Like {@link initPluginMetas} but without the default value: a failed fetch
+ * rejects instead of resolving to null. Both share the same cache entry, so a
+ * successful fetch is only made once either way.
+ */
+export function fetchPluginMetas(): Promise<PluginMetasResponse> {
+  return getCachedPromise(loadPluginMetas);
+}
+
 export function refetchPluginMetas(): Promise<PluginMetasResponse | null> {
   return getCachedPromise<PluginMetasResponse | null>(loadPluginMetas, {
     defaultValue: null,

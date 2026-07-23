@@ -496,6 +496,7 @@ export type {
   CurrentUserDTO,
   AnalyticsSettings,
   AppPluginConfig,
+  AppPluginMetaConfig,
   BootData,
   OAuth,
   OAuthSettings,
