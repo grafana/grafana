@@ -156,26 +156,36 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		})
 		querySpan.End()
 
-		// all errors get converted into k8s errors when sent in responder.Error and lose important context like downstream info
-		var e errutil.Error
-		if errors.As(err, &e) && e.Source == errutil.SourceDownstream {
-			_ = tracing.Error(reqSpan, err)
-			m.SetError()
-			responder.Object(int(backend.StatusBadRequest),
-				&dsV0.QueryDataResponse{QueryDataResponse: backend.QueryDataResponse{Responses: map[string]backend.DataResponse{
-					"A": {
-						Error:       errors.New(e.LogMessage),
-						ErrorSource: backend.ErrorSourceDownstream,
-						Status:      backend.StatusBadRequest,
-					},
-				}}},
-			)
-			return
-		}
-
 		if err != nil {
 			_ = tracing.Error(reqSpan, err)
 			m.SetError()
+
+			// responder.Error converts errors into Kubernetes Status responses, which do not
+			// preserve the datasource error source. Return downstream errors as QDR instead.
+			if errorMessage, ok := downstreamErrorMessage(err); ok {
+				responses := make(map[string]backend.DataResponse, len(queries))
+				dataResponse := backend.ErrDataResponseWithSource(
+					backend.StatusBadRequest,
+					backend.ErrorSourceDownstream,
+					errorMessage,
+				)
+				for _, query := range queries {
+					refID := query.RefID
+					if refID == "" {
+						refID = "A"
+					}
+					responses[refID] = dataResponse
+				}
+				if len(responses) == 0 {
+					responses["A"] = dataResponse
+				}
+
+				responder.Object(int(backend.StatusBadRequest), &dsV0.QueryDataResponse{
+					QueryDataResponse: backend.QueryDataResponse{Responses: responses},
+				})
+				return
+			}
+
 			responder.Error(err)
 			return
 		}
@@ -184,4 +194,20 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			&dsV0.QueryDataResponse{QueryDataResponse: *rsp},
 		)
 	}), nil
+}
+
+func downstreamErrorMessage(err error) (string, bool) {
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return "", false
+	}
+
+	var sourceErr backend.ErrorWithSource
+	isDownstreamError := errors.As(err, &sourceErr) && sourceErr.ErrorSource() == backend.ErrorSourceDownstream
+
+	var grafanaErr errutil.Error
+	if errors.As(err, &grafanaErr) && grafanaErr.Source.IsDownstream() {
+		return grafanaErr.LogMessage, true
+	}
+
+	return err.Error(), isDownstreamError
 }
