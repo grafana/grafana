@@ -18,7 +18,7 @@ var ErrTeamOwnsFolders = errors.New("team owns one or more folders")
 // ValidateNoOwnedFolders checks whether a team is referenced as a folder owner.
 func ValidateNoOwnedFolders(ctx context.Context, searcher resourcepb.ResourceIndexClient, namespace, teamUID string) error {
 	if searcher == nil {
-		logging.FromContext(ctx).Warn("Skipping team folder-ownership check: no folder searcher configured", teamUID)
+		logging.FromContext(ctx).Warn("Skipping team folder-ownership check: no folder searcher configured", "teamUID", teamUID)
 		return nil
 	}
 
