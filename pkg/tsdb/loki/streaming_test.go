@@ -93,6 +93,7 @@ func TestSubscribeStream(t *testing.T) {
 			featuretoggles.EnabledFeatures: flagLokiExperimentalStreaming,
 		})
 		ctx := config.WithGrafanaConfig(context.Background(), cfg)
+		ctx = backend.WithPluginContext(ctx, backend.PluginContext{Namespace: "stacks-123"})
 
 		grafanaSQLReq := &backend.SubscribeStreamRequest{
 			PluginContext: backend.PluginContext{
