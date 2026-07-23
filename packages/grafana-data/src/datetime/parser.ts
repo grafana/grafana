@@ -72,10 +72,8 @@ const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateT
     timeZone = 'utc';
   }
 
-  const zone = moment.tz.zone(timeZone);
-
-  if (zone && zone.name) {
-    return dateTimeForTimeZone(zone.name, value, format);
+  if (moment.tz.isValidZone(timeZone)) {
+    return dateTimeForTimeZone(timeZone, value, format);
   }
 
   switch (lowerCase(timeZone)) {
@@ -89,10 +87,9 @@ const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateT
 const parseOthers = (value: DateTimeInput, options?: DateTimeOptionsWhenParsing): DateTime => {
   const date = value;
   const timeZone = getTimeZone(options);
-  const zone = moment.tz.zone(timeZone);
 
-  if (zone && zone.name) {
-    return dateTimeForTimeZone(zone.name, date);
+  if (moment.tz.isValidZone(timeZone)) {
+    return dateTimeForTimeZone(timeZone, date);
   }
 
   switch (lowerCase(timeZone)) {

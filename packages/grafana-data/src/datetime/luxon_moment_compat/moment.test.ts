@@ -138,6 +138,16 @@ describe('year/month/date accessors', () => {
   });
 });
 
+describe('tz.isValidZone', () => {
+  it('accepts IANA zone names and rejects everything else', () => {
+    expect(moment.tz.isValidZone('America/New_York')).toBe(true);
+    expect(moment.tz.isValidZone('UTC')).toBe(true);
+    expect(moment.tz.isValidZone('browser')).toBe(false);
+    expect(moment.tz.isValidZone('not/a-zone')).toBe(false);
+    expect(moment.tz.isValidZone('')).toBe(false);
+  });
+});
+
 describe('duration component getters', () => {
   it('returns integer components like moment, not fractional totals', () => {
     const d = moment.duration(90, 'minutes');

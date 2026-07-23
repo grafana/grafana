@@ -73,12 +73,6 @@ export const getTimeZones = memoize((includeInternal: boolean | InternalTimeZone
   return Object.keys(countriesByTimeZone)
     .sort()
     .reduce((zones: TimeZone[], zone: string) => {
-      const countriesForZone = countriesByTimeZone[zone];
-
-      if (countriesForZone.length === 0) {
-        return zones;
-      }
-
       // the vendored country data can reference zones newer than the runtime's tz
       // database (e.g. America/Coyhaique on older ICU); skip zones the runtime
       // cannot resolve, since they cannot be used for formatting.
@@ -451,18 +445,14 @@ const countriesByTimeZone = ((): Record<string, TimeZoneCountry[]> => {
   const all: Record<string, TimeZoneCountry[]> = {};
 
   for (const [code, timeZones] of Object.entries(zonesByCountry)) {
+    const name = countryByCode[code];
+
+    if (!name) {
+      continue;
+    }
+
     for (const timeZone of timeZones) {
-      if (!all[timeZone]) {
-        all[timeZone] = [];
-      }
-
-      const name = countryByCode[code];
-
-      if (!name) {
-        continue;
-      }
-
-      all[timeZone].push({ code, name });
+      (all[timeZone] ??= []).push({ code, name });
     }
   }
 

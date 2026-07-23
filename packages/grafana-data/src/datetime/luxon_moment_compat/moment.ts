@@ -1,4 +1,4 @@
-import { type DateTimeUnit, type DurationUnit, DateTime, Duration, Settings } from 'luxon';
+import { type DateTimeUnit, type DurationUnit, DateTime, Duration, IANAZone, Settings } from 'luxon';
 
 import { convertMomentToLuxonWithOrdinal, formatWithOrdinal } from './format';
 
@@ -70,7 +70,7 @@ interface MomentBuiltinFormat {
 }
 type MomentFormat = string | MomentBuiltinFormat;
 type FormatArg = string | undefined;
-type UnitGetter = MomentUnit | DateTimeUnit | 'date' | 's' | 'm' | 'h' | 'd' | 'M' | 'y' | 'w';
+type UnitGetter = MomentUnit | DateTimeUnit | 'date';
 
 type MomentDurationInput = number | string | undefined | null;
 
@@ -94,6 +94,7 @@ interface MomentTzFactory {
   (input?: MomentInput, format?: MomentFormat, zone?: string): MomentLike;
   guess(ignoreCache?: boolean): string;
   zone(name: string): MomentTimeZoneInfo | null;
+  isValidZone(name: string): boolean;
 }
 
 // deliberately narrower than moment's real API: it only carries the methods Grafana's own code
@@ -235,6 +236,7 @@ let currentLocale = DEFAULT_LOCALE;
 Settings.defaultLocale = currentLocale;
 const localeWeekStart: Record<string, number> = {};
 const intlFormatterCache = new Map<string, Intl.DateTimeFormat>();
+const zoneValidityCache = new Map<string, boolean>();
 let cachedGuessedZone: string | null = null;
 
 function normalizeLocale(locale?: string): string | undefined {
@@ -330,7 +332,7 @@ function normalizeUnit(unit: string): DurationUnit {
 }
 
 function normalizeStartEndUnit(unit: StartEndUnit): DateTimeUnit {
-  return START_END_UNIT_MAP[unit] ?? 'day';
+  return START_END_UNIT_MAP[unit];
 }
 
 function normalizeDurationInput(input: number, unit?: MomentUnit | string): Duration {
@@ -371,8 +373,11 @@ function parseWithFormat(value: string, format: MomentFormat, options?: MomentOp
   const fallbackParsed = parseWithFallbacks(value, options);
   if (fallbackParsed.isValid) {
     const formatted = fallbackParsed.toFormat(fmt, options);
-    // re-parse with only requested tokens
-    return DateTime.fromFormat(formatted, fmt, options);
+    // re-parse with only the requested tokens; if that truncation loses validity, keep the full
+    // fallback parse (the same result normalizeInput would otherwise recompute via its own
+    // parseWithFallbacks pass)
+    const reparsed = DateTime.fromFormat(formatted, fmt, options);
+    return reparsed.isValid ? reparsed : fallbackParsed;
   }
 
   return DateTime.invalid('unsupported format input');
@@ -437,49 +442,42 @@ function toMomentDay(weekday: number): number {
   return weekday % 7;
 }
 
-function getFieldByUnit(dt: DateTime, unit: UnitGetter): number {
-  switch (unit) {
-    case 'millisecond':
-    case 'milliseconds':
-    case 'ms':
-      return dt.millisecond;
-    case 'second':
-    case 'seconds':
-    case 's':
-      return dt.second;
-    case 'minute':
-    case 'minutes':
-    case 'm':
-      return dt.minute;
-    case 'hour':
-    case 'hours':
-    case 'h':
-      return dt.hour;
-    case 'day':
-    case 'days':
-    case 'd':
-    case 'date':
-      return dt.day;
-    case 'week':
-    case 'weeks':
-    case 'w':
-      return dt.weekNumber;
-    case 'month':
-    case 'months':
-    case 'M':
-      return dt.month - 1;
-    case 'year':
-    case 'years':
-    case 'y':
-      return dt.year;
-    case 'quarter':
-    case 'quarters':
-    case 'Q':
-      return dt.quarter;
-    default:
-      return Number.NaN;
-  }
-}
+// canonical field for every get() unit spelling; get() dispatches to the matching accessor so the
+// moment-vs-luxon offset semantics (0-based months, etc.) live in exactly one place. The 'day'
+// family maps to day-of-month (luxon semantics, matching this shim's behavior to date), not
+// moment's weekday.
+const FIELD_BY_UNIT: Partial<
+  Record<UnitGetter, 'year' | 'month' | 'date' | 'week' | 'hour' | 'minute' | 'second' | 'millisecond' | 'quarter'>
+> = {
+  millisecond: 'millisecond',
+  milliseconds: 'millisecond',
+  ms: 'millisecond',
+  second: 'second',
+  seconds: 'second',
+  s: 'second',
+  minute: 'minute',
+  minutes: 'minute',
+  m: 'minute',
+  hour: 'hour',
+  hours: 'hour',
+  h: 'hour',
+  day: 'date',
+  days: 'date',
+  d: 'date',
+  date: 'date',
+  week: 'week',
+  weeks: 'week',
+  w: 'week',
+  month: 'month',
+  months: 'month',
+  M: 'month',
+  year: 'year',
+  years: 'year',
+  y: 'year',
+  quarter: 'quarter',
+  quarters: 'quarter',
+  Q: 'quarter',
+};
 
 function getLocaleFirstDayOfWeek(locale = currentLocale): number {
   return localeWeekStart[locale] ?? 0;
@@ -586,7 +584,7 @@ function isMomentLike(value: unknown): value is MomentLike {
   );
 }
 
-function weekdayNames(locale = DEFAULT_LOCALE): string[] {
+function weekdayNames(locale: string): string[] {
   const dateFmt = getCachedDateTimeFormatter(locale, {
     weekday: 'long',
     timeZone: 'UTC',
@@ -662,6 +660,17 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
     (value) => setDt(dt.set({ millisecond: value }))
   );
 
+  const fieldAccessors = {
+    year: yearAccessor,
+    month: monthAccessor,
+    date: dateAccessor,
+    week: weekAccessor,
+    hour: hourAccessor,
+    minute: minuteAccessor,
+    second: secondAccessor,
+    millisecond: millisecondAccessor,
+  } as const;
+
   const getLocaleWeekStart = () => getLocaleFirstDayOfWeek(dt.locale || currentLocale);
 
   // millis of this instant and `other`, truncated to `unit` when given, for comparisons
@@ -729,7 +738,14 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
     },
 
     get(unit) {
-      return getFieldByUnit(dt, unit);
+      const field = FIELD_BY_UNIT[unit];
+
+      if (field === undefined) {
+        return Number.NaN;
+      }
+
+      // quarter has no moment-style accessor on the shim
+      return field === 'quarter' ? dt.quarter : fieldAccessors[field]();
     },
 
     locale(value) {
@@ -970,6 +986,19 @@ const momentTz: MomentTzFactory = Object.assign(
     },
 
     zone: (name: string): MomentTimeZoneInfo | null => createTimeZoneInfo(name),
+
+    // cached because callers use this as a per-format-call gate (see formatter.ts/parser.ts) and
+    // luxon's IANAZone.isValidZone constructs a throwaway Intl.DateTimeFormat on every call
+    isValidZone: (name: string): boolean => {
+      let valid = zoneValidityCache.get(name);
+
+      if (valid === undefined) {
+        valid = IANAZone.isValidZone(name);
+        zoneValidityCache.set(name, valid);
+      }
+
+      return valid;
+    },
   }
 );
 
@@ -1002,6 +1031,8 @@ const moment: MomentFactory = Object.assign(
     },
 
     utc: (input?: MomentInput, format?: MomentFormat): MomentLike => {
+      // the trailing .utc() is load-bearing for raw luxon DateTime inputs, which normalizeInput
+      // passes through with their own zone, ignoring options.zone
       return makeMoment(input, { zone: 'utc', locale: currentLocale }, { format }).utc();
     },
 
