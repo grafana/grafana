@@ -23,7 +23,6 @@ import { Dropdown, Icon, Menu, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';
-import type TNil from '../../types/TNil';
 
 import jsonMarkup from './jsonMarkup';
 
@@ -142,16 +141,15 @@ function parseIfComplexJson(value: unknown) {
   return value;
 }
 
-export type KeyValuesTableLink = Partial<
-  Pick<PluginExtensionLink, 'path' | 'title' | 'description' | 'onClick' | 'icon'>
->;
+export type KeyValuesTableLink = Pick<PluginExtensionLink, 'path' | 'title' | 'onClick' | 'icon'> &
+  Partial<Pick<PluginExtensionLink, 'description'>>;
 
 interface LinkValueProps {
   link: KeyValuesTableLink;
 }
 
 export const LinkValue = ({ link, children }: PropsWithChildren<LinkValueProps>) => {
-  const { path, title = '', onClick, icon = 'external-link-alt' } = link;
+  const { path, title, onClick, icon = 'external-link-alt' } = link;
   const styles = useStyles2(getStyles);
 
   return (
@@ -233,7 +231,7 @@ export const LinkValuesMenu = ({ links, children }: LinkValuesMenuProps) => {
 
 export type KeyValuesTableProps = {
   data: TraceKeyValuePair[];
-  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[]) | TNil;
+  linksGetter?: (pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[];
   onlyValues?: boolean;
 };
 
