@@ -277,9 +277,9 @@ This Terraform configuration creates a Supervisor configuration file that connec
 
    ```yaml
    server:
-     endpoint: "${fm_url}/v1/opamp"
+     endpoint: '${fm_url}/v1/opamp'
      headers:
-       Authorization: "Basic ${fm_auth_base64}"
+       Authorization: 'Basic ${fm_auth_base64}'
 
    capabilities:
      reports_effective_config: true
@@ -287,10 +287,10 @@ This Terraform configuration creates a Supervisor configuration file that connec
      reports_remote_config: true
 
    agent:
-     executable: "<OTELCOL_EXECUTABLE_PATH>"
+     executable: '<OTELCOL_EXECUTABLE_PATH>'
 
    storage:
-     directory: "<STORAGE_DIRECTORY>"
+     directory: '<STORAGE_DIRECTORY>'
    ```
 
 1. Create a file named `otel-supervisor-config.tf` and add the following code block:
@@ -473,8 +473,8 @@ This pipeline collects host metrics with the [`hostmetrics` receiver](https://gi
    extensions:
      basicauth/grafana_cloud:
        client_auth:
-         username: "${fm_user_id}"
-         password: "${fm_token}"
+         username: '${fm_user_id}'
+         password: '${fm_token}'
 
    exporters:
      otlp_http/grafana_cloud:
