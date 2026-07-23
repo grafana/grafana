@@ -1399,12 +1399,15 @@ describe('getDisplayValuesForCalcs', () => {
     expect(results[0].title).toBeDefined();
   });
 
-  it('uses percent unit formatter for diffperc reducer', () => {
+  it('computes the percentage difference and formats it with a percent suffix for diffperc', () => {
     const field = new MutableDataFrame({
       fields: [{ name: 'v', type: FieldType.number, values: [10, 20] }],
     }).fields[0];
     const results = getDisplayValuesForCalcs([ReducerID.diffperc], field, theme);
     expect(results).toHaveLength(1);
+    // 10 -> 20 is a +100% change, rendered as "100 %"
+    expect(results[0].numeric).toBe(100);
+    expect(results[0].text).toBe('100');
     expect(results[0].suffix).toContain('%');
   });
 
