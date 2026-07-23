@@ -36,6 +36,7 @@ export function mergeLocalsAndRemotes({
 
   const remoteSet = new Set<string>(remote?.map((plugin) => plugin.slug));
   const localMap = new Map<string, LocalPlugin>(local.map((plugin) => [plugin.id, plugin]));
+  local.forEach((plugin) => plugin.aliasIDs?.forEach((alias) => localMap.set(alias, plugin)));
   const instancesMap = new Map<string, InstancePlugin>(instance?.map((plugin) => [plugin.pluginSlug, plugin]));
   const provisionedSet = new Set<string>(provisioned?.map((plugin) => plugin.slug));
 
@@ -43,7 +44,7 @@ export function mergeLocalsAndRemotes({
   local.forEach((localPlugin) => {
     const error = errorByPluginId[localPlugin.id];
 
-    if (!remoteSet.has(localPlugin.id)) {
+    if (!remoteSet.has(localPlugin.id) && !localPlugin.aliasIDs?.some((alias) => remoteSet.has(alias))) {
       let catalogPlugin = mergeLocalAndRemote(localPlugin, undefined, error);
       if (config.pluginAdminExternalManageEnabled) {
         catalogPlugin = mergeCloudState(
@@ -225,7 +226,8 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
 // TODO: change the signature by removing the optionals for local and remote.
 export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, error?: PluginError): CatalogPlugin {
   const installedVersion = local?.info.version;
-  const id = remote?.slug || local?.id || '';
+  const matchedViaAlias = remote && local && local.aliasIDs?.includes(remote.slug);
+  const id = matchedViaAlias ? local.id : remote?.slug || local?.id || '';
   const type = local?.type || remote?.typeCode;
   const isDisabled = !!error;
   const keywords = remote?.keywords || local?.info.keywords || [];
@@ -235,12 +237,15 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     large: `/public/build/img/icn-${type}.svg`,
   };
 
-  if (remote) {
+  if (matchedViaAlias && local.info.logos) {
+    logos = local.info.logos;
+  } else if (remote) {
+    const remoteSlug = remote.slug || id;
     logos = {
-      small: `${config.appSubUrl}/api/gnet/plugins/${id}/versions/${remote.version}/logos/small`,
-      large: `${config.appSubUrl}/api/gnet/plugins/${id}/versions/${remote.version}/logos/large`,
+      small: `${config.appSubUrl}/api/gnet/plugins/${remoteSlug}/versions/${remote.version}/logos/small`,
+      large: `${config.appSubUrl}/api/gnet/plugins/${remoteSlug}/versions/${remote.version}/logos/large`,
     };
-  } else if (local && local.info.logos) {
+  } else if (local?.info.logos) {
     logos = local.info.logos;
   }
 
@@ -251,6 +256,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     downloads: remote?.downloads || 0,
     hasUpdate: local?.hasUpdate || false,
     id,
+    aliasIDs: local?.aliasIDs,
     info: {
       logos,
       keywords,
