@@ -22,15 +22,15 @@ export class Controls extends PageObject {
   }
 
   readonly variables = {
-    getLabel: (variableLabel: string): Locator => {
-      return this.dashboardPage.getByGrafanaSelector(
-        this.selectors.pages.Dashboard.SubMenu.submenuItemLabels(variableLabel)
-      );
+    getLabel: (variableLabel: string): Locator =>
+      this.dashboardPage.getByGrafanaSelector(this.selectors.pages.Dashboard.SubMenu.submenuItemLabels(variableLabel)),
+    getDropdownTrigger: (variableLabel: string): Locator => {
+      // the trigger is the next sibling of its label
+      return this.variables.getLabel(variableLabel).locator('+ *');
     },
     openDropdown: async (variableLabel: string) => {
       await test.step(`Open dropdown of variable "${variableLabel}"`, async () => {
-        // The variable value control is the next sibling of its label
-        await this.variables.getLabel(variableLabel).locator('+ *').click();
+        await this.variables.getDropdownTrigger(variableLabel).click();
       });
     },
     getOption: (optionLabel: string): Locator => this.page.getByRole('option', { name: optionLabel, exact: true }),

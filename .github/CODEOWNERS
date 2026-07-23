@@ -274,7 +274,6 @@
 /devenv/dev-dashboards/datasource-loki/ @grafana/grafana-catalog
 /devenv/dev-dashboards/datasource-testdata/ @grafana/grafana-catalog
 /devenv/dev-dashboards/datasource-mysql/ @grafana/data-sources-plugins
-/devenv/dev-dashboards/datasource-postgres/ @grafana/data-sources-plugins
 
 /devenv/dev-dashboards/e2e-repeats/ @grafana/grafana-frontend-platform
 /devenv/dev-dashboards/panel-text @grafana/grafana-frontend-platform
@@ -312,7 +311,6 @@
 /devenv/docker/blocks/mysql_opendata/ @grafana/data-sources-plugins
 /devenv/docker/blocks/mysql_tests/ @grafana/data-sources-plugins
 /devenv/docker/blocks/pgvector/ @grafana/grafana-search-and-storage
-/devenv/docker/blocks/postgres/ @grafana/data-sources-plugins
 /devenv/docker/blocks/postgres_tests/ @grafana/data-sources-plugins
 /devenv/docker/blocks/prometheus/ @grafana/data-sources-plugins
 /devenv/docker/blocks/prometheus_random_data/ @grafana/data-sources-plugins
@@ -365,7 +363,6 @@
 
 # OSS Big Tent backend code
 /pkg/tsdb/mysql/ @grafana/data-sources-plugins
-/pkg/tsdb/grafana-postgresql-datasource/ @grafana/data-sources-plugins
 /pkg/tsdb/sqlmacro/ @grafana/data-sources-plugins
 
 # Partner Datasources backend code
@@ -402,6 +399,7 @@
 /pkg/plugins/ @grafana/grafana-catalog
 /pkg/services/datasourceproxy/ @grafana/grafana-catalog
 /pkg/services/datasources/ @grafana/grafana-catalog
+/pkg/services/datasources/awsexternalid/ @grafana/data-sources-plugins
 /pkg/services/diagnostics/ @grafana/data-sources
 /pkg/services/pluginsintegration/ @grafana/grafana-catalog
 /pkg/plugins/codegen/pfs/ @grafana/grafana-catalog @grafana/grafana-as-code
@@ -1061,6 +1059,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/plugins/panel/news/ @grafana/dataviz-squad
 /public/app/plugins/panel/stat/ @grafana/dataviz-squad
 /public/app/plugins/panel/text/ @grafana/dataviz-squad
+/public/app/plugins/panel/textng/ @grafana/dataviz-squad
 /public/app/plugins/panel/welcome/ @grafana/grafana-frontend-navigation
 /public/app/plugins/panel/xychart/ @grafana/dataviz-squad
 /public/app/routes/ @grafana/grafana-frontend-navigation
@@ -1160,7 +1159,6 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/loki/ @grafana/data-sources-plugins @grafana/observability-logs
 /public/app/plugins/datasource/mixed/ @grafana/dashboards-squad
 /public/app/plugins/datasource/mysql/ @grafana/data-sources-plugins
-/public/app/plugins/datasource/grafana-postgresql-datasource/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/prometheus/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
 

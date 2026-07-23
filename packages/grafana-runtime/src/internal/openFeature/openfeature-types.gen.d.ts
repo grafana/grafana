@@ -27,7 +27,6 @@ declare module "@openfeature/core" {
     | "grafana.secretsReferenceValueUI"
     | "sqlExpressionsColumnAutoComplete"
     | "sqlExpressionsCodeMirror"
-    | "dashboards.filterablePanels"
     | "grafana.filterablePanels"
     | "grafana.savedQueriesPage"
     | "newSavedQueriesExperience"

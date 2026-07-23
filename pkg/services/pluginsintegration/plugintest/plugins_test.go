@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
-	postgres "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
@@ -145,10 +144,9 @@ func TestIntegrationPluginManager(t *testing.T) {
 	lk := loki.ProvideService(hcp, tracer)
 	pr := prometheus.ProvideService(hcp)
 	td := testdatasource.ProvideService()
-	pg := postgres.ProvideService()
 	my := mysql.ProvideService()
 	graf := grafanads.ProvideService(nil, features)
-	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), am, cw, grap, idb, lk, pr, td, pg, my, graf)
+	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), am, cw, grap, idb, lk, pr, td, my, graf)
 
 	testCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
 
@@ -228,7 +226,6 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"loki":                             {},
 		"prometheus":                       {},
 		"grafana-testdata-datasource":      {},
-		"grafana-postgresql-datasource":    {},
 		"mysql":                            {},
 		"grafana":                          {},
 		"alertmanager":                     {},
