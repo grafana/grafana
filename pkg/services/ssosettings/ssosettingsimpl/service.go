@@ -61,6 +61,29 @@ type Service struct {
 	mtReadAuthoritative bool
 }
 
+// ProvideReadOnlyService builds the SSO settings read path without wiring the
+// management API, access control, usage stats, or process-global metrics. It is
+// intended for tenant-scoped consumers that only need database-backed OAuth
+// settings with INI configuration as a fallback.
+func ProvideReadOnlyService(
+	cfg *setting.Cfg,
+	sqlStore db.DB,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+) *Service {
+	return &Service{
+		logger:                log.New("ssosettings.readonly"),
+		cfg:                   cfg,
+		store:                 database.ProvideStore(sqlStore),
+		secrets:               secretsService,
+		metrics:               newMetrics(nil),
+		fbStrategies:          []ssosettings.FallbackStrategy{strategies.NewOAuthStrategy(cfg)},
+		providersList:         slices.Clone(ssosettings.AllOAuthProviders),
+		configurableProviders: map[string]bool{},
+		reloadables:           map[string]ssosettings.Reloadable{},
+		cachedSSOSettings:     make([]*models.SSOSettings, 0),
+	}
+}
+
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	routeRegister routing.RouteRegister, features featuremgmt.FeatureToggles,
 	secrets secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
