@@ -39,6 +39,7 @@ type PluginListItem struct {
 	Name            string                  `json:"name"`
 	Type            string                  `json:"type"`
 	Id              string                  `json:"id"`
+	AliasIDs        []string                `json:"aliasIDs,omitempty"`
 	Enabled         bool                    `json:"enabled"`
 	Pinned          bool                    `json:"pinned"`
 	Info            plugins.Info            `json:"info"`
