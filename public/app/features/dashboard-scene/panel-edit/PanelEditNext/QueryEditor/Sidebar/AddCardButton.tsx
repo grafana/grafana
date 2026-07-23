@@ -3,13 +3,11 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { CoreApp, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config as grafanaConfig } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { Dropdown, Icon, Menu, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
+import { hasSavedQueryReadPermissions } from 'app/features/explore/QueryLibrary/utils/identity';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
-import { AccessControlAction } from 'app/types/accessControl';
 
 import {
   trackAddExpressionInitiated,
@@ -51,12 +49,7 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
 
   const isDashboardDs = dsSettings?.name === SHARED_DASHBOARD_QUERY;
 
-  // When the savedQueriesRBAC feature toggle is enabled, access to the query
-  // library is governed by fine-grained RBAC permissions. Otherwise, any
-  // signed-in user can read saved queries (the pre-RBAC default).
-  const canReadQueries = grafanaConfig.featureToggles.savedQueriesRBAC
-    ? contextSrv.hasPermission(AccessControlAction.QueriesRead)
-    : contextSrv.isSignedIn;
+  const canReadQueries = hasSavedQueryReadPermissions();
 
   const addAndSelectQuery = useCallback(
     (query?: Partial<DataQuery>) => {
