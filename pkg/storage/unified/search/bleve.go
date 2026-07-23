@@ -2262,24 +2262,15 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		searchrequest.From = 0
 	}
 
-	// Everything is combined within an AND query: label/field filters plus the
-	// optional free-text clause.
-	queries, errResult := b.filterQueries(req)
+	// Label/field filters are constraints, not relevance signals, so they go into
+	// the boolean Filter clause (scored "none" by bleve) while the free-text query
+	// scores in Must. This keeps ranking driven by text relevance alone.
+	filters, errResult := b.filterQueries(req)
 	if errResult != nil {
 		return nil, errResult
 	}
-	if q := b.buildTextQuery(searchrequest, req); q != nil {
-		queries = append(queries, q)
-	}
-
-	switch len(queries) {
-	case 0:
-		searchrequest.Query = bleve.NewMatchAllQuery()
-	case 1:
-		searchrequest.Query = queries[0]
-	default:
-		searchrequest.Query = bleve.NewConjunctionQuery(queries...) // AND
-	}
+	textQuery := b.buildTextQuery(searchrequest, req)
+	searchrequest.Query = combineFilterAndTextQueries(filters, textQuery)
 
 	// postFilter applies authorization after ranking in runPostFilterAuthz, so
 	// skip the in-searcher wrapper here and let bleve return unfiltered ranked hits.
@@ -2330,6 +2321,29 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	return searchrequest, nil
+}
+
+// combineFilterAndTextQueries assembles the final bleve query from the non-scoring
+// filter clauses and the optional scoring free-text query. Filters go in the
+// boolean Filter slot so they constrain matches without contributing to the score.
+func combineFilterAndTextQueries(filters []query.Query, textQuery query.Query) query.Query {
+	if len(filters) == 0 {
+		if textQuery == nil {
+			return bleve.NewMatchAllQuery()
+		}
+		return textQuery
+	}
+
+	bq := bleve.NewBooleanQuery()
+	if textQuery != nil {
+		bq.AddMust(textQuery)
+	}
+	if len(filters) == 1 {
+		bq.AddFilter(filters[0])
+	} else {
+		bq.AddFilter(bleve.NewConjunctionQuery(filters...))
+	}
+	return bq
 }
 
 // resolveFieldName maps a public field name to its physical index name. Clients
