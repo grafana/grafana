@@ -54,14 +54,6 @@ make devenv sources=postgres,auth/openldap,grafana postgres_version=9.2 grafana_
 
 The grafana block is pre-configured with the dev-datasources and dashboards.
 
-#### Tempo
-
-The tempo block runs loki and prometheus as well and should not be ran with prometheus as a separate source. You need to install a docker plugin for the self logging to work, without it the container won't start. See https://grafana.com/docs/loki/latest/clients/docker-driver/#installing for installation instructions.
-
-#### Jaeger
-
-Jaeger block runs both Jaeger and Loki container. Loki container sends traces to Jaeger and also logs its own logs into itself so it is possible to setup derived field for traceID from Loki to Jaeger. You need to install a docker plugin for the self logging to work, without it the container won't start. See https://grafana.com/docs/loki/latest/clients/docker-driver/#installing for installation instructions.
-
 #### Graphite
 
 | version | source name | graphite-web port | plaintext port | pickle port |
@@ -87,7 +79,7 @@ You can access the web UI at http://localhost:12080/#/
 
 ## Debugging setup in VS Code
 
-An example of launch.json is provided in `.vscode/launch.json`. It basically does what Makefile and .bra.toml do. The 'program' field is set to the folder name so VS Code loads all \*.go files in it instead of just main.go.
+An example of launch.json is provided in `.vscode/launch.json`. It basically does what Makefile and .air.toml do. The 'program' field is set to the folder name so VS Code loads all \*.go files in it instead of just main.go.
 
 ## Troubleshooting
 

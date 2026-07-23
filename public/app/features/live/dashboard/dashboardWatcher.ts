@@ -1,14 +1,14 @@
-import { Unsubscribable } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
+import { type Unsubscribable } from 'rxjs';
 
 import {
   AppEvents,
   isLiveChannelMessageEvent,
   isLiveChannelStatusEvent,
-  LiveChannelAddress,
+  type LiveChannelAddress,
   LiveChannelConnectionState,
-  LiveChannelEvent,
+  type LiveChannelEvent,
   LiveChannelScope,
+  generateUUID,
 } from '@grafana/data';
 import { getGrafanaLiveSrv, locationService } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
@@ -18,11 +18,11 @@ import { ShowModalReactEvent } from '../../../types/events';
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 
 import { DashboardChangedModal } from './DashboardChangedModal';
-import { DashboardEvent, DashboardEventAction } from './types';
+import { type DashboardEvent, DashboardEventAction } from './types';
 
 // sessionId is not a security-sensitive value.
 // It is used for filtering out dashboard edit events from the same browsing session
-const sessionId = uuidv4();
+const sessionId = generateUUID();
 
 class DashboardWatcher {
   private static readonly IGNORE_SAVE_WINDOW_MS = 5000;
@@ -89,6 +89,16 @@ class DashboardWatcher {
   // ignore the next 5 seconds of save events
   ignoreNextSave() {
     this.ignoreSave = Date.now() + DashboardWatcher.IGNORE_SAVE_WINDOW_MS;
+  }
+
+  // Suppress save events indefinitely until clearIgnoreSave() is called.
+  // Used by provisioned saves where Git operations can exceed the 5s window.
+  ignoreSaveIndefinitely() {
+    this.ignoreSave = Infinity;
+  }
+
+  clearIgnoreSave() {
+    this.ignoreSave = 0;
   }
 
   getRecentEditingEvent() {

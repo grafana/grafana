@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { Fragment, useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useSceneContext } from '@grafana/scenes-react';
 import { Button, IconButton, Stack, useStyles2 } from '@grafana/ui';
@@ -13,8 +13,8 @@ import { addOrReplaceFilter, removeFilter, useExactFilterKeys, useFilterValue, u
 import { useLabelSectionOpen } from './labelFilter.hooks';
 import { filterLabels } from './labelFilter.utils';
 
-export const DEFAULT_VISIBLE_LABELS = 25;
-export const DEFAULT_VISIBLE_VALUES = 12;
+const DEFAULT_VISIBLE_LABELS = 25;
+const DEFAULT_VISIBLE_VALUES = 12;
 
 // --- Shared content component (also used by LabelsColumn) ---
 
@@ -108,6 +108,10 @@ export function AllLabelsContent({ allLabels, onFilterAdded, labelFilter = '' }:
             i18nKey="alerting.triage.show-all-labels"
             values={{ count: allLabels.length }}
             defaults={'Show all ({{ count }})'}
+            tOptions={{
+              defaultValue_one: 'Show all ({{ count }})',
+              defaultValue_other: 'Show all ({{ count }})',
+            }}
           />
         </Button>
       )}
@@ -181,6 +185,10 @@ function LabelValuesList({ labelKey, values, onValueClick, valueHits }: LabelVal
             i18nKey="alerting.triage.show-all-values"
             values={{ count: matchedValues.length }}
             defaults={'Show all ({{ count }})'}
+            tOptions={{
+              defaultValue_one: 'Show all ({{ count }})',
+              defaultValue_other: 'Show all ({{ count }})',
+            }}
           />
         </Button>
       )}

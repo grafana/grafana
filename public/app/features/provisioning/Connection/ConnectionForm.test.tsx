@@ -1,9 +1,10 @@
 import { HttpResponse, delay, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { mockComboboxRect } from '@grafana/test-utils';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { Connection } from 'app/api/clients/provisioning/v0alpha1';
+import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 
@@ -70,6 +71,29 @@ describe('ConnectionForm', () => {
       expect(screen.getByLabelText(/^Private Key \(PEM\)/)).toBeInTheDocument();
     });
 
+    it('should allow selecting GitHub Enterprise when creating and it is available', async () => {
+      mockComboboxRect();
+      server.use(
+        http.get(`${BASE}/settings`, () =>
+          HttpResponse.json({ availableRepositoryTypes: ['github', 'githubEnterprise'] })
+        )
+      );
+
+      const { user } = setup();
+
+      const providerField = screen.getByLabelText(/^Provider/);
+      await waitFor(() => {
+        expect(providerField).toBeEnabled();
+      });
+
+      await user.click(providerField);
+      await user.click(await screen.findByRole('option', { name: 'GitHub Enterprise' }));
+
+      expect(providerField).toHaveDisplayValue('GitHub Enterprise');
+      // Selecting GitHub Enterprise reveals the GHE-only server URL field
+      expect(await screen.findByLabelText(/^Custom server URL/)).toBeInTheDocument();
+    });
+
     it('should render Save button', () => {
       setup();
 
@@ -107,6 +131,35 @@ describe('ConnectionForm', () => {
       setup({ data: createMockConnection() });
 
       expect(screen.getByLabelText(/^Private Key \(PEM\)/)).toHaveValue('configured');
+    });
+  });
+
+  describe('GitHub Enterprise', () => {
+    const createEnterpriseConnection = () =>
+      createMockConnection({
+        spec: {
+          title: 'Test GHE Connection',
+          type: 'githubEnterprise',
+          url: 'https://ghe.example.com/settings/installations/12345678',
+          githubEnterprise: {
+            appID: '123456',
+            installationID: '12345678',
+            serverUrl: 'https://ghe.example.com',
+          },
+        },
+      });
+
+    it('should render the server URL field when the connection type is githubEnterprise', () => {
+      setup({ data: createEnterpriseConnection() });
+
+      expect(screen.getByLabelText(/^Custom server URL/)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Custom server URL/)).toHaveValue('https://ghe.example.com');
+    });
+
+    it('should not render the server URL field for a github connection', () => {
+      setup({ data: createMockConnection() });
+
+      expect(screen.queryByLabelText(/^Custom server URL/)).not.toBeInTheDocument();
     });
   });
 

@@ -1,9 +1,9 @@
-import { GrafanaRulesSourceSymbol, RulerDataSourceConfig, RulesSourceUid } from 'app/types/unified-alerting';
+import { GrafanaRulesSourceSymbol, type RulerDataSourceConfig, type RulesSourceUid } from 'app/types/unified-alerting';
 
 import {
-  AlertmanagerApiFeatures,
+  type AlertmanagerApiFeatures,
   PromApplication,
-  RulesSourceApplication,
+  type RulesSourceApplication,
 } from '../../../../types/unified-alerting-dto';
 import { GRAFANA_RULES_SOURCE_NAME, getDataSourceUID, getRulesDataSourceByUID } from '../utils/datasource';
 

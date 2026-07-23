@@ -1,6 +1,6 @@
 import { config, locationService } from '@grafana/runtime';
 import { CustomVariable, SceneTimeRange, SceneVariableSet, UrlSyncManager } from '@grafana/scenes';
-import { DashboardDataDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';

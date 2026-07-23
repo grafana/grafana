@@ -2,14 +2,14 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { gt, valid } from 'semver';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Badge, Button, ConfirmModal, Icon, Spinner, useStyles2 } from '@grafana/ui';
 
 import { isPreinstalledPlugin } from '../helpers';
 import { useInstall } from '../state/hooks';
-import { PluginStatus, Version } from '../types';
+import { PluginStatus, type Version } from '../types';
 
 const PLUGINS_VERSION_PAGE_UPGRADE_INTERACTION_EVENT_NAME = 'plugins_upgrade_clicked';
 const PLUGINS_VERSION_PAGE_CHANGE_INTERACTION_EVENT_NAME = 'plugins_downgrade_clicked';
@@ -21,6 +21,7 @@ interface Props {
   disabled: boolean;
   tooltip?: string;
   onConfirmInstallation: () => void;
+  hideInstallState?: boolean;
 }
 
 export const VersionInstallButton = ({
@@ -31,6 +32,7 @@ export const VersionInstallButton = ({
   disabled,
   tooltip,
   onConfirmInstallation,
+  hideInstallState,
 }: Props) => {
   const install = useInstall();
   const [isInstalling, setIsInstalling] = useState(false);
@@ -38,6 +40,7 @@ export const VersionInstallButton = ({
   const styles = useStyles2(getStyles);
 
   const installState = getInstallState(installedVersion, version.version);
+  const displayInstallState = hideInstallState ? PluginStatus.INSTALL : installState;
 
   useEffect(() => {
     if (installedVersion === version.version) {
@@ -46,7 +49,7 @@ export const VersionInstallButton = ({
     }
   }, [installedVersion, version.version]);
 
-  if (version.version === installedVersion) {
+  if (!hideInstallState && version.version === installedVersion) {
     return (
       <Badge
         className={styles.badge}
@@ -115,8 +118,8 @@ export const VersionInstallButton = ({
         tooltip={tooltip}
         tooltipPlacement="bottom-start"
       >
-        {getLabel(installState)}{' '}
-        {isInstalling ? <Spinner className={styles.spinner} inline size="sm" /> : getIcon(installState)}
+        {getLabel(displayInstallState)}{' '}
+        {isInstalling ? <Spinner className={styles.spinner} inline size="sm" /> : getIcon(displayInstallState)}
       </Button>
       <ConfirmModal
         isOpen={isModalOpen}
@@ -130,7 +133,7 @@ export const VersionInstallButton = ({
         onConfirm={onConfirm}
         onDismiss={onDismiss}
         disabled={isInstalling}
-        confirmButtonVariant="primary"
+        confirmVariant="primary"
       />
     </>
   );

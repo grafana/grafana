@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { useToggle } from 'react-use';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Dropdown, Menu, MenuItem, ToolbarButton, useStyles2 } from '@grafana/ui';
@@ -32,9 +32,7 @@ export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
   const renderMenu = () => (
     <TopNavBarMenu node={profileNode}>
       <>
-        {config.featureToggles.grafanaconThemes && (
-          <MenuItem icon="palette" onClick={onToggleThemeDrawer} label={t('profile.change-theme', 'Change theme')} />
-        )}
+        <MenuItem icon="palette" onClick={onToggleThemeDrawer} label={t('profile.change-theme', 'Change theme')} />
         <Menu.Item
           icon="monitor"
           onClick={onToggleKioskMode}
@@ -47,14 +45,16 @@ export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
             label={t('navigation.rss-button', 'Latest from the blog')}
           />
         )}
-        <Menu.Divider />
         {!config.auth.disableSignoutMenu && (
-          <MenuItem
-            url={`${config.appSubUrl}/logout`}
-            label={t('nav.sign-out.title', 'Sign out')}
-            icon="arrow-from-right"
-            target={'_self'}
-          />
+          <>
+            <Menu.Divider />
+            <MenuItem
+              url={`${config.appSubUrl}/logout`}
+              label={t('nav.sign-out.title', 'Sign out')}
+              icon="arrow-from-right"
+              target={'_self'}
+            />
+          </>
         )}
       </>
     </TopNavBarMenu>

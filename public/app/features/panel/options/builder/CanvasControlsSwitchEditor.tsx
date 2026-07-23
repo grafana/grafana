@@ -1,5 +1,5 @@
-import { StandardEditorProps } from '@grafana/data';
-import { AnnotationDisplayOptions, VizAnnotations } from '@grafana/schema/dist/esm/common/common.gen';
+import { type StandardEditorProps } from '@grafana/data';
+import { type AnnotationDisplayOptions, type VizAnnotations } from '@grafana/schema/dist/esm/common/common.gen';
 import { Switch } from '@grafana/ui';
 
 const DEFAULT_INDICATOR_LINE_WIDTH = 2;

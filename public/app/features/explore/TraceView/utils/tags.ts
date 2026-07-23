@@ -12,21 +12,7 @@ import {
   SPAN_NAME,
   SERVICE_NAME,
 } from '../components/constants/span';
-import { Trace } from '../components/types/trace';
-
-export const getTraceServiceNames = (trace: Trace) => {
-  const serviceNames = trace.spans.map((span) => {
-    return span.process.serviceName;
-  });
-  return uniq(serviceNames).sort();
-};
-
-export const getTraceSpanNames = (trace: Trace) => {
-  const spanNames = trace.spans.map((span) => {
-    return span.operationName;
-  });
-  return uniq(spanNames).sort();
-};
+import { type Trace } from '../components/types/trace';
 
 export const getTraceTagKeys = (trace: Trace) => {
   let keys: string[] = [];

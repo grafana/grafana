@@ -1,11 +1,11 @@
 import { cloneDeep, defaults, find } from 'lodash';
 
-import { PanelPluginMeta, store } from '@grafana/data';
+import { type PanelPluginMeta, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { calculateNewPanelGridPos } from 'app/features/dashboard/utils/panel';
 
 export const NEW_PANEL_TITLE = 'New panel';
@@ -16,19 +16,6 @@ export function onCreateNewPanel(dashboard: DashboardModel, datasource?: string)
     title: NEW_PANEL_TITLE,
     gridPos: calculateNewPanelGridPos(dashboard),
     datasource: datasource ? { uid: datasource } : null,
-    isNew: true,
-  };
-
-  dashboard.addPanel(newPanel);
-  return newPanel.id;
-}
-
-export function onCreateNewWidgetPanel(dashboard: DashboardModel, widgetType: string): number | undefined {
-  const newPanel: Partial<PanelModel> = {
-    type: widgetType,
-    title: t('dashboard.on-create-new-widget-panel.new-panel.title.widget-title', 'Widget title'),
-    gridPos: calculateNewPanelGridPos(dashboard),
-    datasource: null,
     isNew: true,
   };
 

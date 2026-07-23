@@ -1,7 +1,9 @@
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, setPluginImportUtils } from '@grafana/runtime';
 import {
-  MultiValueVariable,
+  ConstantVariable,
+  CustomVariable,
+  type MultiValueVariable,
   SceneGridLayout,
   SceneTimeRange,
   SceneVariableSet,
@@ -22,10 +24,13 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { performTabRepeats } from '../scene/layout-tabs/TabItemRepeater';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
-import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { toControlSourceRef } from '../utils/predefinedVariables';
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { DashboardEditPane } from './DashboardEditPane';
+import { DashboardOutline } from './outline/DashboardOutline';
+import { dashboardEditActions } from './shared';
+import { type DashboardEditPaneLike } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -40,6 +45,127 @@ setPluginImportUtils({
 });
 
 describe('DashboardEditPane', () => {
+  describe('Selection', () => {
+    it('Can select dashboard', () => {
+      const scene = buildTestScene();
+      scene.state.editPane.state.selectionContext.onSelect({ id: scene.state.key! }, {});
+      expect(scene.state.editPane.getSelectedObject()).toBe(scene);
+    });
+
+    it('single panel and multi panel selection', () => {
+      const scene = buildTestScene();
+      const editPane = scene.state.editPane;
+      const panel1 = scene.onCreateNewPanel();
+
+      expect(editPane.getSelectedObject()).toBe(panel1);
+
+      // Selecting same object should clear selection
+      editPane.selectObject(panel1);
+
+      expect(editPane.getSelectedObject()).toBeUndefined();
+
+      const panel2 = scene.onCreateNewPanel();
+      editPane.state.selectionContext.onSelect({ id: panel1.state.key! }, { multi: true });
+
+      expect(editPane.state.selectionContext.selected).toHaveLength(2);
+
+      // Selecting one that is already selected should remove it
+      editPane.state.selectionContext.onSelect({ id: panel2.state.key! }, { multi: true });
+
+      expect(editPane.state.selectionContext.selected).toHaveLength(1);
+      expect(editPane.getSelectedObject()).toBe(panel1);
+    });
+
+    it('Clear selection should select dashboard when docked', () => {
+      const scene = buildTestScene();
+      const editPane = scene.state.editPane;
+
+      const panel = scene.onCreateNewPanel();
+      editPane.clearSelection();
+
+      expect(editPane.getSelectedObject()).toBeUndefined();
+
+      editPane.setState({ isDocked: true });
+      editPane.selectObject(panel);
+      editPane.clearSelection();
+
+      expect(editPane.getSelectedObject()).toBe(scene);
+    });
+
+    it('Force selecting should keep selecting if already selected', () => {
+      const scene = buildTestScene();
+      const editPane = scene.state.editPane;
+
+      // This selects panel
+      const panel = scene.onCreateNewPanel();
+
+      // Force select
+      editPane.state.selectionContext.onSelect({ id: panel.state.key! }, { multi: false, force: true });
+
+      expect(editPane.getSelectedObject()).toBe(panel);
+      expect(editPane.state.selectionContext.selected).toHaveLength(1);
+
+      // Force select with multi
+      editPane.state.selectionContext.onSelect({ id: panel.state.key! }, { multi: true, force: true });
+
+      // Still only 1 item selected
+      expect(editPane.state.selectionContext.selected).toHaveLength(1);
+    });
+
+    it('Selecting when none element pane is open should not toggle selection', () => {
+      const scene = buildTestScene();
+      const editPane = scene.state.editPane;
+
+      const panel = scene.onCreateNewPanel();
+
+      editPane.openPane(new DashboardOutline({}));
+
+      expect(editPane.getSelectedObject()).toBe(panel);
+
+      // Select panel again (when it is still selected)
+      editPane.state.selectionContext.onSelect({ id: panel.state.key! }, { force: false });
+
+      // Should still be selected
+      expect(editPane.getSelectedObject()).toBe(panel);
+    });
+
+    it('Selecting tab with closed edit pane should not select tab', () => {
+      const { editPane, tab1 } = setupWithTwoTabs();
+
+      // Selecting tab with closed edit pane should not select tab
+      editPane.selectObject(tab1);
+      expect(editPane.getSelectedObject()).toBeUndefined();
+    });
+
+    it('Selecting tab with open edit pane should select tab', () => {
+      const { editPane, tab1 } = setupWithTwoTabs();
+
+      // Selecting tab with closed edit pane should not select tab
+      editPane.openPane(new DashboardOutline({}));
+      editPane.selectObject(tab1);
+      expect(editPane.getSelectedObject()).toBe(tab1);
+    });
+
+    it('Removing a panel that is not selected', () => {
+      const scene = buildTestScene();
+      const editPane = scene.state.editPane;
+
+      const panel1 = scene.onCreateNewPanel();
+      const panel2 = scene.onCreateNewPanel();
+
+      scene.removePanel(panel1);
+
+      expect(editPane.getSelectedObject()).toBe(panel2);
+    });
+
+    it('Force selecting tab should always select it', () => {
+      const { editPane, tab1 } = setupWithTwoTabs();
+
+      editPane.selectObject(tab1, { force: true });
+      expect(editPane.getSelectedObject()).toBe(tab1);
+    });
+  });
+
   it('Handles edit action events that adds objects', () => {
     const scene = buildTestScene();
     const editPane = scene.state.editPane;
@@ -49,14 +175,14 @@ describe('DashboardEditPane', () => {
     expect(editPane.state.undoStack).toHaveLength(1);
 
     // Should select object
-    expect(editPane.getSelection()).toBeDefined();
+    expect(editPane.getSelectedObject()).toBeDefined();
 
     editPane.undoAction();
 
     expect(editPane.state.undoStack).toHaveLength(0);
 
     // should clear selection
-    expect(editPane.getSelection()).toBeUndefined();
+    expect(editPane.getSelectedObject()).toBeUndefined();
   });
 
   it('when new action comes in clears redo stack', () => {
@@ -92,6 +218,164 @@ describe('DashboardEditPane', () => {
     expect(cloned.state.undoStack).toHaveLength(0);
   });
 
+  it('clone should preserve the outline collapsed state', () => {
+    const scene = buildTestScene();
+    const editPane = scene.state.editPane;
+    const outlinePane = editPane.state.outlinePane!;
+
+    outlinePane.setNodeCollapsed('some-key', false);
+    outlinePane.setNodeCollapsed('another-key', true);
+
+    const cloned = editPane.clone({});
+    const clonedOutline = cloned.state.outlinePane!;
+
+    expect(clonedOutline.isNodeCollapsed('some-key', true)).toBe(false);
+    expect(clonedOutline.isNodeCollapsed('another-key', false)).toBe(true);
+
+    clonedOutline.setNodeCollapsed('new-key', false);
+    expect(outlinePane.isNodeCollapsed('new-key', true)).toBe(false);
+  });
+
+  it('keeps the variable selected when undoing and redoing variable type changes', () => {
+    const variable = new TestVariable({
+      name: 'service',
+      delayMs: 0,
+      value: 'prod',
+      text: 'prod',
+      optionsToReturn: [{ label: 'prod', value: 'prod' }],
+    });
+    const variableSet = new SceneVariableSet({ variables: [variable] });
+    const dashboard = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      $variables: variableSet,
+      isEditing: true,
+      body: AutoGridLayoutManager.createEmpty(),
+    });
+
+    activateFullSceneTree(dashboard);
+
+    const editPane = dashboard.state.editPane;
+    editPane.selectObject(variable, { force: true });
+
+    const changedVariable = new ConstantVariable({ name: 'service' });
+    dashboardEditActions.changeVariableType({
+      source: variableSet,
+      oldVariable: variable,
+      newVariable: changedVariable,
+    });
+
+    expect(variableSet.state.variables[0]).toBe(changedVariable);
+    expect(editPane.getSelectedObject()).toBe(changedVariable);
+
+    editPane.undoAction();
+
+    expect(variableSet.state.variables[0]).toBe(variable);
+    expect(editPane.getSelectedObject()).toBe(variable);
+
+    editPane.redoAction();
+
+    expect(variableSet.state.variables[0]).toBe(changedVariable);
+    expect(editPane.getSelectedObject()).toBe(changedVariable);
+  });
+
+  it('restores dropped predefined variables when undoing a shadowing rename', () => {
+    const predefined = new CustomVariable({
+      name: 'env',
+      query: 'prod,dev',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+    const local = new CustomVariable({ name: 'localVar', query: 'a,b' });
+    const variableSet = new SceneVariableSet({ variables: [predefined, local] });
+    const dashboard = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      $variables: variableSet,
+      isEditing: true,
+      body: AutoGridLayoutManager.createEmpty(),
+    });
+
+    activateFullSceneTree(dashboard);
+
+    dashboardEditActions.changeVariableName({
+      source: local,
+      oldValue: 'localVar',
+      newValue: 'env',
+    });
+
+    expect(local.state.name).toBe('env');
+    expect(variableSet.state.variables).toEqual([local]);
+
+    dashboard.state.editPane.undoAction();
+
+    expect(local.state.name).toBe('localVar');
+    expect(variableSet.state.variables).toEqual([predefined, local]);
+  });
+
+  it('re-injects predefined variables when a shadowing local is renamed away', () => {
+    const predefined = new CustomVariable({
+      name: 'env',
+      query: 'prod,dev',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+    const local = new CustomVariable({ name: 'localVar', query: 'a,b' });
+    const variableSet = new SceneVariableSet({ variables: [predefined, local] });
+    const dashboard = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      $variables: variableSet,
+      isEditing: true,
+      body: AutoGridLayoutManager.createEmpty(),
+    });
+
+    activateFullSceneTree(dashboard);
+
+    dashboardEditActions.changeVariableName({
+      source: local,
+      oldValue: 'localVar',
+      newValue: 'env',
+    });
+    expect(variableSet.state.variables).toEqual([local]);
+
+    dashboardEditActions.changeVariableName({
+      source: local,
+      oldValue: 'env',
+      newValue: 'localVar',
+    });
+
+    expect(local.state.name).toBe('localVar');
+    expect(variableSet.state.variables).toEqual([predefined, local]);
+  });
+
+  it('re-injects predefined variables when a shadowing local is deleted', () => {
+    const predefined = new CustomVariable({
+      name: 'env',
+      query: 'prod,dev',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+    const local = new CustomVariable({ name: 'localVar', query: 'a,b' });
+    const variableSet = new SceneVariableSet({ variables: [predefined, local] });
+    const dashboard = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      $variables: variableSet,
+      isEditing: true,
+      body: AutoGridLayoutManager.createEmpty(),
+    });
+
+    activateFullSceneTree(dashboard);
+
+    dashboardEditActions.changeVariableName({
+      source: local,
+      oldValue: 'localVar',
+      newValue: 'env',
+    });
+    expect(variableSet.state.variables).toEqual([local]);
+
+    dashboardEditActions.removeVariable({
+      source: variableSet,
+      removedObject: local,
+    });
+
+    expect(variableSet.state.variables).toEqual([predefined]);
+  });
+
   describe('Selecting repeated elements', () => {
     it('Selecting a repeated panel selects the source panel', () => {
       const layoutManager = new DefaultGridLayoutManager({
@@ -122,7 +406,7 @@ describe('DashboardEditPane', () => {
 
       editPane.state.selectionContext.onSelect({ id: clonePanel.state.key! }, {});
 
-      expect(editPane.getSelection()).toBe(sourcePanel);
+      expect(editPane.getSelectedObject()).toBe(sourcePanel);
     });
 
     it('Selecting a repeated tab inside a repeated row selects the source tab', () => {
@@ -144,8 +428,9 @@ describe('DashboardEditPane', () => {
           }),
         ],
       });
-      const { editPane, variables } = buildTestSceneWithRepeat(layoutManager);
+      const { scene, editPane, variables } = buildTestSceneWithRepeat(layoutManager);
       editPane.enableSelection();
+      editPane.selectObject(scene);
 
       const [sourceRow] = layoutManager.state.rows;
       const [sourceTab] = (sourceRow.state.layout as TabsLayoutManager).state.tabs;
@@ -170,7 +455,7 @@ describe('DashboardEditPane', () => {
 
       editPane.state.selectionContext.onSelect({ id: clonedTabInClonedRow.state.key! }, {});
 
-      expect(editPane.getSelection()).toBe(sourceTab);
+      expect(editPane.getSelectedObject()).toBe(sourceTab);
     });
   });
 
@@ -273,6 +558,36 @@ describe('DashboardEditPane', () => {
       expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
     });
 
+    it('preserves the source panel config when pasting with target undefined into a RowsLayout dashboard', () => {
+      const { dashboard, row1, row2, row1Viz, editPane } = setupWithTwoRows();
+      dashboard.copyPanel(row1Viz);
+
+      editPane.pastePanel(undefined);
+
+      const row1Panels = row1.getLayout().getVizPanels();
+      expect(row1Panels).toHaveLength(2);
+      expect(row2.getLayout().getVizPanels()).toHaveLength(0);
+
+      const pastedPanel = row1Panels[row1Panels.length - 1];
+      expect(pastedPanel.state.pluginId).toBe(row1Viz.state.pluginId);
+      expect(pastedPanel.state.title).toBe(row1Viz.state.title);
+    });
+
+    it('preserves the source panel config when pasting with target undefined into a TabsLayout dashboard', () => {
+      const { dashboard, tab1, tab2, tab1Viz, editPane } = setupWithTwoTabs();
+      dashboard.copyPanel(tab1Viz);
+
+      editPane.pastePanel(undefined);
+
+      const tab1Panels = tab1.getLayout().getVizPanels();
+      expect(tab1Panels).toHaveLength(2);
+      expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
+
+      const pastedPanel = tab1Panels[tab1Panels.length - 1];
+      expect(pastedPanel.state.pluginId).toBe(tab1Viz.state.pluginId);
+      expect(pastedPanel.state.title).toBe(tab1Viz.state.title);
+    });
+
     it('adds pasted panel to the dashboard when dashboard is empty', () => {
       const { dashboard, editPane } = setupEmptyDashboard();
       const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
@@ -353,12 +668,13 @@ function buildTestSceneWithRepeat(layoutManager: DashboardLayoutManager) {
   return {
     variables,
     editPane: scene.state.editPane,
+    scene,
   };
 }
 
 function setupEmptyDashboard(): {
   dashboard: DashboardScene;
-  editPane: DashboardEditPane;
+  editPane: DashboardEditPaneLike;
 } {
   const dashboard = new DashboardScene({
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
@@ -375,7 +691,7 @@ function setupWithTwoTabs(): {
   tab1: TabItem;
   tab2: TabItem;
   tab1Viz: VizPanel;
-  editPane: DashboardEditPane;
+  editPane: DashboardEditPaneLike;
 } {
   const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
   const gridItem = new AutoGridItem({ body: panel });
@@ -399,7 +715,7 @@ function setupWithTwoRows(): {
   row1: RowItem;
   row2: RowItem;
   row1Viz: VizPanel;
-  editPane: DashboardEditPane;
+  editPane: DashboardEditPaneLike;
 } {
   const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
   const gridItem = new AutoGridItem({ body: panel });

@@ -1,24 +1,24 @@
 import { css, cx } from '@emotion/css';
-import { ReactElement, useState } from 'react';
+import { type ReactElement, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useMeasure } from 'react-use';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { GrafanaTheme2, IconName, TimeRange } from '@grafana/data';
+import { type GrafanaTheme2, type IconName, type TimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   CustomVariable,
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   TextBoxVariable,
   VariableDependencyConfig,
-  VariableValue,
+  type VariableValue,
   sceneGraph,
 } from '@grafana/scenes';
-import { Alert, Icon, LoadingBar, Pagination, Stack, Text, Tooltip, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { Alert, Icon, LoadingBar, Pagination, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import {
-  GrafanaAlertStateWithReason,
+  type GrafanaAlertStateWithReason,
   isAlertStateWithReason,
   isGrafanaAlertState,
   mapStateWithReasonToBaseState,
@@ -34,7 +34,7 @@ import { combineMatcherStrings } from '../../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { createRelativeUrl } from '../../../utils/url';
 import { CollapseToggle } from '../../CollapseToggle';
-import { LogRecord } from '../state-history/common';
+import { type LogRecord } from '../state-history/common';
 
 import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO } from './CentralAlertHistoryScene';
 import { EventDetails } from './EventDetails';
@@ -444,9 +444,7 @@ const Timestamp = ({ time }: TimestampProps) => {
   );
 };
 
-export default withErrorBoundary(HistoryEventsList, { style: 'page' });
-
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     header: css({
       display: 'flex',
@@ -564,7 +562,7 @@ export class HistoryEventsListObject extends SceneObjectBase<HistoryEventsListOb
 
 export type FilterType = 'label' | 'stateFrom' | 'stateTo';
 
-export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<HistoryEventsListObject>) {
+function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<HistoryEventsListObject>) {
   // This make sure the component is re-rendered when the variables change
   const { hideAlertRuleColumn } = model.useState();
 

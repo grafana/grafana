@@ -1,7 +1,7 @@
 import { css, keyframes } from '@emotion/css';
-import { CSSProperties } from 'react';
+import { type CSSProperties } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
@@ -52,7 +52,7 @@ const getStyles = (theme: GrafanaTheme2, delay: number, duration: number) => {
     bar: css({
       width: BAR_WIDTH + '%',
       height: 1,
-      background: `linear-gradient(90deg, transparent 0%, ${theme.colors.primary.main} 80.75%, transparent 100%)`,
+      background: `linear-gradient(90deg, transparent 0%, ${theme.colors.accent.main} 80.75%, transparent 100%)`,
       transform: 'translateX(-100%)',
       willChange: 'transform',
       [theme.transitions.handleMotion('no-preference')]: {

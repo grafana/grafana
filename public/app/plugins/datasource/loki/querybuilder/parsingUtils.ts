@@ -1,6 +1,6 @@
-import { SyntaxNode, TreeCursor } from '@lezer/common';
+import { type SyntaxNode, type TreeCursor } from '@lezer/common';
 
-import { QueryBuilderOperation, QueryBuilderOperationParamValue } from '@grafana/plugin-ui';
+import { type QueryBuilderOperation, type QueryBuilderOperationParamValue } from '@grafana/plugin-ui';
 
 // Although 0 isn't explicitly provided in the @grafana/lezer-logql library as the error node ID, it does appear to be the ID of error nodes within lezer.
 export const ErrorId = 0;
@@ -130,11 +130,3 @@ export function getAllByType(expr: string, cur: SyntaxNode, type: number | strin
   }
   return values;
 }
-
-/**
- * There aren't any spaces in the metric names, so let's introduce a wildcard into the regex for each space to better facilitate a fuzzy search
- */
-export const regexifyLabelValuesQueryString = (query: string) => {
-  const queryArray = query.split(' ');
-  return queryArray.map((query) => `${query}.*`).join('');
-};

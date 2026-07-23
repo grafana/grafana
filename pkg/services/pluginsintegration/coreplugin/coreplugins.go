@@ -18,47 +18,27 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
-	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
-	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
-	postgres "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource"
-	pyroscope "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
-	"github.com/grafana/grafana/pkg/tsdb/jaeger"
 	"github.com/grafana/grafana/pkg/tsdb/loki"
-	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
-	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
-	"github.com/grafana/grafana/pkg/tsdb/parca"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
-	"github.com/grafana/grafana/pkg/tsdb/tempo"
-	"github.com/grafana/grafana/pkg/tsdb/zipkin"
 )
 
 const (
-	CloudWatch      = "cloudwatch"
-	CloudMonitoring = "stackdriver"
-	AzureMonitor    = "grafana-azure-monitor-datasource"
-	Elasticsearch   = "elasticsearch"
-	Graphite        = "graphite"
-	InfluxDB        = "influxdb"
-	Loki            = "loki"
-	OpenTSDB        = "opentsdb"
-	Prometheus      = "prometheus"
-	Tempo           = "tempo"
-	TestData        = "grafana-testdata-datasource"
-	TestDataAlias   = "testdata"
-	PostgreSQL      = "grafana-postgresql-datasource"
-	MySQL           = "mysql"
-	MSSQL           = "mssql"
-	Grafana         = "grafana"
-	Pyroscope       = "grafana-pyroscope-datasource"
-	Parca           = "parca"
-	Zipkin          = "zipkin"
-	Jaeger          = "jaeger"
+	CloudWatch    = "cloudwatch"
+	AzureMonitor  = "grafana-azure-monitor-datasource"
+	Graphite      = "graphite"
+	InfluxDB      = "influxdb"
+	Loki          = "loki"
+	Prometheus    = "prometheus"
+	TestData      = "grafana-testdata-datasource"
+	TestDataAlias = "testdata"
+	MySQL         = "mysql"
+	Grafana       = "grafana"
 )
 
 func init() {
@@ -98,33 +78,23 @@ func ProvideCoreProvider(coreRegistry *Registry) plugins.BackendFactoryProvider 
 	return provider.New(coreRegistry.BackendFactoryProvider(), provider.DefaultProvider)
 }
 
-func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *cloudwatch.Service, cm *cloudmonitoring.Service,
-	es *elasticsearch.Service, grap *graphite.Service, idb *influxdb.Service, lk *loki.Service, otsdb *opentsdb.Service,
-	pr *prometheus.Service, t *tempo.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
-	ms *mssql.Service, graf *grafanads.Service, pyroscope *pyroscope.Service, parca *parca.Service, zipkin *zipkin.Service, jaeger *jaeger.Service) *Registry {
+func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *cloudwatch.Service,
+	grap *graphite.Service, idb *influxdb.Service, lk *loki.Service,
+	pr *prometheus.Service, td *testdatasource.Service, my *mysql.Service,
+	graf *grafanads.Service) *Registry {
 	// Non-optimal global solution to replace plugin SDK default tracer for core plugins.
 	sdktracing.InitDefaultTracer(tracer)
 
 	return NewRegistry(map[string]backendplugin.PluginFactoryFunc{
-		CloudWatch:      asBackendPlugin(cw),
-		CloudMonitoring: asBackendPlugin(cm),
-		AzureMonitor:    asBackendPlugin(am),
-		Elasticsearch:   asBackendPlugin(es),
-		Graphite:        asBackendPlugin(grap),
-		InfluxDB:        asBackendPlugin(idb),
-		Loki:            asBackendPlugin(lk),
-		OpenTSDB:        asBackendPlugin(otsdb),
-		Prometheus:      asBackendPlugin(pr),
-		Tempo:           asBackendPlugin(t),
-		TestData:        asBackendPlugin(td),
-		PostgreSQL:      asBackendPlugin(pg),
-		MySQL:           asBackendPlugin(my),
-		MSSQL:           asBackendPlugin(ms),
-		Grafana:         asBackendPlugin(graf),
-		Pyroscope:       asBackendPlugin(pyroscope),
-		Parca:           asBackendPlugin(parca),
-		Zipkin:          asBackendPlugin(zipkin),
-		Jaeger:          asBackendPlugin(jaeger),
+		CloudWatch:   asBackendPlugin(cw),
+		AzureMonitor: asBackendPlugin(am),
+		Graphite:     asBackendPlugin(grap),
+		InfluxDB:     asBackendPlugin(idb),
+		Loki:         asBackendPlugin(lk),
+		Prometheus:   asBackendPlugin(pr),
+		TestData:     asBackendPlugin(td),
+		MySQL:        asBackendPlugin(my),
+		Grafana:      asBackendPlugin(graf),
 	})
 }
 
@@ -226,38 +196,18 @@ func NewPlugin(pluginID string, httpClientProvider *httpclient.Provider, tracer 
 		svc = testdatasource.ProvideService()
 	case CloudWatch:
 		svc = cloudwatch.ProvideService()
-	case CloudMonitoring:
-		svc = cloudmonitoring.ProvideService(httpClientProvider)
 	case AzureMonitor:
 		svc = azuremonitor.ProvideService(httpClientProvider)
-	case Elasticsearch:
-		svc = elasticsearch.ProvideService(httpClientProvider)
 	case Graphite:
 		svc = graphite.ProvideService(httpClientProvider, tracer)
 	case InfluxDB:
 		svc = influxdb.ProvideService(httpClientProvider)
 	case Loki:
 		svc = loki.ProvideService(httpClientProvider, tracer)
-	case OpenTSDB:
-		svc = opentsdb.ProvideService(httpClientProvider)
 	case Prometheus:
 		svc = prometheus.ProvideService(httpClientProvider)
-	case Tempo:
-		svc = tempo.ProvideService(httpClientProvider, tracer)
-	case PostgreSQL:
-		svc = postgres.ProvideService()
 	case MySQL:
 		svc = mysql.ProvideService()
-	case MSSQL:
-		svc = mssql.ProvideService()
-	case Pyroscope:
-		svc = pyroscope.ProvideService(httpClientProvider)
-	case Parca:
-		svc = parca.ProvideService(httpClientProvider)
-	case Zipkin:
-		svc = zipkin.ProvideService(httpClientProvider)
-	case Jaeger:
-		svc = jaeger.ProvideService(httpClientProvider)
 	default:
 		return nil, ErrCorePluginNotFound
 	}

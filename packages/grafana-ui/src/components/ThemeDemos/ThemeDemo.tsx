@@ -7,9 +7,9 @@ import {
   colorManipulator,
   FieldColorModeId,
   fieldColorModeRegistry,
-  GrafanaTheme2,
-  ThemeRichColor,
-  ThemeVizHue,
+  type GrafanaTheme2,
+  type ThemeRichColor,
+  type ThemeVizHue,
 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
@@ -23,11 +23,11 @@ import { InlineFieldRow } from '../Forms/InlineFieldRow';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Icon } from '../Icon/Icon';
 import { Input } from '../Input/Input';
-import { BackgroundColor, BorderColor, Box, BoxShadow } from '../Layout/Box/Box';
+import { type BackgroundColor, type BorderColor, Box, type BoxShadow } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Switch } from '../Switch/Switch';
-import { Text, TextProps } from '../Text/Text';
+import { Text, type TextProps } from '../Text/Text';
 
 interface DemoBoxProps {
   bg?: BackgroundColor;
@@ -95,6 +95,7 @@ export const ThemeDemo = () => {
   const richColors = [
     t.colors.primary,
     t.colors.secondary,
+    t.colors.tertiary,
     t.colors.success,
     t.colors.error,
     t.colors.warning,
@@ -313,7 +314,7 @@ interface VizHuesDemoProps {
   theme: GrafanaTheme2;
 }
 
-export function VizHuesDemo({ theme, color }: VizHuesDemoProps) {
+function VizHuesDemo({ theme, color }: VizHuesDemoProps) {
   return (
     <tr>
       <td>{color.name}</td>
@@ -340,7 +341,7 @@ interface RichColorDemoProps {
   color: ThemeRichColor;
 }
 
-export function RichColorDemo({ theme, color }: RichColorDemoProps) {
+function RichColorDemo({ theme, color }: RichColorDemoProps) {
   return (
     <tr>
       <td>{color.name}</td>
@@ -374,6 +375,7 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
           className={css({
             background: color.transparent,
             borderRadius: theme.shape.radius.default,
+            color: theme.colors.getContrastText(color.transparent, 4.5),
             padding: theme.spacing(1),
           })}
         >
@@ -407,7 +409,7 @@ const colorsTableStyle = (theme: GrafanaTheme2) =>
     },
   });
 
-export function TextColors({ t }: { t: GrafanaTheme2 }) {
+function TextColors({ t }: { t: GrafanaTheme2 }) {
   return (
     <>
       <DemoText color="primary">
@@ -426,7 +428,7 @@ export function TextColors({ t }: { t: GrafanaTheme2 }) {
   );
 }
 
-export function ShadowDemo({ name, shadow }: { name: string; shadow: string }) {
+function ShadowDemo({ name, shadow }: { name: string; shadow: string }) {
   const t = useTheme2();
   const style = css({
     padding: t.spacing(2),
@@ -436,7 +438,7 @@ export function ShadowDemo({ name, shadow }: { name: string; shadow: string }) {
   return <div className={style}>{name}</div>;
 }
 
-export function ActionsDemo() {
+function ActionsDemo() {
   const t = useTheme2();
 
   const item = css({

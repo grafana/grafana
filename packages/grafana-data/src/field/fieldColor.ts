@@ -12,15 +12,164 @@ import tinycolor from 'tinycolor2';
 import { t } from '@grafana/i18n';
 
 import { getContrastRatio } from '../themes/colorManipulator';
-import { GrafanaTheme2 } from '../themes/types';
-import { reduceField } from '../transformations/fieldReducer';
-import { Field } from '../types/dataFrame';
+import { type GrafanaTheme2 } from '../themes/types';
+import { type Field } from '../types/dataFrame';
 import { FALLBACK_COLOR, FieldColorModeId } from '../types/fieldColor';
-import { Threshold } from '../types/thresholds';
-import { Registry, RegistryItem } from '../utils/Registry';
+import { type Threshold } from '../types/thresholds';
+import { Registry, type RegistryItem } from '../utils/Registry';
 
-import { getScaleCalculator, ColorScaleValue } from './scale';
 import { fallBackThreshold } from './thresholds';
+
+/**
+ * Color blind-safe palette based on Wong (2011) "Points of view: Color blindness"
+ * Nature Methods 8:441. All 8 colors are validated as mutually distinguishable
+ * under protanopia, deuteranopia, and tritanopia.
+ * Black and white are included for theme-adaptive contrast filtering.
+ */
+const COLORBLIND_SAFE_PALETTE: string[] = [
+  '#0072B2',
+  '#E69F00',
+  '#009E73',
+  '#CC79A7',
+  '#56B4E9',
+  '#D55E00',
+  '#F0E442',
+  '#000000',
+  '#FFFFFF',
+];
+
+/**
+ * Experimental categorical palettes gated behind the `dataviz.experimentalColorSchemes`
+ * feature toggle. These are not final and may change or be removed.
+ */
+const CATEGORICAL_NEXT_PALETTE: string[] = [
+  '#D97E9B',
+  '#FFC554',
+  '#41CD94',
+  '#64A6D8',
+  '#F79CFF',
+  '#E78A5F',
+  '#C9E1A6',
+  '#00CFE3',
+  '#9B93DF',
+  '#FFB2BE',
+  '#CEA82E',
+  '#9CF2D6',
+  '#8FC3FF',
+  '#CE84C1',
+  '#FFC39D',
+  '#89C862',
+  '#41AEC7',
+  '#CDB9FF',
+  '#EF8488',
+  '#E7DB98',
+  '#00D8BE',
+  '#759EE6',
+  '#FFB1E1',
+  '#EE9941',
+  '#BAF2B8',
+  '#54D3FF',
+  '#B78EE2',
+  '#FF645A',
+  '#C0BD2F',
+  '#8FFFF6',
+  '#B4C7FF',
+  '#EB85B5',
+  '#FFD49F',
+  '#58DB89',
+  '#46ABDE',
+  '#EABCFF',
+  '#FF8E6F',
+  '#DEED9F',
+  '#00DFE5',
+  '#959DF6',
+];
+
+const CATEGORICAL_NEXT_2_PALETTE: string[] = [
+  '#63B564',
+  '#DED188',
+  '#84B1FF',
+  '#FFDBBC',
+  '#FFA8AA',
+  '#C986E6',
+  '#FFC4D4',
+  '#9BCB35',
+  '#D3EFFF',
+  '#F8B4D2',
+  '#A6B924',
+  '#AFE8FF',
+  '#FF97DA',
+  '#AAA720',
+  '#81E3FB',
+  '#F386E2',
+  '#FFE397',
+  '#84D6E1',
+  '#D784DF',
+  '#FED283',
+  '#00D4DA',
+  '#F2E7FF',
+  '#F3C48A',
+  '#00C9C0',
+  '#E4DAFF',
+  '#FFAC74',
+  '#00BEA7',
+  '#D2CFFF',
+  '#FF9767',
+  '#9DFFDF',
+  '#BDC4FF',
+  '#FE8260',
+  '#93F4C5',
+  '#A4BAFF',
+  '#EA796E',
+  '#9FE3B3',
+  '#74B6FF',
+  '#FFD8DD',
+  '#89E04D',
+  '#3BAFFE',
+];
+
+const CATEGORICAL_NEXT_3_PALETTE: string[] = [
+  '#63B564',
+  '#88DDFE',
+  '#CA94FF',
+  '#FFD8D3',
+  '#CFCB00',
+  '#00BEB5',
+  '#C7D5FF',
+  '#FF8DC4',
+  '#FFE5C7',
+  '#9FDCB0',
+  '#00BBFF',
+  '#F0D0FF',
+  '#FFA48B',
+  '#9BAC32',
+  '#7CE6E9',
+  '#A3ABFF',
+  '#FFDAE4',
+  '#E1C18A',
+  '#1DC58A',
+  '#B7DFFF',
+  '#F38EFC',
+  '#FFE7DD',
+  '#BED997',
+  '#00C5D8',
+  '#DEDCFF',
+  '#FFA4B3',
+  '#C79E00',
+  '#8BEBCC',
+  '#7DBBFF',
+  '#FFDCF8',
+  '#F5BB95',
+  '#7DC053',
+  '#9BEAFF',
+  '#C5ADFF',
+  '#EA777E',
+  '#E0D287',
+  '#00CEB5',
+  '#D5E4FF',
+  '#FFA1DC',
+  '#E88E29',
+];
 
 /** @beta */
 export type FieldValueColorCalculator = (value: number, percent: number, Threshold?: Threshold) => string;
@@ -39,6 +188,7 @@ export interface FieldColorMode extends RegistryItem {
 export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
   const accessibleGroup = t('grafana-data.field.fieldColor.accessibleGroup', 'Accessible');
   const otherGroup = t('grafana-data.field.fieldColor.otherGroup', 'Others');
+  const experimentalGroup = t('grafana-data.field.fieldColor.experimentalGroup', 'Experimental');
 
   return [
     {
@@ -52,6 +202,13 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       name: 'Shades of a color',
       description: 'Select shades of a specific color',
       getCalculator: getShadedColor,
+    },
+    {
+      id: FieldColorModeId.Gradient,
+      name: 'Gradient',
+      description:
+        'Interpolate between two colors based on value order. The highest value gets the start color; the lowest gets the end color.',
+      getCalculator: getFixedColor,
     },
     {
       id: FieldColorModeId.Thresholds,
@@ -87,6 +244,44 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
             theme.colors.contrastThreshold
         );
       },
+    }),
+    new FieldColorSchemeMode({
+      id: FieldColorModeId.PaletteColorblind,
+      name: 'Color blind safe',
+      isContinuous: false,
+      isByValue: false,
+      getColors: (theme: GrafanaTheme2) => {
+        return COLORBLIND_SAFE_PALETTE.filter(
+          (color) =>
+            getContrastRatio(theme.visualization.getColorByName(color), theme.colors.background.primary) >=
+            theme.colors.contrastThreshold
+        );
+      },
+      group: accessibleGroup,
+    }),
+    new FieldColorSchemeMode({
+      id: FieldColorModeId.PaletteCategoricalNext,
+      name: 'Categorical Next',
+      isContinuous: false,
+      isByValue: false,
+      getColors: (_theme: GrafanaTheme2) => CATEGORICAL_NEXT_PALETTE,
+      group: experimentalGroup,
+    }),
+    new FieldColorSchemeMode({
+      id: FieldColorModeId.PaletteCategoricalNext2,
+      name: 'Categorical Next 2',
+      isContinuous: false,
+      isByValue: false,
+      getColors: (_theme: GrafanaTheme2) => CATEGORICAL_NEXT_2_PALETTE,
+      group: experimentalGroup,
+    }),
+    new FieldColorSchemeMode({
+      id: FieldColorModeId.PaletteCategoricalNext3,
+      name: 'Categorical Next 3',
+      isContinuous: false,
+      isByValue: false,
+      getColors: (_theme: GrafanaTheme2) => CATEGORICAL_NEXT_3_PALETTE,
+      group: experimentalGroup,
     }),
     new FieldColorSchemeMode({
       id: FieldColorModeId.ContinuousViridis,
@@ -233,7 +428,7 @@ interface FieldColorSchemeModeGetColors extends BaseFieldColorSchemeModeOptions 
 
 type FieldColorSchemeModeOptions = FieldColorSchemeModeGetColors | FieldColorSchemeModeInterpolator;
 
-export class FieldColorSchemeMode implements FieldColorMode {
+class FieldColorSchemeMode implements FieldColorMode {
   id: FieldColorModeId;
   name: string;
   description?: string;
@@ -321,30 +516,6 @@ export function getFieldColorModeForField(field: Field): FieldColorMode {
 /** @beta */
 export function getFieldColorMode(mode?: FieldColorModeId | string): FieldColorMode {
   return fieldColorModeRegistry.getIfExists(mode) ?? fieldColorModeRegistry.get(FieldColorModeId.Thresholds);
-}
-
-/**
- * @alpha
- * Function that will return a series color for any given color mode. If the color mode is a by value color
- * mode it will use the field.config.color.seriesBy property to figure out which value to use
- */
-export function getFieldSeriesColor(field: Field, theme: GrafanaTheme2): ColorScaleValue {
-  const mode = getFieldColorModeForField(field);
-
-  if (!mode.isByValue) {
-    return {
-      color: mode.getCalculator(field, theme)(0, 0),
-      threshold: fallBackThreshold,
-      percent: 1,
-    };
-  }
-
-  const scale = getScaleCalculator(field, theme);
-  const stat = field.config.color?.seriesBy ?? 'last';
-  const calcs = reduceField({ field, reducers: [stat] });
-  const value = calcs[stat] ?? 0;
-
-  return scale(value);
 }
 
 export function getColorByStringHash(colors: string[], string: string) {

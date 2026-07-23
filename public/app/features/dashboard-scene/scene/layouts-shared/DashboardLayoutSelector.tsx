@@ -1,15 +1,14 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { RadioButtonGroup, Box, ConfirmModal } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
-import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
-import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
+import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { containsTabsLayout } from './findAllGridTypes';
 import { layoutRegistry } from './layoutRegistry';
@@ -24,10 +23,6 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
   const [newLayout, setNewLayout] = useState<LayoutRegistryItem | undefined>();
 
   const disableTabsReason = useMemo(() => {
-    if (config.featureToggles.unlimitedLayoutsNesting) {
-      return undefined;
-    }
-
     // Check parent hierarchy
     let parent = layoutManager.parent;
     while (parent) {
@@ -112,7 +107,7 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
           body={t('dashboard.layout.panel.modal.body', 'Changing the layout will reset all panel positions and sizes.')}
           confirmText={t('dashboard.layout.panel.modal.confirm', 'Change layout')}
           dismissText={t('dashboard.layout.panel.modal.dismiss', 'Cancel')}
-          confirmButtonVariant="primary"
+          confirmVariant="primary"
           onConfirm={onConfirmNewLayout}
           onDismiss={onDismissNewLayout}
         />

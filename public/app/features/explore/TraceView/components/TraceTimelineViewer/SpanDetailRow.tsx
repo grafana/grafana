@@ -15,16 +15,16 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { CoreApp, GrafanaTheme2, LinkModel, TimeRange, TraceLog } from '@grafana/data';
-import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
-import { TimeZone } from '@grafana/schema';
+import { type CoreApp, type GrafanaTheme2, type LinkModel, type TimeRange, type TraceLog } from '@grafana/data';
+import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
+import { type TimeZone } from '@grafana/schema';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
-import { SpanLinkFunc } from '../types/links';
-import { TraceSpan, TraceSpanReference } from '../types/trace';
+import { type SpanLinkFunc } from '../types/links';
+import { type TraceSpan, type TraceSpanReference } from '../types/trace';
 
-import SpanDetail, { TraceFlameGraphs } from './SpanDetail';
-import DetailState from './SpanDetail/DetailState';
+import SpanDetail, { type TraceFlameGraphs } from './SpanDetail';
+import type DetailState from './SpanDetail/DetailState';
 import SpanTreeOffset from './SpanTreeOffset';
 import TimelineRow from './TimelineRow';
 
@@ -99,6 +99,7 @@ export type SpanDetailRowProps = {
   traceToProfilesOptions?: TraceToProfilesOptions;
   timeZone: TimeZone;
   tagsToggle: (spanID: string) => void;
+  summaryAttributesToggle: (spanID: string) => void;
   traceStartTime: number;
   traceDuration: number;
   traceName: string;
@@ -134,6 +135,7 @@ const UnthemedSpanDetailRow = React.memo<SpanDetailRowProps>((props) => {
     traceToProfilesOptions,
     timeZone,
     tagsToggle,
+    summaryAttributesToggle,
     traceStartTime,
     traceDuration,
     traceName,
@@ -186,6 +188,7 @@ const UnthemedSpanDetailRow = React.memo<SpanDetailRowProps>((props) => {
               traceToProfilesOptions={traceToProfilesOptions}
               timeZone={timeZone}
               tagsToggle={tagsToggle}
+              summaryAttributesToggle={summaryAttributesToggle}
               traceStartTime={traceStartTime}
               traceDuration={traceDuration}
               traceName={traceName}

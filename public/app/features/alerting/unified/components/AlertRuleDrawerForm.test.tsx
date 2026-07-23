@@ -1,15 +1,18 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { render } from 'test/test-utils';
+import { render, testWithFeatureToggles } from 'test/test-utils';
 
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
+import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { GrafanaGroupUpdatedResponse } from '../api/alertRuleModel';
-import { ContactPoint, RuleFormType, RuleFormValues } from '../types/rule-form';
+import { type GrafanaGroupUpdatedResponse } from '../api/alertRuleModel';
+import { alertingApi } from '../api/alertingApi';
+import { type ContactPoint, RuleFormType, type RuleFormValues } from '../types/rule-form';
 
-import { AlertRuleDrawerForm, AlertRuleDrawerFormProps } from './AlertRuleDrawerForm';
+import { AlertRuleDrawerForm, type AlertRuleDrawerFormProps } from './AlertRuleDrawerForm';
+import { EVALUATION_INTERVAL_FIELD_TEST_ID } from './rule-editor/RuleEvaluationIntervalField';
 
 setupMswServer();
 
@@ -17,6 +20,11 @@ setupMswServer();
 const mockExecute = jest.fn();
 jest.mock('../hooks/ruleGroup/useUpsertRuleFromRuleGroup', () => ({
   useAddRuleToRuleGroup: () => [{ execute: mockExecute }],
+}));
+
+const mockUpsertUngroupedGrafanaRule = jest.fn();
+jest.mock('../hooks/useUpsertUngroupedGrafanaRule', () => ({
+  useUpsertUngroupedGrafanaRule: () => mockUpsertUngroupedGrafanaRule,
 }));
 
 // Mock notification hooks
@@ -116,6 +124,7 @@ describe('AlertRuleDrawerForm', () => {
         expect(onContinueInAlerting).toHaveBeenCalledWith(
           expect.objectContaining({
             name: 'Test Rule',
+            evaluateFor: '0s',
           })
         );
       });
@@ -281,6 +290,168 @@ describe('AlertRuleDrawerForm', () => {
           'Validation error',
           'Please correct the errors in the form and try again.'
         );
+      });
+    });
+  });
+
+  // The drawer's submit path is gated on alerting.rulesAPIV2:
+  //   - disabled → legacy `addRuleToRuleGroup` (with the "derive group from name" fallback)
+  //   - enabled  → groupless app-platform create via `useUpsertUngroupedGrafanaRule`
+  // The createAlertRuleFromPanel toggle gates whether the drawer is shown at all,
+  // which happens upstream in NewRuleFromPanelButton — not asserted here.
+  describe('Submit routing by alerting.rulesAPIV2 toggle', () => {
+    // Group is required by the legacy path's form validation, so include it.
+    const submittablePrefill: Partial<RuleFormValues> = {
+      name: 'Test Alert Rule',
+      folder: { title: 'Test Folder', uid: 'test-folder-uid' },
+      group: 'test-group',
+      evaluateEvery: '1m',
+      type: RuleFormType.grafana,
+      queries: [
+        {
+          refId: 'A',
+          datasourceUid: 'test-ds',
+          queryType: '',
+          model: { refId: 'A' },
+        },
+      ],
+      condition: 'A',
+    };
+
+    describe('when alerting.rulesAPIV2 is disabled (legacy grouped flow)', () => {
+      it('calls the legacy addRuleToRuleGroup hook and not the v2 hook', async () => {
+        const mockResponse: GrafanaGroupUpdatedResponse = {
+          message: 'Rule created successfully',
+          created: ['rule-uid'],
+        };
+        mockExecute.mockResolvedValue(mockResponse);
+
+        const { user } = renderDrawer({ prefill: submittablePrefill });
+        await user.click(screen.getByRole('button', { name: /Create/i }));
+
+        await waitFor(() => {
+          expect(mockExecute).toHaveBeenCalledTimes(1);
+        });
+        expect(mockUpsertUngroupedGrafanaRule).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('when alerting.rulesAPIV2 is enabled (v2 groupless flow)', () => {
+      testWithFeatureToggles({ enable: ['alerting.rulesAPIV2'] });
+
+      it('calls the v2 ungrouped hook with isUngroupedRuleGroup forced true', async () => {
+        mockUpsertUngroupedGrafanaRule.mockResolvedValue('new-rule-uid');
+
+        const { user } = renderDrawer({ prefill: submittablePrefill });
+        await user.click(screen.getByRole('button', { name: /Create/i }));
+
+        await waitFor(() => {
+          expect(mockUpsertUngroupedGrafanaRule).toHaveBeenCalledTimes(1);
+        });
+        expect(mockUpsertUngroupedGrafanaRule).toHaveBeenCalledWith(
+          expect.objectContaining({
+            existingUid: undefined,
+            values: expect.objectContaining({ isUngroupedRuleGroup: true }),
+          })
+        );
+        expect(mockExecute).not.toHaveBeenCalled();
+      });
+
+      it('closes the drawer and shows a success notification on success', async () => {
+        mockUpsertUngroupedGrafanaRule.mockResolvedValue('new-rule-uid');
+        const onClose = jest.fn();
+
+        const { user } = renderDrawer({ onClose, prefill: submittablePrefill });
+        await user.click(screen.getByRole('button', { name: /Create/i }));
+
+        await waitFor(() => {
+          expect(onClose).toHaveBeenCalled();
+        });
+        expect(mockSuccess).toHaveBeenCalledWith(
+          'Alert rule created',
+          'Your alert rule has been created successfully.'
+        );
+      });
+
+      it('invalidates the legacy rule cache so the panel alerts list refreshes', async () => {
+        // The app-platform create lives on a separate cache slice, so the drawer must explicitly
+        // invalidate the CombinedAlertRule tag the panel list relies on.
+        mockUpsertUngroupedGrafanaRule.mockResolvedValue('new-rule-uid');
+
+        // Spy on dispatch before render so the component's useDispatch() captures the spy.
+        const store = configureStore();
+        const dispatchSpy = jest.spyOn(store, 'dispatch');
+
+        const { user } = render(<AlertRuleDrawerForm {...defaultProps} prefill={submittablePrefill} />, { store });
+
+        await user.click(screen.getByRole('button', { name: /Create/i }));
+
+        await waitFor(() => {
+          expect(dispatchSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+              type: `${alertingApi.reducerPath}/invalidateTags`,
+              payload: expect.arrayContaining(['CombinedAlertRule']),
+            })
+          );
+        });
+      });
+
+      it('shows an error notification when the v2 mutation rejects', async () => {
+        mockUpsertUngroupedGrafanaRule.mockRejectedValue(new Error('boom from the api'));
+        const onClose = jest.fn();
+
+        const { user } = renderDrawer({ onClose, prefill: submittablePrefill });
+        await user.click(screen.getByRole('button', { name: /Create/i }));
+
+        await waitFor(() => {
+          expect(mockError).toHaveBeenCalledWith('Failed to create alert rule', expect.stringContaining('boom'));
+        });
+        expect(onClose).not.toHaveBeenCalled();
+      });
+
+      it('hides the evaluation group picker and shows a per-rule evaluation interval input', () => {
+        renderDrawer({ prefill: submittablePrefill });
+
+        expect(screen.queryByTestId('group-picker')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('new-evaluation-group-button')).not.toBeInTheDocument();
+        expect(screen.getByTestId(EVALUATION_INTERVAL_FIELD_TEST_ID)).toBeInTheDocument();
+      });
+
+      it('submits the evaluation interval as a rule property', async () => {
+        mockUpsertUngroupedGrafanaRule.mockResolvedValue('new-rule-uid');
+
+        const { user } = renderDrawer({ prefill: submittablePrefill });
+
+        const intervalInput = within(screen.getByTestId(EVALUATION_INTERVAL_FIELD_TEST_ID)).getByRole('textbox');
+        await user.clear(intervalInput);
+        await user.type(intervalInput, '5m');
+
+        await user.click(screen.getByRole('button', { name: /Create/i }));
+
+        await waitFor(() => {
+          expect(mockUpsertUngroupedGrafanaRule).toHaveBeenCalledWith(
+            expect.objectContaining({
+              values: expect.objectContaining({ evaluateEvery: '5m', evaluateFor: '0s' }),
+            })
+          );
+        });
+      });
+
+      it('submits pending period as 0s because the drawer does not expose that field', async () => {
+        mockUpsertUngroupedGrafanaRule.mockResolvedValue('new-rule-uid');
+
+        const { user } = renderDrawer({
+          prefill: { ...submittablePrefill, evaluateFor: '1m' },
+        });
+        await user.click(screen.getByRole('button', { name: /Create/i }));
+
+        await waitFor(() => {
+          expect(mockUpsertUngroupedGrafanaRule).toHaveBeenCalledWith(
+            expect.objectContaining({
+              values: expect.objectContaining({ evaluateFor: '0s' }),
+            })
+          );
+        });
       });
     });
   });

@@ -1,14 +1,14 @@
 import { urlUtil } from '@grafana/data';
 import { locationService, logInfo } from '@grafana/runtime';
-import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
-import { RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alerting';
+import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
+import { type RuleGroupIdentifierV2, type RuleIdentifier } from 'app/types/unified-alerting';
 
 import { createReturnTo } from '../hooks/useReturnTo';
-import { RuleFormValues } from '../types/rule-form';
+import { type RuleFormValues } from '../types/rule-form';
 
 import { ROOT_ROUTE_NAME } from './k8s/constants';
 import { stringifyIdentifier } from './rule-id';
-import { RelativeUrl, createRelativeUrl } from './url';
+import { type RelativeUrl, createRelativeUrl } from './url';
 
 /**
  * Tab values for contact points page - duplicated here to avoid circular dependency
@@ -39,6 +39,7 @@ export const ALERTING_PATHS: Record<string, RelativeUrl> = {
   TIME_INTERVALS: '/alerting/routes/mute-timing',
   ROUTES: '/alerting/routes',
   ALERTS_ACTIVITY: '/alerting/alerts',
+  IMPORT_TO_GMA: '/alerting/import-to-gma',
 };
 
 /**

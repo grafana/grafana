@@ -1,22 +1,11 @@
 import { useCallback } from 'react';
 
-import {
-  DataTransformerID,
-  SelectableValue,
-  standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
-  TransformerCategory,
-} from '@grafana/data';
-import { JoinByFieldOptions, JoinMode } from '@grafana/data/internal';
+import { type SelectableValue, type TransformerUIProps } from '@grafana/data';
+import { type JoinByFieldOptions, JoinMode } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Combobox, InlineFieldRow, InlineField } from '@grafana/ui';
 import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/internal';
-
-import { getTransformationContent } from '../docs/getTransformationContent';
-import darkImage from '../images/dark/joinByField.svg';
-import lightImage from '../images/light/joinByField.svg';
 
 export function SeriesToFieldsTransformerEditor({ input, options, onChange }: TransformerUIProps<JoinByFieldOptions>) {
   const names = useFieldDisplayNames(input);
@@ -106,19 +95,3 @@ export function SeriesToFieldsTransformerEditor({ input, options, onChange }: Tr
     </>
   );
 }
-
-export const getJoinByFieldTransformerRegistryItem: () => TransformerRegistryItem<JoinByFieldOptions> = () => ({
-  id: DataTransformerID.joinByField,
-  aliasIds: [DataTransformerID.seriesToColumns],
-  editor: SeriesToFieldsTransformerEditor,
-  transformation: standardTransformers.joinByFieldTransformer,
-  name: t('transformers.join-by-field-transformer-editor.name.join-by-field', 'Join by field'),
-  description: t(
-    'transformers.join-by-field-transformer-editor.description.combine-rows-from-2-tables',
-    'Combine rows from 2+ tables, based on a related field.'
-  ),
-  categories: new Set([TransformerCategory.Combine]),
-  help: getTransformationContent(DataTransformerID.joinByField).helperDocs,
-  imageDark: darkImage,
-  imageLight: lightImage,
-});

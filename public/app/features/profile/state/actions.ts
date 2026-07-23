@@ -1,9 +1,9 @@
 import { config } from '@grafana/runtime';
-import { ThunkResult } from 'app/types/store';
-import { UserOrg } from 'app/types/user';
+import { type ThunkResult } from 'app/types/store';
+import { type UserOrg } from 'app/types/user';
 
 import { api } from '../api';
-import { ChangePasswordFields, ProfileUpdateFields } from '../types';
+import { type ChangePasswordFields, type ProfileUpdateFields } from '../types';
 
 import {
   initLoadOrgs,

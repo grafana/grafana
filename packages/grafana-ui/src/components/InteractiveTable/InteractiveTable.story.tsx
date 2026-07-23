@@ -1,6 +1,6 @@
-import { Meta, StoryFn, StoryObj } from '@storybook/react';
+import { type Meta, type StoryFn, type StoryObj } from '@storybook/react-webpack5';
 import { useCallback, useMemo, useState } from 'react';
-import { CellProps } from 'react-table';
+import { type CellProps } from 'react-table';
 
 import { LinkButton } from '../Button/Button';
 import { Checkbox } from '../Forms/Checkbox';
@@ -9,7 +9,7 @@ import { Icon } from '../Icon/Icon';
 import { Input } from '../Input/Input';
 import { Text } from '../Text/Text';
 
-import { FetchDataArgs, InteractiveTable, InteractiveTableHeaderTooltip } from './InteractiveTable';
+import { type FetchDataArgs, InteractiveTable, type InteractiveTableHeaderTooltip } from './InteractiveTable';
 import mdx from './InteractiveTable.mdx';
 
 const EXCLUDED_PROPS = ['className', 'renderExpandedRow', 'getRowId', 'fetchData'];
@@ -272,6 +272,8 @@ export const WithHeaderTooltips: TableStoryObj = {
   },
 };
 
+const collator = new Intl.Collator();
+
 export const WithControlledSort: StoryFn<typeof InteractiveTable> = (args) => {
   const [data, setData] = useState(pageableData);
 
@@ -289,9 +291,9 @@ export const WithControlledSort: StoryFn<typeof InteractiveTable> = (args) => {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         const bData = b[sort.id as keyof Omit<CarData, 'age' | 'car'>];
         if (sort.desc) {
-          return bData.localeCompare(aData);
+          return collator.compare(bData, aData);
         }
-        return aData.localeCompare(bData);
+        return collator.compare(aData, bData);
       });
       setData(newData);
     }, 300);
@@ -336,4 +338,17 @@ export const WithCustomHeader: TableStoryObj = {
     getRowId: (r) => r.id,
   },
 };
+export const WithColumnWidths: TableStoryObj = {
+  args: {
+    columns: [
+      { id: 'firstName', header: 'First name (fixed 150px)', sortType: 'string', width: 150 },
+      { id: 'lastName', header: 'Last name (min 200px)', sortType: 'string', minWidth: 200 },
+      { id: 'car', header: 'Car (max 120px)', sortType: 'string', maxWidth: 120 },
+      { id: 'age', header: 'Age (80px)', width: 80 },
+    ],
+    data: pageableData.slice(0, 10),
+    getRowId: (r) => r.id,
+  },
+};
+
 export default meta;

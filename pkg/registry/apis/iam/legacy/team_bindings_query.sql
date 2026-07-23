@@ -9,6 +9,8 @@ WHERE
   {{ end }}
   {{ if .Query.TeamUID }}
     AND t.uid = {{ .Arg .Query.TeamUID }}
+  {{ else if .Query.TeamUIDs }}
+    AND t.uid IN ({{ .ArgList .Query.TeamUIDs }})
   {{ end }}
   {{ if .Query.UserUID }}
     AND u.uid = {{ .Arg .Query.UserUID }}

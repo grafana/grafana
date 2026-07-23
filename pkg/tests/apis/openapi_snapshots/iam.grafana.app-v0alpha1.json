@@ -77,767 +77,12 @@
         }
       }
     },
-    "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/externalgroupmappings": {
-      "get": {
-        "tags": [
-          "ExternalGroupMapping"
-        ],
-        "description": "list or watch objects of kind ExternalGroupMapping",
-        "operationId": "listExternalGroupMapping",
-        "parameters": [
-          {
-            "name": "allowWatchBookmarks",
-            "in": "query",
-            "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "continue",
-            "in": "query",
-            "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldSelector",
-            "in": "query",
-            "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "labelSelector",
-            "in": "query",
-            "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersion",
-            "in": "query",
-            "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersionMatch",
-            "in": "query",
-            "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "sendInitialEvents",
-            "in": "query",
-            "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "timeoutSeconds",
-            "in": "query",
-            "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "watch",
-            "in": "query",
-            "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMappingList"
-                }
-              },
-              "application/json;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMappingList"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMappingList"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "list",
-        "x-kubernetes-group-version-kind": {
-          "group": "iam.grafana.app",
-          "version": "v0alpha1",
-          "kind": "ExternalGroupMapping"
-        }
-      },
-      "post": {
-        "tags": [
-          "ExternalGroupMapping"
-        ],
-        "description": "create an ExternalGroupMapping",
-        "operationId": "createExternalGroupMapping",
-        "parameters": [
-          {
-            "name": "dryRun",
-            "in": "query",
-            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldManager",
-            "in": "query",
-            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldValidation",
-            "in": "query",
-            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
-              }
-            },
-            "application/yaml": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
-                }
-              }
-            }
-          },
-          "202": {
-            "description": "Accepted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "post",
-        "x-kubernetes-group-version-kind": {
-          "group": "iam.grafana.app",
-          "version": "v0alpha1",
-          "kind": "ExternalGroupMapping"
-        }
-      },
-      "delete": {
-        "tags": [
-          "ExternalGroupMapping"
-        ],
-        "description": "delete collection of ExternalGroupMapping",
-        "operationId": "deletecollectionExternalGroupMapping",
-        "parameters": [
-          {
-            "name": "continue",
-            "in": "query",
-            "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "dryRun",
-            "in": "query",
-            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldSelector",
-            "in": "query",
-            "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "gracePeriodSeconds",
-            "in": "query",
-            "description": "The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "ignoreStoreReadErrorWithClusterBreakingPotential",
-            "in": "query",
-            "description": "if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "labelSelector",
-            "in": "query",
-            "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "orphanDependents",
-            "in": "query",
-            "description": "Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the \"orphan\" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "propagationPolicy",
-            "in": "query",
-            "description": "Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersion",
-            "in": "query",
-            "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersionMatch",
-            "in": "query",
-            "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "sendInitialEvents",
-            "in": "query",
-            "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "timeoutSeconds",
-            "in": "query",
-            "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "deletecollection",
-        "x-kubernetes-group-version-kind": {
-          "group": "iam.grafana.app",
-          "version": "v0alpha1",
-          "kind": "ExternalGroupMapping"
-        }
-      },
-      "parameters": [
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "pretty",
-          "in": "query",
-          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
-    "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/externalgroupmappings/{name}": {
-      "get": {
-        "tags": [
-          "ExternalGroupMapping"
-        ],
-        "description": "read the specified ExternalGroupMapping",
-        "operationId": "getExternalGroupMapping",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "get",
-        "x-kubernetes-group-version-kind": {
-          "group": "iam.grafana.app",
-          "version": "v0alpha1",
-          "kind": "ExternalGroupMapping"
-        }
-      },
-      "put": {
-        "tags": [
-          "ExternalGroupMapping"
-        ],
-        "description": "replace the specified ExternalGroupMapping",
-        "operationId": "replaceExternalGroupMapping",
-        "parameters": [
-          {
-            "name": "dryRun",
-            "in": "query",
-            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldManager",
-            "in": "query",
-            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldValidation",
-            "in": "query",
-            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
-              }
-            },
-            "application/yaml": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "put",
-        "x-kubernetes-group-version-kind": {
-          "group": "iam.grafana.app",
-          "version": "v0alpha1",
-          "kind": "ExternalGroupMapping"
-        }
-      },
-      "delete": {
-        "tags": [
-          "ExternalGroupMapping"
-        ],
-        "description": "delete an ExternalGroupMapping",
-        "operationId": "deleteExternalGroupMapping",
-        "parameters": [
-          {
-            "name": "dryRun",
-            "in": "query",
-            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "gracePeriodSeconds",
-            "in": "query",
-            "description": "The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "ignoreStoreReadErrorWithClusterBreakingPotential",
-            "in": "query",
-            "description": "if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "orphanDependents",
-            "in": "query",
-            "description": "Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the \"orphan\" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "propagationPolicy",
-            "in": "query",
-            "description": "Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              }
-            }
-          },
-          "202": {
-            "description": "Accepted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "delete",
-        "x-kubernetes-group-version-kind": {
-          "group": "iam.grafana.app",
-          "version": "v0alpha1",
-          "kind": "ExternalGroupMapping"
-        }
-      },
-      "patch": {
-        "tags": [
-          "ExternalGroupMapping"
-        ],
-        "description": "partially update the specified ExternalGroupMapping",
-        "operationId": "updateExternalGroupMapping",
-        "parameters": [
-          {
-            "name": "dryRun",
-            "in": "query",
-            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldManager",
-            "in": "query",
-            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch).",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldValidation",
-            "in": "query",
-            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "force",
-            "in": "query",
-            "description": "Force is going to \"force\" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/apply-patch+yaml": {
-              "schema": {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
-              }
-            },
-            "application/json-patch+json": {
-              "schema": {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
-              }
-            },
-            "application/merge-patch+json": {
-              "schema": {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
-              }
-            },
-            "application/strategic-merge-patch+json": {
-              "schema": {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "patch",
-        "x-kubernetes-group-version-kind": {
-          "group": "iam.grafana.app",
-          "version": "v0alpha1",
-          "kind": "ExternalGroupMapping"
-        }
-      },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the ExternalGroupMapping",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "pretty",
-          "in": "query",
-          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
     "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/searchExternalGroupMappings": {
       "post": {
         "tags": [
           "Search"
         ],
-        "description": "Search ExternalGroupMapping resources by the provided external group IDs.",
+        "description": "Returns the team UIDs that map to any of the provided external group IDs.",
         "operationId": "searchExternalGroupMappings",
         "parameters": [
           {
@@ -879,28 +124,6 @@
               "format": "int64"
             },
             "example": 0
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "sortable field",
-            "schema": {
-              "type": "string"
-            },
-            "examples": {
-              "": {
-                "summary": "default sorting",
-                "value": "externalGroup"
-              },
-              "-externalGroup": {
-                "summary": "externalGroup descending",
-                "value": "-externalGroup"
-              },
-              "externalGroup": {
-                "summary": "externalGroup ascending",
-                "value": "externalGroup"
-              }
-            }
           }
         ],
         "requestBody": {
@@ -955,9 +178,41 @@
           {
             "name": "query",
             "in": "query",
-            "description": "team name query string",
+            "description": "team name query string (fuzzy/partial match). Mutually exclusive with title.",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "description": "exact match on team name. Mutually exclusive with query.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uid",
+            "in": "query",
+            "description": "filter by team UIDs. Mutually exclusive with teamId.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "teamId",
+            "in": "query",
+            "description": "filter by legacy team IDs. Deprecated: use uid instead. Mutually exclusive with uid.",
+            "deprecated": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int64"
+              }
             }
           },
           {
@@ -1174,15 +429,6 @@
         "operationId": "listServiceAccount",
         "parameters": [
           {
-            "name": "allowWatchBookmarks",
-            "in": "query",
-            "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
             "name": "continue",
             "in": "query",
             "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
@@ -1224,24 +470,6 @@
             "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
             "schema": {
               "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersionMatch",
-            "in": "query",
-            "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "sendInitialEvents",
-            "in": "query",
-            "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
-            "schema": {
-              "type": "boolean",
               "uniqueItems": true
             }
           },
@@ -1391,155 +619,6 @@
           }
         },
         "x-kubernetes-action": "post",
-        "x-kubernetes-group-version-kind": {
-          "group": "iam.grafana.app",
-          "version": "v0alpha1",
-          "kind": "ServiceAccount"
-        }
-      },
-      "delete": {
-        "tags": [
-          "ServiceAccount"
-        ],
-        "description": "delete collection of ServiceAccount",
-        "operationId": "deletecollectionServiceAccount",
-        "parameters": [
-          {
-            "name": "continue",
-            "in": "query",
-            "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "dryRun",
-            "in": "query",
-            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldSelector",
-            "in": "query",
-            "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "gracePeriodSeconds",
-            "in": "query",
-            "description": "The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "ignoreStoreReadErrorWithClusterBreakingPotential",
-            "in": "query",
-            "description": "if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "labelSelector",
-            "in": "query",
-            "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "orphanDependents",
-            "in": "query",
-            "description": "Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the \"orphan\" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "propagationPolicy",
-            "in": "query",
-            "description": "Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersion",
-            "in": "query",
-            "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersionMatch",
-            "in": "query",
-            "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "sendInitialEvents",
-            "in": "query",
-            "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "timeoutSeconds",
-            "in": "query",
-            "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
           "version": "v0alpha1",
@@ -1927,13 +1006,32 @@
         ],
         "description": "connect GET requests to tokens of ServiceAccount",
         "operationId": "getServiceAccountTokens",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "maximum number of tokens to return in a single page",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "continue",
+            "in": "query",
+            "description": "continue token returned by a previous list response to fetch the next page",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.ServiceAccountTokenList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ListServiceAccountTokensBody"
                 }
               }
             }
@@ -1943,418 +1041,48 @@
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
           "version": "v0alpha1",
-          "kind": "ServiceAccountTokenList"
-        }
-      },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the ServiceAccountTokenList",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
-    "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/teambindings": {
-      "get": {
-        "tags": [
-          "TeamBinding"
-        ],
-        "description": "list or watch objects of kind TeamBinding",
-        "operationId": "listTeamBinding",
-        "parameters": [
-          {
-            "name": "allowWatchBookmarks",
-            "in": "query",
-            "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "continue",
-            "in": "query",
-            "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldSelector",
-            "in": "query",
-            "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "labelSelector",
-            "in": "query",
-            "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersion",
-            "in": "query",
-            "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersionMatch",
-            "in": "query",
-            "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "sendInitialEvents",
-            "in": "query",
-            "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "timeoutSeconds",
-            "in": "query",
-            "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "watch",
-            "in": "query",
-            "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingList"
-                }
-              },
-              "application/json;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingList"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingList"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "list",
-        "x-kubernetes-group-version-kind": {
-          "group": "iam.grafana.app",
-          "version": "v0alpha1",
-          "kind": "TeamBinding"
+          "kind": "ListServiceAccountTokensResponse"
         }
       },
       "post": {
         "tags": [
-          "TeamBinding"
+          "ServiceAccount"
         ],
-        "description": "create a TeamBinding",
-        "operationId": "createTeamBinding",
-        "parameters": [
-          {
-            "name": "dryRun",
-            "in": "query",
-            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldManager",
-            "in": "query",
-            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldValidation",
-            "in": "query",
-            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          }
-        ],
+        "description": "connect POST requests to tokens of ServiceAccount",
+        "operationId": "createServiceAccountTokens",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
-              }
-            },
-            "application/yaml": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateServiceAccountTokenRequestBody"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
-                }
-              }
-            }
-          },
           "201": {
-            "description": "Created",
+            "description": "Token created",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
-                }
-              }
-            }
-          },
-          "202": {
-            "description": "Accepted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateServiceAccountTokenBody"
                 }
               }
             }
           }
         },
-        "x-kubernetes-action": "post",
+        "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
           "version": "v0alpha1",
-          "kind": "TeamBinding"
-        }
-      },
-      "delete": {
-        "tags": [
-          "TeamBinding"
-        ],
-        "description": "delete collection of TeamBinding",
-        "operationId": "deletecollectionTeamBinding",
-        "parameters": [
-          {
-            "name": "continue",
-            "in": "query",
-            "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "dryRun",
-            "in": "query",
-            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldSelector",
-            "in": "query",
-            "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "gracePeriodSeconds",
-            "in": "query",
-            "description": "The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "ignoreStoreReadErrorWithClusterBreakingPotential",
-            "in": "query",
-            "description": "if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "labelSelector",
-            "in": "query",
-            "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "orphanDependents",
-            "in": "query",
-            "description": "Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the \"orphan\" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "propagationPolicy",
-            "in": "query",
-            "description": "Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersion",
-            "in": "query",
-            "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersionMatch",
-            "in": "query",
-            "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "sendInitialEvents",
-            "in": "query",
-            "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "timeoutSeconds",
-            "in": "query",
-            "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "deletecollection",
-        "x-kubernetes-group-version-kind": {
-          "group": "iam.grafana.app",
-          "version": "v0alpha1",
-          "kind": "TeamBinding"
+          "kind": "ListServiceAccountTokensResponse"
         }
       },
       "parameters": [
         {
-          "name": "namespace",
+          "name": "name",
           "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
+          "description": "name of the ServiceAccount",
           "required": true,
           "schema": {
             "type": "string",
@@ -2362,9 +1090,10 @@
           }
         },
         {
-          "name": "pretty",
-          "in": "query",
-          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
           "schema": {
             "type": "string",
             "uniqueItems": true
@@ -2372,331 +1101,62 @@
         }
       ]
     },
-    "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/teambindings/{name}": {
+    "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/serviceaccounts/{name}/tokens/{tokenName}": {
       "get": {
         "tags": [
-          "TeamBinding"
+          "ServiceAccount"
         ],
-        "description": "read the specified TeamBinding",
-        "operationId": "getTeamBinding",
+        "description": "connect GET requests to tokens of ServiceAccount",
+        "operationId": "getServiceAccountTokensWithPath",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetServiceAccountTokenBody"
                 }
               }
             }
           }
         },
-        "x-kubernetes-action": "get",
+        "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
           "version": "v0alpha1",
-          "kind": "TeamBinding"
-        }
-      },
-      "put": {
-        "tags": [
-          "TeamBinding"
-        ],
-        "description": "replace the specified TeamBinding",
-        "operationId": "replaceTeamBinding",
-        "parameters": [
-          {
-            "name": "dryRun",
-            "in": "query",
-            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldManager",
-            "in": "query",
-            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldValidation",
-            "in": "query",
-            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
-              }
-            },
-            "application/yaml": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "put",
-        "x-kubernetes-group-version-kind": {
-          "group": "iam.grafana.app",
-          "version": "v0alpha1",
-          "kind": "TeamBinding"
+          "kind": "ListServiceAccountTokensResponse"
         }
       },
       "delete": {
         "tags": [
-          "TeamBinding"
+          "ServiceAccount"
         ],
-        "description": "delete a TeamBinding",
-        "operationId": "deleteTeamBinding",
-        "parameters": [
-          {
-            "name": "dryRun",
-            "in": "query",
-            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "gracePeriodSeconds",
-            "in": "query",
-            "description": "The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "ignoreStoreReadErrorWithClusterBreakingPotential",
-            "in": "query",
-            "description": "if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "orphanDependents",
-            "in": "query",
-            "description": "Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the \"orphan\" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "propagationPolicy",
-            "in": "query",
-            "description": "Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          }
-        ],
+        "description": "connect DELETE requests to tokens of ServiceAccount",
+        "operationId": "deleteServiceAccountTokensWithPath",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              }
-            }
-          },
-          "202": {
-            "description": "Accepted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.DeleteServiceAccountTokenBody"
                 }
               }
             }
           }
         },
-        "x-kubernetes-action": "delete",
+        "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
           "version": "v0alpha1",
-          "kind": "TeamBinding"
-        }
-      },
-      "patch": {
-        "tags": [
-          "TeamBinding"
-        ],
-        "description": "partially update the specified TeamBinding",
-        "operationId": "updateTeamBinding",
-        "parameters": [
-          {
-            "name": "dryRun",
-            "in": "query",
-            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldManager",
-            "in": "query",
-            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch).",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldValidation",
-            "in": "query",
-            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "force",
-            "in": "query",
-            "description": "Force is going to \"force\" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/apply-patch+yaml": {
-              "schema": {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
-              }
-            },
-            "application/json-patch+json": {
-              "schema": {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
-              }
-            },
-            "application/merge-patch+json": {
-              "schema": {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
-              }
-            },
-            "application/strategic-merge-patch+json": {
-              "schema": {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "patch",
-        "x-kubernetes-group-version-kind": {
-          "group": "iam.grafana.app",
-          "version": "v0alpha1",
-          "kind": "TeamBinding"
+          "kind": "ListServiceAccountTokensResponse"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the TeamBinding",
+          "description": "name of the ServiceAccount",
           "required": true,
           "schema": {
             "type": "string",
@@ -2714,9 +1174,10 @@
           }
         },
         {
-          "name": "pretty",
-          "in": "query",
-          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "name": "tokenName",
+          "in": "path",
+          "description": "name of the token to operate on",
+          "required": true,
           "schema": {
             "type": "string",
             "uniqueItems": true
@@ -2733,15 +1194,6 @@
         "operationId": "listTeam",
         "parameters": [
           {
-            "name": "allowWatchBookmarks",
-            "in": "query",
-            "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
             "name": "continue",
             "in": "query",
             "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
@@ -2783,24 +1235,6 @@
             "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
             "schema": {
               "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersionMatch",
-            "in": "query",
-            "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "sendInitialEvents",
-            "in": "query",
-            "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
-            "schema": {
-              "type": "boolean",
               "uniqueItems": true
             }
           },
@@ -2950,155 +1384,6 @@
           }
         },
         "x-kubernetes-action": "post",
-        "x-kubernetes-group-version-kind": {
-          "group": "iam.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Team"
-        }
-      },
-      "delete": {
-        "tags": [
-          "Team"
-        ],
-        "description": "delete collection of Team",
-        "operationId": "deletecollectionTeam",
-        "parameters": [
-          {
-            "name": "continue",
-            "in": "query",
-            "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "dryRun",
-            "in": "query",
-            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldSelector",
-            "in": "query",
-            "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "gracePeriodSeconds",
-            "in": "query",
-            "description": "The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "ignoreStoreReadErrorWithClusterBreakingPotential",
-            "in": "query",
-            "description": "if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "labelSelector",
-            "in": "query",
-            "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "orphanDependents",
-            "in": "query",
-            "description": "Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the \"orphan\" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "propagationPolicy",
-            "in": "query",
-            "description": "Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersion",
-            "in": "query",
-            "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersionMatch",
-            "in": "query",
-            "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "sendInitialEvents",
-            "in": "query",
-            "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "timeoutSeconds",
-            "in": "query",
-            "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
           "version": "v0alpha1",
@@ -3479,6 +1764,55 @@
         }
       ]
     },
+    "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/teams/{name}/addmember": {
+      "post": {
+        "tags": [
+          "Team"
+        ],
+        "description": "connect POST requests to addmember of Team",
+        "operationId": "createTeamAddmember",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.TeamMemberList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "iam.grafana.app",
+          "version": "v0alpha1",
+          "kind": "TeamMemberList"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the TeamMemberList",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/teams/{name}/groups": {
       "get": {
         "tags": [
@@ -3641,6 +1975,55 @@
         }
       ]
     },
+    "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/teams/{name}/removemember": {
+      "post": {
+        "tags": [
+          "Team"
+        ],
+        "description": "connect POST requests to removemember of Team",
+        "operationId": "createTeamRemovemember",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.TeamMemberList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "iam.grafana.app",
+          "version": "v0alpha1",
+          "kind": "TeamMemberList"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the TeamMemberList",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/users": {
       "get": {
         "tags": [
@@ -3649,15 +2032,6 @@
         "description": "list or watch objects of kind User",
         "operationId": "listUser",
         "parameters": [
-          {
-            "name": "allowWatchBookmarks",
-            "in": "query",
-            "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
           {
             "name": "continue",
             "in": "query",
@@ -3700,24 +2074,6 @@
             "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
             "schema": {
               "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersionMatch",
-            "in": "query",
-            "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "sendInitialEvents",
-            "in": "query",
-            "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
-            "schema": {
-              "type": "boolean",
               "uniqueItems": true
             }
           },
@@ -3867,155 +2223,6 @@
           }
         },
         "x-kubernetes-action": "post",
-        "x-kubernetes-group-version-kind": {
-          "group": "iam.grafana.app",
-          "version": "v0alpha1",
-          "kind": "User"
-        }
-      },
-      "delete": {
-        "tags": [
-          "User"
-        ],
-        "description": "delete collection of User",
-        "operationId": "deletecollectionUser",
-        "parameters": [
-          {
-            "name": "continue",
-            "in": "query",
-            "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "dryRun",
-            "in": "query",
-            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldSelector",
-            "in": "query",
-            "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "gracePeriodSeconds",
-            "in": "query",
-            "description": "The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "ignoreStoreReadErrorWithClusterBreakingPotential",
-            "in": "query",
-            "description": "if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "labelSelector",
-            "in": "query",
-            "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "orphanDependents",
-            "in": "query",
-            "description": "Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the \"orphan\" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "propagationPolicy",
-            "in": "query",
-            "description": "Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersion",
-            "in": "query",
-            "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersionMatch",
-            "in": "query",
-            "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "sendInitialEvents",
-            "in": "query",
-            "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "timeoutSeconds",
-            "in": "query",
-            "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
           "version": "v0alpha1",
@@ -4667,7 +2874,7 @@
           {
             "name": "limit",
             "in": "query",
-            "description": "number of results to return",
+            "description": "maximum number of results to return per page",
             "schema": {
               "type": "integer",
               "format": "int64"
@@ -4675,24 +2882,12 @@
             "example": 30
           },
           {
-            "name": "page",
+            "name": "continue",
             "in": "query",
-            "description": "page number (starting from 1)",
+            "description": "Opaque token from a previous response's metadata.continue; resumes listing after the last team returned. The token is base64 ('+', '/', '=' may appear) — clients MUST URL-encode it when appending to the query string, otherwise '+' will silently decode to a space on the server and pagination will fail.",
             "schema": {
-              "type": "integer",
-              "format": "int64"
-            },
-            "example": 1
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "number of results to skip",
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            },
-            "example": 0
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -4701,7 +2896,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.UserTeamList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetUserTeamsResponse"
                 }
               }
             }
@@ -4736,10 +2931,317 @@
           }
         }
       ]
+    },
+    "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/users/~": {
+      "get": {
+        "tags": [
+          "Display"
+        ],
+        "description": "Show display information for the currently authenticated identity",
+        "operationId": "getCurrentUserDisplay",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.Display"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateSearchExternalGroupMappingsBody": {
+        "type": "object",
+        "required": [
+          "teams",
+          "totalHits"
+        ],
+        "properties": {
+          "teams": {
+            "description": "Deduplicated team UIDs whose spec.externalGroups intersect the request set.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "totalHits": {
+            "description": "Raw match count; may exceed len(teams) in legacy storage mode where one team can match through multiple group rows. Use to drive pagination, not as a team count.",
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateSearchExternalGroupMappingsResponse": {
+        "type": "object",
+        "required": [
+          "teams",
+          "totalHits"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "teams": {
+            "description": "Deduplicated team UIDs whose spec.externalGroups intersect the request set.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "totalHits": {
+            "description": "Raw match count; may exceed len(teams) in legacy storage mode where one team can match through multiple group rows. Use to drive pagination, not as a team count.",
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateServiceAccountTokenBody": {
+        "type": "object",
+        "required": [
+          "token",
+          "serviceAccountTokenName",
+          "expires"
+        ],
+        "properties": {
+          "expires": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "serviceAccountTokenName": {
+            "type": "string",
+            "default": ""
+          },
+          "token": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateServiceAccountTokenRequestBody": {
+        "type": "object",
+        "required": [
+          "tokenName"
+        ],
+        "properties": {
+          "expiresInSeconds": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tokenName": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateServiceAccountTokenResponse": {
+        "type": "object",
+        "required": [
+          "token",
+          "serviceAccountTokenName",
+          "expires"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "expires": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "serviceAccountTokenName": {
+            "type": "string",
+            "default": ""
+          },
+          "token": {
+            "type": "string",
+            "default": ""
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "CreateServiceAccountTokenResponse",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateTeamMemberBody": {
+        "type": "object",
+        "required": [
+          "team",
+          "user",
+          "permission",
+          "external"
+        ],
+        "properties": {
+          "external": {
+            "description": "external reflects the stored origin of the membership after the operation. On a re-add this may differ from the value submitted in the request; clients that care about origin should diff request vs response.",
+            "type": "boolean",
+            "default": false
+          },
+          "permission": {
+            "type": "string",
+            "default": ""
+          },
+          "team": {
+            "type": "string",
+            "default": ""
+          },
+          "user": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateTeamMemberResponse": {
+        "type": "object",
+        "required": [
+          "team",
+          "user",
+          "permission",
+          "external"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "external": {
+            "description": "external reflects the stored origin of the membership after the operation. On a re-add this may differ from the value submitted in the request; clients that care about origin should diff request vs response.",
+            "type": "boolean",
+            "default": false
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "permission": {
+            "type": "string",
+            "default": ""
+          },
+          "team": {
+            "type": "string",
+            "default": ""
+          },
+          "user": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.DeleteServiceAccountTokenBody": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.DeleteServiceAccountTokenResponse": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "message": {
+            "type": "string",
+            "default": ""
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "DeleteServiceAccountTokenResponse",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.DeleteTeamMemberBody": {
+        "type": "object",
+        "required": [
+          "team",
+          "user"
+        ],
+        "properties": {
+          "team": {
+            "type": "string",
+            "default": ""
+          },
+          "user": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.DeleteTeamMemberResponse": {
+        "type": "object",
+        "required": [
+          "team",
+          "user"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "team": {
+            "type": "string",
+            "default": ""
+          },
+          "user": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping": {
         "type": "object",
         "required": [
@@ -4756,30 +3258,13 @@
             "type": "string"
           },
           "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
-              }
-            ]
+            "default": {}
           },
           "spec": {
             "description": "Spec is the spec of the ExternalGroupMapping",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMappingSpec"
-              }
-            ]
+            "default": {}
           }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "iam.grafana.app",
-            "kind": "ExternalGroupMapping",
-            "version": "v0alpha1"
-          }
-        ]
+        }
       },
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMappingList": {
         "type": "object",
@@ -4795,12 +3280,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMapping"
-                }
-              ]
+              "default": {}
             }
           },
           "kind": {
@@ -4808,21 +3288,9 @@
             "type": "string"
           },
           "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
+            "default": {}
           }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "iam.grafana.app",
-            "kind": "ExternalGroupMappingList",
-            "version": "v0alpha1"
-          }
-        ]
+        }
       },
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMappingSpec": {
         "type": "object",
@@ -4836,12 +3304,7 @@
             "default": ""
           },
           "teamRef": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ExternalGroupMappingTeamRef"
-              }
-            ]
+            "default": {}
           }
         }
       },
@@ -4967,6 +3430,10 @@
             "type": "string",
             "default": ""
           },
+          "internalId": {
+            "type": "integer",
+            "format": "int64"
+          },
           "memberCount": {
             "type": "integer",
             "format": "int64"
@@ -5034,6 +3501,9 @@
           "lastSeenAt",
           "lastSeenAtAge",
           "provisioned",
+          "disabled",
+          "internalId",
+          "created",
           "score"
         ],
         "properties": {
@@ -5044,9 +3514,33 @@
               "default": false
             }
           },
+          "created": {
+            "description": "Creation timestamp, in epoch milliseconds.",
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "disabled": {
+            "type": "boolean",
+            "default": false
+          },
           "email": {
             "type": "string",
             "default": ""
+          },
+          "externalAuthModules": {
+            "description": "Auth module identifiers the user is externally synced with.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "internalId": {
+            "description": "Deprecated internal (legacy SQL) id of the user.",
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           },
           "lastSeenAt": {
             "type": "integer",
@@ -5084,56 +3578,107 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetTeamGroupsBody": {
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetServiceAccountTokenBody": {
         "type": "object",
         "required": [
-          "items"
+          "body"
         ],
         "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
+          "body": {
+            "default": {}
           }
         }
       },
-      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetTeamGroupsExternalGroupMapping": {
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetServiceAccountTokenResponse": {
         "type": "object",
         "required": [
-          "name",
-          "externalGroup"
-        ],
-        "properties": {
-          "externalGroup": {
-            "type": "string",
-            "default": ""
-          },
-          "name": {
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetTeamGroupsResponse": {
-        "type": "object",
-        "required": [
-          "items"
+          "body"
         ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
           },
-          "items": {
+          "body": {
+            "default": {}
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetServiceAccountTokenToken": {
+        "type": "object",
+        "required": [
+          "title",
+          "revoked",
+          "expires",
+          "created",
+          "updated",
+          "lastUsed"
+        ],
+        "properties": {
+          "created": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "expires": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "lastUsed": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "revoked": {
+            "type": "boolean",
+            "default": false
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          },
+          "updated": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetTeamGroupsBody": {
+        "type": "object",
+        "required": [
+          "externalGroups"
+        ],
+        "properties": {
+          "externalGroups": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetTeamGroupsExternalGroupMapping"
-                }
-              ]
+              "type": "string",
+              "default": ""
+            }
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetTeamGroupsResponse": {
+        "type": "object",
+        "required": [
+          "externalGroups"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "externalGroups": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
             }
           },
           "kind": {
@@ -5229,6 +3774,7 @@
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetUserTeamsResponse": {
         "type": "object",
         "required": [
+          "metadata",
           "items"
         ],
         "properties": {
@@ -5245,6 +3791,9 @@
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
             "type": "string"
+          },
+          "metadata": {
+            "default": {}
           }
         }
       },
@@ -5477,6 +4026,105 @@
             "description": "RBAC scope (e.g: \"dashboards:uid:dash1\")",
             "type": "string",
             "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ListServiceAccountTokensBody": {
+        "type": "object",
+        "required": [
+          "items",
+          "continue"
+        ],
+        "properties": {
+          "continue": {
+            "type": "string",
+            "default": ""
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ListServiceAccountTokensResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "continue"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "continue": {
+            "type": "string",
+            "default": ""
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ListServiceAccountTokensToken"
+                }
+              ]
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "ListServiceAccountTokensResponse",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ListServiceAccountTokensToken": {
+        "type": "object",
+        "required": [
+          "title",
+          "revoked",
+          "expires",
+          "created",
+          "updated",
+          "lastUsed"
+        ],
+        "properties": {
+          "created": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "expires": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "lastUsed": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "revoked": {
+            "type": "boolean",
+            "default": false
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          },
+          "updated": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           }
         }
       },
@@ -6004,30 +4652,13 @@
             "type": "string"
           },
           "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
-              }
-            ]
+            "default": {}
           },
           "spec": {
             "description": "Spec is the spec of the TeamBinding",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingSpec"
-              }
-            ]
+            "default": {}
           }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "iam.grafana.app",
-            "kind": "TeamBinding",
-            "version": "v0alpha1"
-          }
-        ]
+        }
       },
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingList": {
         "type": "object",
@@ -6043,12 +4674,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
-                }
-              ]
+              "default": {}
             }
           },
           "kind": {
@@ -6056,21 +4682,9 @@
             "type": "string"
           },
           "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
+            "default": {}
           }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "iam.grafana.app",
-            "kind": "TeamBindingList",
-            "version": "v0alpha1"
-          }
-        ]
+        }
       },
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingSpec": {
         "type": "object",
@@ -6091,20 +4705,10 @@
             "default": ""
           },
           "subject": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingspecSubject"
-              }
-            ]
+            "default": {}
           },
           "teamRef": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingTeamRef"
-              }
-            ]
+            "default": {}
           }
         }
       },
@@ -6270,22 +4874,72 @@
           "title",
           "email",
           "provisioned",
-          "externalUID"
+          "externalUID",
+          "members"
         ],
         "properties": {
           "email": {
             "type": "string",
             "default": ""
           },
+          "externalGroups": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          },
           "externalUID": {
             "type": "string",
             "default": ""
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamTeamMember"
+                }
+              ]
+            }
           },
           "provisioned": {
             "type": "boolean",
             "default": false
           },
           "title": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamTeamMember": {
+        "type": "object",
+        "required": [
+          "kind",
+          "name",
+          "permission",
+          "external"
+        ],
+        "properties": {
+          "external": {
+            "description": "whether the member was added externally (e.g. team sync)",
+            "type": "boolean",
+            "default": false
+          },
+          "kind": {
+            "description": "kind of the identity",
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "description": "uid of the identity",
+            "type": "string",
+            "default": ""
+          },
+          "permission": {
+            "description": "permission of the identity in the team",
             "type": "string",
             "default": ""
           }
@@ -6340,6 +4994,26 @@
             "version": "v0alpha1"
           }
         ]
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserExternalAuthInfo": {
+        "type": "object",
+        "required": [
+          "module",
+          "authID"
+        ],
+        "properties": {
+          "authID": {
+            "type": "string",
+            "default": ""
+          },
+          "externalUID": {
+            "type": "string"
+          },
+          "module": {
+            "type": "string",
+            "default": ""
+          }
+        }
       },
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserList": {
         "type": "object",
@@ -6408,6 +5082,17 @@
           "emailVerified": {
             "type": "boolean",
             "default": false
+          },
+          "externalAuthInfo": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserExternalAuthInfo"
+                }
+              ]
+            }
           },
           "grafanaAdmin": {
             "type": "boolean",
@@ -6633,48 +5318,6 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.ServiceAccountToken": {
-        "type": "object",
-        "required": [
-          "created"
-        ],
-        "properties": {
-          "created": {},
-          "expires": {},
-          "lastUsed": {},
-          "name": {
-            "type": "string"
-          },
-          "revoked": {
-            "type": "boolean"
-          }
-        }
-      },
-      "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.ServiceAccountTokenList": {
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
-          }
-        }
-      },
       "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.TeamMember": {
         "type": "object",
         "required": [
@@ -6852,83 +5495,6 @@
           }
         }
       },
-      "github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef": {
-        "type": "object",
-        "required": [
-          "type",
-          "name"
-        ],
-        "properties": {
-          "name": {
-            "description": "Name is the unique identifier for identity, guaranteed to be a unique value for the type within a namespace.",
-            "type": "string",
-            "default": ""
-          },
-          "type": {
-            "description": "Type of identity e.g. \"user\". For a full list see https://github.com/grafana/authlib/blob/d6737a7dc8f55e9d42834adb83b5da607ceed293/types/type.go#L15",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccountToken": {
-        "type": "object",
-        "required": [
-          "created"
-        ],
-        "properties": {
-          "created": {
-            "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time"
-          },
-          "expires": {
-            "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time"
-          },
-          "lastUsed": {
-            "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time"
-          },
-          "name": {
-            "type": "string"
-          },
-          "revoked": {
-            "type": "boolean"
-          }
-        }
-      },
-      "github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccountTokenList": {
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.ServiceAccountToken"
-                }
-              ]
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
-          }
-        }
-      },
       "github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamMember": {
         "type": "object",
         "required": [
@@ -6953,7 +5519,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.IdentityRef"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.IdentityRef"
               }
             ]
           },

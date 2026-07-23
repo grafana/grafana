@@ -2,12 +2,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
-import { FetchError, isFetchError } from '@grafana/runtime';
-import { LibraryPanel } from '@grafana/schema';
-import { Button, Field, Input, Modal, Stack } from '@grafana/ui';
+import { type FetchError, isFetchError } from '@grafana/runtime';
+import { type LibraryPanel } from '@grafana/schema';
+import { Button, Field, Input, Stack } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
-import { PanelModel } from '../../../dashboard/state/PanelModel';
+import { type PanelModel } from '../../../dashboard/state/PanelModel';
 import { getLibraryPanelByName } from '../../state/api';
 import { usePanelSave } from '../../utils/usePanelSave';
 
@@ -95,21 +95,5 @@ export const AddLibraryPanelContents = ({
         </Button>
       </Stack>
     </>
-  );
-};
-
-interface Props extends AddLibraryPanelContentsProps {
-  isOpen?: boolean;
-}
-
-export const AddLibraryPanelModal = ({ isOpen = false, panel, initialFolderUid, ...props }: Props) => {
-  return (
-    <Modal
-      title={t('library-panels.add-library-panel-modal.title-create-library-panel', 'Create library panel')}
-      isOpen={isOpen}
-      onDismiss={props.onDismiss}
-    >
-      <AddLibraryPanelContents panel={panel} initialFolderUid={initialFolderUid} onDismiss={props.onDismiss} />
-    </Modal>
   );
 };

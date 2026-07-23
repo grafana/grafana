@@ -15,9 +15,65 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		Settings{}.OpenAPIModelName():     schema_pkg_apis_appplugin_v0alpha1_Settings(ref),
-		SettingsList{}.OpenAPIModelName(): schema_pkg_apis_appplugin_v0alpha1_SettingsList(ref),
-		SettingsSpec{}.OpenAPIModelName(): schema_pkg_apis_appplugin_v0alpha1_SettingsSpec(ref),
+		HealthCheckResult{}.OpenAPIModelName(): schema_pkg_apis_appplugin_v0alpha1_HealthCheckResult(ref),
+		Settings{}.OpenAPIModelName():          schema_pkg_apis_appplugin_v0alpha1_Settings(ref),
+		SettingsList{}.OpenAPIModelName():      schema_pkg_apis_appplugin_v0alpha1_SettingsList(ref),
+		SettingsSpec{}.OpenAPIModelName():      schema_pkg_apis_appplugin_v0alpha1_SettingsSpec(ref),
+	}
+}
+
+func schema_pkg_apis_appplugin_v0alpha1_HealthCheckResult(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The string description",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"code": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Explicit status code",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional description for the data source",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"details": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Spec depends on the plugin",
+							Ref:         ref(commonv0alpha1.Unstructured{}.OpenAPIModelName()),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			commonv0alpha1.Unstructured{}.OpenAPIModelName()},
 	}
 }
 
@@ -53,11 +109,26 @@ func schema_pkg_apis_appplugin_v0alpha1_Settings(ref common.ReferenceCallback) c
 							Ref:     ref(SettingsSpec{}.OpenAPIModelName()),
 						},
 					},
+					"secure": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Secure values allows setting values that are never shown to users. The returned properties are only the names of the configured values.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			SettingsSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			commonv0alpha1.InlineSecureValue{}.OpenAPIModelName(), SettingsSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -134,23 +205,8 @@ func schema_pkg_apis_appplugin_v0alpha1_SettingsSpec(ref common.ReferenceCallbac
 							Ref: ref(commonv0alpha1.Unstructured{}.OpenAPIModelName()),
 						},
 					},
-					"secureJsonFields": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: false,
-										Type:    []string{"boolean"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
 				},
-				Required: []string{"enabled", "pinned", "jsonData", "secureJsonFields"},
+				Required: []string{"enabled", "pinned", "jsonData"},
 			},
 		},
 		Dependencies: []string{

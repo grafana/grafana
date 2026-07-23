@@ -3,9 +3,13 @@ package server
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/sync/semaphore"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	authnlib "github.com/grafana/authlib/authn"
@@ -14,12 +18,14 @@ import (
 	"github.com/openfga/openfga/pkg/storage"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	clientrest "k8s.io/client-go/rest"
 
 	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/clientauth"
-	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -29,11 +35,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/server/reconciler"
-	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 const cacheCleanInterval = 2 * time.Minute
+const maxContextualTuplesPerRequest = 100
 
 var _ authzv1.AuthzServiceServer = (*Server)(nil)
 var _ authzextv1.AuthzExtentionServiceServer = (*Server)(nil)
@@ -53,7 +59,8 @@ type Server struct {
 
 	cfg      setting.ZanzanaServerSettings
 	stores   map[string]zanzana.StoreInfo
-	storesMU *sync.Mutex
+	storesMU sync.RWMutex
+	storeSF  singleflight.Group
 	cache    *localcache.CacheService
 
 	mtReconciler zanzana.MTReconciler
@@ -61,37 +68,31 @@ type Server struct {
 	logger  log.Logger
 	tracer  tracing.Tracer
 	metrics *metrics
+
+	globalSem         *semaphore.Weighted
+	namespaceLimiters sync.Map
+	nsLimiterSize     int64
 }
 
-func NewEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider) (*Server, error) {
-	store, err := zStore.NewEmbeddedStore(cfg, db, logger)
-	if err != nil {
-		return nil, fmt.Errorf("failed to start zanzana: %w", err)
-	}
-
+func NewEmbeddedZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource, elector leaderelection.Elector) (*Server, error) {
 	openfga, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	return newServer(cfg, openfga, store, logger, tracer, reg, restConfig)
+	return newServer(cfg, openfga, store, logger, tracer, reg, restConfig, reconcileCRDs, elector)
 }
 
-func NewZanzanaServer(cfg *setting.Cfg, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) (*Server, error) {
-	store, err := zStore.NewStore(cfg, logger)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initilize zanana store: %w", err)
-	}
-
+func NewZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, reconcileCRDs []schema.GroupVersionResource, elector leaderelection.Elector) (*Server, error) {
 	openfgaServer, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	return newServer(cfg, openfgaServer, store, logger, tracer, reg, nil)
+	return newServer(cfg, openfgaServer, store, logger, tracer, reg, nil, reconcileCRDs, elector)
 }
 
-func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider) (*Server, error) {
+func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource, elector leaderelection.Elector) (*Server, error) {
 	channel := &inprocgrpc.Channel{}
 	openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
 	openFGAClient := openfgav1.NewOpenFGAServiceClient(channel)
@@ -102,13 +103,17 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 		openFGAServer: openfga,
 		openFGAClient: openFGAClient,
 		store:         store,
-		storesMU:      &sync.Mutex{},
 		stores:        make(map[string]zanzana.StoreInfo),
 		cfg:           zanzanaCfg,
 		cache:         localcache.New(zanzanaCfg.CacheSettings.CheckQueryCacheTTL, cacheCleanInterval),
 		logger:        logger,
 		tracer:        tracer,
 		metrics:       newZanzanaServerMetrics(reg),
+		nsLimiterSize: int64(zanzanaCfg.MaxConcurrentRequestsPerNamespace),
+	}
+
+	if zanzanaCfg.MaxConcurrentRequests > 0 {
+		s.globalSem = semaphore.NewWeighted(int64(zanzanaCfg.MaxConcurrentRequests))
 	}
 
 	var clientFactory resources.ClientFactory
@@ -148,6 +153,12 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 				"iam.grafana.app":    cfg.ZanzanaReconciler.IAMAPIServerURL,
 			}
 
+			// The setting apiserver is optional: only wire it when configured. When set,
+			// the reconciler reads per-namespace anonymous-access config from it.
+			if cfg.ZanzanaReconciler.SettingAPIServerURL != "" {
+				apiServerURLs["setting.grafana.app"] = cfg.ZanzanaReconciler.SettingAPIServerURL
+			}
+
 			for group, url := range apiServerURLs {
 				// Each API group gets its own audience for proper token scoping
 				audienceProvider := clientauth.NewStaticAudienceProvider(group)
@@ -177,31 +188,6 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 
 	var mtReconciler zanzana.MTReconciler
 	if cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
-		reconcilerLogger := log.New("zanzana.mt-reconciler")
-
-		var leaderElector reconciler.LeaderElector
-		if cfg.ZanzanaReconciler.LeaderElectionEnabled {
-			restCfg, err := clientrest.InClusterConfig()
-			if err != nil {
-				return nil, fmt.Errorf("failed to get in-cluster config for leader election: %w", err)
-			}
-			leaderElector, err = reconciler.NewKubernetesLeaderElector(
-				restCfg,
-				cfg.ZanzanaReconciler.LeaderElectionLeaseName,
-				cfg.ZanzanaReconciler.LeaderElectionNamespace,
-				cfg.ZanzanaReconciler.LeaderElectionIdentity,
-				cfg.ZanzanaReconciler.LeaseDuration,
-				cfg.ZanzanaReconciler.RenewDeadline,
-				cfg.ZanzanaReconciler.RetryPeriod,
-				reconcilerLogger,
-			)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create leader elector: %w", err)
-			}
-		} else {
-			leaderElector = reconciler.NewNoopLeaderElector()
-		}
-
 		mtReconciler = reconciler.NewReconciler(
 			s,
 			clientFactory,
@@ -209,13 +195,15 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 				Workers:             cfg.ZanzanaReconciler.Workers,
 				Interval:            cfg.ZanzanaReconciler.Interval,
 				WriteBatchSize:      cfg.ZanzanaReconciler.WriteBatchSize,
-				ZanzanaReadPageSize: cfg.ZanzanaReconciler.ZanzanaReadPageSize,
+				ZanzanaReadPageSize: int(cfg.ZanzanaServer.ReadPageSize),
 				QueueSize:           cfg.ZanzanaReconciler.QueueSize,
+				ListPageSize:        cfg.ZanzanaReconciler.ListPageSize,
+				CRDs:                reconcileCRDs,
 			},
-			reconcilerLogger,
+			log.New("zanzana.mt-reconciler"),
 			tracer,
 			reg,
-			leaderElector,
+			elector,
 		)
 	} else {
 		mtReconciler = reconciler.NewNoopReconciler()
@@ -250,12 +238,12 @@ func (s *Server) Close() {
 	s.store.Close()
 }
 
-func (s *Server) getContextuals(subject string) (*openfgav1.ContextualTupleKeys, error) {
-	contextuals := make([]*openfgav1.TupleKey, 0)
-
+// getContextuals returns contextual tuples for the request subject.
+func (s *Server) getContextuals(subject string, teams []string) (*openfgav1.ContextualTupleKeys, error) {
+	var keys []*openfgav1.TupleKey
 	if strings.HasPrefix(subject, common.TypeRenderService+":") {
-		contextuals = append(
-			contextuals,
+		keys = append(
+			keys,
 			&openfgav1.TupleKey{
 				User:     subject,
 				Relation: common.RelationSetView,
@@ -265,10 +253,6 @@ func (s *Server) getContextuals(subject string) (*openfgav1.ContextualTupleKeys,
 					"",
 				),
 			},
-		)
-
-		contextuals = append(
-			contextuals,
 			&openfgav1.TupleKey{
 				User:     subject,
 				Relation: common.RelationSetView,
@@ -278,12 +262,56 @@ func (s *Server) getContextuals(subject string) (*openfgav1.ContextualTupleKeys,
 					"",
 				),
 			},
+			&openfgav1.TupleKey{
+				User:     subject,
+				Relation: common.RelationSetView,
+				Object: common.NewGroupResourceIdent(
+					folders.FolderResourceInfo.GroupResource().Group,
+					folders.FolderResourceInfo.GroupResource().Resource,
+					"",
+				),
+			},
 		)
 	}
 
-	if len(contextuals) > 0 {
-		return &openfgav1.ContextualTupleKeys{TupleKeys: contextuals}, nil
+	seen := make(map[string]struct{})
+	var teamNames []string
+	for _, g := range teams {
+		if g == "" {
+			continue
+		}
+		if _, dup := seen[g]; !dup {
+			seen[g] = struct{}{}
+			teamNames = append(teamNames, g)
+		}
+	}
+	sort.Strings(teamNames)
+	for _, n := range teamNames {
+		keys = append(keys, common.NewTypedTuple(common.TypeTeam, subject, common.RelationTeamMember, n))
+	}
+	if len(keys) == 0 {
+		return nil, nil
+	}
+	return &openfgav1.ContextualTupleKeys{TupleKeys: keys}, nil
+}
+
+func contextualTupleChunks(contextuals *openfgav1.ContextualTupleKeys) []*openfgav1.ContextualTupleKeys {
+	if contextuals == nil || len(contextuals.GetTupleKeys()) == 0 {
+		return nil
 	}
 
-	return nil, nil
+	tuples := contextuals.GetTupleKeys()
+	if len(tuples) <= maxContextualTuplesPerRequest {
+		return []*openfgav1.ContextualTupleKeys{contextuals}
+	}
+
+	chunks := make([]*openfgav1.ContextualTupleKeys, 0, (len(tuples)+maxContextualTuplesPerRequest-1)/maxContextualTuplesPerRequest)
+	for i := 0; i < len(tuples); i += maxContextualTuplesPerRequest {
+		end := i + maxContextualTuplesPerRequest
+		if end > len(tuples) {
+			end = len(tuples)
+		}
+		chunks = append(chunks, &openfgav1.ContextualTupleKeys{TupleKeys: tuples[i:end]})
+	}
+	return chunks
 }

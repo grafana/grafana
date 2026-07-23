@@ -17,6 +17,7 @@ labels:
 menuTitle: Annotations
 title: Azure Monitor annotations
 weight: 450
+review_date: 2026-05-12
 ---
 
 # Azure Monitor annotations
@@ -33,16 +34,26 @@ weight: 450
 
 To add an Azure Monitor annotation to a dashboard:
 
-1. Open the dashboard where you want to add annotations.
-1. Click **Dashboard settings** (gear icon) in the top navigation.
-1. Select **Annotations** in the left menu.
-1. Click **Add annotation query**.
-1. Enter a **Name** for the annotation (e.g., "Azure Activity", "Deployments").
-1. Select your **Azure Monitor** data source.
+1. Navigate to the dashboard you want to update and click **Edit**.
+1. Click the **Add new element** icon (blue plus sign).
+1. Click **Annotation query**.
+1. Enter a name for the annotation query.
+1. If you don't want to use the annotation query right away, clear the **Enabled** checkbox.
+1. Select a color for the annotation event markers.
+1. Select an option in the **Show annotation controls in** drop-down list to control where on the dashboard the annotation is displayed.
+1. Select an option in the **Show in** drop-down list to control the panels in which the annotation is displayed.
+1. Click **Open query editor** to open the **Annotation Query** dialog box.
+1. Select your **Azure Monitor** data source from the **Data source** drop-down list.
 1. Choose the **Logs** service.
 1. Select a **Resource** (Log Analytics workspace or Application Insights resource).
 1. Write a KQL query that returns the annotation data.
-1. Click **Apply** to save.
+1. Configure the annotation query and field mappings.
+1. (Optional) Click **Test annotation query** to ensure that the query is working properly.
+1. Click **Close** when you've completed the query setup.
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.
 
 ## Query requirements
 
@@ -182,7 +193,7 @@ Follow these recommendations when creating annotations:
 
 4. **Add relevant tags**: Include columns like `ResourceGroup`, `Severity`, or `Status` that become clickable tags for filtering.
 
-5. **Use descriptive names**: Name your annotations clearly (e.g., "Production Deployments", "Critical Alerts") so dashboard users understand what they represent.
+5. **Use descriptive names**: Name your annotations clearly (for example, "Production Deployments", "Critical Alerts") so dashboard users understand what they represent.
 
 ## Troubleshoot annotations
 

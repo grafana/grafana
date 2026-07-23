@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
 
-import { CentralAlertHistorySceneV1Props, GrafanaTheme2, VariableHide } from '@grafana/data';
+import { type CentralAlertHistorySceneV1Props, type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   CustomVariable,
   EmbeddedScene,
   PanelBuilders,
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneControlsSpacer,
   SceneFlexItem,
   SceneFlexLayout,
@@ -29,7 +29,6 @@ import {
   Button,
   GraphGradientMode,
   Icon,
-  LegendDisplayMode,
   LineInterpolation,
   ScaleDistribution,
   StackingMode,
@@ -198,7 +197,7 @@ export function getEventsScenesFlexItem() {
       .setCustomFieldConfig('stacking', { mode: StackingMode.None, group: 'A' })
       .setCustomFieldConfig('gradientMode', GraphGradientMode.Hue)
       .setCustomFieldConfig('scaleDistribution', { type: ScaleDistribution.Linear })
-      .setOption('legend', { showLegend: false, displayMode: LegendDisplayMode.Hidden })
+      .setOption('legend', { showLegend: false })
       .setOption('tooltip', { mode: TooltipDisplayMode.Single })
       .setNoValue('No events found')
       .build(),

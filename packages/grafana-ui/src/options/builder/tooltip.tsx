@@ -1,6 +1,6 @@
-import { DataFrame, PanelOptionsEditorBuilder } from '@grafana/data';
+import { type DataFrame, type PanelOptionsEditorBuilder } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { OptionsWithTooltip, TooltipDisplayMode, SortOrder } from '@grafana/schema';
+import { type OptionsWithTooltip, TooltipDisplayMode, SortOrder } from '@grafana/schema';
 
 /** @internal */
 export const optsWithHideZeros: OptionsWithTooltip = {

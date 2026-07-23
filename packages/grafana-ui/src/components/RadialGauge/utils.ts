@@ -1,18 +1,18 @@
 import {
-  FieldConfig,
-  FieldDisplay,
+  type FieldConfig,
+  type FieldDisplay,
   GAUGE_DEFAULT_MAXIMUM,
   GAUGE_DEFAULT_MINIMUM,
   getActiveThreshold,
   getDisplayProcessor,
-  GrafanaTheme,
-  GrafanaTheme2,
-  Threshold,
-  ThresholdsConfig,
+  type GrafanaTheme,
+  type GrafanaTheme2,
+  type Threshold,
+  type ThresholdsConfig,
   ThresholdsMode,
 } from '@grafana/data';
 
-import { RadialGaugeDimensions } from './types';
+import { type RadialGaugeDimensions } from './types';
 
 const DEFAULT_THRESHOLDS: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -223,14 +223,6 @@ export function calculateDimensions(
   };
 }
 
-export function toCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number) {
-  let radian = ((angleInDegrees - 90) * Math.PI) / 180.0;
-  return {
-    x: centerX + radius * Math.cos(radian),
-    y: centerY + radius * Math.sin(radian),
-  };
-}
-
 export function drawRadialArcPath(
   startAngle: number,
   endAngle: number,
@@ -332,7 +324,7 @@ export function getFormattedThresholds(
     }
     const prev = steps[i - 1];
     formatted.push({
-      value: isFinite(step.value) ? step.value : 0,
+      value: isFinite(step.value) ? step.value : min,
       color: theme.visualization.getColorByName((offsetColor ? prev : step).color),
     });
     if (step === last) {

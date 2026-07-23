@@ -100,12 +100,6 @@ const lokiQueryResult = {
   },
 };
 
-test.use({
-  featureToggles: {
-    logsExploreTableVisualisation: true,
-  },
-});
-
 test.describe(
   'Loki Query Editor',
   {
@@ -115,8 +109,8 @@ test.describe(
     test('Should be able to add explore table to dashboard', async ({
       createDataSource,
       page,
-      dashboardPage,
       selectors,
+      components,
     }) => {
       await createDataSource({ type: 'loki', name: dataSourceName });
       // Mock API responses
@@ -146,8 +140,7 @@ test.describe(
 
       // Go to Explore and choose Loki data source
       await page.goto('/explore');
-      await dashboardPage.getByGrafanaSelector(selectors.components.DataSourcePicker.container).click();
-      await page.getByRole('button', { name: dataSourceName }).click();
+      await components.dataSourcePicker.set(dataSourceName);
 
       await page.getByRole('radio', { name: 'Code' }).click();
 

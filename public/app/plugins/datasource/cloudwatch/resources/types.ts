@@ -1,6 +1,6 @@
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 
-import { Dimensions } from '../dataquery.gen';
+import { type Dimensions } from '../dataquery.gen';
 
 export interface ResourceResponse<T> {
   accountId?: string;
@@ -35,6 +35,12 @@ export interface DescribeLogGroupsRequest extends ResourceRequest {
   limit?: number;
   listAllLogGroups?: boolean;
   accountId?: string;
+  nextToken?: string;
+}
+
+export interface ListDataSourcesRequest {
+  region: string;
+  pattern?: string;
 }
 
 export interface Account {
@@ -49,6 +55,11 @@ export interface LogGroupResponse {
   name: string;
 }
 
+export interface LogDataSourceResponse {
+  name: string;
+  type: string;
+}
+
 export interface MetricResponse {
   name: string;
   namespace: string;
@@ -56,6 +67,11 @@ export interface MetricResponse {
 
 export interface RegionResponse {
   name: string;
+}
+
+export interface LogGroupsResponse {
+  results: Array<ResourceResponse<LogGroupResponse>>;
+  nextToken?: string;
 }
 
 export interface SelectableResourceValue extends SelectableValue<string> {

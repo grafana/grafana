@@ -13,14 +13,15 @@ import {
   type PluginExtensionAddedLinkConfig,
   type PluginExtensionLink,
   PluginExtensionTypes,
+  type PluginMeta,
   urlUtil,
 } from '@grafana/data';
 import { reportInteraction, config } from '@grafana/runtime';
 import { getAppPluginMetas } from '@grafana/runtime/internal';
+import { getPluginSettings } from '@grafana/runtime/unstable';
 import { Modal } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { isRecord } from 'app/core/utils/isRecord';
-import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import {
   CloseExtensionSidebarEvent,
   OpenExtensionSidebarEvent,
@@ -39,8 +40,8 @@ import {
   getExtensionPointPluginMetaSync,
   type ExtensionPointPluginMeta,
 } from './appUtils';
-import { ExtensionsLog, log as baseLog } from './logs/log';
-import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
+import { type ExtensionsLog, log as baseLog } from './logs/log';
+import { type AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { assertIsNotPromise, assertStringProps, isPromise } from './validators';
 
 export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
@@ -81,18 +82,35 @@ export const wrapWithPluginContext = <T,>({
   extensionTitle,
   Component,
   log,
+  pluginMeta,
 }: {
   pluginId: string;
   extensionTitle: string;
   Component: React.ComponentType<T>;
   log: ExtensionsLog;
+  pluginMeta?: PluginMeta;
 }) => {
+  const renderWithContext = (props: T & React.JSX.IntrinsicAttributes, meta: PluginMeta) => (
+    <PluginContextProvider meta={meta}>
+      <ExtensionErrorBoundary pluginId={pluginId} extensionTitle={extensionTitle} log={log}>
+        <RestrictedGrafanaApisProvider pluginId={pluginId}>
+          <Component
+            {...writableProxy(props, { log, source: 'extension', pluginId, pluginVersion: meta.info?.version })}
+          />
+        </RestrictedGrafanaApisProvider>
+      </ExtensionErrorBoundary>
+    </PluginContextProvider>
+  );
+
+  // When the plugin meta is already known (e.g. captured at registration time, right after the
+  // plugin was imported), render synchronously. The async variant below renders `null` for at
+  // least one commit, which makes extension content pop in after the host page has painted.
+  if (pluginMeta) {
+    return (props: T & React.JSX.IntrinsicAttributes) => renderWithContext(props, pluginMeta);
+  }
+
   const WrappedExtensionComponent = (props: T & React.JSX.IntrinsicAttributes) => {
-    const {
-      error,
-      loading,
-      value: pluginMeta,
-    } = useAsync(() => getPluginSettings(pluginId, { showErrorAlert: false }));
+    const { error, loading, value: fetchedPluginMeta } = useAsync(() => getPluginSettings(pluginId, false));
 
     if (loading) {
       return null;
@@ -106,22 +124,12 @@ export const wrapWithPluginContext = <T,>({
       return null;
     }
 
-    if (!pluginMeta) {
+    if (!fetchedPluginMeta) {
       log.error(`Fetched plugin meta information is empty for "${pluginId}", aborting.`);
       return null;
     }
 
-    return (
-      <PluginContextProvider meta={pluginMeta}>
-        <ExtensionErrorBoundary pluginId={pluginId} extensionTitle={extensionTitle} log={log}>
-          <RestrictedGrafanaApisProvider pluginId={pluginId}>
-            <Component
-              {...writableProxy(props, { log, source: 'extension', pluginId, pluginVersion: pluginMeta.info?.version })}
-            />
-          </RestrictedGrafanaApisProvider>
-        </ExtensionErrorBoundary>
-      </PluginContextProvider>
-    );
+    return renderWithContext(props, fetchedPluginMeta);
   };
 
   return WrappedExtensionComponent;
@@ -213,13 +221,6 @@ export function generateExtensionId(pluginId: string, extensionPointId: string, 
 
 const _isReadOnlyProxy = Symbol('isReadOnlyProxy');
 const _isMutationObserverProxy = Symbol('isMutationObserverProxy');
-
-export class ReadOnlyProxyError extends Error {
-  constructor(message?: string) {
-    super(message ?? 'Mutating a read-only proxy object');
-    this.name = 'ReadOnlyProxyError';
-  }
-}
 
 /**
  * Returns a proxy that wraps the given object in a way that makes it read only.
@@ -476,7 +477,7 @@ export function getLinkExtensionOverrides(
   }
 }
 
-export function getLinkExtensionOnClick(
+function getLinkExtensionOnClick(
   pluginId: string,
   extensionPointId: string,
   config: AddedLinkRegistryItem,
@@ -549,7 +550,7 @@ export function getLinkExtensionOnClick(
   };
 }
 
-export function getLinkExtensionPathWithTracking(pluginId: string, path: string, extensionPointId: string): string {
+function getLinkExtensionPathWithTracking(pluginId: string, path: string, extensionPointId: string): string {
   return urlUtil.appendQueryToUrl(
     path,
     urlUtil.toUrlParams({

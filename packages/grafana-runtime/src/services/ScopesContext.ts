@@ -1,8 +1,8 @@
 import { createContext, useContext, useMemo } from 'react';
-import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
-import { Scope } from '@grafana/data';
+import { type Scope } from '@grafana/data';
+import { useObservable } from '@grafana/data/unstable';
 
 export interface ScopesContextValueState {
   // Whether the drawer with the related dashboards is open

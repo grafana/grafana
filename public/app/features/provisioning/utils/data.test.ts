@@ -1,8 +1,8 @@
-import { RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
-import { RepositoryFormData } from '../types';
+import { type RepositoryFormData } from '../types';
 
-import { dataToSpec, generateRepositoryTitle, specToData } from './data';
+import { dataToSpec, deriveSigningKeySecret, generateRepositoryTitle, specToData } from './data';
 
 const baseSync = {
   enabled: true,
@@ -166,6 +166,60 @@ describe('provisioning data mapping', () => {
       expect(data.url).toBe('https://github.com/owner/repo');
       expect(data.generateDashboardPreviews).toBe(true);
     });
+
+    it('honors github.generateDashboardPreviews for github specs, ignoring pullRequest', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        description: '',
+        sync: baseSync,
+        workflows: [],
+        github: {
+          url: 'https://github.com/owner/repo',
+          branch: 'main',
+          path: '',
+          generateDashboardPreviews: false,
+        },
+        pullRequest: {
+          generateDashboardPreviews: true,
+        },
+      };
+
+      const data = specToData(spec);
+      expect(data.generateDashboardPreviews).toBe(false);
+    });
+  });
+
+  describe('githubEnterprise', () => {
+    it('writes generateDashboardPreviews onto pullRequest options, not the githubEnterprise config', () => {
+      const formData = makeFormData('githubEnterprise');
+      formData.generateDashboardPreviews = true;
+      const spec = dataToSpec(formData);
+
+      expect(spec.pullRequest?.generateDashboardPreviews).toBe(true);
+      expect(spec.githubEnterprise).not.toHaveProperty('generateDashboardPreviews');
+    });
+
+    it('reads generateDashboardPreviews from pullRequest options', () => {
+      const spec: RepositorySpec = {
+        type: 'githubEnterprise',
+        title: 'repo',
+        description: '',
+        sync: baseSync,
+        workflows: [],
+        githubEnterprise: {
+          url: 'https://ghes.example.com/owner/repo',
+          branch: 'main',
+          path: '',
+        },
+        pullRequest: {
+          generateDashboardPreviews: true,
+        },
+      };
+
+      const data = specToData(spec);
+      expect(data.generateDashboardPreviews).toBe(true);
+    });
   });
 
   describe('webhook', () => {
@@ -188,7 +242,29 @@ describe('provisioning data mapping', () => {
       expect(spec.webhook).toBeUndefined();
     });
 
-    it('reads webhook from spec to form data', () => {
+    it('sets disabled:true and omits baseUrl when disabled is true', () => {
+      const formData = makeFormData('github');
+      formData.webhook = { disabled: true, baseUrl: 'https://grafana.example.com' };
+      const spec = dataToSpec(formData);
+      expect(spec.webhook).toEqual({ disabled: true });
+      expect(spec.webhook).not.toHaveProperty('baseUrl');
+    });
+
+    it('sets disabled:true and omits baseUrl when disabled is true and baseUrl is absent', () => {
+      const formData = makeFormData('github');
+      formData.webhook = { disabled: true };
+      const spec = dataToSpec(formData);
+      expect(spec.webhook).toEqual({ disabled: true });
+    });
+
+    it('omits disabled when disabled is false and includes baseUrl', () => {
+      const formData = makeFormData('github');
+      formData.webhook = { disabled: false, baseUrl: 'https://grafana.example.com' };
+      const spec = dataToSpec(formData);
+      expect(spec.webhook).toEqual({ baseUrl: 'https://grafana.example.com' });
+    });
+
+    it('reads webhook baseUrl from spec to form data', () => {
       const spec: RepositorySpec = {
         type: 'github',
         title: 'repo',
@@ -199,6 +275,300 @@ describe('provisioning data mapping', () => {
       };
       const data = specToData(spec);
       expect(data.webhook?.baseUrl).toBe('https://grafana.example.com');
+    });
+
+    it('reads webhook disabled:true from spec to form data', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+        webhook: { disabled: true },
+      };
+      const data = specToData(spec);
+      expect(data.webhook?.disabled).toBe(true);
+      expect(data.webhook?.baseUrl).toBeUndefined();
+    });
+  });
+
+  describe('commit message template', () => {
+    it('writes singleResourceMessageTemplate to spec when provided', () => {
+      const formData = makeFormData('github');
+      formData.commit = { singleResourceMessageTemplate: 'feat(dashboards): {{action}} {{title}}' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.singleResourceMessageTemplate).toBe('feat(dashboards): {{action}} {{title}}');
+    });
+
+    it('trims surrounding whitespace before writing to spec', () => {
+      const formData = makeFormData('github');
+      formData.commit = { singleResourceMessageTemplate: '  feat: {{title}}  ' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.singleResourceMessageTemplate).toBe('feat: {{title}}');
+    });
+
+    it('omits commit from spec when template is whitespace-only', () => {
+      const formData = makeFormData('github');
+      formData.commit = { singleResourceMessageTemplate: '   ' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit).toBeUndefined();
+    });
+
+    it('omits commit from spec when not set', () => {
+      const spec = dataToSpec(makeFormData('github'));
+      expect(spec.commit).toBeUndefined();
+    });
+
+    it('writes enforceTemplate to spec without a message template', () => {
+      const formData = makeFormData('github');
+      formData.commit = { enforceTemplate: true };
+      const spec = dataToSpec(formData);
+      expect(spec.commit).toEqual({ enforceTemplate: true });
+    });
+
+    it('writes both message template and enforceTemplate to spec', () => {
+      const formData = makeFormData('github');
+      formData.commit = { singleResourceMessageTemplate: 'feat: {{title}}', enforceTemplate: true };
+      const spec = dataToSpec(formData);
+      expect(spec.commit).toEqual({ singleResourceMessageTemplate: 'feat: {{title}}', enforceTemplate: true });
+    });
+
+    it('omits commit when template is whitespace-only and enforce is false', () => {
+      const formData = makeFormData('github');
+      formData.commit = { singleResourceMessageTemplate: '   ', enforceTemplate: false };
+      const spec = dataToSpec(formData);
+      expect(spec.commit).toBeUndefined();
+    });
+
+    it('reads commit from spec to form data', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+        commit: { singleResourceMessageTemplate: 'feat: {{title}}', enforceTemplate: true },
+      };
+      const data = specToData(spec);
+      expect(data.commit?.singleResourceMessageTemplate).toBe('feat: {{title}}');
+      expect(data.commit?.enforceTemplate).toBe(true);
+    });
+  });
+
+  describe('branch options', () => {
+    it('writes nameTemplate to spec when provided', () => {
+      const formData = makeFormData('github');
+      formData.branchOptions = { nameTemplate: 'grafana/{{action}}-{{title}}' };
+      const spec = dataToSpec(formData);
+      expect(spec.branch?.nameTemplate).toBe('grafana/{{action}}-{{title}}');
+    });
+
+    it('trims surrounding whitespace before writing to spec', () => {
+      const formData = makeFormData('github');
+      formData.branchOptions = { nameTemplate: '  grafana/{{title}}  ' };
+      const spec = dataToSpec(formData);
+      expect(spec.branch?.nameTemplate).toBe('grafana/{{title}}');
+    });
+
+    it('writes enforceTemplate to spec without a name template', () => {
+      const formData = makeFormData('github');
+      formData.branchOptions = { enforceTemplate: true };
+      const spec = dataToSpec(formData);
+      expect(spec.branch).toEqual({ enforceTemplate: true });
+    });
+
+    it('writes both name template and enforceTemplate to spec', () => {
+      const formData = makeFormData('github');
+      formData.branchOptions = { nameTemplate: 'grafana/{{title}}', enforceTemplate: true };
+      const spec = dataToSpec(formData);
+      expect(spec.branch).toEqual({ nameTemplate: 'grafana/{{title}}', enforceTemplate: true });
+    });
+
+    it('omits branch options when name template is whitespace-only and enforce is false', () => {
+      const formData = makeFormData('github');
+      formData.branchOptions = { nameTemplate: '   ', enforceTemplate: false };
+      const spec = dataToSpec(formData);
+      expect(spec.branch).toBeUndefined();
+    });
+
+    it('omits branch options from spec when not set', () => {
+      const spec = dataToSpec(makeFormData('github'));
+      expect(spec.branch).toBeUndefined();
+    });
+
+    it('reads branch options from spec to form data', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+        branch: { nameTemplate: 'grafana/{{title}}', enforceTemplate: true },
+      };
+      const data = specToData(spec);
+      expect(data.branchOptions?.nameTemplate).toBe('grafana/{{title}}');
+      expect(data.branchOptions?.enforceTemplate).toBe(true);
+    });
+  });
+
+  describe('commit signing', () => {
+    it('writes signerName and signerEmail to spec when provided', () => {
+      const formData = makeFormData('github');
+      formData.commit = { signerName: 'Jane Doe', signerEmail: 'jane@example.com' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.signerName).toBe('Jane Doe');
+      expect(spec.commit?.signerEmail).toBe('jane@example.com');
+    });
+
+    it('trims author fields before writing to spec', () => {
+      const formData = makeFormData('github');
+      formData.commit = { signerName: '  Jane Doe  ', signerEmail: '  jane@example.com  ' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.signerName).toBe('Jane Doe');
+      expect(spec.commit?.signerEmail).toBe('jane@example.com');
+    });
+
+    it('omits author fields from spec when whitespace-only', () => {
+      const formData = makeFormData('github');
+      formData.commit = { signerName: '   ', signerEmail: '   ' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit).toBeUndefined();
+    });
+
+    it('writes only the author fields that are set', () => {
+      const formData = makeFormData('github');
+      formData.commit = { signerName: 'Jane Doe' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.signerName).toBe('Jane Doe');
+      expect(spec.commit).not.toHaveProperty('signerEmail');
+      expect(spec.commit).not.toHaveProperty('singleResourceMessageTemplate');
+    });
+
+    it('reads author fields from spec to form data', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+        commit: { signerName: 'Jane Doe', signerEmail: 'jane@example.com' },
+      };
+      const data = specToData(spec);
+      expect(data.commit?.signerName).toBe('Jane Doe');
+      expect(data.commit?.signerEmail).toBe('jane@example.com');
+    });
+
+    it('writes signingMethod to spec when signing is configured', () => {
+      const formData = makeFormData('github');
+      formData.signingMethod = 'ssh';
+      formData.commit = { signerName: 'Jane Doe', signerEmail: 'jane@example.com' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.signingMethod).toBe('ssh');
+    });
+
+    it('omits signingMethod when not set', () => {
+      const formData = makeFormData('github');
+      formData.commit = { signerName: 'Jane Doe', signerEmail: 'jane@example.com' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit).not.toHaveProperty('signingMethod');
+    });
+
+    it('writes smimeCertificate to spec when set', () => {
+      const formData = makeFormData('github');
+      formData.signingMethod = 'smime';
+      formData.smimeCertificate = '-----BEGIN CERTIFICATE-----';
+      formData.commit = { signerName: 'Jane Doe', signerEmail: 'jane@example.com' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.signingMethod).toBe('smime');
+      expect(spec.commit?.smimeCertificate).toBe('-----BEGIN CERTIFICATE-----');
+    });
+
+    it('reads signingMethod and smimeCertificate from spec, never the signing key', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+        commit: {
+          signerName: 'Jane Doe',
+          signerEmail: 'jane@example.com',
+          signingMethod: 'smime',
+          smimeCertificate: '-----BEGIN CERTIFICATE-----',
+        },
+      };
+      const data = specToData(spec);
+      expect(data.signingMethod).toBe('smime');
+      expect(data.smimeCertificate).toBe('-----BEGIN CERTIFICATE-----');
+      expect(data.commitSigningKey).toBe('');
+    });
+
+    it('reads signingMethod as empty when spec has no signing format', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+      };
+      const data = specToData(spec);
+      expect(data.signingMethod).toBe('');
+    });
+  });
+
+  describe('pull request options', () => {
+    it('writes titleTemplate to spec when provided', () => {
+      const formData = makeFormData('github');
+      formData.pullRequest = { titleTemplate: '{{action}}: {{title}}' };
+      const spec = dataToSpec(formData);
+      expect(spec.pullRequest?.titleTemplate).toBe('{{action}}: {{title}}');
+    });
+
+    it('trims surrounding whitespace before writing to spec', () => {
+      const formData = makeFormData('github');
+      formData.pullRequest = { titleTemplate: '  {{title}}  ' };
+      const spec = dataToSpec(formData);
+      expect(spec.pullRequest?.titleTemplate).toBe('{{title}}');
+    });
+
+    it('writes enforceTemplate to spec without a title template', () => {
+      const formData = makeFormData('github');
+      formData.pullRequest = { enforceTemplate: true };
+      const spec = dataToSpec(formData);
+      expect(spec.pullRequest).toEqual({ enforceTemplate: true });
+    });
+
+    it('writes both title template and enforceTemplate to spec', () => {
+      const formData = makeFormData('github');
+      formData.pullRequest = { titleTemplate: '{{title}}', enforceTemplate: true };
+      const spec = dataToSpec(formData);
+      expect(spec.pullRequest).toEqual({ titleTemplate: '{{title}}', enforceTemplate: true });
+    });
+
+    it('omits pull request options when title template is whitespace-only and enforce is false', () => {
+      const formData = makeFormData('github');
+      formData.pullRequest = { titleTemplate: '   ', enforceTemplate: false };
+      const spec = dataToSpec(formData);
+      expect(spec.pullRequest).toBeUndefined();
+    });
+
+    it('omits pull request options from spec when not set', () => {
+      const spec = dataToSpec(makeFormData('github'));
+      expect(spec.pullRequest).toBeUndefined();
+    });
+
+    it('reads pull request options from spec to form data', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+        pullRequest: { titleTemplate: '{{title}}', enforceTemplate: true },
+      };
+      const data = specToData(spec);
+      expect(data.pullRequest?.titleTemplate).toBe('{{title}}');
+      expect(data.pullRequest?.enforceTemplate).toBe(true);
     });
   });
 
@@ -266,5 +636,27 @@ describe('generateRepositoryTitle', () => {
 
   it('returns path for local type', () => {
     expect(generateRepositoryTitle({ type: 'local', path: '/path/to/repo' })).toBe('/path/to/repo');
+  });
+});
+
+describe('deriveSigningKeySecret', () => {
+  it('creates the key when signing is enabled and a new key was entered', () => {
+    const form = { ...makeFormData('github'), signingMethod: 'gpg' as const, commitSigningKey: 'key-material' };
+    expect(deriveSigningKeySecret(form, false)).toEqual({ create: 'key-material' });
+  });
+
+  it('returns undefined when signing is enabled but no new key was entered (keep existing)', () => {
+    const form = { ...makeFormData('github'), signingMethod: 'gpg' as const, commitSigningKey: '' };
+    expect(deriveSigningKeySecret(form, true)).toBeUndefined();
+  });
+
+  it('removes the key when signing is disabled but a key was previously stored', () => {
+    const form = { ...makeFormData('github'), signingMethod: '' as const, commitSigningKey: '' };
+    expect(deriveSigningKeySecret(form, true)).toEqual({ remove: true });
+  });
+
+  it('returns undefined when signing is disabled and nothing was stored', () => {
+    const form = { ...makeFormData('github'), signingMethod: '' as const, commitSigningKey: '' };
+    expect(deriveSigningKeySecret(form, false)).toBeUndefined();
   });
 });

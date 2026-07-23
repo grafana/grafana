@@ -1,18 +1,18 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceSettings } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { Stack, Text, Button, Alert, Field, Input, Box } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
-import { DashboardInput, DataSourceInput } from 'app/features/manage-dashboards/types';
+import { type DashboardInput, type DataSourceInput } from 'app/features/manage-dashboards/types';
 
 import { useTrackingContext } from './TrackingContext';
 import { NewDashboardLibraryInteractions } from './analytics/main';
-import { ContentKind } from './constants';
+import { type ContentKind } from './constants';
 import { DashboardLibraryInteractions } from './interactions';
-import { InputMapping, mapConstantInputs, mapUserSelectedDatasources } from './utils/autoMapDatasources';
+import { type InputMapping, mapConstantInputs, mapUserSelectedDatasources } from './utils/autoMapDatasources';
 
 interface Props {
   unmappedDsInputs: DataSourceInput[];
@@ -46,6 +46,18 @@ export const CommunityDashboardMappingForm = ({
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
 
   const { sourceEntryPoint, eventLocation } = useTrackingContext();
+
+  // Auto-mapped datasources (`existingMappings`) only carry the uid; we resolve them to a
+  // friendly name for the alert below. Building a uid→name map from the full list keeps
+  // this to a single async lookup regardless of how many mappings exist.
+  const { items: allDatasources } = useDataSourceInstanceList();
+  const datasourceNameByUid = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const ds of allDatasources) {
+      map.set(ds.uid, ds.name);
+    }
+    return map;
+  }, [allDatasources]);
 
   // Track mapping form shown on mount
   useEffect(() => {
@@ -167,16 +179,20 @@ export const CommunityDashboardMappingForm = ({
           <Alert title="" severity="info">
             <Stack direction="column" gap={1}>
               <Text>
-                <Trans i18nKey="dashboard-library.community-mapping-form.auto-mapped" count={existingMappings.length}>
+                <Trans
+                  i18nKey="dashboard-library.community-mapping-form.auto-mapped"
+                  count={existingMappings.length}
+                  tOptions={{
+                    defaultValue_one: '{{count}} datasources were automatically configured:',
+                    defaultValue_other: '{{count}} datasources were automatically configured:',
+                  }}
+                >
                   {{ count: existingMappings.length }} datasources were automatically configured:
                 </Trans>
               </Text>
               <Text color="secondary">
                 {existingMappings
-                  .map((mapping) => {
-                    const ds = getDataSourceSrv().getInstanceSettings(mapping.value);
-                    return `${mapping.pluginId} → ${ds?.name || mapping.value}`;
-                  })
+                  .map((mapping) => `${mapping.pluginId} → ${datasourceNameByUid.get(mapping.value) || mapping.value}`)
                   .join(' | ')}
               </Text>
             </Stack>

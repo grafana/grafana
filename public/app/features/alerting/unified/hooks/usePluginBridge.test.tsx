@@ -1,47 +1,25 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
-import { useGetPluginSettingsQuery } from '../api/pluginsApi';
+import { OrgRole, PluginIncludeType } from '@grafana/data';
+import { invalidateCachedPromisesCache } from '@grafana/runtime/internal';
+import { contextSrv } from 'app/core/services/context_srv';
+
+import { setupMswServer } from '../mockApi';
+import { addPlugin, disablePlugin, failPlugin, removePlugin } from '../mocks/server/configure';
 import { pluginMeta } from '../testSetup/plugins';
 import { SupportedPlugin } from '../types/pluginBridges';
 
-import { useIrmPlugin } from './usePluginBridge';
+import { canAccessPluginPage, useIrmPlugin } from './usePluginBridge';
 
-jest.mock('../api/pluginsApi');
-
-const mockedUseGetPluginSettingsQuery = jest.mocked(useGetPluginSettingsQuery);
-
-type PluginQueryResult = ReturnType<typeof useGetPluginSettingsQuery>;
+setupMswServer();
 
 describe('useIrmPlugin', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+  afterEach(() => {
+    invalidateCachedPromisesCache();
   });
 
   it('should return IRM plugin ID when IRM plugin is installed', async () => {
-    mockedUseGetPluginSettingsQuery.mockImplementation((pluginId) => {
-      if (pluginId === SupportedPlugin.Irm) {
-        return {
-          data: pluginMeta[SupportedPlugin.Irm],
-          isLoading: false,
-          error: undefined,
-          refetch: jest.fn(),
-        } as PluginQueryResult;
-      }
-      if (pluginId === SupportedPlugin.OnCall) {
-        return {
-          data: { ...pluginMeta[SupportedPlugin.OnCall], enabled: false },
-          isLoading: false,
-          error: undefined,
-          refetch: jest.fn(),
-        } as PluginQueryResult;
-      }
-      return {
-        data: undefined,
-        isLoading: false,
-        error: { status: 404, data: { message: 'Plugin not found' } },
-        refetch: jest.fn(),
-      } as PluginQueryResult;
-    });
+    addPlugin(pluginMeta[SupportedPlugin.Irm]);
 
     const { result } = renderHook(() => useIrmPlugin(SupportedPlugin.OnCall));
 
@@ -55,23 +33,6 @@ describe('useIrmPlugin', () => {
   });
 
   it('should return OnCall plugin ID when IRM plugin is not installed', async () => {
-    mockedUseGetPluginSettingsQuery.mockImplementation((pluginId) => {
-      if (pluginId === SupportedPlugin.OnCall) {
-        return {
-          data: pluginMeta[SupportedPlugin.OnCall],
-          isLoading: false,
-          error: undefined,
-          refetch: jest.fn(),
-        } as PluginQueryResult;
-      }
-      return {
-        data: undefined,
-        isLoading: false,
-        error: { status: 404, data: { message: 'Plugin not found' } },
-        refetch: jest.fn(),
-      } as PluginQueryResult;
-    });
-
     const { result } = renderHook(() => useIrmPlugin(SupportedPlugin.OnCall));
 
     await waitFor(() => {
@@ -84,23 +45,6 @@ describe('useIrmPlugin', () => {
   });
 
   it('should return Incident plugin ID when IRM plugin is not installed', async () => {
-    mockedUseGetPluginSettingsQuery.mockImplementation((pluginId) => {
-      if (pluginId === SupportedPlugin.Incident) {
-        return {
-          data: pluginMeta[SupportedPlugin.Incident],
-          isLoading: false,
-          error: undefined,
-          refetch: jest.fn(),
-        } as PluginQueryResult;
-      }
-      return {
-        data: undefined,
-        isLoading: false,
-        error: { status: 404, data: { message: 'Plugin not found' } },
-        refetch: jest.fn(),
-      } as PluginQueryResult;
-    });
-
     const { result } = renderHook(() => useIrmPlugin(SupportedPlugin.Incident));
 
     await waitFor(() => {
@@ -113,13 +57,6 @@ describe('useIrmPlugin', () => {
   });
 
   it('should return loading state while fetching plugins', () => {
-    mockedUseGetPluginSettingsQuery.mockReturnValue({
-      data: undefined,
-      isLoading: true,
-      error: undefined,
-      refetch: jest.fn(),
-    } as PluginQueryResult);
-
     const { result } = renderHook(() => useIrmPlugin(SupportedPlugin.OnCall));
 
     expect(result.current.loading).toBe(true);
@@ -127,12 +64,21 @@ describe('useIrmPlugin', () => {
   });
 
   it('should return installed false when neither plugin is installed (404)', async () => {
-    mockedUseGetPluginSettingsQuery.mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      error: { status: 404, data: { message: 'Plugin not found' } },
-      refetch: jest.fn(),
-    } as PluginQueryResult);
+    removePlugin(SupportedPlugin.OnCall);
+
+    const { result } = renderHook(() => useIrmPlugin(SupportedPlugin.OnCall));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.pluginId).toBe(SupportedPlugin.OnCall);
+    expect(result.current.installed).toBe(false);
+    expect(result.current.error).toBeUndefined();
+  });
+
+  it('should return installed false when plugin is disabled', async () => {
+    disablePlugin(SupportedPlugin.OnCall);
 
     const { result } = renderHook(() => useIrmPlugin(SupportedPlugin.OnCall));
 
@@ -146,12 +92,7 @@ describe('useIrmPlugin', () => {
   });
 
   it('should propagate error when plugin check fails with a non-404 error', async () => {
-    mockedUseGetPluginSettingsQuery.mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      error: { status: 500, data: { message: 'Internal server error' } },
-      refetch: jest.fn(),
-    } as PluginQueryResult);
+    failPlugin(SupportedPlugin.OnCall, 500);
 
     const { result } = renderHook(() => useIrmPlugin(SupportedPlugin.OnCall));
 
@@ -165,30 +106,7 @@ describe('useIrmPlugin', () => {
   });
 
   it('should return IRM plugin ID when both IRM and OnCall are installed', async () => {
-    mockedUseGetPluginSettingsQuery.mockImplementation((pluginId) => {
-      if (pluginId === SupportedPlugin.Irm) {
-        return {
-          data: pluginMeta[SupportedPlugin.Irm],
-          isLoading: false,
-          error: undefined,
-          refetch: jest.fn(),
-        } as PluginQueryResult;
-      }
-      if (pluginId === SupportedPlugin.OnCall) {
-        return {
-          data: pluginMeta[SupportedPlugin.OnCall],
-          isLoading: false,
-          error: undefined,
-          refetch: jest.fn(),
-        } as PluginQueryResult;
-      }
-      return {
-        data: undefined,
-        isLoading: false,
-        error: { status: 404, data: { message: 'Plugin not found' } },
-        refetch: jest.fn(),
-      } as PluginQueryResult;
-    });
+    addPlugin(pluginMeta[SupportedPlugin.Irm]);
 
     const { result } = renderHook(() => useIrmPlugin(SupportedPlugin.OnCall));
 
@@ -198,34 +116,11 @@ describe('useIrmPlugin', () => {
 
     expect(result.current.pluginId).toBe(SupportedPlugin.Irm);
     expect(result.current.installed).toBe(true);
-    expect(result.current.settings).toEqual(pluginMeta[SupportedPlugin.Irm]);
+    expect(result.current.settings).toEqual(expect.objectContaining({ id: SupportedPlugin.Irm }));
   });
 
   it('should return IRM plugin ID when both IRM and Incident are installed', async () => {
-    mockedUseGetPluginSettingsQuery.mockImplementation((pluginId) => {
-      if (pluginId === SupportedPlugin.Irm) {
-        return {
-          data: pluginMeta[SupportedPlugin.Irm],
-          isLoading: false,
-          error: undefined,
-          refetch: jest.fn(),
-        } as PluginQueryResult;
-      }
-      if (pluginId === SupportedPlugin.Incident) {
-        return {
-          data: pluginMeta[SupportedPlugin.Incident],
-          isLoading: false,
-          error: undefined,
-          refetch: jest.fn(),
-        } as PluginQueryResult;
-      }
-      return {
-        data: undefined,
-        isLoading: false,
-        error: { status: 404, data: { message: 'Plugin not found' } },
-        refetch: jest.fn(),
-      } as PluginQueryResult;
-    });
+    addPlugin(pluginMeta[SupportedPlugin.Irm]);
 
     const { result } = renderHook(() => useIrmPlugin(SupportedPlugin.Incident));
 
@@ -235,6 +130,72 @@ describe('useIrmPlugin', () => {
 
     expect(result.current.pluginId).toBe(SupportedPlugin.Irm);
     expect(result.current.installed).toBe(true);
-    expect(result.current.settings).toEqual(pluginMeta[SupportedPlugin.Irm]);
+    expect(result.current.settings).toEqual(expect.objectContaining({ id: SupportedPlugin.Irm }));
+  });
+});
+
+describe('canAccessPluginPage', () => {
+  const previousRole = contextSrv.user.orgRole;
+  const previousPermissions = contextSrv.user.permissions;
+  const previousIsEditor = contextSrv.isEditor;
+  const previousIsGrafanaAdmin = contextSrv.isGrafanaAdmin;
+
+  afterEach(() => {
+    contextSrv.user.orgRole = previousRole;
+    contextSrv.user.permissions = previousPermissions;
+    contextSrv.isEditor = previousIsEditor;
+    contextSrv.isGrafanaAdmin = previousIsGrafanaAdmin;
+  });
+
+  it('returns false when include requires action and user lacks permission', () => {
+    contextSrv.user.permissions = {};
+    const settings = {
+      ...pluginMeta[SupportedPlugin.Incident],
+      includes: [
+        {
+          type: PluginIncludeType.page,
+          name: 'Declare incident',
+          path: '/a/grafana-incident-app/incidents/declare',
+          action: 'grafana-incident-app.incidents:write',
+        },
+      ],
+    };
+
+    expect(canAccessPluginPage(settings, '/a/grafana-incident-app/incidents/declare')).toBe(false);
+  });
+
+  it('returns true when include requires action and user has permission', () => {
+    contextSrv.user.permissions = { 'grafana-incident-app.incidents:write': true };
+    const settings = {
+      ...pluginMeta[SupportedPlugin.Incident],
+      includes: [
+        {
+          type: PluginIncludeType.page,
+          name: 'Declare incident',
+          path: '/a/grafana-incident-app/incidents/declare',
+          action: 'grafana-incident-app.incidents:write',
+        },
+      ],
+    };
+
+    expect(canAccessPluginPage(settings, '/a/grafana-incident-app/incidents/declare')).toBe(true);
+  });
+
+  it('returns false when include role is editor and user is viewer', () => {
+    contextSrv.user.orgRole = OrgRole.Viewer;
+    contextSrv.isEditor = false;
+    const settings = {
+      ...pluginMeta[SupportedPlugin.Incident],
+      includes: [
+        {
+          type: PluginIncludeType.page,
+          name: 'Declare incident',
+          path: '/a/grafana-incident-app/incidents/declare',
+          role: OrgRole.Editor,
+        },
+      ],
+    };
+
+    expect(canAccessPluginPage(settings, '/a/grafana-incident-app/incidents/declare')).toBe(false);
   });
 });

@@ -42,35 +42,6 @@ test.describe('Scope Redirect Functionality', () => {
     });
   });
 
-  test('should prioritize redirectUrl over scope navigation fallback', async ({ page, gotoDashboardPage }) => {
-    const scopes = testScopesWithRedirect();
-
-    await test.step('Set up routes and navigate to dashboard', async () => {
-      await setupScopeRoutes(page, scopes);
-      await gotoDashboardPage({ uid: 'cuj-dashboard-1' });
-    });
-
-    await test.step('Open scopes selector', async () => {
-      await openScopesSelector(page, scopes);
-    });
-
-    await test.step('Select scope with redirectUrl', async () => {
-      // Select the scope with redirectUrl directly
-      await selectScope(page, 'sn-redirect-custom', scopes[0]);
-    });
-
-    await test.step('Apply scopes and verify redirectUrl takes priority', async () => {
-      await applyScopes(page, [scopes[0]]);
-
-      // Should redirect to custom URL, not stay on current dashboard
-      await expect(page).toHaveURL(/\/d\/cuj-dashboard-2/);
-      await expect(page).not.toHaveURL(/\/d\/cuj-dashboard-1/);
-
-      // Verify the scope was applied
-      await expect(page).toHaveURL(/scopes=scope-sn-redirect-custom/);
-    });
-  });
-
   test('should not redirect when reloading page on dashboard not in dashboard list', async ({
     page,
     gotoDashboardPage,
@@ -212,10 +183,7 @@ test.describe('Scope Redirect Functionality', () => {
     });
   });
 
-  test('should redirect to related dashboard when changing scopes (NOT in edit mode)', async ({
-    page,
-    gotoDashboardPage,
-  }) => {
+  test('should not redirect when changing scopes without redirectPath', async ({ page, gotoDashboardPage }) => {
     const scopes = testScopesWithRedirect();
 
     await test.step('Set up routes and navigate to dashboard', async () => {
@@ -223,14 +191,15 @@ test.describe('Scope Redirect Functionality', () => {
       await gotoDashboardPage({ uid: 'cuj-dashboard-3' });
     });
 
-    await test.step('Select and apply scope with related dashboard', async () => {
+    await test.step('Select and apply scope without redirectPath', async () => {
       await openScopesSelector(page, scopes);
       await selectScope(page, 'sn-redirect-fallback', scopes[1]);
       await applyScopes(page, [scopes[1]]);
 
-      // Should redirect from cuj-dashboard-3 to cuj-dashboard-2 (the related dashboard)
-      await expect(page).toHaveURL(/\/d\/cuj-dashboard-2/);
+      // Scope is applied, but without redirectPath we stay on the current dashboard
+      await expect(page).toHaveURL(/\/d\/cuj-dashboard-3/);
       await expect(page).toHaveURL(/scopes=scope-sn-redirect-fallback/);
+      await expect(page).not.toHaveURL(/\/d\/cuj-dashboard-2/);
     });
   });
 
@@ -259,19 +228,51 @@ test.describe('Scope Redirect Functionality', () => {
     await test.step('Change scope while in edit mode and verify no redirect', async () => {
       // Select and apply a scope that would normally trigger a redirect
       await openScopesSelector(page, scopes);
-      expect(page.getByText('Select scopes')).toBeVisible();
-      await selectScope(page, 'sn-redirect-fallback', scopes[1]);
-      await applyScopes(page, [scopes[1]]);
+      await expect(page.getByText('Select scopes')).toBeVisible();
+      await selectScope(page, 'sn-redirect-custom', scopes[0]);
+      await applyScopes(page, [scopes[0]]);
 
       // Verify the scope was applied
-      await expect(page).toHaveURL(/scopes=scope-sn-redirect-fallback/);
+      await expect(page).toHaveURL(/scopes=scope-sn-redirect-custom/);
 
-      // Should stay on the same dashboard (cuj-dashboard-3) even though we're not on a related dashboard
+      // Should stay on the same dashboard (cuj-dashboard-3) — redirects disabled in edit mode
       await expect(page).toHaveURL(/\/d\/cuj-dashboard-3/);
+      await expect(page).not.toHaveURL(/\/d\/cuj-dashboard-2/);
 
       // Should still be in edit mode (Save button is still visible)
       const saveButton = dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton);
       await expect(saveButton).toBeVisible();
+    });
+  });
+
+  test('should not redirect when the image renderer binding is present', async ({ page, gotoDashboardPage }) => {
+    const scopes = testScopesWithRedirect();
+
+    await test.step('Inject the image-renderer binding before any page script runs', async () => {
+      // Mimics what grafana-image-renderer's chromedp does on real /render calls.
+      await page.addInitScript(() => {
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        (
+          window as unknown as { __grafanaImageRendererMessageChannel: (m: string) => void }
+        ).__grafanaImageRendererMessageChannel = () => {};
+      });
+    });
+
+    await test.step('Set up routes and navigate to dashboard', async () => {
+      await setupScopeRoutes(page, scopes);
+      await gotoDashboardPage({ uid: 'cuj-dashboard-3' });
+    });
+
+    await test.step('Apply a scope with redirectPath and verify no redirect', async () => {
+      await openScopesSelector(page, scopes);
+      await selectScope(page, 'sn-redirect-custom', scopes[0]);
+      await applyScopes(page, [scopes[0]]);
+
+      // Scope must still be applied…
+      await expect(page).toHaveURL(/scopes=scope-sn-redirect-custom/);
+      // …but the redirect must not fire during image/PDF capture
+      await expect(page).toHaveURL(/\/d\/cuj-dashboard-3/);
+      await expect(page).not.toHaveURL(/\/d\/cuj-dashboard-2/);
     });
   });
 
@@ -294,11 +295,11 @@ test.describe('Scope Redirect Functionality', () => {
 
     await test.step('Change scope while in edit mode and verify no redirect', async () => {
       await openScopesSelector(page, scopes);
-      await selectScope(page, 'sn-redirect-fallback', scopes[1]);
-      await applyScopes(page, [scopes[1]]);
+      await selectScope(page, 'sn-redirect-custom', scopes[0]);
+      await applyScopes(page, [scopes[0]]);
 
       // Verify the scope was applied
-      await expect(page).toHaveURL(/scopes=scope-sn-redirect-fallback/);
+      await expect(page).toHaveURL(/scopes=scope-sn-redirect-custom/);
 
       // Should stay on cuj-dashboard-3 — redirect is disabled in edit mode
       await expect(page).toHaveURL(/\/d\/cuj-dashboard-3/);
@@ -307,11 +308,11 @@ test.describe('Scope Redirect Functionality', () => {
     await test.step('Exit edit mode', async () => {
       // Click the "Exit edit" button — the dashboard is not dirty (only scopes changed,
       // not the dashboard itself), so no confirmation dialog will appear.
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.exitButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
-      // Verify we are no longer in edit mode: the edit button should be visible again
-      const editButton = dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton);
-      await expect(editButton).toBeVisible();
+      // Verify we are no longer in edit mode: the save button should not be visible
+      const saveButton = dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton);
+      await expect(saveButton).not.toBeVisible();
     });
 
     await test.step('Clear scope and re-apply to verify redirect is re-enabled', async () => {
@@ -322,17 +323,17 @@ test.describe('Scope Redirect Functionality', () => {
       // Verify scope was cleared from URL
       await expect(page).not.toHaveURL(/scopes=/);
 
-      // Re-apply the same scope — now that edit mode is off, redirect should fire.
+      // Re-apply a scope with redirectPath — now that edit mode is off, redirect should fire.
       // Skip waiting for all network responses: the tree, scope data, and dashboard
       // bindings/navigations are all either cached or cancelled by the redirect navigation
       // itself. The routes from the first apply are still registered so mocks still work.
       await openScopesSelector(page);
-      await selectScope(page, 'sn-redirect-fallback');
+      await selectScope(page, 'sn-redirect-custom');
       await applyScopes(page);
 
       // Should now redirect from cuj-dashboard-3 to cuj-dashboard-2
       await expect(page).toHaveURL(/\/d\/cuj-dashboard-2/);
-      await expect(page).toHaveURL(/scopes=scope-sn-redirect-fallback/);
+      await expect(page).toHaveURL(/scopes=scope-sn-redirect-custom/);
     });
   });
 });

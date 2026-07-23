@@ -1,15 +1,21 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
-import { FeatureState, FieldConfigSource, GrafanaTheme2, PanelPluginVisualizationSuggestion } from '@grafana/data';
+import {
+  FeatureState,
+  type FieldConfigSource,
+  type GrafanaTheme2,
+  type PanelPluginVisualizationSuggestion,
+} from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { sceneGraph, VizPanel } from '@grafana/scenes';
+import { sceneGraph, type VizPanel } from '@grafana/scenes';
 import { FeatureBadge, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { VisualizationCardGrid } from 'app/features/panel/components/VizTypePicker/VisualizationCardGrid';
 import { VizSuggestionsInteractions } from 'app/features/panel/components/VizTypePicker/interactions';
 import { getPluginPresets } from 'app/features/panel/presets/getPresets';
 import { MIN_MULTI_COLUMN_SIZE } from 'app/features/panel/suggestions/constants';
+import { hasData } from 'app/features/panel/suggestions/utils';
 
 export interface PanelStylesSectionProps {
   panel: VizPanel;
@@ -61,7 +67,7 @@ export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionP
     );
   };
 
-  if (!presets || presets.length === 0 || !data || data.series.length === 0) {
+  if (!presets || presets.length === 0 || !data || !hasData(data)) {
     return null;
   }
 

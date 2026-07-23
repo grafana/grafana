@@ -180,6 +180,12 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 		err = safepath.Walk(ctx, opts.Path, func(ctx context.Context, segPath string) error {
 			folderPath := segPath + "/"
 			existing, _, readErr := ReadFolderMetadata(ctx, r.repo, folderPath, opts.Ref)
+			if errors.Is(readErr, repository.ErrRefNotFound) {
+				// The target branch doesn't exist yet — it will be created from the
+				// configured branch by repo.Create. Check the configured branch so
+				// we know whether the file already exists in the tree we'll inherit.
+				existing, _, readErr = ReadFolderMetadata(ctx, r.repo, folderPath, "")
+			}
 			if readErr == nil {
 				if segPath == leafPath {
 					return apierrors.NewAlreadyExists(
@@ -191,12 +197,12 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 				stableUID = existing.Name
 				return nil
 			}
-			if !errors.Is(readErr, repository.ErrFileNotFound) && !errors.Is(readErr, repository.ErrRefNotFound) {
+			if !errors.Is(readErr, repository.ErrFileNotFound) {
 				return fmt.Errorf("failed to read folder metadata for %q: %w", folderPath, readErr)
 			}
 			// Not found: write a new folder metadata file
 			uid := util.GenerateShortUID()
-			manifest := NewFolderManifest(uid, safepath.Base(folderPath))
+			manifest := NewFolderManifest(uid, safepath.Base(folderPath), r.folders.FolderGVK())
 			var writeErr error
 			stableUID, writeErr = WriteFolderMetadata(ctx, r.repo, folderPath, manifest, opts.Ref, opts.Message)
 			if writeErr != nil {
@@ -309,6 +315,14 @@ func (r *DualReadWriter) UpdateFolderMetadata(ctx context.Context, opts DualWrit
 		},
 	}
 
+	// URLs must point at the updated _folder.json file, not the directory, so the
+	// "view file" link resolves to the actual changed resource on the remote.
+	urls, err := getFolderURLs(ctx, safepath.Join(opts.Path, folderMetadataFileName), opts.Ref, r.repo)
+	if err != nil {
+		return nil, err
+	}
+	wrap.URLs = urls
+
 	if r.shouldUpdateGrafanaDB(opts, nil) {
 		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref); err != nil {
 			return nil, fmt.Errorf("ensure folder path exists: %w", err)
@@ -391,7 +405,15 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 
 	// Create or update
 	if create {
-		err = r.repo.Create(ctx, opts.Path, opts.Ref, data, opts.Message)
+		// Write the resource file together with any missing ancestor _folder.json
+		// files in a single commit using the staging mechanism. When the repository
+		// does not support staging (e.g. local repos), writes are applied directly.
+		stageOptions := repository.StageOptions{
+			Ref:                   opts.Ref,
+			Mode:                  repository.StageModeCommitOnlyOnce,
+			CommitOnlyOnceMessage: opts.Message,
+		}
+		err = repository.WrapWithStageAndPushIfPossible(ctx, r.repo, stageOptions, r.createResourceAndNewFolderMetadata(ctx, opts, data))
 	} else {
 		err = r.repo.Update(ctx, opts.Path, opts.Ref, data, opts.Message)
 	}
@@ -414,14 +436,104 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 			})
 		}
 
-		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref); err != nil {
-			return nil, fmt.Errorf("ensure folder path exists: %w", err)
+		// Only folder-scoped kinds carry a folder annotation; org-scoped kinds (e.g. playlists)
+		// must not have one stamped onto them, or the apiserver rejects the write.
+		if parsed.FolderScoped {
+			parent, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref)
+			if err != nil {
+				return nil, fmt.Errorf("ensure folder path exists: %w", err)
+			}
+
+			// In case the parent folder has a different ID than the one from the initially parsed resource,
+			// e.g. when the folder metadata has been generated as part of the create operation, we need to update it.
+			if parsed.Meta.GetFolder() != parent {
+				parsed.Meta.SetFolder(parent)
+			}
 		}
 
-		err = parsed.Run(ctx)
+		if err := parsed.Run(ctx); err != nil {
+			return nil, fmt.Errorf("run resource: %w", err)
+		}
 	}
 
-	return parsed, err
+	return parsed, nil
+}
+
+func (r *DualReadWriter) createResourceAndNewFolderMetadata(ctx context.Context, opts DualWriteOptions, data []byte) func(stagedRepo repository.Repository, _ bool) error {
+	return func(stagedRepo repository.Repository, _ bool) error {
+		rw, ok := stagedRepo.(repository.ReaderWriter)
+		if !ok {
+			return fmt.Errorf("repository does not support read/write operations")
+		}
+		if r.folderMetadataEnabled && !safepath.IsDir(opts.Path) {
+			if err := r.writeNewFoldersMetadata(ctx, rw, opts.Path, opts.Ref, opts.Message); err != nil {
+				return err
+			}
+		}
+		return rw.Create(ctx, opts.Path, opts.Ref, data, opts.Message)
+	}
+}
+
+// moveResourceAndCreateNewFolderMetadata returns a staged write that moves a file to
+// opts.Path together with any missing ancestor _folder.json files, so a move
+// into a newly-created folder lands in a single commit. When new content is
+// provided the original is deleted and recreated at the destination; otherwise
+// a plain rename is performed.
+func (r *DualReadWriter) moveResourceAndCreateNewFolderMetadata(ctx context.Context, opts DualWriteOptions, data []byte) func(stagedRepo repository.Repository, _ bool) error {
+	return func(stagedRepo repository.Repository, _ bool) error {
+		rw, ok := stagedRepo.(repository.ReaderWriter)
+		if !ok {
+			return fmt.Errorf("repository does not support read/write operations")
+		}
+		if r.folderMetadataEnabled && !safepath.IsDir(opts.Path) {
+			if err := r.writeNewFoldersMetadata(ctx, rw, opts.Path, opts.Ref, opts.Message); err != nil {
+				return err
+			}
+		}
+		if len(opts.Data) > 0 {
+			if err := rw.Delete(ctx, opts.OriginalPath, opts.Ref, opts.Message); err != nil {
+				return fmt.Errorf("delete original file in repository: %w", err)
+			}
+			return rw.Create(ctx, opts.Path, opts.Ref, data, opts.Message)
+		}
+		return rw.Move(ctx, opts.OriginalPath, opts.Path, opts.Ref, opts.Message)
+	}
+}
+
+// writeNewFoldersMetadata walks the directories of filePath and writes a _folder.json
+// with a stable UID for any folder that does not exist in the repository yet.
+// Folders that already exist (with or without metadata) are left untouched —
+// we never backfill metadata for pre-existing folders. Reads and writes go
+// through the provided ReaderWriter (the staged repo during a staged write) so
+// reads observe writes made earlier in the same stage.
+func (r *DualReadWriter) writeNewFoldersMetadata(ctx context.Context, rw repository.ReaderWriter, filePath, ref, message string) error {
+	dir := safepath.Dir(filePath)
+	if dir == "" {
+		return nil
+	}
+
+	return safepath.Walk(ctx, dir, func(ctx context.Context, segPath string) error {
+		folderPath := safepath.EnsureTrailingSlash(segPath)
+
+		// Skip folders that already exist in the repository (with or without metadata).
+		_, err := rw.Read(ctx, folderPath, ref)
+		if errors.Is(err, repository.ErrRefNotFound) {
+			// Target branch not created yet; check the branch it will inherit from.
+			_, err = rw.Read(ctx, folderPath, "")
+		}
+		if err == nil {
+			return nil
+		}
+		if !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
+			return fmt.Errorf("check if folder exists for %q: %w", folderPath, err)
+		}
+
+		manifest := NewFolderManifest(util.GenerateShortUID(), safepath.Base(folderPath), r.folders.FolderGVK())
+		if _, err := WriteFolderMetadata(ctx, rw, folderPath, manifest, ref, message); err != nil {
+			return fmt.Errorf("write folder metadata for %q: %w", folderPath, err)
+		}
+		return nil
+	})
 }
 
 // MoveResource moves a resource from one path to another in the repository
@@ -488,18 +600,19 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 		return nil, err
 	}
 
+	gvk := r.folders.FolderGVK()
 	parsed := &ParsedResource{
 		Action: provisioning.ResourceActionMove,
 		Info: &repository.FileInfo{
 			Path: opts.Path,
 			Ref:  opts.Ref,
 		},
-		GVK: schema.GroupVersionKind{
-			Group:   FolderResource.Group,
-			Version: FolderResource.Version,
-			Kind:    "Folder",
+		GVK: gvk,
+		GVR: schema.GroupVersionResource{
+			Group:    gvk.Group,
+			Version:  gvk.Version,
+			Resource: FolderResource.Resource,
 		},
-		GVR:  FolderResource,
 		URLs: urls,
 		Repo: provisioning.ResourceRepositoryInfo{
 			Type:      cfg.Spec.Type,
@@ -584,28 +697,33 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
 	}
 
-	// Perform the move operation in the repository
-	// If we have new content, we need to update the file content as part of the move
-	if len(opts.Data) > 0 {
-		// FIXME: I think we should MOVE + UPDATE instead of Delete / Create
-		// For moves with content updates, we need to delete the old file and create the new one
-		if err = r.repo.Delete(ctx, opts.OriginalPath, opts.Ref, opts.Message); err != nil {
-			return nil, fmt.Errorf("delete original file in repository: %w", err)
-		}
-		if err = r.repo.Create(ctx, opts.Path, opts.Ref, data, opts.Message); err != nil {
-			return nil, fmt.Errorf("create moved file with new content in repository: %w", err)
-		}
-	} else {
-		// For simple moves without content changes, use the move operation
-		if err = r.repo.Move(ctx, opts.OriginalPath, opts.Path, opts.Ref, opts.Message); err != nil {
-			return nil, fmt.Errorf("move file in repository: %w", err)
-		}
+	// Perform the move together with any missing ancestor _folder.json files in a
+	// single commit using the staging mechanism. When the repository does not
+	// support staging (e.g. local repos), writes are applied directly.
+	stageOptions := repository.StageOptions{
+		Ref:                   opts.Ref,
+		Mode:                  repository.StageModeCommitOnlyOnce,
+		CommitOnlyOnceMessage: opts.Message,
+	}
+	if err = repository.WrapWithStageAndPushIfPossible(ctx, r.repo, stageOptions, r.moveResourceAndCreateNewFolderMetadata(ctx, opts, data)); err != nil {
+		return nil, err
 	}
 
 	// Update the grafana database if this is the main branch
 	if r.shouldUpdateGrafanaDB(opts, newParsed) {
-		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref); err != nil {
-			return nil, fmt.Errorf("ensure folder path exists: %w", err)
+		// Only folder-scoped kinds carry a folder annotation; org-scoped kinds (e.g. playlists)
+		// must not have one stamped onto them, or the apiserver rejects the write.
+		if newParsed.FolderScoped {
+			parent, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref)
+			if err != nil {
+				return nil, fmt.Errorf("ensure folder path exists: %w", err)
+			}
+
+			// In case the parent folder has a different ID than the one from the initially parsed resource,
+			// e.g. when the folder metadata has been generated as part of the move operation, we need to update it.
+			if newParsed.Meta.GetFolder() != parent {
+				newParsed.Meta.SetFolder(parent)
+			}
 		}
 
 		// Delete the old resource from grafana if name changed
@@ -657,7 +775,7 @@ func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions
 		return nil, fmt.Errorf("error deleting folder from repository: %w", err)
 	}
 
-	return folderDeleteResponse(ctx, opts.Path, opts.Ref, r.repo)
+	return folderDeleteResponse(ctx, opts.Path, opts.Ref, r.repo, r.folders.FolderGVK())
 }
 
 func getFolderURLs(ctx context.Context, path, ref string, repo repository.Repository) (*provisioning.RepositoryURLs, error) {
@@ -679,7 +797,7 @@ func getPathType(isDir bool) string {
 	return "file (no trailing '/')"
 }
 
-func folderDeleteResponse(ctx context.Context, path, ref string, repo repository.Repository) (*ParsedResource, error) {
+func folderDeleteResponse(ctx context.Context, path, ref string, repo repository.Repository, gvk schema.GroupVersionKind) (*ParsedResource, error) {
 	urls, err := getFolderURLs(ctx, path, ref, repo)
 	if err != nil {
 		return nil, err
@@ -691,12 +809,12 @@ func folderDeleteResponse(ctx context.Context, path, ref string, repo repository
 			Path: path,
 			Ref:  ref,
 		},
-		GVK: schema.GroupVersionKind{
-			Group:   FolderResource.Group,
-			Version: FolderResource.Version,
-			Kind:    "Folder",
+		GVK: gvk,
+		GVR: schema.GroupVersionResource{
+			Group:    gvk.Group,
+			Version:  gvk.Version,
+			Resource: FolderResource.Resource,
 		},
-		GVR: FolderResource,
 		Repo: provisioning.ResourceRepositoryInfo{
 			Type:      repo.Config().Spec.Type,
 			Namespace: repo.Config().Namespace,

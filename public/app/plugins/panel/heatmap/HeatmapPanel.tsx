@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { useMemo, useRef, useState } from 'react';
 
-import { DashboardCursorSync, PanelProps, TimeRange } from '@grafana/data';
+import { DashboardCursorSync, type PanelProps, type TimeRange } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { ScaleDistributionConfig } from '@grafana/schema';
+import { type LegendPlacement, type ScaleDistributionConfig } from '@grafana/schema';
 import {
   EventBusPlugin,
   TooltipDisplayMode,
@@ -15,19 +15,19 @@ import {
   VizLayout,
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
-import { FacetedData, TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { type FacetedData, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { getXAxisConfig } from '../../../core/components/TimeSeries/utils';
-import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationPlugin';
+import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 
 import { HeatmapTooltip } from './HeatmapTooltip';
-import { HeatmapData, prepareHeatmapData } from './fields';
+import { type HeatmapData, prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 import { calculateYSizeDivisor, prepConfig } from './utils';
 
 interface HeatmapPanelProps extends PanelProps<Options> {}
@@ -71,7 +71,7 @@ export const HeatmapPanel = (props: HeatmapPanelProps) => {
     );
   }
 
-  return <HeatmapPanelViz {...props} info={info} palette={palette} />;
+  return <HeatmapPanelViz {...props} info={info} />;
 };
 
 const HeatmapPanelViz = ({
@@ -85,8 +85,7 @@ const HeatmapPanelViz = ({
   onChangeTimeRange,
   replaceVariables,
   info,
-  palette,
-}: HeatmapPanelProps & { info: HeatmapDataForViz; palette: string[] }) => {
+}: HeatmapPanelProps & { info: HeatmapDataForViz }) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const { sync, eventsScope, canAddAnnotations, onSelectRange, canExecuteActions } = usePanelContext();
@@ -170,31 +169,29 @@ const HeatmapPanelViz = ({
   }, [options, timeZone, data.structureRev, cursorSync, annotationsLength]);
 
   const renderLegend = () => {
-    if (!options.legend.show) {
+    if (!options.legend.show || info.heatmapColors == null) {
       return null;
     }
 
-    let hoverValue: number | undefined = undefined;
+    let placement: LegendPlacement = options.legend.placement ?? 'bottom';
 
-    // let heatmapType = dataRef.current?.heatmap?.meta?.type;
-    // let isSparseHeatmap = heatmapType === DataFrameType.HeatmapCells && !isHeatmapCellsDense(dataRef.current?.heatmap!);
-    // let countFieldIdx = !isSparseHeatmap ? 2 : 3;
-    // const countField = info.heatmap.fields[countFieldIdx];
+    // VizLayout forces bottom placement on narrow screens; mirror that here so
+    // we don't render a full-height vertical scale into a bottom strip
+    if (document.body.clientWidth < theme.breakpoints.values.lg) {
+      placement = 'bottom';
+    }
 
-    // seriesIdx: 1 is heatmap layer; 2 is exemplar layer
-    // if (hover && info.heatmap.fields && hover.seriesIdx === 1) {
-    //   hoverValue = countField.values[hover.dataIdx];
-    // }
+    const isRight = placement === 'right';
 
     return (
-      <VizLayout.Legend placement="bottom" maxHeight="20%">
-        <div className={styles.colorScaleWrapper}>
+      <VizLayout.Legend placement={placement} width={isRight ? options.legend.width : undefined} maxHeight="20%">
+        <div className={isRight ? styles.colorScaleWrapperVertical : styles.colorScaleWrapper}>
           <ColorScale
-            hoverValue={hoverValue}
-            colorPalette={palette}
-            min={dataRef.current.heatmapColors?.minValue!}
-            max={dataRef.current.heatmapColors?.maxValue!}
+            colorPalette={info.heatmapColors.palette}
+            min={info.heatmapColors.minValue}
+            max={info.heatmapColors.maxValue}
             display={info.display}
+            orientation={isRight ? 'vertical' : 'horizontal'}
           />
         </div>
       </VizLayout.Legend>
@@ -243,10 +240,7 @@ const HeatmapPanelViz = ({
                       seriesIdx={seriesIdx}
                       dataRef={dataRef}
                       isPinned={isPinned}
-                      dismiss={dismiss}
                       showHistogram={options.tooltip.yHistogram}
-                      showColorScale={options.tooltip.showColorScale}
-                      panelData={data}
                       annotate={enableAnnotationCreation ? annotate : undefined}
                       maxHeight={options.tooltip.maxHeight}
                       maxWidth={options.tooltip.maxWidth}
@@ -281,5 +275,15 @@ const getStyles = () => ({
     marginLeft: '25px',
     padding: '10px 0',
     maxWidth: '300px',
+  }),
+  // vertical analog of the horizontal wrapper above; VizLayout's legend scroll
+  // container is a full-height flex column, so auto margins center the capped
+  // scale vertically while content hugs the left edge (extra configured legend
+  // width becomes empty space to the right of the values)
+  colorScaleWrapperVertical: css({
+    height: '100%',
+    maxHeight: '300px',
+    margin: 'auto 0',
+    padding: '10px 8px',
   }),
 });

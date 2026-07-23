@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 
-import { DataSourceSettings } from '@grafana/data';
-import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
+import { type DataSourceSettings } from '@grafana/data';
+import { type BackendSrvRequest, type FetchResponse } from '@grafana/runtime';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 
 import {
@@ -9,9 +9,9 @@ import {
   deleteDataSource,
   convertK8sDatasourceSettingsToLegacyDatasourceSettings,
   convertLegacyDatasourceSettingsToK8sDatasourceSettings,
-  DataSourceSettingsK8s,
-  K8sMetadata,
-  DatasourceInstanceK8sSpec,
+  type DataSourceSettingsK8s,
+  type K8sMetadata,
+  type DatasourceInstanceK8sSpec,
 } from './api';
 
 jest.mock('app/core/services/backend_srv');
@@ -55,8 +55,8 @@ describe('Datasources / API', () => {
         typeName: '',
         access: 'all areas',
         url: 'example.com',
-        user: '',
-        database: '',
+        user: 'zaphod',
+        database: 'universe',
         basicAuth: true,
         basicAuthUser: 'zaphod',
         isDefault: true,
@@ -66,13 +66,14 @@ describe('Datasources / API', () => {
         },
         readOnly: true,
         withCredentials: false,
+        version: 2,
       };
 
       let k8sMetadata: K8sMetadata = {
         name: 'fortytwo',
         namespace: 'default',
         uid: 'fortytwo',
-        resourceVersion: '',
+        resourceVersion: '2',
         generation: 42,
         creationTimestamp: '1234',
         labels: { 'grafana.app/deprecatedInternalID': '42' },
@@ -85,6 +86,8 @@ describe('Datasources / API', () => {
         url: 'example.com',
         basicAuth: true,
         basicAuthUser: 'zaphod',
+        user: 'zaphod',
+        database: 'universe',
         isDefault: true,
         readOnly: true,
       };
@@ -116,6 +119,7 @@ describe('Datasources / API', () => {
     it('should convert legacy datasource to k8s datasource', () => {
       let dsLegacySettings: DataSourceSettings = {
         id: 42,
+        version: 2,
         uid: 'fortytwo',
         orgId: 1,
         name: 'slartybartfast',
@@ -124,8 +128,8 @@ describe('Datasources / API', () => {
         typeName: '',
         access: 'all areas',
         url: 'example.com',
-        user: '',
-        database: '',
+        user: 'zaphod',
+        database: 'universe',
         basicAuth: true,
         basicAuthUser: 'zaphod',
         isDefault: true,
@@ -137,7 +141,7 @@ describe('Datasources / API', () => {
       let k8sMetadata: K8sMetadata = {
         name: 'fortytwo',
         namespace: 'default',
-        resourceVersion: '',
+        resourceVersion: '2',
         labels: { 'grafana.app/deprecatedInternalID': '42' },
         annotations: {},
       };
@@ -149,6 +153,8 @@ describe('Datasources / API', () => {
         basicAuth: true,
         basicAuthUser: 'zaphod',
         isDefault: true,
+        user: 'zaphod',
+        database: 'universe',
         readOnly: true,
       };
       let dsK8sSettings: DataSourceSettingsK8s = {

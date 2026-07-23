@@ -1,26 +1,26 @@
 import {
-  Action,
-  ActionModel,
+  type Action,
+  type ActionModel,
   ActionType,
-  ActionVariableInput,
+  type ActionVariableInput,
   AppEvents,
-  DataContextScopedVar,
-  DataFrame,
-  DataLink,
-  Field,
+  type DataContextScopedVar,
+  type DataFrame,
+  type DataLink,
+  type Field,
   FieldType,
   getFieldDataContextClone,
-  InterpolateFunction,
-  InfinityOptions,
-  ScopedVars,
+  type InterpolateFunction,
+  type InfinityOptions,
+  type ScopedVars,
   textUtil,
-  ValueLinkConfig,
+  type ValueLinkConfig,
 } from '@grafana/data';
-import { BackendSrvRequest, config as grafanaConfig, getBackendSrv } from '@grafana/runtime';
+import { type BackendSrvRequest, config as grafanaConfig, getBackendSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 
 import { HttpRequestMethod } from '../../plugins/panel/canvas/panelcfg.gen';
-import { createAbsoluteUrl, RelativeUrl } from '../alerting/unified/utils/url';
+import { createAbsoluteUrl, type RelativeUrl } from '../alerting/unified/utils/url';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { getNextRequestId } from '../query/state/PanelQueryRunner';
 

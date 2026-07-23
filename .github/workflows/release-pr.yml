@@ -46,7 +46,10 @@ permissions:
 
 jobs:
   capture-date:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+      actions: read # gh run view reads the run's createdAt via the Actions API
     outputs:
       release_date: ${{ steps.set_release_date.outputs.release_date }}
     steps:
@@ -95,44 +98,56 @@ jobs:
       id-token: write
       pull-requests: write
     name: Create Release PR
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64
     if: github.repository == 'grafana/grafana'
     env:
       VERSION: ${{ inputs.version }}
       LATEST: ${{ inputs.latest }}
       DRY_RUN: ${{ inputs.dry_run }}
+      RUN_NUMBER: ${{ github.run_number }}
     steps:
-      - name: "Get vault secrets"
-        id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          repo_secrets: |
-            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
-      - name: Generate token
-        id: generate_changelog_token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+          github_app: grafana-pr-automation
+          permission_set: ${{ startsWith(github.ref_name, 'release-') && 'release' || 'main' }}
+      # The grafana repo is large enough that GitHub's pre-receive scan for workflow-file
+      # modifications ("Restricts updates to workflow files" system rule) consistently
+      # exceeds its server-side timeout on any push -- regardless of whether the push
+      # actually touches workflow files. When the scan times out, GitHub fails closed and
+      # rejects the push with "workflows scope may be required". Granting workflows:write
+      # tells GitHub to skip the scan entirely (the caller is already authorized to modify
+      # workflow files), which is the only documented way to push to this repo from a bot.
+      # grafana-writer is the only app installed with that scope; grafana-pr-automation
+      # cannot push at all because of this.
+      - name: Get GitHub App token (writer)
+        id: get-writer-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
-          repositories: "[\"grafana\", \"grafana-enterprise\"]"
-          permissions: "{\"contents\": \"write\", \"pull_requests\": \"write\", \"workflows\":\"write\"}"
-      - run: echo "RELEASE_BRANCH=release-${VERSION}" >> "$GITHUB_ENV"
-      - name: Checkout Grafana
+          github_app: grafana-writer
+          permission_set: ${{ startsWith(github.ref_name, 'release-') && 'release-writer' || 'release-writer-main' }}
+      - run: |
+          {
+            echo "RELEASE_BRANCH=release-${VERSION}"
+            echo "WORK_BRANCH=release/${RUN_NUMBER}/${VERSION}"
+          } >> "$GITHUB_ENV"
+      - name: Checkout Grafana target branch #checkout the target branch to base the release branch on
         uses: actions/checkout@v5
         with:
-          token: ${{ steps.generate_changelog_token.outputs.token }}
+          token: ${{ steps.get-writer-app-token.outputs.token }} # used only for fetching; commits go via kminehart API
           ref: ${{ env.RELEASE_BRANCH }}
           fetch-tags: true
           fetch-depth: 0
       - name: Checkout Grafana (main)
         uses: actions/checkout@v5
         with:
-          token: ${{ steps.generate_changelog_token.outputs.token }}
+          token: ${{ github.token }}
           ref: main
-          fetch-depth: '0'
           path: .grafana-main
 
       - name: Setup Node.js
+        if: ${{ !contains(inputs.version, '+security') }}
         uses: ./.github/actions/setup-node
       # Use actions/setup-go directly instead of ./.github/actions/setup-go: the composite
       # references ./.github/actions/report-go-cache-sizes, which resolves from this job's
@@ -141,25 +156,31 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
+          go-version-file: .grafana-main/go.mod
           cache: false
-      - name: Configure git user
-        run: |
-          git config --local user.name "grafana-delivery-bot[bot]"
-          git config --local user.email "grafana-delivery-bot[bot]@users.noreply.github.com"
-          git config --local --add --bool push.autoSetupRemote true
 
-      - name: Create branch
-        run: git checkout -b "release/${{ github.run_number }}/$VERSION"
+      # planetscale/ghcommit-action commits to an existing remote branch; it doesn't
+      # create the branch itself. Pre-create the ref at the release branch's HEAD via
+      # the Git Data API so subsequent commits have a target.
+      - name: Pre-create branch on remote
+        env:
+          GH_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
+        run: |
+          BASE_SHA=$(git rev-parse "origin/${RELEASE_BRANCH}")
+          gh api "repos/${GITHUB_REPOSITORY}/git/refs" \
+            --method POST \
+            -f "ref=refs/heads/${WORK_BRANCH}" \
+            -f "sha=${BASE_SHA}"
+
       - name: Generate changelog
         id: changelog
         if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
         uses: ./.grafana-main/.github/actions/changelog
         with:
           previous: ${{inputs.previous_version}}
-          github_token: ${{ steps.generate_changelog_token.outputs.token }}
           target: v${{ env.VERSION }}
           output_file: changelog_items.md
+          github_token: ${{ steps.get-github-app-token.outputs.token }}
       - name: Patch CHANGELOG.md
         if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
         run: |
@@ -171,12 +192,18 @@ jobs:
             cat changelog_items.md
           ) > CHANGELOG.part
 
+          # Escape BRE metacharacters so versions containing '.' (and the literal '+' in
+          # '+security' builds) match the delimiters literally instead of as a regex.
+          # '+' is left unescaped on purpose: in BRE it is already a literal, and '\+'
+          # would turn it into the one-or-more operator.
+          VERSION_RE=$(printf '%s' "$VERSION" | sed 's/[][\.^$*]/\\&/g')
+
           # Check if a version exists in the changelog
-          if grep -q "<!-- $VERSION START" CHANGELOG.md ; then
+          if grep -qF "<!-- $VERSION START" CHANGELOG.md ; then
             # Replace the content between START and END delimiters
             echo "Version $VERSION is found in the CHANGELOG.md, patching contents..."
-            sed -i -e "/$VERSION START/,/$VERSION END/{//!d;}" \
-                   -e "/$VERSION START/r CHANGELOG.part" CHANGELOG.md
+            sed -i -e "/$VERSION_RE START/,/$VERSION_RE END/{//!d;}" \
+                   -e "/$VERSION_RE START/r CHANGELOG.part" CHANGELOG.md
           else
             # Prepend changelog part to the main changelog file
             echo "Version $VERSION not found in the CHANGELOG.md"
@@ -195,32 +222,53 @@ jobs:
       - name: "Prettify CHANGELOG.md"
         if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
         run: npx prettier --write CHANGELOG.md
-      - name: Commit CHANGELOG.md changes
-        if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
-        run: git add CHANGELOG.md && git commit --allow-empty -m "Update changelog" CHANGELOG.md
+      # Remove the main checkout before lerna runs so nx doesn't see duplicate plugin
+      # package.json files across .grafana-main and the release-branch tree.
+      - name: Remove main checkout before bump
+        if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
+        run: rm -rf .grafana-main
       - name: Bump versions
-        if: ${{ inputs.bump == true || inputs.bump == 'true' }}
-        uses: dagger/dagger-for-github@d913e70051faf3b907d4dd96ef1161083c88c644
-        with:
-          version: 0.18.8
-          verb: run
-          args: go run -C .grafana-main ./pkg/build/actions/bump-version -version="patch"
-
+        if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
+        run: |
+          yarn install
+          npm version patch --no-git-tag-version
+          yarn run lerna version patch --no-push --no-git-tag-version --force-publish --exact --yes
+          yarn install
+          yarn prettier:write
       - name: make gen-cue
+        if: ${{ !contains(inputs.version, '+security') }}
         shell: bash
         run: make gen-cue
-      - name: Add package.json changes
-        if: ${{ inputs.bump == true || inputs.bump == 'true' }}
-        run: |
-          git add package.json lerna.json yarn.lock packages public
-          test -e e2e-playwright/test-plugins && git add e2e-playwright/test-plugins
-          git commit -m "Update version to $VERSION"
 
-      - name: Git push
-        run: git push
+      # Single commit for all release-PR file changes (changelog + version bumps +
+      # yarn.lock refresh + regenerated CUE schemas). ghcommit-action uses the Git Data
+      # API, which gives us two things in one shot:
+      #   1. Commits made via the API with a GitHub App installation token are auto-signed
+      #      by GitHub under grafana-writer[bot]'s identity (Verified signature),
+      #      satisfying upcoming required_signatures rules.
+      #   2. The grafana-writer token's workflows:write skips the pre-receive workflow-file
+      #      scan that otherwise times out on grafana/grafana (the repo is too large for
+      #      the scan to finish in time, causing pushes to be rejected regardless of
+      #      whether workflow files were touched).
+      # Doing it as a single commit also avoids the parent-SHA mismatch ghcommit-action
+      # hits when multiple sequential API commits are made on the same branch (each
+      # commit advances the remote ref while local HEAD doesn't).
+      - name: Commit release-PR changes
+        uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
+        with:
+          commit_message: "Release: ${{ env.VERSION }}"
+          repo: ${{ github.repository }}
+          branch: ${{ env.WORK_BRANCH }}
+          empty: "true"
+          file_pattern: "**"
+        env:
+          GITHUB_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
       - name: Create PR
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # grafana-pr-automation token (reader permission-set, now with pull_requests:write)
+          # is used here instead of the default GITHUB_TOKEN so the PR is created under the
+          # grafana-pr-automation[bot] identity.
+          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
           LATEST_FLAG=()
@@ -232,5 +280,6 @@ jobs:
             -l "no-changelog" \
             --dry-run="$DRY_RUN" \
             -B "${RELEASE_BRANCH}" \
+            -H "${WORK_BRANCH}" \
             --title "Release: $VERSION" \
             --body "These code changes must be merged after a release is complete"

@@ -2,15 +2,15 @@ import { renderHook } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { config, locationService } from '@grafana/runtime';
-import { AlertingRule, RecordingRule, RuleIdentifier } from 'app/types/unified-alerting';
+import { type AlertingRule, type RecordingRule, type RuleIdentifier } from 'app/types/unified-alerting';
 import {
   GrafanaAlertStateDecision,
-  GrafanaRuleDefinition,
+  type GrafanaRuleDefinition,
   PromAlertingRuleState,
   PromRuleType,
-  RulerAlertingRuleDTO,
-  RulerGrafanaRuleDTO,
-  RulerRecordingRuleDTO,
+  type RulerAlertingRuleDTO,
+  type RulerGrafanaRuleDTO,
+  type RulerRecordingRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
 import {
@@ -21,6 +21,7 @@ import {
   hashRulerRule,
   parse,
   stringifyIdentifier,
+  stripPromQLComments,
 } from './rule-id';
 
 const alertingRule = {
@@ -372,5 +373,62 @@ describe('hashQuery', () => {
 
     expect(hash1).toBe(hash2);
     expect(hash1).toBe(hash1.split('').sort().join(''));
+  });
+
+  it('should strip inline comments (# after code on the same line)', () => {
+    const query1 = `max by (service) (up{env="production"}) # production fallback
+or # combine with staging
+max by (service) (up{env="staging"}) * 0.8`;
+    const query2 = `max by (service) (up{env="production"}) or max by (service) (up{env="staging"}) * 0.8`;
+
+    expect(hashQuery(query1)).toBe(hashQuery(query2));
+  });
+
+  it('should strip mixed full-line and inline comments', () => {
+    const query1 = `# Full-line comment
+max by (environment, namespace, service) (service_condition{environment="production"}) # inline comment
+or
+# Another full-line comment
+max by (environment, namespace, service) (service_condition{environment!="production"})`;
+    const query2 = `max by (environment, namespace, service) (service_condition{environment="production"}) or max by (environment, namespace, service) (service_condition{environment!="production"})`;
+
+    expect(hashQuery(query1)).toBe(hashQuery(query2));
+  });
+});
+
+describe('stripPromQLComments', () => {
+  it('should strip full-line comments', () => {
+    expect(stripPromQLComments('# comment\nmetric')).toBe('metric');
+  });
+
+  it('should strip inline comments', () => {
+    expect(stripPromQLComments('metric or # fallback\nother_metric')).toBe('metric or\nother_metric');
+  });
+
+  it('should strip mixed full-line and inline comments', () => {
+    const input = `# header comment
+max by (service) (up{env="production"}) # inline
+or
+# another full-line
+max by (service) (up{env="staging"})`;
+    const expected = `max by (service) (up{env="production"})
+or
+max by (service) (up{env="staging"})`;
+    expect(stripPromQLComments(input)).toBe(expected);
+  });
+
+  it('should return empty string for a comment-only query', () => {
+    expect(stripPromQLComments('# just a comment')).toBe('');
+  });
+
+  it('should return the query unchanged when there are no comments', () => {
+    expect(stripPromQLComments('rate(requests_total[5m])')).toBe('rate(requests_total[5m])');
+  });
+
+  it('should collapse lines that become empty after comment removal', () => {
+    const input = `metric1
+# this whole line is a comment
+metric2`;
+    expect(stripPromQLComments(input)).toBe('metric1\nmetric2');
   });
 });

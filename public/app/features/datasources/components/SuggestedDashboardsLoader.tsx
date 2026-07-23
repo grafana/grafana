@@ -1,6 +1,6 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstanceSettings, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { SuggestedDashboardsModal } from 'app/features/dashboard/dashgrid/DashboardLibrary/SuggestedDashboardsModal';
 import { TrackingProvider } from 'app/features/dashboard/dashgrid/DashboardLibrary/TrackingContext';
 import {
@@ -10,16 +10,16 @@ import {
 import {
   EVENT_LOCATIONS,
   PAGE_SIZE,
-  SourceEntryPoint,
+  type SourceEntryPoint,
 } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
-import { GnetDashboard } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
+import { type GnetDashboard } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
 import {
   DEFAULT_SORT_ORDER,
   DEFAULT_SORT_DIRECTION,
   INCLUDE_LOGO,
   INCLUDE_SCREENSHOTS,
 } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/communityDashboardHelpers';
-import { PluginDashboard } from 'app/types/plugins';
+import { type PluginDashboard } from 'app/types/plugins';
 
 type FetchStatus = 'idle' | 'loading' | 'done' | 'error';
 
@@ -75,6 +75,9 @@ export const SuggestedDashboardsLoader = ({
   const onFetchCompletedRef = useRef<((hasDashboards: boolean) => void) | undefined>(undefined);
   onFetchCompletedRef.current = onFetchComplete;
 
+  const { settings: datasource, isLoading: isDatasourceLoading } = useDataSourceInstanceSettings(datasourceUid);
+  const datasourceType = datasource?.type ?? '';
+
   const triggerFetch = useCallback(async () => {
     if (hasFetchedRef.current) {
       return;
@@ -83,7 +86,7 @@ export const SuggestedDashboardsLoader = ({
     setFetchStatus('loading');
 
     try {
-      const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
+      const ds = await getDataSourceInstanceSettings(datasourceUid);
       if (!ds) {
         setFetchStatus('done');
         onFetchCompletedRef.current?.(false);
@@ -156,16 +159,17 @@ export const SuggestedDashboardsLoader = ({
   const handleLastPageItemCount = useCallback(
     (count: number) => {
       setLastPageItemCount(count);
-      // Persist in the module-level cache so it survives modal close/reopen
-      const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
-      if (ds) {
-        const cached = dashboardCache.get(ds.type);
+      // Persist in the module-level cache so it survives modal close/reopen. The type is
+      // resolved at the top of the component via `useDataSourceInstanceSettings`, so by
+      // the time the list has produced a real lastPageItemCount the type is available.
+      if (datasourceType) {
+        const cached = dashboardCache.get(datasourceType);
         if (cached) {
           cached.lastPageItemCount = count;
         }
       }
     },
-    [datasourceUid]
+    [datasourceType]
   );
 
   const trackingValue = useMemo(
@@ -181,12 +185,13 @@ export const SuggestedDashboardsLoader = ({
           isOpen={isOpen}
           onDismiss={() => setIsOpen(false)}
           datasourceUid={datasourceUid}
+          datasourceType={datasourceType}
           provisionedDashboards={provisionedDashboards}
           communityDashboards={communityDashboards}
           communityTotalPages={communityTotalPages}
           lastPageItemCount={lastPageItemCount}
           onLastPageItemCount={handleLastPageItemCount}
-          isDashboardsLoading={fetchStatus === 'loading'}
+          isDashboardsLoading={fetchStatus === 'loading' || (Boolean(datasourceUid) && isDatasourceLoading)}
         />
       </TrackingProvider>
     </>

@@ -1,22 +1,26 @@
 import { memo } from 'react';
 
-import { t } from '@grafana/i18n';
-import { Badge, Stack } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
+import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
+import { ReadOnlyBadge } from 'app/features/provisioning/components/ReadOnlyBadge';
+import { ensureFolderPathTrailingSlash } from 'app/features/provisioning/components/utils/path';
 import {
   RepoViewStatus,
   useGetResourceRepositoryView,
 } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
-import { getManagedByRepositoryTooltip, getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
-import { DashboardViewItem } from 'app/features/search/types';
-import { FolderDTO } from 'app/types/folders';
+import { getSourcePath, isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
+import { type DashboardViewItem } from 'app/features/search/types';
+import { type FolderDTO } from 'app/types/folders';
 
 export interface Props {
   folder?: FolderDTO | DashboardViewItem;
+  /** When true, the badge exposes repository actions (source folder, repository admin). Opt-in so the folder picker dropdown stays non-interactive. */
+  enableRepositoryLink?: boolean;
 }
 
-export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
+export const FolderRepo = memo(function FolderRepo({ folder, enableRepositoryLink = false }: Props) {
   // Check if we can skip early without needing the useIsProvisionedInstance query
   // This reduces RTK Query subscriptions and prevents re-render loops on API errors
   const canSkipEarly = getCanSkipEarly(folder);
@@ -24,7 +28,13 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
   const isProvisionedInstance = useIsProvisionedInstance({ skip: canSkipEarly });
   const skipRender = canSkipEarly || isProvisionedInstance;
 
-  const { isReadOnlyRepo, repoType, repository, status } = useGetResourceRepositoryView({
+  const {
+    isReadOnlyRepo,
+    repoType,
+    repository,
+    folder: folderResource,
+    status,
+  } = useGetResourceRepositoryView({
     folderName: skipRender ? undefined : folder?.uid,
     skipQuery: skipRender,
   });
@@ -36,28 +46,23 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
   const isOrphaned = status === RepoViewStatus.Orphaned;
 
   if (isOrphaned) {
-    return (
-      <Badge
-        color="orange"
-        icon="exclamation-triangle"
-        tooltip={t('folder-repo.repository-not-found-tooltip', 'Repository not found')}
-      />
-    );
+    return <ManagedBadge managerKind={ManagerKind.Repo} isOrphaned />;
   }
 
-  const repoTooltipText = getManagedByRepositoryTooltip(repository?.title || repository?.name);
+  // Trailing slash marks the path as a directory, so the source link points at the
+  // provider's tree view instead of a blob view.
+  const folderSourcePath = folderResource ? ensureFolderPathTrailingSlash(getSourcePath(folderResource) ?? '') : '';
 
   return (
     // badge with text and icon only has different height, we will need to adjust the layout using stretch
     <Stack direction="row" alignItems="stretch">
-      {isReadOnlyRepo && (
-        <Badge
-          color="darkgrey"
-          text={t('folder-repo.read-only-badge', 'Read only')}
-          tooltip={getReadOnlyTooltipText({ isLocal: repoType === 'local' })}
-        />
-      )}
-      <Badge color="purple" icon="exchange-alt" tooltip={repoTooltipText} />
+      {isReadOnlyRepo && <ReadOnlyBadge repoType={repoType} />}
+      <ManagedBadge
+        managerKind={ManagerKind.Repo}
+        name={repository?.title || repository?.name}
+        repositoryName={enableRepositoryLink ? repository?.name : undefined}
+        sourcePath={enableRepositoryLink ? folderSourcePath || undefined : undefined}
+      />
     </Stack>
   );
 });
@@ -72,7 +77,7 @@ function getCanSkipEarly(folder: FolderDTO | DashboardViewItem | undefined): boo
   if (hasParent) {
     return true;
   }
-  const isNotManaged = folder.managedBy !== ManagerKind.Repo;
+  const isNotManaged = !isItemManagedByRepository(folder);
   if (isNotManaged) {
     return true;
   }

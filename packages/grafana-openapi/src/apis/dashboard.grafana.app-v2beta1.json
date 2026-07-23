@@ -36,15 +36,6 @@
         "operationId": "listDashboard",
         "parameters": [
           {
-            "name": "allowWatchBookmarks",
-            "in": "query",
-            "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
             "name": "continue",
             "in": "query",
             "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
@@ -86,24 +77,6 @@
             "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
             "schema": {
               "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersionMatch",
-            "in": "query",
-            "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "sendInitialEvents",
-            "in": "query",
-            "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
-            "schema": {
-              "type": "boolean",
               "uniqueItems": true
             }
           },
@@ -251,153 +224,6 @@
           }
         },
         "x-kubernetes-action": "post",
-        "x-kubernetes-group-version-kind": {
-          "group": "dashboard.grafana.app",
-          "version": "v2beta1",
-          "kind": "Dashboard"
-        }
-      },
-      "delete": {
-        "tags": ["Dashboard"],
-        "description": "delete collection of Dashboard",
-        "operationId": "deletecollectionDashboard",
-        "parameters": [
-          {
-            "name": "continue",
-            "in": "query",
-            "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "dryRun",
-            "in": "query",
-            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldSelector",
-            "in": "query",
-            "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "gracePeriodSeconds",
-            "in": "query",
-            "description": "The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "ignoreStoreReadErrorWithClusterBreakingPotential",
-            "in": "query",
-            "description": "if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "labelSelector",
-            "in": "query",
-            "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "orphanDependents",
-            "in": "query",
-            "description": "Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the \"orphan\" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "propagationPolicy",
-            "in": "query",
-            "description": "Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersion",
-            "in": "query",
-            "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersionMatch",
-            "in": "query",
-            "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "sendInitialEvents",
-            "in": "query",
-            "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "timeoutSeconds",
-            "in": "query",
-            "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
           "version": "v2beta1",
@@ -786,6 +612,1412 @@
           }
         }
       ]
+    },
+    "/notebooks": {
+      "get": {
+        "tags": ["Notebook"],
+        "description": "list or watch objects of kind Notebook",
+        "operationId": "listNotebook",
+        "parameters": [
+          {
+            "name": "continue",
+            "in": "query",
+            "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldSelector",
+            "in": "query",
+            "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "labelSelector",
+            "in": "query",
+            "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
+            "schema": {
+              "type": "integer",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "resourceVersion",
+            "in": "query",
+            "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "timeoutSeconds",
+            "in": "query",
+            "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
+            "schema": {
+              "type": "integer",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "watch",
+            "in": "query",
+            "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotebookList"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotebookList"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotebookList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "list",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v2beta1",
+          "kind": "Notebook"
+        }
+      },
+      "post": {
+        "tags": ["Notebook"],
+        "description": "create a Notebook",
+        "operationId": "createNotebook",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Notebook"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/Notebook"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notebook"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notebook"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notebook"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notebook"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notebook"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notebook"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "post",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v2beta1",
+          "kind": "Notebook"
+        }
+      },
+      "delete": {
+        "tags": ["Notebook"],
+        "description": "delete collection of Notebook",
+        "operationId": "deletecollectionNotebook",
+        "parameters": [
+          {
+            "name": "continue",
+            "in": "query",
+            "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldSelector",
+            "in": "query",
+            "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "gracePeriodSeconds",
+            "in": "query",
+            "description": "The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately.",
+            "schema": {
+              "type": "integer",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "ignoreStoreReadErrorWithClusterBreakingPotential",
+            "in": "query",
+            "description": "if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "labelSelector",
+            "in": "query",
+            "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
+            "schema": {
+              "type": "integer",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "orphanDependents",
+            "in": "query",
+            "description": "Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the \"orphan\" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "propagationPolicy",
+            "in": "query",
+            "description": "Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "resourceVersion",
+            "in": "query",
+            "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "resourceVersionMatch",
+            "in": "query",
+            "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "sendInitialEvents",
+            "in": "query",
+            "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "shardSelector",
+            "in": "query",
+            "description": "shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:\n\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000')\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n\nField paths use CEL-style object-rooted syntax (e.g. \"object.metadata.uid\"), NOT the fieldSelector format (\"metadata.uid\"). Currently supported paths:\n  - object.metadata.uid\n  - object.metadata.namespace\n\nhexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.\n\nExamples:\n  2-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n  4-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')\n    shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')\n    shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')\n\nThis is an alpha field and requires enabling the ShardedListAndWatch feature gate.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "timeoutSeconds",
+            "in": "query",
+            "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
+            "schema": {
+              "type": "integer",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "deletecollection",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v2beta1",
+          "kind": "Notebook"
+        }
+      },
+      "parameters": [
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/notebooks/{name}": {
+      "get": {
+        "tags": ["Notebook"],
+        "description": "read the specified Notebook",
+        "operationId": "getNotebook",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notebook"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notebook"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v2beta1",
+          "kind": "Notebook"
+        }
+      },
+      "put": {
+        "tags": ["Notebook"],
+        "description": "replace the specified Notebook",
+        "operationId": "replaceNotebook",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Notebook"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/Notebook"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notebook"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notebook"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notebook"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notebook"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v2beta1",
+          "kind": "Notebook"
+        }
+      },
+      "delete": {
+        "tags": ["Notebook"],
+        "description": "delete a Notebook",
+        "operationId": "deleteNotebook",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "gracePeriodSeconds",
+            "in": "query",
+            "description": "The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately.",
+            "schema": {
+              "type": "integer",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "ignoreStoreReadErrorWithClusterBreakingPotential",
+            "in": "query",
+            "description": "if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "orphanDependents",
+            "in": "query",
+            "description": "Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the \"orphan\" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "propagationPolicy",
+            "in": "query",
+            "description": "Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "delete",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v2beta1",
+          "kind": "Notebook"
+        }
+      },
+      "patch": {
+        "tags": ["Notebook"],
+        "description": "partially update the specified Notebook",
+        "operationId": "updateNotebook",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch).",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Force is going to \"force\" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/apply-patch+yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/Patch"
+              }
+            },
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Patch"
+              }
+            },
+            "application/merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Patch"
+              }
+            },
+            "application/strategic-merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Patch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notebook"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notebook"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notebook"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notebook"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v2beta1",
+          "kind": "Notebook"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the Notebook",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/variables": {
+      "get": {
+        "tags": ["Variable"],
+        "description": "list or watch objects of kind Variable",
+        "operationId": "listVariable",
+        "parameters": [
+          {
+            "name": "continue",
+            "in": "query",
+            "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldSelector",
+            "in": "query",
+            "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "labelSelector",
+            "in": "query",
+            "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
+            "schema": {
+              "type": "integer",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "resourceVersion",
+            "in": "query",
+            "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "timeoutSeconds",
+            "in": "query",
+            "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
+            "schema": {
+              "type": "integer",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "watch",
+            "in": "query",
+            "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariableList"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariableList"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariableList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "list",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v2beta1",
+          "kind": "Variable"
+        }
+      },
+      "post": {
+        "tags": ["Variable"],
+        "description": "create a Variable",
+        "operationId": "createVariable",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Variable"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/Variable"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Variable"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Variable"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Variable"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Variable"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Variable"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Variable"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "post",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v2beta1",
+          "kind": "Variable"
+        }
+      },
+      "delete": {
+        "tags": ["Variable"],
+        "description": "delete collection of Variable",
+        "operationId": "deletecollectionVariable",
+        "parameters": [
+          {
+            "name": "continue",
+            "in": "query",
+            "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldSelector",
+            "in": "query",
+            "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "gracePeriodSeconds",
+            "in": "query",
+            "description": "The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately.",
+            "schema": {
+              "type": "integer",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "ignoreStoreReadErrorWithClusterBreakingPotential",
+            "in": "query",
+            "description": "if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "labelSelector",
+            "in": "query",
+            "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
+            "schema": {
+              "type": "integer",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "orphanDependents",
+            "in": "query",
+            "description": "Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the \"orphan\" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "propagationPolicy",
+            "in": "query",
+            "description": "Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "resourceVersion",
+            "in": "query",
+            "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "resourceVersionMatch",
+            "in": "query",
+            "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "sendInitialEvents",
+            "in": "query",
+            "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "shardSelector",
+            "in": "query",
+            "description": "shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:\n\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000')\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n\nField paths use CEL-style object-rooted syntax (e.g. \"object.metadata.uid\"), NOT the fieldSelector format (\"metadata.uid\"). Currently supported paths:\n  - object.metadata.uid\n  - object.metadata.namespace\n\nhexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.\n\nExamples:\n  2-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n  4-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')\n    shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')\n    shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')\n\nThis is an alpha field and requires enabling the ShardedListAndWatch feature gate.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "timeoutSeconds",
+            "in": "query",
+            "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
+            "schema": {
+              "type": "integer",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "deletecollection",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v2beta1",
+          "kind": "Variable"
+        }
+      },
+      "parameters": [
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/variables/{name}": {
+      "get": {
+        "tags": ["Variable"],
+        "description": "read the specified Variable",
+        "operationId": "getVariable",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Variable"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Variable"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v2beta1",
+          "kind": "Variable"
+        }
+      },
+      "put": {
+        "tags": ["Variable"],
+        "description": "replace the specified Variable",
+        "operationId": "replaceVariable",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Variable"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/Variable"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Variable"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Variable"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Variable"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Variable"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v2beta1",
+          "kind": "Variable"
+        }
+      },
+      "delete": {
+        "tags": ["Variable"],
+        "description": "delete a Variable",
+        "operationId": "deleteVariable",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "gracePeriodSeconds",
+            "in": "query",
+            "description": "The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately.",
+            "schema": {
+              "type": "integer",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "ignoreStoreReadErrorWithClusterBreakingPotential",
+            "in": "query",
+            "description": "if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "orphanDependents",
+            "in": "query",
+            "description": "Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the \"orphan\" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "propagationPolicy",
+            "in": "query",
+            "description": "Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "delete",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v2beta1",
+          "kind": "Variable"
+        }
+      },
+      "patch": {
+        "tags": ["Variable"],
+        "description": "partially update the specified Variable",
+        "operationId": "updateVariable",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch).",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Force is going to \"force\" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/apply-patch+yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/Patch"
+              }
+            },
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Patch"
+              }
+            },
+            "application/merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Patch"
+              }
+            },
+            "application/strategic-merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Patch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Variable"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Variable"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Variable"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Variable"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v2beta1",
+          "kind": "Variable"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the Variable",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
     }
   },
   "components": {
@@ -810,17 +2042,9 @@
       },
       "AnnotationPermission": {
         "type": "object",
-        "required": ["dashboard", "organization"],
+        "required": ["dashboard"],
         "properties": {
           "dashboard": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AnnotationActions"
-              }
-            ]
-          },
-          "organization": {
             "default": {},
             "allOf": [
               {
@@ -1153,8 +2377,8 @@
             "description": "Panel IDs that should be included or excluded",
             "type": "array",
             "items": {
-              "type": "integer",
-              "format": "int64",
+              "type": "number",
+              "format": "double",
               "default": 0
             }
           }
@@ -2034,6 +3258,10 @@
         "properties": {
           "fixedColor": {
             "description": "The fixed color value for fixed or shades color modes.",
+            "type": "string"
+          },
+          "gradientColorTo": {
+            "description": "The end color for the gradient color mode (smallest value). Only used when mode is gradient.",
             "type": "string"
           },
           "mode": {
@@ -4045,6 +5273,1539 @@
           }
         ]
       },
+      "Notebook": {
+        "type": "object",
+        "required": ["metadata", "spec"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ObjectMeta"
+              }
+            ]
+          },
+          "spec": {
+            "description": "Spec is the spec of the Notebook",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookSpec"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "Notebook",
+            "version": "v2beta1"
+          }
+        ]
+      },
+      "NotebookAction": {
+        "type": "object",
+        "required": ["type", "title"],
+        "properties": {
+          "confirmation": {
+            "type": "string"
+          },
+          "fetch": {
+            "$ref": "#/components/schemas/NotebookFetchOptions"
+          },
+          "infinity": {
+            "$ref": "#/components/schemas/NotebookInfinityOptions"
+          },
+          "oneClick": {
+            "type": "boolean"
+          },
+          "style": {
+            "$ref": "#/components/schemas/NotebookV2beta1ActionStyle"
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          },
+          "type": {
+            "type": "string",
+            "default": ""
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/NotebookActionVariable"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "NotebookActionVariable": {
+        "type": "object",
+        "required": ["key", "name", "type"],
+        "properties": {
+          "key": {
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "type": "string",
+            "default": ""
+          },
+          "type": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "NotebookCellKind": {
+        "description": "A cell holds non-panel narrative content (markdown text, code) in a notebook layout. Panel cells are not represented here — they reuse PanelKind.",
+        "type": "object",
+        "required": ["kind", "spec"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookCellSpec"
+              }
+            ]
+          }
+        }
+      },
+      "NotebookCellKindOrPanelKindOrLibraryPanelKind": {
+        "type": "object",
+        "properties": {
+          "CellKind": {
+            "$ref": "#/components/schemas/NotebookCellKind"
+          },
+          "LibraryPanelKind": {
+            "$ref": "#/components/schemas/NotebookLibraryPanelKind"
+          },
+          "PanelKind": {
+            "$ref": "#/components/schemas/NotebookPanelKind"
+          }
+        }
+      },
+      "NotebookCellSpec": {
+        "type": "object",
+        "required": ["content"],
+        "properties": {
+          "content": {
+            "$ref": "#/components/schemas/NotebookMarkdownCellContentKindOrCodeCellContentKind"
+          }
+        }
+      },
+      "NotebookCodeCellContentKind": {
+        "type": "object",
+        "required": ["kind", "spec"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookCodeCellContentSpec"
+              }
+            ]
+          }
+        }
+      },
+      "NotebookCodeCellContentSpec": {
+        "type": "object",
+        "required": ["language", "code"],
+        "properties": {
+          "annotation": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "default": ""
+          },
+          "highlight": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64",
+              "default": 0
+            }
+          },
+          "language": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "NotebookDataLink": {
+        "type": "object",
+        "required": ["title", "url"],
+        "properties": {
+          "targetBlank": {
+            "type": "boolean"
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          },
+          "url": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "NotebookDataQueryKind": {
+        "type": "object",
+        "required": ["kind", "group", "version", "spec"],
+        "properties": {
+          "datasource": {
+            "description": "New type for datasource reference Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookV2beta1DataQueryKindDatasource"
+              }
+            ]
+          },
+          "group": {
+            "type": "string",
+            "default": ""
+          },
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "labels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "spec": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          },
+          "version": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "NotebookDataTransformerConfig": {
+        "description": "Transformations allow to manipulate data returned by a query before the system applies a visualization. Using transformations you can: rename fields, join time series data, perform mathematical operations across queries, use the output of one transformation as the input to another transformation, etc.",
+        "type": "object",
+        "required": ["id", "options"],
+        "properties": {
+          "disabled": {
+            "description": "Disabled transformations are skipped",
+            "type": "boolean"
+          },
+          "filter": {
+            "description": "Optional frame matcher. When missing it will be applied to all results",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookMatcherConfig"
+              }
+            ]
+          },
+          "id": {
+            "description": "Unique identifier of transformer",
+            "type": "string",
+            "default": ""
+          },
+          "options": {
+            "description": "Options to be passed to the transformer Valid options depend on the transformer id",
+            "type": "object"
+          },
+          "topic": {
+            "description": "Where to pull DataFrames from as input to transformation",
+            "type": "string"
+          }
+        }
+      },
+      "NotebookDynamicConfigValue": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "default": ""
+          },
+          "value": {
+            "type": "object"
+          }
+        }
+      },
+      "NotebookElementReference": {
+        "type": "object",
+        "required": ["kind", "name"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "NotebookFetchOptions": {
+        "type": "object",
+        "required": ["method", "url"],
+        "properties": {
+          "body": {
+            "type": "string"
+          },
+          "headers": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "default": ""
+              }
+            }
+          },
+          "method": {
+            "type": "string",
+            "default": ""
+          },
+          "queryParams": {
+            "description": "These are 2D arrays of strings, each representing a key-value pair We are defining them this way because we can't generate a go struct that that would have exactly two strings in each sub-array",
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "default": ""
+              }
+            }
+          },
+          "url": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "NotebookFieldColor": {
+        "description": "Map a field to a color.",
+        "type": "object",
+        "required": ["mode"],
+        "properties": {
+          "fixedColor": {
+            "description": "The fixed color value for fixed or shades color modes.",
+            "type": "string"
+          },
+          "gradientColorTo": {
+            "description": "The end color for the gradient color mode (smallest value). Only used when mode is gradient.",
+            "type": "string"
+          },
+          "mode": {
+            "description": "The main color scheme mode.",
+            "type": "string",
+            "default": ""
+          },
+          "seriesBy": {
+            "description": "Some visualizations need to know how to assign a series color from by value color schemes.",
+            "type": "string"
+          }
+        }
+      },
+      "NotebookFieldConfig": {
+        "description": "The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a field. A field can represent a single time series or table column. Field options allow you to change how the data is displayed in your visualizations.",
+        "type": "object",
+        "properties": {
+          "actions": {
+            "description": "Define interactive HTTP requests that can be triggered from data visualizations.",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/NotebookAction"
+                }
+              ]
+            }
+          },
+          "color": {
+            "description": "Panel color configuration",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookFieldColor"
+              }
+            ]
+          },
+          "custom": {
+            "description": "custom is specified by the FieldConfig field in panel plugin schemas.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          },
+          "decimals": {
+            "description": "Specify the number of decimals Grafana includes in the rendered value. If you leave this field blank, Grafana automatically truncates the number of decimals based on the value. For example 1.1234 will display as 1.12 and 100.456 will display as 100. To display all decimals, set the unit to `String`.",
+            "type": "number",
+            "format": "double"
+          },
+          "description": {
+            "description": "Human readable field metadata",
+            "type": "string"
+          },
+          "displayName": {
+            "description": "The display value for this field.  This supports template variables blank is auto",
+            "type": "string"
+          },
+          "displayNameFromDS": {
+            "description": "This can be used by data sources that return and explicit naming structure for values and labels When this property is configured, this value is used rather than the default naming strategy.",
+            "type": "string"
+          },
+          "fieldMinMax": {
+            "description": "Calculate min max per field",
+            "type": "boolean"
+          },
+          "filterable": {
+            "description": "True if data source field supports ad-hoc filters",
+            "type": "boolean"
+          },
+          "links": {
+            "description": "The behavior when clicking on a result",
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "mappings": {
+            "description": "Convert input values into a display string",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotebookValueMapOrRangeMapOrRegexMapOrSpecialValueMap"
+            }
+          },
+          "max": {
+            "description": "The maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.",
+            "type": "number",
+            "format": "double"
+          },
+          "min": {
+            "description": "The minimum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.",
+            "type": "number",
+            "format": "double"
+          },
+          "noValue": {
+            "description": "Alternative to empty string",
+            "type": "string"
+          },
+          "nullValueMode": {
+            "description": "How null values should be handled when calculating field stats \"null\" - Include null values, \"connected\" - Ignore nulls, \"null as zero\" - Treat nulls as zero",
+            "type": "string"
+          },
+          "path": {
+            "description": "An explicit path to the field in the datasource.  When the frame meta includes a path, This will default to `${frame.meta.path}/${field.name}\n\nWhen defined, this value can be used as an identifier within the datasource scope, and may be used to update the results",
+            "type": "string"
+          },
+          "thresholds": {
+            "description": "Map numeric values to states",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookThresholdsConfig"
+              }
+            ]
+          },
+          "unit": {
+            "description": "Unit a field should use. The unit you select is applied to all fields except time. You can use the units ID available in Grafana or a custom unit. Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts As custom unit, you can use the following formats: `suffix:<suffix>` for custom unit that should go after value. `prefix:<prefix>` for custom unit that should go before value. `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`. `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character. `count:<unit>` for a custom count unit. `currency:<unit>` for custom a currency unit.",
+            "type": "string"
+          },
+          "writeable": {
+            "description": "True if data source can write a value to the path. Auth/authz are supported separately",
+            "type": "boolean"
+          }
+        }
+      },
+      "NotebookFieldConfigSource": {
+        "description": "The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a field. A field can represent a single time series or table column. Field options allow you to change how the data is displayed in your visualizations.",
+        "type": "object",
+        "required": ["defaults", "overrides"],
+        "properties": {
+          "defaults": {
+            "description": "Defaults are the options applied to all fields.",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookFieldConfig"
+              }
+            ]
+          },
+          "overrides": {
+            "description": "Overrides are the options applied to specific fields overriding the defaults.",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/NotebookV2beta1FieldConfigSourceOverrides"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "NotebookInfinityOptions": {
+        "type": "object",
+        "required": ["method", "url", "datasourceUid"],
+        "properties": {
+          "body": {
+            "type": "string"
+          },
+          "datasourceUid": {
+            "type": "string",
+            "default": ""
+          },
+          "headers": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "default": ""
+              }
+            }
+          },
+          "method": {
+            "type": "string",
+            "default": ""
+          },
+          "queryParams": {
+            "description": "These are 2D arrays of strings, each representing a key-value pair We are defining them this way because we can't generate a go struct that that would have exactly two strings in each sub-array",
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "default": ""
+              }
+            }
+          },
+          "url": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "NotebookLibraryPanelKind": {
+        "type": "object",
+        "required": ["kind", "spec"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookLibraryPanelKindSpec"
+              }
+            ]
+          }
+        }
+      },
+      "NotebookLibraryPanelKindSpec": {
+        "type": "object",
+        "required": ["id", "title", "libraryPanel"],
+        "properties": {
+          "id": {
+            "description": "Panel ID for the library panel in the dashboard",
+            "type": "number",
+            "format": "double",
+            "default": 0
+          },
+          "libraryPanel": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookLibraryPanelRef"
+              }
+            ]
+          },
+          "title": {
+            "description": "Title for the library panel in the dashboard",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "NotebookLibraryPanelRef": {
+        "description": "A library panel is a reusable panel that you can use in any dashboard. When you make a change to a library panel, that change propagates to all instances of where the panel is used. Library panels streamline reuse of panels across multiple dashboards.",
+        "type": "object",
+        "required": ["name", "uid"],
+        "properties": {
+          "name": {
+            "description": "Library panel name",
+            "type": "string",
+            "default": ""
+          },
+          "uid": {
+            "description": "Library panel uid",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "NotebookList": {
+        "type": "object",
+        "required": ["metadata", "items"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Notebook"
+                }
+              ]
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ListMeta"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "NotebookList",
+            "version": "v2beta1"
+          }
+        ]
+      },
+      "NotebookMarkdownCellContentKind": {
+        "type": "object",
+        "required": ["kind", "spec"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookMarkdownCellContentSpec"
+              }
+            ]
+          }
+        }
+      },
+      "NotebookMarkdownCellContentKindOrCodeCellContentKind": {
+        "type": "object",
+        "properties": {
+          "CodeCellContentKind": {
+            "$ref": "#/components/schemas/NotebookCodeCellContentKind"
+          },
+          "MarkdownCellContentKind": {
+            "$ref": "#/components/schemas/NotebookMarkdownCellContentKind"
+          }
+        }
+      },
+      "NotebookMarkdownCellContentSpec": {
+        "type": "object",
+        "required": ["text"],
+        "properties": {
+          "text": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "NotebookMatcherConfig": {
+        "description": "Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation. It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.",
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": {
+            "description": "The matcher id. This is used to find the matcher implementation from registry.",
+            "type": "string",
+            "default": ""
+          },
+          "options": {
+            "description": "The matcher options. This is specific to the matcher implementation.",
+            "type": "object"
+          },
+          "scope": {
+            "description": "If set, limits this matcher to fields of that type. If not set, \"series\" mode is used.",
+            "type": "string"
+          }
+        }
+      },
+      "NotebookNotebookLayoutItemKind": {
+        "type": "object",
+        "required": ["kind", "spec"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookNotebookLayoutItemSpec"
+              }
+            ]
+          }
+        }
+      },
+      "NotebookNotebookLayoutItemSpec": {
+        "description": "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI.",
+        "type": "object",
+        "required": ["element", "source"],
+        "properties": {
+          "collapsed": {
+            "type": "boolean"
+          },
+          "element": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookElementReference"
+              }
+            ]
+          },
+          "source": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "NotebookNotebookLayoutKind": {
+        "type": "object",
+        "required": ["kind", "spec"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookNotebookLayoutSpec"
+              }
+            ]
+          }
+        }
+      },
+      "NotebookNotebookLayoutSpec": {
+        "type": "object",
+        "required": ["cells"],
+        "properties": {
+          "cells": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/NotebookNotebookLayoutItemKind"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "NotebookPanelKind": {
+        "type": "object",
+        "required": ["kind", "spec"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookPanelSpec"
+              }
+            ]
+          }
+        }
+      },
+      "NotebookPanelQueryKind": {
+        "type": "object",
+        "required": ["kind", "spec"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookPanelQuerySpec"
+              }
+            ]
+          }
+        }
+      },
+      "NotebookPanelQuerySpec": {
+        "type": "object",
+        "required": ["query", "refId", "hidden"],
+        "properties": {
+          "hidden": {
+            "type": "boolean",
+            "default": false
+          },
+          "query": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookDataQueryKind"
+              }
+            ]
+          },
+          "refId": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "NotebookPanelSpec": {
+        "type": "object",
+        "required": ["id", "title", "description", "links", "data", "vizConfig"],
+        "properties": {
+          "data": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookQueryGroupKind"
+              }
+            ]
+          },
+          "description": {
+            "type": "string",
+            "default": ""
+          },
+          "id": {
+            "type": "number",
+            "format": "double",
+            "default": 0
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/NotebookDataLink"
+                }
+              ]
+            }
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          },
+          "transparent": {
+            "type": "boolean"
+          },
+          "vizConfig": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookVizConfigKind"
+              }
+            ]
+          }
+        }
+      },
+      "NotebookQueryGroupKind": {
+        "type": "object",
+        "required": ["kind", "spec"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookQueryGroupSpec"
+              }
+            ]
+          }
+        }
+      },
+      "NotebookQueryGroupSpec": {
+        "type": "object",
+        "required": ["queries", "transformations", "queryOptions"],
+        "properties": {
+          "queries": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/NotebookPanelQueryKind"
+                }
+              ]
+            }
+          },
+          "queryOptions": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookQueryOptionsSpec"
+              }
+            ]
+          },
+          "transformations": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/NotebookTransformationKind"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "NotebookQueryOptionsSpec": {
+        "type": "object",
+        "properties": {
+          "cacheTimeout": {
+            "type": "string"
+          },
+          "hideTimeOverride": {
+            "type": "boolean"
+          },
+          "interval": {
+            "type": "string"
+          },
+          "maxDataPoints": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "queryCachingTTL": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "timeCompare": {
+            "type": "string"
+          },
+          "timeFrom": {
+            "type": "string"
+          },
+          "timeShift": {
+            "type": "string"
+          }
+        }
+      },
+      "NotebookRangeMap": {
+        "description": "Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.",
+        "type": "object",
+        "required": ["type", "options"],
+        "properties": {
+          "options": {
+            "description": "Range to match against and the result to apply when the value is within the range",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookV2beta1RangeMapOptions"
+              }
+            ]
+          },
+          "type": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "NotebookRegexMap": {
+        "description": "Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.",
+        "type": "object",
+        "required": ["type", "options"],
+        "properties": {
+          "options": {
+            "description": "Regular expression to match against and the result to apply when the value matches the regex",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookV2beta1RegexMapOptions"
+              }
+            ]
+          },
+          "type": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "NotebookSpec": {
+        "type": "object",
+        "required": ["title", "tags", "timeSettings", "elements", "layout"],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "elements": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/NotebookCellKindOrPanelKindOrLibraryPanelKind"
+            }
+          },
+          "layout": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookNotebookLayoutKind"
+              }
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "timeSettings": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookTimeSettingsSpec"
+              }
+            ]
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "NotebookSpecialValueMap": {
+        "description": "Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.",
+        "type": "object",
+        "required": ["type", "options"],
+        "properties": {
+          "options": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookV2beta1SpecialValueMapOptions"
+              }
+            ]
+          },
+          "type": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "NotebookThreshold": {
+        "type": "object",
+        "required": ["value", "color"],
+        "properties": {
+          "color": {
+            "type": "string",
+            "default": ""
+          },
+          "value": {
+            "description": "Value null means -Infinity",
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "NotebookThresholdsConfig": {
+        "type": "object",
+        "required": ["mode", "steps"],
+        "properties": {
+          "mode": {
+            "type": "string",
+            "default": ""
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/NotebookThreshold"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "NotebookTimeRangeOption": {
+        "type": "object",
+        "required": ["display", "from", "to"],
+        "properties": {
+          "display": {
+            "type": "string",
+            "default": ""
+          },
+          "from": {
+            "type": "string",
+            "default": ""
+          },
+          "to": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "NotebookTimeSettingsSpec": {
+        "description": "Time configuration It defines the default time config for the time picker, the refresh picker for the specific dashboard.",
+        "type": "object",
+        "required": ["from", "to", "autoRefresh", "autoRefreshIntervals", "hideTimepicker", "fiscalYearStartMonth"],
+        "properties": {
+          "autoRefresh": {
+            "description": "Refresh rate of dashboard. Represented via interval string, e.g. \"5s\", \"1m\", \"1h\", \"1d\". v1: refresh",
+            "type": "string",
+            "default": ""
+          },
+          "autoRefreshIntervals": {
+            "description": "Interval options available in the refresh picker dropdown. v1: timepicker.refresh_intervals",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "fiscalYearStartMonth": {
+            "description": "The month that the fiscal year starts on. 0 = January, 11 = December",
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "from": {
+            "description": "Start time range for dashboard. Accepted values are relative time strings like \"now-6h\" or absolute time strings like \"2020-07-10T08:00:00.000Z\".",
+            "type": "string",
+            "default": ""
+          },
+          "hideTimepicker": {
+            "description": "Whether timepicker is visible or not. v1: timepicker.hidden",
+            "type": "boolean",
+            "default": false
+          },
+          "nowDelay": {
+            "description": "Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values. v1: timepicker.nowDelay",
+            "type": "string"
+          },
+          "quickRanges": {
+            "description": "Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard. v1: timepicker.quick_ranges , not exposed in the UI",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/NotebookTimeRangeOption"
+                }
+              ]
+            }
+          },
+          "timezone": {
+            "description": "Timezone of dashboard. Accepted values are IANA TZDB zone ID or \"browser\" or \"utc\".",
+            "type": "string"
+          },
+          "to": {
+            "description": "End time range for dashboard. Accepted values are relative time strings like \"now-6h\" or absolute time strings like \"2020-07-10T08:00:00.000Z\".",
+            "type": "string",
+            "default": ""
+          },
+          "weekStart": {
+            "description": "Day when the week starts. Expressed by the name of the day in lowercase, e.g. \"monday\".",
+            "type": "string"
+          }
+        }
+      },
+      "NotebookTransformationKind": {
+        "type": "object",
+        "required": ["kind", "spec"],
+        "properties": {
+          "kind": {
+            "description": "The kind of a TransformationKind is the transformation ID",
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookDataTransformerConfig"
+              }
+            ]
+          }
+        }
+      },
+      "NotebookV2beta1ActionStyle": {
+        "type": "object",
+        "properties": {
+          "backgroundColor": {
+            "type": "string"
+          }
+        }
+      },
+      "NotebookV2beta1DataQueryKindDatasource": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "NotebookV2beta1FieldConfigSourceOverrides": {
+        "type": "object",
+        "required": ["matcher", "properties"],
+        "properties": {
+          "__systemRef": {
+            "description": "Describes config override rules created when interacting with Grafana.",
+            "type": "string"
+          },
+          "matcher": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookMatcherConfig"
+              }
+            ]
+          },
+          "properties": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/NotebookDynamicConfigValue"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "NotebookV2beta1RangeMapOptions": {
+        "type": "object",
+        "required": ["from", "to", "result"],
+        "properties": {
+          "from": {
+            "description": "Min value of the range. It can be null which means -Infinity",
+            "type": "number",
+            "format": "double"
+          },
+          "result": {
+            "description": "Config to apply when the value is within the range",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookValueMappingResult"
+              }
+            ]
+          },
+          "to": {
+            "description": "Max value of the range. It can be null which means +Infinity",
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "NotebookV2beta1RegexMapOptions": {
+        "type": "object",
+        "required": ["pattern", "result"],
+        "properties": {
+          "pattern": {
+            "description": "Regular expression to match against",
+            "type": "string",
+            "default": ""
+          },
+          "result": {
+            "description": "Config to apply when the value matches the regex",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookValueMappingResult"
+              }
+            ]
+          }
+        }
+      },
+      "NotebookV2beta1SpecialValueMapOptions": {
+        "type": "object",
+        "required": ["match", "result"],
+        "properties": {
+          "match": {
+            "description": "Special value to match against",
+            "type": "string",
+            "default": ""
+          },
+          "result": {
+            "description": "Config to apply when the value matches the special value",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookValueMappingResult"
+              }
+            ]
+          }
+        }
+      },
+      "NotebookValueMap": {
+        "description": "Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.",
+        "type": "object",
+        "required": ["type", "options"],
+        "properties": {
+          "options": {
+            "description": "Map with <value_to_match>: ValueMappingResult. For example: { \"10\": { text: \"Perfection!\", color: \"green\" } }",
+            "type": "object",
+            "additionalProperties": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/NotebookValueMappingResult"
+                }
+              ]
+            }
+          },
+          "type": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "NotebookValueMapOrRangeMapOrRegexMapOrSpecialValueMap": {
+        "type": "object",
+        "properties": {
+          "RangeMap": {
+            "$ref": "#/components/schemas/NotebookRangeMap"
+          },
+          "RegexMap": {
+            "$ref": "#/components/schemas/NotebookRegexMap"
+          },
+          "SpecialValueMap": {
+            "$ref": "#/components/schemas/NotebookSpecialValueMap"
+          },
+          "ValueMap": {
+            "$ref": "#/components/schemas/NotebookValueMap"
+          }
+        }
+      },
+      "NotebookValueMappingResult": {
+        "description": "Result used as replacement with text and color when the value matches",
+        "type": "object",
+        "properties": {
+          "color": {
+            "description": "Text to use when the value matches",
+            "type": "string"
+          },
+          "icon": {
+            "description": "Icon to display when the value matches. Only specific visualizations.",
+            "type": "string"
+          },
+          "index": {
+            "description": "Position in the mapping array. Only used internally.",
+            "type": "integer",
+            "format": "int32"
+          },
+          "text": {
+            "description": "Text to display when the value matches",
+            "type": "string"
+          }
+        }
+      },
+      "NotebookVizConfigKind": {
+        "type": "object",
+        "required": ["kind", "group", "version", "spec"],
+        "properties": {
+          "group": {
+            "description": "The group is the plugin ID",
+            "type": "string",
+            "default": ""
+          },
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookVizConfigSpec"
+              }
+            ]
+          },
+          "version": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "NotebookVizConfigSpec": {
+        "description": "--- Kinds ---",
+        "type": "object",
+        "required": ["options", "fieldConfig"],
+        "properties": {
+          "fieldConfig": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookFieldConfigSource"
+              }
+            ]
+          },
+          "options": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "Variable": {
+        "type": "object",
+        "required": ["metadata", "spec"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ObjectMeta"
+              }
+            ]
+          },
+          "spec": {
+            "description": "Spec is the spec of the Variable",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VariableSpec"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "Variable",
+            "version": "v2beta1"
+          }
+        ]
+      },
+      "VariableList": {
+        "type": "object",
+        "required": ["metadata", "items"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Variable"
+                }
+              ]
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ListMeta"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "VariableList",
+            "version": "v2beta1"
+          }
+        ]
+      },
+      "VariableSpec": {
+        "type": "object",
+        "properties": {
+          "AdhocVariableKind": {
+            "$ref": "#/components/schemas/DashboardAdhocVariableKind"
+          },
+          "ConstantVariableKind": {
+            "$ref": "#/components/schemas/DashboardConstantVariableKind"
+          },
+          "CustomVariableKind": {
+            "$ref": "#/components/schemas/DashboardCustomVariableKind"
+          },
+          "DatasourceVariableKind": {
+            "$ref": "#/components/schemas/DashboardDatasourceVariableKind"
+          },
+          "GroupByVariableKind": {
+            "$ref": "#/components/schemas/DashboardGroupByVariableKind"
+          },
+          "IntervalVariableKind": {
+            "$ref": "#/components/schemas/DashboardIntervalVariableKind"
+          },
+          "QueryVariableKind": {
+            "$ref": "#/components/schemas/DashboardQueryVariableKind"
+          },
+          "SwitchVariableKind": {
+            "$ref": "#/components/schemas/DashboardSwitchVariableKind"
+          },
+          "TextVariableKind": {
+            "$ref": "#/components/schemas/DashboardTextVariableKind"
+          }
+        }
+      },
       "APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",
         "type": "object",
@@ -4535,6 +7296,29 @@
         "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
         "type": "string",
         "format": "date-time"
+      },
+      "WatchEvent": {
+        "description": "Event represents a single event to a watched resource.",
+        "type": "object",
+        "required": ["type", "object"],
+        "properties": {
+          "object": {
+            "description": "Object is:\n * If Type is Added or Modified: the new state of the object.\n * If Type is Deleted: the state of the object immediately before deletion.\n * If Type is Error: *Status is recommended; other types may make sense\n   depending on context.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.runtime.RawExtension"
+              }
+            ]
+          },
+          "type": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "io.k8s.apimachinery.pkg.runtime.RawExtension": {
+        "description": "RawExtension is used to hold extensions in external versions.\n\nTo use this, make a field which has RawExtension as its type in your external, versioned struct, and Object in your internal struct. You also need to register your various plugin types.\n\n// Internal package:\n\n\ttype MyAPIObject struct {\n\t\truntime.TypeMeta `json:\",inline\"`\n\t\tMyPlugin runtime.Object `json:\"myPlugin\"`\n\t}\n\n\ttype PluginA struct {\n\t\tAOption string `json:\"aOption\"`\n\t}\n\n// External package:\n\n\ttype MyAPIObject struct {\n\t\truntime.TypeMeta `json:\",inline\"`\n\t\tMyPlugin runtime.RawExtension `json:\"myPlugin\"`\n\t}\n\n\ttype PluginA struct {\n\t\tAOption string `json:\"aOption\"`\n\t}\n\n// On the wire, the JSON will look something like this:\n\n\t{\n\t\t\"kind\":\"MyAPIObject\",\n\t\t\"apiVersion\":\"v1\",\n\t\t\"myPlugin\": {\n\t\t\t\"kind\":\"PluginA\",\n\t\t\t\"aOption\":\"foo\",\n\t\t},\n\t}\n\nSo what happens? Decode first uses json or yaml to unmarshal the serialized data into your external MyAPIObject. That causes the raw JSON to be stored, but not unpacked. The next step is to copy (using pkg/conversion) into the internal struct. The runtime package's DefaultScheme has conversion functions installed which will unpack the JSON stored in RawExtension, turning it into the correct object type, and storing it in the Object. (TODO: In the case where the object is of an unknown type, a runtime.Unknown object will be created and stored.)",
+        "type": "object"
       }
     }
   }

@@ -1,5 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
+import { Controls, Sidebar } from './page-objects';
 import { flows, type Variable } from './utils';
 
 test.use({
@@ -19,9 +20,12 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can add a new group by variable', async ({ gotoDashboardPage, selectors, page }) => {
+    test('can add a new group by variable', async ({ gotoDashboardPage, selectors, page, components }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
+
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
       const variable: Variable = {
         type: 'groupby',
@@ -30,16 +34,13 @@ test.describe(
         label: 'VariableUnderTest',
       };
 
-      // common steps to add a new variable
-      await flows.newEditPaneVariableClick(dashboardPage, selectors);
-      await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
+      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
+      await sidebar.variableOptions.groupby.selectDatasource('gdev-loki');
 
-      // select datasource for the group by variable
-      await dashboardPage
-        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.dataSourceSelect)
-        .click();
-      const dataSource = 'gdev-loki';
-      await page.getByText(dataSource).click();
+      // Assert the variable dropdown is visible with correct label
+      const variableLabel = controls.variables.getLabel(variable.label!);
+      await expect(variableLabel).toBeVisible();
+      await expect(variableLabel).toContainText(variable.label!);
 
       // mock the API call to get the labels
       const labels = ['label1', 'label2'];
@@ -54,30 +55,9 @@ test.describe(
         });
       });
 
-      // open the variable dropdown in the dashboard and confirm the variable value is set
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItem).locator('> div').click();
-      const variableLabel = dashboardPage.getByGrafanaSelector(
-        selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label!)
-      );
-      await expect(variableLabel).toBeVisible();
-      await expect(variableLabel).toContainText(variable.label!);
-
-      // mock the API call to get the label values
-      const labelValues = ['label2Value1'];
-      await page.route(`**/resources/label/${labels[1]}/values*`, async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            status: 'success',
-            data: labelValues,
-          }),
-        });
-      });
-
-      // choose the label and value
-      await page.getByText(labels[1]).click();
-      await page.keyboard.press('Escape');
+      // choose the label, then close the dropdown
+      await controls.variables.selectOption(variable.label!, labels[1]);
+      await page.locator('body').click();
 
       // assert the panel is visible and has the correct value
       const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();

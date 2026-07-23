@@ -1,15 +1,16 @@
 import { faker } from '@faker-js/faker';
-import { Row } from 'react-table';
+import { type Row } from 'react-table';
 
-import { Field, FieldConfigSource, FieldType, MutableDataFrame, SelectableValue } from '@grafana/data';
+import { type Field, type FieldConfigSource, FieldType, MutableDataFrame, type SelectableValue } from '@grafana/data';
 
+import { getTextAlign } from './cellUtils';
 import {
   calculateUniqueFieldValues,
   filterByValue,
   getColumns,
   getFilteredOptions,
-  getTextAlign,
   rowToFieldValue,
+  sortCaseInsensitive,
   sortNumber,
   sortOptions,
   valuesToOptions,
@@ -541,6 +542,23 @@ describe('Table utils', () => {
       const stop = performance.now();
       const diff = stop - start;
       expect(diff).toBeLessThanOrEqual(20);
+    });
+  });
+
+  describe('sortCaseInsensitive', () => {
+    const row = (value: unknown) => ({ values: [value] }) as unknown as Row;
+
+    it('treats equal strings as equal regardless of case', () => {
+      expect(sortCaseInsensitive(row('Alpha'), row('alpha'), '0')).toBe(0);
+    });
+
+    it('orders strings case-insensitively', () => {
+      expect(sortCaseInsensitive(row('apple'), row('Banana'), '0')).toBeLessThan(0);
+      expect(sortCaseInsensitive(row('Banana'), row('apple'), '0')).toBeGreaterThan(0);
+    });
+
+    it('coerces non-string values to strings before comparing', () => {
+      expect(sortCaseInsensitive(row(10), row(10), '0')).toBe(0);
     });
   });
 

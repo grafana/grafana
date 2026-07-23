@@ -4,7 +4,7 @@
  * Reorder a row within its parent or move it to a different parent.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
@@ -13,7 +13,7 @@ import { resolveLayoutPath, resolveParentPath } from './layoutPathResolver';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
-export const moveRowPayloadSchema = payloads.moveRow;
+const moveRowPayloadSchema = payloads.moveRow;
 
 export type MoveRowPayload = z.infer<typeof moveRowPayloadSchema>;
 

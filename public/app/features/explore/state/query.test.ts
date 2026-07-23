@@ -4,27 +4,27 @@ import { thunkTester } from 'test/core/thunk/thunkTester';
 import { assertIsDefined } from 'test/helpers/asserts';
 
 import {
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceApi,
-  DataSourceJsonData,
-  DataSourcePluginMeta,
-  DataSourceWithSupplementaryQueriesSupport,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceApi,
+  type DataSourceJsonData,
+  type DataSourcePluginMeta,
+  type DataSourceWithSupplementaryQueriesSupport,
   LoadingState,
   MutableDataFrame,
-  RawTimeRange,
+  type RawTimeRange,
   SupplementaryQueryType,
 } from '@grafana/data';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { queryLogsSample, queryLogsVolume } from 'app/features/logs/logsModel';
-import { ExploreItemState } from 'app/types/explore';
-import { createAsyncThunk, StoreState, ThunkDispatch } from 'app/types/store';
+import { type ExploreItemState } from 'app/types/explore';
+import { createAsyncThunk, type StoreState, type ThunkDispatch } from 'app/types/store';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import * as richHistory from '../../../core/utils/richHistory';
 import { configureStore } from '../../../store/configureStore';
-import { setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
+import { setTimeSrv, type TimeSrv } from '../../dashboard/services/TimeSrv';
 import { makeLogs } from '../mocks/makeLogs';
 import { supplementaryQueryTypes } from '../utils/supplementaryQueries';
 
@@ -46,7 +46,7 @@ import {
   cleanSupplementaryQueryDataProviderAction,
   clearLogs,
   queryStreamUpdatedAction,
-  QueryEndedPayload,
+  type QueryEndedPayload,
   changeQueries,
 } from './query';
 import * as actions from './query';
@@ -106,6 +106,19 @@ jest.mock('@grafana/runtime', () => ({
         );
       },
     };
+  },
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: (ref?: DataSourceRef | string) => {
+    if (!ref) {
+      return Promise.resolve(datasources[0]);
+    }
+
+    return Promise.resolve(
+      datasources.find((ds) => (typeof ref === 'string' ? ds.uid === ref : ds.uid === ref.uid)) || datasources[0]
+    );
   },
 }));
 

@@ -1,20 +1,25 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2, PluginState } from '@grafana/data';
+import { type GrafanaTheme2, PluginState } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { TextDimensionMode } from '@grafana/schema';
 import { Button, Spinner, useStyles2 } from '@grafana/ui';
-import { DimensionContext } from 'app/features/dimensions/context';
+import { type DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
-import { APIEditor, APIEditorConfig } from 'app/plugins/panel/canvas/editor/element/APIEditor';
-import { ButtonStyleConfig, ButtonStyleEditor } from 'app/plugins/panel/canvas/editor/element/ButtonStyleEditor';
+import { APIEditor, type APIEditorConfig } from 'app/plugins/panel/canvas/editor/element/APIEditor';
+import { type ButtonStyleConfig, ButtonStyleEditor } from 'app/plugins/panel/canvas/editor/element/ButtonStyleEditor';
 import { callApi } from 'app/plugins/panel/canvas/editor/element/utils';
 import { HttpRequestMethod } from 'app/plugins/panel/canvas/panelcfg.gen';
 
-import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultLightTextColor } from '../element';
-import { Align, TextConfig, TextData } from '../types';
+import {
+  type CanvasElementItem,
+  type CanvasElementOptions,
+  type CanvasElementProps,
+  defaultLightTextColor,
+} from '../element';
+import { Align, type TextConfig, type TextData } from '../types';
 
 interface ButtonData extends Omit<TextData, 'valign'> {
   api?: APIEditorConfig;

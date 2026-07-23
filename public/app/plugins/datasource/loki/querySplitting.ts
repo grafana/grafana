@@ -1,22 +1,22 @@
 import { groupBy, partition } from 'lodash';
-import { Observable, Subscriber, Subscription, tap } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
+import { Observable, type Subscriber, type Subscription, tap } from 'rxjs';
 
 import {
   arrayToDataFrame,
-  DataQueryRequest,
-  DataQueryResponse,
+  type DataQueryRequest,
+  type DataQueryResponse,
   DataTopic,
   dateTime,
   LoadingState,
   rangeUtil,
   store,
-  TimeRange,
+  type TimeRange,
+  generateUUID,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { LokiQueryType, LokiQueryDirection } from './dataquery.gen';
-import { LokiDatasource } from './datasource';
+import { type LokiDatasource } from './datasource';
 import {
   splitTimeRange as splitLogsTimeRange,
   splitTimeRangeAligned as splitLogsTimeRangeAligned,
@@ -29,7 +29,7 @@ import {
 import { addQueryLimitsContext, isLogsQuery, isQueryWithRangeVariable } from './queryUtils';
 import { isRetriableError } from './responseUtils';
 import { trackGroupedQueries } from './tracking';
-import { LokiGroupedRequest, LokiQuery } from './types';
+import { type LokiGroupedRequest, type LokiQuery } from './types';
 
 export function partitionTimeRange(
   isLogsQuery: boolean,
@@ -125,12 +125,12 @@ const addLimitsToSplitRequests = (splitQueryIndex: number, shardQueryIndex: numb
   }));
 };
 
-export function runSplitGroupedQueries(
+function runSplitGroupedQueries(
   datasource: LokiDatasource,
   requests: LokiGroupedRequest[],
   options: QuerySplittingOptions = {}
 ) {
-  const responseKey = requests.length ? requests[0].request.queryGroupId : uuidv4();
+  const responseKey = requests.length ? requests[0].request.queryGroupId : generateUUID();
   let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming, key: responseKey };
   const totalRequests = Math.max(...requests.map(({ partition }) => partition.length));
   const longestPartition = requests.filter(({ partition }) => partition.length === totalRequests)[0].partition;
@@ -354,7 +354,7 @@ export function runSplitQuery(
   const [nonSplittingQueries, normalQueries] = partition(queries, (query) => !querySupportsSplitting(query));
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
 
-  request.queryGroupId = uuidv4();
+  request.queryGroupId = generateUUID();
   // Allow custom split durations for debugging, e.g. `localStorage.setItem('grafana.loki.querySplitInterval', 24 * 60 * 1000) // 1 hour`
   const debugSplitDuration = parseInt(store.get('grafana.loki.querySplitInterval'), 10);
   const oneDayMs = debugSplitDuration || 24 * 60 * 60 * 1000;

@@ -5,13 +5,13 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
 	"testing"
+	"text/template"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -61,6 +61,20 @@ func TestFeatureToggleFiles(t *testing.T) {
 				generateCSV(lookup),
 			)
 		})
+
+		t.Run("react openfeature manifest", func(t *testing.T) {
+			verifyAndGenerateFile(t,
+				"../../../packages/grafana-runtime/src/internal/openFeature/openfeature.gen.ts",
+				generateOpenFeatureReact(t),
+			)
+		})
+
+		t.Run("react openfeature typings", func(t *testing.T) {
+			verifyAndGenerateFile(t,
+				"../../../packages/grafana-runtime/src/internal/openFeature/openfeature-types.gen.d.ts",
+				generateOpenFeatureReactTypings(),
+			)
+		})
 	})
 }
 
@@ -89,7 +103,7 @@ func readFeatureList(t *testing.T) map[string]featuretoggleapi.Feature {
 			Stage:           flag.Stage.String(),
 			Owner:           string(flag.Owner),
 			RequiresDevMode: flag.RequiresDevMode,
-			FrontendOnly:    flag.FrontendOnly,
+			FrontendOnly:    !flag.Generate.Go && !flag.Generate.LegacyGo,
 			RequiresRestart: flag.RequiresRestart,
 			HideFromDocs:    flag.HideFromDocs,
 			Expression:      flag.Expression,
@@ -160,13 +174,26 @@ func readFeatureList(t *testing.T) map[string]featuretoggleapi.Feature {
 	return all
 }
 
+func verifyFlagName(flag FeatureFlag) error {
+	name := flag.Name
+
+	// Flags should be in the format `component.flagName`, except legacy feature toggles
+	isLegacy := flag.Generate.LegacyFrontend || flag.Generate.LegacyGo
+	if !isLegacy && !strings.Contains(name, ".") {
+		return fmt.Errorf("flag name %q must be in the format of component.flagName", name)
+	}
+
+	for part := range strings.SplitSeq(name, ".") {
+		// acronyms can be configured as needed via `ConfigureAcronym` function from `./strcase/camel.go`
+		if part != strcase.ToLowerCamel(part) {
+			return fmt.Errorf("flag name %q segment %q is not lowerCamelCase (expected %q)", name, part, strcase.ToLowerCamel(part))
+		}
+	}
+	return nil
+}
+
 // Check if all flags are configured properly
 func verifyFlagsConfiguration(t *testing.T) {
-	legacyNames := map[string]bool{
-		"live-service-web-worker": true,
-	}
-	invalidNames := make([]string, 0)
-
 	// Check that all flags set in code are valid
 	for _, flag := range standardFeatureFlags {
 		if flag.Expression == "true" && (flag.Stage != FeatureStageGeneralAvailability && flag.Stage != FeatureStageDeprecated && flag.Stage != FeatureStagePublicPreview) {
@@ -193,15 +220,13 @@ func verifyFlagsConfiguration(t *testing.T) {
 		if flag.Expression == "" {
 			t.Errorf("the `Expression` property for %s is incorrect. Empty string values are not allowed. Please explicitly define the default value of the Feature Flag. Valid values include boolean, non-empty string, integer, float, and structured values in JSON format.", flag.Name)
 		}
-		// Check camel case names
-		if flag.Name != strcase.ToLowerCamel(flag.Name) && !legacyNames[flag.Name] {
-			invalidNames = append(invalidNames, flag.Name)
+		if err := verifyFlagName(flag); err != nil {
+			t.Error(err)
+		}
+		if !flag.Generate.Go && !flag.Generate.LegacyGo && !flag.Generate.LegacyFrontend && !flag.Generate.React {
+			t.Errorf("feature %s does not have any generation targets. please set the `Generate` property to specify which clients should be generated for this feature", flag.Name)
 		}
 	}
-
-	// Make sure the names are valid
-	require.Empty(t, invalidNames, "%s feature names should be camel cased", invalidNames)
-	// acronyms can be configured as needed via `ConfigureAcronym` function from `./strcase/camel.go`
 }
 
 type flagDateInfo struct {
@@ -284,6 +309,10 @@ func generateTypeScript() string {
 export interface FeatureToggles {
 `
 	for _, flag := range standardFeatureFlags {
+		if !flag.Generate.LegacyFrontend {
+			continue
+		}
+
 		buf += "  /**\n"
 		buf += "  * " + flag.Description + "\n"
 		if flag.Stage == FeatureStageDeprecated {
@@ -338,8 +367,9 @@ package featuremgmt
 const (`)
 
 	for _, flag := range standardFeatureFlags {
-		if flag.FrontendOnly {
-			continue // no need to have the golang constant for frontend only flags
+		// There's no OpenFeature-specific generation for Go yet, but `GenerateGo` is used to enforce new naming conventions
+		if !flag.Generate.LegacyGo && !flag.Generate.Go {
+			continue
 		}
 
 		data.CamelCase = strcase.ToCamel(flag.Name)
@@ -383,13 +413,13 @@ func generateCSV(lookup map[string]featuretoggleapi.Feature) string {
 	for _, flag := range standardFeatureFlags {
 		info := lookup[flag.Name]
 		write([]string{
-			info.GetCreationTimestamp().Format("2006-01-02"),
+			info.GetCreationTimestamp().UTC().Format("2006-01-02"),
 			flag.Name,
 			flag.Stage.String(),
 			string(flag.Owner),
 			strconv.FormatBool(flag.RequiresDevMode),
 			strconv.FormatBool(flag.RequiresRestart),
-			strconv.FormatBool(flag.FrontendOnly),
+			strconv.FormatBool(!flag.Generate.Go && !flag.Generate.LegacyGo),
 		})
 	}
 
@@ -515,4 +545,127 @@ func writeToggleDocsTable(include func(FeatureFlag) bool, showEnableByDefault bo
 	// Markdown table formatting (from prettier)
 	v := strings.ReplaceAll(sb.String(), "|--", "| -")
 	return strings.ReplaceAll(v, "--|", "- |")
+}
+
+// Generates and returns an OpenFeature React SDK file content by executing
+// the openfeature_react.tmpl template directly with the feature flags data.
+func generateOpenFeatureReact(t *testing.T) string {
+	t.Helper()
+
+	type ofFlag struct {
+		Key          string
+		Description  string
+		Type         string
+		DefaultValue any
+	}
+	type ofFlagset struct {
+		Flags []ofFlag
+	}
+	type templateData struct {
+		Flagset ofFlagset
+	}
+
+	flags := make([]ofFlag, 0, len(standardFeatureFlags))
+	for _, flag := range standardFeatureFlags {
+		if !flag.Generate.React {
+			continue
+		}
+		flags = append(flags, ofFlag{
+			Key:          flag.Name,
+			Description:  flag.Description,
+			Type:         "boolean",
+			DefaultValue: flag.Expression == "true",
+		})
+	}
+
+	sort.Slice(flags, func(i, j int) bool {
+		return flags[i].Key < flags[j].Key
+	})
+
+	funcMap := template.FuncMap{
+		"ToPascal": strcase.ToCamel,
+		"Quote": func(s string) string {
+			return `"` + s + `"`
+		},
+		"QuoteString": func(v any) string {
+			switch val := v.(type) {
+			case bool:
+				if val {
+					return "true"
+				}
+				return "false"
+			case string:
+				return `"` + val + `"`
+			default:
+				return fmt.Sprintf("%v", v)
+			}
+		},
+		"ToJSONString": func(v any) string {
+			b, _ := json.Marshal(v)
+			return string(b)
+		},
+	}
+
+	//nolint:gosec
+	tmplContent, err := os.ReadFile("openfeature_react.tmpl")
+	require.NoError(t, err, "failed to read openfeature_react.tmpl")
+
+	tmpl, err := template.New("openfeature").Funcs(funcMap).Parse(string(tmplContent))
+	require.NoError(t, err, "failed to parse openfeature_react.tmpl")
+
+	var buf bytes.Buffer
+	require.NoError(t, tmpl.Execute(&buf, templateData{
+		Flagset: ofFlagset{Flags: flags},
+	}), "failed to execute openfeature template")
+
+	return buf.String()
+}
+
+func getReactTypingsKeys(keys []string) string {
+	if len(keys) == 0 {
+		return " never"
+	}
+
+	var s strings.Builder
+	for _, key := range keys {
+		s.WriteString("\n    | \"")
+		s.WriteString(key)
+		s.WriteString("\"")
+	}
+	return s.String()
+}
+
+func generateOpenFeatureReactTypings() string {
+	type ofFlagset struct {
+		Boolean []string
+		Number  []string
+		String  []string
+		Object  []string
+	}
+
+	flagSet := ofFlagset{}
+	for _, flag := range standardFeatureFlags {
+		if !flag.Generate.React {
+			continue
+		}
+		flagSet.Boolean = append(flagSet.Boolean, flag.Name)
+	}
+
+	return fmt.Sprintf(`/**
+ * NOTE: This file was auto generated.  DO NOT EDIT DIRECTLY!
+ * To change feature flags, edit:
+ *  pkg/services/featuremgmt/registry.go
+ * Then run:
+ *  make gen-feature-toggles
+ */
+
+import "@openfeature/core";
+
+declare module "@openfeature/core" {
+  export type BooleanFlagKey =%s;
+  export type NumberFlagKey =%s;
+  export type StringFlagKey =%s;
+  export type ObjectFlagKey =%s;
+}
+`, getReactTypingsKeys(flagSet.Boolean), getReactTypingsKeys(flagSet.Number), getReactTypingsKeys(flagSet.String), getReactTypingsKeys(flagSet.Object))
 }

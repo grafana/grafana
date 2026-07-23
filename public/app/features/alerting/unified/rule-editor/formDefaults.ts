@@ -3,10 +3,11 @@ import z from 'zod';
 
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { alertingAlertRuleFormSchema } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
-import { RuleWithLocation } from 'app/types/unified-alerting';
-import { GrafanaAlertStateDecision, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { type RuleWithLocation } from 'app/types/unified-alerting';
+import { GrafanaAlertStateDecision, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { RuleFormType, RuleFormValues } from '../types/rule-form';
+import { shouldUseRulesAPIV2 } from '../featureToggles';
+import { RuleFormType, type RuleFormValues } from '../types/rule-form';
 // TODO Ideally all of these should be moved here
 import { getRulesAccess } from '../utils/access-control';
 import { defaultAnnotations } from '../utils/constants';
@@ -80,6 +81,8 @@ export const getDefaultFormValues = (ruleType?: RuleFormType): RuleFormValues =>
     dataSourceName: GRAFANA_RULES_SOURCE_NAME, // let's use Grafana-managed alert rule by default
     type, // viewers can't create prom alerts
     group: '',
+    // New Grafana rules default to ungrouped when the v2 API is enabled; flag-off keeps the legacy grouped flow.
+    isUngroupedRuleGroup: shouldUseRulesAPIV2(),
 
     // grafana
     folder: undefined,
@@ -119,10 +122,6 @@ function getDefaultEditorSettings(ruleType?: RuleFormType) {
     return undefined;
   }
 
-  const editorSettingsEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
-  if (!editorSettingsEnabled) {
-    return undefined;
-  }
   //then, check in local storage if the user has saved last rule with sections simplified
   const queryEditorSettings = localStorage.getItem(SIMPLIFIED_QUERY_EDITOR_KEY);
   const notificationStepSettings = localStorage.getItem(MANUAL_ROUTING_KEY);
@@ -152,7 +151,7 @@ export function formValuesFromQueryParams(ruleDefinition: string, type: RuleForm
         annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
         queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
         type: ruleFromQueryParams.type ?? type ?? RuleFormType.grafana,
-        evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
+        evaluateEvery: ruleFromQueryParams.evaluateEvery ?? DEFAULT_GROUP_EVALUATION_INTERVAL,
       })
     )
   );

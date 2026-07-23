@@ -1,7 +1,7 @@
-import { DataFrameType, DataQueryRequest, dateTime, FieldType } from '@grafana/data';
+import { DataFrameType, type DataQueryRequest, dateTime, FieldType } from '@grafana/data';
 
 import { randomWalk } from './randomWalk';
-import { GrafanaQuery, GrafanaQueryType } from './types';
+import { type GrafanaQuery, GrafanaQueryType } from './types';
 
 function makeRequest(overrides?: Partial<DataQueryRequest<GrafanaQuery>>): DataQueryRequest<GrafanaQuery> {
   return {
@@ -52,6 +52,7 @@ describe('randomWalk', () => {
     expect(frame.fields[1].name).toBe('A-series');
     expect(frame.fields[1].type).toBe(FieldType.number);
     expect(frame.meta?.type).toBe(DataFrameType.TimeSeriesMulti);
+    expect(frame.refId).toBe('A');
     expect(frame.length).toBe(frame.fields[0].values.length);
   });
 

@@ -48,8 +48,8 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 				CreatePluginVersion: "4.15.0",
 				Manifest: grafanaComPluginManifest{
 					Files: map[string]string{
-						"module.js":                   "hash123",
-						"test-child-plugin/module.js": "child-hash123",
+						"module.js":                   "deadbeef",
+						"test-child-plugin/module.js": "beefcafe",
 					},
 				},
 				Children: []grafanaComChildPluginVersion{
@@ -71,13 +71,17 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 		require.NoError(t, err)
 		require.NotNil(t, result)
-		assert.Equal(t, expectedMeta, result.Meta.PluginJson)
+		// The plugin.json has no version, so it falls back to the gcom version.
+		expectedWithVersion := expectedMeta
+		expectedWithVersion.Info.Version = "1.0.0"
+		assert.Equal(t, expectedWithVersion, result.Meta.PluginJson)
 		assert.Equal(t, pluginsv0alpha1.MetaSpecClassExternal, result.Meta.Class)
 		assert.Equal(t, pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusValid, result.Meta.Signature.Status)
 		assert.Equal(t, pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeGrafana, *result.Meta.Signature.Type)
 		assert.Equal(t, "grafana", *result.Meta.Signature.Org)
 		assert.Equal(t, result.Meta.Module.Path, "https://cdn.grafana.com/plugins/test-plugin/1.0.0/module.js")
-		assert.Equal(t, "hash123", *result.Meta.Module.Hash)
+		// The manifest stores a raw hex hash; the meta exposes it in SRI format.
+		assert.Equal(t, "sha256-3q2+7w==", *result.Meta.Module.Hash)
 		assert.Equal(t, pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyScript, result.Meta.Module.LoadingStrategy)
 		assert.Equal(t, "https://cdn.grafana.com/plugins/test-plugin/1.0.0", result.Meta.BaseURL)
 		assert.Equal(t, []string{"test-child-plugin"}, result.Meta.Children)
@@ -93,8 +97,11 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 
 			require.NoError(t, err)
 			require.NotNil(t, childResult)
-			// Child plugin should have its own JSON data
-			assert.Equal(t, childJSON, childResult.Meta.PluginJson)
+			// Child plugin should have its own JSON data, with the version
+			// inherited from the parent (its own plugin.json has none).
+			expectedChild := childJSON
+			expectedChild.Info.Version = "1.0.0"
+			assert.Equal(t, expectedChild, childResult.Meta.PluginJson)
 			assert.Equal(t, pluginsv0alpha1.MetaSpecClassExternal, childResult.Meta.Class)
 
 			// Child inherits signature from parent
@@ -104,7 +111,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 
 			// Child has its own module path based on child path
 			assert.Equal(t, "https://cdn.grafana.com/plugins/test-plugin/1.0.0/test-child-plugin/module.js", childResult.Meta.Module.Path)
-			assert.Equal(t, "child-hash123", *childResult.Meta.Module.Hash)
+			assert.Equal(t, "sha256-vu/K/g==", *childResult.Meta.Module.Hash)
 
 			// BaseURL should be constructed from parent CDNURL + child path
 			assert.Equal(t, "https://cdn.grafana.com/plugins/test-plugin/1.0.0/test-child-plugin", childResult.Meta.BaseURL)
@@ -134,7 +141,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 				CreatePluginVersion: "4.15.0",
 				Manifest: grafanaComPluginManifest{
 					Files: map[string]string{
-						"module.js": "hash123",
+						"module.js": "deadbeef",
 					},
 				},
 			}
@@ -286,7 +293,10 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
-		assert.Equal(t, expectedMeta, result.Meta.PluginJson)
+		// The plugin.json has no version, so it falls back to the gcom version.
+		expectedWithVersion := expectedMeta
+		expectedWithVersion.Info.Version = "1.0.0"
+		assert.Equal(t, expectedWithVersion, result.Meta.PluginJson)
 		assert.Equal(t, defaultCatalogTTL, result.TTL)
 	})
 
@@ -340,7 +350,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 						CreatePluginVersion: tc.createPluginVersion,
 						Manifest: grafanaComPluginManifest{
 							Files: map[string]string{
-								"module.js": "hash123",
+								"module.js": "deadbeef",
 							},
 						},
 					}

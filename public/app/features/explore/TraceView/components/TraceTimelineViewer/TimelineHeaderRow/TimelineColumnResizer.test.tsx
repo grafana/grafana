@@ -13,9 +13,9 @@
 // limitations under the License.
 
 import { fireEvent, render, screen } from '@testing-library/react';
-import cx from 'classnames';
+import cx from 'clsx';
 
-import TimelineColumnResizer, { getStyles, TimelineColumnResizerProps } from './TimelineColumnResizer';
+import TimelineColumnResizer, { getStyles, type TimelineColumnResizerProps } from './TimelineColumnResizer';
 
 const mockOnChange = jest.fn();
 

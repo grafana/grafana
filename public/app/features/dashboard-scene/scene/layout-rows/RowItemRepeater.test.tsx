@@ -1,18 +1,19 @@
 import { act, screen, waitFor } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { VariableRefresh } from '@grafana/data';
+import { type VariableRefresh } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { locationService, setPluginImportUtils } from '@grafana/runtime';
 import {
   CustomVariable,
   LocalValueVariable,
-  MultiValueVariable,
+  type MultiValueVariable,
+  sceneGraph,
   SceneTimeRange,
   SceneVariableSet,
   TestVariable,
   UrlSyncManager,
-  VariableValueOption,
+  type VariableValueOption,
   PanelBuilders,
 } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
@@ -81,16 +82,24 @@ describe('RowItemRepeater', () => {
       const { repeatByVariable, rowToRepeat } = renderScene({ variableQueryTime: 0 });
       let stateUpdates = 0;
 
-      rowToRepeat.subscribeToState((s) => stateUpdates++);
+      rowToRepeat.subscribeToState(() => stateUpdates++);
 
       await waitFor(() => {
         expect(screen.queryByText('Row C')).toBeInTheDocument();
       });
 
+      // Flush deferred initial performRowRepeats before measuring the no-op path.
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+      stateUpdates = 0;
+
       act(() => {
         repeatByVariable.changeValueTo(['A1', 'B1', 'C1']);
       });
 
+      // performRowRepeats skips re-cloning (same values), but the variable change
+      // still yields a single row state notification — same as pre-setTimeout behavior.
       expect(stateUpdates).toBe(1);
     });
 
@@ -172,6 +181,95 @@ describe('RowItemRepeater', () => {
         expect(variables![0].state.name).toBe('server');
         expect(variables![0].getValue()).toBe('row-scope');
       }
+    });
+  });
+
+  describe('render-before-activation race', () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+      jest.useRealTimers();
+    });
+
+    it('does not initialize repeats when deps are loading, and stays stuck if the repeat variable never notifies again', () => {
+      const row = new RowItem({
+        key: 'row-1',
+        title: 'Row $item',
+        repeatByVariable: 'item',
+        layout: AutoGridLayoutManager.createEmpty(),
+      });
+      const item = new CustomVariable({
+        name: 'item',
+        query: 'alpha',
+        value: 'alpha',
+        text: 'alpha',
+      });
+      // Attach a parent so performRowRepeats can publish NewSceneObjectAddedEvent safely.
+      new RowsLayoutManager({ rows: [row] });
+
+      const hasLoading = jest.spyOn(sceneGraph, 'hasVariableDependencyInLoadingState').mockReturnValue(true);
+
+      performRowRepeats(item as unknown as MultiValueVariable, row, false);
+      expect(row.state.repeatedRows).toBeUndefined();
+
+      // Deps clear without an item state change — mirrors a URL-preselected var finishing
+      // (or set becoming active) without notifying subscribeToState.
+      hasLoading.mockReturnValue(false);
+      expect(row.state.repeatedRows).toBeUndefined();
+
+      performRowRepeats(item as unknown as MultiValueVariable, row, false);
+      expect(row.state.repeatedRows).toBeDefined();
+      expect(row.state.repeatedRows).toHaveLength(0);
+    });
+
+    it('Should initialize repeats via deferred mount after dependency loading clears without a variable state change', async () => {
+      jest.useFakeTimers();
+
+      let depsLoading = true;
+      jest.spyOn(sceneGraph, 'hasVariableDependencyInLoadingState').mockImplementation(() => depsLoading);
+
+      const row = new RowItem({
+        key: 'row-1',
+        title: 'Row $item',
+        repeatByVariable: 'item',
+        layout: new AutoGridLayoutManager({
+          layout: new AutoGridLayout({
+            children: [
+              new AutoGridItem({
+                body: buildTextPanel('text-1', 'Panel inside repeated row, item = $item'),
+              }),
+            ],
+          }),
+        }),
+      });
+      // Pre-resolved single value (URL-selected) — no further state updates.
+      const item = new CustomVariable({
+        name: 'item',
+        query: 'alpha',
+        value: 'alpha',
+        text: 'alpha',
+      });
+      const scene = new DashboardScene({
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        $variables: new SceneVariableSet({ variables: [item] }),
+        body: new RowsLayoutManager({ rows: [row] }),
+      });
+
+      render(<scene.Component model={scene} />);
+
+      // Mount effect scheduled setTimeout(0); deps still "loading" so a sync perform would skip.
+      expect(row.state.repeatedRows).toBeUndefined();
+
+      // Set / deps become ready before the deferred perform runs (RENDER_BEFORE_ACTIVATION).
+      depsLoading = false;
+
+      act(() => {
+        jest.runOnlyPendingTimers();
+      });
+
+      await waitFor(() => {
+        expect(row.state.repeatedRows).toBeDefined();
+        expect(screen.queryByText('Row alpha')).toBeInTheDocument();
+      });
     });
   });
 

@@ -1,16 +1,16 @@
 import Feature from 'ol/Feature';
-import MapBrowserEvent from 'ol/MapBrowserEvent';
+import type MapBrowserEvent from 'ol/MapBrowserEvent';
 import { Point } from 'ol/geom';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints';
 import VectorSource from 'ol/source/Vector';
 
-import { DataFrame, PanelProps } from '@grafana/data';
+import { DataHoverClearEvent, type DataFrame, type PanelProps } from '@grafana/data';
 
 import { GeomapPanel } from '../GeomapPanel';
-import { GeomapHoverPayload, GeomapLayerHover } from '../event';
+import { type GeomapHoverPayload, type GeomapLayerHover } from '../event';
 import { type Options } from '../panelcfg.gen';
 
-import { pointerMoveListener } from './tooltip';
+import { pointerMoveListener, setTooltipListeners } from './tooltip';
 
 // Mock the GeomapPanel class
 jest.mock('../GeomapPanel', () => {
@@ -21,6 +21,9 @@ jest.mock('../GeomapPanel', () => {
           getEventPixel: jest.fn().mockReturnValue([100, 100]),
           getCoordinateFromPixel: jest.fn().mockReturnValue([0, 0]),
           forEachFeatureAtPixel: jest.fn(),
+          getView: jest.fn().mockReturnValue({
+            getResolution: jest.fn().mockReturnValue(100), // 100 map units/pixel → tolerance = 100 * 2 = 200 map units
+          }),
         },
         mapDiv: {
           style: { cursor: 'auto' },
@@ -49,7 +52,6 @@ jest.mock('./layers', () => {
   return {
     getMapLayerState: jest.fn().mockReturnValue({
       options: { tooltip: true },
-      mouseEvents: { next: jest.fn() },
     }),
   };
 });
@@ -109,7 +111,7 @@ describe('tooltip utils', () => {
     });
 
     differentFeature = new Feature({
-      geometry: new Point([1, 1]),
+      geometry: new Point([50000, 50000]), // well outside pixel tolerance
       rowIndex: 4,
       frame: {} as DataFrame,
     });
@@ -217,5 +219,146 @@ describe('tooltip utils', () => {
       // The last feature (feature4) has no rowIndex, so it should be at the end
       expect(layerHover.features[3].getProperties()['rowIndex']).toBeUndefined();
     });
+
+    it('should match near-overlapping features within pixel tolerance', () => {
+      // Mock resolution: 100 map units/pixel, HIT_TOLERANCE_PX = 2, tolerance = 200 map units
+      // Per-axis: |dx| <= 200 && |dy| <= 200
+      // Create features with coordinates close to [0,0] but not exactly equal
+      // (simulates geocoding/lookup mode floating-point imprecision)
+      const nearFeature1 = new Feature({
+        geometry: new Point([50, 50]), // |dx| = |dy| = 50, within 200
+        rowIndex: 10,
+        frame: {} as DataFrame,
+      });
+
+      const nearFeature2 = new Feature({
+        geometry: new Point([-30, 20]), // |dx| = 30, |dy| = 20, within 200
+        rowIndex: 11,
+        frame: {} as DataFrame,
+      });
+
+      (mockVectorSource.forEachFeature as jest.Mock).mockImplementation((callback) => {
+        callback(nearFeature1);
+        callback(nearFeature2);
+      });
+
+      pointerMoveListener(mockEvent, panel);
+
+      const layerHover = panel.hoverPayload.layers?.[0] as GeomapLayerHover;
+      expect(layerHover.features.length).toBe(3); // feature1 + 2 near features
+      expect(layerHover.features).toContain(feature1);
+      expect(layerHover.features).toContain(nearFeature1);
+      expect(layerHover.features).toContain(nearFeature2);
+    });
+
+    it('should match features exactly at the tolerance boundary (inclusive)', () => {
+      // Mock resolution: 100 map units/pixel, HIT_TOLERANCE_PX = 2, tolerance = 200 map units
+      // Feature at [200, 0] → |dx| = 200, exactly equal to tolerance → should match (<=)
+      const boundaryFeature = new Feature({
+        geometry: new Point([200, 0]),
+        rowIndex: 15,
+        frame: {} as DataFrame,
+      });
+
+      (mockVectorSource.forEachFeature as jest.Mock).mockImplementation((callback) => {
+        callback(boundaryFeature);
+      });
+
+      pointerMoveListener(mockEvent, panel);
+
+      const layerHover = panel.hoverPayload.layers?.[0] as GeomapLayerHover;
+      expect(layerHover.features.length).toBe(2);
+      expect(layerHover.features).toContain(boundaryFeature);
+    });
+
+    it('should not match features outside pixel tolerance', () => {
+      // Mock resolution: 100 map units/pixel, HIT_TOLERANCE_PX = 2, tolerance = 200 map units
+      // Per-axis: |dx| > 200 || |dy| > 200
+      const farFeature = new Feature({
+        geometry: new Point([500, 500]), // |dx| = |dy| = 500, outside 200
+        rowIndex: 20,
+        frame: {} as DataFrame,
+      });
+
+      (mockVectorSource.forEachFeature as jest.Mock).mockImplementation((callback) => {
+        callback(farFeature);
+      });
+
+      pointerMoveListener(mockEvent, panel);
+
+      const layerHover = panel.hoverPayload.layers?.[0] as GeomapLayerHover;
+      expect(layerHover.features.length).toBe(1); // only feature1
+      expect(layerHover.features).not.toContain(farFeature);
+    });
+  });
+});
+
+describe('setTooltipListeners', () => {
+  function createPanelForSetListeners(overrides?: { tooltipPointerMoveDebounced?: { cancel: jest.Mock } }) {
+    let pointerLeaveHandler: () => void;
+    const viewport = {
+      addEventListener: jest.fn((type: string, fn: () => void) => {
+        if (type === 'pointerleave') {
+          pointerLeaveHandler = fn;
+        }
+      }),
+    };
+    const publish = jest.fn();
+    const clearTooltip = jest.fn();
+    const panel = {
+      tooltipPointerMoveDebounced: overrides?.tooltipPointerMoveDebounced,
+      map: {
+        on: jest.fn(),
+        getViewport: jest.fn().mockReturnValue(viewport),
+      },
+      props: { eventBus: { publish } },
+      clearTooltip,
+    } as unknown as GeomapPanel;
+
+    return {
+      panel,
+      viewport,
+      publish,
+      clearTooltip,
+      simulateViewportPointerLeave: () => pointerLeaveHandler(),
+    };
+  }
+
+  it('attaches pointerleave to the map viewport', () => {
+    const { panel, viewport } = createPanelForSetListeners();
+    setTooltipListeners(panel);
+    expect(panel.map?.getViewport).toHaveBeenCalled();
+    expect(viewport.addEventListener).toHaveBeenCalledWith('pointerleave', expect.any(Function));
+  });
+
+  it('on viewport pointerleave, publishes DataHoverClearEvent and calls clearTooltip', () => {
+    const { panel, publish, clearTooltip, simulateViewportPointerLeave } = createPanelForSetListeners();
+    setTooltipListeners(panel);
+    simulateViewportPointerLeave();
+
+    expect(publish).toHaveBeenCalledTimes(1);
+    expect(publish).toHaveBeenCalledWith(expect.any(DataHoverClearEvent));
+    expect(clearTooltip).toHaveBeenCalledTimes(1);
+  });
+
+  it('on viewport pointerleave, cancels the debounced pointermove handler', () => {
+    const { panel, simulateViewportPointerLeave } = createPanelForSetListeners();
+    setTooltipListeners(panel);
+
+    const debounced = panel.tooltipPointerMoveDebounced;
+    expect(debounced).toBeDefined();
+    const cancelSpy = jest.spyOn(debounced!, 'cancel');
+    simulateViewportPointerLeave();
+
+    expect(cancelSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancels any existing debounced handler before replacing listeners', () => {
+    const previousCancel = jest.fn();
+    const { panel } = createPanelForSetListeners({
+      tooltipPointerMoveDebounced: { cancel: previousCancel },
+    });
+    setTooltipListeners(panel);
+    expect(previousCancel).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,19 +1,20 @@
-import { UserEvent } from '@testing-library/user-event';
+import { type UserEvent } from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { GrafanaRuleFormStep, renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
+import { mockComboboxRect } from '@grafana/test-utils';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setAlertmanagerChoices } from 'app/features/alerting/unified/mocks/server/configure';
 import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { captureRequests, serializeRequests } from 'app/features/alerting/unified/mocks/server/events';
-import { FOLDER_TITLE_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/search';
+import { FOLDER_TITLE_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { MANUAL_ROUTING_KEY, SIMPLIFIED_QUERY_EDITOR_KEY } from 'app/features/alerting/unified/utils/rule-form';
@@ -67,18 +68,7 @@ const server = setupMswServer();
 
 // combobox hack
 beforeEach(() => {
-  const mockGetBoundingClientRect = jest.fn(() => ({
-    width: 120,
-    height: 120,
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
-  }));
-
-  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-    value: mockGetBoundingClientRect,
-  });
+  mockComboboxRect();
 
   mockPreviewApiResponse(server, []);
 });
@@ -235,7 +225,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
   });
 
   describe('switch modes enabled', () => {
-    testWithFeatureToggles({ enable: ['alertingQueryAndExpressionsStepMode', 'alertingNotificationsStepMode'] });
+    testWithFeatureToggles({ enable: ['alertingNotificationsStepMode'] });
 
     it('can create the new grafana-managed rule with default modes', async () => {
       const contactPointName = 'lotsa-emails';

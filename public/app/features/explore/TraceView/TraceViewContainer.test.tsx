@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 
-import { TimeRange } from '@grafana/data';
+import { type TimeRange } from '@grafana/data';
 
 import { configureStore } from '../../../store/configureStore';
 import { initialExploreState } from '../state/main';
@@ -18,6 +18,7 @@ jest.mock('@grafana/runtime', () => {
     ...jest.requireActual('@grafana/runtime'),
     reportInteraction: jest.fn(),
     usePluginLinks: jest.fn().mockReturnValue({ isLoading: false, links: [] }),
+    useAppPluginInstalled: jest.fn().mockReturnValue({ loading: false, error: undefined, value: false }),
   };
 });
 

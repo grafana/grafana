@@ -1,5 +1,7 @@
+import { type ChangeEvent } from 'react';
+
 import {
-  DataFrame,
+  type DataFrame,
   DataFrameType,
   FieldConfigProperty,
   FieldType,
@@ -10,12 +12,12 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   AxisPlacement,
-  GraphFieldConfig,
+  type GraphFieldConfig,
   ScaleDistribution,
-  ScaleDistributionConfig,
+  type ScaleDistributionConfig,
   HeatmapCellLayout,
 } from '@grafana/schema';
-import { TooltipDisplayMode } from '@grafana/ui';
+import { Input, TooltipDisplayMode } from '@grafana/ui';
 import { addHideFrom, ScaleDistributionEditor } from '@grafana/ui/internal';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addAnnotationOptions } from 'app/features/panel/options/builder/annotations';
@@ -27,7 +29,7 @@ import { YBucketScaleEditor } from './YBucketScaleEditor';
 import { prepareHeatmapData } from './fields';
 import { heatmapChangedHandler, heatmapMigrationHandler } from './migrations';
 import { colorSchemes, quantizeScheme } from './palettes';
-import { Options, HeatmapColorMode, HeatmapColorScale } from './panelcfg.gen';
+import { type Options, HeatmapColorMode, HeatmapColorScale } from './panelcfg.gen';
 import { heatmapSuggestionsSupplier } from './suggestions';
 import { defaultOptions } from './types';
 
@@ -105,11 +107,11 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       addHeatmapCalculationOptions('calculation.', builder, opts.calculation, category);
     }
 
-    if (!opts.calculate && !isHeatmapCells && config.featureToggles.heatmapRowsAxisOptions) {
+    if (!opts.calculate && !isHeatmapCells) {
       builder.addCustomEditor({
         id: 'rowsFrame-yBucketScale',
         path: 'rowsFrame.yBucketScale',
-        name: t('heatmap.name-y-bucket-scale', 'Y bucket scale'),
+        name: t('heatmap.name-y-bucket-scale', 'Y Bucket scale'),
         category,
         editor: YBucketScaleEditor,
         defaultValue: undefined,
@@ -447,14 +449,6 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       showIf: (opts) => opts.tooltip.mode === TooltipDisplayMode.Single,
     });
 
-    builder.addBooleanSwitch({
-      path: 'tooltip.showColorScale',
-      name: t('heatmap.name-show-color-scale', 'Show color scale'),
-      defaultValue: defaultOptions.tooltip.showColorScale,
-      category,
-      showIf: (opts) => opts.tooltip.mode === TooltipDisplayMode.Single,
-    });
-
     builder.addNumberInput({
       path: 'tooltip.maxWidth',
       name: t('heatmap.name-max-width', 'Max width'),
@@ -479,12 +473,55 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
     });
 
     category = [t('heatmap.category-legend', 'Legend')];
-    builder.addBooleanSwitch({
-      path: 'legend.show',
-      name: t('heatmap.name-show-legend', 'Show legend'),
-      defaultValue: defaultOptions.legend.show,
-      category,
-    });
+    builder
+      .addBooleanSwitch({
+        path: 'legend.show',
+        name: t('heatmap.name-show-legend', 'Show legend'),
+        defaultValue: defaultOptions.legend.show,
+        category,
+      })
+      .addRadio({
+        path: 'legend.placement',
+        name: t('heatmap.name-placement', 'Placement'),
+        defaultValue: defaultOptions.legend.placement ?? 'bottom',
+        category,
+        settings: {
+          options: [
+            { value: 'bottom', label: t('heatmap.placement-options.label-bottom', 'Bottom') },
+            { value: 'right', label: t('heatmap.placement-options.label-right', 'Right') },
+          ],
+        },
+        showIf: (opts) => opts.legend.show,
+      })
+      .addCustomEditor({
+        id: 'legend.width',
+        path: 'legend.width',
+        name: t('grafana-ui.builder.legend.name-width', 'Width'),
+        category,
+        showIf: (c) => c.legend.show && c.legend.placement === 'right',
+        editor: ({ onChange, ...props }) => {
+          return (
+            <Input
+              {...props}
+              placeholder={t('grafana-ui.builder.legend.placeholder-width', 'Auto, px, or % (e.g. 220 or 35%)')}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                let value: string | undefined = e.currentTarget.value.trim();
+
+                if (value === '') {
+                  value = undefined;
+                }
+
+                let numeric = Number(value);
+                onChange(Number.isNaN(numeric) ? value : numeric);
+              }}
+              // this is needed as a work-around for _something_ in an ancestor causing a blur/onChange/remount happen on every keypress
+              onInputCapture={(e) => {
+                e.stopPropagation();
+              }}
+            />
+          );
+        },
+      });
 
     category = [t('heatmap.category-exemplars', 'Exemplars')];
     builder.addColorPicker({

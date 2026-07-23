@@ -1,4 +1,4 @@
-import { DashboardPage, E2ESelectorGroups, expect, test } from '@grafana/plugin-e2e';
+import { type DashboardPage, type E2ESelectorGroups, expect, test } from '@grafana/plugin-e2e';
 
 import { setupAnnotationApiMock } from '../utils/annotation-api-mock';
 
@@ -13,17 +13,40 @@ const DASHBOARD_UID = 'ad7p5pjk';
 
 const MANY_ANNOTATIONS_COUNTS = {
   frame1: {
+    count: 224,
+    widths: {
+      '1064': 1,
+      '2600': 6,
+    },
+  },
+  frame2: {
+    count: 235,
+    widths: {
+      '1064': 2,
+      '2600': 15,
+    },
+  },
+  frame3: {
+    count: 2,
+    widths: {
+      '1064': 2,
+      '2600': 2,
+    },
+  },
+};
+const REGION_ANNOTATIONS_COUNTS = {
+  frame1: {
     count: 223,
     widths: {
-      '1000': 1,
+      '1064': 1,
       '2600': 5,
     },
   },
   frame2: {
     count: 235,
     widths: {
-      '1000': 1,
-      '2600': 15,
+      '1064': 2,
+      '2600': 13,
     },
   },
 };
@@ -31,16 +54,18 @@ const ALERT_ANNOTATIONS_COUNTS = {
   frame1: {
     count: 11,
     widths: {
-      '1000': 1,
+      '1064': 1,
       '2600': 1,
     },
   },
 };
 
-test.use({ viewport: { width: 1000, height: 1440 }, featureToggles: { annotationsClustering: true } });
+test.use({
+  viewport: { width: 1064, height: 1840 },
+});
 
 test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, () => {
-  test.describe('width: 1000', () => {
+  test.describe('width: 1064', () => {
     test('Clustering status', async ({ gotoDashboardPage, selectors }) => {
       const dashboardPage = await gotoDashboardPage({
         uid: DASHBOARD_UID,
@@ -52,14 +77,18 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         dashboardPage,
         selectors,
         'Clustering disabled',
-        MANY_ANNOTATIONS_COUNTS.frame1.count + MANY_ANNOTATIONS_COUNTS.frame2.count
+        MANY_ANNOTATIONS_COUNTS.frame1.count +
+          MANY_ANNOTATIONS_COUNTS.frame2.count +
+          MANY_ANNOTATIONS_COUNTS.frame3.count
       );
 
       await assertAnnotationCount(
         dashboardPage,
         selectors,
         'Clustering disabled w/ multi-row',
-        MANY_ANNOTATIONS_COUNTS.frame1.count + MANY_ANNOTATIONS_COUNTS.frame2.count
+        MANY_ANNOTATIONS_COUNTS.frame1.count +
+          MANY_ANNOTATIONS_COUNTS.frame2.count +
+          MANY_ANNOTATIONS_COUNTS.frame3.count
       );
 
       await assertAnnotationCount(dashboardPage, selectors, 'Alert annos links', ALERT_ANNOTATIONS_COUNTS.frame1.count);
@@ -69,27 +98,46 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         dashboardPage,
         selectors,
         'Clustering enabled',
-        MANY_ANNOTATIONS_COUNTS.frame1.widths['1000'] + MANY_ANNOTATIONS_COUNTS.frame2.widths['1000']
+        MANY_ANNOTATIONS_COUNTS.frame1.widths['1064'] +
+          MANY_ANNOTATIONS_COUNTS.frame2.widths['1064'] +
+          MANY_ANNOTATIONS_COUNTS.frame3.widths['1064']
       );
 
       await assertAnnotationCount(
         dashboardPage,
         selectors,
         'Clustering enabled w/ multi-row',
-        MANY_ANNOTATIONS_COUNTS.frame1.widths['1000'] + MANY_ANNOTATIONS_COUNTS.frame2.widths['1000']
+        MANY_ANNOTATIONS_COUNTS.frame1.widths['1064'] +
+          MANY_ANNOTATIONS_COUNTS.frame2.widths['1064'] +
+          MANY_ANNOTATIONS_COUNTS.frame3.widths['1064']
       );
 
       await assertAnnotationCount(
         dashboardPage,
         selectors,
         'Alert annos clustering',
-        ALERT_ANNOTATIONS_COUNTS.frame1.widths['1000']
+        ALERT_ANNOTATIONS_COUNTS.frame1.widths['1064']
+      );
+
+      // Regions
+      await assertAnnotationCount(
+        dashboardPage,
+        selectors,
+        'Region clustering (off)',
+        REGION_ANNOTATIONS_COUNTS.frame1.count + REGION_ANNOTATIONS_COUNTS.frame2.count
+      );
+
+      await assertAnnotationCount(
+        dashboardPage,
+        selectors,
+        'Region clustering (on)',
+        REGION_ANNOTATIONS_COUNTS.frame1.widths['1064'] + REGION_ANNOTATIONS_COUNTS.frame2.widths['1064']
       );
     });
   });
   test.describe('width: 2600', () => {
     test.use({ viewport: { width: 2600, height: 1440 } });
-    test('Clustering status', async ({ gotoDashboardPage, selectors }) => {
+    test('Clustering status', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({
         uid: DASHBOARD_UID,
         queryParams: new URLSearchParams(),
@@ -100,14 +148,18 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         dashboardPage,
         selectors,
         'Clustering disabled',
-        MANY_ANNOTATIONS_COUNTS.frame1.count + MANY_ANNOTATIONS_COUNTS.frame2.count
+        MANY_ANNOTATIONS_COUNTS.frame1.count +
+          MANY_ANNOTATIONS_COUNTS.frame2.count +
+          MANY_ANNOTATIONS_COUNTS.frame3.count
       );
 
       await assertAnnotationCount(
         dashboardPage,
         selectors,
         'Clustering disabled w/ multi-row',
-        MANY_ANNOTATIONS_COUNTS.frame1.count + MANY_ANNOTATIONS_COUNTS.frame2.count
+        MANY_ANNOTATIONS_COUNTS.frame1.count +
+          MANY_ANNOTATIONS_COUNTS.frame2.count +
+          MANY_ANNOTATIONS_COUNTS.frame3.count
       );
 
       await assertAnnotationCount(dashboardPage, selectors, 'Alert annos links', ALERT_ANNOTATIONS_COUNTS.frame1.count);
@@ -117,14 +169,18 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         dashboardPage,
         selectors,
         'Clustering enabled',
-        MANY_ANNOTATIONS_COUNTS.frame1.widths['2600'] + MANY_ANNOTATIONS_COUNTS.frame2.widths['2600']
+        MANY_ANNOTATIONS_COUNTS.frame1.widths['2600'] +
+          MANY_ANNOTATIONS_COUNTS.frame2.widths['2600'] +
+          MANY_ANNOTATIONS_COUNTS.frame3.widths['2600']
       );
 
       await assertAnnotationCount(
         dashboardPage,
         selectors,
         'Clustering enabled w/ multi-row',
-        MANY_ANNOTATIONS_COUNTS.frame1.widths['2600'] + MANY_ANNOTATIONS_COUNTS.frame2.widths['2600']
+        MANY_ANNOTATIONS_COUNTS.frame1.widths['2600'] +
+          MANY_ANNOTATIONS_COUNTS.frame2.widths['2600'] +
+          MANY_ANNOTATIONS_COUNTS.frame3.widths['2600']
       );
 
       await assertAnnotationCount(
@@ -132,6 +188,21 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         selectors,
         'Alert annos clustering',
         ALERT_ANNOTATIONS_COUNTS.frame1.widths['2600']
+      );
+
+      // Regions
+      await assertAnnotationCount(
+        dashboardPage,
+        selectors,
+        'Region clustering (off)',
+        REGION_ANNOTATIONS_COUNTS.frame1.count + REGION_ANNOTATIONS_COUNTS.frame2.count
+      );
+
+      await assertAnnotationCount(
+        dashboardPage,
+        selectors,
+        'Region clustering (on)',
+        REGION_ANNOTATIONS_COUNTS.frame1.widths['2600'] + REGION_ANNOTATIONS_COUNTS.frame2.widths['2600']
       );
     });
   });
@@ -222,6 +293,8 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
     });
 
     test.describe('wip annotations', () => {
+      test.use({ viewport: { width: 1280, height: 700 } });
+
       test('can edit locally created (wip) annotations from the clustered tooltip', async ({
         page,
         gotoDashboardPage,
@@ -241,12 +314,26 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
 
         await expect(panel, `Panel should be visible`).toBeVisible();
 
-        // Meta click to create a wip annotation
-        await panel.locator('.u-over').click({ position: { x: 100, y: 100 }, modifiers: ['Meta'] });
+        // Meta click to create a wip annotation. Target a point reliably inside the plot rather
+        // than a hardcoded pixel offset, which can land outside the plot area depending on the
+        // panel's rendered size and intercept the click on the panel content wrapper.
+        const plot = panel.locator('.u-over');
+        const plotBox = await plot.boundingBox();
+        if (!plotBox) {
+          throw new Error('could not resolve plot bounding box');
+        }
+        // Two click points 10px apart (close enough to cluster once clustering is enabled),
+        // both well inside the plot, derived from the plot box rather than hardcoded pixels.
+        const clickY = Math.round(plotBox.height * 0.5);
+        const clickBaseX = Math.round(plotBox.width * 0.25);
+        const clickLeft = { x: clickBaseX, y: clickY };
+        const clickRight = { x: clickBaseX + 10, y: clickY };
+
+        await plot.click({ position: clickLeft, modifiers: ['Meta'] });
 
         const descriptionTextarea = page.getByTestId('annotation-editor-description');
         const tagsInput = page.getByText('Add tags');
-        const markersLocator = page.getByTestId(selectors.pages.Dashboard.Annotations.marker);
+        const markersLocator = panel.getByTestId(selectors.pages.Dashboard.Annotations.marker);
         await expect(descriptionTextarea, 'add annotation description is visible').toBeVisible();
         await expect(tagsInput, 'should only be one tags input').toHaveCount(1);
 
@@ -259,7 +346,10 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         await page.keyboard.press('Enter');
 
         // save
-        await page.getByRole('button', { name: 'Save', exact: true }).click();
+        await page
+          .getByTestId('data-testid portal-container')
+          .getByRole('button', { name: 'Save', exact: true })
+          .click();
         // Assert saving has closed the modal before we create another one
         await expect(
           page.getByText('Add annotation'),
@@ -269,7 +359,7 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         await expect(markersLocator, 'annotation marker is visible').toBeVisible();
 
         // add another anno
-        await panel.locator('.u-over').click({ position: { x: 110, y: 100 }, modifiers: ['Meta'] });
+        await plot.click({ position: clickRight, modifiers: ['Meta'] });
         await expect(descriptionTextarea, 'add annotation description is visible').toBeVisible();
         await expect(tagsInput, 'should only be one tags input').toHaveCount(1);
         await descriptionTextarea.fill('description2 text goes here');
@@ -278,7 +368,10 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         await page.keyboard.type('tag2');
         await page.keyboard.press('Enter');
         // save
-        await page.getByRole('button', { name: 'Save', exact: true }).click();
+        await page
+          .getByTestId('data-testid portal-container')
+          .getByRole('button', { name: 'Save', exact: true })
+          .click();
         // Assert saving has closed the modal before we create another one
         await expect(
           page.getByText('Add annotation'),
@@ -333,7 +426,14 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         await expect(tooltip.getByText('tag2'), 'tag from anno 2 is visible').toBeVisible();
         await tooltip.getByRole('button', { name: 'Delete' }).first().click();
 
-        // Delete second anno
+        // assert that first anno was removed from API result before clicking again
+        await expect
+          .poll(async () => {
+            await markersLocator.hover();
+            return tooltip.getByText('tag1').count();
+          }, 'annotation is removed after annotation GET is returned')
+          .toEqual(0);
+
         await markersLocator.click();
         await expect(
           tooltip.getByText('description2 text goes here - EDITED'),
@@ -341,6 +441,94 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         ).toBeVisible();
         await expect(tooltip.getByText('tag2'), 'anno 2 tag is visible').toBeVisible();
         await tooltip.getByRole('button', { name: 'Delete' }).first().click();
+
+        await expect(markersLocator, 'should no longer be any annotations').toHaveCount(0);
+      });
+
+      // regression test for https://github.com/grafana/grafana/issues/122446
+      test('annotations that return after panel query are rendered in correct position on x-axis', async ({
+        page,
+        gotoDashboardPage,
+        selectors,
+      }) => {
+        // Mock annotation API to avoid shared DB state in parallel executions
+        await setupAnnotationApiMock(page);
+
+        const dashboardPage = await gotoDashboardPage({
+          uid: DASHBOARD_UID,
+          queryParams: new URLSearchParams({ viewPanel: 'panel-18' }),
+        });
+
+        const panel = dashboardPage.getByGrafanaSelector(
+          selectors.components.Panels.Panel.title('wip annotations panel')
+        );
+
+        await expect(panel, `Panel should be visible`).toBeVisible();
+
+        // Meta click to create a wip annotation at a known x within the plot.
+        const plot = panel.locator('.u-over');
+        const plotBox = await plot.boundingBox();
+        if (!plotBox) {
+          throw new Error('could not resolve plot bounding box');
+        }
+        const clickX = 100;
+        await plot.click({ position: { x: clickX, y: Math.round(plotBox.height * 0.5) }, modifiers: ['Meta'] });
+
+        const descriptionTextarea = page.getByTestId('annotation-editor-description');
+        const markersLocator = page.getByTestId(selectors.pages.Dashboard.Annotations.marker);
+
+        // add description
+        await descriptionTextarea.fill('description text goes here');
+
+        // save
+        await page
+          .getByTestId('data-testid portal-container')
+          .getByRole('button', { name: 'Save', exact: true })
+          .click();
+        // Assert saving has closed the modal before we create another one
+        await expect(
+          page.getByText('Add annotation'),
+          'add annotation text is not rendered as the modal was removed after clicking save'
+        ).toHaveCount(0);
+
+        // assert annotation was created
+        await expect(markersLocator, 'annotation marker is visible').toBeVisible();
+
+        // Marker renders at roughly the click x (small tolerance for rendering rounding).
+        const leftOf = (style: string | null) => {
+          const m = style?.match(/left:\s*(-?\d+(?:\.\d+)?)px/);
+          return m ? parseFloat(m[1]) : NaN;
+        };
+        await expect
+          .poll(async () => leftOf(await markersLocator.first().getAttribute('style')), {
+            message: 'marker left is near the click x',
+          })
+          .toBeLessThanOrEqual(clickX + 5);
+        await expect
+          .poll(async () => leftOf(await markersLocator.first().getAttribute('style')))
+          .toBeGreaterThanOrEqual(clickX - 5);
+
+        // Move time range backwards, annotation should now be on the right half of the plot.
+        await page.getByTestId(selectors.components.TimePicker.moveBackwardButton).click();
+
+        // Assert the marker re-rendered to the right half after the annotation was re-queried.
+        // Use an in-bounds range rather than a hardcoded pixel (which is sensitive to sub-pixel
+        // plot-width differences across schema versions).
+        await expect
+          .poll(async () => leftOf(await markersLocator.first().getAttribute('style')), {
+            message: 'marker moved to the right half of the plot after shifting time back',
+          })
+          .toBeGreaterThan(plotBox.width * 0.5);
+        await expect
+          .poll(async () => leftOf(await markersLocator.first().getAttribute('style')))
+          .toBeLessThan(plotBox.width);
+
+        // Clean up annos
+        const tooltip = page.getByTestId(selectors.pages.Dashboard.Annotations.tooltip);
+        await markersLocator.click();
+        await expect(tooltip.getByText('description text goes here'), 'anno 2 edited text is visible').toBeVisible();
+        await tooltip.getByRole('button', { name: 'Delete' }).first().click();
+
         await expect(markersLocator, 'should no longer be any annotations').toHaveCount(0);
       });
     });

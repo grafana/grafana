@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
@@ -19,9 +20,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/simplejson"
 )
 
 // --------------------------------------------------------------
@@ -65,7 +65,7 @@ func executeMockedQuery(t *testing.T, name string, query queryModel) *backend.Da
 		query.MaxSeries = 50
 	}
 
-	dr := executeQuery(context.Background(), glog, query, runner, query.MaxSeries)
+	dr := executeQuery(context.Background(), log.NewNullLogger(), query, runner, query.MaxSeries)
 	return &dr
 }
 
@@ -155,9 +155,9 @@ func TestAggregateGrouping(t *testing.T) {
 	expectedFrame := data.NewFrame("",
 		data.NewField("Time", nil, []*time.Time{&t1, &t2, &t3}),
 		data.NewField("Value", map[string]string{"host": "hostname.ru"}, []*float64{
-			util.Pointer(8.291),
-			util.Pointer(0.534),
-			util.Pointer(0.667),
+			new(8.291),
+			new(0.534),
+			new(0.667),
 		}),
 	)
 	expectedFrame.Meta = &data.FrameMeta{}
@@ -190,7 +190,7 @@ func TestNonStandardTimeColumn(t *testing.T) {
 		data.NewField("_start_water", map[string]string{"st": "1"}, []*time.Time{&t1}),
 		data.NewField("_stop_water", map[string]string{"st": "1"}, []*time.Time{&t2}),
 		data.NewField("_value", map[string]string{"st": "1"}, []*float64{
-			util.Pointer(156.304),
+			new(156.304),
 		}),
 	)
 	expectedFrame.Meta = &data.FrameMeta{}
@@ -230,7 +230,7 @@ func TestRealQuery(t *testing.T) {
 		runner, err := runnerFromDataSource(dsInfo)
 		require.NoError(t, err)
 
-		dr := executeQuery(context.Background(), glog, queryModel{
+		dr := executeQuery(context.Background(), log.NewNullLogger(), queryModel{
 			MaxDataPoints: 100,
 			RawQuery:      "buckets()",
 		}, runner, 50)

@@ -1,15 +1,16 @@
-import React, { FC, useMemo, useState } from 'react';
+import React, { type FC, useMemo, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Button, ConfirmModal, Modal, ModalProps, Space, Spinner, Stack, Text } from '@grafana/ui';
+import { Button, ConfirmModal, Modal, type ModalProps, Space, Spinner, Stack, Text } from '@grafana/ui';
 
-import { RouteWithID } from '../../../../../../plugins/datasource/alertmanager/types';
-import { FormAmRoute } from '../../../types/amroutes';
+import { type RouteWithID } from '../../../../../../plugins/datasource/alertmanager/types';
+import { type FormAmRoute } from '../../../types/amroutes';
 import { defaultGroupBy } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { stringifyErrorLike } from '../../../utils/misc';
+import { ErrorModal } from '../../ErrorModal';
 import { AmRootRouteForm } from '../EditDefaultPolicyForm';
 import { NotificationPoliciesErrorAlert } from '../PolicyUpdateErrorAlert';
 import {
@@ -21,14 +22,14 @@ import {
   trackNotificationPolicyResetError,
 } from '../notificationPolicyAnalytics';
 
-export interface DeleteModalProps {
+interface DeleteModalProps {
   isOpen: boolean;
   onConfirm: () => Promise<unknown>;
   onDismiss: () => void;
   routeName: string;
 }
 
-export const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen, routeName }: DeleteModalProps) => {
+const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen, routeName }: DeleteModalProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<unknown | undefined>();
 
@@ -256,30 +257,6 @@ export const CreateModal = React.memo(({ existingPolicyNames, onConfirm, onDismi
   );
 });
 CreateModal.displayName = 'CreateModal';
-
-interface ErrorModalProps extends Pick<ModalProps, 'isOpen' | 'onDismiss'> {
-  error: unknown;
-}
-const ErrorModal = ({ isOpen, onDismiss, error }: ErrorModalProps) => {
-  return (
-    <Modal
-      isOpen={isOpen}
-      onDismiss={onDismiss}
-      closeOnBackdropClick={true}
-      closeOnEscape={true}
-      title={t('alerting.policies.error-modal.title-something-went-wrong', 'Something went wrong')}
-    >
-      <p>
-        <Trans i18nKey="alerting.policies.error-modal.failed-to-update-your-configuration">
-          Failed to update your configuration:
-        </Trans>
-      </p>
-      <pre>
-        <code>{stringifyErrorLike(error)}</code>
-      </pre>
-    </Modal>
-  );
-};
 
 const CreatingModal: FC<Pick<ModalProps, 'isOpen' | 'onDismiss'>> = ({ isOpen, onDismiss = () => {} }) => (
   <Modal

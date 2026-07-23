@@ -2,17 +2,17 @@ import { useEffect, useMemo } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
-import { SceneComponentProps } from '@grafana/scenes';
+import { type SceneComponentProps } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { useSelector } from 'app/types/store';
 
 import { DashboardEditPaneSplitter } from '../edit-pane/DashboardEditPaneSplitter';
+import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../solo/SoloPanelContext';
 
-import { DashboardScene } from './DashboardScene';
+import { type DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
-import { SoloPanelContextProvider, useDefineSoloPanelContext } from './SoloPanelContext';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {
@@ -31,10 +31,20 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const scopesServices = useScopesServices();
 
   // Disable scope redirects while in edit mode so users aren't navigated away mid-edit.
+  // Also close the scopes dashboards drawer while editing and restore it on exit.
   useEffect(() => {
     scopesServices?.scopesSelectorService.setRedirectEnabled(!isEditing);
+
+    const drawerWasOpen = Boolean(isEditing && scopesServices?.scopesDashboardsService.state.drawerOpened);
+    if (drawerWasOpen) {
+      scopesServices?.scopesDashboardsService.toggleDrawer();
+    }
+
     return () => {
       scopesServices?.scopesSelectorService.setRedirectEnabled(true);
+      if (drawerWasOpen && !scopesServices?.scopesDashboardsService.state.drawerOpened) {
+        scopesServices?.scopesDashboardsService.toggleDrawer();
+      }
     };
   }, [scopesServices, isEditing]);
 

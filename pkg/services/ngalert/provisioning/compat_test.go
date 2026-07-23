@@ -1,17 +1,35 @@
 package provisioning
 
 import (
+	"maps"
 	"math/rand"
+	"slices"
 	"testing"
 
+	"github.com/grafana/alerting/receivers/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
+
+func TestEmbeddedContactPointToGrafanaIntegrationConfig_UsesV1(t *testing.T) {
+	settings := simplejson.NewFromAny(map[string]any{
+		"url": "https://example.com",
+	})
+	cp := &definitions.EmbeddedContactPoint{
+		UID:      "test-uid",
+		Name:     "test-name",
+		Type:     "webhook",
+		Settings: settings,
+	}
+
+	integration, err := EmbeddedContactPointToGrafanaIntegrationConfig(cp)
+	require.NoError(t, err)
+	assert.Equal(t, schema.V1, integration.Version)
+}
 
 func TestPostableGrafanaReceiverToEmbeddedContactPoint(t *testing.T) {
 	expectedProvenance := models.KnownProvenances[rand.Intn(len(models.KnownProvenances))]
@@ -119,7 +137,7 @@ func TestPostableGrafanaReceiverToEmbeddedContactPoint(t *testing.T) {
 			embeddedContactPoint, err := PostableGrafanaReceiverToEmbeddedContactPoint(&tt.input, expectedProvenance, decrypt)
 			require.NoError(t, err)
 			assert.Equal(t, tt.expected, embeddedContactPoint)
-			assert.ElementsMatch(t, maps.Values(tt.input.SecureSettings), decrypted)
+			assert.ElementsMatch(t, slices.Collect(maps.Values(tt.input.SecureSettings)), decrypted)
 		})
 	}
 }

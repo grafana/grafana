@@ -1,6 +1,6 @@
-import { getDataSourceSrv } from '@grafana/runtime';
-import { Input } from 'app/features/dashboard/components/DashExportModal/DashboardExporter';
-import { DashboardInput, DataSourceInput, InputType } from 'app/features/manage-dashboards/types';
+import { getDataSourceInstanceList, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { type Input } from 'app/features/dashboard/components/DashExportModal/DashboardExporter';
+import { type DashboardInput, type DataSourceInput, InputType } from 'app/features/manage-dashboards/types';
 
 export interface InputMapping {
   name: string;
@@ -33,15 +33,16 @@ export interface AutoMapResult {
  * @param currentDatasourceUid - UID of the datasource selected in "build dashboard" flow
  * @returns Result containing mappings, unmapped inputs, and whether all inputs were mapped
  */
-export function tryAutoMapDatasources(inputs: DataSourceInput[], currentDatasourceUid: string): AutoMapResult {
+export async function tryAutoMapDatasources(
+  inputs: DataSourceInput[],
+  currentDatasourceUid: string
+): Promise<AutoMapResult> {
   const mappings: InputMapping[] = [];
   const unmappedDsInputs: DataSourceInput[] = [];
 
   for (const input of inputs) {
-    // Get all datasources compatible with this input's plugin type
-    const compatibleDs = getDataSourceSrv()
-      .getList({ type: input.pluginId })
-      .filter((ds) => ds.uid);
+    const allCompatible = await getDataSourceInstanceList({ type: input.pluginId });
+    const compatibleDs = allCompatible.filter((ds) => ds.uid);
 
     let selectedDs: string | undefined;
 
@@ -52,7 +53,7 @@ export function tryAutoMapDatasources(inputs: DataSourceInput[], currentDatasour
     // Option 2: Auto-select if only one option exists AND it's not the current datasource's type
     // (example: only auto-select if we are confident it's the right choice)
     else if (compatibleDs.length === 1) {
-      const currentDs = getDataSourceSrv().getInstanceSettings(currentDatasourceUid);
+      const currentDs = await getDataSourceInstanceSettings(currentDatasourceUid);
 
       // Only auto-select if:
       // - The single option matches the input's plugin type exactly

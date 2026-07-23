@@ -18,6 +18,7 @@ spec:
           operations:
           - CREATE
           - UPDATE
+          - DELETE
       conversion: false
       kind: AlertRule
       plural: AlertRules
@@ -31,6 +32,14 @@ spec:
           required:
           - spec
         DatasourceUID:
+          pattern: ^[a-zA-Z0-9_-]+$
+          type: string
+        ExecErrState:
+          enum:
+          - Error
+          - Ok
+          - Alerting
+          - KeepLast
           type: string
         Expression:
           additionalProperties: false
@@ -60,9 +69,6 @@ spec:
         ExpressionMap:
           additionalProperties:
             $ref: '#/components/schemas/Expression'
-          description: |-
-            TODO: validate that only one can specify source=true
-            & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
           type: object
         IntervalTrigger:
           additionalProperties: false
@@ -72,6 +78,33 @@ spec:
           required:
           - interval
           type: object
+        NamedRoutingTree:
+          additionalProperties: false
+          properties:
+            routingTree:
+              type: string
+            type:
+              $ref: '#/components/schemas/NotificationSettingsType'
+          required:
+          - type
+          - routingTree
+          type: object
+        NoDataState:
+          enum:
+          - NoData
+          - Ok
+          - Alerting
+          - KeepLast
+          type: string
+        NotificationSettings:
+          oneOf:
+          - $ref: '#/components/schemas/SimplifiedRouting'
+          - $ref: '#/components/schemas/NamedRoutingTree'
+        NotificationSettingsType:
+          enum:
+          - SimplifiedRouting
+          - NamedRoutingTree
+          type: string
         OperatorState:
           additionalProperties: false
           properties:
@@ -99,9 +132,28 @@ spec:
           - lastEvaluation
           - state
           type: object
+        PanelRef:
+          additionalProperties: false
+          properties:
+            dashboardUID:
+              minLength: 1
+              pattern: ^[a-zA-Z0-9_-]+$
+              type: string
+            panelID:
+              exclusiveMinimum: true
+              minimum: 0
+              type: integer
+          required:
+          - dashboardUID
+          - panelID
+          type: object
         PromDuration:
+          not:
+            pattern: hmuµn
+          pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
           type: string
         PromDurationWMillis:
+          pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$
           type: string
         RelativeTimeRange:
           additionalProperties: false
@@ -114,10 +166,38 @@ spec:
           - from
           - to
           type: object
+        SimplifiedRouting:
+          additionalProperties: false
+          properties:
+            activeTimeIntervals:
+              items:
+                $ref: '#/components/schemas/TimeIntervalRef'
+              type: array
+            groupBy:
+              items:
+                type: string
+              type: array
+            groupInterval:
+              $ref: '#/components/schemas/PromDuration'
+            groupWait:
+              $ref: '#/components/schemas/PromDuration'
+            muteTimeIntervals:
+              items:
+                $ref: '#/components/schemas/TimeIntervalRef'
+              type: array
+            receiver:
+              type: string
+            repeatInterval:
+              $ref: '#/components/schemas/PromDuration'
+            type:
+              $ref: '#/components/schemas/NotificationSettingsType'
+          required:
+          - type
+          - receiver
+          type: object
         TemplateString:
           type: string
         TimeIntervalRef:
-          description: 'TODO(@moustafab): validate regex for time interval ref'
           type: string
         spec:
           additionalProperties: false
@@ -127,8 +207,8 @@ spec:
                 $ref: '#/components/schemas/TemplateString'
               type: object
             execErrState:
+              $ref: '#/components/schemas/ExecErrState'
               default: Error
-              type: string
             expressions:
               $ref: '#/components/schemas/ExpressionMap'
             for:
@@ -143,48 +223,12 @@ spec:
               minimum: 0
               type: integer
             noDataState:
+              $ref: '#/components/schemas/NoDataState'
               default: NoData
-              type: string
             notificationSettings:
-              additionalProperties: false
-              properties:
-                activeTimeIntervals:
-                  items:
-                    $ref: '#/components/schemas/TimeIntervalRef'
-                  type: array
-                groupBy:
-                  items:
-                    type: string
-                  type: array
-                groupInterval:
-                  $ref: '#/components/schemas/PromDuration'
-                groupWait:
-                  $ref: '#/components/schemas/PromDuration'
-                muteTimeIntervals:
-                  items:
-                    $ref: '#/components/schemas/TimeIntervalRef'
-                  type: array
-                receiver:
-                  type: string
-                repeatInterval:
-                  $ref: '#/components/schemas/PromDuration'
-              required:
-              - receiver
-              type: object
+              $ref: '#/components/schemas/NotificationSettings'
             panelRef:
-              additionalProperties: false
-              properties:
-                dashboardUID:
-                  minLength: 1
-                  type: string
-                panelID:
-                  exclusiveMinimum: true
-                  minimum: 0
-                  type: integer
-              required:
-              - dashboardUID
-              - panelID
-              type: object
+              $ref: '#/components/schemas/PanelRef'
             paused:
               type: boolean
             title:
@@ -214,12 +258,104 @@ spec:
               type: object
           type: object
       scope: Namespaced
+      searchFields:
+      - capabilities:
+        - filter
+        - retrieve
+        description: The rule type discriminator (always "alertrule")
+        name: type
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: The evaluation interval of the rule
+        name: interval
+        path: spec.trigger.interval
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: Whether the rule is paused
+        name: paused
+        path: spec.paused
+        type: boolean
+      - array: true
+        capabilities:
+        - filter
+        - retrieve
+        description: The rule's labels, flattened to key and key=value terms
+        name: labels
+        type: string
+      - capabilities:
+        - retrieve
+        description: The rule's annotations, JSON-encoded for display
+        name: annotations
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: How long the condition must be met before the rule fires
+        name: for
+        path: spec.for
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: How long the rule keeps firing after the condition clears
+        name: keepFiringFor
+        path: spec.keepFiringFor
+        type: string
+      - array: true
+        capabilities:
+        - filter
+        - retrieve
+        description: The query datasource UIDs referenced by the rule's expressions
+        name: datasourceUIDs
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: The UID of the dashboard the rule is associated with
+        name: dashboardUID
+        path: spec.panelRef.dashboardUID
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: The ID of the panel the rule is associated with
+        name: panelID
+        path: spec.panelRef.panelID
+        type: int64
+      - capabilities:
+        - filter
+        - retrieve
+        description: The receiver for simplified-routing notification settings
+        name: receiver
+        path: spec.notificationSettings.receiver
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: Which notification routing branch is configured
+        name: notificationType
+        path: spec.notificationSettings.type
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: The named routing tree for the rule's notifications
+        name: routingTree
+        path: spec.notificationSettings.routingTree
+        type: string
       selectableFields:
       - spec.title
       - spec.paused
       - spec.panelRef.dashboardUID
       - spec.panelRef.panelID
+      - spec.notificationSettings.type
       - spec.notificationSettings.receiver
+      - spec.notificationSettings.routingTree
+      userReadable: false
     - admission:
         mutation:
           operations:
@@ -229,11 +365,13 @@ spec:
           operations:
           - CREATE
           - UPDATE
+          - DELETE
       conversion: false
       kind: RecordingRule
       plural: RecordingRules
       schemas:
         DatasourceUID:
+          pattern: ^[a-zA-Z0-9_-]+$
           type: string
         Expression:
           additionalProperties: false
@@ -263,9 +401,6 @@ spec:
         ExpressionMap:
           additionalProperties:
             $ref: '#/components/schemas/Expression'
-          description: |-
-            TODO: validate that only one can specify source=true
-            & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
           type: object
         IntervalTrigger:
           additionalProperties: false
@@ -275,6 +410,9 @@ spec:
           required:
           - interval
           type: object
+        MetricName:
+          pattern: ^[a-zA-Z_:][a-zA-Z0-9_:]*$
+          type: string
         OperatorState:
           additionalProperties: false
           properties:
@@ -303,8 +441,12 @@ spec:
           - state
           type: object
         PromDuration:
+          not:
+            pattern: hmuµn
+          pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
           type: string
         PromDurationWMillis:
+          pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$
           type: string
         RecordingRule:
           properties:
@@ -337,11 +479,11 @@ spec:
                 $ref: '#/components/schemas/TemplateString'
               type: object
             metric:
-              type: string
+              $ref: '#/components/schemas/MetricName'
             paused:
               type: boolean
             targetDatasourceUID:
-              type: string
+              $ref: '#/components/schemas/DatasourceUID'
             title:
               type: string
             trigger:
@@ -369,8 +511,410 @@ spec:
               type: object
           type: object
       scope: Namespaced
+      searchFields:
+      - capabilities:
+        - filter
+        - retrieve
+        description: The rule type discriminator (always "recordingrule")
+        name: type
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: The evaluation interval of the rule
+        name: interval
+        path: spec.trigger.interval
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: Whether the rule is paused
+        name: paused
+        path: spec.paused
+        type: boolean
+      - array: true
+        capabilities:
+        - filter
+        - retrieve
+        description: The rule's labels, flattened to key and key=value terms
+        name: labels
+        type: string
+      - array: true
+        capabilities:
+        - filter
+        - retrieve
+        description: The query datasource UIDs referenced by the rule's expressions
+        name: datasourceUIDs
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: The name of the recorded metric
+        name: metric
+        path: spec.metric
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: The UID of the datasource the metric is written to
+        name: targetDatasourceUID
+        path: spec.targetDatasourceUID
+        type: string
       selectableFields:
       - spec.title
       - spec.paused
+      - spec.metric
+      - spec.targetDatasourceUID
+      userReadable: false
+    - admission:
+        mutation:
+          operations:
+          - CREATE
+          - UPDATE
+        validation:
+          operations:
+          - CREATE
+          - UPDATE
+      conversion: false
+      kind: RuleSequence
+      plural: RuleSequences
+      schemas:
+        IntervalTrigger:
+          additionalProperties: false
+          properties:
+            interval:
+              $ref: '#/components/schemas/PromDuration'
+          required:
+          - interval
+          type: object
+        OperatorState:
+          additionalProperties: false
+          properties:
+            descriptiveState:
+              description: descriptiveState is an optional more descriptive state
+                field which has no requirements on format
+              type: string
+            details:
+              additionalProperties: true
+              description: details contains any extra information that is operator-specific
+              type: object
+            lastEvaluation:
+              description: lastEvaluation is the ResourceVersion last evaluated
+              type: string
+            state:
+              description: |-
+                state describes the state of the lastEvaluation.
+                It is limited to three possible states for machine evaluation.
+              enum:
+              - success
+              - in_progress
+              - failed
+              type: string
+          required:
+          - lastEvaluation
+          - state
+          type: object
+        PromDuration:
+          not:
+            pattern: hmuµn
+          pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
+          type: string
+        RuleRef:
+          additionalProperties: false
+          properties:
+            name:
+              $ref: '#/components/schemas/RuleUID'
+              description: name is the metadata.name of an AlertRule or RecordingRule
+                resource.
+          required:
+          - name
+          type: object
+        RuleSequence:
+          properties:
+            spec:
+              $ref: '#/components/schemas/spec'
+            status:
+              $ref: '#/components/schemas/status'
+          required:
+          - spec
+        RuleUID:
+          pattern: ^[a-zA-Z0-9_-]+$
+          type: string
+        spec:
+          additionalProperties: false
+          properties:
+            alertingRules:
+              items:
+                $ref: '#/components/schemas/RuleRef'
+              type: array
+            recordingRules:
+              items:
+                $ref: '#/components/schemas/RuleRef'
+              type: array
+            trigger:
+              $ref: '#/components/schemas/IntervalTrigger'
+          required:
+          - trigger
+          - recordingRules
+          type: object
+        status:
+          additionalProperties: false
+          properties:
+            additionalFields:
+              additionalProperties: true
+              description: additionalFields is reserved for future use
+              type: object
+            operatorStates:
+              additionalProperties:
+                $ref: '#/components/schemas/OperatorState'
+              description: |-
+                operatorStates is a map of operator ID to operator state evaluations.
+                Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+              type: object
+          type: object
+      scope: Namespaced
+      userReadable: false
     name: v0alpha1
+    routes:
+      namespaced:
+        /search:
+          post:
+            operationId: createSearchRules
+            requestBody:
+              content:
+                application/json:
+                  schema:
+                    additionalProperties: false
+                    properties:
+                      continue:
+                        type: string
+                      facets:
+                        items:
+                          type: string
+                        type: array
+                      fields:
+                        items:
+                          type: string
+                        type: array
+                      labelSelector:
+                        type: string
+                      limit:
+                        type: integer
+                      sort:
+                        items:
+                          $ref: '#/components/schemas/createSearchRulesSearchSortField'
+                        type: array
+                      where:
+                        $ref: '#/components/schemas/createSearchRulesSearchWhereNode'
+                    type: object
+            responses:
+              default:
+                content:
+                  application/json:
+                    schema:
+                      additionalProperties: false
+                      description: |-
+                        listMeta is intentionally omitted: #SearchResults carries its
+                        own metadata (continue, totalHits) mirroring the generic
+                        search.grafana.app SearchResults envelope.
+                      properties:
+                        apiVersion:
+                          description: 'APIVersion defines the versioned schema of
+                            this representation of an object. Servers should convert
+                            recognized schemas to the latest internal value, and may
+                            reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                          type: string
+                        facets:
+                          additionalProperties:
+                            items:
+                              $ref: '#/components/schemas/createSearchRulesFacetValue'
+                            type: array
+                          type: object
+                        items:
+                          items:
+                            $ref: '#/components/schemas/createSearchRulesSearchResultHit'
+                          type: array
+                        kind:
+                          description: 'Kind is a string value representing the REST
+                            resource this object represents. Servers may infer this
+                            from the endpoint the client submits requests to. Cannot
+                            be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                          type: string
+                        metadata:
+                          $ref: '#/components/schemas/createSearchRulesSearchResultsMetadata'
+                      required:
+                      - metadata
+                      - items
+                      - apiVersion
+                      - kind
+                      type: object
+                description: Default OK response
+      schemas:
+        createSearchRulesFacetValue:
+          additionalProperties: false
+          description: '#FacetValue is a single value/count pair in a facet breakdown.'
+          properties:
+            count:
+              type: integer
+            value:
+              type: string
+          required:
+          - value
+          - count
+          type: object
+        createSearchRulesRuleSearchHitFields:
+          additionalProperties: false
+          description: |-
+            #RuleSearchHitFields is the per-kind field payload returned on each hit.
+            It carries the union of alert- and recording-rule search fields; only the
+            fields relevant to a hit's kind are populated. This maps to the kind's
+            declared searchFields.
+          properties:
+            annotations:
+              additionalProperties:
+                type: string
+              description: Alert-rule fields.
+              type: object
+            dashboardUID:
+              type: string
+            datasourceUIDs:
+              items:
+                type: string
+              type: array
+            folder:
+              type: string
+            for:
+              type: string
+            interval:
+              type: string
+            keepFiringFor:
+              type: string
+            labels:
+              additionalProperties:
+                type: string
+              type: object
+            metric:
+              description: Recording-rule fields.
+              type: string
+            notificationType:
+              type: string
+            panelID:
+              type: integer
+            paused:
+              type: boolean
+            receiver:
+              type: string
+            routingTree:
+              type: string
+            targetDatasourceUID:
+              type: string
+            title:
+              type: string
+            type:
+              type: string
+          type: object
+        createSearchRulesSearchFilterLeaf:
+          additionalProperties: false
+          description: '#SearchFilterLeaf matches a single field against a set of
+            values.'
+          properties:
+            field:
+              type: string
+            operator:
+              enum:
+              - In
+              - NotIn
+              type: string
+            values:
+              items:
+                type: string
+              type: array
+          required:
+          - field
+          - operator
+          - values
+          type: object
+        createSearchRulesSearchResultHit:
+          additionalProperties: false
+          description: |-
+            #SearchResultHit is a single match: its identity, an optional relevance
+            score (present only when the query included free text), and the requested
+            fields.
+          properties:
+            fields:
+              $ref: '#/components/schemas/createSearchRulesRuleSearchHitFields'
+            resource:
+              $ref: '#/components/schemas/createSearchRulesSearchResultResource'
+            score:
+              type: number
+          required:
+          - resource
+          - fields
+          type: object
+        createSearchRulesSearchResultResource:
+          additionalProperties: false
+          description: '#SearchResultResource is the full identity of a hit.'
+          properties:
+            group:
+              type: string
+            kind:
+              type: string
+            name:
+              type: string
+            resource:
+              type: string
+          required:
+          - group
+          - resource
+          - kind
+          - name
+          type: object
+        createSearchRulesSearchResultsMetadata:
+          additionalProperties: false
+          description: |-
+            #SearchResultsMetadata carries the paging token and total authorised match
+            count.
+          properties:
+            continue:
+              type: string
+            totalHits:
+              type: integer
+          type: object
+        createSearchRulesSearchSortField:
+          description: |-
+            #SearchSortField selects a result ordering. A leading "-" denotes
+            descending. Each field must be declared sortable in the kind's manifest.
+          type: string
+        createSearchRulesSearchTextLeaf:
+          additionalProperties: false
+          description: |-
+            #SearchTextLeaf is a free-text search across one or more text-capable
+            fields. When fields is omitted, the kind's default text field set is used.
+          properties:
+            fields:
+              items:
+                type: string
+              type: array
+            value:
+              type: string
+          required:
+          - value
+          type: object
+        createSearchRulesSearchWhereNode:
+          additionalProperties: false
+          description: |-
+            #SearchWhereNode is a single node of the where query tree. A node has
+            exactly one key naming its type. v1 supports a top-level "and" combinator
+            plus the "text" and "filter" leaves; "or"/"not"/nesting and the "range"/
+            "exists" leaves are future, additive extensions.
+          properties:
+            and:
+              items:
+                $ref: '#/components/schemas/createSearchRulesSearchWhereNode'
+              type: array
+            filter:
+              $ref: '#/components/schemas/createSearchRulesSearchFilterLeaf'
+            text:
+              $ref: '#/components/schemas/createSearchRulesSearchTextLeaf'
+          type: object
     served: true

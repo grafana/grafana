@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
-import { HeaderGroup } from 'react-table';
+import { type HeaderGroup } from 'react-table';
 
 import { HeaderRow } from './HeaderRow';
-import { TableStyles } from './styles';
+import { type TableStyles } from './styles';
 
 describe('HeaderRow', () => {
   describe('aria-labels for sort buttons', () => {

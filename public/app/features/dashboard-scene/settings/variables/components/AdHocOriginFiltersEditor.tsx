@@ -1,7 +1,7 @@
-import { ReactElement } from 'react';
+import { type ReactElement } from 'react';
 
 import { t } from '@grafana/i18n';
-import { AdHocFiltersComboboxRenderer, AdHocFiltersController } from '@grafana/scenes';
+import { AdHocFiltersComboboxRenderer, type AdHocFiltersController } from '@grafana/scenes';
 import { Field, Stack } from '@grafana/ui';
 
 export interface AdHocOriginFiltersEditorProps {

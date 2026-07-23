@@ -1,12 +1,12 @@
 import { debounce } from 'lodash';
-import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
-import { LogRowModel, store } from '@grafana/data';
+import { type LogRowModel, store } from '@grafana/data';
 
 import { getFieldSelectorWidth } from '../fieldSelector/fieldSelectorUtils';
 
-import { LogLineDetailsMode } from './LogLineDetails';
-import { LogListModel } from './processing';
+import { type LogLineDetailsMode } from './LogLineDetails';
+import { type LogListModel } from './processing';
 import { getScrollbarWidth, LOG_LIST_CONTROLS_WIDTH, LOG_LIST_MIN_WIDTH } from './virtualization';
 
 export interface LogDetailsContextData {
@@ -16,7 +16,8 @@ export interface LogDetailsContextData {
   detailsMode: LogLineDetailsMode;
   detailsWidth: number;
   enableLogDetails: boolean;
-  setCurrentLog(log: LogListModel): void;
+  replaceDetails: (log: LogListModel) => void;
+  setCurrentLog: (log: LogListModel) => void;
   setDetailsMode: (mode: LogLineDetailsMode) => void;
   setDetailsWidth: (width: number) => void;
   showDetails: LogListModel[];
@@ -30,6 +31,7 @@ export const emptyContextData: LogDetailsContextData = {
   detailsMode: 'sidebar',
   detailsWidth: 0,
   enableLogDetails: false,
+  replaceDetails: () => {},
   setCurrentLog: () => {},
   setDetailsMode: () => {},
   setDetailsWidth: () => {},
@@ -49,7 +51,7 @@ export const useLogDetailsContext = (): LogDetailsContextData => {
 
 export interface Props {
   children?: ReactNode;
-  // Only ControlledLogRows can send an undefined containerElement. See LogList.tsx
+  // Optional. Table-only consumers omit this; LogList passes its scroll container.
   containerElement?: HTMLDivElement;
   detailsMode?: LogLineDetailsMode;
   enableLogDetails: boolean;
@@ -163,6 +165,23 @@ export const LogDetailsContextProvider = ({
     [currentLog, enableLogDetails, showDetails]
   );
 
+  const replaceDetails = useCallback(
+    (log: LogListModel) => {
+      if (!enableLogDetails || !currentLog) {
+        return;
+      }
+      if (showDetails.find((stateLog) => stateLog.uid === log.uid)) {
+        setCurrentLog(log);
+        return;
+      }
+      removeDetailsScrollPosition(currentLog);
+      const newShowDetails = showDetails.filter((stateLog) => stateLog.uid !== currentLog.uid);
+      setShowDetails([...newShowDetails, log]);
+      setCurrentLog(log);
+    },
+    [currentLog, enableLogDetails, showDetails]
+  );
+
   const setDetailsWidth = useCallback(
     (width: number) => {
       if (!logOptionsStorageKey || !containerElement) {
@@ -192,6 +211,7 @@ export const LogDetailsContextProvider = ({
         detailsMode,
         detailsWidth,
         enableLogDetails,
+        replaceDetails,
         setCurrentLog,
         setDetailsMode,
         setDetailsWidth,
@@ -204,7 +224,6 @@ export const LogDetailsContextProvider = ({
   );
 };
 
-// Only ControlledLogRows can send an undefined containerElement. See LogList.tsx
 export function getDetailsWidth(
   containerElement: HTMLDivElement | undefined,
   logOptionsStorageKey?: string,
@@ -247,7 +266,7 @@ export function getDetailsScrollPosition(log: LogListModel) {
   return detailsScrollMap.get(log.uid) ?? 0;
 }
 
-export function removeDetailsScrollPosition(log: LogListModel) {
+function removeDetailsScrollPosition(log: LogListModel) {
   detailsScrollMap.delete(log.uid);
 }
 

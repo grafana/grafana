@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
-import { DashboardCursorSync, PanelProps, useDataLinksContext } from '@grafana/data';
+import { DashboardCursorSync, type DataFrame, type PanelProps, useDataLinksContext } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { PanelDataErrorView } from '@grafana/runtime';
 import {
@@ -12,29 +12,27 @@ import {
   useTheme2,
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
-import { TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import {
   prepareTimelineFields,
   prepareTimelineLegendItems,
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
+import { getFilterByGroupedLabels } from 'app/features/panel/filters/adhoc';
 
 import { StateTimelineTooltip } from '../state-timeline/StateTimelineTooltip';
 import { usePagination } from '../state-timeline/hooks';
 import { containerStyles } from '../state-timeline/styles';
-import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationPlugin';
+import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 import { getTimezones } from '../timeseries/utils';
 
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 interface TimelinePanelProps extends PanelProps<Options> {}
 
-/**
- * @alpha
- */
 export const StatusHistoryPanel = ({
   data,
   timeRange,
@@ -51,12 +49,26 @@ export const StatusHistoryPanel = ({
 
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
-  const { sync, eventsScope, canAddAnnotations, eventBus, canExecuteActions } = usePanelContext();
+  const {
+    sync,
+    eventsScope,
+    canAddAnnotations,
+    eventBus,
+    canExecuteActions,
+    getFiltersBasedOnGrouping,
+    onAddAdHocFilters,
+  } = usePanelContext();
   const { dataLinkPostProcessor } = useDataLinksContext();
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
+
+  const getFilterByGroupedLabelsModel = useCallback(
+    (frame: DataFrame, seriesIdx: number | null | undefined) =>
+      getFilterByGroupedLabels(frame, seriesIdx, getFiltersBasedOnGrouping, onAddAdHocFilters),
+    [getFiltersBasedOnGrouping, onAddAdHocFilters]
+  );
 
   const { frames, warn } = useMemo(
     () => prepareTimelineFields(data.series, false, timeRange, theme),
@@ -84,7 +96,16 @@ export const StatusHistoryPanel = ({
     return (
       <div className="panel-empty">
         <p>
-          <Trans i18nKey="status-history.status-history-panel.too-many-points" count={paginatedFrames[0].length}>
+          <Trans
+            i18nKey="status-history.status-history-panel.too-many-points"
+            count={paginatedFrames[0].length}
+            tOptions={{
+              defaultValue_one:
+                'Too many points to visualize properly. <br/>Update the query to return fewer points. <br/>({{count}} points received)',
+              defaultValue_other:
+                'Too many points to visualize properly. <br/>Update the query to return fewer points. <br/>({{count}} points received)',
+            }}
+          >
             Too many points to visualize properly. <br />
             Update the query to return fewer points. <br />({'{{count}}'} points received)
           </Trans>
@@ -159,6 +180,7 @@ export const StatusHistoryPanel = ({
                         maxHeight={options.tooltip.maxHeight}
                         replaceVariables={replaceVariables}
                         dataLinks={dataLinks}
+                        filterByGroupedLabels={getFilterByGroupedLabelsModel(alignedFrame, seriesIdx)}
                         canExecuteActions={userCanExecuteActions}
                       />
                     );

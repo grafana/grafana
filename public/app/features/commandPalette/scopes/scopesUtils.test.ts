@@ -1,13 +1,13 @@
 import { renderHook } from '@testing-library/react';
 import { setIn } from 'immutable';
-import { useObservable } from 'react-use';
 import { Observable, of } from 'rxjs';
 
-import { Scope, ScopeNode } from '@grafana/data';
+import { type Scope, type ScopeNode } from '@grafana/data';
+import { useObservable } from '@grafana/data/unstable';
 
 import { useScopesServices } from '../../scopes/ScopesContextProvider';
-import { ScopesSelectorServiceState } from '../../scopes/selector/ScopesSelectorService';
-import { NodesMap, SelectedScope, TreeNode } from '../../scopes/selector/types';
+import { type ScopesSelectorServiceState } from '../../scopes/selector/ScopesSelectorService';
+import { type NodesMap, type SelectedScope, type TreeNode } from '../../scopes/selector/types';
 import { SCOPES_PRIORITY } from '../values';
 
 import { mapScopeNodeToAction, mapScopesNodesTreeToActions, useScopeServicesState } from './scopesUtils';
@@ -16,8 +16,8 @@ jest.mock('../../scopes/ScopesContextProvider', () => ({
   useScopesServices: jest.fn(),
 }));
 
-jest.mock('react-use', () => {
-  const actual = jest.requireActual('react-use');
+jest.mock('@grafana/data/unstable', () => {
+  const actual = jest.requireActual('@grafana/data/unstable');
   return {
     ...actual,
     useObservable: jest.fn(),
@@ -77,6 +77,7 @@ describe('mapScopeNodeToAction', () => {
       keywords: 'Scope 1 scope1',
       priority: SCOPES_PRIORITY,
       section: 'Scopes',
+      sectionId: 'scopes',
       subtitle: 'Parent Scope',
       perform: expect.any(Function),
     });
@@ -247,7 +248,7 @@ describe('useScopeServicesState', () => {
     jest.clearAllMocks();
     // Reset useObservable to use actual implementation by default
     (useObservable as jest.Mock).mockImplementation((...args) => {
-      const actual = jest.requireActual('react-use');
+      const actual = jest.requireActual('@grafana/data/unstable');
       return actual.useObservable(...args);
     });
   });

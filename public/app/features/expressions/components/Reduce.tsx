@@ -1,10 +1,10 @@
 import * as React from 'react';
 
-import { CoreApp, SelectableValue } from '@grafana/data';
+import { CoreApp, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, InlineField, InlineFieldRow, Input, Select, TextLink } from '@grafana/ui';
 
-import { ExpressionQuery, ExpressionQuerySettings, ReducerMode, reducerModes, reducerTypes } from '../types';
+import { type ExpressionQuery, type ExpressionQuerySettings, ReducerMode, reducerModes, reducerTypes } from '../types';
 
 interface Props {
   app?: CoreApp;

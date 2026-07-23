@@ -1,21 +1,21 @@
 import { useCallback, useMemo } from 'react';
 
-import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
+import { CoreApp, type DataSourceApi, type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import {
   SafeSerializableSceneObject,
-  SceneComponentProps,
-  SceneDataQuery,
+  type SceneComponentProps,
+  type SceneDataQuery,
   sceneGraph,
   SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
-  SceneQueryRunner,
-  VizPanel,
+  type SceneObjectRef,
+  type SceneObjectState,
+  type SceneQueryRunner,
+  type VizPanel,
 } from '@grafana/scenes';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { Button, Stack, Tab } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { addQuery } from 'app/core/utils/query';
@@ -32,7 +32,7 @@ import { QueryGroupTopSection } from 'app/features/query/components/QueryGroup';
 import { updateQueries } from 'app/features/query/state/updateQueries';
 import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
 import { AccessControlAction } from 'app/types/accessControl';
-import { QueryGroupOptions } from 'app/types/query';
+import { type QueryGroupOptions } from 'app/types/query';
 
 import { MIXED_DATASOURCE_NAME } from '../../../../plugins/datasource/mixed/MixedDataSource';
 import { useQueryLibraryContext } from '../../../explore/QueryLibrary/QueryLibraryContext';
@@ -40,10 +40,11 @@ import { ExpressionDatasourceUID } from '../../../expressions/types';
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 import { PanelInspectDrawer } from '../../inspect/PanelInspectDrawer';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
+import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
-import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
+import { trackAddQuery } from '../PanelEditNext/tracking';
 
-import { PanelDataPaneTab, PanelDataTabHeaderProps, TabId } from './types';
+import { type PanelDataPaneTab, type PanelDataTabHeaderProps, TabId } from './types';
 import { hasBackendDatasource } from './utils';
 
 interface PanelDataQueriesTabState extends SceneObjectState {
@@ -248,10 +249,12 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     const timeFrom = options.timeRange?.from ?? undefined;
     const timeShift = options.timeRange?.shift ?? undefined;
     const hideTimeOverride = options.timeRange?.hide;
+    const compareWith =
+      panel.state.$timeRange instanceof PanelTimeRange ? panel.state.$timeRange.state.compareWith : undefined;
 
-    if (timeFrom !== undefined || timeShift !== undefined) {
-      panelStateUpdate.$timeRange = new PanelTimeRange({ timeFrom, timeShift, hideTimeOverride });
-      panelStateUpdate.hoverHeader = getUpdatedHoverHeader(panel.state.title, panelStateUpdate.$timeRange);
+    if (timeFrom !== undefined || timeShift !== undefined || compareWith) {
+      panelStateUpdate.$timeRange = new PanelTimeRange({ timeFrom, timeShift, hideTimeOverride, compareWith });
+      panelStateUpdate.hoverHeader = getUpdatedHoverHeader(panel.state.title, panelStateUpdate.$timeRange?.state);
     } else {
       panelStateUpdate.$timeRange = undefined;
       panelStateUpdate.hoverHeader = getUpdatedHoverHeader(panel.state.title, undefined);
@@ -305,6 +308,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
   public addQueryClick = () => {
     const queries = this.getQueries();
+    trackAddQuery('new_query', 'legacy', { silent: true });
     this.onQueriesChange(addQuery(queries, this.newQuery()));
   };
 

@@ -77,6 +77,34 @@ func IsSafe(path string) error {
 	return nil
 }
 
+// SanitizeSegment converts an arbitrary folder title into a single path segment
+// that satisfies IsSafe. Characters outside the allowed set ([a-zA-Z0-9 _.-])
+// are dropped, and leading/trailing spaces and dots are trimmed so the result
+// is neither a hidden path (leading dot) nor a traversal token ("." / "..").
+// The result never contains a path separator, so a title always maps to exactly
+// one directory level. When no usable characters remain (e.g. a title made up
+// entirely of unsupported symbols), fallback is returned so the segment is
+// always non-empty.
+func SanitizeSegment(title, fallback string) string {
+	var b strings.Builder
+	b.Grow(len(title))
+	for _, r := range title {
+		switch {
+		case r >= 'a' && r <= 'z',
+			r >= 'A' && r <= 'Z',
+			r >= '0' && r <= '9',
+			r == ' ', r == '_', r == '.', r == '-':
+			b.WriteRune(r)
+		}
+	}
+
+	cleaned := strings.Trim(b.String(), " .")
+	if cleaned == "" {
+		return fallback
+	}
+	return cleaned
+}
+
 // SafeSegment returns a safe part of the path
 // It ensures the path is free from traversal attempts, hidden files,
 // and other potentially dangerous patterns.

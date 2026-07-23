@@ -14,11 +14,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -28,7 +28,7 @@ var alertRulesPermissions = map[string][]string{
 	accesscontrol.ActionAlertingRuleRead:   {"*"},
 	accesscontrol.ActionAlertingRuleCreate: {"*"},
 	accesscontrol.ActionAlertingRuleUpdate: {"*"},
-	dashboards.ActionFoldersRead:           {"*"},
+	folder.ActionFoldersRead:               {"*"},
 	datasources.ActionQuery:                {"*"},
 }
 
@@ -74,7 +74,7 @@ func TestGetNotificationTemplates(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, notificationTemplates)
 		require.Len(t, notificationTemplates, 1)
-		require.Equal(t, createdTemplate.Name, notificationTemplates[0].Name)
+		require.Equal(t, createdTemplate.Title, notificationTemplates[0].Name)
 	})
 }
 
@@ -322,12 +322,12 @@ func createMuteTiming(t *testing.T, ctx context.Context, service *Service, user 
 	return createdTiming
 }
 
-func createNotificationTemplate(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser) definitions.NotificationTemplate {
+func createNotificationTemplate(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser) v1.TemplateGroup {
 	t.Helper()
 
-	tmpl := definitions.NotificationTemplate{
-		Name:     "MyTestNotificationTemplate",
-		Template: "This is a test template\n{{ .ExternalURL }}",
+	tmpl := v1.TemplateGroup{
+		Title:   "MyTestNotificationTemplate",
+		Content: "This is a test template\n{{ .ExternalURL }}",
 	}
 
 	createdTemplate, err := service.ngAlert.Api.Templates.CreateTemplate(ctx, user.GetOrgID(), tmpl)
@@ -440,7 +440,7 @@ func createAlertRule(t *testing.T, ctx context.Context, service *Service, user *
 		ExecErrState:    models.OkErrState,
 	}
 
-	createdRule, err := service.ngAlert.Api.AlertRules.CreateAlertRule(ctx, user, rule, "")
+	createdRule, err := service.ngAlert.Api.AlertRules.CreateAlertRule(ctx, user, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 	require.NoError(t, err)
 
 	return createdRule
@@ -454,7 +454,7 @@ func createFolder(t *testing.T, ctx context.Context, service *Service, user *use
 		Title:        title,
 		SignedInUser: user,
 	})
-	if err != nil && !errors.Is(err, dashboards.ErrFolderWithSameUIDExists) {
+	if err != nil && !errors.Is(err, folder.ErrSameUIDExists) {
 		require.NoError(t, err)
 	}
 }
@@ -469,7 +469,7 @@ func createAlertRuleGroup(t *testing.T, ctx context.Context, service *Service, u
 		Rules:     rules,
 	}
 
-	err := service.ngAlert.Api.AlertRules.ReplaceRuleGroup(ctx, user, group, "", "")
+	err := service.ngAlert.Api.AlertRules.ReplaceRuleGroup(ctx, user, group, models.ProvenanceToManagerProperties(models.ProvenanceNone), "")
 	require.NoError(t, err)
 
 	return group

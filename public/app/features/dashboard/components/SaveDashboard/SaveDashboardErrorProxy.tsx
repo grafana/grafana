@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, FetchError } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
+import { type FetchError } from '@grafana/runtime';
+import { type Dashboard } from '@grafana/schema';
 import { Button, ConfirmModal, Modal, useStyles2 } from '@grafana/ui';
 
-import { DashboardModel } from '../../state/DashboardModel';
+import { type DashboardModel } from '../../state/DashboardModel';
 
 import { SaveDashboardAsButton } from './SaveDashboardButton';
-import { SaveDashboardModalProps } from './types';
+import { type SaveDashboardModalProps } from './types';
 import { useDashboardSave } from './useDashboardSave';
 
 interface SaveDashboardErrorProxyProps {
@@ -31,8 +31,6 @@ export const SaveDashboardErrorProxy = ({
   setErrorIsHandled,
 }: SaveDashboardErrorProxyProps) => {
   const { onDashboardSave } = useDashboardSave();
-
-  const isRestoreDashboardsEnabled = config.featureToggles.restoreDashboards;
 
   return (
     <>
@@ -58,50 +56,23 @@ export const SaveDashboardErrorProxy = ({
         />
       )}
       {error.data && error.data.status === 'name-exists' && (
-        <>
-          {isRestoreDashboardsEnabled ? (
-            <Modal
-              isOpen={true}
-              title={t('save-dashboards.name-exists.title', 'Dashboard name already exists')}
-              onDismiss={onDismiss}
-            >
-              <p>
-                <Trans i18nKey="save-dashboards.name-exists.message-info">
-                  A dashboard with the same name in the selected folder already exists, including recently deleted
-                  dashboards.
-                </Trans>
-              </p>
-              <p>
-                <Trans i18nKey="save-dashboards.name-exists.message-suggestion">
-                  Please choose a different name or folder.
-                </Trans>
-              </p>
-            </Modal>
-          ) : (
-            <ConfirmModal
-              isOpen={true}
-              title={t('dashboard.save-dashboard-error-proxy.title-name-exists', 'Conflict')}
-              body={
-                <div>
-                  <Trans i18nKey="dashboard.save-dashboard-error-proxy.body-name-exists">
-                    A dashboard with the same name in selected folder already exists.
-                    <br />
-                    <small>Would you still like to save this dashboard?</small>
-                  </Trans>
-                </div>
-              }
-              confirmText={t(
-                'dashboard.save-dashboard-error-proxy.confirmText-save-and-overwrite',
-                'Save and overwrite'
-              )}
-              onConfirm={async () => {
-                await onDashboardSave(dashboardSaveModel, { overwrite: true }, dashboard);
-                onDismiss();
-              }}
-              onDismiss={onDismiss}
-            />
-          )}
-        </>
+        <Modal
+          isOpen={true}
+          title={t('save-dashboards.name-exists.title', 'Dashboard name already exists')}
+          onDismiss={onDismiss}
+        >
+          <p>
+            <Trans i18nKey="save-dashboards.name-exists.message-info">
+              A dashboard with the same name in the selected folder already exists, including recently deleted
+              dashboards.
+            </Trans>
+          </p>
+          <p>
+            <Trans i18nKey="save-dashboards.name-exists.message-suggestion">
+              Please choose a different name or folder.
+            </Trans>
+          </p>
+        </Modal>
       )}
       {error.data && error.data.status === 'plugin-dashboard' && (
         <ConfirmPluginDashboardSaveModal

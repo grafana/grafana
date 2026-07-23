@@ -1,19 +1,21 @@
 import type { AdHocVariableModel, TextBoxVariableModel, TypedVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Dashboard, VariableOption } from '@grafana/schema';
+import { type Dashboard, type VariableOption } from '@grafana/schema';
 import {
-  AdHocFilterWithLabels,
-  Spec as DashboardV2Spec,
-  VariableKind,
+  type AdHocFilterWithLabels,
+  type CustomVariableKind,
+  type Spec as DashboardV2Spec,
+  type VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
-import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
+import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
+import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import { validateFiltersOrigin } from '../serialization/sceneVariablesSetToVariables';
 import { jsonDiff } from '../settings/version-history/utils';
 
-export function deepEqual(a: string | string[], b: string | string[]) {
+function deepEqual(a: string | string[], b: string | string[]) {
   return (
     typeof a === typeof b &&
     ((typeof a === 'string' && a === b) ||
@@ -21,7 +23,7 @@ export function deepEqual(a: string | string[], b: string | string[]) {
   );
 }
 
-export function isEqual(a: VariableOption | undefined, b: VariableOption | undefined) {
+function isEqual(a: VariableOption | undefined, b: VariableOption | undefined) {
   return a === b || (a && b && a.selected === b.selected && deepEqual(a.text, b.text) && deepEqual(a.value, b.value));
 }
 
@@ -127,31 +129,21 @@ interface DefaultPersistedTimeValue {
   from?: string;
   to?: string;
 }
-export function getHasTimeChanged(
-  newRange: DefaultPersistedTimeValue = {},
-  previousRange: DefaultPersistedTimeValue = {}
-) {
+function getHasTimeChanged(newRange: DefaultPersistedTimeValue = {}, previousRange: DefaultPersistedTimeValue = {}) {
   return newRange.from !== previousRange.from || newRange.to !== previousRange.to;
 }
 
 export function adHocVariableFiltersEqual(filtersA?: AdHocFilterWithLabels[], filtersB?: AdHocFilterWithLabels[]) {
-  if (filtersA === undefined && filtersB === undefined) {
-    console.warn('Adhoc variable filter property is undefined');
-    return true;
-  }
+  const a = filtersA ?? [];
+  const b = filtersB ?? [];
 
-  if ((filtersA === undefined && filtersB !== undefined) || (filtersB === undefined && filtersA !== undefined)) {
-    console.warn('Adhoc variable filter property is undefined');
+  if (a.length !== b.length) {
     return false;
   }
 
-  if (filtersA?.length !== filtersB?.length) {
-    return false;
-  }
-
-  for (let i = 0; i < (filtersA?.length ?? 0); i++) {
-    const aFilter = filtersA?.[i];
-    const bFilter = filtersB?.[i];
+  for (let i = 0; i < a.length; i++) {
+    const aFilter = a[i];
+    const bFilter = b[i];
     if (aFilter?.key !== bFilter?.key || aFilter?.operator !== bFilter?.operator || aFilter?.value !== bFilter?.value) {
       return false;
     }
@@ -159,7 +151,97 @@ export function adHocVariableFiltersEqual(filtersA?: AdHocFilterWithLabels[], fi
   return true;
 }
 
-export function applyVariableChangesV2(
+function escapeCsvValue(value: string) {
+  return value.replace(/\\/g, '\\\\').replace(/,/g, '\\,');
+}
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function formatCsvOptionEntry(text: string, value: string) {
+  // Runtime CustomVariable CSV parsing requires spaces around `:` for label/value pairs.
+  if (text !== value) {
+    return `${escapeCsvValue(text)} : ${escapeCsvValue(value)}`;
+  }
+  return escapeCsvValue(value);
+}
+
+function customVariableQueryWithCurrent(variable: CustomVariableKind): string | undefined {
+  const current = variable.spec.current;
+  if (!current) {
+    return undefined;
+  }
+
+  const currentValues = (Array.isArray(current.value) ? current.value : [current.value]).map((v) => String(v));
+  const currentTexts = (Array.isArray(current.text) ? current.text : [current.text]).map((t) => String(t));
+
+  // Skip the synthetic All token — it is injected at runtime when includeAll is enabled,
+  // and must not be persisted as a literal option in the query string.
+  const currentOptions = currentValues
+    .map((value, i) => ({
+      value,
+      text: currentTexts[i] ?? value,
+    }))
+    .filter((option) => option.value !== ALL_VARIABLE_VALUE);
+
+  if (currentOptions.length === 0) {
+    return variable.spec.query;
+  }
+
+  if (variable.spec.valuesFormat === 'json') {
+    let existingOptions: Array<{ value: string; text: string }> = [];
+    if (variable.spec.query) {
+      try {
+        const parsed = JSON.parse(variable.spec.query);
+        if (Array.isArray(parsed)) {
+          existingOptions = parsed.filter(isObjectRecord).map((o) => ({
+            value: String(o.value ?? ''),
+            text: String(o.text ?? o.value ?? ''),
+          }));
+        }
+      } catch {
+        // Preserve broken-but-recoverable JSON rather than overwriting with just the current selection.
+        return variable.spec.query;
+      }
+    }
+
+    const existingValues = new Set(existingOptions.map((o) => o.value));
+    const appendedOptions = currentOptions.filter((option) => !existingValues.has(option.value));
+
+    // Match CSV: when the selection is already represented in query, keep the original
+    // string so property order, spacing, and fields dropped during parse/map are preserved.
+    if (!appendedOptions.length) {
+      return variable.spec.query;
+    }
+
+    return JSON.stringify([...existingOptions, ...appendedOptions]);
+  }
+
+  const existingValues = new Set(
+    (variable.spec.query.match(/(?:\\,|[^,])+/g) ?? []).map((entry) => {
+      const unescaped = entry.replace(/\\,/g, ',');
+      // Same greedy regex as CustomVariable runtime parsing: for `a : b : c` the first
+      // capture takes `a : b` and the value is `c`. Keep this in sync with scenes/legacy.
+      const keyValueMatch = /^\s*(.+)\s:\s(.+)$/.exec(unescaped);
+      return keyValueMatch ? keyValueMatch[2].trim() : unescaped.trim();
+    })
+  );
+
+  const appendedValues = currentOptions
+    .filter((option) => !existingValues.has(option.value))
+    .map((option) => formatCsvOptionEntry(option.text, option.value))
+    .join(',');
+  if (!variable.spec.query) {
+    return appendedValues;
+  }
+  if (!appendedValues) {
+    return variable.spec.query;
+  }
+  return `${variable.spec.query},${appendedValues}`;
+}
+
+function applyVariableChangesV2(
   saveModel: DashboardV2Spec,
   originalSaveModel: DashboardV2Spec,
   saveVariables?: boolean
@@ -220,10 +302,10 @@ function applyVariableKindListChanges(
       variable.kind === 'AdhocVariable' &&
       original.kind === 'AdhocVariable' &&
       !adHocVariableFiltersEqual(
-        config.featureToggles.adHocFilterDefaultValues
+        config.featureToggles.dashboardUnifiedDrilldownControls
           ? variable.spec.filters.filter((f) => !f.origin)
           : variable.spec.filters,
-        config.featureToggles.adHocFilterDefaultValues
+        config.featureToggles.dashboardUnifiedDrilldownControls
           ? original.spec.filters.filter((f) => !f.origin)
           : original.spec.filters
       )
@@ -231,9 +313,17 @@ function applyVariableKindListChanges(
       hasChanges = true;
     }
 
+    if (saveVariables && variable.kind === 'CustomVariable' && original.kind === 'CustomVariable') {
+      // CustomVariable runtime options are derived from query, so include the saved selection in query.
+      const currentAsQuery = customVariableQueryWithCurrent(variable);
+      if (currentAsQuery !== undefined) {
+        variable.spec.query = currentAsQuery;
+      }
+    }
+
     if (!saveVariables) {
       if (variable.kind === 'AdhocVariable' && original.kind === 'AdhocVariable') {
-        if (config.featureToggles.adHocFilterDefaultValues) {
+        if (config.featureToggles.dashboardUnifiedDrilldownControls) {
           const originFilters = (variable.spec.filters ?? []).filter((f) => f.origin);
           const originalRuntimeFilters = (original.spec.filters ?? []).filter((f) => !f.origin);
           variable.spec.filters = [...originFilters, ...originalRuntimeFilters];
@@ -262,7 +352,7 @@ function applyVariableKindListChanges(
  * Recursively walk RowsLayout / TabsLayout and apply variable merge/detection
  * for section variables embedded under row.spec.variables / tab.spec.variables.
  */
-export function applySectionVariableChangesV2(
+function applySectionVariableChangesV2(
   changedLayout: DashboardV2Spec['layout'] | undefined,
   originalLayout: DashboardV2Spec['layout'] | undefined,
   saveVariables?: boolean
@@ -300,7 +390,7 @@ export function applySectionVariableChangesV2(
   return hasChanges;
 }
 
-export function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Dashboard, saveVariables?: boolean) {
+function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Dashboard, saveVariables?: boolean) {
   const originalVariables = originalSaveModel.templating?.list ?? [];
   const variablesToSave = saveModel.templating?.list ?? [];
   let hasVariableValueChanges = false;
@@ -340,8 +430,19 @@ export function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Da
       const typed = variable as TypedVariableModel;
 
       if (typed.type === 'adhoc') {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        typed.filters = (original as AdHocVariableModel).filters;
+        if (config.featureToggles.dashboardUnifiedDrilldownControls) {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          const changedFilters = (typed as AdHocVariableModel).filters ?? [];
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          const originalFilters = (original as AdHocVariableModel).filters ?? [];
+          const originFilters = changedFilters.filter((f) => f.origin);
+          const originalRuntimeFilters = originalFilters.filter((f) => !f.origin);
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          (typed as AdHocVariableModel).filters = [...originFilters, ...originalRuntimeFilters];
+        } else {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          (typed as AdHocVariableModel).filters = (original as AdHocVariableModel).filters;
+        }
       } else if (typed.type === 'textbox') {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         typed.query = (original as TextBoxVariableModel).query;

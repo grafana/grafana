@@ -1,33 +1,33 @@
 import { uniq } from 'lodash';
 
 import {
-  AbsoluteTimeRange,
-  DataSourceApi,
+  type AbsoluteTimeRange,
+  type DataSourceApi,
   dateMath,
-  DateTime,
-  EventBusExtended,
+  type DateTime,
+  type EventBusExtended,
   getDefaultTimeRange,
-  HistoryItem,
+  type HistoryItem,
   isDateTime,
   LoadingState,
-  LogRowModel,
-  PanelData,
-  RawTimeRange,
-  ScopedVars,
+  type LogRowModel,
+  type PanelData,
+  type RawTimeRange,
+  type ScopedVars,
   store,
-  TimeFragment,
-  TimeRange,
+  type TimeFragment,
+  type TimeRange,
   toUtc,
-  URLRange,
-  URLRangeValue,
+  type URLRange,
+  type URLRangeValue,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { DataQuery, DataSourceJsonData, DataSourceRef, TimeZone } from '@grafana/schema';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { type DataQuery, type DataSourceJsonData, type DataSourceRef, type TimeZone } from '@grafana/schema';
 import { getLocalRichHistoryStorage } from 'app/core/history/richHistoryStorageProvider';
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { ExploreItemState, ExplorePanelData, RichHistoryQuery } from 'app/types/explore';
-import { StoreState } from 'app/types/store';
+import { type ExploreItemState, type ExplorePanelData, type RichHistoryQuery } from 'app/types/explore';
+import { type StoreState } from 'app/types/store';
 
 import { setLastUsedDatasourceUID } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
@@ -295,7 +295,7 @@ export async function getCorrelationsData(state: StoreState, exploreId: string) 
   const isCorrelationEditorMode = state.explore.correlationEditorDetails?.editorMode || false;
   const isLeftPane = Object.keys(state.explore.panes)[0] === exploreId;
   const showCorrelationEditorLinks = isCorrelationEditorMode && isLeftPane;
-  const defaultCorrelationEditorDatasource = showCorrelationEditorLinks ? await getDataSourceSrv().get() : undefined;
+  const defaultCorrelationEditorDatasource = showCorrelationEditorLinks ? await getDataSourceInstance() : undefined;
   const interpolateCorrelationHelperVars =
     isCorrelationEditorMode && !isLeftPane && correlationEditorHelperData !== undefined;
 

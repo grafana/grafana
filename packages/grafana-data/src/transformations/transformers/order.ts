@@ -2,8 +2,8 @@ import { clone } from 'lodash';
 import { map } from 'rxjs/operators';
 
 import { cacheFieldDisplayNames, getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame, Field, FieldType } from '../../types/dataFrame';
-import { DataTransformerInfo } from '../../types/transformations';
+import { type DataFrame, type Field, FieldType } from '../../types/dataFrame';
+import { type DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
 

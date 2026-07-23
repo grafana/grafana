@@ -1,30 +1,51 @@
-import { css, cx } from '@emotion/css';
-import { useCallback, useState } from 'react';
+import { css, cx, keyframes } from '@emotion/css';
+import { useCallback, useRef, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Checkbox, Icon, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { ActionItem, Actions } from '../../../Actions';
+import { Actions } from '../../../Actions';
+import { type ActionItem } from '../../../actionItem';
 import {
-  QUERY_EDITOR_COLORS,
-  QUERY_EDITOR_TYPE_CONFIG,
   QueryEditorType,
+  SIDEBAR_CARD_DATA_ATTR,
   SIDEBAR_CARD_HEIGHT,
   SIDEBAR_CARD_INDENT,
   SIDEBAR_CARD_SPACING,
-  getQueryEditorColors,
 } from '../../../constants';
-import { getEditorBorderColor } from '../../utils';
+import { type SelectionModifiers, useQueryEditorTypeConfig, useQueryEditorUIContext } from '../../QueryEditorContext';
+import { getEditorBorderColor, getHiddenMaskStyles } from '../../utils';
 import { AddCardButton } from '../AddCardButton';
 import { getGhostCardVisuals } from '../SidebarCardGhostStyles';
+
+const checkboxPop = keyframes({
+  '0%': { transform: 'scale(1)' },
+  '45%': { transform: 'scale(0.9)' },
+  '100%': { transform: 'scale(1)' },
+});
+
+const checkboxTickIn = keyframes({
+  '0%': { transform: 'rotate(45deg) scale(0.6)', opacity: 0 },
+  '100%': { transform: 'rotate(45deg) scale(1)', opacity: 1 },
+});
+
+// The visible checkbox box is 16px (theme.spacing(2)), matching the @grafana/ui
+// Checkbox. We extend the click target by CHECKBOX_HIT_PADDING on every side; the
+// open slot must therefore be the box plus that padding on both horizontal sides,
+// and the slot's negative margins absorb the same padding so nothing visually moves.
+const CHECKBOX_BOX_SIZE = 2;
+const CHECKBOX_HIT_PADDING = 0.75;
+const CHECKBOX_SLOT_OPEN_WIDTH = CHECKBOX_BOX_SIZE + CHECKBOX_HIT_PADDING * 2;
 
 interface SidebarCardProps {
   children: React.ReactNode;
   id: string;
   isSelected: boolean;
+  isMultiSelected?: boolean;
   item: ActionItem;
-  onClick: () => void;
+  onSelect: () => void;
+  onToggleMultiSelect?: (modifiers?: SelectionModifiers) => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
   onToggleHide?: () => void;
@@ -35,16 +56,22 @@ export const SidebarCard = ({
   children,
   id,
   isSelected,
+  isMultiSelected = false,
   item,
-  onClick,
+  onSelect,
+  onToggleMultiSelect,
   onDelete,
   onDuplicate,
   onToggleHide,
   variant = 'default',
 }: SidebarCardProps) => {
+  const theme = useTheme2();
+  const typeConfig = useQueryEditorTypeConfig();
   const addVariant = item.type === QueryEditorType.Transformation ? 'transformation' : 'query';
   const hasActions = onDelete || onDuplicate || onToggleHide;
   const [hasFocusWithin, setHasFocusWithin] = useState(false);
+  const shiftRangeSelectRef = useRef(false);
+  const { multiSelectMode } = useQueryEditorUIContext();
 
   const styles = useStyles2(getStyles, { isSelected, item });
 
@@ -58,13 +85,25 @@ export const SidebarCard = ({
     }
   }, []);
 
-  // Setter function to reset the focus state of the card when the modal is closed.
   const handleResetFocus = useCallback(() => {
     setHasFocusWithin(false);
   }, []);
 
-  // Using a div with role="button" instead of a native button for @hello-pangea/dnd compatibility,
-  // so we manually handle Enter and Space key activation.
+  const handleCardMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.shiftKey) {
+      e.preventDefault();
+    }
+    // @hello-pangea/dnd's capture-phase mousedown listener calls preventDefault, so browser focus
+    // transfer never fires and Monaco never sees a natural blur. Force it imperatively.
+    if (document.activeElement instanceof HTMLElement && document.activeElement !== e.currentTarget) {
+      document.activeElement.blur();
+    }
+  };
+
+  const handleCardClick = () => {
+    onSelect();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.target !== e.currentTarget) {
       return;
@@ -72,19 +111,35 @@ export const SidebarCard = ({
 
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      onClick();
+      onSelect();
     }
   };
 
+  const handleBulkCheckboxMouseDownCapture = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.shiftKey) {
+      e.preventDefault();
+      shiftRangeSelectRef.current = true;
+      onToggleMultiSelect?.({ range: true });
+    }
+  };
+
+  const handleCheckboxChange = () => {
+    if (shiftRangeSelectRef.current) {
+      shiftRangeSelectRef.current = false;
+      return;
+    }
+    onToggleMultiSelect?.({ multi: true });
+  };
+
   if (variant === 'ghost') {
-    const typeConfig = QUERY_EDITOR_TYPE_CONFIG[item.type];
+    const config = typeConfig[item.type];
     return (
       <div className={cx(styles.wrapper, styles.ghostWrapper)} aria-hidden>
         <div className={cx(styles.card, styles.ghostCard)}>
           <div className={styles.cardContent}>
-            <Icon name={typeConfig.icon} size="sm" className={styles.ghostCardIcon} />
+            <Icon name={config.icon} size="sm" className={styles.ghostCardIcon} />
             <span className={styles.ghostCardLabel}>
-              {t('query-editor-next.sidebar.new-type', 'New {{type}}', { type: typeConfig.getLabel() })}
+              {t('query-editor-next.sidebar.new-type', 'New {{type}}', { type: config.getLabel() })}
             </span>
           </div>
         </div>
@@ -94,45 +149,66 @@ export const SidebarCard = ({
 
   return (
     <div className={styles.wrapper}>
-      <div
-        className={styles.card}
-        onClick={onClick}
-        onKeyDown={handleKeyDown}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        role="button"
-        tabIndex={0}
-        data-query-sidebar-card={id}
-        aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
-        aria-pressed={isSelected}
-      >
-        <div className={styles.cardContent}>{children}</div>
-        {/** Alerts don't have actions and cannot be hidden so we don't need to show the hidden icon or hover actions. */}
-        {/** hasActions is indicating if this is an alert card or a query/transformation card. */}
-        {hasActions && (
-          <div>
-            <div className={styles.cardContentIcons}>
-              {item.isHidden && <Icon name="eye-slash" size="sm" />}
-              {!!item.error && <Icon name="exclamation-triangle" size="sm" color={QUERY_EDITOR_COLORS.error} />}
-            </div>
-            <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
-              <Actions
-                handleResetFocus={handleResetFocus}
-                item={item}
-                onDelete={onDelete}
-                onDuplicate={onDuplicate}
-                onToggleHide={onToggleHide}
-                order={{
-                  delete: 1,
-                  duplicate: 0,
-                  hide: 2,
-                }}
+      <div className={styles.cardRow}>
+        <div
+          aria-hidden={!multiSelectMode}
+          className={cx(styles.checkboxWrapper, multiSelectMode && styles.checkboxWrapperOpen)}
+          {...(!multiSelectMode && { inert: '' })}
+        >
+          {onToggleMultiSelect && (
+            <div className={styles.checkboxClickArea} onMouseDownCapture={handleBulkCheckboxMouseDownCapture}>
+              <Checkbox
+                className={styles.checkboxHitArea}
+                value={isMultiSelected}
+                onChange={handleCheckboxChange}
+                aria-label={t('query-editor-next.sidebar.card-multi-select', 'Include card {{id}} in bulk selection', {
+                  id,
+                })}
               />
             </div>
-          </div>
-        )}
+          )}
+        </div>
+        <div
+          className={styles.card}
+          onClick={handleCardClick}
+          onMouseDown={handleCardMouseDown}
+          onKeyDown={handleKeyDown}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          role="button"
+          tabIndex={0}
+          {...{ [SIDEBAR_CARD_DATA_ATTR]: id }}
+          aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
+          aria-pressed={isSelected}
+        >
+          <div className={styles.cardContent}>{children}</div>
+          {hasActions && !multiSelectMode && (
+            <div>
+              <div className={styles.cardContentIcons}>
+                {item.isHidden && <Icon name="eye-slash" size="sm" />}
+                {!!item.error && <Icon name="exclamation-triangle" size="sm" color={theme.colors.error.text} />}
+              </div>
+              <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
+                <Actions
+                  handleResetFocus={handleResetFocus}
+                  item={item}
+                  onDelete={onDelete}
+                  onDuplicate={onDuplicate}
+                  onToggleHide={onToggleHide}
+                  order={{
+                    delete: 1,
+                    duplicate: 0,
+                    hide: 2,
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-      <AddCardButton variant={addVariant} afterId={id} />
+      {/* The inline add button is absolutely positioned into the left gutter, which the bulk
+          checkbox occupies in multi-select mode. Hide it there to avoid the visual collision. */}
+      {!multiSelectMode && <AddCardButton variant={addVariant} afterId={id} />}
     </div>
   );
 };
@@ -147,7 +223,6 @@ function getStyles(
     item: ActionItem;
   }
 ) {
-  // TODO: I think we should refactor this so we aren't relying on this border color for the selected card.
   const borderColor = getEditorBorderColor({
     theme,
     editorType: item.type,
@@ -155,9 +230,10 @@ function getStyles(
     isError: !!item.error,
   });
 
-  const themeColors = getQueryEditorColors(theme);
   const selectedBg = `color-mix(in srgb, ${borderColor} 10%, ${theme.colors.background.primary})`;
-  const hoverBackgroundColor = isSelected ? selectedBg : themeColors.card.hoverBg;
+  const hoverBackgroundColor = isSelected ? selectedBg : colorManipulator.alpha(theme.colors.text.primary, 0.08);
+  const hoverSolidBg = isSelected ? selectedBg : theme.colors.background.secondary;
+
   const {
     ghostBackgroundColor,
     ghostBorderColor,
@@ -178,14 +254,12 @@ function getStyles(
     display: 'flex',
     alignItems: 'center',
     paddingRight: theme.spacing(1),
-    // increasing the left padding lets the gradient become transparent before the first button rather than behind the first button
     paddingLeft: theme.spacing(3),
     borderRadius: `0 ${theme.shape.radius.default} ${theme.shape.radius.default} 0`,
-    background: `linear-gradient(270deg, ${hoverBackgroundColor} 70%, transparent 100%)`,
+    background: `linear-gradient(270deg, ${hoverSolidBg} 80%, transparent 100%)`,
     opacity: 0,
     transform: 'translateX(8px)',
     pointerEvents: 'none',
-    // This transition handles the opacity and transform of the hover actions when the card is hovered.
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create(['opacity', 'transform'], {
         duration: theme.transitions.duration.standard,
@@ -194,8 +268,12 @@ function getStyles(
   });
 
   const cardBorder = !!item.error
-    ? `1px solid color-mix(in srgb, ${QUERY_EDITOR_COLORS.error} 50%, transparent)`
+    ? `1px solid ${theme.colors.error.border}`
     : `1px solid ${isSelected ? borderColor : theme.colors.border.medium}`;
+
+  const cardBackground = isSelected ? selectedBg : theme.colors.background.primary;
+  const cardBoxShadow = isSelected ? `0 0 4px 0 color-mix(in srgb, ${borderColor} 40%, transparent)` : 'none';
+  const indicatorWidth = isSelected ? 3 : 2;
 
   return {
     cardContentIcons: css({
@@ -210,11 +288,6 @@ function getStyles(
       marginLeft: theme.spacing(SIDEBAR_CARD_INDENT),
       marginRight: theme.spacing(SIDEBAR_CARD_INDENT),
 
-      // Two slim pseudo-element strips extend the hover zone to the left and
-      // below the card, covering the path to the "+" button without overlapping
-      // the card's clickable area.
-
-      // Left strip: narrow gutter running along the card's left edge and below.
       '&::before': {
         content: '""',
         position: 'absolute',
@@ -224,7 +297,6 @@ function getStyles(
         height: `calc(100% + ${theme.spacing(1.5)})`,
       },
 
-      // Bottom strip: runs along the card's bottom edge extending to the left.
       '&::after': {
         content: '""',
         position: 'absolute',
@@ -256,20 +328,22 @@ function getStyles(
       justifyContent: 'space-between',
 
       width: '100%',
-      background: isSelected ? selectedBg : themeColors.card.bg,
+      flex: 1,
+      minWidth: 0,
+      background: cardBackground,
       borderRadius: theme.shape.radius.default,
       cursor: 'pointer',
 
       overflow: 'hidden',
       border: cardBorder,
-      boxShadow: isSelected ? `0 0 4px 0 color-mix(in srgb, ${borderColor} 40%, transparent)` : 'none',
+      boxShadow: cardBoxShadow,
       '&::before': {
         content: '""',
         position: 'absolute',
         left: 0,
         top: 0,
         bottom: 0,
-        width: isSelected ? 3 : 2,
+        width: indicatorWidth,
         background: borderColor,
         [theme.transitions.handleMotion('no-preference', 'reduce')]: {
           transition: theme.transitions.create(['width'], {
@@ -279,12 +353,10 @@ function getStyles(
       },
 
       ...(item.isHidden && {
-        opacity: theme.isDark ? 0.6 : 0.7,
-        filter: 'grayscale(0.8)',
+        ...getHiddenMaskStyles(theme),
         boxShadow: 'none',
       }),
 
-      // This transitions the background color of the card when it is hovered or selected.
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: theme.transitions.create(['background-color', 'box-shadow', 'opacity', 'filter'], {
           duration: theme.transitions.duration.standard,
@@ -318,11 +390,74 @@ function getStyles(
       overflow: 'hidden',
       minWidth: 0,
       flex: 1,
-      // This transitions the opacity of the card text when the card is hidden.
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: theme.transitions.create(['opacity'], {
           duration: theme.transitions.duration.standard,
         }),
+      },
+    }),
+
+    cardRow: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1.25),
+    }),
+
+    // Animated slot: width opens/closes to slide the card aside. overflow:hidden
+    // clips the box when closed; alignSelf:stretch lets the hit area fill card height.
+    checkboxWrapper: css({
+      display: 'flex',
+      alignItems: 'stretch',
+      alignSelf: 'stretch',
+      overflow: 'hidden',
+      width: 0,
+      flexShrink: 0,
+      lineHeight: 0,
+      marginRight: `-${theme.spacing(1.25)}`,
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create(['width', 'margin-left', 'margin-right'], {
+          duration: theme.transitions.duration.short,
+          easing: theme.transitions.easing.easeOut,
+        }),
+      },
+    }),
+    checkboxWrapperOpen: css({
+      width: theme.spacing(CHECKBOX_SLOT_OPEN_WIDTH),
+      marginLeft: `-${theme.spacing(CHECKBOX_HIT_PADDING)}`,
+      marginRight: `-${theme.spacing(CHECKBOX_HIT_PADDING)}`,
+    }),
+
+    checkboxClickArea: css({
+      display: 'flex',
+      alignItems: 'stretch',
+    }),
+
+    // Enlarges the click target (the Checkbox <label>) to the full card height and a
+    // few px beyond the box on each side, with hover + press/check feedback.
+    checkboxHitArea: css({
+      height: '100%',
+      alignContent: 'center',
+      paddingInline: theme.spacing(CHECKBOX_HIT_PADDING),
+      cursor: 'pointer',
+
+      '& input': {
+        cursor: 'pointer',
+      },
+
+      '&:hover input:not(:checked) + span': {
+        borderColor: theme.components.input.borderHover,
+      },
+
+      [theme.transitions.handleMotion('no-preference')]: {
+        '&:active input + span': {
+          transform: 'scale(0.94)',
+        },
+        '& input:checked + span': {
+          animation: `${checkboxPop} 180ms ${theme.transitions.easing.easeOut}`,
+        },
+        '& input:checked + span::after': {
+          animation: `${checkboxTickIn} 180ms ${theme.transitions.easing.easeOut}`,
+        },
       },
     }),
 

@@ -5,7 +5,7 @@
  * plus the MutationContext passed to handlers and reusable permission checks.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { config } from '@grafana/runtime';
 
@@ -18,7 +18,7 @@ export interface MutationContext {
 
 export type PermissionCheckResult = { allowed: true } | { allowed: false; error: string };
 
-export type PermissionCheck = (scene: DashboardScene) => PermissionCheckResult;
+type PermissionCheck = (scene: DashboardScene) => PermissionCheckResult;
 
 /**
  * A complete mutation command: schema, handler, permission, and metadata.
@@ -95,6 +95,8 @@ export function requiresNewDashboardLayoutsReadOnly(_scene: DashboardScene): Per
  */
 export function enterEditModeIfNeeded(scene: DashboardScene): void {
   if (!scene.state.isEditing) {
-    scene.onEnterEditMode();
+    scene.onEnterEditMode('assistant');
   }
+  // New-layout mutations only run while the edit pane is active, and it may not be mounted here.
+  scene.activateEditPane();
 }

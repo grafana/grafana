@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
@@ -26,8 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
-
-func ptrTo[T any](v T) *T { return &v }
 
 func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
@@ -93,7 +92,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// An invalid alertmanager choice should return an error.
 	{
 		ac := apimodels.PostableNGalertConfig{
-			AlertmanagersChoice: ptrTo(apimodels.AlertmanagersChoice("invalid")),
+			AlertmanagersChoice: new(apimodels.AlertmanagersChoice("invalid")),
 		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
@@ -114,7 +113,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// but never specify any. This should return an error.
 	{
 		ac := apimodels.PostableNGalertConfig{
-			AlertmanagersChoice: ptrTo(apimodels.AlertmanagersChoice(ngmodels.ExternalAlertmanagers.String())),
+			AlertmanagersChoice: new(apimodels.AlertmanagersChoice(ngmodels.ExternalAlertmanagers.String())),
 		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
@@ -189,7 +188,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// and make it so that only the external Alertmanagers handle the alerts.
 	{
 		ac := apimodels.PostableNGalertConfig{
-			AlertmanagersChoice: ptrTo(apimodels.AlertmanagersChoice(ngmodels.ExternalAlertmanagers.String())),
+			AlertmanagersChoice: new(apimodels.AlertmanagersChoice(ngmodels.ExternalAlertmanagers.String())),
 		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
@@ -318,7 +317,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// Sending an empty value for AlertmanagersChoice should default to AllAlertmanagers.
 	{
 		ac := apimodels.PostableNGalertConfig{
-			AlertmanagersChoice: ptrTo(apimodels.AlertmanagersChoice("")),
+			AlertmanagersChoice: new(apimodels.AlertmanagersChoice("")),
 		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
@@ -357,5 +356,89 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 
 			return len(alertmanagers.Data.Active) == 0
 		}, 16*time.Second, 8*time.Second) // the sync interval is 2s so after 8s all alertmanagers (if any) most probably are started
+	}
+}
+
+func TestIntegrationAdminConfiguration_ExternalAlertmanagerUIDOnlyInsert(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	testinfra.SQLiteIntegrationTest(t)
+
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+		EnableFeatureToggles:  []string{featuremgmt.FlagAlertingSyncExternalAlertmanager},
+	})
+
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+
+	// Create a user to make authenticated requests
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Login:          "grafana",
+		Password:       "password",
+	})
+
+	// Add a Mimir Alertmanager datasource to reference from the admin configuration.
+	var dsUID string
+	{
+		cmd := datasources.AddDataSourceCommand{
+			OrgID:  1,
+			Name:   "Mimir AM",
+			Type:   datasources.DS_ALERTMANAGER,
+			Access: "proxy",
+			URL:    "http://localhost:9009",
+			JsonData: simplejson.NewFromAny(map[string]any{
+				"implementation": "mimir",
+			}),
+		}
+		buf := bytes.Buffer{}
+		enc := json.NewEncoder(&buf)
+		err := enc.Encode(&cmd)
+		require.NoError(t, err)
+		dataSourcesUrl := fmt.Sprintf("http://grafana:password@%s/api/datasources", grafanaListedAddr)
+		resp := postRequest(t, dataSourcesUrl, buf.String(), http.StatusOK) // nolint
+		b, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		var res struct {
+			Datasource struct {
+				UID string `json:"uid"`
+			} `json:"datasource"`
+		}
+		err = json.Unmarshal(b, &res)
+		require.NoError(t, err)
+		dsUID = res.Datasource.UID
+		require.NotEmpty(t, dsUID)
+	}
+
+	// A UID-only write with no pre-existing admin configuration must insert a new row.
+	{
+		ac := apimodels.PostableNGalertConfig{
+			ExternalAlertmanagerUID: new(dsUID),
+		}
+		buf := bytes.Buffer{}
+		enc := json.NewEncoder(&buf)
+		err := enc.Encode(&ac)
+		require.NoError(t, err)
+
+		alertsURL := fmt.Sprintf("http://grafana:password@%s/api/v1/ngalert/admin_config", grafanaListedAddr)
+		resp := postRequest(t, alertsURL, buf.String(), http.StatusCreated) // nolint
+		b, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		var res map[string]any
+		err = json.Unmarshal(b, &res)
+		require.NoError(t, err)
+		require.Equal(t, "admin configuration updated", res["message"])
+	}
+
+	// The alertmanagers choice not sent in the request should default to internal.
+	{
+		alertsURL := fmt.Sprintf("http://grafana:password@%s/api/v1/ngalert/admin_config", grafanaListedAddr)
+		resp := getRequest(t, alertsURL, http.StatusOK) // nolint
+		b, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		require.JSONEq(t, fmt.Sprintf("{\"alertmanagersChoice\": %q, \"external_alertmanager_uid\": %q}\n", ngmodels.InternalAlertmanager, dsUID), string(b))
 	}
 }

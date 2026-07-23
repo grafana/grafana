@@ -4,7 +4,7 @@
  * Remove a row by path. Optionally move contained panels to another group.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
@@ -14,7 +14,7 @@ import { movePanelsToLayout } from './movePanelsHelper';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
-export const removeRowPayloadSchema = payloads.removeRow;
+const removeRowPayloadSchema = payloads.removeRow;
 
 export type RemoveRowPayload = z.infer<typeof removeRowPayloadSchema>;
 

@@ -1,14 +1,14 @@
 import { load } from 'js-yaml';
 import { useCallback, useMemo, useState } from 'react';
 
-import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { isDefaultRoutingTreeName } from '@grafana/alerting';
+import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { fetchAlertManagerConfig } from '../../api/alertmanager';
 import { convertToGMAApi } from '../../api/convertToGMAApi';
 import { stringifyErrorLike } from '../../utils/misc';
 
-import { MERGE_MATCHERS_LABEL_NAME } from './Wizard/constants';
-import type { ConvertAlertmanagerResponse, DryRunValidationResult } from './types';
+import type { ConvertAlertmanagerResponse, DryRunValidationResult, MergeStats, PromoteStatsSummary } from './types';
 
 interface ParsedAlertmanagerYaml {
   alertmanagerConfig: string;
@@ -36,7 +36,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  *
  * This function extracts `template_files` and re-serializes the remaining config as JSON.
  */
-export function parseAlertmanagerYaml(yamlContent: string): ParsedAlertmanagerYaml {
+function parseAlertmanagerYaml(yamlContent: string): ParsedAlertmanagerYaml {
   let parsed: unknown;
   try {
     parsed = load(yamlContent);
@@ -64,6 +64,8 @@ interface NotificationsSourceParams {
   yamlFile: File | null;
   /** Configuration identifier - the name of the extra config (policy tree name) */
   configIdentifier: string;
+  /** If true, promote (merge) the imported config into the main Grafana config */
+  promote?: boolean;
 }
 
 /**
@@ -98,28 +100,15 @@ interface MigrateRulesBaseParams {
   targetDatasourceUID?: string;
 }
 
-/**
- * Policy routing via notification_settings.policy (new) and label-based routing via extraLabels (legacy)
- * are mutually exclusive — only one mechanism should be used per import.
- */
-type MigrateRulesParams = MigrateRulesBaseParams &
-  ({ extraLabels?: string; notificationSettings?: never } | { extraLabels?: never; notificationSettings?: string });
+type MigrateRulesParams = MigrateRulesBaseParams & { notificationSettings?: string };
 
-/**
- * Build the routing-specific params for rule import.
- * When the `alertingPolicyRoutingSettings` feature flag is ON and a routing tree is selected,
- * uses the new `notification_settings.policy` mechanism; otherwise falls back to `extraLabels`.
- */
 export function buildRoutingParams(
-  selectedRoutingTree: string | undefined,
-  usePolicyRouting: boolean
-): Pick<MigrateRulesParams, 'extraLabels' | 'notificationSettings'> {
-  if (usePolicyRouting && selectedRoutingTree) {
-    return { notificationSettings: JSON.stringify({ policy: selectedRoutingTree }) };
-  }
-
+  selectedRoutingTreeName: string | undefined
+): Pick<MigrateRulesParams, 'notificationSettings'> {
   return {
-    extraLabels: selectedRoutingTree ? `${MERGE_MATCHERS_LABEL_NAME}=${selectedRoutingTree}` : undefined,
+    notificationSettings: isDefaultRoutingTreeName(selectedRoutingTreeName)
+      ? undefined
+      : JSON.stringify({ policy: selectedRoutingTreeName }),
   };
 }
 
@@ -134,11 +123,12 @@ export function useImportNotifications() {
     async (params: NotificationsSourceParams) => {
       const { alertmanagerConfig, templateFiles } = await resolveAlertmanagerConfig(params);
 
-      await convertAlertmanagerConfig({
+      return await convertAlertmanagerConfig({
         alertmanagerConfig,
         templateFiles,
         configIdentifier: params.configIdentifier,
         forceReplace: true,
+        promote: params.promote,
       }).unwrap();
     },
     [convertAlertmanagerConfig]
@@ -161,7 +151,6 @@ export function useImportRules() {
         pauseRecordingRules,
         payload,
         targetDatasourceUID,
-        extraLabels,
         notificationSettings,
       } = params;
 
@@ -172,7 +161,6 @@ export function useImportRules() {
         pauseAlerts: pauseAlertingRules,
         payload,
         targetDatasourceUID,
-        extraLabels,
         notificationSettings,
       }).unwrap();
     },
@@ -251,9 +239,23 @@ function isRuleManagedByExternalSystem(rule: { labels?: Record<string, string> }
 }
 
 /**
+ * Summarize the per-type merge stats from a promote (dry-run or real) into counts
+ * for display on the review screen.
+ */
+export function summarizeMergeStats(stats: MergeStats | undefined): PromoteStatsSummary {
+  return {
+    route: Boolean(stats?.added_route),
+    receivers: stats?.added_receivers?.length ?? 0,
+    templates: stats?.added_templates?.length ?? 0,
+    timeIntervals: stats?.added_time_intervals?.length ?? 0,
+    inhibitionRules: stats?.added_inhibition_rules?.length ?? 0,
+  };
+}
+
+/**
  * Parse the backend ConvertAlertmanagerResponse into a UI-friendly DryRunValidationResult.
  */
-function parseDryRunResponse(response: ConvertAlertmanagerResponse): DryRunValidationResult {
+export function parseDryRunResponse(response: ConvertAlertmanagerResponse): DryRunValidationResult {
   const renamedReceivers = Object.entries(response.rename_resources?.receivers ?? {}).map(
     ([originalName, newName]) => ({ originalName, newName })
   );
@@ -266,6 +268,7 @@ function parseDryRunResponse(response: ConvertAlertmanagerResponse): DryRunValid
     error: response.error,
     renamedReceivers,
     renamedTimeIntervals,
+    stats: response.stats ? summarizeMergeStats(response.stats) : undefined,
   };
 }
 
@@ -288,6 +291,7 @@ export function useDryRunNotifications() {
           alertmanagerConfig,
           templateFiles,
           configIdentifier: params.configIdentifier,
+          promote: params.promote,
         });
       } catch (err) {
         setPreRunError(stringifyErrorLike(err));

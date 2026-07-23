@@ -1,44 +1,73 @@
 name: External FR Notify
 
+# Thin wiring. Mints a short-lived community-triage token via the broker,
+# checks out the private grafana/community-triage repo (pinned by SHA) into
+# ./community-triage/, and runs the scripts from there. Config
+# (team-notifications-config.json) is resolved at this repo's root.
+
 on:
   issues:
-    types: [labeled]
+    types: [labeled, typed]
 
-permissions:
-  contents: read
-  issues: write
-  id-token: write
+permissions: {}
 
 concurrency:
   group: notify-fr-${{ github.event.issue.number }}
   cancel-in-progress: false
 
+env:
+  # community-triage logic version this repo is pinned to. Bump deliberately;
+  # re-resolve with: git ls-remote https://github.com/grafana/community-triage main
+  TRIAGE_REF: da6b3f7224d74c43d89374af39fc048911ea110b # trufflehog:ignore
+
 jobs:
   notify:
     name: Notify team about new FR
     runs-on: ubuntu-latest
+    permissions:
+      contents: read  # checkout config + community-triage logic
+      issues: write   # post welcome comment and auto-triaged label
+      id-token: write # vault OIDC + broker token exchange
     if: |
-      contains(github.event.issue.labels.*.name, 'type/feature-request') &&
-      !contains(github.event.issue.labels.*.name, 'fr/auto-triaged')
+      !contains(github.event.issue.labels.*.name, 'fr/auto-triaged') &&
+      (
+        (github.event.action == 'labeled' && contains(github.event.issue.labels.*.name, 'type/feature-request'))
+        || github.event.action == 'typed'
+      )
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - name: Checkout this repo (config only)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           persist-credentials: false
           sparse-checkout: |
             .github/team-notifications-config.json
-            .github/workflows/scripts/utils.mts
-            .github/workflows/scripts/fr-notify.mts
+
+      - name: Mint token for community-triage
+        id: triage-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@580590a644e82e79bb2598bdaba0be245a14dda0  # create-github-app-token/v0.2.2
+        with:
+          github_app: grafana-community-triage
+
+      - name: Checkout community-triage logic (pinned by SHA)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          repository: grafana/community-triage
+          ref: ${{ env.TRIAGE_REF }}
+          path: community-triage
+          token: ${{ steps.triage-token.outputs.token }}
+          persist-credentials: false
+          sparse-checkout: |
+            .github/workflows/scripts
 
       - name: Setup Node.js
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
         with:
           node-version: '22'
 
       - name: Get vault secrets
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@c2f1df59dba624b3fd509e5181aa8da5217120c0 # main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@f1614b210386ac420af6807a997ac7f6d96e477a  # v1.3.1
         with:
           repo_secrets: |
             SLACK_BOT_TOKEN=community-slack-bot:token
@@ -48,9 +77,11 @@ jobs:
         id: metadata
         env:
           GH_TOKEN: ${{ github.token }}
+          ORG_MEMBERS_TOKEN: ${{ steps.triage-token.outputs.token }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.repository }}
-        run: node --experimental-strip-types .github/workflows/scripts/fr-notify.mts metadata
+          EVENT_ACTION: ${{ github.event.action }}
+        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/fr-notify.mts metadata
 
       - name: Match teams and send notifications
         id: notify
@@ -63,8 +94,9 @@ jobs:
           TITLE_B64: ${{ steps.metadata.outputs.title_b64 }}
           AUTHOR: ${{ steps.metadata.outputs.author }}
           CREATED_DATE: ${{ steps.metadata.outputs.created_date }}
+          IS_CHAMPION: ${{ steps.metadata.outputs.is_champion }}
           SLACK_BOT_TOKEN: ${{ env.SLACK_BOT_TOKEN }}
-        run: node --experimental-strip-types .github/workflows/scripts/fr-notify.mts notify
+        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/fr-notify.mts notify
 
       - name: Post welcome comment
         if: steps.metadata.outputs.skip_processing != 'true' && steps.notify.outputs.notification_sent == 'true'
@@ -72,7 +104,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.repository }}
-        run: node --experimental-strip-types .github/workflows/scripts/fr-notify.mts welcome
+        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/fr-notify.mts welcome
 
       - name: Add auto-triaged label
         if: steps.metadata.outputs.skip_processing != 'true' && steps.notify.outputs.notification_sent == 'true'
@@ -80,4 +112,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.repository }}
-        run: node --experimental-strip-types .github/workflows/scripts/fr-notify.mts auto-triaged
+        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/fr-notify.mts auto-triaged

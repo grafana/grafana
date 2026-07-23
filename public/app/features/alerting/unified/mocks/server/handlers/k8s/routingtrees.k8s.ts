@@ -1,6 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
-import { RoutingTree, RoutingTreeList } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type RoutingTree, type RoutingTreeList } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import {
   deleteRoutingTree,
   getRoutingTree,
@@ -9,7 +9,7 @@ import {
   setRoutingTree,
 } from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
 import { ALERTING_API_SERVER_BASE_URL } from 'app/features/alerting/unified/mocks/server/utils';
-import { ApiMachineryError } from 'app/features/alerting/unified/utils/k8s/errors';
+import { type ApiMachineryError } from 'app/features/alerting/unified/utils/k8s/errors';
 
 import { ROOT_ROUTE_NAME } from '../../../../utils/k8s/constants';
 

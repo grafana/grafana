@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
-import { ReactNode, useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
-import { DataQuery, DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { type DataQuery, type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { FieldValidationMessage, Icon, Input, useStyles2 } from '@grafana/ui';
@@ -89,10 +89,9 @@ export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQue
         {!hideRefId && !isEditing && (
           <button
             className={styles.queryNameWrapper}
-            aria-label={selectors.components.QueryEditorRow.title(query.refId)}
+            data-testid={selectors.components.QueryEditorRow.title(query.refId)}
             title={t('query.query-editor-row-header.query-name-div-title-edit-query-name', 'Edit query name')}
             onClick={onEditQuery}
-            data-testid="query-name-div"
             type="button"
           >
             <span className={styles.queryName}>{query.refId}</span>
@@ -180,7 +179,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
 
       '&:focus': {
-        border: `2px solid ${theme.colors.primary.border}`,
+        border: `2px solid ${theme.colors.accent.border}`,
       },
 
       '&:hover, &:focus': {
@@ -191,7 +190,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     queryName: css({
       fontWeight: theme.typography.fontWeightMedium,
-      color: theme.colors.primary.text,
+      color: theme.colors.accent.text,
       cursor: 'pointer',
       overflow: 'hidden',
       marginLeft: theme.spacing(0.5),

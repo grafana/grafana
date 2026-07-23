@@ -4,43 +4,36 @@ import { useEffect } from 'react';
 
 import { t } from '@grafana/i18n';
 import {
-  MultiValueVariable,
+  type MultiValueVariable,
   NewSceneObjectAddedEvent,
   SceneVariableSet,
   sceneGraph,
-  VariableValueSingle,
+  type VariableValueSingle,
 } from '@grafana/scenes';
 import { Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { DashboardStateChangedEvent } from '../../edit-pane/shared';
+import { DashboardStateChangedEvent } from '../../edit-pane/events';
 import { getCloneKey, getLocalVariableValueSet, getRepeatVariableValueSet } from '../../utils/clone';
 import { getRepeatLocalVariableValue } from '../../utils/getRepeatLocalVariableValue';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
 import { filterSectionRepeatLocalVariables, getSectionBaseVariables } from '../../variables/utils';
 
-import { TabItem } from './TabItem';
-import { TabsLayoutManager } from './TabsLayoutManager';
+import { type TabItem } from './TabItem';
+import { type TabsLayoutManager } from './TabsLayoutManager';
 
-export interface Props {
+interface Props {
   tab: TabItem;
   manager: TabsLayoutManager;
   variable: MultiValueVariable;
 }
 
-export function TabItemRepeater({
-  tab,
-  variable,
-}: {
-  tab: TabItem;
-  manager: TabsLayoutManager;
-  variable: MultiValueVariable;
-}) {
+export function TabItemRepeater({ tab, variable }: Props) {
   const { repeatedTabs } = tab.useState();
   const styles = useStyles2(getStyles);
 
   // Subscribe to variable state changes and perform repeats when the variable changes
   useEffect(() => {
-    performTabRepeats(variable, tab, false);
+    setTimeout(() => performTabRepeats(variable, tab, false), 0);
 
     const variableChangeSub = variable.subscribeToState((state) => performTabRepeats(variable, tab, false));
     const editEventSub = tab.subscribeToEvent(DashboardStateChangedEvent, (e) =>
@@ -137,7 +130,7 @@ function getPrevRepeatValues(mainTab: TabItem, varName: string): VariableValueSi
   return values;
 }
 
-export function createTabRepeats({
+function createTabRepeats({
   values,
   texts,
   variable,

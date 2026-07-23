@@ -1,23 +1,48 @@
-import { v4 as uuidv4 } from 'uuid';
-
-import { getDefaultTimeRange, DataFrameView } from '@grafana/data';
-import { QueryFormat, SQLQuery, SQLSelectableValue } from '@grafana/plugin-ui';
-import { DataQuery } from '@grafana/schema';
+import {
+  type AdHocVariableFilter,
+  DataFrameView,
+  getDefaultTimeRange,
+  type ScopedVars,
+  type TimeRange,
+  generateUUID,
+} from '@grafana/data';
+import { QueryFormat, type SQLQuery, type SQLSelectableValue } from '@grafana/plugin-ui';
+import { type DataQuery } from '@grafana/schema';
+import { quoteIdentifierIfNecessary } from '@grafana/sql';
 
 import { dataSource } from '../ExpressionDatasource';
 
-export async function fetchSQLFields(query: Partial<SQLQuery>, queries: DataQuery[]): Promise<SQLSelectableValue[]> {
+import { interpolateSourceQueries } from './interpolateSourceQueries';
+import { SQL_EXPRESSIONS_DIALECT } from './sqlIdentifier';
+
+export interface FetchSQLFieldsOptions {
+  range?: TimeRange;
+  scopedVars?: ScopedVars;
+  filters?: AdHocVariableFilter[];
+}
+
+export async function fetchSQLFields(
+  query: Partial<SQLQuery>,
+  queries: DataQuery[],
+  options: FetchSQLFieldsOptions = {}
+): Promise<SQLSelectableValue[]> {
   const datasource = dataSource;
   if (!query.table) {
     return [];
   }
 
-  const queryString = `SELECT * FROM ${query.table} LIMIT 1`;
+  const queryString = `SELECT * FROM ${quoteIdentifierIfNecessary(query.table, SQL_EXPRESSIONS_DIALECT)} LIMIT 1`;
+  const sourceQueries = queries.filter((q) => q.refId === query.table);
+  const interpolatedSourceQueries = await interpolateSourceQueries(
+    sourceQueries,
+    options.scopedVars ?? {},
+    options.filters
+  );
 
   const queryResponse = await datasource.runMetaSQLExprQuery(
-    { rawSql: queryString, format: QueryFormat.Table, refId: `fields-${uuidv4()}` },
-    getDefaultTimeRange(),
-    queries.filter((q) => q.refId === query.table)
+    { rawSql: queryString, format: QueryFormat.Table, refId: `fields-${generateUUID()}` },
+    options.range ?? getDefaultTimeRange(),
+    interpolatedSourceQueries
   );
   const frame = new DataFrameView<string[]>(queryResponse);
 
@@ -26,7 +51,7 @@ export async function fetchSQLFields(query: Partial<SQLQuery>, queries: DataQuer
       name,
       text: name,
       label: name,
-      value: quoteIdentifierIfNecessary(name),
+      value: quoteIdentifierIfNecessary(name, SQL_EXPRESSIONS_DIALECT),
       type,
     };
   });
@@ -109,10 +134,6 @@ function mapColumnTypeToIcon(type: string) {
     default:
       return undefined;
   }
-}
-
-function quoteIdentifierIfNecessary(value: string) {
-  return /^[a-zA-Z_][a-zA-Z0-9_$]*$/g.test(value) ? value : `\`${value}\``;
 }
 
 // based off https://github.com/grafana/grafana/blob/main/pkg/expr/sql/parser_allow.go

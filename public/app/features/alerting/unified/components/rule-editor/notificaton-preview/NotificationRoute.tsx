@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
 
-import { AlertLabels, RouteMatchResult, RouteWithID } from '@grafana/alerting';
-import { GrafanaTheme2 } from '@grafana/data';
+import { AlertLabels, type RouteMatchResult, type RouteWithID } from '@grafana/alerting';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Text, useStyles2 } from '@grafana/ui';
+import { Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { arrayLabelsToObject } from '../../../utils/labels';
 import { Spacer } from '../../Spacer';
 
@@ -17,21 +16,19 @@ type TreeMeta = {
 
 type InstanceMatchProps = {
   matchedInstance: RouteMatchResult<RouteWithID>;
-  policyTreeSpec: RouteWithID;
   policyTreeMetadata: TreeMeta;
 };
 
-export function InstanceMatch({ matchedInstance, policyTreeSpec, policyTreeMetadata }: InstanceMatchProps) {
+export function InstanceMatch({ matchedInstance, policyTreeMetadata }: InstanceMatchProps) {
   const styles = useStyles2(getStyles);
 
-  const { labels, matchingJourney, route } = matchedInstance;
+  const { labels, matchingJourney } = matchedInstance;
 
   // Get all match details from the final matched route in the journey
   const finalRouteMatchInfo = matchingJourney.at(-1);
   const routeMatchLabels = arrayLabelsToObject(
     finalRouteMatchInfo?.matchDetails.map((detail) => labels[detail.labelIndex]) ?? []
   );
-  const matchedRootRoute = route.id === policyTreeSpec.id;
 
   return (
     <div className={styles.instanceListItem}>
@@ -44,12 +41,7 @@ export function InstanceMatch({ matchedInstance, policyTreeSpec, policyTreeMetad
           </Text>
         )}
         <Spacer />
-        <NotificationPolicyDrawer
-          labels={labels}
-          policyName={policyTreeMetadata.name}
-          matchedRootRoute={matchedRootRoute}
-          journey={matchingJourney}
-        />
+        <NotificationPolicyDrawer labels={labels} policyName={policyTreeMetadata.name} journey={matchingJourney} />
       </Stack>
     </div>
   );

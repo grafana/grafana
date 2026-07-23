@@ -2,43 +2,43 @@ import { advanceTo } from 'jest-date-mock';
 import { map, of } from 'rxjs';
 
 import {
-  DataFrame,
-  DataQueryRequest,
-  DataSourceApi,
+  type DataFrame,
+  type DataQueryRequest,
+  type DataSourceApi,
   dateTime,
   FieldType,
-  PanelData,
-  PanelPluginMeta,
-  standardTransformersRegistry,
-  StandardVariableQuery,
+  type PanelData,
+  type PanelPluginMeta,
+  type StandardVariableQuery,
   toDataFrame,
   VariableSupportType,
 } from '@grafana/data';
+import { mockTransformationsRegistry, reduceTransformer } from '@grafana/data/internal';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   CustomVariable,
-  MultiValueVariable,
+  type MultiValueVariable,
   sceneGraph,
   SceneGridLayout,
-  SceneGridRow,
+  type SceneGridRow,
   VizPanel,
 } from '@grafana/scenes';
-import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
+import { type Dashboard, LoadingState, type Panel, type RowPanel, VariableRefresh } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
-import { getReduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
-import { DashboardDataDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
-import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
+import { type DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
+import { type RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
@@ -58,7 +58,7 @@ import {
   trimDashboardForSnapshot,
 } from './transformSceneToSaveModel';
 
-standardTransformersRegistry.setInit(() => [getReduceTransformRegistryItem()]);
+mockTransformationsRegistry([reduceTransformer]);
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: (id: string) => undefined,
@@ -346,6 +346,8 @@ describe('transformSceneToSaveModel', () => {
         meta: {},
       });
 
+      activateFullSceneTree(scene);
+
       const variable = scene.state.$variables?.state.variables[0] as MultiValueVariable;
       variable.changeValueTo(['a', 'b', 'c']);
 
@@ -373,12 +375,27 @@ describe('transformSceneToSaveModel', () => {
         timeFrom: '2h',
         timeShift: '1d',
         hideTimeOverride: true,
+        timeCompare: '1d',
       });
 
       const saveModel = gridItemToPanel(gridItem);
       expect(saveModel.timeFrom).toBe('2h');
       expect(saveModel.timeShift).toBe('1d');
       expect(saveModel.hideTimeOverride).toBe(true);
+      expect(saveModel.timeCompare).toBe('1d');
+    });
+
+    it('preserves timeCompare through v1 save and load', () => {
+      const gridItem = buildGridItemFromPanelSchema({ timeCompare: '1w' });
+      const saveModel = gridItemToPanel(gridItem);
+
+      expect(saveModel.timeCompare).toBe('1w');
+
+      const reloaded = buildGridItemFromPanelSchema(saveModel);
+      const timeRange = (reloaded.state.body as VizPanel).state.$timeRange as PanelTimeRange;
+
+      expect(timeRange).toBeInstanceOf(PanelTimeRange);
+      expect(timeRange.state.compareWith).toBe('1w');
     });
 
     it('transparent panel', () => {

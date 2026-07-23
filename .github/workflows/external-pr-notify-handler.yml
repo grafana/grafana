@@ -1,30 +1,66 @@
 name: External PR Notify Handler
 
+# Consumer-side handler. Triggered by the trigger workflow's run completion,
+# so it executes in THIS repo's trusted context with elevated permissions.
+# It carries NO logic: every job mints a short-lived community-triage-app
+# token, checks out the private grafana/community-triage repo (pinned by SHA)
+# into ./community-triage/, and runs the scripts/docker from there. Config
+# (team-notifications-config.json, CODEOWNERS, .agents review skills come from
+# community-triage) is resolved at this repo's root.
+
 on:
   workflow_run:  # zizmor: ignore[dangerous-triggers]
     workflows: ["External PR Notify Trigger"]
     types: [completed]
 
-permissions:
-  contents: read
-  pull-requests: write
-  id-token: write
-  actions: read
+permissions: {}
 
 concurrency:
+  # Unique per triggering run so each external PR's handler runs to completion
+  # without cancelling others. Branch names are not unique across PRs.
   group: notify-pr-handler-${{ github.event.workflow_run.id }}
   cancel-in-progress: false
 
+env:
+  # community-triage logic version this repo is pinned to (main as of PR #6).
+  # Bump deliberately; re-resolve with:
+  #   git ls-remote https://github.com/grafana/community-triage main
+  TRIAGE_REF: da6b3f7224d74c43d89374af39fc048911ea110b # trufflehog:ignore
+
 jobs:
-  notify:
-    name: Notify and label external PR
+  triage:
+    name: Triage external PR
     runs-on: ubuntu-latest
-    # Only run if trigger workflow succeeded
     if: github.event.workflow_run.conclusion == 'success'
+    permissions:
+      contents: read      # checkout config + CODEOWNERS
+      actions: read        # download trigger artifact
+      pull-requests: write # add classification and auto-triaged labels
+      id-token: write      # vault OIDC token exchange
+    outputs:
+      pr_number: ${{ steps.validate.outputs.pr_number }}
+      skip_processing: ${{ steps.metadata.outputs.skip_processing }}
+      has_enabled_team: ${{ steps.check-teams.outputs.has_enabled_team }}
+      matched_teams: ${{ steps.check-teams.outputs.matched_teams }}
+      agent_review: ${{ steps.check-teams.outputs.agent_review }}
+      pr_type: ${{ steps.classify.outputs.type }}
+      slop_status: ${{ steps.detect-slop.outputs.slop_status }}
+      slop_score: ${{ steps.detect-slop.outputs.slop_score }}
+      slop_reason: ${{ steps.detect-slop.outputs.slop_reason }}
+      size: ${{ steps.metadata.outputs.size }}
+      additions: ${{ steps.metadata.outputs.additions }}
+      deletions: ${{ steps.metadata.outputs.deletions }}
+      author: ${{ steps.metadata.outputs.author }}
+      title_b64: ${{ steps.metadata.outputs.title_b64 }}
+      files_b64: ${{ steps.metadata.outputs.files_b64 }}
+      all_files_b64: ${{ steps.metadata.outputs.all_files_b64 }}
+      area_labels: ${{ steps.metadata.outputs.area_labels }}
+      created_date: ${{ steps.metadata.outputs.created_date }}
+      is_champion: ${{ steps.metadata.outputs.is_champion }}
 
     steps:
       - name: Download PR number
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16  # v4.1.8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           name: pr-number
           path: /tmp/pr-number
@@ -43,37 +79,50 @@ jobs:
           echo "Processing PR #$PR_NUMBER"
           printf '%s\n' "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
 
-      - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - name: Checkout this repo (config + CODEOWNERS only)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           persist-credentials: false
           sparse-checkout: |
             .github/team-notifications-config.json
             .github/CODEOWNERS
-            .github/workflows/scripts/utils.mts
-            .github/workflows/scripts/pr-notify.mts
 
       - name: Setup Node.js
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
         with:
           node-version: '22'
 
       - name: Get vault secrets
-        id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@c2f1df59dba624b3fd509e5181aa8da5217120c0 # main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@f1614b210386ac420af6807a997ac7f6d96e477a  # v1.3.1
         with:
           repo_secrets: |
-            OPENAI_API_KEY=community-openai:key
-            SLACK_BOT_TOKEN=community-slack-bot:token
-            SLACK_CHANNELS=community-slack-channels:map
+            ANTHROPIC_API_KEY=community-anthropic:key
+
+      - name: Mint token for community-triage
+        id: triage-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@580590a644e82e79bb2598bdaba0be245a14dda0  # create-github-app-token/v0.2.2
+        with:
+          github_app: grafana-community-triage
+
+      - name: Checkout community-triage logic (pinned by SHA)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          repository: grafana/community-triage
+          ref: ${{ env.TRIAGE_REF }}
+          path: community-triage
+          token: ${{ steps.triage-token.outputs.token }}
+          persist-credentials: false
+          sparse-checkout: |
+            .github/workflows/scripts
 
       - name: Get PR metadata
         id: metadata
         env:
           GH_TOKEN: ${{ github.token }}
+          ORG_MEMBERS_TOKEN: ${{ steps.triage-token.outputs.token }}
           PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
           REPO: ${{ github.repository }}
-        run: node --experimental-strip-types .github/workflows/scripts/pr-notify.mts metadata
+        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-notify.mts metadata
 
       - name: Check for enabled team matches
         id: check-teams
@@ -83,23 +132,28 @@ jobs:
           PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
           REPO: ${{ github.repository }}
           CREATED_DATE: ${{ steps.metadata.outputs.created_date }}
-        run: node --experimental-strip-types .github/workflows/scripts/pr-notify.mts check-teams
-
-      - name: No enabled team - skip triage
-        if: steps.metadata.outputs.skip_processing != 'true' && steps.check-teams.outputs.has_enabled_team != 'true'
-        run: |
-          echo "::notice::No enabled team matches this PR - skipping classification and notification"
-          echo "This PR will not be triaged (no type/size labels, no welcome comment)"
+        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-notify.mts check-teams
 
       - name: Classify PR type
         id: classify
         if: steps.metadata.outputs.skip_processing != 'true' && steps.check-teams.outputs.has_enabled_team == 'true'
         env:
-          OPENAI_API_KEY: ${{ env.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ env.ANTHROPIC_API_KEY }}
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
           REPO: ${{ github.repository }}
-        run: node --experimental-strip-types .github/workflows/scripts/pr-notify.mts classify
+        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-notify.mts classify
+
+      - name: Detect AI slop
+        id: detect-slop
+        if: steps.metadata.outputs.skip_processing != 'true' && steps.check-teams.outputs.has_enabled_team == 'true'
+        continue-on-error: true
+        env:
+          ANTHROPIC_API_KEY: ${{ env.ANTHROPIC_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
+          REPO: ${{ github.repository }}
+        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-notify.mts detect-slop
 
       - name: Add classification labels
         if: steps.metadata.outputs.skip_processing != 'true' && steps.check-teams.outputs.has_enabled_team == 'true'
@@ -109,41 +163,321 @@ jobs:
           PR_TYPE: ${{ steps.classify.outputs.type }}
           PR_SIZE: ${{ steps.metadata.outputs.size }}
           REPO: ${{ github.repository }}
-        run: node --experimental-strip-types .github/workflows/scripts/pr-notify.mts labels
+        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-notify.mts labels
 
-      - name: Match teams and send notifications
-        id: notify
+      - name: Add auto-triaged label early
         if: steps.metadata.outputs.skip_processing != 'true' && steps.check-teams.outputs.has_enabled_team == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
           REPO: ${{ github.repository }}
-          AREA_LABELS: ${{ steps.metadata.outputs.area_labels }}
-          ALL_FILES_B64: ${{ steps.metadata.outputs.all_files_b64 }}
-          PR_SIZE: ${{ steps.metadata.outputs.size }}
-          PR_TYPE: ${{ steps.classify.outputs.type }}
-          PR_ADDITIONS: ${{ steps.metadata.outputs.additions }}
-          PR_DELETIONS: ${{ steps.metadata.outputs.deletions }}
-          PR_AUTHOR: ${{ steps.metadata.outputs.author }}
-          TITLE_B64: ${{ steps.metadata.outputs.title_b64 }}
-          FILES_B64: ${{ steps.metadata.outputs.files_b64 }}
-          CREATED_DATE: ${{ steps.metadata.outputs.created_date }}
+        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-notify.mts auto-triaged
+
+  review:
+    name: Docker-isolated Oz review
+    runs-on: ubuntu-latest
+    needs: triage
+    if: needs.triage.outputs.skip_processing != 'true' && needs.triage.outputs.has_enabled_team == 'true' && needs.triage.outputs.agent_review == 'true'
+    permissions:
+      contents: read      # checkout this repo (review context)
+      pull-requests: write # post review comments
+      id-token: write      # vault OIDC token exchange
+    outputs:
+      review_line: ${{ steps.review-summary.outputs.review_line }}
+
+    steps:
+      - name: Checkout this repo (full — review context mounted as /repo)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
+        with:
+          node-version: '22'
+
+      - name: Get vault secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@f1614b210386ac420af6807a997ac7f6d96e477a  # v1.3.1
+        with:
+          repo_secrets: |
+            WARP_API_KEY=community-warp:key
+
+      - name: Mint token for community-triage
+        id: triage-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@580590a644e82e79bb2598bdaba0be245a14dda0  # create-github-app-token/v0.2.2
+        with:
+          github_app: grafana-community-triage
+
+      - name: Checkout community-triage logic (pinned by SHA)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          repository: grafana/community-triage
+          ref: ${{ env.TRIAGE_REF }}
+          path: community-triage
+          token: ${{ steps.triage-token.outputs.token }}
+          persist-credentials: false
+          sparse-checkout: |
+            .github/workflows/scripts
+            docker
+            .agents
+
+      - name: Generate PR diff and description
+        id: pr-context
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ needs.triage.outputs.pr_number }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh pr diff "$PR_NUMBER" --repo "$REPO" | awk '
+            /^diff --git/ { print; next }
+            /^index / { print; next }
+            /^---/ { print; next }
+            /^\+\+\+/ { print; next }
+            /^Binary files / { print; next }
+            /^@@/ {
+              split($2, old_parts, ",")
+              split($3, new_parts, ",")
+              old_line = -old_parts[1]
+              new_line = substr(new_parts[1], 2)
+              print
+              next
+            }
+            /^-/ { printf "[OLD:%d]%s\n", old_line++, $0; next }
+            /^\+/ { printf "[NEW:%d]%s\n", new_line++, $0; next }
+            { printf "[OLD:%d,NEW:%d]%s\n", old_line++, new_line++, $0 }
+          ' | head -10000 > pr_diff.txt
+          echo "Diff size: $(wc -l < pr_diff.txt) lines"
+          gh pr view "$PR_NUMBER" --repo "$REPO" --json body --jq '.body // "No description provided."' > pr_description.txt
+          PR_TITLE=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json title --jq '.title')
+          echo "PR title: $PR_TITLE"
+          # Emit via a random-delimiter heredoc so titles with special
+          # characters are captured verbatim as a single step output.
+          DELIM="ghaout_$(openssl rand -hex 16)"
+          {
+            printf 'pr_title<<%s\n' "$DELIM"
+            printf '%s\n' "$PR_TITLE"
+            printf '%s\n' "$DELIM"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Load team-specific review rules
+        id: team-skills
+        env:
+          MATCHED_TEAMS: ${{ needs.triage.outputs.matched_teams }}
+        run: |
+          FOUND=""
+          IFS=',' read -ra TEAMS <<< "$MATCHED_TEAMS"
+          for team in "${TEAMS[@]}"; do
+            # Validate before building a path: a team value with an embedded
+            # "/.." would escape the skills tree and cat an arbitrary file into
+            # the review prompt. Restrict to a strict charset. SECURITY-REVIEW.md #3.
+            if ! [[ "$team" =~ ^[a-z0-9-]+$ ]]; then
+              echo "::warning::skipping invalid team name: $team"
+              continue
+            fi
+            SKILL_PATH="./community-triage/.agents/skills/team-${team}/SKILL.md"
+            if [ -f "$SKILL_PATH" ]; then
+              echo "Loading team skill: $SKILL_PATH"
+              cat "$SKILL_PATH" >> team_rules.txt
+              echo "" >> team_rules.txt
+              FOUND="true"
+            fi
+          done
+          if [ -z "$FOUND" ]; then
+            echo "No team-specific skills found"
+            echo "" > team_rules.txt
+          fi
+          printf '%s\n' "has_team_rules=$FOUND" >> "$GITHUB_OUTPUT"
+
+      - name: Build review container
+        run: docker build -t oz-review ./community-triage/docker/oz-review/
+
+      - name: Stage clean repo mount
+        run: |
+          rsync -a --exclude='.git' --exclude='community-triage' "${GITHUB_WORKSPACE}/" /tmp/repo-clean/
+          # Overlay the review skills from community-triage so the Oz entrypoint
+          # (which copies /repo/.agents into its workspace) finds pr-review-*.
+          cp -r ./community-triage/.agents /tmp/repo-clean/.agents
+          echo "Staged repo: $(find /tmp/repo-clean -type f | wc -l) files (no .git)"
+
+      - name: Restrict container egress to Warp API
+        id: egress
+        run: |
+          WARP_IPS=$(dig +short app.warp.dev A | head -3)
+          echo "Resolved app.warp.dev → $WARP_IPS"
+
+          # Pin one resolved IPv4 and expose it for --add-host on the container,
+          # so the container needs NO DNS. DNS egress is then dropped (no port-53
+          # ACCEPT below) to close the DNS-exfiltration channel — SECURITY-REVIEW.md #2.
+          WARP_IP=$(printf '%s\n' "$WARP_IPS" | grep -Eo '^[0-9]+(\.[0-9]+){3}$' | head -1)
+          if [ -z "$WARP_IP" ]; then
+            echo "::error::could not resolve app.warp.dev to an IPv4 address"
+            exit 1
+          fi
+          printf 'warp_ip=%s\n' "$WARP_IP" >> "$GITHUB_OUTPUT"
+
+          sudo iptables -N OZ_EGRESS 2>/dev/null || sudo iptables -F OZ_EGRESS
+          sudo iptables -A OZ_EGRESS -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+          # shellcheck disable=SC2086
+          for ip in $WARP_IPS; do
+            sudo iptables -A OZ_EGRESS -d "$ip" -j ACCEPT
+            echo "Allowed: $ip"
+          done
+          sudo iptables -A OZ_EGRESS -j REJECT --reject-with icmp-net-unreachable
+
+          sudo iptables -I DOCKER-USER -j OZ_EGRESS
+
+      - name: Run Oz review in Docker
+        id: oz-review
+        if: steps.pr-context.outcome == 'success' && env.WARP_API_KEY != ''
+        continue-on-error: true
+        env:
+          # Untrusted / dynamic values are passed through the environment, never
+          # interpolated with ${{ }} into the run: body. Inside the script they
+          # are referenced as shell variables, whose contents are NOT re-evaluated
+          # (so a PR title like $(...) cannot execute). See SECURITY-REVIEW.md #1.
+          PR_TITLE: ${{ steps.pr-context.outputs.pr_title }}
+          PR_NUMBER: ${{ needs.triage.outputs.pr_number }}
+          PR_TYPE: ${{ needs.triage.outputs.pr_type }}
+          REPO: ${{ github.repository }}
+          WARP_IP: ${{ steps.egress.outputs.warp_ip }}
+        run: |
+          # Defense-in-depth: PR_TYPE selects a skill name and must not carry
+          # shell metacharacters. Constrain to a strict charset before use.
+          if ! [[ "$PR_TYPE" =~ ^[a-z][a-z0-9-]*$ ]]; then
+            echo "::error::unexpected pr_type: $PR_TYPE"
+            exit 1
+          fi
+
+          mkdir -p /tmp/oz-output /tmp/oz-context
+
+          cp pr_diff.txt /tmp/oz-context/
+          cp pr_description.txt /tmp/oz-context/
+          cp team_rules.txt /tmp/oz-context/ 2>/dev/null || true
+
+          chmod -R a+rX /tmp/repo-clean /tmp/oz-context
+          chmod 777 /tmp/oz-output
+
+          docker run --rm \
+            --cap-drop=ALL \
+            --security-opt=no-new-privileges \
+            --pids-limit=256 \
+            --memory=2g \
+            --add-host "app.warp.dev:${WARP_IP}" \
+            -v "/tmp/repo-clean:/repo:ro" \
+            -v "/tmp/oz-context:/context:ro" \
+            -v "/tmp/oz-output:/output" \
+            -e WARP_API_KEY="${WARP_API_KEY}" \
+            -e OZ_MODEL="claude-4-8-opus-high" \
+            -e OZ_SKILL="pr-review-${PR_TYPE}" \
+            -e OZ_PROMPT="Review Pull Request #${PR_NUMBER} in ${REPO}.
+          PR title: ${PR_TITLE}
+          PR description: Read pr_description.txt
+          Annotated diff: Read pr_diff.txt
+          Team-specific review rules: Read team_rules.txt
+          The full repository source is mounted at /repo — use it to understand surrounding code context when reviewing changes.
+          Use the review skill instructions as the base behavior. Also apply the team-specific rules from team_rules.txt when they are present. Apply them to this PR only." \
+            oz-review
+
+          if [ -f /tmp/oz-output/review.json ]; then
+            cp /tmp/oz-output/review.json .
+            echo "Docker review captured review.json"
+          else
+            echo "WARNING: No review.json from Docker container"
+          fi
+
+      - name: Clean up egress rules
+        if: always()
+        run: |
+          sudo iptables -D DOCKER-USER -j OZ_EGRESS 2>/dev/null || true
+          sudo iptables -F OZ_EGRESS 2>/dev/null || true
+          sudo iptables -X OZ_EGRESS 2>/dev/null || true
+
+      - name: Post review and extract summary
+        id: review-summary
+        if: steps.pr-context.outcome == 'success'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ needs.triage.outputs.pr_number }}
+          REPO: ${{ github.repository }}
+        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-notify.mts post-review
+
+  notify:
+    name: Notify teams
+    runs-on: ubuntu-latest
+    needs: [triage, review]
+    if: always() && needs.triage.result == 'success' && needs.triage.outputs.skip_processing != 'true' && needs.triage.outputs.has_enabled_team == 'true'
+    permissions:
+      contents: read      # checkout config + CODEOWNERS
+      pull-requests: write # post fallback comment
+      id-token: write      # vault OIDC token exchange
+
+    steps:
+      - name: Checkout this repo (config + CODEOWNERS only)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            .github/team-notifications-config.json
+            .github/CODEOWNERS
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
+        with:
+          node-version: '22'
+
+      - name: Get vault secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@f1614b210386ac420af6807a997ac7f6d96e477a  # v1.3.1
+        with:
+          repo_secrets: |
+            SLACK_BOT_TOKEN=community-slack-bot:token
+            SLACK_CHANNELS=community-slack-channels:map
+
+      - name: Mint token for community-triage
+        id: triage-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@580590a644e82e79bb2598bdaba0be245a14dda0  # create-github-app-token/v0.2.2
+        with:
+          github_app: grafana-community-triage
+
+      - name: Checkout community-triage logic (pinned by SHA)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          repository: grafana/community-triage
+          ref: ${{ env.TRIAGE_REF }}
+          path: community-triage
+          token: ${{ steps.triage-token.outputs.token }}
+          persist-credentials: false
+          sparse-checkout: |
+            .github/workflows/scripts
+
+      - name: Match teams and send notifications
+        id: notify
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ needs.triage.outputs.pr_number }}
+          REPO: ${{ github.repository }}
+          AREA_LABELS: ${{ needs.triage.outputs.area_labels }}
+          ALL_FILES_B64: ${{ needs.triage.outputs.all_files_b64 }}
+          PR_SIZE: ${{ needs.triage.outputs.size }}
+          PR_TYPE: ${{ needs.triage.outputs.pr_type }}
+          PR_ADDITIONS: ${{ needs.triage.outputs.additions }}
+          PR_DELETIONS: ${{ needs.triage.outputs.deletions }}
+          PR_AUTHOR: ${{ needs.triage.outputs.author }}
+          TITLE_B64: ${{ needs.triage.outputs.title_b64 }}
+          FILES_B64: ${{ needs.triage.outputs.files_b64 }}
+          CREATED_DATE: ${{ needs.triage.outputs.created_date }}
+          IS_CHAMPION: ${{ needs.triage.outputs.is_champion }}
           SLACK_BOT_TOKEN: ${{ env.SLACK_BOT_TOKEN }}
-        run: node --experimental-strip-types .github/workflows/scripts/pr-notify.mts notify
+          REVIEW_SUMMARY: ${{ needs.review.outputs.review_line }}
+          SLOP_STATUS: ${{ needs.triage.outputs.slop_status }}
+          SLOP_SCORE: ${{ needs.triage.outputs.slop_score }}
+          SLOP_REASON: ${{ needs.triage.outputs.slop_reason }}
+        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-notify.mts notify
 
-      - name: Post welcome comment
-        if: steps.metadata.outputs.skip_processing != 'true' && steps.check-teams.outputs.has_enabled_team == 'true' && steps.notify.outputs.notification_sent == 'true'
+      - name: Post fallback comment
+        if: needs.review.outputs.review_line == '' && steps.notify.outputs.notification_sent == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
+          PR_NUMBER: ${{ needs.triage.outputs.pr_number }}
           REPO: ${{ github.repository }}
-          PR_TYPE: ${{ steps.classify.outputs.type }}
-        run: node --experimental-strip-types .github/workflows/scripts/pr-notify.mts welcome
-
-      - name: Add auto-triaged label
-        if: steps.metadata.outputs.skip_processing != 'true' && steps.check-teams.outputs.has_enabled_team == 'true' && steps.notify.outputs.notification_sent == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
-          REPO: ${{ github.repository }}
-        run: node --experimental-strip-types .github/workflows/scripts/pr-notify.mts auto-triaged
+        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-notify.mts fallback-comment

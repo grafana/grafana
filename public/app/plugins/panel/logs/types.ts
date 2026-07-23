@@ -1,9 +1,8 @@
 import type { Grammar } from 'prismjs';
-import React, { ReactNode } from 'react';
 
-import { CoreApp, DataFrame, Field, LinkModel, ScopedVars } from '@grafana/data';
-import { LogLineMenuCustomItem } from 'app/features/logs/components/panel/LogLineMenu';
-import { LogListOptions } from 'app/features/logs/components/panel/LogList';
+import { CoreApp, type DataFrame, type Field, type LinkModel, type ScopedVars } from '@grafana/data';
+import { type LogLineMenuCustomItem } from 'app/features/logs/components/panel/LogLineMenu';
+import { type LogListOptions } from 'app/features/logs/components/panel/LogList';
 
 type onClickFilterLabelType = (key: string, value: string, frame?: DataFrame) => void;
 type onClickFilterOutLabelType = (key: string, value: string, frame?: DataFrame) => void;
@@ -61,10 +60,6 @@ export function isOnNewLogsReceivedType(callback: unknown): callback is onNewLog
 
 export function isOnLogOptionsChange(callback: unknown): callback is onLogOptionsChangeType {
   return typeof callback === 'function';
-}
-
-export function isReactNodeArray(node: unknown): node is ReactNode[] {
-  return Array.isArray(node) && node.every(React.isValidElement);
 }
 
 export function isCoreApp(app: unknown): app is CoreApp {

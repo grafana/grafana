@@ -16,11 +16,15 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	v1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	v1alpha1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 )
 
 var (
-	rawSchemaPreferencesv1alpha1     = []byte(`{"NavbarPreference":{"additionalProperties":false,"properties":{"bookmarkUrls":{"items":{"type":"string"},"type":"array"}},"required":["bookmarkUrls"],"type":"object"},"Preferences":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"QueryHistoryPreference":{"additionalProperties":false,"properties":{"homeTab":{"description":"one of: '' | 'query' | 'starred';","type":"string"}},"type":"object"},"spec":{"additionalProperties":false,"properties":{"homeDashboardUID":{"description":"UID for the home dashboard","type":"string"},"language":{"description":"Selected language (beta)","type":"string"},"navbar":{"$ref":"#/components/schemas/NavbarPreference","description":"Navigation preferences"},"queryHistory":{"$ref":"#/components/schemas/QueryHistoryPreference","description":"Explore query history preferences"},"regionalFormat":{"description":"Selected locale (beta)","type":"string"},"theme":{"description":"light, dark, empty is default","type":"string"},"timezone":{"description":"The timezone selection\nTODO: this should use the timezone defined in common","type":"string"},"weekStart":{"description":"day of the week (sunday, monday, etc)","type":"string"}},"type":"object"}}`)
+	rawSchemaPreferencesv1           = []byte(`{"NavbarPreference":{"additionalProperties":false,"properties":{"bookmarkUrls":{"items":{"type":"string"},"type":"array"}},"required":["bookmarkUrls"],"type":"object"},"Preferences":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"QueryHistoryPreference":{"additionalProperties":false,"properties":{"homeTab":{"description":"one of: '' | 'query' | 'starred';","type":"string"}},"type":"object"},"spec":{"additionalProperties":false,"properties":{"homeDashboardUID":{"description":"UID for the home dashboard","type":"string"},"homeURL":{"description":"Explicit home URL (NOTE: this can only be modified in the system settings)","type":"string"},"language":{"description":"Selected language","type":"string"},"navbar":{"$ref":"#/components/schemas/NavbarPreference","description":"Navigation preferences"},"queryHistory":{"$ref":"#/components/schemas/QueryHistoryPreference","description":"Explore query history preferences"},"theme":{"description":"user interface theme","type":"string"},"timezone":{"description":"The timezone selection","type":"string"},"weekStart":{"description":"day of the week (sunday, monday, etc)","type":"string"}},"type":"object"}}`)
+	versionSchemaPreferencesv1       app.VersionSchema
+	_                                = json.Unmarshal(rawSchemaPreferencesv1, &versionSchemaPreferencesv1)
+	rawSchemaPreferencesv1alpha1     = []byte(`{"NavbarPreference":{"additionalProperties":false,"properties":{"bookmarkUrls":{"items":{"type":"string"},"type":"array"}},"required":["bookmarkUrls"],"type":"object"},"Preferences":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"QueryHistoryPreference":{"additionalProperties":false,"properties":{"homeTab":{"description":"one of: '' | 'query' | 'starred';","type":"string"}},"type":"object"},"spec":{"additionalProperties":false,"properties":{"homeDashboardUID":{"description":"UID for the home dashboard","type":"string"},"homeURL":{"description":"Explicit home URL (NOTE: this can only be modified in the system settings)","type":"string"},"language":{"description":"Selected language","type":"string"},"navbar":{"$ref":"#/components/schemas/NavbarPreference","description":"Navigation preferences"},"queryHistory":{"$ref":"#/components/schemas/QueryHistoryPreference","description":"Explore query history preferences"},"theme":{"description":"user interface theme","type":"string"},"timezone":{"description":"The timezone selection","type":"string"},"weekStart":{"description":"day of the week (sunday, monday, etc)","type":"string"}},"type":"object"}}`)
 	versionSchemaPreferencesv1alpha1 app.VersionSchema
 	_                                = json.Unmarshal(rawSchemaPreferencesv1alpha1, &versionSchemaPreferencesv1alpha1)
 )
@@ -29,8 +33,35 @@ var appManifestData = app.ManifestData{
 	AppName:          "preferences",
 	AppDisplayName:   "preferences",
 	Group:            "preferences.grafana.app",
-	PreferredVersion: "v1alpha1",
+	PreferredVersion: "v1",
 	Versions: []app.ManifestVersion{
+		{
+			Name:   "v1",
+			Served: true,
+			Kinds: []app.ManifestVersionKind{
+				{
+					Kind:       "Preferences",
+					Plural:     "Preferences",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
+					Schema: &versionSchemaPreferencesv1,
+				},
+			},
+			Routes: app.ManifestVersionRoutes{
+				Namespaced: map[string]spec3.PathProps{},
+				Cluster:    map[string]spec3.PathProps{},
+				Schemas:    map[string]spec.Schema{},
+			},
+		},
+
 		{
 			Name:   "v1alpha1",
 			Served: true,
@@ -69,6 +100,7 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
+	"Preferences/v1":       v1.PreferencesKind(),
 	"Preferences/v1alpha1": v1alpha1.PreferencesKind(),
 }
 

@@ -1,32 +1,36 @@
-import { renderHook, getWrapper, waitFor, screen } from 'test/test-utils';
+import { http, HttpResponse } from 'msw';
+import { act, renderHook, getWrapper, waitFor, screen } from 'test/test-utils';
 
+import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { AppEvents } from '@grafana/data';
 import { config, setBackendSrv } from '@grafana/runtime';
-import { setupMockServer } from '@grafana/test-utils/server';
+import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
   useDeleteFoldersMutation as useDeleteFoldersMutationLegacy,
   useMoveFoldersMutation as useMoveFoldersMutationLegacy,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { getFolderURL as getStarredFolderURL } from 'app/features/browse-dashboards/utils/dashboards';
 
-import { AnnoKeyFolder } from '../../../../features/apiserver/types';
+import { AnnoKeyFolder, AnnoKeyGrantPermissions } from '../../../../features/apiserver/types';
 
 import {
   useGetFolderQueryFacade,
   useDeleteMultipleFoldersMutationFacade,
   useMoveMultipleFoldersMutationFacade,
   getFolderByUidFacade,
+  getFolderUrl,
 } from './hooks';
 import { setupCreateFolder, setupUpdateFolder } from './test-utils';
 
-import { useDeleteFolderMutation, useUpdateFolderMutation } from './index';
+import { useDeleteFolderMutation } from './index';
 
 // Mocks for the hooks used inside useGetFolderQueryFacade
 jest.mock('./index', () => ({
   ...jest.requireActual('./index'),
   useDeleteFolderMutation: jest.fn(),
-  useUpdateFolderMutation: jest.fn(),
 }));
 
 const publishMockFn = jest.fn();
@@ -52,6 +56,13 @@ jest.mock('../../../../types/store', () => {
   };
 });
 
+// The folder mutations refresh the team folders tree as a side effect. listTeamFolders would error
+// here because this test mocks the app dispatch, so stub it out.
+jest.mock('app/features/browse-dashboards/api/services', () => ({
+  ...jest.requireActual('app/features/browse-dashboards/api/services'),
+  listTeamFolders: jest.fn(async () => []),
+}));
+
 setBackendSrv(backendSrv);
 setupMockServer();
 
@@ -73,6 +84,53 @@ const renderFolderHook = async () => {
     expect(result.current.data).toBeDefined();
   });
   return result;
+};
+
+const setupUpdateFolderHandler = (onPatch?: jest.Mock) => {
+  folderAPIVersionResolver.set('v1beta1');
+  server.use(
+    http.patch('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:name', async ({ params, request }) => {
+      const body = await request.json();
+      onPatch?.({ name: params.name, body });
+
+      return HttpResponse.json({
+        apiVersion: 'folder.grafana.app/v1beta1',
+        kind: 'Folder',
+        metadata: {
+          name: params.name,
+          generation: 1,
+        },
+        spec: {
+          title:
+            body && typeof body === 'object' && 'spec' in body
+              ? (body.spec?.title ?? 'Updated Folder')
+              : 'Updated Folder',
+        },
+      });
+    })
+  );
+};
+
+const setupCreateFolderHandler = (onCreate?: jest.Mock) => {
+  folderAPIVersionResolver.set('v1beta1');
+  server.use(
+    http.post('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders', async ({ request }) => {
+      const body = await request.json();
+      onCreate?.(body);
+
+      return HttpResponse.json({
+        apiVersion: 'folder.grafana.app/v1beta1',
+        kind: 'Folder',
+        metadata: {
+          name: 'new-folder-uid',
+          generation: 1,
+        },
+        spec: {
+          title: body && typeof body === 'object' && 'spec' in body ? (body.spec?.title ?? 'test') : 'test',
+        },
+      });
+    })
+  );
 };
 
 const originalToggles = { ...config.featureToggles };
@@ -191,30 +249,37 @@ describe('useDeleteMultipleFoldersMutationFacade', () => {
 });
 
 describe('useMoveMultipleFoldersMutationFacade', () => {
-  const mockUpdateFolder = jest.fn(() => ({ error: undefined }));
   const mockMoveFolders = jest.fn(() => ({ error: undefined }));
+  const patchSpy = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (useUpdateFolderMutation as jest.Mock).mockReturnValue([mockUpdateFolder]);
     (useMoveFoldersMutationLegacy as jest.Mock).mockReturnValue([mockMoveFolders]);
+    patchSpy.mockReset();
+  });
+  afterEach(() => {
+    folderAPIVersionResolver.reset();
   });
 
   it('moves multiple folders and publishes success alert', async () => {
     config.featureToggles.foldersAppPlatformAPI = true;
+    setupUpdateFolderHandler(patchSpy);
     const folderUIDs = ['uid1', 'uid2'];
-    const [moveFolders] = useMoveMultipleFoldersMutationFacade();
-    await moveFolders({ folderUIDs, destinationUID: 'uid3' });
-
-    // Should call deleteFolder for each UID
-    expect(mockUpdateFolder).toHaveBeenCalledTimes(folderUIDs.length);
-    expect(mockUpdateFolder).toHaveBeenCalledWith({
-      name: 'uid1',
-      patch: { metadata: { annotations: { [AnnoKeyFolder]: 'uid3' } } },
+    const { result } = renderHook(() => useMoveMultipleFoldersMutationFacade(), {
+      wrapper: getWrapper({}),
     });
-    expect(mockUpdateFolder).toHaveBeenCalledWith({
+    await act(async () => {
+      await result.current[0]({ folderUIDs, destinationUID: 'uid3' });
+    });
+
+    expect(patchSpy).toHaveBeenCalledTimes(folderUIDs.length);
+    expect(patchSpy).toHaveBeenCalledWith({
+      name: 'uid1',
+      body: { metadata: { annotations: { [AnnoKeyFolder]: 'uid3' } } },
+    });
+    expect(patchSpy).toHaveBeenCalledWith({
       name: 'uid2',
-      patch: { metadata: { annotations: { [AnnoKeyFolder]: 'uid3' } } },
+      body: { metadata: { annotations: { [AnnoKeyFolder]: 'uid3' } } },
     });
 
     // Should publish a success alert
@@ -230,8 +295,12 @@ describe('useMoveMultipleFoldersMutationFacade', () => {
   it('uses legacy call when flag is false', async () => {
     config.featureToggles.foldersAppPlatformAPI = false;
     const folderUIDs = ['uid1', 'uid2'];
-    const [moveFolders] = useMoveMultipleFoldersMutationFacade();
-    await moveFolders({ folderUIDs, destinationUID: 'uid3' });
+    const { result } = renderHook(() => useMoveMultipleFoldersMutationFacade(), {
+      wrapper: getWrapper({}),
+    });
+    await act(async () => {
+      await result.current[0]({ folderUIDs, destinationUID: 'uid3' });
+    });
 
     // Should call deleteFolder for each UID
     expect(mockMoveFolders).toHaveBeenCalledTimes(1);
@@ -247,9 +316,13 @@ describe.each([
 ])('folderAppPlatformAPI toggle set to: %s', (toggle) => {
   beforeEach(() => {
     config.featureToggles.foldersAppPlatformAPI = toggle;
+    if (toggle) {
+      folderAPIVersionResolver.set('v1beta1');
+    }
   });
   afterEach(() => {
     config.featureToggles = originalToggles;
+    folderAPIVersionResolver.reset();
   });
 
   describe('useCreateFolder', () => {
@@ -270,15 +343,55 @@ describe.each([
       expect(await screen.findByText('Folder created')).toBeInTheDocument();
       expect(dispatchMockFn).toHaveBeenCalled();
     });
+
+    it('sets grant-permissions annotation when creating a root folder via the app platform API', async () => {
+      if (!toggle) {
+        return;
+      }
+
+      const createSpy = jest.fn();
+      setupCreateFolderHandler(createSpy);
+      const { user } = setupCreateFolder();
+
+      await user.click(screen.getByText(/Create Folder at root/));
+
+      await waitFor(() => expect(createSpy).toHaveBeenCalled());
+      expect(createSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            annotations: { [AnnoKeyGrantPermissions]: 'default' },
+          }),
+        })
+      );
+    });
+
+    it('sets folder annotation when creating a nested folder via the app platform API', async () => {
+      if (!toggle) {
+        return;
+      }
+
+      const createSpy = jest.fn();
+      setupCreateFolderHandler(createSpy);
+      const { user } = setupCreateFolder();
+
+      await user.click(screen.getByText(/Create Folder in nested folder/));
+
+      await waitFor(() => expect(createSpy).toHaveBeenCalled());
+      expect(createSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            annotations: { [AnnoKeyFolder]: folderA.item.uid },
+          }),
+        })
+      );
+      expect(createSpy.mock.calls[0][0].metadata.annotations[AnnoKeyGrantPermissions]).toBeUndefined();
+    });
   });
 
   describe('useUpdateFolder', () => {
-    // TODO: Remove manual mocking and move this to MSW handlers instead
-    const mockUpdateFolder = jest.fn(() => ({ error: undefined, result: { isSuccess: true } }));
-
     beforeEach(() => {
       jest.clearAllMocks();
-      (useUpdateFolderMutation as jest.Mock).mockReturnValue([mockUpdateFolder, { isSuccess: true }]);
+      setupUpdateFolderHandler();
     });
 
     it('updates a folder', async () => {
@@ -289,6 +402,39 @@ describe.each([
 
       expect(await screen.findByText('Folder updated')).toBeInTheDocument();
     });
+  });
+});
+
+describe('useUpdateFolder app-platform starred nav update', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    config.featureToggles.foldersAppPlatformAPI = true;
+    folderAPIVersionResolver.set('v1beta1');
+    setupUpdateFolderHandler();
+  });
+
+  afterEach(() => {
+    config.featureToggles = originalToggles;
+    folderAPIVersionResolver.set('v1beta1');
+    dispatchMockFn.mockReset();
+  });
+
+  it('dispatches updateDashboardName with the request uid/title and folder URL on rename', async () => {
+    const { user } = await setupUpdateFolder(folderA_folderA.item.uid);
+
+    await user.clear(screen.getByLabelText('Folder Title'));
+    await user.type(screen.getByLabelText('Folder Title'), 'Updated Folder');
+    await user.click(screen.getByText('Update Folder'));
+
+    expect(await screen.findByText('Folder updated')).toBeInTheDocument();
+
+    expect(dispatchMockFn).toHaveBeenCalledWith(
+      updateDashboardName({
+        id: folderA_folderA.item.uid,
+        title: 'Updated Folder',
+        url: getStarredFolderURL(folderA_folderA.item.uid),
+      })
+    );
   });
 });
 
@@ -328,5 +474,51 @@ describe('getFolderByUidFacade', () => {
       .mockResolvedValueOnce({ data: undefined });
 
     await expect(getFolderByUidFacade('some-folder-uid')).rejects.toThrow('One of the folder responses is undefined');
+  });
+});
+
+describe('getFolderUrl', () => {
+  const originalAppSubUrl = String(config.appSubUrl);
+
+  beforeEach(() => {
+    config.appSubUrl = '/grafana';
+  });
+
+  afterEach(() => {
+    config.appSubUrl = originalAppSubUrl;
+  });
+
+  it('returns a slug derived from a Latin title', () => {
+    expect(getFolderUrl('abc123', 'My Folder')).toBe('/grafana/dashboards/f/abc123/my-folder');
+  });
+
+  it('falls back to uid when title is CJK-only', () => {
+    expect(getFolderUrl('abc123', 'テストフォルダ')).toBe('/grafana/dashboards/f/abc123/abc123');
+  });
+
+  it('falls back to uid when title is Cyrillic-only', () => {
+    expect(getFolderUrl('abc123', 'Тест')).toBe('/grafana/dashboards/f/abc123/abc123');
+  });
+
+  it('falls back to uid when title is Arabic-only', () => {
+    expect(getFolderUrl('abc123', 'مجلد')).toBe('/grafana/dashboards/f/abc123/abc123');
+  });
+
+  it('uses the Latin portion of a mixed title', () => {
+    expect(getFolderUrl('abc123', 'テスト Folder')).toBe('/grafana/dashboards/f/abc123/folder');
+  });
+
+  it('falls back to uid when title is empty', () => {
+    expect(getFolderUrl('abc123', '')).toBe('/grafana/dashboards/f/abc123/abc123');
+  });
+
+  it('respects appSubUrl', () => {
+    config.appSubUrl = '/custom';
+    expect(getFolderUrl('uid1', 'Test')).toBe('/custom/dashboards/f/uid1/test');
+  });
+
+  it('works with empty appSubUrl', () => {
+    config.appSubUrl = '';
+    expect(getFolderUrl('uid1', 'Test')).toBe('/dashboards/f/uid1/test');
   });
 });

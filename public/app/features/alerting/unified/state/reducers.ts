@@ -4,24 +4,18 @@ import { createAsyncMapSlice, createAsyncSlice } from '../utils/redux';
 
 import {
   deleteAlertManagerConfigAction,
-  fetchAlertGroupsAction,
   fetchGrafanaAnnotationsAction,
   fetchPromRulesAction,
   fetchRulerRulesAction,
   updateAlertManagerConfigAction,
 } from './actions';
 
-export const reducer = combineReducers({
+const reducer = combineReducers({
   promRules: createAsyncMapSlice('promRules', fetchPromRulesAction, ({ rulesSourceName }) => rulesSourceName).reducer,
   rulerRules: createAsyncMapSlice('rulerRules', fetchRulerRulesAction, ({ rulesSourceName }) => rulesSourceName)
     .reducer,
   saveAMConfig: createAsyncSlice('saveAMConfig', updateAlertManagerConfigAction).reducer,
   deleteAMConfig: createAsyncSlice('deleteAMConfig', deleteAlertManagerConfigAction).reducer,
-  amAlertGroups: createAsyncMapSlice(
-    'amAlertGroups',
-    fetchAlertGroupsAction,
-    (alertManagerSourceName) => alertManagerSourceName
-  ).reducer,
   managedAlertStateHistory: createAsyncSlice('managedAlertStateHistory', fetchGrafanaAnnotationsAction).reducer,
 });
 

@@ -10,13 +10,14 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/grafana/grafana-app-sdk/resource"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1/fakes"
@@ -197,7 +198,7 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 		t.Run(fmt.Sprintf("user '%s'", tc.user.Identity.GetLogin()), func(t *testing.T) {
 			client, err := v1beta1.NewTimeIntervalClientFromGenerator(tc.user.GetClientRegistry())
 			require.NoError(t, err)
-			var expected = &v1beta1.TimeInterval{
+			expected := &v1beta1.TimeInterval{
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
 				},
@@ -305,7 +306,7 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 				})
 			}
 
-			deleteOptions := v1.DeleteOptions{Preconditions: &v1.Preconditions{ResourceVersion: util.Pointer(expected.ResourceVersion)}}
+			deleteOptions := v1.DeleteOptions{Preconditions: &v1.Preconditions{ResourceVersion: new(expected.ResourceVersion)}}
 			oldClient := common.NewTimeIntervalClient(t, tc.user)
 			if tc.canDelete {
 				t.Run("should be able to delete time interval", func(t *testing.T) {
@@ -347,51 +348,166 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	org := helper.Org1
-
-	admin := org.Admin
-	adminClient, err := v1beta1.NewTimeIntervalClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
-	require.NoError(t, err)
-
-	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
-	require.NoError(t, err)
-
-	created, err := adminClient.Create(ctx, &v1beta1.TimeInterval{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
-		Spec: v1beta1.TimeIntervalSpec{
-			Name:          "time-interval-1",
-			TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
-		},
-	}, resource.CreateOptions{})
-	require.NoError(t, err)
-	require.Equal(t, "none", created.GetProvenanceStatus())
-
-	t.Run("should provide provenance status", func(t *testing.T) {
-		require.NoError(t, db.SetProvenance(ctx, &definitions.MuteTimeInterval{
-			MuteTimeInterval: config.MuteTimeInterval{
-				Name: created.Spec.Name,
+	// writer has resource write actions but NO provenance set-status permission.
+	writer := helper.CreateUser("IntervalsWriter", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{
+				accesscontrol.ActionAlertingNotificationsTimeIntervalsRead,
+				accesscontrol.ActionAlertingNotificationsTimeIntervalsWrite,
+				accesscontrol.ActionAlertingNotificationsTimeIntervalsDelete,
 			},
-		}, admin.Identity.GetOrgID(), "API"))
+		},
+	})
+	writerClient, err := v1beta1.NewTimeIntervalClientFromGenerator(writer.GetClientRegistry())
+	require.NoError(t, err)
 
-		got, err := adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
+	// provisioner has the same write actions PLUS provenance set-status permission.
+	provisioner := helper.CreateUser("IntervalsProvisioner", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{
+				accesscontrol.ActionAlertingNotificationsTimeIntervalsRead,
+				accesscontrol.ActionAlertingNotificationsTimeIntervalsWrite,
+				accesscontrol.ActionAlertingNotificationsTimeIntervalsDelete,
+				accesscontrol.ActionAlertingProvisioningSetStatus,
+			},
+		},
+	})
+	provisionerClient, err := v1beta1.NewTimeIntervalClientFromGenerator(provisioner.GetClientRegistry())
+	require.NoError(t, err)
+
+	newInterval := func(name string) *v1beta1.TimeInterval {
+		return &v1beta1.TimeInterval{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+			},
+			Spec: v1beta1.TimeIntervalSpec{
+				Name:          name,
+				TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
+			},
+		}
+	}
+
+	t.Run("create", func(t *testing.T) {
+		t.Run("writer can create without provenance", func(t *testing.T) {
+			interval := newInterval("writer-create-no-prov")
+			created, err := writerClient.Create(ctx, interval, resource.CreateOptions{})
+			require.NoError(t, err)
+			require.Empty(t, created.GetProvenanceStatus())
+			require.NoError(t, writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+		})
+
+		t.Run("writer cannot create with provenance set", func(t *testing.T) {
+			interval := newInterval("writer-create-with-prov")
+			interval.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			_, err := writerClient.Create(ctx, interval, resource.CreateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can create with provenance", func(t *testing.T) {
+			interval := newInterval("provisioner-create-with-prov")
+			interval.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			created, err := provisionerClient.Create(ctx, interval, resource.CreateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, string(ngmodels.ProvenanceAPI), created.GetProvenanceStatus())
+			require.NoError(t, provisionerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+		})
+	})
+
+	t.Run("update", func(t *testing.T) {
+		// Setup: one unprovisioned and one provisioned resource.
+		unprov, err := writerClient.Create(ctx, newInterval("update-unprov"), resource.CreateOptions{})
 		require.NoError(t, err)
-		require.Equal(t, "API", got.GetProvenanceStatus())
-	})
-	t.Run("should not let update if provisioned", func(t *testing.T) {
-		updated := created.Copy().(*v1beta1.TimeInterval)
-		updated.Spec.TimeIntervals = fakes.IntervalGenerator{}.GenerateMany(2)
+		t.Cleanup(func() {
+			_ = provisionerClient.Delete(ctx, unprov.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		})
 
-		_, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
-		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		provInterval := newInterval("update-prov")
+		provInterval.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+		prov, err := provisionerClient.Create(ctx, provInterval, resource.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = provisionerClient.Delete(ctx, prov.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		})
+
+		t.Run("writer can update resource without provenance", func(t *testing.T) {
+			current, err := writerClient.Get(ctx, unprov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.TimeInterval)
+			updated.Spec.TimeIntervals = fakes.IntervalGenerator{}.GenerateMany(2)
+			_, err = writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
+
+		t.Run("writer cannot set provenance on existing resource", func(t *testing.T) {
+			current, err := writerClient.Get(ctx, unprov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.TimeInterval)
+			updated.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			_, err = writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("writer cannot update provisioned resource", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, prov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.TimeInterval)
+			updated.Spec.TimeIntervals = fakes.IntervalGenerator{}.GenerateMany(2)
+			_, err = writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can set provenance on existing resource", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, unprov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.TimeInterval)
+			updated.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			got, err := provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, string(ngmodels.ProvenanceAPI), got.GetProvenanceStatus())
+			// Reset provenance for subsequent subtests.
+			got.SetProvenanceStatus("")
+			_, err = provisionerClient.Update(ctx, got, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
+
+		t.Run("provisioner can update provisioned resource", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, prov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.TimeInterval)
+			updated.Spec.TimeIntervals = fakes.IntervalGenerator{}.GenerateMany(2)
+			_, err = provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
 	})
 
-	t.Run("should not let delete if provisioned", func(t *testing.T) {
-		err := adminClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
-		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+	t.Run("delete", func(t *testing.T) {
+		t.Run("writer can delete resource without provenance", func(t *testing.T) {
+			created, err := writerClient.Create(ctx, newInterval("delete-unprov"), resource.CreateOptions{})
+			require.NoError(t, err)
+			err = writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			require.NoError(t, err)
+		})
+
+		t.Run("writer cannot delete provisioned resource", func(t *testing.T) {
+			interval := newInterval("delete-prov-forbidden")
+			interval.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			created, err := provisionerClient.Create(ctx, interval, resource.CreateOptions{})
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_ = provisionerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			})
+			err = writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can delete provisioned resource", func(t *testing.T) {
+			interval := newInterval("delete-prov-ok")
+			interval.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			created, err := provisionerClient.Create(ctx, interval, resource.CreateOptions{})
+			require.NoError(t, err)
+			err = provisionerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			require.NoError(t, err)
+		})
 	})
 }
 
@@ -451,7 +567,7 @@ func TestIntegrationTimeIntervalOptimisticConcurrency(t *testing.T) {
 
 		err = oldClient.Delete(ctx, actual.GetStaticMetadata().Identifier().Name, v1.DeleteOptions{
 			Preconditions: &v1.Preconditions{
-				ResourceVersion: util.Pointer("something"),
+				ResourceVersion: new("something"),
 			},
 		})
 		require.Truef(t, errors.IsConflict(err), "should get Forbidden error but got %s", err)
@@ -462,7 +578,7 @@ func TestIntegrationTimeIntervalOptimisticConcurrency(t *testing.T) {
 
 		err = oldClient.Delete(ctx, actual.GetStaticMetadata().Identifier().Name, v1.DeleteOptions{
 			Preconditions: &v1.Preconditions{
-				ResourceVersion: util.Pointer(actual.ResourceVersion),
+				ResourceVersion: new(actual.ResourceVersion),
 			},
 		})
 		require.NoError(t, err)
@@ -473,7 +589,7 @@ func TestIntegrationTimeIntervalOptimisticConcurrency(t *testing.T) {
 
 		err = oldClient.Delete(ctx, actual.GetStaticMetadata().Identifier().Name, v1.DeleteOptions{
 			Preconditions: &v1.Preconditions{
-				ResourceVersion: util.Pointer(actual.ResourceVersion),
+				ResourceVersion: new(actual.ResourceVersion),
 			},
 		})
 		require.NoError(t, err)
@@ -704,7 +820,9 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 	t.Run("Update", func(t *testing.T) {
 		t.Run("should rename all references if name changes", func(t *testing.T) {
 			renamed := interval.Copy().(*v1beta1.TimeInterval)
-			renamed.Spec.Name += "-new"
+			// Use a unique suffix so the target name cannot collide with any
+			// leftover state in the stored Alertmanager configuration.
+			renamed.Spec.Name += "-" + util.GenerateShortUID()
 
 			actual, err := adminClient.Update(ctx, renamed, resource.UpdateOptions{})
 			require.NoError(t, err)

@@ -312,6 +312,7 @@ func convertQueryOptions_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardQueryOptio
 	out.TimeFrom = in.TimeFrom
 	out.MaxDataPoints = in.MaxDataPoints
 	out.TimeShift = in.TimeShift
+	out.TimeCompare = in.TimeCompare
 	out.QueryCachingTTL = in.QueryCachingTTL
 	out.Interval = in.Interval
 	out.CacheTimeout = in.CacheTimeout
@@ -819,6 +820,7 @@ func convertVariable_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardVariableKind, 
 				SkipUrlSync:      in.AdhocVariableKind.Spec.SkipUrlSync,
 				Description:      in.AdhocVariableKind.Spec.Description,
 				AllowCustomValue: in.AdhocVariableKind.Spec.AllowCustomValue,
+				EnableGroupBy:    in.AdhocVariableKind.Spec.EnableGroupBy,
 				Datasource:       datasource,
 			},
 		}

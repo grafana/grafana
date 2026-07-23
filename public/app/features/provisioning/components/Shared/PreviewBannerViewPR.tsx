@@ -5,6 +5,7 @@ import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 import { isValidRepoType } from 'app/features/provisioning/guards';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
+import { appendPullRequestTitleParam } from '../../utils/pullRequestTitle';
 import { isGitProvider } from '../../utils/repositoryTypes';
 import { getBranchUrl } from '../utils/url';
 
@@ -46,13 +47,20 @@ function BranchDisplay({ baseUrl, branch, repoType }: { baseUrl: string; branch:
  * @description This component is used to display a banner when a provisioned dashboard/folder is created, deleted, or loaded from a new branch in repo.
  */
 export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, branchInfo }: Props) {
-  const { repoType, action } = usePullRequestParam();
+  const { repoType, action, prTitle } = usePullRequestParam();
 
   const capitalizedRepoType = isValidRepoType(repoType) ? RepoTypeDisplay[repoType] : 'repository';
-  const linkUrl = prURL || branchInfo?.repoBaseUrl || repoUrl;
+  // Prefill the provider's "open pull request" form title from pullRequest.titleTemplate; only the
+  // PR/compare URL carries it. Returns prURL unchanged when no title was threaded through.
+  const prLink = appendPullRequestTitleParam(prURL, repoType, prTitle);
+  const linkUrl = prLink || branchInfo?.repoBaseUrl || repoUrl;
 
   const actionText =
-    action === 'delete' ? getDeleteBannerText(capitalizedRepoType) : getCreateBannerText(isNewPr, capitalizedRepoType);
+    action === 'delete'
+      ? getDeleteBannerText(capitalizedRepoType)
+      : action === 'update'
+        ? getUpdateBannerText(capitalizedRepoType)
+        : getCreateBannerText(isNewPr, capitalizedRepoType);
 
   if (behindBranch) {
     return (
@@ -160,6 +168,25 @@ function getDeleteBannerText(repoType: string): BannerText {
     body: t(
       'provisioned-resource-preview-banner.preview-banner.delete-from-branch',
       'The rest of Grafana users in your organization will still see this resource until this branch is merged'
+    ),
+    button: t(
+      'provisioned-resource-preview-banner.preview-banner.open-pull-request-in-repo',
+      'Open pull request in {{repoType}}',
+      { repoType }
+    ),
+  };
+}
+
+function getUpdateBannerText(repoType: string): BannerText {
+  return {
+    title: t(
+      'provisioned-resource-preview-banner.title-updated-resource-in-branch',
+      'A resource has been updated in a branch in {{repoType}}.',
+      { repoType }
+    ),
+    body: t(
+      'provisioned-resource-preview-banner.preview-banner.update-from-branch',
+      'The rest of Grafana users in your organization will still see the current version until this branch is merged'
     ),
     button: t(
       'provisioned-resource-preview-banner.preview-banner.open-pull-request-in-repo',

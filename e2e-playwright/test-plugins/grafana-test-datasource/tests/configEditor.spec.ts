@@ -23,9 +23,9 @@ test.describe(
       });
 
       test('switch field', async ({ page }) => {
-        const field = page.getByLabel('Switch Enabled');
+        const field = page.getByRole('switch', { name: 'Switch Enabled' });
         await expect(field).not.toBeChecked();
-        await field.check();
+        await field.check({ force: true });
         await expect(field).toBeChecked();
       });
 

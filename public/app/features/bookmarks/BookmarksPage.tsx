@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { EmptyState, useStyles2 } from '@grafana/ui';
 import { usePinnedItems } from 'app/core/components/AppChrome/MegaMenu/hooks';
@@ -11,7 +11,7 @@ import { useSelector } from 'app/types/store';
 
 export function BookmarksPage() {
   const styles = useStyles2(getStyles);
-  const pinnedItems = usePinnedItems();
+  const { pinnedItems } = usePinnedItems();
   const navTree = useSelector((state) => state.navBarTree);
 
   const validItems = pinnedItems.reduce((acc: NavModelItem[], url) => {

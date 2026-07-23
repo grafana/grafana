@@ -1,11 +1,9 @@
 package grafanads
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -38,10 +36,12 @@ var (
 	_ backend.CheckHealthHandler = (*Service)(nil)
 )
 
+// nolint:staticcheck
 func ProvideService(store store.StorageService, features featuremgmt.FeatureToggles) *Service {
 	return newService(store, features)
 }
 
+// nolint:staticcheck
 func newService(store store.StorageService, features featuremgmt.FeatureToggles) *Service {
 	s := &Service{
 		store:    store,
@@ -54,7 +54,7 @@ func newService(store store.StorageService, features featuremgmt.FeatureToggles)
 
 // Service exists regardless of user settings
 type Service struct {
-	store    store.StorageService
+	store    store.StorageService // nolint:staticcheck
 	log      log.Logger
 	features featuremgmt.FeatureToggles
 }
@@ -80,8 +80,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			response.Responses[q.RefID] = s.doRandomWalk(q)
 		case queryTypeList:
 			response.Responses[q.RefID] = s.doListQuery(ctx, q)
-		case queryTypeRead:
-			response.Responses[q.RefID] = s.doReadQuery(ctx, q)
 		default:
 			response.Responses[q.RefID] = backend.DataResponse{
 				Error: fmt.Errorf("unknown query type"),
@@ -110,41 +108,11 @@ func (s *Service) doListQuery(ctx context.Context, query backend.DataQuery) back
 
 	path := store.RootPublicStatic + "/" + q.Path
 	maxFiles := int(query.MaxDataPoints)
-	listFrame, err := s.store.List(ctx, nil, path, maxFiles)
+	listFrame, err := s.store.List(ctx, nil, path, maxFiles) // nolint:staticcheck
 	response.Error = err
 	if listFrame != nil {
 		response.Frames = data.Frames{listFrame.Frame}
 	}
-	return response
-}
-
-func (s *Service) doReadQuery(ctx context.Context, query backend.DataQuery) backend.DataResponse {
-	q := &readQueryModel{}
-	response := backend.DataResponse{}
-	err := json.Unmarshal(query.JSON, &q)
-	if err != nil {
-		response.Error = err
-		return response
-	}
-
-	if filepath.Ext(q.Path) != ".csv" {
-		response.Error = fmt.Errorf("unsupported file type")
-		return response
-	}
-
-	path := store.RootPublicStatic + "/" + q.Path
-	file, err := s.store.Read(ctx, nil, path)
-	if err != nil {
-		response.Error = err
-		return response
-	}
-
-	frame, err := testdatasource.LoadCsvContent(bytes.NewReader(file.Contents), filepath.Base(path))
-	if err != nil {
-		response.Error = err
-		return response
-	}
-	response.Frames = data.Frames{frame}
 	return response
 }
 

@@ -1,5 +1,5 @@
-import { Receiver } from 'app/plugins/datasource/alertmanager/types';
-const DEFAULT_EMAIL = '<example@email.com>';
+import { type Receiver } from 'app/plugins/datasource/alertmanager/types';
+const DEFAULT_EMAIL = '<example@example.com>';
 
 export function isContactPointReady(defaultContactPoint: string, contactPoints: Receiver[]) {
   // We consider the contact point ready if the default contact is no longer referencing the default email address

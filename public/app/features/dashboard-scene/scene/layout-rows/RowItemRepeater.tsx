@@ -2,42 +2,40 @@ import { isEqual } from 'lodash';
 import { useEffect } from 'react';
 
 import {
-  MultiValueVariable,
+  type MultiValueVariable,
   NewSceneObjectAddedEvent,
   SceneVariableSet,
   sceneGraph,
-  VariableValueSingle,
+  type VariableValueSingle,
 } from '@grafana/scenes';
 import { Spinner } from '@grafana/ui';
 
-import { DashboardStateChangedEvent } from '../../edit-pane/shared';
+import { DashboardStateChangedEvent } from '../../edit-pane/events';
 import { getCloneKey, getLocalVariableValueSet, getRepeatVariableValueSet } from '../../utils/clone';
 import { getRepeatLocalVariableValue } from '../../utils/getRepeatLocalVariableValue';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
 import { filterSectionRepeatLocalVariables, getSectionBaseVariables } from '../../variables/utils';
 
-import { RowItem } from './RowItem';
-import { RowsLayoutManager } from './RowsLayoutManager';
+import { type RowItem } from './RowItem';
+import { type RowsLayoutManager } from './RowsLayoutManager';
 
-export interface Props {
+interface Props {
   row: RowItem;
   manager: RowsLayoutManager;
   variable: MultiValueVariable;
 }
 
-export function RowItemRepeater({
-  row,
-  variable,
-}: {
-  row: RowItem;
-  manager: RowsLayoutManager;
-  variable: MultiValueVariable;
-}) {
+export function RowItemRepeater({ row, variable }: Props) {
   const { repeatedRows } = row.useState();
 
-  // Subscribe to variable state changes and perform repeats when the variable changes
+  // Subscribe to variable state changes and perform repeats when the variable changes.
+  // Defer the initial performRowRepeats to the next macrotask so the parent SceneVariableSet
+  // can activate first under RENDER_BEFORE_ACTIVATION).
+  // A sync call here can early-return while the set is inactive; if the later options update
+  // does not notify subscribeToState (URL value already set), repeatedRows stays undefined
+  // and the row spinner never clears.
   useEffect(() => {
-    performRowRepeats(variable, row, false);
+    const timeoutId = setTimeout(() => performRowRepeats(variable, row, false), 0);
 
     const variableChangeSub = variable.subscribeToState((state) => performRowRepeats(variable, row, false));
     const editEventSub = row.subscribeToEvent(DashboardStateChangedEvent, (e) =>
@@ -45,6 +43,7 @@ export function RowItemRepeater({
     );
 
     return () => {
+      clearTimeout(timeoutId);
       editEventSub.unsubscribe();
       variableChangeSub.unsubscribe();
     };

@@ -1,9 +1,9 @@
 import { render, waitFor } from '@testing-library/react';
 import type { JSX } from 'react';
 
-import InfluxDatasource from '../../../../../datasource';
+import type InfluxDatasource from '../../../../../datasource';
 import { getMockInfluxDS, getMockDSInstanceSettings } from '../../../../../mocks/datasource';
-import { DEFAULT_POLICY, InfluxQuery } from '../../../../../types';
+import { DEFAULT_POLICY, type InfluxQuery } from '../../../../../types';
 
 import { VisualInfluxQLEditor } from './VisualInfluxQLEditor';
 
@@ -40,7 +40,7 @@ async function assertEditor(query: InfluxQuery, textContent: string) {
   const onChange = jest.fn();
   const onRunQuery = jest.fn();
   const datasource: InfluxDatasource = getMockInfluxDS(getMockDSInstanceSettings());
-  datasource.metricFindQuery = () => Promise.resolve([]);
+  datasource.runMetadataQuery = () => Promise.resolve([]);
   const { container } = render(
     <VisualInfluxQLEditor query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
   );

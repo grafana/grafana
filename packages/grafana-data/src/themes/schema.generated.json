@@ -78,6 +78,66 @@
           },
           "additionalProperties": false
         },
+        "tertiary": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "main": {
+              "type": "string"
+            },
+            "shade": {
+              "type": "string"
+            },
+            "text": {
+              "type": "string"
+            },
+            "border": {
+              "type": "string"
+            },
+            "transparent": {
+              "type": "string"
+            },
+            "borderTransparent": {
+              "type": "string"
+            },
+            "contrastText": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "accent": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "main": {
+              "type": "string"
+            },
+            "shade": {
+              "type": "string"
+            },
+            "text": {
+              "type": "string"
+            },
+            "border": {
+              "type": "string"
+            },
+            "transparent": {
+              "type": "string"
+            },
+            "borderTransparent": {
+              "type": "string"
+            },
+            "contrastText": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
         "info": {
           "type": "object",
           "properties": {
@@ -225,6 +285,9 @@
             "canvas": {
               "type": "string"
             },
+            "page": {
+              "type": "string"
+            },
             "primary": {
               "type": "string"
             },
@@ -320,10 +383,35 @@
       },
       "additionalProperties": false
     },
+    "shadows": {
+      "type": "object",
+      "properties": {
+        "z1": {
+          "type": "string"
+        },
+        "z2": {
+          "type": "string"
+        },
+        "z3": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
     "shape": {
       "type": "object",
       "properties": {
+        "borderRadiusSm": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
         "borderRadius": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "borderRadiusLg": {
           "type": "integer",
           "minimum": 0,
           "maximum": 9007199254740991
@@ -676,6 +764,204 @@
           "items": {
             "type": "string"
           }
+        }
+      },
+      "additionalProperties": false
+    },
+    "components": {
+      "type": "object",
+      "properties": {
+        "height": {
+          "type": "object",
+          "properties": {
+            "sm": {
+              "type": "number"
+            },
+            "md": {
+              "type": "number"
+            },
+            "lg": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        "input": {
+          "type": "object",
+          "properties": {
+            "background": {
+              "type": "string"
+            },
+            "borderColor": {
+              "type": "string"
+            },
+            "borderHover": {
+              "type": "string"
+            },
+            "text": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "tooltip": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string"
+            },
+            "background": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "panel": {
+          "type": "object",
+          "properties": {
+            "padding": {
+              "type": "number"
+            },
+            "headerHeight": {
+              "type": "number"
+            },
+            "borderColor": {
+              "type": "string"
+            },
+            "boxShadow": {
+              "type": "string"
+            },
+            "background": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "dropdown": {
+          "type": "object",
+          "properties": {
+            "background": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "overlay": {
+          "type": "object",
+          "properties": {
+            "background": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "dashboard": {
+          "type": "object",
+          "properties": {
+            "background": {
+              "type": "string"
+            },
+            "padding": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        "drawer": {
+          "type": "object",
+          "properties": {
+            "padding": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        "textHighlight": {
+          "type": "object",
+          "properties": {
+            "background": {
+              "type": "string"
+            },
+            "text": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "sidemenu": {
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        "horizontalDrawer": {
+          "type": "object",
+          "properties": {
+            "defaultHeight": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        "table": {
+          "type": "object",
+          "properties": {
+            "rowHoverBackground": {
+              "type": "string"
+            },
+            "rowSelected": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "menu": {
+          "type": "object",
+          "properties": {
+            "borderRadius": {
+              "type": "string",
+              "enum": [
+                "default",
+                "md",
+                "sm",
+                "lg",
+                "pill",
+                "circle"
+              ]
+            },
+            "padding": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        "tag": {
+          "type": "object",
+          "properties": {
+            "colors": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "background": {
+                    "type": "string"
+                  },
+                  "text": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "background",
+                  "text"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false

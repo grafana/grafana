@@ -1,34 +1,37 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { of } from 'rxjs';
 
 import {
   createDataFrame,
-  DataFrame,
+  type DataFrame,
   DataFrameType,
+  type DataSourceApi,
   dateTime,
-  Field,
+  type Field,
   FieldType,
   LogLevel,
-  LogRowModel,
+  type LogRowModel,
   LogsSortOrder,
   PluginExtensionPoints,
-  ScopedVars,
+  type ScopedVars,
   toDataFrame,
 } from '@grafana/data';
-import { DataSourceSrv, getDataSourceSrv, setPluginLinksHook, usePluginLinks } from '@grafana/runtime';
+import { setPluginLinksHook, usePluginLinks } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { createLokiDatasource } from 'app/plugins/datasource/loki/mocks/datasource';
-import { createTempoDatasource } from 'app/plugins/datasource/tempo/test/mocks';
 
 import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../../logsFrame';
+import * as logsUtils from '../../utils';
 import { getFieldSelectorWidth } from '../fieldSelector/fieldSelectorUtils';
 import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
 import { createLogLine } from '../mocks/logRow';
 
-import { emptyContextData, LogDetailsContext, LogDetailsContextData } from './LogDetailsContext';
-import { LogLineDetails, Props } from './LogLineDetails';
-import { LogListContext, LogListContextData } from './LogListContext';
+import { emptyContextData, LogDetailsContext, type LogDetailsContextData } from './LogDetailsContext';
+import { LogLineDetails, type Props } from './LogLineDetails';
+import { LogListContext, type LogListContextData } from './LogListContext';
 import { defaultValue } from './__mocks__/LogListContext';
+import { createTempoDatasource } from './__mocks__/createTempoDatasource';
 
 jest.mock('@openfeature/react-sdk', () => ({
   useBooleanFlagValue: jest.fn().mockReturnValue(false),
@@ -52,8 +55,12 @@ jest.mock('@grafana/assistant', () => {
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn(),
   usePluginLinks: jest.fn(),
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(),
 }));
 
 jest.mock('./LogListContext');
@@ -141,19 +148,36 @@ describe('LogLineDetails', () => {
       links: [],
       isLoading: false,
     });
-    jest.mocked(getDataSourceSrv).mockImplementation(
-      () =>
-        ({
-          get: (uid: string) => {
-            if (uid === 'loki-ds') {
-              return Promise.resolve(lokiDS);
-            } else if (uid === 'tempo-ds') {
-              return Promise.resolve(tempoDS);
-            }
-            return Promise.resolve(null);
-          },
-        }) as unknown as DataSourceSrv
-    );
+    jest.mocked(getDataSourceInstance).mockImplementation((ref) => {
+      const uid = typeof ref === 'string' ? ref : ref?.uid;
+      if (uid === 'loki-ds') {
+        return Promise.resolve(lokiDS as unknown as DataSourceApi);
+      } else if (uid === 'tempo-ds') {
+        return Promise.resolve(tempoDS as unknown as DataSourceApi);
+      }
+      return Promise.resolve(null as unknown as DataSourceApi);
+    });
+  });
+
+  test('Copy log as JSON from header copies structured JSON from the log', async () => {
+    const copyTextSpy = jest.spyOn(logsUtils, 'copyText').mockResolvedValue(undefined);
+
+    await setup(undefined, { labels: { svc: 'api' } });
+
+    await userEvent.click(screen.getByRole('button', { name: /Copy to clipboard/i }));
+    await userEvent.click(screen.getByRole('menuitem', { name: /JSON/i }));
+
+    await waitFor(() => {
+      expect(copyTextSpy).toHaveBeenCalled();
+      const text = copyTextSpy.mock.calls[0][0];
+      const parsed = JSON.parse(text);
+      expect(parsed).toMatchObject({
+        line: expect.any(String),
+        labels: expect.objectContaining({ svc: 'api' }),
+        timeEpochMs: expect.any(Number),
+      });
+    });
+    copyTextSpy.mockRestore();
   });
 
   describe('Toggleable filters', () => {
@@ -218,6 +242,53 @@ describe('LogLineDetails', () => {
       );
     });
   });
+  describe('Filtering by log line string', () => {
+    test('calls onClickFilterString with the log line and refId', async () => {
+      const onClickFilterString = jest.fn();
+      const log = createLogLine({
+        entry: 'some log line',
+        logLevel: LogLevel.error,
+        timeEpochMs: 1546297200000,
+        datasourceUid: lokiDS.uid,
+      });
+
+      await setup({ logs: [log] }, undefined, { onClickFilterString }, { showDetails: [log], currentLog: log });
+
+      await userEvent.click(screen.getByText('Log line'));
+      await userEvent.click(screen.getByLabelText('Filter for this log line'));
+
+      expect(onClickFilterString).toHaveBeenCalledTimes(1);
+      expect(onClickFilterString).toHaveBeenCalledWith('some log line', log.dataFrame.refId);
+    });
+
+    test('calls onClickFilterOutString with the log line and refId', async () => {
+      const onClickFilterOutString = jest.fn();
+      const log = createLogLine({
+        entry: 'some log line',
+        logLevel: LogLevel.error,
+        timeEpochMs: 1546297200000,
+        datasourceUid: lokiDS.uid,
+      });
+
+      await setup({ logs: [log] }, undefined, { onClickFilterOutString }, { showDetails: [log], currentLog: log });
+
+      await userEvent.click(screen.getByText('Log line'));
+      await userEvent.click(screen.getByLabelText('Filter out this log line'));
+
+      expect(onClickFilterOutString).toHaveBeenCalledTimes(1);
+      expect(onClickFilterOutString).toHaveBeenCalledWith('some log line', log.dataFrame.refId);
+    });
+
+    test('does not render the filter buttons when the callbacks are not provided', async () => {
+      await setup(undefined, { labels: { key1: 'label1' } });
+
+      await userEvent.click(screen.getByText('Log line'));
+
+      expect(screen.queryByLabelText('Filter for this log line')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Filter out this log line')).not.toBeInTheDocument();
+    });
+  });
+
   describe('when fields are present', () => {
     test('should render the fields and the log line', async () => {
       await setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
@@ -570,9 +641,7 @@ describe('LogLineDetails', () => {
       });
 
       test('should fallback to a single group of Fields if not supported', async () => {
-        jest.requireMock('@grafana/runtime').getDataSourceSrv = jest.fn().mockImplementation(() => ({
-          get: (uid: string) => Promise.reject(null),
-        }));
+        jest.mocked(getDataSourceInstance).mockImplementation(() => Promise.reject(null));
 
         await setup(
           undefined,
@@ -732,11 +801,12 @@ describe('LogLineDetails', () => {
       expect(screen.queryAllByRole('tab')).toHaveLength(0);
     });
 
+    const logs = [
+      createLogLine({ uid: '1', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'First log' }),
+      createLogLine({ uid: '2', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'Second log' }),
+    ];
+
     test('Renders multiple log details', async () => {
-      const logs = [
-        createLogLine({ uid: '1', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'First log' }),
-        createLogLine({ uid: '2', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'Second log' }),
-      ];
       await setup({ logs }, undefined, undefined, { showDetails: logs, currentLog: logs[1] }, 'No fields to display.');
 
       expect(screen.queryAllByRole('tab')).toHaveLength(2);
@@ -745,6 +815,40 @@ describe('LogLineDetails', () => {
 
       expect(screen.getAllByText('First log')).toHaveLength(1);
       expect(screen.getAllByText('Second log')).toHaveLength(2);
+    });
+
+    test('Can be keyboard navigated down', async () => {
+      const replaceDetails = jest.fn();
+      const focusLogLine = jest.fn();
+
+      await setup({ logs, focusLogLine }, undefined, undefined, {
+        showDetails: logs,
+        currentLog: logs[0],
+        replaceDetails,
+      });
+
+      fireEvent.keyDown(document, { key: 'ArrowDown' });
+
+      expect(replaceDetails).toHaveBeenCalledTimes(1);
+      expect(replaceDetails).toHaveBeenCalledWith(logs[1]);
+      expect(focusLogLine).toHaveBeenCalledWith(logs[1], 'auto');
+    });
+
+    test('Can be keyboard navigated up', async () => {
+      const replaceDetails = jest.fn();
+      const focusLogLine = jest.fn();
+
+      await setup({ logs, focusLogLine }, undefined, undefined, {
+        showDetails: logs,
+        currentLog: logs[1],
+        replaceDetails,
+      });
+
+      fireEvent.keyDown(document, { key: 'ArrowUp' });
+
+      expect(replaceDetails).toHaveBeenCalledTimes(1);
+      expect(replaceDetails).toHaveBeenCalledWith(logs[0]);
+      expect(focusLogLine).toHaveBeenCalledWith(logs[0], 'auto');
     });
   });
 
@@ -818,6 +922,78 @@ describe('LogLineDetails', () => {
     await userEvent.click(screen.getByText('Trace'));
 
     expect(await screen.findByText('Trace view')).toBeInTheDocument();
+  });
+
+  test('Requests the trace by ID when the derived field uses a TraceQL trace-id lookup', async () => {
+    const entry = 'traceId=1234 msg="some message"';
+    const dataFrame = toDataFrame({
+      fields: [
+        { name: 'timestamp', config: {}, type: FieldType.time, values: [1] },
+        { name: 'entry', values: [entry] },
+        {
+          name: 'traceId',
+          values: ['1234'],
+          config: { links: [{ title: 'link title', url: 'localhost:3210/${__value.text}' }] },
+        },
+        { name: 'userId', values: ['5678'] },
+      ],
+    });
+    const log = createLogLine(
+      { entry, dataFrame, entryFieldIndex: 0, rowIndex: 0, datasourceUid: lokiDS.uid },
+      {
+        escape: false,
+        order: LogsSortOrder.Descending,
+        timeZone: 'browser',
+        virtualization: undefined,
+        wrapLogMessage: true,
+        getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame, vars: ScopedVars) => {
+          if (field.config && field.config.links) {
+            return field.config.links.map((link) => {
+              return {
+                href: '/explore',
+                interpolatedParams: {
+                  query: {
+                    datasource: {
+                      uid: tempoDS.uid,
+                    },
+                    refId: 'A',
+                    query: '{trace:id = "abcd1234"}',
+                    queryType: 'traceql',
+                  },
+                },
+                title: 'tempo',
+                target: '_blank',
+                origin: field,
+              };
+            });
+          }
+          return [];
+        },
+      }
+    );
+
+    const querySpy = jest.spyOn(tempoDS, 'query').mockReturnValueOnce(
+      of({
+        data: [
+          createDataFrame({
+            fields: [
+              { name: 'traceID', values: ['5d5d850e24d89509'], type: FieldType.string },
+              { name: 'spanID', values: ['5d5d850e24d89509'], type: FieldType.string },
+            ],
+          }),
+        ],
+      })
+    );
+
+    await setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
+
+    await userEvent.click(screen.getByText('Trace'));
+
+    expect(await screen.findByText('Trace view')).toBeInTheDocument();
+    // The TraceQL lookup must be unwrapped to the bare trace ID so Tempo returns full trace spans.
+    expect(querySpy).toHaveBeenCalledWith(
+      expect.objectContaining({ targets: [expect.objectContaining({ query: 'abcd1234' })] })
+    );
   });
 
   test('Shows a message if the trace cannot be retrieved', async () => {

@@ -12,38 +12,41 @@ import {
   sceneGraph,
   GroupByVariable,
   AdHocFiltersVariable,
-  SceneDataTransformer,
-  SceneGridItem,
+  type SceneDataTransformer,
+  type SceneGridItem,
   SwitchVariable,
 } from '@grafana/scenes';
+import { VariableRefresh } from '@grafana/schema';
 import {
-  AdhocVariableKind,
-  ConstantVariableKind,
-  CustomVariableKind,
-  Spec as DashboardV2Spec,
-  DatasourceVariableKind,
+  type AdhocVariableKind,
+  type ConstantVariableKind,
+  type CustomVariableKind,
+  type Spec as DashboardV2Spec,
+  type DatasourceVariableKind,
   defaultDataQueryKind,
-  GridLayoutItemSpec,
-  GridLayoutSpec,
-  GroupByVariableKind,
-  IntervalVariableKind,
-  QueryVariableKind,
-  SwitchVariableKind,
-  TextVariableKind,
+  type GridLayoutItemSpec,
+  type GridLayoutSpec,
+  type GroupByVariableKind,
+  type IntervalVariableKind,
+  type QueryVariableKind,
+  type SwitchVariableKind,
+  type TextVariableKind,
+  type VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import { AnnoKeyDashboardIsSnapshot } from 'app/features/apiserver/types';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { DashboardRoutes } from 'app/types/dashboard';
 
-import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
+import { type DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
-import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
-import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
-import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
-import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { type AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
+import { type AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
+import { type DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { type RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { type TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
+import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/utils';
 import { validateVariable, validateVizPanel } from '../v2schema/test-helpers';
@@ -270,9 +273,12 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
     // Transformations
     const panelWithTransformations = vizPanels.find((p) => p.state.key === 'panel-1')!;
-    expect((panelWithTransformations.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual(
-      getPanelElement(dash, 'panel-1')!.spec.data.spec.transformations[0].spec
-    );
+    const expectedTransformation = getPanelElement(dash, 'panel-1')!.spec.data.spec.transformations[0];
+    expect((panelWithTransformations.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual({
+      id: expectedTransformation.group,
+      ...expectedTransformation.spec,
+      topic: undefined,
+    });
   });
 
   it('should set panel ds if it is mixed DS', () => {
@@ -363,6 +369,101 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(vizPanels.length).toBe(2);
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.type).toBe('mixed');
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
+  });
+
+  describe('interval variables', () => {
+    it('should handle $___auto value', () => {
+      const dashboard = cloneDeep(defaultDashboard);
+      const intervalVar = dashboard.spec.variables.find((v) => v.kind === 'IntervalVariable') as IntervalVariableKind;
+      intervalVar.spec.current.value = '$__auto';
+      intervalVar.spec.auto = true;
+
+      const scene = transformSaveModelSchemaV2ToScene(dashboard);
+      const variable = scene.state.$variables?.getByName('intervalVar') as IntervalVariable;
+
+      expect(variable.state.value).toBe('$__auto');
+    });
+  });
+
+  describe('default variables', () => {
+    const predefinedVariable = (name: string): VariableKind =>
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      ({
+        kind: 'CustomVariable',
+        spec: {
+          name,
+          current: { text: 'a', value: 'a' },
+          query: 'a,b,c',
+          origin: { type: 'global' },
+        },
+      }) as unknown as VariableKind;
+
+    it('should inject default variables ahead of dashboard variables', () => {
+      const dashboard = cloneDeep(defaultDashboard);
+
+      const scene = transformSaveModelSchemaV2ToScene(dashboard, {
+        uid: 'dashboard-uid',
+        route: DashboardRoutes.Normal,
+        defaultVariables: [predefinedVariable('injectedVar')],
+      });
+
+      const variables = scene.state.$variables?.state.variables!;
+      expect(variables[0].state.name).toBe('injectedVar');
+      expect(variables[0].state.origin).toEqual({ type: 'global' });
+      // Dashboard-local variables are still present after the injected ones.
+      expect(variables.some((v) => v.state.name === 'queryVar')).toBe(true);
+    });
+
+    it('should drop default variables shadowed by a dashboard variable of the same name', () => {
+      const dashboard = cloneDeep(defaultDashboard);
+
+      const scene = transformSaveModelSchemaV2ToScene(dashboard, {
+        uid: 'dashboard-uid',
+        route: DashboardRoutes.Normal,
+        defaultVariables: [predefinedVariable('customVar')],
+      });
+
+      const matching = scene.state.$variables?.state.variables.filter((v) => v.state.name === 'customVar')!;
+      expect(matching).toHaveLength(1);
+      // The dashboard-local variable wins, so no origin is set.
+      expect(matching[0].state.origin).toBeUndefined();
+    });
+  });
+
+  describe('query variables in public dashboard mode', () => {
+    it('forces refresh to never when publicDashboardAccessToken is set, regardless of spec refresh', () => {
+      const originalToken = config.publicDashboardAccessToken;
+      config.publicDashboardAccessToken = 'test-public-token';
+      try {
+        const dashboard = cloneDeep(defaultDashboard);
+        const queryVar = dashboard.spec.variables.find((v) => v.kind === 'QueryVariable') as QueryVariableKind;
+        queryVar.spec.refresh = 'onDashboardLoad';
+
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+        const variable = scene.state.$variables?.getByName('queryVar') as QueryVariable;
+
+        expect(variable.state.refresh).toBe(VariableRefresh.never);
+      } finally {
+        config.publicDashboardAccessToken = originalToken;
+      }
+    });
+
+    it('honors the spec refresh value when not in public dashboard mode', () => {
+      const originalToken = config.publicDashboardAccessToken;
+      config.publicDashboardAccessToken = '';
+      try {
+        const dashboard = cloneDeep(defaultDashboard);
+        const queryVar = dashboard.spec.variables.find((v) => v.kind === 'QueryVariable') as QueryVariableKind;
+        queryVar.spec.refresh = 'onDashboardLoad';
+
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+        const variable = scene.state.$variables?.getByName('queryVar') as QueryVariable;
+
+        expect(variable.state.refresh).toBe(VariableRefresh.onDashboardLoad);
+      } finally {
+        config.publicDashboardAccessToken = originalToken;
+      }
+    });
   });
 
   describe('adhoc variables', () => {
@@ -490,6 +591,28 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       expect(intervalSnapshot.state.value).toBe('1m');
       expect(intervalSnapshot.state.text).toBe('1m');
       expect(intervalSnapshot.state.isReadOnly).toBe(true);
+    });
+
+    it('should not create annotation data layers for snapshots', () => {
+      // Snapshots embed annotation results in the per-panel snapshot query data, so annotation
+      // layers must not be created — they would fire live annotation queries (e.g. the authorized
+      // /api/annotations endpoint, which returns 401 for snapshots).
+      const snapshot: DashboardWithAccessInfo<DashboardV2Spec> = {
+        ...defaultDashboard,
+        metadata: {
+          ...defaultDashboard.metadata,
+          annotations: {
+            ...defaultDashboard.metadata.annotations,
+            [AnnoKeyDashboardIsSnapshot]: 'true',
+          },
+        },
+      };
+
+      const scene = transformSaveModelSchemaV2ToScene(snapshot);
+
+      expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
+      const dataLayers = scene.state.$data as DashboardDataLayerSet;
+      expect(dataLayers.state.annotationLayers).toHaveLength(0);
     });
 
     it('should convert empty defaultKeys array to undefined for adhoc variables', () => {

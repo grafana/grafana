@@ -1,10 +1,9 @@
 import { render, waitFor } from '@testing-library/react';
-import { act } from 'react';
 
 import { config } from '@grafana/runtime';
 
-import { GrafanaDatasource } from '../datasource';
-import { GrafanaQuery, GrafanaQueryType } from '../types';
+import { type GrafanaDatasource } from '../datasource';
+import { type GrafanaQuery, GrafanaQueryType } from '../types';
 
 import { QueryEditor } from './QueryEditor';
 
@@ -37,11 +36,9 @@ describe('QueryEditor', () => {
         queryType: GrafanaQueryType.RandomWalk,
       };
 
-      await act(async () => {
-        render(
-          <QueryEditor datasource={mockDatasource} query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} />
-        );
-      });
+      render(
+        <QueryEditor datasource={mockDatasource} query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} />
+      );
 
       // Wait for async operations to complete
       await waitFor(() => {
@@ -60,11 +57,9 @@ describe('QueryEditor', () => {
         queryType: GrafanaQueryType.RandomWalk,
       };
 
-      await act(async () => {
-        render(
-          <QueryEditor datasource={mockDatasource} query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} />
-        );
-      });
+      render(
+        <QueryEditor datasource={mockDatasource} query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} />
+      );
 
       // Wait for component to settle
       await waitFor(() => {

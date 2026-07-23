@@ -6,13 +6,13 @@ import {
   ContactPointSelector as GrafanaManagedContactPointSelector,
   RoutingTreeSelector,
 } from '@grafana/alerting/unstable';
-import { RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Button, Field, Icon, Input, Label, Stack, Tooltip } from '@grafana/ui';
-import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
-import { ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { ContactPointAction } from 'app/features/alerting/unified/hooks/abilities/types';
+import { type ObjectMatcher, type RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
+import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { matcherToObjectMatcher } from '../../utils/alertmanager';
@@ -31,7 +31,7 @@ interface NotificationPoliciesFilterProps {
 }
 
 const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: NotificationPoliciesFilterProps) => {
-  const [contactPointsSupported, canSeeContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
+  const { granted: canSeeContactPoints } = useContactPointAbility({ action: ContactPointAction.View });
   const { isGrafanaAlertmanager } = useAlertmanager();
   const [searchParams, setSearchParams] = useURLSearchParams();
   const { queryString, contactPoint } = getNotificationPoliciesFilters(searchParams);
@@ -108,7 +108,7 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
           value={queryString ?? ''}
         />
       </Field>
-      {contactPointsSupported && canSeeContactPoints && (
+      {canSeeContactPoints && (
         <Field
           label={t('alerting.notification-policies-filter.label-search-by-contact-point', 'Contact point')}
           noMargin
@@ -152,7 +152,7 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
           )}
         </Field>
       )}
-      {isGrafanaAlertmanager && config.featureToggles.alertingMultiplePolicies && (
+      {isGrafanaAlertmanager && (
         <Field label={t('alerting.multiple-policies-view.policy-tree-filter-label', 'Policy')} noMargin>
           <RoutingTreeSelector
             multi

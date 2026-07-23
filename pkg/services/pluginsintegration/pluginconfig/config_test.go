@@ -5,6 +5,7 @@ import (
 
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/require"
@@ -35,4 +36,15 @@ func TestPluginSettings(t *testing.T) {
 	require.Len(t, ps["secret-plugin"], 2)
 	require.Equal(t, ps["secret-plugin"]["secret_key"], "secret")
 	require.Equal(t, ps["secret-plugin"]["normal_key"], "not a secret")
+}
+
+func TestProvidePluginInstanceConfigMarketplaceLicenseDirectory(t *testing.T) {
+	cfg := &setting.Cfg{
+		Raw:                         ini.Empty(),
+		MarketplaceLicenseDirectory: "/var/lib/grafana/marketplace-licenses",
+	}
+
+	pluginCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+	require.NoError(t, err)
+	require.Equal(t, cfg.MarketplaceLicenseDirectory, pluginCfg.MarketplaceLicenseDirectory)
 }

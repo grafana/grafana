@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	gocache "github.com/patrickmn/go-cache"
@@ -54,7 +56,7 @@ type migrationStatusReader struct {
 	registry *MigrationRegistry
 	cache    *gocache.Cache
 	metrics  *statusReaderMetrics
-	onlyCfg  bool
+	onlyCfg  atomic.Bool
 }
 
 var _ contract.MigrationStatusReader = (*migrationStatusReader)(nil)
@@ -89,7 +91,7 @@ func ProvideMigrationStatusReader(
 			return nil, fmt.Errorf("failed to ensure migration log table: %w", err)
 		}
 		// Can't create migration log table, fall back to config-only mode.
-		reader.onlyCfg = true
+		reader.onlyCfg.Store(true)
 		logger.Warn("Migration log table missing and bootstrap failed, falling back to config-driven resolution", "error", err)
 	}
 	return reader, nil
@@ -124,13 +126,13 @@ func (r *migrationStatusReader) resolveStorageMode(ctx context.Context, gr schem
 		}
 	}
 
-	if r.onlyCfg {
+	if r.onlyCfg.Load() {
 		if !r.migrationLogTableAvailable() {
 			logger.Debug("Migration log table not available, using config for storage mode resolution", "resource", gr.String(), "config_mode", configKey, "resolved_mode", mode)
 			return mode, nil
 		}
 		logger.Info("Migration log table now available, using log-based resolution")
-		r.onlyCfg = false
+		r.onlyCfg.Store(false)
 	}
 
 	// The migration log is the source of truth for "data has been synced".
@@ -178,4 +180,31 @@ func (r *migrationStatusReader) findDefinition(gr schema.GroupResource) (Migrati
 		}
 	}
 	return MigrationDefinition{}, false
+}
+
+// GetFloorVersion implements contract.MigrationStatusReader.
+func (r *migrationStatusReader) GetFloorVersion(gr schema.GroupResource) (string, bool) {
+	for _, def := range r.registry.All() {
+		for _, ri := range def.Resources {
+			if ri.FloorVersion == "" {
+				continue
+			}
+			if floorResourceMatches(gr, ri.GroupResource) {
+				return ri.FloorVersion, true
+			}
+		}
+	}
+	return "", false
+}
+
+// floorResourceMatches reports whether gr is covered by the registered floor
+// GroupResource. Besides an exact match, it accepts plugin-specific subgroups: the
+// datasource migration registers a single "datasource.grafana.app" floor, but dual
+// writing addresses each plugin under its own group (e.g. "prometheus.datasource.grafana.app").
+// Those share the resource and carry the registered group as a suffix.
+func floorResourceMatches(gr, floor schema.GroupResource) bool {
+	if gr == floor {
+		return true
+	}
+	return gr.Resource == floor.Resource && strings.HasSuffix(gr.Group, "."+floor.Group)
 }

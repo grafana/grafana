@@ -1,12 +1,12 @@
-import { Scope, ScopeNode, Store } from '@grafana/data';
+import { type Scope, type ScopeNode, type Store } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
-import { ScopesApiClient } from '../ScopesApiClient';
-import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
-import { ScopeNavigation } from '../dashboards/types';
+import { type ScopesApiClient } from '../ScopesApiClient';
+import { type ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
+import { type ScopeNavigation } from '../dashboards/types';
 
-import { RECENT_SCOPES_KEY, ScopesSelectorService } from './ScopesSelectorService';
-import { RecentScope } from './types';
+import { ScopesSelectorService } from './ScopesSelectorService';
+import { RECENT_SCOPES_KEY } from './recentScopesStorage';
 
 // Mock locationService
 jest.mock('@grafana/runtime', () => ({
@@ -17,11 +17,7 @@ jest.mock('@grafana/runtime', () => ({
   },
   config: {
     ...jest.requireActual('@grafana/runtime').config,
-
-    featureToggles: {
-      ...jest.requireActual('@grafana/runtime').config.featureToggles,
-      useScopeSingleNodeEndpoint: true,
-    },
+    buildInfo: { version: 'test-version' },
   },
 }));
 
@@ -33,16 +29,6 @@ describe('ScopesSelectorService', () => {
   const mockScope: Scope = {
     metadata: {
       name: 'test-scope',
-    },
-    spec: {
-      title: 'test-scope',
-      filters: [],
-    },
-  };
-
-  const mockScope2: Scope = {
-    metadata: {
-      name: 'recent-scope',
     },
     spec: {
       title: 'test-scope',
@@ -155,8 +141,9 @@ describe('ScopesSelectorService', () => {
       expect(service.state.selectedScopes).toEqual([{ scopeId: 'test-scope', scopeNodeId: 'test-scope-node' }]);
     });
 
-    it('should set recent scopes', async () => {
+    it('should not write recent scopes on selectScope (only on applyScopes)', async () => {
       await service.selectScope('test-scope-node');
+      expect(storeValue[RECENT_SCOPES_KEY]).toBeUndefined();
     });
   });
 
@@ -188,14 +175,32 @@ describe('ScopesSelectorService', () => {
       sub.unsubscribe();
     });
 
-    it('should set parent node for recent scopes', async () => {
-      // Load mock node
-      await service.filterNode('', '');
+    it('should store minimal scope format in localStorage', async () => {
+      await service.changeScopes(['test-scope']);
+      expect(JSON.parse(storeValue[RECENT_SCOPES_KEY] as string)).toEqual([
+        { scopeIds: ['test-scope'], version: 'test-version' },
+      ]);
+    });
 
-      await service.changeScopes(['test-scope'], 'test-scope-node');
-      expect(service.state.appliedScopes).toEqual([{ scopeId: 'test-scope', parentNodeId: 'test-scope-node' }]);
-      expect(service.state.nodes).toEqual({ 'test-scope-node': mockNode });
-      expect(storeValue[RECENT_SCOPES_KEY]).toEqual(JSON.stringify([[{ ...mockScope, parentNode: mockNode }]]));
+    it('should omit scopeNodeId when scope has defaultPath', async () => {
+      const scopeWithDefaultPath: Scope = {
+        metadata: { name: 'default-path-scope' },
+        spec: { title: 'Default Path Scope', defaultPath: ['', 'parent', 'leaf'], filters: [] },
+      };
+      apiClient.fetchMultipleScopes.mockResolvedValueOnce([scopeWithDefaultPath]);
+
+      await service.changeScopes(['default-path-scope'], undefined, 'leaf');
+
+      const stored = JSON.parse(storeValue[RECENT_SCOPES_KEY] as string);
+      expect(stored[0].scopeNodeId).toBeUndefined();
+      expect(stored[0].scopeIds).toEqual(['default-path-scope']);
+    });
+
+    it('should store scopeNodeId when scope lacks defaultPath', async () => {
+      await service.changeScopes(['test-scope'], undefined, 'scope-node-1');
+
+      const stored = JSON.parse(storeValue[RECENT_SCOPES_KEY] as string);
+      expect(stored[0].scopeNodeId).toBe('scope-node-1');
     });
 
     it('should set scopeNodeId for the first scope only', async () => {
@@ -488,194 +493,6 @@ describe('ScopesSelectorService', () => {
       await service.changeScopes(['test-scope']);
 
       expect(dashboardsService.fetchDashboards).toHaveBeenCalledWith(['test-scope']);
-    });
-  });
-
-  describe('getRecentScopes', () => {
-    it('should parse and filter scopes', async () => {
-      await service.filterNode('', '');
-      await service.selectScope('test-scope-node');
-      await service.apply();
-      storeValue[RECENT_SCOPES_KEY] = JSON.stringify([[mockScope2], [mockScope]]);
-
-      const recentScopes = service.getRecentScopes();
-      expect(recentScopes).toEqual([[mockScope2]]);
-    });
-
-    it('should work with old version', async () => {
-      await service.filterNode('', '');
-      await service.selectScope('test-scope-node');
-      await service.apply();
-      storeValue[RECENT_SCOPES_KEY] = JSON.stringify([
-        [{ scope: mockScope2, path: [] }],
-        [{ scope: mockScope, path: [] }],
-      ]);
-
-      const recentScopes = service.getRecentScopes();
-      expect(recentScopes).toEqual([[mockScope2]]);
-    });
-
-    it('should return empty on wrong data', async () => {
-      storeValue[RECENT_SCOPES_KEY] = JSON.stringify([{ scope: mockScope2 }]);
-
-      let recentScopes = service.getRecentScopes();
-      expect(recentScopes).toEqual([]);
-
-      storeValue[RECENT_SCOPES_KEY] = JSON.stringify([]);
-      recentScopes = service.getRecentScopes();
-      expect(recentScopes).toEqual([]);
-
-      storeValue[RECENT_SCOPES_KEY] = JSON.stringify(null);
-      recentScopes = service.getRecentScopes();
-      expect(recentScopes).toEqual([]);
-
-      storeValue[RECENT_SCOPES_KEY] = JSON.stringify([[{ metadata: { noName: 'test' } }]]);
-      recentScopes = service.getRecentScopes();
-      expect(recentScopes).toEqual([]);
-    });
-  });
-
-  describe('nodes from local storage', () => {
-    it('should return parent nodes from recent scopes', async () => {
-      // Set mock scopes with parent node
-      const mockScopeWithParentNode: RecentScope = {
-        metadata: { name: 'test-scope' },
-        spec: {
-          title: 'test-scope',
-          filters: [],
-        },
-        parentNode: {
-          metadata: { name: 'test-scope-node' },
-          spec: {
-            linkId: 'test-scope',
-            linkType: 'scope',
-            parentName: '',
-            nodeType: 'container',
-            title: 'test-scope-node',
-          },
-        },
-      };
-
-      // Set store value BEFORE creating the service
-      storeValue[RECENT_SCOPES_KEY] = JSON.stringify([[mockScopeWithParentNode]]);
-
-      // Create service with the existing store (which now has the data)
-      service = new ScopesSelectorService(apiClient, dashboardsService, store as Store);
-      expect(service.state.nodes).toEqual({ 'test-scope-node': mockScopeWithParentNode.parentNode });
-    });
-
-    it('should remove parent node if it is not valid', async () => {
-      // Mock with valid parent node
-      const mockScopeWithValidParentNode: RecentScope = {
-        metadata: { name: 'test-scope' },
-        spec: {
-          title: 'test-scope',
-          filters: [],
-        },
-        parentNode: {
-          metadata: { name: 'test-scope-node' },
-          spec: {
-            linkId: 'test-scope',
-            linkType: 'scope',
-            parentName: '',
-            nodeType: 'container',
-            title: 'test-scope-node',
-          },
-        },
-      };
-
-      // lacks name and spec
-      const mockScopeWithInvalidParentNode: RecentScope = {
-        metadata: { name: 'test-scope' },
-        spec: {
-          title: 'test-scope',
-          filters: [],
-        },
-        parentNode: {
-          //@ts-expect-error
-          metadata: {},
-          //@ts-expect-error
-          spec: {},
-        },
-      };
-
-      // Set store value BEFORE creating the service
-      storeValue[RECENT_SCOPES_KEY] = JSON.stringify([
-        [mockScopeWithInvalidParentNode],
-        [mockScopeWithValidParentNode],
-      ]);
-
-      // Create service with the existing store (which now has the data)
-      service = new ScopesSelectorService(apiClient, dashboardsService, store as Store);
-      expect(service.state.nodes).toEqual({ 'test-scope-node': mockScopeWithValidParentNode.parentNode });
-    });
-
-    it('should validate parent nodes across all recent scope sets', async () => {
-      // Create multiple scope sets with various parent node validity
-      const mockScopeWithValidParentNode: RecentScope = {
-        metadata: { name: 'valid-scope' },
-        spec: {
-          title: 'valid-scope',
-          filters: [],
-        },
-        parentNode: {
-          metadata: { name: 'valid-parent-node' },
-          spec: {
-            linkId: 'valid-scope',
-            linkType: 'scope',
-            parentName: '',
-            nodeType: 'container',
-            title: 'valid-parent-node',
-          },
-        },
-      };
-
-      const mockScopeWithInvalidParentNode1: RecentScope = {
-        metadata: { name: 'invalid-scope-1' },
-        spec: {
-          title: 'invalid-scope-1',
-          filters: [],
-        },
-        parentNode: {
-          //@ts-expect-error
-          metadata: {},
-          //@ts-expect-error
-          spec: {},
-        },
-      };
-
-      const mockScopeWithInvalidParentNode2: RecentScope = {
-        metadata: { name: 'invalid-scope-2' },
-        spec: {
-          title: 'invalid-scope-2',
-          filters: [],
-        },
-        parentNode: {
-          metadata: { name: 'invalid-parent-node-2' }, // missing spec
-          //@ts-expect-error - intentionally invalid spec for testing
-          spec: {},
-        },
-      };
-
-      // Set store value with multiple scope sets - some with invalid parent nodes
-      storeValue[RECENT_SCOPES_KEY] = JSON.stringify([
-        [mockScopeWithInvalidParentNode1],
-        [mockScopeWithValidParentNode],
-        [mockScopeWithInvalidParentNode2],
-      ]);
-
-      // Create service with the existing store
-      service = new ScopesSelectorService(apiClient, dashboardsService, store as Store);
-
-      // Should only include the valid parent node
-      expect(service.state.nodes).toEqual({ 'valid-parent-node': mockScopeWithValidParentNode.parentNode });
-
-      // Verify that the invalid parent nodes were removed from the stored data
-      const recentScopes = service.getRecentScopes();
-      expect(recentScopes).toHaveLength(3);
-      expect(recentScopes[0][0].parentNode).toBeUndefined(); // invalid parent node should be removed
-      expect(recentScopes[1][0].parentNode).toEqual(mockScopeWithValidParentNode.parentNode); // valid parent node should remain
-      expect(recentScopes[2][0].parentNode).toBeUndefined(); // invalid parent node should be removed
     });
   });
 
@@ -1018,7 +835,33 @@ describe('ScopesSelectorService', () => {
   });
 
   describe('redirect on scope selection', () => {
-    it('should redirect to the first scopeNavigation with /d/ URL when current URL is not a scopeNavigation', async () => {
+    const mockNodeWithRedirect = (redirectPath: string): ScopeNode => ({
+      metadata: { name: 'test-scope-node' },
+      spec: {
+        linkId: 'test-scope',
+        linkType: 'scope',
+        parentName: '',
+        nodeType: 'leaf',
+        title: 'test-scope-node',
+        redirectPath,
+      },
+    });
+
+    const setupNodeWithRedirect = async (redirectPath: string) => {
+      const node = mockNodeWithRedirect(redirectPath);
+      apiClient.fetchNodes = jest
+        .fn()
+        .mockImplementation((options: { parent?: string; query?: string; limit?: number }) => {
+          if (options.parent === '' && !options.query) {
+            return [node];
+          }
+          return [];
+        });
+      await service.filterNode('', '');
+      await service.selectScope('test-scope-node');
+    };
+
+    it('should NOT redirect when scope has no redirectPath even if scopeNavigations exist', async () => {
       dashboardsService.state.scopeNavigations = [
         {
           spec: {
@@ -1038,23 +881,24 @@ describe('ScopesSelectorService', () => {
 
       await service.changeScopes(['test-scope']);
 
-      expect(locationService.push).toHaveBeenCalledWith('/d/dashboard1');
+      expect(locationService.push).not.toHaveBeenCalled();
     });
 
-    it('should NOT redirect when the first scopeNavigation does not contain /d/ (e.g., logs drilldown)', async () => {
+    it('should NOT redirect when there are no scopeNavigations and no redirectPath', async () => {
+      dashboardsService.state.scopeNavigations = [];
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
+
+      await service.changeScopes(['test-scope']);
+
+      expect(locationService.push).not.toHaveBeenCalled();
+    });
+
+    it('should NOT redirect when scope node is undefined', async () => {
       dashboardsService.state.scopeNavigations = [
         {
-          spec: {
-            scope: 'test-scope',
-            url: '/explore',
-          },
-          status: {
-            title: 'Explore',
-            groups: [],
-          },
-          metadata: {
-            name: 'explore1',
-          },
+          spec: { scope: 'test-scope', url: '/d/dashboard1' },
+          status: { title: 'Dashboard 1', groups: [] },
+          metadata: { name: 'dashboard1' },
         },
       ];
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
@@ -1064,7 +908,35 @@ describe('ScopesSelectorService', () => {
       expect(locationService.push).not.toHaveBeenCalled();
     });
 
-    it('should NOT redirect when current URL matches a scopeNavigation', async () => {
+    it('should redirect to redirectPath when scope node has explicit redirectPath', async () => {
+      await setupNodeWithRedirect('/custom-redirect-url');
+
+      await service.apply();
+
+      expect(locationService.push).toHaveBeenCalledWith('/custom-redirect-url');
+    });
+
+    it('should redirect to redirectPath even when scopeNavigations exist', async () => {
+      await setupNodeWithRedirect('/priority-redirect');
+
+      dashboardsService.state.scopeNavigations = [
+        {
+          spec: { scope: 'test-scope', url: '/d/dashboard1' },
+          status: { title: 'Dashboard 1', groups: [] },
+          metadata: { name: 'dashboard1' },
+        },
+      ];
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
+
+      await service.apply();
+
+      expect(locationService.push).toHaveBeenCalledWith('/priority-redirect');
+      expect(locationService.push).toHaveBeenCalledTimes(1);
+    });
+
+    it('should NOT redirect to redirectPath when current URL matches a scopeNavigation', async () => {
+      await setupNodeWithRedirect('/custom-redirect-url');
+
       dashboardsService.state.scopeNavigations = [
         {
           spec: {
@@ -1082,26 +954,95 @@ describe('ScopesSelectorService', () => {
       ];
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/dashboard1' });
 
-      await service.changeScopes(['test-scope']);
+      await service.apply();
 
       expect(locationService.push).not.toHaveBeenCalled();
     });
 
-    it('should NOT redirect when there are no scopeNavigations', async () => {
+    it('should NOT redirect when already on the redirectPath', async () => {
+      await setupNodeWithRedirect('/custom-redirect-url');
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/custom-redirect-url' });
+
+      await service.apply();
+
+      expect(locationService.push).not.toHaveBeenCalled();
+    });
+
+    it('should NOT redirect when redirects are disabled', async () => {
+      service.setRedirectEnabled(false);
+      await setupNodeWithRedirect('/custom-redirect-url');
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/some-other-dashboard' });
+
+      await service.apply();
+
+      expect(locationService.push).not.toHaveBeenCalled();
+    });
+
+    it('should NOT redirect when the image renderer binding is present', async () => {
+      (window as { __grafanaImageRendererMessageChannel?: unknown }).__grafanaImageRendererMessageChannel = jest.fn();
+
+      try {
+        await setupNodeWithRedirect('/custom-redirect-url');
+        (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/some-other-dashboard' });
+
+        await service.apply();
+        expect(locationService.push).not.toHaveBeenCalled();
+      } finally {
+        delete (window as { __grafanaImageRendererMessageChannel?: unknown }).__grafanaImageRendererMessageChannel;
+      }
+    });
+
+    it('should redirect again after re-enabling redirects', async () => {
+      await setupNodeWithRedirect('/custom-redirect-url');
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/some-other-dashboard' });
+
+      // Disable, then re-enable — the flag should be toggleable back on.
+      service.setRedirectEnabled(false);
+      service.setRedirectEnabled(true);
+
+      await service.apply();
+
+      expect(locationService.push).toHaveBeenCalledWith('/custom-redirect-url');
+    });
+
+    it('should redirect to redirectPath after resolving scope node from defaultPath', async () => {
+      const scope: Scope = {
+        metadata: { name: 'scope-sea-1' },
+        spec: {
+          title: 'Seattle Datacenter 1',
+          defaultPath: ['region-us-west', 'country-usa', 'city-seattle', 'datacenter-sea-1'],
+          filters: [],
+        },
+      };
+      const nodeWithRedirect: ScopeNode = {
+        metadata: { name: 'datacenter-sea-1' },
+        spec: {
+          nodeType: 'leaf',
+          title: 'SEA-1',
+          parentName: 'city-seattle',
+          linkType: 'scope',
+          linkId: 'scope-sea-1',
+          redirectPath: '/d/from-default-path',
+        },
+      };
+
+      apiClient.fetchMultipleScopes = jest.fn().mockResolvedValue([scope]);
+      apiClient.fetchMultipleScopeNodes = jest.fn().mockResolvedValue([nodeWithRedirect]);
       dashboardsService.state.scopeNavigations = [];
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
 
-      await service.changeScopes(['test-scope']);
+      await service.changeScopes(['scope-sea-1']);
 
-      expect(locationService.push).not.toHaveBeenCalled();
+      expect(locationService.push).toHaveBeenCalledWith('/d/from-default-path');
     });
 
-    it('should NOT redirect when scopeNavigation does not have a url property', async () => {
+    it('should NOT redirect when scope navigation entry has no url property', async () => {
+      await setupNodeWithRedirect('/custom-redirect-url');
+
       dashboardsService.state.scopeNavigations = [
         {
           spec: {
             scope: 'test-scope',
-            // Missing url property
           },
           status: {
             title: 'Dashboard 1',
@@ -1114,201 +1055,9 @@ describe('ScopesSelectorService', () => {
       ] as unknown as ScopeNavigation[];
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
 
-      await service.changeScopes(['test-scope']);
-
-      expect(locationService.push).not.toHaveBeenCalled();
-    });
-
-    it('should handle multiple scopeNavigations and redirect to the first dashboard one', async () => {
-      dashboardsService.state.scopeNavigations = [
-        {
-          spec: {
-            scope: 'test-scope',
-            url: '/d/first-dashboard',
-          },
-          status: {
-            title: 'First Dashboard',
-            groups: [],
-          },
-          metadata: {
-            name: 'first-dashboard',
-          },
-        },
-        {
-          spec: {
-            scope: 'test-scope',
-            url: '/d/second-dashboard',
-          },
-          status: {
-            title: 'Second Dashboard',
-            groups: [],
-          },
-          metadata: {
-            name: 'second-dashboard',
-          },
-        },
-      ];
-      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
-
-      await service.changeScopes(['test-scope']);
-
-      // Should redirect to the first one
-      expect(locationService.push).toHaveBeenCalledWith('/d/first-dashboard');
-      expect(locationService.push).toHaveBeenCalledTimes(1);
-    });
-
-    it('should NOT redirect when redirects are disabled', async () => {
-      service.setRedirectEnabled(false);
-
-      dashboardsService.state.scopeNavigations = [
-        {
-          spec: {
-            scope: 'test-scope',
-            url: '/d/dashboard1',
-          },
-          status: {
-            title: 'Dashboard 1',
-            groups: [],
-          },
-          metadata: {
-            name: 'dashboard1',
-          },
-        },
-      ];
-      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/some-other-dashboard' });
-
-      await service.changeScopes(['test-scope']);
-
-      expect(locationService.push).not.toHaveBeenCalled();
-    });
-
-    it('should redirect again after re-enabling redirects', async () => {
-      dashboardsService.state.scopeNavigations = [
-        {
-          spec: {
-            scope: 'test-scope',
-            url: '/d/dashboard1',
-          },
-          status: {
-            title: 'Dashboard 1',
-            groups: [],
-          },
-          metadata: {
-            name: 'dashboard1',
-          },
-        },
-      ];
-      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/some-other-dashboard' });
-
-      // Disable, then re-enable — the flag should be toggleable back on.
-      service.setRedirectEnabled(false);
-      service.setRedirectEnabled(true);
-
-      await service.changeScopes(['test-scope']);
-
-      expect(locationService.push).toHaveBeenCalledWith('/d/dashboard1');
-    });
-
-    it('should redirect to redirectUrl when scope node has explicit redirectUrl', async () => {
-      const mockNodeWithRedirect: ScopeNode = {
-        metadata: { name: 'test-scope-node' },
-        spec: {
-          linkId: 'test-scope',
-          linkType: 'scope',
-          parentName: '',
-          nodeType: 'leaf',
-          title: 'test-scope-node',
-          redirectPath: '/custom-redirect-url',
-        },
-      };
-
-      // Mock fetchNodes to return the node with redirectPath
-      apiClient.fetchNodes = jest
-        .fn()
-        .mockImplementation((options: { parent?: string; query?: string; limit?: number }) => {
-          if (options.parent === '' && !options.query) {
-            return [mockNodeWithRedirect];
-          } else {
-            return [];
-          }
-        });
-
-      // First update the node to populate the service state
-      await service.filterNode('', '');
-
-      // Then select the scope to set scopeNodeId in selectedScopes
-      await service.selectScope('test-scope-node');
-
-      // Then apply to trigger the redirect
       await service.apply();
 
       expect(locationService.push).toHaveBeenCalledWith('/custom-redirect-url');
-    });
-
-    it('should prioritize redirectUrl over scope navigation fallback', async () => {
-      const mockNodeWithRedirect: ScopeNode = {
-        metadata: { name: 'test-scope-node' },
-        spec: {
-          linkId: 'test-scope',
-          linkType: 'scope',
-          parentName: '',
-          nodeType: 'leaf',
-          title: 'test-scope-node',
-          redirectPath: '/priority-redirect',
-        },
-      };
-
-      const mockNavigations: ScopeNavigation[] = [
-        {
-          spec: { scope: 'test-scope', url: '/d/dashboard1' },
-          status: { title: 'Dashboard 1', groups: [] },
-          metadata: { name: 'dashboard1' },
-        },
-      ];
-
-      // Mock fetchNodes to return the node with redirectPath
-      apiClient.fetchNodes = jest
-        .fn()
-        .mockImplementation((options: { parent?: string; query?: string; limit?: number }) => {
-          if (options.parent === '' && !options.query) {
-            return [mockNodeWithRedirect];
-          } else {
-            return [];
-          }
-        });
-
-      dashboardsService.state.scopeNavigations = mockNavigations;
-      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
-
-      // First update the node to populate the service state
-      await service.filterNode('', '');
-
-      // Then select the scope to set scopeNodeId in selectedScopes
-      await service.selectScope('test-scope-node');
-
-      // Then apply to trigger the redirect
-      await service.apply();
-
-      // Should use redirectPath, not scope navigation
-      expect(locationService.push).toHaveBeenCalledWith('/priority-redirect');
-      expect(locationService.push).toHaveBeenCalledTimes(1);
-    });
-
-    it('should fall back to scope navigation when scope node is undefined', async () => {
-      // Don't add the node to the service state, so it will be undefined
-      dashboardsService.state.scopeNavigations = [
-        {
-          spec: { scope: 'test-scope', url: '/d/dashboard1' },
-          status: { title: 'Dashboard 1', groups: [] },
-          metadata: { name: 'dashboard1' },
-        },
-      ];
-      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
-
-      await service.changeScopes(['test-scope']);
-
-      // Should fall back to scope navigation since scope node is undefined
-      expect(locationService.push).toHaveBeenCalledWith('/d/dashboard1');
     });
   });
 
@@ -1678,6 +1427,33 @@ describe('ScopesSelectorService', () => {
       await service.changeScopes(['scope-empty']);
 
       expect(apiClient.fetchMultipleScopeNodes).not.toHaveBeenCalled();
+    });
+
+    it('should backfill scopeNodeId into appliedScopes from defaultPath when initially absent', async () => {
+      apiClient.fetchMultipleScopes = jest.fn().mockResolvedValue([scopeWithDefaultPath]);
+      apiClient.fetchMultipleScopeNodes = jest
+        .fn()
+        .mockResolvedValue([regionNode, countryNode, cityNode, datacenterNode]);
+
+      // Call without scopeNodeId (simulates URL load without scope_node)
+      await service.changeScopes(['scope-sea-1']);
+
+      // scopeNodeId should be backfilled from defaultPath's last element
+      expect(service.state.appliedScopes[0].scopeNodeId).toBe('datacenter-sea-1');
+      expect(service.state.selectedScopes[0].scopeNodeId).toBe('datacenter-sea-1');
+    });
+
+    it('should not overwrite existing scopeNodeId when defaultPath is present', async () => {
+      apiClient.fetchMultipleScopes = jest.fn().mockResolvedValue([scopeWithDefaultPath]);
+      apiClient.fetchMultipleScopeNodes = jest
+        .fn()
+        .mockResolvedValue([regionNode, countryNode, cityNode, datacenterNode]);
+
+      // Call with an explicit scopeNodeId
+      await service.changeScopes(['scope-sea-1'], undefined, 'explicit-node');
+
+      // Should keep the explicit value, not overwrite from defaultPath
+      expect(service.state.appliedScopes[0].scopeNodeId).toBe('explicit-node');
     });
   });
 

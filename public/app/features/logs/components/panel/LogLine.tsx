@@ -1,20 +1,20 @@
 import { css } from '@emotion/css';
 import {
-  CSSProperties,
+  type CSSProperties,
   memo,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
-  MouseEvent,
+  type MouseEvent,
   useLayoutEffect,
 } from 'react';
 import Highlighter from 'react-highlight-words';
 import { useIntersection } from 'react-use';
 import tinycolor from 'tinycolor2';
 
-import { findHighlightChunksInText, GrafanaTheme2, LogsDedupStrategy, TimeRange } from '@grafana/data';
+import { findHighlightChunksInText, type GrafanaTheme2, LogsDedupStrategy, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Icon, Tooltip } from '@grafana/ui';
 
@@ -28,12 +28,12 @@ import { InlineLogLineDetails } from './LogLineDetails';
 import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPermalinked, useLogIsPinned, useLogListContext } from './LogListContext';
 import { useLogListSearchContext } from './LogListSearchContext';
-import { getNormalizedFieldName, LogListModel } from './processing';
+import { getNormalizedFieldName, type LogListModel } from './processing';
 import {
   FIELD_GAP_MULTIPLIER,
   getLogLineDOMHeight,
-  LogFieldDimension,
-  LogLineVirtualization,
+  type LogFieldDimension,
+  type LogLineVirtualization,
   DEFAULT_LINE_HEIGHT,
 } from './virtualization';
 
@@ -360,7 +360,9 @@ const Log = memo(
           // When logs are unwrapped, we want an empty column space to align with other log lines.
         }
         {showLevel && (log.displayLevel || !wrapLogMessage) && (
-          <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel} </span>
+          <span className={`${styles.level} level-${log.logLevel} field`} title={log.logLevel}>
+            {log.displayLevel}{' '}
+          </span>
         )}
         {showUniqueLabels && log.uniqueLabels && (
           <span className="field">
@@ -538,7 +540,7 @@ export const getStyles = (
     warning: '#FBAD37',
     debug: '#6E9FFF',
     trace: '#6ed0e0',
-    info: '#6CCF8E',
+    info: '#6E9FFF',
     metadata: theme.colors.text.secondary,
     default: colorDefault,
     parsedField: theme.colors.text.secondary,
@@ -546,6 +548,10 @@ export const getStyles = (
   };
 
   const hoverColor = tinycolor(theme.colors.background.canvas).darken(11).toRgbString();
+  const pinnedColor = tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString();
+  const detailsColor = tinycolor(theme.colors.background.canvas)
+    .darken(theme.isDark ? 2 : 5)
+    .toRgbString();
 
   return {
     logLine: css({
@@ -557,6 +563,10 @@ export const getStyles = (
       wordBreak: 'break-all',
       '&:hover': {
         background: hoverColor,
+        // Keep the sticky menu background in sync with the hovered log line.
+        '& .log-line-menu': {
+          background: hoverColor,
+        },
       },
       '&.infinite-scroll': {
         '&::before': {
@@ -623,19 +633,36 @@ export const getStyles = (
       lineHeight: theme.typography.body.lineHeight,
     }),
     detailsDisplayed: css({
-      background: tinycolor(theme.colors.background.canvas)
-        .darken(theme.isDark ? 2 : 5)
-        .toRgbString(),
+      background: detailsColor,
+      '& .log-line-menu': {
+        background: detailsColor,
+      },
     }),
     currentLog: css({
       background: hoverColor,
       fontWeight: theme.typography.fontWeightBold,
+      '& .log-line-menu': {
+        background: hoverColor,
+      },
     }),
     pinnedLogLine: css({
-      backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
+      backgroundColor: pinnedColor,
+      // The pinned highlight is translucent, so layer it over the panel background to keep the sticky menu opaque.
+      '& .log-line-menu': {
+        background: `linear-gradient(${pinnedColor}, ${pinnedColor}), ${theme.colors.background.primary}`,
+      },
     }),
     permalinkedLogLine: css({
-      backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
+      backgroundColor: pinnedColor,
+      '& .log-line-menu': {
+        background: `linear-gradient(${pinnedColor}, ${pinnedColor}), ${theme.colors.background.primary}`,
+      },
+    }),
+    menuWrapper: css({
+      background: theme.colors.background.primary,
+      left: 0,
+      position: 'sticky',
+      zIndex: 1,
     }),
     menuIcon: css({
       height: virtualization?.getLineHeight() ?? DEFAULT_LINE_HEIGHT,
@@ -696,6 +723,9 @@ export const getStyles = (
       },
       '&.level-debug': {
         color: colors.debug,
+      },
+      '&.level-trace': {
+        color: colors.trace,
       },
     }),
     loadMoreButton: css({

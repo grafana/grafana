@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   useAbsoluteLayout,
   useExpanded,
@@ -8,7 +8,7 @@ import {
   useSortBy,
   useTable,
 } from 'react-table';
-import { VariableSizeList } from 'react-window';
+import { type VariableSizeList } from 'react-window';
 
 import { FieldType, ReducerID, getRowUniqueId, getFieldMatcher } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -19,9 +19,10 @@ import { useTheme2 } from '../../../themes/ThemeContext';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../../Pagination/Pagination';
 import { TableCellInspector } from '../TableCellInspector';
+import { hasGeoCell, LazyOpenLayersProvider } from '../geo';
 import { useFixScrollbarContainer, useResetVariableListSizeCache } from '../hooks';
 import { getInitialState, useTableStateReducer } from '../reducer';
-import { FooterItem, GrafanaTableState, InspectCell, TableRTProps as Props } from '../types';
+import { type FooterItem, type GrafanaTableState, type InspectCell, type TableRTProps as Props } from '../types';
 import {
   getColumns,
   sortCaseInsensitive,
@@ -153,6 +154,7 @@ export const Table = memo((props: Props) => {
   });
 
   const hasUniqueId = !!data.meta?.uniqueRowIdFields?.length;
+  const tableHasGeoCell = useMemo(() => hasGeoCell(data), [data]);
 
   const options: any = useMemo(() => {
     // This is a bit hard to type with the react-table types here, the reducer does not actually match with the
@@ -281,6 +283,10 @@ export const Table = memo((props: Props) => {
   );
 
   const itemCount = enablePagination ? page.length : rows.length;
+
+  // Virtualization means only the visible rows exist in the DOM, so we announce the real
+  // row count to screen readers. ARIA row counts are 1-based and include the header row.
+  const ariaRowCount = (noHeader ? 0 : 1) + rows.length;
   let paginationEl = null;
   if (enablePagination) {
     const itemsRangeStart = state.pageIndex * state.pageSize + 1;
@@ -330,12 +336,13 @@ export const Table = memo((props: Props) => {
     });
   }
 
-  return (
+  const rendered = (
     <>
       <div
         {...getTableProps()}
         className={tableStyles.table}
         aria-label={ariaLabel}
+        aria-rowcount={ariaRowCount}
         role="table"
         ref={tableDivRef}
         style={{ width, height }}
@@ -359,6 +366,7 @@ export const Table = memo((props: Props) => {
                   headerHeight={headerHeight}
                   rowHeight={tableStyles.rowHeight}
                   itemCount={itemCount}
+                  noHeader={noHeader}
                   pageIndex={state.pageIndex}
                   listHeight={listHeight}
                   listRef={listRef}
@@ -407,6 +415,16 @@ export const Table = memo((props: Props) => {
         />
       )}
     </>
+  );
+
+  if (!tableHasGeoCell) {
+    return rendered;
+  }
+
+  return (
+    <Suspense fallback={rendered}>
+      <LazyOpenLayersProvider>{rendered}</LazyOpenLayersProvider>
+    </Suspense>
   );
 });
 

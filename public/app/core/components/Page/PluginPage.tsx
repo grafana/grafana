@@ -1,6 +1,7 @@
 import { useContext } from 'react';
 
-import { PluginPageProps } from '@grafana/runtime';
+import { selectors } from '@grafana/e2e-selectors';
+import { type PluginPageProps } from '@grafana/runtime';
 import { PluginPageContext } from 'app/features/plugins/components/PluginPageContext';
 
 import { Page } from './Page';
@@ -27,6 +28,8 @@ export function PluginPage({
       info={info}
       subTitle={subTitle}
       background={background}
+      data-testid={context.pluginId ? selectors.components.Plugins.appPage(context.pluginId) : undefined}
+      data-plugin-id={context.pluginId}
     >
       <Page.Contents>{children}</Page.Contents>
     </Page>

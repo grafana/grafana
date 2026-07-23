@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { getDragStyles, useStyles2, useTheme2 } from '@grafana/ui';
@@ -8,7 +8,7 @@ import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/const
 
 import { useEditPaneCollapsed } from '../../edit-pane/shared';
 import { getDashboardSceneFor } from '../../utils/utils';
-import { PanelEditor } from '../PanelEditor';
+import { type PanelEditor } from '../PanelEditor';
 import { useSnappingSplitter } from '../splitter/useSnappingSplitter';
 import { useScrollReflowLimit } from '../useScrollReflowLimit';
 
@@ -17,7 +17,7 @@ import { QUERY_EDITOR_BANNER_DISMISSED_KEY, QUERY_EDITOR_SIDEBAR_SIZE_KEY, Sideb
 const CONTROLS_ROW_HEIGHT = 'auto';
 const MIN_SIDEBAR_RATIO = 0.1;
 const MAX_SIDEBAR_RATIO = 0.5;
-const MIN_SIDEBAR_PIXELS = 220;
+const MIN_SIDEBAR_PIXELS = 200;
 const vizResizerClassName = css({ height: 2, width: '100%' });
 // Pre-mount placeholder — useLayoutEffect replaces this with the responsive default before the first paint.
 const FALLBACK_SIDEBAR_RATIO = 0.25;
@@ -186,7 +186,6 @@ export function useVizAndDataPaneLayout(
 ) {
   const dashboard = getDashboardSceneFor(model);
   const { dataPane, tableView } = model.useState();
-  const panel = model.getPanel();
   const { controls } = dashboard.useState();
   const [sidebarSize = SidebarSize.Mini, setSidebarSize] = useLocalStorage<SidebarSize>(
     QUERY_EDITOR_SIDEBAR_SIZE_KEY,
@@ -194,8 +193,6 @@ export function useVizAndDataPaneLayout(
   );
 
   const isScrollingLayout = useScrollReflowLimit();
-
-  const panelToShow = tableView ?? panel;
 
   const sidebarResize = useRatioResize({
     direction: 'horizontal',
@@ -231,8 +228,10 @@ export function useVizAndDataPaneLayout(
   return {
     scene: {
       dataPane,
-      panelToShow,
+      panel: model.getPanel(),
+      tableView,
       controls,
+      dashboard,
     },
     layout: {
       sidebarSize,

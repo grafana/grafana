@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { CollapsableSection, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
@@ -69,14 +69,18 @@ export function RenamedResourcesList({ renamedReceivers, renamedTimeIntervals }:
   return (
     <Stack direction="column" gap={1}>
       <CollapsibleRenameList
-        label={t('alerting.import-to-gma.renamed-receivers', '{{count}} contact points will be renamed', {
+        label={t('alerting.import-to-gma.renamed-receivers', '', {
           count: renamedReceivers.length,
+          defaultValue_one: '{{count}} contact points will be renamed',
+          defaultValue_other: '{{count}} contact points will be renamed',
         })}
         items={renamedReceivers}
       />
       <CollapsibleRenameList
-        label={t('alerting.import-to-gma.renamed-intervals', '{{count}} time intervals will be renamed', {
+        label={t('alerting.import-to-gma.renamed-intervals', '', {
           count: renamedTimeIntervals.length,
+          defaultValue_one: '{{count}} time intervals will be renamed',
+          defaultValue_other: '{{count}} time intervals will be renamed',
         })}
         items={renamedTimeIntervals}
       />

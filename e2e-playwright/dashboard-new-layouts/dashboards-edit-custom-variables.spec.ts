@@ -1,15 +1,15 @@
-import { Locator } from '@playwright/test';
+import { type Locator } from '@playwright/test';
 
-import { test, expect, DashboardPage, E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { test, expect } from '@grafana/plugin-e2e';
 
-import { flows } from './utils';
+import { Controls, Panel, Sidebar } from './page-objects';
+import { flows, type Variable } from './utils';
 
 test.use({
   featureToggles: {
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
     groupByVariable: true,
-    multiPropsVariables: false,
   },
 });
 
@@ -26,187 +26,165 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    let addButton: Locator | undefined;
-    let rows: Locator | undefined;
-    let valueInputs: Locator | undefined;
-    let labelInputs: Locator | undefined;
-    let deleteButtons: Locator | undefined;
-
-    const getAddButton = async (dashboardPage: DashboardPage, selectors: E2ESelectorGroups) => {
-      addButton = dashboardPage.getByGrafanaSelector(
-        selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.addButton
-      );
-      await expect(addButton).toBeVisible();
+    const checkPreview = async (previewOptions: Locator, labels: string[]) => {
+      await test.step('Checking preview of values', async () => {
+        for (let i = 0; i < labels.length; i++) {
+          await expect(previewOptions.nth(i)).toHaveText(labels[i]);
+        }
+      });
     };
 
-    const refetchItems = (dashboardPage: DashboardPage, selectors: E2ESelectorGroups) => {
-      rows = dashboardPage.getByGrafanaSelector(
-        selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.row
-      );
-
-      valueInputs = dashboardPage.getByGrafanaSelector(
-        selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.valueInput
-      );
-
-      labelInputs = dashboardPage.getByGrafanaSelector(
-        selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.labelInput
-      );
-
-      deleteButtons = dashboardPage.getByGrafanaSelector(
-        selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.deleteButton
-      );
-    };
-
-    const checkRows = async (length: number) => {
-      expect(await rows!.all()).toHaveLength(length);
-    };
-
-    const fillValue = async (text: string, index: number) => {
-      await valueInputs!.nth(index).fill(text);
-    };
-
-    const fillLabel = async (text: string, index: number) => {
-      await labelInputs!.nth(index).fill(text);
-    };
-
-    const fillLabelValue = async (value: string, label: string, index: number) => {
-      await fillValue(value, index);
-      await fillLabel(label, index);
-    };
-
-    const openModal = async (dashboardPage: DashboardPage, selectors: E2ESelectorGroups) => {
-      await dashboardPage
-        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.optionsOpenButton)
-        .click();
-
-      await getAddButton(dashboardPage, selectors);
-
-      refetchItems(dashboardPage, selectors);
-    };
-
-    const applyAndcloseModal = async (dashboardPage: DashboardPage, selectors: E2ESelectorGroups) => {
-      await dashboardPage
-        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.applyButton)
-        .click();
-    };
-
-    const checkItems = async (items: Array<[string, string?]>) => {
-      for (let i = 0; i < items.length; i++) {
-        const [value, label] = items[i];
-        await expect(valueInputs!.nth(i)).toHaveValue(value);
-        await expect(labelInputs!.nth(i)).toHaveValue(label ?? '');
-      }
-    };
-
-    const checkPreview = async (dashboardPage: DashboardPage, selectors: E2ESelectorGroups, labels: string[]) => {
-      const previewOptions = dashboardPage.getByGrafanaSelector(
-        selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption
-      );
-
-      for (let i = 0; i < labels.length; i++) {
-        expect(await previewOptions.nth(i).textContent()).toBe(labels[i]);
-      }
-    };
-
-    const addItem = async (dashboardPage: DashboardPage, selectors: E2ESelectorGroups, value = '', label = '') => {
-      await addButton!.click();
-      refetchItems(dashboardPage, selectors);
-      await fillLabelValue(value ?? '', label ?? '', (await rows!.all()).length - 1);
-    };
-
-    const removeItem = async (dashboardPage: DashboardPage, selectors: E2ESelectorGroups, index: number) => {
-      await deleteButtons!.nth(index).click();
-      refetchItems(dashboardPage, selectors);
-    };
-
-    test.beforeEach(() => {
-      valueInputs = undefined;
-      labelInputs = undefined;
-      deleteButtons = undefined;
-    });
-
-    test('can add a new custom variable', async ({ gotoDashboardPage, selectors, page }) => {
+    test('can add a new custom variable', async ({ gotoDashboardPage, selectors, page, components }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
 
-      // common steps to add a new variable
-      await flows.newEditPaneVariableClick(dashboardPage, selectors);
-      await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, {
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+
+      const variable: Variable & { label: string } = {
         type: 'custom',
-        name: 'foo',
-        label: 'Foo',
+        name: 'VariableUnderTest',
+        label: 'VariableUnderTest',
         value: '',
-      });
+      };
 
-      await openModal(dashboardPage, selectors);
-      await checkRows(1);
-      await addItem(dashboardPage, selectors);
-      await checkRows(2);
-      await fillValue('first value', 0);
-      await fillLabelValue('second value', 'second label', 1);
-      await addItem(dashboardPage, selectors, 'third value', 'third label');
-      await addItem(dashboardPage, selectors, 'fourth value', 'fourth value');
-      await removeItem(dashboardPage, selectors, 2);
-      await checkRows(3);
-      await checkPreview(dashboardPage, selectors, ['first value', 'second label', 'fourth value']);
-      await applyAndcloseModal(dashboardPage, selectors);
+      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
 
-      // assert variable is visible and has the correct values
-      const variableLabel = dashboardPage.getByGrafanaSelector(
-        selectors.pages.Dashboard.SubMenu.submenuItemLabels('Foo')
-      );
+      await sidebar.variableOptions.custom.openEditor();
+      await sidebar.variableOptions.custom.selectFormat('CSV');
+      await sidebar.variableOptions.custom.setValues('first value, second label : second value, fourth value');
+
+      await checkPreview(sidebar.variableOptions.custom.getPreviewOfValues(), [
+        'first value',
+        'second label',
+        'fourth value',
+      ]);
+      await sidebar.variableOptions.custom.clickApplyButton();
+
+      const variableLabel = controls.variables.getLabel(variable.label);
       await expect(variableLabel).toBeVisible();
-      await expect(variableLabel).toContainText('Foo');
-      await expect(
-        dashboardPage.getByGrafanaSelector(
-          selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('first value')
-        )
-      ).toBeVisible();
+      await expect(variableLabel).toContainText(variable.label);
+      await expect(controls.variables.getDropdownTrigger(variable.label)).toContainText('first value');
 
-      // check that variable deletion works
-      await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.deleteButton).click();
+      // Assert the variable values are correctly displayed in the panel
+      const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
+      await expect(panelContent).toBeVisible();
+      const markdownContent = panelContent.locator('.markdown-html');
+      await expect(markdownContent).toContainText(`${variable.name}: first value`);
+
+      await sidebar.clickDeleteButton({ confirm: true });
       await expect(variableLabel).toBeHidden();
     });
 
-    test('can edit a custom variable', async ({ gotoDashboardPage, selectors, page }) => {
-      const dashboardPage = await gotoDashboardPage({
-        uid: PAGE_UNDER_TEST,
-        queryParams: new URLSearchParams({ orgId: '1', editview: 'variables' }),
-      });
+    test('can edit a custom variable', async ({ gotoDashboardPage, selectors, page, components }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
 
-      // Create a custom variable in the dashboard settings page
-      await dashboardPage.getByGrafanaSelector(selectors.components.CallToActionCard.buttonV2('Add variable')).click();
-      const typeSelect = dashboardPage
-        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2)
-        .locator('input');
-      await typeSelect.fill('Custom');
-      await typeSelect.press('Enter');
-      await dashboardPage
-        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2)
-        .fill('foo');
-      await dashboardPage
-        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2)
-        .fill('Foo');
-      await dashboardPage
-        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput)
-        .fill('first value, second label : second value, fourth value : fourth value');
-      await dashboardPage
-        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton)
-        .click();
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
-        .click();
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
-      // Open the modal editor in the side pane
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.node('Variables')).click();
-      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('foo')).click();
-      await openModal(dashboardPage, selectors);
+      const variable: Variable & { label: string } = {
+        type: 'custom',
+        name: 'VariableUnderTest',
+        label: 'VariableUnderTest',
+        value: '',
+      };
 
-      // Check the items
-      await checkItems([['first value'], ['second value', 'second label'], ['fourth value']]);
-      await checkPreview(dashboardPage, selectors, ['first value', 'second label', 'fourth value']);
+      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
+
+      await sidebar.variableOptions.custom.openEditor();
+      await sidebar.variableOptions.custom.selectFormat('CSV');
+      await sidebar.variableOptions.custom.setValues('first value, second label : second value, fourth value');
+      await sidebar.variableOptions.custom.clickApplyButton();
+
+      // make sure the variable is deselected in order to ba able interact with the content outline item
+      // if not, the item is selected and does not receive click events
+      await sidebar.clickCloseButton();
+
+      await sidebar.toolbar.clickButton('Outline');
+      await sidebar.contentOutline.toggleNode('Variables');
+      await sidebar.contentOutline.clickItem(variable.name);
+      await sidebar.variableOptions.custom.openEditor();
+
+      await sidebar.variableOptions.custom.setValues(
+        'first value updated, second label updated : second value, fourth value'
+      );
+
+      await checkPreview(sidebar.variableOptions.custom.getPreviewOfValues(), [
+        'first value updated',
+        'second label updated',
+        'fourth value',
+      ]);
+      await sidebar.variableOptions.custom.clickApplyButton();
+
+      const variableLabel = controls.variables.getLabel(variable.label);
+      await expect(variableLabel).toBeVisible();
+      await expect(variableLabel).toContainText(variable.label);
+      await expect(controls.variables.getDropdownTrigger(variable.label)).toContainText('first value updated');
+
+      // Assert the variable values are correctly displayed in the panel
+      const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
+      await expect(panelContent).toBeVisible();
+      const markdownContent = panelContent.locator('.markdown-html');
+      await expect(markdownContent).toContainText(`${variable.name}: first value updated`);
+    });
+
+    test('can create a custom variable with multiple properties', async ({
+      gotoDashboardPage,
+      selectors,
+      page,
+      components,
+    }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+      await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
+
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+
+      const variable: Variable & { label: string } = {
+        type: 'custom',
+        name: 'VariableUnderTest',
+        label: 'VariableUnderTest',
+        value: '',
+      };
+
+      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
+
+      const options = [
+        { value: 'dev', text: 'Development', aws: 'us-east-1' },
+        { value: 'prod', text: 'Production', aws: 'eu-west-1' },
+      ];
+
+      await sidebar.variableOptions.custom.openEditor();
+      await sidebar.variableOptions.custom.selectFormat('JSON');
+      await sidebar.variableOptions.custom.setValues(JSON.stringify(options));
+
+      // The preview table renders one column per property and one row per option, in input order
+      const previewTable = sidebar.variableOptions.custom.getPreviewTable();
+      await expect(previewTable.getByRole('columnheader')).toHaveText(Object.keys(options[0]));
+
+      const previewRows = previewTable.getByRole('row');
+      await expect(previewRows).toHaveCount(options.length + 1); // + header row
+      for (const [i, option] of options.entries()) {
+        await expect(previewRows.nth(i + 1).getByRole('cell')).toHaveText(Object.values(option));
+      }
+
+      await sidebar.variableOptions.custom.clickApplyButton();
+
+      const variableLabel = controls.variables.getLabel(variable.label);
+      await expect(variableLabel).toBeVisible();
+      await expect(variableLabel).toContainText(variable.label);
+
+      // The first option is selected by default; the panels interpolate its value and text
+      const panelContents = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content);
+      await expect(panelContents.first().locator('.markdown-html')).toContainText(`${variable.name}: dev`);
+      await expect(panelContents.nth(1).locator('.markdown-html')).toContainText(`${variable.name}Text: Development`);
+
+      // Retitle the first panel to verify the aws property can be interpolated via ${var.property}
+      const panel = new Panel({ page, dashboardPage, selectors, components });
+      await panel.selectByTitle('Panel Title');
+      await sidebar.panelOptions.setTitle(`Panel Title - aws: \${${variable.name}.aws}`);
+      await expect(panel.getHeaderByTitle(`Panel Title - aws: ${options[0].aws}`)).toBeVisible();
     });
   }
 );

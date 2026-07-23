@@ -5,8 +5,8 @@
 # $schema: https://golangci-lint.run/jsonschema/golangci.jsonschema.json
 version: '2'
 run:
-  timeout: 15m
-  concurrency: 10
+  timeout: 30m
+  concurrency: 0 # GOMAXPROCS
   allow-parallel-runners: true
 linters:
   default: none
@@ -34,18 +34,6 @@ linters:
   settings:
     depguard:
       rules:
-        aggregator:
-          list-mode: lax
-          files:
-            - ./pkg/aggregator/*
-            - ./pkg/aggregator/**/*
-          allow:
-            - github.com/grafana/grafana/pkg/aggregator
-            - github.com/grafana/grafana/pkg/semconv
-            - github.com/grafana/grafana/pkg/apimachinery
-          deny:
-            - pkg: github.com/grafana/grafana/pkg
-              desc: apimachinery is not allowed to import grafana core
         apimachinery:
           list-mode: lax
           files:
@@ -95,34 +83,20 @@ linters:
               desc: apps/secret is not allowed to import grafana core
         coreplugins:
           files:
-            - '**/pkg/tsdb/grafana-pyroscope-datasource/*'
-            - '**/pkg/tsdb/grafana-pyroscope-datasource/**/*'
             - '**/pkg/tsdb/grafana-testdata-datasource/*'
             - '**/pkg/tsdb/grafana-testdata-datasource/**/*'
             - '**/pkg/tsdb/azuremonitor/*'
             - '**/pkg/tsdb/azuremonitor/**/*'
-            - '**/pkg/tsdb/cloud-monitoring/*'
-            - '**/pkg/tsdb/cloud-monitoring/**/*'
             - '**/pkg/tsdb/graphite/*'
             - '**/pkg/tsdb/graphite/**/*'
             - '**/pkg/tsdb/mysql/*'
             - '**/pkg/tsdb/mysql/**/*'
-            - '**/pkg/tsdb/opentsdb/*'
-            - '**/pkg/tsdb/opentsdb/**/*'
-            - '**/pkg/tsdb/parca/*'
-            - '**/pkg/tsdb/parca/**/*'
-            - '**/pkg/tsdb/tempo/*'
-            - '**/pkg/tsdb/tempo/**/*'
             - '**/pkg/tsdb/cloudwatch/*'
             - '**/pkg/tsdb/cloudwatch/**/*'
             - '**/pkg/tsdb/loki/*'
             - '**/pkg/tsdb/loki/**/*'
-            - '**/pkg/tsdb/zipkin/*'
-            - '**/pkg/tsdb/zipkin/**/*'
-            - '**/pkg/tsdb/jaeger/*'
-            - '**/pkg/tsdb/jaeger/**/*'
-            - '**/pkg/tsdb/elasticsearch/*'
-            - '**/pkg/tsdb/elasticsearch/**/*'
+            - '**/pkg/tsdb/influxdb/*'
+            - '**/pkg/tsdb/influxdb/**/*'
           deny:
             - pkg: github.com/grafana/grafana/pkg/api
               desc: Core plugins are not allowed to depend on Grafana core packages
@@ -257,6 +231,15 @@ linters:
           - staticcheck
         text: use fake service and real access control evaluator instead
       - linters:
+          - staticcheck
+        text: 'QF1012'
+      - linters:
+          - gosec
+        text: G101 # extremely noisy and low confidence
+      - linters:
+          - gosec
+        text: G118 # extremely noisy and low confidence
+      - linters:
           - gosec
         text: G108
       - linters:
@@ -302,6 +285,10 @@ linters:
           - gosec
         path: (.+)_test\.go
         text: G601
+      - linters:
+          - gosec
+        path: (.+)_test\.go
+        text: G124
     paths:
       - devenv
       - scripts

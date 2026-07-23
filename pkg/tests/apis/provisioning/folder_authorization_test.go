@@ -22,10 +22,10 @@ func TestIntegrationProvisioning_FolderAuthorizationWithoutMetadata(t *testing.T
 		folderPathPrefix = "parent-hash"
 	)
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:                   repoName,
-		Target:                 "instance",
-		SkipResourceAssertions: true,
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repoName,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
 	})
 
 	helper.SetPermissions(helper.Org1.Editor, []resourcepermissions.SetResourcePermissionCommand{

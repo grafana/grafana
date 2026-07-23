@@ -1,10 +1,14 @@
 import { useMemo } from 'react';
 
-import { CoreApp, PluginExtensionPoints, PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context } from '@grafana/data';
+import {
+  type CoreApp,
+  PluginExtensionPoints,
+  type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
+} from '@grafana/data';
 import { renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
-import { QueryActionComponent, RowActionComponents } from 'app/features/query/components/QueryActionComponent';
+import { type QueryActionComponent, RowActionComponents } from 'app/features/query/components/QueryActionComponent';
 
 import { QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';

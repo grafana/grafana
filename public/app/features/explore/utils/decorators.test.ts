@@ -1,21 +1,23 @@
 import { lastValueFrom } from 'rxjs';
 
 import {
-  DataFrame,
+  type DataFrame,
   FieldType,
   LoadingState,
-  PanelData,
+  type PanelData,
   getDefaultTimeRange,
   toDataFrame,
-  DataSourceApi,
-  DataSourceInstanceSettings,
-  PanelPluginMeta,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type PanelPluginMeta,
+  standardTransformersRegistry,
 } from '@grafana/data';
-import { CorrelationData } from '@grafana/runtime';
+import { joinByFieldTransformer, mergeTransformer } from '@grafana/data/internal';
+import { type CorrelationData } from '@grafana/runtime';
 import { setPanelPluginMetas } from '@grafana/runtime/internal';
-import { DataSourceJsonData, DataQuery } from '@grafana/schema';
+import { type DataSourceJsonData, type DataQuery } from '@grafana/schema';
 import TableModel from 'app/core/TableModel';
-import { ExplorePanelData } from 'app/types/explore';
+import { type ExplorePanelData } from 'app/types/explore';
 
 import {
   decorateWithCorrelations,
@@ -30,6 +32,21 @@ jest.mock('@grafana/data', () => ({
   dateTimeFormat: () => 'format() jest mocked',
   dateTimeFormatTimeAgo: () => 'fromNow() jest mocked',
 }));
+
+beforeAll(() => {
+  standardTransformersRegistry.setInit(() =>
+    [joinByFieldTransformer, mergeTransformer].map((t) => ({
+      id: t.id,
+      aliasIds: t.aliasIds,
+      name: t.name,
+      transformation: () => Promise.resolve(t),
+      description: t.description,
+      editor: () => null,
+      imageDark: '',
+      imageLight: '',
+    }))
+  );
+});
 
 const getTestContext = () => {
   const timeSeries = toDataFrame({

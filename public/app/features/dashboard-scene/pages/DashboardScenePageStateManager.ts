@@ -1,10 +1,18 @@
-import { locationUtil, UrlQueryMap } from '@grafana/data';
+import { locationUtil, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
-import { UserStorage } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient, UserStorage } from '@grafana/runtime/internal';
 import { sceneGraph } from '@grafana/scenes';
-import { Spec as DashboardV2Spec, VariableKind, DashboardLink } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { GetRepositoryFilesWithPathApiResponse, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  type Spec as DashboardV2Spec,
+  type VariableKind,
+  type DashboardLink,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import {
+  type GetRepositoryFilesWithPathApiResponse,
+  provisioningAPIv0alpha1,
+} from 'app/api/clients/provisioning/v0alpha1';
+import { markAsUrlRewrite } from 'app/core/navigation/urlRewrite';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
@@ -16,40 +24,51 @@ import {
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
 } from 'app/features/apiserver/types';
-import { ensureV2Response, transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
-import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { isDashboardV2Resource, isDashboardV2Spec, isV2StoredVersion } from 'app/features/dashboard/api/utils';
+import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
+import { ensureV2Response } from 'app/features/dashboard/api/ResponseTransformers';
+import { DashboardVersionError, type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import {
+  isDashboardResource,
+  isDashboardV1Resource,
+  isDashboardV2Resource,
+  isDashboardV2Spec,
+  isV2StoredVersion,
+} from 'app/features/dashboard/api/utils';
 import { initializeDashboardAnalyticsAggregator } from 'app/features/dashboard/services/DashboardAnalyticsAggregator';
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { initializeReportRenderReadinessObserver } from 'app/features/dashboard/services/ReportRenderReadinessObserver';
 import { initializeScenePerformanceLogger } from 'app/features/dashboard/services/ScenePerformanceLogger';
+import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
+import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/dashboard-templates/main';
+import { transformTemplateToSaveModelSchemaV2 } from 'app/features/dashboard-scene/utils/dashboardTemplateEnvelope';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard-scene/utils/tracking';
+import { interpolateV1Dashboard } from 'app/features/manage-dashboards/import/utils/inputs';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { ProvisioningPreview } from 'app/features/provisioning/types';
+import { type ProvisioningPreview } from 'app/features/provisioning/types';
 import { dispatch } from 'app/store/store';
 import {
-  DashboardDataDTO,
-  DashboardDTO,
+  type DashboardDataDTO,
+  type DashboardDTO,
   DashboardRoutes,
-  HomeDashboardRedirectDTO,
+  type HomeDashboardRedirectDTO,
   isRedirectResponse,
 } from 'app/types/dashboard';
 
-import { PanelEditor } from '../panel-edit/PanelEditor';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type PanelEditor } from '../panel-edit/PanelEditor';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import {
   createV2RowsLayout,
-  SceneCreationOptions,
+  type SceneCreationOptions,
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
-import { loadDefaultControlsFromDatasources } from '../utils/dashboardControls';
-import { getDsRefsFromV1Dashboard, getDsRefsFromV2Dashboard } from '../utils/dashboardDsRefs';
+import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
+import { fetchPredefinedVariables } from '../utils/predefinedVariables';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
 
@@ -79,7 +98,7 @@ export const DASHBOARD_CACHE_TTL = 500;
 const LOAD_SCENE_MEASUREMENT = 'loadDashboardScene';
 
 /** Only used by cache in loading home in DashboardPageProxy and initDashboard (Old arch), can remove this after old dashboard arch is gone */
-export const HOME_DASHBOARD_CACHE_KEY = '__grafana_home_uid__';
+const HOME_DASHBOARD_CACHE_KEY = '__grafana_home_uid__';
 
 interface DashboardCacheEntry<T> {
   dashboard: T;
@@ -93,13 +112,26 @@ export interface LoadDashboardOptions {
   slug?: string;
   type?: string;
   urlFolderUid?: string;
+  dashboardTemplateUid?: string;
+  editTemplate?: boolean;
   defaultVariables?: VariableKind[];
   defaultLinks?: DashboardLink[];
 }
 
-export type HomeDashboardDTO = DashboardDTO & {
+type HomeDashboardDTO = DashboardDTO & {
   dashboard: DashboardDataDTO | DashboardV2Spec;
 };
+
+/**
+ * Possible non-redirect return shapes of `/api/dashboards/home`. Either a
+ * classic `{ meta, dashboard }` envelope (legacy `home.json`) or a
+ * Kubernetes-style dashboard resource returned verbatim from the backend when
+ * `default_home_dashboard_path` points at a `dashboard.grafana.app/*` file.
+ */
+type HomeDashboardFetchResult =
+  | HomeDashboardDTO
+  | DashboardWithAccessInfo<DashboardV2Spec>
+  | DashboardWithAccessInfo<DashboardDataDTO>;
 
 interface DashboardScenePageStateManagerLike<T> {
   fetchDashboard(options: LoadDashboardOptions): Promise<T | null>;
@@ -152,7 +184,6 @@ abstract class DashboardScenePageStateManagerBase<T>
   abstract reloadDashboard(queryParams: UrlQueryMap): Promise<void>;
   abstract transformResponseToScene(rsp: T | null, options: LoadDashboardOptions): DashboardScene | null;
   abstract loadSnapshotScene(slug: string): Promise<DashboardScene>;
-  abstract getDefaultControls(rsp: T): Promise<{ defaultVariables: VariableKind[]; defaultLinks: DashboardLink[] }>;
 
   protected cache: Record<string, DashboardScene> = {};
 
@@ -163,41 +194,76 @@ abstract class DashboardScenePageStateManagerBase<T>
     return this.cache;
   }
 
-  protected async fetchHomeDashboard(): Promise<DashboardDTO | null> {
-    const rsp = await getBackendSrv().get<HomeDashboardDTO | HomeDashboardRedirectDTO>('/api/dashboards/home');
+  /**
+   * `/api/dashboards/home` can return one of three shapes:
+   *   1. A redirect to another dashboard ({@link HomeDashboardRedirectDTO}).
+   *   2. The legacy classic wrapper {@link HomeDashboardDTO} (`{ meta, dashboard }`) for
+   *      classic `home.json`-style files.
+   *   3. A Kubernetes-style dashboard resource ({@link DashboardWithAccessInfo}) when
+   *      `default_home_dashboard_path` points at a `dashboard.grafana.app/*`
+   *      manifest. In that case the backend returns the file verbatim with an
+   *      injected `access` block.
+   */
+  protected async fetchHomeDashboard(): Promise<HomeDashboardFetchResult | null> {
+    const rsp = await getBackendSrv().get<HomeDashboardFetchResult | HomeDashboardRedirectDTO>('/api/dashboards/home');
 
     if (isRedirectResponse(rsp)) {
       const newUrl = locationUtil.processRedirectUri(rsp.redirectUri, locationService.getLocation());
-      locationService.replace(newUrl);
+      // Landing-page resolution, not a navigation: journey trackers keep previousUrl absent.
+      locationService.replace(markAsUrlRewrite(newUrl));
       return null;
     }
 
-    // If dashboard is on v2 schema convert to v1 schema, there's curently no v2 API for home dashboard
-    if (isDashboardV2Spec(rsp.dashboard)) {
-      rsp.dashboard = transformDashboardV2SpecToV1(rsp.dashboard, {
-        name: '',
-        generation: 0,
-        resourceVersion: '0',
-        creationTimestamp: '',
-      });
+    // k8s-format responses already carry an `access` block from the backend;
+    // classic responses still use the legacy `meta` flags.
+    if (isDashboardResource(rsp)) {
+      return rsp;
     }
 
-    if (rsp?.meta) {
+    if (rsp.meta) {
       rsp.meta.canSave = false;
       rsp.meta.canShare = false;
       rsp.meta.canStar = false;
     }
-
     return rsp;
   }
 
   private async loadHomeDashboard(): Promise<DashboardScene | null> {
     const rsp = await this.fetchHomeDashboard();
-    if (rsp) {
-      return transformSaveModelToScene(rsp, undefined, getSceneCreationOptions());
+    if (!rsp) {
+      return null;
     }
 
-    return null;
+    // k8s-format home dashboards (dashboard.grafana.app/*) are returned
+    // verbatim by the backend. Route them through the native v1/v2 scene
+    // builders directly. In particular, v2 resources go through the v2
+    // builder which supports RowsLayout / TabsLayout / AutoGridLayout — not
+    // just GridLayout, which was the only shape the old v2->v1 downconverter
+    // could handle.
+    if (isDashboardV2Resource(rsp)) {
+      return transformSaveModelSchemaV2ToScene(rsp);
+    }
+    if (isDashboardV1Resource(rsp)) {
+      return transformSaveModelToScene(
+        {
+          dashboard: rsp.spec,
+          meta: {
+            canSave: false,
+            canShare: false,
+            canStar: false,
+            canEdit: false,
+            canDelete: false,
+            canAdmin: false,
+            k8s: rsp.metadata,
+          },
+        },
+        undefined,
+        getSceneCreationOptions()
+      );
+    }
+
+    // Neither v1 nor v2 k8s resource - must be the classic DashboardDTO shape.
+    return transformSaveModelToScene(rsp, undefined, getSceneCreationOptions());
   }
 
   public async loadSnapshot(slug: string) {
@@ -311,7 +377,14 @@ abstract class DashboardScenePageStateManagerBase<T>
     dryRun: any,
     provisioningPreview: ProvisioningPreview
   ) {
-    if (dryRun.apiVersion.split('/')[1] === 'v2beta1') {
+    if (dryRun.apiVersion.split('/')[1].startsWith('v2')) {
+      // Record the ref the file was actually loaded from (absent on default-branch fallback) so
+      // consumers like the managed badge source link can target it, mirroring the v1 branch below.
+      const v2Anno = (dryRun.metadata.annotations ??= {});
+      if (provisioningPreview.ref) {
+        v2Anno[AnnoKeySourcePath] = path + '#' + provisioningPreview.ref;
+      }
+
       return {
         ...dryRun,
         kind: 'DashboardWithAccessInfo',
@@ -381,13 +454,10 @@ abstract class DashboardScenePageStateManagerBase<T>
 
       trackDashboardSceneLoaded(dashboard, measure?.duration);
 
-      const isRenderTarget =
-        options.route === DashboardRoutes.Report ||
-        options.route === DashboardRoutes.Embedded ||
-        (options.route === DashboardRoutes.Normal && contextSrv.user?.authenticatedBy === 'render');
+      const renderTarget = isRenderTarget(options.route);
       const enableProfiling =
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === options.uid) !== -1 ||
-        isRenderTarget;
+        renderTarget;
 
       if (enableProfiling) {
         // Initialize both performance services before starting profiling to ensure observers are registered
@@ -400,7 +470,7 @@ abstract class DashboardScenePageStateManagerBase<T>
         }
       }
 
-      if (isRenderTarget) {
+      if (renderTarget) {
         // Register the report render readiness observer so the image renderer can detect
         // when the dashboard has fully rendered (queries + transforms + fieldConfig + render)
         initializeReportRenderReadinessObserver();
@@ -411,7 +481,6 @@ abstract class DashboardScenePageStateManagerBase<T>
 
       if (options.route !== DashboardRoutes.New) {
         emitDashboardViewEvent({
-          id: dashboard.state.id,
           meta: dashboard.state.meta,
           uid: dashboard.state.uid,
           title: dashboard.state.title,
@@ -446,6 +515,9 @@ abstract class DashboardScenePageStateManagerBase<T>
   private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene | null> {
     this.setState({ dashboard: undefined, isLoading: true });
 
+    // Resolve API versions before synchronous getV1()/getV2() calls downstream.
+    await dashboardAPIVersionResolver.resolve();
+
     // Home dashboard is not handled through legacy API and is not versioned.
     // Handling home dashboard flow separately from regular dashboard flow.
     if (options.route === DashboardRoutes.Home) {
@@ -458,11 +530,19 @@ abstract class DashboardScenePageStateManagerBase<T>
       return null;
     }
 
-    const { defaultVariables, defaultLinks } = await this.getDefaultControls(rsp);
-    options.defaultVariables = defaultVariables;
-    options.defaultLinks = defaultLinks;
+    const enrichedOptions = await this.enrichLoadOptions(rsp, options);
+    const scene = this.transformResponseToScene(rsp, enrichedOptions);
 
-    return this.transformResponseToScene(rsp, options);
+    return scene;
+  }
+
+  /**
+   * Post-fetch hook that lets managers asynchronously extend the load options (e.g.
+   * inject predefined variables) before the scene is created. Public (not protected)
+   * because the unified manager delegates to the version-specific managers.
+   */
+  async enrichLoadOptions(_rsp: T, options: LoadDashboardOptions): Promise<LoadDashboardOptions> {
+    return options;
   }
 
   public getDashboardFromCache(cacheKey: string): T | null {
@@ -517,19 +597,24 @@ abstract class DashboardScenePageStateManagerBase<T>
 
 export class DashboardScenePageStateManager extends DashboardScenePageStateManagerBase<DashboardDTO> {
   transformResponseToScene(rsp: DashboardDTO | null, options: LoadDashboardOptions): DashboardScene | null {
-    const fromCache = this.getSceneFromCache(options.uid);
+    // Public dashboards are not part of a session and therefore should not use the cache
+    const skipSceneCache = options.route === DashboardRoutes.Public;
 
-    if (
-      fromCache &&
-      fromCache.state.version === rsp?.dashboard.version &&
-      fromCache.state.meta.created === rsp?.meta.created
-    ) {
-      const profiler = getDashboardSceneProfiler();
-      profiler.setMetadata({
-        dashboardUID: fromCache.state.uid,
-        dashboardTitle: fromCache.state.title,
-      });
-      return fromCache;
+    if (!skipSceneCache) {
+      const fromCache = this.getSceneFromCache(options.uid);
+
+      if (
+        fromCache &&
+        fromCache.state.version === rsp?.dashboard.version &&
+        fromCache.state.meta.created === rsp?.meta.created
+      ) {
+        const profiler = getDashboardSceneProfiler();
+        profiler.setMetadata({
+          dashboardUID: fromCache.state.uid,
+          dashboardTitle: fromCache.state.title,
+        });
+        return fromCache;
+      }
     }
 
     if (rsp?.dashboard) {
@@ -548,8 +633,8 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
         scene.setState({ isDirty: true });
       }
 
-      // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
-      if (options.uid) {
+      // We don't want to cache temporary dashboards (e.g from Explore) or public dashboards
+      if (options.uid && !skipSceneCache) {
         this.setSceneCache(options.uid, scene);
       }
 
@@ -603,12 +688,11 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     const datasource = searchParams.get('datasource');
     const gnetId = searchParams.get('gnetId');
     const pluginId = searchParams.get('pluginId');
-
     const path = searchParams.get('path');
 
-    // Check if this is a template dashboard
+    // Check if this is a Grafana dashboard template
     if (gnetId && datasource && pluginId) {
-      return this.loadTemplateDashboard(gnetId, datasource, pluginId);
+      return this.loadGrafanaDashboardTemplate(gnetId, datasource, pluginId);
     }
 
     // Check if this is a community dashboard (has gnetId) or plugin dashboard
@@ -644,7 +728,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
   }
 
-  private async loadTemplateDashboard(
+  private async loadGrafanaDashboardTemplate(
     gnetId: string,
     datasource: string | null,
     pluginId: string | null
@@ -655,21 +739,17 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     // The dashboard JSON is in the 'json' property
     const dashboardJson = gnetDashboard.json;
 
-    const data = {
-      dashboard: dashboardJson,
-      overwrite: true,
-      inputs: [
-        {
-          name: '*',
-          type: 'datasource',
-          pluginId: pluginId,
-          value: datasource,
-        },
-      ],
-    };
-
-    const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
-    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
+    // Interpolate in the frontend — no backend round-trip needed
+    const interpolatedDashboard = interpolateV1Dashboard(dashboardJson, [
+      {
+        name: '*',
+        type: 'datasource',
+        pluginId: pluginId ?? undefined,
+        value: datasource ?? '',
+      },
+    ]);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard as DashboardDataDTO);
   }
 
   private async loadCommunityTemplateDashboard(gnetId: number | string): Promise<DashboardDTO> {
@@ -695,23 +775,10 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     // The dashboard JSON is in the 'json' property
     const dashboardJson = gnetDashboard.json;
 
-    // Call interpolate endpoint with the dashboard JSON and mappings
-    const data = {
-      dashboard: dashboardJson,
-      overwrite: true,
-      inputs: mappings,
-    };
-
-    const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
-    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
-  }
-
-  public getDefaultControls(
-    rsp: DashboardDTO
-  ): Promise<{ defaultVariables: VariableKind[]; defaultLinks: DashboardLink[] }> {
-    const datasourceRefs = getDsRefsFromV1Dashboard(rsp);
-
-    return loadDefaultControlsFromDatasources(datasourceRefs);
+    // Interpolate in the frontend — no backend round-trip needed
+    const interpolatedDashboard = interpolateV1Dashboard(dashboardJson, mappings);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard as DashboardDataDTO);
   }
 
   public async fetchDashboard({
@@ -733,7 +800,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
     try {
       switch (route) {
-        case DashboardRoutes.Home:
+        case DashboardRoutes.Home: {
           // For legacy dashboarding we keep this logic here, as dashboard can be loaded through state manager's fetchDashboard method directly
           // See DashboardPageProxy.
           const homeDashboard = await this.fetchHomeDashboard();
@@ -742,8 +809,34 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
             return null;
           }
 
-          rsp = homeDashboard;
+          // A v2 k8s home resource cannot be represented as the legacy
+          // DashboardDTO shape this method returns. Signal it the same way
+          // other v2 paths in this method do so DashboardVersionError
+          // handling can switch over to the v2 state manager.
+          if (isDashboardV2Resource(homeDashboard)) {
+            throw new DashboardVersionError('v2beta1', 'Home dashboard is a v2 resource');
+          }
+
+          // For v1 k8s resources, unwrap to the classic `{ meta, dashboard }`
+          // shape the rest of this method expects.
+          if (isDashboardV1Resource(homeDashboard)) {
+            rsp = {
+              dashboard: homeDashboard.spec,
+              meta: {
+                canSave: false,
+                canShare: false,
+                canStar: false,
+                canEdit: false,
+                canDelete: false,
+                canAdmin: false,
+                k8s: homeDashboard.metadata,
+              },
+            };
+          } else {
+            rsp = homeDashboard;
+          }
           break;
+        }
         case DashboardRoutes.New:
           rsp = await buildNewDashboardSaveModel(urlFolderUid);
           break;
@@ -796,11 +889,12 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
         if (dashboardUrl !== currentPath) {
           // Spread current location to persist search params used for navigation
-          locationService.replace({
-            ...locationService.getLocation(),
-            pathname: dashboardUrl,
-          });
-          console.log('not correct url correcting', dashboardUrl, currentPath);
+          locationService.replace(
+            markAsUrlRewrite({
+              ...locationService.getLocation(),
+              pathname: dashboardUrl,
+            })
+          );
         }
       }
 
@@ -917,26 +1011,89 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     throw new Error('Snapshot not found');
   }
 
+  async enrichLoadOptions(
+    rsp: DashboardWithAccessInfo<DashboardV2Spec>,
+    options: LoadDashboardOptions
+  ): Promise<LoadDashboardOptions> {
+    // Public dashboards are rendered anonymously and must not fetch org-level resources.
+    if (options.route === DashboardRoutes.Public) {
+      return options;
+    }
+
+    // fetchPredefinedVariables is a no-op when the feature flag is off.
+    if (!config.featureToggles.globalDashboardVariables) {
+      return options;
+    }
+
+    // New dashboards carry the target folder in the URL; existing ones in the folder annotation.
+    const folderUid = rsp.metadata.annotations?.[AnnoKeyFolder] || options.urlFolderUid || undefined;
+    const predefinedVariables = await fetchPredefinedVariables(folderUid);
+
+    // Always attach (including []) so scene-cache hits can sync — including clearing
+    // variables that were deleted after the scene was cached.
+    return {
+      ...options,
+      defaultVariables: [...predefinedVariables, ...(options.defaultVariables ?? [])],
+    };
+  }
+
   transformResponseToScene(
     rsp: DashboardWithAccessInfo<DashboardV2Spec> | null,
     options: LoadDashboardOptions
   ): DashboardScene | null {
-    const fromCache = this.getSceneFromCache(options.uid);
+    // Public dashboards are not part of a session and therefore should not use the cache
+    const skipSceneCache = options.route === DashboardRoutes.Public;
 
-    if (fromCache && fromCache.state.version === rsp?.metadata.generation) {
-      const profiler = getDashboardSceneProfiler();
-      profiler.setMetadata({
-        dashboardUID: fromCache.state.uid,
-        dashboardTitle: fromCache.state.title,
-      });
-      return fromCache;
+    if (!skipSceneCache) {
+      const fromCache = this.getSceneFromCache(options.uid);
+
+      if (fromCache && fromCache.state.version === rsp?.metadata.generation) {
+        // Scene cache has no TTL. Re-apply predefined variables fetched by enrichLoadOptions
+        // so revisits pick up changes after the 30s predefined-variables cache expires.
+        if (options.defaultVariables !== undefined) {
+          fromCache.setPredefinedVariables(options.defaultVariables);
+        }
+
+        const profiler = getDashboardSceneProfiler();
+        profiler.setMetadata({
+          dashboardUID: fromCache.state.uid,
+          dashboardTitle: fromCache.state.title,
+        });
+        return fromCache;
+      }
     }
 
     if (rsp) {
       const scene = transformSaveModelSchemaV2ToScene(rsp, options);
 
-      // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
-      if (options.uid) {
+      // Special handling for Template route - set up edit mode and dirty state
+      if (
+        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false) &&
+        options.route === DashboardRoutes.Template
+      ) {
+        const editMode = !!options.editTemplate;
+
+        if (options.dashboardTemplateUid && editMode) {
+          scene.setState({
+            meta: {
+              ...scene.state.meta,
+              isDashboardTemplate: true,
+              dashboardTemplateUid: options.dashboardTemplateUid,
+            },
+          });
+        }
+
+        scene.onEnterEditMode();
+
+        // Use-template flow forces isDirty so Save-As is primed. Edit-template flow
+        // starts clean — dirtiness should reflect real user edits.
+        if (!editMode) {
+          scene.setState({ isDirty: true });
+        }
+      }
+
+      // We don't want to cache temporary dashboards (e.g from Explore) or public dashboards
+      if (options.uid && !skipSceneCache) {
         this.setSceneCache(options.uid, scene);
       }
 
@@ -946,20 +1103,14 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     throw new Error('Dashboard not found');
   }
 
-  public async getDefaultControls(
-    rsp: DashboardWithAccessInfo<DashboardV2Spec>
-  ): Promise<{ defaultVariables: VariableKind[]; defaultLinks: DashboardLink[] }> {
-    const datasourceRefs = getDsRefsFromV2Dashboard(rsp);
-
-    return loadDefaultControlsFromDatasources(datasourceRefs);
-  }
-
   public async fetchDashboard({
     type,
     slug,
     uid,
     route,
     urlFolderUid,
+    dashboardTemplateUid,
+    editTemplate,
   }: LoadDashboardOptions): Promise<DashboardWithAccessInfo<DashboardV2Spec> | null> {
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
 
@@ -984,7 +1135,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
             throw new DashboardVersionError('v0alpha1', 'Assistant preview contains V1 dashboard');
           }
           return {
-            apiVersion: 'v2beta1',
+            apiVersion: dashboardAPIVersionResolver.getV2(),
             kind: 'DashboardWithAccessInfo',
             metadata: {
               creationTimestamp: '',
@@ -1003,6 +1154,17 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         }
         case DashboardRoutes.Public: {
           return await this.dashboardLoader.loadDashboard('public', '', uid);
+        }
+        case DashboardRoutes.Template: {
+          if (
+            getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false) &&
+            dashboardTemplateUid
+          ) {
+            rsp = await this.loadDashboardTemplate(dashboardTemplateUid, { editMode: !!editTemplate });
+            break;
+          }
+          // Grafana dashboard templates are V1 only — throw to fallback
+          throw new DashboardVersionError('v0alpha1', 'Grafana-provisioned dashboard templates use V1 schema');
         }
         default:
           if (config.featureToggles.reloadDashboardsOnParamsChange) {
@@ -1024,11 +1186,12 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         const currentPath = locationService.getLocation().pathname;
         if (dashboardUrl !== currentPath) {
           // Spread current location to persist search params used for navigation
-          locationService.replace({
-            ...locationService.getLocation(),
-            pathname: dashboardUrl,
-          });
-          console.log('not correct url correcting', dashboardUrl, currentPath);
+          locationService.replace(
+            markAsUrlRewrite({
+              ...locationService.getLocation(),
+              pathname: dashboardUrl,
+            })
+          );
         }
       }
       // Populate nav model in global store according to the folder
@@ -1045,6 +1208,48 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       throw e;
     }
     return rsp;
+  }
+
+  private async loadDashboardTemplate(
+    dashboardTemplateUid: string,
+    { editMode }: { editMode: boolean }
+  ): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
+    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false)) {
+      throw new Error('Custom dashboard templates are not enabled');
+    }
+
+    const response = await getDashboardTemplateExtension().loadTemplate(dashboardTemplateUid);
+
+    const resourceVersion = response.metadata?.resourceVersion;
+
+    CustomDashboardTemplateInteractions.loaded({
+      templateUid: dashboardTemplateUid,
+      mode: editMode ? 'edit' : 'use',
+    });
+
+    if (editMode) {
+      // Edit-template flow: mark the scene as editing an org template so downstream UI can hide
+      // irrelevant actions.
+      // canEdit and canSave will change in the future with specific RBAC permissions.
+      return transformTemplateToSaveModelSchemaV2({
+        dashboardSpec: response.spec.dashboard,
+        dashboardVersion: response.spec.dashboardVersion,
+        resourceVersion,
+        canEdit: true,
+        canSave: true,
+      });
+    }
+
+    // Use-template flow: The embedded dashboard spec is hydrated
+    // into a fresh scene so the user can "Save as" a brand-new dashboard. Do NOT mark the
+    // scene as an org template; no dashboardTemplateUid — this is not an edit of the
+    // template, it's a cloning flow.
+    return transformTemplateToSaveModelSchemaV2({
+      dashboardSpec: response.spec.dashboard,
+      dashboardVersion: response.spec.dashboardVersion,
+      canEdit: true,
+      canSave: true,
+    });
   }
 
   public async reloadDashboard(queryParams: UrlQueryMap): Promise<void> {
@@ -1085,7 +1290,9 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         return;
       }
 
-      const scene = transformSaveModelSchemaV2ToScene(rsp);
+      // Re-apply predefined variables so param-triggered reloads keep the injected variables.
+      const reloadOptions = await this.enrichLoadOptions(rsp, { uid, route: DashboardRoutes.Normal });
+      const scene = transformSaveModelSchemaV2ToScene(rsp, reloadOptions);
 
       // we need to call and restore dashboard state on every reload that pulls a new dashboard version
       if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(uid)) {
@@ -1112,7 +1319,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
   }
 }
 
-export function shouldForceV2API(): boolean {
+function shouldForceV2API(): boolean {
   return Boolean(config.featureToggles.dashboardNewLayouts);
 }
 
@@ -1181,6 +1388,17 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
 
   public getDashboardFromCache(uid: string) {
     return this.activeManager.getDashboardFromCache(uid);
+  }
+
+  async enrichLoadOptions(
+    rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>,
+    options: LoadDashboardOptions
+  ): Promise<LoadDashboardOptions> {
+    if (isDashboardV2Resource(rsp)) {
+      return this.v2Manager.enrichLoadOptions(rsp, options);
+    }
+
+    return options;
   }
 
   transformResponseToScene(
@@ -1264,9 +1482,16 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       this.setActiveManager(newDashboardVersion);
     }
 
-    // Template dashboards are currently in v1 schema format.
+    // Dashboard templates: Grafana templates use V1, Custom templates use V2
     if (options.route === DashboardRoutes.Template) {
-      this.setActiveManager('v1');
+      if (
+        options.dashboardTemplateUid &&
+        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false)
+      ) {
+        this.setActiveManager('v2');
+      } else {
+        this.setActiveManager('v1');
+      }
     }
 
     return this.withVersionHandling((manager) => {
@@ -1290,15 +1515,6 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
   public resetActiveManager() {
     this.activeManager = shouldForceV2API() ? this.v2Manager : this.v1Manager;
-  }
-
-  public async getDefaultControls(
-    rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>
-  ): Promise<{ defaultVariables: VariableKind[]; defaultLinks: DashboardLink[] }> {
-    if (isDashboardV2Resource(rsp)) {
-      return this.v2Manager.getDefaultControls(rsp);
-    }
-    return this.v1Manager.getDefaultControls(rsp);
   }
 }
 

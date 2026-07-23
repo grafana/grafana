@@ -1,92 +1,43 @@
-import { Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { DashboardPage, E2ESelectorGroups, expect } from '@grafana/plugin-e2e';
+import { Components, type DashboardPage, type E2ESelectorGroups, expect } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
-const deselectPanels = async (dashboardPage: DashboardPage, selectors: E2ESelectorGroups) => {
-  await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Controls).click({
-    position: { x: 0, y: 0 },
-  });
-};
+import { Controls, Sidebar } from './page-objects';
 
 export const flows = {
-  deselectPanels,
-  async changePanelTitle(
-    dashboardPage: DashboardPage,
-    selectors: E2ESelectorGroups,
-    oldPanelTitle: string,
-    newPanelTitle: string
-  ) {
-    await deselectPanels(dashboardPage, selectors);
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-      .filter({ hasText: oldPanelTitle })
-      .first()
-      .click();
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'))
-      .fill(newPanelTitle);
-  },
-  async changePanelDescription(
-    dashboardPage: DashboardPage,
-    selectors: E2ESelectorGroups,
-    panelTitle: string,
-    newDescription: string
-  ) {
-    await deselectPanels(dashboardPage, selectors);
-    const panelTitleRegex = new RegExp(`^${panelTitle}$`);
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-      .filter({ hasText: panelTitleRegex })
-      .first()
-      .click();
-    const descriptionTextArea = dashboardPage
-      .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('panel-options Description'))
-      .locator('textarea');
-    await descriptionTextArea.fill(newDescription);
-  },
-  async newEditPaneVariableClick(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-    await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-    await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
-    await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('Variables')).click();
-    await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.dockToggle).click();
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.addVariableButton)
-      .click();
-  },
-  async newEditPanelCommonVariableInputs(
+  async addNewGenericVariable(
+    page: Page,
     dashboardPage: DashboardPage,
     selectors: E2ESelectorGroups,
     variable: Variable
   ) {
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.variableType(variable.type))
-      .click();
+    // Keep the flows signature unchanged for unmigrated callers: build the
+    // `components` fixture equivalent from the page context
+    const components = new Components(dashboardPage.ctx);
+    const controls = new Controls({ page, dashboardPage, selectors, components });
+    const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+
+    await controls.enterEditMode();
+
+    await sidebar.toolbar.clickButton('Add');
+    await sidebar.addOptions.clickNewVariableButton();
+
+    await sidebar.variableOptions.selectVariableType(variable.type);
 
     // New variable creation schedules a delayed autofocus to name input
     // Let that timer finish before we interact to prevent focus on the wrong input
     await dashboardPage.ctx.page.waitForTimeout(250);
 
-    const variableNameInput = dashboardPage.getByGrafanaSelector(
-      selectors.components.PanelEditor.ElementEditPane.variableNameInput
-    );
-    await variableNameInput.click();
-    await variableNameInput.fill(variable.name);
-    await variableNameInput.blur();
+    await sidebar.variableOptions.setName(variable.name);
     if (variable.label) {
-      const variableLabelInput = dashboardPage.getByGrafanaSelector(
-        selectors.components.PanelEditor.ElementEditPane.variableLabelInput
-      );
-      await variableLabelInput.click();
-      await variableLabelInput.fill(variable.label);
-      await variableLabelInput.blur();
+      await sidebar.variableOptions.setLabel(variable.label);
     }
   },
   async addNewTextBoxVariable(dashboardPage: DashboardPage, variable: Variable) {
-    await flows.newEditPaneVariableClick(dashboardPage, selectors);
-    await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
+    await flows.addNewGenericVariable(dashboardPage.ctx.page, dashboardPage, selectors, variable);
     // set the textbox variable value
     const type = 'variable-type Value';
     const fieldLabel = dashboardPage.getByGrafanaSelector(
@@ -127,7 +78,12 @@ export async function saveDashboard(
     await page.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput).fill(title);
   }
   await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton).click();
-  await expect(page.getByText('Dashboard saved')).toBeVisible();
+
+  // wait for the toast
+  const toast = page.getByRole('status', { name: 'Dashboard saved' });
+  await expect(toast).toBeVisible();
+  // close toast, we do this to prevent any incorrect assertion when several saves occur fast. i.e. the 1st toast is still visible but the 2nd save has not occurred yet
+  await toast.getByRole('button', { name: 'Close alert' }).click();
 }
 
 export async function checkRepeatedPanelTitles(

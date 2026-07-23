@@ -26,22 +26,21 @@ func TestIntegrationProvisioning_JobPendingDeleteLabel_SkipsExecution(t *testing
 
 	// Create a local repository with one dashboard and run the initial sync so
 	// the resource is present in Grafana.
-	helper.CreateRepo(t, common.TestRepo{
-		Name:               repoName,
-		Target:             "folder",
-		ExpectedDashboards: 1,
-		ExpectedFolders:    1, // folder sync creates a root folder for the repository
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repoName,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "dashboard.json",
 		},
 	})
 
-	// Remove the file from disk. A real pull job would propagate this deletion to
-	// Grafana; a skipped job must leave the dashboard intact.
-	err := os.Remove(filepath.Join(helper.ProvisioningPath, "dashboard.json"))
-	require.NoError(t, err)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
+	helper.RequireRepoFolderCount(t, repoName, 1)
 
-	// Label the repository as pending-delete before submitting the job.
+	// Label the repository as pending-delete BEFORE removing the file from disk.
+	// The repository was created with sync enabled, so a controller-triggered pull
+	// could otherwise run in the window between the file removal and the label
+	// update and delete the dashboard this test expects preserved.
 	repoObj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 	require.NoError(t, err)
 
@@ -53,6 +52,11 @@ func TestIntegrationProvisioning_JobPendingDeleteLabel_SkipsExecution(t *testing
 	repoObj.SetLabels(labels)
 
 	_, err = helper.Repositories.Resource.Update(t.Context(), repoObj, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	// Remove the file from disk now that the label is set. A real pull job would
+	// propagate this deletion to Grafana; a skipped job must leave the dashboard intact.
+	err = os.Remove(filepath.Join(helper.ProvisioningPath, "dashboard.json"))
 	require.NoError(t, err)
 
 	// Submit a pull job. Without the pending-delete skip this would sync the
@@ -69,10 +73,7 @@ func TestIntegrationProvisioning_JobPendingDeleteLabel_SkipsExecution(t *testing
 		"skipped job should complete with a warning")
 
 	// The dashboard must still exist because the pull was skipped.
-	dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-	require.NoError(t, err)
-	require.Len(t, dashboards.Items, 1,
-		"dashboard should be preserved because the pull job was skipped")
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 
 	// Sanity-check: removing the label lets the next pull run normally and remove
 	// the dashboard that is no longer on disk.
@@ -91,8 +92,5 @@ func TestIntegrationProvisioning_JobPendingDeleteLabel_SkipsExecution(t *testing
 		Pull:   &provisioning.SyncJobOptions{},
 	})
 
-	dashboards, err = helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-	require.NoError(t, err)
-	require.Empty(t, dashboards.Items,
-		"dashboard should be deleted once the pull job runs without the pending-delete label (the repository root folder remains)")
+	helper.RequireRepoDashboardCount(t, repoName, 0)
 }

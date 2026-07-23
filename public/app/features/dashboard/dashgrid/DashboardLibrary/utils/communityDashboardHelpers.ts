@@ -1,20 +1,27 @@
-import { PanelModel } from '@grafana/data';
+import { type PanelModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getBackendSrv, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
-import { DataSourceInput, DashboardJson } from 'app/features/manage-dashboards/types';
+import { interpolateV1Dashboard } from 'app/features/manage-dashboards/import/utils/inputs';
+import { type DataSourceInput, type DashboardJson } from 'app/features/manage-dashboards/types';
 import { dispatch } from 'app/types/store';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
 import type { MappingContext } from '../SuggestedDashboardsModal';
-import { fetchCommunityDashboard, GnetDashboardDependency } from '../api/dashboardLibraryApi';
-import { CONTENT_KINDS, ContentKind, CREATION_ORIGINS, EventLocation, SourceEntryPoint } from '../constants';
-import { GnetDashboard, Link } from '../types';
+import { fetchCommunityDashboard, type GnetDashboardDependency } from '../api/dashboardLibraryApi';
+import {
+  CONTENT_KINDS,
+  type ContentKind,
+  CREATION_ORIGINS,
+  type EventLocation,
+  type SourceEntryPoint,
+} from '../constants';
+import { type GnetDashboard, type Link } from '../types';
 
-import { InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';
+import { type InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';
+import type { AssistantSource } from './templateDashboardHelpers';
 
-export const SEARCH_DEBOUNCE_MS = 500;
 export const DEFAULT_SORT_ORDER = 'downloads';
 export const DEFAULT_SORT_DIRECTION = 'desc';
 export const INCLUDE_LOGO = true;
@@ -42,7 +49,7 @@ export function getLogoUrl(dashboard: GnetDashboard): string {
 /**
  * Format date string for display
  */
-export function formatDate(dateString?: string): string {
+function formatDate(dateString?: string): string {
   if (!dateString) {
     return 'N/A';
   }
@@ -91,7 +98,8 @@ export function navigateToTemplate(
   sourceEntryPoint: SourceEntryPoint,
   eventLocation: EventLocation,
   contentKind: ContentKind,
-  datasourceTypes?: string[]
+  datasourceTypes?: string[],
+  assistantSource?: AssistantSource
 ): void {
   const searchParams = new URLSearchParams({
     datasource: datasourceUid,
@@ -110,6 +118,10 @@ export function navigateToTemplate(
     searchParams.set('datasourceTypes', JSON.stringify(datasourceTypes));
   }
 
+  if (assistantSource) {
+    searchParams.set('assistantSource', assistantSource);
+  }
+
   locationService.push({
     pathname: DASHBOARD_LIBRARY_ROUTES.Template,
     search: searchParams.toString(),
@@ -122,6 +134,7 @@ interface UseCommunityDashboardParams {
   sourceEntryPoint: SourceEntryPoint;
   eventLocation: EventLocation;
   onShowMapping?: (context: MappingContext) => void;
+  assistantSource?: AssistantSource;
 }
 
 /**
@@ -235,6 +248,7 @@ export async function onUseCommunityDashboard({
   sourceEntryPoint,
   eventLocation,
   onShowMapping,
+  assistantSource,
 }: UseCommunityDashboardParams): Promise<void> {
   // Note: item_clicked tracking is done by the caller (CommunityDashboardSection or SuggestedDashboards)
   // with the correct discoveryMethod before calling this function
@@ -261,7 +275,7 @@ export async function onUseCommunityDashboard({
     const constantInputs = parseConstantInputs(dashboardJson.__inputs || []);
 
     // Try auto-mapping datasources
-    const mappingResult = tryAutoMapDatasources(dsInputs, datasourceUid);
+    const mappingResult = await tryAutoMapDatasources(dsInputs, datasourceUid);
 
     // Decide whether to show mapping form or navigate directly
     // Show mapping form if: (a) there are unmapped datasources OR (b) there are constants
@@ -277,7 +291,8 @@ export async function onUseCommunityDashboard({
         sourceEntryPoint,
         eventLocation,
         CONTENT_KINDS.COMMUNITY_DASHBOARD,
-        datasourceTypes
+        datasourceTypes,
+        assistantSource
       );
     } else {
       // Show mapping form for unmapped datasources and/or constants
@@ -298,7 +313,8 @@ export async function onUseCommunityDashboard({
               sourceEntryPoint,
               eventLocation,
               CONTENT_KINDS.COMMUNITY_DASHBOARD,
-              datasourceTypes
+              datasourceTypes,
+              assistantSource
             ),
         });
       }
@@ -337,7 +353,7 @@ export async function interpolateDashboardForCompatibilityCheck(
   const dsInputs: DataSourceInput[] = dashboardJson.__inputs?.filter(isDataSourceInput) || [];
 
   // 3. Auto-map datasources using existing utility
-  const mappingResult = tryAutoMapDatasources(dsInputs, datasourceUid);
+  const mappingResult = await tryAutoMapDatasources(dsInputs, datasourceUid);
 
   // 4. Check if auto-mapping was successful
   // Compatibility check requires all datasource variables to be resolved
@@ -350,15 +366,8 @@ export async function interpolateDashboardForCompatibilityCheck(
     );
   }
 
-  // 5. Prepare inputs array for interpolation API
+  // 5. Interpolate in the frontend — no backend round-trip needed
   const inputs: InputMapping[] = mappingResult.mappings;
 
-  // 6. Call interpolation endpoint to replace template variables
-  const interpolatedDashboard = await getBackendSrv().post<DashboardJson>('/api/dashboards/interpolate', {
-    dashboard: dashboardJson,
-    overwrite: true,
-    inputs: inputs,
-  });
-
-  return interpolatedDashboard;
+  return interpolateV1Dashboard(dashboardJson, inputs);
 }

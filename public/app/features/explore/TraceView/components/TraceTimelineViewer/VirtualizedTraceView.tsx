@@ -16,28 +16,28 @@ import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import memoizeOne from 'memoize-one';
 import * as React from 'react';
-import { RefObject } from 'react';
+import { type RefObject } from 'react';
 
-import { CoreApp, GrafanaTheme2, LinkModel, TimeRange, TraceLog } from '@grafana/data';
+import { type CoreApp, type GrafanaTheme2, type LinkModel, type TimeRange, type TraceLog } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
+import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, reportInteraction } from '@grafana/runtime';
-import { TimeZone } from '@grafana/schema';
+import { type TimeZone } from '@grafana/schema';
 import { stylesFactory, withTheme2, ToolbarButton } from '@grafana/ui';
 
 import { PEER_SERVICE } from '../constants/tag-keys';
-import { SpanBarOptions } from '../settings/SpanBarSettings';
-import TNil from '../types/TNil';
-import TTraceTimeline from '../types/TTraceTimeline';
-import { SpanLinkFunc } from '../types/links';
-import { TraceSpan, Trace, TraceSpanReference, CriticalPathSection } from '../types/trace';
+import { type SpanBarOptions } from '../settings/SpanBarSettings';
+import type TNil from '../types/TNil';
+import type TTraceTimeline from '../types/TTraceTimeline';
+import { type SpanLinkFunc } from '../types/links';
+import { type TraceSpan, type Trace, type TraceSpanReference, type CriticalPathSection } from '../types/trace';
 import { getColorByKey } from '../utils/color-generator';
 import { getServiceColorKey, getServiceDisplayName } from '../utils/service-name';
 
 import ListView from './ListView';
-import SpanBarRow from './SpanBarRow';
-import { TraceFlameGraphs } from './SpanDetail';
-import DetailState from './SpanDetail/DetailState';
+import { SpanBarRow } from './SpanBarRow';
+import { type TraceFlameGraphs } from './SpanDetail';
+import type DetailState from './SpanDetail/DetailState';
 import SpanDetailRow from './SpanDetailRow';
 import {
   createViewedBoundsFunc,
@@ -45,7 +45,7 @@ import {
   isErrorSpan,
   isKindClient,
   spanContainsErredSpan,
-  ViewedBoundsFunctionType,
+  type ViewedBoundsFunctionType,
 } from './utils';
 
 const getStyles = stylesFactory(() => ({
@@ -91,6 +91,7 @@ type TVirtualizedTraceViewOwnProps = {
   detailReferenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
   detailProcessToggle: (spanID: string) => void;
   detailTagsToggle: (spanID: string) => void;
+  detailSummaryAttributesToggle: (spanID: string) => void;
   detailToggle: (spanID: string) => void;
   setSpanNameColumnWidth: (width: number) => void;
   hoverIndentGuideIds: Set<string>;
@@ -119,7 +120,7 @@ type TVirtualizedTraceViewOwnProps = {
 export type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TTraceTimeline;
 
 // export for tests
-export const DEFAULT_HEIGHTS = {
+const DEFAULT_HEIGHTS = {
   bar: 28,
   detail: 161,
   detailWithLogs: 197,
@@ -227,7 +228,7 @@ const memoizedGetClipping = memoizeOne(getClipping, isEqual);
 const memoizedChildSpansMap = memoizeOne(childSpansMap);
 
 // export from tests
-export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewProps> {
+class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewProps> {
   listView: ListView | TNil;
   hasScrolledToSpan = false;
 
@@ -534,6 +535,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       detailStackTracesToggle,
       detailStates,
       detailTagsToggle,
+      detailSummaryAttributesToggle,
       detailToggle,
       spanNameColumnWidth,
       trace,
@@ -579,6 +581,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           traceToProfilesOptions={traceToProfilesOptions}
           timeZone={timeZone}
           tagsToggle={detailTagsToggle}
+          summaryAttributesToggle={detailSummaryAttributesToggle}
           traceStartTime={trace.startTime}
           traceDuration={trace.duration}
           traceName={trace.traceName}

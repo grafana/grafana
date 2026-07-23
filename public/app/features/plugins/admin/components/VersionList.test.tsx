@@ -227,6 +227,81 @@ describe('VersionList', () => {
     config.pluginAdminExternalManageEnabled = pluginAdminExternalManageEnabledOriginal;
   });
 
+  it('should allow installing the latest of the current and newer majors for a managed major aligned plugin', () => {
+    // Regression test: hiding the (untrustworthy) installed version for managed plugins must not
+    // change which versions are installable. With 2.0.0 installed, the latest of major 2 and the
+    // latest of major 3 must both stay enabled.
+    const versions = [
+      ...generateVersionsForMajor('1', 3),
+      ...generateVersionsForMajor('2', 3),
+      ...generateVersionsForMajor('3', 3),
+    ];
+
+    const installedVersion = '2.0.0';
+
+    const managedPluginsV2Original = config.featureToggles.managedPluginsV2;
+    config.featureToggles.managedPluginsV2 = true;
+
+    const pluginAdminExternalManageEnabledOriginal = config.pluginAdminExternalManageEnabled;
+    config.pluginAdminExternalManageEnabled = true;
+
+    const plugin = getCatalogPluginMock({
+      details: {
+        grafanaDependency: '>=8.0.0',
+        pluginDependencies: [],
+        links: [{ name: 'GitHub', url: 'https://example.com' }],
+        versions,
+      },
+      managed: { enabled: true, strategy: PluginUpdateStrategy.MajorAligned },
+      installedVersion,
+    });
+
+    renderWithStore(<VersionList plugin={plugin} />, { managedPluginsV2: true });
+    const buttons = screen.getAllByRole('button');
+    const enabledButtons = buttons.filter((btn) => !(btn as HTMLButtonElement).disabled);
+    expect(enabledButtons).toHaveLength(2);
+    const enabledRows = enabledButtons.map((btn) => btn.closest('tr')?.textContent);
+    expect(enabledRows.join(' ')).toContain('2.2.0');
+    expect(enabledRows.join(' ')).toContain('3.2.0');
+
+    config.featureToggles.managedPluginsV2 = managedPluginsV2Original;
+    config.pluginAdminExternalManageEnabled = pluginAdminExternalManageEnabledOriginal;
+  });
+
+  it('should fall back to only the latest compatible version when a managed major aligned plugin has an invalid installed version', () => {
+    // An invalid semver installedVersion (e.g. a dev build) must not crash the version list.
+    const versions = [
+      ...generateVersionsForMajor('1', 3),
+      ...generateVersionsForMajor('2', 3),
+      ...generateVersionsForMajor('3', 3),
+    ];
+
+    const managedPluginsV2Original = config.featureToggles.managedPluginsV2;
+    config.featureToggles.managedPluginsV2 = true;
+
+    const pluginAdminExternalManageEnabledOriginal = config.pluginAdminExternalManageEnabled;
+    config.pluginAdminExternalManageEnabled = true;
+
+    const plugin = getCatalogPluginMock({
+      details: {
+        grafanaDependency: '>=8.0.0',
+        pluginDependencies: [],
+        links: [{ name: 'GitHub', url: 'https://example.com' }],
+        versions,
+      },
+      managed: { enabled: true, strategy: PluginUpdateStrategy.MajorAligned },
+      installedVersion: 'dev',
+    });
+
+    renderWithStore(<VersionList plugin={plugin} />, { managedPluginsV2: true });
+    const buttons = screen.getAllByRole('button');
+    const enabledButtons = buttons.filter((btn) => !(btn as HTMLButtonElement).disabled);
+    expect(enabledButtons).toHaveLength(1);
+
+    config.featureToggles.managedPluginsV2 = managedPluginsV2Original;
+    config.pluginAdminExternalManageEnabled = pluginAdminExternalManageEnabledOriginal;
+  });
+
   it('should enable only the install button for the major aligned compatible version, when it is major aligned managed plugin and there is no version installed', () => {
     const versions = [
       ...generateVersionsForMajor('1', 3),
@@ -253,10 +328,61 @@ describe('VersionList', () => {
     renderWithStore(<VersionList plugin={plugin} />, { managedPluginsV2: true });
     const buttons = screen.getAllByRole('button');
     const enabledButtons = buttons.filter((btn) => !(btn as HTMLButtonElement).disabled);
-    expect(enabledButtons).toHaveLength(3);
+    expect(enabledButtons).toHaveLength(1);
 
     config.featureToggles.managedPluginsV2 = managedPluginsV2Original;
     config.pluginAdminExternalManageEnabled = pluginAdminExternalManageEnabledOriginal;
+  });
+
+  it('should not mark any row as installed or show upgrade/downgrade for a managed plugin', () => {
+    const versions = [
+      {
+        version: '4.19.0',
+        createdAt: '2024-01-01',
+        isCompatible: true,
+        grafanaDependency: '>=10.0.0',
+      },
+      {
+        version: '4.17.0',
+        createdAt: '2023-08-01',
+        isCompatible: true,
+        grafanaDependency: '>=9.0.0',
+      },
+    ];
+
+    // The stored installedVersion is stale/unreliable for managed plugins (e.g. remote
+    // CDN-provisioned datasources) — it should never be trusted as ground truth.
+    const installedVersion = '4.17.0';
+
+    const plugin = getCatalogPluginMock({
+      details: {
+        grafanaDependency: '>=8.0.0',
+        pluginDependencies: [],
+        links: [{ name: 'GitHub', url: 'https://example.com' }],
+        versions,
+      },
+      managed: { enabled: true, strategy: PluginUpdateStrategy.MajorAligned },
+      installedVersion,
+    });
+
+    renderWithStore(<VersionList plugin={plugin} />);
+
+    expect(screen.queryByText(/\(installed version\)/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Installed')).not.toBeInTheDocument();
+    expect(screen.queryByText('Upgrade')).not.toBeInTheDocument();
+    expect(screen.queryByText('Downgrade')).not.toBeInTheDocument();
+    expect(screen.getByText('4.17.0')).toBeInTheDocument();
+    expect(screen.getByText(/^4\.19\.0/)).toBeInTheDocument();
+
+    // Even though the row is not labeled as installed, the stored installed version still
+    // cannot be redundantly reinstalled.
+    expect(screen.getByText('4.17.0').closest('tr')?.querySelector('button')).toBeDisabled();
+    expect(
+      screen
+        .getByText(/^4\.19\.0/)
+        .closest('tr')
+        ?.querySelector('button')
+    ).toBeEnabled();
   });
 
   it('should disable all versions when plugin is managed and update strategy is "assigned"', () => {

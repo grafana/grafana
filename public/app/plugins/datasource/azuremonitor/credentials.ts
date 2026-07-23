@@ -1,5 +1,5 @@
 import {
-  AzureCredentials,
+  type AzureCredentials,
   getDatasourceCredentials,
   getDefaultAzureCloud,
   getClientSecret,
@@ -8,7 +8,7 @@ import {
 } from '@grafana/azure-sdk';
 import { config } from '@grafana/runtime';
 
-import { AzureMonitorDataSourceInstanceSettings, AzureMonitorDataSourceSettings } from './types/types';
+import { type AzureMonitorDataSourceInstanceSettings, type AzureMonitorDataSourceSettings } from './types/types';
 
 export function getCredentials(
   options: AzureMonitorDataSourceSettings | AzureMonitorDataSourceInstanceSettings

@@ -13,22 +13,22 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import cx from 'classnames';
+import cx from 'clsx';
 import DOMPurify from 'dompurify';
-import { PropsWithChildren } from 'react';
+import { type PropsWithChildren } from 'react';
 
-import { GrafanaTheme2, PluginExtensionLink, TraceKeyValuePair } from '@grafana/data';
+import { type GrafanaTheme2, type PluginExtensionLink, type TraceKeyValuePair } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';
-import TNil from '../../types/TNil';
+import type TNil from '../../types/TNil';
 
 import jsonMarkup from './jsonMarkup';
 
-const copyIconClassName = 'copyIcon';
+const getStyles = (theme: GrafanaTheme2) => {
+  const keyColor = theme.colors.text.secondary;
 
-export const getStyles = (theme: GrafanaTheme2) => {
   return {
     KeyValueTable: css({
       label: 'KeyValueTable',
@@ -41,19 +41,22 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     body: css({
       label: 'body',
-      verticalAlign: 'baseline',
     }),
     row: css({
       label: 'row',
       '& > td': {
         padding: '0 0.5rem',
         height: '30px',
+        verticalAlign: 'middle',
       },
       '&:nth-child(2n) > td': {
         background: autoColor(theme, '#f5f5f5'),
       },
-      [`&:not(:hover) .${copyIconClassName}`]: {
+      '& > td:last-child button': {
         visibility: 'hidden',
+      },
+      '&:hover > td:last-child button': {
+        visibility: 'visible',
       },
       'a span': {
         color: `${theme.colors.text.link} !important`,
@@ -64,13 +67,19 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     keyColumn: css({
       label: 'keyColumn',
-      color: autoColor(theme, '#888'),
+      color: keyColor,
       whiteSpace: 'pre',
       width: '125px',
+    }),
+    copyIcon: css({
+      label: 'copyIcon',
+      color: keyColor,
     }),
     copyColumn: css({
       label: 'copyColumn',
       textAlign: 'right',
+      verticalAlign: 'middle',
+      whiteSpace: 'nowrap',
     }),
     linkIcon: css({
       label: 'linkIcon',
@@ -162,7 +171,7 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
                 <td>{valueMarkup}</td>
                 <td className={styles.copyColumn}>
                   <CopyIcon
-                    className={copyIconClassName}
+                    className={styles.copyIcon}
                     copyText={row.type === 'code' || row.type === 'text' ? row.value : JSON.stringify(row, null, 2)}
                     tooltipTitle="Copy"
                   />

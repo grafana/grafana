@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -15,18 +14,19 @@ import (
 
 func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "move-auth-test"
 	testRepo := common.TestRepo{
-		Name: repo,
+		Name:      repo,
+		Workflows: []string{"write"},
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "dashboard.json",
 		},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    0,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireRepoDashboardCount(t, repo, 1)
+	helper.RequireRepoFolderCount(t, repo, 0)
 
 	// Grant the editor user dashboard permissions (the default editor role
 	// does not include dashboards:write/dashboards:create which are required
@@ -57,7 +57,7 @@ func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.NoError(t, result.Error(), "admin should be able to create move job")
 		require.Equal(t, http.StatusAccepted, statusCode, "should return 202 Accepted")
@@ -82,7 +82,7 @@ func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.NoError(t, result.Error(), "editor should be able to create move job")
 		require.Equal(t, http.StatusAccepted, statusCode, "should return 202 Accepted")
@@ -107,7 +107,7 @@ func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "viewer should not be able to create move job")
 		require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
@@ -115,7 +115,7 @@ func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
 	})
 
 	t.Run("move job blocked for folder resource in file", func(t *testing.T) {
-		folderJSON := `{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"sneaky-folder"},"spec":{"title":"Sneaky"}}`
+		folderJSON := `{"apiVersion":"folder.grafana.app/v1","kind":"Folder","metadata":{"name":"sneaky-folder"},"spec":{"title":"Sneaky"}}`
 		helper.WriteToProvisioningPath(t, "folder-as-file-move.json", []byte(folderJSON))
 
 		body := common.AsJSON(provisioning.JobSpec{
@@ -134,7 +134,7 @@ func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "move job should be blocked for folder resource in a file")
 		require.NotEqual(t, http.StatusAccepted, statusCode, "should not return 202 Accepted")
@@ -160,7 +160,7 @@ func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
 			SubResource("jobs").
 			Body(body).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "move job should be blocked for unsupported resource type")
 		require.NotEqual(t, http.StatusAccepted, statusCode, "should not return 202 Accepted")

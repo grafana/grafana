@@ -1,17 +1,15 @@
-import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { DashboardDTO } from 'app/types/dashboard';
+import { type Dashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type DashboardDTO } from 'app/types/dashboard';
 
 import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
 import { UnifiedDashboardAPI } from './UnifiedDashboardAPI';
-import { LegacyDashboardAPI } from './legacy';
-import { DashboardAPI, DashboardWithAccessInfo } from './types';
+import { type DashboardAPI, type DashboardWithAccessInfo } from './types';
 import { getDashboardsApiVersion } from './utils';
 import { K8sDashboardAPI } from './v1';
 import { K8sDashboardV2API } from './v2';
 
 type DashboardAPIClients = {
-  legacy: DashboardAPI<DashboardDTO, Dashboard>;
   v1: DashboardAPI<DashboardDTO, Dashboard>;
   v2: DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>, DashboardV2Spec>;
   unified: DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>, Dashboard | DashboardV2Spec>;
@@ -47,7 +45,6 @@ export async function getDashboardAPI(
 
   if (!clients || !dashboardAPIVersionResolver.isResolved) {
     clients = {
-      legacy: new LegacyDashboardAPI(),
       v1: new K8sDashboardAPI(),
       v2: new K8sDashboardV2API(),
       unified: new UnifiedDashboardAPI(),

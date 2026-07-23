@@ -1,5 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
+import { Controls, Panel, Sidebar } from './page-objects';
+
 test.use({
   featureToggles: {
     dashboardNewLayouts: true,
@@ -8,35 +10,32 @@ test.use({
   },
 });
 
-const PAGE_UNDER_TEST = '5SdHCadmz/panel-tests-graph';
-
 test.describe(
   'Dashboard',
   {
     tag: ['@dashboards'],
   },
   () => {
-    test('can toggle transparent background switch', async ({ gotoDashboardPage, selectors, page }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+    test('can toggle transparent background switch', async ({ gotoDashboardPage, selectors, page, components }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: '5SdHCadmz/panel-tests-graph' });
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const panel = new Panel({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-        .filter({ hasText: /^No Data Points Warning$/ })
-        .first()
-        .click();
+      await controls.enterEditMode();
 
-      const panelTitle = dashboardPage.getByGrafanaSelector(
-        selectors.components.Panels.Panel.title('No Data Points Warning')
-      );
+      const panelTitle = 'No Data Points Warning';
 
-      const initialBackground = await panelTitle.evaluate((el) => getComputedStyle(el).background);
+      const panelContainer = panel.getContainerByTitle(panelTitle);
+
+      const initialBackground = await panelContainer.evaluate((el) => getComputedStyle(el).background);
       expect(initialBackground).not.toMatch(/rgba\(0, 0, 0, 0\)/);
 
-      await page.getByRole('switch', { name: 'Transparent background' }).click({ force: true });
+      await panel.selectByTitle(panelTitle);
+      await sidebar.panelOptions.toggleTransparentBackground();
 
-      const transparentBackground = await panelTitle.evaluate((el) => getComputedStyle(el).background);
+      const transparentBackground = await panelContainer.evaluate((el) => getComputedStyle(el).background);
       expect(transparentBackground).toMatch(/rgba\(0, 0, 0, 0\)/);
     });
   }

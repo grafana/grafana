@@ -1,7 +1,7 @@
 import { useCallback, useState, type JSX } from 'react';
 
 import { t } from '@grafana/i18n';
-import { ComboboxOption, MultiCombobox } from '@grafana/ui';
+import { type ComboboxOption, MultiCombobox } from '@grafana/ui';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 export interface FolderFilterProps {
@@ -22,8 +22,6 @@ export function FolderFilter({ onChange }: FolderFilterProps): JSX.Element {
   return (
     <MultiCombobox
       prefixIcon="filter"
-      minWidth={40}
-      width="auto"
       options={getFoldersAsOptions}
       value={value}
       onChange={onSelectOptionChange}

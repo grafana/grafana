@@ -1,6 +1,10 @@
 import { t } from '@grafana/i18n';
+import { w3cStandardEmailValidator } from 'app/features/admin/utils';
 
-import { RepoType } from './types';
+import { type RepositoryFormData } from '../types';
+import { validateNoUserInfoInUrl } from '../utils/validators';
+
+import { type RepoType } from './types';
 
 export interface FieldConfig {
   label: string;
@@ -13,12 +17,51 @@ export interface FieldConfig {
       value: RegExp;
       message: string;
     };
+    validate?: (value: string | undefined) => string | true;
   };
 }
 
 // Provider-specific field configurations for all providers
 // This needs to be a function for translations to work
 const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => {
+  // Commit signing fields are identical across all git-based providers.
+  const signingFields = {
+    signingMethod: {
+      label: t('provisioning.shared.signing-method-label', 'Commit signing'),
+      description: t(
+        'provisioning.shared.signing-method-description',
+        'Sign commits so their author can be cryptographically verified.'
+      ),
+    },
+    commitSigningKey: {
+      label: t('provisioning.shared.signing-key-label', 'Signing key'),
+      description: t('provisioning.shared.signing-key-description', 'Private key used to sign commits. No passphrase.'),
+    },
+    smimeCertificate: {
+      label: t('provisioning.shared.smime-certificate-label', 'S/MIME certificate'),
+      description: t(
+        'provisioning.shared.smime-certificate-description',
+        'X.509 certificate paired with the signing key.'
+      ),
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+      placeholder: '-----BEGIN CERTIFICATE-----',
+    },
+    commitSignerName: {
+      label: t('provisioning.shared.commit-signer-name-label', 'Signer name'),
+      description: t('provisioning.shared.commit-signer-name-description', 'Name of the commit signer.'),
+      placeholder: t('provisioning.shared.commit-signer-name-placeholder', 'Grafana'),
+    },
+    commitSignerEmail: {
+      label: t('provisioning.shared.commit-signer-email-label', 'Signer email'),
+      description: t('provisioning.shared.commit-signer-email-description', 'Must match the signing key identity.'),
+      placeholder: t('provisioning.shared.commit-signer-email-placeholder', 'noreply@grafana.com'),
+    },
+    signerIsAuthor: {
+      label: t('provisioning.shared.signer-is-author-label', 'Use signer as commit author'),
+      description: t('provisioning.shared.signer-is-author-description', 'Author commits as the signer.'),
+    },
+  };
+
   // Shared field descriptions used across multiple providers
   const shared = {
     branch: {
@@ -42,6 +85,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           value: /^https:\/\/[^\/]+\/[^\/]+\/[^\/]+\/?$/,
           message: t('provisioning.shared.url-pattern', 'Must be a valid repository URL (https://hostname/owner/repo)'),
         },
+        validate: validateNoUserInfoInUrl,
       },
     },
     tokenUser: {
@@ -51,51 +95,61 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
     },
   };
 
-  return {
-    github: {
-      token: {
-        label: t('provisioning.github.token-label', 'Personal Access Token'),
-        description: t(
-          'provisioning.github.token-description',
-          'GitHub Personal Access Token with repository permissions'
-        ),
-        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        placeholder: 'ghp_xxxxxxxxxxxxxxxxxxxx',
-        required: true,
-        validation: {
-          required: t('provisioning.github.token-required', 'GitHub token is required'),
-        },
-      },
-      url: {
-        ...shared.url,
-        description: t('provisioning.github.url-description', 'The GitHub repository URL'),
-        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        placeholder: 'https://github.com/owner/repository',
-        required: true,
-        validation: {
-          ...shared.url.validation,
-          required: t('provisioning.github.url-required', 'Repository URL is required'),
-        },
-      },
-      branch: {
-        ...shared.branch,
-        required: true,
-        validation: {
-          required: t('provisioning.github.branch-required', 'Branch is required'),
-        },
-      },
-      path: {
-        ...shared.path,
-        required: false,
-      },
-      prWorkflow: {
-        label: t('provisioning.github.pr-workflow-label', 'Enable pull request option when saving'),
-        description: t(
-          'provisioning.github.pr-workflow-description', // trufflehog:ignore
-          'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.'
-        ),
+  // GitHub and GitHub Enterprise share the same fields; only the URL placeholder host
+  // differs.
+  const github = (...hosts: string[]): Record<string, FieldConfig> => ({
+    token: {
+      label: t('provisioning.github.token-label', 'Personal Access Token'),
+      description: t(
+        'provisioning.github.token-description',
+        'GitHub Personal Access Token with repository permissions'
+      ),
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+      placeholder: 'ghp_xxxxxxxxxxxxxxxxxxxx',
+      required: true,
+      validation: {
+        required: t('provisioning.github.token-required', 'GitHub token is required'),
       },
     },
+    url: {
+      ...shared.url,
+      description: t('provisioning.github.url-description', 'The GitHub repository URL'),
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+      placeholder: hosts
+        .map((h) => {
+          return h + '/owner/repository';
+        })
+        .join(' or '),
+      required: true,
+      validation: {
+        ...shared.url.validation,
+        required: t('provisioning.github.url-required', 'Repository URL is required'),
+      },
+    },
+    branch: {
+      ...shared.branch,
+      required: true,
+      validation: {
+        required: t('provisioning.github.branch-required', 'Branch is required'),
+      },
+    },
+    path: {
+      ...shared.path,
+      required: false,
+    },
+    prWorkflow: {
+      label: t('provisioning.github.pr-workflow-label', 'Enable pull request option when saving'),
+      description: t(
+        'provisioning.github.pr-workflow-description', // trufflehog:ignore
+        'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.'
+      ),
+    },
+    ...signingFields,
+  });
+
+  return {
+    github: github('https://github.com'),
+    githubEnterprise: github('https://your-enterprise-url.com', 'https://<slug>.ghe.com'),
     gitlab: {
       token: {
         label: t('provisioning.gitlab.token-label', 'Project Access Token'),
@@ -114,11 +168,18 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         ...shared.url,
         description: t('provisioning.gitlab.url-description', 'The GitLab repository URL'),
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        placeholder: 'https://gitlab.com/owner/repository',
+        placeholder: 'https://gitlab.com/group/repository',
         required: true,
         validation: {
-          ...shared.url.validation,
           required: t('provisioning.gitlab.url-required', 'Repository URL is required'),
+          pattern: {
+            value: /^https:\/\/[^\/]+\/[^\/]+(\/[^\/]+)+\/?$/,
+            message: t(
+              'provisioning.gitlab.url-pattern',
+              'Must be a valid repository URL (https://hostname/group/repository or https://hostname/group/subgroup/repository)'
+            ),
+          },
+          validate: validateNoUserInfoInUrl,
         },
       },
       branch: {
@@ -139,6 +200,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'Allows users to choose whether to open a merge request when saving changes. If the repository does not allow direct changes to the main branch, a merge request may still be required.'
         ),
       },
+      ...signingFields,
     },
     bitbucket: {
       token: {
@@ -162,6 +224,22 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           required: t('provisioning.bitbucket.token-user-required', 'Username is required'),
         },
       },
+      email: {
+        label: t('provisioning.bitbucket.email-label', 'Atlassian account email'),
+        description: t(
+          'provisioning.bitbucket.email-description',
+          'The Atlassian account email used to authenticate the Bitbucket API. Required to enable webhooks.'
+        ),
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        placeholder: 'you@example.com',
+        required: false,
+        validation: {
+          pattern: {
+            value: w3cStandardEmailValidator,
+            message: t('provisioning.bitbucket.email-invalid', 'Enter a valid email address'),
+          },
+        },
+      },
       url: {
         ...shared.url,
         description: t('provisioning.bitbucket.url-description', 'The Bitbucket repository URL'),
@@ -169,8 +247,15 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         placeholder: 'https://bitbucket.org/owner/repository',
         required: true,
         validation: {
-          ...shared.url.validation,
           required: t('provisioning.bitbucket.url-required', 'Repository URL is required'),
+          pattern: {
+            value: /^https:\/\/[^\/]+\/[^\/]+(\/[^\/]+)+\/?$/,
+            message: t(
+              'provisioning.bitbucket.url-pattern',
+              'Must be a valid repository URL (https://hostname/owner/repo or https://hostname/scm/project/repo)'
+            ),
+          },
+          validate: validateNoUserInfoInUrl,
         },
       },
       branch: {
@@ -191,6 +276,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.'
         ),
       },
+      ...signingFields,
     },
     git: {
       token: {
@@ -226,6 +312,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
             value: /^https?:\/\/.+/,
             message: t('provisioning.git.url-pattern', 'Must be a valid Git repository URL'),
           },
+          validate: validateNoUserInfoInUrl,
         },
       },
       branch: {
@@ -246,6 +333,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.'
         ),
       },
+      ...signingFields,
     },
     local: {
       path: {
@@ -272,6 +360,13 @@ export const getGitProviderFields = (
   | {
       tokenConfig: FieldConfig;
       tokenUserConfig?: FieldConfig;
+      emailConfig?: FieldConfig;
+      signingMethodConfig?: FieldConfig;
+      signingKeyConfig?: FieldConfig;
+      smimeCertificateConfig?: FieldConfig;
+      commitSignerNameConfig?: FieldConfig;
+      commitSignerEmailConfig?: FieldConfig;
+      signerIsAuthorConfig?: FieldConfig;
       urlConfig: FieldConfig;
       branchConfig: FieldConfig;
       pathConfig: FieldConfig;
@@ -286,6 +381,13 @@ export const getGitProviderFields = (
   // For git providers, these fields are guaranteed to exist
   const tokenConfig = configs.token;
   const tokenUserConfig = configs.tokenUser; // Optional field, only for some providers
+  const emailConfig = configs.email; // Optional field, only for Bitbucket
+  const signingMethodConfig = configs.signingMethod; // Optional, only for git-based providers
+  const signingKeyConfig = configs.commitSigningKey; // Optional, only for git-based providers
+  const smimeCertificateConfig = configs.smimeCertificate; // Paired with commitSigningKey when format is smime
+  const commitSignerNameConfig = configs.commitSignerName; // Paired with commitSigningKey
+  const commitSignerEmailConfig = configs.commitSignerEmail; // Paired with commitSigningKey
+  const signerIsAuthorConfig = configs.signerIsAuthor; // Paired with commitSigningKey
   const urlConfig = configs.url;
   const branchConfig = configs.branch;
   const pathConfig = configs.path;
@@ -298,11 +400,39 @@ export const getGitProviderFields = (
   return {
     tokenConfig,
     tokenUserConfig,
+    emailConfig,
+    signingMethodConfig,
+    signingKeyConfig,
+    smimeCertificateConfig,
+    commitSignerNameConfig,
+    commitSignerEmailConfig,
+    signerIsAuthorConfig,
     urlConfig,
     branchConfig,
     pathConfig,
     prWorkflowConfig,
   };
+};
+
+export const getSigningMethodOptions = (): Array<{ label: string; value: RepositoryFormData['signingMethod'] }> => [
+  { label: t('provisioning.shared.signing-method-none', 'None'), value: '' },
+  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+  { label: 'GPG', value: 'gpg' },
+  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+  { label: 'SSH', value: 'ssh' },
+  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+  { label: 'S/MIME', value: 'smime' },
+];
+
+export const getSigningKeyPlaceholder = (format?: string): string => {
+  switch (format) {
+    case 'ssh':
+      return '-----BEGIN OPENSSH PRIVATE KEY-----';
+    case 'smime':
+      return '-----BEGIN PRIVATE KEY-----';
+    default:
+      return '-----BEGIN PGP PRIVATE KEY BLOCK-----';
+  }
 };
 
 /**

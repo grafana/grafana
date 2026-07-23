@@ -11,14 +11,17 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
@@ -31,6 +34,50 @@ import (
 type AzureMonitorDatasource struct {
 	Proxy  types.ServiceProxy
 	Logger log.Logger
+
+	// subscriptionCache maps cacheKey (see subscriptionCacheKey) to a
+	// subscriptionCacheEntry. Values are inserted on successful fetch and
+	// served until expiresAt. Zero-value-ready.
+	subscriptionCache sync.Map
+
+	// subscriptionFlights coalesces concurrent lookups for the same cacheKey
+	// so that a burst of queries against the same subscription only performs
+	// one upstream HTTP call.
+	subscriptionFlights singleflight.Group
+}
+
+// subscriptionCacheTTL is the lifetime of a cached subscription display name.
+// Display names change rarely and are only used for legend formatting, so
+// brief staleness after a rename is acceptable.
+const subscriptionCacheTTL = 5 * time.Minute
+
+type subscriptionCacheEntry struct {
+	displayName string
+	expiresAt   time.Time
+}
+
+// subscriptionCacheKey composes the fields that disambiguate a subscription
+// lookup. orgId and dsId scope to a single Grafana datasource; baseUrl
+// disambiguates across Azure clouds (public, government, china) configured
+// on the same datasource over time.
+func subscriptionCacheKey(orgId, dsId int64, baseUrl, subscriptionId string) string {
+	return fmt.Sprintf("%d|%d|%s|%s", orgId, dsId, baseUrl, subscriptionId)
+}
+
+// isUserScopedAuth reports whether the datasource issues requests with an
+// identity that varies per Grafana user. In those modes persistent caching
+// is unsafe: a user who has lost access to a subscription would continue to
+// receive a cached display name until the TTL expires. Singleflight
+// coalescing within a single burst is still safe and still applied.
+func isUserScopedAuth(creds azcredentials.AzureCredentials) bool {
+	if creds == nil {
+		return false
+	}
+	switch creds.AzureAuthType() {
+	case azcredentials.AzureAuthCurrentUserIdentity, azcredentials.AzureAuthClientSecretObo:
+		return true
+	}
+	return false
 }
 
 var (
@@ -71,7 +118,13 @@ func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, ori
 
 func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo types.DatasourceInfo) (*types.AzureMonitorQuery, error) {
 	var target string
-	queryJSONModel := dataquery.AzureMonitorQuery{}
+	// GrafanaSql is not present on the generated AzureMonitorQuery type yet;
+	// embedding lets us pick it up in the same Unmarshal pass.
+	// TODO: Move GrafanaSql to the generated type.
+	var queryJSONModel struct {
+		dataquery.AzureMonitorQuery
+		GrafanaSql bool `json:"grafanaSql"`
+	}
 	err := json.Unmarshal(query.JSON, &queryJSONModel)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode the Azure Monitor query object from JSON: %w", err)
@@ -97,8 +150,8 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 	filterInBody := true
 	resourceIDs := []string{}
 	resourceMap := map[string]dataquery.AzureMonitorResource{}
-	if hasOne, resourceGroup, resourceName := hasOneResource(queryJSONModel); hasOne {
-		ub := urlBuilder{
+	if hasOne, resourceGroup, resourceName := hasOneResource(queryJSONModel.AzureMonitorQuery); hasOne {
+		ub := UrlBuilder{
 			ResourceURI: azJSONModel.ResourceUri,
 			// Alternative, used to reconstruct resource URI if it's not present
 			DefaultSubscription: &dsInfo.Settings.SubscriptionId,
@@ -109,7 +162,7 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 		}
 
 		// Construct the resourceURI (for legacy query objects pre Grafana 9)
-		resourceUri, err := ub.buildResourceURI()
+		resourceUri, err := ub.BuildResourceURI()
 		if err != nil {
 			return nil, err
 		}
@@ -124,14 +177,14 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 		}
 	} else {
 		for _, r := range azJSONModel.Resources {
-			ub := urlBuilder{
+			ub := UrlBuilder{
 				DefaultSubscription: &dsInfo.Settings.SubscriptionId,
 				Subscription:        queryJSONModel.Subscription,
 				ResourceGroup:       r.ResourceGroup,
 				MetricNamespace:     azJSONModel.MetricNamespace,
 				ResourceName:        r.ResourceName,
 			}
-			resourceUri, err := ub.buildResourceURI()
+			resourceUri, err := ub.BuildResourceURI()
 			if err != nil {
 				return nil, err
 			}
@@ -145,40 +198,18 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 		}
 	}
 
-	// old model
-	dimension := ""
-	if azJSONModel.Dimension != nil {
-		dimension = strings.TrimSpace(*azJSONModel.Dimension)
-	}
-	dimensionFilter := ""
-	if azJSONModel.DimensionFilter != nil {
-		dimensionFilter = strings.TrimSpace(*azJSONModel.DimensionFilter)
-	}
-
-	dimSB := strings.Builder{}
-
-	if dimension != "" && dimensionFilter != "" && dimension != "None" && len(azJSONModel.DimensionFilters) == 0 {
-		dimSB.WriteString(fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
-	} else {
-		for i, filter := range azJSONModel.DimensionFilters {
-			if len(filter.Filters) == 0 {
-				dimSB.WriteString(fmt.Sprintf("%s eq '*'", *filter.Dimension))
-			} else {
-				dimSB.WriteString(types.ConstructFiltersString(filter))
-			}
-			if i != len(azJSONModel.DimensionFilters)-1 {
-				dimSB.WriteString(" and ")
-			}
-		}
+	dimensionFilterString, err := buildDimensionFilterString(azJSONModel)
+	if err != nil {
+		return nil, err
 	}
 
 	filterString := strings.Join(resourceIDs, " or ")
 
-	if dimSB.String() != "" {
+	if dimensionFilterString != "" {
 		if filterString != "" {
-			filterString = fmt.Sprintf("(%s) and (%s)", filterString, dimSB.String())
+			filterString = fmt.Sprintf("(%s) and (%s)", filterString, dimensionFilterString)
 		} else {
-			filterString = dimSB.String()
+			filterString = dimensionFilterString
 		}
 	}
 
@@ -203,6 +234,7 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 		Dimensions:   azJSONModel.DimensionFilters,
 		Resources:    resourceMap,
 		Subscription: sub,
+		GrafanaSql:   queryJSONModel.GrafanaSql,
 	}
 	if filterString != "" {
 		if filterInBody {
@@ -213,6 +245,61 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 	}
 
 	return azureQuery, nil
+}
+
+// buildDimensionFilterString constructs the dimension portion of the metrics
+// API $filter from either the legacy single dimension/dimensionFilter fields
+// or the DimensionFilters list.
+func buildDimensionFilterString(azJSONModel *dataquery.AzureMetricQuery) (string, error) {
+	// old model
+	dimension := ""
+	if azJSONModel.Dimension != nil {
+		dimension = strings.TrimSpace(*azJSONModel.Dimension)
+	}
+	dimensionFilter := ""
+	if azJSONModel.DimensionFilter != nil {
+		dimensionFilter = strings.TrimSpace(*azJSONModel.DimensionFilter)
+	}
+
+	if dimension != "" && dimensionFilter != "" && dimension != "None" && len(azJSONModel.DimensionFilters) == 0 {
+		return fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter), nil
+	}
+
+	// The metrics API accepts at most one 'sw' clause per dimension: it
+	// rejects both "sw ... or sw ..." (or is only valid between eq clauses)
+	// and "sw ... and sw ..." (multiple sw values for one dimension), so fail
+	// here with a clearer message than the API's. Values are counted across
+	// all filter entries because the same dimension may appear more than once
+	// in the list, and dimension names are compared case-insensitively
+	// because the API treats them that way.
+	swValueCounts := map[string]int{}
+	for _, filter := range azJSONModel.DimensionFilters {
+		if filter.Operator == nil || *filter.Operator != "sw" {
+			continue
+		}
+		filterDimension := ""
+		if filter.Dimension != nil {
+			filterDimension = *filter.Dimension
+		}
+		key := strings.ToLower(filterDimension)
+		swValueCounts[key] += len(filter.Filters)
+		if swValueCounts[key] > 1 {
+			return "", backend.DownstreamError(fmt.Errorf("the Azure Monitor API supports only one 'starts with' filter value per dimension, but dimension %q has %d", filterDimension, swValueCounts[key]))
+		}
+	}
+
+	dimSB := strings.Builder{}
+	for i, filter := range azJSONModel.DimensionFilters {
+		if len(filter.Filters) == 0 {
+			dimSB.WriteString(fmt.Sprintf("%s eq '*'", *filter.Dimension))
+		} else {
+			dimSB.WriteString(types.ConstructFiltersString(filter))
+		}
+		if i != len(azJSONModel.DimensionFilters)-1 {
+			dimSB.WriteString(" and ")
+		}
+	}
+	return dimSB.String(), nil
 }
 
 func getParams(azJSONModel *dataquery.AzureMetricQuery, query backend.DataQuery) (url.Values, error) {
@@ -254,7 +341,69 @@ func getParams(azJSONModel *dataquery.AzureMetricQuery, query backend.DataQuery)
 	return params, nil
 }
 
-func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, ctx context.Context, subscriptionId string, baseUrl string, dsId int64, orgId int64) (string, error) {
+func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, ctx context.Context, subscriptionId string, baseUrl string, dsId int64, orgId int64, creds azcredentials.AzureCredentials) (string, error) {
+	userScoped := isUserScopedAuth(creds)
+	cacheKey := subscriptionCacheKey(orgId, dsId, baseUrl, subscriptionId)
+
+	// Persistent caching is only safe in auth modes where every request from
+	// this datasource uses the same Azure identity. In user-scoped modes the
+	// request is authorised on behalf of the current Grafana user, so a
+	// cached display name could be served to a user who has since lost
+	// access. Singleflight coalescing of concurrent callers is still applied
+	// in both modes.
+	if !userScoped {
+		if entry, ok := e.loadSubscriptionCacheEntry(cacheKey); ok {
+			return entry.displayName, nil
+		}
+	}
+
+	// Coalesce concurrent misses for the same cacheKey. Callers that arrive
+	// while a fetch is in flight will share its result (and its error), which
+	// is acceptable for this short-lived lookup.
+	result, err, _ := e.subscriptionFlights.Do(cacheKey, func() (any, error) {
+		if !userScoped {
+			// Re-check under the flight: another caller may have refreshed
+			// the entry between the fast-path miss and acquiring the flight
+			// slot.
+			if entry, ok := e.loadSubscriptionCacheEntry(cacheKey); ok {
+				return entry.displayName, nil
+			}
+		}
+
+		displayName, err := e.fetchSubscriptionDisplayName(cli, ctx, subscriptionId, baseUrl, dsId, orgId)
+		if err != nil {
+			return "", err
+		}
+
+		if !userScoped {
+			e.subscriptionCache.Store(cacheKey, subscriptionCacheEntry{
+				displayName: displayName,
+				expiresAt:   time.Now().Add(subscriptionCacheTTL),
+			})
+		}
+		return displayName, nil
+	})
+	if err != nil {
+		return "", err
+	}
+	return result.(string), nil
+}
+
+// loadSubscriptionCacheEntry returns the unexpired cache entry for cacheKey,
+// if one exists.
+func (e *AzureMonitorDatasource) loadSubscriptionCacheEntry(cacheKey string) (subscriptionCacheEntry, bool) {
+	v, ok := e.subscriptionCache.Load(cacheKey)
+	if !ok {
+		return subscriptionCacheEntry{}, false
+	}
+	entry := v.(subscriptionCacheEntry)
+	if time.Now().After(entry.expiresAt) {
+		return subscriptionCacheEntry{}, false
+	}
+	return entry, true
+}
+
+func (e *AzureMonitorDatasource) fetchSubscriptionDisplayName(cli *http.Client, ctx context.Context, subscriptionId string, baseUrl string, dsId int64, orgId int64) (string, error) {
 	req, err := e.createRequest(ctx, fmt.Sprintf("%s/subscriptions/%s", baseUrl, subscriptionId))
 	if err != nil {
 		return "", fmt.Errorf("failed to retrieve subscription details for subscription %s: %s", subscriptionId, err)
@@ -343,7 +492,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.
 		return nil, err
 	}
 
-	subscription, err := e.retrieveSubscriptionDetails(cli, ctx, query.Subscription, dsInfo.Routes["Azure Monitor"].URL, dsInfo.DatasourceID, dsInfo.OrgID)
+	subscription, err := e.retrieveSubscriptionDetails(cli, ctx, query.Subscription, dsInfo.Routes["Azure Monitor"].URL, dsInfo.DatasourceID, dsInfo.OrgID, dsInfo.Credentials)
 	if err != nil {
 		return nil, err
 	}
@@ -368,18 +517,16 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, url string) 
 }
 
 func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (types.AzureMonitorResponse, error) {
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return types.AzureMonitorResponse{}, err
-	}
-
 	if res.StatusCode/100 != 2 {
+		body, readErr := io.ReadAll(res.Body)
+		if readErr != nil {
+			return types.AzureMonitorResponse{}, fmt.Errorf("non-2xx response %s and failed to read body: %w", res.Status, readErr)
+		}
 		return types.AzureMonitorResponse{}, utils.CreateResponseErrorFromStatusCode(res.StatusCode, res.Status, body)
 	}
 
 	var data types.AzureMonitorResponse
-	err = json.Unmarshal(body, &data)
-	if err != nil {
+	if err := json.NewDecoder(res.Body).Decode(&data); err != nil {
 		return types.AzureMonitorResponse{}, err
 	}
 
@@ -444,6 +591,30 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 			}
 		}
 
+		if query.GrafanaSql {
+			timeField.Name = "time"
+			metricFieldName := dataField.Name
+			dataField.Name = "value"
+			if query.Alias == "" {
+				if dataField.Config != nil {
+					if dataField.Config.DisplayName == "" {
+						dataField.Config.DisplayName = metricFieldName
+					}
+				} else {
+					dataField.SetConfig(&data.FieldConfig{
+						DisplayName: metricFieldName,
+					})
+				}
+			}
+
+			resourceNameField := data.NewFieldFromFieldType(data.FieldTypeString, len(series.Data))
+			resourceNameField.Name = "resourceName"
+			for i := 0; i < len(series.Data); i++ {
+				resourceNameField.Set(i, resourceName)
+			}
+			frame.Fields = append(frame.Fields, resourceNameField)
+		}
+
 		requestedAgg := query.Params.Get("aggregation")
 
 		for i, point := range series.Data {
@@ -478,6 +649,51 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 }
 
 // Gets the deep link for the given query
+// The following unexported types mirror the JSON schema the Azure Portal
+// Metrics Explorer blade expects in its ChartDefinition and TimeContext URL
+// parameters. They replace nested map[string]any literals so json.Marshal
+// does not pay reflect-based boxing on every query.
+//
+// Field order is chosen to match the serialisation order that the previous
+// map[string]any code produced (map keys serialise alphabetically),
+// so the resulting URL is byte-identical.
+
+type portalTimeContext struct {
+	Absolute portalTimeContextAbsolute `json:"absolute"`
+}
+
+type portalTimeContextAbsolute struct {
+	Start string `json:"startTime"`
+	End   string `json:"endTime"`
+}
+
+type portalChartDefinition struct {
+	V2Charts []portalV2Chart `json:"v2charts"`
+}
+
+// portalV2Chart keeps fields in alphabetical name order to preserve the
+// output shape of the prior map[string]any{"filterCollection", "grouping",
+// "metrics"} literal.
+type portalV2Chart struct {
+	FilterCollection *portalFilterCollection       `json:"filterCollection,omitempty"`
+	Grouping         *portalGrouping               `json:"grouping,omitempty"`
+	Metrics          []types.MetricChartDefinition `json:"metrics"`
+}
+
+type portalFilterCollection struct {
+	Filters []types.AzureMonitorDimensionFilterBackend `json:"filters"`
+}
+
+// portalGrouping fields are in alphabetical order (dimension, sort, top) to
+// preserve the output shape of the prior map[string]any literal. Dimension
+// is a pointer so a nil value marshals as JSON null, matching the prior
+// behaviour when dimension.Dimension was nil.
+type portalGrouping struct {
+	Dimension *string `json:"dimension"`
+	Sort      int     `json:"sort"`
+	Top       int     `json:"top"`
+}
+
 func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, resourceName string) (string, error) {
 	aggregationType := aggregationTypeMap["Average"]
 	aggregation := query.Params.Get("aggregation")
@@ -487,11 +703,8 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, res
 		}
 	}
 
-	timespan, err := json.Marshal(map[string]any{
-		"absolute": struct {
-			Start string `json:"startTime"`
-			End   string `json:"endTime"`
-		}{
+	timespan, err := json.Marshal(portalTimeContext{
+		Absolute: portalTimeContextAbsolute{
 			Start: query.TimeRange.From.UTC().Format(time.RFC3339Nano),
 			End:   query.TimeRange.To.UTC().Format(time.RFC3339Nano),
 		},
@@ -502,7 +715,7 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, res
 	escapedTime := url.QueryEscape(string(timespan))
 
 	var filters []types.AzureMonitorDimensionFilterBackend
-	var grouping map[string]any
+	var grouping *portalGrouping
 
 	if len(query.Dimensions) > 0 {
 		for _, dimension := range query.Dimensions {
@@ -511,10 +724,10 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, res
 
 			// Only the first dimension determines the splitting shown in the Azure Portal
 			if grouping == nil {
-				grouping = map[string]any{
-					"dimension": dimension.Dimension,
-					"sort":      2,
-					"top":       10,
+				grouping = &portalGrouping{
+					Dimension: dimension.Dimension,
+					Sort:      2,
+					Top:       10,
 				}
 			}
 
@@ -553,8 +766,8 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, res
 		}
 	}
 
-	chart := map[string]any{
-		"metrics": []types.MetricChartDefinition{
+	chart := portalV2Chart{
+		Metrics: []types.MetricChartDefinition{
 			{
 				ResourceMetadata: map[string]string{
 					"id": resourceID,
@@ -571,18 +784,14 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, res
 	}
 
 	if filters != nil {
-		chart["filterCollection"] = map[string]any{
-			"filters": filters,
-		}
+		chart.FilterCollection = &portalFilterCollection{Filters: filters}
 	}
 	if grouping != nil {
-		chart["grouping"] = grouping
+		chart.Grouping = grouping
 	}
 
-	chartDef, err := json.Marshal(map[string]any{
-		"v2charts": []any{
-			chart,
-		},
+	chartDef, err := json.Marshal(portalChartDefinition{
+		V2Charts: []portalV2Chart{chart},
 	})
 	if err != nil {
 		return "", err

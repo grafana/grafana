@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
-import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
+import { type GrafanaTheme2, type UrlQueryMap } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { Button, ClipboardButton, Field, FieldSet, Icon, Input, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
@@ -23,11 +23,12 @@ type Props = {
   title: string;
   buildUrl: (urlParams: UrlQueryMap) => void;
   imageUrl: string;
+  absoluteImageUrl: string;
   disabled: boolean;
   theme: string;
 };
 
-export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }: Props) {
+export function SharePanelPreview({ title, imageUrl, absoluteImageUrl, buildUrl, disabled, theme }: Props) {
   const styles = useStyles2(getStyles);
 
   const {
@@ -201,7 +202,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
                 variant="secondary"
                 disabled={disabled || !isValid}
                 aria-describedby={disabled || !isValid ? 'copy-image-link-disabled-help' : undefined}
-                getText={() => imageUrl}
+                getText={() => absoluteImageUrl}
                 onClipboardCopy={() => DashboardInteractions.copyImageUrlClicked({ shareResource: 'panel' })}
               >
                 <Trans i18nKey="link.share-panel.copy-image-link">Copy image link</Trans>

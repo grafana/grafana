@@ -1,31 +1,39 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
   CoreApp,
-  DataFrame,
+  type DataFrame,
   FieldType,
   getDefaultTimeRange,
   LogLevel,
-  LogRowModel,
+  type LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
   store,
   toDataFrame,
 } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
-import { TempoDatasource } from '@grafana-plugins/tempo/datasource';
-import { createTempoDatasource } from '@grafana-plugins/tempo/test/mocks';
+import { reportInteraction } from '@grafana/runtime';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { createLogLine, createLogRow } from '../mocks/logRow';
 import { OTEL_PROBE_FIELD } from '../otel/formats';
 
-import { LogList, Props } from './LogList';
+import { LogList, type Props } from './LogList';
+import { type TempoDatasource, createTempoDatasource } from './__mocks__/createTempoDatasource';
+
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
+    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+  });
+};
 
 jest.mock('@openfeature/react-sdk', () => ({
-  useBooleanFlagValue: jest.fn().mockReturnValue(false),
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
 }));
 
 jest.mock('@grafana/assistant', () => ({
@@ -56,6 +64,10 @@ jest.mock('@grafana/runtime', () => {
     }),
   };
 });
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: () => Promise.resolve(tempoDS),
+}));
 jest.mock('../../utils', () => ({
   ...jest.requireActual('../../utils'),
   isPopoverMenuDisabled: jest.fn(),
@@ -85,17 +97,10 @@ jest.mock('re-resizable', () => {
   };
 });
 
-const originalFlagValue = config.featureToggles.newLogsPanel;
-beforeAll(() => {
-  config.featureToggles.newLogsPanel = true;
-});
-afterAll(() => {
-  config.featureToggles.newLogsPanel = originalFlagValue;
-});
-
 describe('LogList', () => {
   let logs: LogRowModel[], defaultProps: Props;
   beforeEach(() => {
+    setBooleanFlags({ otelLogsFormatting: true });
     logs = [
       createLogRow({ uid: '1', labels: { name_of_the_label: 'value of the label' } }),
       createLogRow({ uid: '2' }),
@@ -212,10 +217,8 @@ describe('LogList', () => {
   });
 
   describe('OTel log lines', () => {
-    const originalState = config.featureToggles.otelLogsFormatting;
-
     test('Does not perform OTel-related actions when the flag is disabled', () => {
-      config.featureToggles.otelLogsFormatting = false;
+      setBooleanFlags({ otelLogsFormatting: false });
       const onLogOptionsChange = jest.fn();
       const setDisplayedFields = jest.fn();
 
@@ -225,12 +228,10 @@ describe('LogList', () => {
       expect(screen.getByText('log message 1')).toBeInTheDocument();
       expect(onLogOptionsChange).not.toHaveBeenCalled();
       expect(setDisplayedFields).not.toHaveBeenCalled();
-
-      config.featureToggles.otelLogsFormatting = originalState;
     });
 
     test('Reports the default displayed fields for non-OTel logs', () => {
-      config.featureToggles.otelLogsFormatting = true;
+      setBooleanFlags({ otelLogsFormatting: true });
       const onLogOptionsChange = jest.fn();
       const setDisplayedFields = jest.fn();
 
@@ -242,12 +243,10 @@ describe('LogList', () => {
 
       // No fields to display, no call
       expect(setDisplayedFields).not.toHaveBeenCalled();
-
-      config.featureToggles.otelLogsFormatting = originalState;
     });
 
     test('Reports the default OTel displayed fields', () => {
-      config.featureToggles.otelLogsFormatting = true;
+      setBooleanFlags({ otelLogsFormatting: true });
       const onLogOptionsChange = jest.fn();
       const setDisplayedFields = jest.fn();
 
@@ -267,8 +266,33 @@ describe('LogList', () => {
         OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME,
       ]);
       expect(setDisplayedFields).toHaveBeenCalledWith([LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]);
+    });
 
-      config.featureToggles.otelLogsFormatting = originalState;
+    test('Calls setDisplayedFields when showLogAttributes is toggled off externally', async () => {
+      setBooleanFlags({ otelLogsFormatting: true });
+      const setDisplayedFields = jest.fn();
+      const otelLogs = [createLogRow({ uid: '1', labels: { [OTEL_PROBE_FIELD]: '1' } })];
+
+      const { rerender } = render(
+        <LogList {...defaultProps} logs={otelLogs} setDisplayedFields={setDisplayedFields} showLogAttributes={true} />
+      );
+
+      await waitFor(() => {
+        expect(setDisplayedFields).toHaveBeenCalledWith([
+          LOG_LINE_BODY_FIELD_NAME,
+          OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME,
+        ]);
+      });
+
+      setDisplayedFields.mockClear();
+
+      rerender(
+        <LogList {...defaultProps} logs={otelLogs} setDisplayedFields={setDisplayedFields} showLogAttributes={false} />
+      );
+
+      await waitFor(() => {
+        expect(setDisplayedFields).toHaveBeenCalledWith([]);
+      });
     });
   });
 
@@ -492,6 +516,8 @@ describe('LogList', () => {
     });
 
     test('Toggles displayed fields on and off', async () => {
+      // Disable OTel suggested fields so each label renders once in the selector.
+      setBooleanFlags({ otelLogsFormatting: false });
       const { rerender } = render(<LogList {...defaultProps} {...extraProps} showFieldSelector />);
 
       await screen.findByText('log 1');
@@ -512,8 +538,7 @@ describe('LogList', () => {
     });
 
     test('Applies OTel default displayed fields and suggested fields', () => {
-      const originalState = config.featureToggles.otelLogsFormatting;
-      config.featureToggles.otelLogsFormatting = true;
+      setBooleanFlags({ otelLogsFormatting: true });
 
       const logs = [
         createLogRow({
@@ -528,8 +553,8 @@ describe('LogList', () => {
       // Log line message
       expect(screen.getByText('log message 1')).toBeInTheDocument();
 
-      // Label
-      expect(screen.getByText('service')).toBeInTheDocument();
+      // Label (also rendered as a suggested field when OTel formatting is enabled)
+      expect(screen.getAllByText('service').length).toBeGreaterThan(0);
 
       // Default displayed fields
       expect(screen.getByText('Log line')).toBeInTheDocument();
@@ -537,8 +562,6 @@ describe('LogList', () => {
 
       // Suggested field
       expect(screen.getByText('scope_name')).toBeInTheDocument();
-
-      config.featureToggles.otelLogsFormatting = originalState;
     });
 
     test('Toggles show log level by clicking the Log Level checkbox in the field selector', async () => {

@@ -14,7 +14,12 @@
 
 import { SpanStatusCode } from '@opentelemetry/api';
 
-import { SelectableValue, TraceKeyValuePair, TraceSearchProps, TraceSearchTag } from '@grafana/data';
+import {
+  type SelectableValue,
+  type TraceKeyValuePair,
+  type TraceSearchProps,
+  type TraceSearchTag,
+} from '@grafana/data';
 
 import {
   KIND,
@@ -27,8 +32,8 @@ import {
   SPAN_NAME,
   SERVICE_NAME,
 } from '../constants/span';
-import TNil from '../types/TNil';
-import { TraceSpan, CriticalPathSection } from '../types/trace';
+import type TNil from '../types/TNil';
+import { type TraceSpan, type CriticalPathSection } from '../types/trace';
 
 /**
  * Filter spans using adhoc filters.
@@ -226,7 +231,7 @@ export function filterSpans(
   return filteredSpans ? new Set(spans.map((span: TraceSpan) => span.spanID)) : undefined;
 }
 
-export function getQueryMatches(query: string, spans: TraceSpan[] | TNil) {
+function getQueryMatches(query: string, spans: TraceSpan[] | TNil) {
   if (!spans) {
     return undefined;
   }
@@ -418,7 +423,7 @@ const getCriticalPathMatches = (spans: TraceSpan[], criticalPath: CriticalPathSe
   });
 };
 
-export const convertTimeFilter = (time: string) => {
+const convertTimeFilter = (time: string) => {
   if (time.includes('ns')) {
     return parseFloat(time.split('ns')[0]) / 1000;
   } else if (time.includes('us')) {

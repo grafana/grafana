@@ -2,17 +2,18 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { RadioButtonGroup, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { KBObjectArray, RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { type KBObjectArray, RuleFormType, type RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { DOCS_URL_NOTIFICATIONS, DOCS_URL_NOTIFICATION_POLICIES } from '../../utils/docs';
 import { isGrafanaManagedRuleByType, isGrafanaRecordingRuleByType, isRecordingRuleByType } from '../../utils/rules';
+import { NAMED_ROOT_LABEL_NAME } from '../notification-policies/useNotificationPolicyRoute';
 
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
@@ -241,12 +242,14 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
   ]);
   const selectedPolicy = watch('selectedPolicy');
 
-  const multiplePoliciesEnabled = config.featureToggles.alertingMultiplePolicies ?? false;
-  const policyRoutingSettingsEnabled = config.featureToggles.alertingPolicyRoutingSettings ?? false;
+  // Prefer the policy field (notification_settings.policy — canonical and honored by the backend),
+  // falling back to the legacy __grafana_managed_route__ label, so the notification preview fetches
+  // the correct routing tree instead of always defaulting to root.
+  const policyNameForPreview = selectedPolicy || labels.find((l) => l.key === NAMED_ROOT_LABEL_NAME)?.value;
 
   return (
     <Stack direction="column" gap={2}>
-      {multiplePoliciesEnabled && <PolicyTreeSelector />}
+      <PolicyTreeSelector />
       <NotificationPreview
         alertQueries={queries}
         customLabels={labels}
@@ -254,7 +257,7 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
         folder={folder}
         alertName={alertName}
         alertUid={alertUid}
-        policyName={policyRoutingSettingsEnabled ? selectedPolicy : undefined}
+        policyName={policyNameForPreview}
       />
     </Stack>
   );
@@ -323,7 +326,7 @@ interface NotificationsStepDescriptionProps {
   manualRouting: boolean;
 }
 
-export const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDescriptionProps) => {
+const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDescriptionProps) => {
   return (
     <Stack alignItems="center">
       <Text variant="bodySmall" color="secondary">

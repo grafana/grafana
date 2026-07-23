@@ -6,20 +6,22 @@ import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useContactPointsWithStatus } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
-import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
-import { FormAmRoute } from 'app/features/alerting/unified/types/amroutes';
+import { AlertGroupAction, ContactPointAction } from 'app/features/alerting/unified/hooks/abilities/types';
+import { type FormAmRoute } from 'app/features/alerting/unified/types/amroutes';
 import { addUniqueIdentifierToRoute } from 'app/features/alerting/unified/utils/amroutes';
 import { getErrorCode, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import {
-  AlertmanagerGroup,
-  ObjectMatcher,
+  type AlertmanagerGroup,
+  type ObjectMatcher,
   ROUTES_META_SYMBOL,
-  RouteWithID,
+  type RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 
+import { useAlertGroupAbility } from '../../hooks/abilities/alertmanager/useAlertGroupAbility';
+import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
 import { anyOfRequestState, isError } from '../../hooks/useAsync';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { ContactPointsState } from '../../types/alerting';
+import { type ContactPointsState } from '../../types/alerting';
 import { CONTACT_POINTS_STATE_INTERVAL_MS } from '../../utils/constants';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { ERROR_NEWER_CONFIGURATION } from '../../utils/k8s/errors';
@@ -27,7 +29,7 @@ import { routeAdapter } from '../../utils/routeAdapter';
 
 import { alertmanagerApi } from './../../api/alertmanagerApi';
 import { contactPointsStateDtoToModel } from './../../api/grafana';
-import { InsertPosition } from './../../utils/routeTree';
+import { type InsertPosition } from './../../utils/routeTree';
 import { findRoutesByMatchers, findRoutesMatchingPredicate } from './Filters';
 import { useAddPolicyModal, useAlertGroupsModal, useDeletePolicyModal, useEditPolicyModal } from './Modals';
 import { Policy } from './Policy';
@@ -44,7 +46,7 @@ import {
 import { getAlertGroupsKey } from './utils';
 
 /** Async function that computes route-to-alert-group mapping off the main thread. */
-export type GetRouteGroupsMapFn = (
+type GetRouteGroupsMapFn = (
   rootRoute: RouteWithID,
   alertGroups: AlertmanagerGroup[],
   options?: { unquoteMatchers?: boolean }
@@ -80,12 +82,11 @@ export const PoliciesTree = ({
   getRouteGroupsMap,
 }: PoliciesTreeProps) => {
   const appNotification = useAppNotification();
-  const [contactPointsSupported, canSeeContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
-  const [, canSeeAlertGroups] = useAlertmanagerAbility(AlertmanagerAction.ViewAlertGroups);
+  const { granted: shouldFetchContactPoints } = useContactPointAbility({ action: ContactPointAction.View });
+  const { granted: canSeeAlertGroups } = useAlertGroupAbility(AlertGroupAction.View);
 
   const { selectedAlertmanager, isGrafanaAlertmanager, hasConfigurationAPI } = useAlertmanager();
 
-  const shouldFetchContactPoints = contactPointsSupported && canSeeContactPoints;
   const { currentData: contactPointsStatusData } = alertmanagerApi.useGetContactPointsStatusQuery(undefined, {
     skip: !shouldFetchContactPoints,
     pollingInterval: CONTACT_POINTS_STATE_INTERVAL_MS,

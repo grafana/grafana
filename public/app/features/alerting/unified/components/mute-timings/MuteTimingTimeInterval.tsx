@@ -3,12 +3,12 @@ import { concat, uniq, upperFirst, without } from 'lodash';
 import { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, FieldSet, Icon, InlineSwitch, Input, Stack, useStyles2 } from '@grafana/ui';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { MuteTimingFields } from '../../types/mute-timing-form';
+import { type MuteTimingFields } from '../../types/mute-timing-form';
 import { DAYS_OF_THE_WEEK, MONTHS, defaultTimeInterval, validateArrayField } from '../../utils/mute-timings';
 
 import { MuteTimingTimeRange } from './MuteTimingTimeRange';

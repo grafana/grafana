@@ -1,8 +1,17 @@
-import { Observable, ReplaySubject, Subject, distinctUntilChanged, firstValueFrom, map, scan, startWith } from 'rxjs';
+import {
+  type Observable,
+  ReplaySubject,
+  Subject,
+  distinctUntilChanged,
+  firstValueFrom,
+  map,
+  scan,
+  startWith,
+} from 'rxjs';
 
-import { AppPluginConfig } from '@grafana/data';
+import { type AppPluginConfig, type PluginMeta } from '@grafana/data';
 
-import { ExtensionsLog, log } from '../logs/log';
+import { type ExtensionsLog, log } from '../logs/log';
 import { deepFreeze } from '../utils';
 
 export const MSG_CANNOT_REGISTER_READ_ONLY = 'Cannot register to a read-only registry';
@@ -10,6 +19,9 @@ export const MSG_CANNOT_REGISTER_READ_ONLY = 'Cannot register to a read-only reg
 export type PluginExtensionConfigs<T> = {
   pluginId: string;
   configs: T[];
+  // The full plugin meta, when known at registration time (i.e. registered right after the
+  // plugin was imported). Lets registries render extension components without re-fetching it.
+  pluginMeta?: PluginMeta;
 };
 
 export type RegistryType<T> = Record<string | symbol, T>;

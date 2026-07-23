@@ -1,23 +1,23 @@
 import { isEmpty } from 'lodash';
 
 import {
-  DisplayValue,
+  type DisplayValue,
   FieldType,
   getActiveThreshold,
   getDisplayProcessor,
-  GrafanaTheme2,
-  Labels,
-  ThresholdsConfig,
-  ValueMapping,
+  type GrafanaTheme2,
+  type Labels,
+  type ThresholdsConfig,
+  type ValueMapping,
 } from '@grafana/data';
 import { BigValueColorMode } from '@grafana/ui';
 import { labelsMatchMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { parsePromQLStyleMatcherLooseSafe } from 'app/features/alerting/unified/utils/matchers';
 import { createListFilterLink } from 'app/features/alerting/unified/utils/navigation';
-import { Alert, hasAlertState } from 'app/types/unified-alerting';
+import { type Alert, hasAlertState } from 'app/types/unified-alerting';
 import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { UnifiedAlertListOptions } from './types';
+import { type UnifiedAlertListOptions } from './types';
 
 function hasLabelFilter(alertInstanceLabelFilter: string, labels: Labels) {
   const matchers = parsePromQLStyleMatcherLooseSafe(alertInstanceLabelFilter);

@@ -19,6 +19,7 @@ var _ appsdkapiserver.GenericAPIServer = (*customStorageWrapper)(nil)
 type customStorageWrapper struct {
 	wrapped appsdkapiserver.GenericAPIServer
 	replace map[schema.GroupVersionResource]rest.Storage
+	wrap    map[schema.GroupVersionResource]func(rest.Storage) (rest.Storage, error)
 }
 
 func (c *customStorageWrapper) InstallAPIGroup(
@@ -42,6 +43,21 @@ func (c *customStorageWrapper) InstallAPIGroup(
 		}
 		apiGroupInfo.VersionedResourcesStorageMap[gvr.Version][gvr.Resource] = storage
 	}
+	for gvr, wrap := range c.wrap {
+		versionedStorage, ok := apiGroupInfo.VersionedResourcesStorageMap[gvr.Version]
+		if !ok {
+			return fmt.Errorf("storage version %q not found for %s", gvr.Version, gvr.String())
+		}
+		storage, ok := versionedStorage[gvr.Resource]
+		if !ok {
+			return fmt.Errorf("storage resource %q not found for %s", gvr.Resource, gvr.String())
+		}
+		wrappedStorage, err := wrap(storage)
+		if err != nil {
+			return err
+		}
+		versionedStorage[gvr.Resource] = wrappedStorage
+	}
 	return c.wrapped.InstallAPIGroup(apiGroupInfo)
 }
 
@@ -60,7 +76,11 @@ func (w *noProtobufWrapper) SupportedMediaTypes() []runtime.SerializerInfo {
 	return supported
 }
 
-// RegisteredWebServices implements apiserver.GenericAPIServer.
+// RegisteredWebServices implements apiserver.GenericAPIServer. It passes through
+// to the wrapped server: this wrapper only customizes storage in InstallAPIGroup
+// and must stay transparent for everything else. Returning an empty slice here
+// would make app-sdk fail to find the version WebService when registering
+// custom resource routes.
 func (c *customStorageWrapper) RegisteredWebServices() []*restful.WebService {
-	return []*restful.WebService{}
+	return c.wrapped.RegisteredWebServices()
 }

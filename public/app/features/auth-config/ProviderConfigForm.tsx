@@ -23,7 +23,7 @@ import { Page } from '../../core/components/Page/Page';
 
 import { FieldRenderer } from './FieldRenderer';
 import { getSectionFields } from './fields';
-import { SSOProvider, SSOProviderDTO } from './types';
+import { type SSOProvider, type SSOProviderDTO } from './types';
 import { dataToDTO, dtoToData } from './utils/data';
 
 const appEvents = getAppEvents();

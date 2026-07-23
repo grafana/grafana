@@ -1,10 +1,12 @@
-import { LogRowModel } from '@grafana/data';
+import { type LogRowModel } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneTimeRange } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { createLogRow } from 'app/features/logs/components/mocks/logRow';
 
-import { ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/shorturl_object_gen';
+import { type ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/shorturl_object_gen';
 import { defaultSpec } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/types.spec.gen';
 import { defaultStatus } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/types.status.gen';
 
@@ -50,7 +52,7 @@ beforeEach(() => {
   });
 
   document.execCommand = jest.fn();
-  config.featureToggles.useKubernetesShortURLsAPI = false;
+  setTestFlags({ [FlagKeys.UseKubernetesShortURLsAPI]: false });
 
   // clear memoizeOne function
   if ('clear' in createShortLink) {
@@ -80,7 +82,7 @@ describe('createShortLink using k8s API', () => {
       writable: true,
     });
 
-    config.featureToggles.useKubernetesShortURLsAPI = true;
+    setTestFlags({ [FlagKeys.UseKubernetesShortURLsAPI]: true });
     const shortUrl = await createShortLink('d/edhmipji89b0gb/welcome?orgId=1&from=now-6h&to=now&timezone=browser');
     expect(shortUrl).toBe('https://www.test.grafana.com/goto/bewyw48durgu8d?orgId=1');
   });
@@ -90,7 +92,7 @@ describe('createShortLink retries after failure', () => {
   it('retries after k8s API failure instead of returning cached rejection', async () => {
     jest.spyOn(console, 'error').mockImplementation();
 
-    config.featureToggles.useKubernetesShortURLsAPI = true;
+    setTestFlags({ [FlagKeys.UseKubernetesShortURLsAPI]: true });
 
     const mockLocation = { protocol: 'https:', host: 'www.test.grafana.com' };
     Object.defineProperty(window, 'location', { value: mockLocation, writable: true });

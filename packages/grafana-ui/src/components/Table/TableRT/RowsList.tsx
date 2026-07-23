@@ -1,42 +1,38 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, UIEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
+import { type CSSProperties, type UIEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
-import { Cell, Row, TableState, HeaderGroup } from 'react-table';
+import { type Cell, type Row, type TableState, type HeaderGroup } from 'react-table';
 import { VariableSizeList } from 'react-window';
 import { Subscription, debounceTime } from 'rxjs';
 
 import {
-  DataFrame,
+  type DataFrame,
   DataHoverClearEvent,
   DataHoverEvent,
-  Field,
+  type Field,
   FieldType,
-  TimeRange,
+  type TimeRange,
   hasTimeField,
-  InterpolateFunction,
+  type InterpolateFunction,
 } from '@grafana/data';
 import { TableCellDisplayMode, TableCellHeight } from '@grafana/schema';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
-import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
+import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import { usePanelContext } from '../../PanelChrome';
 import { TableCell } from '../Cells/TableCell';
+import { getCellColors } from '../cellUtils';
 import {
-  CellColors,
-  GetActionsFunction,
-  TableFieldOptions,
-  TableFilterActionCallback,
-  TableInspectCellCallback,
+  type CellColors,
+  type GetActionsFunction,
+  type TableFieldOptions,
+  type TableFilterActionCallback,
+  type TableInspectCellCallback,
 } from '../types';
-import {
-  calculateAroundPointThreshold,
-  getCellColors,
-  isPointTimeValAroundTableTimeVal,
-  guessTextBoundingBox,
-} from '../utils';
+import { calculateAroundPointThreshold, isPointTimeValAroundTableTimeVal, guessTextBoundingBox } from '../utils';
 
 import { ExpandedRow, getExpandedRowHeight } from './ExpandedRow';
-import { TableStyles } from './styles';
+import { type TableStyles } from './styles';
 
 interface RowsListProps {
   data: DataFrame;
@@ -45,6 +41,7 @@ interface RowsListProps {
   headerHeight: number;
   rowHeight: number;
   itemCount: number;
+  noHeader?: boolean;
   pageIndex: number;
   listHeight: number;
   width: number;
@@ -74,6 +71,7 @@ export const RowsList = (props: RowsListProps) => {
     footerPaginationEnabled,
     rowHeight,
     itemCount,
+    noHeader,
     pageIndex,
     tableState,
     prepareRow,
@@ -280,7 +278,12 @@ export const RowsList = (props: RowsListProps) => {
     ({ index, style, rowHighlightIndex }: { index: number; style: CSSProperties; rowHighlightIndex?: number }) => {
       const indexForPagination = rowIndexForPagination(index);
       const row = rows[indexForPagination];
-      let additionalProps: React.HTMLAttributes<HTMLDivElement> = {};
+      const additionalProps: React.HTMLAttributes<HTMLDivElement> = {
+        // ARIA row indexes are 1-based, include the header row and, with pagination,
+        // span all pages. Virtualization only renders the visible rows, so without this
+        // screen readers would announce positions within the rendered subset only.
+        'aria-rowindex': indexForPagination + (noHeader ? 1 : 2),
+      };
       prepareRow(row);
 
       const expandedRowStyle = tableState.expanded[row.id] ? css({ '&:hover': { background: 'inherit' } }) : {};
@@ -288,9 +291,7 @@ export const RowsList = (props: RowsListProps) => {
 
       if (rowHighlightIndex !== undefined && row.index === rowHighlightIndex) {
         style = { ...style, backgroundColor: theme.components.table.rowSelected };
-        additionalProps = {
-          'aria-selected': 'true',
-        };
+        additionalProps['aria-selected'] = 'true';
       }
 
       // Color rows if enabled
@@ -365,6 +366,7 @@ export const RowsList = (props: RowsListProps) => {
     [
       rowIndexForPagination,
       rows,
+      noHeader,
       prepareRow,
       tableState.expanded,
       nestedDataField,

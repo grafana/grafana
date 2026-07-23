@@ -1,20 +1,19 @@
-import { FeatureLike } from 'ol/Feature';
-import OpenLayersMap from 'ol/Map';
+import { type FeatureLike } from 'ol/Feature';
+import type OpenLayersMap from 'ol/Map';
 import VectorImage from 'ol/layer/VectorImage';
 import { Stroke, Style } from 'ol/style';
 import Photo from 'ol-ext/style/Photo';
 
 import {
-  MapLayerRegistryItem,
-  PanelData,
-  GrafanaTheme2,
-  EventBus,
+  type MapLayerRegistryItem,
+  type PanelData,
+  type GrafanaTheme2,
+  type EventBus,
   FieldType,
-  Field,
-  MapLayerOptions,
+  type Field,
+  type MapLayerOptions,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { FrameGeometrySourceMode } from '@grafana/schema';
 import { findField } from 'app/features/dimensions/utils';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getLocationMatchers } from 'app/features/geo/utils/location';
@@ -39,18 +38,7 @@ const defaultOptions: PhotoConfig = {
   color: 'rgb(200, 200, 200)',
 };
 
-export const PHOTOS_LAYER_ID = 'photos';
-
-// Used by default when nothing is configured
-export const defaultPhotosConfig: MapLayerOptions<PhotoConfig> = {
-  type: PHOTOS_LAYER_ID,
-  name: '', // will get replaced
-  config: defaultOptions,
-  location: {
-    mode: FrameGeometrySourceMode.Auto,
-  },
-  tooltip: true,
-};
+const PHOTOS_LAYER_ID = 'photos';
 
 // TODO Find a way to use SVG scaled to behave like a png, currently using base64 conversion
 //const unknownImageSVG = '../../../../../public/img/icons/unicons/question-circle.svg';

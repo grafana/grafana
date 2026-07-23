@@ -17,14 +17,13 @@ import (
 func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagDisabled(t *testing.T) {
 	const repo = "missing-folder-meta-disabled"
 	helper := sharedHelper(t)
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"testdata/all-panels.json": "myfolder/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{

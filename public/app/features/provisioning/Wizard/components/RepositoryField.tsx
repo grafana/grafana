@@ -3,16 +3,16 @@ import { useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import {
-  GetConnectionRepositoriesApiResponse,
+  type GetConnectionRepositoriesApiResponse,
   useGetConnectionRepositoriesQuery,
 } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
 import { Combobox, Field, Input } from '@grafana/ui';
 
-import { ExternalRepository } from '../../types';
-import { isGitProvider } from '../../utils/repositoryTypes';
+import { type ExternalRepository } from '../../types';
+import { isGitHubBased, isGitProvider } from '../../utils/repositoryTypes';
 import { getGitProviderFields } from '../fields';
-import { WizardFormData } from '../types';
+import { type WizardFormData } from '../types';
 
 type RepositoryWithRequiredFields = ExternalRepository & Required<Pick<ExternalRepository, 'name' | 'url'>>;
 
@@ -34,7 +34,7 @@ export function RepositoryField({ isSelectedConnectionReady }: { isSelectedConne
   ]);
 
   const isGitBased = isGitProvider(type);
-  const isGitHubAppAuth = type === 'github' && githubAuthType === 'github-app';
+  const isGitHubAppAuth = isGitHubBased(type) && githubAuthType === 'github-app';
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const {
     data: connectionRepositories,

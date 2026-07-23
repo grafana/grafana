@@ -3,7 +3,7 @@ import { HttpResponse, delay, http } from 'msw';
 import React from 'react';
 import { Provider } from 'react-redux';
 
-import { DataSourceJsonData } from '@grafana/data';
+import { type DataSourceJsonData } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 import { PromApplication } from 'app/types/unified-alerting-dto';

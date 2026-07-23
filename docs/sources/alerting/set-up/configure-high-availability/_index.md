@@ -247,19 +247,23 @@ The HA settings (`ha_peers`, etc.) apply only to communication between alertmana
 
 You can also confirm your high availability setup by monitoring Alertmanager metrics exposed by Grafana.
 
-| Metric                                               | Description                                                                                                                                                |
-| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| alertmanager_cluster_members                         | Number indicating current number of members in cluster.                                                                                                    |
-| alertmanager_cluster_messages_received_total         | Total number of cluster messages received.                                                                                                                 |
-| alertmanager_cluster_messages_received_size_total    | Total size of cluster messages received.                                                                                                                   |
-| alertmanager_cluster_messages_sent_total             | Total number of cluster messages sent.                                                                                                                     |
-| alertmanager_cluster_messages_sent_size_total        | Total number of cluster messages received.                                                                                                                 |
-| alertmanager_cluster_messages_publish_failures_total | Total number of messages that failed to be published.                                                                                                      |
-| alertmanager_cluster_pings_seconds                   | Histogram of latencies for ping messages.                                                                                                                  |
-| alertmanager_cluster_pings_failures_total            | Total number of failed pings.                                                                                                                              |
-| alertmanager_peer_position                           | The position an Alertmanager instance believes it holds, which defines its role in the cluster. Peers should be numbered sequentially, starting from zero. |
+{{< admonition type="note" >}}
+Starting in Grafana v12.4, these metrics are prefixed with `grafana_` (for example, `grafana_alertmanager_cluster_members`). If you are upgrading from an earlier version, update your dashboards and alert rules accordingly.
+{{< /admonition >}}
 
-You can confirm the number of Grafana instances in your alerting high availability setup by querying the `alertmanager_cluster_members` and `alertmanager_peer_position` metrics.
+| Metric                                                         | Description                                                                                                                                                |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `grafana_alertmanager_cluster_members`                         | Number indicating current number of members in cluster.                                                                                                    |
+| `grafana_alertmanager_cluster_messages_received_total`         | Total number of cluster messages received.                                                                                                                 |
+| `grafana_alertmanager_cluster_messages_received_size_total`    | Total size of cluster messages received.                                                                                                                   |
+| `grafana_alertmanager_cluster_messages_sent_total`             | Total number of cluster messages sent.                                                                                                                     |
+| `grafana_alertmanager_cluster_messages_sent_size_total`        | Total number of cluster messages received.                                                                                                                 |
+| `grafana_alertmanager_cluster_messages_publish_failures_total` | Total number of messages that failed to be published.                                                                                                      |
+| `grafana_alertmanager_cluster_pings_seconds`                   | Histogram of latencies for ping messages.                                                                                                                  |
+| `grafana_alertmanager_cluster_pings_failures_total`            | Total number of failed pings.                                                                                                                              |
+| `grafana_alertmanager_peer_position`                           | The position an Alertmanager instance believes it holds, which defines its role in the cluster. Peers should be numbered sequentially, starting from zero. |
+
+You can confirm the number of Grafana instances in your alerting high availability setup by querying the `grafana_alertmanager_cluster_members` and `grafana_alertmanager_peer_position` metrics.
 
 Note that these alerting high availability metrics are exposed via the `/metrics` endpoint in Grafana, and are not automatically collected or displayed. If you have a Prometheus instance connected to Grafana, add a `scrape_config` to scrape Grafana metrics and then query these metrics in Explore.
 

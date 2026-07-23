@@ -1,4 +1,4 @@
-import { DataFrame, DataFrameType, Field, FieldType } from '@grafana/data';
+import { type DataFrame, DataFrameType, type Field, FieldType } from '@grafana/data';
 
 export const getMockLokiFrame = (override?: Partial<DataFrame>) => {
   const testDataFrame: DataFrame = {

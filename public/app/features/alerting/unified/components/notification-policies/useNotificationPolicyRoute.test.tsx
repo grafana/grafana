@@ -1,16 +1,37 @@
-import { RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
-import { MatcherOperator, ROUTES_META_SYMBOL, Route } from 'app/plugins/datasource/alertmanager/types';
+import { HttpResponse, http } from 'msw';
+import { getWrapper, renderHook, waitFor } from 'test/test-utils';
 
+import {
+  API_GROUP,
+  API_VERSION,
+  type RoutingTree,
+  type RoutingTreeRoute,
+} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { MatcherOperator, ROUTES_META_SYMBOL, type Route } from 'app/plugins/datasource/alertmanager/types';
+
+import { setupMswServer } from '../../mockApi';
+import {
+  getRoutingTree,
+  presentDefaultRoutingTreeAs,
+  resetRoutingTreeMap,
+} from '../../mocks/server/entities/k8s/routingtrees';
+import { ALERTING_API_SERVER_BASE_URL } from '../../mocks/server/utils';
 import { KnownProvenance } from '../../types/knownProvenance';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 
 import {
+  NAMED_ROOT_LABEL_NAME,
   createKubernetesRoutingTreeSpec,
   isRouteProvisioned,
+  k8sRouteToRoute,
   k8sSubRouteToRoute,
   parseAmConfigRoute,
   routeToK8sSubRoute,
+  useNotificationPolicyRoute,
 } from './useNotificationPolicyRoute';
+
+const server = setupMswServer();
 
 test('k8sSubRouteToRoute', () => {
   const input: RoutingTreeRoute = {
@@ -251,5 +272,50 @@ describe('parseAmConfigRoute', () => {
     expect(resultA1).toBe(resultA2);
     expect(resultB1).toBe(resultB2);
     expect(resultC1).toBe(resultC2);
+  });
+});
+
+describe('k8sRouteToRoute default-tree matcher', () => {
+  const treeNamed = (name?: string): RoutingTree => ({
+    apiVersion: `${API_GROUP}/${API_VERSION}`,
+    kind: 'RoutingTree',
+    metadata: { name },
+    spec: { defaults: { receiver: 'grafana-default-email' }, routes: [] },
+  });
+
+  it.each(['user-defined', 'default', '', undefined])(
+    'emits the empty catch-all matcher for the default tree named %p',
+    (name) => {
+      const result = k8sRouteToRoute(treeNamed(name));
+      expect(result.object_matchers).toEqual([[NAMED_ROOT_LABEL_NAME, MatcherOperator.equal, '']]);
+    }
+  );
+
+  it('emits a named matcher for a real managed route', () => {
+    const result = k8sRouteToRoute(treeNamed('team-backend'));
+    expect(result.object_matchers).toEqual([[NAMED_ROOT_LABEL_NAME, MatcherOperator.equal, 'team-backend']]);
+  });
+});
+
+describe.each(['user-defined', 'default'])('send side stays user-defined (backend emits %s)', (backendName) => {
+  it('addresses the default routing tree by the user-defined name', async () => {
+    resetRoutingTreeMap();
+    presentDefaultRoutingTreeAs(backendName);
+
+    const requestedNames: string[] = [];
+    server.use(
+      http.get(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees/:name`, ({ params }) => {
+        requestedNames.push(String(params.name));
+        return HttpResponse.json(getRoutingTree(ROOT_ROUTE_NAME));
+      })
+    );
+
+    renderHook(() => useNotificationPolicyRoute({ alertmanager: GRAFANA_RULES_SOURCE_NAME }), {
+      wrapper: getWrapper({ renderWithRouter: true }),
+    });
+
+    // Non-vacuous: wait until the hook has actually issued the GET, THEN assert the name it used.
+    await waitFor(() => expect(requestedNames.length).toBeGreaterThan(0));
+    expect(requestedNames).toEqual(['user-defined']);
   });
 });

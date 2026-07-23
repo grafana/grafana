@@ -1,13 +1,11 @@
-import { validate as uuidValidate } from 'uuid';
-
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue, isUUID } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { TextLink } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { ServerDiscoveryField } from './components/ServerDiscoveryField';
-import { FieldData, SSOProvider, SSOSettingsField } from './types';
+import { type FieldData, type SSOProvider, type SSOSettingsField } from './types';
 import { isSelectableValue, isSelectableValueArray } from './utils/guards';
 import { isUrlValid, isValidDomain } from './utils/url';
 
@@ -41,6 +39,7 @@ export const getSectionFields = (): Section => {
           'scopes',
           'authUrl',
           'tokenUrl',
+          'tokenExchangeTimeout',
           'allowSignUp',
           'autoLogin',
           'signoutRedirectUrl',
@@ -84,6 +83,7 @@ export const getSectionFields = (): Section => {
           'serverDiscoveryUrl',
           'authUrl',
           'tokenUrl',
+          'tokenExchangeTimeout',
           'apiUrl',
           'allowSignUp',
           'autoLogin',
@@ -280,6 +280,7 @@ export const getSectionFields = (): Section => {
           'scopes',
           'authUrl',
           'tokenUrl',
+          'tokenExchangeTimeout',
           'apiUrl',
           'allowSignUp',
           'autoLogin',
@@ -497,6 +498,14 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         message: t('auth-config.fields.token-url-required', 'This field is required and must be a valid URL.'),
       },
     },
+    tokenExchangeTimeout: {
+      label: t('auth-config.fields.token-exchange-timeout-label', 'Token exchange timeout (seconds)'),
+      type: 'text',
+      description: t(
+        'auth-config.fields.token-exchange-timeout-description',
+        'The timeout in seconds for the OAuth token exchange request. Defaults to 15 seconds if not set or set to 0.'
+      ),
+    },
     scopes: {
       label: scopesLabel,
       type: 'select',
@@ -535,10 +544,10 @@ export function fieldMap(provider: string): Record<string, FieldData> {
           ? {
               validate: (value) => {
                 if (typeof value === 'string') {
-                  return uuidValidate(value);
+                  return isUUID(value);
                 }
                 if (isSelectableValueArray(value)) {
-                  return value.every((v) => v?.value && uuidValidate(v.value));
+                  return value.every((v) => v?.value && isUUID(v.value));
                 }
                 return true;
               },

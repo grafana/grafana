@@ -2,8 +2,10 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -17,9 +19,12 @@ import (
 	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/api/datasource"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -59,7 +64,7 @@ type mockConnectionClient struct {
 	err    error
 }
 
-func (m *mockConnectionClient) GetConnectionByUID(_ *contextmodel.ReqContext, _ string) (*queryV0.DataSourceConnectionList, error) {
+func (m *mockConnectionClient) GetConnectionByUID(_ context.Context, _ int64, _ string) (*queryV0.DataSourceConnectionList, error) {
 	return m.result, m.err
 }
 
@@ -89,6 +94,7 @@ func (m *mockDirectRestConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, 
 	m.lastServedHeaders = r.Header.Clone()
 	w.WriteHeader(http.StatusOK)
 }
+
 func (m *mockDirectRestConfigProvider) IsReady() bool { return true }
 
 type mockRoundTripper struct {
@@ -180,7 +186,7 @@ func TestGetK8sDataSourceByUIDHandler(t *testing.T) {
 				Features: featuremgmt.WithFeatures(
 					featuremgmt.FlagDatasourcesRerouteLegacyCRUDAPIs,
 					featuremgmt.FlagQueryService,
-					featuremgmt.FlagQueryServiceWithConnections,
+					featuremgmt.FlagDatasourceUseNewCRUDAPIs,
 					featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint,
 				),
 				dsConnectionClient:   &mockConnectionClient{result: tt.connectionResult, err: tt.connectionErr},
@@ -209,7 +215,7 @@ func TestGetK8sDataSourceByUIDHandler(t *testing.T) {
 	}
 }
 
-func newResourceTestContext(t *testing.T, method, urlPath string, params map[string]string) (*contextmodel.ReqContext, *httptest.ResponseRecorder) {
+func newTestContext(t *testing.T, method, urlPath string, params map[string]string) (*contextmodel.ReqContext, *httptest.ResponseRecorder) {
 	t.Helper()
 	req, err := http.NewRequest(method, urlPath, nil)
 	require.NoError(t, err)
@@ -244,7 +250,7 @@ func TestCallK8sDataSourceResourceHandler_FlagDisabled(t *testing.T) {
 	}
 	hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 
-	ctx, recorder := newResourceTestContext(t, http.MethodGet, "/api/datasources/uid/test-uid/resources", map[string]string{":uid": "test-uid", "*": ""})
+	ctx, recorder := newTestContext(t, http.MethodGet, "/api/datasources/uid/test-uid/resources", map[string]string{":uid": "test-uid", "*": ""})
 	handler := hs.callK8sDataSourceResourceHandler()
 	handler.(func(*contextmodel.ReqContext))(ctx)
 
@@ -389,6 +395,12 @@ func TestCallK8sDataSourceResourceHandler(t *testing.T) {
 				dsConnectionClient:   &mockConnectionClient{result: tt.connectionResult, err: tt.connectionErr},
 				clientConfigProvider: configProvider,
 				namespacer:           func(int64) string { return "default" },
+				// Required so datasourceRequiresSTPaths does not fall back to legacy on cache-miss
+				// for valid single-connection cases. Error cases return before the cache is reached.
+				DataSourceCache: &fakeDatasources.FakeCacheService{
+					DataSources: []*datasources.DataSource{{UID: "test-uid"}},
+				},
+				log: log.NewNopLogger(),
 			}
 			hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 
@@ -401,7 +413,7 @@ func TestCallK8sDataSourceResourceHandler(t *testing.T) {
 			}
 			params := map[string]string{":uid": tt.uid, "*": tt.subPath}
 
-			ctx, recorder := newResourceTestContext(t, http.MethodGet, urlPath, params)
+			ctx, recorder := newTestContext(t, http.MethodGet, urlPath, params)
 
 			handler := hs.callK8sDataSourceResourceHandler()
 			handler.(func(*contextmodel.ReqContext))(ctx)
@@ -448,10 +460,14 @@ func TestCallK8sDataSourceResourceHandler_PreservesHTTPMethod(t *testing.T) {
 				}},
 				clientConfigProvider: configProvider,
 				namespacer:           func(int64) string { return "default" },
+				DataSourceCache: &fakeDatasources.FakeCacheService{
+					DataSources: []*datasources.DataSource{{UID: "test-uid"}},
+				},
+				log: log.NewNopLogger(),
 			}
 			hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 
-			ctx, recorder := newResourceTestContext(t, method,
+			ctx, recorder := newTestContext(t, method,
 				"/api/datasources/uid/test-uid/resources/api/v1/query",
 				map[string]string{":uid": "test-uid", "*": "api/v1/query"})
 
@@ -558,10 +574,14 @@ func TestCallK8sDataSourceResourceHandler_Headers(t *testing.T) {
 				}},
 				clientConfigProvider: configProvider,
 				namespacer:           func(int64) string { return "default" },
+				DataSourceCache: &fakeDatasources.FakeCacheService{
+					DataSources: []*datasources.DataSource{{UID: "test-uid"}},
+				},
+				log: log.NewNopLogger(),
 			}
 			hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 
-			ctx, recorder := newResourceTestContext(t, http.MethodPost,
+			ctx, recorder := newTestContext(t, http.MethodPost,
 				"/api/datasources/uid/test-uid/resources/api/v1/query",
 				map[string]string{":uid": "test-uid", "*": "api/v1/query"})
 
@@ -582,6 +602,263 @@ func TestCallK8sDataSourceResourceHandler_Headers(t *testing.T) {
 			for _, key := range tt.expectedAbsent {
 				assert.Empty(t, configProvider.lastServedHeaders.Get(key),
 					"header %q should not be present on the proxied request", key)
+			}
+		})
+	}
+}
+
+// ── datasourceRequiresSTPaths ────────────────────────────────────────────────
+func TestDatasourceRequiresSTPaths(t *testing.T) {
+	const dsUID = "test-uid"
+
+	newDS := func(jsonData map[string]any) *datasources.DataSource {
+		if jsonData == nil {
+			return &datasources.DataSource{UID: dsUID}
+		}
+		j := simplejson.NewFromAny(jsonData)
+		return &datasources.DataSource{UID: dsUID, JsonData: j}
+	}
+
+	tests := []struct {
+		name       string
+		uid        string // defaults to dsUID ("test-uid") if empty
+		cfg        *setting.Cfg
+		dataSource *datasources.DataSource
+		wantForce  bool
+		wantReason string
+	}{
+		{
+			name:       "IP range AC enabled → force legacy",
+			cfg:        &setting.Cfg{IPRangeACEnabled: true},
+			dataSource: newDS(nil),
+			wantForce:  true,
+			wantReason: "ip-range-access-control",
+		},
+		{
+			name:       "oauthPassThru enabled → force legacy",
+			cfg:        setting.NewCfg(),
+			dataSource: newDS(map[string]any{"oauthPassThru": true}),
+			wantForce:  true,
+			wantReason: "oauth-passthru",
+		},
+		{
+			name:       "oauthPassThru false → do not force legacy",
+			cfg:        setting.NewCfg(),
+			dataSource: newDS(map[string]any{"oauthPassThru": false}),
+			wantForce:  false,
+		},
+		{
+			name:       "teamHttpHeaders present → force legacy (LBAC)",
+			cfg:        setting.NewCfg(),
+			dataSource: newDS(map[string]any{"teamHttpHeaders": map[string]any{}}),
+			wantForce:  true,
+			wantReason: "lbac",
+		},
+		{
+			name:       "no special flags → do not force legacy",
+			cfg:        setting.NewCfg(),
+			dataSource: newDS(map[string]any{"httpMethod": "GET"}),
+			wantForce:  false,
+		},
+		{
+			name:       "nil jsonData → do not force legacy",
+			cfg:        setting.NewCfg(),
+			dataSource: newDS(nil),
+			wantForce:  false,
+		},
+		{
+			name:       "datasource not found → force legacy (safety fallback)",
+			cfg:        setting.NewCfg(),
+			dataSource: nil, // nil means the cache will return ErrDataSourceNotFound
+			wantForce:  true,
+			wantReason: "datasource-lookup-failed",
+		},
+		{
+			// The built-in "-- Grafana --" datasource has no SQL row and is not yet
+			// supported in the MT path, so it must always take the legacy route.
+			name:       "built-in grafana datasource → force legacy",
+			uid:        "grafana",
+			cfg:        setting.NewCfg(),
+			dataSource: nil, // no SQL row — cache must not even be consulted
+			wantForce:  true,
+			wantReason: "builtin-grafana-datasource",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cache := &fakeDatasources.FakeCacheService{}
+			if tt.dataSource != nil {
+				cache.DataSources = []*datasources.DataSource{tt.dataSource}
+			}
+
+			hs := &HTTPServer{
+				Cfg:             tt.cfg,
+				DataSourceCache: cache,
+				log:             log.NewNopLogger(),
+			}
+
+			uid := dsUID
+			if tt.uid != "" {
+				uid = tt.uid
+			}
+			gotForce, gotReason := hs.datasourceRequiresSTPaths(
+				context.Background(), uid, &user.SignedInUser{}, false,
+			)
+
+			assert.Equal(t, tt.wantForce, gotForce)
+			if tt.wantForce {
+				assert.Equal(t, tt.wantReason, gotReason)
+			}
+		})
+	}
+}
+
+// skipCaptureCacheService is a CacheService spy that records the skipCache
+// value passed to GetDatasourceByUID so tests can verify it is forwarded correctly.
+type skipCaptureCacheService struct {
+	ds            *datasources.DataSource
+	lastSkipCache bool
+}
+
+func (s *skipCaptureCacheService) GetDatasourceByUID(_ context.Context, uid string, _ identity.Requester, skipCache bool) (*datasources.DataSource, error) {
+	s.lastSkipCache = skipCache
+	if s.ds != nil && s.ds.UID == uid {
+		return s.ds, nil
+	}
+	return nil, datasources.ErrDataSourceNotFound
+}
+
+func (s *skipCaptureCacheService) GetDatasource(_ context.Context, _ int64, _ identity.Requester, _ bool) (*datasources.DataSource, error) {
+	return nil, datasources.ErrDataSourceNotFound
+}
+
+var _ datasources.CacheService = (*skipCaptureCacheService)(nil)
+
+// TestDatasourceRequiresSTPaths_HonorsSkipCache verifies that the skipCache flag
+// received from the HTTP request context (c.SkipDSCache / X-Grafana-NoCache) is
+// forwarded to the cache service instead of being hardcoded to false.
+// Without this, a stale cached entry could cause an oauthPassThru or LBAC datasource
+// to be incorrectly redirected to the MT path on the same request that would
+// read the updated settings if it reached the legacy handler.
+func TestDatasourceRequiresSTPaths_HonorsSkipCache(t *testing.T) {
+	ds := &datasources.DataSource{UID: "test-uid"} // plain datasource, no ST flags
+
+	for _, skipCache := range []bool{false, true} {
+		t.Run(fmt.Sprintf("skipCache=%v", skipCache), func(t *testing.T) {
+			cache := &skipCaptureCacheService{ds: ds}
+			hs := &HTTPServer{
+				Cfg:             setting.NewCfg(),
+				DataSourceCache: cache,
+				log:             log.NewNopLogger(),
+			}
+
+			hs.datasourceRequiresSTPaths(context.Background(), "test-uid", &user.SignedInUser{}, skipCache)
+
+			assert.Equal(t, skipCache, cache.lastSkipCache,
+				"skipCache must be forwarded to the cache service, not hardcoded")
+		})
+	}
+}
+
+func TestPluginTypeFromConnection(t *testing.T) {
+	assert.Equal(t, "prometheus", pluginTypeFromConnection(queryV0.DataSourceConnection{Plugin: "prometheus"}))
+	assert.Equal(t, "loki", pluginTypeFromConnection(queryV0.DataSourceConnection{APIGroup: "loki.datasource.grafana.app"}))
+	assert.Equal(t, "grafana-testdata-datasource", pluginTypeFromConnection(queryV0.DataSourceConnection{APIGroup: "grafana-testdata-datasource.datasource.grafana.app"}))
+}
+
+func TestCallK8sDataSourceHealthHandler(t *testing.T) {
+	tests := []struct {
+		name                string
+		dsUID               string
+		connectionResult    *queryV0.DataSourceConnectionList
+		connectionErr       error
+		expectedCode        int
+		expectedMessage     string
+		expectedForwardPath string
+	}{
+		{
+			name:            "invalid UID returns 400",
+			dsUID:           "not a valid uid!!",
+			expectedCode:    http.StatusBadRequest,
+			expectedMessage: "UID is invalid",
+		},
+		{
+			name:            "GetConnectionByUID not found returns 404",
+			dsUID:           "test-uid",
+			connectionErr:   errors.New("datasource connection not found"),
+			expectedCode:    http.StatusNotFound,
+			expectedMessage: "Data source not found",
+		},
+		{
+			name:            "GetConnectionByUID generic error returns 500",
+			dsUID:           "test-uid",
+			connectionErr:   errors.New("some internal error"),
+			expectedCode:    http.StatusInternalServerError,
+			expectedMessage: "Failed to lookup datasource connection",
+		},
+		{
+			name:  "duplicate connections returns 409",
+			dsUID: "test-uid",
+			connectionResult: &queryV0.DataSourceConnectionList{
+				Items: []queryV0.DataSourceConnection{{Name: "a"}, {Name: "b"}},
+			},
+			expectedCode:    http.StatusConflict,
+			expectedMessage: "duplicate datasource connections found with this name",
+		},
+		{
+			name:  "empty connections returns 404",
+			dsUID: "test-uid",
+			connectionResult: &queryV0.DataSourceConnectionList{
+				Items: []queryV0.DataSourceConnection{},
+			},
+			expectedCode:    http.StatusNotFound,
+			expectedMessage: "Data source not found",
+		},
+		{
+			name:  "valid connection forwards to k8s health path",
+			dsUID: "test-uid",
+			connectionResult: &queryV0.DataSourceConnectionList{
+				Items: []queryV0.DataSourceConnection{
+					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1", Plugin: "prometheus"},
+				},
+			},
+			expectedCode:        http.StatusOK,
+			expectedForwardPath: "/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-uid/health",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setupOpenFeatureFlag(t, featuremgmt.FlagDatasourcesApiServerEnableHealthEndpointRedirect, true)
+
+			configProvider := &mockDirectRestConfigProvider{host: "http://localhost"}
+			hs := &HTTPServer{
+				Cfg:                  setting.NewCfg(),
+				Features:             featuremgmt.WithFeatures(),
+				dsConnectionClient:   &mockConnectionClient{result: tt.connectionResult, err: tt.connectionErr},
+				clientConfigProvider: configProvider,
+				namespacer:           func(int64) string { return "default" },
+				DataSourceCache: &fakeDatasources.FakeCacheService{
+					DataSources: []*datasources.DataSource{{UID: "test-uid"}},
+				},
+				log: log.NewNopLogger(),
+			}
+			hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
+			ctx, recorder := newTestContext(t, http.MethodGet, "/api/datasources/uid/"+tt.dsUID+"/health", map[string]string{":uid": tt.dsUID})
+			handler := hs.callK8sDataSourceHealthHandler()
+			handler.(func(*contextmodel.ReqContext))(ctx)
+
+			assert.Equal(t, tt.expectedCode, recorder.Code)
+
+			if tt.expectedMessage != "" {
+				var body map[string]any
+				require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body))
+				assert.Equal(t, tt.expectedMessage, body["message"])
+			}
+
+			if tt.expectedForwardPath != "" {
+				assert.Equal(t, tt.expectedForwardPath, configProvider.lastServedPath)
 			}
 		})
 	}

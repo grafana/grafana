@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"regexp"
+	"strconv"
 
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
@@ -24,7 +26,7 @@ import (
 
 const (
 	UserResource      = "users"
-	UserResourceGroup = "iam.grafana.com"
+	UserResourceGroup = "iam.grafana.app"
 )
 
 var (
@@ -33,6 +35,8 @@ var (
 	fieldEmail                                      = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_EMAIL)
 	fieldLastSeenAt                                 = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_LAST_SEEN_AT)
 	fieldRole                                       = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_ROLE)
+	fieldDisabled                                   = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_DISABLED)
+	legacyIDField                                   = resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID
 	wildcardsMatcher                                = regexp.MustCompile(`[\*\?\\]`)
 
 	userSortFieldMapping = map[string]string{
@@ -42,6 +46,11 @@ var (
 		fieldEmail:                  "email",
 	}
 )
+
+// UserSortFieldMapping returns a mapping of unified search field names to legacy SQL sort key names.
+func UserSortFieldMapping() map[string]string {
+	return userSortFieldMapping
+}
 
 // UserLegacySearchClient is a client for searching for users in the legacy search engine.
 type UserLegacySearchClient struct {
@@ -75,11 +84,11 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 		return nil, err
 	}
 
-	if req.Limit > maxLimit {
-		req.Limit = maxLimit
+	if req.Limit > common.MaxListLimit {
+		return nil, fmt.Errorf("limit cannot be greater than %d", common.MaxListLimit)
 	}
-	if req.Limit <= 0 {
-		req.Limit = 30
+	if req.Limit < 1 {
+		req.Limit = common.DefaultListLimit
 	}
 
 	if req.Page > math.MaxInt32 || req.Page < 0 {
@@ -189,6 +198,8 @@ func getResourceKey(item *org.OrgUserDTO, namespace string) *resourcepb.Resource
 	}
 }
 
+var userColumns = resource.TableColumnsByName(builders.UserSearchFields)
+
 func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 	cols := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(fields))
 	standardSearchFields := resource.StandardSearchFields()
@@ -197,13 +208,25 @@ func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 		case resource.SEARCH_FIELD_TITLE:
 			cols = append(cols, standardSearchFields.Field(resource.SEARCH_FIELD_TITLE))
 		case fieldLastSeenAt:
-			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_LAST_SEEN_AT])
+			cols = append(cols, userColumns[builders.USER_LAST_SEEN_AT])
 		case fieldRole:
-			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_ROLE])
+			cols = append(cols, userColumns[builders.USER_ROLE])
 		case fieldEmail:
-			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_EMAIL])
+			cols = append(cols, userColumns[builders.USER_EMAIL])
 		case fieldLogin:
-			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_LOGIN])
+			cols = append(cols, userColumns[builders.USER_LOGIN])
+		case fieldDisabled:
+			cols = append(cols, userColumns[builders.USER_DISABLED])
+		case resource.SEARCH_FIELD_CREATED:
+			cols = append(cols, &resourcepb.ResourceTableColumnDefinition{
+				Name: resource.SEARCH_FIELD_CREATED,
+				Type: resourcepb.ResourceTableColumnDefinition_INT64,
+			})
+		case legacyIDField:
+			cols = append(cols, &resourcepb.ResourceTableColumnDefinition{
+				Name: legacyIDField,
+				Type: resourcepb.ResourceTableColumnDefinition_STRING,
+			})
 		}
 	}
 	return cols
@@ -225,6 +248,18 @@ func createCells(u *org.OrgUserDTO, fields []string) [][]byte {
 			cells = append(cells, b)
 		case fieldRole:
 			cells = append(cells, []byte(u.Role))
+		case fieldDisabled:
+			if u.IsDisabled {
+				cells = append(cells, []byte{1})
+			} else {
+				cells = append(cells, []byte{0})
+			}
+		case resource.SEARCH_FIELD_CREATED:
+			b := make([]byte, 8)
+			binary.BigEndian.PutUint64(b, uint64(u.Created.UnixMilli()))
+			cells = append(cells, b)
+		case legacyIDField:
+			cells = append(cells, []byte(strconv.FormatInt(u.UserID, 10)))
 		}
 	}
 	return cells

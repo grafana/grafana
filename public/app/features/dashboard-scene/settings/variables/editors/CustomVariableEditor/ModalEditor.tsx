@@ -1,10 +1,9 @@
-import { FormEvent, useRef, useState } from 'react';
+import { type FormEvent, useRef, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
-import { CustomVariableModel } from '@grafana/data';
+import { type CustomVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { CustomVariable } from '@grafana/scenes';
 import { Button, FieldValidationMessage, Modal, Stack, TextArea } from '@grafana/ui';
 import { dashboardEditActions } from 'app/features/dashboard-scene/edit-pane/shared';
@@ -12,21 +11,12 @@ import { dashboardEditActions } from 'app/features/dashboard-scene/edit-pane/sha
 import { ValuesFormatSelector } from '../../components/CustomVariableForm';
 import { VariableValuesPreview } from '../../components/VariableValuesPreview';
 
-import { ModalEditorNonMultiProps } from './ModalEditorNonMultiProps';
-
 interface ModalEditorProps {
   variable: CustomVariable;
   onClose: () => void;
 }
 
 export function ModalEditor(props: ModalEditorProps) {
-  if (!config.featureToggles.multiPropsVariables) {
-    return <ModalEditorNonMultiProps {...props} />;
-  }
-  return <ModalEditorMultiProps {...props} />;
-}
-
-function ModalEditorMultiProps(props: ModalEditorProps) {
   const {
     previewOptions,
     valuesFormat,
@@ -93,8 +83,8 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
   );
 }
 
-export function useDraftVariable(variable: CustomVariable) {
-  const draftVariableRef = useRef<CustomVariable>();
+function useDraftVariable(variable: CustomVariable) {
+  const draftVariableRef = useRef<CustomVariable>(undefined);
   if (!draftVariableRef.current) {
     draftVariableRef.current = new CustomVariable(variable.state);
   }
@@ -140,11 +130,7 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
         source: variable,
         description: t('dashboard-scene.use-modal-editor.description.change-variable-query', 'Change variable query'),
         perform: async () => {
-          if (!config.featureToggles.multiPropsVariables) {
-            variable.setState({ valuesFormat: 'csv', query });
-          } else {
-            variable.setState({ valuesFormat, query });
-          }
+          variable.setState({ valuesFormat, query });
 
           if (valuesFormat === 'json') {
             variable.setState({ allowCustomValue: false, allValue: undefined });

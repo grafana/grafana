@@ -1,29 +1,37 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useCallback, useMemo, useState } from 'react';
 
 import {
   CoreApp,
-  DataFrame,
-  FieldConfigSource,
-  GrafanaTheme2,
+  type DataFrame,
+  type FieldConfigSource,
+  type GrafanaTheme2,
   LoadingState,
   LogsSortOrder,
-  PanelData,
-  PanelProps,
+  type PanelData,
+  type PanelProps,
 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
+import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/fieldSelector/logFields';
+import { getSuggestedFieldsFromLogList } from 'app/features/logs/components/fieldSelector/suggestedFields';
 import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
+import { LogListModel } from 'app/features/logs/components/panel/processing';
 import {
   DATAPLANE_SEVERITY_NAME,
   LOGS_DATAPLANE_BODY_NAME,
   LOGS_DATAPLANE_TIMESTAMP_NAME,
-  LogsFrame,
+  type LogsFrame,
   parseLogsFrame,
 } from 'app/features/logs/logsFrame';
+import { dataFrameToLogsModel } from 'app/features/logs/logsModel';
+import { isMissingStringField, isMissingTimeField } from 'app/features/logs/utils';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
+import { LogDetailsContextProvider } from './LogDetailsContext';
+import { getDefaultLogDetailsWidth, LogsTableDetails } from './LogsTableDetails';
 import { TableNGWrap } from './TableNGWrap';
 import { LogsTableFields } from './fieldSelector/LogsTableFields';
 import { detectLevelField } from './fields/logs';
@@ -32,23 +40,28 @@ import { useOrganizeFields } from './hooks/useOrganizeFields';
 import { copyLogsTableDashboardUrl } from './links/copyDashboardUrl';
 import { getDisplayedFields } from './options/getDisplayedFields';
 import { onSortOrderChange } from './options/onSortOrderChange';
-import { Options } from './options/types';
-import { Options as LogsTableOptions } from './panelcfg.gen';
+import { type Options } from './options/types';
+import { type Options as LogsTableOptions } from './panelcfg.gen';
 import { getInitialRowIndex } from './props/getInitialRowIndex';
 import {
-  BuildLinkToLogLine,
+  type BuildLinkToLogLine,
   isBuildLinkToLogLine,
   isOnLogsTableOptionsChange,
-  OnLogsTableOptionsChange,
+  type OnLogsTableOptionsChange,
 } from './types';
 
 interface LogsTablePanelProps extends Omit<PanelProps<Options>, 'timeRange'> {}
 
+/**
+ * Props:
+ * Determines if a given key => value filter is active in a given query. Used by Log details.
+ * isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
+ */
 export const LogsTable = ({
   data,
   width,
   height,
-  fieldConfig,
+  fieldConfig: fieldConfigProp,
   options,
   eventBus,
   onOptionsChange,
@@ -63,6 +76,8 @@ export const LogsTable = ({
 }: LogsTablePanelProps) => {
   const frameIndex = options.frameIndex <= data.series.length - 1 ? options.frameIndex : 0;
   const styles = useStyles2(getStyles, height, width);
+  const { app } = usePanelContext();
+  const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
 
   const rawTableFrame: DataFrame | null = data.series[frameIndex] ? data.series[frameIndex] : null;
   const logsFrame: LogsFrame | null = useMemo(
@@ -107,6 +122,32 @@ export const LogsTable = ({
     [handleLogsTableOptionsChange, options]
   );
 
+  const transformDisplayedFields = useCallback(
+    (displayedFields: string[]) => {
+      return displayedFields.map((displayedField) => {
+        if (displayedField === bodyFieldName) {
+          return LOG_LINE_BODY_FIELD_NAME;
+        }
+
+        return displayedField;
+      });
+    },
+    [bodyFieldName]
+  );
+
+  const untransformDisplayedFields = useCallback(
+    (displayedFields: string[]) => {
+      return displayedFields.map((displayedField) => {
+        if (displayedField === LOG_LINE_BODY_FIELD_NAME) {
+          return bodyFieldName;
+        }
+
+        return displayedField;
+      });
+    },
+    [bodyFieldName]
+  );
+
   const handleTableOnFieldConfigChange = useCallback(
     (fieldConfig: FieldConfigSource) => {
       onFieldConfigChange(fieldConfig);
@@ -132,8 +173,56 @@ export const LogsTable = ({
     [data.timeRange]
   );
 
+  const wrapText = useMemo(
+    () => fieldConfigProp.defaults.custom?.wrapText ?? options.wrapText ?? false,
+    [fieldConfigProp.defaults.custom?.wrapText, options.wrapText]
+  );
+
+  const handleWrapTextClick = useCallback(() => {
+    const nextWrapText = !wrapText;
+    if (app === CoreApp.Dashboard || app === CoreApp.PanelEditor || app === CoreApp.PanelViewer) {
+      const nextFieldConfig: FieldConfigSource = {
+        ...fieldConfigProp,
+        defaults: {
+          ...fieldConfigProp.defaults,
+          custom: {
+            ...fieldConfigProp.defaults.custom,
+            wrapText: nextWrapText,
+          },
+        },
+      };
+      onFieldConfigChange(nextFieldConfig);
+    } else {
+      onOptionsChange({
+        ...options,
+        wrapText: nextWrapText,
+      });
+    }
+  }, [app, fieldConfigProp, onFieldConfigChange, onOptionsChange, options, wrapText]);
+
+  const fieldConfig = useMemo(
+    () => ({
+      ...fieldConfigProp,
+      defaults: {
+        ...fieldConfigProp.defaults,
+        custom: {
+          ...fieldConfigProp.defaults?.custom,
+          filterable: true,
+          wrapText,
+        },
+      },
+    }),
+    [fieldConfigProp, wrapText]
+  );
+
   // Extract fields transform
-  const { extractedFrame } = useExtractFields({ rawTableFrame, fieldConfig, timeZone });
+  const { extractedFrame } = useExtractFields({
+    rawTableFrame,
+    fieldConfig,
+    timeZone,
+    replaceVariables,
+    loadingState: data.state,
+  });
 
   // Organize fields transform
   const { organizedFrame } = useOrganizeFields({
@@ -159,6 +248,40 @@ export const LogsTable = ({
     return data;
   }, [organizedFrame, data, frameIndex]);
 
+  const tableOptions = useMemo(
+    () => ({
+      sortOrder: options.sortOrder ?? LogsSortOrder.Descending,
+      sortBy: [
+        { displayName: timeFieldName, desc: options.sortOrder ? options.sortOrder === LogsSortOrder.Descending : true },
+      ],
+      fieldSelectorWidth: options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth(),
+      logDetailsWidth: options.logDetailsWidth ? options.logDetailsWidth : getDefaultLogDetailsWidth(),
+      ...options,
+      wrapText,
+    }),
+    [options, timeFieldName, wrapText]
+  );
+
+  const logRows = useMemo(() => {
+    const logs = rawTableFrame
+      ? dataFrameToLogsModel([rawTableFrame], undefined, undefined, panelData.request?.targets, false).rows.map(
+          (logRow) =>
+            new LogListModel(logRow, {
+              escape: false,
+              timeZone,
+              wrapLogMessage: true,
+            })
+        )
+      : null;
+    return logs ?? [];
+  }, [panelData.request?.targets, rawTableFrame, timeZone]);
+
+  const getSuggestedFields = useCallback(
+    (_dataFrame: DataFrame, displayedColumns: string[], defaultColumns: string[] = []) =>
+      getSuggestedFieldsFromLogList(logRows, displayedColumns, defaultColumns, otelLogsFormattingEnabled),
+    [logRows, otelLogsFormattingEnabled]
+  );
+
   const noSeries = data.series.length === 0;
   const noValues = data.series[frameIndex]?.fields?.[0]?.values?.length === 0;
 
@@ -167,7 +290,15 @@ export const LogsTable = ({
 
   // Show no data state if query returns nothing
   if ((noSeries || noValues || noLogsFrame) && data.state === LoadingState.Done) {
-    return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
+    return (
+      <PanelDataErrorView
+        fieldConfig={fieldConfig}
+        panelId={id}
+        data={data}
+        needsStringField={isMissingStringField(data.series)}
+        needsTimeField={isMissingTimeField(data.series)}
+      />
+    );
   }
 
   // Don't render the table if we don't have the required data to show the visualization
@@ -176,19 +307,22 @@ export const LogsTable = ({
   return (
     <div className={styles.wrapper} ref={containerRef}>
       {renderTable && containerElement && (
-        <>
+        <LogDetailsContextProvider enableLogDetails={options.enableLogDetails ?? true} logs={logRows}>
           <LogsTableFields
             tableWidth={width}
             fieldSelectorWidth={options.fieldSelectorWidth}
-            displayedFields={getDisplayedFields(options, timeFieldName, levelFieldName, bodyFieldName)}
+            displayedFields={untransformDisplayedFields(getDisplayedFields(options, timeFieldName, levelFieldName))}
             height={height}
             logsFrame={logsFrame}
             timeFieldName={timeFieldName}
             levelFieldName={levelFieldName}
             bodyFieldName={bodyFieldName}
             dataFrame={extractedFrame}
-            onDisplayedFieldsChange={(displayedFields: string[]) => handleLogsTableOptionChange({ displayedFields })}
+            onDisplayedFieldsChange={(displayedFields: string[]) =>
+              handleLogsTableOptionChange({ displayedFields: transformDisplayedFields(displayedFields) })
+            }
             onFieldSelectorWidthChange={(width: number) => handleLogsTableOptionChange({ fieldSelectorWidth: width })}
+            getSuggestedFields={getSuggestedFields}
           />
 
           <TableNGWrap
@@ -199,12 +333,7 @@ export const LogsTable = ({
             height={height}
             id={id}
             timeZone={timeZone}
-            options={{
-              sortOrder: LogsSortOrder.Descending,
-              sortBy: [{ displayName: timeFieldName, desc: true }],
-              fieldSelectorWidth: options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth(),
-              ...options,
-            }}
+            options={tableOptions}
             transparent={transparent}
             fieldConfig={fieldConfig}
             renderCounter={renderCounter}
@@ -214,9 +343,18 @@ export const LogsTable = ({
             onFieldConfigChange={handleTableOnFieldConfigChange}
             replaceVariables={replaceVariables}
             onChangeTimeRange={onChangeTimeRange}
+            onWrapTextClick={handleWrapTextClick}
             logOptionsStorageKey={SETTING_KEY_ROOT}
           />
-        </>
+
+          <LogsTableDetails
+            containerElement={containerElement}
+            options={tableOptions}
+            onOptionsChange={handleTableOptionsChange}
+            timeRange={data.timeRange}
+            timeZone={timeZone}
+          />
+        </LogDetailsContextProvider>
       )}
     </div>
   );
@@ -225,6 +363,8 @@ export const LogsTable = ({
 const getStyles = (theme: GrafanaTheme2, height: number, width: number) => {
   return {
     wrapper: css({
+      // prevent overflow in the tiny suggestions preview
+      overflow: 'hidden',
       height,
       width,
     }),

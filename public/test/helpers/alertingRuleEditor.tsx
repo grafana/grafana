@@ -42,6 +42,10 @@ export const ui = {
       contactPoint: byTestId('contact-point-picker'),
       routingOptions: byText(/muting, grouping and timings \(optional\)/i),
     },
+    evaluationMode: {
+      useGroups: byRole('radio', { name: /use groups \(legacy\)/i }),
+      setInterval: byRole('radio', { name: /set interval/i }),
+    },
     switchModeBasic: (stepNo: GrafanaRuleFormStep) =>
       byTestId(selectors.components.AlertRules.stepAdvancedModeSwitch(stepNo.toString())),
     switchModeAdvanced: (stepNo: GrafanaRuleFormStep) =>

@@ -1,21 +1,20 @@
 import { css, cx } from '@emotion/css';
-import { useLayoutEffect, useRef, useReducer, CSSProperties } from 'react';
+import { useLayoutEffect, useRef, useReducer, type CSSProperties } from 'react';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { type GrafanaTheme2, type LinkModel } from '@grafana/data';
 import { DashboardCursorSync } from '@grafana/schema';
 
-import { AdHocFilterModel } from '../../../internal';
 import { useStyles2 } from '../../../themes/ThemeContext';
-import { RangeSelection1D, RangeSelection2D, OnSelectRangeCallback } from '../../PanelChrome';
+import { type RangeSelection1D, type RangeSelection2D, type OnSelectRangeCallback } from '../../PanelChrome';
 import { getPortalContainer } from '../../Portal/Portal';
-import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
+import { type AdHocFilterModel } from '../../VizTooltip';
+import { type UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { CloseButton } from './CloseButton';
 
-export const DEFAULT_TOOLTIP_WIDTH = undefined;
 export const TOOLTIP_OFFSET = 10;
 
 // todo: barchart? histogram?
@@ -113,9 +112,6 @@ const getAdHocFiltersFallback: GetAdHocFiltersCallback = () => [];
 
 const userAgentIsMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
 
-/**
- * @alpha
- */
 export const TooltipPlugin2 = ({
   config,
   hoverMode,

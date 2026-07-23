@@ -1,14 +1,18 @@
-import { config, locationService } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
-import { Status, Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { config } from '@grafana/runtime';
+import { type Dashboard } from '@grafana/schema';
+import { type Status, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isRecord } from 'app/core/utils/isRecord';
-import { Resource } from 'app/features/apiserver/types';
-import { isDashboardSceneEnabled } from 'app/features/dashboard-scene/utils/utils';
-import { DashboardDataDTO } from 'app/types/dashboard';
+import {
+  AnnoKeyGrantPermissions,
+  type Resource,
+  type ResourceClient,
+  type ResourceForCreate,
+} from 'app/features/apiserver/types';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
-import { SaveDashboardCommand } from '../components/SaveDashboard/types';
+import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
 
-import { DashboardWithAccessInfo } from './types';
+import { type DashboardWithAccessInfo } from './types';
 
 export function isV2StoredVersion(version: string | undefined): boolean {
   return version === 'v2alpha1' || version === 'v2beta1' || version === 'v2';
@@ -19,37 +23,13 @@ export function isV0V1StoredVersion(version: string | undefined): boolean {
 }
 
 export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {
-  const isKubernetesDashboardsEnabled = config.featureToggles.kubernetesDashboards;
-  const isDashboardNewLayoutsEnabled = config.featureToggles.dashboardNewLayouts;
-
-  const forcingOldDashboardArch = locationService.getSearch().get('scenes') === 'false';
-
-  // Force legacy API when dashboard scene is disabled or explicitly forced
-  if (!isDashboardSceneEnabled() || forcingOldDashboardArch) {
-    if (responseFormat === 'v2') {
-      throw new Error('v2 is not supported for legacy architecture');
-    }
-
-    return isKubernetesDashboardsEnabled ? 'v1' : 'legacy';
+  if (responseFormat === 'v1') {
+    return 'v1';
   }
-
-  // Unified manages redirection between v1 and v2, but when responseFormat is undefined we get the unified API
-  if (isKubernetesDashboardsEnabled) {
-    if (responseFormat === 'v1') {
-      return 'v1';
-    }
-    if (responseFormat === 'v2' || isDashboardNewLayoutsEnabled) {
-      return 'v2';
-    }
-    return 'unified';
+  if (responseFormat === 'v2' || config.featureToggles.dashboardNewLayouts) {
+    return 'v2';
   }
-
-  // Handle non-kubernetes case
-  if (responseFormat === 'v2') {
-    throw new Error('v2 is not supported if kubernetes dashboards are disabled');
-  }
-
-  return 'legacy';
+  return 'unified';
 }
 
 // This function is used to determine if the dashboard is a k8s resource (v1 or v2 format)
@@ -97,6 +77,20 @@ export function isV2DashboardCommand(
   return isDashboardV2Spec(cmd.dashboard);
 }
 
+export function buildRestorePayload<T>(dashboard: Resource<T>): ResourceForCreate<T> {
+  return {
+    metadata: {
+      ...dashboard.metadata,
+      resourceVersion: '',
+      annotations: {
+        ...dashboard.metadata.annotations,
+        [AnnoKeyGrantPermissions]: 'default',
+      },
+    },
+    spec: dashboard.spec,
+  };
+}
+
 /**
  * Helper function to extract the stored version from a dashboard resource if conversion failed
  * @param item - Dashboard resource item
@@ -120,4 +114,24 @@ export function failedFromVersion(
 ): boolean {
   const storedVersion = getFailedVersion(item);
   return !!storedVersion && versionPrefixes.some((prefix) => storedVersion.startsWith(prefix));
+}
+
+/**
+ * Fetch a single soft-deleted dashboard through the recently-deleted listing.
+ *
+ * The `find` is load-bearing, not defensive: unified storage drops field selectors on
+ * get-trash listings (only the label survives), so the name is pinned solely by the
+ * apiserver registry collapsing `metadata.name=` into a single-object storage key. If
+ * that ever regresses, this request silently degenerates into the full deleted-dashboards
+ * listing (every item, full specs) — the find keeps the result correct regardless.
+ */
+export async function fetchDeletedDashboard<T>(
+  client: Pick<ResourceClient<T>, 'list'>,
+  name: string
+): Promise<Resource<T> | undefined> {
+  const list = await client.list({
+    labelSelector: 'grafana.app/get-trash=true',
+    fieldSelector: `metadata.name=${name}`,
+  });
+  return list.items.find((item) => item.metadata.name === name);
 }

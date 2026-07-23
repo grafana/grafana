@@ -17,37 +17,42 @@ import {
 } from 'rxjs';
 
 import {
-  DataFrame,
-  DataQueryError,
+  type DataFrame,
+  type DataQueryError,
   DataQueryErrorType,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  Field,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type Field,
   FieldType,
   LoadingState,
-  LogRowContextOptions,
+  type LogRowContextOptions,
   LogRowContextQueryDirection,
-  LogRowModel,
-  ScopedVars,
+  type LogRowModel,
+  type ScopedVars,
   getDefaultTimeRange,
   rangeUtil,
 } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
+import { type TemplateSrv } from '@grafana/runtime';
 import { type CustomFormatterVariable } from '@grafana/scenes';
 import { GraphDrawStyle } from '@grafana/schema';
 import { TableCellDisplayMode } from '@grafana/ui';
 
-import { CloudWatchLogsQuery, LogsMode, CloudWatchLogsAnomaliesQuery, LogsQueryLanguage } from '../dataquery.gen';
 import {
-  CloudWatchJsonData,
+  type CloudWatchLogsQuery,
+  LogsMode,
+  type CloudWatchLogsAnomaliesQuery,
+  LogsQueryLanguage,
+} from '../dataquery.gen';
+import {
+  type CloudWatchJsonData,
   CloudWatchLogsQueryStatus,
-  CloudWatchLogsRequest,
-  CloudWatchQuery,
-  GetLogEventsRequest,
-  LogAction,
-  QueryParam,
-  StartQueryRequest,
+  type CloudWatchLogsRequest,
+  type CloudWatchQuery,
+  type GetLogEventsRequest,
+  type LogAction,
+  type QueryParam,
+  type StartQueryRequest,
 } from '../types';
 import { addDataLinksToLogsResponse } from '../utils/datalinks';
 import { LOG_GROUP_ACCOUNT_MAX, LOG_GROUP_PREFIX_MAX } from '../utils/logGroupsConstants';
@@ -97,7 +102,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     const validLogQueries = logQueries.filter(this.filterQuery);
 
     const startQueryRequests: StartQueryRequest[] = validLogQueries.map((target: CloudWatchLogsQuery) => {
-      const { expression, logGroups, logGroupNames, logGroupPrefixes, selectedAccountIds } =
+      const { expression, logGroups, logGroupNames, logGroupPrefixes, selectedAccountIds, logDataSources } =
         this.interpolateLogsQueryVariables(target, options.scopedVars);
       return {
         refId: target.refId,
@@ -105,6 +110,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
         queryString: expression ?? '',
         logGroups,
         logGroupNames,
+        logDataSources,
         queryLanguage: target.queryLanguage,
         logsMode: target.logsMode ?? LogsMode.Insights,
         logsQueryScope: target.logsQueryScope,
@@ -252,7 +258,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     scopedVars: ScopedVars
   ): Pick<
     CloudWatchLogsQuery,
-    'expression' | 'logGroups' | 'logGroupNames' | 'logGroupPrefixes' | 'selectedAccountIds'
+    'expression' | 'logGroups' | 'logGroupNames' | 'logGroupPrefixes' | 'selectedAccountIds' | 'logDataSources'
   > {
     const interpolatedLogGroupArns = interpolateStringArrayUsingSingleOrMultiValuedVariable(
       this.templateSrv,
@@ -340,6 +346,9 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       expression,
       logGroupPrefixes,
       selectedAccountIds,
+      // Keep AWS data source name/type pairs literal. The selector does not accept variables,
+      // and independently expanding multi-value fields would lose their pairing.
+      logDataSources: query.logDataSources,
     };
   }
 
@@ -555,6 +564,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
   private filterQuery(query: CloudWatchLogsQuery) {
     const hasMissingLegacyLogGroupNames = !query.logGroupNames?.length;
     const hasMissingLogGroups = !query.logGroups?.length;
+    const hasMissingLogDataSources = !query.logDataSources?.length;
     const hasMissingQueryString = !query.expression?.length;
     const hasMissingPrefixes = !query.logGroupPrefixes?.length;
 
@@ -570,6 +580,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
 
     const hasValidLogGroupSelection =
       !hasMissingLogGroups ||
+      !hasMissingLogDataSources ||
       !hasMissingLegacyLogGroupNames ||
       usesNamePrefixScope ||
       usesAllLogGroupsScope ||

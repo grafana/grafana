@@ -1,9 +1,11 @@
-flagName:
+react19:
   variations:
     enabled: true
     disabled: false
   defaultRule:
-    variation: disabled
+    variation: enabled
+  metadata:
+    public: "true"
 
 reportRenderBinding:
   variations:
@@ -11,3 +13,52 @@ reportRenderBinding:
     disabled: false
   defaultRule:
     variation: enabled
+  metadata:
+    public: "true"
+
+compiledBootScript:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled
+  metadata:
+    public: "true"
+
+grafana.assetSriChecks:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled
+  metadata:
+    public: "true"
+
+grafana.meticulousAIMode:
+  variations:
+    off: 'off'
+    on-prod-env: 'on-prod-env'
+    on-dev-env: 'on-dev-env'
+  defaultRule:
+    variation: off
+  metadata:
+    public: "true"
+
+frontendService.reducedBootDataAPI:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled
+  metadata:
+    public: "true"
+
+grafana.frontendLegacyAPIHandling:
+  variations:
+    off: 'off'
+    alert: 'alert'
+    block: 'block'
+  defaultRule:
+    variation: off
+  metadata:
+    public: "true"

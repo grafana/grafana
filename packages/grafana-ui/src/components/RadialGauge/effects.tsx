@@ -1,7 +1,7 @@
-import { colorManipulator, GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 
 import { ARC_END } from './constants';
-import { RadialGaugeDimensions, RadialShape } from './types';
+import { type RadialGaugeDimensions, type RadialShape } from './types';
 
 // some utility transparent white colors for gradients
 const TRANSPARENT_WHITE = '#ffffff00';

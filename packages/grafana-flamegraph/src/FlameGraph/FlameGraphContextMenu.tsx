@@ -1,9 +1,9 @@
-import { DataFrame } from '@grafana/data';
-import { MenuItem, MenuGroup, ContextMenu, IconName } from '@grafana/ui';
+import { type DataFrame } from '@grafana/data';
+import { MenuItem, MenuGroup, ContextMenu, type IconName } from '@grafana/ui';
 
-import { ClickedItemData, PaneView, SelectedView, ViewMode } from '../types';
+import { type ClickedItemData, type PaneView, type SelectedView, type ViewMode } from '../types';
 
-import { CollapseConfig, FlameGraphDataContainer } from './dataTransform';
+import { type CollapseConfig, type FlameGraphDataContainer } from './dataTransform';
 
 export type GetExtraContextMenuButtonsFunction = (
   clickedItemData: ClickedItemData,
@@ -18,7 +18,7 @@ export type GetExtraContextMenuButtonsFunction = (
   }
 ) => ExtraContextMenuButton[];
 
-export type ExtraContextMenuButton = {
+type ExtraContextMenuButton = {
   label: string;
   icon: IconName;
   onClick: () => void;

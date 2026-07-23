@@ -1,56 +1,61 @@
 import { cloneDeep, map as lodashMap } from 'lodash';
-import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
+import { lastValueFrom, merge, type Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 import {
-  AbstractQuery,
-  AnnotationEvent,
-  AnnotationQueryRequest,
+  type AbstractQuery,
+  type AnnotationEvent,
   CoreApp,
-  DataFrame,
+  type DataFrame,
   DataFrameView,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  DataSourceWithLogsContextSupport,
-  DataSourceWithSupplementaryQueriesSupport,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type DataSourceWithLogsContextSupport,
+  type DataSourceWithSupplementaryQueriesSupport,
   SupplementaryQueryType,
-  DataSourceWithQueryExportSupport,
-  DataSourceWithQueryImportSupport,
-  Labels,
+  type DataSourceWithQueryExportSupport,
+  type DataSourceWithQueryImportSupport,
+  type Labels,
   LoadingState,
-  LogRowModel,
-  QueryFixAction,
-  QueryHint,
+  type LogRowModel,
+  type QueryFixAction,
+  type QueryHint,
   rangeUtil,
-  ScopedVars,
-  SupplementaryQueryOptions,
-  TimeRange,
-  LogRowContextOptions,
-  DataSourceWithToggleableQueryFiltersSupport,
-  ToggleFilterAction,
-  QueryFilterOptions,
+  type ScopedVars,
+  type SupplementaryQueryOptions,
+  type TimeRange,
+  type LogRowContextOptions,
+  type DataSourceWithToggleableQueryFiltersSupport,
+  type ToggleFilterAction,
+  type QueryFilterOptions,
   renderLegendFormat,
-  LegacyMetricFindQueryOptions,
-  AdHocVariableFilter,
+  type LegacyMetricFindQueryOptions,
+  type AdHocVariableFilter,
   urlUtil,
-  MetricFindValue,
-  DataSourceGetTagValuesOptions,
-  DataSourceGetTagKeysOptions,
-  DataSourceWithQueryModificationSupport,
-  DataSourceWithLogsLabelTypesSupport,
-  LogsVolumeOption,
-  LogsSampleOptions,
-  QueryVariableModel,
-  CustomVariableModel,
+  type MetricFindValue,
+  type DataSourceGetTagValuesOptions,
+  type DataSourceGetTagKeysOptions,
+  type DataSourceWithQueryModificationSupport,
+  type DataSourceWithLogsLabelTypesSupport,
+  type LogsVolumeOption,
+  type LogsSampleOptions,
+  type QueryVariableModel,
+  type CustomVariableModel,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Duration } from '@grafana/lezer-logql';
-import { BackendSrvRequest, config, DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import {
+  type BackendSrvRequest,
+  config,
+  DataSourceWithBackend,
+  getTemplateSrv,
+  type TemplateSrv,
+} from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
 
 import LanguageProvider from './LanguageProvider';
-import { LiveStreams, LokiLiveTarget } from './LiveStreams';
+import { LiveStreams, type LokiLiveTarget } from './LiveStreams';
 import { LogContextProvider } from './LogContextProvider';
 import { LokiVariableSupport } from './LokiVariableSupport';
 import { transformBackendResult } from './backendResultTransformer';
@@ -91,18 +96,23 @@ import { replaceVariables, returnVariables } from './querybuilder/parsingUtils';
 import { runShardSplitQuery } from './shardQuerySplitting';
 import { convertToWebSocketUrl, doLokiChannelStream } from './streaming';
 import { trackQuery } from './tracking';
-import { LabelType, LokiOptions, LokiQuery, LokiVariableQuery, LokiVariableQueryType, QueryStats } from './types';
+import {
+  LabelType,
+  type LokiOptions,
+  type LokiQuery,
+  type LokiVariableQuery,
+  LokiVariableQueryType,
+  type QueryStats,
+} from './types';
 
-export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
-export const DEFAULT_MAX_LINES = 1000;
+const DEFAULT_MAX_LINES = 1000;
 export const DEFAULT_MAX_LINES_SAMPLE = 10;
-export const LOKI_ENDPOINT = '/loki/api/v1';
 export const REF_ID_DATA_SAMPLES = 'loki-data-samples';
 export const REF_ID_STARTER_ANNOTATION = 'annotation-';
 export const REF_ID_STARTER_LOG_ROW_CONTEXT = 'log-row-context-query-';
 export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 export const REF_ID_STARTER_LOG_SAMPLE = 'log-sample-';
-export const REF_ID_STARTER_STATS = 'log-stats-';
+const REF_ID_STARTER_STATS = 'log-stats-';
 
 const NS_IN_MS = 1000000;
 
@@ -1232,7 +1242,7 @@ export class LokiDatasource
     };
   }
 }
-export function lokiSpecialRegexEscape<T>(value: T) {
+function lokiSpecialRegexEscape<T>(value: T) {
   if (typeof value === 'string') {
     return value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&');
   }

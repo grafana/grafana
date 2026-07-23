@@ -1,4 +1,4 @@
-import { LabelMatcher } from './types';
+import { type LabelMatcher } from './types';
 import { isLabelMatch, matchLabelsSet } from './utils';
 
 describe('isLabelMatch', () => {

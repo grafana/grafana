@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCopyToClipboard } from 'react-use';
 
-import { Field, GrafanaTheme2 } from '@grafana/data';
+import { type Field, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isValidLegacyName, utf8Support } from '@grafana/prometheus';
 import { reportInteraction } from '@grafana/runtime';
@@ -9,7 +9,7 @@ import { IconButton, useStyles2 } from '@grafana/ui';
 
 import { ItemLabels } from './ItemLabels';
 import { ItemValues } from './ItemValues';
-import { instantQueryRawVirtualizedListData } from './RawListContainer';
+import { type instantQueryRawVirtualizedListData } from './RawListContainer';
 import RawListItemAttributes from './RawListItemAttributes';
 
 export interface RawListProps {
@@ -21,7 +21,7 @@ export interface RawListProps {
 }
 
 export type RawListValue = { key: string; value: string };
-export const rawListExtraSpaceAtEndOfLine = '20px';
+const rawListExtraSpaceAtEndOfLine = '20px';
 export const rawListItemColumnWidth = '80px';
 export const rawListPaddingToHoldSpaceForCopyIcon = '25px';
 

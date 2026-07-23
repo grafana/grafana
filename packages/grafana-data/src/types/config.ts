@@ -1,16 +1,16 @@
 import type { InternalLoggerLevel } from '@grafana/faro-core';
 
-import { SystemDateFormatSettings } from '../datetime/formats';
-import { MapLayerOptions } from '../geo/layer';
+import { type SystemDateFormatSettings } from '../datetime/formats';
+import { type MapLayerOptions } from '../geo/layer';
 
-import { DataSourceInstanceSettings } from './datasource';
-import { FeatureToggles } from './featureToggles.gen';
-import { IconName } from './icon';
-import { NavLinkDTO } from './navModel';
-import { OrgRole } from './orgs';
-import { PanelPluginMeta } from './panel';
-import { AngularMeta, PluginDependencies, PluginExtensions, PluginLoadingStrategy } from './plugin';
-import { TimeOption } from './time';
+import { type DataSourceInstanceSettings } from './datasource';
+import { type FeatureToggles } from './featureToggles.gen';
+import { type IconName } from './icon';
+import { type NavLinkDTO } from './navModel';
+import { type OrgRole } from './orgs';
+import { type PanelPluginMeta } from './panel';
+import { type AngularMeta, type PluginDependencies, type PluginExtensions, type PluginLoadingStrategy } from './plugin';
+import { type TimeOption } from './time';
 
 export interface AzureSettings {
   cloud?: string;
@@ -107,7 +107,7 @@ export interface GrafanaJavascriptAgentConfig {
   tracingInstrumentalizationEnabled: boolean;
 }
 
-export interface UnifiedAlertingStateHistoryConfig {
+interface UnifiedAlertingStateHistoryConfig {
   backend?: string;
   primary?: string;
   prometheusTargetDatasourceUID?: string;
@@ -179,7 +179,6 @@ export interface CurrentUserDTO {
   gravatarUrl: string;
   timezone: string;
   weekStart: string;
-  regionalFormat: string;
   language: string;
   permissions?: Record<string, boolean>;
   analytics: AnalyticsSettings;
@@ -347,10 +346,11 @@ export interface GrafanaConfig {
   };
   analytics: {
     enabled: boolean;
+    presenceIndicatorsDisabled?: boolean;
   };
 }
 
-export interface SqlConnectionLimits {
+interface SqlConnectionLimits {
   maxOpenConns: number;
   maxIdleConns: number;
   connMaxLifetime: number;

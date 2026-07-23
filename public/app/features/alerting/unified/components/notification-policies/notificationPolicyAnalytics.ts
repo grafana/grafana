@@ -28,10 +28,6 @@ export function trackNotificationPolicyExported(payload: { isDefaultPolicy: bool
   reportInteraction('grafana_alerting_notification_policy_exported', payload);
 }
 
-export function trackNotificationPolicySelectorChanged(payload: { fromDefault: boolean; toDefault: boolean }) {
-  reportInteraction('grafana_alerting_notification_policy_selector_changed', payload);
-}
-
 export function trackNotificationPoliciesToggledAll(payload: {
   action: 'expand' | 'collapse';
   visiblePoliciesCount: number;

@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 
 import { ThresholdsMode } from '@grafana/schema';
 
@@ -86,6 +86,30 @@ describe('RadialGauge', () => {
 
       expect(screen.getByRole('img')).toBeInTheDocument();
       expect(screen.getByLabelText('Threshold 85')).toBeInTheDocument();
+    });
+
+    it('should format absolute threshold labels without units by default', () => {
+      const yearInMs = 365 * 24 * 60 * 60 * 1000;
+      const threeYearsInMs = 3 * yearInMs;
+
+      render(
+        <RadialGaugeExample
+          showScaleLabels
+          unit="ms"
+          value={2 * yearInMs}
+          max={threeYearsInMs}
+          thresholds={{
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              { value: 0, color: 'green' },
+              { value: threeYearsInMs, color: 'red' },
+            ],
+          }}
+        />
+      );
+
+      expect(screen.getByLabelText('Threshold 3')).toBeInTheDocument();
+      expect(screen.getByText('3')).toBeInTheDocument();
     });
 
     it('should render labels for a circle gauge', () => {

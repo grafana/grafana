@@ -6,13 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -41,8 +39,6 @@ func validateTimeRange(item *annotations.Item) error {
 	return nil
 }
 
-var xormMigrationTrigger sync.Once
-
 type xormRepositoryImpl struct {
 	cfg                *setting.Cfg
 	db                 db.DB
@@ -54,10 +50,6 @@ type xormRepositoryImpl struct {
 }
 
 func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Service, reg prometheus.Registerer) *xormRepositoryImpl {
-	xormMigrationTrigger.Do(func() {
-		triggerAlwaysOnMigrations(cfg, l, db)
-	})
-
 	repo := &xormRepositoryImpl{
 		cfg:        cfg,
 		db:         db,
@@ -96,25 +88,6 @@ func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Servi
 		reg.MustRegister(repo.queryRangeStart, repo.queryRangeDuration, repo.queryResultsCount)
 	}
 	return repo
-}
-
-func triggerAlwaysOnMigrations(cfg *setting.Cfg, l log.Logger, db db.DB) {
-	sec := cfg.Raw.Section("database")
-	skipDashboardUIDMigration := sec.Key("skip_dashboard_uid_migration_on_startup").MustBool(false)
-	if skipDashboardUIDMigration {
-		l.Debug("skipped dashboard UID startup migration")
-		return
-	}
-	// Run migration in a background goroutine to avoid blocking service startup
-	go func() {
-		l.Info("Starting annotation dashboard_uid migration in background")
-		err := migrations.RunDashboardUIDMigrations(db.GetEngine().NewSession(), db.GetDialect().DriverName(), l)
-		if err != nil {
-			l.Error("failed to populate dashboard_uid for annotations", "error", err)
-		} else {
-			l.Info("Annotation dashboard_uid migration completed successfully")
-		}
-	}()
 }
 
 func (r *xormRepositoryImpl) Type() string {
@@ -295,12 +268,46 @@ func (r *xormRepositoryImpl) ensureTags(ctx context.Context, annotationID int64,
 			}
 		}
 		if len(tagsInsert) != 0 {
-			if _, err := sess.InsertMulti(tagsInsert); err != nil {
+			if err := r.insertTagsIgnoringConflicts(sess, tagsInsert); err != nil {
 				return err
 			}
 		}
 		return nil
 	})
+}
+
+// insertTagsIgnoringConflicts inserts annotation_tag rows, ignoring any conflicts
+// that arise from duplicate annotation_id/tag_id pairs.
+func (r *xormRepositoryImpl) insertTagsIgnoringConflicts(sess *sqlstore.DBSession, tags []annotationTag) error {
+	dialect := r.db.GetDialect()
+
+	switch dialect.DriverName() {
+	case migrator.MySQL:
+		args := make([]any, 0, len(tags)*2)
+		valuesClause := make([]string, 0, len(tags))
+		for _, t := range tags {
+			valuesClause = append(valuesClause, "(?, ?)")
+			args = append(args, t.AnnotationID, t.TagID)
+		}
+		sql := "INSERT IGNORE INTO annotation_tag (annotation_id, tag_id) VALUES " + strings.Join(valuesClause, ", ")
+		_, err := sess.Exec(append([]any{sql}, args...)...)
+		return err
+
+	default: // postgres, sqlite
+		args := make([]any, 0, len(tags)*2)
+		valuesClause := make([]string, 0, len(tags))
+		for i, t := range tags {
+			if dialect.DriverName() == migrator.Postgres {
+				valuesClause = append(valuesClause, fmt.Sprintf("($%d, $%d)", i*2+1, i*2+2))
+			} else {
+				valuesClause = append(valuesClause, "(?, ?)")
+			}
+			args = append(args, t.AnnotationID, t.TagID)
+		}
+		sql := "INSERT INTO annotation_tag (annotation_id, tag_id) VALUES " + strings.Join(valuesClause, ", ") + " ON CONFLICT (annotation_id, tag_id) DO NOTHING"
+		_, err := sess.Exec(append([]any{sql}, args...)...)
+		return err
+	}
 }
 
 func tagSet[T any](fn func(T) int64, list []T) map[int64]struct{} {

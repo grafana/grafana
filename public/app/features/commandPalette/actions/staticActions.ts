@@ -1,23 +1,35 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo } from 'react';
 
-import { NavModelItem } from '@grafana/data';
+import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv, config, locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
+import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { getEnrichedHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
 import {
   shouldRenderInviteUserButton,
   performInviteUserClick,
 } from 'app/core/components/AppChrome/TopBar/InviteUserButtonUtils';
+import { contextSrv } from 'app/core/services/context_srv';
 import { changeTheme } from 'app/core/services/theme';
 import { currentMockApiState, toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
+import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
+import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
 
-import { CommandPaletteAction } from '../types';
-import { ACTIONS_PRIORITY, DEFAULT_PRIORITY, PREFERENCES_PRIORITY } from '../values';
+import { type CommandPaletteAction } from '../types';
+import {
+  ACTIONS_PRIORITY,
+  DEFAULT_PRIORITY,
+  SECTION_ACTIONS,
+  SECTION_PAGES,
+  SECTION_PREFERENCES,
+  PREFERENCES_PRIORITY,
+} from '../values';
 
 // TODO: Clean this once ID is mandatory on nav items
 function idForNavItem(navItem: NavModelItem) {
@@ -55,6 +67,7 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
     const section = isCreateAction
       ? t('command-palette.section.actions', 'Actions')
       : t('command-palette.section.pages', 'Pages');
+    const sectionId = isCreateAction ? SECTION_ACTIONS : SECTION_PAGES;
 
     const priority = isCreateAction ? ACTIONS_PRIORITY : DEFAULT_PRIORITY;
 
@@ -63,6 +76,7 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
       id: idForNavItem(navItem),
       name: text,
       section,
+      sectionId,
       url: urlOrCallback,
       target,
       parent: parents.length > 0 && !isCreateAction ? idForNavItem(parents[parents.length - 1]) : undefined,
@@ -90,6 +104,7 @@ function getGlobalActions(): CommandPaletteAction[] {
       name: t('command-palette.action.change-theme', 'Change theme'),
       keywords: 'interface color dark light',
       section: t('command-palette.section.preferences', 'Preferences'),
+      sectionId: SECTION_PREFERENCES,
       priority: PREFERENCES_PRIORITY,
     },
     {
@@ -145,37 +160,46 @@ function getGlobalActions(): CommandPaletteAction[] {
 export function useStaticActions(): CommandPaletteAction[] {
   const navBarTree = useSelector((state) => state.navBarTree);
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
+  const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
+  const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
+  const { queryLibraryEnabled, openDrawer } = useQueryLibraryContext();
 
   return useMemo(() => {
     let navBarActions = navTreeToActions(navBarTree);
 
-    if (config.featureToggles.dashboardTemplates) {
-      const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
-      if (testDataSources.length > 0) {
-        const navBarActionsWithoutActions = navBarActions.filter((action) => action.priority !== ACTIONS_PRIORITY);
-        const navBarActionsWithActions = navBarActions.filter((action) => action.priority === ACTIONS_PRIORITY);
+    const canCreateDashboard = contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
 
-        navBarActionsWithActions.splice(1, 0, {
-          id: 'browse-template-dashboard',
-          name: t('command-palette.action.dashboard-from-template', 'Dashboard from template'),
-          section: t('command-palette.section.actions', 'Actions'),
-          priority: ACTIONS_PRIORITY,
-          perform: () => {
-            isAnalyticsFrameworkEnabled
-              ? NewDashboardLibraryInteractions.entryPointClicked({
-                  entryPoint: SOURCE_ENTRY_POINTS.COMMAND_PALETTE,
-                  contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
-                })
-              : DashboardLibraryInteractions.entryPointClicked({
-                  entryPoint: SOURCE_ENTRY_POINTS.COMMAND_PALETTE,
-                  contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
-                });
-            locationService.push('/dashboards?templateDashboards=true&source=commandPalette');
-          },
-        });
+    if (isTemplateDashboardsAvailable && canCreateDashboard) {
+      const navBarActionsWithoutActions = navBarActions.filter((action) => action.priority !== ACTIONS_PRIORITY);
+      const navBarActionsWithActions = navBarActions.filter((action) => action.priority === ACTIONS_PRIORITY);
 
-        navBarActions = [...navBarActionsWithoutActions, ...navBarActionsWithActions];
-      }
+      navBarActionsWithActions.splice(1, 0, {
+        id: 'browse-template-dashboard',
+        name: t('command-palette.action.dashboard-from-template', 'Dashboard from template'),
+        section: t('command-palette.section.actions', 'Actions'),
+        sectionId: SECTION_ACTIONS,
+        priority: ACTIONS_PRIORITY,
+        perform: () => {
+          isAnalyticsFrameworkEnabled
+            ? NewDashboardLibraryInteractions.entryPointClicked({
+                entryPoint: SOURCE_ENTRY_POINTS.COMMAND_PALETTE,
+                contentKind: isCustomDashboardTemplatesEnabled ? undefined : CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                contentKinds: isCustomDashboardTemplatesEnabled
+                  ? [CONTENT_KINDS.CUSTOM_DASHBOARD_TEMPLATE, CONTENT_KINDS.TEMPLATE_DASHBOARD]
+                  : [CONTENT_KINDS.TEMPLATE_DASHBOARD],
+              })
+            : DashboardLibraryInteractions.entryPointClicked({
+                entryPoint: SOURCE_ENTRY_POINTS.COMMAND_PALETTE,
+                contentKind: isCustomDashboardTemplatesEnabled ? undefined : CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                contentKinds: isCustomDashboardTemplatesEnabled
+                  ? [CONTENT_KINDS.CUSTOM_DASHBOARD_TEMPLATE, CONTENT_KINDS.TEMPLATE_DASHBOARD]
+                  : [CONTENT_KINDS.TEMPLATE_DASHBOARD],
+              });
+          locationService.push('/dashboards?templateDashboards=true&source=commandPalette');
+        },
+      });
+
+      navBarActions = [...navBarActionsWithoutActions, ...navBarActionsWithActions];
     }
 
     if (shouldRenderInviteUserButton()) {
@@ -183,12 +207,36 @@ export function useStaticActions(): CommandPaletteAction[] {
         id: 'invite-user',
         name: t('navigation.invite-user.invite-new-user-button', 'Invite new user'),
         section: t('command-palette.section.actions', 'Actions'),
+        sectionId: SECTION_ACTIONS,
         priority: ACTIONS_PRIORITY,
         perform: () => {
           performInviteUserClick('command_palette_actions', 'invite-user-command-palette');
         },
       });
     }
+
+    const canReadQueries = config.featureToggles.savedQueriesRBAC
+      ? contextSrv.hasPermission(AccessControlAction.QueriesRead)
+      : contextSrv.isSignedIn;
+
+    if (queryLibraryEnabled && canReadQueries) {
+      navBarActions.push({
+        id: 'open-saved-queries',
+        name: t('command-palette.action.open-saved-queries', 'Open saved queries'),
+        section: t('command-palette.section.actions', 'Actions'),
+        sectionId: SECTION_ACTIONS,
+        priority: ACTIONS_PRIORITY,
+        perform: () => openDrawer({ options: { context: 'command-palette' } }),
+      });
+    }
+
     return [...getGlobalActions(), ...navBarActions];
-  }, [isAnalyticsFrameworkEnabled, navBarTree]);
+  }, [
+    isAnalyticsFrameworkEnabled,
+    isCustomDashboardTemplatesEnabled,
+    isTemplateDashboardsAvailable,
+    navBarTree,
+    queryLibraryEnabled,
+    openDrawer,
+  ]);
 }

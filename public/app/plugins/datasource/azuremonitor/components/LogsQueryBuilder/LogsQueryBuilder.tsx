@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback } from 'react';
 
-import { SelectableValue, TimeRange } from '@grafana/data';
+import { type SelectableValue, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { EditorRows } from '@grafana/plugin-ui';
 import { Alert } from '@grafana/ui';
@@ -8,18 +8,21 @@ import { Alert } from '@grafana/ui';
 import {
   BuilderQueryEditorExpressionType,
   BuilderQueryEditorPropertyType,
-  BuilderQueryEditorReduceExpression,
-  BuilderQueryEditorWhereExpression,
-  BuilderQueryEditorGroupByExpression,
-  BuilderQueryEditorOrderByExpression,
-  BuilderQueryEditorPropertyExpression,
-  BuilderQueryExpression,
+  type BuilderQueryEditorReduceExpression,
+  type BuilderQueryEditorWhereExpression,
+  type BuilderQueryEditorGroupByExpression,
+  type BuilderQueryEditorOrderByExpression,
+  type BuilderQueryEditorPropertyExpression,
+  type BuilderQueryExpression,
 } from '../../dataquery.gen';
-import Datasource from '../../datasource';
+import type Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { AzureLogAnalyticsMetadataTable, AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
-import { AzureMonitorQuery } from '../../types/query';
-import { EngineSchema } from '../../types/types';
+import {
+  type AzureLogAnalyticsMetadataTable,
+  type AzureLogAnalyticsMetadataColumn,
+} from '../../types/logAnalyticsMetadata';
+import { type AzureMonitorQuery } from '../../types/query';
+import { type EngineSchema } from '../../types/types';
 
 import { AggregateSection } from './AggregationSection';
 import { AzureMonitorKustoQueryBuilder } from './AzureMonitorKustoQueryBuilder';

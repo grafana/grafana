@@ -23,6 +23,14 @@
 #       - action: 'users:write'
 #         scope: 'global.users:*'
 #       - action: 'users:create'
+#       # Optional datasource plugin type for data source scoped permissions (`datasourceType`).
+#       # If omitted and scope is `datasources:uid:<uid>`, the type is resolved from the data source when the role is provisioned.
+#       # Provisioning fails if that UID if multiple data sources share the same UID, then you must set `datasourceType` explicitly.
+#       - action: 'datasources:read'
+#         scope: 'datasources:uid:cfh1oc3kvsw00a'
+#       - action: 'datasources:read'
+#         scope: 'datasources:uid:another-uid'
+#         datasourceType: prometheus
 #   - name: 'custom:global:users:reader'
 #     # <bool> overwrite org id and creates a global role.
 #     global: true

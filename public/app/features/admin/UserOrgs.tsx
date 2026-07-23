@@ -1,16 +1,16 @@
 import { css, cx } from '@emotion/css';
-import { memo, ReactElement, useEffect, useRef, useState } from 'react';
+import { memo, type ReactElement, useEffect, useRef, useState } from 'react';
 
-import { GrafanaTheme2, OrgRole } from '@grafana/data';
+import { type GrafanaTheme2, OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmButton, Field, Icon, Modal, Tooltip, useStyles2, Stack, TextLink } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
-import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
+import { OrgPicker, type OrgSelectItem } from 'app/core/components/Select/OrgPicker';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, Role } from 'app/types/accessControl';
-import { Organization } from 'app/types/organization';
-import { UserOrg, UserDTO } from 'app/types/user';
+import { AccessControlAction, type Role } from 'app/types/accessControl';
+import { type Organization } from 'app/types/organization';
+import { type UserOrg, type UserDTO } from 'app/types/user';
 
 import { OrgRolePicker } from './OrgRolePicker';
 
@@ -249,7 +249,7 @@ interface AddToOrgModalProps {
   onDismiss?(): void;
 }
 
-export const AddToOrgModal = memo(({ isOpen, user, userOrgs, onOrgAdd, onDismiss }: AddToOrgModalProps) => {
+const AddToOrgModal = memo(({ isOpen, user, userOrgs, onOrgAdd, onDismiss }: AddToOrgModalProps) => {
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
   const [role, setRole] = useState<OrgRole>(OrgRole.Viewer);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
@@ -373,7 +373,7 @@ const getChangeOrgButtonTheme = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export function ChangeOrgButton({
+function ChangeOrgButton({
   lockMessage,
   onChangeRoleClick,
   isExternalUser,

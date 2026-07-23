@@ -36,6 +36,12 @@ func NewLegacyTeamBindingSearchClient(store legacy.LegacyIdentityStore, tracer t
 	}
 }
 
+// VectorSearch is not supported on the legacy team binding store; vector
+// search only exists on the unified storage path.
+func (c *LegacyTeamBindingSearchClient) VectorSearch(_ context.Context, _ *resourcepb.VectorSearchRequest, _ ...grpc.CallOption) (*resourcepb.VectorSearchResponse, error) {
+	return nil, fmt.Errorf("vector search not supported on legacy team binding store")
+}
+
 func (c *LegacyTeamBindingSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, span := c.tracer.Start(ctx, "teambinding.legacysearch")
 	defer span.End()
@@ -54,11 +60,11 @@ func (c *LegacyTeamBindingSearchClient) Search(ctx context.Context, req *resourc
 		OrgID: signedInUser.GetOrgID(),
 	}
 
-	if req.Limit > 100 {
-		req.Limit = 100
+	if req.Limit > common.MaxListLimit {
+		return nil, fmt.Errorf("limit cannot be greater than %d", common.MaxListLimit)
 	}
-	if req.Limit <= 0 {
-		req.Limit = 50
+	if req.Limit < 1 {
+		req.Limit = common.DefaultListLimit
 	}
 	if req.Page < 1 {
 		req.Page = 1
@@ -177,11 +183,13 @@ func getFieldValueFromRequirements(reqs []*resourcepb.Requirement, key string) s
 	return ""
 }
 
+var teamBindingColumnDefs = resource.TableColumnsByName(builders.TeamBindingSearchFields)
+
 func teamBindingColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 	cols := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(fields))
 	for _, f := range fields {
 		name := strings.TrimPrefix(f, resource.SEARCH_FIELD_PREFIX)
-		if col, ok := builders.TeamBindingTableColumnDefinitions[name]; ok {
+		if col, ok := teamBindingColumnDefs[name]; ok {
 			cols = append(cols, col)
 		}
 	}

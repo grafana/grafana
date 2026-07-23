@@ -1,27 +1,27 @@
 import { getNextRefId } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getPanelPluginMetasMapSync, PanelPluginMetas } from '@grafana/runtime/internal';
+import { getPanelPluginMetasMapSync, type PanelPluginMetas } from '@grafana/runtime/internal';
 import {
-  SceneDataProvider,
-  SceneDataQuery,
+  type SceneDataProvider,
+  type SceneDataQuery,
   SceneDataTransformer,
-  SceneObject,
+  type SceneObject,
   SceneQueryRunner,
   VizPanel,
   VizPanelMenu,
-  VizPanelState,
+  type VizPanelState,
 } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 import {
-  Spec as DashboardV2Spec,
-  AutoGridLayoutItemKind,
-  RowsLayoutRowKind,
-  LibraryPanelKind,
-  PanelKind,
-  PanelQueryKind,
-  QueryVariableKind,
-  TabsLayoutTabKind,
-  DataQueryKind,
+  type Spec as DashboardV2Spec,
+  type AutoGridLayoutItemKind,
+  type RowsLayoutRowKind,
+  type LibraryPanelKind,
+  type PanelKind,
+  type PanelQueryKind,
+  type QueryVariableKind,
+  type TabsLayoutTabKind,
+  type DataQueryKind,
   defaultPanelQueryKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
@@ -29,23 +29,24 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardScene } from '../../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
 import { VizPanelHeaderActions } from '../../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../../scene/VizPanelSubHeader';
-import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
-import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
+import { type AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
+import { type DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
-import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
-import { getVizPanelKeyForPanelId } from '../../utils/utils';
+import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
+import { getVizPanelKeyForPanelId, isNewPanelQueryErrorsUIEnabled } from '../../utils/utils';
 import { getV2AngularMigrationHandler, isAngularMigrationData } from '../angularMigration';
 import { createElements, vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 import { transformDataTopic } from '../transformToV2TypesUtils';
+import { normalizeTransformation } from '../transformationCompat';
 
 export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
   const titleItems: SceneObject[] = [];
@@ -57,10 +58,15 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     })
   );
 
-  titleItems.push(new PanelNotices());
+  // The new errors & notices UI surfaces notices in the header popover instead, so the
+  // standalone notices title item is only shown with the legacy UI.
+  if (!isNewPanelQueryErrorsUIEnabled()) {
+    titleItems.push(new PanelNotices());
+  }
 
   const queryOptions = panel.spec.data.spec.queryOptions;
-  const timeOverrideShown = (queryOptions.timeFrom || queryOptions.timeShift) && !queryOptions.hideTimeOverride;
+  const timeOverrideShown =
+    (queryOptions.timeFrom || queryOptions.timeShift || queryOptions.timeCompare) && !queryOptions.hideTimeOverride;
 
   // Extract __angularMigration data if present
   // This data is used to run Angular panel migrations in v2 (e.g., singlestat -> stat)
@@ -79,7 +85,10 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     pluginId: panel.spec.vizConfig.group,
     options,
     fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
-    pluginVersion: panel.spec.vizConfig.version,
+    // An empty/absent version means the caller didn't pin one (it's optional in
+    // the spec); leave pluginVersion undefined so the panel uses the running
+    // plugin's current version rather than migrating against a bogus value.
+    pluginVersion: panel.spec.vizConfig.version || undefined,
     displayMode: panel.spec.transparent ? 'transparent' : 'default',
     hoverHeader: !panel.spec.title && !timeOverrideShown,
     hoverHeaderOffset: 0,
@@ -87,13 +96,14 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     $data: createPanelDataProvider(panel),
     titleItems,
     headerActions: new VizPanelHeaderActions({
-      hideGroupByAction: !config.featureToggles.panelGroupBy,
+      hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
     subHeader: new VizPanelSubHeader({
       hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
     }),
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
+    _UNSAFE_clearPreviousFieldValues: true,
   };
 
   // Set up Angular migration handler if migration data is present
@@ -108,11 +118,12 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     });
   }
 
-  if (queryOptions.timeFrom || queryOptions.timeShift) {
+  if (queryOptions.timeFrom || queryOptions.timeShift || queryOptions.timeCompare) {
     vizPanelState.$timeRange = new PanelTimeRange({
       timeFrom: queryOptions.timeFrom,
       timeShift: queryOptions.timeShift,
       hideTimeOverride: queryOptions.hideTimeOverride,
+      compareWith: queryOptions.timeCompare,
     });
   }
 
@@ -129,7 +140,11 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
     })
   );
 
-  titleItems.push(new PanelNotices());
+  // The new errors & notices UI surfaces notices in the header popover instead, so the
+  // standalone notices title item is only shown with the legacy UI.
+  if (!isNewPanelQueryErrorsUIEnabled()) {
+    titleItems.push(new PanelNotices());
+  }
 
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
@@ -146,15 +161,18 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
     ],
     extendPanelContext: setDashboardPanelContext,
     headerActions: new VizPanelHeaderActions({
-      hideGroupByAction: !config.featureToggles.panelGroupBy,
+      hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
     pluginId: LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID,
     title: panel.spec.title,
+    hoverHeader: !panel.spec.title,
+    hoverHeaderOffset: 0,
     options: {},
     fieldConfig: {
       defaults: {},
       overrides: [],
     },
+    _UNSAFE_clearPreviousFieldValues: true,
   };
 
   if (!config.publicDashboardAccessToken) {
@@ -166,7 +184,7 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
   return new VizPanel(vizPanelState);
 }
 
-export function createPanelDataProvider(
+function createPanelDataProvider(
   panelKind: PanelKind,
   panelMetas: PanelPluginMetas = getPanelPluginMetasMapSync()
 ): SceneDataProvider | undefined {
@@ -211,9 +229,11 @@ export function createPanelDataProvider(
   return new SceneDataTransformer({
     $data: dataProvider,
     transformations: panel.data.spec.transformations.map((t) => {
+      const normalized = normalizeTransformation(t);
       return {
-        ...t.spec,
-        topic: transformDataTopic(t.spec.topic),
+        id: normalized.group,
+        ...normalized.spec,
+        topic: transformDataTopic(normalized.spec.topic),
       };
     }),
   });
@@ -411,10 +431,6 @@ export function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuer
     ...(datasource ? { datasource } : {}),
     ...query.spec.query.spec,
   };
-}
-
-export function getLayout(sceneState: DashboardLayoutManager): DashboardV2Spec['layout'] {
-  return sceneState.serialize();
 }
 
 export function getConditionalRendering(

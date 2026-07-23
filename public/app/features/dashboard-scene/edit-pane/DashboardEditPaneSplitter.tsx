@@ -1,11 +1,22 @@
 import { css, cx } from '@emotion/css';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useMedia } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
-import { VizPanel, useSceneObjectState } from '@grafana/scenes';
-import { ElementSelectionContext, useSidebar, useStyles2, Sidebar } from '@grafana/ui';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { type VizPanel, useSceneObjectState } from '@grafana/scenes';
+import {
+  ElementSelectionContext,
+  useSidebar,
+  useStyles2,
+  useTheme2,
+  Sidebar,
+  type SidebarContextValue,
+} from '@grafana/ui';
+import { getInternalRadius } from '@grafana/ui/internal';
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -18,14 +29,14 @@ import {
   usePopoverDismissOnClickOutside,
 } from '../assistant/DashboardAssistantViewMode';
 import { ViewModePanelPromptCard } from '../assistant/ViewModePanelPromptCard';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
 import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
-import { DashboardSidebarPaneName } from './DashboardEditPane';
 import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
+import { type DashboardSidebarPane } from './types';
 
 interface Props {
   dashboard: DashboardScene;
@@ -43,8 +54,9 @@ export function DashboardEditPaneSplitter(props: Props) {
 }
 
 function DashboardEditPaneSplitterLegacy({ dashboard, body, controls }: Props) {
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const headerHeight = useChromeHeaderHeight();
-  const styles = useStyles2(getStyles, headerHeight ?? 0);
+  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
 
   return (
     <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
@@ -59,8 +71,9 @@ function DashboardEditPaneSplitterLegacy({ dashboard, body, controls }: Props) {
 
 function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, controls }: Props) {
   const headerHeight = useChromeHeaderHeight();
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const { editPane } = dashboard.state;
-  const styles = useStyles2(getStyles, headerHeight ?? 0);
+  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
@@ -70,7 +83,9 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
    */
   useUpdateAppChromeActions(dashboard);
 
-  const { selectionContext, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+  const { selectionContext, openPane, previousState } = useSceneObjectState(editPane, {
+    shouldActivateOrKeepAlive: true,
+  });
 
   const { isEnabled: isAssistantEnabled } = useDashboardAssistantViewMode({
     dashboard,
@@ -118,10 +133,6 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     []
   );
 
-  const CODE_PANE_MIN_WIDTH = 700;
-  const originalPaneWidthRef = useRef<number | null>(null);
-  const previousPaneRef = useRef<DashboardSidebarPaneName | undefined>(undefined);
-
   // Selection is only needed in edit mode — the assistant popover is triggered
   // exclusively via the sparkle button, not through the selection system.
   useEffect(() => {
@@ -132,34 +143,22 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     }
   }, [isEditing, editPane]);
 
+  const theme = useTheme2();
+  const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
   const sidebarContext = useSidebar({
     hasOpenPane: Boolean(openPane),
     contentMargin: 1,
     position: 'right',
-    persistanceKey: isEditing ? 'dashboard' : 'dashboard-view',
+    persistenceKey: isEditing ? 'dashboard' : 'dashboard-view',
+    hiddenPersistenceKey: 'dashboard',
     defaultToDocked: isEditing ? true : false,
     onClosePane: () => editPane.closePane(),
+    onGoBack: () => editPane.goBackToPrevious(),
+    canGoBack: previousState !== undefined,
+    defaultIsHidden: isEditing ? false : isMobile,
   });
 
-  useEffect(() => {
-    const wasCodePane = previousPaneRef.current === 'code';
-    const isCodePane = openPane === 'code';
-    previousPaneRef.current = openPane;
-
-    if (isCodePane && !wasCodePane) {
-      // Opening code pane - store original width and expand if needed
-      if (sidebarContext.paneWidth < CODE_PANE_MIN_WIDTH) {
-        originalPaneWidthRef.current = sidebarContext.paneWidth;
-        const diff = CODE_PANE_MIN_WIDTH - sidebarContext.paneWidth;
-        sidebarContext.onResize(diff);
-      }
-    } else if (wasCodePane && !isCodePane && originalPaneWidthRef.current !== null) {
-      // Leaving code pane - restore original width
-      const diff = originalPaneWidthRef.current - sidebarContext.paneWidth;
-      sidebarContext.onResize(diff);
-      originalPaneWidthRef.current = null;
-    }
-  }, [openPane, sidebarContext]);
+  useSidebarPaneMinWidth(openPane, sidebarContext);
 
   /**
    * Sync docked state to editPane state
@@ -204,16 +203,21 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
         {...sidebarContext.outerWrapperProps}
       >
         <div
-          className={styles.scrollContainer}
+          className={cx(styles.scrollContainer, sidebarContext.isHiddenPreference && styles.scrollContainerNoSidebar)}
           ref={onBodyRef}
           onPointerDown={onClearSelection}
           data-testid={selectors.components.DashboardEditPaneSplitter.bodyContainer}
+          // The dashboard scrolls inside this element rather than the document body, so make it
+          // focusable; without this, arrow/page keys can't scroll the dashboard once it's focused.
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+          tabIndex={0}
+          aria-label={t('dashboard.layout.scroll-content', 'Dashboard content')}
         >
           {body}
         </div>
 
         <Sidebar contextValue={sidebarContext}>
-          <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
+          <DashboardEditPaneRenderer dashboard={dashboard} />
         </Sidebar>
       </div>
     );
@@ -236,17 +240,40 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
   );
 }
 
+function useSidebarPaneMinWidth(openPane: DashboardSidebarPane | undefined, sidebarContext: SidebarContextValue) {
+  const originalPaneWidthRef = useRef<number | null>(null);
+  const previousPaneRef = useRef<DashboardSidebarPane | undefined>(undefined);
+
+  useEffect(() => {
+    previousPaneRef.current = openPane;
+
+    if (openPane?.minWidth && sidebarContext.paneWidth < openPane.minWidth) {
+      originalPaneWidthRef.current = sidebarContext.paneWidth;
+      const diff = openPane.minWidth - sidebarContext.paneWidth;
+      sidebarContext.onResize(diff);
+    }
+
+    // If we are switching to a different openPane without minWidth
+    if (openPane && !openPane.minWidth && originalPaneWidthRef.current !== null) {
+      const diff = originalPaneWidthRef.current - sidebarContext.paneWidth;
+      sidebarContext.onResize(diff);
+      originalPaneWidthRef.current = null;
+    }
+  }, [openPane, sidebarContext]);
+}
+
 function useUpdateAppChromeActions(dashboard: DashboardScene) {
   const { chrome } = useGrafana();
 
   useLayoutEffect(() => {
     const hasUid = Boolean(dashboard.state.uid);
     const canStar = Boolean(dashboard.state.meta.canStar);
+    const isSnapshot = Boolean(dashboard.state.meta.isSnapshot);
 
     const breadcrumbActions = (
       <>
         {hasUid && canStar && <StarButton dashboard={dashboard} />}
-        {hasUid && canStar && <PublicDashboardBadge dashboard={dashboard} />}
+        {hasUid && canStar && !isSnapshot && <PublicDashboardBadge dashboard={dashboard} />}
         {renderDynamicNavActions()}
       </>
     );
@@ -272,7 +299,7 @@ function renderDynamicNavActions() {
   });
 }
 
-function getStyles(theme: GrafanaTheme2, headerHeight: number) {
+function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnabled: boolean) {
   return {
     canvasWrappperOld: css({
       label: 'canvas-wrapper-old',
@@ -316,6 +343,8 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       overflow: 'auto',
       scrollbarWidth: 'thin',
       scrollbarGutter: 'stable',
+      // the tabIndex is only here to allow keyboard scrolling, so suppress the focus outline.
+      outline: 'none',
       // without top padding the fixed controls headers is rendered over the selection outline.
       padding: theme.spacing(0.125, 1, 2, 2),
     }),
@@ -344,13 +373,24 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       // Because the edit pane splitter handle area adds padding we can reduce it here
       paddingRight: theme.spacing(1),
     }),
-    controlsWrapperSticky: css({
-      [theme.breakpoints.up('md')]: {
-        position: 'sticky',
-        zIndex: theme.zIndex.activePanel,
-        background: theme.colors.background.canvas,
-        top: headerHeight,
+    controlsWrapperSticky: css(
+      {
+        [theme.breakpoints.up('md')]: {
+          position: 'sticky',
+          // above docked dashboard edit Sidebar (zIndex navBarFixed); otherwise time picker popover stays under it.
+          zIndex: theme.zIndex.sidemenu,
+          background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
+          top: headerHeight,
+        },
       },
-    }),
+      visualRefreshEnabled && {
+        borderTopLeftRadius: getInternalRadius(theme, 0, {
+          parentBorderRadius: 'lg',
+        }),
+        borderTopRightRadius: getInternalRadius(theme, 0, {
+          parentBorderRadius: 'lg',
+        }),
+      }
+    ),
   };
 }

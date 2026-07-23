@@ -1,15 +1,15 @@
 import {
   API_GROUP,
   API_VERSION,
-  RoutingTree,
-  RoutingTreeMatcher,
-  RoutingTreeRoute,
-  RoutingTreeSpec,
+  type RoutingTree,
+  type RoutingTreeMatcher,
+  type RoutingTreeRoute,
+  type RoutingTreeSpec,
 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import grafanaAlertmanagerConfig from 'app/features/alerting/unified/mocks/server/entities/alertmanager-config/grafana-alertmanager-config';
 import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';
 import { K8sAnnotations, ROOT_ROUTE_NAME } from 'app/features/alerting/unified/utils/k8s/constants';
-import { AlertManagerCortexConfig, MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertManagerCortexConfig, MatcherOperator, type Route } from 'app/plugins/datasource/alertmanager/types';
 
 /**
  * Normalise matchers from config Route object -> what the k8s API expects to be returning
@@ -51,7 +51,15 @@ const mapRoute = (route: Route): RoutingTreeRoute => {
   };
 };
 
-export const getUserDefinedRoutingTree: (config: AlertManagerCortexConfig) => RoutingTree = (config) => {
+/**
+ * Builds the default (root) routing tree from the alertmanager config. `emittedName` sets the tree's
+ * metadata.name — i.e. the name the mock reports back in responses — so tests can present the same default
+ * tree under either the current emitted name (`user-defined`) or the future canonical name (`default`).
+ */
+export const getUserDefinedRoutingTree: (config: AlertManagerCortexConfig, emittedName?: string) => RoutingTree = (
+  config,
+  emittedName = ROOT_ROUTE_NAME
+) => {
   const route = config.alertmanager_config?.route || {};
 
   const { routes, ...defaults } = route;
@@ -64,7 +72,7 @@ export const getUserDefinedRoutingTree: (config: AlertManagerCortexConfig) => Ro
       }) || [],
   };
 
-  return routingTreeFromSpec(ROOT_ROUTE_NAME, spec);
+  return routingTreeFromSpec(emittedName, spec);
 };
 
 const routingTreeFromSpec: (routeName: string, spec: RoutingTreeSpec, provenance?: string) => RoutingTree = (
@@ -79,6 +87,9 @@ const routingTreeFromSpec: (routeName: string, spec: RoutingTreeSpec, provenance
     namespace: 'default',
     annotations: {
       [K8sAnnotations.Provenance]: provenance,
+      [K8sAnnotations.AccessWrite]: 'true',
+      [K8sAnnotations.AccessDelete]: 'true',
+      [K8sAnnotations.AccessAdmin]: 'true',
     },
     // Resource versions are much shorter than this in reality, but this is an easy way
     // for us to mock the concurrency logic and check if the policies have updated since the last fetch
@@ -221,6 +232,40 @@ export const resetDefaultRoutingTree = () => {
   ROUTING_TREE_MAP.set(ROOT_ROUTE_NAME, getUserDefinedRoutingTree(grafanaAlertmanagerConfig));
 };
 
+/**
+ * Presents the default (root) routing tree in LIST responses under a chosen name, so tests can exercise
+ * the frontend against both the current emitted name (`user-defined`) and the future canonical name (`default`).
+ * The map key stays ROOT_ROUTE_NAME so GET/DELETE-by-name (send side, always `user-defined`) still resolve.
+ */
+export const presentDefaultRoutingTreeAs = (name: string) => {
+  ROUTING_TREE_MAP.set(ROOT_ROUTE_NAME, getUserDefinedRoutingTree(grafanaAlertmanagerConfig, name));
+};
+
 export const resetRoutingTreeMap = () => {
   ROUTING_TREE_MAP = getDefaultRoutingTreeMap();
+};
+
+export const setAllRoutingTreePermissions = ({
+  canWrite,
+  canDelete,
+  canAdmin,
+}: {
+  canWrite: boolean;
+  canDelete: boolean;
+  canAdmin: boolean;
+}) => {
+  ROUTING_TREE_MAP.forEach((tree, name) => {
+    ROUTING_TREE_MAP.set(name, {
+      ...tree,
+      metadata: {
+        ...tree.metadata,
+        annotations: {
+          ...tree.metadata.annotations,
+          [K8sAnnotations.AccessWrite]: String(canWrite),
+          [K8sAnnotations.AccessDelete]: String(canDelete),
+          [K8sAnnotations.AccessAdmin]: String(canAdmin),
+        },
+      },
+    });
+  });
 };

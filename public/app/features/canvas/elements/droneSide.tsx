@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ScalarDimensionConfig } from '@grafana/schema';
+import { type ScalarDimensionConfig } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { DimensionContext } from 'app/features/dimensions/context';
+import { type DimensionContext } from 'app/features/dimensions/context';
 import { ScalarDimensionEditor } from 'app/features/dimensions/editors/ScalarDimensionEditor';
 
-import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultBgColor } from '../element';
+import { type CanvasElementItem, type CanvasElementOptions, type CanvasElementProps, defaultBgColor } from '../element';
 
 interface DroneSideData {
   pitchAngle?: number;

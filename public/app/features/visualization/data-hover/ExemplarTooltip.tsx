@@ -1,12 +1,12 @@
-import { LinkModel } from '@grafana/data';
+import { type LinkModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
+  type VizTooltipItem,
   VizTooltipContent,
   VizTooltipFooter,
-  VizTooltipItem,
   VizTooltipHeader,
   VizTooltipWrapper,
-} from '@grafana/ui/internal';
+} from '@grafana/ui';
 
 export interface Props {
   items: VizTooltipItem[];
@@ -33,7 +33,7 @@ export const ExemplarTooltip = ({ items, links, isPinned, maxHeight }: Props) =>
         maxHeight={maxHeight}
         scrollable={maxHeight != null}
       />
-      <VizTooltipFooter dataLinks={links ?? []} />
+      <VizTooltipFooter dataLinks={links} />
     </VizTooltipWrapper>
   );
 };

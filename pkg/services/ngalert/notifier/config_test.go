@@ -6,13 +6,16 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
 func TestLoad(t *testing.T) {
 	tc := []struct {
 		name              string
 		rawConfig         string
-		expectedTemplates map[string]string
+		expectedTemplates map[v1.ResourceUID]v1.TemplateGroup
 		expectedError     error
 	}{
 		{
@@ -37,7 +40,7 @@ func TestLoad(t *testing.T) {
   }
 }
 `,
-			expectedTemplates: map[string]string{"email.template": "something with a pretty good content"},
+			expectedTemplates: map[v1.ResourceUID]v1.TemplateGroup{v1.TemplateUID(v1.TemplateKindGrafana, "email.template"): v1.NewTemplateGroup("", "email.template", "something with a pretty good content", v1.TemplateKindGrafana, ngmodels.ProvenanceNone)},
 		},
 		{
 			name:          "with an empty configuration, it is not valid.",
@@ -55,8 +58,8 @@ func TestLoad(t *testing.T) {
 				assert.Equal(t, tt.expectedError.Error(), err.Error())
 			} else {
 				require.NoError(t, err)
-				assert.NotNil(t, c.TemplateFiles)
-				assert.Equal(t, tt.expectedTemplates, c.TemplateFiles)
+				assert.NotNil(t, c.Templates)
+				assert.Equal(t, tt.expectedTemplates, c.Templates)
 			}
 		})
 	}

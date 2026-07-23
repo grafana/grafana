@@ -8,7 +8,7 @@ import { LocationServiceProvider, locationService } from '@grafana/runtime';
 import { SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
 import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { DashboardMeta } from 'app/types/dashboard';
+import { type DashboardMeta } from 'app/types/dashboard';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardInteractions } from '../utils/interactions';
@@ -19,6 +19,7 @@ import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutMana
 
 jest.mock('../utils/interactions', () => ({
   DashboardInteractions: {
+    editSessionStarted: jest.fn(),
     editButtonClicked: jest.fn(),
   },
 }));

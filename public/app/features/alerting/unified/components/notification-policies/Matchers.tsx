@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { take, takeRight, uniqueId } from 'lodash';
-import { FC } from 'react';
+import { type FC } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Stack, getTagColorsFromName, useStyles2 } from '@grafana/ui';
-import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
+import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
-import { MatcherFormatter, matcherFormatter } from '../../utils/matchers';
+import { type MatcherFormatter, matcherFormatter } from '../../utils/matchers';
 import { PopupCard } from '../HoverCard';
 
 type MatchersProps = { matchers: ObjectMatcher[]; formatter?: MatcherFormatter };
@@ -60,16 +60,16 @@ export const MatcherBadge: FC<MatcherBadgeProps> = ({ matcher, formatter = 'defa
 
 const getStyles = (theme: GrafanaTheme2) => ({
   matcher: (label: string) => {
-    const { color, borderColor } = getTagColorsFromName(label);
+    const { background, text } = getTagColorsFromName(label, theme);
 
     return {
       wrapper: css({
         color: '#fff',
-        background: color,
+        background,
         padding: `${theme.spacing(0.33)} ${theme.spacing(0.66)}`,
         fontSize: theme.typography.bodySmall.fontSize,
 
-        border: `solid 1px ${borderColor}`,
+        border: `solid 1px ${text}`,
         borderRadius: theme.shape.borderRadius(2),
 
         // Ensure we preserve whitespace, as otherwise it's not noticeable _at all_

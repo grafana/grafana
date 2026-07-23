@@ -1,4 +1,4 @@
-import { FormattedValue, getValueFormat, SelectableValue, toFixedUnit } from '@grafana/data';
+import { type FormattedValue, getValueFormat, type SelectableValue, toFixedUnit } from '@grafana/data';
 
 type MeasureAction = 'area' | 'length';
 
@@ -20,7 +20,7 @@ export interface MapMeasure extends SelectableValue<MeasureAction> {
   getUnit: (v?: string) => MapUnit;
 }
 
-export interface MapUnit extends SelectableValue<string> {
+interface MapUnit extends SelectableValue<string> {
   format: (si: number) => FormattedValue;
 }
 

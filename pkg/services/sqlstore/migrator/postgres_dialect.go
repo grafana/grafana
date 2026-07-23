@@ -294,6 +294,10 @@ func (db *PostgresDialect) UpsertMultipleSQL(tableName string, keyCols, updateCo
 	return s, nil
 }
 
+func (db *PostgresDialect) SupportsAdvisoryLocks() bool {
+	return true
+}
+
 func (db *PostgresDialect) Lock(cfg LockCfg) error {
 	// trying to obtain the lock for a resource identified by a 64-bit or 32-bit key value
 	// the lock is exclusive: multiple lock requests stack, so that if the same resource is locked three times
@@ -346,7 +350,7 @@ func (db *PostgresDialect) Unlock(cfg LockCfg) error {
 
 func (db *PostgresDialect) GetDBName(dsn string) (string, error) {
 	if strings.HasPrefix(dsn, "postgres://") || strings.HasPrefix(dsn, "postgresql://") {
-		parsedDSN, err := pq.ParseURL(dsn)
+		parsedDSN, err := pq.ParseURL(dsn) // nolint:staticcheck
 		if err != nil {
 			return "", err
 		}

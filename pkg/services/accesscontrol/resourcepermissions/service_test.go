@@ -2,8 +2,11 @@ package resourcepermissions
 
 import (
 	"context"
+	"sync"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -14,10 +17,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
@@ -26,6 +31,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+var openfeatureTestMutex sync.Mutex
 
 type setUserPermissionTest struct {
 	desc     string
@@ -310,7 +317,7 @@ func TestIntegrationService_RegisterActionSets(t *testing.T) {
 			} else {
 				// Check that action sets have not been registered
 				for permission := range tt.options.PermissionsToActions {
-					actionSetName := GetActionSetName(tt.options.Resource, permission)
+					actionSetName := tt.options.GetActionSetName(permission)
 					assert.Nil(t, actionSets.ResolveActionSet(actionSetName))
 				}
 			}
@@ -437,6 +444,38 @@ func TestStore_RegisterActionSet(t *testing.T) {
 			},
 			expectedErr: true,
 		},
+		{
+			desc:     "should support routes",
+			pluginID: "test-app",
+			coreActionSets: []ActionSet{
+				{
+					Action:  accesscontrol.AlertingRoutesKind + ":view",
+					Actions: []string{accesscontrol.ActionAlertingManagedRoutesRead},
+				},
+				{
+					Action: accesscontrol.AlertingRoutesKind + ":edit",
+					Actions: []string{
+						accesscontrol.ActionAlertingManagedRoutesRead,
+						accesscontrol.ActionAlertingManagedRoutesWrite,
+						accesscontrol.ActionAlertingManagedRoutesDelete,
+					},
+				},
+			},
+			expectedActionSets: []ActionSet{
+				{
+					Action:  accesscontrol.AlertingRoutesKind + ":view",
+					Actions: []string{accesscontrol.ActionAlertingManagedRoutesRead},
+				},
+				{
+					Action: accesscontrol.AlertingRoutesKind + ":edit",
+					Actions: []string{
+						accesscontrol.ActionAlertingManagedRoutesRead,
+						accesscontrol.ActionAlertingManagedRoutesWrite,
+						accesscontrol.ActionAlertingManagedRoutesDelete,
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
@@ -471,7 +510,330 @@ func TestStore_RegisterActionSet(t *testing.T) {
 	}
 }
 
+func TestService_K8sActionFormat(t *testing.T) {
+	tests := []struct {
+		name                  string
+		opts                  Options
+		expectErr             bool
+		expectedAction        string
+		expectedScope         string
+		expectedRoleName      string
+		expectedActionSetName string
+	}{
+		{
+			name: "legacy format",
+			opts: Options{
+				Resource:        "dashboards",
+				APIGroup:        "",
+				K8sActionFormat: false,
+			},
+			expectErr:             false,
+			expectedAction:        "dashboards.permissions:read",
+			expectedScope:         "dashboards:uid:abc123",
+			expectedRoleName:      "fixed:dashboards.permissions:reader",
+			expectedActionSetName: "dashboards:view",
+		},
+		{
+			name: "k8s format",
+			opts: Options{
+				Resource:        "dashboards",
+				APIGroup:        "dashboard.grafana.app",
+				K8sActionFormat: true,
+			},
+			expectErr:             false,
+			expectedAction:        "dashboard.grafana.app/dashboards:get_permissions",
+			expectedScope:         "dashboard.grafana.app/dashboards:uid:abc123",
+			expectedRoleName:      "fixed:dashboard.grafana.app:dashboards.permissions:reader",
+			expectedActionSetName: "dashboard.grafana.app/dashboards:view",
+		},
+		{
+			name: "k8s format without api group should fail",
+			opts: Options{
+				Resource:        "dashboards",
+				APIGroup:        "",
+				K8sActionFormat: true,
+			},
+			expectErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sql := db.InitTestDB(t)
+			cfg := setting.NewCfg()
+			license := licensingtest.NewFakeLicensing()
+			license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
+			acService := &actest.FakeService{}
+			features := featuremgmt.WithFeatures()
+			ac := acimpl.ProvideAccessControl(features)
+
+			service, err := New(
+				cfg, tt.opts, features, routing.NewRouteRegister(), license,
+				ac, acService, sql, nil, nil, NewActionSetService(),
+			)
+
+			if tt.expectErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+
+			// Test Options.GetAction
+			action := service.options.GetAction("read")
+			assert.Equal(t, tt.expectedAction, action)
+
+			// Test Options.GetScope
+			scope := service.options.GetScope("uid", "abc123")
+			assert.Equal(t, tt.expectedScope, scope)
+
+			// Test Options.GetRoleName
+			roleName := service.options.GetRoleName("reader")
+			assert.Equal(t, tt.expectedRoleName, roleName)
+
+			// Test Options.GetActionSetName
+			actionSetName := service.options.GetActionSetName("View")
+			assert.Equal(t, tt.expectedActionSetName, actionSetName)
+		})
+	}
+}
+
+// enableRedirectFlags installs a global OpenFeature provider where both K8s
+// resource-permission redirect flags resolve to true, restoring the noop provider
+// on cleanup. Mirrors how the flags are read in production (via OpenFeature).
+func enableRedirectFlags(t *testing.T) {
+	t.Helper()
+	openfeatureTestMutex.Lock()
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect: setting.NewInMemoryFlag(featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect, true),
+		featuremgmt.FlagKubernetesAuthzResourcePermissionApis:      setting.NewInMemoryFlag(featuremgmt.FlagKubernetesAuthzResourcePermissionApis, true),
+	})
+	require.NoError(t, err)
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+		openfeatureTestMutex.Unlock()
+	})
+}
+
+func TestRequiresAPIGroup(t *testing.T) {
+	tests := []struct {
+		name            string
+		resource        string
+		k8sActionFormat bool
+		redirectFlags   bool
+		want            bool
+	}{
+		{name: "nothing enabled", resource: "dashboards", want: false},
+		{name: "k8sActionFormat always requires it", resource: "dashboards", k8sActionFormat: true, want: true},
+		{name: "k8sActionFormat requires it even for exempt resource", resource: "teams", k8sActionFormat: true, want: true},
+		{name: "redirect requires it for a regular resource", resource: "dashboards", redirectFlags: true, want: true},
+		{name: "redirect requires it for receivers", resource: "receivers", redirectFlags: true, want: true},
+		{name: "redirect exempts teams", resource: "teams", redirectFlags: true, want: false},
+		{name: "redirect exempts datasources", resource: "datasources", redirectFlags: true, want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.redirectFlags {
+				enableRedirectFlags(t)
+			}
+			got := requiresAPIGroup(context.Background(), tt.resource, tt.k8sActionFormat)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestService_APIGroupRequiredWhenRedirectEnabled(t *testing.T) {
+	tests := []struct {
+		name          string
+		resource      string
+		apiGroup      string
+		redirectFlags bool
+		expectErr     bool
+	}{
+		{
+			name:          "non-teams resource without APIGroup and redirect enabled fails",
+			resource:      "dashboards",
+			apiGroup:      "",
+			redirectFlags: true,
+			expectErr:     true,
+		},
+		{
+			name:          "non-teams resource with APIGroup and redirect enabled succeeds",
+			resource:      "dashboards",
+			apiGroup:      "dashboard.grafana.app",
+			redirectFlags: true,
+			expectErr:     false,
+		},
+		{
+			name:          "teams resource without APIGroup is exempt even when redirect enabled",
+			resource:      "teams",
+			apiGroup:      "",
+			redirectFlags: true,
+			expectErr:     false,
+		},
+		{
+			name:          "datasources resource without APIGroup is exempt even when redirect enabled",
+			resource:      "datasources",
+			apiGroup:      "",
+			redirectFlags: true,
+			expectErr:     false,
+		},
+		{
+			name:          "non-teams resource without APIGroup is fine when redirect disabled",
+			resource:      "dashboards",
+			apiGroup:      "",
+			redirectFlags: false,
+			expectErr:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.redirectFlags {
+				enableRedirectFlags(t)
+			}
+
+			sql := db.InitTestDB(t)
+			cfg := setting.NewCfg()
+			license := licensingtest.NewFakeLicensing()
+			license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
+			features := featuremgmt.WithFeatures()
+			ac := acimpl.ProvideAccessControl(features)
+
+			_, err := New(
+				cfg, Options{Resource: tt.resource, APIGroup: tt.apiGroup}, features,
+				routing.NewRouteRegister(), license, ac, &actest.FakeService{}, sql, nil, nil, NewActionSetService(),
+			)
+
+			if tt.expectErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestGetActionSetName(t *testing.T) {
+	tests := []struct {
+		name       string
+		k8sFormat  bool
+		apiGroup   string
+		resource   string
+		permission string
+		expected   string
+	}{
+		{
+			name:       "legacy format",
+			k8sFormat:  false,
+			apiGroup:   "",
+			resource:   "dashboards",
+			permission: "View",
+			expected:   "dashboards:view",
+		},
+		{
+			name:       "k8s format",
+			k8sFormat:  true,
+			apiGroup:   "dashboard.grafana.app",
+			resource:   "dashboards",
+			permission: "View",
+			expected:   "dashboard.grafana.app/dashboards:view",
+		},
+		{
+			name:       "legacy format lowercase",
+			k8sFormat:  false,
+			apiGroup:   "",
+			resource:   "Dashboards",
+			permission: "View",
+			expected:   "dashboards:view",
+		},
+		{
+			name:       "k8s format lowercase",
+			k8sFormat:  true,
+			apiGroup:   "Dashboard.Grafana.App",
+			resource:   "Dashboards",
+			permission: "View",
+			expected:   "dashboard.grafana.app/dashboards:view",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			opts := Options{
+				Resource:        tt.resource,
+				APIGroup:        tt.apiGroup,
+				K8sActionFormat: tt.k8sFormat,
+			}
+			result := opts.GetActionSetName(tt.permission)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestMapPermission_ServiceAccount(t *testing.T) {
+	saOpts := Options{
+		Resource: serviceaccounts.ScopeServiceAccountRoot,
+		PermissionsToActions: map[string][]string{
+			"Edit":  {serviceaccounts.ActionRead, serviceaccounts.ActionWrite},
+			"Admin": {serviceaccounts.ActionRead, serviceaccounts.ActionWrite, serviceaccounts.ActionDelete},
+		},
+	}
+
+	t.Run("flag off: emits action set token AND granular actions", func(t *testing.T) {
+		svc := &Service{options: saOpts}
+		actions, err := svc.mapPermission("Edit")
+		require.NoError(t, err)
+		assert.Contains(t, actions, saOpts.GetActionSetName("Edit"), "should include action set token")
+		assert.Contains(t, actions, serviceaccounts.ActionRead, "should include granular read action")
+		assert.Contains(t, actions, serviceaccounts.ActionWrite, "should include granular write action")
+	})
+
+	t.Run("flag on: emits only action set token", func(t *testing.T) {
+		openfeatureTestMutex.Lock()
+		defer func() {
+			_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+			openfeatureTestMutex.Unlock()
+		}()
+
+		provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+			featuremgmt.FlagOnlyStoreServiceAccountActionSets: setting.NewInMemoryFlag(featuremgmt.FlagOnlyStoreServiceAccountActionSets, true),
+		})
+		require.NoError(t, err)
+		require.NoError(t, openfeature.SetProviderAndWait(provider))
+
+		svc := &Service{options: saOpts}
+		actions, err := svc.mapPermission("Edit")
+		require.NoError(t, err)
+		require.Len(t, actions, 1)
+		assert.Equal(t, saOpts.GetActionSetName("Edit"), actions[0])
+	})
+
+	t.Run("invalid level returns ErrInvalidPermission", func(t *testing.T) {
+		svc := &Service{options: saOpts}
+		_, err := svc.mapPermission("View")
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrInvalidPermission)
+	})
+}
+
+func TestIsActionSetEnabledResource_ServiceAccount(t *testing.T) {
+	t.Run("serviceaccounts actions are enabled", func(t *testing.T) {
+		assert.True(t, isActionSetEnabledResource(serviceaccounts.ScopeServiceAccountRoot+":edit"))
+		assert.True(t, isActionSetEnabledResource(serviceaccounts.ScopeServiceAccountRoot+":admin"))
+	})
+}
+
 func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, team.Service) {
+	t.Helper()
+	service, userSvc, teamSvc, _ := setupTestEnvironmentWithCfg(t, ops, featuremgmt.WithFeatures())
+	return service, userSvc, teamSvc
+}
+
+// setupTestEnvironmentWithCfg is like setupTestEnvironment but lets the caller pass feature
+// toggles and returns the *setting.Cfg so tests can tweak it (e.g. the dual-writer mode).
+func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt.FeatureToggles) (*Service, user.Service, team.Service, *setting.Cfg) {
 	t.Helper()
 
 	sql := db.InitTestDB(t)
@@ -493,7 +855,6 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	acService := &actest.FakeService{}
-	features := featuremgmt.WithFeatures()
 	ac := acimpl.ProvideAccessControl(features)
 	service, err := New(
 		cfg, ops, features, routing.NewRouteRegister(), license,
@@ -501,5 +862,61 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 	)
 	require.NoError(t, err)
 
-	return service, userSvc, teamSvc
+	return service, userSvc, teamSvc, cfg
+}
+
+func TestMapPermission_Datasource(t *testing.T) {
+	dsOpts := Options{
+		Resource: datasources.ScopeRoot,
+		PermissionsToActions: map[string][]string{
+			"Query": {datasources.ActionRead, datasources.ActionQuery},
+			"Edit":  {datasources.ActionRead, datasources.ActionQuery, datasources.ActionWrite, datasources.ActionDelete},
+			"Admin": {datasources.ActionRead, datasources.ActionQuery, datasources.ActionWrite, datasources.ActionDelete, datasources.ActionPermissionsRead, datasources.ActionPermissionsWrite},
+		},
+	}
+
+	t.Run("flag off: Edit emits action set token AND granular actions", func(t *testing.T) {
+		svc := &Service{options: dsOpts}
+		actions, err := svc.mapPermission("Edit")
+		require.NoError(t, err)
+		assert.Contains(t, actions, dsOpts.GetActionSetName("Edit")) // datasources:edit
+		assert.Contains(t, actions, datasources.ActionWrite)
+		assert.Contains(t, actions, datasources.ActionDelete)
+	})
+
+	t.Run("flag off: Query token collides with the granular query action", func(t *testing.T) {
+		svc := &Service{options: dsOpts}
+		actions, err := svc.mapPermission("Query")
+		require.NoError(t, err)
+		// GetActionSetName("Query") == datasources:query == datasources.ActionQuery
+		assert.Equal(t, dsOpts.GetActionSetName("Query"), datasources.ActionQuery)
+		assert.Contains(t, actions, datasources.ActionRead)
+		assert.Contains(t, actions, datasources.ActionQuery)
+	})
+
+	t.Run("flag on: emits only action set token", func(t *testing.T) {
+		openfeatureTestMutex.Lock()
+		defer func() {
+			_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+			openfeatureTestMutex.Unlock()
+		}()
+
+		provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+			featuremgmt.FlagIamOnlyStoreDatasourceActionSets: setting.NewInMemoryFlag(featuremgmt.FlagIamOnlyStoreDatasourceActionSets, true),
+		})
+		require.NoError(t, err)
+		require.NoError(t, openfeature.SetProviderAndWait(provider))
+
+		svc := &Service{options: dsOpts}
+		actions, err := svc.mapPermission("Edit")
+		require.NoError(t, err)
+		require.Len(t, actions, 1)
+		assert.Equal(t, dsOpts.GetActionSetName("Edit"), actions[0])
+	})
+}
+
+func TestIsActionSetEnabledResource_Datasource(t *testing.T) {
+	assert.True(t, isActionSetEnabledResource(datasources.ScopeRoot+":query"))
+	assert.True(t, isActionSetEnabledResource(datasources.ScopeRoot+":edit"))
+	assert.True(t, isActionSetEnabledResource(datasources.ScopeRoot+":admin"))
 }

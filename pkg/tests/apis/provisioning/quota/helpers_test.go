@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-var env = common.NewSharedEnv()
+var env = common.NewSharedEnv(common.WithoutProvisioningFolderMetadata)
 
 func sharedHelper(t *testing.T) *common.ProvisioningTestHelper {
 	t.Helper()

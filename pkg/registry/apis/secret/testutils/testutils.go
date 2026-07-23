@@ -5,13 +5,11 @@ import (
 	"fmt"
 	"slices"
 	"testing"
-	"time"
 
 	"github.com/madflojo/testcerts"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
@@ -41,20 +39,14 @@ import (
 )
 
 type SetupConfig struct {
-	KeeperService            contracts.KeeperService
 	DataKeyMigrationExecutor contracts.EncryptedValueMigrationExecutor
 	RunSecretsDBMigrations   bool
 	RunDataKeyMigration      bool
+	SystemKeeperWrapperFunc  func(contracts.Keeper) contracts.Keeper
 }
 
 func defaultSetupCfg() SetupConfig {
 	return SetupConfig{}
-}
-
-func WithKeeperService(keeperService contracts.KeeperService) func(*SetupConfig) {
-	return func(setupCfg *SetupConfig) {
-		setupCfg.KeeperService = keeperService
-	}
 }
 
 func WithMutateCfg(f func(*SetupConfig)) func(*SetupConfig) {
@@ -93,13 +85,14 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	defaultKey := "SdlklWklckeLS"
 	cfg := setting.NewCfg()
 	cfg.SecretsManagement = setting.SecretsManagerSettings{
-		CurrentEncryptionProvider:     "secret_key.v1",
-		ConfiguredKMSProviders:        map[string]map[string]string{"secret_key.v1": {"secret_key": defaultKey}},
-		GCWorkerEnabled:               false,
-		RunSecretsDBMigrations:        setupCfg.RunSecretsDBMigrations,
-		RunDataKeyMigration:           setupCfg.RunDataKeyMigration,
-		GCWorkerMaxBatchSize:          2,
-		GCWorkerMaxConcurrentCleanups: 2,
+		CurrentEncryptionProvider:         "secret_key.v1",
+		ConfiguredKMSProviders:            map[string]map[string]string{"secret_key.v1": {"secret_key": defaultKey}},
+		GCWorkerEnabled:                   false,
+		RunSecretsDBMigrations:            setupCfg.RunSecretsDBMigrations,
+		RunDataKeyMigration:               setupCfg.RunDataKeyMigration,
+		GCWorkerMaxBatchSize:              2,
+		GCWorkerMaxConcurrentCleanups:     2,
+		GCWorkerMaxAttemptsPerSecureValue: 2,
 	}
 	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, nil)
 	require.NoError(t, err)
@@ -139,19 +132,22 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	if fakeMigrationExecutor == nil {
 		fakeMigrationExecutor = &NoopMigrationExecutor{}
 	}
+
 	sqlKeeper, err := sqlkeeper.NewSQLKeeper(tracer, encryptionManager, encryptedValueStorage, fakeMigrationExecutor, nil, cfg)
 	require.NoError(t, err)
+
+	var systemKeeper contracts.Keeper = sqlKeeper
+
+	if setupCfg.SystemKeeperWrapperFunc != nil {
+		systemKeeper = setupCfg.SystemKeeperWrapperFunc(systemKeeper)
+	}
 
 	// Initialize a real migration executor for test
 	realMigrationExecutor, err := encryptionstorage.ProvideEncryptedValueMigrationExecutor(database, tracer, encryptedValueStorage, globalEncryptedValueStorage)
 	require.NoError(t, err)
 
 	mockAwsKeeper := NewModelSecretsManager()
-	var keeperService contracts.KeeperService = newKeeperServiceWrapper(sqlKeeper, mockAwsKeeper)
-
-	if setupCfg.KeeperService != nil {
-		keeperService = setupCfg.KeeperService
-	}
+	var keeperService contracts.KeeperService = newKeeperServiceWrapper(systemKeeper, mockAwsKeeper)
 
 	secureValueValidator := validator.ProvideSecureValueValidator()
 	secureValueMutator := mutator.ProvideSecureValueMutator()
@@ -174,7 +170,8 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		cfg,
 		secureValueMetadataStorage,
 		keeperMetadataStorage,
-		keeperService)
+		keeperService,
+		tracer)
 
 	return Sut{
 		SecureValueService:              secureValueService,
@@ -184,7 +181,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		EncryptedValueStorage:           encryptedValueStorage,
 		GlobalEncryptedValueStorage:     globalEncryptedValueStorage,
 		EncryptedValueMigrationExecutor: realMigrationExecutor,
-		SQLKeeper:                       sqlKeeper,
+		SystemKeeper:                    systemKeeper,
 		Database:                        database,
 		AccessClient:                    accessClient,
 		ConsolidationService:            consolidationService,
@@ -206,7 +203,7 @@ type Sut struct {
 	EncryptedValueStorage           contracts.EncryptedValueStorage
 	GlobalEncryptedValueStorage     contracts.GlobalEncryptedValueStorage
 	EncryptedValueMigrationExecutor contracts.EncryptedValueMigrationExecutor
-	SQLKeeper                       *sqlkeeper.SQLKeeper
+	SystemKeeper                    contracts.Keeper
 	Database                        *database.Database
 	AccessClient                    types.AccessClient
 	ConsolidationService            contracts.ConsolidationService
@@ -240,7 +237,7 @@ func (s *Sut) CreateSv(ctx context.Context, opts ...func(*CreateSvConfig)) (*sec
 			},
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "desc1",
-				Value:       ptr.To(secretv1beta1.NewExposedSecureValue("v1")),
+				Value:       new(secretv1beta1.NewExposedSecureValue("v1")),
 				Decrypters:  []string{"decrypter1"},
 			},
 			Status: secretv1beta1.SecureValueStatus{},
@@ -316,12 +313,12 @@ func (s *Sut) CreateKeeper(ctx context.Context, opts ...func(*CreateKeeperConfig
 }
 
 type keeperServiceWrapper struct {
-	sqlKeeper *sqlkeeper.SQLKeeper
-	awsKeeper *ModelAWSSecretsManager
+	systemKeeper contracts.Keeper
+	awsKeeper    *ModelAWSSecretsManager
 }
 
-func newKeeperServiceWrapper(sqlKeeper *sqlkeeper.SQLKeeper, awsKeeper *ModelAWSSecretsManager) *keeperServiceWrapper {
-	return &keeperServiceWrapper{sqlKeeper: sqlKeeper, awsKeeper: awsKeeper}
+func newKeeperServiceWrapper(systemKeeper contracts.Keeper, awsKeeper *ModelAWSSecretsManager) *keeperServiceWrapper {
+	return &keeperServiceWrapper{systemKeeper: systemKeeper, awsKeeper: awsKeeper}
 }
 
 func (wrapper *keeperServiceWrapper) KeeperForConfig(cfg secretv1beta1.KeeperConfig) (contracts.Keeper, error) {
@@ -329,7 +326,7 @@ func (wrapper *keeperServiceWrapper) KeeperForConfig(cfg secretv1beta1.KeeperCon
 	case *secretv1beta1.NamedKeeperConfig[*secretv1beta1.KeeperAWSConfig]:
 		return wrapper.awsKeeper, nil
 	default:
-		return wrapper.sqlKeeper, nil
+		return wrapper.systemKeeper, nil
 	}
 }
 
@@ -350,13 +347,18 @@ func CreateUserAuthContext(ctx context.Context, namespace string, permissions ma
 
 func CreateServiceAuthContext(ctx context.Context, serviceIdentity string, namespace string, permissions []string) context.Context {
 	requester := &identity.StaticRequester{
+		Type:      types.TypeAccessPolicy,
 		Namespace: namespace,
 		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
-			Rest: authn.AccessTokenClaims{
-				Permissions:     permissions,
-				ServiceIdentity: serviceIdentity,
-			},
+			Rest: authn.AccessTokenClaims{},
 		},
+	}
+
+	if serviceIdentity != "" {
+		requester.AccessTokenClaims.Rest.ServiceIdentity = serviceIdentity
+	}
+	if len(permissions) > 0 {
+		requester.AccessTokenClaims.Rest.DelegatedPermissions = permissions
 	}
 
 	return types.WithAuthInfo(ctx, requester)
@@ -427,137 +429,4 @@ func CreateX509TestDir(t *testing.T) TestCertPaths {
 		ServerKey:  serverKeyFile.Name(),
 		CA:         caCertFile.Name(),
 	}
-}
-
-type FakeClock struct {
-	Current time.Time
-}
-
-func NewFakeClock() *FakeClock {
-	return &FakeClock{Current: time.Now()}
-}
-
-func (c *FakeClock) Now() time.Time {
-	return c.Current
-}
-
-func (c *FakeClock) AdvanceBy(duration time.Duration) {
-	c.Current = c.Current.Add(duration)
-}
-
-type NoopMigrationExecutor struct {
-}
-
-func (e *NoopMigrationExecutor) Execute(ctx context.Context) (int, error) {
-	return 0, nil
-}
-
-// A mock of AWS secrets manager, used for testing.
-type ModelAWSSecretsManager struct {
-	secrets        map[string]entry
-	alreadyDeleted map[string]bool
-}
-
-type entry struct {
-	exposedValueOrRef string
-	externalID        string
-}
-
-func NewModelSecretsManager() *ModelAWSSecretsManager {
-	return &ModelAWSSecretsManager{
-		secrets:        make(map[string]entry),
-		alreadyDeleted: make(map[string]bool),
-	}
-}
-
-func (m *ModelAWSSecretsManager) Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64, exposedValueOrRef string) (externalID contracts.ExternalID, err error) {
-	if exposedValueOrRef == "" {
-		return "", fmt.Errorf("failed to satisfy constraint: Member must have length greater than or equal to 1")
-	}
-
-	versionID := buildVersionID(namespace, name, version)
-	if e, ok := m.secrets[versionID]; ok {
-		// Ignore duplicated requests
-		if e.exposedValueOrRef == exposedValueOrRef {
-			return contracts.ExternalID(e.externalID), nil
-		}
-
-		// Tried to create a secret that already exists
-		return "", fmt.Errorf("ResourceExistsException: The operation failed because the secret %+v already exists", versionID)
-	}
-
-	// First time creating the secret
-	entry := entry{
-		exposedValueOrRef: exposedValueOrRef,
-		externalID:        "external-id",
-	}
-	m.secrets[versionID] = entry
-
-	return contracts.ExternalID(entry.externalID), nil
-}
-
-// Used to simulate the creation of secrets in the 3rd party secret store
-func (m *ModelAWSSecretsManager) Create(name, value string) {
-	m.secrets[name] = entry{
-		exposedValueOrRef: value,
-		externalID:        fmt.Sprintf("external_id_%+v", value),
-	}
-}
-
-func (m *ModelAWSSecretsManager) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) (exposedValue secretv1beta1.ExposedSecureValue, err error) {
-	versionID := buildVersionID(namespace, name, version)
-
-	if m.deleted(versionID) {
-		return "", fmt.Errorf("InvalidRequestException: You can't perform this operation on the secret because it was marked for deletion")
-	}
-
-	entry, ok := m.secrets[versionID]
-	if !ok {
-		return "", fmt.Errorf("ResourceNotFoundException: Secrets Manager can't find the specified secret")
-	}
-
-	return secretv1beta1.ExposedSecureValue(entry.exposedValueOrRef), nil
-}
-
-// TODO: this could be namespaced to make it more realistic
-func (m *ModelAWSSecretsManager) RetrieveReference(ctx context.Context, _ secretv1beta1.KeeperConfig, ref string) (secretv1beta1.ExposedSecureValue, error) {
-	entry, ok := m.secrets[ref]
-	if !ok {
-		return "", fmt.Errorf("ResourceNotFoundException: Secrets Manager can't find the specified secret")
-	}
-	return secretv1beta1.ExposedSecureValue(entry.exposedValueOrRef), nil
-}
-
-func (m *ModelAWSSecretsManager) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) (err error) {
-	versionID := buildVersionID(namespace, name, version)
-
-	// Deleting a secret that existed at some point is idempotent
-	if m.deleted(versionID) {
-		return nil
-	}
-
-	// If the secret is being deleted for the first time
-	if m.exists(versionID) {
-		m.delete(versionID)
-	}
-
-	return nil
-}
-
-func (m *ModelAWSSecretsManager) deleted(versionID string) bool {
-	return m.alreadyDeleted[versionID]
-}
-
-func (m *ModelAWSSecretsManager) exists(versionID string) bool {
-	_, ok := m.secrets[versionID]
-	return ok
-}
-
-func (m *ModelAWSSecretsManager) delete(versionID string) {
-	m.alreadyDeleted[versionID] = true
-	delete(m.secrets, versionID)
-}
-
-func buildVersionID(namespace xkube.Namespace, name string, version int64) string {
-	return fmt.Sprintf("%s/%s/%d", namespace, name, version)
 }

@@ -1,16 +1,15 @@
 import { css, cx } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDefaultVizPanel } from '../../utils/utils';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
-import { DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { addNewRowTo, addNewTabTo } from './addNew';
 import { getLayoutControlsStyles } from './styles';
@@ -120,10 +119,6 @@ const MAX_NESTING_DEPTH = 3;
 
 export function useNestingRestrictions(layoutManager: DashboardLayoutManager) {
   return useMemo(() => {
-    if (config.featureToggles.unlimitedLayoutsNesting) {
-      return { disableGrouping: false, disableTabs: false };
-    }
-
     const layouts: string[] = [];
     let parent = layoutManager.parent;
 

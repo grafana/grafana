@@ -1,28 +1,32 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import useMountedState from 'react-use/lib/useMountedState';
 import { lastValueFrom } from 'rxjs';
 
 import {
   applyFieldOverrides,
-  DataFrame,
-  FieldConfigSource,
-  TimeZone,
+  type DataFrame,
+  type FieldConfigSource,
+  type InterpolateFunction,
+  LoadingState,
+  type TimeZone,
   transformDataFrame,
   useDataLinksContext,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
-import { replaceVariables } from '@grafana-plugins/loki/querybuilder/parsingUtils';
 
+import { getLogsTableFieldConfigRegistry } from '../logsTableFieldConfig';
 import { extractLogsFieldsTransform } from '../transforms/extractLogsFieldsTransform';
 
 interface Props {
   rawTableFrame: DataFrame | null;
   fieldConfig?: FieldConfigSource;
   timeZone: TimeZone;
+  replaceVariables?: InterpolateFunction;
+  loadingState: LoadingState;
 }
 
-export function useExtractFields({ rawTableFrame, fieldConfig, timeZone }: Props) {
+export function useExtractFields({ rawTableFrame, fieldConfig, timeZone, replaceVariables, loadingState }: Props) {
   const dataLinksContext = useDataLinksContext();
   const isMounted = useMountedState();
   const dataLinkPostProcessor = dataLinksContext.dataLinkPostProcessor;
@@ -30,7 +34,7 @@ export function useExtractFields({ rawTableFrame, fieldConfig, timeZone }: Props
   const theme = useTheme2();
 
   useEffect(() => {
-    if (!fieldConfig) {
+    if (!fieldConfig || loadingState === LoadingState.Loading) {
       return;
     }
 
@@ -46,6 +50,7 @@ export function useExtractFields({ rawTableFrame, fieldConfig, timeZone }: Props
         const extractedFrames = applyFieldOverrides({
           data,
           fieldConfig,
+          fieldConfigRegistry: getLogsTableFieldConfigRegistry(),
           replaceVariables: replaceVariables ?? getTemplateSrv().replace.bind(getTemplateSrv()),
           theme,
           timeZone,
@@ -58,9 +63,7 @@ export function useExtractFields({ rawTableFrame, fieldConfig, timeZone }: Props
       .catch((err) => {
         console.error('LogsTable: Extract fields transform error', err);
       });
-    // @todo hook re-renders unexpectedly when data frame isn't changing if we add `rawTableFrame` as dependency, so we check for changes in the timestamps instead
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataLinkPostProcessor, fieldConfig, rawTableFrame?.fields[1]?.values, theme, timeZone]);
+  }, [dataLinkPostProcessor, fieldConfig, isMounted, loadingState, rawTableFrame, replaceVariables, theme, timeZone]);
 
   return { extractedFrame };
 }

@@ -5,10 +5,10 @@ package resource
 import (
 	"github.com/grafana/grafana-app-sdk/app"
 
+	alerting_historian "github.com/grafana/alerting/apps/historian/pkg/apis"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis"
-	alerting_historian "github.com/grafana/grafana/apps/alerting/historian/pkg/apis"
 	alerting_notifications "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis"
-	alerting_rules "github.com/grafana/grafana/apps/alerting/rules/pkg/apis"
+	alerting_rules "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
 	annotation "github.com/grafana/grafana/apps/annotation/pkg/apis"
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/manifestdata"
 	correlations "github.com/grafana/grafana/apps/correlations/pkg/apis"
@@ -33,7 +33,6 @@ func AppManifests() []app.Manifest {
 	// TODO: don't use hardcoded list of manifests when possible.
 	return []app.Manifest{
 		advisor.LocalManifest(),
-		alerting_historian.LocalManifest(),
 		alerting_notifications.LocalManifest(),
 		alerting_rules.LocalManifest(),
 		annotation.LocalManifest(),
@@ -54,5 +53,6 @@ func AppManifests() []app.Manifest {
 		quotas.LocalManifest(),
 		secret.LocalManifest(),
 		shorturl.LocalManifest(),
+		alerting_historian.LocalManifest(),
 	}
 }

@@ -1,15 +1,10 @@
 import { isObject } from 'lodash';
-import { FormEvent, useCallback, useState } from 'react';
+import { type FormEvent, useCallback, useState } from 'react';
 
-import { CustomVariableModel, shallowCompare } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { CustomVariable, SceneVariable } from '@grafana/scenes';
-import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { type CustomVariableModel, shallowCompare } from '@grafana/data';
+import { type CustomVariable } from '@grafana/scenes';
 
 import { CustomVariableForm } from '../../components/CustomVariableForm';
-
-import { PaneItem } from './PaneItem';
 
 interface CustomVariableEditorProps {
   variable: CustomVariable;
@@ -56,16 +51,12 @@ export function CustomVariableEditor({ variable, onRunQuery }: CustomVariableEdi
     (event: FormEvent<HTMLTextAreaElement>) => {
       setPrevQuery('');
 
-      if (config.featureToggles.multiPropsVariables && valuesFormat === 'json') {
+      if (valuesFormat === 'json') {
         const validationError = validateJsonQuery(event.currentTarget.value.trim());
         setQueryValidationError(validationError);
         if (validationError) {
           return;
         }
-      }
-
-      if (!config.featureToggles.multiPropsVariables) {
-        variable.setState({ valuesFormat: 'csv' });
       }
 
       variable.setState({ query: event.currentTarget.value });
@@ -107,21 +98,7 @@ export function CustomVariableEditor({ variable, onRunQuery }: CustomVariableEdi
   );
 }
 
-export function getCustomVariableOptions(variable: SceneVariable): OptionsPaneItemDescriptor[] {
-  if (!(variable instanceof CustomVariable)) {
-    return [];
-  }
-
-  return [
-    new OptionsPaneItemDescriptor({
-      title: t('dashboard.edit-pane.variable.custom-options.values', 'Values separated by comma'),
-      id: 'custom-variable-values',
-      render: ({ props }) => <PaneItem id={props.id} variable={variable} />,
-    }),
-  ];
-}
-
-export const validateJsonQuery = (query: string): Error | undefined => {
+const validateJsonQuery = (query: string): Error | undefined => {
   if (!query) {
     return;
   }

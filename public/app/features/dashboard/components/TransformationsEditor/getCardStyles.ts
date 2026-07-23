@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 export const getCardStyles = (theme: GrafanaTheme2, fullWidth?: boolean) => ({
   baseCard: css({

@@ -1,20 +1,34 @@
-import { AnnotationQuery, getDataSourceRef, NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, VizPanel, dataLayers } from '@grafana/scenes';
+import {
+  type AnnotationQuery,
+  getDataSourceRef,
+  type NavModel,
+  type NavModelItem,
+  PageLayoutType,
+} from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
+import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
+import { useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/internal';
+import { type SceneComponentProps, SceneObjectBase, type VizPanel, dataLayers } from '@grafana/scenes';
+import { Alert, Button } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import {
+  HIGHLIGHT_CATEGORY_PARAM_NAME,
+  CATEGORY_PARAM_NAME,
+} from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { NEW_ANNOTATION_NAME } from '../scene/DashboardDataLayerSet';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
 import { AnnotationSettingsEdit } from './annotations/AnnotationSettingsEdit';
 import { AnnotationSettingsList } from './annotations/AnnotationSettingsList';
-import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
+import { type DashboardEditView, type DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
 export enum MoveDirection {
   UP = -1,
@@ -138,6 +152,40 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
   const panels = dashboardSceneGraph.getVizPanels(dashboard);
 
   const annotations: AnnotationQuery[] = dataLayersToAnnotations(annotationLayers);
+
+  const isDynamicDashboardsEnabled = config.featureToggles.dashboardNewLayouts;
+  const isSettingsPageRedesignEnabled = useFlagGrafanaDashboardSettingsRedesign();
+
+  const goToSidebar = () => {
+    // close settings and open dashboard sidebar
+    const dashboard = getDashboardSceneFor(model);
+    dashboard.state.editPane.selectObject(dashboard);
+    locationService.partial({
+      editview: null,
+      [HIGHLIGHT_CATEGORY_PARAM_NAME]: 'dashboard-annotations',
+      [CATEGORY_PARAM_NAME]: 'dashboard-annotations',
+    });
+
+    DashboardInteractions.takeMeToSidebarClicked({ item: 'annotations' });
+  };
+  if (isDynamicDashboardsEnabled && isSettingsPageRedesignEnabled) {
+    return (
+      <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
+        <NavToolbarActions dashboard={dashboard} />
+        <Alert
+          severity="info"
+          title={t('dashboard-scene.dashboard-settings.annotations.title-moved', 'Looking for annotations?')}
+        >
+          <Trans i18nKey="dashboard-scene.dashboard-settings.annotations.description-moved">
+            Annotation settings have moved to the dashboard&apos;s sidebar.
+          </Trans>
+          <Button onClick={goToSidebar} fill="text" variant="primary" size="md">
+            <Trans i18nKey="dashboard-scene.dashboard-settings.annotations.button-moved">Take me there</Trans>
+          </Button>
+        </Alert>
+      </Page>
+    );
+  }
 
   if (editIndex != null && editIndex < annotationLayers.length) {
     return (

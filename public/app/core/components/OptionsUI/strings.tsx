@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { memo, useState, useCallback } from 'react';
 import * as React from 'react';
 
-import { StandardEditorProps, StringFieldConfigSettings, GrafanaTheme2 } from '@grafana/data';
+import { type StandardEditorProps, type StringFieldConfigSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, Input, useStyles2 } from '@grafana/ui';
 
 type Props = StandardEditorProps<string[], StringFieldConfigSettings>;

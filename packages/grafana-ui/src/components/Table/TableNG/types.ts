@@ -1,44 +1,40 @@
-import { FC, SyntheticEvent } from 'react';
-import { CellRendererProps, Column } from 'react-data-grid';
+import { type FC, type SyntheticEvent } from 'react';
 
 import {
-  DataFrame,
-  Field,
-  GrafanaTheme2,
-  KeyValue,
-  TimeRange,
-  FieldConfigSource,
-  ActionModel,
-  FieldType,
-  DataFrameWithValue,
-  SelectableValue,
-  FieldState,
+  type DataFrame,
+  type Field,
+  type GrafanaTheme2,
+  type KeyValue,
+  type TimeRange,
+  type FieldConfigSource,
+  type ActionModel,
+  type FieldType,
+  type DataFrameWithValue,
+  type SelectableValue,
+  type FieldState,
 } from '@grafana/data';
-import { TableCellHeight, TableFieldOptions } from '@grafana/schema';
+import { type CellRendererProps, type Column } from '@grafana/react-data-grid';
+import { type MatcherScope, type TableCellHeight } from '@grafana/schema';
 
-import { TableCellInspectorMode } from '../TableCellInspector';
-import { TableCellOptions } from '../types';
+import { type TableCellInspectorMode } from '../TableCellInspector';
+import { type TableCellOptions } from '../types';
 
-import { TextAlign } from './utils';
+import { type TextAlign } from './styles';
+import { type ApplyFilterResult } from './utils';
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
 
-export type AdHocFilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
+type AdHocFilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
 export type AdHocFilterItem = { key: string; value: string; operator: AdHocFilterOperator };
 export type TableFilterActionCallback = (item: AdHocFilterItem) => void;
-export type TableColumnResizeActionCallback = (fieldDisplayName: string, width: number) => void;
-export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
-export type FooterItem = Array<KeyValue<string>> | string | undefined;
+type TableColumnResizeActionCallback = (fieldDisplayName: string, width: number, fieldScope?: MatcherScope) => void;
+type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
+type FooterItem = Array<KeyValue<string>> | string | undefined;
 
-export type GetActionsFunction = (frame: DataFrame, field: Field, rowIndex: number) => ActionModel[];
+type GetActionsFunction = (frame: DataFrame, field: Field, rowIndex: number) => ActionModel[];
 
 export type GetActionsFunctionLocal = (field: Field, rowIndex: number) => ActionModel[];
-
-export type TableFieldOptionsType = Omit<TableFieldOptions, 'cellOptions'> & {
-  cellOptions: TableCellOptions;
-  headerComponent?: React.ComponentType<CustomHeaderRendererProps>;
-};
 
 export enum FilterOperator {
   CONTAINS = 'Contains',
@@ -99,20 +95,6 @@ export interface TableRow {
   [columnName: string]: TableCellValue;
 }
 
-export interface CustomCellRendererProps {
-  field: Field;
-  rowIndex: number;
-  frame: DataFrame;
-  // Would be great to have generic type for this but that would need having a generic DataFrame type where the field
-  // types could be propagated here.
-  value: unknown;
-}
-
-export interface CustomHeaderRendererProps {
-  field: Field;
-  defaultContent: React.ReactNode;
-}
-
 export interface TableSortByFieldState {
   displayName: string;
   desc?: boolean;
@@ -125,7 +107,7 @@ export interface TableSortByFieldState {
  */
 export type SortByBehavior = 'initial' | 'managed';
 
-export interface BaseTableProps {
+interface BaseTableProps {
   ariaLabel?: string;
   data: DataFrame;
   width: number;
@@ -150,7 +132,7 @@ export interface BaseTableProps {
   transparent?: boolean;
   /* message to show when no rows are present */
   noValue?: string;
-  /** Used by SparklineCell when provided */
+  /** used by SparklineCell when provided */
   timeRange?: TimeRange;
   enableSharedCrosshair?: boolean;
   // The index of the field value that the table will initialize scrolled to
@@ -163,6 +145,8 @@ export interface BaseTableProps {
   disableSanitizeHtml?: boolean;
   // if true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
   disableKeyboardEvents?: boolean;
+  // temporary feature toggle to manage rollout of the refactored nested-table implementation
+  nestedRefactorEnabled?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
@@ -291,15 +275,11 @@ export type FrameToRowsConverter = (frame: DataFrame, nestedRowIndex?: number) =
 export interface NestedRowEntry {
   raw: TableRow[];
   final: TableRow[];
+  filterResult: ApplyFilterResult;
 }
 
 // Type for mapping column names to their field types
 export type ColumnTypes = Record<string, FieldType>;
-
-export interface ScrollPosition {
-  x: number;
-  y: number;
-}
 
 export interface TypographyCtx {
   ctx: CanvasRenderingContext2D;

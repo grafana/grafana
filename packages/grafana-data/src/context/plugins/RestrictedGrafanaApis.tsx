@@ -1,4 +1,4 @@
-import { createContext, ReactElement, PropsWithChildren, useMemo, useContext } from 'react';
+import { createContext, type ReactElement, type PropsWithChildren, useMemo, useContext } from 'react';
 
 // Generic schema type to avoid zod dependency in @grafana/data
 interface ZodSchema {
@@ -20,7 +20,7 @@ export interface DashboardMutationAPI {
   getAvailableCommands(): string[];
 }
 
-export interface RestrictedGrafanaApisContextTypeInternal {
+interface RestrictedGrafanaApisContextTypeInternal {
   // Add types for restricted Grafana APIs here
   // (Make sure that they are typed as optional properties)
   alertingAlertRuleFormSchema?: ZodSchema;

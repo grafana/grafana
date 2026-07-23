@@ -1,7 +1,6 @@
 package quota
 
 import (
-	"context"
 	"encoding/base64"
 	"path/filepath"
 	"testing"
@@ -32,19 +31,17 @@ func TestIntegrationProvisioning_NamespaceRepositoryQuota(t *testing.T) {
 
 	// --- Step 1: create 2 repos with unlimited quota  ---------
 	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 0})
-	helper.CreateRepo(t, common.TestRepo{
-		Name:                   repo1Name,
-		Path:                   repo1Path,
-		Target:                 "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo1Name,
+		LocalPath:  repo1Path,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
-	helper.CreateRepo(t, common.TestRepo{
-		Name:                   repo2Name,
-		Path:                   repo2Path,
-		Target:                 "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo2Name,
+		LocalPath:  repo2Path,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 
 	waitForHealthyWithNamespaceQuota(t, helper, repo1Name, provisioning.ReasonQuotaUnlimited)
@@ -82,7 +79,7 @@ func waitForUnhealthyWithNamespaceQuota(t *testing.T, helper *common.Provisionin
 		if !assert.NoError(collect, err) {
 			return
 		}
-		repo := common.UnstructuredToRepository(t, repoObj)
+		repo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 		assert.False(collect, repo.Status.Health.Healthy, "repo %s should be unhealthy", repoName)
 		cond := common.FindCondition(repo.Status.Conditions, provisioning.ConditionTypeNamespaceQuota)
 		if !assert.NotNil(collect, cond, "NamespaceQuota condition not found on %s", repoName) {
@@ -102,7 +99,7 @@ func waitForHealthyWithNamespaceQuota(t *testing.T, helper *common.ProvisioningT
 		if !assert.NoError(collect, err) {
 			return
 		}
-		repo := common.UnstructuredToRepository(t, repoObj)
+		repo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 		assert.True(collect, repo.Status.Health.Healthy, "repo %s should be healthy", repoName)
 		cond := common.FindCondition(repo.Status.Conditions, provisioning.ConditionTypeNamespaceQuota)
 		if !assert.NotNil(collect, cond, "NamespaceQuota condition not found on %s", repoName) {
@@ -117,7 +114,7 @@ func waitForHealthyWithNamespaceQuota(t *testing.T, helper *common.ProvisioningT
 // blocked due to namespace quota being exceeded.
 func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
+
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	const (
@@ -149,16 +146,16 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 		},
 	}}
 
-	_, err := helper.CreateGithubConnection(t, ctx, conn)
+	_, err := helper.CreateGithubConnection(t, conn)
 	require.NoError(t, err, "failed to create GitHub connection")
 
 	// Wait for the connection itself to be reconciled (token acquired).
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		obj, err := helper.Connections.Resource.Get(ctx, connName, metav1.GetOptions{})
+		obj, err := helper.Connections.Resource.Get(t.Context(), connName, metav1.GetOptions{})
 		if !assert.NoError(c, err) {
 			return
 		}
-		connObj := common.UnstructuredToConnection(t, obj)
+		connObj := common.MustFromUnstructured[provisioning.Connection](t, obj)
 		assert.NotEqual(c, int64(0), connObj.Status.ObservedGeneration,
 			"connection should be reconciled at least once")
 		assert.False(c, connObj.Secure.Token.IsZero(),
@@ -196,7 +193,7 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 				},
 			},
 		}}
-		_, err = helper.Repositories.Resource.Create(ctx, repoObj, metav1.CreateOptions{})
+		_, err = helper.Repositories.Resource.Create(t.Context(), repoObj, metav1.CreateOptions{})
 		require.NoError(t, err, "failed to create repository %s", name)
 	}
 
@@ -204,11 +201,11 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 	for _, name := range []string{repoName1, repoName2} {
 		name := name
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
-			obj, err := helper.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
+			obj, err := helper.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
 			if !assert.NoError(c, err) {
 				return
 			}
-			r := common.UnstructuredToRepository(t, obj)
+			r := common.MustFromUnstructured[provisioning.Repository](t, obj)
 			assert.False(c, r.Secure.Token.IsZero(),
 				"repo %s should have a token after initial reconciliation", name)
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
@@ -252,17 +249,17 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 		},
 	})
 	require.NoError(t, err)
-	_, err = helper.Repositories.Resource.Patch(ctx, repoName1,
+	_, err = helper.Repositories.Resource.Patch(t.Context(), repoName1,
 		types.MergePatchType, statusPatch, metav1.PatchOptions{}, "status")
 	require.NoError(t, err, "failed to patch repo1 status with near-expiry token")
 
 	// --- Step 5: verify health check AND token refresh happened, repo still blocked
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		obj, err := helper.Repositories.Resource.Get(ctx, repoName1, metav1.GetOptions{})
+		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName1, metav1.GetOptions{})
 		if !assert.NoError(c, err) {
 			return
 		}
-		r := common.UnstructuredToRepository(t, obj)
+		r := common.MustFromUnstructured[provisioning.Repository](t, obj)
 
 		// Repository must still be blocked by the namespace quota.
 		cond := common.FindCondition(r.Status.Conditions, provisioning.ConditionTypeNamespaceQuota)

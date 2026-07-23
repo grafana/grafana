@@ -1,4 +1,4 @@
-# Owned by grafana-release-guild
+# Owned by grafana-backend-services-squad
 # Intended to be dropped into the base repo (Ex: grafana/grafana) for use in the security mirror.
 name: Create security patch
 run-name: create-security-patch
@@ -8,22 +8,149 @@ on:
       - opened
       - reopened
       - synchronize
+      # edited (title/description) and (un)labeled (VUL ID / backport targets) regenerate
+      # the patch so the patch repo stays in sync with the mirror PR.
+      - edited
+      - labeled
+      - unlabeled
     branches:
       - "main"
       - "v*.*.*"
       - "release-*.*.*"
 
-# This is run before the pull request has been merged, so we'll run against the src branch
+concurrency:
+  group: create-patch-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
 jobs:
-  trigger_downstream_create_security_patch:
-    concurrency: create-patch-${{ github.ref_name }}
-    uses: grafana/security-patch-actions/.github/workflows/create-patch.yml@main # zizmor: ignore[unpinned-uses]
-    if: github.repository == 'grafana/grafana-security-mirror'
-    with:
-      repo: "${{ github.repository }}"
-      src_ref: "${{ github.head_ref }}" # this is the source branch name, Ex: "feature/newthing"
-      patch_ref: "${{ github.base_ref }}" # this is the target branch name, Ex: "main"
-      patch_repo: "grafana/grafana-security-patches"
-      patch_prefix: "${{ github.event.pull_request.number }}"
-      sender: "${{ github.event.pull_request.user.login }}"
-    secrets: inherit # zizmor: ignore[secrets-inherit]
+  # Dispatch create-patch via REST API rather than workflow_call. The previous
+  # workflow_call approach relied on get-vault-secrets + tibdex inside the called
+  # workflow (which is no longer permitted); switching to createWorkflowDispatch lets
+  # the called workflow use the per-workflow token broker (create-github-app-token).
+  dispatch-create-patch:
+    if: ${{ github.repository == 'grafana/grafana-security-mirror' }}
+    runs-on: ubuntu-arm64-small
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write # post the sticky status comment back on the mirror PR
+    env:
+      REPO: ${{ github.repository }}
+      SRC_REF: ${{ github.head_ref }}
+      PATCH_REF: ${{ github.base_ref }}
+      PATCH_PREFIX: ${{ github.event.pull_request.number }}
+      SENDER: ${{ github.event.pull_request.user.login }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      # Resolve the VUL ID and backport targets from the PR. The VUL ID can come from a
+      # `VUL-YYYY-NNNN` label (preferred — added for searchability) or, failing that, the
+      # required `GL-Vuln: VUL-YYYY-NNNN` trailer in the PR description (the canonical source
+      # enforced by grafana-security-patches' validate-patch-trailers). `backport <branch>`
+      # labels list extra branches to copy the patch into.
+      - name: Resolve VUL ID and backport targets
+        id: labels
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const labels = (pr.labels || []).map(l => l.name);
+
+            const fromLabel = labels.find(n => /^VUL-\d{4}-\d{4}$/.test(n));
+            const fromTrailer = (pr.body || '').match(/^GL-Vuln:\s*(VUL-\d{4}-\d{4})\b/im);
+            const vulId = fromLabel || (fromTrailer && fromTrailer[1]) || '';
+
+            const base = process.env.PATCH_REF;
+            const backports = [...new Set(
+              labels
+                .filter(n => /^backport\s+\S+/i.test(n))
+                .map(n => n.replace(/^backport\s+/i, '').trim())
+                .filter(b => b && b !== base)
+            )];
+            core.setOutput('vul_id', vulId);
+            core.setOutput('backport_refs', backports.join(' '));
+
+      # Without a VUL ID we can't name or de-duplicate the patch. Tell the author and stop
+      # (success, not failure — a missing label isn't an error, just nothing to do yet).
+      - name: Comment when VUL ID is missing
+        if: ${{ steps.labels.outputs.vul_id == '' }}
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: Number(process.env.PR_NUMBER),
+              body: '🔐 No VUL ID found on this PR, so no security patch was generated. '
+                + 'Add a `VUL-YYYY-NNNN` label or a `GL-Vuln: VUL-YYYY-NNNN` trailer to the description '
+                + '(and any `backport <branch>` labels) to trigger patch creation.',
+            });
+
+      - name: Get GitHub App token
+        if: ${{ steps.labels.outputs.vul_id != '' }}
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        with:
+          github_app: grafana-releases-oss
+
+      # Use `gh workflow run` rather than the createWorkflowDispatch REST call so we can
+      # capture the triggered run's URL (gh returns it when available) and link it from the
+      # status comment. source_pr is passed so the builder can link the patch PR back here.
+      - name: Dispatch create-patch in security-patch-actions
+        if: ${{ steps.labels.outputs.vul_id != '' }}
+        id: dispatch
+        env:
+          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+          COMMENT: "Closes: ${{ github.repository }}#${{ github.event.pull_request.number }}"
+          VUL_ID: ${{ steps.labels.outputs.vul_id }}
+          BACKPORT_REFS: ${{ steps.labels.outputs.backport_refs }}
+        run: |
+          set -euo pipefail
+          out=$(gh workflow run create-patch.yml \
+            --repo grafana/security-patch-actions \
+            --ref main \
+            -f "repo=${REPO}" \
+            -f "src_ref=${SRC_REF}" \
+            -f "patch_ref=${PATCH_REF}" \
+            -f "patch_repo=grafana/grafana-security-patches" \
+            -f "patch_prefix=${PATCH_PREFIX}" \
+            -f "vul_id=${VUL_ID}" \
+            -f "backport_refs=${BACKPORT_REFS}" \
+            -f "sender=${SENDER}" \
+            -f "comment=${COMMENT}" \
+            -f "source_pr=${PR_NUMBER}" 2>&1) || { echo "$out"; exit 1; }
+          echo "$out"
+          run_url=$(printf '%s\n' "$out" | grep -oE 'https://github\.com/[^[:space:]]+/actions/runs/[0-9]+' | head -1 || true)
+          echo "run_url=${run_url}" | tee -a "$GITHUB_OUTPUT"
+
+      # Post a fresh status comment each run (no in-place updates) so every dispatch is a
+      # visible, self-contained notification with its own run link.
+      - name: Comment dispatch status
+        if: ${{ steps.labels.outputs.vul_id != '' }}
+        uses: actions/github-script@v8
+        env:
+          VUL_ID: ${{ steps.labels.outputs.vul_id }}
+          BACKPORT_REFS: ${{ steps.labels.outputs.backport_refs }}
+          RUN_URL: ${{ steps.dispatch.outputs.run_url }}
+        with:
+          script: |
+            const {VUL_ID, BACKPORT_REFS, PATCH_REF, PR_NUMBER, RUN_URL} = process.env;
+            const targets = [PATCH_REF, ...(BACKPORT_REFS ? BACKPORT_REFS.split(' ') : [])];
+            // Link the exact triggered run when gh returned its URL; otherwise fall back
+            // to the workflow's runs page.
+            const runLink = RUN_URL
+              ? `[run](${RUN_URL})`
+              : '[security-patch-actions](https://github.com/grafana/security-patch-actions/actions/workflows/create-patch.yml)';
+            const body = [
+              `🔐 **Security patch dispatched** for \`${VUL_ID}\``,
+              '',
+              `Targets: ${targets.map(t => `\`${t}\``).join(', ')}`,
+              '',
+              `Patch generation is running: ${runLink}. `
+                + `The PR in \`grafana-security-patches\` will appear/update on branch \`patch/${VUL_ID}\` `
+                + `(a link will be posted here once it's created).`,
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner, repo: context.repo.repo, issue_number: Number(PR_NUMBER), body,
+            });

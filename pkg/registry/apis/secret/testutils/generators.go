@@ -3,10 +3,10 @@ package testutils
 import (
 	"fmt"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 	"pgregory.net/rapid"
+
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 )
 
 var (
@@ -24,7 +24,7 @@ var (
 			},
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: rapid.SampledFrom([]string{"d1", "d2", "d3", "d4", "d5"}).Draw(t, "description"),
-				Value:       ptr.To(secretv1beta1.NewExposedSecureValue(rapid.SampledFrom([]string{"v1", "v2", "v3", "v4", "v5"}).Draw(t, "value"))),
+				Value:       new(secretv1beta1.NewExposedSecureValue(rapid.SampledFrom([]string{"v1", "v2", "v3", "v4", "v5"}).Draw(t, "value"))),
 				Decrypters:  rapid.SliceOfDistinct(DecryptersGen, func(v string) string { return v }).Draw(t, "decrypters"),
 			},
 			Status: secretv1beta1.SecureValueStatus{},
@@ -39,7 +39,7 @@ var (
 			},
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: rapid.SampledFrom([]string{"d1", "d2", "d3", "d4", "d5"}).Draw(t, "description"),
-				Ref:         ptr.To(SecretsToRefGen.Draw(t, "ref")),
+				Ref:         new(SecretsToRefGen.Draw(t, "ref")),
 				Decrypters:  rapid.SliceOfDistinct(DecryptersGen, func(v string) string { return v }).Draw(t, "decrypters"),
 			},
 			Status: secretv1beta1.SecureValueStatus{},

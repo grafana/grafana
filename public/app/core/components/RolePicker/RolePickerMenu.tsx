@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useRef, useState, type JSX } from 'react';
 
-import { OrgRole } from '@grafana/data';
+import { type OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ScrollContainer, Stack, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/internal';
-import { Role } from 'app/types/accessControl';
+import { type Role } from 'app/types/accessControl';
 
 import { BuiltinRoleSelector } from './BuiltinRoleSelector';
 import { RoleMenuGroupsSection } from './RoleMenuGroupsSection';
@@ -30,6 +30,8 @@ interface RolesCollectionEntry {
   renderedName: string;
   roles: Role[];
 }
+
+const roleNameCollator = new Intl.Collator();
 
 const fixedRoleGroupNames: Record<string, string> = {
   ldap: 'LDAP',
@@ -112,9 +114,9 @@ export const RolePickerMenu = ({
     const fixedRoles = options.filter(filterFixedRoles).sort(sortRolesByName);
     const pluginRoles = options.filter(filterPluginsRoles).sort(sortRolesByName);
     const optionGroups = {
-      fixed: convertRolesToGroupOptions(fixedRoles).sort((a, b) => a.name.localeCompare(b.name)),
-      custom: convertRolesToGroupOptions(customRoles).sort((a, b) => a.name.localeCompare(b.name)),
-      plugin: convertRolesToGroupOptions(pluginRoles).sort((a, b) => a.name.localeCompare(b.name)),
+      fixed: convertRolesToGroupOptions(fixedRoles).sort((a, b) => roleNameCollator.compare(a.name, b.name)),
+      custom: convertRolesToGroupOptions(customRoles).sort((a, b) => roleNameCollator.compare(a.name, b.name)),
+      plugin: convertRolesToGroupOptions(pluginRoles).sort((a, b) => roleNameCollator.compare(a.name, b.name)),
     };
 
     setRolesCollection({
@@ -339,7 +341,7 @@ const getRolePrefix = (role: Role) => {
   return role.name.substring(0, prefixEnd);
 };
 
-const sortRolesByName = (a: Role, b: Role) => a.name.localeCompare(b.name);
+const sortRolesByName = (a: Role, b: Role) => roleNameCollator.compare(a.name, b.name);
 
 const capitalize = (s: string): string => {
   return s.slice(0, 1).toUpperCase() + s.slice(1);

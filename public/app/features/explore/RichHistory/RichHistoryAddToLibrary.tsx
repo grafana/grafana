@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { Button } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useDispatch, useSelector } from 'app/types/store';
@@ -13,9 +13,10 @@ import { selectExploreDSMaps } from '../state/selectors';
 
 type Props = {
   query: DataQuery;
+  comment?: string;
 };
 
-export const RichHistoryAddToLibrary = ({ query }: Props) => {
+export const RichHistoryAddToLibrary = ({ query, comment }: Props) => {
   const [hasBeenSaved, setHasBeenSaved] = useState(false);
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
   const dispatch = useDispatch();
@@ -45,6 +46,7 @@ export const RichHistoryAddToLibrary = ({ query }: Props) => {
             query,
             onSelectQuery,
             options: {
+              description: comment,
               onSave: () => {
                 setHasBeenSaved(true);
               },

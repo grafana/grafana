@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -11,7 +12,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
+	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
@@ -26,13 +28,16 @@ import (
 	"github.com/grafana/authlib/authz"
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
+	"github.com/grafana/dskit/services"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/infra/log"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/usagestats"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
@@ -42,10 +47,30 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resourc
 // Uses gRPC Unavailable so clients with retry interceptors will retry on another backend.
 var errStopping = status.Error(codes.Unavailable, "server is stopping")
 
+// logIfServerError logs errRes at Error level if it represents a 5xx (server) error.
+func (s *server) logIfServerError(ctx context.Context, op string, key *resourcepb.ResourceKey, errRes *resourcepb.ErrorResult) {
+	if errRes == nil || errRes.Code < 500 {
+		return
+	}
+	s.log.FromContext(ctx).Error(fmt.Sprintf("server error: %s", op),
+		"group", key.Group,
+		"resource", key.Resource,
+		"namespace", key.Namespace,
+		"name", key.Name,
+		"code", errRes.Code,
+		"error", errRes.Message,
+	)
+}
+
+// defaultBookmarkFrequency is how often periodic bookmark events are sent
+// to Watch clients that have AllowWatchBookmarks enabled.
+const defaultBookmarkFrequency = 10 * time.Second
+
 // ResourceServer implements all gRPC services
 type ResourceServer interface {
 	SearchServer
 	resourcepb.ResourceStoreServer
+	resourcepb.ResourceStatsServer
 	resourcepb.BulkStoreServer
 	resourcepb.BlobStoreServer
 	resourcepb.QuotasServer
@@ -157,6 +182,14 @@ type StorageBackend interface {
 	// Get resource stats within the storage backend.  When namespace is empty, it will apply to all
 	GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error)
 
+	// ListStoredResources discovers which resource identities exist in storage,
+	// without returning counts. It is a cheaper alternative to GetResourceStats
+	// for callers that only need to know what is stored. The filter's Namespace
+	// is required; Group and Resource are optional (empty means no filter on that
+	// field). Results are discovery-only and may contain false positives: a
+	// returned identity may have no live objects by the time the caller queries it.
+	ListStoredResources(ctx context.Context, filter NamespacedResource) ([]NamespacedResource, error)
+
 	// GetResourceLastImportTimes returns import times for all namespaced resources in the backend.
 	GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error]
 }
@@ -234,6 +267,9 @@ type SearchOptions struct {
 	// Minimum build version for reusing file-based indexes. Ignored if nil.
 	MinBuildVersion *semver.Version
 
+	// Running Grafana build version. Used to detect if index was built by a newer version.
+	BuildVersion *semver.Version
+
 	// Number of workers to use for index rebuilds.
 	IndexRebuildWorkers int
 
@@ -247,8 +283,47 @@ type SearchOptions struct {
 	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
 	InjectFailuresPercent int
 
-	// Map "group/kind" -> list of selectable fields. Keys must be lower-case.
-	SelectableFieldsForKinds map[string][]string
+	// SearchFields holds the per-kind search-field wiring shared with the index
+	// backend. The search server reads the selectable fields and the definition
+	// hash from it and triggers a rebuild when either differs from the values
+	// stored in an index's IndexBuildInfo. May be nil.
+	SearchFields *SearchFieldsRegistry
+
+	// Index snapshot settings — enable downloading pre-built search indexes from object storage on startup.
+	// IndexSnapshotEnabled gates the entire snapshot feature.
+	IndexSnapshotEnabled bool
+	// IndexSnapshotBucketURL is the Go CDK bucket URL (s3://, gs://, azblob://, mem://, file:///).
+	IndexSnapshotBucketURL string
+	// IndexSnapshotThreshold is the minimum document count to use remote snapshots (must be >= IndexFileThreshold).
+	IndexSnapshotThreshold int
+	// IndexSnapshotMaxAge is the maximum age of a snapshot before it is deleted during cleanup.
+	IndexSnapshotMaxAge time.Duration
+	// IndexSnapshotMinDocChanges is the minimum number of document changes since the last
+	// snapshot before a new upload is triggered.
+	IndexSnapshotMinDocChanges int
+	// IndexSnapshotUploadInterval is the minimum time between consecutive snapshot uploads.
+	IndexSnapshotUploadInterval time.Duration
+	// IndexSnapshotLockTTL is the TTL for the distributed lock used to coordinate uploads/cleanup.
+	IndexSnapshotLockTTL time.Duration
+	// IndexSnapshotCleanupInterval is how often snapshot cleanup runs.
+	IndexSnapshotCleanupInterval time.Duration
+	// IndexSnapshotCleanupGracePeriod is the time a newly uploaded snapshot must
+	// have existed before its predecessor in the same Grafana-version group is
+	// considered eligible for cleanup.
+	IndexSnapshotCleanupGracePeriod time.Duration
+
+	// VectorSearch query-embedding cache. nil disables the cache path.
+	QueryCache             vector.QueryEmbeddingCache
+	QueryCacheMaxPerTenant int
+
+	// VectorSearch per-tenant rate limiter. nil disables rate limiting.
+	RateLimiter        vector.RateLimiter
+	RateLimitPerTenant int
+	RateLimitWindow    time.Duration
+
+	// Vector API collection allowlists: "group/resource" entries; empty allows nothing.
+	AllowedInternalCollections []string
+	AllowedExternalCollections []string
 }
 
 type ResourceServerOptions struct {
@@ -295,6 +370,8 @@ type ResourceServerOptions struct {
 
 	IndexMetrics *BleveIndexMetrics
 
+	VectorMetrics *VectorMetrics
+
 	// MaxPageSizeBytes is the maximum size of a page in bytes.
 	MaxPageSizeBytes int
 
@@ -305,6 +382,48 @@ type ResourceServerOptions struct {
 	OwnsIndexFn func(key NamespacedResource) (bool, error)
 
 	QuotasConfig QuotasConfig
+
+	// BookmarkFrequency controls how often periodic bookmark events are sent to
+	// Watch clients that set AllowWatchBookmarks. Zero defaults to defaultBookmarkFrequency.
+	BookmarkFrequency time.Duration
+
+	// VectorBackend is the optional pgvector-backed store for semantic search.
+	// nil when the [unified_storage] vector_backend flag is off. When present,
+	// the resource and search servers hold a reference for use by future
+	// write and query paths.
+	VectorBackend vector.VectorBackend
+
+	// Embedder is the optional text-to-vector embedder used by the
+	// VectorSearch RPC. nil when no [vector_embedder] provider is configured;
+	// the RPC then returns Unimplemented.
+	Embedder *embedder.Embedder
+
+	// VectorReconciler, when non-nil, is launched after Init; the server
+	// attaches its own broadcaster to it before starting Run so the
+	// reconciler's watch path lights up. The reconciler owns the
+	// backfiller and runs it. nil = reconciler feature off.
+	VectorReconciler BroadcasterConsumer
+
+	// UsageStatsEnabled turns on the usage stats ingestion path (RecordEvent /
+	// GetResourceDailyStats). It requires a KV-backed StorageBackend so the
+	// ingester can share its KV store and lease manager.
+	UsageStatsEnabled bool
+}
+
+// Runnable is anything the server can launch in a goroutine and that
+// exits cleanly on context cancel. Stays abstract so the resource
+// package doesn't have to import the concrete indexer packages, which
+// would cycle.
+type Runnable interface {
+	Run(ctx context.Context) error
+}
+
+// BroadcasterConsumer is a Runnable that wants the server's write-events
+// broadcaster attached before Run. The server sets this up once
+// initWatcher has populated its broadcaster.
+type BroadcasterConsumer interface {
+	Runnable
+	UseBroadcaster(b Broadcaster[*WrittenEvent])
 }
 
 func (opts ResourceServerOptions) bulkBatchOptions() BulkBatchOptions {
@@ -333,7 +452,7 @@ func NewUninitializedSearchServer(opts ResourceServerOptions) (SearchServer, err
 	}
 
 	// Create the search server using the search.go factory
-	searchServer, err := newSearchServer(opts.Search, opts.Backend, opts.AccessClient, blobstore, opts.IndexMetrics, opts.OwnsIndexFn)
+	searchServer, err := newSearchServer(opts.Search, opts.Backend, opts.VectorBackend, opts.Embedder, opts.AccessClient, blobstore, opts.IndexMetrics, opts.VectorMetrics, opts.OwnsIndexFn)
 	if err != nil || searchServer == nil {
 		return nil, fmt.Errorf("search server could not be created: %w", err)
 	}
@@ -400,6 +519,10 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		opts.QOSConfig.MaxRetries = 3
 	}
 
+	if opts.BookmarkFrequency == 0 {
+		opts.BookmarkFrequency = defaultBookmarkFrequency
+	}
+
 	// Initialize the blob storage
 	blobstore, err := initializeBlobStorage(opts)
 	if err != nil {
@@ -413,6 +536,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 	s := &server{
 		log:                            logger,
 		backend:                        opts.Backend,
+		vectorBackend:                  opts.VectorBackend,
 		bulkBatchOptions:               opts.bulkBatchOptions(),
 		blob:                           blobstore,
 		diagnostics:                    opts.Diagnostics,
@@ -432,11 +556,37 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		searchClient:                   opts.SearchClient,
 		quotasConfig:                   opts.QuotasConfig,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
+		bookmarkFrequency:              opts.BookmarkFrequency,
+		vectorWriteReconciler:          opts.VectorReconciler,
 	}
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchServer(opts.Search, s.backend, s.access, s.blob, opts.IndexMetrics, opts.OwnsIndexFn)
+		s.search, err = newSearchServer(opts.Search, s.backend, opts.VectorBackend, opts.Embedder, s.access, s.blob, opts.IndexMetrics, opts.VectorMetrics, opts.OwnsIndexFn)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Access to search is required when checking quotas.
+	if opts.OverridesService != nil && s.search == nil && opts.SearchClient == nil {
+		return nil, fmt.Errorf("overrides service requires search for quota checking")
+	}
+
+	if opts.UsageStatsEnabled {
+		kvBackend, ok := opts.Backend.(KVBackend)
+		if !ok {
+			return nil, fmt.Errorf("usage stats require a KV-backed storage backend")
+		}
+		// The flush loop relies on a lease to serialize the read-add-write per
+		// namespace; without one, concurrent flushes across pods would lose
+		// increments. NewIngester rejects a nil lease manager.
+		s.statsIngester, err = usagestats.NewIngester(usagestats.IngesterOptions{
+			Store:  usagestats.NewStore(kvBackend.KV()),
+			Leases: kvBackend.LeaseManager(),
+			Reg:    opts.Reg,
+			Log:    logger,
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -487,6 +637,7 @@ var _ ResourceServer = &server{}
 type server struct {
 	log              log.Logger
 	backend          StorageBackend
+	vectorBackend    vector.VectorBackend
 	bulkBatchOptions BulkBatchOptions
 	blob             BlobSupport
 	secure           secrets.InlineSecureValueSupport
@@ -528,6 +679,17 @@ type server struct {
 	// Set from SearchOptions.IndexMinUpdateInterval.
 	artificialSuccessfulWriteDelay time.Duration
 	storageEnabled                 bool
+
+	bookmarkFrequency time.Duration
+
+	// Vector reconciler (which owns the backfiller). Started in Init,
+	// joined in Stop via indexersWG.
+	vectorWriteReconciler BroadcasterConsumer
+	indexersWG            sync.WaitGroup
+
+	// statsIngester buffers and flushes usage stats events. nil when the
+	// usage stats feature is off or the backend is not KV-backed.
+	statsIngester *usagestats.Ingester
 }
 
 // Init implements ResourceServer.
@@ -548,11 +710,39 @@ func (s *server) Init(ctx context.Context) error {
 			s.initErr = s.initWatcher()
 		}
 
+		// Launch async vector indexers (backfiller + reconciler) once
+		// the broadcaster is up. They run for the server's lifetime
+		// and Stop() joins them via indexersWG.
+		if s.initErr == nil {
+			s.startVectorIndexers()
+		}
+
+		if s.initErr == nil && s.statsIngester != nil {
+			s.initErr = services.StartAndAwaitRunning(s.ctx, s.statsIngester)
+		}
+
 		if s.initErr != nil {
 			s.log.Error("error running resource server init", "error", s.initErr)
 		}
 	})
 	return s.initErr
+}
+
+// startVectorIndexers launches the vector reconciler (which owns and runs
+// the backfiller). Optional: nil = feature off. The reconciler gets the
+// server's broadcaster via UseBroadcaster before Run so its watch path
+// lights up.
+func (s *server) startVectorIndexers() {
+	if s.vectorWriteReconciler != nil {
+		if s.broadcaster != nil {
+			s.vectorWriteReconciler.UseBroadcaster(s.broadcaster)
+		}
+		s.indexersWG.Go(func() {
+			if err := s.vectorWriteReconciler.Run(s.ctx); err != nil && !errors.Is(err, context.Canceled) {
+				s.log.Error("vector reconciler stopped", "err", err)
+			}
+		})
+	}
 }
 
 // trackWrite atomically checks the stopping flag and increments the in-flight
@@ -577,6 +767,9 @@ func (s *server) Stop(ctx context.Context) error {
 	s.stopping = true
 	s.stopMu.Unlock()
 
+	// Stops streaming (broadcaster, watch events).
+	s.cancel()
+
 	// Wait for in-flight write operations to finish, respecting the context deadline.
 	// After the unlock above, no new Add(1) can happen, so Wait is safe.
 	done := make(chan struct{})
@@ -591,7 +784,27 @@ func (s *server) Stop(ctx context.Context) error {
 		s.log.Warn("timed out waiting for in-flight write operations to complete")
 	}
 
+	// Wait for async vector indexers (backfiller, reconciler) to wind
+	// down. They observe s.ctx, so the cancel above unblocks them.
+	indexersDone := make(chan struct{})
+	go func() {
+		s.indexersWG.Wait()
+		close(indexersDone)
+	}()
+	select {
+	case <-indexersDone:
+		s.log.Debug("vector indexers stopped")
+	case <-ctx.Done():
+		s.log.Warn("timed out waiting for vector indexers to stop")
+	}
+
 	var stopFailed bool
+
+	if s.statsIngester != nil {
+		if err := services.StopAndAwaitTerminated(ctx, s.statsIngester); err != nil {
+			s.log.Warn("usage stats ingester failed to stop cleanly", "error", err)
+		}
+	}
 
 	if s.search != nil {
 		s.search.stop()
@@ -604,12 +817,12 @@ func (s *server) Stop(ctx context.Context) error {
 		}
 	}
 
-	if kvBackend, ok := s.backend.(KVBackend); ok {
-		kvBackend.Stop()
+	if stoppableBackend, ok := s.backend.(ResourceServerStopper); ok {
+		if err := stoppableBackend.Stop(ctx); err != nil {
+			stopFailed = true
+			s.initErr = fmt.Errorf("backend stop failed: %w", err)
+		}
 	}
-
-	// Stops the streaming
-	s.cancel()
 
 	// mark the value as done
 	if stopFailed {
@@ -623,7 +836,7 @@ func (s *server) Stop(ctx context.Context) error {
 // Old value indicates an update -- otherwise a create
 //
 //nolint:gocyclo
-func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, value, oldValue []byte) (*WriteEvent, *resourcepb.ErrorResult) {
+func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, rv int64, value, oldValue []byte) (*WriteEvent, *resourcepb.ErrorResult) {
 	tmp := &unstructured.Unstructured{}
 	err := tmp.UnmarshalJSON(value)
 	if err != nil {
@@ -634,26 +847,25 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		return nil, AsErrorResult(err)
 	}
 
-	l := s.log.FromContext(ctx)
+	// TODO: return a NewBadRequestErorr in this case once the resource server is
+	// only interfacing with storage backends for K8s resources.
 	if obj.GetUID() == "" {
-		// TODO! once https://github.com/grafana/grafana/pull/96086 is deployed everywhere
-		// return nil, NewBadRequestError("object is missing UID")
-		l.Error("object is missing UID", "key", key)
+		s.log.FromContext(ctx).Warn("object is missing UID", "key", key)
 	}
 
 	if obj.GetResourceVersion() != "" {
-		l.Error("object must not include a resource version", "key", key)
+		return nil, NewBadRequestError("object must not include a resource version")
 	}
 
 	// Make sure the command labels are not saved
 	for k := range obj.GetLabels() {
 		if k == utils.LabelKeyGetHistory || k == utils.LabelKeyGetTrash {
-			return nil, NewBadRequestError("can not save label: " + k)
+			return nil, NewBadRequestError("cannot save label: " + k)
 		}
 	}
 
 	if obj.GetAnnotation(utils.AnnoKeyGrantPermissions) != "" {
-		return nil, NewBadRequestError("can not save annotation: " + utils.AnnoKeyGrantPermissions)
+		return nil, NewBadRequestError("cannot save annotation: " + utils.AnnoKeyGrantPermissions)
 	}
 
 	event := &WriteEvent{
@@ -667,6 +879,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		event.Type = resourcepb.WatchEvent_ADDED
 	} else {
 		event.Type = resourcepb.WatchEvent_MODIFIED
+		event.PreviousRV = rv
 
 		temp := &unstructured.Unstructured{}
 		err = temp.UnmarshalJSON(oldValue)
@@ -752,6 +965,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 			return nil, AsErrorResult(err)
 		}
 	}
+
 	return event, nil
 }
 
@@ -816,6 +1030,20 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 	}
 	defer s.inflight.Done()
 
+	if r := verifyRequestKey(req.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
+	}
+
+	rsp := &resourcepb.CreateResponse{}
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		rsp.Error = &resourcepb.ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}
+		return rsp, nil
+	}
+
 	err := s.checkQuota(ctx, NamespacedResource{
 		Namespace: req.Key.Namespace,
 		Group:     req.Key.Group,
@@ -836,20 +1064,6 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		}, nil
 	}
 
-	if r := verifyRequestKey(req.Key); r != nil {
-		return nil, fmt.Errorf("invalid request key: %s", r.Message)
-	}
-
-	rsp := &resourcepb.CreateResponse{}
-	user, ok := claims.AuthInfoFrom(ctx)
-	if !ok || user == nil {
-		rsp.Error = &resourcepb.ErrorResult{
-			Message: "no user found in context",
-			Code:    http.StatusUnauthorized,
-		}
-		return rsp, nil
-	}
-
 	var res *resourcepb.CreateResponse
 	runErr := s.runInQueue(ctx, req.Key.Namespace, func(queueCtx context.Context) {
 		res, err = s.create(queueCtx, user, req)
@@ -860,28 +1074,33 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		})
 	}
 
-	s.sleepAfterSuccessfulWriteOperation("Create", req.Key, res, err)
+	s.sleepAfterSuccessfulWriteOperation(ctx, "Create", req.Key, res, err)
 
 	return res, err
 }
 
 func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resourcepb.CreateRequest) (*resourcepb.CreateResponse, error) {
 	rsp := &resourcepb.CreateResponse{}
+	defer func() { s.logIfServerError(ctx, "server.create", req.Key, rsp.Error) }()
 
-	event, e := s.newEvent(ctx, user, req.Key, req.Value, nil)
+	event, e := s.newEvent(ctx, user, req.Key, 0, req.Value, nil)
 	if e != nil {
 		rsp.Error = e
 		return rsp, nil
 	}
 
-	// If the resource already exists, the create will return an already exists error that is remapped appropriately by AsErrorResult.
-	// This also benefits from ACID behaviours on our databases, so we avoid race conditions.
+	// If the resource already exists, the create will return an already exists or a
+	// conflict error that is remapped appropriately by AsErrorResult.
 	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
+		if apierrors.IsConflict(err) {
+			// Retryable concurrent-create conflict. Return as gRPC Aborted
+			// so client retry interceptors can handle it.
+			return nil, status.Error(codes.Aborted, err.Error())
+		}
 		rsp.Error = AsErrorResult(err)
 	}
-	s.log.FromContext(ctx).Debug("server.WriteEvent", "type", event.Type, "rv", rsp.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "name", event.Key.Name, "resource", event.Key.Resource)
 	return rsp, nil
 }
 
@@ -893,7 +1112,7 @@ type responseWithErrorResult interface {
 // Returns boolean indicating whether the sleep was performed or not (used in testing).
 //
 // This sleep is performed to guarantee search-after-write consistency, when rate-limiting updates to search index.
-func (s *server) sleepAfterSuccessfulWriteOperation(operation string, key *resourcepb.ResourceKey, res responseWithErrorResult, err error) bool {
+func (s *server) sleepAfterSuccessfulWriteOperation(ctx context.Context, operation string, key *resourcepb.ResourceKey, res responseWithErrorResult, err error) bool {
 	if s.artificialSuccessfulWriteDelay <= 0 {
 		return false
 	}
@@ -920,7 +1139,10 @@ func (s *server) sleepAfterSuccessfulWriteOperation(operation string, key *resou
 		"namespace", key.Namespace,
 		"name", key.Name)
 
-	time.Sleep(s.artificialSuccessfulWriteDelay)
+	select {
+	case <-time.After(s.artificialSuccessfulWriteDelay):
+	case <-ctx.Done():
+	}
 	return true
 }
 
@@ -933,6 +1155,10 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 	}
 	defer s.inflight.Done()
 
+	if r := verifyRequestKey(req.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
+	}
+
 	rsp := &resourcepb.UpdateResponse{}
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
@@ -940,10 +1166,6 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 			Message: "no user found in context",
 			Code:    http.StatusUnauthorized,
 		}
-		return rsp, nil
-	}
-	if req.ResourceVersion < 0 {
-		rsp.Error = AsErrorResult(apierrors.NewBadRequest("update must include the previous version"))
 		return rsp, nil
 	}
 
@@ -960,17 +1182,20 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 		})
 	}
 
-	s.sleepAfterSuccessfulWriteOperation("Update", req.Key, res, err)
+	s.sleepAfterSuccessfulWriteOperation(ctx, "Update", req.Key, res, err)
 
 	return res, err
 }
 
 func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resourcepb.UpdateRequest) (*resourcepb.UpdateResponse, error) {
 	rsp := &resourcepb.UpdateResponse{}
+	defer func() { s.logIfServerError(ctx, "server.update", req.Key, rsp.Error) }()
+
 	latest := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{
 		Key: req.Key,
 	})
 	if latest.Error != nil {
+		rsp.Error = latest.Error
 		return rsp, nil
 	}
 	if latest.Value == nil {
@@ -978,22 +1203,37 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 		return rsp, nil
 	}
 
-	// TODO: once we know the client is always sending the RV, require ResourceVersion > 0
-	// See: https://github.com/grafana/grafana/pull/111866
-	if req.ResourceVersion > 0 && !rvmanager.IsRvEqual(latest.ResourceVersion, req.ResourceVersion) {
-		return &resourcepb.UpdateResponse{
-			Error: &ErrOptimisticLockingFailed,
-		}, nil
+	// Skip write events when there is no change to the payload, but still enforce RBAC.
+	if bytes.Equal(req.Value, latest.Value) {
+		key := req.Key
+		a, err := s.access.Check(ctx, user, claims.CheckRequest{
+			Verb:      utils.VerbUpdate,
+			Group:     key.Group,
+			Resource:  key.Resource,
+			Namespace: key.Namespace,
+			Name:      key.Name,
+		}, latest.Folder)
+		if err != nil {
+			return &resourcepb.UpdateResponse{Error: AsErrorResult(err)}, nil
+		}
+		if !a.Allowed {
+			return &resourcepb.UpdateResponse{
+				Error: &resourcepb.ErrorResult{
+					Message: "not allowed to update resource",
+					Code:    http.StatusForbidden,
+				},
+			}, nil
+		}
+
+		rsp.ResourceVersion = latest.ResourceVersion // No change, return the current RV
+		return rsp, nil
 	}
 
-	event, e := s.newEvent(ctx, user, req.Key, req.Value, latest.Value)
+	event, e := s.newEvent(ctx, user, req.Key, req.ResourceVersion, req.Value, latest.Value)
 	if e != nil {
 		rsp.Error = e
 		return rsp, nil
 	}
-
-	event.Type = resourcepb.WatchEvent_MODIFIED
-	event.PreviousRV = latest.ResourceVersion
 
 	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
@@ -1012,10 +1252,11 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 	}
 	defer s.inflight.Done()
 
-	rsp := &resourcepb.DeleteResponse{}
-	if req.ResourceVersion < 0 {
-		return nil, apierrors.NewBadRequest("update must include the previous version")
+	if r := verifyRequestKey(req.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
 	}
+
+	rsp := &resourcepb.DeleteResponse{}
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		rsp.Error = &resourcepb.ErrorResult{
@@ -1039,22 +1280,20 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 		})
 	}
 
-	s.sleepAfterSuccessfulWriteOperation("Delete", req.Key, res, err)
+	s.sleepAfterSuccessfulWriteOperation(ctx, "Delete", req.Key, res, err)
 
 	return res, err
 }
 
 func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resourcepb.DeleteRequest) (*resourcepb.DeleteResponse, error) {
 	rsp := &resourcepb.DeleteResponse{}
+	defer func() { s.logIfServerError(ctx, "server.delete", req.Key, rsp.Error) }()
+
 	latest := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{
 		Key: req.Key,
 	})
 	if latest.Error != nil {
 		rsp.Error = latest.Error
-		return rsp, nil
-	}
-	if req.ResourceVersion > 0 && !rvmanager.IsRvEqual(latest.ResourceVersion, req.ResourceVersion) {
-		rsp.Error = &ErrOptimisticLockingFailed
 		return rsp, nil
 	}
 
@@ -1080,7 +1319,7 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 	event := WriteEvent{
 		Key:        req.Key,
 		Type:       resourcepb.WatchEvent_DELETED,
-		PreviousRV: latest.ResourceVersion,
+		PreviousRV: req.ResourceVersion,
 		GUID:       uuid.New().String(),
 	}
 	marker := &unstructured.Unstructured{}
@@ -1121,6 +1360,9 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 }
 
 func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.server.Read")
+	defer span.End()
+
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return &resourcepb.ReadResponse{
@@ -1130,8 +1372,12 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 			}}, nil
 	}
 
-	if req.Key.Resource == "" {
-		return &resourcepb.ReadResponse{Error: NewBadRequestError("missing resource")}, nil
+	// Don't validate the name format here: a lookup with an odd or
+	// invalid-looking name should fall through to the backend and surface as
+	// NotFound, matching K8s Get semantics. Strict name validation belongs on
+	// writes (Create/Update/Delete).
+	if r := verifyRequestKeyCollection(req.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
 	}
 
 	var (
@@ -1150,7 +1396,13 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 	return res, err
 }
 
-func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb.ReadRequest) (readRsp *resourcepb.ReadResponse, readErr error) {
+	defer func() {
+		if readRsp != nil {
+			s.logIfServerError(ctx, "server.read", req.Key, readRsp.Error)
+		}
+	}()
+
 	rsp := s.backend.ReadResource(ctx, req)
 	if rsp.Error != nil && rsp.Error.Code == http.StatusNotFound {
 		return &resourcepb.ReadResponse{Error: rsp.Error}, nil
@@ -1179,10 +1431,101 @@ func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb
 	}, nil
 }
 
+func (s *server) checkStatsReadAccess(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey) error {
+	// must be able to read object in order to read its stats
+	rsp := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{Key: key})
+	if rsp.Error != nil {
+		if rsp.Error.Code == http.StatusNotFound {
+			return status.Error(codes.NotFound, rsp.Error.Message)
+		}
+		return status.Error(codes.Internal, rsp.Error.Message)
+	}
+
+	a, err := s.access.Check(ctx, user, claims.CheckRequest{
+		Verb:      "get",
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+		Name:      key.Name,
+	}, rsp.Folder)
+	if err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+	if !a.Allowed {
+		return status.Error(codes.PermissionDenied, "not allowed to access object stats")
+	}
+	return nil
+}
+
+func (s *server) RecordEvent(ctx context.Context, req *resourcepb.RecordEventRequest) (*resourcepb.RecordEventResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.server.RecordEvent")
+	defer span.End()
+
+	if s.statsIngester == nil {
+		return nil, status.Error(codes.Unimplemented, "usage stats are not enabled")
+	}
+
+	// deliberately require only that a caller identity is present, with
+	// no object-level authz. The client emits events for objects the user is
+	// already viewing (having passed a read check at the API layer), so the
+	// per-object permission was effectively enforced upstream.
+	if user, ok := claims.AuthInfoFrom(ctx); !ok || user == nil {
+		return nil, status.Error(codes.Unauthenticated, "no user found in context")
+	}
+	if r := verifyRequestKey(req.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
+	}
+
+	if err := s.statsIngester.RecordEvent(ctx, req.Key, req.Events); err != nil {
+		if errors.Is(err, usagestats.ErrInvalidEvent) {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &resourcepb.RecordEventResponse{}, nil
+}
+
+func (s *server) GetResourceDailyStats(req *resourcepb.GetResourceDailyStatsRequest, stream resourcepb.ResourceStats_GetResourceDailyStatsServer) error {
+	ctx, span := tracer.Start(stream.Context(), "resource.server.GetResourceDailyStats")
+	defer span.End()
+
+	if s.statsIngester == nil {
+		return status.Error(codes.Unimplemented, "usage stats are not enabled")
+	}
+
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return status.Error(codes.Unauthenticated, "no user found in context")
+	}
+	if r := verifyRequestKey(req.Key); r != nil {
+		return status.Error(codes.InvalidArgument, r.Message)
+	}
+	if err := s.checkStatsReadAccess(ctx, user, req.Key); err != nil {
+		return err
+	}
+
+	for day, err := range s.statsIngester.GetResourceDailyStats(ctx, req.Key, req.FromDay, req.ToDay) {
+		if err != nil {
+			return status.Error(codes.Internal, err.Error())
+		}
+		if err := stream.Send(day); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.List")
-	span.SetAttributes(attribute.String("group", req.Options.Key.Group), attribute.String("resource", req.Options.Key.Resource))
 	defer span.End()
+
+	if req.Options == nil {
+		return nil, status.Error(codes.InvalidArgument, "missing list options")
+	}
+	if r := verifyRequestKeyCollection(req.Options.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
+	}
+	span.SetAttributes(attribute.String("group", req.Options.Key.Group), attribute.String("resource", req.Options.Key.Resource))
 
 	// The history + trash queries do not yet support additional filters
 	if req.Source != resourcepb.ListRequest_STORE {
@@ -1238,6 +1581,42 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	default:
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid list source: %v", req.Source))
 	}
+}
+
+// ListStoredResources implements the ResourceStore gRPC service by delegating
+// to the storage backend. A namespace is required.
+func (s *server) ListStoredResources(ctx context.Context, req *resourcepb.ListStoredResourcesRequest) (*resourcepb.ListStoredResourcesResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.server.ListStoredResources")
+	defer span.End()
+
+	if req.Namespace == "" {
+		return nil, status.Error(codes.InvalidArgument, "namespace is required")
+	}
+
+	if err := s.Init(ctx); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	stored, err := s.backend.ListStoredResources(ctx, NamespacedResource{
+		Namespace: req.Namespace,
+		Group:     req.Group,
+		Resource:  req.Resource,
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	rsp := &resourcepb.ListStoredResourcesResponse{
+		Items: make([]*resourcepb.ListStoredResourcesResponse_StoredResource, 0, len(stored)),
+	}
+	for _, r := range stored {
+		rsp.Items = append(rsp.Items, &resourcepb.ListStoredResourcesResponse_StoredResource{
+			Namespace: r.Namespace,
+			Group:     r.Group,
+			Resource:  r.Resource,
+		})
+	}
+	return rsp, nil
 }
 
 // listBackendFunc is the signature shared by ListIterator and ListHistory.
@@ -1318,7 +1697,7 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 		return iter.Error()
 	})
 
-	return s.finalizeListResponse(rsp, rv, err, nextToken, req.Options.Key)
+	return s.finalizeListResponse(ctx, rsp, rv, err, nextToken, req.Options.Key)
 }
 
 // listFromTrash lists deleted resources. Trash uses a different authorization
@@ -1388,12 +1767,14 @@ func (s *server) listFromTrash(ctx context.Context, req *resourcepb.ListRequest)
 		return iter.Error()
 	})
 
-	return s.finalizeListResponse(rsp, rv, err, nextToken, req.Options.Key)
+	return s.finalizeListResponse(ctx, rsp, rv, err, nextToken, req.Options.Key)
 }
 
 // finalizeListResponse validates the resource version, sets pagination token,
 // and records metrics. Shared by listFromStore, listFromHistory, and listFromTrash.
-func (s *server) finalizeListResponse(rsp *resourcepb.ListResponse, rv int64, err error, nextToken string, key *resourcepb.ResourceKey) (*resourcepb.ListResponse, error) {
+func (s *server) finalizeListResponse(ctx context.Context, rsp *resourcepb.ListResponse, rv int64, err error, nextToken string, key *resourcepb.ResourceKey) (*resourcepb.ListResponse, error) {
+	defer func() { s.logIfServerError(ctx, "server.list", key, rsp.Error) }()
+
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 		return rsp, nil
@@ -1428,6 +1809,16 @@ func (s *server) checkFolderAdmin(ctx context.Context, user claims.AuthInfo, fol
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
 	}, folder)
+	if err != nil {
+		// The error is swallowed (user treated as non-admin), so without this
+		// the failure is invisible. Record it as a degraded operation, tagging
+		// whether authz was unavailable vs. a logical error.
+		s.degraded(ctx, "folder_admin_check", classifyAuthError(err), NamespacedResource{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+		}, err)
+	}
 	isAdmin := err == nil && resp.Allowed
 	cache[folder] = isAdmin
 	return isAdmin
@@ -1476,17 +1867,41 @@ func (s *server) initWatcher() error {
 	if s.storageMetrics != nil {
 		broadcasterMetrics = s.storageMetrics.Broadcaster
 	}
-	s.broadcaster = NewBroadcaster(s.ctx, out, broadcasterMetrics)
+	s.broadcaster = NewBroadcaster(s.ctx, out, broadcasterMetrics, func(e *WrittenEvent) string {
+		if e == nil || e.Key == nil {
+			return ""
+		}
+		return e.Key.Resource
+	})
 	return nil
 }
 
 //nolint:gocyclo
-func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStore_WatchServer) error {
+func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStore_WatchServer) (retErr error) {
 	ctx := srv.Context()
+
+	// When our context is canceled (e.g. client disconnects), downstream calls
+	// like srv.Send may surface that cancellation back to us. Treat it as a
+	// clean shutdown to match the explicit `case <-ctx.Done(): return nil`
+	// branch in the watch loop. Context errors from other contexts are still
+	// propagated.
+	defer func() {
+		if retErr != nil && ctx.Err() != nil &&
+			(errors.Is(retErr, context.Canceled) || errors.Is(retErr, context.DeadlineExceeded)) {
+			retErr = nil
+		}
+	}()
 
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return apierrors.NewUnauthorized("no user found in context")
+	}
+
+	if req.Options == nil {
+		return status.Error(codes.InvalidArgument, "missing watch options")
+	}
+	if r := verifyRequestKeyCollection(req.Options.Key); r != nil {
+		return status.Error(codes.InvalidArgument, r.Message)
 	}
 
 	key := req.Options.Key
@@ -1507,7 +1922,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	// Start listening -- this will buffer any changes that happen while we backfill.
 	// If events are generated faster than we can process them, then some events will be dropped.
 	// TODO: Think of a way to allow the client to catch up.
-	stream, err := s.broadcaster.Subscribe(ctx, fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace))
+	stream, err := s.broadcaster.Subscribe(ctx, fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace), key.Resource)
 	if err != nil {
 		return err
 	}
@@ -1554,13 +1969,34 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		mostRecentRV = s.mostRecentRV.Load()
 	}
 
-	var initialEventsRV int64 // resource version coming from the initial events
+	lastBookmarkRV := int64(-1)
+	sendBookmark := func(rv int64) error {
+		// Don't send repeated bookmarks if no new events were received.
+		if rv <= 0 || rv == lastBookmarkRV {
+			return nil
+		}
+
+		if err := srv.Send(&resourcepb.WatchEvent{
+			Type:     resourcepb.WatchEvent_BOOKMARK,
+			Resource: &resourcepb.WatchEvent_Resource{Version: rv},
+		}); err != nil {
+			return fmt.Errorf("sending bookmark: %w", err)
+		}
+
+		lastBookmarkRV = rv
+		return nil
+	}
+
+	var lastEmittedRV int64 // tracks the most recent RV sent to the client
 	if req.SendInitialEvents {
 		// Backfill the stream by adding every existing entities.
-		initialEventsRV, err = s.backend.ListIterator(ctx, &resourcepb.ListRequest{Options: req.Options}, func(iter ListIterator) error {
+		initialEventsRV, err := s.backend.ListIterator(ctx, &resourcepb.ListRequest{Options: req.Options}, func(iter ListIterator) error {
 			for iter.Next() {
 				if err := iter.Error(); err != nil {
 					return err
+				}
+				if !checker(iter.Name(), iter.Folder()) {
+					continue
 				}
 				if err := srv.Send(&resourcepb.WatchEvent{
 					Type: resourcepb.WatchEvent_ADDED,
@@ -1577,31 +2013,42 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		if err != nil {
 			return err
 		}
-	}
-	if req.SendInitialEvents && req.AllowWatchBookmarks {
-		if err := srv.Send(&resourcepb.WatchEvent{
-			Type: resourcepb.WatchEvent_BOOKMARK,
-			Resource: &resourcepb.WatchEvent_Resource{
-				Version: initialEventsRV,
-			},
-		}); err != nil {
-			return err
+
+		lastEmittedRV = initialEventsRV
+		if req.AllowWatchBookmarks {
+			if err := sendBookmark(lastEmittedRV); err != nil {
+				return err
+			}
 		}
 	}
 
 	var since int64 // resource version to start watching from
 	switch {
 	case req.SendInitialEvents:
-		since = initialEventsRV
+		since = lastEmittedRV
 	case req.Since == 0:
 		since = mostRecentRV
 	default:
 		since = req.Since
 	}
+
+	// Set up periodic bookmark ticker when the client opted in.
+	var bookmarkC <-chan time.Time
+	if req.AllowWatchBookmarks && s.bookmarkFrequency > 0 {
+		ticker := time.NewTicker(s.bookmarkFrequency)
+		defer ticker.Stop()
+		bookmarkC = ticker.C
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
+
+		case <-bookmarkC:
+			if err := sendBookmark(lastEmittedRV); err != nil {
+				return err
+			}
 
 		case event, ok := <-stream:
 			if !ok {
@@ -1647,10 +2094,12 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				if err := srv.Send(resp); err != nil {
 					return err
 				}
+				lastEmittedRV = event.ResourceVersion
 
-				if s.storageMetrics != nil {
-					// record latency - resource version is a unix timestamp in microseconds so we convert to seconds
-					latencySeconds := float64(time.Now().UnixMicro()-event.ResourceVersion) / 1e6
+				if s.storageMetrics != nil && event.ResourceVersion > mostRecentRV {
+					// record latency - resource version can be either a unix microsecond timestamp (SQL backend)
+					// or a snowflake ID (KV backend), so we use resourceVersionTime to handle both formats.
+					latencySeconds := time.Since(resourceVersionTime(event.ResourceVersion)).Seconds()
 					if latencySeconds > 0 {
 						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
 					}
@@ -1668,6 +2117,16 @@ func (s *server) Search(ctx context.Context, req *resourcepb.ResourceSearchReque
 	return s.search.Search(ctx, req)
 }
 
+// VectorSearch delegates to the embedded searchServer; the searchServer is
+// where the vector backend and embedder live and where the actual handler
+// is implemented.
+func (s *server) VectorSearch(ctx context.Context, req *resourcepb.VectorSearchRequest) (*resourcepb.VectorSearchResponse, error) {
+	if s.search == nil {
+		return nil, fmt.Errorf("vector search is not configured")
+	}
+	return s.search.VectorSearch(ctx, req)
+}
+
 // StatsGetter provides resource statistics (via search index or backend).
 type StatsGetter interface {
 	GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error)
@@ -1679,18 +2138,51 @@ func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequ
 		return nil, err
 	}
 
-	if s.search == nil {
-		// If the backend implements "GetStats", we can use it
-		srv, ok := s.backend.(StatsGetter)
-		if ok {
-			return srv.GetStats(ctx, req)
-		}
-		return nil, fmt.Errorf("search index not configured")
+	if s.search != nil {
+		return s.search.GetStats(ctx, req)
 	}
-	return s.search.GetStats(ctx, req)
+
+	if s.searchClient != nil {
+		return s.searchClient.GetStats(ctx, req)
+	}
+
+	// TODO: remove this fallback once the SQL backend is phased out; it's not implemented
+	// in the KV backend.
+	if srv, ok := s.backend.(StatsGetter); ok {
+		return srv.GetStats(ctx, req)
+	}
+
+	return nil, fmt.Errorf("search index not configured")
 }
 
+// requireUserNamespace is a cross-tenant safety net for delegated-only
+// RPCs. It does not replace resource-level access.Check; it only catches
+// the case where a caller authenticated for one namespace asks for data
+// in another.
+func requireUserNamespace(ctx context.Context, namespace string) *resourcepb.ErrorResult {
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return &resourcepb.ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}
+	}
+	if !claims.NamespaceMatches(user.GetNamespace(), namespace) {
+		return &resourcepb.ErrorResult{
+			Message: "namespace mismatch",
+			Code:    http.StatusForbidden,
+		}
+	}
+	return nil
+}
+
+// ListManagedObjects implements ManagedObjectIndexServer.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
+	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
+		return &resourcepb.ListManagedObjectsResponse{Error: errRes}, nil
+	}
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
 	}
@@ -1698,7 +2190,13 @@ func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListMan
 	return s.search.ListManagedObjects(ctx, req)
 }
 
+// CountManagedObjects implements ManagedObjectIndexServer.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) CountManagedObjects(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
+	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
+		return &resourcepb.CountManagedObjectsResponse{Error: errRes}, nil
+	}
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
 	}
@@ -1711,12 +2209,59 @@ func (s *server) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckReque
 	return s.diagnostics.IsHealthy(ctx, req) //nolint:staticcheck
 }
 
-// GetBlob implements BlobStore.
+// PutBlob implements BlobStore.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
+	if req.Resource == nil {
+		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
+			Message: "missing resource key",
+			Code:    http.StatusBadRequest,
+		}}, nil
+	}
 	if s.blob == nil {
 		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
 			Message: "blob store not configured",
 			Code:    http.StatusNotImplemented,
+		}}, nil
+	}
+
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}}, nil
+	}
+
+	// Load the parent both to enforce existence (see proto) and to get its
+	// folder for access.Check.
+	parent := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{Key: req.Resource})
+	switch {
+	case parent == nil:
+		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
+			Message: "parent resource not found",
+			Code:    http.StatusNotFound,
+		}}, nil
+	case parent.Error != nil:
+		// Surface backend status as-is; collapsing to 404 would hide
+		// transient 5xx as "not found".
+		return &resourcepb.PutBlobResponse{Error: parent.Error}, nil
+	}
+
+	a, err := s.access.Check(ctx, user, claims.CheckRequest{
+		Verb:      utils.VerbUpdate,
+		Group:     req.Resource.Group,
+		Resource:  req.Resource.Resource,
+		Namespace: req.Resource.Namespace,
+		Name:      req.Resource.Name,
+	}, parent.Folder)
+	if err != nil {
+		return &resourcepb.PutBlobResponse{Error: AsErrorResult(err)}, nil
+	}
+	if !a.Allowed {
+		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
+			Code: http.StatusForbidden,
 		}}, nil
 	}
 
@@ -1739,21 +2284,24 @@ func (s *server) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRe
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
 	}
-	usage, err := s.backend.GetResourceStats(ctx, nsr, 0)
+	statsRsp, err := s.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+		Namespace: nsr.Namespace,
+		Kinds:     []string{nsr.GroupResource()},
+	})
 	if err != nil {
 		return &resourcepb.QuotaUsageResponse{Error: AsErrorResult(err)}, nil
+	}
+	if statsRsp.Error != nil {
+		return &resourcepb.QuotaUsageResponse{Error: statsRsp.Error}, nil
 	}
 	limit, err := s.overridesService.GetQuota(ctx, nsr)
 	if err != nil {
 		return &resourcepb.QuotaUsageResponse{Error: AsErrorResult(err)}, nil
 	}
 
-	// handle case where no resources exist yet - very unlikely but possible
 	rsp := &resourcepb.QuotaUsageResponse{Limit: int64(limit.Limit)}
-	if len(usage) <= 0 {
-		rsp.Usage = 0
-	} else {
-		rsp.Usage = usage[0].Count
+	if len(statsRsp.Stats) > 0 {
+		rsp.Usage = statsRsp.Stats[0].Count
 	}
 
 	return rsp, nil
@@ -1785,7 +2333,18 @@ func (s *server) getPartialObject(ctx context.Context, key *resourcepb.ResourceK
 }
 
 // GetBlob implements BlobStore.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
+	if req.Resource == nil {
+		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
+			Message: "missing resource key",
+			Code:    http.StatusBadRequest,
+		}}, nil
+	}
+	if errRes := requireUserNamespace(ctx, req.Resource.Namespace); errRes != nil {
+		return &resourcepb.GetBlobResponse{Error: errRes}, nil
+	}
 	if s.blob == nil {
 		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
 			Message: "blob store not configured",
@@ -1869,7 +2428,13 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 	}
 }
 
+// RebuildIndexes implements ResourceIndexServer.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
+		return &resourcepb.RebuildIndexesResponse{Error: errRes}, nil
+	}
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
 	}
@@ -1878,6 +2443,10 @@ func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildInde
 }
 
 func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
+	if nsr.Namespace == "" {
+		return nil
+	}
+
 	span := trace.SpanFromContext(ctx)
 	span.AddEvent("checkQuota", trace.WithAttributes(
 		attribute.String("namespace", nsr.Namespace),
@@ -1892,15 +2461,23 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 
 	quota, err := s.overridesService.GetQuota(ctx, nsr)
 	if err != nil {
-		s.log.FromContext(ctx).Error("failed to get quota for resource", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
+		s.degraded(ctx, "check_quota", "get_quota_failed", nsr, err)
 		return nil
 	}
 
-	stats, err := s.backend.GetResourceStats(ctx, nsr, 0)
+	statsRsp, err := s.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+		Namespace: nsr.Namespace,
+		Kinds:     []string{nsr.GroupResource()},
+	})
 	if err != nil {
-		s.log.FromContext(ctx).Error("failed to get resource stats for quota checking", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
+		s.degraded(ctx, "check_quota", "get_stats_failed", nsr, err)
 		return nil
 	}
+	if statsRsp.Error != nil {
+		s.degraded(ctx, "check_quota", "stats_error", nsr, errors.New(statsRsp.Error.Message))
+		return nil
+	}
+	stats := statsRsp.Stats
 	if len(stats) > 0 {
 		s.log.FromContext(ctx).Debug("stats found", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "count", stats[0].Count)
 	} else {
@@ -1922,13 +2499,61 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 	return nil
 }
 
+// degraded records that an operation proceeded despite a failed external
+// dependency, skipping a guard/check. Use this anywhere the server swallows an
+// external-call error and continues, so the degradation is alertable instead of
+// log-only.
+func (s *server) degraded(ctx context.Context, operation, reason string, nsr NamespacedResource, err error) {
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		s.log.FromContext(ctx).Debug("skipping degraded report: request context done",
+			"operation", operation, "reason", reason, "ctx_error", ctxErr, "error", err)
+		return
+	}
+	s.log.FromContext(ctx).Error("degraded operation: external dependency failed, guard skipped",
+		"operation", operation, "reason", reason,
+		"namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource,
+		"error", err)
+	if s.storageMetrics != nil {
+		s.storageMetrics.DegradedOperations.
+			WithLabelValues(operation, reason, nsr.Group, nsr.Resource).Inc()
+	}
+	if span := trace.SpanFromContext(ctx); span != nil {
+		span.AddEvent("degraded_operation", trace.WithAttributes(
+			attribute.String("operation", operation),
+			attribute.String("reason", reason),
+		))
+	}
+}
+
+// classifyAuthError maps an access-check error to a stable, low-cardinality
+// reason label so a downstream authz outage ("service unavailable") alerts
+// separately from a logical/decision error. Logical failures are returned
+// locally as typed sentinels before the remote call, while a down/slow service
+// surfaces as a gRPC transport status.
+func classifyAuthError(err error) string {
+	if err == nil {
+		return ""
+	}
+	if errors.Is(err, claims.ErrNamespaceMismatch) {
+		return "auth_namespace_mismatch"
+	}
+	switch status.Code(err) {
+	case codes.Unavailable, codes.DeadlineExceeded, codes.Canceled, codes.ResourceExhausted:
+		return "auth_unavailable"
+	case codes.Unauthenticated, codes.PermissionDenied, codes.InvalidArgument:
+		return "auth_rejected"
+	default:
+		return "auth_error"
+	}
+}
+
 // resourceVersionTime extracts the timestamp embedded in a resource version.
 // Resource versions can be either snowflake IDs (KV backend) or microsecond
 // Unix timestamps (SQL backend).
 func resourceVersionTime(rv int64) time.Time {
-	micro := rv
-	if isSnowflake(rv) {
-		micro = rvmanager.RVFromSnowflake(rv)
+	if IsSnowflake(rv) {
+		msec := (rv >> (snowflake.NodeBits + snowflake.StepBits)) + snowflake.Epoch
+		return time.UnixMilli(msec)
 	}
-	return time.UnixMicro(micro)
+	return time.UnixMicro(rv)
 }

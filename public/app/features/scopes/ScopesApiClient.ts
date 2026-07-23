@@ -1,10 +1,11 @@
-import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { type Scope, type ScopeDashboardBinding, type ScopeNode } from '@grafana/data';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
+import type { FindDefaultScope } from 'app/api/clients/scope/v0alpha1/endpoints.gen';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { dispatch } from 'app/store/store';
 
-import { ScopeNavigation } from './dashboards/types';
+import { type ScopeNavigation } from './dashboards/types';
 
 export class ScopesApiClient {
   /**
@@ -93,7 +94,7 @@ export class ScopesApiClient {
   }
 
   async fetchMultipleScopeNodes(names: string[]): Promise<ScopeNode[]> {
-    if (!config.featureToggles.useMultipleScopeNodesEndpoint || names.length === 0) {
+    if (names.length === 0) {
       return Promise.resolve([]);
     }
 
@@ -267,11 +268,58 @@ export class ScopesApiClient {
     }
   };
 
-  public fetchScopeNode = async (scopeNodeId: string): Promise<ScopeNode | undefined> => {
-    if (!config.featureToggles.useScopeSingleNodeEndpoint) {
-      return Promise.resolve(undefined);
+  /**
+   * Fetches the default scope name to use when no scope is currently selected.
+   * Returns just the scope name; callers apply it via the normal pipeline.
+   *
+   * As a side effect, seeds the `getScope` RTK Query cache with the full
+   * Scope from the envelope, so the subsequent `applyScopes` →
+   * `fetchMultipleScopes` → `fetchScope` is a cache hit. This matters
+   * because the find endpoint returns scopes entitled to the caller, which
+   * is a different set than the addressable `/scopes/{name}` resources —
+   * without the seed, `fetchScope` could 404 and the metadata would never
+   * reach the selector state.
+   *
+   * Gated on `grafana.useDefaultScopesEndpoint`; returns undefined when the
+   * flag is off, when the server returns no default, or on error.
+   */
+  public fetchDefaultScope = async (): Promise<string | undefined> => {
+    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaUseDefaultScopesEndpoint, false)) {
+      return undefined;
     }
 
+    const subscription = dispatch(
+      scopeAPIv0alpha1.endpoints.getFindDefaultScope.initiate(undefined, { subscribe: false })
+    );
+    try {
+      const result = await subscription;
+      const data = this.extractDataOrHandleError<FindDefaultScope>(result, 'default scope');
+      const scope = data?.scope;
+      const name = scope?.metadata?.name;
+      // `!name` already implies `!scope` at runtime (name derives from scope);
+      // the extra `|| !scope` is a TypeScript narrowing guard so `scope` is
+      // typed as non-undefined for the upsertQueryData call below.
+      if (!name || !scope) {
+        return undefined;
+      }
+
+      // Await the upsert so the cache entry transitions to `fulfilled` (with
+      // `fulfilledTimeStamp`) BEFORE we return. `upsertQueryData` dispatches
+      // `pending` synchronously but `fulfilled` only on the next microtask;
+      // without awaiting, the subsequent `fetchScope` from applyScopes can
+      // see `status: 'pending'` and fire a real network request.
+      await dispatch(scopeAPIv0alpha1.util.upsertQueryData('getScope', { name }, scope));
+      return name;
+    } catch (err) {
+      const errorMessage = getMessageFromError(err);
+      console.error('Failed to fetch default scope:', errorMessage);
+      return undefined;
+    } finally {
+      subscription.unsubscribe();
+    }
+  };
+
+  public fetchScopeNode = async (scopeNodeId: string): Promise<ScopeNode | undefined> => {
     const subscription = dispatch(
       scopeAPIv0alpha1.endpoints.getScopeNode.initiate({ name: scopeNodeId }, { subscribe: false })
     );

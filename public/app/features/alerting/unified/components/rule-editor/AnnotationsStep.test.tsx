@@ -3,13 +3,11 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen, within } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
-import { config } from '@grafana/runtime';
-
 import { DashboardSearchItemType } from '../../../../search/types';
 import { mockDashboardApi, setupMswServer } from '../../mockApi';
 import { mockDashboardDto, mockDashboardSearchItem } from '../../mocks';
 import { getDefaultFormValues } from '../../rule-editor/formDefaults';
-import { RuleFormValues } from '../../types/rule-form';
+import { type RuleFormValues } from '../../types/rule-form';
 import { Annotation } from '../../utils/constants';
 
 import AnnotationsStep from './AnnotationsStep';
@@ -49,8 +47,6 @@ function FormWrapper({ formValues }: { formValues?: Partial<RuleFormValues> }) {
 }
 
 describe('AnnotationsField', function () {
-  config.featureToggles.kubernetesDashboards = false;
-
   it('should display default list of annotations', function () {
     render(<FormWrapper />);
 

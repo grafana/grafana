@@ -18,25 +18,15 @@ func TestNewPlugin(t *testing.T) {
 		ExpectedNotFoundErr bool
 	}{
 		{ID: AzureMonitor},
-		{ID: CloudMonitoring},
 		{ID: CloudWatch},
-		{ID: Elasticsearch},
 		{ID: Grafana, ExpectedNotFoundErr: true},
 		{ID: Graphite},
 		{ID: InfluxDB},
 		{ID: Loki},
-		{ID: MSSQL},
 		{ID: MySQL},
-		{ID: OpenTSDB},
-		{ID: Parca},
-		{ID: PostgreSQL},
 		{ID: Prometheus},
-		{ID: Pyroscope},
-		{ID: Tempo},
 		{ID: TestData, ExpectedAlias: TestDataAlias},
 		{ID: TestDataAlias, ExpectedID: TestData, ExpectedAlias: TestDataAlias},
-		{ID: Zipkin},
-		{ID: Jaeger},
 	}
 
 	for _, tc := range tcs {

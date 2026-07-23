@@ -1,9 +1,9 @@
-import { render, RenderResult } from '@testing-library/react';
+import { render, type RenderResult } from '@testing-library/react';
 
-import { FieldDisplay } from '@grafana/data';
+import { type FieldDisplay } from '@grafana/data';
 
-import { RadialArcPathEndpointMarks, RadialArcPathEndpointMarksProps } from './RadialArcPathEndpointMarks';
-import { RadialGaugeDimensions } from './types';
+import { RadialArcPathEndpointMarks, type RadialArcPathEndpointMarksProps } from './RadialArcPathEndpointMarks';
+import { type RadialGaugeDimensions } from './types';
 
 const ser = new XMLSerializer();
 

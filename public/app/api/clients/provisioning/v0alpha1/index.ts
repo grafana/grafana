@@ -13,7 +13,7 @@ import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { clearFolders } from 'app/features/browse-dashboards/state/slice';
 import { getState } from 'app/store/store';
-import { ThunkDispatch } from 'app/types/store';
+import { type ThunkDispatch } from 'app/types/store';
 
 import {
   createErrorNotification,
@@ -21,7 +21,7 @@ import {
   createWarningNotification,
 } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
-import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
+import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/constants';
 import { refetchChildren } from '../../../../features/browse-dashboards/state/actions';
 import { handleError } from '../../../utils';
 import { createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';

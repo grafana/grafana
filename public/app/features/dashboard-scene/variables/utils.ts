@@ -1,13 +1,13 @@
 import { t } from '@grafana/i18n';
 import {
   LocalValueVariable,
-  SceneObject,
-  SceneVariable,
+  type SceneObject,
+  type SceneVariable,
   SceneVariableSet,
-  SceneVariableState,
-  SceneVariables,
+  type SceneVariableState,
+  type SceneVariables,
 } from '@grafana/scenes';
-import { Dashboard } from '@grafana/schema';
+import { type Dashboard } from '@grafana/schema';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { isRecord } from 'app/core/utils/isRecord';
 import type { GraphEdge, GraphNode } from 'app/features/variables/inspect/types';

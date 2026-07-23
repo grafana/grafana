@@ -6,54 +6,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
-
-func createUnmanagedFolder(t *testing.T, helper *common.ProvisioningTestHelper, name, title string) {
-	t.Helper()
-	obj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "folder.grafana.app/v1beta1",
-			"kind":       "Folder",
-			"metadata": map[string]interface{}{
-				"name":      name,
-				"namespace": "default",
-			},
-			"spec": map[string]interface{}{
-				"title": title,
-			},
-		},
-	}
-	_, err := helper.Folders.Resource.Create(t.Context(), obj, metav1.CreateOptions{})
-	require.NoError(t, err)
-}
-
-func createUnmanagedFolderWithParent(t *testing.T, helper *common.ProvisioningTestHelper, name, title, parentUID string) {
-	t.Helper()
-	obj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "folder.grafana.app/v1beta1",
-			"kind":       "Folder",
-			"metadata": map[string]interface{}{
-				"name":      name,
-				"namespace": "default",
-				"annotations": map[string]interface{}{
-					"grafana.app/folder": parentUID,
-				},
-			},
-			"spec": map[string]interface{}{
-				"title": title,
-			},
-		},
-	}
-	_, err := helper.Folders.Resource.Create(t.Context(), obj, metav1.CreateOptions{})
-	require.NoError(t, err)
-}
 
 func triggerExport(t *testing.T, helper *common.ProvisioningTestHelper, repo string) *provisioning.Job {
 	t.Helper()
@@ -74,14 +31,14 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlagDisabled(t *testing
 		helper := sharedHelper(t)
 
 		const repo = "export-no-meta-repo"
-		helper.CreateRepo(t, common.TestRepo{
-			Name:                   repo,
-			Target:                 "instance",
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "instance",
+			Workflows:  []string{"write"},
+			SkipSync:   true,
 		})
 
-		createUnmanagedFolder(t, helper, "no-meta-folder-uid", "no-meta-folder")
+		helper.CreateUnmanagedFolderWithName(t, "no-meta-folder-uid", "no-meta-folder", "")
 
 		job := triggerExport(t, helper, repo)
 		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
@@ -98,11 +55,11 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlagDisabled(t *testing
 		helper := sharedHelper(t)
 
 		const repo = "nested-no-meta-repo"
-		helper.CreateRepo(t, common.TestRepo{
-			Name:                   repo,
-			Target:                 "instance",
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "instance",
+			Workflows:  []string{"write"},
+			SkipSync:   true,
 		})
 
 		const (
@@ -111,8 +68,8 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlagDisabled(t *testing
 			childUID    = "nested-no-meta-child-uid"
 			childTitle  = "nested-no-meta-child"
 		)
-		createUnmanagedFolder(t, helper, parentUID, parentTitle)
-		createUnmanagedFolderWithParent(t, helper, childUID, childTitle, parentUID)
+		helper.CreateUnmanagedFolderWithName(t, parentUID, parentTitle, "")
+		helper.CreateUnmanagedFolderWithName(t, childUID, childTitle, parentUID)
 
 		job := triggerExport(t, helper, repo)
 		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")

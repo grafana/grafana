@@ -11,10 +11,10 @@ import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { AsyncError, LoadingOptions, NotFoundError } from './MessageRows';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
-import { ALL_OPTION_VALUE, ComboboxOption } from './types';
+import { ALL_OPTION_VALUE, type ComboboxOption } from './types';
 import { isNewGroup } from './utils';
 
-export const VIRTUAL_OVERSCAN_ITEMS = 4;
+const VIRTUAL_OVERSCAN_ITEMS = 4;
 
 interface ComboboxListProps<T extends string | number> {
   options: Array<ComboboxOption<T>>;

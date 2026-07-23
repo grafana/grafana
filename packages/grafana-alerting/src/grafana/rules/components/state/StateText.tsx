@@ -1,10 +1,10 @@
-import { ReactNode } from 'react';
+import { type ComponentProps, type ReactNode } from 'react';
 
 import { Trans } from '@grafana/i18n';
 import { Icon, Stack, Text } from '@grafana/ui';
 
 import { StateDot } from './StateDot';
-import { Health, State } from './types';
+import { type Health, type State } from './types';
 
 // we're making a distinction here between the "state" of the rule and its "health".
 // When the type is "recording" we only support the health property.
@@ -50,6 +50,10 @@ export const StateText = ({ state, health, type = 'alerting', isPaused = false }
       color = 'warning';
       stateLabel = 'Recovering';
       break;
+    case 'inhibited':
+      color = 'info';
+      stateLabel = 'Inhibited';
+      break;
     case 'unknown':
     default:
       color = 'unknown';
@@ -71,17 +75,18 @@ export const StateText = ({ state, health, type = 'alerting', isPaused = false }
   // recording rule badge
   // @TODO do recording rules support "nodata" state?
   if (type === 'recording') {
-    const text = health === 'error' ? 'Recording error' : 'Recording';
-    const color = health === 'error' ? 'error' : 'success';
+    const isRecordingError = health === 'error';
+    const recordingText = isRecordingError ? 'Recording error' : 'Recording';
+    const recordingColor: TextColor = isRecordingError ? 'error' : 'success';
 
-    return <InnerText color={color} text={text} />;
+    return <InnerText color={recordingColor} text={recordingText} />;
   }
 
   return <InnerText color={color} text={stateLabel} />;
 };
 
 // the generic badge component
-type TextColor = 'success' | 'error' | 'warning' | 'unknown';
+type TextColor = 'success' | 'error' | 'warning' | 'unknown' | 'info';
 
 interface InnerTextProps {
   color: TextColor;
@@ -92,7 +97,12 @@ interface InnerTextProps {
 // a badge in a specific text color and a dot in matching color.
 // We currently don't expose this component outside of this file.
 function InnerText({ color, text }: InnerTextProps) {
-  const textColor = color === 'unknown' ? 'secondary' : color;
+  let textColor: ComponentProps<typeof Text>['color'];
+  if (color === 'unknown') {
+    textColor = 'secondary';
+  } else {
+    textColor = color;
+  }
 
   return (
     <Stack direction="row" gap={0.5} wrap="nowrap" flex="0 0 auto" alignItems="center">

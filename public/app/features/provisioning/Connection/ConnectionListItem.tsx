@@ -1,10 +1,10 @@
 import { textUtil } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';
-import { Connection } from 'app/api/clients/provisioning/v0alpha1';
+import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
-import { RepoType } from '../Wizard/types';
+import { type RepoType } from '../Wizard/types';
 import { CONNECTIONS_URL } from '../constants';
 
 import { ConnectionStatusBadge } from './ConnectionStatusBadge';
@@ -25,7 +25,7 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
   return (
     <Card noMargin key={name} isSelected={isSelected} onClick={onClick}>
       <Card.Figure>
-        <RepoIcon type={providerType} />
+        <RepoIcon type={providerType} autoHeight />
       </Card.Figure>
       <Card.Heading>
         <Stack gap={2} direction="row" alignItems="center">

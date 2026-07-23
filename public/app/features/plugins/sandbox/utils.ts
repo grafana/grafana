@@ -2,35 +2,29 @@ import { isNearMembraneProxy } from '@locker/near-membrane-shared';
 import { cloneDeep } from 'lodash';
 import * as React from 'react';
 
-import { LogContext } from '@grafana/faro-web-sdk';
-import { createMonitoringLogger } from '@grafana/runtime';
+import { type LogContext } from '@grafana/faro-web-sdk';
+import { getLogger } from '@grafana/runtime/unstable';
 
-import { SandboxedPluginObject } from './types';
+import { type SandboxedPluginObject } from './types';
 
 export function isSandboxedPluginObject(value: unknown): value is SandboxedPluginObject {
   return !!value && typeof value === 'object' && value?.hasOwnProperty('plugin');
 }
-
-export function assertNever(x: never): never {
-  throw new Error(`Unexpected object: ${x}. This should never happen.`);
-}
-
-const sandboxLogger = createMonitoringLogger('sandbox');
 
 export function isReactClassComponent(obj: unknown): obj is React.Component {
   return obj instanceof React.Component;
 }
 
 export function logWarning(message: string, context?: LogContext) {
-  sandboxLogger.logWarning(message, context);
+  getLogger('sandbox').logWarning(message, context);
 }
 
 export function logError(error: Error, context?: LogContext) {
-  sandboxLogger.logError(error, context);
+  getLogger('sandbox').logError(error, context);
 }
 
 export function logInfo(message: string, context?: LogContext) {
-  sandboxLogger.logInfo(message, context);
+  getLogger('sandbox').logInfo(message, context);
 }
 
 function isRegex(value: unknown): value is RegExp {

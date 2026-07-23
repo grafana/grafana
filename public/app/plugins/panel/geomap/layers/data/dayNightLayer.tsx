@@ -1,5 +1,5 @@
 import Feature from 'ol/Feature';
-import OpenLayersMap from 'ol/Map';
+import type OpenLayersMap from 'ol/Map';
 import Point from 'ol/geom/Point';
 import { Group as LayerGroup } from 'ol/layer';
 import VectorImage from 'ol/layer/VectorImage';
@@ -10,14 +10,14 @@ import DayNight from 'ol-ext/source/DayNight';
 import { Subscription } from 'rxjs';
 
 import {
-  MapLayerRegistryItem,
-  MapLayerOptions,
-  PanelData,
-  GrafanaTheme2,
-  EventBus
+  type MapLayerRegistryItem,
+  type MapLayerOptions,
+  type PanelData,
+  type GrafanaTheme2,
+  type EventBus
 } from '@grafana/data';
 
-export enum ShowTime {
+enum ShowTime {
   From = 'from',
   To = 'to',
 }
@@ -35,15 +35,7 @@ const defaultConfig: DayNightConfig = {
   nightColor: '#a7a6ba4D',
 };
 
-export const DAY_NIGHT_LAYER_ID = 'dayNight';
-
-// Used by default when nothing is configured
-export const defaultDayNightConfig: MapLayerOptions<DayNightConfig> = {
-  type: DAY_NIGHT_LAYER_ID,
-  name: '', // will get replaced
-  config: defaultConfig,
-  tooltip: true,
-};
+const DAY_NIGHT_LAYER_ID = 'dayNight';
 
 /**
  * Map layer configuration for circle overlay

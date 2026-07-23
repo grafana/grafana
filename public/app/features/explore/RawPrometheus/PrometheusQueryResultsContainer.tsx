@@ -1,6 +1,6 @@
 import { lazy, Suspense, useMemo } from 'react';
 
-import { applyFieldOverrides, PrometheusQueryResultsV1Props } from '@grafana/data';
+import { applyFieldOverrides, type PrometheusQueryResultsV1Props } from '@grafana/data';
 import { config, getTemplateSrv } from '@grafana/runtime';
 
 const RawPrometheusContainerPureLazy = lazy(() =>

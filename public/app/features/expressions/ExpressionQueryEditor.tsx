@@ -1,9 +1,17 @@
 import { css } from '@emotion/css';
-import { lazy, Suspense, useCallback, useEffect, useRef } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useId, useRef } from 'react';
 
-import { DataSourceApi, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
-import { Button, IconButton, InlineField, PopoverContent, useStyles2 } from '@grafana/ui';
+import { type DataSourceApi, FeatureState, type GrafanaTheme2, type QueryEditorProps } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import {
+  Button,
+  FeatureBadge,
+  IconButton,
+  InlineField,
+  InlineLabel,
+  type PopoverContent,
+  useStyles2,
+} from '@grafana/ui';
 
 import { ClassicConditions } from './components/ClassicConditions';
 import { ExpressionTypeDropdown } from './components/ExpressionTypeDropdown';
@@ -11,7 +19,7 @@ import { Math } from './components/Math';
 import { Reduce } from './components/Reduce';
 import { Resample } from './components/Resample';
 import { Threshold } from './components/Threshold';
-import { ExpressionQuery, ExpressionQueryType, expressionTypes } from './types';
+import { type ExpressionQuery, ExpressionQueryType, expressionTypes } from './types';
 import { getDefaults } from './utils/expressionTypes';
 
 export type ExpressionQueryEditorProps = QueryEditorProps<DataSourceApi<ExpressionQuery>, ExpressionQuery>;
@@ -31,7 +39,9 @@ type ExpressionTypeConfigStorage = Partial<Record<NonClassicExpressionType, stri
  * @param type - The expression type.
  * @returns The configuration for the expression type.
  */
-const getExpressionTypeConfig = (type: ExpressionQueryType): { helperText: PopoverContent } => {
+const getExpressionTypeConfig = (
+  type: ExpressionQueryType
+): { helperText: PopoverContent; featureState: FeatureState | undefined } => {
   const description = expressionTypes.find(({ value }) => value === type)?.description;
 
   switch (type) {
@@ -44,10 +54,12 @@ const getExpressionTypeConfig = (type: ExpressionQueryType): { helperText: Popov
             columns, as returned from the data source.
           </Trans>
         ),
+        featureState: FeatureState.preview,
       };
     default:
       return {
         helperText: description ?? '',
+        featureState: undefined,
       };
   }
 };
@@ -93,6 +105,7 @@ function useExpressionsCache() {
 export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
   const { query, queries, onRunQuery, onChange, app } = props;
   const { getCachedExpression, setCachedExpression } = useExpressionsCache();
+  const labelId = useId();
 
   const styles = useStyles2(getStyles);
 
@@ -145,22 +158,32 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
     }
   };
 
-  const { helperText } = getExpressionTypeConfig(query.type);
+  const { helperText, featureState } = getExpressionTypeConfig(query.type);
 
   return (
     <div>
       <div className={styles.operationRow}>
         <InlineField
-          label={t('expressions.expression-query-editor.label-operation', 'Operation')}
-          labelWidth={labelWidth}
+          label={
+            <InlineLabel width={labelWidth} id={labelId}>
+              <Trans i18nKey="expressions.expression-query-editor.label-operation">Operation</Trans>
+            </InlineLabel>
+          }
         >
           <ExpressionTypeDropdown handleOnSelect={onSelectExpressionType}>
-            <Button fill="outline" icon="angle-down" iconPlacement="right" variant="secondary">
+            <Button
+              aria-describedby={labelId}
+              fill="outline"
+              icon="angle-down"
+              iconPlacement="right"
+              variant="secondary"
+            >
               {expressionTypes.find(({ value }) => value === query.type)?.label}
             </Button>
           </ExpressionTypeDropdown>
         </InlineField>
         <div className={styles.fieldContainer}>
+          {featureState && <FeatureBadge featureState={featureState} />}
           {helperText && <IconButton name="info-circle" tooltip={helperText} />}
         </div>
       </div>

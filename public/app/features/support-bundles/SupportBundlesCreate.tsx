@@ -1,13 +1,15 @@
 import { useEffect, type JSX } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Checkbox, LinkButton, Stack, Alert } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
-import { StoreState } from 'app/types/store';
+import { type StoreState } from 'app/types/store';
 
 import { loadSupportBundleCollectors, createSupportBundle } from './state/actions';
+
+const collator = new Intl.Collator();
 
 const mapStateToProps = (state: StoreState) => {
   return {
@@ -75,12 +77,12 @@ export const SupportBundlesCreateUnconnected = ({
           <Form defaultValues={values} onSubmit={onSubmit} validateOn="onSubmit">
             {({ register }) => {
               return (
-                <>
+                <Stack direction="column" gap={2}>
                   {[...collectors]
-                    .sort((a, b) => a.displayName.localeCompare(b.displayName))
+                    .sort((a, b) => collator.compare(a.displayName, b.displayName))
                     .map((component) => {
                       return (
-                        <Field key={component.uid}>
+                        <Field key={component.uid} noMargin>
                           <Checkbox
                             {...register(component.uid)}
                             label={component.displayName}
@@ -100,7 +102,7 @@ export const SupportBundlesCreateUnconnected = ({
                       <Trans i18nKey="support-bundles.support-bundles-create-unconnected.cancel">Cancel</Trans>
                     </LinkButton>
                   </Stack>
-                </>
+                </Stack>
               );
             }}
           </Form>

@@ -1,7 +1,7 @@
-import { defineConfig, devices, PlaywrightTestConfig, Project } from '@playwright/test';
+import { defineConfig, devices, type PlaywrightTestConfig, type Project } from '@playwright/test';
 import path, { dirname } from 'path';
 
-import { PluginOptions } from '@grafana/plugin-e2e';
+import { type PluginOptions } from '@grafana/plugin-e2e';
 
 export const testDirRoot = 'e2e-playwright';
 const pluginDirRoot = path.join(testDirRoot, 'plugin-e2e');
@@ -92,16 +92,8 @@ export default defineConfig<PluginOptions>({
       dependencies: ['createUserAndAuthenticate'],
     },
     withAuth({
-      name: 'elasticsearch',
-      testDir: path.join(pluginDirRoot, '/elasticsearch'),
-    }),
-    withAuth({
       name: 'mysql',
       testDir: path.join(pluginDirRoot, '/mysql'),
-    }),
-    withAuth({
-      name: 'mssql',
-      testDir: path.join(pluginDirRoot, '/mssql'),
     }),
     withAuth({
       name: 'extensions-test-app',
@@ -120,10 +112,6 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(pluginDirRoot, '/azuremonitor'),
     }),
     withAuth({
-      name: 'cloudmonitoring',
-      testDir: path.join(pluginDirRoot, '/cloudmonitoring'),
-    }),
-    withAuth({
       name: 'graphite',
       testDir: path.join(pluginDirRoot, '/graphite'),
     }),
@@ -132,24 +120,8 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(pluginDirRoot, '/influxdb'),
     }),
     withAuth({
-      name: 'opentsdb',
-      testDir: path.join(pluginDirRoot, '/opentsdb'),
-    }),
-    withAuth({
-      name: 'jaeger',
-      testDir: path.join(pluginDirRoot, '/jaeger'),
-    }),
-    withAuth({
-      name: 'grafana-postgresql-datasource',
-      testDir: path.join(pluginDirRoot, '/grafana-postgresql-datasource'),
-    }),
-    withAuth({
       name: 'canvas',
       testDir: path.join(testDirRoot, '/canvas'),
-    }),
-    withAuth({
-      name: 'zipkin',
-      testDir: path.join(pluginDirRoot, '/zipkin'),
     }),
     {
       name: 'unauthenticated',
@@ -206,6 +178,15 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(testDirRoot, '/dashboard-cujs'),
       testMatch: ['global-teardown.spec.ts'],
       dependencies: ['dashboard-cujs'],
+    }),
+    withAuth({
+      name: 'journey-tracking',
+      testDir: path.join(testDirRoot, '/journey-tracking'),
+      use: {
+        featureToggles: {
+          cujTracking: true,
+        },
+      },
     }),
     withAuth({
       name: 'grafana-e2etest-panel',

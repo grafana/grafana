@@ -1,15 +1,17 @@
 import { css, cx } from '@emotion/css';
 import { useEffect } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { ErrorBoundaryAlert, LoadingPlaceholder, useStyles2, useTheme2 } from '@grafana/ui';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { ExploreQueryParams } from 'app/types/explore';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type ExploreQueryParams } from 'app/types/explore';
 import { useSelector } from 'app/types/store';
+
+import { Page } from '../../core/components/Page/Page';
 
 import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
 import { ExploreActions } from './ExploreActions';
@@ -64,49 +66,51 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
   useExplorePageContext(panes);
 
   return (
-    <div
-      className={cx(styles.pageScrollbarWrapper, {
-        [styles.correlationsEditorIndicator]: showCorrelationEditorBar,
-      })}
-    >
-      <h1 className="sr-only">
-        <Trans i18nKey="nav.explore.title">Explore</Trans>
-      </h1>
-      <ExploreActions />
-      {showCorrelationEditorBar && <CorrelationEditorModeBar panes={panes} />}
-      <SplitPaneWrapper
-        splitOrientation="vertical"
-        paneSize={widthCalc}
-        minSize={MIN_PANE_WIDTH}
-        maxSize={MIN_PANE_WIDTH * -1}
-        primary="second"
-        splitVisible={hasSplit}
-        parentStyle={showCorrelationEditorBar ? { height: `calc(100% - ${theme.spacing(6)}` } : {}} // button = 4, padding = 1 x 2
-        paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
-        onDragFinished={(size) => size && updateSplitSize(size)}
-      >
-        {panes.map(([exploreId, pane]) => {
-          return (
-            <ErrorBoundaryAlert boundaryName="explore-pane" key={exploreId} style="page">
-              {pane.initialized ? (
-                <ExplorePaneContainer exploreId={exploreId} />
-              ) : (
-                <LoadingPlaceholder text={t('explore.pane.loading-placeholder', 'Loading...')} />
-              )}
-            </ErrorBoundaryAlert>
-          );
+    <Page layout={PageLayoutType.Custom}>
+      <div
+        className={cx(styles.pageScrollbarWrapper, {
+          [styles.correlationsEditorIndicator]: showCorrelationEditorBar,
         })}
-      </SplitPaneWrapper>
-      {drawerOpened && (
-        <ExploreDrawer>
-          <RichHistoryContainer
-            onClose={() => {
-              setDrawerOpened(false);
-            }}
-          />
-        </ExploreDrawer>
-      )}
-    </div>
+      >
+        <h1 className="sr-only">
+          <Trans i18nKey="nav.explore.title">Explore</Trans>
+        </h1>
+        <ExploreActions />
+        {showCorrelationEditorBar && <CorrelationEditorModeBar panes={panes} />}
+        <SplitPaneWrapper
+          splitOrientation="vertical"
+          paneSize={widthCalc}
+          minSize={MIN_PANE_WIDTH}
+          maxSize={MIN_PANE_WIDTH * -1}
+          primary="second"
+          splitVisible={hasSplit}
+          parentStyle={showCorrelationEditorBar ? { height: `calc(100% - ${theme.spacing(6)}` } : {}} // button = 4, padding = 1 x 2
+          paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
+          onDragFinished={(size) => size && updateSplitSize(size)}
+        >
+          {panes.map(([exploreId, pane]) => {
+            return (
+              <ErrorBoundaryAlert boundaryName="explore-pane" key={exploreId} style="page">
+                {pane.initialized ? (
+                  <ExplorePaneContainer exploreId={exploreId} />
+                ) : (
+                  <LoadingPlaceholder text={t('explore.pane.loading-placeholder', 'Loading...')} />
+                )}
+              </ErrorBoundaryAlert>
+            );
+          })}
+        </SplitPaneWrapper>
+        {drawerOpened && (
+          <ExploreDrawer>
+            <RichHistoryContainer
+              onClose={() => {
+                setDrawerOpened(false);
+              }}
+            />
+          </ExploreDrawer>
+        )}
+      </div>
+    </Page>
   );
 }
 

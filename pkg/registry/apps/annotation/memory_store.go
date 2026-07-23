@@ -1,13 +1,15 @@
 package annotation
 
 import (
+	"cmp"
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 
-	"github.com/google/uuid"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 )
@@ -23,6 +25,8 @@ func NewMemoryStore() Store {
 	}
 }
 
+func (m *memoryStore) Close() error { return nil }
+
 func (m *memoryStore) Get(ctx context.Context, namespace, name string) (*annotationV0.Annotation, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -30,7 +34,7 @@ func (m *memoryStore) Get(ctx context.Context, namespace, name string) (*annotat
 	key := namespace + "/" + name
 	anno, ok := m.data[key]
 	if !ok {
-		return nil, fmt.Errorf("annotation not found")
+		return nil, ErrNotFound
 	}
 
 	return anno.DeepCopy(), nil
@@ -40,54 +44,83 @@ func (m *memoryStore) List(ctx context.Context, namespace string, opts ListOptio
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
+	filter := opts.Deleted
+	if filter != DeletedExclude && filter != DeletedInclude && filter != DeletedOnly {
+		filter = DeletedExclude
+	}
+
 	//nolint:prealloc
 	var result []annotationV0.Annotation // no, we can't pre-alloc it, we don't know the size yet
 
 	for _, anno := range m.data {
-		if anno.Namespace != namespace {
-			continue
-		}
-
-		if opts.DashboardUID != "" && (anno.Spec.DashboardUID == nil || *anno.Spec.DashboardUID != opts.DashboardUID) {
-			continue
-		}
-
-		if opts.PanelID != 0 && (anno.Spec.PanelID == nil || *anno.Spec.PanelID != opts.PanelID) {
-			continue
-		}
-
-		if opts.From > 0 && anno.Spec.Time < opts.From {
-			continue
-		}
-
-		if opts.To > 0 && anno.Spec.Time > opts.To {
-			continue
-		}
-
-		if len(opts.Tags) > 0 {
-			if !matchTags(anno.Spec.Tags, opts.Tags, opts.TagsMatchAny) {
-				continue
-			}
-		}
-
-		if len(opts.Scopes) > 0 {
-			if !matchScopes(anno.Spec.Scopes, opts.Scopes, opts.ScopesMatchAny) {
-				continue
-			}
-		}
-
-		if opts.CreatedBy != "" && anno.GetCreatedBy() != opts.CreatedBy {
-			continue
-		}
-
-		result = append(result, *anno.DeepCopy())
-
-		if opts.Limit > 0 && int64(len(result)) >= opts.Limit {
-			break
+		if matchesList(anno, namespace, filter, opts) {
+			result = append(result, *anno.DeepCopy())
 		}
 	}
 
+	sortByEndTime(result)
+
+	if opts.Limit > 0 && int64(len(result)) > opts.Limit {
+		result = result[:opts.Limit]
+	}
+
 	return &AnnotationList{Items: result}, nil
+}
+
+func matchesList(anno *annotationV0.Annotation, namespace string, filter DeletedFilter, opts ListOptions) bool {
+	if anno.Namespace != namespace {
+		return false
+	}
+	deleted := anno.DeletionTimestamp != nil
+	if deleted && filter == DeletedExclude {
+		return false
+	}
+	if !deleted && filter == DeletedOnly {
+		return false
+	}
+	if opts.DashboardUID != "" && (anno.Spec.DashboardUID == nil || *anno.Spec.DashboardUID != opts.DashboardUID) {
+		return false
+	}
+	if opts.PanelID != 0 && (anno.Spec.PanelID == nil || *anno.Spec.PanelID != opts.PanelID) {
+		return false
+	}
+	if opts.From > 0 && anno.Spec.Time < opts.From {
+		return false
+	}
+	if opts.To > 0 && anno.Spec.Time > opts.To {
+		return false
+	}
+	if len(opts.Tags) > 0 && !matchTags(anno.Spec.Tags, opts.Tags, opts.TagsMatchAny) {
+		return false
+	}
+	if len(opts.Scopes) > 0 && !matchScopes(anno.Spec.Scopes, opts.Scopes, opts.ScopesMatchAny) {
+		return false
+	}
+	if opts.CreatedBy != "" && anno.GetCreatedBy() != opts.CreatedBy {
+		return false
+	}
+	if opts.LegacyID > 0 && GetLegacyID(anno) != opts.LegacyID {
+		return false
+	}
+	return true
+}
+
+func sortByEndTime(items []annotationV0.Annotation) {
+	endTime := func(a annotationV0.Annotation) int64 {
+		if a.Spec.TimeEnd != nil {
+			return *a.Spec.TimeEnd
+		}
+		return a.Spec.Time
+	}
+	slices.SortFunc(items, func(a, b annotationV0.Annotation) int {
+		if n := cmp.Compare(endTime(b), endTime(a)); n != 0 {
+			return n
+		}
+		if n := cmp.Compare(b.Spec.Time, a.Spec.Time); n != 0 {
+			return n
+		}
+		return cmp.Compare(a.Name, b.Name)
+	})
 }
 
 func matchTags(annoTags []string, filterTags []string, matchAny bool) bool {
@@ -148,17 +181,16 @@ func (m *memoryStore) Create(ctx context.Context, anno *annotationV0.Annotation)
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if anno.Name == "" {
-		anno.Name = uuid.New().String()
-	}
-
 	key := anno.Namespace + "/" + anno.Name
 
 	if _, exists := m.data[key]; exists {
-		return nil, fmt.Errorf("annotation already exists")
+		return nil, fmt.Errorf("%w: %s", ErrAlreadyExists, key)
 	}
 
 	created := anno.DeepCopy()
+	if created.UID == "" {
+		created.UID = types.UID(created.Name)
+	}
 	if created.CreationTimestamp.IsZero() {
 		created.CreationTimestamp = metav1.Now()
 	}
@@ -174,8 +206,13 @@ func (m *memoryStore) Update(ctx context.Context, anno *annotationV0.Annotation)
 
 	key := anno.Namespace + "/" + anno.Name
 
-	if _, exists := m.data[key]; !exists {
-		return nil, fmt.Errorf("annotation not found")
+	existing, exists := m.data[key]
+	if !exists {
+		return nil, ErrNotFound
+	}
+
+	if existing.DeletionTimestamp != nil {
+		return nil, ErrNotFound
 	}
 
 	updated := anno.DeepCopy()
@@ -190,11 +227,13 @@ func (m *memoryStore) Delete(ctx context.Context, namespace, name string) error 
 
 	key := namespace + "/" + name
 
-	if _, exists := m.data[key]; !exists {
-		return fmt.Errorf("annotation not found")
+	anno, exists := m.data[key]
+	if !exists || anno.DeletionTimestamp != nil {
+		return ErrNotFound
 	}
 
-	delete(m.data, key)
+	now := metav1.Now()
+	anno.DeletionTimestamp = &now
 	return nil
 }
 
@@ -206,6 +245,9 @@ func (m *memoryStore) ListTags(ctx context.Context, namespace string, opts TagLi
 
 	for _, anno := range m.data {
 		if anno.Namespace != namespace {
+			continue
+		}
+		if anno.DeletionTimestamp != nil {
 			continue
 		}
 		for _, tag := range anno.Spec.Tags {

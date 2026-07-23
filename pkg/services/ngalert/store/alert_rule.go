@@ -6,24 +6,22 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"slices"
 	"strings"
 
 	"github.com/google/uuid"
 	"github.com/prometheus/alertmanager/pkg/labels"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -90,7 +88,7 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 				version.Created = TimeNow()
 				version.CreatedBy = nil
 				if user != nil {
-					version.CreatedBy = util.Pointer(string(*user))
+					version.CreatedBy = new(string(*user))
 				}
 			}
 		}
@@ -173,15 +171,15 @@ func (st DBstore) IncreaseVersionForAllRulesInNamespaces(ctx context.Context, or
 	return keys, err
 }
 
-// getFolderFullpaths fetches fullpaths for multiple folders using a background user.
+// getFolderFullpaths fetches fullpaths for multiple folders using the Grafana service identity.
 // Returns a map of folder UID -> fullpath, or nil if FolderService is not configured.
 func (st DBstore) getFolderFullpaths(ctx context.Context, orgID int64, folderUIDs []string) (map[string]string, error) {
 	if st.FolderService == nil {
 		return nil, fmt.Errorf("folder service is not configured")
 	}
-	bgUser := accesscontrol.BackgroundUser("ngalert", orgID, org.RoleAdmin, []accesscontrol.Permission{
-		{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
-	})
+	// Use the Grafana service identity so the call is authenticated as the system when the
+	// folder service is a (multi-tenant) app server reached through the aggregation layer.
+	ctx, bgUser := identity.WithServiceIdentity(ctx, orgID, identity.WithServiceIdentityName("ngalert"))
 	folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
 		OrgID:        orgID,
 		UIDs:         folderUIDs,
@@ -542,7 +540,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 				r := newRules[i]
 				key := ngmodels.AlertRuleKey{OrgID: r.OrgID, UID: r.UID}
 
-				ids = append(ids, ngmodels.AlertRuleKeyWithId{AlertRuleKey: key, ID: r.ID})
+				ids = append(ids, ngmodels.AlertRuleKeyWithId{AlertRuleKey: key, ID: r.ID, GUID: r.GUID})
 				keys = append(keys, key)
 			}
 		}
@@ -606,7 +604,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 				return fmt.Errorf("failed to convert alert rule %s to storage model: %w", r.New.UID, err)
 			}
 			// no way to update multiple rules at once
-			if updated, err := sess.ID(r.Existing.ID).AllCols().Omit("rule_guid").Update(converted); err != nil || updated == 0 {
+			if updated, err := sess.Table(alertRule{}).ID(r.Existing.ID).AllCols().Omit("guid").Update(converted); err != nil || updated == 0 {
 				if err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
 						return ngmodels.ErrAlertRuleConflict(r.New.UID, r.New.OrgID, err)
@@ -708,7 +706,7 @@ func (st DBstore) preventIntermediateUniqueConstraintViolations(sess *db.Session
 			uniqueTempTitle = r.Title[:AlertRuleMaxTitleLength-len(u)] + uuid.New().String()
 		}
 
-		if updated, err := sess.ID(r.ID).Cols("title").Update(&alertRule{Title: uniqueTempTitle, Version: r.Version}); err != nil || updated == 0 {
+		if updated, err := sess.Table(alertRule{}).ID(r.ID).Cols("title").Update(&alertRule{Title: uniqueTempTitle, Version: r.Version}); err != nil || updated == 0 {
 			if err != nil {
 				return fmt.Errorf("failed to set temporary rule title [%s] %s: %w", r.UID, r.Title, err)
 			}
@@ -778,7 +776,10 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 
 		// Build group cursor condition
 		if cursor.NamespaceUID != "" {
-			q = buildGroupCursorCondition(q, cursor)
+			q, err = buildGroupCursorCondition(q, cursor, query.OrgID)
+			if err != nil {
+				return err
+			}
 		}
 
 		// No arbitrary fetch limit - let the loop control pagination
@@ -868,38 +869,66 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 	return result, nextToken, err
 }
 
-func buildGroupCursorCondition(sess *xorm.Session, c ngmodels.GroupCursor) *xorm.Session {
+func buildGroupCursorCondition(sess *xorm.Session, c ngmodels.GroupCursor, orgID int64) (*xorm.Session, error) {
 	// We need to handle this here otherwise we end up checking rule_group > "no_group_for_rule..."
 	// and skipping everything
+	isNoGroupRule := ngmodels.IsNoGroupRuleGroup(c.RuleGroup)
 	ruleGroup := c.RuleGroup
-	if ngmodels.IsNoGroupRuleGroup(ruleGroup) {
+	var uid string
+	var uidSubquery string
+	if isNoGroupRule {
+		parsedRuleGroup, err := ngmodels.ParseNoRuleGroup(c.RuleGroup)
+		if err != nil {
+			return nil, err
+		}
+
+		uid = parsedRuleGroup.GetRuleUID()
+		uidSubquery = "(SELECT id FROM alert_rule WHERE org_id = ? AND uid = ?)"
 		ruleGroup = ""
 	}
 
 	if c.FolderFullpath != "" {
-		return sess.And(
-			"((folder_fullpath > ?) OR (folder_fullpath = ? AND namespace_uid > ?) OR (folder_fullpath = ? AND namespace_uid = ? AND rule_group > ?))",
+		sql := `(folder_fullpath > ?)
+			OR (folder_fullpath = ? AND namespace_uid > ?)
+			OR (folder_fullpath = ? AND namespace_uid = ? AND rule_group > ?)
+		`
+
+		args := []any{
 			c.FolderFullpath,
 			c.FolderFullpath, c.NamespaceUID,
 			c.FolderFullpath, c.NamespaceUID, ruleGroup,
-		)
+		}
+
+		// If the cursor is an ungrouped rule we need to look up the rule id from the uid to use as a row level tiebreaker
+		if isNoGroupRule {
+			sql += " OR (folder_fullpath = ? AND namespace_uid = ? AND rule_group = '' AND id > " + uidSubquery + ")"
+			args = append(args, c.FolderFullpath, c.NamespaceUID, orgID, uid)
+		}
+
+		return sess.And("("+sql+")", args...), nil
 	}
+
 	// fallback to previous cursor condition if folder fullpath is not available, this means that pagination will be less efficient as it cannot take advantage of folder fullpath ordering, but at least it will work and not return duplicate or missing groups.
-	return sess.And(
-		"((namespace_uid > ?) OR (namespace_uid = ? AND rule_group > ?))",
-		c.NamespaceUID, c.NamespaceUID, ruleGroup,
-	)
+	sql := `(namespace_uid > ?)
+		OR (namespace_uid = ? AND rule_group > ?)`
+	args := []any{
+		c.NamespaceUID,
+		c.NamespaceUID, ruleGroup,
+	}
+
+	if isNoGroupRule {
+		// Same note on the row level tiebreaker as above here
+		sql += " OR (namespace_uid = ? AND rule_group = '' AND id > " + uidSubquery + ")"
+		args = append(args, c.NamespaceUID, orgID, uid)
+	}
+
+	return sess.And("("+sql+")", args...), nil
 }
 
 func shouldIncludeRule(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesExtendedQuery, groupsMap map[string]struct{}) bool {
 	settings := rule.ContactPointRouting()
-	if query.ReceiverName != "" {
-		if settings == nil {
-			return false
-		}
-		if settings.Receiver != query.ReceiverName {
-			return false
-		}
+	if !matchesReceiverFilters(settings, query) {
+		return false
 	}
 
 	if query.TimeIntervalName != "" {
@@ -910,6 +939,10 @@ func shouldIncludeRule(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesE
 			!slices.Contains(settings.ActiveTimeIntervals, query.TimeIntervalName) {
 			return false
 		}
+	}
+
+	if !matchesRecordFilters(rule, query) {
+		return false
 	}
 
 	if query.HasPrometheusRuleDefinition != nil {
@@ -924,6 +957,51 @@ func shouldIncludeRule(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesE
 		}
 	}
 
+	return true
+}
+
+// matchesReceiverFilters verifies the ReceiverName / ExcludeReceiverName scalar filters exactly
+// against the rule's contact-point routing. The SQL pre-filter uses substring matching on the
+// notification_settings JSON, so this post-filter removes false positives.
+func matchesReceiverFilters(settings *ngmodels.ContactPointRouting, query *ngmodels.ListAlertRulesExtendedQuery) bool {
+	receiver := ""
+	if settings != nil {
+		receiver = settings.Receiver
+	}
+	if query.ReceiverName != "" && receiver != query.ReceiverName {
+		return false
+	}
+	if query.ExcludeReceiverName != "" && receiver == query.ExcludeReceiverName {
+		return false
+	}
+	return true
+}
+
+// matchesRecordFilters verifies the record-related scalar filters exactly against the rule's
+// Record. The SQL pre-filter uses substring matching on the record JSON column, so this
+// post-filter removes false positives.
+func matchesRecordFilters(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesExtendedQuery) bool {
+	if query.RecordMetricExact == "" && query.ExcludeRecordMetric == "" &&
+		query.RecordTargetDatasourceUIDExact == "" && query.ExcludeRecordTargetDatasourceUID == "" {
+		return true
+	}
+	metric, target := "", ""
+	if rule.Record != nil {
+		metric = rule.Record.Metric
+		target = rule.Record.TargetDatasourceUID
+	}
+	if query.RecordMetricExact != "" && metric != query.RecordMetricExact {
+		return false
+	}
+	if query.ExcludeRecordMetric != "" && metric == query.ExcludeRecordMetric {
+		return false
+	}
+	if query.RecordTargetDatasourceUIDExact != "" && target != query.RecordTargetDatasourceUIDExact {
+		return false
+	}
+	if query.ExcludeRecordTargetDatasourceUID != "" && target == query.ExcludeRecordTargetDatasourceUID {
+		return false
+	}
 	return true
 }
 
@@ -1059,6 +1137,36 @@ func buildRuleGroupFilter(q *xorm.Session, ruleGroups []string) (*xorm.Session, 
 	return q, nil, nil
 }
 
+// buildRuleGroupExcludeFilter adds NOT IN conditions to exclude the given rule groups.
+// It mirrors the logic of buildRuleGroupFilter but uses NOT IN semantics.
+func buildRuleGroupExcludeFilter(q *xorm.Session, ruleGroups []string) (*xorm.Session, error) {
+	if len(ruleGroups) == 0 {
+		return q, nil
+	}
+	var noGroupRuleUIDs []string
+	var realGroups []string
+	for _, group := range ruleGroups {
+		if ngmodels.IsNoGroupRuleGroup(group) {
+			noGroupRuleGroup, err := ngmodels.ParseNoRuleGroup(group)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse rule group %q: %w", group, err)
+			}
+			noGroupRuleUIDs = append(noGroupRuleUIDs, noGroupRuleGroup.GetRuleUID())
+		} else {
+			realGroups = append(realGroups, group)
+		}
+	}
+	if len(realGroups) > 0 {
+		args, notIn := getINSubQueryArgs(realGroups)
+		q = q.Where(fmt.Sprintf("rule_group NOT IN (%s)", strings.Join(notIn, ",")), args...)
+	}
+	if len(noGroupRuleUIDs) > 0 {
+		args, notIn := getINSubQueryArgs(noGroupRuleUIDs)
+		q = q.Where(fmt.Sprintf("uid NOT IN (%s)", strings.Join(notIn, ",")), args...)
+	}
+	return q, nil
+}
+
 // nolint:gocyclo
 func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.ListAlertRulesExtendedQuery) (q *xorm.Session, groupsSet map[string]struct{}, err error) {
 	q = sess.Table("alert_rule")
@@ -1068,14 +1176,80 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 
 	if query.DashboardUID != "" {
 		q = q.Where("dashboard_uid = ?", query.DashboardUID)
-		if query.PanelID != 0 {
-			q = q.Where("panel_id = ?", query.PanelID)
+	}
+	if query.ExcludeDashboardUID != "" {
+		// dashboard_uid is nullable, so a NULL value should also satisfy `!=`.
+		q = q.Where("(dashboard_uid IS NULL OR dashboard_uid <> ?)", query.ExcludeDashboardUID)
+	}
+	if query.PanelID != 0 {
+		q = q.Where("panel_id = ?", query.PanelID)
+	}
+	if query.ExcludePanelID != 0 {
+		q = q.Where("(panel_id IS NULL OR panel_id <> ?)", query.ExcludePanelID)
+	}
+	if query.IsPaused != nil {
+		q = q.Where("is_paused = ?", *query.IsPaused)
+	}
+	if query.TitleExact != "" {
+		q = q.Where("title = ?", query.TitleExact)
+	}
+	if query.ExcludeTitle != "" {
+		q = q.Where("title <> ?", query.ExcludeTitle)
+	}
+	if t := query.NotificationSettingsType; t != "" {
+		clause, err := notificationSettingsTypeClause(t)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+		q = q.Where(clause)
+	}
+	if t := query.ExcludeNotificationSettingsType; t != "" {
+		clause, err := notificationSettingsTypeClause(t)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+		q = q.Where("NOT (" + clause + ")")
+	}
+	if query.RoutingPolicyExact != "" {
+		q = q.Where("alert_routing_policy = ?", query.RoutingPolicyExact)
+	}
+	if query.ExcludeRoutingPolicy != "" {
+		// alert_routing_policy is nullable; NULL should satisfy `!=` to match k8s field-selector semantics.
+		q = q.Where("(alert_routing_policy IS NULL OR alert_routing_policy <> ?)", query.ExcludeRoutingPolicy)
+	}
+	if query.RecordMetricExact != "" {
+		q, err = st.filterByContentInRecord("Metric", query.RecordMetricExact, false, q)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+	}
+	if query.ExcludeRecordMetric != "" {
+		q, err = st.filterByContentInRecord("Metric", query.ExcludeRecordMetric, true, q)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+	}
+	if query.RecordTargetDatasourceUIDExact != "" {
+		q, err = st.filterByContentInRecord("TargetDatasourceUID", query.RecordTargetDatasourceUIDExact, false, q)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+	}
+	if query.ExcludeRecordTargetDatasourceUID != "" {
+		q, err = st.filterByContentInRecord("TargetDatasourceUID", query.ExcludeRecordTargetDatasourceUID, true, q)
+		if err != nil {
+			return nil, groupsSet, err
 		}
 	}
 
 	if len(query.NamespaceUIDs) > 0 {
 		args, in := getINSubQueryArgs(query.NamespaceUIDs)
 		q = q.Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Join(in, ",")), args...)
+	}
+
+	if len(query.ExcludeNamespaceUIDs) > 0 {
+		args, notIn := getINSubQueryArgs(query.ExcludeNamespaceUIDs)
+		q = q.Where(fmt.Sprintf("namespace_uid NOT IN (%s)", strings.Join(notIn, ",")), args...)
 	}
 
 	if len(query.RuleUIDs) > 0 {
@@ -1088,12 +1262,28 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 		return nil, groupsSet, err
 	}
 
+	q, err = buildRuleGroupExcludeFilter(q, query.ExcludeRuleGroups)
+	if err != nil {
+		return nil, groupsSet, err
+	}
+
+	if query.RuleGroupExists != nil {
+		if *query.RuleGroupExists {
+			q = q.Where("rule_group != ''")
+		} else {
+			q = q.Where("rule_group = ''")
+		}
+	}
+
 	if query.ReceiverName != "" {
 		q, err = st.filterByContentInNotificationSettings(query.ReceiverName, q)
 		if err != nil {
 			return nil, groupsSet, err
 		}
 	}
+	// ExcludeReceiverName has no SQL pre-filter (LIKE-based exclusion would over-exclude rules
+	// that contain the value as a substring of an unrelated JSON field). The exact-match check
+	// happens in matchesReceiverFilters in the post-query filter.
 
 	if query.TimeIntervalName != "" {
 		q, err = st.filterByContentInNotificationSettings(query.TimeIntervalName, q)
@@ -1202,13 +1392,8 @@ func (st DBstore) handleRuleRow(rows *xorm.Rows, query *ngmodels.ListAlertRulesE
 		return nil, false
 	}
 	settings := converted.ContactPointRouting()
-	if query.ReceiverName != "" { // remove false-positive hits from the result
-		if settings == nil {
-			return nil, false
-		}
-		if settings.Receiver != query.ReceiverName {
-			return nil, false
-		}
+	if !matchesReceiverFilters(settings, query) { // remove false-positive hits from the result
+		return nil, false
 	}
 	if query.TimeIntervalName != "" {
 		if settings == nil {
@@ -1218,6 +1403,9 @@ func (st DBstore) handleRuleRow(rows *xorm.Rows, query *ngmodels.ListAlertRulesE
 			!slices.Contains(settings.ActiveTimeIntervals, query.TimeIntervalName) {
 			return nil, false
 		}
+	}
+	if !matchesRecordFilters(&converted, query) { // remove false-positive hits from the result
+		return nil, false
 	}
 	if query.HasPrometheusRuleDefinition != nil { // remove false-positive hits from the result
 		if *query.HasPrometheusRuleDefinition != converted.HasPrometheusRuleDefinition() {
@@ -1422,16 +1610,13 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 				om[r.NamespaceUID] = struct{}{}
 			}
 			for orgID, uids := range uids {
-				schedulerUser := accesscontrol.BackgroundUser("grafana_scheduler", orgID, org.RoleAdmin,
-					[]accesscontrol.Permission{
-						{
-							Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll,
-						},
-					})
+				// Use the Grafana service identity so the call is authenticated as the system when the
+				// folder service is a (multi-tenant) app server reached through the aggregation layer.
+				svcCtx, schedulerUser := identity.WithServiceIdentity(ctx, orgID, identity.WithServiceIdentityName("grafana_scheduler"))
 
-				folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
+				folders, err := st.FolderService.GetFolders(svcCtx, folder.GetFoldersQuery{
 					OrgID:        orgID,
-					UIDs:         maps.Keys(uids),
+					UIDs:         slices.Collect(maps.Keys(uids)),
 					WithFullpath: true,
 					SignedInUser: schedulerUser,
 				})
@@ -1450,7 +1635,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 // DeleteInFolder deletes the rules contained in a given folder along with their associated data.
 func (st DBstore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
 	for _, folderUID := range folderUIDs {
-		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
+		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
 		canSave, err := st.AccessControl.Evaluate(ctx, user, evaluator)
 		if err != nil {
 			st.Logger.Error("Failed to evaluate access control", "error", err)
@@ -1458,7 +1643,7 @@ func (st DBstore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs [
 		}
 		if !canSave {
 			st.Logger.Error("user is not allowed to delete alert rules in folder", "folder", folderUID, "user")
-			return dashboards.ErrFolderAccessDenied
+			return folder.ErrAccessDenied
 		}
 
 		rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
@@ -1597,6 +1782,50 @@ func (st DBstore) filterByContentInNotificationSettings(value string, sess *xorm
 		search = strings.ReplaceAll(strings.ReplaceAll(search, `\`, `\\`), `"`, `\"`)
 	}
 	sql, param := st.SQLStore.GetDialect().LikeOperator("notification_settings", true, search, true)
+	return sess.And(sql, param), nil
+}
+
+// notificationSettingsTypeClause returns a SQL predicate matching rules whose effective
+// notification settings type equals t. Effective type is SimplifiedRouting when
+// notification_settings is set, otherwise NamedRoutingTree when alert_routing_policy is set.
+// SimplifiedRouting takes precedence on rules that have both columns populated.
+func notificationSettingsTypeClause(t ngmodels.NotificationSettingsType) (string, error) {
+	const simplifiedSet = "notification_settings IS NOT NULL AND notification_settings <> '' AND notification_settings <> 'null' AND notification_settings <> '[]'"
+	const simplifiedUnset = "(notification_settings IS NULL OR notification_settings = '' OR notification_settings = 'null' OR notification_settings = '[]')"
+	switch t {
+	case ngmodels.NotificationSettingsTypeSimplifiedRouting:
+		return simplifiedSet, nil
+	case ngmodels.NotificationSettingsTypeNamedRoutingTree:
+		return "alert_routing_policy IS NOT NULL AND " + simplifiedUnset, nil
+	default:
+		return "", fmt.Errorf("unsupported notification settings type %q", t)
+	}
+}
+
+// filterByContentInRecord adds a LIKE filter to the query for the given key/value pair in the
+// `record` JSON column. When exclude is true, the rule must not match. Callers should still
+// verify the match by parsing the column after the query runs, as LIKE matches the raw JSON
+// serialization and may include false positives.
+func (st DBstore) filterByContentInRecord(key, value string, exclude bool, sess *xorm.Session) (*xorm.Session, error) {
+	if value == "" {
+		return sess, nil
+	}
+	keyBytes, err := json.Marshal(key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshall key for record content filter: %w", err)
+	}
+	valueBytes, err := json.Marshal(value)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshall value for record content filter: %w", err)
+	}
+	search := string(keyBytes) + ":" + string(valueBytes)
+	if st.SQLStore.GetDialect().DriverName() != migrator.SQLite {
+		search = strings.ReplaceAll(strings.ReplaceAll(search, `\`, `\\`), `"`, `\"`)
+	}
+	sql, param := st.SQLStore.GetDialect().LikeOperator("record", true, search, true)
+	if exclude {
+		return sess.And("NOT ("+sql+")", param), nil
+	}
 	return sess.And(sql, param), nil
 }
 

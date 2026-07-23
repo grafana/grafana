@@ -1,8 +1,8 @@
-import { AwsAuthDataSourceJsonData, AwsAuthDataSourceSecureJsonData } from '@grafana/aws-sdk';
-import { DataFrame, DataSourceRef } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { type AwsAuthDataSourceJsonData, type AwsAuthDataSourceSecureJsonData } from '@grafana/aws-sdk';
+import { type DataSourceRef } from '@grafana/data';
+import { type DataQuery } from '@grafana/schema';
 
-import * as raw from './dataquery.gen';
+import type * as raw from './dataquery.gen';
 
 export type CloudWatchQuery =
   | raw.CloudWatchMetricsQuery
@@ -17,8 +17,6 @@ export type CloudWatchDefaultQuery = Omit<raw.CloudWatchLogsQuery, 'queryMode'> 
 export interface MultiFilters {
   [key: string]: string[];
 }
-
-export type Direction = 'ASC' | 'DESC';
 
 export type LogAction = 'GetQueryResults' | 'GetLogEvents' | 'StartQuery' | 'StopQuery';
 
@@ -87,42 +85,6 @@ export interface GetLogEventsRequest extends DataQuery {
   region: string;
 }
 
-export interface TSDBResponse<T = any> {
-  results: Record<string, TSDBQueryResult<T>>;
-  message?: string;
-}
-
-export interface TSDBQueryResult<T = any> {
-  refId: string;
-  series: TSDBTimeSeries[];
-  tables: Array<TSDBTable<T>>;
-  frames: DataFrame[];
-
-  error?: string;
-  meta?: any;
-}
-
-export interface TSDBTable<T = any> {
-  columns: Array<{ text: string }>;
-  rows: T[];
-}
-
-export interface DataQueryError<CloudWatchMetricsQuery> {
-  data?: {
-    message?: string;
-    error?: string;
-    results: Record<string, TSDBQueryResult<CloudWatchMetricsQuery>>;
-  };
-  message?: string;
-}
-
-export interface TSDBTimeSeries {
-  name: string;
-  points: TSDBTimePoint[];
-  tags?: Record<string, string>;
-}
-export type TSDBTimePoint = [number, number];
-
 export interface LogGroupField {
   /**
    * The name of a log field.
@@ -144,6 +106,7 @@ export interface StartQueryRequest extends DataQuery {
    */
   logGroupNames?: string[] /* not quite deprecated yet, but will be soon */;
   logGroups?: raw.LogGroup[];
+  logDataSources?: raw.LogDataSource[];
   /**
    * The query string to use. For more information, see CloudWatch Logs Insights Query Syntax.
    */
@@ -191,7 +154,7 @@ export interface MetricRequest {
   debug?: boolean;
 }
 
-export interface MetricQuery {
+interface MetricQuery {
   [key: string]: any;
   datasource?: DataSourceRef;
   refId?: string;

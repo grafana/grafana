@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
-import { clamp } from 'lodash';
 import { useCallback, useId, useRef } from 'react';
-import * as React from 'react';
+import type * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { ComponentSize } from '../../types/size';
-import { DragHandlePosition, getDragStyles } from '../DragHandle/DragHandle';
+import { type ComponentSize } from '../../types/size';
+import { clamp } from '../../utils/clamp';
+import { type DragHandlePosition, getDragStyles } from '../DragHandle/DragHandle';
 
 export interface UseSplitterOptions {
   /**

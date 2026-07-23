@@ -1,16 +1,16 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { BootstrapStep, Props } from './BootstrapStep';
+import { BootstrapStep, type Props } from './BootstrapStep';
 import { StepStatusProvider, useStepStatus } from './StepStatusContext';
 import { useModeOptions } from './hooks/useModeOptions';
 import { useRepositoryStatus } from './hooks/useRepositoryStatus';
 import { useResourceStats } from './hooks/useResourceStats';
-import { WizardFormData } from './types';
+import { type WizardFormData } from './types';
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetRepositoryFilesQuery: jest.fn(),
@@ -41,7 +41,7 @@ type WizardFormDefaults = Omit<Partial<WizardFormData>, 'repository'> & {
   repository?: Partial<WizardFormData['repository']>;
 };
 
-// Component to display step status errors for testing
+// Component to display step status errors/warnings for testing
 function StepStatusDisplay() {
   const { stepStatusInfo } = useStepStatus();
   if (stepStatusInfo.status === 'error' && 'error' in stepStatusInfo) {
@@ -53,6 +53,20 @@ function StepStatusDisplay() {
         <div>{title}</div>
         <div>{typeof message === 'string' ? message : message}</div>
         {stepStatusInfo.action && (
+          <button onClick={stepStatusInfo.action.onClick}>{stepStatusInfo.action.label}</button>
+        )}
+      </div>
+    );
+  }
+  if (stepStatusInfo.status === 'warning' && 'warning' in stepStatusInfo) {
+    const warning = stepStatusInfo.warning;
+    const title = typeof warning === 'string' ? warning : warning.title;
+    const message = typeof warning === 'string' ? warning : warning.message;
+    return (
+      <div>
+        <div>{title}</div>
+        <div>{typeof message === 'string' ? message : message}</div>
+        {'action' in stepStatusInfo && stepStatusInfo.action && (
           <button onClick={stepStatusInfo.action.onClick}>{stepStatusInfo.action.label}</button>
         )}
       </div>
@@ -370,6 +384,35 @@ describe('BootstrapStep', () => {
       // Check that the folder option is now selected by looking for the title field
       expect(await screen.findByRole('textbox', { name: /display name/i })).toBeInTheDocument();
     });
+
+    it('should display the folderless option when it is enabled', async () => {
+      mockUseModeOptions.mockReturnValue({
+        enabledOptions: [
+          {
+            target: 'folderless',
+            label: 'Sync external storage directly at root level without a containing folder',
+            description: 'Resources are provisioned at the top level without a wrapper folder',
+            subtitle: 'Use this option to sync external resources to the top level',
+            disabled: false,
+          },
+        ],
+        disabledOptions: [],
+      });
+
+      setup({
+        settingsData: {
+          allowedTargets: ['folder', 'folderless'],
+          allowImageRendering: true,
+          items: [],
+          availableRepositoryTypes: [],
+          maxRepositories: 10,
+        },
+      });
+
+      expect(
+        await screen.findByText('Sync external storage directly at root level without a containing folder')
+      ).toBeInTheDocument();
+    });
   });
 
   describe('title field visibility', () => {
@@ -379,10 +422,115 @@ describe('BootstrapStep', () => {
       // Default is folder, so title field should be visible
       expect(await screen.findByRole('textbox', { name: /display name/i })).toBeInTheDocument();
     });
+
+    it('should not show title field for folderless sync target', async () => {
+      // Folderless has no wrapper folder, so the display-name field must not appear.
+      mockUseModeOptions.mockReturnValue({
+        enabledOptions: [
+          {
+            target: 'folderless',
+            label: 'Sync external storage directly at root level without a containing folder',
+            description: 'Resources are provisioned at the top level without a wrapper folder',
+            subtitle: 'Use this option to sync external resources to the top level',
+            disabled: false,
+          },
+        ],
+        disabledOptions: [],
+      });
+
+      const { user } = setup({
+        settingsData: {
+          allowedTargets: ['folder', 'folderless'],
+          allowImageRendering: true,
+          items: [],
+          availableRepositoryTypes: [],
+          maxRepositories: 10,
+        },
+      });
+
+      const folderlessOption = await screen.findByText(
+        'Sync external storage directly at root level without a containing folder'
+      );
+      await user.click(folderlessOption);
+
+      expect(screen.queryByRole('textbox', { name: /display name/i })).not.toBeInTheDocument();
+    });
   });
 
-  describe('quota exceeded', () => {
-    it('should not render content when resource count exceeds quota limit', () => {
+  describe('quota warning', () => {
+    it('should use file count (not resource count) for quota check when file count exceeds limit', async () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true,
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: { maxResourcesPerRepository: 20 },
+        conditions: undefined,
+        refetch: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 10,
+        unmanagedCount: 0,
+        fileCount: 25,
+        resourceCount: 10,
+        resourceCountString: '10 resources',
+        fileCountString: '25 files',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: false,
+      });
+
+      setup();
+
+      // Content stays visible: warning does not hard-block the wizard
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /display name/i })).toBeInTheDocument();
+      // A non-blocking warning is surfaced based on file count (25 > 20)
+      expect(screen.getByText('Resource limit may be exceeded')).toBeInTheDocument();
+    });
+
+    it('should not block when resource count exceeds quota but file count is within limit', async () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true,
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: { maxResourcesPerRepository: 20 },
+        conditions: undefined,
+        refetch: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 25,
+        unmanagedCount: 0,
+        fileCount: 10,
+        resourceCount: 25,
+        resourceCountString: '25 resources',
+        fileCountString: '10 files',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: false,
+      });
+
+      setup();
+
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
+    });
+
+    it('should render content with a warning when file count exceeds quota limit', async () => {
       mockUseRepositoryStatus.mockReturnValue({
         isReady: true,
         isLoading: false,
@@ -413,8 +561,12 @@ describe('BootstrapStep', () => {
 
       setup();
 
-      expect(screen.queryByText('Sync external storage to a new Grafana folder')).not.toBeInTheDocument();
-      expect(screen.queryByRole('textbox', { name: /display name/i })).not.toBeInTheDocument();
+      // Content stays visible and there is no blocking error
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /display name/i })).toBeInTheDocument();
+      expect(screen.queryByText('Resource quota exceeded')).not.toBeInTheDocument();
+      // A non-blocking warning is surfaced instead
+      expect(screen.getByText('Resource limit may be exceeded')).toBeInTheDocument();
     });
 
     it('should render content when no quota is configured even with high resource count', async () => {

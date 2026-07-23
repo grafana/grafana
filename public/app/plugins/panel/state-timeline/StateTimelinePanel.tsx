@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
-import { DashboardCursorSync, PanelProps, useDataLinksContext } from '@grafana/data';
+import { DashboardCursorSync, type DataFrame, type PanelProps, useDataLinksContext } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import {
   AxisPlacement,
@@ -11,22 +11,23 @@ import {
   useTheme2,
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
-import { TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import {
   prepareTimelineFields,
   prepareTimelineLegendItems,
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
+import { getFilterByGroupedLabels } from 'app/features/panel/filters/adhoc';
 
-import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationPlugin';
+import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 import { getTimezones } from '../timeseries/utils';
 
 import { StateTimelineTooltip } from './StateTimelineTooltip';
 import { usePagination } from './hooks';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 import { containerStyles } from './styles';
 
 interface TimelinePanelProps extends PanelProps<Options> {}
@@ -47,12 +48,26 @@ export const StateTimelinePanel = ({
 
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
-  const { sync, eventsScope, canAddAnnotations, eventBus, canExecuteActions } = usePanelContext();
+  const {
+    sync,
+    eventsScope,
+    canAddAnnotations,
+    eventBus,
+    canExecuteActions,
+    getFiltersBasedOnGrouping,
+    onAddAdHocFilters,
+  } = usePanelContext();
 
   const { dataLinkPostProcessor } = useDataLinksContext();
 
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
+
+  const getFilterByGroupedLabelsModel = useCallback(
+    (frame: DataFrame, seriesIdx: number | null | undefined) =>
+      getFilterByGroupedLabels(frame, seriesIdx, getFiltersBasedOnGrouping, onAddAdHocFilters),
+    [getFiltersBasedOnGrouping, onAddAdHocFilters]
+  );
 
   const { frames, warn } = useMemo(
     () => prepareTimelineFields(data.series, options.mergeValues ?? true, timeRange, theme),
@@ -144,6 +159,7 @@ export const StateTimelinePanel = ({
                         maxHeight={options.tooltip.maxHeight}
                         replaceVariables={replaceVariables}
                         dataLinks={dataLinks}
+                        filterByGroupedLabels={getFilterByGroupedLabelsModel(alignedFrame, seriesIdx)}
                         canExecuteActions={userCanExecuteActions}
                       />
                     );

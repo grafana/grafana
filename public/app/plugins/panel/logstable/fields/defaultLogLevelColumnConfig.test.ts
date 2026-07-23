@@ -1,4 +1,4 @@
-import { Field, FieldConfig, FieldType, LogLevel, MappingType } from '@grafana/data';
+import { type Field, type FieldConfig, FieldType, LogLevel, MappingType } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/ui';
 import { LogLevelColor } from 'app/features/logs/logsModel';
 

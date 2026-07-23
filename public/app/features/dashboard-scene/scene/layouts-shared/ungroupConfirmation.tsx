@@ -4,7 +4,7 @@ import { ShowConfirmModalEvent, ShowModalReactEvent } from 'app/types/events';
 
 import { ConvertMixedGridsModal } from '../layout-rows/ConvertMixedGridsModal';
 
-import { GridLayoutType, mapIdToGridLayoutType } from './utils';
+import { type GridLayoutType, mapIdToGridLayoutType } from './utils';
 
 export interface UngroupConfirmationOptions {
   hasNonGridLayout: boolean;

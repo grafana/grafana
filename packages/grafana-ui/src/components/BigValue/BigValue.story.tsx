@@ -1,18 +1,18 @@
-import { StoryFn, Meta } from '@storybook/react';
+import { type StoryFn, type Meta } from '@storybook/react-webpack5';
 
-import { FieldSparkline, FieldType } from '@grafana/data';
+import { type FieldSparkline, FieldType } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
+import { BigValue } from './BigValue';
+import mdx from './BigValue.mdx';
 import {
-  BigValue,
   BigValueColorMode,
   BigValueGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,
-  Props,
-} from './BigValue';
-import mdx from './BigValue.mdx';
+  type Props,
+} from './BigValueTypes';
 
 const meta: Meta = {
   title: 'Plugins/BigValue',

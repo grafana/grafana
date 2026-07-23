@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 
-import { EventLocation, SourceEntryPoint } from './constants';
+import { type EventLocation, type SourceEntryPoint } from './constants';
 
 interface TrackingContextValue {
   sourceEntryPoint: SourceEntryPoint;

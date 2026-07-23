@@ -1,6 +1,8 @@
 import { debounce } from 'lodash';
 
-import { reportInteraction } from '@grafana/runtime';
+import { getAppEvents, reportInteraction } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { PanelEditNextFeedbackEvent } from 'app/types/events';
 
 import { QueryEditorType } from './constants';
 
@@ -26,14 +28,22 @@ export function trackTransformationFilterChanged(filter: string | null) {
   });
 }
 
-type AddCardSource = 'section_header' | 'inline';
+type AddCardSource = 'section_header' | 'inline' | 'empty_state' | 'legacy';
 
-export function trackAddQuery(querySource: 'saved_query' | 'new_query', cardSource: AddCardSource) {
-  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
-    action: 'add_query',
-    source: querySource,
-    card_source: cardSource,
-  });
+export function trackAddQuery(
+  querySource: 'saved_query' | 'new_query',
+  cardSource: AddCardSource,
+  options?: { silent?: boolean }
+) {
+  reportInteraction(
+    EVENT_PANEL_EDIT_NEXT,
+    {
+      action: 'add_query',
+      source: querySource,
+      card_source: cardSource,
+    },
+    options
+  );
 }
 
 export function trackOpenSavedQueryPicker(source: AddCardSource) {
@@ -50,11 +60,15 @@ export function trackAddExpressionInitiated(source: AddCardSource) {
   });
 }
 
-export function trackAddTransformationInitiated(source: AddCardSource) {
-  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
-    action: 'add_transformation_initiated',
-    source,
-  });
+export function trackAddTransformationInitiated(source: AddCardSource, options?: { silent?: boolean }) {
+  reportInteraction(
+    EVENT_PANEL_EDIT_NEXT,
+    {
+      action: 'add_transformation_initiated',
+      source,
+    },
+    options
+  );
 }
 
 export type CardActionSource = 'content_header' | 'sidebar_card';
@@ -62,13 +76,18 @@ export type CardActionSource = 'content_header' | 'sidebar_card';
 export function trackCardAction(
   action: 'delete' | 'toggle_hide' | 'duplicate',
   itemType: QueryEditorType,
-  source: CardActionSource
+  source: CardActionSource,
+  options?: { silent?: boolean }
 ) {
-  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
-    action,
-    item_type: itemType,
-    source,
-  });
+  reportInteraction(
+    EVENT_PANEL_EDIT_NEXT,
+    {
+      action,
+      item_type: itemType,
+      source,
+    },
+    options
+  );
 }
 
 export function trackTransformationToolAction(action: 'toggle_help' | 'toggle_filter' | 'toggle_debug') {
@@ -88,11 +107,15 @@ export function trackQueryMenuAction(
   });
 }
 
-export function trackReorder(itemType: 'query' | 'transformation') {
-  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
-    action: 'reorder',
-    item_type: itemType,
-  });
+export function trackReorder(itemType: 'query' | 'transformation', options?: { silent?: boolean }) {
+  reportInteraction(
+    EVENT_PANEL_EDIT_NEXT,
+    {
+      action: 'reorder',
+      item_type: itemType,
+    },
+    options
+  );
 }
 
 export function trackEditorVersionToggle(direction: 'upgrade' | 'downgrade') {
@@ -121,17 +144,39 @@ export function trackSidebarSizeToggle(direction: 'expand' | 'collapse') {
   });
 }
 
-export function trackSidebarViewChange(view: QueryEditorType) {
+export function trackSidebarViewChange(view: string, options?: { silent?: boolean }) {
+  reportInteraction(
+    EVENT_PANEL_EDIT_NEXT,
+    {
+      action: 'change_sidebar_view',
+      view,
+    },
+    options
+  );
+}
+
+export function trackStackedViewToggle(direction: 'enter' | 'exit') {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
-    action: 'change_sidebar_view',
-    view,
+    action: 'toggle_stacked_view',
+    direction,
   });
 }
 
-export function trackQueryOptionsToggle(open: boolean) {
+export function trackQueryOptionsToggle(open: boolean, options?: { silent?: boolean }) {
+  reportInteraction(
+    EVENT_PANEL_EDIT_NEXT,
+    {
+      action: 'toggle_query_options',
+      open,
+    },
+    options
+  );
+}
+
+export function trackMultiSelectToggle(direction: 'enter' | 'exit') {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
-    action: 'toggle_query_options',
-    open,
+    action: 'toggle_multi_select',
+    direction,
   });
 }
 
@@ -142,52 +187,14 @@ export function trackRenameInitiated() {
   });
 }
 
-const INTERCOM_APP_ID = 'agpb1wfw';
-const INTERCOM_SURVEY_ID = '59003702';
-
-function getIntercom(): ((command: string, ...args: unknown[]) => void) | undefined {
-  if ('Intercom' in window && typeof window.Intercom === 'function') {
-    return window.Intercom;
+export function startFeedbackSurvey(): void {
+  const isPanelEditNextFeedbackEventEnabled = getFeatureFlagClient().getBooleanValue(
+    FlagKeys.GrafanaPanelEditNextFeedbackEvent,
+    false
+  );
+  if (isPanelEditNextFeedbackEventEnabled) {
+    // Fire an event for grafana-setupguide-app to detect, which will show the survey in Cloud.
+    getAppEvents().publish(new PanelEditNextFeedbackEvent());
+    return;
   }
-  return undefined;
-}
-
-let intercomLoadPromise: Promise<void> | null = null;
-
-function ensureIntercomLoaded(): Promise<void> {
-  if (typeof getIntercom() === 'function') {
-    return Promise.resolve();
-  }
-
-  if (intercomLoadPromise) {
-    return intercomLoadPromise;
-  }
-
-  intercomLoadPromise = new Promise<void>((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = `https://widget.intercom.io/widget/${INTERCOM_APP_ID}`;
-    script.async = true;
-    script.onload = () => {
-      getIntercom()?.('boot', { app_id: INTERCOM_APP_ID, hide_default_launcher: true });
-      resolve();
-    };
-    script.onerror = () => {
-      intercomLoadPromise = null;
-      reject(new Error('Failed to load Intercom'));
-    };
-    document.head.appendChild(script);
-  });
-
-  return intercomLoadPromise;
-}
-
-export function startIntercomSurvey(): void {
-  ensureIntercomLoaded()
-    .then(() => {
-      getIntercom()?.('startSurvey', INTERCOM_SURVEY_ID);
-    })
-    .catch(() => {
-      // Intercom blocked or unavailable — silently ignore.
-      // The survey is non-critical; the editor remains fully functional.
-    });
 }

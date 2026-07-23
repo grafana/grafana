@@ -1,25 +1,28 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
+import { useMemo } from 'react';
 
 import {
   CoreApp,
-  GrafanaTheme2,
-  IconName,
-  LinkModel,
+  type DataSourceInstanceSettings,
+  type GrafanaTheme2,
+  type IconName,
+  type LinkModel,
   PluginExtensionPoints,
-  RawTimeRange,
-  TimeRange,
+  type RawTimeRange,
+  type TimeRange,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
+import { getTraceToLogsOptions, type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction, usePluginLinks } from '@grafana/runtime';
-import { DataSourceRef } from '@grafana/schema';
+import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { type DataSourceJsonData, type DataSourceRef } from '@grafana/schema';
 import { Button, DataLinkButton, Dropdown, Menu, useStyles2 } from '@grafana/ui';
-import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
+export const RelatedProfilesTitle = 'Related profiles';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
-import { SpanLinkDef, SpanLinkFunc, SpanLinkType } from '../../types/links';
-import { TraceSpan } from '../../types/trace';
+import { type SpanLinkDef, type SpanLinkFunc, SpanLinkType } from '../../types/links';
+import { type TraceSpan } from '../../types/trace';
 
 export type ProfilesButtonContext = {
   serviceName: string;
@@ -34,6 +37,7 @@ export type Props = {
   span: TraceSpan;
   traceToProfilesOptions?: TraceToProfilesOptions;
   datasourceType: string;
+  datasourceUid: string;
   timeRange: TimeRange;
   createSpanLink?: SpanLinkFunc;
   app: CoreApp;
@@ -60,29 +64,47 @@ const MAX_LINKS = 3;
 
 const ABSOLUTE_LINK_PATTERN = /^https?:\/\//i;
 
-export const getSpanDetailLinkButtons = (props: Props) => {
-  const { span, createSpanLink, traceToProfilesOptions, timeRange, datasourceType, app, shareButton } = props;
+export const SpanDetailLinkButtons = (props: Props) => {
+  const { span, createSpanLink, traceToProfilesOptions, timeRange, datasourceType, datasourceUid, app, shareButton } =
+    props;
 
-  let linkToProfiles: SpanLinkDef | undefined;
-  let content = shareButton ? <>{shareButton}</> : undefined;
+  // Hooks must run unconditionally on every render, so fetch the plugin links up front.
+  // The context only depends on props, and the fetched links are only consumed below when
+  // a profiles link exists and we're in Explore.
+  const context = getProfileLinkButtonsContext(span, traceToProfilesOptions, timeRange);
+  const { links: pluginLinks } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.TraceViewDetails,
+    context,
+    limitPerPlugin: 1,
+  });
 
-  if (createSpanLink) {
-    const links = (createSpanLink(span) || [])
+  const { settings } = useDataSourceInstanceSettings(datasourceUid);
+
+  const links = useMemo(() => {
+    let linkToProfiles: SpanLinkDef | undefined;
+
+    const links = (createSpanLink?.(span) || [])
       // Linked spans are shown in a separate section
       .filter((link) => link.type !== SpanLinkType.Traces)
       .map((link) => {
         if (link.type === SpanLinkType.Logs) {
-          return createLinkModel(link, SpanLinkType.Logs, 'Logs for this span', 'gf-logs', datasourceType);
+          return createLinkModel(link, SpanLinkType.Logs, getLogsButtonCTA(settings), 'gf-logs', datasourceType);
         }
         if (link.type === SpanLinkType.Profiles && link.title === RelatedProfilesTitle) {
           linkToProfiles = link;
-          return createLinkModel(link, SpanLinkType.Profiles, 'Profiles for this span', 'link', datasourceType);
+          return createLinkModel(
+            link,
+            SpanLinkType.Profiles,
+            t('explore.span-detail-link-buttons.profiles-for-this-span', 'Profiles for this span'),
+            'link',
+            datasourceType
+          );
         }
         if (link.type === SpanLinkType.Session) {
           return createLinkModel(
             link,
             SpanLinkType.Session,
-            'Session for this span',
+            t('explore.span-detail-link-buttons.session-for-this-span', 'Session for this span'),
             'frontend-observability',
             datasourceType
           );
@@ -96,14 +118,11 @@ export const getSpanDetailLinkButtons = (props: Props) => {
     if (linkToProfiles && app === CoreApp.Explore) {
       // ensure we have a profile link
       const profilesDrilldownPluginId = 'grafana-pyroscope-app';
-      const context = getProfileLinkButtonsContext(span, traceToProfilesOptions, timeRange);
-      const extensionPointId = PluginExtensionPoints.TraceViewDetails;
-      const { links: pluginLinks } = usePluginLinks({ extensionPointId, context, limitPerPlugin: 1 });
       const link =
         pluginLinks && pluginLinks.length > 0
           ? pluginLinks.find((link) => link.pluginId === profilesDrilldownPluginId)
           : null;
-      const label = 'Open in Profiles Drilldown';
+      const label = t('explore.span-detail-link-buttons.open-in-profiles-drilldown', 'Open in Profiles Drilldown');
       const appLink: SpanLinkDef = {
         ...linkToProfiles,
         href: '',
@@ -122,44 +141,54 @@ export const getSpanDetailLinkButtons = (props: Props) => {
       return aValue - bValue;
     });
 
-    if (links.length > MAX_LINKS) {
-      content = (
-        <>
-          <DropDownMenu links={links}></DropDownMenu>
-          {shareButton}
-        </>
-      );
-    } else if (links.length > 0) {
-      content = (
-        <>
-          {links.map((spanLinkModel, index) => (
-            <SingleLinkButton spanLinkModel={spanLinkModel} key={index} />
-          ))}
-          {shareButton}
-        </>
-      );
-    }
-  }
+    return links;
+  }, [app, createSpanLink, datasourceType, pluginLinks, settings, span]);
 
-  if (!content) {
-    return <></>;
+  if (!links.length && !shareButton) {
+    return null;
   }
 
   return (
-    <span
-      className={css({
-        display: 'flex',
-        width: '100%',
-        flexDisplay: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'flex-end',
-        gap: '5px',
-      })}
-    >
-      {content}
+    <span className={styles.linksContainer}>
+      {links.length > MAX_LINKS ? (
+        <DropDownMenu links={links}></DropDownMenu>
+      ) : (
+        links.map((spanLinkModel, index) => <SingleLinkButton spanLinkModel={spanLinkModel} key={index} />)
+      )}
+      {shareButton}
     </span>
   );
 };
+
+const styles = {
+  linksContainer: css({
+    display: 'flex',
+    width: '100%',
+    flexDisplay: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+    gap: '5px',
+  }),
+};
+
+function getLogsButtonCTA(settings: DataSourceInstanceSettings<DataSourceJsonData> | undefined) {
+  const defaultCTA = t('explore.span-detail-link-buttons.related-logs', 'Related logs');
+  if (!settings) {
+    return defaultCTA;
+  }
+
+  // The trace-to-logs config lives on jsonData; getTraceToLogsOptions also
+  // migrates the legacy `tracesToLogs` shape to the v2 shape.
+  const options = getTraceToLogsOptions(settings.jsonData);
+  if (options?.filterBySpanID) {
+    return t('explore.span-detail-link-buttons.logs-for-this-span', 'Logs for this span');
+  }
+  if (options?.filterByTraceID) {
+    return t('explore.span-detail-link-buttons.logs-for-this-trace', 'Logs for this trace');
+  }
+
+  return defaultCTA;
+}
 
 function getResponsibleButtonStyles(theme: GrafanaTheme2) {
   return css({

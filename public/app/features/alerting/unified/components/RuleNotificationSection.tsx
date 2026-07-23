@@ -5,11 +5,10 @@ import { useFormContext } from 'react-hook-form';
 import { notificationsAPIv0alpha1 } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2, textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import {
   Button,
   Combobox,
-  ComboboxOption,
+  type ComboboxOption,
   Field,
   FieldValidationMessage,
   Input,
@@ -23,7 +22,7 @@ import {
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
-import { RuleFormValues } from '../types/rule-form';
+import { type RuleFormValues } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
@@ -130,7 +129,6 @@ export function RuleNotificationSection() {
   // Validate runbook URL for form-level validation feedback
   const runbookUrlError = useMemo(() => validateRunbookUrl(runbookUrlValue), [runbookUrlValue]);
   const runbookUrlErrorId = useId();
-  const multiplePoliciesEnabled = config.featureToggles.alertingMultiplePolicies ?? false;
 
   return (
     <section className={styles.section} aria-labelledby="notification-section-heading">
@@ -195,7 +193,7 @@ export function RuleNotificationSection() {
             {useNotificationPolicy ? (
               <div className={styles.contentTopSpacer}>
                 <Stack direction="column" gap={2}>
-                  {multiplePoliciesEnabled && <PolicyTreeSelector />}
+                  <PolicyTreeSelector />
                   <NeedHelpInfoForNotificationPolicy />
                 </Stack>
               </div>

@@ -1,5 +1,5 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { Field, FieldType } from '../../types/dataFrame';
+import { type Field, FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 
 import {
@@ -60,6 +60,27 @@ describe('field convert type', () => {
     });
   });
 
+  it.each([
+    ['utc', 'YYYY-MM-DD HH:mm:ss', Date.UTC(2024, 0, 1)],
+    ['Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss', Date.UTC(2023, 11, 31, 18, 30)],
+    ['utc', '', Date.UTC(2024, 0, 1)],
+  ])('will parse string time in the specified timezone', (timezone, dateFormat, expected) => {
+    const field: Field = {
+      name: 'date',
+      type: FieldType.string,
+      values: ['2024-01-01 00:00:00'],
+      config: {},
+    };
+
+    const result = convertFieldType(field, {
+      destinationType: FieldType.time,
+      dateFormat,
+      timezone,
+    });
+
+    expect(result.values).toEqual([expected]);
+  });
+
   it('will not parse improperly formatted date strings', () => {
     const options = { targetField: 'misformatted dates', destinationType: FieldType.time };
 
@@ -116,7 +137,7 @@ it('can convert proper numeric strings to numbers, but also treat edge-cases', (
   expect(numbers).toEqual({
     name: 'stringy nums',
     type: FieldType.number,
-    values: [10, null, 30, 14, 10, 23, 0, 0],
+    values: [10, null, 30, 14, 10, 23, null, null],
     config: {},
   });
 });

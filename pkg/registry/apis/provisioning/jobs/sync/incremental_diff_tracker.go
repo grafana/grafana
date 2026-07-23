@@ -9,16 +9,18 @@ type rebuiltIncrementalDiffTracker struct {
 	generatedPaths map[string]struct{}
 	replaced       []replacedFolder
 	activeUIDs     map[string]struct{}
+	relocations    map[string][]string // targetPath → UIDs relocating there
 }
 
 // newRebuiltIncrementalDiff seeds the rewritten diff with changes
-// and prepares tracking for generated paths and replaced folders.
+// and prepares tracking for generated paths and replaced or relocated folders.
 func newRebuiltIncrementalDiffTracker(changes []repository.VersionedFileChange) *rebuiltIncrementalDiffTracker {
 	return &rebuiltIncrementalDiffTracker{
 		filteredDiff:   changes,
 		generatedPaths: make(map[string]struct{}),
 		replaced:       make([]replacedFolder, 0),
 		activeUIDs:     make(map[string]struct{}),
+		relocations:    make(map[string][]string),
 	}
 }
 
@@ -42,12 +44,25 @@ func (result *rebuiltIncrementalDiffTracker) AppendReplaced(replaced replacedFol
 	result.replaced = append(result.replaced, replaced)
 }
 
-// TrackActiveUID records a UID that is being actively assigned to a folder
+// TrackRelocation records a UID that is being actively assigned to targetPath
 // by a metadata change in this diff. UIDs in this set must not be deleted
 // even if they appear in the replaced list (the UID moved between paths
 // rather than being removed).
-func (result *rebuiltIncrementalDiffTracker) TrackActiveUID(uid string) {
+func (result *rebuiltIncrementalDiffTracker) TrackRelocation(targetPath, uid string) {
 	result.activeUIDs[uid] = struct{}{}
+	result.relocations[targetPath] = append(result.relocations[targetPath], uid)
+}
+
+func (result *rebuiltIncrementalDiffTracker) IsActiveUID(uid string) bool {
+	_, ok := result.activeUIDs[uid]
+	return ok
+}
+
+// Relocations returns a mapping from target folder path to the UIDs that are
+// relocating there. Callers thread these per-path allowlists into
+// EnsureFolderPathExist via WithRelocatingUIDs.
+func (result *rebuiltIncrementalDiffTracker) Relocations() map[string][]string {
+	return result.relocations
 }
 
 func (result *rebuiltIncrementalDiffTracker) IncrementalDiff() []repository.VersionedFileChange {

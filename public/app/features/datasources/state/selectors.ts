@@ -1,11 +1,13 @@
 import memoizeOne from 'memoize-one';
 
-import { DataSourcePluginMeta, DataSourceSettings, UrlQueryValue } from '@grafana/data';
-import { DataSourcesState } from 'app/types/datasources';
+import { type DataSourcePluginMeta, type DataSourceSettings, type UrlQueryValue } from '@grafana/data';
+import { type DataSourcesState } from 'app/types/datasources';
 
 // Use consistent references for empty objects to prevent infinite re-renders
 const EMPTY_DATASOURCE = {} as DataSourceSettings;
 const EMPTY_DATASOURCE_META = {} as DataSourcePluginMeta;
+
+const collator = new Intl.Collator();
 
 export const getDataSources = memoizeOne((state: DataSourcesState) => {
   const regex = new RegExp(state.searchQuery, 'i');
@@ -15,7 +17,7 @@ export const getDataSources = memoizeOne((state: DataSourcesState) => {
   });
 
   return filteredDataSources.sort((a, b) =>
-    state.isSortAscending ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
+    state.isSortAscending ? collator.compare(a.name, b.name) : collator.compare(b.name, a.name)
   );
 });
 
@@ -43,6 +45,5 @@ export const getDataSourceMeta = (state: DataSourcesState, type: string): DataSo
 };
 
 export const getDataSourcesSearchQuery = (state: DataSourcesState) => state.searchQuery;
-export const getDataSourcesLayoutMode = (state: DataSourcesState) => state.layoutMode;
 export const getDataSourcesCount = (state: DataSourcesState) => state.dataSourcesCount;
 export const getDataSourcesSort = (state: DataSourcesState) => state.isSortAscending;

@@ -1,21 +1,19 @@
-import { DataSourceInstanceSettings, DataSourcePluginMeta, TypedVariableModel } from '@grafana/data';
+import { type TypedVariableModel } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { variableAdapters } from '../adapters';
-import { changeVariableEditorExtended } from '../editor/reducer';
 import { adHocBuilder } from '../shared/testing/builders';
-import { getPreloadedState, getRootReducer, RootReducerType } from '../state/helpers';
+import { getPreloadedState, getRootReducer, type RootReducerType } from '../state/helpers';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
-import { addVariable, changeVariableProp } from '../state/sharedReducer';
+import { addVariable } from '../state/sharedReducer';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import {
   addFilter,
-  AdHocTableOptions,
+  type AdHocTableOptions,
   applyFilterFromTable,
   changeFilter,
-  changeVariableDatasource,
   removeFilter,
   setFiltersFromUrl,
 } from './actions';
@@ -34,15 +32,6 @@ jest.mock('app/features/plugins/datasource_srv', () => ({
 }));
 
 variableAdapters.setInit(() => [createAdHocVariableAdapter()]);
-
-const datasources = [
-  { ...createDatasource('default', true, true), value: null },
-  createDatasource('elasticsearch-v1'),
-  createDatasource('loki', false),
-  createDatasource('influx'),
-  createDatasource('google-sheets', false),
-  createDatasource('elasticsearch-v7'),
-];
 
 describe('adhoc actions', () => {
   describe('when applyFilterFromTable is dispatched and filter already exist', () => {
@@ -383,76 +372,6 @@ describe('adhoc actions', () => {
       expect(locationService.partial).toHaveBeenLastCalledWith(expectedQuery);
     });
   });
-
-  describe('when changeVariableDatasource is dispatched with unsupported datasource', () => {
-    it('then correct actions are dispatched', async () => {
-      const key = 'key';
-      const datasource = { uid: 'mysql' };
-      const variable = adHocBuilder()
-        .withId('Filters')
-        .withRootStateKey(key)
-        .withName('Filters')
-        .withDatasource({ uid: 'influxdb' })
-        .build();
-
-      getDatasource.mockRestore();
-      getDatasource.mockResolvedValue(null);
-      getList.mockRestore();
-      getList.mockReturnValue(datasources);
-
-      const tester = await reduxTester<RootReducerType>()
-        .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenAsyncActionIsDispatched(changeVariableDatasource(toKeyedVariableIdentifier(variable), datasource), true);
-
-      tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction(
-          key,
-          changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource }))
-        ),
-        toKeyedAction(
-          key,
-          changeVariableEditorExtended({
-            infoText: 'This data source does not support ad hoc filters yet.',
-          })
-        )
-      );
-    });
-  });
-
-  describe('when changeVariableDatasource is dispatched with datasource', () => {
-    it('then correct actions are dispatched', async () => {
-      const key = 'key';
-      const datasource = { uid: 'elasticsearch' };
-      const loadingText = 'Ad hoc filters are applied automatically to all queries that target this data source';
-      const variable = adHocBuilder()
-        .withId('Filters')
-        .withRootStateKey(key)
-        .withName('Filters')
-        .withDatasource({ uid: 'influxdb' })
-        .build();
-
-      getDatasource.mockRestore();
-      getDatasource.mockResolvedValue({
-        getTagKeys: () => {},
-      });
-      getList.mockRestore();
-      getList.mockReturnValue(datasources);
-
-      const tester = await reduxTester<RootReducerType>()
-        .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenAsyncActionIsDispatched(changeVariableDatasource(toKeyedVariableIdentifier(variable), datasource), true);
-
-      tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction(
-          key,
-          changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource }))
-        ),
-        toKeyedAction(key, changeVariableEditorExtended({ infoText: loadingText }))
-      );
-    });
-  });
 });
 
 function createAddVariableAction(variable: TypedVariableModel, index = 0) {
@@ -460,16 +379,4 @@ function createAddVariableAction(variable: TypedVariableModel, index = 0) {
   const global = false;
   const data = { global, index, model: { ...variable, index: -1, global } };
   return toKeyedAction(variable.rootStateKey!, addVariable(toVariablePayload(identifier, data)));
-}
-
-function createDatasource(name: string, selectable = true, isDefault = false): DataSourceInstanceSettings {
-  return {
-    name,
-    meta: {
-      mixed: !selectable,
-    } as DataSourcePluginMeta,
-    isDefault,
-    uid: name,
-    type: name,
-  } as DataSourceInstanceSettings;
 }

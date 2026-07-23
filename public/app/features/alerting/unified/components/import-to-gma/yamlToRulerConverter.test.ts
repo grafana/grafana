@@ -1,4 +1,4 @@
-import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { parseYamlToRulerRulesConfigDTO } from './yamlToRulerConverter';
 

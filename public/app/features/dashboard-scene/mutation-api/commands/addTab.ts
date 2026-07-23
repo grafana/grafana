@@ -6,18 +6,20 @@
  * (preserving the original layout structure) rather than being flattened.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
+import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { isLayoutParent } from '../../scene/types/LayoutParent';
+import { deserializeSectionVariables } from '../../serialization/layoutSerializers/sectionVariables';
 
 import { resolveLayoutPath, validateNesting } from './layoutPathResolver';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
-export const addTabPayloadSchema = payloads.addTab;
+const addTabPayloadSchema = payloads.addTab;
 
 export type AddTabPayload = z.infer<typeof addTabPayloadSchema>;
 
@@ -51,6 +53,10 @@ export const addTabCommand: MutationCommand<AddTabPayload> = {
           layout: DefaultGridLayoutManager.fromVizPanels([]),
           title: tab.spec.title,
           repeatByVariable: tab.spec.repeat?.value,
+          conditionalRendering: tab.spec.conditionalRendering
+            ? ConditionalRenderingGroup.deserialize(tab.spec.conditionalRendering)
+            : undefined,
+          $variables: deserializeSectionVariables(tab.spec.variables),
         });
 
         const currentTabs = [...tabsManager.state.tabs];
@@ -71,6 +77,10 @@ export const addTabCommand: MutationCommand<AddTabPayload> = {
           layout: targetLayout,
           title: tab.spec.title,
           repeatByVariable: tab.spec.repeat?.value,
+          conditionalRendering: tab.spec.conditionalRendering
+            ? ConditionalRenderingGroup.deserialize(tab.spec.conditionalRendering)
+            : undefined,
+          $variables: deserializeSectionVariables(tab.spec.variables),
         });
 
         tabsManager = new TabsLayoutManager({ tabs: [newTab] });

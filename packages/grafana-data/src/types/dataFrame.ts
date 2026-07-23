@@ -1,13 +1,18 @@
-import { HideSeriesConfig } from '@grafana/schema';
+import { type HideSeriesConfig } from '@grafana/schema';
 
-import { ScopedVars } from './ScopedVars';
-import { Action } from './action';
-import { QueryResultBase, Labels, NullValueMode } from './data';
-import { DataLink, LinkModel } from './dataLink';
-import { DecimalCount, DisplayProcessor, DisplayValue, DisplayValueAlignmentFactors } from './displayValue';
-import { FieldColor } from './fieldColor';
-import { ThresholdsConfig } from './thresholds';
-import { ValueMapping } from './valueMapping';
+import { type ScopedVars } from './ScopedVars';
+import { type Action } from './action';
+import { type QueryResultBase, type Labels, type NullValueMode } from './data';
+import { type DataLink, type LinkModel } from './dataLink';
+import {
+  type DecimalCount,
+  type DisplayProcessor,
+  type DisplayValue,
+  type DisplayValueAlignmentFactors,
+} from './displayValue';
+import { type FieldColor } from './fieldColor';
+import { type ThresholdsConfig } from './thresholds';
+import { type ValueMapping } from './valueMapping';
 
 /** @public */
 export enum FieldType {
@@ -23,8 +28,7 @@ export enum FieldType {
   other = 'other', // Object, Array, etc
   frame = 'frame', // DataFrame
 
-  // @alpha Nested DataFrames. This is for example used with tables where expanding a row will show a nested table.
-  // The value should be DataFrame[] even if it is a single frame.
+  // Used for nested data (e.g. expandable table rows). Value must be DataFrame[], even for a single frame.
   nestedFrames = 'nestedFrames',
 }
 
@@ -137,7 +141,8 @@ export interface ValueLinkConfig {
   valueRowIndex?: number;
 }
 
-export interface Field<T = any> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface Field<T = any, C = any> {
   /**
    * Name of the field (column)
    */
@@ -149,7 +154,7 @@ export interface Field<T = any> {
   /**
    *  Meta info about how field and how to display it
    */
-  config: FieldConfig;
+  config: FieldConfig<C>;
 
   /**
    * The raw field values
@@ -254,9 +259,10 @@ export interface NumericRange {
   delta: number;
 }
 
-export interface DataFrame extends QueryResultBase {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface DataFrame<V = any, C = any> extends QueryResultBase {
   name?: string;
-  fields: Field[]; // All fields of equal length
+  fields: Array<Field<V, C>>; // All fields of equal length
 
   // The number of rows
   length: number;

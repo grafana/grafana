@@ -1,6 +1,6 @@
 import { nanoid } from 'nanoid';
-import { ReactElement, useState } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import { type ReactElement, useState } from 'react';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { sceneUtils, VizConfigBuilders } from '@grafana/scenes';
 import {
@@ -12,7 +12,7 @@ import {
 } from '@grafana/scenes-react';
 import { Page } from 'app/core/components/Page/Page';
 
-import { LogFilter, LogViewFilters } from './LogViewFilters';
+import { type LogFilter, LogViewFilters } from './LogViewFilters';
 import { ExtensionsLogDataSource } from './dataSource';
 import { createFilterTransformation } from './filterTransformation';
 import { log } from './log';
@@ -56,7 +56,7 @@ function LogViewScene(): ReactElement | null {
       actions={<LogViewFilters provider={data} filteredProvider={filteredData} filter={filter} onChange={setFilter} />}
     >
       <AutoSizer>
-        {({ height, width }) => (
+        {({ height, width }: Size) => (
           <VizGridLayout minHeight={height} minWidth={width}>
             <VizPanel title="" viz={logsViz} dataProvider={filteredData} />
           </VizGridLayout>

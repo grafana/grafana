@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
-import { DragDropContext, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { SceneDataLayerProvider } from '@grafana/scenes';
+import { type SceneDataLayerProvider } from '@grafana/scenes';
 import { Box, Button, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
-import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
+import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { useBuildAddAnnotation } from '../add-new/AddAnnotationQuery';
 import { dashboardEditActions } from '../shared';
@@ -36,7 +36,7 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
 
   const onClickAnnotation = useCallback((a: DashboardAnnotationsDataLayer) => {
     const { editPane } = getDashboardSceneFor(a).state;
-    editPane.selectObject(a, a.state.key!);
+    editPane.selectObject(a);
   }, []);
 
   const onDragEnd = useCallback(
@@ -101,32 +101,32 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
         <DraggableList
           items={visible}
           droppableId={ID_VISIBLE_LIST}
-          title={t(
-            'dashboard-scene.dashboard-annotations-list.title-above-dashboard-count',
-            'Above dashboard ({{count}})',
-            { count: visible.length }
-          )}
+          title={t('dashboard-scene.dashboard-annotations-list.title-above-dashboard-count', '', {
+            count: visible.length,
+            defaultValue_one: 'Above dashboard ({{count}})',
+            defaultValue_other: 'Above dashboard ({{count}})',
+          })}
           onClickItem={onClickAnnotation}
           renderItemLabel={renderItemLabel}
         />
         <DraggableList
           items={controlsMenu}
           droppableId={ID_CONTROLS_MENU_LIST}
-          title={t(
-            'dashboard-scene.dashboard-annotations-list.title-controls-menu-count',
-            'Controls menu ({{count}})',
-            {
-              count: controlsMenu.length,
-            }
-          )}
+          title={t('dashboard-scene.dashboard-annotations-list.title-controls-menu-count', '', {
+            count: controlsMenu.length,
+            defaultValue_one: 'Controls menu ({{count}})',
+            defaultValue_other: 'Controls menu ({{count}})',
+          })}
           onClickItem={onClickAnnotation}
           renderItemLabel={renderItemLabel}
         />
         <DraggableList
           items={hidden}
           droppableId={ID_HIDDEN_LIST}
-          title={t('dashboard-scene.dashboard-annotations-list.title-hidden-count', 'Hidden ({{count}})', {
+          title={t('dashboard-scene.dashboard-annotations-list.title-hidden-count', '', {
             count: hidden.length,
+            defaultValue_one: 'Hidden ({{count}})',
+            defaultValue_other: 'Hidden ({{count}})',
           })}
           onClickItem={onClickAnnotation}
           renderItemLabel={renderItemLabel}

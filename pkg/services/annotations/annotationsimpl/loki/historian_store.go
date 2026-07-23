@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
-	"golang.org/x/exp/constraints"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
@@ -213,8 +212,9 @@ func hasAccess(entry historian.LokiEntry, resources accesscontrol.AccessResource
 	return orgFilter || dashFilter()
 }
 
+// add more type as needed, for now only float64 is being used
 type number interface {
-	constraints.Integer | constraints.Float
+	float64
 }
 
 // numericMap converts a simplejson map[string]any to a map[string]N, where N is numeric (int or float).

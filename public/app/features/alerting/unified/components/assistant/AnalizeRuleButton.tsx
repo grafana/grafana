@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 
-import { OpenAssistantProps, createAssistantContextItem, useAssistant } from '@grafana/assistant';
+import { type OpenAssistantProps, createAssistantContextItem, useAssistant } from '@grafana/assistant';
 import { t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { Menu } from '@grafana/ui';
-import { GrafanaAlertingRule, GrafanaRecordingRule, GrafanaRule } from 'app/types/unified-alerting';
+import { type GrafanaAlertingRule, type GrafanaRecordingRule, type GrafanaRule } from 'app/types/unified-alerting';
 
 import { prometheusRuleType } from '../../utils/rules';
 
@@ -52,12 +52,6 @@ function AnalyzeRuleButtonView({
   const analyzeRulePrompt = useMemo(() => buildAnalyzeRulePrompt(rule), [rule]);
 
   const handleClick = () => {
-    reportInteraction('grafana_assistant_app_analyze_rule_button_clicked', {
-      origin: 'alerting',
-      alertName: rule.name,
-      alertState: prometheusRuleType.grafana.alertingRule(rule) ? rule.state : undefined,
-    });
-
     openAssistant({
       origin: 'alerting/analyze-rule-menu-item',
       mode: 'assistant',

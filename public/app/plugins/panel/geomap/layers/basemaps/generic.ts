@@ -1,8 +1,14 @@
-import OpenLayersMap from 'ol/Map';
+import type OpenLayersMap from 'ol/Map';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 
-import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, EventBus } from '@grafana/data';
+import {
+  type MapLayerRegistryItem,
+  type MapLayerOptions,
+  type GrafanaTheme2,
+  type EventBus,
+  textUtil,
+} from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 export interface XYZConfig {
@@ -37,8 +43,8 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
         cfg.attribution = cfg.attribution ?? defaultXYZConfig.attribution;
       }
       const noRepeat = options.noRepeat ?? false;
-      const interpolatedUrl = getTemplateSrv().replace(cfg.url);
-      const interpolatedAttribution = getTemplateSrv().replace(cfg.attribution);
+      const interpolatedUrl = textUtil.sanitizeUrl(getTemplateSrv().replace(cfg.url));
+      const interpolatedAttribution = textUtil.sanitizeTextPanelContent(getTemplateSrv().replace(cfg.attribution));
 
       return new TileLayer({
         source: new XYZ({

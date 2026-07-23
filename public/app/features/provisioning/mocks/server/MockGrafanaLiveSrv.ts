@@ -1,4 +1,4 @@
-import { Observable, NEVER, Subject } from 'rxjs';
+import { type Observable, NEVER, Subject } from 'rxjs';
 
 import {
   type DataQueryResponse,

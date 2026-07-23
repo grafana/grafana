@@ -1,7 +1,7 @@
 import { reportInteraction } from '@grafana/runtime';
 
-import { ContentKind, DiscoveryMethod, EventLocation, SourceEntryPoint } from './constants';
-import { isTemplateDashboardAssistantEnabled } from './utils/assistantHelpers';
+import { type ContentKind, type DiscoveryMethod, type EventLocation, type SourceEntryPoint } from './constants';
+import { isTemplateDashboardAssistantEnabled, isSuggestedDashboardAssistantEnabled } from './utils/assistantHelpers';
 
 const SCHEMA_VERSION = 1;
 
@@ -63,7 +63,12 @@ export const DashboardLibraryInteractions = {
   }) => {
     reportDashboardLibraryInteraction('mapping_form_completed', properties);
   },
-  entryPointClicked: (properties: { entryPoint: SourceEntryPoint; contentKind: ContentKind }) => {
+  entryPointClicked: (properties: {
+    entryPoint: SourceEntryPoint;
+    /** @deprecated Use contentKinds instead. */
+    contentKind: ContentKind | undefined;
+    contentKinds: ContentKind[];
+  }) => {
     reportDashboardLibraryInteraction('entry_point_clicked', properties);
   },
 
@@ -117,6 +122,28 @@ export const TemplateDashboardInteractions = {
     reportDashboardLibraryInteraction('loaded', {
       ...properties,
       isDashboardTemplatesAssistantEnabled,
+    });
+  },
+};
+
+export const SuggestedDashboardInteractions = {
+  ...DashboardLibraryInteractions,
+  loaded: async (properties: LoadedInteractionProperties) => {
+    const isSuggestedDashboardAssistantButtonEnabled = await isSuggestedDashboardAssistantEnabled();
+    reportDashboardLibraryInteraction('loaded', {
+      ...properties,
+      isSuggestedDashboardAssistantButtonEnabled,
+    });
+  },
+  itemClicked: async (
+    properties: ItemClickedInteractionProperties & {
+      action?: 'use_dashboard' | 'assistant';
+    }
+  ) => {
+    const isSuggestedDashboardAssistantButtonEnabled = await isSuggestedDashboardAssistantEnabled();
+    reportDashboardLibraryInteraction('item_clicked', {
+      ...properties,
+      isSuggestedDashboardAssistantButtonEnabled,
     });
   },
 };

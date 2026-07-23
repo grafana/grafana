@@ -15,13 +15,20 @@ func PlaylistMigration(migrator migrator.PlaylistMigrator) migrations.MigrationD
 		ID:          "playlists",
 		MigrationID: "playlists migration",
 		Resources: []migrations.ResourceInfo{
-			{GroupResource: playlistGR, LockTables: []string{"playlist", "playlist_item"}},
+			{
+				GroupResource: playlistGR,
+				LockTables:    []string{"playlist", "playlist_item"},
+				FloorVersion:  playlists.APIVersion,
+			},
 		},
 		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
 			playlistGR: migrator.MigratePlaylists,
 		},
 		Validators: []migrations.ValidatorFactory{
-			migrations.CountValidation(playlistGR, "playlist", "org_id = ?"),
+			migrations.CountValidation(playlistGR, migrations.CountValidationOptions{
+				Table: "playlist",
+				Where: "org_id = ?",
+			}),
 		},
 		SkipWhenMissing: true, // playlists may not exist at all
 		RenameTables:    []string{},

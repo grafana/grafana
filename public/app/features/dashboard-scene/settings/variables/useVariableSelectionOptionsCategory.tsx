@@ -1,16 +1,14 @@
 import { useCallback, useId, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { MultiValueVariable, SceneVariableValueChangedEvent } from '@grafana/scenes';
+import { type MultiValueVariable, SceneVariableValueChangedEvent } from '@grafana/scenes';
 import { Input, Switch } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 function useVariableHasMultiProps(variable: MultiValueVariable) {
   const state = variable.useState();
-  const hasMultiProps =
-    config.featureToggles.multiPropsVariables && 'valuesFormat' in state && state.valuesFormat === 'json';
+  const hasMultiProps = 'valuesFormat' in state && state.valuesFormat === 'json';
   return hasMultiProps;
 }
 
@@ -87,7 +85,11 @@ function MultiValueSwitch({ variable, id }: InputProps) {
   const { isMulti } = variable.useState();
 
   return (
-    <Switch id={id} value={isMulti} onChange={(evt) => variable.setState({ isMulti: evt.currentTarget.checked })} />
+    <Switch
+      id={id}
+      value={Boolean(isMulti)}
+      onChange={(evt) => variable.setState({ isMulti: evt.currentTarget.checked })}
+    />
   );
 }
 
@@ -97,7 +99,7 @@ function IncludeAllSwitch({ variable, id }: InputProps) {
   return (
     <Switch
       id={id}
-      value={includeAll}
+      value={Boolean(includeAll)}
       onChange={(evt) => variable.setState({ includeAll: evt.currentTarget.checked })}
     />
   );

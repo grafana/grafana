@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -12,6 +13,10 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -23,16 +28,15 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
 	writeToProvisioningPath(t, helper, "teamB/_folder.json", folderMetadataJSON("team-b-uid", "Team B Display"))
 	writeToProvisioningPath(t, helper, "teamC/teamD/.keep", []byte{})
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json":    "teamA/dashboard.json",
 			"../testdata/text-options.json":  "teamB/dashboard.json",
 			"../testdata/timeline-demo.json": "teamC/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -83,7 +87,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
 		"teamA/teamC/dashboard.json":       newTeamCUID,
 	})
 
-	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "teamA/dashboard.json"},
 		"WZ7AhQiVz": {Title: "Text options", SourcePath: "teamA/teamC/teamB/dashboard.json"},
 		"mIJjFy8Kz": {Title: "Timeline Demo", SourcePath: "teamA/teamC/dashboard.json"},
@@ -104,6 +108,259 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
 		"moved dashboard (teamC -> teamA/teamC) should preserve UID")
 }
 
+func TestIntegrationProvisioning_FullSync_DuplicateFolderPathReparentsChildBeforeCleanup(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const (
+		repo         = "folder-duplicate-path-cleanup"
+		currentUID   = "duplicate-current-uid"
+		orphanUID    = "duplicate-orphan-uid"
+		dashboardUID = "duplicate-folder-dashboard"
+	)
+
+	writeToProvisioningPath(t, helper, "myfolder/_folder.json", folderMetadataJSON(currentUID, "My Folder"))
+	writeToProvisioningPath(t, helper, "myfolder/dashboard.json", common.DashboardJSON(dashboardUID, "Dashboard in Duplicate Folder", 1))
+
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
+	})
+
+	helper.SyncAndWait(t, repo, nil)
+	common.RequireFolderState(t, helper.Folders, currentUID, "My Folder", "myfolder", repo)
+	helper.RequireRepoDashboardCount(t, repo, 1)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"myfolder/dashboard.json": currentUID,
+	})
+	before := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{"myfolder/dashboard.json"})
+
+	injectManagedFolder(t, helper, repo, orphanUID, "Orphan Folder", "myfolder", repo, "stale-folder-checksum")
+	common.RequireFolderState(t, helper.Folders, orphanUID, "Orphan Folder", "myfolder", repo)
+	requireFolderSourcePathCount(t, helper, repo, "myfolder", 2)
+
+	moveManagedDashboardToFolder(t, helper, dashboardUID, orphanUID)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"myfolder/dashboard.json": orphanUID,
+	})
+
+	helper.SyncAndWait(t, repo, nil)
+
+	common.RequireFolderState(t, helper.Folders, currentUID, "My Folder", "myfolder", repo)
+	assertNoFolderByUID(t, helper, orphanUID)
+	requireFolderSourcePathCount(t, helper, repo, "myfolder", 1)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"myfolder/dashboard.json": currentUID,
+	})
+	after := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{"myfolder/dashboard.json"})
+	common.RequireDashboardsUpdatedInPlace(t, before, after, []string{"myfolder/dashboard.json"})
+	helper.RequireRepoDashboardCount(t, repo, 1)
+}
+
+func TestIntegrationProvisioning_FullSync_DuplicateFolderBothWithChildren(t *testing.T) {
+	helper := sharedHelper(t)
+	const (
+		repo       = "folder-dup-both-children"
+		currentUID = "dup-both-current-uid"
+		orphanUID  = "dup-both-orphan-uid"
+		dash1UID   = "dup-both-dash-1"
+		dash2UID   = "dup-both-dash-2"
+		dash3UID   = "dup-both-dash-3"
+	)
+
+	// Set up repo with 3 dashboards in myfolder/.
+	writeToProvisioningPath(t, helper, "myfolder/_folder.json", folderMetadataJSON(currentUID, "My Folder"))
+	writeToProvisioningPath(t, helper, "myfolder/dash1.json", common.DashboardJSON(dash1UID, "Dashboard 1", 1))
+	writeToProvisioningPath(t, helper, "myfolder/dash2.json", common.DashboardJSON(dash2UID, "Dashboard 2", 1))
+	writeToProvisioningPath(t, helper, "myfolder/dash3.json", common.DashboardJSON(dash3UID, "Dashboard 3", 1))
+
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
+	})
+
+	helper.SyncAndWait(t, repo, nil)
+	common.RequireFolderState(t, helper.Folders, currentUID, "My Folder", "myfolder", repo)
+	helper.RequireRepoDashboardCount(t, repo, 3)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"myfolder/dash1.json": currentUID,
+		"myfolder/dash2.json": currentUID,
+		"myfolder/dash3.json": currentUID,
+	})
+	before := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{
+		"myfolder/dash1.json", "myfolder/dash2.json", "myfolder/dash3.json",
+	})
+
+	// Inject orphan folder at same path.
+	injectManagedFolder(t, helper, repo, orphanUID, "Orphan Folder", "myfolder", repo, "stale-checksum")
+	requireFolderSourcePathCount(t, helper, repo, "myfolder", 2)
+
+	// Move dash1 and dash2 to orphan; dash3 stays under current.
+	moveManagedDashboardToFolder(t, helper, dash1UID, orphanUID)
+	moveManagedDashboardToFolder(t, helper, dash2UID, orphanUID)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"myfolder/dash1.json": orphanUID,
+		"myfolder/dash2.json": orphanUID,
+		"myfolder/dash3.json": currentUID,
+	})
+
+	helper.SyncAndWait(t, repo, nil)
+
+	// Orphan deleted; orphan's children re-parented; current's child untouched.
+	common.RequireFolderState(t, helper.Folders, currentUID, "My Folder", "myfolder", repo)
+	assertNoFolderByUID(t, helper, orphanUID)
+	requireFolderSourcePathCount(t, helper, repo, "myfolder", 1)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"myfolder/dash1.json": currentUID,
+		"myfolder/dash2.json": currentUID,
+		"myfolder/dash3.json": currentUID,
+	})
+	after := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{
+		"myfolder/dash1.json", "myfolder/dash2.json", "myfolder/dash3.json",
+	})
+	common.RequireDashboardsUpdatedInPlace(t, before, after, []string{
+		"myfolder/dash1.json", "myfolder/dash2.json", "myfolder/dash3.json",
+	})
+	helper.RequireRepoDashboardCount(t, repo, 3)
+}
+
+func TestIntegrationProvisioning_FullSync_DuplicateFolderBothWithChildren_Nested(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const (
+		repo       = "folder-dup-nested-children"
+		parentUID  = "dup-nested-parent-uid"
+		currentUID = "dup-nested-current-uid"
+		orphanUID  = "dup-nested-orphan-uid"
+		dash1UID   = "dup-nested-dash-1"
+		dash2UID   = "dup-nested-dash-2"
+		dash3UID   = "dup-nested-dash-3"
+	)
+
+	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON(parentUID, "Parent"))
+	writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON(currentUID, "Child"))
+	writeToProvisioningPath(t, helper, "parent/child/dash1.json", common.DashboardJSON(dash1UID, "Dashboard 1", 1))
+	writeToProvisioningPath(t, helper, "parent/child/dash2.json", common.DashboardJSON(dash2UID, "Dashboard 2", 1))
+	writeToProvisioningPath(t, helper, "parent/child/dash3.json", common.DashboardJSON(dash3UID, "Dashboard 3", 1))
+
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
+	})
+
+	helper.SyncAndWait(t, repo, nil)
+	common.RequireFolderState(t, helper.Folders, parentUID, "Parent", "parent", repo)
+	common.RequireFolderState(t, helper.Folders, currentUID, "Child", "parent/child", parentUID)
+	helper.RequireRepoDashboardCount(t, repo, 3)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"parent/child/dash1.json": currentUID,
+		"parent/child/dash2.json": currentUID,
+		"parent/child/dash3.json": currentUID,
+	})
+	before := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{
+		"parent/child/dash1.json", "parent/child/dash2.json", "parent/child/dash3.json",
+	})
+
+	// Inject orphan folder at same nested path.
+	injectManagedFolder(t, helper, repo, orphanUID, "Orphan Child", "parent/child", parentUID, "stale-checksum")
+	requireFolderSourcePathCount(t, helper, repo, "parent/child", 2)
+
+	// Move dash1 and dash2 to orphan; dash3 stays under current.
+	moveManagedDashboardToFolder(t, helper, dash1UID, orphanUID)
+	moveManagedDashboardToFolder(t, helper, dash2UID, orphanUID)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"parent/child/dash1.json": orphanUID,
+		"parent/child/dash2.json": orphanUID,
+		"parent/child/dash3.json": currentUID,
+	})
+
+	helper.SyncAndWait(t, repo, nil)
+
+	// Parent untouched, orphan deleted, all children under surviving folder.
+	common.RequireFolderState(t, helper.Folders, parentUID, "Parent", "parent", repo)
+	common.RequireFolderState(t, helper.Folders, currentUID, "Child", "parent/child", parentUID)
+	assertNoFolderByUID(t, helper, orphanUID)
+	requireFolderSourcePathCount(t, helper, repo, "parent/child", 1)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"parent/child/dash1.json": currentUID,
+		"parent/child/dash2.json": currentUID,
+		"parent/child/dash3.json": currentUID,
+	})
+	after := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{
+		"parent/child/dash1.json", "parent/child/dash2.json", "parent/child/dash3.json",
+	})
+	common.RequireDashboardsUpdatedInPlace(t, before, after, []string{
+		"parent/child/dash1.json", "parent/child/dash2.json", "parent/child/dash3.json",
+	})
+	helper.RequireRepoDashboardCount(t, repo, 3)
+}
+
+func TestIntegrationProvisioning_FullSync_DuplicateFolderWithConcurrentFolderRename(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const (
+		repo         = "folder-dup-plus-rename"
+		currentUID   = "dup-rename-current-uid"
+		orphanUID    = "dup-rename-orphan-uid"
+		dashboardUID = "dup-rename-dashboard"
+		teamAUID     = "team-a-dup-rename-uid"
+		teamBUID     = "team-b-dup-rename-uid"
+	)
+
+	writeToProvisioningPath(t, helper, "myfolder/_folder.json", folderMetadataJSON(currentUID, "My Folder"))
+	writeToProvisioningPath(t, helper, "myfolder/dashboard.json", common.DashboardJSON(dashboardUID, "Dashboard in Dup Folder", 1))
+	writeToProvisioningPath(t, helper, "teamA/_folder.json", folderMetadataJSON(teamAUID, "Team A"))
+
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
+		Copies: map[string]string{
+			"../testdata/all-panels.json": "teamA/panel-dashboard.json",
+		},
+		SkipSync: true,
+	})
+
+	helper.SyncAndWait(t, repo, nil)
+	common.RequireFolderState(t, helper.Folders, currentUID, "My Folder", "myfolder", repo)
+	common.RequireFolderState(t, helper.Folders, teamAUID, "Team A", "teamA", repo)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"myfolder/dashboard.json":    currentUID,
+		"teamA/panel-dashboard.json": teamAUID,
+	})
+
+	// Inject orphan folder at myfolder/ and move dashboard to it
+	injectManagedFolder(t, helper, repo, orphanUID, "Orphan Folder", "myfolder", repo, "stale-checksum")
+	requireFolderSourcePathCount(t, helper, repo, "myfolder", 2)
+	moveManagedDashboardToFolder(t, helper, dashboardUID, orphanUID)
+
+	// Simultaneously rename teamA → teamB (UID change in _folder.json)
+	writeToProvisioningPath(t, helper, "teamB/_folder.json", folderMetadataJSON(teamBUID, "Team B"))
+	moveInProvisioningPath(t, helper, "teamA/panel-dashboard.json", "teamB/panel-dashboard.json")
+	// Remove old teamA folder from provisioning path
+	require.NoError(t, os.RemoveAll(filepath.Join(helper.ProvisioningPath, "teamA")))
+
+	helper.SyncAndWait(t, repo, nil)
+
+	// Duplicate folder cleanup: orphan deleted, dashboard re-parented to current
+	common.RequireFolderState(t, helper.Folders, currentUID, "My Folder", "myfolder", repo)
+	assertNoFolderByUID(t, helper, orphanUID)
+	requireFolderSourcePathCount(t, helper, repo, "myfolder", 1)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"myfolder/dashboard.json": currentUID,
+	})
+
+	// Folder rename: teamA gone, teamB created with new UID
+	common.RequireFolderState(t, helper.Folders, teamBUID, "Team B", "teamB", repo)
+	assertNoFolderAtPath(t, helper, repo, "teamA")
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"teamB/panel-dashboard.json": teamBUID,
+	})
+
+	helper.RequireRepoDashboardCount(t, repo, 2)
+}
+
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedSubtree(t *testing.T) {
 	helper := sharedHelper(t)
 	const repo = "folder-move-nested"
@@ -113,16 +370,15 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedSubtree(t
 	writeToProvisioningPath(t, helper, "root/child/grand/.keep", []byte{})
 	writeToProvisioningPath(t, helper, "other/.keep", []byte{})
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json":    "root/dashboard.json",
 			"../testdata/text-options.json":  "root/child/dashboard.json",
 			"../testdata/timeline-demo.json": "root/child/grand/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -150,7 +406,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedSubtree(t
 		"other/child/grand/dashboard.json": newGrandUID,
 	})
 
-	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "root/dashboard.json"},
 		"WZ7AhQiVz": {Title: "Text options", SourcePath: "other/child/dashboard.json"},
 		"mIJjFy8Kz": {Title: "Timeline Demo", SourcePath: "other/child/grand/dashboard.json"},
@@ -164,15 +420,14 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MixedLegacy(t *
 	writeToProvisioningPath(t, helper, "metaA/_folder.json", folderMetadataJSON("meta-a-uid", "Meta A"))
 	writeToProvisioningPath(t, helper, "plainB/.keep", []byte{})
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json":   "metaA/dashboard.json",
 			"../testdata/text-options.json": "plainB/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -195,7 +450,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MixedLegacy(t *
 		"metaA/plainB/dashboard.json": newPlainBUID,
 	})
 
-	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "metaA/dashboard.json"},
 		"WZ7AhQiVz": {Title: "Text options", SourcePath: "metaA/plainB/dashboard.json"},
 	})
@@ -208,14 +463,13 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MetaToPlainPare
 	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 	writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-uid", "Child"))
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/child/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -233,7 +487,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MetaToPlainPare
 		"child/dashboard.json": "child-uid",
 	})
 
-	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "child/dashboard.json"},
 	})
 }
@@ -246,14 +500,13 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_RootToNested(t 
 	writeToProvisioningPath(t, helper, "myfolder/_folder.json", folderMetadataJSON("my-uid", "My Folder"))
 	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "myfolder/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -276,7 +529,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_RootToNested(t 
 		"parent/myfolder/dashboard.json": "my-uid",
 	})
 
-	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "parent/myfolder/dashboard.json"},
 	})
 }
@@ -289,14 +542,13 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedToRoot(t 
 	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 	writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-uid", "Child"))
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/child/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -319,7 +571,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedToRoot(t 
 		"child/dashboard.json": "child-uid",
 	})
 
-	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "child/dashboard.json"},
 	})
 }
@@ -332,15 +584,14 @@ func TestIntegrationProvisioning_FullSync_FolderMovePreservesGeneration(t *testi
 	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 	writeToProvisioningPath(t, helper, "plain/.keep", []byte{})
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json":   "myfolder/dashboard.json",
 			"../testdata/text-options.json": "plain/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -421,14 +672,13 @@ func TestIntegrationProvisioning_FullSync_FolderMove_NestedToNested_PreservesGen
 	writeToProvisioningPath(t, helper, "parentA/myfolder/_folder.json", folderMetadataJSON("my-uid", "My Folder"))
 	writeToProvisioningPath(t, helper, "parentB/_folder.json", folderMetadataJSON("parent-b-uid", "Parent B"))
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parentA/myfolder/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -480,14 +730,13 @@ func TestIntegrationProvisioning_FullSync_FolderMove_RootToNested_PreservesGener
 	writeToProvisioningPath(t, helper, "myfolder/_folder.json", folderMetadataJSON("my-uid", "My Folder"))
 	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "myfolder/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -538,14 +787,13 @@ func TestIntegrationProvisioning_FullSync_FolderMove_NestedToRoot_PreservesGener
 	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 	writeToProvisioningPath(t, helper, "parent/myfolder/_folder.json", folderMetadataJSON("my-uid", "My Folder"))
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/myfolder/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -605,11 +853,10 @@ func TestIntegrationProvisioning_FullSync_FolderMoveUpdatesChildrenFolders(t *te
 	writeToProvisioningPath(t, helper, "target/_folder.json", folderMetadataJSON("target-uid", "Target"))
 	writeToProvisioningPath(t, helper, "target/.keep", []byte{})
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:                   repo,
-		Target:                 "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -649,11 +896,10 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithUIDChange_NoGenerationPr
 	writeToProvisioningPath(t, helper, "myfolder/_folder.json", folderMetadataJSON("original-uid", "My Folder"))
 	writeToProvisioningPath(t, helper, "myfolder/.keep", []byte{})
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:                   repo,
-		Target:                 "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)
@@ -678,9 +924,72 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithUIDChange_NoGenerationPr
 		"generation must be 1: folder was deleted and recreated, not updated in-place")
 }
 
+func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_DuplicateUID(t *testing.T) {
+	helper := sharedHelper(t)
+	const repo = "folder-duplicate-uid"
+
+	// Set up two separate folders each with their own unique UIDs.
+	writeToProvisioningPath(t, helper, "folderA/_folder.json", folderMetadataJSON("uid-a", "Folder A"))
+	writeToProvisioningPath(t, helper, "folderB/_folder.json", folderMetadataJSON("uid-b", "Folder B"))
+
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
+		Copies: map[string]string{
+			"../testdata/all-panels.json":   "folderA/dashboard.json",
+			"../testdata/text-options.json": "folderB/dashboard.json",
+		},
+		SkipSync: true,
+	})
+
+	helper.SyncAndWait(t, repo, nil)
+
+	common.RequireFolderState(t, helper.Folders, "uid-a", "Folder A", "folderA", repo)
+	common.RequireFolderState(t, helper.Folders, "uid-b", "Folder B", "folderB", repo)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"folderA/dashboard.json": "uid-a",
+		"folderB/dashboard.json": "uid-b",
+	})
+
+	// Update folderB's metadata to claim the same UID as folderA — a conflict.
+	writeToProvisioningPath(t, helper, "folderB/_folder.json", folderMetadataJSON("uid-a", "Folder B Renamed"))
+
+	// The sync must warn: folderB cannot take over uid-a which is already owned by folderA.
+	// UID conflicts are ResourceValidationErrors and are treated as warnings, not hard errors.
+	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{},
+	})
+	require.Equal(t, string(provisioning.JobStateWarning), common.MustNestedString(job.Object, "status", "state"),
+		"sync must warn when a folder metadata file claims a UID already owned by another folder")
+
+	jobWarnings := common.MustNestedStringSlice(job.Object, "status", "warnings")
+	require.NotEmpty(t, jobWarnings, "sync job must report the UID conflict as a warning")
+	uidAMentioned := false
+	for _, w := range jobWarnings {
+		if strings.Contains(w, "uid-a") {
+			uidAMentioned = true
+			break
+		}
+	}
+	require.True(t, uidAMentioned, "at least one warning should mention the conflicting UID uid-a")
+
+	// Folder A must remain intact and unchanged.
+	common.RequireFolderState(t, helper.Folders, "uid-a", "Folder A", "folderA", repo)
+
+	// Folder B must remain exactly as it was before the conflicting sync — still on uid-b and not renamed.
+	common.RequireFolderState(t, helper.Folders, "uid-b", "Folder B", "folderB", repo)
+
+	// Both dashboards must remain parented under their original folders.
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"folderA/dashboard.json": "uid-a",
+		"folderB/dashboard.json": "uid-b",
+	})
+}
+
 func folderMetadataJSON(uid, title string) []byte {
 	folder := map[string]any{
-		"apiVersion": "folder.grafana.app/v1beta1",
+		"apiVersion": "folder.grafana.app/v1",
 		"kind":       "Folder",
 		"metadata": map[string]any{
 			"name": uid,
@@ -796,6 +1105,104 @@ func assertNoFolderByUID(t *testing.T, helper *common.ProvisioningTestHelper, fo
 		"folder %q should be deleted", folderUID)
 }
 
+func requireFolderSourcePathCount(t *testing.T, helper *common.ProvisioningTestHelper, repoName, sourcePath string, expected int) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list folders") {
+			return
+		}
+		count := 0
+		for _, f := range list.Items {
+			annotations := f.GetAnnotations()
+			if annotations[utils.AnnoKeyManagerIdentity] == repoName && annotations[utils.AnnoKeySourcePath] == sourcePath {
+				count++
+			}
+		}
+		assert.Equal(c, expected, count, "folder count for sourcePath %q", sourcePath)
+	}, 30*time.Second, 100*time.Millisecond,
+		"expected %d folders with sourcePath %q for repo %q", expected, sourcePath, repoName)
+}
+
+func injectManagedFolder(t *testing.T, helper *common.ProvisioningTestHelper, repoName, folderUID, title, sourcePath, parentUID, checksum string) {
+	t.Helper()
+
+	folderObj := map[string]any{
+		"apiVersion": "folder.grafana.app/v1",
+		"kind":       "Folder",
+		"metadata": map[string]any{
+			"name":      folderUID,
+			"namespace": helper.Namespace,
+			"annotations": map[string]any{
+				utils.AnnoKeyFolder:          parentUID,
+				utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+				utils.AnnoKeyManagerIdentity: repoName,
+				utils.AnnoKeySourcePath:      sourcePath,
+				utils.AnnoKeySourceChecksum:  checksum,
+			},
+		},
+		"spec": map[string]any{
+			"title": title,
+		},
+	}
+	data, err := json.Marshal(folderObj)
+	require.NoError(t, err)
+
+	provCtx, _, err := identity.WithProvisioningIdentity(t.Context(), helper.Namespace)
+	require.NoError(t, err)
+
+	rsp, err := helper.GetEnv().ResourceClient.Create(provCtx, &resourcepb.CreateRequest{
+		Key: &resourcepb.ResourceKey{
+			Namespace: helper.Namespace,
+			Group:     "folder.grafana.app",
+			Resource:  "folders",
+			Name:      folderUID,
+		},
+		Value: data,
+	})
+	require.NoError(t, err)
+	require.Nil(t, rsp.GetError(), "resource create should not return error: %v", rsp.GetError())
+}
+
+func moveManagedDashboardToFolder(t *testing.T, helper *common.ProvisioningTestHelper, dashboardUID, folderUID string) {
+	t.Helper()
+
+	key := &resourcepb.ResourceKey{
+		Namespace: helper.Namespace,
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+		Name:      dashboardUID,
+	}
+	provCtx, _, err := identity.WithProvisioningIdentity(t.Context(), helper.Namespace)
+	require.NoError(t, err)
+
+	read, err := helper.GetEnv().ResourceClient.Read(provCtx, &resourcepb.ReadRequest{Key: key})
+	require.NoError(t, err)
+	require.Nil(t, read.GetError(), "resource read should not return error: %v", read.GetError())
+
+	var dashboard map[string]any
+	require.NoError(t, json.Unmarshal(read.GetValue(), &dashboard))
+	metadata, ok := dashboard["metadata"].(map[string]any)
+	require.True(t, ok, "dashboard metadata should be present")
+	annotations, ok := metadata["annotations"].(map[string]any)
+	if !ok {
+		annotations = make(map[string]any)
+		metadata["annotations"] = annotations
+	}
+	annotations[utils.AnnoKeyFolder] = folderUID
+
+	data, err := json.Marshal(dashboard)
+	require.NoError(t, err)
+
+	update, err := helper.GetEnv().ResourceClient.Update(provCtx, &resourcepb.UpdateRequest{
+		Key:             key,
+		ResourceVersion: read.GetResourceVersion(),
+		Value:           data,
+	})
+	require.NoError(t, err)
+	require.Nil(t, update.GetError(), "resource update should not return error: %v", update.GetError())
+}
+
 // TestIntegrationProvisioning_FullSync_DashboardMoveInPlace verifies that
 // moving a dashboard file to a different folder during full sync updates it
 // in place (preserving K8s UID and creationTimestamp) rather than deleting
@@ -807,14 +1214,13 @@ func TestIntegrationProvisioning_FullSync_DashboardMoveInPlace(t *testing.T) {
 	writeToProvisioningPath(t, helper, "folderA/_folder.json", folderMetadataJSON("folder-a-uid", "Folder A"))
 	writeToProvisioningPath(t, helper, "folderB/_folder.json", folderMetadataJSON("folder-b-uid", "Folder B"))
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "folderA/dashboard.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	helper.SyncAndWait(t, repo, nil)

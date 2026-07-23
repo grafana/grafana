@@ -20,18 +20,19 @@ type WebhookURLBuilder interface {
 }
 
 type extra struct {
-	factory               *Factory
-	decrypter             repository.Decrypter
-	webhookBuilder        WebhookURLBuilder
-	folderMetadataEnabled bool
+	factory        *Factory
+	decrypter      repository.Decrypter
+	webhookBuilder WebhookURLBuilder
+	// allowInsecure permits http:// URLs together with a token (cleartext credentials); local/dev only.
+	allowInsecure bool
 }
 
-func Extra(decrypter repository.Decrypter, factory *Factory, webhookBuilder WebhookURLBuilder, folderMetadataEnabled bool) repository.Extra {
+func Extra(decrypter repository.Decrypter, factory *Factory, webhookBuilder WebhookURLBuilder, allowInsecure bool) repository.Extra {
 	return &extra{
-		decrypter:             decrypter,
-		factory:               factory,
-		webhookBuilder:        webhookBuilder,
-		folderMetadataEnabled: folderMetadataEnabled,
+		decrypter:      decrypter,
+		factory:        factory,
+		webhookBuilder: webhookBuilder,
+		allowInsecure:  allowInsecure,
 	}
 }
 
@@ -52,11 +53,19 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		return nil, fmt.Errorf("unable to decrypt token: %w", err)
 	}
 
+	signingKey, err := secure.CommitSigningKey(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decrypt signing key: %w", err)
+	}
+
 	gitRepo, err := git.NewRepository(ctx, r, git.RepositoryConfig{
-		URL:    r.Spec.GitHub.URL,
-		Branch: r.Spec.GitHub.Branch,
-		Path:   r.Spec.GitHub.Path,
-		Token:  token,
+		URL:              r.Spec.GitHub.URL,
+		Branch:           r.Spec.GitHub.Branch,
+		Path:             r.Spec.GitHub.Path,
+		Token:            token,
+		CommitSigningKey: signingKey,
+		SigningMethod:    git.SigningMethodFromSpec(r),
+		SMIMECertificate: git.SMIMECertificateFromSpec(r),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error creating git repository: %w", err)
@@ -67,14 +76,41 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		return nil, fmt.Errorf("error creating github repository: %w", err)
 	}
 
-	if util.IsInterfaceNil(e.webhookBuilder) {
-		return ghRepo, nil
+	return MaybeWrapWithWebhook(ctx, r, ghRepo, secure, e.webhookBuilder)
+}
+
+// MaybeWrapWithWebhook wraps base as a webhook-capable repository when a webhook
+// URL is configured and enabled; otherwise it returns base unchanged. When the
+// webhook is disabled but a previously registered hook still exists, base is
+// wrapped with empty credentials so the reconciler can delete the stale hook.
+func MaybeWrapWithWebhook(
+	ctx context.Context,
+	r *provisioning.Repository,
+	base GithubRepository,
+	secure repository.SecureValues,
+	webhookBuilder WebhookURLBuilder,
+) (repository.Repository, error) {
+	if util.IsInterfaceNil(webhookBuilder) {
+		return base, nil
+	}
+	logger := logging.FromContext(ctx)
+
+	// Webhook integration is explicitly disabled for this repository, so polling will be
+	// used instead. Skip registration even if a webhook URL would otherwise be available.
+	// If there is a webhook already registered from a previous enabled state, wrap with
+	// GithubWebhookRepository anyway so OnUpdate can delete the stale hook from GitHub.
+	if r.Spec.Webhook != nil && r.Spec.Webhook.Disabled {
+		if repository.GetID(r.Status.Webhook).IsEmpty() {
+			logger.Debug("Skipping webhook setup: webhook is disabled")
+			return base, nil
+		}
+		return NewGithubWebhookRepository(base, "", ""), nil
 	}
 
-	webhookURL := e.webhookBuilder.WebhookURL(ctx, r)
+	webhookURL := webhookBuilder.WebhookURL(ctx, r)
 	if len(webhookURL) == 0 {
 		logger.Debug("Skipping webhook setup as no webhooks are not configured")
-		return ghRepo, nil
+		return base, nil
 	}
 
 	webhookSecret, err := secure.WebhookSecret(ctx)
@@ -82,7 +118,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		return nil, fmt.Errorf("decrypt webhookSecret: %w", err)
 	}
 
-	return NewGithubWebhookRepository(ghRepo, webhookURL, webhookSecret, e.folderMetadataEnabled), nil
+	return NewGithubWebhookRepository(base, webhookURL, webhookSecret), nil
 }
 
 func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {
@@ -90,5 +126,5 @@ func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {
 }
 
 func (e *extra) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return Validate(ctx, obj)
+	return Validate(ctx, obj, e.allowInsecure)
 }

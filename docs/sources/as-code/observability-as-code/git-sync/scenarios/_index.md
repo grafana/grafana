@@ -2,7 +2,7 @@
 title: Git Sync deployment scenarios
 menuTitle: Deployment scenarios
 description: Learn about common Git Sync deployment patterns and configurations for different organizational needs
-weight: 500
+weight: 1000
 keywords:
   - git sync
   - deployment patterns
@@ -16,9 +16,9 @@ aliases:
 
 # Git Sync deployment scenarios
 
-{{< admonition type="caution" >}}
+{{< admonition type="note" >}}
 
-**Git Sync is under development**. It reflects Grafana’s approach to Observability as Code and might include limitations or breaking changes. For current status and known issues, refer to the [Git Sync introduction](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/).
+Git Sync functionalities are constantly evolving. [Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
 
 {{< /admonition >}}
 
@@ -27,6 +27,7 @@ This guide shows practical deployment scenarios for Grafana’s Git Sync. Learn 
 - [Single instance](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/git-sync-deployment-scenarios/single-instance/)
 - [Git Sync for development and production environments](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/git-sync-deployment-scenarios/dev-prod/)
 - [Git Sync with regional replication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/git-sync-deployment-scenarios/multi-region/)
+- [Testing sandboxes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/git-sync-deployment-scenarios/testing-sandboxes/)
 - [High availability](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/git-sync-deployment-scenarios/high-availability/)
 - [Git Sync in a shared Grafana instance](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/git-sync-deployment-scenarios/multi-team/)
 

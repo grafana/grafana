@@ -5,7 +5,7 @@ import { omit } from 'lodash';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 
-import Datasource from '../../datasource';
+import type Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import createMockDatasource, { createMockLocations, createMockMetricsNamespaces } from '../../mocks/datasource';
 import { createMockInstanceSetttings } from '../../mocks/instanceSettings';
@@ -15,11 +15,11 @@ import {
   mockResourcesByResourceGroup,
   mockSearchResults,
 } from '../../mocks/resourcePickerRows';
-import { DeepPartial } from '../../mocks/utils';
-import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
+import { type DeepPartial } from '../../mocks/utils';
+import ResourcePickerData, { type ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 
 import ResourcePicker, { RECENT_RESOURCES_KEY } from './ResourcePicker';
-import { ResourceRowGroup, ResourceRowType } from './types';
+import { type ResourceRowGroup, ResourceRowType } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

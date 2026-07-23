@@ -1,12 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { PropsWithChildren } from 'react';
+import { type PropsWithChildren } from 'react';
 
-import { CoreApp, DataQueryRequest, dateTime, LoadingState, PanelData, toDataFrame } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { CoreApp, type DataQueryRequest, dateTime, LoadingState, type PanelData, toDataFrame } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 
-import { filterPanelDataToQuery, Props, QueryEditorRow } from './QueryEditorRow';
+import { filterPanelDataToQuery, type Props, QueryEditorRow } from './QueryEditorRow';
 
 const mockDS = mockDataSource({
   name: 'test',
@@ -41,12 +42,15 @@ jest.mock('@grafana/assistant', () => ({
   createAssistantContextItem: jest.fn(),
 }));
 
+const mockGet = jest.fn(() => Promise.resolve(mockDS));
+const mockGetInstanceSettings = jest.fn(() => mockDS);
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
-    get: () => Promise.resolve(mockDS),
+    get: mockGet,
     getList: () => {},
-    getInstanceSettings: () => mockDS,
+    getInstanceSettings: mockGetInstanceSettings,
   }),
 }));
 
@@ -385,6 +389,23 @@ describe('QueryEditorRow', () => {
     index: 0,
     range: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
   });
+  it('forwards scopedVars when resolving a query datasource variable', async () => {
+    mockGetInstanceSettings.mockClear();
+    const data = {
+      state: LoadingState.Done,
+      series: [],
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+    // A section-scoped (row/tab) datasource variable can only be resolved with the panel's scene
+    // scope, so QueryEditorRow must forward scopedVars to getInstanceSettings.
+    const scopedVars = { __sceneObject: { value: {} } };
+    const query = { refId: 'B', datasource: { uid: '${ds_var}', type: 'prometheus' } };
+    render(<QueryEditorRow {...props(data)} query={query} scopedVars={scopedVars} />);
+
+    await waitFor(() => {
+      expect(mockGetInstanceSettings).toHaveBeenCalledWith(query.datasource, scopedVars);
+    });
+  });
   it('should display error message in corresponding panel', async () => {
     const data = {
       state: LoadingState.Error,
@@ -458,7 +479,7 @@ describe('QueryEditorRow', () => {
       render(<QueryEditorRow {...props(testData)} />);
 
       await waitFor(() => {
-        expect(screen.getByTestId('query-editor-row')).toBeInTheDocument();
+        expect(screen.getByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument();
       });
 
       expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).not.toHaveBeenCalled();

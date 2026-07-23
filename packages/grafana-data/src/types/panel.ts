@@ -1,20 +1,20 @@
-import { EventBus } from '../events/types';
-import { StandardEditorProps } from '../field/standardFieldConfigEditorRegistry';
-import { Registry } from '../utils/Registry';
+import { type EventBus } from '../events/types';
+import { type StandardEditorProps } from '../field/standardFieldConfigEditorRegistry';
+import { type Registry } from '../utils/Registry';
 
-import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
-import { ScopedVars } from './ScopedVars';
-import { AlertStateInfo } from './alerts';
-import { PanelModel } from './dashboard';
-import { LoadingState } from './data';
-import { DataFrame } from './dataFrame';
-import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource';
-import { FieldConfigSource } from './fieldOverrides';
-import { IconName } from './icon';
-import { LinkTarget } from './linkTarget';
-import { OptionEditorConfig } from './options';
-import { PluginMeta } from './plugin';
-import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
+import { type OptionsEditorItem } from './OptionsUIRegistryBuilder';
+import { type ScopedVars } from './ScopedVars';
+import { type AlertStateInfo } from './alerts';
+import { type PanelModel } from './dashboard';
+import { type LoadingState } from './data';
+import { type DataFrame } from './dataFrame';
+import { type DataQueryError, type DataQueryRequest, type DataQueryTimings } from './datasource';
+import { type FieldConfigSource } from './fieldOverrides';
+import { type IconName } from './icon';
+import { type LinkTarget } from './linkTarget';
+import { type OptionEditorConfig } from './options';
+import { type PluginMeta } from './plugin';
+import { type AbsoluteTimeRange, type TimeRange, type TimeZone } from './time';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -111,8 +111,12 @@ export interface PanelProps<T = any> {
   /** Handler for options change. Invoke it to update the panel custom options. */
   onOptionsChange: (options: T) => void;
 
-  /** Field config change handler. Invoke it to update the panel field config. */
-  onFieldConfigChange: (config: FieldConfigSource) => void;
+  /**
+   * Field config change handler. Invoke it to update the panel field config.
+   * By default, the given config is deep-merged into the current field config;
+   * Pass `replace: true` to replace the field config entirely.
+   */
+  onFieldConfigChange: (config: FieldConfigSource, replace?: boolean) => void;
 
   /** Template variables interpolation function. Given a string containing template variables, it returns the string with interpolated values. */
   replaceVariables: InterpolateFunction;

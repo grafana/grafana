@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
-import classNames from 'classnames';
+import classNames from 'clsx';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { VizPanel, sceneGraph } from '@grafana/scenes';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { type VizPanel, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { DashboardScene } from './DashboardScene';
-import { SoloPanelContextProvider } from './SoloPanelContext';
+import { SoloPanelContextProvider } from '../solo/SoloPanelContext';
+
+import { type DashboardScene } from './DashboardScene';
 
 export interface Props {
   dashboard: DashboardScene;
@@ -58,10 +59,21 @@ export class SoloPanelContextValueWithSearchStringFilter {
   public constructor(private searchQuery: string) {}
 
   public matches(panel: VizPanel): boolean {
-    const interpolatedSearchString = sceneGraph.interpolate(panel, this.searchQuery).toLowerCase();
-    const interpolatedTitle = panel.interpolate(panel.state.title, undefined, 'text').toLowerCase();
+    const interpolatedSearchString = sceneGraph.interpolate(panel, this.searchQuery);
+    const interpolatedTitle = panel.interpolate(panel.state.title, undefined, 'text');
 
-    const match = interpolatedTitle.includes(interpolatedSearchString);
+    let match: boolean;
+    try {
+      const regex = new RegExp(interpolatedSearchString, 'i');
+      match = regex.test(interpolatedTitle);
+    } catch {
+      match = false;
+    }
+
+    if (!match) {
+      match = interpolatedTitle.toLowerCase().includes(interpolatedSearchString.toLowerCase());
+    }
+
     if (match) {
       this.matchFound = true;
     }

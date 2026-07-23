@@ -2,10 +2,10 @@
 
 import { type MergeExclusive } from 'type-fest';
 
-import { DataQuery, RelativeTimeRange } from '@grafana/data';
-import { ExpressionQuery } from 'app/features/expressions/types';
+import { type DataQuery, type RelativeTimeRange } from '@grafana/data';
+import { type ExpressionQuery } from 'app/features/expressions/types';
 
-import { AlertGroupTotals, AlertInstanceTotals } from './unified-alerting';
+import { type AlertGroupTotals, type AlertInstanceTotals } from './unified-alerting';
 
 export type Labels = Record<string, string>;
 export type Annotations = Record<string, string>;
@@ -153,7 +153,7 @@ export interface PromAlertingRuleDTO extends PromRuleDTOBase {
   notificationSettings?: GrafanaNotificationSettings;
 }
 
-export interface PromRecordingRuleDTO extends PromRuleDTOBase {
+interface PromRecordingRuleDTO extends PromRuleDTOBase {
   health: string;
   name: string;
   query: string; // expr
@@ -186,7 +186,7 @@ export interface GrafanaPromRuleGroupDTO extends PromRuleGroupDTO<GrafanaPromRul
   folderUid: string;
 }
 
-export interface PromResponse<T> {
+interface PromResponse<T> {
   status: 'success' | 'error' | ''; // mocks return empty string
   data: T;
   errorType?: string;
@@ -259,7 +259,7 @@ export type GrafanaNotificationSettings = MergeExclusive<
   GrafanaNotificationSettingsBase & { policy: string }
 >;
 
-export interface GrafanaEditorSettings {
+interface GrafanaEditorSettings {
   simplified_query_and_expressions_section: boolean;
   simplified_notifications_section: boolean;
 }
@@ -268,7 +268,7 @@ export interface UpdatedBy {
   uid: string;
   name: string;
 }
-export interface PostableGrafanaRuleDefinition {
+interface PostableGrafanaRuleDefinition {
   uid?: string;
   title: string;
   condition: string;

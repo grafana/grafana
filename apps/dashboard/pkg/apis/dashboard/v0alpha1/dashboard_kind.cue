@@ -209,6 +209,8 @@ lineage: schemas: [{
 			multi?: bool | *false
 			// Allow custom values to be entered in the variable
 			allowCustomValue?: bool | *true
+			// Whether the group-by operator is enabled in the ad hoc filter combobox.
+			enableGroupBy?: bool | *false
 			// Options that can be selected for a variable.
 			options?: [...#VariableOption]
 			// Options to config when to refresh a variable

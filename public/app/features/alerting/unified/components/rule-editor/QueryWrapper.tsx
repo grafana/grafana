@@ -1,30 +1,29 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import * as React from 'react';
-import { ChangeEvent, useState } from 'react';
+import { type ChangeEvent, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import {
   CoreApp,
-  DataSourceApi,
-  DataSourceInstanceSettings,
-  GrafanaTheme2,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type GrafanaTheme2,
   LoadingState,
-  PanelData,
-  RelativeTimeRange,
-  ThresholdsConfig,
+  type PanelData,
+  type RelativeTimeRange,
+  type ThresholdsConfig,
   getDefaultRelativeTimeRange,
   rangeUtil,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
-import { GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { type DataQuery } from '@grafana/schema';
+import { type GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
-import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
+import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { RuleFormValues } from '../../types/rule-form';
+import { type RuleFormValues } from '../../types/rule-form';
 import { DOCS_URL_DATA_SOURCE_ALERTING } from '../../utils/docs';
 import { msToSingleUnitDuration } from '../../utils/time';
 import { ExpressionStatusIndicator } from '../expressions/ExpressionStatusIndicator';
@@ -33,8 +32,8 @@ import { AlertingRuleQueryExtensionPoint } from '../extensions/AlertingRuleQuery
 import { QueryOptions } from './QueryOptions';
 import { VizWrapper } from './VizWrapper';
 
-export const DEFAULT_MAX_DATA_POINTS = 43200;
-export const DEFAULT_MIN_INTERVAL = '1s';
+const DEFAULT_MAX_DATA_POINTS = 43200;
+const DEFAULT_MIN_INTERVAL = '1s';
 
 export interface AlertQueryOptions {
   maxDataPoints?: number | undefined;
@@ -56,7 +55,6 @@ interface Props {
   index: number;
   thresholds: ThresholdsConfig;
   thresholdsType?: GraphThresholdsStyleMode;
-  onChangeThreshold?: (thresholds: ThresholdsConfig, index: number) => void;
   condition: string | null;
   onSetCondition: (refId: string) => void;
   onChangeQueryOptions: (options: AlertQueryOptions, index: number) => void;
@@ -77,7 +75,6 @@ export const QueryWrapper = ({
   queries,
   thresholds,
   thresholdsType,
-  onChangeThreshold,
   condition,
   onSetCondition,
   onChangeQueryOptions,
@@ -87,8 +84,7 @@ export const QueryWrapper = ({
   const defaults = dsInstance?.getDefaultQuery ? dsInstance.getDefaultQuery(CoreApp.UnifiedAlerting) : {};
 
   const { getValues } = useFormContext<RuleFormValues>();
-  const isSwitchModeEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
-  const isAdvancedMode = isSwitchModeEnabled ? getValues('editorSettings.simplifiedQueryEditor') !== true : true;
+  const isAdvancedMode = getValues('editorSettings.simplifiedQueryEditor') !== true;
 
   const queryWithDefaults = {
     ...defaults,

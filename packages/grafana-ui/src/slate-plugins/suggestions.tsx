@@ -1,14 +1,19 @@
 import { debounce, sortBy } from 'lodash';
-import { Editor, Plugin as SlatePlugin } from 'slate-react';
+import { type Editor, type Plugin as SlatePlugin } from 'slate-react';
 
-import { Typeahead } from '../components/Typeahead/Typeahead';
-import { CompletionItem, SuggestionsState, TypeaheadInput, TypeaheadOutput } from '../types/completion';
+import { Typeahead, type TypeaheadMenu } from '../components/Typeahead/Typeahead';
+import {
+  type CompletionItem,
+  type SuggestionsState,
+  type TypeaheadInput,
+  type TypeaheadOutput,
+} from '../types/completion';
 import { SearchFunctionType, SearchFunctionMap } from '../utils/searchFunctions';
 import { makeFragment } from '../utils/slate';
 
 import TOKEN_MARK from './slate-prism/TOKEN_MARK';
 
-export const TYPEAHEAD_DEBOUNCE = 250;
+const TYPEAHEAD_DEBOUNCE = 250;
 
 // Commands added to the editor by this plugin.
 interface SuggestionsPluginCommands {
@@ -27,7 +32,7 @@ export function SuggestionsPlugin({
   onWillApplySuggestion?: (suggestion: string, state: SuggestionsState) => string;
   portalOrigin: string;
 }): SlatePlugin {
-  let typeaheadRef: Typeahead;
+  let typeaheadRef: TypeaheadMenu;
   let state: SuggestionsState = {
     groupedItems: [],
     typeaheadPrefix: '',
@@ -201,7 +206,7 @@ export function SuggestionsPlugin({
         <>
           {children}
           <Typeahead
-            menuRef={(menu: Typeahead) => (typeaheadRef = menu)}
+            menuRef={(menu) => (typeaheadRef = menu)}
             origin={portalOrigin}
             prefix={state.typeaheadPrefix}
             isOpen={!!state.groupedItems.length}

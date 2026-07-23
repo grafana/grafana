@@ -1,15 +1,44 @@
 package sort
 
 import (
+	"fmt"
 	"sort"
+	"strings"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
-// sort is separated into its own service to allow the dashboard service to use it in the k8s
-// fallback (see pkg/registry/apis/dashboard/legacysearcher/search_client.go), since search
-// has a direct dependency on the dashboard service (and thus would create a circular dependency in wire)
+var sortByMapping = map[string]string{
+	builders.DASHBOARD_VIEWS_LAST_30_DAYS:  "viewed-recently",
+	builders.DASHBOARD_VIEWS_TOTAL:         "viewed",
+	builders.DASHBOARD_ERRORS_LAST_30_DAYS: "errors-recently",
+	builders.DASHBOARD_ERRORS_TOTAL:        "errors",
+	"title":                                "alpha",
+}
+
+func ParseSortName(sortName string) (string, bool, error) {
+	if sortName == "" {
+		return "", false, nil
+	}
+
+	isDesc := strings.HasSuffix(sortName, "-desc")
+	isAsc := strings.HasSuffix(sortName, "-asc")
+	if !isDesc && !isAsc {
+		isDesc = true
+	}
+
+	prefix := strings.TrimSuffix(strings.TrimSuffix(sortName, "-desc"), "-asc")
+	for key, mappedPrefix := range sortByMapping {
+		if prefix == mappedPrefix {
+			return key, isDesc, nil
+		}
+	}
+
+	return "", false, apierrors.NewBadRequest(fmt.Sprintf("no matching sort field found for: %s", sortName))
+}
 
 var (
 	SortAlphaAsc = model.SortOption{
@@ -18,7 +47,7 @@ var (
 		Description: "Sort results in an alphabetically ascending order",
 		Index:       0,
 		Filter: []model.SortOptionFilter{
-			searchstore.TitleSorter{},
+			model.TitleSorter{},
 		},
 	}
 	SortAlphaDesc = model.SortOption{
@@ -27,7 +56,7 @@ var (
 		Description: "Sort results in an alphabetically descending order",
 		Index:       0,
 		Filter: []model.SortOptionFilter{
-			searchstore.TitleSorter{Descending: true},
+			model.TitleSorter{Descending: true},
 		},
 	}
 )

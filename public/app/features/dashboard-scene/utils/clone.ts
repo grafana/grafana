@@ -1,11 +1,11 @@
 import {
   LocalValueVariable,
-  MultiValueVariableState,
-  SceneObject,
-  SceneVariable,
-  SceneVariables,
+  type MultiValueVariableState,
+  type SceneObject,
+  type SceneVariable,
+  type SceneVariables,
   SceneVariableSet,
-  VariableValueSingle,
+  type VariableValueSingle,
 } from '@grafana/scenes';
 
 const CLONE_KEY = '-clone-';
@@ -85,6 +85,21 @@ export function getRepeatVariableValueSet(
     // Always clone base variables to avoid attaching the same SceneObject instance
     // to multiple SceneVariableSet parents during repeat updates.
     variables: [...baseSet.state.variables.map((v) => v.clone()), ...localVariables],
+  });
+}
+
+/**
+ * Deep-clone a section-scoped variable set so duplicated rows/tabs get unique scene keys.
+ * Without new keys, edit-pane selection resolves to the first variable with a matching key.
+ */
+export function cloneSectionVariableSet(variableSet: SceneVariables | undefined): SceneVariableSet | undefined {
+  if (!(variableSet instanceof SceneVariableSet)) {
+    return undefined;
+  }
+
+  return variableSet.clone({
+    key: undefined,
+    variables: variableSet.state.variables.map((variable) => variable.clone({ key: undefined })),
   });
 }
 

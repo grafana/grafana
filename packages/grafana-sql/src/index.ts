@@ -30,3 +30,4 @@ export { applyQueryDefaults } from './defaults';
 export { makeVariable } from './utils/testHelpers';
 export { QueryEditorExpressionType } from './expressions';
 export { loadResources } from './loadResources';
+export { quoteIdentifierIfNecessary, unquoteIdentifier, type SqlIdentifierDialect } from './dialects/sqlIdentifier';

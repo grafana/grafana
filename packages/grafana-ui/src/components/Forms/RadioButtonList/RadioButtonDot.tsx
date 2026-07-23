@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 
@@ -65,8 +65,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: '3px 0' /* Space for box-shadow when focused */,
 
     ':checked': {
-      backgroundColor: theme.v1.palette.white,
-      border: `5px solid ${theme.colors.primary.main}`,
+      backgroundColor: theme.colors.accent.contrastText,
+      border: `5px solid ${theme.colors.accent.main}`,
     },
 
     ':disabled': {
@@ -92,7 +92,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     ':focus': {
       outline: 'none !important',
-      boxShadow: `0 0 0 1px ${theme.colors.background.canvas}, 0 0 0 3px ${theme.colors.primary.main}`,
+      boxShadow: `0 0 0 1px ${theme.colors.background.canvas}, 0 0 0 3px ${theme.colors.accent.main}`,
     },
   }),
   label: css({

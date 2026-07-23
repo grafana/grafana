@@ -2,9 +2,9 @@ import { readdirSync, statSync } from 'fs';
 import path from 'path';
 
 import {
-  Spec as DashboardV2Spec,
-  GridLayoutItemKind,
-  RowsLayoutRowKind,
+  type Spec as DashboardV2Spec,
+  type GridLayoutItemKind,
+  type RowsLayoutRowKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 /**

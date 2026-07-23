@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Button, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -15,7 +15,7 @@ export type CompatibilityState =
   | { status: 'success'; score: number; metricsFound: number; metricsTotal: number }
   | { status: 'error'; errorMessage?: string; errorCode?: string };
 
-export type ErrorCategory = 'not_supported' | 'unexpected';
+type ErrorCategory = 'not_supported' | 'unexpected';
 
 interface ScoreIndicator {
   color: 'green' | 'orange' | 'red';

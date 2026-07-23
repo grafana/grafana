@@ -1,16 +1,32 @@
 import { merge } from 'lodash';
-import uPlot, { Cursor, Band, Hooks, Select, AlignedData, Padding, Series } from 'uplot';
+import uPlot, {
+  type Cursor,
+  type Band,
+  type Hooks,
+  type Select,
+  type AlignedData,
+  type Padding,
+  type Series,
+} from 'uplot';
 
-import { DataFrame, DefaultTimeZone, Field, getTimeZoneInfo, GrafanaTheme2, TimeRange, TimeZone } from '@grafana/data';
-import { AxisPlacement, VizOrientation } from '@grafana/schema';
+import {
+  type DataFrame,
+  DefaultTimeZone,
+  type Field,
+  type GrafanaTheme2,
+  type TimeRange,
+  type TimeZone,
+} from '@grafana/data';
+import { AxisPlacement, type VizOrientation } from '@grafana/schema';
 
-import { FacetedData, PlotConfig } from '../types';
-import { DEFAULT_PLOT_CONFIG, getStackingBands, pluginLog, StackingGroup } from '../utils';
+import { findTimeZoneAt, resolveIanaName } from '../../DateTimePickers/TimeZonePicker/timeZoneUtils';
+import { type FacetedData, type PlotConfig } from '../types';
+import { DEFAULT_PLOT_CONFIG, getStackingBands, pluginLog, type StackingGroup } from '../utils';
 
-import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
-import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
-import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
-import { getThresholdsDrawHook, UPlotThresholdOptions } from './UPlotThresholds';
+import { type AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
+import { type ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
+import { type SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
+import { getThresholdsDrawHook, type UPlotThresholdOptions } from './UPlotThresholds';
 
 const cursorDefaults: Cursor = {
   // prevent client-side zoom from triggering at the end of a selection
@@ -56,7 +72,10 @@ export class UPlotConfigBuilder {
   prepData: PrepData | undefined = undefined;
 
   constructor(timeZone: TimeZone = DefaultTimeZone) {
-    this.tz = getTimeZoneInfo(timeZone, Date.now())?.ianaName;
+    const resolved = resolveIanaName(timeZone);
+    // Unknown zones stay undefined so tzDate falls back to browser-local
+    // dates; UTC is always valid but may be missing from the runtime's list.
+    this.tz = findTimeZoneAt(resolved, Date.now())?.name ?? (resolved === 'UTC' ? 'UTC' : undefined);
   }
 
   // Exposed to let the container know the primary scale keys
@@ -285,7 +304,6 @@ export type Renderers = Array<{
   init: (config: UPlotConfigBuilder, fieldIndices: Record<string, number>) => void;
 }>;
 
-/** @alpha */
 type UPlotConfigPrepOpts<T extends Record<string, unknown> = {}> = {
   frame: DataFrame;
   theme: GrafanaTheme2;
@@ -300,5 +318,4 @@ type UPlotConfigPrepOpts<T extends Record<string, unknown> = {}> = {
   xAxisConfig?: Pick<AxisProps, 'size' | 'gap' | 'ticks'>;
 } & T;
 
-/** @alpha */
 export type UPlotConfigPrepFn<T extends {} = {}> = (opts: UPlotConfigPrepOpts<T>) => UPlotConfigBuilder;

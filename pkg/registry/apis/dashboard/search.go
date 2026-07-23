@@ -13,23 +13,29 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	claims "github.com/grafana/authlib/types"
 	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	commonv0 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -44,10 +50,9 @@ type SearchHandler struct {
 	features featuremgmt.FeatureToggles
 }
 
-func NewSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyDashboardSearcher resourcepb.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
-	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), dashboardv0alpha1.DashboardResourceInfo.GroupResource(), resourceClient, legacyDashboardSearcher, features)
+func NewSearchHandler(tracer trace.Tracer, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
 	return &SearchHandler{
-		client:   searchClient,
+		client:   resourceClient,
 		log:      log.New("grafana-apiserver.dashboards.search"),
 		tracer:   tracer,
 		features: features,
@@ -58,7 +63,7 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 	searchResults := defs[dashboardv0alpha1.SearchResults{}.OpenAPIModelName()].Schema
 	sortableFields := defs[dashboardv0alpha1.SortableFields{}.OpenAPIModelName()].Schema
 
-	return &builder.APIRoutes{
+	routes := &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
 				Path: "search",
@@ -328,6 +333,83 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 			},
 		},
 	}
+
+	// Semantic (vector) search is still experimental, so it's only registered —
+	// and therefore only present in the OpenAPI spec — when the feature toggle
+	// is enabled.
+	if s.features != nil && s.features.IsEnabledGlobally(featuremgmt.FlagDashboardVectorSearch) { // nolint:staticcheck
+		routes.Namespace = append(routes.Namespace, builder.APIRouteHandler{
+			Path: "search/vector",
+			Spec: &spec3.PathProps{
+				Get: &spec3.Operation{
+					OperationProps: spec3.OperationProps{
+						Tags:        []string{"Search"},
+						OperationId: "vectorSearchDashboards",
+						Description: "Semantic (vector) search for dashboards, ranked by meaning rather than keyword match",
+						Parameters: []*spec3.Parameter{
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "namespace",
+									In:          "path",
+									Required:    true,
+									Example:     "default",
+									Description: "workspace",
+									Schema:      spec.StringProperty(),
+								},
+							},
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "query",
+									In:          "query",
+									Description: "natural language query string",
+									Required:    true,
+									Schema:      spec.StringProperty(),
+								},
+							},
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "folder",
+									In:          "query",
+									Description: "restrict results to a folder (not recursive)",
+									Required:    false,
+									Schema:      spec.StringProperty(),
+								},
+							},
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "limit",
+									In:          "query",
+									Description: "maximum number of results to return (default 50, max 200)",
+									Required:    false,
+									Schema:      spec.Int64Property(),
+								},
+							},
+						},
+						Responses: &spec3.Responses{
+							ResponsesProps: spec3.ResponsesProps{
+								StatusCodeResponses: map[int]*spec3.Response{
+									200: {
+										ResponseProps: spec3.ResponseProps{
+											Content: map[string]*spec3.MediaType{
+												"application/json": {
+													MediaTypeProps: spec3.MediaTypeProps{
+														Schema: &searchResults,
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			Handler: s.DoVectorSearch,
+		})
+	}
+
+	return routes
 }
 
 func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
@@ -344,20 +426,23 @@ func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
 	s.write(w, sortable)
 }
 
-const rootFolder = "general"
-
 var errEmptyResults = fmt.Errorf("empty results")
+
+// errVectorSearchNotConfigured is returned (HTTP 501) when the vector search
+// endpoint is enabled by feature toggle but the unified storage backend has no
+// embedder/vector store configured.
+var errVectorSearchNotConfigured = errutil.NotImplemented("dashboard.vectorSearchNotConfigured")
 
 func permissionToActions(p dashboardaccess.PermissionType) (dashboardAction string, folderAction string) {
 	switch p {
 	case dashboardaccess.PERMISSION_EDIT:
-		return dashboards.ActionDashboardsWrite, dashboards.ActionFoldersWrite
+		return dashboards.ActionDashboardsWrite, foldermodel.ActionFoldersWrite
 	case dashboardaccess.PERMISSION_ADMIN:
-		return dashboards.ActionDashboardsPermissionsWrite, dashboards.ActionFoldersPermissionsWrite
+		return dashboards.ActionDashboardsPermissionsWrite, foldermodel.ActionFoldersPermissionsWrite
 	case dashboardaccess.PERMISSION_VIEW:
 		fallthrough
 	default:
-		return dashboards.ActionDashboardsRead, dashboards.ActionFoldersRead
+		return dashboards.ActionDashboardsRead, foldermodel.ActionFoldersRead
 	}
 }
 
@@ -431,6 +516,99 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	s.write(w, parsedResults)
 }
 
+// DoVectorSearch serves the semantic (vector) search endpoint. It is registered
+// only when the dashboardVectorSearch feature toggle is enabled. Unlike lexical
+// search it does not fall back: if the vector backend isn't configured the
+// underlying call returns Unimplemented, which we surface as 501.
+func (s *SearchHandler) DoVectorSearch(w http.ResponseWriter, r *http.Request) {
+	ctx, span := s.tracer.Start(r.Context(), "dashboard.vectorSearch")
+	defer span.End()
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	queryParams, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	key, err := asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	limit := 50
+	if queryParams.Has("limit") {
+		if l, parseErr := strconv.Atoi(queryParams.Get("limit")); parseErr == nil && l > 0 {
+			limit = l
+		}
+	}
+
+	req := &resourcepb.VectorSearchRequest{
+		Key:   key,
+		Query: queryParams.Get("query"),
+		Limit: int64(limit),
+	}
+	if folder := queryParams.Get("folder"); folder != "" {
+		folder = foldermodel.ToLegacyFolderUID(folder)
+		req.Filters = append(req.Filters, &resourcepb.Requirement{
+			Key:      "folder",
+			Operator: string(selection.Equals),
+			Values:   []string{folder},
+		})
+	}
+
+	result, err := s.client.VectorSearch(ctx, req)
+	if err != nil {
+		if status.Code(err) == codes.Unimplemented {
+			errhttp.Write(ctx, errVectorSearchNotConfigured.Errorf("vector search is not configured on this instance"), w)
+			return
+		}
+		errhttp.Write(ctx, resource.GetError(resource.AsErrorResult(err)), w)
+		return
+	}
+	if result.GetError() != nil {
+		errhttp.Write(ctx, resource.GetError(result.GetError()), w)
+		return
+	}
+
+	s.write(w, vectorSearchResultsToSearchResults(result))
+}
+
+// Map each matched panel to its dashboard. Dashboards are not deduplicated. Attaches embedded panel content to each result.
+//
+// Results are kept in backend order: Score is the cosine distance (lower = closer),
+// so the first hit is the best match.
+func vectorSearchResultsToSearchResults(result *resourcepb.VectorSearchResponse) *dashboardv0alpha1.SearchResults {
+	hits := make([]dashboardv0alpha1.DashboardHit, 0, len(result.GetResults()))
+	for _, r := range result.GetResults() {
+		field := &commonv0.Unstructured{}
+		field.Set("subresource", r.GetSubresource())
+		field.Set("score", r.GetScore())
+		field.Set("snippet", r.GetContent())
+
+		hits = append(hits, dashboardv0alpha1.DashboardHit{
+			Resource: dashboardv0alpha1.DASHBOARD_RESOURCE,
+			Name:     r.GetName(),
+			Title:    r.GetTitle(),
+			Folder:   r.GetFolder(),
+			Score:    r.GetScore(),
+			Field:    field,
+		})
+	}
+
+	out := &dashboardv0alpha1.SearchResults{Hits: hits, TotalHits: int64(len(hits))}
+	if len(hits) > 0 {
+		out.MaxScore = hits[0].Score
+	}
+	return out
+}
+
 // convertHttpSearchRequestToResourceSearchRequest create ResourceSearchRequest from query parameters.
 // Supplied function is used to get dashboards shared with user.
 // nolint:gocyclo
@@ -498,18 +676,32 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		return nil, err
 	}
 
-	// Add sorting
+	// Add sorting. Dashboard-specific fields live under the fields.*
+	// sub-document inside bleve; clients pass the bare name (e.g.
+	// ?sort=panel_types) and the search backend needs the prefixed form
+	// (fields.panel_types) to find them. The leading "-" descending marker
+	// is stripped first so the dashboard-field lookup sees the bare name
+	// regardless of direction.
 	if queryParams.Has("sort") {
-		for _, sort := range queryParams["sort"] {
-			if slices.Contains(builders.DashboardFields(), sort) {
-				sort = resource.SEARCH_FIELD_PREFIX + sort
+		isDashboardField := func(name string) bool {
+			return slices.ContainsFunc(builders.DashboardSearchFields, func(def resource.SearchFieldDefinition) bool {
+				return def.Name == name
+			})
+		}
+		for _, raw := range queryParams["sort"] {
+			field := raw
+			desc := false
+			if strings.HasPrefix(field, "-") {
+				desc = true
+				field = field[1:]
 			}
-			s := &resourcepb.ResourceSearchRequest_Sort{Field: sort}
-			if strings.HasPrefix(sort, "-") {
-				s.Desc = true
-				s.Field = s.Field[1:]
+			if isDashboardField(field) {
+				field = resource.SEARCH_FIELD_PREFIX + field
 			}
-			searchRequest.SortBy = append(searchRequest.SortBy, s)
+			searchRequest.SortBy = append(searchRequest.SortBy, &resourcepb.ResourceSearchRequest_Sort{
+				Field: field,
+				Desc:  desc,
+			})
 		}
 	}
 
@@ -522,6 +714,9 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		}
 		searchRequest.Facet = make(map[string]*resourcepb.ResourceSearchRequest_Facet)
 		for _, v := range facets {
+			if v != resource.SEARCH_FIELD_TAGS {
+				return nil, apierrors.NewBadRequest(fmt.Sprintf("faceting is not supported for field %q", v))
+			}
 			searchRequest.Facet[v] = &resourcepb.ResourceSearchRequest_Facet{
 				Field: v,
 				Limit: int64(facetLimit),
@@ -582,23 +777,33 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		})
 	}
 
+	// K6 creates a technical folder for some rbac handling that should not be visible to normal user.
+	// The legacy search backend ignores NotIn on name, but we should be mostly in mode 4+ now.
+	if !user.IsIdentityType(claims.TypeServiceAccount) {
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_NAME,
+			Operator: string(selection.NotIn),
+			Values:   []string{accesscontrol.K6FolderUID},
+		})
+	}
+
 	if searchRequest.Query == "*" {
 		searchRequest.Query = "" // will match everything
 	} else if searchRequest.Query != "" {
 		// Explicitly configure the query for dashboard+folder matching.
 		searchRequest.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{
 			{
-				Name:  resource.SEARCH_FIELD_TITLE,
-				Type:  resourcepb.QueryFieldType_KEYWORD,
-				Boost: 10, // exact match -- includes ngrams! If they lived on their own field, we could score them differently
-			}, {
-				Name:  resource.SEARCH_FIELD_TITLE,
-				Type:  resourcepb.QueryFieldType_TEXT,
-				Boost: 2, // standard analyzer (with ngrams!)
-			}, {
 				Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
+				Type:  resourcepb.QueryFieldType_KEYWORD,
+				Boost: 10, // exact title match (case-insensitive via pre-lowered title_phrase)
+			}, {
+				Name:  resource.SEARCH_FIELD_TITLE,
 				Type:  resourcepb.QueryFieldType_TEXT,
-				Boost: 5, // standard analyzer
+				Boost: 2, // standard analyzer (word-level matching)
+			}, {
+				Name:  resource.SEARCH_FIELD_TITLE_NGRAM,
+				Type:  resourcepb.QueryFieldType_TEXT,
+				Boost: 1, // ngram analyzer (partial/prefix matching)
 			},
 		}
 
@@ -628,12 +833,16 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		// hijacks the "name" query param to only search for shared dashboard UIDs
 		names = append(names, dashboardUIDs...)
 	} else if folder != "" {
-		if folder == rootFolder {
-			folder = "" // root folder is empty in the search index
-		}
+		// Collapse the canonical "general" root sentinel to the legacy empty
+		// value before querying. A search backend on the same version expands
+		// "" back to both root sentinels, but the backend is deployed separately
+		// and may lag this API server; an un-upgraded backend only matches the
+		// "" that root-parented resources are still indexed with, so normalizing
+		// here keeps root search working across the rollout skew.
+		folder = foldermodel.ToLegacyFolderUID(folder)
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      "folder",
-			Operator: "=",
+			Operator: string(selection.Equals),
 			Values:   []string{folder},
 		})
 	}
@@ -683,7 +892,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		}
 	}
 	for _, folderPermission := range folderPermissions {
-		if folderUid, found := strings.CutPrefix(folderPermission, dashboards.ScopeFoldersPrefix); found {
+		if folderUid, found := strings.CutPrefix(folderPermission, foldermodel.ScopeFoldersPrefix); found {
 			if !slices.Contains(dashboardUids, folderUid) && folderUid != foldermodel.SharedWithMeFolderUID && folderUid != foldermodel.GeneralFolderUID {
 				dashboardUids = append(dashboardUids, folderUid)
 			}
@@ -735,11 +944,13 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		return sharedDashboards, fmt.Errorf("error retrieving folder information")
 	}
 
-	// populate list of unique folder UIDs in the list of dashboards user has read permissions
+	// populate list of unique folder UIDs in the list of dashboards user has read permissions.
+	// Root-parented dashboards have no parent folder to check, and the apistore may report root
+	// as either the legacy "" or the canonical "general" sentinel, so skip both.
 	allFolders := make([]string, 0)
 	for _, dash := range dashboardResult.Results.Rows {
 		folderUid := string(dash.Cells[folderUidIdx])
-		if folderUid != "" && !slices.Contains(allFolders, folderUid) {
+		if !foldermodel.IsRootFolderUID(folderUid) && !slices.Contains(allFolders, folderUid) {
 			allFolders = append(allFolders, folderUid)
 		}
 	}
@@ -768,11 +979,12 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		foldersWithAccess = append(foldersWithAccess, fold.Key.Name)
 	}
 
-	// add to sharedDashboards dashboards user has access to, but does NOT have access to it's parent folder
+	// add to sharedDashboards dashboards user has access to, but does NOT have access to it's parent folder.
+	// Root-parented dashboards (reported as "" or "general") have no parent folder, so skip both sentinels.
 	for _, dash := range dashboardResult.Results.Rows {
 		dashboardUid := dash.Key.Name
 		folderUid := string(dash.Cells[folderUidIdx])
-		if folderUid != "" && !slices.Contains(foldersWithAccess, folderUid) {
+		if !foldermodel.IsRootFolderUID(folderUid) && !slices.Contains(foldersWithAccess, folderUid) {
 			sharedDashboards = append(sharedDashboards, dashboardUid)
 		}
 	}

@@ -1,13 +1,13 @@
-import { AnnotationQuery, DataQuery, VariableModel, VariableRefresh, Panel } from '@grafana/schema';
+import { type AnnotationQuery, type DataQuery, type VariableModel, VariableRefresh, type Panel } from '@grafana/schema';
 import {
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
   defaultDataQueryKind,
-  GridLayoutItemKind,
-  GridLayoutKind,
-  PanelKind,
-  RowsLayoutKind,
-  RowsLayoutRowKind,
-  VariableKind,
+  type GridLayoutItemKind,
+  type GridLayoutKind,
+  type PanelKind,
+  type RowsLayoutKind,
+  type RowsLayoutRowKind,
+  type VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import {
@@ -25,7 +25,7 @@ import {
   transformVariableHideToEnum,
   transformVariableRefreshToEnum,
 } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
-import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import {
   getDefaultDatasource,
@@ -33,7 +33,7 @@ import {
   ResponseTransformers,
   transformMappingsToV1,
 } from './ResponseTransformers';
-import { DashboardWithAccessInfo } from './types';
+import { type DashboardWithAccessInfo } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -379,6 +379,7 @@ describe('ResponseTransformers', () => {
             transformations: [],
             repeat: 'var1',
             repeatDirection: 'h',
+            timeCompare: '1d',
           },
           {
             id: 2,
@@ -430,7 +431,7 @@ describe('ResponseTransformers', () => {
       const transformed = ResponseTransformers.ensureV2Response(dto);
 
       // Metadata
-      expect(transformed.apiVersion).toBe('v2beta1');
+      expect(transformed.apiVersion).toBe('v2');
       expect(transformed.kind).toBe('DashboardWithAccessInfo');
       expect(transformed.metadata.annotations?.[AnnoKeyCreatedBy]).toEqual('user1');
       expect(transformed.metadata.annotations?.[AnnoKeyUpdatedBy]).toEqual('user2');
@@ -521,7 +522,7 @@ describe('ResponseTransformers', () => {
                   },
                 },
               ],
-              queryOptions: {},
+              queryOptions: { timeCompare: '1d' },
               transformations: [],
             },
           },
@@ -837,7 +838,7 @@ describe('ResponseTransformers', () => {
 
     it('should transform DashboardWithAccessInfo<DashboardV2Spec> to DashboardDTO', () => {
       const dashboardV2: DashboardWithAccessInfo<DashboardV2Spec> = {
-        apiVersion: 'v2beta1',
+        apiVersion: 'v2',
         kind: 'DashboardWithAccessInfo',
         metadata: {
           creationTimestamp: '2023-01-01T00:00:00Z',
@@ -1117,7 +1118,7 @@ describe('ResponseTransformers', () => {
         };
       })
     );
-    expect(v1.transformations).toEqual(v2Spec.data.spec.transformations.map((t) => t.spec));
+    expect(v1.transformations).toEqual(v2Spec.data.spec.transformations.map((t) => ({ id: t.group, ...t.spec })));
     const layoutElement = layoutV2.spec.items.find(
       (item) => item.kind === 'GridLayoutItem' && item.spec.element.name === panelKey
     ) as GridLayoutItemKind;
@@ -1137,6 +1138,7 @@ describe('ResponseTransformers', () => {
     expect(v1.queryCachingTTL).toBe(v2Spec.data.spec.queryOptions.queryCachingTTL);
     expect(v1.timeFrom).toBe(v2Spec.data.spec.queryOptions.timeFrom);
     expect(v1.timeShift).toBe(v2Spec.data.spec.queryOptions.timeShift);
+    expect(v1.timeCompare).toBe(v2Spec.data.spec.queryOptions.timeCompare);
     expect(v1.transparent).toBe(v2Spec.transparent);
   }
 

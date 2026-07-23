@@ -1,23 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { PropsOf } from '@emotion/react';
+import { type PropsOf } from '@emotion/react';
 import { Controller, useForm } from 'react-hook-form';
 
-import { ContactPointSelector } from '@grafana/alerting/unstable';
-import { GrafanaTheme2 } from '@grafana/data';
+import { ContactPointSelector, RoutingTreeSelector } from '@grafana/alerting/unstable';
+import type { RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Button,
-  Combobox,
-  Icon,
-  Input,
-  Label,
-  MultiCombobox,
-  Stack,
-  Text,
-  Tooltip,
-  useStyles2,
-  useTheme2,
-} from '@grafana/ui';
+import { Button, Combobox, Icon, Input, Label, MultiCombobox, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
@@ -29,19 +18,12 @@ import {
   useNamespaceAndGroupOptions,
 } from '../../components/rules/Filter/useRuleFilterAutocomplete';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
-import { RuleHealth, RuleSource, RulesFilter } from '../../search/rulesSearchParser';
+import { RuleHealth, RuleSource, type RulesFilter } from '../../search/rulesSearchParser';
 
-import { AdvancedFilters } from './types';
-import {
-  advancedFiltersToRulesFilter,
-  searchQueryToDefaultValues,
-  usePluginsFilterStatus,
-  usePortalContainer,
-} from './utils';
+import { type AdvancedFilters } from './types';
+import { advancedFiltersToRulesFilter, searchQueryToDefaultValues, usePluginsFilterStatus } from './utils';
 
 const SIDEBAR_WIDTH = 250;
-
-const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
 
 /**
  * Persistent filter sidebar for the alert rule list v2.
@@ -73,23 +55,49 @@ interface FilterSidebarFormProps {
 
 function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
   const styles = useStyles2(getStyles);
-  const theme = useTheme2();
 
   const { updateFilters } = useRulesFilter();
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
+  const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
 
-  // Create portal container for combobox dropdowns
-  const portalContainer = usePortalContainer(theme.zIndex.portal + 100);
+  const defaults = searchQueryToDefaultValues(filterState);
 
-  const { control, watch, register } = useForm<AdvancedFilters>({
-    defaultValues: searchQueryToDefaultValues(filterState),
+  const { control, watch, register, setValue } = useForm<AdvancedFilters>({
+    defaultValues: defaults,
   });
+
+  const contactPointValue = watch('contactPoint');
+  const policyValue = watch('policy');
+  const isContactPointDisabled = Boolean(policyValue);
+  const isPolicyDisabled = Boolean(contactPointValue);
 
   function applyFormValues(overrides: Partial<AdvancedFilters> = {}) {
     const formValues = watch();
     const ruleFilter = advancedFiltersToRulesFilter({ ...formValues, ...overrides }, filterState.freeFormWords);
     trackAlertRuleFilterEvent({ filterMethod: 'search-input', filter: ruleFilter, filterVariant: 'v2' });
     updateFilters(ruleFilter);
+  }
+
+  function handleContactPointChange(cp: { spec: { title: string } } | null) {
+    const contactPoint = cp?.spec.title ?? null;
+    setValue('contactPoint', contactPoint);
+    if (contactPoint) {
+      setValue('policy', null);
+      applyFormValues({ contactPoint, policy: null });
+    } else {
+      applyFormValues({ contactPoint });
+    }
+  }
+
+  function handlePolicyChange(tree: RoutingTree | null) {
+    const policy = tree?.metadata.name ?? null;
+    setValue('policy', policy);
+    if (policy) {
+      setValue('contactPoint', null);
+      applyFormValues({ policy, contactPoint: null });
+    } else {
+      applyFormValues({ policy });
+    }
   }
 
   const { namespaceOptions, groupOptions, namespacePlaceholder, groupPlaceholder } = useNamespaceAndGroupOptions();
@@ -128,7 +136,6 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
                     applyFormValues({ labels });
                   }}
                   placeholder={t('alerting.rules-filter.placeholder-labels', 'Select labels')}
-                  portalContainer={portalContainer}
                 />
               )}
             />
@@ -201,7 +208,6 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
                   }}
                   value={field.value}
                   isClearable
-                  portalContainer={portalContainer}
                 />
               )}
             />
@@ -223,7 +229,6 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
                   }}
                   value={field.value}
                   isClearable
-                  portalContainer={portalContainer}
                 />
               )}
             />
@@ -313,7 +318,6 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
                     applyFormValues({ dataSourceNames });
                   }}
                   placeholder={t('alerting.rules-filter.placeholder-data-sources', 'Select data sources')}
-                  portalContainer={portalContainer}
                 />
               )}
             />
@@ -322,54 +326,121 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
 
         <div className={styles.divider} />
 
-        {canRenderContactPointSelector && (
-          <>
-            <SidebarSection>
-              <SidebarField
-                label={
-                  <Stack gap={0.5} alignItems="center">
-                    <span>
-                      <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
-                    </span>
-                    <Tooltip
-                      content={
-                        <Trans i18nKey="alerting.rules-filter.contact-point-tooltip">
-                          Filters alert rules which route directly to the selected contact point. Alert rules routed to
-                          notification policies will not be displayed.
-                        </Trans>
-                      }
-                    >
-                      <Icon
-                        name="info-circle"
-                        size="sm"
-                        title={t('alerting.rules-filter.contact-point-tooltip-title', 'Contact point filter help')}
-                      />
-                    </Tooltip>
-                  </Stack>
-                }
-              >
-                <Controller
-                  name="contactPoint"
-                  control={control}
-                  render={({ field }) => (
+        <SidebarSection>
+          {canRenderContactPointSelector && (
+            <SidebarField
+              label={
+                <Stack gap={0.5} alignItems="center">
+                  <span>
+                    <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
+                  </span>
+                  <Tooltip
+                    content={
+                      <Trans i18nKey="alerting.rules-filter.contact-point-tooltip">
+                        Filters alert rules which route directly to the selected contact point. Alert rules routed to
+                        notification policies will not be displayed.
+                      </Trans>
+                    }
+                  >
+                    <Icon
+                      name="info-circle"
+                      size="sm"
+                      title={t('alerting.rules-filter.contact-point-tooltip-title', 'Contact point filter help')}
+                    />
+                  </Tooltip>
+                </Stack>
+              }
+            >
+              <Controller
+                name="contactPoint"
+                control={control}
+                render={({ field }) => {
+                  const selector = (
                     <ContactPointSelector
                       placeholder={t('alerting.rules-filter.placeholder-contact-point', 'Select contact point')}
                       value={field.value}
                       isClearable
-                      onChange={(cp) => {
-                        const contactPoint = cp?.spec.title ?? null;
-                        field.onChange(contactPoint);
-                        applyFormValues({ contactPoint });
-                      }}
-                      portalContainer={portalContainer}
+                      disabled={isContactPointDisabled}
+                      onChange={handleContactPointChange}
                     />
-                  )}
-                />
-              </SidebarField>
-            </SidebarSection>
-            <div className={styles.divider} />
-          </>
-        )}
+                  );
+
+                  if (isContactPointDisabled) {
+                    return (
+                      <Tooltip
+                        content={t(
+                          'alerting.rules-filter.contact-point-disabled-tooltip',
+                          'Contact point filtering is not available while a notification policy filter is active.'
+                        )}
+                        placement="top"
+                      >
+                        <div>{selector}</div>
+                      </Tooltip>
+                    );
+                  }
+
+                  return selector;
+                }}
+              />
+            </SidebarField>
+          )}
+          <SidebarField
+            label={
+              <Stack gap={0.5} alignItems="center">
+                <span>
+                  <Trans i18nKey="alerting.policyFilter.label">Notification policy</Trans>
+                </span>
+                <Tooltip
+                  content={
+                    <Trans i18nKey="alerting.rules-filter.policy-tooltip">
+                      Filters alert rules which route to the selected notification policy tree. Alert rules using direct
+                      contact point routing will not be displayed.
+                    </Trans>
+                  }
+                >
+                  <Icon
+                    name="info-circle"
+                    size="sm"
+                    title={t('alerting.rules-filter.policy-tooltip-title', 'Notification policy filter help')}
+                  />
+                </Tooltip>
+              </Stack>
+            }
+          >
+            <Controller
+              name="policy"
+              control={control}
+              render={({ field }) => {
+                const selector = (
+                  <RoutingTreeSelector
+                    placeholder={t('alerting.rules-filter.placeholder-policy', 'Select policy')}
+                    value={field.value ?? undefined}
+                    isClearable
+                    disabled={isPolicyDisabled}
+                    onChange={handlePolicyChange}
+                  />
+                );
+
+                if (isPolicyDisabled) {
+                  return (
+                    <Tooltip
+                      content={t(
+                        'alerting.rules-filter.policy-disabled-tooltip',
+                        'Notification policy filtering is not available while a contact point filter is active.'
+                      )}
+                      placement="top"
+                    >
+                      <div>{selector}</div>
+                    </Tooltip>
+                  );
+                }
+
+                return selector;
+              }}
+            />
+          </SidebarField>
+        </SidebarSection>
+        <div className={styles.divider} />
 
         <SidebarSection>
           <SidebarField

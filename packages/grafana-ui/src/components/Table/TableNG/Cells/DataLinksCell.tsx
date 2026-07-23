@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
 
-import { isTableCellStylesKeyEqual } from '../styles';
-import { DataLinksCellProps, TableCellStyles } from '../types';
-import { getCellLinks, getJustifyContent } from '../utils';
+import { getJustifyContent, isTableCellStylesKeyEqual } from '../styles';
+import { type DataLinksCellProps, type TableCellStyles } from '../types';
+import { getCellLinks } from '../utils';
 
 export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
   const links = getCellLinks(field, rowIdx);

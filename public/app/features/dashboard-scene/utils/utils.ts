@@ -1,27 +1,32 @@
-import { getDataSourceRef, IntervalVariableModel, ScopedVars } from '@grafana/data';
+import { getDataSourceRef, type IntervalVariableModel, type ScopedVars } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient, useFlagGrafanaScenesFlickeringFix } from '@grafana/runtime/internal';
 import {
-  CancelActivationHandler,
-  CustomVariable,
+  type CancelActivationHandler,
+  type CustomVariable,
   LocalValueVariable,
-  MultiValueVariable,
+  type MultiValueVariable,
   SceneDataTransformer,
   sceneGraph,
-  SceneObject,
-  SceneObjectState,
+  type SceneObject,
+  SceneObjectBase,
+  type SceneObjectState,
   SceneQueryRunner,
   SceneVariableSet,
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
-import { Dashboard, Panel, RowPanel } from '@grafana/schema';
+import { type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
 import { createLogger } from '@grafana/ui';
+import kbn from 'app/core/utils/kbn';
+import { type RowItem } from 'app/features/dashboard-scene/scene/layout-rows/RowItem';
+import { type TabItem } from 'app/features/dashboard-scene/scene/layout-tabs/TabItem';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
-import { DashboardLayoutOrchestrator } from '../scene/DashboardLayoutOrchestrator';
-import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
+import { type DashboardLayoutOrchestrator } from '../scene/DashboardLayoutOrchestrator';
+import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
@@ -29,11 +34,12 @@ import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
-import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { type DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
-import { DashboardDropTarget } from '../scene/types/DashboardDropTarget';
-import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { type DashboardDropTarget } from '../scene/types/DashboardDropTarget';
+import { type DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { type DashboardSceneState } from '../scene/types/dashboard';
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
@@ -45,6 +51,13 @@ const V1_PANEL_PROPERTIES = {
 
 export function getVizPanelKeyForPanelId(panelId: number) {
   return `panel-${panelId}`;
+}
+
+/**
+ * Whether the new panel query errors & notices UI (header popover + dedicated inspector tab) is enabled.
+ */
+export function isNewPanelQueryErrorsUIEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewPanelQueryErrorsUI, false);
 }
 
 export function getPanelIdForVizPanel(panel: SceneObject): number {
@@ -265,9 +278,7 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
 }
 
 export function getDefaultPluginId(): string {
-  return config.featureToggles.dashboardNewLayouts || config.featureToggles.newVizSuggestions
-    ? UNCONFIGURED_PANEL_PLUGIN_ID
-    : 'timeseries';
+  return config.featureToggles.dashboardNewLayouts ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
 }
 
 export function getDefaultVizPanel(): VizPanel {
@@ -292,7 +303,7 @@ export function getDefaultVizPanel(): VizPanel {
       $behaviors: [panelMenuBehavior],
     }),
     headerActions: new VizPanelHeaderActions({
-      hideGroupByAction: !config.featureToggles.panelGroupBy,
+      hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
     $data: datasourceSettings
       ? new SceneDataTransformer({
@@ -446,6 +457,25 @@ export function interpolateSectionTitle<T extends RepeatableSectionState>(
   return sceneGraph.interpolate(scene, value, undefined, 'text');
 }
 
+const getSlug = (item: TabItem | RowItem) => interpolateSectionTitle(item, item.state.title || '').replace(/ +/g, '-');
+
+export function getSlugForRowOrTab<T extends TabItem | RowItem>(newItem: T, items: T[]): string {
+  const baseSlug = getSlug(newItem);
+  const sameSlugs = items.filter((item) => getSlug(item) === baseSlug);
+
+  if (sameSlugs.length > 1) {
+    const slugIndex = sameSlugs.findIndex((item) => item === newItem);
+    if (slugIndex > 0) {
+      return `${baseSlug}__${slugIndex + 1}`;
+    }
+  }
+  return baseSlug;
+}
+
+export function getLegacySlugForRowOrTab(tab: TabItem | RowItem): string {
+  return kbn.slugifyForUrl(interpolateSectionTitle(tab, tab.state.title || ''));
+}
+
 function getRepeatLocalScopedVars<T extends RepeatableSectionState>(scene: SceneObject<T>): ScopedVars | undefined {
   const variableSet = scene.state.$variables;
   if (!(variableSet instanceof SceneVariableSet)) {
@@ -534,10 +564,9 @@ export function hasActualSaveChanges(dashboard: DashboardScene) {
   return !!changes.diffCount;
 }
 
-export function isDashboardSceneEnabled(): boolean {
-  return !!(config.featureToggles.dashboardScene || config.featureToggles.dashboardNewLayouts);
-}
-
-export function isPublicDashboardsSceneEnabled(): boolean {
-  return !!(config.featureToggles.publicDashboardsScene || config.featureToggles.dashboardNewLayouts);
+export function useScenesFlickeringFix() {
+  const scenesFlickeringFix = useFlagGrafanaScenesFlickeringFix();
+  if (scenesFlickeringFix) {
+    SceneObjectBase.RENDER_BEFORE_ACTIVATION_DEFAULT = true;
+  }
 }

@@ -1,25 +1,34 @@
 import { css } from '@emotion/css';
-import { CSSProperties, ReactNode } from 'react';
+import { type CSSProperties, type ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
 import { VizTooltipRow } from './VizTooltipRow';
-import { VizTooltipItem } from './types';
+import { type VizTooltipItem } from './types';
 
 interface VizTooltipContentProps {
+  /** The rows to render, one per series or field. */
   items: VizTooltipItem[];
   children?: ReactNode;
+  /** When true the content area becomes vertically scrollable, constrained by `maxHeight`. */
   scrollable?: boolean;
-  isPinned: boolean;
+  /**
+   * Whether the tooltip is currently pinned (locked open by the user).
+   * When pinned, label and value cells become clickable to copy their text to the clipboard.
+   * Defaults to `false`.
+   */
+  isPinned?: boolean;
+  /** Maximum height in pixels of the scrollable content area. Only applied when `scrollable` is true. */
   maxHeight?: number;
 }
 
+/** @alpha */
 export const VizTooltipContent = ({
   items,
   children,
-  isPinned,
+  isPinned = false,
   scrollable = false,
   maxHeight,
 }: VizTooltipContentProps) => {

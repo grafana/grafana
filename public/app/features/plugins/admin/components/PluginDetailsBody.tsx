@@ -1,17 +1,20 @@
 import { css } from '@emotion/css';
 import { useMemo, type JSX } from 'react';
 
-import { GrafanaTheme2, PluginContextProvider, UrlQueryMap, PluginType } from '@grafana/data';
+import { type GrafanaTheme2, PluginContextProvider, type UrlQueryMap, PluginType } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { PageInfoItem } from '@grafana/runtime/internal';
-import { CellProps, Column, InteractiveTable, Stack, useStyles2, Carousel } from '@grafana/ui';
+import { type PageInfoItem } from '@grafana/runtime/internal';
+import { type CellProps, type Column, InteractiveTable, Stack, useStyles2, Carousel } from '@grafana/ui';
 
+import { AssistantOverview } from '../components/AssistantOverview/AssistantOverview';
+import { ASSISTANT_PLUGIN_ID } from '../components/AssistantOverview/constants';
 import { Changelog } from '../components/Changelog';
 import { PluginDetailsPanel } from '../components/PluginDetailsPanel';
 import { VersionList } from '../components/VersionList';
 import { usePluginConfig } from '../hooks/usePluginConfig';
-import { CatalogPlugin, Permission, PluginTabIds, Screenshots } from '../types';
+import { type CatalogPlugin, type Permission, PluginTabIds, type Screenshots } from '../types';
 
 import Connections from './ConnectionsTab';
 import { PluginDashboards } from './PluginDashboards';
@@ -29,7 +32,7 @@ type Cell<T extends keyof Permission = keyof Permission> = CellProps<Permission,
 
 export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetails }: Props): JSX.Element {
   const styles = useStyles2(getStyles);
-  const { value: pluginConfig } = usePluginConfig(plugin);
+  const { value: pluginConfig, loading: pluginConfigLoading } = usePluginConfig(plugin);
   const columns: Array<Column<Permission>> = useMemo(
     () => [
       {
@@ -51,7 +54,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
   };
 
   if (pageId === PluginTabIds.OVERVIEW) {
-    return (
+    const readme = (
       <div
         className={styles.readme}
         dangerouslySetInnerHTML={{
@@ -59,6 +62,19 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
         }}
       />
     );
+
+    if (plugin.id === ASSISTANT_PLUGIN_ID) {
+      return (
+        <AssistantOverview
+          plugin={plugin}
+          pluginConfig={pluginConfig}
+          pluginConfigLoading={pluginConfigLoading}
+          fallback={readme}
+        />
+      );
+    }
+
+    return readme;
   }
 
   if (pageId === PluginTabIds.VERSIONS) {
@@ -132,7 +148,10 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
     for (const configPage of pluginConfig.configPages) {
       if (pageId === configPage.id) {
         return (
-          <div>
+          <div
+            data-testid={selectors.components.Plugins.configPage(plugin.id, configPage.id)}
+            data-plugin-id={plugin.id}
+          >
             <PluginContextProvider meta={pluginConfig.meta}>
               <configPage.body plugin={pluginConfig} query={queryParams} />
             </PluginContextProvider>
@@ -167,7 +186,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
   );
 }
 
-export const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrap: css({
     width: '100%',
     height: '65vh',

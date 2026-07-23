@@ -1,5 +1,5 @@
 import { HttpResponse } from 'msw';
-import { PropsWithChildren } from 'react';
+import { type PropsWithChildren } from 'react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { getWrapper, renderHook, waitFor } from 'test/test-utils';
 

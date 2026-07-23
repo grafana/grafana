@@ -5,7 +5,7 @@
 // in that case please add the attribute data-testid={selector} in the component and
 // prefix your selector string with 'data-testid' so that when we create the selectors we know to search for it on the right attribute
 
-import { VersionedSelectorGroup } from '../types';
+import { type VersionedSelectorGroup } from '../types';
 
 import { MIN_GRAFANA_VERSION } from './constants';
 
@@ -72,11 +72,26 @@ export const versionedComponents = {
     closePane: {
       '12.4.0': 'data-testid Sidebar close pane',
     },
+    goBack: {
+      '12.4.0': 'data-testid Sidebar go back',
+    },
     dockToggle: {
       '12.4.0': 'data-testid sidebar-dock-toggle',
     },
+    headerTitle: {
+      '12.4.0': 'data-testid sidebar-pane-header-title',
+    },
+    showHideToggle: {
+      '12.4.0': 'data-testid sidebar-show-hide-toggle',
+    },
     newPanelButton: {
       '12.4.0': 'data-testid sidebar add new panel',
+    },
+    configurePanelButton: {
+      '13.1.0': 'data-testid edit pane configure panel button',
+    },
+    addNewVariableButton: {
+      '13.1.0': 'data-testid edit pane add new variable button',
     },
   },
   EditPaneHeader: {
@@ -96,8 +111,29 @@ export const versionedComponents = {
       '12.1.0': 'data-testid EditPaneHeader paste',
     },
   },
+  ViewPanelSidePane: {
+    goBackButton: {
+      '13.0.1': 'data-testid view-panel-side-pane-back-button',
+    },
+  },
   LayoutContainer: {
     '12.4.0': (identifier: string) => `data-testid Layout container ${identifier}`,
+  },
+  VizLayout: {
+    container: {
+      ['13.1.0']: 'data-testid viz-layout',
+    },
+    legend: {
+      ['13.1.0']: 'data-testid viz-layout-legend',
+    },
+  },
+  UPlotChart: {
+    xyCanvas: {
+      ['13.1.0']: 'data-testid xy-canvas',
+    },
+    container: {
+      [MIN_GRAFANA_VERSION]: 'uplot-main-div',
+    },
   },
   TimePicker: {
     moveBackwardButton: {
@@ -508,9 +544,17 @@ export const versionedComponents = {
           [MIN_GRAFANA_VERSION]: 'data-testid Bar gauge value',
         },
       },
+      Histogram: {
+        container: {
+          ['13.1.0']: 'data-testid viz-layout',
+        },
+      },
       PieChart: {
         svgSlice: {
           '10.3.0': 'data testid Pie Chart Slice',
+        },
+        svgLabel: {
+          '13.2.0': 'data-testid Pie Chart Label',
         },
       },
       Text: {
@@ -581,6 +625,9 @@ export const versionedComponents = {
     seriesName: {
       '10.3.0': (name: string) => `data-testid VizLegend series ${name}`,
     },
+    legend: {
+      ['13.1.0']: 'data-testid viz-layout-legend',
+    },
   },
   Drawer: {
     General: {
@@ -633,6 +680,7 @@ export const versionedComponents = {
         [MIN_GRAFANA_VERSION]: 'Panel editor option pane select',
       },
       fieldLabel: {
+        '13.1.0': (type: string) => `data-testid ${type} field property editor`,
         [MIN_GRAFANA_VERSION]: (type: string) => `${type} field property editor`,
       },
       fieldInput: {
@@ -665,18 +713,23 @@ export const versionedComponents = {
 
     // [Geomap] Map controls
     showZoomField: {
+      '13.1.0': 'data-testid Map controls Show zoom control field property editor',
       '10.2.0': 'Map controls Show zoom control field property editor',
     },
     showAttributionField: {
+      '13.1.0': 'data-testid Map controls Show attribution field property editor',
       '10.2.0': 'Map controls Show attribution field property editor',
     },
     showScaleField: {
+      '13.1.0': 'data-testid Map controls Show scale field property editor',
       '10.2.0': 'Map controls Show scale field property editor',
     },
     showMeasureField: {
+      '13.1.0': 'data-testid Map controls Show measure tools field property editor',
       '10.2.0': 'Map controls Show measure tools field property editor',
     },
     showDebugField: {
+      '13.1.0': 'data-testid Map controls Show debug field property editor',
       '10.2.0': 'Map controls Show debug field property editor',
     },
 
@@ -700,8 +753,14 @@ export const versionedComponents = {
       variableType: {
         '12.0.0': (type?: string) => `data-testid variable type ${type}`,
       },
+      changeVariableType: {
+        '12.7.0': 'data-testid change variable type',
+      },
       addVariableButton: {
         '12.0.0': 'data-testid add variable button',
+      },
+      showDependenciesButton: {
+        '13.1.0': 'data-testid show dependencies button',
       },
       addAnnotationButton: {
         '12.6.0': 'data-testid add annotation button',
@@ -756,11 +815,13 @@ export const versionedComponents = {
   PanelInspector: {
     Data: {
       content: {
+        '13.1.0': 'data-testid Panel inspector Data content',
         [MIN_GRAFANA_VERSION]: 'Panel inspector Data content',
       },
     },
     Stats: {
       content: {
+        '13.1.0': 'data-testid Panel inspector Stats content',
         [MIN_GRAFANA_VERSION]: 'Panel inspector Stats content',
       },
     },
@@ -772,9 +833,11 @@ export const versionedComponents = {
     },
     Query: {
       content: {
+        '13.1.0': 'data-testid Panel inspector Query content',
         [MIN_GRAFANA_VERSION]: 'Panel inspector Query content',
       },
       refreshButton: {
+        '13.1.0': 'data-testid Panel inspector Query refresh button',
         [MIN_GRAFANA_VERSION]: 'Panel inspector Query refresh button',
       },
       jsonObjectKeys: {
@@ -796,11 +859,18 @@ export const versionedComponents = {
       [MIN_GRAFANA_VERSION]: 'data-testid RefreshPicker interval button',
     },
   },
+  ResourcePicker: {
+    card: {
+      '13.2.0': 'data-testid resource-picker-card',
+    },
+  },
   QueryTab: {
     content: {
+      '13.1.0': 'data-testid Query editor tab content',
       [MIN_GRAFANA_VERSION]: 'Query editor tab content',
     },
     queryInspectorButton: {
+      '13.1.0': 'data-testid Query inspector button',
       [MIN_GRAFANA_VERSION]: 'Query inspector button',
     },
     queryHistoryButton: {
@@ -828,6 +898,7 @@ export const versionedComponents = {
   },
   QueryEditorRows: {
     rows: {
+      '13.1.0': 'data-testid Query editor row',
       [MIN_GRAFANA_VERSION]: 'Query editor row',
     },
   },
@@ -836,6 +907,7 @@ export const versionedComponents = {
       '10.4.0': (title: string) => `data-testid ${title}`,
     },
     title: {
+      '13.1.0': (refId: string) => `data-testid Query editor row title ${refId}`,
       [MIN_GRAFANA_VERSION]: (refId: string) => `Query editor row title ${refId}`,
     },
     container: {
@@ -916,6 +988,9 @@ export const versionedComponents = {
     card: {
       '10.1.0': (name: string) => `data-testid New transform ${name}`,
     },
+    applicabilityInfo: {
+      '13.1.0': 'data-testid Transformation applicability info',
+    },
     disableTransformationButton: {
       '10.4.0': 'data-testid Disable transformation button',
     },
@@ -931,9 +1006,11 @@ export const versionedComponents = {
     },
     SpatialOperations: {
       actionLabel: {
+        '13.1.0': 'data-testid root Action field property editor',
         '9.1.2': 'root Action field property editor',
       },
       locationLabel: {
+        '13.1.0': 'data-testid root Location Mode field property editor',
         '10.2.0': 'root Location Mode field property editor',
       },
       location: {
@@ -945,9 +1022,11 @@ export const versionedComponents = {
             '9.1.2': 'Coords location option',
           },
           latitudeFieldLabel: {
+            '13.1.0': 'data-testid root Latitude field field property editor',
             '9.1.2': 'root Latitude field field property editor',
           },
           longitudeFieldLabel: {
+            '13.1.0': 'data-testid root Longitude field field property editor',
             '9.1.2': 'root Longitude field field property editor',
           },
         },
@@ -956,6 +1035,7 @@ export const versionedComponents = {
             '9.1.2': 'Geohash location option',
           },
           geohashFieldLabel: {
+            '13.1.0': 'data-testid root Geohash field field property editor',
             '9.1.2': 'root Geohash field field property editor',
           },
         },
@@ -964,9 +1044,11 @@ export const versionedComponents = {
             '9.1.2': 'Lookup location option',
           },
           lookupFieldLabel: {
+            '13.1.0': 'data-testid root Lookup field field property editor',
             '9.1.2': 'root Lookup field field property editor',
           },
           gazetteerFieldLabel: {
+            '13.1.0': 'data-testid root Gazetteer field property editor',
             '9.1.2': 'root Gazetteer field property editor',
           },
         },
@@ -1113,7 +1195,24 @@ export const versionedComponents = {
       [MIN_GRAFANA_VERSION]: () => '[class*="-currentVisualizationItem"]',
     },
   },
+  Plugins: {
+    appPage: {
+      '13.2.0': (pluginId: string) => `data-testid App plugin page ${pluginId}`,
+    },
+    dataSourceConfigEditor: {
+      '13.2.0': (pluginId: string) => `data-testid Data source config editor ${pluginId}`,
+    },
+    configPage: {
+      '13.2.0': (pluginId: string, pageId: string) => `data-testid Plugin config page ${pluginId} ${pageId}`,
+    },
+    queryEditorRow: {
+      '13.2.0': (dataSourceType: string, refId: string) => `data-testid Query editor row ${dataSourceType} ${refId}`,
+    },
+  },
   Select: {
+    container: {
+      '13.1.0': 'data-testid Select container',
+    },
     menu: {
       '11.5.0': 'data-testid Select menu',
       [MIN_GRAFANA_VERSION]: 'Select options menu',
@@ -1130,6 +1229,26 @@ export const versionedComponents = {
     },
     singleValue: {
       [MIN_GRAFANA_VERSION]: () => 'div[class*="-singleValue"]',
+    },
+  },
+  MultiSelect: {
+    container: {
+      '13.1.0': 'data-testid MultiSelect container',
+    },
+  },
+  RadioGroup: {
+    container: {
+      '13.1.0': 'data-testid RadioGroup container',
+    },
+  },
+  Switch: {
+    container: {
+      '13.1.0': 'data-testid Switch container',
+    },
+  },
+  UnitPicker: {
+    container: {
+      '13.1.0': 'data-testid UnitPicker container',
     },
   },
   FieldConfigEditor: {

@@ -1,25 +1,25 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { colorManipulator, FALLBACK_COLOR, PanelProps } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { colorManipulator, FALLBACK_COLOR, type PanelProps } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { config, PanelDataErrorView } from '@grafana/runtime';
 import {
   TooltipDisplayMode,
   TooltipPlugin2,
   UPlotChart,
   VizLayout,
   VizLegend,
-  VizLegendItem,
+  type VizLegendItem,
+  getFieldDisplayLinks,
   useStyles2,
   useTheme2,
   usePanelContext,
 } from '@grafana/ui';
 import { getDisplayValuesForCalcs, TooltipHoverMode } from '@grafana/ui/internal';
 
-import { getDataLinks } from '../status-history/utils';
-
 import { XYChartTooltip } from './XYChartTooltip';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 import { prepConfig } from './scatter';
 import { prepSeries } from './utils';
 
@@ -42,21 +42,20 @@ export const XYChartPanel2 = (props: Props2) => {
   );
 
   // if series changed due to mappings or data structure, re-init config & renderers
-  let { builder, prepData } = useMemo(
-    () => prepConfig(series, config.theme2),
+  const { builder, warn, prepData } = useMemo(
+    () => {
+      return prepConfig(series, config.theme2);
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [mapping, mappedSeries, props.data.structureRev, props.fieldConfig, props.options.tooltip]
   );
 
   // generate data struct for uPlot mode: 2
-  let data = useMemo(
+  const data = useMemo(
     () => prepData(series),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [series]
   );
-
-  // todo: handle errors
-  let error = builder == null || data.length === 0 ? 'Err' : '';
 
   // TODO: React.memo()
   const renderLegend = () => {
@@ -84,7 +83,7 @@ export const XYChartPanel2 = (props: Props2) => {
       }
     });
 
-    const { placement, displayMode, width, sortBy, sortDesc } = props.options.legend;
+    const { placement, displayMode, width, sortBy, sortDesc, overflow } = props.options.legend;
 
     return (
       <VizLayout.Legend placement={placement} width={width}>
@@ -96,30 +95,34 @@ export const XYChartPanel2 = (props: Props2) => {
           sortBy={sortBy}
           sortDesc={sortDesc}
           isSortable={true}
+          overflow={overflow}
         />
       </VizLayout.Legend>
     );
   };
 
-  if (error) {
+  if (warn || !builder || !data) {
     return (
-      <div className="panel-empty">
-        <p>{error}</p>
-      </div>
+      <PanelDataErrorView
+        panelId={props.id}
+        fieldConfig={props.fieldConfig}
+        data={props.data}
+        message={warn ?? t('xychart.errors.unknown', 'Unknown error')}
+      />
     );
   }
 
   return (
     <VizLayout width={props.width} height={props.height} legend={renderLegend()}>
       {(vizWidth: number, vizHeight: number) => (
-        <UPlotChart config={builder!} data={data} width={vizWidth} height={vizHeight}>
+        <UPlotChart config={builder} data={data} width={vizWidth} height={vizHeight}>
           {props.options.tooltip.mode !== TooltipDisplayMode.None && (
             <TooltipPlugin2
-              config={builder!}
+              config={builder}
               hoverMode={TooltipHoverMode.xyOne}
               getDataLinks={(seriesIdx, dataIdx) => {
                 const xySeries = series[seriesIdx - 1];
-                return getDataLinks(xySeries.y.field, dataIdx);
+                return getFieldDisplayLinks(xySeries.y.field, dataIdx);
               }}
               render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks) => {
                 return (

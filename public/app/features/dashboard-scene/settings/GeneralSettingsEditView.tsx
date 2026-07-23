@@ -1,10 +1,10 @@
-import { ChangeEvent } from 'react';
+import { type ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';
-import { TimeZone } from '@grafana/schema';
+import { type SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';
+import { type TimeZone } from '@grafana/schema';
 import {
   Box,
   CollapsableSection,
@@ -16,23 +16,25 @@ import {
   Switch,
   TagsInput,
   TextArea,
-  WeekStart,
+  type WeekStart,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 import { GenAIDashDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIDashDescriptionButton';
 import { GenAIDashTitleButton } from 'app/features/dashboard/components/GenAI/GenAIDashTitleButton';
 import { MoveProvisionedDashboardDrawer } from 'app/features/provisioning/components/Dashboards/MoveProvisionedDashboardDrawer';
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 
 import { updateNavModel } from '../pages/utils';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DeleteDashboardButton } from './DeleteDashboardButton';
-import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
+import { TimePickerSettings } from './TimePickerSettings';
+import { type DashboardEditView, type DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
 export interface GeneralSettingsEditViewState extends DashboardEditViewState {
   showMoveModal?: boolean;
@@ -111,6 +113,14 @@ export class GeneralSettingsEditView
 
   public onEditableChange = (value: boolean) => {
     this._dashboard.setState({ editable: value });
+  };
+
+  public onDefaultGridChange = (value: string) => {
+    if (value === AutoGridLayoutManager.descriptor.id) {
+      this._dashboard.updateDefaultLayoutTemplate(AutoGridLayoutManager.createEmpty());
+    } else if (value === DefaultGridLayoutManager.descriptor.id) {
+      this._dashboard.updateDefaultLayoutTemplate(DefaultGridLayoutManager.createEmpty());
+    }
   };
 
   public onTimeZoneChange = (value: TimeZone) => {
@@ -216,6 +226,19 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
     },
   ];
 
+  const DEFAULT_GRID_OPTIONS = [
+    {
+      label: t('dashboard-scene.general-settings-edit-view.default_grid_options.label.auto', 'Auto grid'),
+      value: AutoGridLayoutManager.descriptor.id,
+    },
+    {
+      label: t('dashboard-scene.general-settings-edit-view.default_grid_options.label.custom', 'Custom grid'),
+      value: DefaultGridLayoutManager.descriptor.id,
+    },
+  ];
+
+  const defaultGrid = dashboard.getDefaultLayoutType();
+
   const GRAPH_TOOLTIP_OPTIONS = [
     {
       value: 0,
@@ -249,9 +272,7 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
                 <Label htmlFor="title-input">
                   <Trans i18nKey="dashboard-settings.general.title-label">Title</Trans>
                 </Label>
-                {config.featureToggles.dashgpt && (
-                  <GenAIDashTitleButton onGenerate={(title) => model.onTitleChange(title)} />
-                )}
+                <GenAIDashTitleButton onGenerate={(title) => model.onTitleChange(title)} />
               </Stack>
             }
           >
@@ -269,9 +290,7 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
                 <Label htmlFor="description-input">
                   {t('dashboard-settings.general.description-label', 'Description')}
                 </Label>
-                {config.featureToggles.dashgpt && (
-                  <GenAIDashDescriptionButton onGenerate={(description) => model.onDescriptionChange(description)} />
-                )}
+                <GenAIDashDescriptionButton onGenerate={(description) => model.onDescriptionChange(description)} />
               </Stack>
             }
           >
@@ -285,14 +304,16 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
           <Field noMargin label={t('dashboard-settings.general.tags-label', 'Tags')}>
             <TagsInput id="tags-input" tags={tags} onChange={model.onTagsChange} width={40} />
           </Field>
-          <Field noMargin label={t('dashboard-settings.general.folder-label', 'Folder')}>
-            <ProvisioningAwareFolderPicker
-              value={meta.folderUid}
-              onChange={dashboard.isManagedRepository() ? model.onProvisionedFolderChange : model.onFolderChange}
-              repositoryName={dashboard.getManagerIdentity()}
-              excludeUIDs={meta?.folderUid ? [meta.folderUid] : undefined}
-            />
-          </Field>
+          {!meta.isDashboardTemplate && (
+            <Field noMargin label={t('dashboard-settings.general.folder-label', 'Folder')}>
+              <ProvisioningAwareFolderPicker
+                value={meta.folderUid}
+                onChange={dashboard.isManagedRepository() ? model.onProvisionedFolderChange : model.onFolderChange}
+                repositoryName={dashboard.getManagerIdentity()}
+                excludeUIDs={meta?.folderUid ? [meta.folderUid] : undefined}
+              />
+            </Field>
+          )}
 
           {/* Render here so move-form load errors appear under the Move field. */}
           {showMoveModal && moveModalProps && (
@@ -315,6 +336,23 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
           >
             <RadioButtonGroup value={editable} options={EDITABLE_OPTIONS} onChange={model.onEditableChange} />
           </Field>
+
+          {config.featureToggles.dashboardDefaultLayoutSelector && (
+            <Field
+              noMargin
+              label={t('dashboard-settings.general.default-grid-label', 'Default grid')}
+              description={t(
+                'dashboard-settings.general.default-grid-description',
+                'Select layout type to be used for new rows and tabs'
+              )}
+            >
+              <RadioButtonGroup
+                value={defaultGrid}
+                options={DEFAULT_GRID_OPTIONS}
+                onChange={model.onDefaultGridChange}
+              />
+            </Field>
+          )}
         </Box>
 
         <TimePickerSettings

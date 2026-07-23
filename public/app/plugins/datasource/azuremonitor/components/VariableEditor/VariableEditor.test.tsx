@@ -4,11 +4,11 @@ import * as React from 'react';
 import { select, openMenu } from 'react-select-event';
 
 // eslint-disable-next-line no-restricted-imports
-import * as ui from '@grafana/ui';
+import type * as ui from '@grafana/ui';
 
 import { AzureQueryType } from '../../dataquery.gen';
 import createMockDatasource from '../../mocks/datasource';
-import { AzureMonitorQuery } from '../../types/query';
+import { type AzureMonitorQuery } from '../../types/query';
 
 import VariableEditor from './VariableEditor';
 

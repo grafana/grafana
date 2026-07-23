@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
-import { DataQueryError } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { type DataQueryError } from '@grafana/data';
+import { type DataQuery } from '@grafana/schema';
 
 import { QueryErrorAlert } from './QueryErrorAlert';
 

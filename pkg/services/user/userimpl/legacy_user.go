@@ -91,7 +91,7 @@ func (s *LegacyService) GetUsageStats(ctx context.Context) map[string]any {
 }
 
 func (s *LegacyService) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
-	ctx, span := s.tracer.Start(ctx, "user.Create")
+	ctx, span := s.tracer.Start(ctx, "user.legacy.Create")
 	defer span.End()
 
 	if len(cmd.Login) == 0 {
@@ -206,7 +206,7 @@ func (s *LegacyService) Create(ctx context.Context, cmd *user.CreateUserCommand)
 }
 
 func (s *LegacyService) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error {
-	ctx, span := s.tracer.Start(ctx, "user.Delete", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "user.legacy.Delete", trace.WithAttributes(
 		attribute.Int64("userID", cmd.UserID),
 	))
 	defer span.End()
@@ -220,7 +220,7 @@ func (s *LegacyService) Delete(ctx context.Context, cmd *user.DeleteUserCommand)
 }
 
 func (s *LegacyService) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*user.User, error) {
-	ctx, span := s.tracer.Start(ctx, "user.GetByID", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "user.legacy.GetByID", trace.WithAttributes(
 		attribute.Int64("userID", query.ID),
 	))
 	defer span.End()
@@ -229,7 +229,7 @@ func (s *LegacyService) GetByID(ctx context.Context, query *user.GetUserByIDQuer
 }
 
 func (s *LegacyService) GetByUID(ctx context.Context, query *user.GetUserByUIDQuery) (*user.User, error) {
-	ctx, span := s.tracer.Start(ctx, "user.GetByUID", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "user.legacy.GetByUID", trace.WithAttributes(
 		attribute.String("userUID", query.UID),
 	))
 	defer span.End()
@@ -241,7 +241,7 @@ func (s *LegacyService) ListByIdOrUID(ctx context.Context, uids []string, ids []
 	if len(uids) == 0 && len(ids) == 0 {
 		return []*user.User{}, nil
 	}
-	ctx, span := s.tracer.Start(ctx, "user.ListByIdOrUID", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "user.legacy.ListByIdOrUID", trace.WithAttributes(
 		attribute.StringSlice("userUIDs", uids),
 		attribute.Int64Slice("userIDs", ids),
 	))
@@ -251,21 +251,25 @@ func (s *LegacyService) ListByIdOrUID(ctx context.Context, uids []string, ids []
 }
 
 func (s *LegacyService) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
-	ctx, span := s.tracer.Start(ctx, "user.GetByLogin")
+	ctx, span := s.tracer.Start(ctx, "user.legacy.GetByLogin")
 	defer span.End()
 
 	return s.store.GetByLogin(ctx, query)
 }
 
+func (s *LegacyService) GetByLoginWithPassword(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
+	return s.GetByLogin(ctx, query)
+}
+
 func (s *LegacyService) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
-	ctx, span := s.tracer.Start(ctx, "user.GetByEmail")
+	ctx, span := s.tracer.Start(ctx, "user.legacy.GetByEmail")
 	defer span.End()
 
 	return s.store.GetByEmail(ctx, query)
 }
 
 func (s *LegacyService) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
-	ctx, span := s.tracer.Start(ctx, "user.Update", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "user.legacy.Update", trace.WithAttributes(
 		attribute.Int64("userID", cmd.UserID),
 	))
 	defer span.End()
@@ -320,7 +324,7 @@ func (s *LegacyService) Update(ctx context.Context, cmd *user.UpdateUserCommand)
 }
 
 func (s *LegacyService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
-	ctx, span := s.tracer.Start(ctx, "user.UpdateLastSeen", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "user.legacy.UpdateLastSeen", trace.WithAttributes(
 		attribute.Int64("userID", cmd.UserID),
 	))
 	defer span.End()
@@ -346,7 +350,7 @@ func (s *LegacyService) shouldUpdateLastSeen(t time.Time) bool {
 }
 
 func (s *LegacyService) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
-	ctx, span := s.tracer.Start(ctx, "user.GetSignedInUser", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "user.legacy.GetSignedInUser", trace.WithAttributes(
 		attribute.Int64("userID", query.UserID),
 		attribute.Int64("orgID", query.OrgID),
 	))
@@ -384,7 +388,7 @@ func newSignedInUserCacheKey(orgID, userID int64) string {
 }
 
 func (s *LegacyService) getSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
-	ctx, span := s.tracer.Start(ctx, "user.getSignedInUser", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "user.legacy.getSignedInUser", trace.WithAttributes(
 		attribute.Int64("userID", query.UserID),
 		attribute.Int64("orgID", query.OrgID),
 	))
@@ -395,7 +399,8 @@ func (s *LegacyService) getSignedInUser(ctx context.Context, query *user.GetSign
 		return nil, err
 	}
 
-	usr.Teams, err = s.teamService.GetTeamIDsByUser(ctx, &team.GetTeamIDsByUserQuery{
+	// nolint:staticcheck
+	usr.TeamIDs, usr.TeamUIDs, err = s.teamService.GetTeamIDsByUser(ctx, &team.GetTeamIDsByUserQuery{
 		OrgID:  usr.OrgID,
 		UserID: usr.UserID,
 	})
@@ -407,7 +412,7 @@ func (s *LegacyService) getSignedInUser(ctx context.Context, query *user.GetSign
 }
 
 func (s *LegacyService) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
-	ctx, span := s.tracer.Start(ctx, "user.Search", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "user.legacy.Search", trace.WithAttributes(
 		attribute.Int64("orgID", query.OrgID),
 	))
 	defer span.End()
@@ -416,7 +421,7 @@ func (s *LegacyService) Search(ctx context.Context, query *user.SearchUsersQuery
 }
 
 func (s *LegacyService) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
-	ctx, span := s.tracer.Start(ctx, "user.BatchDisableUsers", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "user.legacy.BatchDisableUsers", trace.WithAttributes(
 		attribute.Int64Slice("userIDs", cmd.UserIDs),
 	))
 	defer span.End()
@@ -425,7 +430,7 @@ func (s *LegacyService) BatchDisableUsers(ctx context.Context, cmd *user.BatchDi
 }
 
 func (s *LegacyService) GetProfile(ctx context.Context, query *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
-	ctx, span := s.tracer.Start(ctx, "user.GetProfile", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "user.legacy.GetProfile", trace.WithAttributes(
 		attribute.Int64("userID", query.UserID),
 	))
 	defer span.End()
@@ -435,7 +440,7 @@ func (s *LegacyService) GetProfile(ctx context.Context, query *user.GetUserProfi
 
 // CreateServiceAccount creates a service account in the user table and adds service account to an organisation in the org_user table
 func (s *LegacyService) CreateServiceAccount(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
-	ctx, span := s.tracer.Start(ctx, "user.CreateServiceAccount", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "user.legacy.CreateServiceAccount", trace.WithAttributes(
 		attribute.Int64("orgID", cmd.OrgID),
 	))
 	defer span.End()

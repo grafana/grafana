@@ -1,12 +1,12 @@
-import { DragDropContext, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { DashboardLink, DashboardLinkPlacement } from '@grafana/schema/dist/esm/index.gen';
+import { type DashboardLink, type DashboardLinkPlacement } from '@grafana/schema/dist/esm/index.gen';
 import { Box, Button } from '@grafana/ui';
 
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardScene } from '../../scene/DashboardScene';
 import { openAddLinkPane, openLinkEditPane } from '../../settings/links/LinkAddEditableElement';
 import { DashboardInteractions } from '../../utils/interactions';
 import { dashboardEditActions } from '../shared';
@@ -82,8 +82,10 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
       <DraggableList
         items={visible}
         droppableId={ID_VISIBLE_LIST}
-        title={t('dashboard-scene.links-list.title-above-dashboard', 'Above dashboard ({{count}})', {
+        title={t('dashboard-scene.links-list.title-above-dashboard', '', {
           count: visible.length,
+          defaultValue_one: 'Above dashboard ({{count}})',
+          defaultValue_other: 'Above dashboard ({{count}})',
         })}
         onClickItem={onClickLink}
         renderItemLabel={renderItemLabel}
@@ -91,8 +93,10 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
       <DraggableList
         items={controlsMenu}
         droppableId={ID_CONTROLS_MENU_LIST}
-        title={t('dashboard-scene.links-list.title-controls-menu', 'Controls menu ({{count}})', {
+        title={t('dashboard-scene.links-list.title-controls-menu', '', {
           count: controlsMenu.length,
+          defaultValue_one: 'Controls menu ({{count}})',
+          defaultValue_other: 'Controls menu ({{count}})',
         })}
         onClickItem={onClickLink}
         renderItemLabel={renderItemLabel}

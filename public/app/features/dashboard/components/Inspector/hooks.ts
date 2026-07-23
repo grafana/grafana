@@ -1,22 +1,5 @@
-import { useMemo } from 'react';
-import useAsync from 'react-use/lib/useAsync';
-
-import { DataSourceApi, PanelData, PanelPlugin } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { type DataSourceApi, type PanelData } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { InspectTab } from 'app/features/inspector/types';
-
-import { supportsDataQuery } from '../PanelEditor/utils';
-
-/**
- * Given PanelData return first data source supporting metadata inspector
- */
-export const useDatasourceMetadata = (data?: PanelData) => {
-  const state = useAsync(async () => getDataSourceWithInspector(data), [data]);
-  return state.value;
-};
 
 export async function getDataSourceWithInspector(data?: PanelData): Promise<DataSourceApi | undefined> {
   const targets = data?.request?.targets || [];
@@ -37,35 +20,41 @@ export async function getDataSourceWithInspector(data?: PanelData): Promise<Data
 }
 
 /**
- * Configures tabs for PanelInspector
+ * Whether the response has any errors or result notices worth showing in the errors and
+ * notices inspector tab. The standard inspector can render these for any data source.
  */
-export const useInspectTabs = (
-  panel: PanelModel,
-  dashboard: DashboardModel,
-  plugin: PanelPlugin | undefined | null,
-  hasError?: boolean,
-  metaDs?: DataSourceApi
-) => {
-  return useMemo(() => {
-    const tabs = [];
-    if (supportsDataQuery(plugin)) {
-      tabs.push({ label: t('dashboard.inspect.data-tab', 'Data'), value: InspectTab.Data });
-      tabs.push({ label: t('dashboard.inspect.stats-tab', 'Stats'), value: InspectTab.Stats });
-    }
+export function hasErrorsOrNotices(data?: PanelData): boolean {
+  if (!data) {
+    return false;
+  }
 
-    if (metaDs) {
-      tabs.push({ label: t('dashboard.inspect.meta-tab', 'Meta data'), value: InspectTab.Meta });
-    }
+  const hasErrors = Boolean(data.error) || Boolean(data.errors?.length);
+  const hasNotices = (data.series ?? []).some((frame) => (frame.meta?.notices?.length ?? 0) > 0);
 
-    tabs.push({ label: t('dashboard.inspect.json-tab', 'JSON'), value: InspectTab.JSON });
+  return hasErrors || hasNotices;
+}
 
-    if (hasError) {
-      tabs.push({ label: t('dashboard.inspect.error-tab', 'Error'), value: InspectTab.Error });
-    }
+/**
+ * Returns the data source when it provides a custom ErrorsAndNoticesInspector. This is only
+ * resolved for non-mixed panels: with mixed data sources we can't pick a single custom
+ * inspector, so the standard inspector is used instead.
+ */
+export async function getDataSourceWithErrorsAndNoticesInspector(data?: PanelData): Promise<DataSourceApi | undefined> {
+  const targets = data?.request?.targets || [];
 
-    if (dashboard.meta.canEdit && supportsDataQuery(plugin)) {
-      tabs.push({ label: t('dashboard.inspect.query-tab', 'Query'), value: InspectTab.Query });
-    }
-    return tabs;
-  }, [plugin, metaDs, dashboard, hasError]);
-};
+  if (!targets.length) {
+    return undefined;
+  }
+
+  const uniqueDataSourceUids = new Set(targets.map((target) => target.datasource?.uid));
+  if (uniqueDataSourceUids.size > 1) {
+    return undefined;
+  }
+
+  const dataSource = await getDataSourceSrv().get(targets[0].datasource);
+  if (dataSource && dataSource.components?.ErrorsAndNoticesInspector) {
+    return dataSource;
+  }
+
+  return undefined;
+}

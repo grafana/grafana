@@ -5,15 +5,19 @@ import { useAsync } from 'react-use';
 import { t } from '@grafana/i18n';
 import { useLazyGetConnectionRepositoriesQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { ExternalRepository } from '../types';
+import { type GitHubBasedConnectionType } from '../Wizard/types';
+import { type ExternalRepository } from '../types';
 import { isConnectionReady } from '../utils/connectionStatus';
 import { formatRepoUrl } from '../utils/git';
 
 import { useConnectionList } from './useConnectionList';
 
-export function useConnectionOptions(enabled: boolean) {
+export function useConnectionOptions(enabled: boolean, connectionType?: GitHubBasedConnectionType) {
   const [connections, connectionsLoading, error, refetch] = useConnectionList(enabled ? {} : skipToken);
-  const githubConnections = useMemo(() => connections?.filter((c) => c.spec?.type === 'github') ?? [], [connections]);
+  const githubConnections = useMemo(
+    () => connections?.filter((c) => c.spec?.type === connectionType) ?? [],
+    [connections, connectionType]
+  );
 
   // Only fetch repos for ready connections
   const connectionNames = useMemo(
@@ -80,10 +84,12 @@ export function useConnectionOptions(enabled: boolean) {
         const remaining = repos.length - maxToShow;
         const repoText =
           remaining > 0
-            ? t('provisioning.connection-options.repos-truncated', '{{shown}} +{{count}} more', {
+            ? t('provisioning.connection-options.repos-truncated', '', {
                 shown,
                 count: remaining,
                 interpolation: { escapeValue: false },
+                defaultValue_one: '{{shown}} +{{count}} more',
+                defaultValue_other: '{{shown}} +{{count}} more',
               })
             : shown;
         descriptionParts.push(repoText);

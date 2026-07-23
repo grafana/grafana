@@ -1,11 +1,17 @@
 import { Subscription } from 'rxjs';
 
-import { AnnotationQuery, DashboardCursorSync, dateTimeFormat, DateTimeInput, EventBusSrv } from '@grafana/data';
+import {
+  type AnnotationQuery,
+  DashboardCursorSync,
+  dateTimeFormat,
+  type DateTimeInput,
+  EventBusSrv,
+} from '@grafana/data';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { behaviors, sceneGraph, SceneObject, VizPanel } from '@grafana/scenes';
+import { behaviors, sceneGraph, type SceneObject, VizPanel } from '@grafana/scenes';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
 
 import { PanelModelCompatibilityWrapper } from './PanelModelCompatibilityWrapper';
@@ -31,10 +37,6 @@ export class DashboardModelCompatibilityWrapper {
         }
       })
     );
-  }
-
-  public get id(): number | null {
-    return this._scene.state.id ?? null;
   }
 
   public get uid() {
@@ -117,14 +119,6 @@ export class DashboardModelCompatibilityWrapper {
     return time.getTimeZone();
   }
 
-  public sharedTooltipModeEnabled() {
-    return this._getSyncMode() > 0;
-  }
-
-  public sharedCrosshairModeOnly() {
-    return this._getSyncMode() === 1;
-  }
-
   private _getSyncMode() {
     if (this._scene.state.$behaviors) {
       for (const behavior of this._scene.state.$behaviors) {
@@ -173,8 +167,6 @@ export class DashboardModelCompatibilityWrapper {
   public canEditAnnotations(dashboardUID?: string) {
     return Boolean(this._scene.state.meta.annotationsPermissions?.dashboard.canEdit);
   }
-
-  public panelInitialized() {}
 
   public destroy() {
     this.events.removeAllListeners();

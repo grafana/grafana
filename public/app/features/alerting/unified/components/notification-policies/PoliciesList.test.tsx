@@ -3,16 +3,28 @@ import { HttpResponse, http } from 'msw';
 import { render, screen, within } from 'test/test-utils';
 import { byTestId } from 'testing-library-selector';
 
-import { config } from '@grafana/runtime';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 
 import { AccessControlAction } from '../../../../../types/accessControl';
 import NotificationPolicies from '../../NotificationPoliciesPage';
-import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
+import { useNotificationPolicyAbility } from '../../hooks/abilities/alertmanager/useNotificationPolicyAbility';
+import {
+  type Ability,
+  Granted,
+  InsufficientPermissions,
+  NotSupported,
+  NotificationPolicyAction,
+} from '../../hooks/abilities/types';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
-import { getRoutingTree, getRoutingTreeList, resetRoutingTreeMap } from '../../mocks/server/entities/k8s/routingtrees';
+import {
+  getRoutingTree,
+  getRoutingTreeList,
+  resetRoutingTreeMap,
+  setAllRoutingTreePermissions,
+} from '../../mocks/server/entities/k8s/routingtrees';
 import { KnownProvenance } from '../../types/knownProvenance';
 import { DataSourceType } from '../../utils/datasource';
 import { K8sAnnotations } from '../../utils/k8s/constants';
@@ -28,15 +40,25 @@ jest.mock('../export/GrafanaPoliciesExporter', () => ({
   GrafanaPoliciesExporter: () => null,
 }));
 
-jest.mock('../../hooks/useAbilities', () => ({
-  ...jest.requireActual('../../hooks/useAbilities'),
-  useAlertmanagerAbilities: jest.fn(),
-  useAlertmanagerAbility: jest.fn(),
+jest.mock('../../hooks/abilities/alertmanager/useContactPointAbility', () => ({
+  ...jest.requireActual('../../hooks/abilities/alertmanager/useContactPointAbility'),
+  useContactPointAbility: jest.fn(),
+}));
+jest.mock('../../hooks/abilities/alertmanager/useNotificationPolicyAbility', () => ({
+  ...jest.requireActual('../../hooks/abilities/alertmanager/useNotificationPolicyAbility'),
+  useNotificationPolicyAbility: jest.fn(),
 }));
 
+function toAbility(supported: boolean, allowed: boolean): Ability {
+  if (!supported) {
+    return NotSupported;
+  }
+  return allowed ? Granted : InsufficientPermissions([]);
+}
+
 const mocks = {
-  useAlertmanagerAbilities: jest.mocked(useAlertmanagerAbilities),
-  useAlertmanagerAbility: jest.mocked(useAlertmanagerAbility),
+  useContactPointAbility: jest.mocked(useContactPointAbility),
+  useNotificationPolicyAbility: jest.mocked(useNotificationPolicyAbility),
 };
 
 const server = setupMswServer();
@@ -67,35 +89,26 @@ const ui = {
 };
 
 const allPolicyActions = [
-  AlertmanagerAction.CreateNotificationPolicy,
-  AlertmanagerAction.ViewNotificationPolicyTree,
-  AlertmanagerAction.UpdateNotificationPolicyTree,
-  AlertmanagerAction.DeleteNotificationPolicy,
-  AlertmanagerAction.ExportNotificationPolicies,
+  NotificationPolicyAction.Create,
+  NotificationPolicyAction.ViewTree,
+  NotificationPolicyAction.UpdateTree,
+  NotificationPolicyAction.Delete,
+  NotificationPolicyAction.Export,
 ];
 
-const grantAlertmanagerAbilities = (allowed: AlertmanagerAction[]) => {
-  mocks.useAlertmanagerAbility.mockImplementation((action) => {
-    const included = allowed.includes(action);
-    return [true, included];
-  });
+const grantAlertmanagerAbilities = (allowed: readonly NotificationPolicyAction[]) => {
+  // useContactPointAbility is called for View checks — always grant it
+  mocks.useContactPointAbility.mockReturnValue(Granted);
 
-  mocks.useAlertmanagerAbilities.mockImplementation((actions) => {
-    return actions.map((action) => {
-      const included = allowed.includes(action);
-      return [true, included];
-    });
+  // useNotificationPolicyAbility is called with { action, context } — check action against allowed list
+  mocks.useNotificationPolicyAbility.mockImplementation(({ action }) => {
+    const included = (allowed as readonly string[]).includes(action);
+    return toAbility(true, included);
   });
 };
 
 describe('PoliciesList', () => {
-  const originalFeatureToggle = config.featureToggles.alertingMultiplePolicies;
-  afterAll(() => {
-    config.featureToggles.alertingMultiplePolicies = originalFeatureToggle;
-  });
-
   beforeEach(() => {
-    config.featureToggles.alertingMultiplePolicies = true;
     setupDataSources(...Object.values(dataSources));
     jest.clearAllMocks();
     jest.restoreAllMocks();
@@ -113,6 +126,9 @@ describe('PoliciesList', () => {
     grantUserPermissions([AccessControlAction.AlertingInstanceRead, AccessControlAction.AlertingNotificationsRead]);
 
     resetRoutingTreeMap();
+    // Strip entity-level k8s access annotations so tests start with least-privilege.
+    // Tests that need to open the more-actions menu must opt in via setAllRoutingTreePermissions.
+    setAllRoutingTreePermissions({ canWrite: false, canDelete: false, canAdmin: false });
   });
 
   describe('Route headers and metadata', () => {
@@ -180,16 +196,13 @@ describe('PoliciesList', () => {
   describe('Table action permissions', () => {
     describe('Create', () => {
       it('enable if user has permission', async () => {
-        grantAlertmanagerAbilities([
-          AlertmanagerAction.CreateNotificationPolicy,
-          AlertmanagerAction.ViewNotificationPolicyTree,
-        ]);
+        grantAlertmanagerAbilities([NotificationPolicyAction.Create, NotificationPolicyAction.ViewTree]);
         renderNotificationPolicies();
         expect(await ui.createPolicyButton.find()).toBeInTheDocument();
         expect(ui.createPolicyButton.query()).toBeEnabled();
       });
       it('disable if user does not have permission', async () => {
-        grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree]);
 
         renderNotificationPolicies();
         expect(await ui.createPolicyButton.find()).toBeInTheDocument();
@@ -201,10 +214,8 @@ describe('PoliciesList', () => {
   describe('Policy action permissions', () => {
     describe('Edit', () => {
       it('shows edit menu item if user has edit permission', async () => {
-        grantAlertmanagerAbilities([
-          AlertmanagerAction.ViewNotificationPolicyTree,
-          AlertmanagerAction.UpdateNotificationPolicyTree,
-        ]);
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree, NotificationPolicyAction.UpdateTree]);
+        setAllRoutingTreePermissions({ canWrite: true, canDelete: true, canAdmin: true });
 
         const user = userEvent.setup();
         renderNotificationPolicies();
@@ -214,7 +225,7 @@ describe('PoliciesList', () => {
         expect(screen.getByRole('menuitem', { name: 'Edit' })).toBeInTheDocument();
       });
       it('does not show more actions if user has no edit permission', async () => {
-        grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree]);
 
         renderNotificationPolicies();
         const allRoots = await ui.rootRouteContainer.findAll();
@@ -223,10 +234,8 @@ describe('PoliciesList', () => {
         expect(within(defaultPolicyEl).queryByTestId('more-actions')).not.toBeInTheDocument();
       });
       it('shows edit as disabled if policy is provisioned', async () => {
-        grantAlertmanagerAbilities([
-          AlertmanagerAction.ViewNotificationPolicyTree,
-          AlertmanagerAction.UpdateNotificationPolicyTree,
-        ]);
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree, NotificationPolicyAction.UpdateTree]);
+        setAllRoutingTreePermissions({ canWrite: true, canDelete: true, canAdmin: true });
 
         const user = userEvent.setup();
         renderNotificationPolicies();
@@ -242,10 +251,8 @@ describe('PoliciesList', () => {
     });
     describe('Export', () => {
       it('enable if user has permission', async () => {
-        grantAlertmanagerAbilities([
-          AlertmanagerAction.ViewNotificationPolicyTree,
-          AlertmanagerAction.ExportNotificationPolicies,
-        ]);
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree, NotificationPolicyAction.Export]);
+        setAllRoutingTreePermissions({ canWrite: true, canDelete: true, canAdmin: true });
 
         const user = userEvent.setup();
         renderNotificationPolicies();
@@ -255,7 +262,7 @@ describe('PoliciesList', () => {
         expect(screen.getByRole('menuitem', { name: 'Export' })).toBeInTheDocument();
       });
       it('does not show more actions if user has no export or edit permission', async () => {
-        grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree]);
 
         renderNotificationPolicies();
         const allRoots = await ui.rootRouteContainer.findAll();
@@ -267,10 +274,8 @@ describe('PoliciesList', () => {
 
     describe('Reset', () => {
       it('enable on default policy if user has permission', async () => {
-        grantAlertmanagerAbilities([
-          AlertmanagerAction.ViewNotificationPolicyTree,
-          AlertmanagerAction.DeleteNotificationPolicy,
-        ]);
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree, NotificationPolicyAction.Delete]);
+        setAllRoutingTreePermissions({ canWrite: true, canDelete: true, canAdmin: true });
 
         const user = userEvent.setup();
         renderNotificationPolicies();
@@ -281,7 +286,7 @@ describe('PoliciesList', () => {
         expect(resetItem).toBeInTheDocument();
       });
       it('does not show more actions on default policy if user has no permission', async () => {
-        grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree]);
 
         renderNotificationPolicies();
         const allRoots = await ui.rootRouteContainer.findAll();
@@ -294,6 +299,7 @@ describe('PoliciesList', () => {
 
   describe('Analytics', () => {
     beforeEach(() => {
+      setAllRoutingTreePermissions({ canWrite: true, canDelete: true, canAdmin: true });
       jest.spyOn(analytics, 'trackNotificationPolicyExported');
       jest.spyOn(analytics, 'trackNotificationPoliciesToggledAll');
       // Add a handler for the export API to prevent unhandled request errors
@@ -301,7 +307,7 @@ describe('PoliciesList', () => {
       // The measureText utility in @grafana/ui caches the canvas context at module level.
       // jest.resetAllMocks() between tests resets the cached context's measureText mock, causing
       // crashes when uncached text is measured. We patch the context directly to fix this.
-      const { getCanvasContext } = require('@grafana/ui') as typeof import('@grafana/ui');
+      const { getCanvasContext } = require('@grafana/ui');
       const ctx = getCanvasContext();
       ctx.measureText = jest.fn().mockReturnValue({ width: 100 } as TextMetrics);
     });

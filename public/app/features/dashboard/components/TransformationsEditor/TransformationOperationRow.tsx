@@ -3,13 +3,13 @@ import { useToggle } from 'react-use';
 import { mergeMap } from 'rxjs';
 
 import {
-  DataTransformerConfig,
-  TransformerRegistryItem,
+  type DataTransformerConfig,
+  type TransformerRegistryItem,
   FrameMatcherID,
-  DataTransformContext,
+  type DataTransformContext,
   getFrameMatchers,
   transformDataFrame,
-  DataFrame,
+  type DataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -25,8 +25,8 @@ import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo
 import { TransformationEditor } from './TransformationEditor';
 import { TransformationEditorHelpDisplay } from './TransformationEditorHelpDisplay';
 import { TransformationFilter } from './TransformationFilter';
-import { TransformationData } from './TransformationsEditor';
-import { TransformationsEditorTransformation } from './types';
+import { type TransformationData } from './TransformationsEditor';
+import { type TransformationsEditorTransformation } from './types';
 
 interface TransformationOperationRowProps {
   id: string;

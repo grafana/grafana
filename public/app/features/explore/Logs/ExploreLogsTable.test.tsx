@@ -1,16 +1,18 @@
+import { OpenFeatureTestProvider } from '@openfeature/react-sdk';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import {
-  AbsoluteTimeRange,
+  type AbsoluteTimeRange,
   EventBusSrv,
-  FieldConfigSource,
+  type FieldConfigSource,
   LoadingState,
   LogsSortOrder,
-  PanelData,
+  type PanelData,
   toUtc,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
-import { Options } from 'app/plugins/panel/logstable/options/types';
+import { type Options } from 'app/plugins/panel/logstable/options/types';
 
 import { FIELD_SELECTOR_MIN_WIDTH } from '../../logs/components/fieldSelector/FieldSelector';
 import { extractFieldsTransformer } from '../../transformers/extractFields/extractFields';
@@ -36,6 +38,10 @@ jest.mock('@grafana/runtime', () => ({
   getAppEvents: jest.fn(() => ({
     publish: publishMockFn,
   })),
+  usePluginLinks: jest.fn(() => ({ isLoading: false, links: [] })),
+  getDataSourceSrv: jest.fn(() => ({
+    get: jest.fn().mockResolvedValue(null),
+  })),
 }));
 
 const mockGetUrlSearchParams = jest.fn(() => {
@@ -48,6 +54,13 @@ jest.mock('@grafana/data', () => ({
   },
 }));
 
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+}));
+
 describe('ExploreLogsTable', () => {
   let origResizeObserver = global.ResizeObserver;
   let origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
@@ -55,29 +68,31 @@ describe('ExploreLogsTable', () => {
 
   const setUp = (props?: Partial<React.ComponentProps<typeof ExploreLogsTable>>) => {
     return (
-      <ExploreLogsTable
-        data={panelData}
-        width={100}
-        timeZone={'UTC'}
-        externalOptions={{
-          frameIndex: 0,
-        }}
-        buildLinkToLogLine={buildLinkToLogLine}
-        eventBus={new EventBusSrv()}
-        height={100}
-        onOptionsChange={function (options: Options): void {
-          throw new Error('Function not implemented.');
-        }}
-        onFieldConfigChange={function (config: FieldConfigSource): void {
-          throw new Error('Function not implemented.');
-        }}
-        onChangeTimeRange={function (range: AbsoluteTimeRange): void {
-          throw new Error('Function not implemented.');
-        }}
-        onClickFilterLabel={undefined}
-        onClickFilterOutLabel={undefined}
-        {...props}
-      />
+      <OpenFeatureTestProvider>
+        <ExploreLogsTable
+          data={panelData}
+          width={100}
+          timeZone={'UTC'}
+          externalOptions={{
+            frameIndex: 0,
+          }}
+          buildLinkToLogLine={buildLinkToLogLine}
+          eventBus={new EventBusSrv()}
+          height={100}
+          onOptionsChange={function (options: Options): void {
+            throw new Error('Function not implemented.');
+          }}
+          onFieldConfigChange={function (config: FieldConfigSource): void {
+            throw new Error('Function not implemented.');
+          }}
+          onChangeTimeRange={function (range: AbsoluteTimeRange): void {
+            throw new Error('Function not implemented.');
+          }}
+          onClickFilterLabel={undefined}
+          onClickFilterOutLabel={undefined}
+          {...props}
+        />
+      </OpenFeatureTestProvider>
     );
   };
 
@@ -109,7 +124,7 @@ describe('ExploreLogsTable', () => {
   });
 
   const panelData: PanelData = {
-    state: LoadingState.Loading,
+    state: LoadingState.Done,
     series: [getMockLokiFrame()],
     timeRange: {
       from: toUtc('2019-01-01 10:00:00'),
@@ -128,6 +143,16 @@ describe('ExploreLogsTable', () => {
     expect(headers[0].textContent).toBe('Time');
     expect(headers[1].textContent).toBe('detected_level');
     expect(headers[2].textContent).toBe('Line');
+  });
+
+  it('opens log details when Show details is clicked', async () => {
+    const user = userEvent.setup();
+    render(setUp());
+    await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
+
+    await user.click(screen.getAllByLabelText('Show details')[0]);
+
+    expect(screen.getByLabelText('Close log details sidebar')).toBeVisible();
   });
 
   describe('options', () => {
@@ -215,7 +240,7 @@ describe('ExploreLogsTable', () => {
 
     it('Should respect options.frameIndex', async () => {
       const data: PanelData = {
-        state: LoadingState.Loading,
+        state: LoadingState.Done,
         series: [getMockLokiFrame(), getMockLokiFrameDataPlane()],
         timeRange: {
           from: toUtc('2019-01-01 10:00:00'),

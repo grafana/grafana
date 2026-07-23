@@ -8,6 +8,8 @@ This file provides guidance to AI agents when working with code in the Grafana r
 
 - `docs/AGENTS.md` — Documentation style guide (for work under `docs/`)
 - `public/app/features/alerting/unified/AGENTS.md` — Alerting squad patterns
+- `pkg/storage/unified/AGENTS.md` — Unified storage/search compatibility rules (for work under `pkg/storage/unified/`)
+- `public/app/core/journeys/AGENTS.md` — Critical User Journey instrumentation
 
 ## Project Overview
 
@@ -20,6 +22,15 @@ Grafana is a monitoring and observability platform. Go backend, TypeScript/React
 - Keep changes focused — avoid over-engineering
 - Separate PRs for frontend and backend changes (deployed at different cadences)
 - Security: prevent XSS, SQL injection, command injection
+
+## Comments
+
+- Only add a comment when it explains **why** something is done or reveals non-obvious logic that a reader must know to safely change the code. If the code is self-explanatory, no comment is needed.
+- Never include links (Slack, GitHub, Jira, etc.) in code comments.
+
+## Human Review Gates
+
+Before running `git push`, stop and get explicit human approval. When changes are ready, show a summary of changes and wait for instruction. "Open a PR" in a task description is intent, not permission to push without review.
 
 ## Commands
 
@@ -75,7 +86,7 @@ make update-workspace             # Go workspace (after adding modules)
 
 ```bash
 yarn install --immutable                          # Install frontend deps
-make devenv sources=postgres,influxdb,loki        # Start backing services
+make devenv sources=influxdb        # Start backing services
 make devenv-down                                  # Stop backing services
 make lefthook-install                             # Pre-commit hooks
 ```
@@ -119,7 +130,7 @@ Standalone Go apps using Grafana App SDK: `apps/dashboard/`, `apps/folder/`, `ap
 
 ### Plugin Workspaces
 
-These built-in plugins require separate build steps: `azuremonitor`, `cloud-monitoring`, `grafana-postgresql-datasource`, `loki`, `tempo`, `jaeger`, `mysql`, `parca`, `zipkin`, `grafana-pyroscope-datasource`, `grafana-testdata-datasource`.
+These built-in plugins require separate build steps: `azuremonitor`, `loki`, `mysql`, `grafana-testdata-datasource`.
 
 Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
 
@@ -133,13 +144,14 @@ Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
 - **Config**: Defaults in `conf/defaults.ini`, overrides in `conf/custom.ini`.
 - **Database migrations**: Live in `pkg/services/sqlstore/migrations/`. Test with `make devenv sources=postgres_tests,mysql_tests` then `make test-go-integration-postgres`.
 - **CI sharding**: Backend tests use `SHARD`/`SHARDS` env vars for parallelization.
+- **Service compatibility**: Unified storage/search (`pkg/storage/unified/`) can be deployed as separate services at a different cadence than the Grafana API layer. Changes spanning API-layer callers and `pkg/storage/unified/` must be backwards compatible in both directions — see `pkg/storage/unified/AGENTS.md`.
 
 ## Cursor Cloud specific instructions
 
 ### Prerequisites
 
 - **Node.js v24.x** (see `.nvmrc` for exact version). Use `nvm install` / `nvm use` to match.
-- **Go 1.25.7** (see `go.mod`). Pre-installed in the VM.
+- **Go 1.26.4** (see `go.mod`). Pre-installed in the VM.
 - **Yarn 4.11.0** via corepack (bundled in `.yarn/releases/`). Run `corepack enable` if `yarn` is not found.
 - **GCC** required for CGo/SQLite compilation of the backend.
 

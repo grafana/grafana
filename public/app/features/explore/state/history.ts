@@ -1,7 +1,4 @@
-import { createAction } from '@reduxjs/toolkit';
-
-import { HistoryItem } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import {
   addToRichHistory,
   deleteAllFromRichHistory,
@@ -12,11 +9,11 @@ import {
   updateRichHistorySettings,
   updateStarredInRichHistory,
 } from 'app/core/utils/richHistory';
-import { RichHistoryQuery } from 'app/types/explore';
-import { ThunkResult } from 'app/types/store';
+import { type RichHistoryQuery } from 'app/types/explore';
+import { type ThunkResult } from 'app/types/store';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
-import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
+import { type RichHistorySearchFilters, type RichHistorySettings } from '../../../core/utils/richHistoryTypes';
 
 import {
   richHistoryLimitExceededAction,
@@ -25,15 +22,6 @@ import {
   richHistoryStorageFullAction,
   richHistoryUpdatedAction,
 } from './main';
-
-//
-// Actions and Payloads
-//
-
-export interface HistoryUpdatedPayload {
-  history: HistoryItem[];
-}
-export const historyUpdatedAction = createAction<HistoryUpdatedPayload>('explore/historyUpdated');
 
 //
 // Action creators
@@ -188,7 +176,11 @@ export const updateHistorySearchFilters = (filters: RichHistorySearchFilters): T
   return async (dispatch, getState) => {
     await dispatch(richHistorySearchFiltersUpdatedAction({ filters: { ...filters } }));
     const currentSettings = getState().explore.richHistorySettings!;
-    if (supportedFeatures().lastUsedDataSourcesAvailable) {
+    // Only persist the datasource filter as "last used" when it reflects a user choice.
+    // In active-datasources-only mode the datasource multiselect is hidden, so the only
+    // writer is the mount-seed forcing the active datasource — persisting it would clobber
+    // the filter the user set while the setting was off.
+    if (supportedFeatures().lastUsedDataSourcesAvailable && !currentSettings.activeDatasourcesOnly) {
       await dispatch(
         updateHistorySettings({
           ...currentSettings,

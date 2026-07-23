@@ -2,15 +2,15 @@ import { css } from '@emotion/css';
 import { memo, useCallback, useMemo, useState } from 'react';
 
 import {
-  DataFrame,
-  GrafanaTheme2,
+  type DataFrame,
+  type GrafanaTheme2,
   extractFacetedLabels,
   getFieldDisplayName,
   getFieldSeriesColor,
   resolveFacetedFilterNames,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
+import { type VizLegendOptions, AxisPlacement } from '@grafana/schema';
 
 import { SeriesVisibilityChangeMode } from '../../components/PanelChrome/types';
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
@@ -18,18 +18,20 @@ import { Button } from '../Button/Button';
 import { IconButton } from '../IconButton/IconButton';
 import { usePanelContext } from '../PanelChrome';
 import { Toggletip } from '../Toggletip/Toggletip';
-import { VizLayout, VizLayoutLegendProps } from '../VizLayout/VizLayout';
+import { VizLayout, type VizLayoutLegendProps } from '../VizLayout/VizLayout';
 import { FacetedLabelsFilter } from '../VizLegend/FacetedLabelsFilter';
 import { VizLegend } from '../VizLegend/VizLegend';
-import { VizLegendItem } from '../VizLegend/types';
+import { type VizLegendItem } from '../VizLegend/types';
 
-import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
+import { type UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import { getDisplayValuesForCalcs } from './utils';
 
 interface PlotLegendProps extends VizLegendOptions, Omit<VizLayoutLegendProps, 'children'> {
   data: DataFrame[];
   config: UPlotConfigBuilder;
   enableFacetedFilter?: boolean;
+  facetedFilterPinned?: boolean;
+  onPinnedToSidebarChange?: (pinned: boolean) => void;
 }
 
 /**
@@ -63,6 +65,8 @@ export const PlotLegend = memo(function PlotLegend({
   displayMode,
   limit,
   enableFacetedFilter = false,
+  facetedFilterPinned = false,
+  onPinnedToSidebarChange,
   ...vizLayoutLegendProps
 }: PlotLegendProps) {
   const theme = useTheme2();
@@ -70,7 +74,6 @@ export const PlotLegend = memo(function PlotLegend({
   const { onToggleSeriesVisibility } = usePanelContext();
 
   const [selectedLabels, setSelectedLabels] = useState<Record<string, string[]>>({});
-  const [filterDocked, setFilterDocked] = useState(false);
 
   const facetedLabels = useMemo(
     () => (enableFacetedFilter && onToggleSeriesVisibility ? extractFacetedLabels(data) : {}),
@@ -148,8 +151,8 @@ export const PlotLegend = memo(function PlotLegend({
   }, [onToggleSeriesVisibility]);
 
   const handleToggleFilterDock = useCallback(() => {
-    setFilterDocked((prev) => !prev);
-  }, []);
+    onPinnedToSidebarChange?.(!facetedFilterPinned);
+  }, [onPinnedToSidebarChange, facetedFilterPinned]);
 
   const facetedFilter = hasFacetedLabels ? (
     <FacetedLabelsFilter
@@ -200,11 +203,12 @@ export const PlotLegend = memo(function PlotLegend({
       sortDesc={vizLayoutLegendProps.sortDesc}
       isSortable={true}
       limit={limit}
-      filterAction={!filterDocked ? filterToggle : undefined}
+      filterAction={!facetedFilterPinned ? filterToggle : undefined}
+      overflow={vizLayoutLegendProps.overflow}
     />
   );
 
-  if (filterDocked && facetedFilter) {
+  if (facetedFilterPinned && facetedFilter) {
     return (
       <VizLayout.Legend placement={placement} {...vizLayoutLegendProps}>
         <div className={styles.legendWithFilter}>
@@ -257,7 +261,7 @@ const getPlotLegendStyles = (theme: GrafanaTheme2) => ({
   }),
   filterContent: css({
     position: 'relative',
-    flexShrink: 0,
+    maxWidth: '50%',
     overflow: 'auto',
     borderRight: `1px solid ${theme.colors.border.weak}`,
     paddingRight: theme.spacing(1),

@@ -1,23 +1,28 @@
 import { css } from '@emotion/css';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { Modal, useStyles2 } from '@grafana/ui';
-import { DashboardInput, DataSourceInput, DashboardJson } from 'app/features/manage-dashboards/types';
-import { PluginDashboard } from 'app/types/plugins';
+import { type DashboardInput, type DataSourceInput, type DashboardJson } from 'app/features/manage-dashboards/types';
+import { type PluginDashboard } from 'app/types/plugins';
 
 import { CommunityDashboardMappingForm } from './CommunityDashboardMappingForm';
 import { SuggestedDashboardsList } from './SuggestedDashboardsList/SuggestedDashboardsList';
-import { ContentKind } from './constants';
-import { GnetDashboard } from './types';
-import { InputMapping } from './utils/autoMapDatasources';
+import { type ContentKind } from './constants';
+import { type GnetDashboard } from './types';
+import { type InputMapping } from './utils/autoMapDatasources';
 
 interface SuggestedDashboardsModalProps {
   isOpen: boolean;
   onDismiss: () => void;
   datasourceUid?: string;
+  /**
+   * Datasource type for the currently scoped datasource (e.g. `prometheus`). Resolved
+   * by the parent so the modal and its list child render with a consistent, non-empty
+   * value — the list keys analytics on this and only emits its `loaded` event once.
+   */
+  datasourceType?: string;
   initialMappingContext?: MappingContext | null;
   provisionedDashboards: PluginDashboard[];
   communityDashboards: GnetDashboard[];
@@ -44,6 +49,7 @@ export const SuggestedDashboardsModal = ({
   isOpen,
   onDismiss,
   datasourceUid,
+  datasourceType = '',
   initialMappingContext,
   provisionedDashboards,
   communityDashboards,
@@ -55,17 +61,6 @@ export const SuggestedDashboardsModal = ({
   const [activeView, setActiveView] = useState<ModalView>('list');
   const [mappingContext, setMappingContext] = useState<MappingContext | null>(initialMappingContext || null);
   const styles = useStyles2(getStyles);
-
-  // Get datasource info for modal title
-  const datasourceInfo = useMemo(() => {
-    if (!datasourceUid) {
-      return { type: '' };
-    }
-    const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
-    return {
-      type: ds?.type || '',
-    };
-  }, [datasourceUid]);
 
   // Update state when initialMappingContext changes or modal opens/closes
   useEffect(() => {
@@ -101,11 +96,11 @@ export const SuggestedDashboardsModal = ({
           ? t('dashboard-library.modal.title-mapping-with-name', 'Configure datasources for {{dashboardName}}', {
               dashboardName: mappingContext.dashboardName,
             })
-          : datasourceInfo.type
+          : datasourceType
             ? t(
                 'dashboard-library.modal.title-with-datasource',
                 'Suggested dashboards for your {{datasourceType}} datasource',
-                { datasourceType: datasourceInfo.type }
+                { datasourceType }
               )
             : t('dashboard-library.modal.title', 'Suggested dashboards')
       }
@@ -123,7 +118,7 @@ export const SuggestedDashboardsModal = ({
             lastPageItemCount={lastPageItemCount}
             onLastPageItemCount={onLastPageItemCount}
             datasourceUid={datasourceUid}
-            datasourceType={datasourceInfo.type}
+            datasourceType={datasourceType}
             isDashboardsLoading={isDashboardsLoading}
             onShowMapping={handleShowMapping}
             onDismiss={onDismiss}
@@ -143,7 +138,7 @@ export const SuggestedDashboardsModal = ({
             dashboardName={mappingContext.dashboardName}
             libraryItemId={String(mappingContext.dashboardJson.gnetId || '')}
             contentKind={mappingContext.contentKind}
-            datasourceTypes={[datasourceInfo.type]}
+            datasourceTypes={[datasourceType]}
           />
         </div>
       )}

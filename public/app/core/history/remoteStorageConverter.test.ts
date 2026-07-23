@@ -1,24 +1,18 @@
-import { RichHistoryQuery } from 'app/types/explore';
+import { type RichHistoryQuery } from 'app/types/explore';
 
-import { DatasourceSrv } from '../../features/plugins/datasource_srv';
-import { backendSrv } from '../services/backend_srv';
-
-import { RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';
+import { type RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';
 import { fromDTO, toDTO } from './remoteStorageConverter';
 
-const dsMock = new DatasourceSrv();
-dsMock.init(
-  {
-    // @ts-ignore
-    'name-of-dev-test': { uid: 'dev-test', name: 'name-of-dev-test' },
-  },
-  ''
-);
+const devTest = { uid: 'dev-test', name: 'name-of-dev-test' };
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => backendSrv,
-  getDataSourceSrv: () => dsMock,
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: (nameOrUid: string | { uid: string }) => {
+    if (typeof nameOrUid === 'string') {
+      return Promise.resolve(nameOrUid === devTest.name ? devTest : undefined);
+    }
+    return Promise.resolve(nameOrUid.uid === devTest.uid ? devTest : undefined);
+  },
 }));
 
 const validRichHistory: RichHistoryQuery = {
@@ -41,8 +35,8 @@ const validDTO: RichHistoryRemoteStorageDTO = {
 };
 
 describe('RemoteStorage converter', () => {
-  it('converts DTO to RichHistoryQuery', () => {
-    expect(fromDTO(validDTO)).toMatchObject(validRichHistory);
+  it('converts DTO to RichHistoryQuery', async () => {
+    expect(await fromDTO(validDTO)).toMatchObject(validRichHistory);
   });
   it('convert RichHistoryQuery to DTO', () => {
     expect(toDTO(validRichHistory)).toMatchObject(validDTO);

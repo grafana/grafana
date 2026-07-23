@@ -37,20 +37,14 @@ func TranslateFolderToTuples(obj *unstructured.Unstructured) ([]*openfgav1.Tuple
 		return nil, nil
 	}
 
-	// Create parent relationship tuple: folder:parent -> parent -> folder:child
-	tuple := common.NewFolderParentTuple(parentFolder, folder.Name)
+	// Create parent relationship tuple: folder:child has parent folder:parent
+	tuple := common.NewFolderParentTuple(folder.Name, parentFolder)
 	return []*openfgav1.TupleKey{tuple}, nil
 }
 
 // TranslateRoleToTuples converts a Role CRD to permission tuples.
-// For backward compatibility and test use — no RoleRef resolution.
-func TranslateRoleToTuples(obj *unstructured.Unstructured) ([]*openfgav1.TupleKey, error) {
-	return translateRoleToTuples(obj, nil)
-}
-
-// translateRoleToTuples is the implementation of TranslateRoleToTuples.
 // globalRolePerms, if non-nil, is used to resolve RoleRefs + PermissionsOmitted via the shared resolver.
-func translateRoleToTuples(
+func TranslateRoleToTuples(
 	obj *unstructured.Unstructured,
 	globalRolePerms map[string][]*authzextv1.RolePermission,
 ) ([]*openfgav1.TupleKey, error) {
@@ -119,29 +113,6 @@ func TranslateRoleBindingToTuples(obj *unstructured.Unstructured) ([]*openfgav1.
 	return tuples, nil
 }
 
-// TranslateGlobalRoleBindingToTuples converts a GlobalRoleBinding CRD to assignee tuples.
-// Subject kinds are the same as RoleBinding, so GetRoleBindingTuple is reused directly.
-func TranslateGlobalRoleBindingToTuples(obj *unstructured.Unstructured) ([]*openfgav1.TupleKey, error) {
-	var grb iamv0.GlobalRoleBinding
-	if err := convertUnstructured(obj, &grb); err != nil {
-		return nil, err
-	}
-
-	subjectKind := string(grb.Spec.Subject.Kind)
-	subjectName := grb.Spec.Subject.Name
-
-	tuples := make([]*openfgav1.TupleKey, 0, len(grb.Spec.RoleRefs))
-	for _, roleRef := range grb.Spec.RoleRefs {
-		tuple, err := zanzana.GetRoleBindingTuple(subjectKind, subjectName, roleRef.Name)
-		if err != nil {
-			return nil, err
-		}
-		tuples = append(tuples, tuple)
-	}
-
-	return tuples, nil
-}
-
 // TranslateResourcePermissionToTuples converts a ResourcePermission CRD to permission tuples.
 func TranslateResourcePermissionToTuples(obj *unstructured.Unstructured) ([]*openfgav1.TupleKey, error) {
 	var rp iamv0.ResourcePermission
@@ -174,20 +145,27 @@ func TranslateResourcePermissionToTuples(obj *unstructured.Unstructured) ([]*ope
 	return tuples, nil
 }
 
-// TranslateTeamBindingToTuples converts a TeamBinding CRD to team membership tuples.
-func TranslateTeamBindingToTuples(obj *unstructured.Unstructured) ([]*openfgav1.TupleKey, error) {
-	var tb iamv0.TeamBinding
-	if err := convertUnstructured(obj, &tb); err != nil {
+// TranslateTeamToMemberTuples converts a Team CRD to team membership tuples.
+// Each member in spec.members produces one tuple.
+func TranslateTeamToMemberTuples(obj *unstructured.Unstructured) ([]*openfgav1.TupleKey, error) {
+	var team iamv0.Team
+	if err := convertUnstructured(obj, &team); err != nil {
 		return nil, err
 	}
 
-	// Use the shared server logic to create the tuple
-	tuple, err := zanzana.GetTeamBindingTuple(tb.Spec.Subject.Name, tb.Spec.TeamRef.Name, string(tb.Spec.Permission))
-	if err != nil {
-		return nil, err
+	tuples := make([]*openfgav1.TupleKey, 0, len(team.Spec.Members))
+	for _, m := range team.Spec.Members {
+		if m.Name == "" {
+			continue
+		}
+		tuple, err := zanzana.GetTeamMemberTuple(m.Name, team.Name, string(m.Permission))
+		if err != nil {
+			return nil, err
+		}
+		tuples = append(tuples, tuple)
 	}
 
-	return []*openfgav1.TupleKey{tuple}, nil
+	return tuples, nil
 }
 
 // TranslateUserToTuples converts a User CRD to basic role assignment tuples.
@@ -210,6 +188,31 @@ func TranslateUserToTuples(obj *unstructured.Unstructured) ([]*openfgav1.TupleKe
 
 	tuple := &openfgav1.TupleKey{
 		User:     common.NewTupleEntry(common.TypeUser, user.Name, ""),
+		Relation: common.RelationAssignee,
+		Object:   common.NewTupleEntry(common.TypeRole, basicRole, ""),
+	}
+	return []*openfgav1.TupleKey{tuple}, nil
+}
+
+// TranslateServiceAccountToTuples converts a ServiceAccount CRD to basic role assignment tuples.
+func TranslateServiceAccountToTuples(obj *unstructured.Unstructured) ([]*openfgav1.TupleKey, error) {
+	var sa iamv0.ServiceAccount
+	if err := convertUnstructured(obj, &sa); err != nil {
+		return nil, err
+	}
+
+	role := string(sa.Spec.Role)
+	if sa.Spec.Role == "" {
+		return nil, nil
+	}
+
+	basicRole := common.TranslateBasicRole(role)
+	if basicRole == "" {
+		return nil, fmt.Errorf("invalid basic role: %s", role)
+	}
+
+	tuple := &openfgav1.TupleKey{
+		User:     common.NewTupleEntry(common.TypeServiceAccount, sa.Name, ""),
 		Relation: common.RelationAssignee,
 		Object:   common.NewTupleEntry(common.TypeRole, basicRole, ""),
 	}

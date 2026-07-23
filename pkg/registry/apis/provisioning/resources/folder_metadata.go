@@ -11,6 +11,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -149,17 +150,21 @@ func IsFolderMetadataFile(path string) bool {
 
 // NewFolderManifest builds a Folder resource ready for serialization into _folder.json.
 // uid is the stable K8s name; title is the human-readable folder name.
-func NewFolderManifest(uid, title string) *folders.Folder {
+// gvk determines the apiVersion stamped on the manifest.
+func NewFolderManifest(uid, title string, gvk schema.GroupVersionKind) *folders.Folder {
 	f := folders.NewFolder()
-	f.SetGroupVersionKind(folders.FolderResourceInfo.GroupVersionKind())
+	// TODO: This is safe because v1 and v1beta1 are aliases of each other, we should update this to use the right version type.
+	f.SetGroupVersionKind(gvk)
 	f.Name = uid
 	f.Spec.Title = title
 	return f
 }
 
-// marshalFolderManifest serializes a Folder resource to JSON.
+// marshalFolderManifest serializes a Folder resource to pretty-printed JSON so
+// the _folder.json written to the repository matches the formatting of other
+// resource files (see ParsedResource.ToSaveBytes).
 func marshalFolderManifest(folder *folders.Folder) ([]byte, error) {
-	data, err := json.Marshal(folder)
+	data, err := json.MarshalIndent(folder, "", "  ")
 	if err != nil {
 		return nil, fmt.Errorf("marshal folder manifest: %w", err)
 	}
@@ -202,7 +207,16 @@ func WriteFolderMetadata(ctx context.Context, repo repository.ReaderWriter, fold
 func WriteFolderMetadataUpdate(ctx context.Context, repo repository.ReaderWriter, folderPath, ref, message string, submitted *folders.Folder) (string, error) {
 	existing, _, err := ReadFolderMetadata(ctx, repo, folderPath, ref)
 	if err != nil {
-		return "", fmt.Errorf("read existing folder metadata: %w", err)
+		// When the target branch doesn't exist yet, fall back to reading from
+		// the configured branch. ensureBranchExists (called by repo.Update)
+		// creates the new branch from the configured branch, so the content is
+		// identical at creation time.
+		if errors.Is(err, repository.ErrRefNotFound) {
+			existing, _, err = ReadFolderMetadata(ctx, repo, folderPath, "")
+		}
+		if err != nil {
+			return "", fmt.Errorf("read existing folder metadata: %w", err)
+		}
 	}
 
 	if submitted.Name != "" && submitted.Name != existing.Name {
@@ -277,7 +291,8 @@ func ParseFolderWithMetadata(ctx context.Context, reader repository.Reader, path
 
 // ParseFolderResource constructs a ParsedResource for a folder at the given path.
 // This allows folders to be authorized using the same AuthorizeResource flow as other resources.
-func ParseFolderResource(ctx context.Context, reader repository.Reader, path, ref string, folderMetadataEnabled bool) (*ParsedResource, error) {
+// folderGVK determines the GVK/GVR set on the returned ParsedResource.
+func ParseFolderResource(ctx context.Context, reader repository.Reader, path, ref string, folderMetadataEnabled bool, folderGVK schema.GroupVersionKind) (*ParsedResource, error) {
 	config := reader.Config()
 
 	// Try to read existing folder metadata (single read for both metadata and ID)
@@ -328,7 +343,7 @@ func ParseFolderResource(ctx context.Context, reader repository.Reader, path, re
 
 	// If no metadata object exists, create a minimal folder object
 	if folderObj == nil {
-		folderObj = NewFolderManifest(folderID, folderTitle)
+		folderObj = NewFolderManifest(folderID, folderTitle, folderGVK)
 	} else if folderObj.Spec.Title == "" {
 		folderObj.Spec.Title = folderTitle
 	}
@@ -380,10 +395,14 @@ func ParseFolderResource(ctx context.Context, reader repository.Reader, path, re
 			Name:      config.Name,
 			Title:     config.Spec.Title,
 		},
-		Obj:    folderUnstructured,
-		Meta:   meta,
-		GVK:    folders.FolderResourceInfo.GroupVersionKind(),
-		GVR:    FolderResource,
+		Obj:  folderUnstructured,
+		Meta: meta,
+		GVK:  folderGVK,
+		GVR: schema.GroupVersionResource{
+			Group:    folderGVK.Group,
+			Version:  folderGVK.Version,
+			Resource: FolderResource.Resource,
+		},
 		Action: action,
 	}, nil
 }

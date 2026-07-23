@@ -2,11 +2,11 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
-  DataTransformerConfig,
+  type DataTransformerConfig,
   FieldType,
-  LoadingState,
-  PanelData,
-  TimeRange,
+  type LoadingState,
+  type PanelData,
+  type TimeRange,
   standardTransformersRegistry,
   toDataFrame,
 } from '@grafana/data';
@@ -16,7 +16,7 @@ import { SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
 import config from 'app/core/config';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
-import { DashboardDataDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { DashboardModelCompatibilityWrapper } from '../../utils/DashboardModelCompatibilityWrapper';
@@ -24,6 +24,8 @@ import { findVizPanelByKey } from '../../utils/utils';
 import { testDashboard } from '../testfiles/testDashboard';
 
 import { PanelDataTransformationsTab, PanelDataTransformationsTabRendered } from './PanelDataTransformationsTab';
+
+// FIXME: This file has test encapsulation issues, where failures in one test can cascade to other tests.
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -75,12 +77,17 @@ describe('PanelDataTransformationsTab', () => {
   });
 
   it('renders transformations when there are transformations', async () => {
-    const modelMock = createModelMock(mockData, [
-      {
-        id: 'calculateField',
-        options: {},
-      },
-    ]);
+    const onChangeTransformation = jest.fn();
+    const modelMock = createModelMock(
+      mockData,
+      [
+        {
+          id: 'calculateField',
+          options: {},
+        },
+      ],
+      onChangeTransformation
+    );
     render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
 
     await screen.findByText('1 - Add field from calculation');
@@ -198,7 +205,12 @@ describe('PanelDataTransformationsTab', () => {
       const confirmButton = await screen.findByTestId(selectors.pages.ConfirmModal.delete);
       await userEvent.click(confirmButton);
 
-      expect(reportInteraction).toHaveBeenCalledTimes(1);
+      // CUJ tracking emits a silent grafana_panel_edit_next_interaction alongside
+      // the analytics event - filter to assert only the analytics call.
+      const analyticsCalls = jest
+        .mocked(reportInteraction)
+        .mock.calls.filter((c) => c[0] === 'grafana_panel_transformations_clicked');
+      expect(analyticsCalls).toHaveLength(1);
       expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformations_clicked', {
         context: 'transformations_list',
         type: 'calculateField',

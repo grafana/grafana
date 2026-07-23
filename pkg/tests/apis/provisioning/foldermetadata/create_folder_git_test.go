@@ -1,7 +1,6 @@
 package foldermetadata
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,7 +17,6 @@ func TestIntegrationGitFiles_CreateFolderWithFolderMetadata(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	repoName := "test-folder-metadata-files"
 	_, _ = helper.CreateGitRepo(t, repoName, nil, "write", "branch")
@@ -34,7 +32,7 @@ func TestIntegrationGitFiles_CreateFolderWithFolderMetadata(t *testing.T) {
 			Resource("repositories").
 			Name(repoName).
 			SubResource("files", "meta-folder", "_folder.json").
-			Do(ctx)
+			Do(t.Context())
 		require.NoError(t, result.Error(), "_folder.json should exist in the folder")
 	})
 
@@ -52,7 +50,7 @@ func TestIntegrationGitFiles_CreateFolderWithFolderMetadata(t *testing.T) {
 			Name(repoName).
 			SubResource("files", "branch-meta-folder", "_folder.json").
 			Param("ref", branchName).
-			Do(ctx)
+			Do(t.Context())
 		require.NoError(t, result.Error(), "_folder.json should exist on the branch")
 
 		result = helper.AdminREST.Get().
@@ -60,7 +58,7 @@ func TestIntegrationGitFiles_CreateFolderWithFolderMetadata(t *testing.T) {
 			Resource("repositories").
 			Name(repoName).
 			SubResource("files", "branch-meta-folder", "_folder.json").
-			Do(ctx)
+			Do(t.Context())
 		require.True(t, apierrors.IsNotFound(result.Error()), "_folder.json should not exist on the default branch")
 	})
 
@@ -78,7 +76,7 @@ func TestIntegrationGitFiles_CreateFolderWithFolderMetadata(t *testing.T) {
 			Name(repoName).
 			SubResource("files", "outer", "_folder.json").
 			Param("ref", branchName).
-			Do(ctx)
+			Do(t.Context())
 		require.NoError(t, result.Error(), "parent _folder.json should exist on the branch")
 
 		result = helper.AdminREST.Get().
@@ -87,8 +85,55 @@ func TestIntegrationGitFiles_CreateFolderWithFolderMetadata(t *testing.T) {
 			Name(repoName).
 			SubResource("files", "outer", "inner", "_folder.json").
 			Param("ref", branchName).
-			Do(ctx)
+			Do(t.Context())
 		require.NoError(t, result.Error(), "child _folder.json should exist on the branch")
+	})
+
+	t.Run("create nested folder on new branch reuses ancestor metadata from default branch", func(t *testing.T) {
+		// First, create a parent folder on the default branch so it has _folder.json.
+		resp := postFolderViaFilesAPI(t, helper, repoName, "existing-parent/", "", "Create parent on default branch")
+		body, _ := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode, "creating parent on default branch should succeed: %s", string(body))
+
+		// Read the parent UID from the default branch.
+		result := helper.AdminREST.Get().
+			Namespace("default").
+			Resource("repositories").
+			Name(repoName).
+			SubResource("files", "existing-parent", "_folder.json").
+			Do(t.Context())
+		require.NoError(t, result.Error(), "parent _folder.json should exist on default branch")
+
+		// Now create a child inside that parent on a NEW branch.
+		// This is the scenario that previously failed with "file already exists" because
+		// the code tried to re-create parent/_folder.json on the new branch even though
+		// it already existed on the default branch (which the new branch inherits from).
+		branchName := "branch-with-existing-parent"
+		resp = postFolderViaFilesAPI(t, helper, repoName, "existing-parent/new-child/", branchName, "Create child on new branch")
+		body, _ = io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode, "creating child under existing parent on new branch should succeed: %s", string(body))
+
+		// Verify the child _folder.json was created on the branch.
+		result = helper.AdminREST.Get().
+			Namespace("default").
+			Resource("repositories").
+			Name(repoName).
+			SubResource("files", "existing-parent", "new-child", "_folder.json").
+			Param("ref", branchName).
+			Do(t.Context())
+		require.NoError(t, result.Error(), "child _folder.json should exist on the branch")
+
+		// Verify the parent _folder.json is still readable on the branch (inherited from default).
+		result = helper.AdminREST.Get().
+			Namespace("default").
+			Resource("repositories").
+			Name(repoName).
+			SubResource("files", "existing-parent", "_folder.json").
+			Param("ref", branchName).
+			Do(t.Context())
+		require.NoError(t, result.Error(), "parent _folder.json should be readable on the branch (inherited)")
 	})
 }
 

@@ -1,12 +1,12 @@
 import { memo, useId } from 'react';
 
-import { FieldDisplay, GrafanaTheme2, Threshold, ThresholdsMode } from '@grafana/data';
+import { type FieldDisplay, type GrafanaTheme2, type Threshold, ThresholdsMode } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { measureText } from '../../utils/measureText';
 
-import { RadialGaugeDimensions } from './types';
-import { getFieldConfigMinMax, drawRadialArcPath } from './utils';
+import { type RadialGaugeDimensions } from './types';
+import { getFieldConfigMinMax, drawRadialArcPath, getFieldDisplayProcessor } from './utils';
 
 interface RadialScaleLabelsProps {
   fieldDisplay: FieldDisplay;
@@ -20,8 +20,7 @@ interface RadialScaleLabelsProps {
 }
 
 interface RadialScaleLabel {
-  value: number;
-  labelValue?: string;
+  labelValue: string;
   startOffset: number;
   label: string;
 }
@@ -47,6 +46,7 @@ export const RadialScaleLabels = memo(
 
     const { centerX, centerY, scaleLabelsFontSize, scaleLabelsRadius, barWidth } = dimensions;
     const [min, max] = getFieldConfigMinMax(fieldDisplay);
+    const displayProcessor = getFieldDisplayProcessor(fieldDisplay);
     const thresholds = rawThresholds.filter(
       (threshold) =>
         resolvedThresholdValue(threshold.value, thresholdsMode, min, max) >= min &&
@@ -112,9 +112,9 @@ export const RadialScaleLabels = memo(
 
     const labels: RadialScaleLabel[] = thresholds.map((threshold) => {
       const resolvedValue = resolvedThresholdValue(threshold.value, thresholdsMode, min, max);
-      const labelText = thresholdsMode === ThresholdsMode.Percentage ? `${threshold.value}%` : String(threshold.value);
+      const labelText =
+        thresholdsMode === ThresholdsMode.Percentage ? `${threshold.value}%` : displayProcessor(resolvedValue).text;
       return {
-        value: resolvedValue,
         labelValue: labelText,
         startOffset: getStartOffset(labelText, resolvedValue),
         label: t(`gauge.threshold`, 'Threshold {{value}}', { value: labelText }),
@@ -122,10 +122,11 @@ export const RadialScaleLabels = memo(
     });
 
     if (neutral !== undefined) {
+      const labelText = displayProcessor(neutral).text;
       labels.push({
-        value: neutral,
-        startOffset: getStartOffset(String(neutral), neutral),
-        label: t(`gauge.neutral`, 'Neutral {{value}}', { value: neutral }),
+        labelValue: labelText,
+        startOffset: getStartOffset(labelText, neutral),
+        label: t(`gauge.neutral`, 'Neutral {{value}}', { value: labelText }),
       });
     }
 
@@ -143,7 +144,7 @@ export const RadialScaleLabels = memo(
             aria-label={label.label}
           >
             <textPath href={`#${pathId}`} startOffset={label.startOffset}>
-              {label.labelValue ?? label.value}
+              {label.labelValue}
             </textPath>
           </text>
         ))}

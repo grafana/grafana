@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -17,14 +16,11 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-)
-
-const (
-	// Files endpoint max size for dashboards etc (5MB)
-	filesMaxBodySize = 5 * 1024 * 1024
 )
 
 type filesConnector struct {
@@ -33,15 +29,19 @@ type filesConnector struct {
 	parsers               resources.ParserFactory
 	clients               resources.ClientFactory
 	folderMetadataEnabled bool
+	// maxFileSize caps the size in bytes of files read from or written to the
+	// repository through this connector. <=0 disables the check.
+	maxFileSize int64
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool) *filesConnector {
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, maxFileSize int64) *filesConnector {
 	return &filesConnector{
 		getter:                getter,
 		parsers:               parsers,
 		clients:               clients,
 		access:                access,
 		folderMetadataEnabled: folderMetadataEnabled,
+		maxFileSize:           maxFileSize,
 	}
 }
 
@@ -80,16 +80,19 @@ func (c *filesConnector) getRepo(ctx context.Context, method, name string) (repo
 
 // TODO: document the synchronous write and delete on the API Spec
 func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	logger := logging.FromContext(ctx).With("logger", "files-connector", "repository_name", name)
-	ctx = logging.Context(ctx, logger)
-
-	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c.handleRequest(ctx, name, r, responder, logger)
-	}), 30*time.Second), nil
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger := logging.FromContext(ctx).With("logger", "files-connector", "repository_name", name)
+		c.handleRequest(logging.Context(ctx, logger), name, r, responder, logger)
+	}), nil
 }
 
 // handleRequest processes the HTTP request for files operations.
 func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http.Request, responder rest.Responder, logger logging.Logger) {
+	if userAttributionEnabled(ctx) {
+		if author, ok := auth.GetAuthorFromRequester(ctx); ok {
+			ctx = repository.WithAuthorSignature(ctx, author)
+		}
+	}
 	repo, err := c.getRepo(ctx, r.Method, name)
 	if err != nil {
 		logger.Debug("failed to find repository", "error", err)
@@ -102,8 +105,13 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 		responder.Error(apierrors.NewBadRequest("repository does not support read-writing"))
 		return
 	}
+	if c.maxFileSize > 0 {
+		if m, ok := readWriter.(repository.SizeLimitedReader); ok {
+			m.WithMaxFileSize(c.maxFileSize)
+		}
+	}
 
-	dualReadWriter, err := c.createDualReadWriter(ctx, repo, readWriter)
+	dualReadWriter, authorizer, err := c.createDualReadWriter(ctx, repo, readWriter)
 	if err != nil {
 		responder.Error(err)
 		return
@@ -116,7 +124,7 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 	}
 
 	logger = logger.With("url", r.URL.Path, "ref", opts.Ref, "message", opts.Message)
-	ctx = logging.Context(r.Context(), logger)
+	ctx = logging.Context(ctx, logger)
 
 	// Handle directory listing separately
 	isDir := safepath.IsDir(opts.Path)
@@ -140,7 +148,7 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 		}
 	}
 
-	obj, err := c.handleMethodRequest(ctx, r, opts, isDir, dualReadWriter)
+	obj, err := c.handleMethodRequest(ctx, r, opts, isDir, dualReadWriter, readWriter, authorizer)
 	if err != nil {
 		logger.Debug("got an error after processing request", "error", err)
 		respondWithError(responder, err)
@@ -157,25 +165,27 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 }
 
 // createDualReadWriter sets up the dual read writer with all required dependencies.
-func (c *filesConnector) createDualReadWriter(ctx context.Context, repo repository.Repository, readWriter repository.ReaderWriter) (*resources.DualReadWriter, error) {
+// It also returns the authorizer so callers that bypass the dual read/write path
+// (raw file reads, etc.) can run their own authorization checks.
+func (c *filesConnector) createDualReadWriter(ctx context.Context, repo repository.Repository, readWriter repository.ReaderWriter) (*resources.DualReadWriter, resources.Authorizer, error) {
 	parser, err := c.parsers.GetParser(ctx, readWriter)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get parser: %w", err)
+		return nil, nil, fmt.Errorf("failed to get parser: %w", err)
 	}
 
 	clients, err := c.clients.Clients(ctx, repo.Config().Namespace)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get clients: %w", err)
+		return nil, nil, fmt.Errorf("failed to get clients: %w", err)
 	}
 
-	folderClient, err := clients.Folder(ctx)
+	folderClient, folderGVK, err := clients.Folder(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get folder client: %w", err)
+		return nil, nil, fmt.Errorf("failed to get folder client: %w", err)
 	}
 
-	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree(), resources.WithFolderMetadataEnabled(c.folderMetadataEnabled))
-	authorizer := resources.NewAuthorizer(repo.Config(), readWriter, c.access, c.folderMetadataEnabled)
-	return resources.NewDualReadWriter(readWriter, parser, folders, authorizer, c.folderMetadataEnabled), nil
+	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree(), folderGVK, resources.WithFolderMetadataEnabled(c.folderMetadataEnabled))
+	authorizer := resources.NewAuthorizer(repo.Config(), readWriter, c.access, clients, c.folderMetadataEnabled)
+	return resources.NewDualReadWriter(readWriter, parser, folders, authorizer, c.folderMetadataEnabled), authorizer, nil
 }
 
 // parseRequestOptions extracts options from the HTTP request.
@@ -189,14 +199,28 @@ func (c *filesConnector) parseRequestOptions(r *http.Request, name string, repo 
 		Branch:       repo.Config().Branch(),
 	}
 
+	// Reject unvalidated refs before they reach any backend. Empty is allowed and
+	// is defaulted to the configured branch downstream.
+	if !git.IsValidRef(opts.Ref) {
+		return opts, repository.ErrInvalidRef
+	}
+
 	path, err := pathAfterPrefix(r.URL.Path, fmt.Sprintf("/%s/files", name))
 	if err != nil {
 		return opts, err
 	}
 	opts.Path = path
 
-	if err := resources.IsPathSupported(opts.Path); err != nil {
-		return opts, err
+	// GET requests can read raw files (such as README.md) in addition to k8s
+	// resources. Write operations remain restricted to resource files.
+	if r.Method == http.MethodGet {
+		if err := resources.IsReadablePath(opts.Path); err != nil {
+			return opts, err
+		}
+	} else {
+		if err := resources.IsPathSupported(opts.Path); err != nil {
+			return opts, err
+		}
 	}
 
 	return opts, nil
@@ -205,13 +229,13 @@ func (c *filesConnector) parseRequestOptions(r *http.Request, name string, repo 
 // handleDirectoryListing handles GET requests for directory listing.
 func (c *filesConnector) handleDirectoryListing(ctx context.Context, name string, opts resources.DualWriteOptions, readWriter repository.ReaderWriter, responder rest.Responder) {
 	if err := c.authorizeListFiles(ctx, name); err != nil {
-		responder.Error(err)
+		respondWithError(responder, err)
 		return
 	}
 
 	files, err := c.listFolderFiles(ctx, opts.Path, opts.Ref, readWriter)
 	if err != nil {
-		responder.Error(err)
+		respondWithError(responder, err)
 		return
 	}
 
@@ -219,7 +243,7 @@ func (c *filesConnector) handleDirectoryListing(ctx context.Context, name string
 }
 
 // handleMethodRequest routes the request to the appropriate handler based on HTTP method.
-func (c *filesConnector) handleMethodRequest(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, isDir bool, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {
+func (c *filesConnector) handleMethodRequest(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, isDir bool, dualReadWriter *resources.DualReadWriter, readWriter repository.ReaderWriter, authorizer resources.Authorizer) (*provisioning.ResourceWrapper, error) {
 	if c.folderMetadataEnabled && r.Method != http.MethodGet && resources.IsFolderMetadataFile(opts.Path) {
 		return nil, apierrors.NewForbidden(
 			provisioning.RepositoryResourceInfo.GroupResource(),
@@ -229,7 +253,7 @@ func (c *filesConnector) handleMethodRequest(ctx context.Context, r *http.Reques
 	}
 	switch r.Method {
 	case http.MethodGet:
-		return c.handleGet(ctx, opts, dualReadWriter)
+		return c.handleGet(ctx, opts, dualReadWriter, readWriter, authorizer)
 	case http.MethodPost:
 		return c.handlePost(ctx, r, opts, isDir, dualReadWriter)
 	case http.MethodPut:
@@ -241,12 +265,50 @@ func (c *filesConnector) handleMethodRequest(ctx context.Context, r *http.Reques
 	}
 }
 
-func (c *filesConnector) handleGet(ctx context.Context, opts resources.DualWriteOptions, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {
+func (c *filesConnector) handleGet(ctx context.Context, opts resources.DualWriteOptions, dualReadWriter *resources.DualReadWriter, readWriter repository.ReaderWriter, authorizer resources.Authorizer) (*provisioning.ResourceWrapper, error) {
+	// Raw files (e.g. README.md) are returned without parsing as a k8s resource.
+	if resources.IsRawFile(opts.Path) {
+		return c.handleGetRawFile(ctx, opts, readWriter, authorizer)
+	}
+
 	resource, err := dualReadWriter.Read(ctx, opts.Path, opts.Ref)
 	if err != nil {
 		return nil, err
 	}
 	return resource.AsResourceWrapper(), nil
+}
+
+// handleGetRawFile reads a raw file (such as README.md) and returns its bytes
+// inside ResourceWrapper.Resource.File under the "content" key.
+//
+// Authorization is checked at folder scope: the caller needs read permission
+// on the folder containing the file, mirroring how parsed-resource reads
+// inherit folder-level permissions.
+func (c *filesConnector) handleGetRawFile(ctx context.Context, opts resources.DualWriteOptions, readWriter repository.ReaderWriter, authorizer resources.Authorizer) (*provisioning.ResourceWrapper, error) {
+	if err := authorizer.AuthorizeReadRawFile(ctx, opts.Path); err != nil {
+		return nil, err
+	}
+
+	info, err := readWriter.Read(ctx, opts.Path, opts.Ref)
+	if err != nil {
+		if errors.Is(err, repository.ErrFileNotFound) {
+			return nil, apierrors.NewNotFound(provisioning.RepositoryResourceInfo.GroupResource(), opts.Path)
+		}
+		return nil, fmt.Errorf("read raw file: %w", err)
+	}
+
+	return &provisioning.ResourceWrapper{
+		Path: info.Path,
+		Ref:  info.Ref,
+		Hash: info.Hash,
+		Resource: provisioning.ResourceObjects{
+			File: v0alpha1.Unstructured{
+				Object: map[string]any{
+					"content": string(info.Data),
+				},
+			},
+		},
+	}, nil
 }
 
 func (c *filesConnector) handlePost(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, isDir bool, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {
@@ -259,7 +321,7 @@ func (c *filesConnector) handlePost(ctx context.Context, r *http.Request, opts r
 		return dualReadWriter.CreateFolder(ctx, opts)
 	}
 
-	data, err := readBody(r, filesMaxBodySize)
+	data, err := readBody(r, c.maxFileSize)
 	if err != nil {
 		return nil, err
 	}
@@ -275,7 +337,7 @@ func (c *filesConnector) handlePost(ctx context.Context, r *http.Request, opts r
 func (c *filesConnector) handleMove(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, isDir bool, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {
 	// For move operations, only read body for file moves (not directory moves)
 	if !isDir {
-		data, err := readBody(r, filesMaxBodySize)
+		data, err := readBody(r, c.maxFileSize)
 		if err != nil {
 			return nil, err
 		}
@@ -297,7 +359,7 @@ func (c *filesConnector) handlePut(ctx context.Context, r *http.Request, opts re
 		return nil, apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
 	}
 
-	data, err := readBody(r, filesMaxBodySize)
+	data, err := readBody(r, c.maxFileSize)
 	if err != nil {
 		return nil, err
 	}
@@ -311,7 +373,7 @@ func (c *filesConnector) handlePut(ctx context.Context, r *http.Request, opts re
 }
 
 func (c *filesConnector) handleFolderMetadataUpdate(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {
-	data, err := readBody(r, filesMaxBodySize)
+	data, err := readBody(r, c.maxFileSize)
 	if err != nil {
 		return nil, err
 	}

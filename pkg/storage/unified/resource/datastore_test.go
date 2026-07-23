@@ -6,7 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/bwmarrin/snowflake"
 	badger "github.com/dgraph-io/badger/v4"
@@ -16,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -54,7 +58,7 @@ func setupSqlKV(t *testing.T) kv.KV {
 }
 
 func setupTestDataStore(t *testing.T) *dataStore {
-	return newDataStore(setupBadgerKV(t))
+	return newDataStore(setupBadgerKV(t), nil)
 }
 
 func TestNewDataStore(t *testing.T) {
@@ -63,7 +67,7 @@ func TestNewDataStore(t *testing.T) {
 }
 
 func setupTestDataStoreSqlKv(t *testing.T) *dataStore {
-	return newDataStore(setupSqlKV(t))
+	return newDataStore(setupSqlKV(t), nil)
 }
 
 func TestDataKey_String(t *testing.T) {
@@ -3186,7 +3190,7 @@ func testDataStoreBatchGet(t *testing.T, ctx context.Context, ds *dataStore) {
 
 	t.Run("batch get with some non-existent keys", func(t *testing.T) {
 		// Create 3 existing keys
-		existingKeys := make([]DataKey, 3)
+		existingKeys := make([]DataKey, 3) //nolint:prealloc
 		for i := 0; i < 3; i++ {
 			rv := node.Generate().Int64()
 			existingKeys[i] = DataKey{
@@ -3390,5 +3394,123 @@ func testDataStoreGetLatestAndPredecessor(t *testing.T, ctx context.Context, ds 
 		_, _, err := ds.GetLatestAndPredecessor(ctx, nonExistentKey)
 		require.Error(t, err)
 		require.Equal(t, ErrNotFound, err)
+	})
+}
+
+func TestIsSnowflake(t *testing.T) {
+	created2017 := time.Date(2017, 3, 26, 17, 3, 40, 0, time.UTC)
+	micro2017 := created2017.UnixMicro()
+	snowflake2017 := rvmanager.SnowflakeFromRV(micro2017)
+
+	require.Less(t, snowflake2017, int64(1e18),
+		"sanity: a pre-2018 snowflake must fall below the old 1e18 threshold")
+	require.Equal(t, micro2017, rvmanager.RVFromSnowflake(snowflake2017),
+		"sanity: the micro-RV and key_path snowflake must round-trip")
+
+	tests := []struct {
+		name string
+		rv   int64
+		want bool
+	}{
+		{"zero", 0, false},
+		{"legacy micro-RV from 2017", micro2017, false},
+		{"recent legacy micro-RV", time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC).UnixMicro(), false},
+		{"far-future legacy micro-RV (year 2200)", time.Date(2200, 1, 1, 0, 0, 0, 0, time.UTC).UnixMicro(), false},
+		// Regression: a snowflake from a pre-2018 timestamp is < 1e18 and was
+		// previously misclassified as a legacy micro-RV.
+		{"snowflake from 2017 timestamp", snowflake2017, true},
+		{"snowflake from 2013 timestamp", rvmanager.SnowflakeFromRV(time.Date(2013, 1, 1, 0, 0, 0, 0, time.UTC).UnixMicro()), true},
+		{"modern snowflake from 2025 timestamp", rvmanager.SnowflakeFromRV(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC).UnixMicro()), true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, IsSnowflake(tt.rv))
+		})
+	}
+}
+
+// TestToSnowflakeRVIdempotent verifies that a value that is already a snowflake
+// must pass through toSnowflakeRV unchanged, including when it derives from an
+// old (pre-2018) timestamp and is therefore numerically below 1e18.
+func TestToSnowflakeRVIdempotent(t *testing.T) {
+	cases := []struct {
+		name      string
+		snowflake int64
+	}{
+		{"snowflake from 2017 timestamp", rvmanager.SnowflakeFromRV(time.Date(2017, 3, 26, 17, 3, 40, 0, time.UTC).UnixMicro())},
+		{"snowflake from 2014 timestamp", rvmanager.SnowflakeFromRV(time.Date(2014, 6, 1, 0, 0, 0, 0, time.UTC).UnixMicro())},
+		{"snowflake from 2025 timestamp", rvmanager.SnowflakeFromRV(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC).UnixMicro())},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.snowflake, ToSnowflakeRV(tt.snowflake),
+				"toSnowflakeRV must not re-encode a value that is already a snowflake")
+		})
+	}
+}
+
+func TestIntegrationDataStore_ListStoredResources(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListStoredResources)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListStoredResources)
+}
+
+func testDataStoreListStoredResources(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	save := func(ns, group, resource, name string) {
+		key := DataKey{
+			Namespace:       ns,
+			Group:           group,
+			Resource:        resource,
+			Name:            name,
+			ResourceVersion: node.Generate().Int64(),
+			Action:          DataActionCreated,
+		}
+		require.NoError(t, ds.Save(ctx, key, bytes.NewReader([]byte("v"))))
+	}
+
+	sortFunc := func(a, b NamespacedResource) int {
+		if a.Namespace != b.Namespace {
+			return strings.Compare(a.Namespace, b.Namespace)
+		}
+		if a.Group != b.Group {
+			return strings.Compare(a.Group, b.Group)
+		}
+		return strings.Compare(a.Resource, b.Resource)
+	}
+
+	// Two objects of the same group/resource in ns1 must be reported once.
+	save("ns1", "apps", "deployments", "d1")
+	save("ns1", "apps", "deployments", "d2")
+	save("ns1", "apps", "services", "s1")
+	save("ns2", "apps", "deployments", "d1")
+
+	t.Run("namespace filter returns distinct identities", func(t *testing.T) {
+		got, err := ds.ListStoredResources(ctx, NamespacedResource{Namespace: "ns1"})
+		require.NoError(t, err)
+		slices.SortFunc(got, sortFunc)
+		require.Equal(t, []NamespacedResource{
+			{Namespace: "ns1", Group: "apps", Resource: "deployments"},
+			{Namespace: "ns1", Group: "apps", Resource: "services"},
+		}, got)
+	})
+
+	t.Run("resource filter is scoped to the namespace", func(t *testing.T) {
+		got, err := ds.ListStoredResources(ctx, NamespacedResource{Namespace: "ns1", Resource: "services"})
+		require.NoError(t, err)
+		require.Equal(t, []NamespacedResource{
+			{Namespace: "ns1", Group: "apps", Resource: "services"},
+		}, got)
+	})
+
+	t.Run("non-existent namespace is empty", func(t *testing.T) {
+		got, err := ds.ListStoredResources(ctx, NamespacedResource{Namespace: "missing"})
+		require.NoError(t, err)
+		require.Empty(t, got)
+	})
+
+	t.Run("empty namespace is rejected", func(t *testing.T) {
+		_, err := ds.ListStoredResources(ctx, NamespacedResource{})
+		require.Error(t, err)
 	})
 }

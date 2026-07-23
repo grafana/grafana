@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -35,6 +36,7 @@ const (
 	TestList                      = "list"
 	TestBlobSupport               = "blob support"
 	TestGetResourceStats          = "get resource stats"
+	TestListStoredResources       = "list stored resources"
 	TestListHistory               = "list history"
 	TestListHistoryErrorReporting = "list history error reporting"
 	TestListModifiedSince         = "list events since rv"
@@ -43,6 +45,8 @@ const (
 	TestGetResourceLastImportTime = "get resource last import time"
 	TestOptimisticLocking         = "optimistic locking on concurrent writes"
 	TestClusterScopedResources    = "cluster scoped resources"
+	TestErrorResponses            = "error responses"
+	TestReadAtRVBeforeDelete      = "read at RV edge cases"
 )
 
 type NewBackendFunc func(ctx context.Context) resource.StorageBackend
@@ -84,6 +88,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		{TestList, runTestIntegrationBackendList},
 		{TestBlobSupport, runTestIntegrationBlobSupport},
 		{TestGetResourceStats, runTestIntegrationBackendGetResourceStats},
+		{TestListStoredResources, runTestIntegrationBackendListStoredResources},
 		{TestListHistory, runTestIntegrationBackendListHistory},
 		{TestListHistoryErrorReporting, runTestIntegrationBackendListHistoryErrorReporting},
 		{TestListTrash, runTestIntegrationBackendTrash},
@@ -92,6 +97,8 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		{TestGetResourceLastImportTime, runTestIntegrationGetResourceLastImportTime},
 		{TestOptimisticLocking, runTestIntegrationBackendOptimisticLocking},
 		{TestClusterScopedResources, runTestIntegrationBackendClusterScopedResources},
+		{TestErrorResponses, runTestIntegrationBackendErrorResponses},
+		{TestReadAtRVBeforeDelete, runTestIntegrationBackendReadAtRVEdgeCases},
 	}
 
 	for _, tc := range cases {
@@ -100,7 +107,14 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 				t.Skip()
 			}
 
-			tc.fn(t, newBackend(context.Background()), opts.NSPrefix)
+			backend := newBackend(context.Background())
+			// Stop background goroutines when the case ends so they don't keep
+			// writing to the (SQLite) DB and contend with later cases.
+			if s, ok := backend.(resource.ResourceServerStopper); ok {
+				t.Cleanup(func() { _ = s.Stop(context.Background()) })
+			}
+
+			tc.fn(t, backend, opts.NSPrefix)
 		})
 	}
 }
@@ -331,6 +345,73 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 	})
 }
 
+func runTestIntegrationBackendListStoredResources(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
+
+	sortFunc := func(a, b resource.NamespacedResource) int {
+		if a.Namespace != b.Namespace {
+			return strings.Compare(a.Namespace, b.Namespace)
+		}
+		if a.Group != b.Group {
+			return strings.Compare(a.Group, b.Group)
+		}
+		return strings.Compare(a.Resource, b.Resource)
+	}
+
+	ns1 := nsPrefix + "-stored-ns1"
+	ns2 := nsPrefix + "-stored-ns2"
+
+	// Two objects of the same group/resource in ns1 must be reported once.
+	_, err := WriteEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns1), WithGroup("group"), WithResource("resource1"))
+	require.NoError(t, err)
+	_, err = WriteEvent(ctx, backend, "item2", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns1), WithGroup("group"), WithResource("resource1"))
+	require.NoError(t, err)
+	_, err = WriteEvent(ctx, backend, "item3", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns1), WithGroup("group"), WithResource("resource2"))
+	require.NoError(t, err)
+	_, err = WriteEvent(ctx, backend, "item4", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns2), WithGroup("group"), WithResource("resource1"))
+	require.NoError(t, err)
+
+	t.Run("discover resources in ns1", func(t *testing.T) {
+		got, err := backend.ListStoredResources(ctx, resource.NamespacedResource{Namespace: ns1})
+		require.NoError(t, err)
+		slices.SortFunc(got, sortFunc)
+		require.Equal(t, []resource.NamespacedResource{
+			{Namespace: ns1, Group: "group", Resource: "resource1"},
+			{Namespace: ns1, Group: "group", Resource: "resource2"},
+		}, got)
+	})
+
+	t.Run("discover resources in ns2", func(t *testing.T) {
+		got, err := backend.ListStoredResources(ctx, resource.NamespacedResource{Namespace: ns2})
+		require.NoError(t, err)
+		require.Equal(t, []resource.NamespacedResource{
+			{Namespace: ns2, Group: "group", Resource: "resource1"},
+		}, got)
+	})
+
+	t.Run("resource filter", func(t *testing.T) {
+		got, err := backend.ListStoredResources(ctx, resource.NamespacedResource{Namespace: ns1, Resource: "resource2"})
+		require.NoError(t, err)
+		require.Equal(t, []resource.NamespacedResource{
+			{Namespace: ns1, Group: "group", Resource: "resource2"},
+		}, got)
+	})
+
+	t.Run("non-existent namespace is empty", func(t *testing.T) {
+		got, err := backend.ListStoredResources(ctx, resource.NamespacedResource{Namespace: nsPrefix + "-stored-missing"})
+		require.NoError(t, err)
+		require.Empty(t, got)
+	})
+
+	t.Run("empty namespace is rejected", func(t *testing.T) {
+		_, err := backend.ListStoredResources(ctx, resource.NamespacedResource{})
+		require.Error(t, err)
+	})
+}
 func runTestIntegrationBackendWatchWriteEvents(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 
@@ -534,8 +615,9 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 
 func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-	ns := nsPrefix + "-history-ns"
-	rvCreated, _ := WriteEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	ns := nsPrefix + "-ms-ns"
+	rvCreated, err := WriteEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
 	require.Greater(t, rvCreated, int64(0))
 	rvUpdated, err := WriteEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rvCreated))
 	require.NoError(t, err)
@@ -682,6 +764,60 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 			actualRv, ok := results[name]
 			require.True(t, ok, "expected resource %s not found in results", name)
 			require.Equal(t, expectedRv, actualRv, "wrong RV for %s", name)
+		}
+	})
+
+	t.Run("cross-namespace scan with empty namespace", func(t *testing.T) {
+		// Two namespaces, each with a resource named "shared". The
+		// cross-namespace scan must yield both rather than collapsing
+		// them through name-based dedup.
+		nsA := nsPrefix + "-cross-a"
+		nsB := nsPrefix + "-cross-b"
+		startRv, err := WriteEvent(ctx, backend, "shared", resourcepb.WatchEvent_ADDED, WithNamespace(nsA))
+		require.NoError(t, err)
+		rvA, err := WriteEvent(ctx, backend, "shared", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(nsA, startRv))
+		require.NoError(t, err)
+		rvB, err := WriteEvent(ctx, backend, "shared", resourcepb.WatchEvent_ADDED, WithNamespace(nsB))
+		require.NoError(t, err)
+
+		key := resource.NamespacedResource{
+			Group:    "group",
+			Resource: "resource",
+		}
+		_, seq := backend.ListModifiedSince(ctx, key, startRv-1, nil)
+
+		seen := map[string]int64{}
+		for res, err := range seq {
+			require.NoError(t, err)
+			if res.Key.Name != "shared" {
+				continue
+			}
+			if res.Key.Namespace != nsA && res.Key.Namespace != nsB {
+				continue
+			}
+			seen[res.Key.Namespace] = res.ResourceVersion
+		}
+		require.Equal(t, rvA, seen[nsA], "namespace A should yield latest rv for shared")
+		require.Equal(t, rvB, seen[nsB], "namespace B should yield latest rv for shared")
+	})
+
+	t.Run("rejects missing group or resource", func(t *testing.T) {
+		for _, tc := range []struct {
+			name string
+			key  resource.NamespacedResource
+		}{
+			{name: "missing group", key: resource.NamespacedResource{Resource: "resource"}},
+			{name: "missing resource", key: resource.NamespacedResource{Group: "group"}},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				_, seq := backend.ListModifiedSince(ctx, tc.key, rvCreated, nil)
+				var gotErr error
+				for _, err := range seq {
+					gotErr = err
+					break
+				}
+				require.Error(t, gotErr)
+			})
 		}
 	})
 }
@@ -1067,7 +1203,10 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 }
 
 func runTestIntegrationBackendListHistoryErrorReporting(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	// The deadline must comfortably cover writing the fixture events below on a
+	// loaded CI runner. The List call under test uses its own 1µs timeout, so
+	// this budget only guards setup, not the assertion.
+	ctx := testutil.NewTestContext(t, time.Now().Add(2*time.Minute))
 	server := newServer(t, backend)
 
 	ns := nsPrefix + "-short"
@@ -1120,11 +1259,16 @@ func runTestIntegrationBackendListHistoryErrorReporting(t *testing.T, backend re
 }
 
 func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 	server := newServer(t, backend)
 	store, ok := backend.(resource.BlobSupport)
 	require.True(t, ok)
 	ns := nsPrefix + "-ns1"
+	// Blob RPCs gate on namespace match; the default empty-user ctx from
+	// NewTestContext would 403.
+	ctx := identity.WithServiceIdentityForSingleNamespaceContext(
+		testutil.NewTestContext(t, time.Now().Add(5*time.Second)),
+		ns,
+	)
 
 	t.Run("put and fetch blob", func(t *testing.T) {
 		key := &resourcepb.ResourceKey{
@@ -1133,6 +1277,31 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 			Resource:  "rrr",
 			Name:      "nnn",
 		}
+
+		// PutBlob must 404 before the parent exists (see blob.proto).
+		preExisting, err := server.PutBlob(ctx, &resourcepb.PutBlobRequest{
+			Resource:    key,
+			Method:      resourcepb.PutBlobRequest_GRPC,
+			ContentType: "plain/text",
+			Value:       []byte("rejected"),
+		})
+		require.NoError(t, err)
+		require.NotNil(t, preExisting.Error)
+		require.Equal(t, int32(http.StatusNotFound), preExisting.Error.Code)
+
+		initial := &unstructured.Unstructured{}
+		initialMeta, err := utils.MetaAccessor(initial)
+		require.NoError(t, err)
+		initialMeta.SetName(key.Name)
+		initialMeta.SetNamespace(key.Namespace)
+		initial.SetAPIVersion(key.Group + "/v1")
+		initial.SetKind("Test")
+		initialVal, err := initial.MarshalJSON()
+		require.NoError(t, err)
+		created, err := server.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: initialVal})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
+
 		b1, err := server.PutBlob(ctx, &resourcepb.PutBlobRequest{
 			Resource:    key,
 			Method:      resourcepb.PutBlobRequest_GRPC,
@@ -1162,7 +1331,6 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		require.NoError(t, err)
 		require.Contains(t, string(found.Value), "hello 22222")
 
-		// Save a resource with annotation
 		obj := &unstructured.Unstructured{}
 		meta, err := utils.MetaAccessor(obj)
 		require.NoError(t, err)
@@ -1173,21 +1341,21 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		obj.SetKind("Test")
 		val, err := obj.MarshalJSON()
 		require.NoError(t, err)
-		out, err := server.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: val})
+		out, err := server.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: val, ResourceVersion: created.ResourceVersion})
 		require.NoError(t, err)
 		require.Nil(t, out.Error)
-		require.True(t, out.ResourceVersion > 0)
+		require.True(t, out.ResourceVersion > created.ResourceVersion)
 
 		// The server (not store!) will lookup the saved annotation and return the correct payload
 		res, err := server.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: key})
 		require.NoError(t, err)
-		require.Nil(t, out.Error)
+		require.Nil(t, res.Error)
 		require.Contains(t, string(res.Value), "hello 22222")
 
 		// But we can still get an older version with an explicit UID
 		res, err = server.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: key, Uid: b1.Uid})
 		require.NoError(t, err)
-		require.Nil(t, out.Error)
+		require.Nil(t, res.Error)
 		require.Contains(t, string(res.Value), "hello 11111")
 	})
 }
@@ -1628,6 +1796,12 @@ func toBulkIterator(items []*resourcepb.BulkRequest) *sliceBulkRequestIterator {
 	return &sliceBulkRequestIterator{ix: -1, items: items}
 }
 
+// ToBulkIterator returns a BulkRequestIterator over the given requests, for use by
+// bulk-processing tests in other packages.
+func ToBulkIterator(items []*resourcepb.BulkRequest) resource.BulkRequestIterator {
+	return toBulkIterator(items)
+}
+
 func (s *sliceBulkRequestIterator) Next() bool {
 	s.ix++
 	return s.ix < len(s.items)
@@ -1836,5 +2010,338 @@ func runTestIntegrationBackendClusterScopedResources(t *testing.T, backend resou
 		})
 		require.NotNil(t, resp.Error)
 		require.Equal(t, int32(404), resp.Error.Code)
+	})
+}
+
+// runTestIntegrationBackendReadAtRVEdgeCases pins down ReadResource behavior
+// at exact revision boundaries for create, update, delete, and recreate events.
+// This includes the trash contract the restore flow depends on: trash listings
+// surface each item's delete-event RV, and reading at deleteRV-1 must return the
+// live pre-delete state while reads at and after deleteRV must return not found
+// until the resource is recreated.
+func runTestIntegrationBackendReadAtRVEdgeCases(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+	ctx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{Subject: "testuser"},
+		Rest:   authn.AccessTokenClaims{},
+	}))
+	ns := nsPrefix + "-read-rv"
+	key := &resourcepb.ResourceKey{
+		Name:      "target",
+		Namespace: ns,
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	rvCreate, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns), WithValue("target-create"))
+	require.NoError(t, err)
+
+	_, err = WriteEvent(ctx, backend, "noise-a", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+
+	rvUpdate, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_MODIFIED,
+		WithNamespaceAndRV(ns, rvCreate), WithValue("target-update"))
+	require.NoError(t, err)
+
+	_, err = WriteEvent(ctx, backend, "noise-b", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+
+	rvDelete, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_DELETED,
+		WithNamespaceAndRV(ns, rvUpdate), WithValue("target-delete"))
+	require.NoError(t, err)
+
+	_, err = WriteEvent(ctx, backend, "noise-c", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+
+	rvRecreate, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns), WithValue("target-recreate"))
+	require.NoError(t, err)
+
+	_, err = WriteEvent(ctx, backend, "noise-d", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+
+	type readAtRVCase struct {
+		name              string
+		requestRV         int64
+		expectedStatus    int32
+		expectedRV        int64
+		expectedSubstring string
+	}
+
+	cases := []readAtRVCase{
+		{name: "create rv-1", requestRV: rvCreate - 1, expectedStatus: http.StatusNotFound},
+		{name: "create rv", requestRV: rvCreate, expectedRV: rvCreate, expectedSubstring: "target-create"},
+		{name: "create rv+1", requestRV: rvCreate + 1, expectedRV: rvCreate, expectedSubstring: "target-create"},
+		{name: "update rv-1", requestRV: rvUpdate - 1, expectedRV: rvCreate, expectedSubstring: "target-create"},
+		{name: "update rv", requestRV: rvUpdate, expectedRV: rvUpdate, expectedSubstring: "target-update"},
+		{name: "update rv+1", requestRV: rvUpdate + 1, expectedRV: rvUpdate, expectedSubstring: "target-update"},
+		{name: "delete rv-1", requestRV: rvDelete - 1, expectedRV: rvUpdate, expectedSubstring: "target-update"},
+		{name: "delete rv", requestRV: rvDelete, expectedStatus: http.StatusNotFound},
+		{name: "delete rv+1", requestRV: rvDelete + 1, expectedStatus: http.StatusNotFound},
+		{name: "recreate rv-1", requestRV: rvRecreate - 1, expectedStatus: http.StatusNotFound},
+		{name: "recreate rv", requestRV: rvRecreate, expectedRV: rvRecreate, expectedSubstring: "target-recreate"},
+		{name: "recreate rv+1", requestRV: rvRecreate + 1, expectedRV: rvRecreate, expectedSubstring: "target-recreate"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			resp := backend.ReadResource(ctx, &resourcepb.ReadRequest{
+				Key:             key,
+				ResourceVersion: tc.requestRV,
+			})
+			if tc.expectedStatus != 0 {
+				require.NotNil(t, resp.Error)
+				require.Equal(t, tc.expectedStatus, resp.Error.Code)
+				return
+			}
+			require.Nil(t, resp.Error, "ReadResource error: %v", resp.Error)
+			require.Equal(t, tc.expectedRV, resp.ResourceVersion)
+			require.Contains(t, string(resp.Value), tc.expectedSubstring)
+		})
+	}
+}
+
+// runTestIntegrationBackendErrorResponses tests that the server API returns
+// error responses compatible with what Kubernetes clients expect: correct HTTP
+// status codes, reasons, and details.
+func runTestIntegrationBackendErrorResponses(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+	ctx := types.WithAuthInfo(testutil.NewTestContext(t, time.Now().Add(30*time.Second)), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{
+			Subject: "testuser",
+		},
+		Rest: authn.AccessTokenClaims{},
+	}))
+
+	server := newServer(t, backend)
+	ns := nsPrefix + "-err-resp"
+
+	group := "test.grafana.app"
+	res := "errorresources"
+	kind := "ErrorResource"
+
+	makeValue := func(name string) []byte {
+		return []byte(fmt.Sprintf(
+			`{"apiVersion":"%s/v0alpha1","kind":"%s","metadata":{"name":"%s","namespace":"%s","uid":"%s"}}`,
+			group, kind, name, ns, uuid.New().String(),
+		))
+	}
+
+	t.Run("read nonexistent resource returns 404", func(t *testing.T) {
+		resp, err := server.Read(ctx, &resourcepb.ReadRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: ns,
+				Group:     group,
+				Resource:  res,
+				Name:      "nonexistent-read",
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, resp.Error, "expected error in response")
+		require.Equal(t, int32(http.StatusNotFound), resp.Error.Code)
+
+		require.NotNil(t, resp.Error.Details, "missing error details")
+
+		require.Equal(t, group, resp.Error.Details.Group)
+		require.Equal(t, res, resp.Error.Details.Kind)
+		require.Equal(t, "nonexistent-read", resp.Error.Details.Name)
+	})
+
+	t.Run("create duplicate resource returns 409 AlreadyExists", func(t *testing.T) {
+		name := "dup-create"
+		createReq := &resourcepb.CreateRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: ns,
+				Group:     group,
+				Resource:  res,
+				Name:      name,
+			},
+			Value: makeValue(name),
+		}
+
+		// First create should succeed.
+		resp, err := server.Create(ctx, createReq)
+		require.NoError(t, err)
+		require.Nil(t, resp.Error, "first create should succeed")
+
+		// Second create with the same key should fail.
+		resp, err = server.Create(ctx, createReq)
+		require.NoError(t, err)
+		require.NotNil(t, resp.Error, "expected error for duplicate create")
+		require.Equal(t, int32(http.StatusConflict), resp.Error.Code)
+		require.Equal(t, string(metav1.StatusReasonAlreadyExists), resp.Error.Reason)
+	})
+
+	t.Run("update with stale resource version returns 409", func(t *testing.T) {
+		name := "stale-rv-update"
+		key := &resourcepb.ResourceKey{
+			Namespace: ns,
+			Group:     group,
+			Resource:  res,
+			Name:      name,
+		}
+
+		// Create the resource.
+		createResp, err := server.Create(ctx, &resourcepb.CreateRequest{
+			Key:   key,
+			Value: makeValue(name),
+		})
+		require.NoError(t, err)
+		require.Nil(t, createResp.Error)
+		originalRV := createResp.ResourceVersion
+
+		// Update to advance the RV.
+		updateResp, err := server.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             key,
+			Value:           makeValue(name),
+			ResourceVersion: originalRV,
+		})
+		require.NoError(t, err)
+		require.Nil(t, updateResp.Error, "first update should succeed")
+		require.Greater(t, updateResp.ResourceVersion, originalRV)
+
+		// Attempt a second update with the now-stale original RV.
+		updateResp, err = server.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             key,
+			Value:           makeValue(name),
+			ResourceVersion: originalRV,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, updateResp.Error, "expected error for stale RV update")
+		require.Equal(t, int32(http.StatusConflict), updateResp.Error.Code)
+		require.Equal(t, string(metav1.StatusReasonConflict), updateResp.Error.Reason)
+	})
+
+	t.Run("delete nonexistent resource returns 404", func(t *testing.T) {
+		resp, err := server.Delete(ctx, &resourcepb.DeleteRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: ns,
+				Group:     group,
+				Resource:  res,
+				Name:      "nonexistent-delete",
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, resp.Error, "expected error in response")
+		require.Equal(t, int32(http.StatusNotFound), resp.Error.Code)
+
+		require.NotNil(t, resp.Error.Details)
+		require.Equal(t, group, resp.Error.Details.Group)
+		require.Equal(t, res, resp.Error.Details.Kind)
+		require.Equal(t, "nonexistent-delete", resp.Error.Details.Name)
+	})
+
+	t.Run("delete with stale resource version returns 409", func(t *testing.T) {
+		name := "stale-rv-delete"
+		key := &resourcepb.ResourceKey{
+			Namespace: ns,
+			Group:     group,
+			Resource:  res,
+			Name:      name,
+		}
+
+		// Create the resource.
+		createResp, err := server.Create(ctx, &resourcepb.CreateRequest{
+			Key:   key,
+			Value: makeValue(name),
+		})
+		require.NoError(t, err)
+		require.Nil(t, createResp.Error)
+		originalRV := createResp.ResourceVersion
+
+		// Update to advance the RV.
+		updateResp, err := server.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             key,
+			Value:           makeValue(name),
+			ResourceVersion: originalRV,
+		})
+		require.NoError(t, err)
+		require.Nil(t, updateResp.Error, "update should succeed")
+		require.Greater(t, updateResp.ResourceVersion, originalRV)
+
+		// Delete with the now-stale original RV.
+		deleteResp, err := server.Delete(ctx, &resourcepb.DeleteRequest{
+			Key:             key,
+			ResourceVersion: originalRV,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, deleteResp.Error, "expected error for stale RV delete")
+		require.Equal(t, int32(http.StatusConflict), deleteResp.Error.Code)
+		require.Equal(t, string(metav1.StatusReasonConflict), deleteResp.Error.Reason)
+	})
+
+	t.Run("update without resource version returns 400", func(t *testing.T) {
+		name := "no-rv-update"
+		key := &resourcepb.ResourceKey{
+			Namespace: ns,
+			Group:     group,
+			Resource:  res,
+			Name:      name,
+		}
+
+		createResp, err := server.Create(ctx, &resourcepb.CreateRequest{
+			Key:   key,
+			Value: makeValue(name),
+		})
+		require.NoError(t, err)
+		require.Nil(t, createResp.Error)
+
+		// Attempt to update without sending a resource version.
+		updateResp, err := server.Update(ctx, &resourcepb.UpdateRequest{
+			Key:   key,
+			Value: makeValue(name),
+		})
+		require.NoError(t, err)
+		require.NotNil(t, updateResp.Error, "expected error for missing RV update")
+		require.Equal(t, int32(http.StatusBadRequest), updateResp.Error.Code)
+		require.Equal(t, string(metav1.StatusReasonBadRequest), updateResp.Error.Reason)
+	})
+
+	t.Run("delete without resource version returns 400", func(t *testing.T) {
+		name := "no-rv-delete"
+		key := &resourcepb.ResourceKey{
+			Namespace: ns,
+			Group:     group,
+			Resource:  res,
+			Name:      name,
+		}
+
+		// Create the resource.
+		createResp, err := server.Create(ctx, &resourcepb.CreateRequest{
+			Key:   key,
+			Value: makeValue(name),
+		})
+		require.NoError(t, err)
+		require.Nil(t, createResp.Error)
+
+		// Attempt to delete without sending a resource version.
+		deleteResp, err := server.Delete(ctx, &resourcepb.DeleteRequest{
+			Key: key,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, deleteResp.Error, "expected error for missing RV delete")
+		require.Equal(t, int32(http.StatusBadRequest), deleteResp.Error.Code)
+		require.Equal(t, string(metav1.StatusReasonBadRequest), deleteResp.Error.Reason)
+	})
+
+	t.Run("update nonexistent resource returns 404", func(t *testing.T) {
+		resp, err := server.Update(ctx, &resourcepb.UpdateRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: ns,
+				Group:     group,
+				Resource:  res,
+				Name:      "nonexistent-update",
+			},
+			Value:           makeValue("nonexistent-update"),
+			ResourceVersion: 1,
+		})
+		require.NoError(t, err)
+
+		require.NotNil(t, resp.Error, "expected error in response")
+		require.Equal(t, int32(http.StatusNotFound), resp.Error.Code)
+
+		require.NotNil(t, resp.Error.Details)
+		require.Equal(t, group, resp.Error.Details.Group)
+		require.Equal(t, res, resp.Error.Details.Kind)
+		require.Equal(t, "nonexistent-update", resp.Error.Details.Name)
 	})
 }

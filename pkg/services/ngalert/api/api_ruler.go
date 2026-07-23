@@ -278,9 +278,13 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 		result := apimodels.NamespaceConfigResponse{}
 		userUIDmapping := srv.getUserUIDmapping(c.Req.Context(), rules)
 		if len(rules) > 0 {
-			result[""] = []apimodels.GettableRuleGroupConfig{
-				toGettableRuleGroupConfig("", rules, map[string]ngmodels.Provenance{}, userUIDmapping),
-			}
+			group := toGettableRuleGroupConfig("", rules, map[string]ngmodels.Provenance{}, userUIDmapping)
+			// toGettableRuleGroupConfig sorts by group index, which is not meaningful for deleted rules.
+			// Re-sort by deletion time (Updated) descending so the most recently deleted rules appear first.
+			slices.SortStableFunc(group.Rules, func(a, b apimodels.GettableExtendedRuleNode) int {
+				return b.GrafanaManagedAlert.Updated.Compare(a.GrafanaManagedAlert.Updated)
+			})
+			result[""] = []apimodels.GettableRuleGroupConfig{group}
 		}
 		return response.JSON(http.StatusOK, result)
 	}

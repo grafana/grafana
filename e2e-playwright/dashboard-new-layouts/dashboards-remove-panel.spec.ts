@@ -1,4 +1,6 @@
-import { test, expect, DashboardPage, E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { test, expect } from '@grafana/plugin-e2e';
+
+import { Controls, Panel, Sidebar } from './page-objects';
 
 test.use({
   featureToggles: {
@@ -20,51 +22,43 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can remove a panel', async ({ gotoDashboardPage, selectors }) => {
+    test('can remove a panel', async ({ gotoDashboardPage, selectors, page, components }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const panel = new Panel({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await controls.enterEditMode();
 
-      // Remove Panel #1
-      await removePanelsByTitle(dashboardPage, selectors, ['Panel #1']);
+      const panelTitle = /^Panel #1$/;
+      await panel.selectByTitle(panelTitle);
 
-      // Check that panel has been deleted
-      await expect(
-        dashboardPage
-          .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-          .filter({ hasText: /^Panel #1$/ })
-      ).toBeHidden();
+      await sidebar.clickDeleteButton();
+
+      await expect(page.getByRole('dialog', { name: 'Delete panel?' })).toBeVisible();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
+
+      await expect(panel.getHeaderByTitle(panelTitle)).toBeHidden();
     });
 
-    test('can remove several panels at once', async ({ gotoDashboardPage, selectors }) => {
+    test('can remove several panels at once', async ({ gotoDashboardPage, selectors, page, components }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const panel = new Panel({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await controls.enterEditMode();
 
-      // Remove multiple panels
-      await removePanelsByTitle(dashboardPage, selectors, ['Panel #1', 'Panel #2', 'Panel #3']);
+      const panelTitles = [/^Panel #1$/, /^Panel #2$/, /^Panel #3$/];
+      await panel.selectByTitle(panelTitles);
+      await sidebar.clickDeleteButton();
 
-      // Check that panels have been deleted
-      await expect(
-        dashboardPage
-          .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-          .filter({ hasText: /^Panel #[123]$/ })
-      ).toBeHidden();
+      await expect(page.getByRole('dialog', { name: 'Multiple panels' })).toBeVisible();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
+
+      for (const panelTitle of panelTitles) {
+        await expect(panel.getHeaderByTitle(panelTitle)).toBeHidden();
+      }
     });
   }
 );
-
-// Helper function to remove a panel by its title
-async function removePanelsByTitle(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, panelTitles: string[]) {
-  for (const panelTitle of panelTitles) {
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-      .filter({ hasText: panelTitle })
-      .click({
-        modifiers: ['Shift'],
-      });
-  }
-
-  await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.deleteButton).click();
-  await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
-}

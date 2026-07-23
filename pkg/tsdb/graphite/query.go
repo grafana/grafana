@@ -13,12 +13,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/net/html"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 type queryModel struct {
@@ -70,7 +71,6 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 
 	for refId, graphiteReq := range graphiteQueries {
 		_, span := tracing.DefaultTracer().Start(ctx, "graphite query")
-		defer span.End()
 		targetStr := strings.Join(graphiteReq.formData["target"], ",")
 		span.SetAttributes(
 			attribute.String("refId", refId),
@@ -78,7 +78,7 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 			attribute.String("from", graphiteReq.formData["from"][0]),
 			attribute.String("until", graphiteReq.formData["until"][0]),
 			attribute.Int64("datasource_id", dsInfo.Id),
-			attribute.Int64("org_id", req.PluginContext.OrgID),
+			attribute.Int64("org_id", req.PluginContext.OrgID), // nolint:staticcheck
 		)
 		res, err := dsInfo.HTTPClient.Do(graphiteReq.req)
 		if res != nil {
@@ -87,6 +87,7 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
+			span.End()
 			result.Responses[refId] = backend.ErrorResponseWithErrorSource(backend.DownstreamError(err))
 			return result, nil
 		}
@@ -102,11 +103,13 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
+			span.End()
 			result.Responses[refId] = backend.ErrorResponseWithErrorSource(err)
 			return result, nil
 		}
 
 		frames = append(frames, queryFrames...)
+		span.End()
 	}
 
 	for _, f := range frames {
@@ -216,7 +219,15 @@ func (s *Service) toDataFrames(response *http.Response, refId string) (frames da
 		tags := make(map[string]string)
 		for name, value := range series.Tags {
 			if name == "name" {
-				value = series.Target
+				// Metrictank sets tags["name"] to the full internal series key
+				// (e.g. "cpu.usage;env=prod;host=web01") rather than just the
+				// base metric name. Strip everything from the first ';' so that
+				// transformations like joinByLabels(value:'name') work correctly.
+				target := series.Target
+				if idx := strings.IndexByte(target, ';'); idx != -1 {
+					target = target[:idx]
+				}
+				value = target
 			}
 			switch value := value.(type) {
 			case string:

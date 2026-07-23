@@ -1,16 +1,22 @@
 import { useCallback, useMemo } from 'react';
 
-import { DataFrame, store } from '@grafana/data';
+import { type DataFrame, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton } from '@grafana/ui';
-import { FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
+import { type FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 
-import { FIELD_SELECTOR_MIN_WIDTH, FieldSelector, FieldWithStats, getDefaultFieldSelectorWidth } from './FieldSelector';
+import {
+  FIELD_SELECTOR_MIN_WIDTH,
+  FieldSelector,
+  type FieldWithStats,
+  getDefaultFieldSelectorWidth,
+} from './FieldSelector';
 import { getFieldSelectorWidth } from './fieldSelectorUtils';
 import { getFieldsWithStats } from './getFieldsWithStats';
 import { getSuggestedFieldsFromTable } from './getSuggestedFieldsFromTable';
+import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from './logFields';
 import { logsFieldSelectorWrapperStyles } from './styles';
 
 /**
@@ -95,7 +101,9 @@ export const LogsTableFieldSelector = ({
   );
 
   const suggestedFields = useMemo(() => {
-    return getSuggestedFields(dataFrames[0], displayedColumns, defaultColumns);
+    return getSuggestedFields(dataFrames[0], displayedColumns, defaultColumns).filter(
+      (field) => field.name !== LOG_LINE_BODY_FIELD_NAME && field.name !== OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME
+    );
   }, [dataFrames, defaultColumns, displayedColumns, getSuggestedFields]);
   const fields = useMemo(() => getFieldsWithStats(dataFrames), [dataFrames]);
 

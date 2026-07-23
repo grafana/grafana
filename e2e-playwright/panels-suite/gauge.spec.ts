@@ -10,7 +10,7 @@ const NEW_GAUGES_DASHBOARD_UID = 'panel-tests-gauge-new';
 const OLD_TO_NEW_GAUGES_DASHBOARD_UID = 'panel-tests-old-gauge-to-new';
 
 const OLD_GAUGES_DASHBOARD_GAUGE_COUNT = 16;
-const NEW_GAUGE_DASHBOARD_GAUGE_COUNT = 36;
+const NEW_GAUGE_DASHBOARD_GAUGE_COUNT = 37;
 
 test.describe(
   'Gauge Panel',
@@ -57,16 +57,18 @@ test.describe(
       await expect(errorInfo).toBeHidden();
     });
 
-    test('renders sparklines in gauge panels', async ({ gotoDashboardPage, page }) => {
-      await gotoDashboardPage({
+    test('renders sparklines in gauge panels', async ({ gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({
         uid: NEW_GAUGES_DASHBOARD_UID,
         queryParams: new URLSearchParams({ editPanel: '11' }),
       });
 
-      await expect(page.locator('.uplot')).toHaveCount(5);
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).locator('.uplot')
+      ).toHaveCount(5);
     });
 
-    test('data links', async ({ gotoDashboardPage, selectors, page }) => {
+    test('data links', async ({ gotoDashboardPage, selectors }) => {
       const singleLinkPanel = await gotoDashboardPage({
         uid: NEW_GAUGES_DASHBOARD_UID,
         queryParams: new URLSearchParams({ editPanel: '38' }),
@@ -87,7 +89,10 @@ test.describe(
       await expect(
         multiLinkPanel.getByGrafanaSelector(selectors.components.Menu.MenuComponent('Context'))
       ).not.toBeVisible();
-      await page.locator('[aria-label="Gauge"]').click();
+      await multiLinkPanel
+        .getByGrafanaSelector(selectors.components.Panels.Panel.content)
+        .locator('[aria-label="Gauge"]')
+        .click();
       await expect(
         multiLinkPanel.getByGrafanaSelector(selectors.components.Menu.MenuComponent('Context'))
       ).toBeVisible();
@@ -99,8 +104,12 @@ test.describe(
         queryParams: new URLSearchParams({ editPanel: '36' }),
       });
 
+      const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content);
+
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Gauge.Container),
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Gauge.Container, {
+          root: panelContent,
+        }),
         'that the gauge does not appear'
       ).toBeHidden();
 
@@ -117,7 +126,9 @@ test.describe(
       await noValueOption.fill('My empty value');
       await noValueOption.blur();
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Gauge.Container),
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Gauge.Container, {
+          root: panelContent,
+        }),
         'that the empty text shows up in an empty gauge'
       ).toHaveText('My empty value');
 
@@ -127,8 +138,12 @@ test.describe(
         queryParams: new URLSearchParams({ editPanel: '37' }),
       });
 
+      const panelContent2 = dashboardPage2.getByGrafanaSelector(selectors.components.Panels.Panel.content);
+
       await expect(
-        dashboardPage2.getByGrafanaSelector(selectors.components.Panels.Visualization.Gauge.Container),
+        dashboardPage2.getByGrafanaSelector(selectors.components.Panels.Visualization.Gauge.Container, {
+          root: panelContent2,
+        }),
         'that the gauge does not appear'
       ).toBeHidden();
 
@@ -144,8 +159,10 @@ test.describe(
         queryParams: new URLSearchParams({ editPanel: '20' }),
       });
 
+      const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content);
       const gaugeLocator = dashboardPage.getByGrafanaSelector(
-        selectors.components.Panels.Visualization.Gauge.Container
+        selectors.components.Panels.Visualization.Gauge.Container,
+        { root: panelContent }
       );
 
       await expect(gaugeLocator).toBeVisible();

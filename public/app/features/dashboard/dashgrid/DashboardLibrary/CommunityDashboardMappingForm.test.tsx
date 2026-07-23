@@ -1,12 +1,12 @@
 import { screen, waitFor } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { DataSourceInput, DashboardInput, InputType } from 'app/features/manage-dashboards/types';
+import { type DataSourceInput, type DashboardInput, InputType } from 'app/features/manage-dashboards/types';
 
 import { CommunityDashboardMappingForm } from './CommunityDashboardMappingForm';
 import { TrackingProvider } from './TrackingContext';
-import { CONTENT_KINDS, ContentKind, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
-import { InputMapping } from './utils/autoMapDatasources';
+import { CONTENT_KINDS, type ContentKind, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
+import { type InputMapping } from './utils/autoMapDatasources';
 
 interface CommunityDashboardMappingFormProps {
   dashboardName: string;
@@ -20,15 +20,16 @@ interface CommunityDashboardMappingFormProps {
   onPreview: (mappings: InputMapping[]) => void;
 }
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    getInstanceSettings: jest.fn((uid: string) => ({
-      uid,
-      name: `DataSource ${uid}`,
-      type: 'prometheus',
-    })),
-  }),
+// Mock the async list hook directly. The real hook resolves on a microtask via
+// `useAsync`, which would trigger React `act(...)` warnings in tests that assert
+// synchronously after `render(...)`. Returning a sync value keeps the test setup simple
+// and matches the data shape the component reads (`uid`, `name`).
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceList: jest.fn(() => ({
+    isLoading: false,
+    items: [{ uid: 'loki-uid', name: 'DataSource loki-uid', type: 'loki' }],
+  })),
 }));
 
 jest.mock('app/features/datasources/components/picker/DataSourcePicker', () => ({

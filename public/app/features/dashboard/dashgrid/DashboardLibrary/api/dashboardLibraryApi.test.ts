@@ -1,16 +1,16 @@
-import { BackendSrv, getBackendSrv, logInfo, logWarning } from '@grafana/runtime';
-import { DashboardJson } from 'app/features/manage-dashboards/types';
-import { PluginDashboard } from 'app/types/plugins';
+import { type BackendSrv, getBackendSrv, logInfo, logWarning } from '@grafana/runtime';
+import { type DashboardJson } from 'app/features/manage-dashboards/types';
+import { type PluginDashboard } from 'app/types/plugins';
 
-import { GnetDashboard } from '../types';
+import { type GnetDashboard } from '../types';
 import { createMockGnetDashboard, createMockPluginDashboard } from '../utils/test-utils';
 
 import {
   fetchCommunityDashboard,
   fetchCommunityDashboards,
   fetchProvisionedDashboards,
-  FetchCommunityDashboardsParams,
-  GnetDashboardResponse,
+  type FetchCommunityDashboardsParams,
+  type GnetDashboardResponse,
 } from './dashboardLibraryApi';
 
 jest.mock('@grafana/runtime', () => ({
@@ -339,6 +339,18 @@ describe('dashboardLibraryApi', () => {
 
       expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading provisioned dashboards', error);
       expect(result).toEqual([]);
+    });
+
+    it('should filter out dashboards that have been removed', async () => {
+      const activeDashboard1 = createMockPluginDashboard({ uid: 'active', title: 'Active', removed: false });
+      const activeDashboard2 = createMockPluginDashboard({ uid: 'active2', title: 'Active2' });
+      const removedDashboard = createMockPluginDashboard({ uid: 'removed', title: 'Removed', removed: true });
+
+      mockGet.mockResolvedValue([activeDashboard1, activeDashboard2, removedDashboard]);
+
+      const result = await fetchProvisionedDashboards('prometheus');
+
+      expect(result).toEqual([activeDashboard1, activeDashboard2]);
     });
 
     it('should return empty array for datasource with no provisioned dashboards', async () => {

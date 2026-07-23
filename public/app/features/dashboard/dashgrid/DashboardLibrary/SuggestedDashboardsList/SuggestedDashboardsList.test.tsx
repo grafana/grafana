@@ -6,7 +6,7 @@ import { locationService } from '@grafana/runtime';
 import { TrackingProvider } from '../TrackingContext';
 import { fetchCommunityDashboards } from '../api/dashboardLibraryApi';
 import { EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from '../constants';
-import { GnetDashboard } from '../types';
+import { type GnetDashboard } from '../types';
 import { onUseCommunityDashboard } from '../utils/communityDashboardHelpers';
 import { createMockGnetDashboard, createMockPluginDashboard } from '../utils/test-utils';
 
@@ -34,6 +34,14 @@ jest.mock('../interactions', () => ({
     itemClicked: jest.fn(),
     compatibilityCheckTriggered: jest.fn(),
     compatibilityCheckCompleted: jest.fn(),
+  },
+  SuggestedDashboardInteractions: {
+    loaded: jest.fn(),
+    searchPerformed: jest.fn(),
+    itemClicked: jest.fn(),
+    compatibilityCheckTriggered: jest.fn(),
+    compatibilityCheckCompleted: jest.fn(),
+    createFromScratchClicked: jest.fn(),
   },
 }));
 

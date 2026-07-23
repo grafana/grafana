@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 import { ManagerKind } from 'app/features/apiserver/types';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { RepoViewStatus, useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { OrphanedResourceBanner } from '../Shared/OrphanedResourceBanner';

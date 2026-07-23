@@ -1,7 +1,7 @@
-import { Action } from '@reduxjs/toolkit';
+import { type Action } from '@reduxjs/toolkit';
 
-import { GrafanaRulesSourceSymbol, RuleGroupIdentifier } from 'app/types/unified-alerting';
-import { PostableRulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { GrafanaRulesSourceSymbol, type RuleGroupIdentifier } from 'app/types/unified-alerting';
+import { type PostableRulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';

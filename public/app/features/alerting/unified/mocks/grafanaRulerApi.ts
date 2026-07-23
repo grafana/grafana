@@ -1,17 +1,21 @@
+import { produce } from 'immer';
 import { HttpResponse, http } from 'msw';
-import { SetupServer } from 'msw/node';
+import { type SetupServer } from 'msw/node';
 
 import { FieldType } from '@grafana/data';
 import {
   GrafanaAlertStateDecision,
-  PromRulesResponse,
-  RulerGrafanaRuleDTO,
-  RulerRuleGroupDTO,
-  RulerRulesConfigDTO,
+  type PromRulesResponse,
+  type RulerGrafanaRuleDTO,
+  type RulerRuleGroupDTO,
+  type RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { PREVIEW_URL, PROM_RULES_URL, PreviewResponse } from '../api/alertRuleApi';
+import { PREVIEW_URL, PROM_RULES_URL, type PreviewResponse } from '../api/alertRuleApi';
 import { Annotation } from '../utils/constants';
+import { NO_GROUP_PREFIX } from '../utils/rules';
+
+import { PROMETHEUS_DATASOURCE_UID } from './server/constants';
 
 export function mockPreviewApiResponse(server: SetupServer, result: PreviewResponse) {
   server.use(http.post(PREVIEW_URL, () => HttpResponse.json(result)));
@@ -24,7 +28,7 @@ export function mockPromRulesApiResponse(server: SetupServer, result: PromRulesR
 export const grafanaRulerGroupName = 'grafana-group-1';
 export const grafanaRulerGroupName2 = 'grafana-group-2';
 export const grafanaRulerNamespace = { name: 'test-folder-1', uid: 'uuid020c61ef' };
-export const grafanaRulerNamespace2 = { name: 'test-folder-2', uid: '6abdb25bc1eb' };
+const grafanaRulerNamespace2 = { name: 'test-folder-2', uid: '6abdb25bc1eb' };
 
 export const grafanaRulerRule: RulerGrafanaRuleDTO = {
   for: '5m',
@@ -80,13 +84,48 @@ export const grafanaRulerEmptyGroup: RulerRuleGroupDTO<RulerGrafanaRuleDTO> = {
   rules: [],
 };
 
+// Ungrouped variant of `grafanaRulerRule` — the synthetic group prefix marks rules created
+// without a real group via the v0alpha1 app-platform write paths.
+export const ungroupedGrafanaRulerRule: RulerGrafanaRuleDTO = produce(grafanaRulerRule, (draft) => {
+  draft.grafana_alert.uid = 'ungrouped-rule-uid';
+  draft.grafana_alert.title = 'Ungrouped rule';
+  draft.grafana_alert.rule_group = `${NO_GROUP_PREFIX}ungrouped-rule-uid`;
+});
+
+export const ungroupedGrafanaRulerGroup: RulerRuleGroupDTO<RulerGrafanaRuleDTO> = {
+  name: ungroupedGrafanaRulerRule.grafana_alert.rule_group,
+  interval: '1m',
+  rules: [ungroupedGrafanaRulerRule],
+};
+
+// Recording-rule variant of `grafanaRulerRule`. The state decisions are cleared because
+// recording rules don't surface them, and `target_datasource_uid` is required by the form's
+// react-hook-form validation.
+export const grafanaRulerRecordingRule: RulerGrafanaRuleDTO = produce(grafanaRulerRule, (draft) => {
+  draft.grafana_alert.uid = 'recording-rule-uid';
+  draft.grafana_alert.title = 'Recording rule';
+  draft.grafana_alert.no_data_state = undefined as unknown as GrafanaAlertStateDecision;
+  draft.grafana_alert.exec_err_state = undefined as unknown as GrafanaAlertStateDecision;
+  draft.grafana_alert.record = {
+    metric: 'rec_metric',
+    from: 'A',
+    target_datasource_uid: PROMETHEUS_DATASOURCE_UID,
+  };
+});
+
+export const grafanaRulerRecordingGroup: RulerRuleGroupDTO<RulerGrafanaRuleDTO> = {
+  name: grafanaRulerGroup.name,
+  interval: grafanaRulerGroup.interval,
+  rules: [grafanaRulerRecordingRule],
+};
+
 // AKA Folder
 interface GrafanaNamespace {
   name: string;
   uid: string;
 }
 
-export class RulerTestDb {
+class RulerTestDb {
   private namespaces = new Map<string, string>(); // UID -> Name
   private groupsByNamespaceUid = new Map<string, RulerRuleGroupDTO[]>();
 

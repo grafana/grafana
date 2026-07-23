@@ -1,9 +1,17 @@
-import { Page } from 'playwright-core';
+import { type Page } from 'playwright-core';
 
-import { test, expect, E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { test, expect, type Components, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import { addDashboard } from '../utils/dashboard-helpers';
 import { getResources } from '../utils/prometheus-helpers';
+
+test.use({
+  openFeature: {
+    flags: {
+      'grafana.dashboardSettingsRedesign': false,
+    },
+  },
+});
 
 test.describe(
   'Prometheus annotations',
@@ -13,7 +21,12 @@ test.describe(
   () => {
     const DATASOURCE_NAME = 'aprometheusAnnotationDS';
 
-    test('should navigate to variable query editor', async ({ page, selectors, createDataSourceConfigPage }) => {
+    test('should navigate to variable query editor', async ({
+      page,
+      selectors,
+      createDataSourceConfigPage,
+      components,
+    }) => {
       const annotationName = 'promAnnotation';
 
       await createDataSourceConfigPage({ type: 'prometheus', name: DATASOURCE_NAME });
@@ -25,7 +38,7 @@ test.describe(
       await navigateToAnnotations(page, selectors);
 
       // Add Prometheus annotation
-      await addPrometheusAnnotation(page, selectors, annotationName);
+      await addPrometheusAnnotation(page, selectors, annotationName, components);
 
       // Open metrics browser
       const metricsBrowserButton = page.getByTestId(
@@ -104,15 +117,28 @@ test.describe(
       await expect(editButton).toBeVisible();
       await editButton.click();
 
-      const settingsButton = page.getByTestId(selectors.components.NavToolbar.editDashboard.settingsButton);
-      await expect(settingsButton).toBeVisible();
-      await settingsButton.click();
+      // Open dashboard options in the sidebar
+      const optionsButton = page.getByTestId(selectors.pages.Dashboard.Sidebar.optionsButton);
+      await expect(optionsButton).toBeVisible();
+      await optionsButton.click();
+
+      // Click "View all settings" to open the full settings page
+      const viewAllSettingsButton = page
+        .getByTestId(selectors.components.Sidebar.container)
+        .getByRole('button', { name: 'View all settings' });
+      await expect(viewAllSettingsButton).toBeVisible();
+      await viewAllSettingsButton.click();
 
       const annotationsTab = page.getByTestId(selectors.components.Tab.title('Annotations'));
       await annotationsTab.click();
     }
 
-    async function addPrometheusAnnotation(page: Page, selectors: E2ESelectorGroups, annotationName: string) {
+    async function addPrometheusAnnotation(
+      page: Page,
+      selectors: E2ESelectorGroups,
+      annotationName: string,
+      components: Components
+    ) {
       const addAnnotationButton = page.getByTestId(
         selectors.pages.Dashboard.Settings.Annotations.List.addAnnotationCTAV2
       );
@@ -124,14 +150,7 @@ test.describe(
       await nameInput.clear();
       await nameInput.fill(annotationName);
 
-      const dataSourcePicker = page.getByTestId(selectors.components.DataSourcePicker.container);
-      await expect(dataSourcePicker).toBeVisible();
-      await dataSourcePicker.click();
-
-      const dataSourceOption = page.getByText(DATASOURCE_NAME);
-      await dataSourceOption.scrollIntoViewIfNeeded();
-      await expect(dataSourceOption).toBeVisible();
-      await dataSourceOption.click();
+      await components.dataSourcePicker.set(DATASOURCE_NAME);
     }
   }
 );

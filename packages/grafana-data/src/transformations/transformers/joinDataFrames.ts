@@ -1,12 +1,12 @@
 import { getTimeField, sortDataFrame } from '../../dataframe/processDataFrame';
-import { DataFrame, Field, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../../types/dataFrame';
-import { FieldMatcher } from '../../types/transformations';
+import { type DataFrame, type Field, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../../types/dataFrame';
+import { type FieldMatcher } from '../../types/transformations';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
-import { JoinMode } from './joinByField';
+import { JoinMode } from './joinShared';
 
-export function pickBestJoinField(data: DataFrame[]): FieldMatcher {
+function pickBestJoinField(data: DataFrame[]): FieldMatcher {
   const { timeField } = getTimeField(data[0]);
   if (timeField) {
     return fieldMatchers.get(FieldMatcherID.firstTimeField).get({});
@@ -244,6 +244,13 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
 
   let joined: Array<Array<number | string | null | undefined>> = [];
 
+  if (allData.length === 0) {
+    return {
+      length: 0,
+      fields: originalFields,
+    };
+  }
+
   if (options.mode === JoinMode.outerTabular) {
     joined = joinTabular(allData, true);
   } else if (options.mode === JoinMode.inner) {
@@ -350,106 +357,80 @@ function joinTabular(tables: AlignedData[], outer = false) {
     // console.timeEnd('unmatched right');
 
     /**
-     * Now we can use matched, unmatchedLeft, unmatchedRight, ltable, and rtable to assemble the final table
-     * Instead of using 3-deep nested loops, we eliminate the loops over the known column structure
-     * For this we compile a new function using the schemas from both tables, and filling that struct by looping
-     * over the matched lookup array, then appending the unmatched left rows (and null-filling the right values),
-     * then appending the unmatched right rows (and null-filling the left values).
+     * Now we can use matched, unmatchedLeft, unmatchedRight, ltable, and rtable to assemble the final table.
      *
-     * The assembled function looks something like this when joining 2-col left + 2-col right:
+     * To keep the hot path free of an inner per-column loop (without resorting to runtime codegen, which
+     * requires the 'unsafe-eval' CSP directive) we materialize column-major:
      *
-     * function anonymous(matched, unmatchedLeft, unmatchedRight, ltable, rtable) {
-     *   const joined = [Array(99991),Array(99991),Array(99991)];
-     *
-     *   let rowIdx = 0;
-     *
-     *   for (let i = 0; i < matched.length; i++) {
-     *     let [lidx, ridxs] = matched[i];
-     *
-     *     for (let j = 0; j < ridxs.length; j++, rowIdx++) {
-     *       let ridx = ridxs[j];
-     *       joined[0][rowIdx] = ltable[0][lidx];
-     *       joined[1][rowIdx] = ltable[1][lidx];
-     *       joined[2][rowIdx] = rtable[1][ridx];
-     *     }
-     *   }
-     *
-     *   for (let i = 0; i < unmatchedLeft.length; i++, rowIdx++) {
-     *     let lidx = unmatchedLeft[i];
-     *     joined[0][rowIdx] = ltable[0][lidx];
-     *     joined[1][rowIdx] = ltable[1][lidx];
-     *     joined[2][rowIdx] = null;
-     *   }
-     *
-     *   for (let i = 0; i < unmatchedRight.length; i++, rowIdx++) {
-     *     let ridx = unmatchedRight[i];
-     *     joined[0][rowIdx] = rtable[0][ridx];
-     *     joined[1][rowIdx] = null;
-     *     joined[2][rowIdx] = rtable[1][ridx];
-     *   }
-     *
-     *   return joined;
-     * }
+     *   1. First flatten the matched/unmatched bookkeeping into a per-output-row source plan. For each output
+     *      row we record the source row index in the left and right tables (-1 means "no source", i.e. null-fill).
+     *   2. Then fill each output column independently with a single tight, monomorphic loop over the plan. This
+     *      keeps reads/writes sequential within one array at a time, which both avoids the per-cell column
+     *      dispatch and is friendlier to the cache than scattering writes across every column on each row.
      */
     // console.time('materialize');
-    let outFieldsTpl = Array.from({ length: ltable.length + rtable.length - 1 }, () => `Array(${count})`).join(',');
-    let copyLeftRowTpl = ltable.map((c, i) => `joined[${i}][rowIdx] = ltable[${i}][lidx]`).join(';');
-    // (skips join field in right table)
-    let copyRightRowTpl = rtable
-      .slice(1)
-      .map((c, i) => `joined[${ltable.length + i}][rowIdx] = rtable[${i + 1}][ridx]`)
-      .join(';');
+    let leftSrc = new Int32Array(count);
+    let rightSrc = new Int32Array(count);
 
-    // for outer joins, when we null-fill the left row values, we still populate the first (join) column
-    // with the right row's join column value, rather than omitting it as we do for matched left/right where
-    // that value is already filled by the left row
-    let nullLeftRowTpl = ltable
-      .map((c, i) => `joined[${i}][rowIdx] = ${i === 0 ? `rtable[${i}][ridx]` : `null`}`)
-      .join(';');
-    // (skips join field in right table)
-    let nullRightRowTpl = rtable.slice(1).map((c, i) => `joined[${ltable.length + i}][rowIdx] = null`);
+    let rowIdx = 0;
 
-    let materialize = new Function(
-      'matched',
-      'unmatchedLeft',
-      'unmatchedRight',
-      'ltable',
-      'rtable',
-      `
-      const joined = [${outFieldsTpl}];
+    for (let i = 0; i < matched.length; i++) {
+      let [lidx, ridxs] = matched[i];
 
-      let rowIdx = 0;
-
-      for (let i = 0; i < matched.length; i++) {
-        let [lidx, ridxs] = matched[i];
-
-        for (let j = 0; j < ridxs.length; j++, rowIdx++) {
-          let ridx = ridxs[j];
-          ${copyLeftRowTpl};
-          ${copyRightRowTpl};
-        }
+      for (let j = 0; j < ridxs.length; j++, rowIdx++) {
+        leftSrc[rowIdx] = lidx;
+        rightSrc[rowIdx] = ridxs[j];
       }
+    }
 
-      for (let i = 0; i < unmatchedLeft.length; i++, rowIdx++) {
-        let lidx = unmatchedLeft[i];
-        ${copyLeftRowTpl};
-        ${nullRightRowTpl};
+    for (let i = 0; i < unmatchedLeft.length; i++, rowIdx++) {
+      leftSrc[rowIdx] = unmatchedLeft[i];
+      rightSrc[rowIdx] = -1;
+    }
+
+    for (let i = 0; i < unmatchedRight.length; i++, rowIdx++) {
+      leftSrc[rowIdx] = -1;
+      rightSrc[rowIdx] = unmatchedRight[i];
+    }
+
+    let joined: Array<Array<number | string | null | undefined>> = [];
+
+    // join column (output col 0): sourced from the left row when present, otherwise from the matched
+    // right row. Every output row has exactly one side, so this always resolves to a real value.
+    let ljoin = ltable[0];
+    let rjoin = rtable[0];
+    let joinCol = Array(count);
+    for (let r = 0; r < count; r++) {
+      let li = leftSrc[r];
+      joinCol[r] = li !== -1 ? ljoin[li] : rjoin[rightSrc[r]];
+    }
+    joined.push(joinCol);
+
+    // remaining left columns: null-filled for unmatched-right rows
+    for (let c = 1; c < ltable.length; c++) {
+      let src = ltable[c];
+      let col = Array(count);
+      for (let r = 0; r < count; r++) {
+        let li = leftSrc[r];
+        col[r] = li !== -1 ? src[li] : null;
       }
+      joined.push(col);
+    }
 
-      for (let i = 0; i < unmatchedRight.length; i++, rowIdx++) {
-        let ridx = unmatchedRight[i];
-        ${nullLeftRowTpl};
-        ${copyRightRowTpl};
+    // right columns (skip the join field): null-filled for unmatched-left rows
+    for (let c = 1; c < rtable.length; c++) {
+      let src = rtable[c];
+      let col = Array(count);
+      for (let r = 0; r < count; r++) {
+        let ri = rightSrc[r];
+        col[r] = ri !== -1 ? src[ri] : null;
       }
-
-      return joined;
-      `
-    );
-
-    let joined = materialize(matched, unmatchedLeft, unmatchedRight, ltable, rtable);
+      joined.push(col);
+    }
     // console.timeEnd('materialize');
 
-    ltable = joined;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    ltable = joined as AlignedData;
     lfield = ltable[0];
   }
 
@@ -466,7 +447,7 @@ function joinTabular(tables: AlignedData[], outer = false) {
 //--------------------------------------------------------------------------------
 
 // Copied from uplot
-export type TypedArray =
+type TypedArray =
   | Int8Array
   | Uint8Array
   | Int16Array

@@ -1,12 +1,22 @@
-import { Page, Locator } from '@playwright/test';
+import { type Page, type Locator } from '@playwright/test';
 
-import { test, expect, E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { test, expect, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
-import { getCell, getCellHeight, getColumnIdx, waitForTableLoad } from './table-utils';
+import { getCell, getCellHeight, getColumnIdx, getSelectedFilterCount, waitForTableLoad } from './table-utils';
 
 const DASHBOARD_UID = 'dcb9f5e9-8066-4397-889e-864b99555dbb';
 
 test.use({ viewport: { width: 2000, height: 1080 } });
+
+/** Color-background mode applies a gradient or image via the `background` shorthand (TableNG). */
+const assertCellHasBackground = (cell: Locator, expected: boolean) =>
+  expect(async () => {
+    const hasBackground = await cell.evaluate((el) => {
+      const s = window.getComputedStyle(el);
+      return s.background.includes('linear-gradient') || (s.backgroundImage !== 'none' && s.backgroundImage !== '');
+    });
+    expect(hasBackground, `cell ${expected ? 'has' : 'does not have'} background linear-gradient`).toBe(expected);
+  }).toPass();
 
 const disableAllTextWrap = async (loc: Page | Locator, selectors: E2ESelectorGroups) => {
   // disable text wrapping for all of the columns, since long text with links in them can push the links off the screen.
@@ -264,7 +274,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     expect(fourthPageStatus.total).toBe(largeRowStatus.total);
   });
 
-  test.skip('Tests DataLinks (single and multi) and actions', async ({ gotoDashboardPage, selectors, page }) => {
+  test('Tests DataLinks (single and multi) and actions', async ({ gotoDashboardPage, selectors, page }) => {
     const addDataLink = async (title: string, url: string) => {
       await dashboardPage
         .getByGrafanaSelector(
@@ -275,11 +285,14 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
         .click();
 
       // DataLinks dialog has popped open - fill it in and add a global datalink.
+      // use click and press sequentially for codemirror
       await expect(page.getByRole('dialog')).toBeVisible();
-      await page.getByRole('dialog').locator('#link-title').fill(title);
-      await page.getByRole('dialog').locator('#data-link-input [contenteditable="true"]').focus();
-      await page.getByRole('dialog').locator('#data-link-input [contenteditable="true"]').fill(url);
-      await page.getByRole('dialog').locator('#data-link-input [contenteditable="true"]').blur();
+      const titleInput = page.getByRole('dialog').getByLabel('Title');
+      await titleInput.click();
+      await titleInput.pressSequentially(title);
+      const urlInput = page.getByRole('dialog').getByLabel('URL');
+      await urlInput.click();
+      await urlInput.pressSequentially(url);
       await page.getByRole('dialog').locator('button[aria-disabled="false"]').filter({ hasText: 'Save' }).click();
       await expect(page.getByRole('dialog')).not.toBeVisible();
     };
@@ -293,18 +306,20 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
     ).toBeVisible();
 
+    await waitForTableLoad(page);
+
     await disableAllTextWrap(page, selectors);
 
     const table = page.locator('.rdg');
-    const infoColumnIdx = await getColumnIdx(table, 'Info');
-    const pillColIdx = await getColumnIdx(table, 'Pills');
-    const dataLinkColIdx = await getColumnIdx(table, 'Data Link');
 
-    // Info column has a single DataLink by default.
-    const infoCell = getCell(table, 1, infoColumnIdx);
-    await expect(infoCell.locator('a')).toBeVisible();
-    expect(infoCell.locator('a')).toHaveAttribute('href');
-    expect(infoCell.locator('a')).not.toHaveAttribute('aria-haspopup');
+    // - pills column currently does not support DataLinks.
+    // - we don't apply DataLinks to Actions or DataLinks columns.
+    // - info column has both a link and an action, so it has a popup.
+    // - image w/ link already has one link, so adding a global link gives it a popover.
+    const excludedColumnIdxs = await Promise.all(
+      ['Pills', 'Data Link', 'Action', 'Info', 'Image w/ Link'].map((name) => getColumnIdx(table, name))
+    );
+    const excludedColumns = new Set<number>(excludedColumnIdxs);
 
     // now, add a DataLink to the whole table
     await addDataLink('Test link', 'https://grafana.com');
@@ -312,9 +327,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // add a DataLink to the whole table, all cells will now have a single link.
     const colCount = await page.getByRole('row').nth(1).getByRole('gridcell').count();
     for (let colIdx = 0; colIdx < colCount; colIdx++) {
-      // - pills column currently does not support DataLinks.
-      // - we don't apply DataLinks to the DataLinks column itself, since they're rendered inside.
-      if (colIdx === pillColIdx || colIdx === dataLinkColIdx) {
+      if (excludedColumns.has(colIdx)) {
         continue;
       }
 
@@ -332,15 +345,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // loop thru the columns, click the links, observe that the tooltip appears, and close the tooltip.
     for (let colIdx = 0; colIdx < colCount; colIdx++) {
       const cell = getCell(table, 1, colIdx);
-      if (colIdx === infoColumnIdx) {
-        // the Info column should still have its single link.
-        expect(cell.locator('a')).not.toHaveAttribute('aria-haspopup', 'menu');
-        continue;
-      }
-
-      // - pills column currently does not support DataLinks.
-      // - we don't apply DataLinks to the DataLinks column itself, since they're rendered inside.
-      if (colIdx === pillColIdx || colIdx === dataLinkColIdx) {
+      if (excludedColumns.has(colIdx)) {
         continue;
       }
 
@@ -353,6 +358,86 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     // add an Action to the whole table and check that the action button is added to the tooltip.
     // TODO -- saving for another day.
+  });
+
+  test('Cross-filter: second filter popup only shows values reachable after first filter', async ({
+    gotoDashboardPage,
+    selectors,
+    page,
+  }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '1' }),
+    });
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
+    ).toBeVisible();
+
+    await waitForTableLoad(page);
+
+    const table = page.locator('.rdg');
+
+    const infoColumnIdx = await getColumnIdx(table, 'Info');
+    const minColumnIdx = await getColumnIdx(table, 'Min');
+
+    // --- Baseline: collect the full set of Min option titles from the Min filter popup ---
+    const minHeader = page.getByRole('columnheader').nth(minColumnIdx);
+    await minHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    const minFilterContainer = dashboardPage.getByGrafanaSelector(
+      selectors.components.Panels.Visualization.TableNG.Filters.Container
+    );
+    await expect(minFilterContainer, 'filter popup for min is visible after click').toBeVisible();
+
+    // Count all option rows in the Min filter popup before any cross-filter is applied.
+    // The List component is virtualized so we can't rely on DOM element count — instead click
+    // "Select all" (which operates on the full data array) and parse the "N selected" label.
+    await minFilterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
+    const allMinOptionCount = await getSelectedFilterCount(minFilterContainer, selectors);
+
+    // Close without applying
+    await minFilterContainer.getByRole('button', { name: 'Cancel' }).click();
+    await expect(minFilterContainer, 'filter popup for min is not visible after close').not.toBeVisible();
+
+    // --- Sort by Info and confirm that the first value is not "up" to compare later in the test ---
+    const infoHeader = page.getByRole('columnheader').nth(infoColumnIdx);
+    await infoHeader.getByText('Info').click();
+    await expect(infoHeader, 'info column header is sorted ascending after click').toHaveAttribute(
+      'aria-sort',
+      'ascending'
+    );
+    const firstInfoCell = getCell(table, 1, infoColumnIdx);
+    expect(firstInfoCell, 'first info cell is not "up" after sorting').not.toHaveText('up');
+
+    // --- Apply a filter on Info to only show "up" rows ---
+    await infoHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    const infoFilterContainer = dashboardPage.getByGrafanaSelector(
+      selectors.components.Panels.Visualization.TableNG.Filters.Container
+    );
+    await expect(infoFilterContainer, 'filter popup for info is visible after click').toBeVisible();
+    await infoFilterContainer.getByTitle('up', { exact: true }).locator('label').click();
+    await infoFilterContainer.getByRole('button', { name: 'Ok' }).click();
+    await expect(infoFilterContainer).not.toBeVisible();
+
+    // Table should now show only "up" rows
+    await expect(firstInfoCell, 'first info cell is "up" after filtering').toHaveText('up');
+
+    // --- Open the Min filter popup again; cross-filter should restrict the options ---
+    await minHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    await expect(minFilterContainer, 'filter popup for min is visible after click').toBeVisible();
+
+    await minFilterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
+    const crossFilteredMinOptionCount = await getSelectedFilterCount(minFilterContainer, selectors);
+
+    // With Info filtered to "up" only, Min options must be a subset of (or equal to) the full set.
+    // In practice the data has multiple Info values, so the Min option list should be smaller.
+    expect(
+      crossFilteredMinOptionCount,
+      'cross-filtered min option count is less than all min option count'
+    ).toBeLessThan(allMinOptionCount);
+
+    // Close the filter popup
+    await minFilterContainer.getByRole('button', { name: 'Cancel' }).click();
   });
 
   test('Tests tooltip interactions', async ({ gotoDashboardPage, selectors }) => {
@@ -476,5 +561,54 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await expect(
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
     ).not.toBeVisible();
+  });
+
+  test('Multi-frame table: frame selector combobox switches active frame', async ({
+    gotoDashboardPage,
+    selectors,
+    page,
+  }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '11' }),
+    });
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Multi-frame table'))
+    ).toBeVisible();
+
+    const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
+    await waitForTableLoad(panelContent);
+
+    const table = panelContent.locator('.rdg');
+
+    const frameCombobox = panelContent.getByRole('combobox');
+    await expect(frameCombobox).toBeVisible();
+    await expect(frameCombobox, 'combobox starts with A').toHaveValue('A');
+    await expect(getCell(table, 0, 1), 'frame A header has correct text').toContainText('A');
+    await assertCellHasBackground(getCell(table, 1, 3), true);
+    for (const colIdx of [0, 1, 2, 4, 5]) {
+      await assertCellHasBackground(getCell(table, 1, colIdx), false);
+    }
+
+    await frameCombobox.click();
+    await page.getByRole('option', { name: 'B', exact: true }).click();
+    await expect(frameCombobox, 'combobox changed to B').toHaveValue('B');
+    await waitForTableLoad(panelContent);
+    await expect(getCell(table, 0, 1), 'frame B header has correct text').toContainText('B');
+    await assertCellHasBackground(getCell(table, 1, 3), true);
+    for (const colIdx of [0, 1, 2, 4, 5]) {
+      await assertCellHasBackground(getCell(table, 1, colIdx), false);
+    }
+
+    await frameCombobox.click();
+    await page.getByRole('option', { name: 'C', exact: true }).click();
+    await expect(frameCombobox, 'combobox changed to C').toHaveValue('C');
+    await waitForTableLoad(panelContent);
+    await expect(getCell(table, 0, 1), 'frame C header has correct text').toContainText('C');
+    await assertCellHasBackground(getCell(table, 1, 3), true);
+    for (const colIdx of [0, 1, 2, 4, 5]) {
+      await assertCellHasBackground(getCell(table, 1, colIdx), false);
+    }
   });
 });

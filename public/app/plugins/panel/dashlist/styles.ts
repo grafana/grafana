@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, colorManipulator } from '@grafana/data';
+import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
 
 export const getStyles = (theme: GrafanaTheme2) => {
   const gradient = `linear-gradient(
@@ -10,26 +10,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
   )`;
 
   return {
-    dashlistLink: css({
-      display: 'flex',
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
-      margin: theme.spacing(1),
-      padding: theme.spacing(1),
-      alignItems: 'center',
-
-      a: {
-        flex: 1,
-
-        '&:hover': {
-          '> p': {
-            '&:first-child': {
-              color: theme.colors.text.link,
-              textDecoration: 'underline',
-            },
-          },
-        },
-      },
-    }),
     dashlistCardContainer: css({
       display: 'block',
       height: '100%',

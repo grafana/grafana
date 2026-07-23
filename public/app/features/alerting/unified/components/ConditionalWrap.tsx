@@ -1,4 +1,4 @@
-import { type JSX, Ref, cloneElement, forwardRef } from 'react';
+import { type JSX, type Ref, cloneElement, forwardRef } from 'react';
 
 interface ConditionalWrapProps {
   shouldWrap: boolean;

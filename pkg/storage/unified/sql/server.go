@@ -9,6 +9,9 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboard"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 
@@ -18,6 +21,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/backfill"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/reconciler"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
 type QOSEnqueueDequeuer interface {
@@ -29,6 +36,8 @@ type QOSEnqueueDequeuer interface {
 // ServerOptions contains the options for creating a new ResourceServer
 type ServerOptions struct {
 	Backend          resource.StorageBackend
+	VectorBackend    vector.VectorBackend
+	Embedder         *embedder.Embedder
 	OverridesService *resource.OverridesService
 	Cfg              *setting.Cfg
 	Tracer           trace.Tracer
@@ -38,10 +47,14 @@ type ServerOptions struct {
 	SearchClient     resourcepb.ResourceIndexClient
 	StorageMetrics   *resource.StorageMetrics
 	IndexMetrics     *resource.BleveIndexMetrics
+	VectorMetrics    *resource.VectorMetrics
 	Features         featuremgmt.FeatureToggles
 	QOSQueue         QOSEnqueueDequeuer
 	SecureValues     secrets.InlineSecureValueSupport
 	OwnsIndexFn      func(key resource.NamespacedResource) (bool, error)
+
+	// DashboardStats is optional; nil disables the backfill views filter.
+	DashboardStats builders.DashboardStats
 
 	// DisableStorageServices is used for standalone search server
 	DisableStorageServices bool
@@ -59,12 +72,17 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withAccessClient,
 		withMaxPageSizeBytes,
 		withBackend,
+		withVectorBackend,
+		withEmbedder,
+		withVectorMetrics,
+		withVectorIndexers,
 		withQOSQueue,
 		withOverridesService,
 		withSearch,
 		withSearchClient,
 		withQuotaConfig,
 		withStorageMetrics,
+		withUsageStats,
 	)
 	if err != nil {
 		return nil, err
@@ -92,6 +110,9 @@ func NewUninitializedSearchServer(opts ServerOptions) (resource.SearchServer, er
 		withBlobConfig,
 		withAccessClient,
 		withBackend,
+		withVectorBackend,
+		withEmbedder,
+		withVectorMetrics,
 		withSearch,
 	)
 	if err != nil {
@@ -139,7 +160,9 @@ func withSecureValueService(opts *ServerOptions, resourceOpts *resource.Resource
 
 func withAccessClient(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	if opts.AccessClient != nil {
-		resourceOpts.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Registry: opts.Reg})
+		resourceOpts.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{
+			Registry: opts.Reg,
+		})
 	}
 	return nil
 }
@@ -168,6 +191,12 @@ func withMaxPageSizeBytes(opts *ServerOptions, resourceOpts *resource.ResourceSe
 	return nil
 }
 
+func withUsageStats(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
+	resourceOpts.UsageStatsEnabled = unifiedStorageCfg.Key("usage_stats_enabled").MustBool(false)
+	return nil
+}
+
 func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	if opts.Backend == nil {
 		return fmt.Errorf("missing storage backend")
@@ -181,6 +210,62 @@ func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptio
 	return nil
 }
 
+// withVectorBackend propagates the optional VectorBackend through. nil is
+// allowed; callers fall back to non-vector search paths when it's absent.
+func withVectorBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.VectorBackend = opts.VectorBackend
+	return nil
+}
+
+// withEmbedder propagates the optional Embedder through. nil is allowed;
+// the VectorSearch handler returns Unimplemented when it's absent.
+func withEmbedder(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.Embedder = opts.Embedder
+	return nil
+}
+
+// withVectorIndexers builds the optional vector backfiller and
+// reconciler. Both providers return (nil, nil) when their feature is
+// off, so nil is normal and propagates through to the resource server
+// which simply doesn't start the goroutine.
+func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	if !opts.Cfg.VectorIndexingEnabled ||
+		opts.Cfg.EmbeddingProvider == "" ||
+		opts.Backend == nil ||
+		opts.VectorBackend == nil ||
+		opts.Embedder == nil {
+		return nil
+	}
+	batchEmbedder := embedder.NewBatchEmbedder(*opts.Embedder)
+	builders := []embed.Builder{dashboard.New()}
+
+	backfiller, err := backfill.NewVectorBackfiller(backfill.Options{
+		Storage:        opts.Backend,
+		VectorBackend:  opts.VectorBackend,
+		BatchEmbedder:  batchEmbedder,
+		Builders:       builders,
+		DashboardStats: opts.DashboardStats,
+		Metrics:        resourceOpts.VectorMetrics,
+	})
+	if err != nil {
+		return fmt.Errorf("create vector backfiller: %w", err)
+	}
+
+	resourceOpts.VectorReconciler, err = reconciler.New(reconciler.Options{
+		Storage:       opts.Backend,
+		VectorBackend: opts.VectorBackend,
+		BatchEmbedder: batchEmbedder,
+		Builders:      builders,
+		Backfiller:    backfiller,
+		Interval:      opts.Cfg.VectorReconcilerInterval,
+		Metrics:       resourceOpts.VectorMetrics,
+	})
+	if err != nil {
+		return fmt.Errorf("create vector reconciler: %w", err)
+	}
+	return nil
+}
+
 func withSearchClient(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	resourceOpts.SearchClient = opts.SearchClient
 	return nil
@@ -190,6 +275,24 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 	resourceOpts.Search = opts.SearchOptions
 	resourceOpts.IndexMetrics = opts.IndexMetrics
 	resourceOpts.OwnsIndexFn = opts.OwnsIndexFn
+
+	if opts.VectorBackend != nil {
+		resourceOpts.Search.AllowedInternalCollections = opts.Cfg.VectorAllowedInternalCollections
+		resourceOpts.Search.AllowedExternalCollections = opts.Cfg.VectorAllowedExternalCollections
+		if opts.Cfg.VectorQueryCacheEnabled {
+			if cache, ok := opts.VectorBackend.(vector.QueryEmbeddingCache); ok {
+				resourceOpts.Search.QueryCache = cache
+				resourceOpts.Search.QueryCacheMaxPerTenant = opts.Cfg.VectorQueryCacheMaxPerTenant
+			}
+		}
+		if opts.Cfg.VectorRateLimitEnabled {
+			if rl, ok := opts.VectorBackend.(vector.RateLimiter); ok {
+				resourceOpts.Search.RateLimiter = rl
+				resourceOpts.Search.RateLimitPerTenant = opts.Cfg.VectorRateLimitPerTenant
+				resourceOpts.Search.RateLimitWindow = opts.Cfg.VectorRateLimitWindow
+			}
+		}
+	}
 	return nil
 }
 
@@ -217,6 +320,11 @@ func withQuotaConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerO
 
 func withStorageMetrics(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	resourceOpts.StorageMetrics = opts.StorageMetrics
+	return nil
+}
+
+func withVectorMetrics(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.VectorMetrics = opts.VectorMetrics
 	return nil
 }
 

@@ -9,17 +9,12 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	types "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -34,8 +29,9 @@ type K8sHandler interface {
 	Get(ctx context.Context, name string, orgID int64, options v1.GetOptions, subresource ...string) (*unstructured.Unstructured, error)
 	Create(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts v1.CreateOptions) (*unstructured.Unstructured, error)
 	Update(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts v1.UpdateOptions) (*unstructured.Unstructured, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, orgID int64, opts v1.PatchOptions) (*unstructured.Unstructured, error)
 	Delete(ctx context.Context, name string, orgID int64, options v1.DeleteOptions) error
-	DeleteCollection(ctx context.Context, orgID int64) error
+	DeleteCollection(ctx context.Context, orgID int64, listOptions v1.ListOptions) error
 	List(ctx context.Context, orgID int64, options v1.ListOptions) (*unstructured.UnstructuredList, error)
 	Search(ctx context.Context, orgID int64, in *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error)
 	GetStats(ctx context.Context, orgID int64) (*resourcepb.ResourceStatsResponse, error)
@@ -52,16 +48,13 @@ type k8sHandler struct {
 	userService user.Service
 }
 
-func NewK8sHandler(dual dualwrite.Service, namespacer request.NamespaceMapper, gvr schema.GroupVersionResource,
-	restConfig func(context.Context) (*rest.Config, error), dashStore dashboards.Store, userSvc user.Service, resourceClient resource.ResourceClient, sorter sort.Service, features featuremgmt.FeatureToggles) K8sHandler {
-	legacySearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
-	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), gvr.GroupResource(), resourceClient, legacySearcher, features)
-
+func NewK8sHandler(namespacer request.NamespaceMapper, gvr schema.GroupVersionResource,
+	restConfig func(context.Context) (*rest.Config, error), userSvc user.Service, resourceClient resourcepb.ResourceIndexClient) K8sHandler {
 	return &k8sHandler{
 		namespacer:  namespacer,
 		gvr:         gvr,
 		restConfig:  restConfig,
-		searcher:    searchClient,
+		searcher:    resourceClient,
 		userService: userSvc,
 	}
 }
@@ -97,6 +90,14 @@ func (h *k8sHandler) Update(ctx context.Context, obj *unstructured.Unstructured,
 	return client.Update(ctx, obj, opts)
 }
 
+func (h *k8sHandler) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, orgID int64, opts v1.PatchOptions) (*unstructured.Unstructured, error) {
+	client, err := h.getClient(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+	return client.Patch(ctx, name, pt, data, opts)
+}
+
 func (h *k8sHandler) Delete(ctx context.Context, name string, orgID int64, options v1.DeleteOptions) error {
 	client, err := h.getClient(ctx, orgID)
 	if err != nil {
@@ -106,13 +107,13 @@ func (h *k8sHandler) Delete(ctx context.Context, name string, orgID int64, optio
 	return client.Delete(ctx, name, options)
 }
 
-func (h *k8sHandler) DeleteCollection(ctx context.Context, orgID int64) error {
+func (h *k8sHandler) DeleteCollection(ctx context.Context, orgID int64, listOptions v1.ListOptions) error {
 	client, err := h.getClient(ctx, orgID)
 	if err != nil {
 		return err
 	}
 
-	return client.DeleteCollection(ctx, v1.DeleteOptions{}, v1.ListOptions{})
+	return client.DeleteCollection(ctx, v1.DeleteOptions{}, listOptions)
 }
 
 func (h *k8sHandler) List(ctx context.Context, orgID int64, options v1.ListOptions) (*unstructured.UnstructuredList, error) {

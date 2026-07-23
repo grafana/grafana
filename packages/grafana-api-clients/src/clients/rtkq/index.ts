@@ -5,6 +5,9 @@ import { generatedAPI as advisorAPIv0alpha1 } from './advisor/v0alpha1';
 import { generatedAPI as collectionsAPIv1alpha1 } from './collections/v1alpha1';
 import { generatedAPI as correlationsAPIv0alpha1 } from './correlations/v0alpha1';
 import { generatedAPI as dashboardAPIv0alpha1 } from './dashboard/v0alpha1';
+import { generatedAPI as dashboardAPIv1beta1 } from './dashboard/v1beta1';
+import { generatedAPI as dashboardAPIv2 } from './dashboard/v2';
+import { generatedAPI as dashboardAPIv2beta1 } from './dashboard/v2beta1';
 import { generatedAPI as folderAPIv1beta1 } from './folder/v1beta1';
 import { generatedAPI as historianAlertingAPIv0alpha1 } from './historian.alerting/v0alpha1';
 import { generatedAPI as iamAPIv0alpha1 } from './iam/v0alpha1';
@@ -13,12 +16,15 @@ import { generatedAPI as logsdrilldownAPIv1beta1 } from './logsdrilldown/v1beta1
 import { generatedAPI as notificationsAlertingAPIv0alpha1 } from './notifications.alerting/v0alpha1';
 import { generatedAPI as notificationsAlertingAPIv1beta1 } from './notifications.alerting/v1beta1';
 import { generatedAPI as playlistAPIv1 } from './playlist/v1';
+import { generatedAPI as pluginsAPIv0alpha1 } from './plugins/v0alpha1';
+import { generatedAPI as orgPreferencesAPI } from './preferences/org';
+import { generatedAPI as teamPreferencesAPI } from './preferences/team';
 import { generatedAPI as preferencesAPIv1alpha1 } from './preferences/v1alpha1';
 import { generatedAPI as provisioningAPIv0alpha1 } from './provisioning/v0alpha1';
 import { generatedAPI as quotasAPIv0alpha1 } from './quotas/v0alpha1';
 import { generatedAPI as rulesAlertingAPIv0alpha1 } from './rules.alerting/v0alpha1';
 import { generatedAPI as shortURLAPIv1beta1 } from './shorturl/v1beta1';
-// PLOP_INJECT_IMPORT
+// GENERATED:IMPORT
 
 /** RTK Query middleware for all API clients  */
 export const allMiddleware = [
@@ -38,8 +44,14 @@ export const allMiddleware = [
   logsdrilldownAPIv1beta1.middleware,
   logsdrilldownAPIv1alpha1.middleware,
   quotasAPIv0alpha1.middleware,
+  orgPreferencesAPI.middleware,
+  teamPreferencesAPI.middleware,
   notificationsAlertingAPIv1beta1.middleware,
-  // PLOP_INJECT_MIDDLEWARE
+  dashboardAPIv1beta1.middleware,
+  dashboardAPIv2.middleware,
+  dashboardAPIv2beta1.middleware,
+  pluginsAPIv0alpha1.middleware,
+  // GENERATED:MIDDLEWARE
 ] as const;
 
 /** RTK Query reducers for all API clients  */
@@ -60,8 +72,14 @@ export const allReducers = {
   [logsdrilldownAPIv1alpha1.reducerPath]: logsdrilldownAPIv1alpha1.reducer,
   [logsdrilldownAPIv1beta1.reducerPath]: logsdrilldownAPIv1beta1.reducer,
   [quotasAPIv0alpha1.reducerPath]: quotasAPIv0alpha1.reducer,
+  [orgPreferencesAPI.reducerPath]: orgPreferencesAPI.reducer,
+  [teamPreferencesAPI.reducerPath]: teamPreferencesAPI.reducer,
   [notificationsAlertingAPIv1beta1.reducerPath]: notificationsAlertingAPIv1beta1.reducer,
-  // PLOP_INJECT_REDUCER
+  [dashboardAPIv1beta1.reducerPath]: dashboardAPIv1beta1.reducer,
+  [dashboardAPIv2.reducerPath]: dashboardAPIv2.reducer,
+  [dashboardAPIv2beta1.reducerPath]: dashboardAPIv2beta1.reducer,
+  [pluginsAPIv0alpha1.reducerPath]: pluginsAPIv0alpha1.reducer,
+  // GENERATED:REDUCER
 };
 
 export * from './createBaseQuery';

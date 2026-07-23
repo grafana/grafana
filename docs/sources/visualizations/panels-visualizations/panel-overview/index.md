@@ -66,14 +66,17 @@ If an option is only available in view mode or edit mode, that's indicated:
   - **Data**: Open the **Inspect** drawer in the **Data** tab.
   - **Query**: Open the **Inspect** drawer in the **Query** tab.
   - **Panel JSON**: Open the **Inspect** drawer in the **JSON** tab.
+- **Time settings**: Opens the **Panel time settings** drawer where you can set panel-specific time options. Public preview. For more information, refer to [Panel time settings](#panel-time-settings).
+- **Styles**: Edit mode only. Copy and paste styles from one panel to another in the same dashboard. For more information, refer to [Copy and paste panel styles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-editor-overview/#copy-and-paste-panel-styles).
 - **Assistant**: View mode only. Access Grafana Assistant help options. This option is only available on Grafana Cloud.
+- **Metrics drilldown**: Open the panel in the **Drilldown > Metrics** feature for further exploration. For more information, refer to [Metrics drilldown](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/simplified-exploration/metrics/).
 - **Extensions**: View mode only. Access other actions provided by installed applications, such as declaring an incident. This option is only available in view mode and only appears if you have app plugins installed that contribute an [extension](https://grafana.com/developers/plugin-tools/key-concepts/ui-extensions) to the panel menu.
 - **More**: Access other panel actions.
   - **Duplicate**: Edit mode only. Make a copy of the panel. Duplicated panels query data separately from the original panel. You can use the special `Dashboard` data source to [share the same query results across panels](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/share-query/) instead.
   - **Copy**: Copy the panel to the clipboard.
   - **New library panel**: Edit mode only. Create a panel that can be imported into other dashboards.
   - **New alert rule**: Open the alert rule configuration page in **Alerting**, where you can [create a Grafana-managed alert](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#create-alerts-from-panels) based on the panel queries.
-  - **Hide legend**: Hide the panel legend.
+  - **Hide/Show legend**: Hide or show the panel legend.
   - **Get help**: Send a snapshot or panel data to Grafana Labs Technical Support.
 - **Remove**: Edit mode only. Remove the panel from the dashboard.
 
@@ -81,18 +84,33 @@ If an option is only available in view mode or edit mode, that's indicated:
 
 Grafana has a number of keyboard shortcuts available specifically for panels. Press `?` on your keyboard to display all keyboard shortcuts available in your version of Grafana.
 
-By hovering over a panel with the mouse you can use some shortcuts that will target that panel.
+By hovering over a panel with the mouse you can use some shortcuts that target that panel.
 
 - `e`: Toggle panel edit view
-- `v`: Toggle panel fullscreen view
-- `pu`: Share link
+- `v`: Toggle panel full screen view
+- `pu`: Copy panel share link
 - `pe`: Share embed
 - `ps`: Share snapshot
 - `px`: Open panel in **Explore**
+- `pc`: Copy panel
+- `pv`: Paste panel
 - `pd`: Duplicate Panel
 - `i`: Inspect
 - `pl`: Hide or show legend
 - `pr`: Remove Panel
+
+## Panel time settings
+
+{{< docs/public-preview product="Panel time settings" featureFlag="`panelTimeSettings`" >}}
+
+You can configure the following settings to control the time range for a panel:
+
+| Option                | Description                                                                                                                                                              |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Panel time range      | Overrides the dashboard time range. Use one of the preset values or enter a custom value like `5m` or `2h`.                                                              |
+| Time shift            | Adds a time shift relative to the dashboard or panel time range. Use one of the preset values or enter a custom value like `5m` or `2h`.                                 |
+| Time comparison       | <p>Compare data between two time ranges. Applied after **Time shift** when used together.</p><p>To try out this feature, enable the `timeComparison` feature toggle.</p> |
+| Hide panel time range | Don't show the panel time range in the panel header.                                                                                                                     |
 
 ## Pan and zoom panel time range
 
@@ -156,16 +174,18 @@ Time series
 
 ## Add a panel
 
-To add a panel in a new dashboard click **+ Add visualization** in the middle of the dashboard:
+To add a panel to an empty dashboard, click or drag the panel onto the dashboard:
 
-![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-10.2.png)
+![Empty dashboard state](/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.1.png)
 
 To add a panel to an existing dashboard, follow these steps:
 
 1. Click **Edit** in the top-right corner of the dashboard.
-1. Click the **Add** drop-down and select **Visualization**:
+1. Click the **Add new element** icon (blue plus sign).
 
-   ![Add dropdown](/media/docs/grafana/panels-visualizations/screenshot-add-dropdown-11.2.png)
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-add-element-icon-v13.1.png" max-width="250px" alt="Add element icon" >}}
+
+1. Click or drag a panel onto the dashboard.
 
 ## Panel configuration
 

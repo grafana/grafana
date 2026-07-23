@@ -3,6 +3,7 @@ package common
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -23,6 +24,7 @@ import (
 
 	"github.com/google/go-github/v82/github"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
+	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,16 +32,19 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashboardsV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashboardsV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashboardsV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
-	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -54,6 +59,20 @@ import (
 const (
 	WaitTimeoutDefault  = 60 * time.Second
 	WaitIntervalDefault = 100 * time.Millisecond
+
+	// waitTimeoutCleanup is the per-step budget for non-folder steps in
+	// CleanupAllResources (repositories, connections, dashboards). It is
+	// larger than the default per-operation wait because finalizers and
+	// controller reconciliation can briefly hold these resources past the
+	// initial delete call.
+	waitTimeoutCleanup = 2 * WaitTimeoutDefault
+
+	// waitTimeoutFolderCleanup is the budget for the folders step in
+	// CleanupAllResources. Folders are force-deleted, so this is no longer
+	// gated on the eventually-consistent empty-folder check; the larger budget
+	// is a safety margin for the delete/list round-trips under SQLite write
+	// contention when many folders are left over.
+	waitTimeoutFolderCleanup = 4 * WaitTimeoutDefault
 )
 
 //nolint:gosec // Test RSA private key (generated for testing purposes only, never used in production)
@@ -83,23 +102,118 @@ CU6bb7JalFFyuQBudiHoyxVcY5PVovWF31CLr3DoJr4TR9+Y5H/U/XnzYCIo+w1N
 exECgYBFAGKYTIeGAvhIvD5TphLpbCyeVLBIq5hRyrdRY+6Iwqdr5PGvLPKwin5+
 +4CDhWPW4spq8MYPCRiMrvRSctKt/7FhVGL2vE/0VY3TcLk14qLC+2+0lnPVgnYn
 u5/wOyuHp1cIBnjeN41/pluOWFBHI9xLW3ExLtmYMiecJ8VdRA==
------END RSA PRIVATE KEY-----`
+-----END RSA PRIVATE KEY-----` // trufflehog:ignore
 
 type ProvisioningTestHelper struct {
 	*apis.K8sTestHelper
 	ProvisioningPath string
+	Namespace        string // Namespace for this helper (set by WithNamespace or defaults to "default")
 
+	// Default clients for Org1 (backwards compatibility)
 	Repositories       *apis.K8sResourceClient
 	Connections        *apis.K8sResourceClient
 	Jobs               *apis.K8sResourceClient
 	Folders            *apis.K8sResourceClient
 	DashboardsV0       *apis.K8sResourceClient
 	DashboardsV1       *apis.K8sResourceClient
+	DashboardsV2       *apis.K8sResourceClient
 	DashboardsV2alpha1 *apis.K8sResourceClient
 	DashboardsV2beta1  *apis.K8sResourceClient
 	AdminREST          *rest.RESTClient
 	EditorREST         *rest.RESTClient
 	ViewerREST         *rest.RESTClient
+}
+
+// WithNamespace returns a new ProvisioningTestHelper scoped to the specified namespace and user.
+// This is useful for multi-org testing where you need separate helpers for different organizations.
+func (h *ProvisioningTestHelper) WithNamespace(t *testing.T, namespace string, user apis.User) *ProvisioningTestHelper {
+	t.Helper()
+	gv := &schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v0alpha1"}
+
+	return &ProvisioningTestHelper{
+		ProvisioningPath: h.ProvisioningPath,
+		Namespace:        namespace,
+		K8sTestHelper:    h.K8sTestHelper,
+
+		Repositories: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       provisioning.RepositoryResourceInfo.GroupVersionResource(),
+		}),
+		Connections: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       provisioning.ConnectionResourceInfo.GroupVersionResource(),
+		}),
+		Jobs: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       provisioning.JobResourceInfo.GroupVersionResource(),
+		}),
+		Folders: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       folder.FolderResourceInfo.GroupVersionResource(),
+		}),
+		DashboardsV0: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       dashboardV0.DashboardResourceInfo.GroupVersionResource(),
+		}),
+		DashboardsV1: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
+		}),
+		DashboardsV2: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       dashboardsV2.DashboardResourceInfo.GroupVersionResource(),
+		}),
+		DashboardsV2alpha1: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       dashboardsV2alpha1.DashboardResourceInfo.GroupVersionResource(),
+		}),
+		DashboardsV2beta1: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       dashboardsV2beta1.DashboardResourceInfo.GroupVersionResource(),
+		}),
+		AdminREST:  user.RESTClient(t, gv),
+		EditorREST: user.RESTClient(t, gv),
+		ViewerREST: user.RESTClient(t, gv),
+	}
+}
+
+// Cleanup deletes all provisioning resources in the helper's namespace.
+// This should be called (typically via defer) after tests that create resources in specific namespaces.
+func (h *ProvisioningTestHelper) Cleanup(t *testing.T) {
+	t.Helper()
+
+	// Delete all repositories
+	if err := h.Repositories.Resource.DeleteCollection(t.Context(), metav1.DeleteOptions{}, metav1.ListOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		t.Logf("warning: failed to delete repositories: %v", err)
+	}
+
+	// Delete all connections
+	if err := h.Connections.Resource.DeleteCollection(t.Context(), metav1.DeleteOptions{}, metav1.ListOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		t.Logf("warning: failed to delete connections: %v", err)
+	}
+
+	// Delete all folders
+	if err := h.Folders.Resource.DeleteCollection(t.Context(), metav1.DeleteOptions{}, metav1.ListOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		t.Logf("warning: failed to delete folders: %v", err)
+	}
+
+	// Delete all dashboards (V0, V1, V2, V2alpha1, V2beta1)
+	for _, client := range []*apis.K8sResourceClient{h.DashboardsV0, h.DashboardsV1, h.DashboardsV2, h.DashboardsV2alpha1, h.DashboardsV2beta1} {
+		if client != nil {
+			if err := client.Resource.DeleteCollection(t.Context(), metav1.DeleteOptions{}, metav1.ListOptions{}); err != nil && !apierrors.IsNotFound(err) {
+				t.Logf("warning: failed to delete dashboards: %v", err)
+			}
+		}
+	}
 }
 
 func (h *ProvisioningTestHelper) SyncAndWait(t *testing.T, repo string, options *provisioning.SyncJobOptions) {
@@ -113,19 +227,27 @@ func (h *ProvisioningTestHelper) SyncAndWait(t *testing.T, repo string, options 
 		Pull:   options,
 	})
 
-	result := h.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Name(repo).
-		SubResource("jobs").
-		Body(body).
-		SetHeader("Content-Type", "application/json").
-		Do(t.Context())
+	post := func() rest.Result {
+		return h.AdminREST.Post().
+			Namespace(h.Namespace).
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(t.Context())
+	}
 
-	if apierrors.IsAlreadyExists(result.Error()) {
-		// Wait for all jobs to finish as we don't have the name.
+	// A controller-triggered sync (e.g. the auto-resync when a repo first
+	// becomes healthy) may already be in flight when the caller invokes us.
+	// That sync may not observe state changes the caller just made (e.g.
+	// files copied to the provisioning path), so we drain any in-flight
+	// jobs and retry the POST to guarantee a sync runs against current state.
+	result := post()
+	const maxRetries = 3
+	for i := 0; apierrors.IsAlreadyExists(result.Error()) && i < maxRetries; i++ {
 		h.AwaitJobs(t, repo)
-		return
+		result = post()
 	}
 
 	obj, err := result.Get()
@@ -136,7 +258,21 @@ func (h *ProvisioningTestHelper) SyncAndWait(t *testing.T, repo string, options 
 
 	name := unstruct.GetName()
 	require.NotEmpty(t, name, "expecting name to be set")
-	h.AwaitJobs(t, repo)
+
+	// Wait for the specific job we just queued via its UID rather than a
+	// list-based scan. AwaitJobs lists active jobs and, if it observes none
+	// for this repo, queues a failsafe pull and only checks that
+	// successCount >= len(waitUntilComplete); when our job has already moved
+	// to the historic subresource that check trivially passes (0 >= 0) and
+	// SyncAndWait returns without having waited for the sync to complete,
+	// causing flakes in callers that immediately list provisioned resources.
+	job := h.AwaitJob(t, unstruct)
+	state := MustNestedString(job.Object, "status", "state")
+	if state == string(provisioning.JobStateError) {
+		h.DebugState(t, repo, fmt.Sprintf("SYNC FAILED: %s", name))
+		errs := MustNestedStringSlice(job.Object, "status", "errors")
+		t.Fatalf("sync job %q for repo %q ended in error state; errors: %v", name, repo, errs)
+	}
 }
 
 func (h *ProvisioningTestHelper) TriggerJobAndWaitForSuccess(t *testing.T, repo string, spec provisioning.JobSpec) {
@@ -166,7 +302,7 @@ func (h *ProvisioningTestHelper) TriggerJobAndWaitForSuccess(t *testing.T, repo 
 
 	name := unstruct.GetName()
 	require.NotEmpty(t, name, "expecting name to be set")
-	h.AwaitJobSuccess(t, t.Context(), unstruct)
+	h.AwaitJobSuccess(t, unstruct)
 }
 
 func (h *ProvisioningTestHelper) TriggerJobAndWaitForComplete(t *testing.T, repo string, spec provisioning.JobSpec) *unstructured.Unstructured {
@@ -197,7 +333,33 @@ func (h *ProvisioningTestHelper) TriggerJobAndWaitForComplete(t *testing.T, repo
 	name := unstruct.GetName()
 	require.NotEmpty(t, name, "expecting name to be set")
 
-	return h.AwaitJob(t, t.Context(), unstruct)
+	return h.AwaitJob(t, unstruct)
+}
+
+// CreatePullJob creates a pull Job resource directly, bypassing the
+// repositories/{name}/jobs subresource, and returns the created object. The
+// repository name need not refer to an existing repository — this lets tests
+// drive the job pipeline (pickup, processing, archival) without standing up a
+// repository. A job against a missing repository fails fast and is archived.
+func (h *ProvisioningTestHelper) CreatePullJob(t *testing.T, jobName, repository string) *unstructured.Unstructured {
+	t.Helper()
+	job := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Job",
+		"metadata": map[string]any{
+			"name":      jobName,
+			"namespace": h.Namespace,
+			"labels":    map[string]any{jobs.LabelRepository: repository},
+		},
+		"spec": map[string]any{
+			"action":     string(provisioning.JobActionPull),
+			"repository": repository,
+			"pull":       map[string]any{},
+		},
+	}}
+	created, err := h.Jobs.Resource.Create(t.Context(), job, metav1.CreateOptions{})
+	require.NoError(t, err, "should create job %s directly", jobName)
+	return created
 }
 
 // AwaitLatestHistoricJob waits for the repo's queue to empty and returns the most recent historic job.
@@ -237,25 +399,31 @@ func (h *ProvisioningTestHelper) AwaitLatestHistoricJob(t *testing.T, repo strin
 	return latest.DeepCopy()
 }
 
-func (h *ProvisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Context, job *unstructured.Unstructured) {
+func (h *ProvisioningTestHelper) AwaitJobSuccess(t *testing.T, job *unstructured.Unstructured) {
 	t.Helper()
-	job = h.AwaitJob(t, ctx, job)
+	job = h.AwaitJob(t, job)
 	lastErrors := MustNestedStringSlice(job.Object, "status", "errors")
 	lastState := MustNestedString(job.Object, "status", "state")
+	// A worker that returns an error records it in status.message, not
+	// status.errors, so surface it explicitly — otherwise a failed job only
+	// reports state=error with no reason.
+	lastMessage := MustNestedString(job.Object, "status", "message")
 
 	repo := job.GetLabels()[jobs.LabelRepository]
 
 	// Debug state if job failed
 	if len(lastErrors) > 0 || lastState != string(provisioning.JobStateSuccess) {
+		t.Logf("job '%s' did not succeed: state=%q message=%q errors=%v",
+			job.GetName(), lastState, lastMessage, lastErrors)
 		h.DebugState(t, repo, fmt.Sprintf("JOB FAILED: %s", job.GetName()))
 	}
 
 	require.Empty(t, lastErrors, "historic job '%s' has errors: %v", job.GetName(), lastErrors)
 	require.Equal(t, string(provisioning.JobStateSuccess), lastState,
-		"historic job '%s' was not successful", job.GetName())
+		"historic job '%s' was not successful (message: %q)", job.GetName(), lastMessage)
 }
 
-func (h *ProvisioningTestHelper) AwaitJob(t *testing.T, ctx context.Context, job *unstructured.Unstructured) *unstructured.Unstructured {
+func (h *ProvisioningTestHelper) AwaitJob(t *testing.T, job *unstructured.Unstructured) *unstructured.Unstructured {
 	t.Helper()
 
 	repo := job.GetLabels()[jobs.LabelRepository]
@@ -263,7 +431,7 @@ func (h *ProvisioningTestHelper) AwaitJob(t *testing.T, ctx context.Context, job
 
 	var lastResult *unstructured.Unstructured
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		result, err := h.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{},
+		result, err := h.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{},
 			"jobs", string(job.GetUID()))
 
 		if !assert.False(collect, apierrors.IsNotFound(err)) {
@@ -404,18 +572,18 @@ func getNameBeforeLastDash(name string) string {
 	return name[:lastDashIndex]
 }
 
+// TestdataPath returns the absolute path to a file in the shared testdata directory.
+func TestdataPath(filename string) string {
+	//nolint:dogsled
+	_, thisFile, _, _ := runtime.Caller(0)
+	return filepath.Join(filepath.Dir(thisFile), "../testdata", filename)
+}
+
 // RenderObject reads the filePath and renders it as a template with the given values.
-// The template is expected to be a YAML or JSON file.
-//
-// The values object is mutated to also include the helper property as `h`.
-func (h *ProvisioningTestHelper) RenderObject(t *testing.T, filePath string, values map[string]any) *unstructured.Unstructured {
+// The template is expected to be a YAML or JSON file. Values can be any type (struct, map, etc.).
+func (h *ProvisioningTestHelper) RenderObject(t *testing.T, filePath string, values any) *unstructured.Unstructured {
 	t.Helper()
 	file := readTestFile(t, filePath)
-
-	if values == nil {
-		values = make(map[string]any)
-	}
-	values["h"] = h
 
 	tmpl, err := template.New(filePath).Parse(string(file))
 	require.NoError(t, err, "failed to parse template")
@@ -482,14 +650,12 @@ func (h *ProvisioningTestHelper) DebugState(t *testing.T, repo string, label str
 	t.Helper()
 	t.Logf("=== DEBUG STATE: %s ===", label)
 
-	ctx := context.Background()
-
 	// Log filesystem contents using existing tree function
 	PrintFileTree(t, h.ProvisioningPath)
 
 	// Log all repositories first
 	t.Logf("All repositories:")
-	repos, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
+	repos, err := h.Repositories.Resource.List(t.Context(), metav1.ListOptions{})
 	if err != nil {
 		t.Logf("  ERROR listing repositories: %v", err)
 	} else {
@@ -501,7 +667,7 @@ func (h *ProvisioningTestHelper) DebugState(t *testing.T, repo string, label str
 
 	// Log repository files for the specific repo
 	t.Logf("Repository '%s' files:", repo)
-	h.logRepositoryFiles(t, ctx, repo, "  ")
+	h.logRepositoryFiles(t, repo, "  ")
 
 	// Log files for all other repositories too
 	if repos != nil && len(repos.Items) > 1 {
@@ -509,14 +675,14 @@ func (h *ProvisioningTestHelper) DebugState(t *testing.T, repo string, label str
 		for _, repository := range repos.Items {
 			if repository.GetName() != repo {
 				t.Logf("  Repository '%s' files:", repository.GetName())
-				h.logRepositoryFiles(t, ctx, repository.GetName(), "    ")
+				h.logRepositoryFiles(t, repository.GetName(), "    ")
 			}
 		}
 	}
 
 	// Log Grafana dashboards
 	t.Logf("Grafana dashboards:")
-	dashboards, err := h.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+	dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
 	if err != nil {
 		t.Logf("  ERROR listing dashboards: %v", err)
 	} else {
@@ -528,7 +694,7 @@ func (h *ProvisioningTestHelper) DebugState(t *testing.T, repo string, label str
 
 	// Log Grafana folders
 	t.Logf("Grafana folders:")
-	folders, err := h.Folders.Resource.List(ctx, metav1.ListOptions{})
+	folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
 	if err != nil {
 		t.Logf("  ERROR listing folders: %v", err)
 	} else {
@@ -542,11 +708,11 @@ func (h *ProvisioningTestHelper) DebugState(t *testing.T, repo string, label str
 }
 
 // logRepositoryFiles logs repository file structure using the files API
-func (h *ProvisioningTestHelper) logRepositoryFiles(t *testing.T, ctx context.Context, repoName string, prefix string) {
+func (h *ProvisioningTestHelper) logRepositoryFiles(t *testing.T, repoName string, prefix string) {
 	t.Helper()
 
 	// Try to list files at root level
-	files, err := h.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{}, "files")
+	files, err := h.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{}, "files")
 	if err != nil {
 		t.Logf("%sERROR getting repository files: %v", prefix, err)
 		return
@@ -618,7 +784,8 @@ func (h *ProvisioningTestHelper) logRepositoryObject(t *testing.T, obj map[strin
 // If folder is nested, folder annotations should not be empty.
 // Also checks that the managerId property exists.
 func (h *ProvisioningTestHelper) ValidateManagedDashboardsFolderMetadata(t *testing.T,
-	ctx context.Context, repoName string, dashboards []unstructured.Unstructured) {
+	repoName string, dashboards []unstructured.Unstructured,
+) {
 	t.Helper()
 
 	// Check if folder is nested or not.
@@ -640,64 +807,160 @@ func (h *ProvisioningTestHelper) ValidateManagedDashboardsFolderMetadata(t *test
 	}
 }
 
-type TestRepo struct {
-	Name                   string
-	Target                 string
-	Path                   string
-	Values                 map[string]any
-	Copies                 map[string]string
-	ExpectedDashboards     int
-	ExpectedFolders        int
-	SkipSync               bool
-	SkipResourceAssertions bool
-	Template               string
+func marshalWorkflows(t *testing.T, workflows []string) string {
+	t.Helper()
+	if workflows == nil {
+		workflows = []string{}
+	}
+	b, err := json.Marshal(workflows)
+	require.NoError(t, err)
+	return string(b)
 }
 
-func (h *ProvisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
-	if repo.Target == "" {
-		repo.Target = "instance"
-	}
+type TestRepo struct {
+	// Template fields (directly accessible by Go templates via .FieldName)
+	Name                      string
+	Title                     string
+	Description               string
+	SyncEnabled               bool
+	SyncTarget                string
+	SyncIntervalSeconds       int
+	Path                      string
+	Workflows                 []string
+	WorkflowsJSON             string
+	URL                       string
+	Branch                    string
+	Token                     string
+	TokenUser                 string
+	WebhookSecret             string
+	WebhookBaseURL            string
+	WebhookDisabled           bool
+	GenerateName              string
+	GenerateDashboardPreviews bool
 
-	// Use custom path if provided, otherwise use default provisioning path
-	repoPath := h.ProvisioningPath
-	if repo.Path != "" {
-		repoPath = repo.Path
-		// Ensure the directory exists
-		err := os.MkdirAll(repoPath, 0o750)
+	// Test control fields (not used by templates)
+	LocalPath string
+	Copies    map[string]string
+	SkipSync  bool
+	Template  string
+}
+
+type LocalRepositorySpec struct {
+	Name                string
+	SyncEnabled         bool
+	SyncTarget          string
+	SyncIntervalSeconds int
+	Path                string
+	Title               string
+	Description         string
+	Workflows           []string
+	WorkflowsJSON       string
+}
+
+func (h *ProvisioningTestHelper) CreateLocalRepository(t *testing.T, repo LocalRepositorySpec) {
+	t.Helper()
+
+	if repo.SyncTarget == "" {
+		repo.SyncTarget = "folder"
+	}
+	if repo.Path == "" {
+		repo.Path = h.ProvisioningPath
+	}
+	repo.WorkflowsJSON = marshalWorkflows(t, repo.Workflows)
+
+	localRepo := h.RenderObject(t, TestdataPath("local.json.tmpl"), repo)
+
+	_, err := h.Repositories.Resource.Create(t.Context(), localRepo, metav1.CreateOptions{})
+	require.NoError(t, err)
+	h.WaitForHealthyRepository(t, repo.Name)
+}
+
+type GitHubRepositorySpec struct {
+	Name                      string
+	GenerateName              string
+	SyncEnabled               bool
+	SyncTarget                string
+	SyncIntervalSeconds       int
+	URL                       string
+	Branch                    string
+	Path                      string
+	Title                     string
+	Description               string
+	Token                     string
+	TokenUser                 string
+	WebhookSecret             string
+	WebhookBaseURL            string
+	WebhookDisabled           bool
+	GenerateDashboardPreviews bool
+	Workflows                 []string
+	WorkflowsJSON             string
+}
+
+func (h *ProvisioningTestHelper) CreateGitHubRepository(t *testing.T, repo GitHubRepositorySpec) string {
+	t.Helper()
+
+	if repo.SyncTarget == "" {
+		repo.SyncTarget = "folder"
+	}
+	repo.WorkflowsJSON = marshalWorkflows(t, repo.Workflows)
+
+	githubRepo := h.RenderObject(t, TestdataPath("github.json.tmpl"), repo)
+	createdRepo, err := h.Repositories.Resource.Create(t.Context(), githubRepo, metav1.CreateOptions{})
+	require.NoError(t, err)
+	createdName := createdRepo.GetName()
+	require.NotEmpty(t, createdName)
+
+	h.WaitForHealthyRepository(t, createdName)
+	return createdName
+}
+
+// CreateRepositoryNoWait renders and creates a local repository from the spec
+// but does NOT wait for it to become healthy (unlike CreateLocalRepo). Use it
+// when the test needs to assert the controller's reconcile explicitly — e.g.
+// WaitForHealthyRepository — rather than have that wait hidden inside creation.
+func (h *ProvisioningTestHelper) CreateRepositoryNoWait(t *testing.T, repo TestRepo) {
+	t.Helper()
+	if repo.SyncTarget == "" {
+		repo.SyncTarget = "instance"
+	}
+	repo.SyncEnabled = !repo.SkipSync
+	repo.WorkflowsJSON = marshalWorkflows(t, repo.Workflows)
+	if repo.Path == "" {
+		repo.Path = h.ProvisioningPath
+	}
+	obj := h.RenderObject(t, TestdataPath("local.json.tmpl"), repo)
+	_, err := h.Repositories.Resource.Create(t.Context(), obj, metav1.CreateOptions{})
+	require.NoError(t, err, "failed to create repository %q", repo.Name)
+}
+
+func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
+	if repo.SyncTarget == "" {
+		repo.SyncTarget = "instance"
+	}
+	repo.SyncEnabled = !repo.SkipSync
+	repo.WorkflowsJSON = marshalWorkflows(t, repo.Workflows)
+
+	localPath := h.ProvisioningPath
+	if repo.LocalPath != "" {
+		localPath = repo.LocalPath
+		err := os.MkdirAll(localPath, 0o750)
 		require.NoError(t, err, "should be able to create repository path")
 	}
-
-	templateVars := map[string]any{
-		"Name":        repo.Name,
-		"SyncEnabled": !repo.SkipSync,
-		"SyncTarget":  repo.Target,
-	}
-	if repo.Path != "" {
-		templateVars["Path"] = repoPath
-	}
-	// Add custom values from TestRepo
-	for key, value := range repo.Values {
-		templateVars[key] = value
-	}
-
-	var thisFile string
-	if _, file, _, ok := runtime.Caller(0); ok {
-		thisFile = file
-	}
-	tmpl := filepath.Join(filepath.Dir(thisFile), "../testdata/local-write.json.tmpl")
+	tmpl := TestdataPath("local.json.tmpl")
 	if repo.Template != "" {
 		tmpl = repo.Template
+	} else if repo.Path == "" {
+		repo.Path = localPath
 	}
-	localTmp := h.RenderObject(t, tmpl, templateVars)
+	localTmp := h.RenderObject(t, tmpl, repo)
 
 	_, err := h.Repositories.Resource.Create(t.Context(), localTmp, metav1.CreateOptions{})
 	require.NoError(t, err)
 	h.WaitForHealthyRepository(t, repo.Name)
 
 	for from, to := range repo.Copies {
-		if repo.Path != "" {
-			// Copy to custom path
-			fullPath := path.Join(repoPath, to)
+		if repo.LocalPath != "" {
+			fullPath := path.Join(localPath, to)
 			err := os.MkdirAll(path.Dir(fullPath), 0o750)
 			require.NoError(t, err, "failed to create directories for custom path")
 			file := readTestFile(t, from)
@@ -715,32 +978,106 @@ func (h *ProvisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 	} else {
 		h.DebugState(t, repo.Name, "AFTER REPO CREATION")
 	}
+}
 
-	// Verify initial state
-	if !repo.SkipResourceAssertions {
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-			if err != nil {
-				collect.Errorf("could not list dashboards error: %s", err.Error())
-				return
-			}
-			if len(dashboards.Items) != repo.ExpectedDashboards {
-				collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", len(dashboards.Items), repo.ExpectedDashboards)
-				return
-			}
-			folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-			if err != nil {
-				collect.Errorf("could not list folders: error: %s", err.Error())
-				return
-			}
-			if len(folders.Items) != repo.ExpectedFolders {
-				collect.Errorf("should have the expected folders after sync. got: %d. expected: %d", len(folders.Items), repo.ExpectedFolders)
-				return
-			}
-			assert.Len(collect, dashboards.Items, repo.ExpectedDashboards)
-			assert.Len(collect, folders.Items, repo.ExpectedFolders)
-		}, WaitTimeoutDefault, WaitIntervalDefault, "should have the expected dashboards and folders after sync")
+// filterManagedResources returns the resources managed by repoName.
+func filterManagedResources(items []unstructured.Unstructured, repoName string) []unstructured.Unstructured {
+	var managed []unstructured.Unstructured
+	for i := range items {
+		annotations := items[i].GetAnnotations()
+		if annotations["grafana.app/managedBy"] == "repo" && annotations["grafana.app/managerId"] == repoName {
+			managed = append(managed, items[i])
+		}
 	}
+	return managed
+}
+
+// ListRepoDashboards lists dashboards and returns only those managed by the given repo.
+func (h *ProvisioningTestHelper) ListRepoDashboards(t *testing.T, repoName string) []unstructured.Unstructured {
+	t.Helper()
+	dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+	require.NoError(t, err, "failed to list dashboards")
+	return filterManagedResources(dashboards.Items, repoName)
+}
+
+// ListRepoFolders lists folders and returns only those managed by the given repo.
+func (h *ProvisioningTestHelper) ListRepoFolders(t *testing.T, repoName string) []unstructured.Unstructured {
+	t.Helper()
+	folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+	require.NoError(t, err, "failed to list folders")
+	return filterManagedResources(folders.Items, repoName)
+}
+
+// RequireDashboards polls until every named dashboard exists, regardless of
+// manager, and returns them in the same order as names.
+func (h *ProvisioningTestHelper) RequireDashboards(t *testing.T, names ...string) []unstructured.Unstructured {
+	t.Helper()
+	matched := make([]unstructured.Unstructured, len(names))
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		byName := make(map[string]unstructured.Unstructured, len(dashboards.Items))
+		for _, d := range dashboards.Items {
+			byName[d.GetName()] = d
+		}
+		for i, name := range names {
+			d, ok := byName[name]
+			if !assert.True(c, ok, "expected dashboard %q to exist", name) {
+				continue
+			}
+			matched[i] = d
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected dashboards %v to exist", names)
+	return matched
+}
+
+// RequireFolders polls until every named folder exists, regardless of manager,
+// and returns them in the same order as names.
+func (h *ProvisioningTestHelper) RequireFolders(t *testing.T, names ...string) []unstructured.Unstructured {
+	t.Helper()
+	matched := make([]unstructured.Unstructured, len(names))
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list folders") {
+			return
+		}
+		byName := make(map[string]unstructured.Unstructured, len(folders.Items))
+		for _, f := range folders.Items {
+			byName[f.GetName()] = f
+		}
+		for i, name := range names {
+			f, ok := byName[name]
+			if !assert.True(c, ok, "expected folder %q to exist", name) {
+				continue
+			}
+			matched[i] = f
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected folders %v to exist", names)
+	return matched
+}
+
+// RequireDashboardsNotFound polls until every named dashboard is gone.
+func (h *ProvisioningTestHelper) RequireDashboardsNotFound(t *testing.T, names ...string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		for _, name := range names {
+			_, err := h.DashboardsV1.Resource.Get(t.Context(), name, metav1.GetOptions{})
+			assert.True(c, apierrors.IsNotFound(err), "expected dashboard %q to be not found, got: %v", name, err)
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected dashboards %v to be deleted", names)
+}
+
+// RequireFoldersNotFound polls until every named folder is gone.
+func (h *ProvisioningTestHelper) RequireFoldersNotFound(t *testing.T, names ...string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		for _, name := range names {
+			_, err := h.Folders.Resource.Get(t.Context(), name, metav1.GetOptions{})
+			assert.True(c, apierrors.IsNotFound(err), "expected folder %q to be not found, got: %v", name, err)
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected folders %v to be deleted", names)
 }
 
 // WaitForResourceQuotaLimit waits until the repository's Status.Quota.MaxResourcesPerRepository
@@ -753,7 +1090,7 @@ func (h *ProvisioningTestHelper) WaitForResourceQuotaLimit(t *testing.T, repoNam
 			return
 		}
 
-		repo := UnstructuredToRepository(t, repoObj)
+		repo := MustFromUnstructured[provisioning.Repository](t, repoObj)
 		assert.Equal(collect, expectedLimit, repo.Status.Quota.MaxResourcesPerRepository,
 			"repository quota limit not yet updated by controller")
 	}, WaitTimeoutDefault, WaitIntervalDefault, "Status.Quota.MaxResourcesPerRepository should be %d", expectedLimit)
@@ -769,7 +1106,7 @@ func (h *ProvisioningTestHelper) WaitForQuotaReconciliation(t *testing.T, repoNa
 			return
 		}
 
-		repo := UnstructuredToRepository(t, repoObj)
+		repo := MustFromUnstructured[provisioning.Repository](t, repoObj)
 		condition := FindCondition(repo.Status.Conditions, provisioning.ConditionTypeResourceQuota)
 		if !assert.NotNil(collect, condition, "Quota condition not found") {
 			return
@@ -788,7 +1125,7 @@ func (h *ProvisioningTestHelper) WaitForConditionReason(t *testing.T, repoName s
 			return
 		}
 
-		repo := UnstructuredToRepository(t, repoObj)
+		repo := MustFromUnstructured[provisioning.Repository](t, repoObj)
 		condition := FindCondition(repo.Status.Conditions, conditionType)
 		if !assert.NotNil(collect, condition, "%s condition not found", conditionType) {
 			return
@@ -798,65 +1135,126 @@ func (h *ProvisioningTestHelper) WaitForConditionReason(t *testing.T, repoName s
 	}, WaitTimeoutDefault, WaitIntervalDefault, "%s condition should have reason %s", conditionType, expectedReason)
 }
 
-// RequireRepoDashboardCount performs a one-off check that the number of dashboards managed by the given repo matches the expected count.
-func (h *ProvisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoName string, expectedCount int) {
+// RequireRepoDashboardCount polls the dashboards list until the number of
+// dashboards managed by the given repo matches the expected count, or the
+// default wait timeout elapses. Polling is required because SyncAndWait only
+// waits for the sync job resource to complete; the dashboards-list API may
+// not yet reflect newly-created/deleted resources at that instant.
+func (h *ProvisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoName string, expectedCount int) []unstructured.Unstructured {
 	t.Helper()
-	dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-	require.NoError(t, err, "failed to list dashboards")
-
-	var count int
-	for _, d := range dashboards.Items {
-		managerID, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/managerId")
-		if managerID == repoName {
-			count++
+	var managed []unstructured.Unstructured
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
 		}
-	}
-	require.Equal(t, expectedCount, count, "unexpected number of dashboards managed by repo %s", repoName)
+
+		managed = filterManagedResources(dashboards.Items, repoName)
+		assert.Equal(c, expectedCount, len(managed), "unexpected number of dashboards managed by repo %s", repoName)
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"expected %d dashboard(s) managed by repo %s", expectedCount, repoName)
+	return managed
+}
+
+// RequireRepoFolderCount polls the folders list until the number of folders
+// managed by the given repo matches the expected count, or the default wait
+// timeout elapses. Like the dashboard variant, this avoids races where the
+// sync job has completed but the folders-list API has not yet observed the
+// newly-created folders or their grafana.app/managerId annotation.
+func (h *ProvisioningTestHelper) RequireRepoFolderCount(t *testing.T, repoName string, expectedCount int) []unstructured.Unstructured {
+	t.Helper()
+	var managed []unstructured.Unstructured
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list folders") {
+			return
+		}
+
+		managed = filterManagedResources(folders.Items, repoName)
+		assert.Equal(c, expectedCount, len(managed), "unexpected number of folders managed by repo %s", repoName)
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"expected %d folder(s) managed by repo %s", expectedCount, repoName)
+	return managed
+}
+
+// RequireSingleRepoFolder polls until exactly one folder is managed by the
+// given repo and returns it. Poll-and-return in one step so callers never
+// index into a separately fetched list that may transiently be empty.
+func (h *ProvisioningTestHelper) RequireSingleRepoFolder(t *testing.T, repoName string) *unstructured.Unstructured {
+	t.Helper()
+	var folder unstructured.Unstructured
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list folders") {
+			return
+		}
+		managed := filterManagedResources(folders.Items, repoName)
+		if !assert.Len(c, managed, 1, "expected exactly one folder managed by repo %s", repoName) {
+			return
+		}
+		folder = managed[0]
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"expected exactly one folder managed by repo %s", repoName)
+	return &folder
+}
+
+// RequireSingleRepoDashboard polls until exactly one dashboard is managed by
+// the given repo and returns it.
+func (h *ProvisioningTestHelper) RequireSingleRepoDashboard(t *testing.T, repoName string) *unstructured.Unstructured {
+	t.Helper()
+	var dashboard unstructured.Unstructured
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		managed := filterManagedResources(dashboards.Items, repoName)
+		if !assert.Len(c, managed, 1, "expected exactly one dashboard managed by repo %s", repoName) {
+			return
+		}
+		dashboard = managed[0]
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"expected exactly one dashboard managed by repo %s", repoName)
+	return &dashboard
 }
 
 // TriggerConnectionReconciliation forces the controller to re-process a connection
-// by touching its status (aging the health timestamp by 1ms).
-// Uses EventuallyWithT to tolerate prolonged optimistic-locking conflicts from
-// concurrent controller reconciliations (common with shared servers).
+// by touching its status (aging the health timestamp by 1ms). A merge patch on the
+// status subresource carries no resourceVersion, so it never conflicts with
+// concurrent controller reconciliations.
 func (h *ProvisioningTestHelper) TriggerConnectionReconciliation(t *testing.T, name string) {
 	t.Helper()
-	ctx := t.Context()
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		conn, err := h.Connections.Resource.Get(ctx, name, metav1.GetOptions{})
-		if !assert.NoError(c, err, "failed to get connection %s", name) {
-			return
-		}
-		health, ok := conn.Object["status"].(map[string]any)["health"].(map[string]any)
-		if !assert.True(c, ok, "missing status.health on connection %s", name) {
-			return
-		}
-		health["checked"] = time.Now().UnixMilli() - 1
-		_, err = h.Connections.Resource.UpdateStatus(ctx, conn, metav1.UpdateOptions{})
-		assert.NoError(c, err, "failed to update status for connection %s", name)
-	}, WaitTimeoutDefault, 200*time.Millisecond, "should trigger reconciliation for connection %s", name)
+	statusPatch, err := json.Marshal(map[string]any{
+		"status": map[string]any{
+			"health": map[string]any{
+				"checked": time.Now().UnixMilli() - 1,
+			},
+		},
+	})
+	require.NoError(t, err)
+	_, err = h.Connections.Resource.Patch(t.Context(), name,
+		types.MergePatchType, statusPatch, metav1.PatchOptions{}, "status")
+	require.NoError(t, err, "failed to patch status for connection %s", name)
 }
 
 // TriggerRepositoryReconciliation forces the controller to re-process a repo
 // by touching its status (aging the health timestamp by 1ms).
 // Updating it by incrementing its generation by +1 is not triggering a reconciliation.
-// Uses EventuallyWithT to tolerate prolonged optimistic-locking conflicts from
-// concurrent controller reconciliations (common with shared servers).
+// A merge patch on the status subresource carries no resourceVersion, so it never
+// conflicts with concurrent controller reconciliations.
 func (h *ProvisioningTestHelper) TriggerRepositoryReconciliation(t *testing.T, name string) {
 	t.Helper()
-	ctx := t.Context()
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		repo, err := h.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
-		if !assert.NoError(c, err, "failed to get repository %s", name) {
-			return
-		}
-		health, ok := repo.Object["status"].(map[string]any)["health"].(map[string]any)
-		if !assert.True(c, ok, "missing status.health on repository %s", name) {
-			return
-		}
-		health["checked"] = time.Now().UnixMilli() - 1
-		_, err = h.Repositories.Resource.UpdateStatus(ctx, repo, metav1.UpdateOptions{})
-		assert.NoError(c, err, "failed to update status for repository %s", name)
-	}, WaitTimeoutDefault, 200*time.Millisecond, "should trigger reconciliation for repository %s", name)
+	statusPatch, err := json.Marshal(map[string]any{
+		"status": map[string]any{
+			"health": map[string]any{
+				"checked": time.Now().UnixMilli() - 1,
+			},
+		},
+	})
+	require.NoError(t, err)
+	_, err = h.Repositories.Resource.Patch(t.Context(), name,
+		types.MergePatchType, statusPatch, metav1.PatchOptions{}, "status")
+	require.NoError(t, err, "failed to patch status for repository %s", name)
 }
 
 // WaitForHealthyRepository waits for a repository to become healthy.
@@ -867,7 +1265,7 @@ func (h *ProvisioningTestHelper) WaitForHealthyRepository(t *testing.T, name str
 			return
 		}
 		errType := MustNestedString(repoStatus.Object, "status", "health", "error")
-		assert.Empty(collect, errType, "repository %s has health error: %s", name, errType)
+		assert.Empty(collect, errType, "repository %s has health error: %s - %v", name, errType, repoStatus.Object)
 		msgs := MustNestedStringSlice(repoStatus.Object, "status", "health", "message")
 		assert.Empty(collect, msgs, "repository %s has health messages: %v", name, msgs)
 		status, found := mustNestedBool(repoStatus.Object, "status", "health", "healthy")
@@ -891,20 +1289,306 @@ func (h *ProvisioningTestHelper) WaitForUnhealthyRepository(t *testing.T, name s
 	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should become unhealthy", name)
 }
 
+// WaitForHealthyConnection polls until the connection controller has reconciled
+// the connection: its ObservedGeneration has caught up to the object
+// generation, a health check has run, it is healthy, and the Ready condition is
+// True. This is the connection analogue of WaitForHealthyRepository.
+func (h *ProvisioningTestHelper) WaitForHealthyConnection(t *testing.T, name string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		obj, err := h.Connections.Resource.Get(t.Context(), name, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get connection %s", name) {
+			return
+		}
+		conn := MustFromUnstructured[provisioning.Connection](t, obj)
+		assert.Equal(collect, conn.Generation, conn.Status.ObservedGeneration,
+			"controller should reconcile the observed generation")
+		assert.Greater(collect, conn.Status.Health.Checked, int64(0),
+			"connection %s health check has not run yet", name)
+		assert.True(collect, conn.Status.Health.Healthy, "connection %s is not healthy yet", name)
+		ready := FindCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+		if assert.NotNil(collect, ready, "connection %s should have a Ready condition", name) {
+			assert.Equal(collect, metav1.ConditionTrue, ready.Status, "connection %s Ready condition should be true", name)
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "connection %s should be reconciled and healthy", name)
+}
+
+// RequireRepositoryReReconciles ages the repository's health timestamp and
+// asserts the controller re-runs the health check (status.health.checked
+// advances), proving it reacts to update/resync events. Pairs with a create
+// that first brings the repository to healthy.
+func (h *ProvisioningTestHelper) RequireRepositoryReReconciles(t *testing.T, name string) {
+	t.Helper()
+
+	obj, err := h.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
+	require.NoError(t, err, "failed to get repository %s", name)
+	before, found := mustNestedInt64(obj.Object, "status", "health", "checked")
+	require.True(t, found, "repository %s should already have a health checked timestamp", name)
+
+	h.TriggerRepositoryReconciliation(t, name)
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		cur, err := h.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository %s", name) {
+			return
+		}
+		after, found := mustNestedInt64(cur.Object, "status", "health", "checked")
+		assert.True(collect, found, "repository %s should have a health checked timestamp", name)
+		assert.Greater(collect, after, before, "controller should re-check health after the update")
+	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s health should be re-checked", name)
+}
+
+// WaitForRepositoryDeleted polls until the named repository reports NotFound.
+// Repository deletion is finalizer-driven (cleanup → release/remove orphan
+// resources); on loaded CI runners the chain routinely exceeds short bounds.
+func (h *ProvisioningTestHelper) WaitForRepositoryDeleted(t *testing.T, name string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		_, err := h.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
+		assert.True(collect, apierrors.IsNotFound(err), "repository %s should be deleted", name)
+	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should be deleted", name)
+}
+
+// ReleaseAndDeleteRepository sets the release-orphan-resources finalizer on the
+// repository, deletes it, and waits until the deletion completes. Managed
+// resources are released (manager annotations stripped) rather than deleted;
+// callers that depend on the release having finished should follow up with
+// WaitForResourcesReleased on the relevant client.
+func (h *ProvisioningTestHelper) ReleaseAndDeleteRepository(t *testing.T, name string) {
+	t.Helper()
+	_, err := h.Repositories.Resource.Patch(t.Context(), name, types.JSONPatchType, []byte(`[
+		{"op": "replace", "path": "/metadata/finalizers", "value": ["cleanup", "release-orphan-resources"]}
+	]`), metav1.PatchOptions{})
+	require.NoError(t, err, "should successfully patch finalizers")
+	require.NoError(t, h.Repositories.Resource.Delete(t.Context(), name, metav1.DeleteOptions{}))
+	h.WaitForRepositoryDeleted(t, name)
+}
+
+// RequireRepoFileExists asserts the repository serves a file at the given path
+// via the files subresource.
+func (h *ProvisioningTestHelper) RequireRepoFileExists(t *testing.T, repo string, path ...string) {
+	t.Helper()
+	subresources := append([]string{"files"}, path...)
+	_, err := h.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, subresources...)
+	require.NoError(t, err, "file %s should exist in repository %s", strings.Join(path, "/"), repo)
+}
+
+// RequireRepoFileNotFound asserts the repository has no file at the given path.
+func (h *ProvisioningTestHelper) RequireRepoFileNotFound(t *testing.T, repo string, path ...string) {
+	t.Helper()
+	subresources := append([]string{"files"}, path...)
+	_, err := h.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, subresources...)
+	require.True(t, apierrors.IsNotFound(err),
+		"file %s should not exist in repository %s, got: %v", strings.Join(path, "/"), repo, err)
+}
+
+// WaitForResourcesReleased polls until every item returned by client no longer
+// carries provisioning-manager annotations — i.e. the release-orphan-resources
+// finalizer has finished handing the objects back to the user.
+func WaitForResourcesReleased(t *testing.T, client dynamic.ResourceInterface, resourceKind string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		items, err := client.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(collect, err, "can list %s", resourceKind) {
+			return
+		}
+		for _, v := range items.Items {
+			annotations := v.GetAnnotations()
+			assert.NotContains(collect, annotations, utils.AnnoKeyManagerKind, "%s %q still has manager kind annotation", resourceKind, v.GetName())
+			assert.NotContains(collect, annotations, utils.AnnoKeyManagerIdentity, "%s %q still has manager identity annotation", resourceKind, v.GetName())
+			assert.NotContains(collect, annotations, utils.AnnoKeySourcePath, "%s %q still has source path annotation", resourceKind, v.GetName())
+			assert.NotContains(collect, annotations, utils.AnnoKeySourceChecksum, "%s %q still has source checksum annotation", resourceKind, v.GetName())
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected %s to be released", resourceKind)
+}
+
+// WaitForResourcesDeleted polls until the given client lists zero items.
+// Use this after a repository delete when the remove-orphan-resources
+// finalizer should have swept the managed resources away.
+func WaitForResourcesDeleted(t *testing.T, client dynamic.ResourceInterface, resourceKind string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		items, err := client.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(collect, err, "can list %s", resourceKind) {
+			return
+		}
+		assert.Empty(collect, items.Items, "expected %s to be deleted", resourceKind)
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected %s to be deleted", resourceKind)
+}
+
+// RequireResource polls until the named resource is gettable via client and returns it.
+// Use after a write/sync to assert a resource has been provisioned into Grafana.
+func RequireResource(t *testing.T, client dynamic.ResourceInterface, name string) *unstructured.Unstructured {
+	t.Helper()
+	var got *unstructured.Unstructured
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		obj, err := client.Get(t.Context(), name, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "get %q", name) {
+			return
+		}
+		got = obj
+	}, WaitTimeoutDefault, WaitIntervalDefault, "resource %q should be provisioned", name)
+	return got
+}
+
+// ResourceToJSON marshals an unstructured resource to JSON, e.g. for a files-endpoint write.
+func ResourceToJSON(t *testing.T, obj *unstructured.Unstructured) []byte {
+	t.Helper()
+	data, err := json.Marshal(obj.Object)
+	require.NoError(t, err)
+	return data
+}
+
+// ExportedResourceFiles walks the repository directory and returns the paths of files whose
+// apiVersion has the given group prefix (e.g. "playlist.grafana.app/"). It lets export tests
+// assert what was written without hard-coding the generated file names.
+func (h *ProvisioningTestHelper) ExportedResourceFiles(t *testing.T, groupPrefix string) []string {
+	t.Helper()
+	var matches []string
+	err := filepath.WalkDir(h.ProvisioningPath, func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		switch strings.ToLower(filepath.Ext(p)) {
+		case ".json", ".yaml", ".yml":
+		default:
+			return nil
+		}
+		apiVersion, _, _ := unstructured.NestedString(h.LoadYAMLOrJSONFile(p).Object, "apiVersion")
+		if strings.HasPrefix(apiVersion, groupPrefix) {
+			matches = append(matches, p)
+		}
+		return nil
+	})
+	require.NoError(t, err)
+	return matches
+}
+
+// PlaylistGVR is the playlist resource served by the App SDK apiserver.
+var PlaylistGVR = schema.GroupVersionResource{
+	Group:    "playlist.grafana.app",
+	Version:  "v1",
+	Resource: "playlists",
+}
+
+// NewPlaylist builds a minimal playlist resource for provisioning tests.
+func NewPlaylist(name, title string) *unstructured.Unstructured {
+	return &unstructured.Unstructured{
+		Object: map[string]any{
+			"apiVersion": PlaylistGVR.GroupVersion().String(),
+			"kind":       "Playlist",
+			"metadata": map[string]any{
+				"name": name,
+			},
+			"spec": map[string]any{
+				"title":    title,
+				"interval": "5m",
+				"items": []any{
+					map[string]any{"type": "dashboard_by_tag", "value": "provisioning"},
+				},
+			},
+		},
+	}
+}
+
 // GrafanaOption is a functional option for RunGrafana.
 type GrafanaOption func(opts *testinfra.GrafanaOpts)
 
 // Useful for debugging a test in development.
 //
 
-// WithProvisioningFolderMetadata enables the FlagProvisioningFolderMetadata feature toggle.
-func WithProvisioningFolderMetadata(opts *testinfra.GrafanaOpts) {
-	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
+// WithoutProvisioningFolderMetadata disables the FlagProvisioningFolderMetadata feature toggle.
+func WithoutProvisioningFolderMetadata(opts *testinfra.GrafanaOpts) {
+	opts.DisableFeatureToggles = append(opts.DisableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
 }
 
 func WithRepositoryTypes(types []string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningRepositoryTypes = types
+	}
+}
+
+func WithProvisioningPublicRootURL(url string) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningPublicRootURL = url
+	}
+}
+
+// WithProvisioningMaxIncrementalChanges overrides the controller-side
+// incremental-sync size threshold. A small value (e.g. 5) keeps tests fast
+// when they need to exercise the full-sync fallback; 0 disables the check.
+// Pass an int — the helper takes its address so GrafanaOpts can distinguish
+// "not set" (nil) from an explicit 0.
+func WithProvisioningMaxIncrementalChanges(n int) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningMaxIncrementalChanges = &n
+	}
+}
+
+// WithProvisioningMaxFileSize overrides the per-file size cap enforced by the
+// files API on both reads and writes. A small value (e.g. 1024) keeps the
+// fixture cheap to generate; any non-positive value (<=0) disables the check
+// entirely. Pass an int64 — the helper takes its address so GrafanaOpts can
+// distinguish "not set" (nil) from an explicit 0.
+func WithProvisioningMaxFileSize(n int64) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningMaxFileSize = &n
+	}
+}
+
+// WithNATS enables the embedded Core NATS bus and the SQL KV storage backend so
+// the provisioning controllers reconcile off NATS-delivered resource-change
+// notifications instead of the apiserver watch. The KV backend is what publishes
+// those notifications, so both must be on together. The embedded server binds
+// kernel-assigned ephemeral ports for its client and cluster listeners
+// so parallel test binaries don't collide on the conventional 4222/6222.
+func WithNATS() GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.NATSEnabled = true
+		opts.EnableSQLKVBackend = true
+		opts.NATSListenAddress = "127.0.0.1"
+		opts.NATSClientPort = natsserver.RANDOM_PORT
+		opts.NATSClusterPort = natsserver.RANDOM_PORT
+		// Push the informer re-list and the job driver's fallback poll far out so
+		// any reconcile/job pickup observed within a test's wait budget can only
+		// have come from a live NATS notification, not the periodic LIST/poll.
+		// Tests that specifically exercise the re-list path (e.g. historic-job
+		// cleanup) override the relevant interval.
+		opts.ProvisioningControllerResyncInterval = 10 * time.Minute
+		opts.ProvisioningJobPollInterval = 10 * time.Minute
+	}
+}
+
+// WithNATSReListOnly enables the embedded NATS bus but deliberately leaves the
+// SQL KV backend off, so no component ever publishes a watch notification. The
+// provisioning informers still run on the NATS path (they subscribe and
+// re-list) but receive no live events, so reconciliation is driven purely by
+// the periodic re-list, whose interval is set to resync. This isolates the
+// re-list fallback that guarantees eventual reconciliation when live
+// notifications are missed (round-robined to another replica, a startup or
+// reconnect gap). Keep resync short so the re-list fires within a test budget.
+func WithNATSReListOnly(resync time.Duration) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.NATSEnabled = true
+		opts.NATSListenAddress = "127.0.0.1"
+		opts.NATSClientPort = natsserver.RANDOM_PORT
+		opts.NATSClusterPort = natsserver.RANDOM_PORT
+		// EnableSQLKVBackend stays false: only the KV backend publishes watch
+		// notifications, so leaving it off means the informers never receive a
+		// live event and the re-list is the sole reconcile driver.
+		opts.ProvisioningControllerResyncInterval = resync
+	}
+}
+
+// WithProvisioningHistoryExpiration overrides [provisioning] history_expiration,
+// which is both the HistoricJob retention and the historic-job informer's
+// resync. A short value lets tests exercise the re-list-driven cleanup quickly.
+func WithProvisioningHistoryExpiration(d time.Duration) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningHistoryExpiration = d
 	}
 }
 
@@ -925,6 +1609,12 @@ func defaultGrafanaOpts(provisioningPath string) testinfra.GrafanaOpts {
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagProvisioningExport,
+			featuremgmt.FlagProvisioningUserAttribution,
+			// Lets CleanupAllResources force-delete folders (gracePeriodSeconds=0),
+			// bypassing the eventually-consistent "folder is empty" admission check.
+			// Normal (non-force) deletes still enforce the check, so test behavior
+			// outside cleanup is unchanged.
+			featuremgmt.FlagKubernetesFolderCascadeDelete,
 		},
 		// Provisioning requires resources to be fully migrated to unified storage.
 		// Mode5 ensures reads/writes go to unified storage, and EnableMigration
@@ -939,10 +1629,16 @@ func defaultGrafanaOpts(provisioningPath string) testinfra.GrafanaOpts {
 				EnableMigration: true,
 			},
 		},
-		PermittedProvisioningPaths: ".|" + provisioningPath,
-		// Allow both folder and instance sync targets for tests
-		// (instance is needed for export jobs, folder for most operations)
-		ProvisioningAllowedTargets: []string{"folder", "instance"},
+		// Longer batched RV WithTx deadline via [unified_storage] resource_version_batch_transaction_timeout.
+		UnifiedStorageResourceVersionBatchTransactionTimeout: 60 * time.Second,
+		PermittedProvisioningPaths:                           ".|" + provisioningPath,
+		// Allow folder, instance, and folderless sync targets for tests
+		// (instance is needed for export jobs, folder for most operations,
+		// folderless for top-level sync without a wrapper folder)
+		ProvisioningAllowedTargets: []string{"folder", "instance", "folderless"},
+		// Tests use a local Gitea server over http:// with a token, so permit the
+		// otherwise-rejected http:// + token combination.
+		ProvisioningAllowInsecure: true,
 	}
 }
 
@@ -981,6 +1677,11 @@ func buildProvisioningHelper(t *testing.T, k8sHelper *apis.K8sTestHelper, provis
 		Namespace: "default",
 		GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
 	})
+	dashboardsV2Client := k8sHelper.GetResourceClient(apis.ResourceClientArgs{
+		User:      k8sHelper.Org1.Admin,
+		Namespace: "default",
+		GVR:       dashboardsV2.DashboardResourceInfo.GroupVersionResource(),
+	})
 	dashboardsV2alpha1Client := k8sHelper.GetResourceClient(apis.ResourceClientArgs{
 		User:      k8sHelper.Org1.Admin,
 		Namespace: "default",
@@ -999,6 +1700,7 @@ func buildProvisioningHelper(t *testing.T, k8sHelper *apis.K8sTestHelper, provis
 
 	h := &ProvisioningTestHelper{
 		ProvisioningPath: provisioningPath,
+		Namespace:        "default", // Default namespace (org1)
 		K8sTestHelper:    k8sHelper,
 
 		Repositories:       repositories,
@@ -1010,11 +1712,12 @@ func buildProvisioningHelper(t *testing.T, k8sHelper *apis.K8sTestHelper, provis
 		Folders:            foldersClient,
 		DashboardsV0:       dashboardsV0,
 		DashboardsV1:       dashboardsV1,
+		DashboardsV2:       dashboardsV2Client,
 		DashboardsV2alpha1: dashboardsV2alpha1Client,
 		DashboardsV2beta1:  dashboardsV2beta1Client,
 	}
 
-	h.CleanupAllResources(t, context.Background())
+	h.CleanupAllResources(t)
 
 	return h
 }
@@ -1051,8 +1754,10 @@ func runGrafanaShared(t *testing.T, options ...GrafanaOption) (*ProvisioningTest
 
 // deleteAndWait deletes all resources from a dynamic client and polls until
 // none remain. It retries deletes on each iteration to handle transient
-// resource-version conflicts from concurrent controller updates.
-func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeout time.Duration) error {
+// resource-version conflicts from concurrent controller updates. deleteOpts is
+// applied to every delete (e.g. gracePeriodSeconds=0 to force-delete folders
+// past the empty-folder admission check).
+func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeout time.Duration, deleteOpts metav1.DeleteOptions) error {
 	list, err := client.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return fmt.Errorf("deleteAndWait: initial list: %w", err)
@@ -1061,12 +1766,10 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 		return nil
 	}
 
-	var firstErr error
+	var lastErr error
 	for _, item := range list.Items {
-		if err := client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
-			if firstErr == nil {
-				firstErr = fmt.Errorf("deleteAndWait: delete %q: %w", item.GetName(), err)
-			}
+		if err := client.Delete(ctx, item.GetName(), deleteOpts); err != nil && !apierrors.IsNotFound(err) {
+			lastErr = fmt.Errorf("deleteAndWait: delete %q: %w", item.GetName(), err)
 		}
 	}
 
@@ -1084,21 +1787,19 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 			return nil
 		}
 		for _, item := range remaining.Items {
-			if err := client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
-				if firstErr == nil {
-					firstErr = fmt.Errorf("deleteAndWait: delete %q: %w", item.GetName(), err)
-				}
+			if err := client.Delete(ctx, item.GetName(), deleteOpts); err != nil && !apierrors.IsNotFound(err) {
+				lastErr = fmt.Errorf("deleteAndWait: delete %q: %w", item.GetName(), err)
 			}
 		}
 		select {
 		case <-ctx.Done():
-			if firstErr != nil {
-				return fmt.Errorf("deleteAndWait: context cancelled (first delete error: %v): %w", firstErr, ctx.Err())
+			if lastErr != nil {
+				return fmt.Errorf("deleteAndWait: context cancelled (last delete error: %v): %w", lastErr, ctx.Err())
 			}
 			return fmt.Errorf("deleteAndWait: context cancelled: %w", ctx.Err())
 		case <-timer.C:
-			if firstErr != nil {
-				return fmt.Errorf("deleteAndWait: timed out with %d items remaining (first delete error: %v)", len(remaining.Items), firstErr)
+			if lastErr != nil {
+				return fmt.Errorf("deleteAndWait: timed out with %d items remaining (last delete error: %v)", len(remaining.Items), lastErr)
 			}
 			return fmt.Errorf("deleteAndWait: timed out with %d items remaining", len(remaining.Items))
 		case <-ticker.C:
@@ -1111,18 +1812,33 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 // It also clears the shared provisioning directory so leftover files from
 // a previous test don't leak into the next one.
 // Failures are fatal because cleanup is the primary test-isolation mechanism.
-func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T, ctx context.Context) {
+//
+// Repositories, connections, and dashboards can be briefly blocked by an
+// eventually-consistent signal (finalizers draining orphans, the search index
+// catching up), so they get waitTimeoutCleanup.
+//
+// Folders are force-deleted (gracePeriodSeconds=0, enabled by
+// FlagKubernetesFolderCascadeDelete). The default folder delete is rejected
+// until the search index reflects that the folder is empty, and that index lag
+// is unbounded under SQLite write contention — repeatedly bumping the timeout
+// (see git history) only masks it. Cleanup deletes every folder anyway, so the
+// empty-folder check serves no purpose here; bypassing it makes folder cleanup
+// deterministic instead of racing the index.
+func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T) {
 	t.Helper()
+	forceDelete := metav1.DeleteOptions{GracePeriodSeconds: new(int64)} // gracePeriodSeconds=0
 	for _, c := range []struct {
-		name   string
-		client dynamic.ResourceInterface
+		name       string
+		client     dynamic.ResourceInterface
+		timeout    time.Duration
+		deleteOpts metav1.DeleteOptions
 	}{
-		{"repositories", h.Repositories.Resource},
-		{"connections", h.Connections.Resource},
-		{"dashboards", h.DashboardsV1.Resource},
-		{"folders", h.Folders.Resource},
+		{"repositories", h.Repositories.Resource, waitTimeoutCleanup, metav1.DeleteOptions{}},
+		{"connections", h.Connections.Resource, waitTimeoutCleanup, metav1.DeleteOptions{}},
+		{"dashboards", h.DashboardsV1.Resource, waitTimeoutCleanup, metav1.DeleteOptions{}},
+		{"folders", h.Folders.Resource, waitTimeoutFolderCleanup, forceDelete},
 	} {
-		if err := deleteAndWait(ctx, c.client, 10*time.Second); err != nil {
+		if err := deleteAndWait(t.Context(), c.client, c.timeout, c.deleteOpts); err != nil {
 			t.Fatalf("CleanupAllResources(%s): %v", c.name, err)
 		}
 	}
@@ -1180,7 +1896,7 @@ func (e *SharedEnv) GetHelper(t *testing.T) *ProvisioningTestHelper {
 func (e *SharedEnv) GetCleanHelper(t *testing.T) *ProvisioningTestHelper {
 	t.Helper()
 	h := e.GetHelper(t)
-	h.CleanupAllResources(t, context.Background())
+	h.CleanupAllResources(t)
 	return h
 }
 
@@ -1235,37 +1951,38 @@ func AsJSON(obj any) []byte {
 	return jj
 }
 
-func UnstructuredToRepository(t *testing.T, obj *unstructured.Unstructured) *provisioning.Repository {
-	bytes, err := obj.MarshalJSON()
-	require.NoError(t, err)
-
-	repo := &provisioning.Repository{}
-	err = json.Unmarshal(bytes, repo)
-	require.NoError(t, err)
-
-	return repo
+// ToUnstructured converts a typed K8s object to an unstructured representation
+// using the canonical DefaultUnstructuredConverter.
+func ToUnstructured[T any](obj *T) (*unstructured.Unstructured, error) {
+	raw, err := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	if err != nil {
+		return nil, err
+	}
+	return &unstructured.Unstructured{Object: raw}, nil
 }
 
-func RepositoryToUnstructured(t *testing.T, obj *provisioning.Repository) *unstructured.Unstructured {
-	bytes, err := json.Marshal(obj)
-	require.NoError(t, err)
-
-	res := &unstructured.Unstructured{}
-	err = res.UnmarshalJSON(bytes)
-	require.NoError(t, err)
-
-	return res
+// FromUnstructured converts an unstructured object to a typed K8s object
+// using the canonical DefaultUnstructuredConverter.
+func FromUnstructured[T any](obj *unstructured.Unstructured) (*T, error) {
+	result := new(T)
+	err := k8sruntime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, result)
+	return result, err
 }
 
-func UnstructuredToConnection(t *testing.T, obj *unstructured.Unstructured) *provisioning.Connection {
-	bytes, err := obj.MarshalJSON()
+// MustToUnstructured is a test-fatal wrapper around ToUnstructured.
+func MustToUnstructured[T any](t *testing.T, obj *T) *unstructured.Unstructured {
+	t.Helper()
+	result, err := ToUnstructured(obj)
 	require.NoError(t, err)
+	return result
+}
 
-	c := &provisioning.Connection{}
-	err = json.Unmarshal(bytes, c)
+// MustFromUnstructured is a test-fatal wrapper around FromUnstructured.
+func MustFromUnstructured[T any](t *testing.T, obj *unstructured.Unstructured) *T {
+	t.Helper()
+	result, err := FromUnstructured[T](obj)
 	require.NoError(t, err)
-
-	return c
+	return result
 }
 
 // ParseTestResults extracts TestResults from an API response k8sruntime.Object.
@@ -1324,6 +2041,24 @@ func (h *ProvisioningTestHelper) PostFilesRequest(t *testing.T, repo string, opt
 	require.NoError(t, err)
 
 	return resp
+}
+
+// ListRepositoryFiles returns the file listing from the repository's files endpoint
+// (GET .../files/). It is a directory listing only — it does not parse resources or run
+// a dry-run, so it is safe to call regardless of whether the files are already
+// provisioned in Grafana.
+func (h *ProvisioningTestHelper) ListRepositoryFiles(t *testing.T, repo string) []provisioning.FileItem {
+	t.Helper()
+	rsp := h.AdminREST.Get().
+		Namespace("default").
+		Resource("repositories").
+		Name(repo).
+		Suffix("files/").
+		Do(t.Context())
+	require.NoError(t, rsp.Error(), "listing repository files should succeed")
+	list := &provisioning.FileList{}
+	require.NoError(t, rsp.Into(list))
+	return list.Items
 }
 
 // FilesClient provides convenience methods for interacting with the provisioning
@@ -1385,9 +2120,9 @@ func (c *FilesClient) Do(t *testing.T, method, filePath string, body []byte) *Fi
 }
 
 // Post sends a POST request to the given path with no body.
-func (c *FilesClient) Post(t *testing.T, filePath string) *FilesResponse {
+func (c *FilesClient) Post(t *testing.T, filePath string, body []byte) *FilesResponse {
 	t.Helper()
-	return c.Do(t, http.MethodPost, filePath, nil)
+	return c.Do(t, http.MethodPost, filePath, body)
 }
 
 // Put sends a PUT request to the given path with a JSON body.
@@ -1423,20 +2158,20 @@ func FolderBody(t *testing.T, uid, title string) []byte {
 }
 
 // ReadFolderUID reads the folder UID (metadata.name) from the _folder.json at the given path.
-func (c *FilesClient) ReadFolderUID(t *testing.T, ctx context.Context, metadataPath string) string {
+func (c *FilesClient) ReadFolderUID(t *testing.T, metadataPath string) string {
 	t.Helper()
-	return c.readFolderField(t, ctx, metadataPath, "metadata", "name")
+	return c.readFolderField(t, metadataPath, "metadata", "name")
 }
 
 // ReadFolderTitle reads the folder title (spec.title) from the _folder.json at the given path.
-func (c *FilesClient) ReadFolderTitle(t *testing.T, ctx context.Context, metadataPath string) string {
+func (c *FilesClient) ReadFolderTitle(t *testing.T, metadataPath string) string {
 	t.Helper()
-	return c.readFolderField(t, ctx, metadataPath, "spec", "title")
+	return c.readFolderField(t, metadataPath, "spec", "title")
 }
 
-func (c *FilesClient) readFolderField(t *testing.T, ctx context.Context, metadataPath string, fields ...string) string {
+func (c *FilesClient) readFolderField(t *testing.T, metadataPath string, fields ...string) string {
 	t.Helper()
-	wrapObj, err := c.helper.Repositories.Resource.Get(ctx, c.repo, metav1.GetOptions{}, "files", metadataPath)
+	wrapObj, err := c.helper.Repositories.Resource.Get(t.Context(), c.repo, metav1.GetOptions{}, "files", metadataPath)
 	require.NoError(t, err, "%s: should be readable via the files endpoint", metadataPath)
 	keyPath := append([]string{"resource", "file"}, fields...)
 	val, _, _ := unstructured.NestedString(wrapObj.Object, keyPath...)
@@ -1445,13 +2180,13 @@ func (c *FilesClient) readFolderField(t *testing.T, ctx context.Context, metadat
 
 // RequireValidFolderMetadata reads the _folder.json at folderPath/_folder.json,
 // asserts it has a valid apiVersion, kind, non-empty UID and title, and returns (uid, title).
-func (c *FilesClient) RequireValidFolderMetadata(t *testing.T, ctx context.Context, folderMetadataPath string) (uid, title string) {
+func (c *FilesClient) RequireValidFolderMetadata(t *testing.T, folderMetadataPath string) (uid, title string) {
 	t.Helper()
-	wrapObj, err := c.helper.Repositories.Resource.Get(ctx, c.repo, metav1.GetOptions{}, "files", folderMetadataPath)
+	wrapObj, err := c.helper.Repositories.Resource.Get(t.Context(), c.repo, metav1.GetOptions{}, "files", folderMetadataPath)
 	require.NoError(t, err, "%s: _folder.json should be readable via the files endpoint", folderMetadataPath)
 
 	apiVersion, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "apiVersion")
-	require.Equal(t, "folder.grafana.app/v1beta1", apiVersion, "%s: unexpected apiVersion", folderMetadataPath)
+	require.Equal(t, "folder.grafana.app/v1", apiVersion, "%s: unexpected apiVersion", folderMetadataPath)
 	kind, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "kind")
 	require.Equal(t, "Folder", kind, "%s: unexpected kind", folderMetadataPath)
 
@@ -1521,17 +2256,16 @@ func CountFilesInDir(rootPath string) (int, error) {
 // CleanupAllRepos deletes all repositories and waits for them to be fully removed
 func (h *ProvisioningTestHelper) CleanupAllRepos(t *testing.T) {
 	t.Helper()
-	ctx := context.Background()
 
 	// First, get all repositories that exist
-	list, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
+	list, err := h.Repositories.Resource.List(t.Context(), metav1.ListOptions{})
 	if err != nil || len(list.Items) == 0 {
 		return // Nothing to clean up
 	}
 
 	// Wait for any active jobs to complete before deleting repositories
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		activeJobs, err := h.Jobs.Resource.List(ctx, metav1.ListOptions{})
+		activeJobs, err := h.Jobs.Resource.List(t.Context(), metav1.ListOptions{})
 		if !assert.NoError(collect, err, "failed to list active jobs") {
 			return
 		}
@@ -1540,13 +2274,13 @@ func (h *ProvisioningTestHelper) CleanupAllRepos(t *testing.T) {
 
 	// Now delete all repositories with retries
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		list, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
+		list, err := h.Repositories.Resource.List(t.Context(), metav1.ListOptions{})
 		if !assert.NoError(collect, err) {
 			return
 		}
 
 		for _, repo := range list.Items {
-			err := h.Repositories.Resource.Delete(ctx, repo.GetName(), metav1.DeleteOptions{})
+			err := h.Repositories.Resource.Delete(t.Context(), repo.GetName(), metav1.DeleteOptions{})
 			// Don't fail if already deleted (404 is OK)
 			if err != nil {
 				assert.True(collect, apierrors.IsNotFound(err), "Should be able to delete repository %s (or it should already be deleted)", repo.GetName())
@@ -1556,7 +2290,7 @@ func (h *ProvisioningTestHelper) CleanupAllRepos(t *testing.T) {
 
 	// Then wait for repositories to be fully deleted to ensure clean state
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		list, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
+		list, err := h.Repositories.Resource.List(t.Context(), metav1.ListOptions{})
 		if !assert.NoError(collect, err) {
 			return
 		}
@@ -1566,7 +2300,7 @@ func (h *ProvisioningTestHelper) CleanupAllRepos(t *testing.T) {
 
 func (h *ProvisioningTestHelper) CreateGithubConnection(
 	t *testing.T,
-	ctx context.Context,
+
 	connection *unstructured.Unstructured,
 ) (*unstructured.Unstructured, error) {
 	t.Helper()
@@ -1578,7 +2312,7 @@ func (h *ProvisioningTestHelper) CreateGithubConnection(
 
 	var res *unstructured.Unstructured
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		res, err = h.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+		res, err = h.Connections.Resource.Create(t.Context(), connection, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(collect, err)
 	}, WaitTimeoutDefault, WaitIntervalDefault, "connection should be created")
 
@@ -1587,7 +2321,7 @@ func (h *ProvisioningTestHelper) CreateGithubConnection(
 
 func (h *ProvisioningTestHelper) UpdateGithubConnection(
 	t *testing.T,
-	ctx context.Context,
+
 	connection *unstructured.Unstructured,
 ) (*unstructured.Unstructured, error) {
 	t.Helper()
@@ -1599,7 +2333,7 @@ func (h *ProvisioningTestHelper) UpdateGithubConnection(
 
 	var res *unstructured.Unstructured
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		res, err = h.Connections.Resource.Update(ctx, connection, metav1.UpdateOptions{FieldValidation: "Strict"})
+		res, err = h.Connections.Resource.Update(t.Context(), connection, metav1.UpdateOptions{FieldValidation: "Strict"})
 		require.NoError(collect, err)
 	}, WaitTimeoutDefault, WaitIntervalDefault, "connection should be updated")
 
@@ -1622,25 +2356,25 @@ func (h *ProvisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 	// Setup mock repositories for the ListRepos endpoint
 	expectedRepos := []*github.Repository{
 		{
-			Name: github.Ptr("test-repo-1"),
+			Name: new("test-repo-1"),
 			Owner: &github.User{
-				Login: github.Ptr("test-owner-1"),
+				Login: new("test-owner-1"),
 			},
-			HTMLURL: github.Ptr("https://github.com/test-owner-1/test-repo-1"),
+			HTMLURL: new("https://github.com/test-owner-1/test-repo-1"),
 		},
 		{
-			Name: github.Ptr("test-repo-2"),
+			Name: new("test-repo-2"),
 			Owner: &github.User{
-				Login: github.Ptr("test-owner-2"),
+				Login: new("test-owner-2"),
 			},
-			HTMLURL: github.Ptr("https://github.com/test-owner-2/test-repo-2"),
+			HTMLURL: new("https://github.com/test-owner-2/test-repo-2"),
 		},
 		{
-			Name: github.Ptr("test-repo-3"),
+			Name: new("test-repo-3"),
 			Owner: &github.User{
-				Login: github.Ptr("test-owner-3"),
+				Login: new("test-owner-3"),
 			},
-			HTMLURL: github.Ptr("https://github.com/test-owner-3/test-repo-3"),
+			HTMLURL: new("https://github.com/test-owner-3/test-repo-3"),
 		},
 	}
 
@@ -1653,10 +2387,10 @@ func (h *ProvisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 					ID:   &id,
 					Slug: &appSlug,
 					Permissions: &github.InstallationPermissions{
-						Contents:        github.Ptr("write"),
-						Metadata:        github.Ptr("read"),
-						PullRequests:    github.Ptr("write"),
-						RepositoryHooks: github.Ptr("write"),
+						Contents:        new("write"),
+						Metadata:        new("read"),
+						PullRequests:    new("write"),
+						RepositoryHooks: new("write"),
 					},
 				}
 				_, _ = w.Write(ghmock.MustMarshal(app))
@@ -1671,10 +2405,10 @@ func (h *ProvisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 				installation := github.Installation{
 					ID: &idInt,
 					Permissions: &github.InstallationPermissions{
-						Contents:        github.Ptr("write"),
-						Metadata:        github.Ptr("read"),
-						PullRequests:    github.Ptr("write"),
-						RepositoryHooks: github.Ptr("write"),
+						Contents:        new("write"),
+						Metadata:        new("read"),
+						PullRequests:    new("write"),
+						RepositoryHooks: new("write"),
 					},
 				}
 				_, _ = w.Write(ghmock.MustMarshal(installation))
@@ -1685,7 +2419,7 @@ func (h *ProvisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				installation := github.InstallationToken{
-					Token:     github.Ptr("someToken"),
+					Token:     new("someToken"),
 					ExpiresAt: &github.Timestamp{Time: time.Now().Add(time.Hour * 2)},
 				}
 				_, _ = w.Write(ghmock.MustMarshal(installation))
@@ -1697,7 +2431,7 @@ func (h *ProvisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 				w.WriteHeader(http.StatusOK)
 				reposResponse := &github.ListRepositories{
 					Repositories: expectedRepos,
-					TotalCount:   github.Ptr(len(expectedRepos)),
+					TotalCount:   new(len(expectedRepos)),
 				}
 				_, _ = w.Write(ghmock.MustMarshal(reposResponse))
 			}),
@@ -1771,24 +2505,30 @@ type ExpectedDashboard struct {
 	Folder     string // grafana.app/folder annotation; only checked when non-empty
 }
 
-// RequireDashboardCount asserts the total number of dashboards in the instance.
-func RequireDashboardCount(t *testing.T, dashboardClient *apis.K8sResourceClient, ctx context.Context, expected int) {
+// RequireRepoManagedDashboard waits until the dashboard with the given uid is
+// available in unified storage and is annotated as managed by the named repo
+// at the given source path. Polls until the assertions hold or the default
+// wait timeout elapses.
+func RequireRepoManagedDashboard(t *testing.T, dashboardClient *apis.K8sResourceClient, uid, repoName, sourcePath string) {
 	t.Helper()
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		list, err := dashboardClient.Resource.List(ctx, metav1.ListOptions{})
-		if !assert.NoError(c, err, "failed to list dashboards") {
+		dash, err := dashboardClient.Resource.Get(t.Context(), uid, metav1.GetOptions{})
+		if !assert.NoError(c, err) {
 			return
 		}
-		assert.Len(c, list.Items, expected, "unexpected dashboard count")
-	}, WaitTimeoutDefault, WaitIntervalDefault, "expected %d dashboard(s)", expected)
+		annotations := dash.GetAnnotations()
+		assert.Equal(c, string(utils.ManagerKindRepo), annotations[utils.AnnoKeyManagerKind])
+		assert.Equal(c, repoName, annotations[utils.AnnoKeyManagerIdentity])
+		assert.Equal(c, sourcePath, annotations[utils.AnnoKeySourcePath])
+	}, WaitTimeoutDefault, WaitIntervalDefault, "dashboard %q should be managed by repo %q at %q", uid, repoName, sourcePath)
 }
 
 // RequireDashboardTitle asserts that the dashboard with the given uid (K8s name)
 // has the expected title.
-func RequireDashboardTitle(t *testing.T, dashboardClient *apis.K8sResourceClient, ctx context.Context, uid, expectedTitle string) {
+func RequireDashboardTitle(t *testing.T, dashboardClient *apis.K8sResourceClient, uid, expectedTitle string) {
 	t.Helper()
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		list, err := dashboardClient.Resource.List(ctx, metav1.ListOptions{})
+		list, err := dashboardClient.Resource.List(t.Context(), metav1.ListOptions{})
 		if !assert.NoError(c, err, "failed to list dashboards") {
 			return
 		}
@@ -1806,10 +2546,10 @@ func RequireDashboardTitle(t *testing.T, dashboardClient *apis.K8sResourceClient
 
 // RequireDashboards lists dashboards once and asserts that exactly the expected
 // set exists with matching count, title, and grafana.app/sourcePath for each UID.
-func RequireDashboards(t *testing.T, dashboardClient *apis.K8sResourceClient, ctx context.Context, expected map[string]ExpectedDashboard) {
+func RequireDashboards(t *testing.T, dashboardClient *apis.K8sResourceClient, expected map[string]ExpectedDashboard) {
 	t.Helper()
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		list, err := dashboardClient.Resource.List(ctx, metav1.ListOptions{})
+		list, err := dashboardClient.Resource.List(t.Context(), metav1.ListOptions{})
 		if !assert.NoError(c, err, "failed to list dashboards") {
 			return
 		}
@@ -1836,10 +2576,10 @@ func RequireDashboards(t *testing.T, dashboardClient *apis.K8sResourceClient, ct
 
 // RequireRepoDashboardParent asserts that the dashboard managed by repoName at
 // the given sourcePath is parented to the expected folder UID.
-func RequireRepoDashboardParent(t *testing.T, dashboardClient *apis.K8sResourceClient, ctx context.Context, repoName, sourcePath, expectedFolderUID string) {
+func RequireRepoDashboardParent(t *testing.T, dashboardClient *apis.K8sResourceClient, repoName, sourcePath, expectedFolderUID string) {
 	t.Helper()
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		list, err := dashboardClient.Resource.List(ctx, metav1.ListOptions{})
+		list, err := dashboardClient.Resource.List(t.Context(), metav1.ListOptions{})
 		if !assert.NoError(c, err, "failed to list dashboards") {
 			return
 		}
@@ -1861,11 +2601,11 @@ func RequireRepoDashboardParent(t *testing.T, dashboardClient *apis.K8sResourceC
 
 // RequireRepoFolderTitle asserts that a folder managed by repoName exists with
 // the given title and returns its UID.
-func RequireRepoFolderTitle(t *testing.T, folderClient *apis.K8sResourceClient, ctx context.Context, repoName, expectedTitle string) string {
+func RequireRepoFolderTitle(t *testing.T, folderClient *apis.K8sResourceClient, repoName, expectedTitle string) string {
 	t.Helper()
 	var folderUID string
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		list, err := folderClient.Resource.List(ctx, metav1.ListOptions{})
+		list, err := folderClient.Resource.List(t.Context(), metav1.ListOptions{})
 		if !assert.NoError(c, err, "failed to list folders") {
 			return
 		}
@@ -1888,10 +2628,10 @@ func RequireRepoFolderTitle(t *testing.T, folderClient *apis.K8sResourceClient, 
 
 // RequireRepoFolderTitle asserts that a folder managed by repoName exists with
 // the given title and returns its UID.
-func RequireRepoFolderUID(t *testing.T, folderClient *apis.K8sResourceClient, ctx context.Context, repoName, expectedUID string) {
+func RequireRepoFolderUID(t *testing.T, folderClient *apis.K8sResourceClient, repoName, expectedUID string) {
 	t.Helper()
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		folder, err := folderClient.Resource.Get(ctx, expectedUID, metav1.GetOptions{})
+		folder, err := folderClient.Resource.Get(t.Context(), expectedUID, metav1.GetOptions{})
 		require.NoError(c, err, "failed to get folder")
 		mgr, _, _ := unstructured.NestedString(folder.Object, "metadata", "annotations", "grafana.app/managerId")
 		require.Equal(c, repoName, mgr, "folder %q is not managed by %q", expectedUID, repoName)
@@ -1900,10 +2640,10 @@ func RequireRepoFolderUID(t *testing.T, folderClient *apis.K8sResourceClient, ct
 
 // RequireRepoFolders lists folders once and asserts that the set of
 // grafana.app/sourcePath values for folders managed by repoName matches exactly.
-func RequireRepoFolders(t *testing.T, folderClient *apis.K8sResourceClient, ctx context.Context, repoName string, expectedSourcePaths []string) {
+func RequireRepoFolders(t *testing.T, folderClient *apis.K8sResourceClient, repoName string, expectedSourcePaths []string) {
 	t.Helper()
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		list, err := folderClient.Resource.List(ctx, metav1.ListOptions{})
+		list, err := folderClient.Resource.List(t.Context(), metav1.ListOptions{})
 		if !assert.NoError(c, err, "failed to list folders") {
 			return
 		}
@@ -1950,77 +2690,127 @@ func (h *ProvisioningTestHelper) GetRepositories() *apis.K8sResourceClient {
 	return h.Repositories
 }
 
-// SyncAndWaitWithSuccess triggers a full pull sync, asserts that it succeeds,
-// and waits for the repository's lastRef to be set. Use this as the initial
-// sync in tests that later trigger incremental syncs, so that lastRef is
-// guaranteed to be populated.
-func SyncAndWaitWithSuccess(t *testing.T, h SyncHelper, repoName string) {
-	t.Helper()
+// ---------------------------------------------------------------------------
+// Job matchers — composable assertions for completed sync jobs.
+// ---------------------------------------------------------------------------
 
-	job := h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
-	})
-	requireJobSuccess(t, job)
-	waitForRepoLastRef(t, h.GetRepositories(), repoName)
+// JobMatcher asserts properties of a completed sync job.
+type JobMatcher func(t *testing.T, job *unstructured.Unstructured)
+
+// HasState returns a matcher that asserts the job finished in the given state.
+// On mismatch it dumps the full job (spec + status) so the top-level error
+// message, errors list, summary counts, and warnings are visible in CI logs.
+func HasState(expected provisioning.JobState) JobMatcher {
+	return func(t *testing.T, job *unstructured.Unstructured) {
+		t.Helper()
+		actual := MustNestedString(job.Object, "status", "state")
+		require.Equal(t, string(expected), actual,
+			"job %q should have state %s; full job:\n%s",
+			job.GetName(), expected, jobDump(job))
+	}
 }
 
-// SyncAndWaitSuccessfulIncremental triggers an incremental pull sync, waits for
-// it to complete, and asserts that the job succeeded.
-func SyncAndWaitSuccessfulIncremental(t *testing.T, h SyncHelper, repoName string) {
-	t.Helper()
-
-	job := h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{Incremental: true},
-	})
-	requireJobSuccess(t, job)
+// jobDump renders a job as indented JSON for failure messages. Falls back to
+// the default formatter if marshalling fails (which should not happen for a
+// server-returned object).
+func jobDump(job *unstructured.Unstructured) string {
+	b, err := json.MarshalIndent(job.Object, "", "  ")
+	if err != nil {
+		return fmt.Sprintf("%+v (marshal error: %v)", job.Object, err)
+	}
+	return string(b)
 }
 
-// RequireJobSuccess asserts that a completed job has state "success" and no errors.
-func requireJobSuccess(t *testing.T, job *unstructured.Unstructured) {
+// HasNoErrors returns a matcher that asserts the job completed without errors.
+func HasNoErrors() JobMatcher {
+	return func(t *testing.T, job *unstructured.Unstructured) {
+		t.Helper()
+		errs := MustNestedStringSlice(job.Object, "status", "errors")
+		require.Empty(t, errs, "job %q has errors: %v", job.GetName(), errs)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// SyncAndWait — configurable pull-sync helper.
+// ---------------------------------------------------------------------------
+
+// SyncOption configures the behaviour of SyncAndWait.
+type SyncOption func(*syncOpts)
+
+type syncOpts struct {
+	repoName    string
+	incremental bool
+	matchers    []JobMatcher
+}
+
+// Repo sets the repository name for the sync.
+func Repo(name string) SyncOption {
+	return func(o *syncOpts) { o.repoName = name }
+}
+
+// Incremental makes SyncAndWait trigger an incremental pull instead of a full one.
+func Incremental(o *syncOpts) { o.incremental = true }
+
+// Expect adds arbitrary job matchers that are applied to the completed job.
+// For the common cases prefer Succeeded() or Warning() directly.
+func Expect(m ...JobMatcher) SyncOption {
+	return func(o *syncOpts) {
+		o.matchers = append(o.matchers, m...)
+	}
+}
+
+// Succeeded is a SyncOption that asserts the job succeeded with no errors.
+func Succeeded() SyncOption {
+	return Expect(HasNoErrors(), HasState(provisioning.JobStateSuccess))
+}
+
+// Warning is a SyncOption that asserts the job finished with warning state
+// and no errors.
+func Warning() SyncOption {
+	return Expect(HasNoErrors(), HasState(provisioning.JobStateWarning))
+}
+
+// SyncAndWait triggers a pull sync, waits for it to complete, and asserts the
+// expected outcome using the provided matchers.
+//
+// Every call must include Repo() to identify the target repository and an
+// expectation such as Succeeded() or Warning(). Pass Incremental for an
+// incremental sync.
+//
+// Full (non-incremental) syncs also wait for the repository's lastRef to be
+// set, which is required before an incremental sync can be triggered.
+func SyncAndWait(t *testing.T, h SyncHelper, opts ...SyncOption) {
 	t.Helper()
-	lastState := MustNestedString(job.Object, "status", "state")
-	lastErrors := MustNestedStringSlice(job.Object, "status", "errors")
-	require.Empty(t, lastErrors, "job %q has errors: %v", job.GetName(), lastErrors)
-	require.Equal(t, string(provisioning.JobStateSuccess), lastState,
-		"job %q should succeed", job.GetName())
+
+	o := syncOpts{}
+	for _, fn := range opts {
+		fn(&o)
+	}
+
+	require.NotEmpty(t, o.repoName, "SyncAndWait requires Repo()")
+	require.NotEmpty(t, o.matchers, "SyncAndWait requires an expectation such as Succeeded() or Warning()")
+
+	job := h.TriggerJobAndWaitForComplete(t, o.repoName, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{Incremental: o.incremental},
+	})
+
+	for _, m := range o.matchers {
+		m(t, job)
+	}
+
+	if !o.incremental {
+		waitForRepoLastRef(t, h.GetRepositories(), o.repoName)
+	}
 }
 
 // RequireJobWarning asserts that a completed job has state "warning" and no errors.
+// Prefer Warning() for use with SyncAndWait; this standalone function is kept
+// for callers that assert on a job obtained outside SyncAndWait.
 func RequireJobWarning(t *testing.T, job *unstructured.Unstructured) {
 	t.Helper()
-	lastState := MustNestedString(job.Object, "status", "state")
-	lastErrors := MustNestedStringSlice(job.Object, "status", "errors")
-	require.Empty(t, lastErrors, "job %q has errors: %v", job.GetName(), lastErrors)
-	require.Equal(t, string(provisioning.JobStateWarning), lastState,
-		"job %q should have warning state", job.GetName())
-}
-
-// SyncAndWaitWithWarning triggers a full pull sync, asserts that it completes
-// with a warning state (no errors), and waits for lastRef. Use this for syncs
-// where a warning is the expected outcome (e.g. missing folder metadata).
-func SyncAndWaitWithWarning(t *testing.T, h SyncHelper, repoName string) {
-	t.Helper()
-
-	job := h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
-	})
-	RequireJobWarning(t, job)
-	waitForRepoLastRef(t, h.GetRepositories(), repoName)
-}
-
-// SyncAndWaitIncrementalWithWarning triggers an incremental pull sync, waits
-// for it to complete, and asserts that the job finished with a warning state.
-func SyncAndWaitIncrementalWithWarning(t *testing.T, h SyncHelper, repoName string) {
-	t.Helper()
-
-	job := h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{Incremental: true},
-	})
-	RequireJobWarning(t, job)
+	HasNoErrors()(t, job)
+	HasState(provisioning.JobStateWarning)(t, job)
 }
 
 // GetFolderGeneration returns the current generation of the folder with the given UID.
@@ -2180,6 +2970,124 @@ func DashboardJSON(uid, title string, version int) []byte {
 	return data
 }
 
+// NewManagedDashboard builds an unstructured Dashboard with the manager
+// annotations required to route a Dashboard API write through the
+// provisioning files endpoint (handleManagedResourceRouting). If message is
+// empty, the grafana.app/message annotation is omitted so callers can
+// exercise the action-specific fallback ("Create <name>" / "Update <name>"
+// / "Delete <name>").
+func NewManagedDashboard(apiVersion, name, repoName, sourcePath, message string) *unstructured.Unstructured {
+	annotations := map[string]interface{}{
+		utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+		utils.AnnoKeyManagerIdentity: repoName,
+		utils.AnnoKeySourcePath:      sourcePath,
+	}
+	if message != "" {
+		annotations[utils.AnnoKeyMessage] = message
+	}
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": apiVersion,
+			"kind":       "Dashboard",
+			"metadata": map[string]interface{}{
+				"name":        name,
+				"annotations": annotations,
+			},
+			"spec": map[string]interface{}{
+				"title":         name,
+				"schemaVersion": 41,
+			},
+		},
+	}
+}
+
+// NewUnmanagedFolder builds an unstructured Folder with no manager annotations,
+// for tests that need a pre-existing folder the provisioning code has not
+// claimed. A generated name is used so multiple folders can coexist; pass a
+// non-empty parentUID to nest the folder beneath another.
+func NewUnmanagedFolder(title, parentUID string) *unstructured.Unstructured {
+	metadata := map[string]interface{}{
+		"generateName": "unmanaged-folder-",
+		"namespace":    "default",
+	}
+	if parentUID != "" {
+		metadata["annotations"] = map[string]interface{}{
+			utils.AnnoKeyFolder: parentUID,
+		}
+	}
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "folder.grafana.app/v1",
+			"kind":       "Folder",
+			"metadata":   metadata,
+			"spec": map[string]interface{}{
+				"title": title,
+			},
+		},
+	}
+}
+
+// NewUnmanagedDashboard builds an unstructured Dashboard with no manager
+// annotations. A generated name is used; pass a non-empty folderUID to place it
+// inside a folder.
+func NewUnmanagedDashboard(apiVersion, title, folderUID string) *unstructured.Unstructured {
+	metadata := map[string]interface{}{
+		"generateName": "unmanaged-dash-",
+		"namespace":    "default",
+	}
+	if folderUID != "" {
+		metadata["annotations"] = map[string]interface{}{
+			utils.AnnoKeyFolder: folderUID,
+		}
+	}
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": apiVersion,
+			"kind":       "Dashboard",
+			"metadata":   metadata,
+			"spec": map[string]interface{}{
+				"title":         title,
+				"schemaVersion": 41,
+			},
+		},
+	}
+}
+
+// CreateUnmanagedFolderWithName creates a folder with no manager annotations
+// using an explicit name instead of a generated one. Pass "" for parentUID to
+// create a root folder.
+func (h *ProvisioningTestHelper) CreateUnmanagedFolderWithName(t *testing.T, name, title, parentUID string) {
+	t.Helper()
+	folder := NewUnmanagedFolder(title, parentUID)
+	metadata := folder.Object["metadata"].(map[string]interface{})
+	delete(metadata, "generateName")
+	metadata["name"] = name
+	_, err := h.Folders.Resource.Create(t.Context(), folder, metav1.CreateOptions{})
+	require.NoError(t, err, "should create unmanaged folder %q", name)
+}
+
+// CreateUnmanagedFolder creates a folder with no manager annotations under the
+// given parent (pass "" for a root folder) and returns its generated UID. It
+// asserts the folder starts unmanaged so callers can rely on that precondition.
+func (h *ProvisioningTestHelper) CreateUnmanagedFolder(t *testing.T, title, parentUID string) string {
+	t.Helper()
+	created, err := h.Folders.Resource.Create(t.Context(), NewUnmanagedFolder(title, parentUID), metav1.CreateOptions{})
+	require.NoError(t, err, "should create unmanaged folder %q", title)
+	require.Empty(t, created.GetAnnotations()[utils.AnnoKeyManagerIdentity], "folder %q should start unmanaged", title)
+	return created.GetName()
+}
+
+// CreateUnmanagedDashboard creates a v1 dashboard with no manager annotations in
+// the given folder (pass "" for a root dashboard) and returns its generated
+// name. It asserts the dashboard starts unmanaged.
+func (h *ProvisioningTestHelper) CreateUnmanagedDashboard(t *testing.T, title, folderUID string) string {
+	t.Helper()
+	created, err := h.DashboardsV1.Resource.Create(t.Context(), NewUnmanagedDashboard("dashboard.grafana.app/v1", title, folderUID), metav1.CreateOptions{})
+	require.NoError(t, err, "should create unmanaged dashboard %q", title)
+	require.Empty(t, created.GetAnnotations()[utils.AnnoKeyManagerIdentity], "dashboard %q should start unmanaged", title)
+	return created.GetName()
+}
+
 type exportRepoInfo struct {
 	user   *gittest.User
 	remote *gittest.RemoteRepository
@@ -2191,11 +3099,26 @@ type GitTestHelper struct {
 	*ProvisioningTestHelper
 	gitServer       *gittest.Server
 	exportRepoInfos map[string]*exportRepoInfo
+	githubUserOnce  sync.Once
+	githubUser      *gittest.User
+	githubUserErr   error
 }
 
 // GitServer returns the underlying gittest.Server.
 func (h *GitTestHelper) GitServer() *gittest.Server {
 	return h.gitServer
+}
+
+func (h *GitTestHelper) githubTransportUser(t *testing.T) *gittest.User {
+	t.Helper()
+
+	h.githubUserOnce.Do(func() {
+		h.githubUser, h.githubUserErr = h.gitServer.CreateUser(context.Background(), gittest.WithUsername("git"))
+	})
+	require.NoError(t, h.githubUserErr, "failed to create github transport user")
+	require.NotNil(t, h.githubUser, "github transport user should be created")
+
+	return h.githubUser
 }
 
 // SharedGitEnv lazily starts and reuses one GitTestHelper across tests.
@@ -2234,8 +3157,7 @@ func RunGrafanaWithGitServer(t *testing.T, options ...GrafanaOption) *GitTestHel
 func runGrafanaWithGitServerShared(t *testing.T, options ...GrafanaOption) (*GitTestHelper, func()) {
 	t.Helper()
 
-	ctx := context.Background()
-	gitServer, err := gittest.NewServer(ctx, gittest.WithLogger(gittest.NewWriterLogger(os.Stderr)))
+	gitServer, err := gittest.NewServer(t.Context(), gittest.WithLogger(gittest.NewWriterLogger(os.Stderr)))
 	require.NoError(t, err, "failed to start git server")
 
 	allOpts := append([]GrafanaOption{WithRepositoryTypes([]string{"git"})}, options...)
@@ -2257,8 +3179,8 @@ func runGrafanaWithGitServerShared(t *testing.T, options ...GrafanaOption) (*Git
 
 func startGitServer(t *testing.T) *gittest.Server {
 	t.Helper()
-	ctx := context.Background()
-	gitServer, err := gittest.NewServer(ctx, gittest.WithLogger(gittest.NewTestLogger(t)))
+
+	gitServer, err := gittest.NewServer(t.Context(), gittest.WithLogger(gittest.NewTestLogger(t)))
 	require.NoError(t, err, "failed to start git server")
 	t.Cleanup(func() {
 		if err := gitServer.Cleanup(); err != nil {
@@ -2296,7 +3218,7 @@ func (e *SharedGitEnv) GetHelper(t *testing.T) *GitTestHelper {
 func (e *SharedGitEnv) GetCleanHelper(t *testing.T) *GitTestHelper {
 	t.Helper()
 	h := e.GetHelper(t)
-	h.CleanupAllResources(t, context.Background())
+	h.CleanupAllResources(t)
 	return h
 }
 
@@ -2321,37 +3243,120 @@ func (e *SharedGitEnv) RunTestMain(m *testing.M) {
 // CleanupAllResources removes Grafana-managed resources left by a previous
 // test. It first waits for active jobs to finish, then delegates to
 // ProvisioningTestHelper.CleanupAllResources.
-func (h *GitTestHelper) CleanupAllResources(t *testing.T, ctx context.Context) {
+func (h *GitTestHelper) CleanupAllResources(t *testing.T) {
 	t.Helper()
 	h.waitForNoActiveJobs(t)
-	h.ProvisioningTestHelper.CleanupAllResources(t, ctx)
+	h.ProvisioningTestHelper.CleanupAllResources(t)
 }
 
 // CreateGitRepo creates a git repository with sync target "instance" and registers
 // it with Grafana provisioning. workflows is optional; defaults to ["write"].
 func (h *GitTestHelper) CreateGitRepo(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
-	return h.createGitRepo(t, repoName, "instance", initialFiles, workflows...)
+	return h.createGitRepo(t, repoName, "instance", createRepoOpts{
+		initialFiles: initialFiles,
+		workflows:    workflows,
+	})
 }
 
 // CreateFolderTargetGitRepo creates a git repository with sync target "folder" and
 // registers it with Grafana provisioning. Unlike "instance" repos, multiple "folder"
 // repos can coexist on the same Grafana server. workflows is optional; defaults to ["write"].
 func (h *GitTestHelper) CreateFolderTargetGitRepo(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
-	return h.createGitRepo(t, repoName, "folder", initialFiles, workflows...)
+	return h.createGitRepo(t, repoName, "folder", createRepoOpts{
+		initialFiles: initialFiles,
+		workflows:    workflows,
+	})
 }
 
-func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+// CreateSyncEnabledGitRepo creates a git repository with sync target "instance"
+// and sync.enabled=true. Sync must be on for the provisioning files endpoint to
+// dual-write into unified storage — without it, callers that write a new
+// repo-managed resource via the Dashboard API would fail at the post-write Get
+// inside handleManagedResourceRouting with KeyNotFound.
+// workflows is optional; defaults to ["write"].
+func (h *GitTestHelper) CreateSyncEnabledGitRepo(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	return h.createRepo(t, repoName, "git", "instance", createRepoOpts{
+		waitForReady: true,
+		initialFiles: initialFiles,
+		templateVariables: map[string]any{
+			"SyncEnabled": true,
+		},
+		workflows: workflows,
+	})
+}
+
+// CreateGithubRepo creates a github-type repository backed by the gittest server.
+// workflows is optional; defaults to ["write"].
+// webhookBaseURL is optional; pass it to enable webhook creation on the repo.
+func (h *GitTestHelper) CreateGithubRepo(t *testing.T, repoName string, initialFiles map[string][]byte, webhookBaseURL string, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	extraValues := map[string]any{}
+	if webhookBaseURL != "" {
+		extraValues["WebhookBaseURL"] = webhookBaseURL
+	}
+	return h.createRepo(t, repoName, "github", "instance", createRepoOpts{
+		waitForReady:      true,
+		initialFiles:      initialFiles,
+		templateVariables: extraValues,
+		user:              h.githubTransportUser(t),
+		workflows:         workflows,
+	})
+}
+
+func (h *GitTestHelper) CreateGithubRepoWithWebhookDisabled(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	return h.createRepo(t, repoName, "github", "instance", createRepoOpts{
+		waitForReady: true,
+		initialFiles: initialFiles,
+		templateVariables: map[string]any{
+			"WebhookDisabled": true,
+		},
+		user:      h.githubTransportUser(t),
+		workflows: workflows,
+	})
+}
+
+func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget string, opts createRepoOpts,
+) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	opts.waitForReady = true
+	return h.createRepo(t, repoName, "git", syncTarget, opts)
+}
+
+// createRepo is the shared implementation for creating git-backed repositories.
+// repoType is "git" or "github", which determines the template used.
+// waitForReady controls whether to wait for the repo to become healthy.
+
+type createRepoOpts struct {
+	waitForReady      bool
+	exportRepo        bool
+	initialFiles      map[string][]byte
+	templateVariables map[string]any
+	user              *gittest.User
+	workflows         []string
+}
+
+func (h *GitTestHelper) createRepo(
+	t *testing.T,
+	repoName string,
+	repoType string,
+	syncTarget string,
+	opts createRepoOpts,
+) (*gittest.RemoteRepository, *gittest.LocalRepo) {
 	t.Helper()
 
-	ctx := context.Background()
+	user := opts.user
+	if user == nil {
+		var err error
+		user, err = h.gitServer.CreateUser(t.Context())
+		require.NoError(t, err, "failed to create user")
+	}
 
-	user, err := h.gitServer.CreateUser(ctx)
-	require.NoError(t, err, "failed to create user")
-
-	remote, err := h.gitServer.CreateRepo(ctx, repoName, user)
+	remote, err := h.gitServer.CreateRepo(t.Context(), repoName, user)
 	require.NoError(t, err, "failed to create remote repository")
 
-	local, err := gittest.NewLocalRepo(ctx)
+	if opts.exportRepo {
+		h.exportRepoInfos[repoName] = &exportRepoInfo{user: user, remote: remote}
+	}
+
+	local, err := gittest.NewLocalRepo(t.Context())
 	require.NoError(t, err, "failed to create local repository")
 	t.Cleanup(func() {
 		if err := local.Cleanup(); err != nil {
@@ -2362,12 +3367,12 @@ func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget 
 	_, err = local.InitWithRemote(user, remote)
 	require.NoError(t, err, "failed to initialize local repo with remote")
 
-	for filePath, content := range initialFiles {
+	for filePath, content := range opts.initialFiles {
 		err = local.CreateFile(filePath, string(content))
 		require.NoError(t, err, "failed to create file %s", filePath)
 	}
 
-	if len(initialFiles) > 0 {
+	if len(opts.initialFiles) > 0 {
 		_, err = local.Git("add", ".")
 		require.NoError(t, err, "failed to add files")
 		_, err = local.Git("commit", "-m", "Add initial files")
@@ -2376,54 +3381,36 @@ func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget 
 		require.NoError(t, err, "failed to push files")
 	}
 
-	if len(workflows) == 0 {
-		workflows = []string{"write"}
+	workflows := []string{"write"}
+	if len(opts.workflows) > 0 {
+		workflows = opts.workflows
 	}
-
-	repoSpec := map[string]interface{}{
-		"apiVersion": "provisioning.grafana.app/v0alpha1",
-		"kind":       "Repository",
-		"metadata": map[string]interface{}{
-			"name":      repoName,
-			"namespace": "default",
-		},
-		"spec": map[string]interface{}{
-			"title":       fmt.Sprintf("Test Repository %s", repoName),
-			"description": fmt.Sprintf("Integration test repository for %s", repoName),
-			"type":        "git",
-			"git": map[string]interface{}{
-				"url":       remote.URL,
-				"branch":    "main",
-				"path":      "",
-				"tokenUser": user.Username,
-			},
-			"sync": map[string]interface{}{
-				"enabled":         false,
-				"target":          syncTarget,
-				"intervalSeconds": 60,
-			},
-			"workflows": workflows,
-		},
-		"secure": map[string]interface{}{
-			"token": map[string]interface{}{
-				"create": user.Password,
-			},
-		},
-	}
-
-	repoJSON, err := json.Marshal(repoSpec)
+	workflowsJSON, err := json.Marshal(workflows)
 	require.NoError(t, err)
 
-	result := h.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Body(repoJSON).
-		SetHeader("Content-Type", "application/json").
-		Do(context.Background())
+	templateValues := map[string]any{
+		"Name":          repoName,
+		"Title":         fmt.Sprintf("Test Repository %s", repoName),
+		"URL":           remote.URL,
+		"Branch":        "main",
+		"TokenUser":     user.Username,
+		"SyncTarget":    syncTarget,
+		"Token":         user.Password,
+		"WorkflowsJSON": string(workflowsJSON),
+	}
+	for k, v := range opts.templateVariables {
+		templateValues[k] = v
+	}
 
-	require.NoError(t, result.Error(), "failed to create repository")
+	tmpl := TestdataPath(repoType + ".json.tmpl")
+	repoObj := h.RenderObject(t, tmpl, templateValues)
 
-	h.waitForReadyRepository(t, repoName)
+	_, err = h.Repositories.Resource.Create(t.Context(), repoObj, metav1.CreateOptions{})
+	require.NoError(t, err, "failed to create repository")
+
+	if opts.waitForReady {
+		h.waitForReadyRepository(t, repoName)
+	}
 
 	return remote, local
 }
@@ -2543,46 +3530,6 @@ func (h *GitTestHelper) waitForNoActiveJobs(t *testing.T) {
 	}, WaitTimeoutDefault, WaitIntervalDefault, "jobs should complete before cleanup")
 }
 
-// RequireRepoDashboardCount asserts the number of dashboards whose
-// grafana.app/managerId annotation matches repoName.
-func RequireRepoDashboardCount(t *testing.T, h *GitTestHelper, ctx context.Context, repoName string, expected int) {
-	t.Helper()
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		list, err := h.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-		if !assert.NoError(c, err, "failed to list dashboards") {
-			return
-		}
-		var count int
-		for _, d := range list.Items {
-			if mgr, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/managerId"); mgr == repoName {
-				count++
-			}
-		}
-		assert.Equal(c, expected, count, "unexpected dashboard count for repo %q", repoName)
-	}, WaitTimeoutDefault, WaitIntervalDefault,
-		"expected %d dashboard(s) for repo %q", expected, repoName)
-}
-
-// RequireRepoFolderCount asserts the number of folders whose
-// grafana.app/managerId annotation matches repoName.
-func RequireRepoFolderCount(t *testing.T, h *GitTestHelper, ctx context.Context, repoName string, expected int) {
-	t.Helper()
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		list, err := h.Folders.Resource.List(ctx, metav1.ListOptions{})
-		if !assert.NoError(c, err, "failed to list folders") {
-			return
-		}
-		var count int
-		for _, f := range list.Items {
-			if mgr, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId"); mgr == repoName {
-				count++
-			}
-		}
-		assert.Equal(c, expected, count, "unexpected folder count for repo %q", repoName)
-	}, WaitTimeoutDefault, WaitIntervalDefault,
-		"expected %d folder(s) for repo %q", expected, repoName)
-}
-
 // RequireJobWarningContains asserts that at least one warning in the job status
 // contains the given substring.
 func RequireJobWarningContains(t *testing.T, jobObj *provisioning.Job, substr string) {
@@ -2599,73 +3546,17 @@ func RequireJobWarningContains(t *testing.T, jobObj *provisioning.Job, substr st
 
 // CreateExportGitRepo creates a git repository configured for export (push)
 // workflows: sync disabled, target "instance", workflow "write".
-func (h *GitTestHelper) CreateExportGitRepo(t *testing.T, repoName string) {
+func (h *GitTestHelper) CreateExportGitRepo(t *testing.T, repoName string, initFiles map[string][]byte) (*gittest.RemoteRepository, *gittest.LocalRepo) {
 	t.Helper()
 
-	ctx := context.Background()
-
-	user, err := h.gitServer.CreateUser(ctx)
-	require.NoError(t, err, "failed to create git user")
-
-	remote, err := h.gitServer.CreateRepo(ctx, repoName, user)
-	require.NoError(t, err, "failed to create remote git repository")
-
-	h.exportRepoInfos[repoName] = &exportRepoInfo{user: user, remote: remote}
-
-	local, err := gittest.NewLocalRepo(ctx)
-	require.NoError(t, err, "failed to create local git repository")
-	t.Cleanup(func() {
-		if err := local.Cleanup(); err != nil {
-			t.Logf("failed to cleanup local repo: %v", err)
-		}
+	return h.createGitRepo(t, repoName, "instance", createRepoOpts{
+		waitForReady: true,
+		initialFiles: initFiles,
+		exportRepo:   true,
 	})
-
-	_, err = local.InitWithRemote(user, remote)
-	require.NoError(t, err, "failed to initialize local repo with remote")
-
-	spec := map[string]interface{}{
-		"apiVersion": "provisioning.grafana.app/v0alpha1",
-		"kind":       "Repository",
-		"metadata": map[string]interface{}{
-			"name":      repoName,
-			"namespace": "default",
-		},
-		"spec": map[string]interface{}{
-			"title": repoName,
-			"type":  "git",
-			"git": map[string]interface{}{
-				"url":       remote.URL,
-				"branch":    "main",
-				"tokenUser": user.Username,
-			},
-			"sync": map[string]interface{}{
-				"enabled": false,
-				"target":  "instance",
-			},
-			"workflows": []string{"write"},
-		},
-		"secure": map[string]interface{}{
-			"token": map[string]interface{}{
-				"create": user.Password,
-			},
-		},
-	}
-
-	body, err := json.Marshal(spec)
-	require.NoError(t, err)
-
-	result := h.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Body(body).
-		SetHeader("Content-Type", "application/json").
-		Do(ctx)
-	require.NoError(t, result.Error(), "failed to register export git repository %q with Grafana", repoName)
-
-	h.waitForReadyRepository(t, repoName)
 }
 
-func (h *GitTestHelper) cloneExportRepo(t *testing.T, ctx context.Context, repoName string) (string, func()) {
+func (h *GitTestHelper) cloneExportRepo(t *testing.T, repoName string) (string, func()) {
 	t.Helper()
 	info, ok := h.exportRepoInfos[repoName]
 	if !ok {
@@ -2676,7 +3567,7 @@ func (h *GitTestHelper) cloneExportRepo(t *testing.T, ctx context.Context, repoN
 	require.NoError(t, err, "failed to create temp dir for git clone")
 
 	cloneDir := filepath.Join(tmpDir, "repo")
-	cmd := exec.CommandContext(ctx, "git", "clone", info.remote.AuthURL, cloneDir) //nolint:gosec
+	cmd := exec.CommandContext(t.Context(), "git", "clone", info.remote.AuthURL, cloneDir) //nolint:gosec
 	cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
 	if out, err := cmd.CombinedOutput(); err != nil {
 		_ = os.RemoveAll(tmpDir)
@@ -2689,9 +3580,9 @@ func (h *GitTestHelper) cloneExportRepo(t *testing.T, ctx context.Context, repoN
 // GitFileExists reports whether filePath exists on the main branch of an export
 // repository. It clones the repo via git (bypassing the provisioning files
 // endpoint, which rejects hidden files such as .keep).
-func (h *GitTestHelper) GitFileExists(t *testing.T, ctx context.Context, repoName, filePath string) bool {
+func (h *GitTestHelper) GitFileExists(t *testing.T, repoName, filePath string) bool {
 	t.Helper()
-	cloneDir, cleanup := h.cloneExportRepo(t, ctx, repoName)
+	cloneDir, cleanup := h.cloneExportRepo(t, repoName)
 	defer cleanup()
 
 	_, err := os.Stat(filepath.Join(cloneDir, filePath))
@@ -2700,9 +3591,9 @@ func (h *GitTestHelper) GitFileExists(t *testing.T, ctx context.Context, repoNam
 
 // GitReadFile returns the raw bytes of filePath on the main branch of an export
 // repository. It fails the test if the file does not exist.
-func (h *GitTestHelper) GitReadFile(t *testing.T, ctx context.Context, repoName, filePath string) []byte {
+func (h *GitTestHelper) GitReadFile(t *testing.T, repoName, filePath string) []byte {
 	t.Helper()
-	cloneDir, cleanup := h.cloneExportRepo(t, ctx, repoName)
+	cloneDir, cleanup := h.cloneExportRepo(t, repoName)
 	defer cleanup()
 
 	data, err := os.ReadFile(filepath.Join(cloneDir, filePath)) //nolint:gosec
@@ -2710,9 +3601,13 @@ func (h *GitTestHelper) GitReadFile(t *testing.T, ctx context.Context, repoName,
 	return data
 }
 
-// TestGithubPrivateKeyBase64 returns the base64-encoded test RSA private key
+// TestGithubPrivateKeyBase64 returns the base64-encoded test RSA private key.
+// Computed from TestGithubPrivateKeyPEM at runtime so the encoded form is not a
+// source literal — TruffleHog's PrivateKey detector decodes base64 chunks and
+// re-runs detectors on the result, which bypasses inline `trufflehog:ignore`.
+// The trailing newline matches the canonical PEM file format.
 func TestGithubPrivateKeyBase64() string {
-	return "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb1FJQkFBS0NBUUJuMU11TTVoSWZINmQzVE5TdEkxb2ZXdi9nY2pRNGpvaTljRmlqRXdWTHVQWWtGMW5ECktrU2JhTUdGVVdpT1RhQi9IOWZ4bWQvVjJ1MDRObEJZM2F2Nm01VC9zSGZWU2lFV0FFVWJsaDNjQTM0SFZDbUQKY3F5eVZ0eTVITEdKSmxTczJDN1cyeDd5VWM5SW16eURCc3lqcEtPWHVvako5d045YTE3RDJjWVU1V2tYam9EQwo0QkhpZDYxam45V0JUdFBaWFNnT2RpcndhaE56eFpRU0lQN0RBOVQ4eWlad0lXUHA1WWVzZ3NBUHlRTENGUGdNCnM3N3h6L0NFVW5FWVEzNXpJL2svbVFyd0tkUS9aUDh4THdRb2hVSUQwQkl4RTdHNXF1TDA2OVJ1dUNaV1prb0YKb1BpWmJwN0hTcnl6MSsxOWpEM3JGVDdlSEdVWXZBeUNuWG1YQWdNQkFBRUNnZ0VBRFNzNEJjN0lUWm8rS3l0YgpiZm9sM0FRMm44amNSckFOTjdtZ0JFN05SU1ZZVW91RG52VWxibkNDMnQzUVhQd0xkeFFhMTFHa3lnTFNRMmJnCkdlVkRncTFvNEdVSlRjdnhGbEZDY3BVL2hFQU5JL0RRc3hOQVEvNHdVR29MT2xIYU8zSFB2d0JibEhBNzBnR2UKVXgveHBHK2xNQUZBaUIwRUhFd1o0TTBtQ2xCRU9RdjNOemFGVFd1Qkh0SU1TOGVpZDdNMXE1cXo5K3JDZ1pTTApLQkJIbzBPdlViYWpHNENXbDhTTTZMVVlhcEFTR2crVTE3RSs0eEEzbnB3cElkc2srQ2J0WCt2dlgzMjRuNGtuCjBFa3JKcUNqdjhNMUtpQ0tBUCtVeHdQMDB5d3hPZzRQTit4K2RISS9JN3hCdkVLZS94NkJsdFZTZEdBK1BsVUsKMDJ3YWdRS0JnUURGN2dkUUxGSWFnUEg3WDdkQlA2cUVHeGovQ2s5UWR6M1MxZ290UGtWZXErMS9VdFFpallaMQpqNDR1cC8weUIyQjlQNGtXMDkxbitpV2N5Zm9VNVV3QnVhOWRIdkNaUDNRSDA1TFIxWnNjVUh4TEdqRFBCQVN0CmwyeFNxMGhxcU5XQnNwYjFNMGVDWTBZeGk2NWlEa2ozeHNJMmlOMzVCRWIxRmxXZFI1S0d2d0tCZ1FDR1MwY2UKd0FTV2JaSVBVMlVvS0dPUWtJSlU2UW1MeTBLWmJmWWtweWZFOEl4R3R0WVZFUThwdU52REROWldITmYrTFA4NQpjOGlWNlNmbldpTG11MVhrRzJZbUpGQkNDQVdnSjhNcTJYUUQ4RSthL3hjYVczTnFsY0M1K0kyY3pYMzY3ajNyCjY5d1pTeFJielIrRENmT2lJa3Jla0pJbXdOMTgzWll5MmNCYktRS0JnRmo4NklyU01tTzZINUZ0K2owNnU1WkQKZkp5RjdSejNUM053U2drSFd6YnlRNGdnSEVJZ3NSZy8zNlA0WVN6U0JqNnBoeUFkUndrTmZVV2R4WE1KbUgrYQpGVTdmcnpxblBhcWJKQUoxY0JSdDEwUUkxWEx0a3BEZGFKVk9idk9OVHRqT0MzTFlpRWtHQ3pRUlllaXlGWHBaCkFVNTFnSjhKbmtGb3RqdE5SNEtQQW9HQWVoVlJFRGxMY2wwbG5OMFpac3BneVBrMkltNi9pT0E5S1RIM3hCWloKWndXdTRGSXlpSEE3c3BnazRFcDVSMHR0WjlvTUkzU0ljdy9FZ09OR095OHV3L0hNaVB3V0loRWMzQjJKcFJpTwpDVTZiYjdKYWxGRnl1UUJ1ZGlIb3l4VmNZNVBWb3ZXRjMxQ0xyM0RvSnI0VFI5K1k1SC9VL1huellDSW8rdzFOCmV4RUNnWUJGQUdLWVRJZUdBdmhJdkQ1VHBoTHBiQ3llVkxCSXE1aFJ5cmRSWSs2SXdxZHI1UEd2TFBLd2luNSsKKzRDRGhXUFc0c3BxOE1ZUENSaU1ydlJTY3RLdC83RmhWR0wydkUvMFZZM1RjTGsxNHFMQysyKzBsblBWZ25Zbgp1NS93T3l1SHAxY0lCbmplTjQxL3BsdU9XRkJISTl4TFczRXhMdG1ZTWllY0o4VmRSQT09Ci0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg==" // trufflehog:ignore
+	return base64.StdEncoding.EncodeToString([]byte(TestGithubPrivateKeyPEM + "\n"))
 }
 
 // GetConnectionClientV1Beta1 returns a K8sResourceClient configured for v1beta1 Connections
@@ -2739,38 +3634,6 @@ func GetRepositoryClientV1Beta1(helper *apis.K8sTestHelper) *apis.K8sResourceCli
 	})
 }
 
-// ToUnstructuredConnection converts a Connection to an unstructured object
-func ToUnstructuredConnection(obj *provisioning.Connection) (*unstructured.Unstructured, error) {
-	unstructuredObj, err := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(obj)
-	if err != nil {
-		return nil, err
-	}
-	return &unstructured.Unstructured{Object: unstructuredObj}, nil
-}
-
-// FromUnstructuredToConnection converts an unstructured object to a Connection
-func FromUnstructuredToConnection(obj *unstructured.Unstructured) (*provisioning.Connection, error) {
-	conn := &provisioning.Connection{}
-	err := k8sruntime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, conn)
-	return conn, err
-}
-
-// ToUnstructuredRepository converts a Repository to an unstructured object
-func ToUnstructuredRepository(obj *provisioning.Repository) (*unstructured.Unstructured, error) {
-	unstructuredObj, err := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(obj)
-	if err != nil {
-		return nil, err
-	}
-	return &unstructured.Unstructured{Object: unstructuredObj}, nil
-}
-
-// FromUnstructuredToRepository converts an unstructured object to a Repository
-func FromUnstructuredToRepository(obj *unstructured.Unstructured) (*provisioning.Repository, error) {
-	repo := &provisioning.Repository{}
-	err := k8sruntime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, repo)
-	return repo, err
-}
-
 // NewDefaultSharedEnv creates a SharedEnv with default options for provisioning tests
 func NewDefaultSharedEnv() *SharedEnv {
 	return NewSharedEnv(
@@ -2787,4 +3650,97 @@ func SharedHelper(t *testing.T, env *SharedEnv) *ProvisioningTestHelper {
 	helper := env.GetCleanHelper(t)
 	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient()
 	return helper
+}
+
+// RESTDo performs a REST request against the provisioning API and returns the
+// response as an unstructured map. The subpath is appended to
+// /apis/provisioning.grafana.app/<version>/namespaces/<namespace>/.
+func (h *ProvisioningTestHelper) RESTDo(method, version, subpath string, body ...map[string]interface{}) (map[string]interface{}, error) {
+	ns := h.Namespace
+	if ns == "" {
+		ns = "default"
+	}
+	absPath := fmt.Sprintf("/apis/provisioning.grafana.app/%s/namespaces/%s/%s", version, ns, subpath)
+
+	req := h.AdminREST.Verb(method).AbsPath(absPath)
+	if len(body) > 0 && body[0] != nil {
+		bodyBytes, err := json.Marshal(body[0])
+		if err != nil {
+			return nil, err
+		}
+		req = req.Body(bodyBytes).SetHeader("Content-Type", "application/json")
+	}
+
+	result := req.Do(context.Background())
+	if err := result.Error(); err != nil {
+		return nil, err
+	}
+
+	raw, err := result.Raw()
+	if err != nil {
+		return nil, err
+	}
+
+	var obj map[string]interface{}
+	if err := json.Unmarshal(raw, &obj); err != nil {
+		return nil, err
+	}
+	return obj, nil
+}
+
+// LabelPendingDelete is the label key written by the tenant watcher to mark
+// resources whose namespace is pending deletion.
+const LabelPendingDelete = "cloud.grafana.com/pending-delete"
+
+// SetPendingDeleteLabel adds the pending-delete label to the named resource.
+// It retries on 409 Conflict to handle concurrent status updates from the controller.
+func SetPendingDeleteLabel(t *testing.T, resource dynamic.ResourceInterface, name string) {
+	t.Helper()
+	err := RetryOnConflict(t, func() error {
+		obj, err := resource.Get(t.Context(), name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		labels := obj.GetLabels()
+		if labels == nil {
+			labels = make(map[string]string)
+		}
+		labels[LabelPendingDelete] = "true"
+		obj.SetLabels(labels)
+		_, err = resource.Update(t.Context(), obj, metav1.UpdateOptions{})
+		return err
+	})
+	require.NoError(t, err, "setting the pending-delete label on %q should be allowed", name)
+}
+
+// RetryOnConflict retries fn while it returns a 409 Conflict, using
+// EventuallyWithT so the retry window is time-bounded.
+func RetryOnConflict(t *testing.T, fn func() error) error {
+	t.Helper()
+	var lastErr error
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		lastErr = fn()
+		if apierrors.IsConflict(lastErr) {
+			c.Errorf("conflict error, retrying: %v", lastErr)
+		}
+	}, WaitTimeoutDefault, 200*time.Millisecond, "operation failed with persistent 409 Conflict")
+	return lastErr
+}
+
+func LatestCommitSubject(t *testing.T, local *gittest.LocalRepo, ref string) string {
+	t.Helper()
+	_, err := local.Git("fetch", "origin", ref)
+	require.NoError(t, err, fmt.Sprintf("git fetch origin %s should succeed", ref))
+	out, err := local.Git("log", "-1", "--format=%s", fmt.Sprintf("origin/%s", ref))
+	require.NoError(t, err, "git log should succeed")
+	return strings.TrimSpace(out)
+}
+
+func LatestCommitAuthor(t *testing.T, local *gittest.LocalRepo, ref string) string {
+	t.Helper()
+	_, err := local.Git("fetch", "origin", ref)
+	require.NoError(t, err, fmt.Sprintf("git fetch origin %s should succeed", ref))
+	out, err := local.Git("log", "-1", "--format=%an <%ae>", fmt.Sprintf("origin/%s", ref))
+	require.NoError(t, err, "git log should succeed")
+	return strings.TrimSpace(out)
 }

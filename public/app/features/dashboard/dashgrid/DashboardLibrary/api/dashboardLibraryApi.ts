@@ -1,8 +1,8 @@
 import { getBackendSrv, logInfo, logWarning } from '@grafana/runtime';
-import { DashboardJson } from 'app/features/manage-dashboards/types';
-import { PluginDashboard } from 'app/types/plugins';
+import { type DashboardJson } from 'app/features/manage-dashboards/types';
+import { type PluginDashboard } from 'app/types/plugins';
 
-import { GnetDashboard, GnetDashboardsResponse, Link } from '../types';
+import { type GnetDashboard, type GnetDashboardsResponse, type Link } from '../types';
 
 /**
  * Panel types that are known to allow JavaScript code execution.
@@ -125,7 +125,7 @@ export async function fetchProvisionedDashboards(datasourceType: string): Promis
     const dashboards = await getBackendSrv().get(`api/plugins/${datasourceType}/dashboards`, undefined, undefined, {
       showErrorAlert: false,
     });
-    return Array.isArray(dashboards) ? dashboards : [];
+    return Array.isArray(dashboards) ? dashboards.filter((dashboard) => !dashboard.removed) : [];
   } catch (error) {
     console.error('Error loading provisioned dashboards', error);
     return [];

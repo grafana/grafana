@@ -1,10 +1,10 @@
-import { NavModel, NavModelItem, PageLayoutType, arrayUtils } from '@grafana/data';
+import { type NavModel, type NavModelItem, PageLayoutType, arrayUtils } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
-import { DashboardLink } from '@grafana/schema';
+import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
+import { type DashboardLink } from '@grafana/schema';
 import { Page } from 'app/core/components/Page/Page';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { DashboardLinkForm } from '../settings/links/DashboardLinkForm';
 import { DashboardLinkList } from '../settings/links/DashboardLinkList';
@@ -13,7 +13,7 @@ import { NEW_LINK, isLinkEditable } from '../settings/links/utils';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
-import { DashboardEditView, DashboardEditListViewState, useDashboardEditPageNav } from './utils';
+import { type DashboardEditView, type DashboardEditListViewState, useDashboardEditPageNav } from './utils';
 
 export interface DashboardLinksEditViewState extends DashboardEditListViewState {}
 

@@ -1,12 +1,12 @@
 import React from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 
 import {
-  BuilderQueryEditorGroupByExpression,
+  type BuilderQueryEditorGroupByExpression,
   BuilderQueryEditorPropertyType,
   BuilderQueryEditorExpressionType,
 } from '../../dataquery.gen';

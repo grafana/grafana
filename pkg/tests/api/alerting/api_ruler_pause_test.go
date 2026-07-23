@@ -15,34 +15,31 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+// viewerLogin generates a unique login per test so the viewer user does not
+// collide with another test's viewer when using the shared Grafana env.
+func uniqueViewerLogin() string { return "viewer-" + util.GenerateShortUID() }
+
 func TestIntegrationAlertRulePauseNamespace(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	// Setup Grafana and its Database
-
 	testinfra.SQLiteIntegrationTest(t)
 
-	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableLegacyAlerting: true,
-		EnableUnifiedAlerting: true,
-		DisableAnonymous:      true,
-		AppModeProduction:     true,
-	})
+	grafanaListedAddr, env := getStandardSharedEnv(t)
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
-
+	viewerLogin := uniqueViewerLogin()
 	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
-		Password:       "viewer",
-		Login:          "viewer",
+		Password:       user.Password(viewerLogin),
+		Login:          viewerLogin,
 	})
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
-	viewerClient := newAlertingApiClient(grafanaListedAddr, "viewer", "viewer")
+	viewerClient := newAlertingApiClient(grafanaListedAddr, viewerLogin, viewerLogin)
 
 	// Create the folder we'll save our alerts to
 	folderUID := util.GenerateShortUID()
 	apiClient.CreateFolder(t, folderUID, "folder1")
+	t.Cleanup(func() { deleteFolder(t, grafanaListedAddr, folderUID) })
 
 	// Create multiple rule groups in the folder
 	group1 := generateAlertRuleGroup(2, alertRuleGen())
@@ -52,7 +49,7 @@ func TestIntegrationAlertRulePauseNamespace(t *testing.T) {
 
 	t.Run("pause all rules in namespace", func(t *testing.T) {
 		req := &apimodels.UpdateNamespaceRulesRequest{
-			IsPaused: util.Pointer(true),
+			IsPaused: new(true),
 		}
 		response, status, _ := apiClient.UpdateNamespaceRules(t, folderUID, req)
 		require.Equal(t, http.StatusAccepted, status)
@@ -70,7 +67,7 @@ func TestIntegrationAlertRulePauseNamespace(t *testing.T) {
 
 	t.Run("unpause all rules in namespace", func(t *testing.T) {
 		req := &apimodels.UpdateNamespaceRulesRequest{
-			IsPaused: util.Pointer(false),
+			IsPaused: new(false),
 		}
 		response, status, _ := apiClient.UpdateNamespaceRules(t, folderUID, req)
 		require.Equal(t, http.StatusAccepted, status)
@@ -88,7 +85,7 @@ func TestIntegrationAlertRulePauseNamespace(t *testing.T) {
 
 	t.Run("returns 403 for non-existent folder", func(t *testing.T) {
 		req := &apimodels.UpdateNamespaceRulesRequest{
-			IsPaused: util.Pointer(false),
+			IsPaused: new(false),
 		}
 		_, status, _ := apiClient.UpdateNamespaceRules(t, "non-existent-folder", req)
 		require.Equal(t, http.StatusForbidden, status)
@@ -96,7 +93,7 @@ func TestIntegrationAlertRulePauseNamespace(t *testing.T) {
 
 	t.Run("viewer cannot pause rules", func(t *testing.T) {
 		req := &apimodels.UpdateNamespaceRulesRequest{
-			IsPaused: util.Pointer(false),
+			IsPaused: new(false),
 		}
 		_, status, _ := viewerClient.UpdateNamespaceRules(t, folderUID, req)
 		require.Equal(t, http.StatusForbidden, status)

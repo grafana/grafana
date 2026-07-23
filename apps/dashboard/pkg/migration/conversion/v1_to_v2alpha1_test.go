@@ -607,6 +607,104 @@ func TestV1ToV2alpha1(t *testing.T) {
 				assert.Equal(t, map[string]interface{}{"name": "Field1"}, overrideMatcher.Options)
 			},
 		},
+		{
+			name: "legacy bare-string datasource: known names resolve, unknown names are preserved as UID-only refs",
+			createV1: func() *dashv1.Dashboard {
+				return &dashv1.Dashboard{
+					Spec: dashv1.DashboardSpec{
+						Object: map[string]interface{}{
+							"title": "Test Dashboard",
+							// "Existing Target Name" resolves into (uid: "existing-target-uid", type: "elasticsearch").
+							"panels": []interface{}{
+								map[string]interface{}{
+									"id":         101,
+									"type":       "timeseries",
+									"datasource": "Existing Target Name",
+									"targets": []interface{}{
+										map[string]interface{}{
+											"refId": "A",
+										},
+									},
+								},
+								map[string]interface{}{
+									"id":         103,
+									"type":       "timeseries",
+									"datasource": "non-existing-ds",
+									"targets": []interface{}{
+										map[string]interface{}{
+											"refId": "A",
+										},
+									},
+								},
+								map[string]interface{}{
+									"id":   201,
+									"type": "timeseries",
+									"datasource": map[string]interface{}{
+										"uid":  "-- Mixed --",
+										"type": "mixed",
+									},
+									"targets": []interface{}{
+										map[string]interface{}{
+											"refId":      "A",
+											"datasource": "Existing Target Name",
+										},
+									},
+								},
+								map[string]interface{}{
+									"id":   203,
+									"type": "timeseries",
+									"targets": []interface{}{
+										map[string]interface{}{
+											"refId":      "A",
+											"datasource": "non-existing-ds",
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+			},
+			validateV2alpha1: func(t *testing.T, v2alpha1 *dashv2alpha1.Dashboard) {
+				assertKnownStringDS := func(t *testing.T, panelID, where string) {
+					t.Helper()
+					require.Contains(t, v2alpha1.Spec.Elements, panelID)
+					panel := v2alpha1.Spec.Elements[panelID].PanelKind
+					require.NotNil(t, panel)
+					require.Len(t, panel.Spec.Data.Spec.Queries, 1)
+					q := panel.Spec.Data.Spec.Queries[0]
+					require.NotNil(t, q.Spec.Datasource,
+						"bare-string %s datasource matching the index should produce a ref", where)
+					require.NotNil(t, q.Spec.Datasource.Uid)
+					require.NotNil(t, q.Spec.Datasource.Type)
+					assert.Equal(t, "existing-target-uid", *q.Spec.Datasource.Uid,
+						"known legacy string %s datasource should resolve to the indexed UID", where)
+					assert.Equal(t, "elasticsearch", *q.Spec.Datasource.Type,
+						"known legacy string %s datasource should resolve to the indexed type", where)
+				}
+
+				assertUnknownStringDS := func(t *testing.T, panelID, where string) {
+					t.Helper()
+					require.Contains(t, v2alpha1.Spec.Elements, panelID)
+					panel := v2alpha1.Spec.Elements[panelID].PanelKind
+					require.NotNil(t, panel)
+					require.Len(t, panel.Spec.Data.Spec.Queries, 1)
+					q := panel.Spec.Data.Spec.Queries[0]
+					require.NotNil(t, q.Spec.Datasource,
+						"unknown legacy string %s datasource should be preserved as a ref, not dropped", where)
+					require.NotNil(t, q.Spec.Datasource.Uid)
+					assert.Equal(t, "non-existing-ds", *q.Spec.Datasource.Uid,
+						"unknown legacy string %s datasource should preserve the name as UID", where)
+					assert.Nil(t, q.Spec.Datasource.Type,
+						"unknown legacy string %s datasource should omit Type (UID-only ref, matches omitempty semantics)", where)
+				}
+
+				assertKnownStringDS(t, "panel-101", "panel")
+				assertUnknownStringDS(t, "panel-103", "panel")
+				assertKnownStringDS(t, "panel-201", "target")
+				assertUnknownStringDS(t, "panel-203", "target")
+			},
+		},
 	}
 
 	for _, tt := range testCases {
@@ -622,4 +720,88 @@ func TestV1ToV2alpha1(t *testing.T) {
 			tt.validateV2alpha1(t, &v2alpha1Dash)
 		})
 	}
+}
+
+// TestV1ToV2alpha1_TimezoneEmptyString verifies that timezone: "" from V1 is left unset in V2
+// so that the user-profile-preference fallback continues to work.
+func TestV1ToV2alpha1_TimezoneEmptyString(t *testing.T) {
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
+
+	scheme := runtime.NewScheme()
+	err := RegisterConversions(scheme, dsProvider, leProvider)
+	require.NoError(t, err)
+
+	v1Dash := &dashv1.Dashboard{
+		Spec: dashv1.DashboardSpec{
+			Object: map[string]interface{}{
+				"title":    "Test Dashboard",
+				"timezone": "",
+			},
+		},
+	}
+
+	var v2alpha1Dash dashv2alpha1.Dashboard
+	err = scheme.Convert(v1Dash, &v2alpha1Dash, nil)
+	require.NoError(t, err)
+
+	// timezone: "" in V1 means "use user preference". In V2 this is represented by
+	// leaving Timezone unset (nil), so the serving layer can apply the fallback.
+	assert.Nil(t, v2alpha1Dash.Spec.TimeSettings.Timezone,
+		"timezone: '' from V1 should produce nil Timezone in V2, not 'browser'")
+}
+
+// TestV1ToV2alpha1_AnnotationPanelFilterInt64Ids verifies that v1 dashboards whose
+// annotation panel-filter references a panel id outside the uint32 range survive
+// conversion to v2alpha1.
+func TestV1ToV2alpha1_AnnotationPanelFilterInt64Ids(t *testing.T) {
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
+
+	scheme := runtime.NewScheme()
+	err := RegisterConversions(scheme, dsProvider, leProvider)
+	require.NoError(t, err)
+
+	const largePanelID int64 = 23763571993
+
+	v1Dash := &dashv1.Dashboard{
+		Spec: dashv1.DashboardSpec{
+			Object: map[string]interface{}{
+				"title": "Int64 panel id annotation filter",
+				"annotations": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"name":    "Filtered annotation",
+							"enable":  true,
+							"builtIn": false,
+							"datasource": map[string]interface{}{
+								"type": "prometheus",
+								"uid":  "existing-ref-uid",
+							},
+							"filter": map[string]interface{}{
+								"exclude": false,
+								// JSON numbers decode as float64, mirroring the live path.
+								"ids": []interface{}{float64(largePanelID), float64(9999999999)},
+							},
+							"target": map[string]interface{}{
+								"refId": "Anno",
+							},
+							"type": "prometheus",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	var v2alpha1Dash dashv2alpha1.Dashboard
+	err = scheme.Convert(v1Dash, &v2alpha1Dash, nil)
+	require.NoError(t, err)
+
+	require.Len(t, v2alpha1Dash.Spec.Annotations, 1)
+	filter := v2alpha1Dash.Spec.Annotations[0].Spec.Filter
+	require.NotNil(t, filter)
+	require.Equal(t, []float64{float64(largePanelID), 9999999999}, filter.Ids)
 }

@@ -1,6 +1,6 @@
 import { stripIndents } from 'common-tags';
 
-import { LogsQueryLanguage } from '../../dataquery.gen';
+import { type LogsQueryLanguage } from '../../dataquery.gen';
 
 export interface SampleQuery {
   title: string;

@@ -1,7 +1,6 @@
 package provisioning
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -17,47 +16,36 @@ import (
 // fieldSelector=metadata.name=<name> was not working properly.
 func TestIntegrationProvisioning_RepositoryFieldSelector(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// Create multiple repositories for testing
 	repo1Name := "repo-selector-test-1"
 	repo2Name := "repo-selector-test-2"
 	repo3Name := "repo-selector-test-3"
 
-	// Create first repository
-	repo1 := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-		"Name":        repo1Name,
-		"SyncEnabled": false, // Disable sync to speed up test
+	// Create repositories with sync disabled.
+	helper.CreateLocalRepository(t, common.LocalRepositorySpec{
+		Name:        repo1Name,
+		SyncEnabled: false,
+		Workflows:   []string{"write"},
 	})
-	_, err := helper.Repositories.Resource.Create(ctx, repo1, metav1.CreateOptions{})
-	require.NoError(t, err, "failed to create first repository")
-	helper.WaitForHealthyRepository(t, repo1Name)
-
-	// Create second repository
-	repo2 := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-		"Name":        repo2Name,
-		"SyncEnabled": false,
+	helper.CreateLocalRepository(t, common.LocalRepositorySpec{
+		Name:        repo2Name,
+		SyncEnabled: false,
+		Workflows:   []string{"write"},
 	})
-	_, err = helper.Repositories.Resource.Create(ctx, repo2, metav1.CreateOptions{})
-	require.NoError(t, err, "failed to create second repository")
-	helper.WaitForHealthyRepository(t, repo2Name)
-
-	// Create third repository
-	repo3 := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-		"Name":        repo3Name,
-		"SyncEnabled": false,
+	helper.CreateLocalRepository(t, common.LocalRepositorySpec{
+		Name:        repo3Name,
+		SyncEnabled: false,
+		Workflows:   []string{"write"},
 	})
-	_, err = helper.Repositories.Resource.Create(ctx, repo3, metav1.CreateOptions{})
-	require.NoError(t, err, "failed to create third repository")
-	helper.WaitForHealthyRepository(t, repo3Name)
 
 	// Verify all repositories were created
-	allRepos, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
+	allRepos, err := helper.Repositories.Resource.List(t.Context(), metav1.ListOptions{})
 	require.NoError(t, err, "should be able to list all repositories")
 	require.GreaterOrEqual(t, len(allRepos.Items), 3, "should have at least 3 repositories")
 
 	t.Run("should filter by metadata.name and return single repository", func(t *testing.T) {
-		list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{
+		list, err := helper.Repositories.Resource.List(t.Context(), metav1.ListOptions{
 			FieldSelector: "metadata.name=" + repo2Name,
 		})
 		require.NoError(t, err, "fieldSelector query should succeed")
@@ -66,7 +54,7 @@ func TestIntegrationProvisioning_RepositoryFieldSelector(t *testing.T) {
 	})
 
 	t.Run("should filter by different metadata.name", func(t *testing.T) {
-		list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{
+		list, err := helper.Repositories.Resource.List(t.Context(), metav1.ListOptions{
 			FieldSelector: "metadata.name=" + repo1Name,
 		})
 		require.NoError(t, err, "fieldSelector query should succeed")
@@ -75,7 +63,7 @@ func TestIntegrationProvisioning_RepositoryFieldSelector(t *testing.T) {
 	})
 
 	t.Run("should return empty when fieldSelector does not match any repository", func(t *testing.T) {
-		list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{
+		list, err := helper.Repositories.Resource.List(t.Context(), metav1.ListOptions{
 			FieldSelector: "metadata.name=non-existent-repository",
 		})
 		require.NoError(t, err, "fieldSelector query should succeed even with no matches")
@@ -83,7 +71,7 @@ func TestIntegrationProvisioning_RepositoryFieldSelector(t *testing.T) {
 	})
 
 	t.Run("listing without fieldSelector should return all repositories", func(t *testing.T) {
-		list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
+		list, err := helper.Repositories.Resource.List(t.Context(), metav1.ListOptions{})
 		require.NoError(t, err, "should be able to list without fieldSelector")
 		require.GreaterOrEqual(t, len(list.Items), 3, "should return all repositories when no filter is applied")
 
@@ -103,17 +91,14 @@ func TestIntegrationProvisioning_RepositoryFieldSelector(t *testing.T) {
 // fieldSelector=metadata.name=<name> was not working properly.
 func TestIntegrationProvisioning_JobFieldSelector(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// Create a repository to trigger jobs
 	repoName := "job-selector-test-repo"
-	repo := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
-		"Name":        repoName,
-		"SyncEnabled": false,
+	helper.CreateLocalRepository(t, common.LocalRepositorySpec{
+		Name:        repoName,
+		SyncEnabled: false,
+		Workflows:   []string{"write"},
 	})
-	_, err := helper.Repositories.Resource.Create(ctx, repo, metav1.CreateOptions{})
-	require.NoError(t, err, "failed to create repository")
-	helper.WaitForHealthyRepository(t, repoName)
 
 	// Copy some test files to trigger jobs
 	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "job-test-dashboard-1.json")
@@ -134,7 +119,7 @@ func TestIntegrationProvisioning_JobFieldSelector(t *testing.T) {
 		SubResource("jobs").
 		Body(body1).
 		SetHeader("Content-Type", "application/json").
-		Do(ctx)
+		Do(t.Context())
 	require.NoError(t, result1.Error(), "should be able to trigger first job")
 
 	obj1, err := result1.Get()
@@ -154,7 +139,7 @@ func TestIntegrationProvisioning_JobFieldSelector(t *testing.T) {
 		SubResource("jobs").
 		Body(body1).
 		SetHeader("Content-Type", "application/json").
-		Do(ctx)
+		Do(t.Context())
 	require.NoError(t, result2.Error(), "should be able to trigger second job")
 
 	obj2, err := result2.Get()
@@ -165,7 +150,7 @@ func TestIntegrationProvisioning_JobFieldSelector(t *testing.T) {
 
 	t.Run("should filter by metadata.name and return single job", func(t *testing.T) {
 		// Note: Jobs are ephemeral and may complete quickly, so we test while they exist
-		list, err := helper.Jobs.Resource.List(ctx, metav1.ListOptions{
+		list, err := helper.Jobs.Resource.List(t.Context(), metav1.ListOptions{
 			FieldSelector: "metadata.name=" + job2Name,
 		})
 		require.NoError(t, err, "fieldSelector query should succeed")
@@ -178,7 +163,7 @@ func TestIntegrationProvisioning_JobFieldSelector(t *testing.T) {
 	})
 
 	t.Run("should filter by different metadata.name", func(t *testing.T) {
-		list, err := helper.Jobs.Resource.List(ctx, metav1.ListOptions{
+		list, err := helper.Jobs.Resource.List(t.Context(), metav1.ListOptions{
 			FieldSelector: "metadata.name=" + job1Name,
 		})
 		require.NoError(t, err, "fieldSelector query should succeed")
@@ -191,7 +176,7 @@ func TestIntegrationProvisioning_JobFieldSelector(t *testing.T) {
 	})
 
 	t.Run("should return empty when fieldSelector does not match any job", func(t *testing.T) {
-		list, err := helper.Jobs.Resource.List(ctx, metav1.ListOptions{
+		list, err := helper.Jobs.Resource.List(t.Context(), metav1.ListOptions{
 			FieldSelector: "metadata.name=non-existent-job",
 		})
 		require.NoError(t, err, "fieldSelector query should succeed even with no matches")
@@ -199,7 +184,7 @@ func TestIntegrationProvisioning_JobFieldSelector(t *testing.T) {
 	})
 
 	t.Run("listing without fieldSelector should work", func(t *testing.T) {
-		list, err := helper.Jobs.Resource.List(ctx, metav1.ListOptions{})
+		list, err := helper.Jobs.Resource.List(t.Context(), metav1.ListOptions{})
 		require.NoError(t, err, "should be able to list without fieldSelector")
 		// Jobs may have completed, so we don't assert on count, just that the query works
 		t.Logf("Found %d active jobs without filter", len(list.Items))

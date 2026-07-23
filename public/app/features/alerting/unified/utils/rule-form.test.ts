@@ -1,21 +1,21 @@
-import { PromQuery } from '@grafana/prometheus';
+import { type PromQuery } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
-import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
-import { RuleWithLocation } from 'app/types/unified-alerting';
+import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { type RuleWithLocation } from 'app/types/unified-alerting';
 import {
-  AlertDataQuery,
-  AlertQuery,
+  type AlertDataQuery,
+  type AlertQuery,
   GrafanaAlertStateDecision,
-  GrafanaRuleDefinition,
-  RulerAlertingRuleDTO,
-  RulerGrafanaRuleDTO,
+  type GrafanaRuleDefinition,
+  type RulerAlertingRuleDTO,
+  type RulerGrafanaRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { EvalFunction } from '../../state/alertDef';
 import { mockDataSource, mockRuleWithLocation, mockRulerGrafanaRecordingRule } from '../mocks';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
 import { setupDataSources } from '../testSetup/datasources';
-import { AlertManagerManualRouting, RuleFormType, RuleFormValues } from '../types/rule-form';
+import { type AlertManagerManualRouting, RuleFormType, type RuleFormValues } from '../types/rule-form';
 
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import {
@@ -413,12 +413,22 @@ describe('getNotificationSettingsForDTO with selectedPolicy', () => {
     jest.restoreAllMocks();
   });
 
-  it('should NOT return policy DTO when alertingPolicyRoutingSettings is OFF', () => {
+  it('should return policy DTO even when alertingPolicyRoutingSettings is OFF', () => {
     jest.replaceProperty(config, 'featureToggles', {
       ...config.featureToggles,
       alertingPolicyRoutingSettings: false,
     });
     const result = getNotificationSettingsForDTO(false, undefined, 'TestPolicy');
+    expect(result).toEqual({ policy: 'TestPolicy' });
+    jest.restoreAllMocks();
+  });
+
+  it('should return undefined when selectedPolicy is not set (legacy label-only rule)', () => {
+    jest.replaceProperty(config, 'featureToggles', {
+      ...config.featureToggles,
+      alertingPolicyRoutingSettings: false,
+    });
+    const result = getNotificationSettingsForDTO(false, undefined, undefined);
     expect(result).toBeUndefined();
     jest.restoreAllMocks();
   });
@@ -531,6 +541,26 @@ describe('formValuesToRulerGrafanaRuleDTO label stripping', () => {
       alertingPolicyRoutingSettings: true,
     });
     const result = formValuesToRulerGrafanaRuleDTO(baseValues());
+    expect(result.labels).not.toHaveProperty('__grafana_managed_route__');
+    expect(result.labels).toHaveProperty('env', 'prod');
+    jest.restoreAllMocks();
+  });
+
+  it('should write notification_settings.policy (and strip the legacy label) for a policy-field rule when FF is OFF', () => {
+    jest.replaceProperty(config, 'featureToggles', {
+      ...config.featureToggles,
+      alertingPolicyRoutingSettings: false,
+    });
+    const values: RuleFormValues = {
+      ...getDefaultFormValues(),
+      condition: 'A',
+      type: RuleFormType.grafana,
+      manualRouting: false,
+      selectedPolicy: 'TestPolicy',
+      labels: [{ key: 'env', value: 'prod' }],
+    };
+    const result = formValuesToRulerGrafanaRuleDTO(values);
+    expect(result.grafana_alert.notification_settings).toEqual({ policy: 'TestPolicy' });
     expect(result.labels).not.toHaveProperty('__grafana_managed_route__');
     expect(result.labels).toHaveProperty('env', 'prod');
     jest.restoreAllMocks();

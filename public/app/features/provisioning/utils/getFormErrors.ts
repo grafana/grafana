@@ -1,13 +1,16 @@
-import { Path } from 'react-hook-form';
+import { type Path } from 'react-hook-form';
 
-import { ErrorDetails, StatusCause, Status } from 'app/api/clients/provisioning/v0alpha1';
+import { type ErrorDetails, type StatusCause, type Status } from 'app/api/clients/provisioning/v0alpha1';
 import { extractStatusCauses } from 'app/api/utils';
 
-import { WizardFormData } from '../Wizard/types';
-import { ConnectionFormData, RepositoryFormData } from '../types';
+import { type WizardFormData } from '../Wizard/types';
+import { type ConnectionFormData, type RepositoryFormData } from '../types';
 
-export type RepositoryField = keyof WizardFormData['repository'];
-export type RepositoryFormPath = `repository.${RepositoryField}` | 'repository.sync.intervalSeconds';
+type RepositoryField = keyof WizardFormData['repository'];
+type RepositoryFormPath =
+  | `repository.${RepositoryField}`
+  | 'repository.sync.intervalSeconds'
+  | 'repository.webhook.disabled';
 
 type GenericFormPath = string;
 type GenericFormErrors<T extends GenericFormPath> = Array<[T, { message: string }]>;
@@ -114,6 +117,7 @@ export const getFormErrors = (data: ErrorDetails[] | Status): FormErrors => {
     'git.branch': 'repository.branch',
     'git.url': 'repository.url',
     'sync.intervalSeconds': 'repository.sync.intervalSeconds',
+    'webhook.disabled': 'repository.webhook.disabled',
   };
 
   const errors = extractFormErrors(data);
@@ -121,7 +125,7 @@ export const getFormErrors = (data: ErrorDetails[] | Status): FormErrors => {
 };
 
 // Config form errors
-export type ConfigFormPath = Path<RepositoryFormData>;
+type ConfigFormPath = Path<RepositoryFormData>;
 export type ConfigFormErrors = GenericFormErrors<ConfigFormPath>;
 
 export const getConfigFormErrors = (data: ErrorDetails[] | Status): ConfigFormErrors => {
@@ -132,6 +136,7 @@ export const getConfigFormErrors = (data: ErrorDetails[] | Status): ConfigFormEr
     token: 'token',
     tokenUser: 'tokenUser',
     'sync.intervalSeconds': 'sync.intervalSeconds',
+    'webhook.disabled': 'webhook.disabled',
   };
 
   const errors = extractFormErrors(data);
@@ -139,7 +144,7 @@ export const getConfigFormErrors = (data: ErrorDetails[] | Status): ConfigFormEr
 };
 
 // Connection form errors
-export type ConnectionFormPath = Path<ConnectionFormData>;
+type ConnectionFormPath = Path<ConnectionFormData>;
 export type ConnectionFormErrors = GenericFormErrors<ConnectionFormPath>;
 
 export const getConnectionFormErrors = (data: ErrorDetails[] | Status): ConnectionFormErrors => {
@@ -150,10 +155,15 @@ export const getConnectionFormErrors = (data: ErrorDetails[] | Status): Connecti
     description: 'description',
     appID: 'appID',
     installationID: 'installationID',
+    serverUrl: 'serverUrl',
     'github.appID': 'appID',
     'github.installationID': 'installationID',
+    'githubEnterprise.appID': 'appID',
+    'githubEnterprise.installationID': 'installationID',
+    'githubEnterprise.serverUrl': 'serverUrl',
     'secure.privateKey': 'privateKey',
     privateKey: 'privateKey',
+    'webhook.disabled': 'webhookDisabled',
   };
 
   const errors = extractFormErrors(data);

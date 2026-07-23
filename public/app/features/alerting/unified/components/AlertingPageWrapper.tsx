@@ -1,14 +1,18 @@
-import { PropsWithChildren, ReactNode, useMemo } from 'react';
+import { type PropsWithChildren, type ReactNode, useMemo } from 'react';
 import { useLocation } from 'react-use';
 
+import { config } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
-import { PageProps } from 'app/core/components/Page/types';
+import { type PageProps } from 'app/core/components/Page/types';
 
+import { useImportEntrypointState } from '../hooks/useImportEntrypointState';
 import { AlertmanagerProvider, useAlertmanager } from '../state/AlertmanagerContext';
-import { getRulesDataSources } from '../utils/datasource';
+import { getAlertManagerDataSourcesByPermission } from '../utils/datasource';
 
 import { AlertManagerPicker } from './AlertManagerPicker';
 import { NoAlertManagerWarning } from './NoAlertManagerWarning';
+import { ImportToGMABanner } from './import-to-gma/ImportToGMABanner';
+import { useCanImportToGMA } from './import-to-gma/useCanImportToGMA';
 
 /**
  * This is the main alerting page wrapper, used by the alertmanager page wrapper and the alert rules list view
@@ -35,15 +39,18 @@ interface AlertmanagerPageWrapperProps extends AlertingPageWrapperProps {
 }
 export const AlertmanagerPageWrapper = ({ children, accessType, ...props }: AlertmanagerPageWrapperProps) => {
   const disableAlertmanager = useIsDisabledAlertmanagerSelection();
-  // Check if there are any external data sources that can manage alerts
-  // If so, show the AlertManagerPicker so users can configure their alertmanagers
-  const hasExternalManagedAlerts = useMemo(() => getRulesDataSources().length > 0, []);
+  // Check if there are any external Alertmanager data sources the user can access
+  // If so, show the AlertManagerPicker so users can switch between them
+  const hasExternalAlertmanagers = useMemo(
+    () => getAlertManagerDataSourcesByPermission(accessType).availableExternalDataSources.length > 0,
+    [accessType]
+  );
 
   return (
     <AlertmanagerProvider accessType={accessType}>
       <AlertingPageWrapper
         {...props}
-        actions={hasExternalManagedAlerts && <AlertManagerPicker disabled={disableAlertmanager} />}
+        actions={hasExternalAlertmanagers && <AlertManagerPicker disabled={disableAlertmanager} />}
       >
         <AlertManagerPagePermissionsCheck>{children}</AlertManagerPagePermissionsCheck>
       </AlertingPageWrapper>
@@ -73,5 +80,32 @@ const AlertManagerPagePermissionsCheck = ({ children }: PropsWithChildren) => {
     return <NoAlertManagerWarning availableAlertManagers={availableAlertManagers} />;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <ImportToGMABannerForAlertmanager />
+      {children}
+    </>
+  );
 };
+
+/**
+ * Invites the user to import an external Alertmanager's configuration into
+ * Grafana-managed alerting. Only rendered once a valid Alertmanager is selected. Suppressed on edit/new forms, where the Alertmanager picker is disabled and a
+ * promo banner is noise.
+ */
+function ImportToGMABannerForAlertmanager() {
+  const { isGrafanaAlertmanager } = useAlertmanager();
+  const { canImportNotifications } = useCanImportToGMA();
+  const isEditOrNewForm = useIsDisabledAlertmanagerSelection();
+  const { disabled: importDisabled, isLoading: importStateLoading } = useImportEntrypointState();
+
+  const showBanner =
+    Boolean(config.featureToggles.alertingMigrationWizardUI) &&
+    !isGrafanaAlertmanager &&
+    canImportNotifications &&
+    !isEditOrNewForm &&
+    !importDisabled &&
+    !importStateLoading;
+
+  return showBanner ? <ImportToGMABanner /> : null;
+}

@@ -1,6 +1,6 @@
 import { css } from '@emotion/react';
 
-import { GrafanaTheme2, ThemeTypographyVariant } from '@grafana/data';
+import { type GrafanaTheme2, type ThemeTypographyVariant } from '@grafana/data';
 
 import { getFocusStyles } from '../mixins';
 
@@ -457,7 +457,7 @@ export function getElementStyles(theme: GrafanaTheme2) {
   });
 }
 
-export function getVariantStyles(variant: ThemeTypographyVariant) {
+function getVariantStyles(variant: ThemeTypographyVariant) {
   return {
     margin: 0,
     fontSize: variant.fontSize,

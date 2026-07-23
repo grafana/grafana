@@ -1,5 +1,5 @@
 import { api } from './baseAPI';
-export const addTagTypes = ['API Discovery', 'Dashboard'] as const;
+export const addTagTypes = ['API Discovery', 'Dashboard', 'Notebook', 'Variable'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
     addTagTypes,
@@ -15,14 +15,11 @@ const injectedRtkApi = api
           url: `/dashboards`,
           params: {
             pretty: queryArg.pretty,
-            allowWatchBookmarks: queryArg.allowWatchBookmarks,
             continue: queryArg['continue'],
             fieldSelector: queryArg.fieldSelector,
             labelSelector: queryArg.labelSelector,
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
-            resourceVersionMatch: queryArg.resourceVersionMatch,
-            sendInitialEvents: queryArg.sendInitialEvents,
             timeoutSeconds: queryArg.timeoutSeconds,
             watch: queryArg.watch,
           },
@@ -39,29 +36,6 @@ const injectedRtkApi = api
             dryRun: queryArg.dryRun,
             fieldManager: queryArg.fieldManager,
             fieldValidation: queryArg.fieldValidation,
-          },
-        }),
-        invalidatesTags: ['Dashboard'],
-      }),
-      deletecollectionDashboard: build.mutation<DeletecollectionDashboardApiResponse, DeletecollectionDashboardApiArg>({
-        query: (queryArg) => ({
-          url: `/dashboards`,
-          method: 'DELETE',
-          params: {
-            pretty: queryArg.pretty,
-            continue: queryArg['continue'],
-            dryRun: queryArg.dryRun,
-            fieldSelector: queryArg.fieldSelector,
-            gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
-            labelSelector: queryArg.labelSelector,
-            limit: queryArg.limit,
-            orphanDependents: queryArg.orphanDependents,
-            propagationPolicy: queryArg.propagationPolicy,
-            resourceVersion: queryArg.resourceVersion,
-            resourceVersionMatch: queryArg.resourceVersionMatch,
-            sendInitialEvents: queryArg.sendInitialEvents,
-            timeoutSeconds: queryArg.timeoutSeconds,
           },
         }),
         invalidatesTags: ['Dashboard'],
@@ -123,6 +97,220 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/dashboards/${queryArg.name}/dto` }),
         providesTags: ['Dashboard'],
       }),
+      listNotebook: build.query<ListNotebookApiResponse, ListNotebookApiArg>({
+        query: (queryArg) => ({
+          url: `/notebooks`,
+          params: {
+            pretty: queryArg.pretty,
+            continue: queryArg['continue'],
+            fieldSelector: queryArg.fieldSelector,
+            labelSelector: queryArg.labelSelector,
+            limit: queryArg.limit,
+            resourceVersion: queryArg.resourceVersion,
+            timeoutSeconds: queryArg.timeoutSeconds,
+            watch: queryArg.watch,
+          },
+        }),
+        providesTags: ['Notebook'],
+      }),
+      createNotebook: build.mutation<CreateNotebookApiResponse, CreateNotebookApiArg>({
+        query: (queryArg) => ({
+          url: `/notebooks`,
+          method: 'POST',
+          body: queryArg.notebook,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+          },
+        }),
+        invalidatesTags: ['Notebook'],
+      }),
+      deletecollectionNotebook: build.mutation<DeletecollectionNotebookApiResponse, DeletecollectionNotebookApiArg>({
+        query: (queryArg) => ({
+          url: `/notebooks`,
+          method: 'DELETE',
+          params: {
+            pretty: queryArg.pretty,
+            continue: queryArg['continue'],
+            dryRun: queryArg.dryRun,
+            fieldSelector: queryArg.fieldSelector,
+            gracePeriodSeconds: queryArg.gracePeriodSeconds,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            labelSelector: queryArg.labelSelector,
+            limit: queryArg.limit,
+            orphanDependents: queryArg.orphanDependents,
+            propagationPolicy: queryArg.propagationPolicy,
+            resourceVersion: queryArg.resourceVersion,
+            resourceVersionMatch: queryArg.resourceVersionMatch,
+            sendInitialEvents: queryArg.sendInitialEvents,
+            shardSelector: queryArg.shardSelector,
+            timeoutSeconds: queryArg.timeoutSeconds,
+          },
+        }),
+        invalidatesTags: ['Notebook'],
+      }),
+      getNotebook: build.query<GetNotebookApiResponse, GetNotebookApiArg>({
+        query: (queryArg) => ({
+          url: `/notebooks/${queryArg.name}`,
+          params: {
+            pretty: queryArg.pretty,
+          },
+        }),
+        providesTags: ['Notebook'],
+      }),
+      replaceNotebook: build.mutation<ReplaceNotebookApiResponse, ReplaceNotebookApiArg>({
+        query: (queryArg) => ({
+          url: `/notebooks/${queryArg.name}`,
+          method: 'PUT',
+          body: queryArg.notebook,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+          },
+        }),
+        invalidatesTags: ['Notebook'],
+      }),
+      deleteNotebook: build.mutation<DeleteNotebookApiResponse, DeleteNotebookApiArg>({
+        query: (queryArg) => ({
+          url: `/notebooks/${queryArg.name}`,
+          method: 'DELETE',
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            gracePeriodSeconds: queryArg.gracePeriodSeconds,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            orphanDependents: queryArg.orphanDependents,
+            propagationPolicy: queryArg.propagationPolicy,
+          },
+        }),
+        invalidatesTags: ['Notebook'],
+      }),
+      updateNotebook: build.mutation<UpdateNotebookApiResponse, UpdateNotebookApiArg>({
+        query: (queryArg) => ({
+          url: `/notebooks/${queryArg.name}`,
+          method: 'PATCH',
+          body: queryArg.patch,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+            force: queryArg.force,
+          },
+        }),
+        invalidatesTags: ['Notebook'],
+      }),
+      listVariable: build.query<ListVariableApiResponse, ListVariableApiArg>({
+        query: (queryArg) => ({
+          url: `/variables`,
+          params: {
+            pretty: queryArg.pretty,
+            continue: queryArg['continue'],
+            fieldSelector: queryArg.fieldSelector,
+            labelSelector: queryArg.labelSelector,
+            limit: queryArg.limit,
+            resourceVersion: queryArg.resourceVersion,
+            timeoutSeconds: queryArg.timeoutSeconds,
+            watch: queryArg.watch,
+          },
+        }),
+        providesTags: ['Variable'],
+      }),
+      createVariable: build.mutation<CreateVariableApiResponse, CreateVariableApiArg>({
+        query: (queryArg) => ({
+          url: `/variables`,
+          method: 'POST',
+          body: queryArg.variable,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+          },
+        }),
+        invalidatesTags: ['Variable'],
+      }),
+      deletecollectionVariable: build.mutation<DeletecollectionVariableApiResponse, DeletecollectionVariableApiArg>({
+        query: (queryArg) => ({
+          url: `/variables`,
+          method: 'DELETE',
+          params: {
+            pretty: queryArg.pretty,
+            continue: queryArg['continue'],
+            dryRun: queryArg.dryRun,
+            fieldSelector: queryArg.fieldSelector,
+            gracePeriodSeconds: queryArg.gracePeriodSeconds,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            labelSelector: queryArg.labelSelector,
+            limit: queryArg.limit,
+            orphanDependents: queryArg.orphanDependents,
+            propagationPolicy: queryArg.propagationPolicy,
+            resourceVersion: queryArg.resourceVersion,
+            resourceVersionMatch: queryArg.resourceVersionMatch,
+            sendInitialEvents: queryArg.sendInitialEvents,
+            shardSelector: queryArg.shardSelector,
+            timeoutSeconds: queryArg.timeoutSeconds,
+          },
+        }),
+        invalidatesTags: ['Variable'],
+      }),
+      getVariable: build.query<GetVariableApiResponse, GetVariableApiArg>({
+        query: (queryArg) => ({
+          url: `/variables/${queryArg.name}`,
+          params: {
+            pretty: queryArg.pretty,
+          },
+        }),
+        providesTags: ['Variable'],
+      }),
+      replaceVariable: build.mutation<ReplaceVariableApiResponse, ReplaceVariableApiArg>({
+        query: (queryArg) => ({
+          url: `/variables/${queryArg.name}`,
+          method: 'PUT',
+          body: queryArg.variable,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+          },
+        }),
+        invalidatesTags: ['Variable'],
+      }),
+      deleteVariable: build.mutation<DeleteVariableApiResponse, DeleteVariableApiArg>({
+        query: (queryArg) => ({
+          url: `/variables/${queryArg.name}`,
+          method: 'DELETE',
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            gracePeriodSeconds: queryArg.gracePeriodSeconds,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            orphanDependents: queryArg.orphanDependents,
+            propagationPolicy: queryArg.propagationPolicy,
+          },
+        }),
+        invalidatesTags: ['Variable'],
+      }),
+      updateVariable: build.mutation<UpdateVariableApiResponse, UpdateVariableApiArg>({
+        query: (queryArg) => ({
+          url: `/variables/${queryArg.name}`,
+          method: 'PATCH',
+          body: queryArg.patch,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+            force: queryArg.force,
+          },
+        }),
+        invalidatesTags: ['Variable'],
+      }),
     }),
     overrideExisting: false,
   });
@@ -133,8 +321,6 @@ export type ListDashboardApiResponse = /** status 200 OK */ DashboardList;
 export type ListDashboardApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
-  /** allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored. */
-  allowWatchBookmarks?: boolean;
   /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
     
     This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
@@ -151,24 +337,6 @@ export type ListDashboardApiArg = {
     
     Defaults to unset */
   resourceVersion?: string;
-  /** resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersionMatch?: string;
-  /** `sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic "Bookmark" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `"k8s.io/initial-events-end": "true"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.
-    
-    When `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan
-      is interpreted as "data at least as new as the provided `resourceVersion`"
-      and the bookmark event is send when the state is synced
-      to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
-      If `resourceVersion` is unset, this is interpreted as "consistent read" and the
-      bookmark event is send when the state is synced at least to the moment
-      when request started being processed.
-    - `resourceVersionMatch` set to any other value or unset
-      Invalid error is returned.
-    
-    Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
-  sendInitialEvents?: boolean;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
@@ -188,57 +356,6 @@ export type CreateDashboardApiArg = {
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
   dashboard: Dashboard;
-};
-export type DeletecollectionDashboardApiResponse = /** status 200 OK */ Status;
-export type DeletecollectionDashboardApiArg = {
-  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
-  pretty?: string;
-  /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
-    
-    This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
-  continue?: string;
-  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
-  dryRun?: string;
-  /** A selector to restrict the list of returned objects by their fields. Defaults to everything. */
-  fieldSelector?: string;
-  /** The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately. */
-  gracePeriodSeconds?: number;
-  /** if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it */
-  ignoreStoreReadErrorWithClusterBreakingPotential?: boolean;
-  /** A selector to restrict the list of returned objects by their labels. Defaults to everything. */
-  labelSelector?: string;
-  /** limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.
-    
-    The server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned. */
-  limit?: number;
-  /** Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the "orphan" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both. */
-  orphanDependents?: boolean;
-  /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
-  propagationPolicy?: string;
-  /** resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersion?: string;
-  /** resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersionMatch?: string;
-  /** `sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic "Bookmark" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `"k8s.io/initial-events-end": "true"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.
-    
-    When `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan
-      is interpreted as "data at least as new as the provided `resourceVersion`"
-      and the bookmark event is send when the state is synced
-      to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
-      If `resourceVersion` is unset, this is interpreted as "consistent read" and the
-      bookmark event is send when the state is synced at least to the moment
-      when request started being processed.
-    - `resourceVersionMatch` set to any other value or unset
-      Invalid error is returned.
-    
-    Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
-  sendInitialEvents?: boolean;
-  /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
-  timeoutSeconds?: number;
 };
 export type GetDashboardApiResponse = /** status 200 OK */ Dashboard;
 export type GetDashboardApiArg = {
@@ -298,6 +415,342 @@ export type GetDashboardDtoApiResponse = /** status 200 OK */ DashboardWithAcces
 export type GetDashboardDtoApiArg = {
   /** name of the DashboardWithAccessInfo */
   name: string;
+};
+export type ListNotebookApiResponse = /** status 200 OK */ NotebookList;
+export type ListNotebookApiArg = {
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
+    
+    This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
+  continue?: string;
+  /** A selector to restrict the list of returned objects by their fields. Defaults to everything. */
+  fieldSelector?: string;
+  /** A selector to restrict the list of returned objects by their labels. Defaults to everything. */
+  labelSelector?: string;
+  /** limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.
+    
+    The server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned. */
+  limit?: number;
+  /** resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
+    
+    Defaults to unset */
+  resourceVersion?: string;
+  /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
+  timeoutSeconds?: number;
+  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
+  watch?: boolean;
+};
+export type CreateNotebookApiResponse = /** status 200 OK */
+  | Notebook
+  | /** status 201 Created */ Notebook
+  | /** status 202 Accepted */ Notebook;
+export type CreateNotebookApiArg = {
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  notebook: Notebook;
+};
+export type DeletecollectionNotebookApiResponse = /** status 200 OK */ Status;
+export type DeletecollectionNotebookApiArg = {
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
+    
+    This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
+  continue?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** A selector to restrict the list of returned objects by their fields. Defaults to everything. */
+  fieldSelector?: string;
+  /** The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately. */
+  gracePeriodSeconds?: number;
+  /** if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it */
+  ignoreStoreReadErrorWithClusterBreakingPotential?: boolean;
+  /** A selector to restrict the list of returned objects by their labels. Defaults to everything. */
+  labelSelector?: string;
+  /** limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.
+    
+    The server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned. */
+  limit?: number;
+  /** Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the "orphan" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both. */
+  orphanDependents?: boolean;
+  /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
+  propagationPolicy?: string;
+  /** resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
+    
+    Defaults to unset */
+  resourceVersion?: string;
+  /** resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
+    
+    Defaults to unset */
+  resourceVersionMatch?: string;
+  /** `sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic "Bookmark" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `"k8s.io/initial-events-end": "true"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.
+    
+    When `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan
+      is interpreted as "data at least as new as the provided `resourceVersion`"
+      and the bookmark event is send when the state is synced
+      to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
+      If `resourceVersion` is unset, this is interpreted as "consistent read" and the
+      bookmark event is send when the state is synced at least to the moment
+      when request started being processed.
+    - `resourceVersionMatch` set to any other value or unset
+      Invalid error is returned.
+    
+    Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
+  sendInitialEvents?: boolean;
+  /** shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:
+    
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000')
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+    
+    Field paths use CEL-style object-rooted syntax (e.g. "object.metadata.uid"), NOT the fieldSelector format ("metadata.uid"). Currently supported paths:
+      - object.metadata.uid
+      - object.metadata.namespace
+    
+    hexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.
+    
+    Examples:
+      2-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+      4-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')
+        shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')
+        shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')
+    
+    This is an alpha field and requires enabling the ShardedListAndWatch feature gate. */
+  shardSelector?: string;
+  /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
+  timeoutSeconds?: number;
+};
+export type GetNotebookApiResponse = /** status 200 OK */ Notebook;
+export type GetNotebookApiArg = {
+  /** name of the Notebook */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+};
+export type ReplaceNotebookApiResponse = /** status 200 OK */ Notebook | /** status 201 Created */ Notebook;
+export type ReplaceNotebookApiArg = {
+  /** name of the Notebook */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  notebook: Notebook;
+};
+export type DeleteNotebookApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
+export type DeleteNotebookApiArg = {
+  /** name of the Notebook */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately. */
+  gracePeriodSeconds?: number;
+  /** if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it */
+  ignoreStoreReadErrorWithClusterBreakingPotential?: boolean;
+  /** Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the "orphan" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both. */
+  orphanDependents?: boolean;
+  /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
+  propagationPolicy?: string;
+};
+export type UpdateNotebookApiResponse = /** status 200 OK */ Notebook | /** status 201 Created */ Notebook;
+export type UpdateNotebookApiArg = {
+  /** name of the Notebook */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch). */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
+  force?: boolean;
+  patch: Patch;
+};
+export type ListVariableApiResponse = /** status 200 OK */ VariableList;
+export type ListVariableApiArg = {
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
+    
+    This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
+  continue?: string;
+  /** A selector to restrict the list of returned objects by their fields. Defaults to everything. */
+  fieldSelector?: string;
+  /** A selector to restrict the list of returned objects by their labels. Defaults to everything. */
+  labelSelector?: string;
+  /** limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.
+    
+    The server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned. */
+  limit?: number;
+  /** resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
+    
+    Defaults to unset */
+  resourceVersion?: string;
+  /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
+  timeoutSeconds?: number;
+  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
+  watch?: boolean;
+};
+export type CreateVariableApiResponse = /** status 200 OK */
+  | Variable
+  | /** status 201 Created */ Variable
+  | /** status 202 Accepted */ Variable;
+export type CreateVariableApiArg = {
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  variable: Variable;
+};
+export type DeletecollectionVariableApiResponse = /** status 200 OK */ Status;
+export type DeletecollectionVariableApiArg = {
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
+    
+    This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
+  continue?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** A selector to restrict the list of returned objects by their fields. Defaults to everything. */
+  fieldSelector?: string;
+  /** The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately. */
+  gracePeriodSeconds?: number;
+  /** if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it */
+  ignoreStoreReadErrorWithClusterBreakingPotential?: boolean;
+  /** A selector to restrict the list of returned objects by their labels. Defaults to everything. */
+  labelSelector?: string;
+  /** limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.
+    
+    The server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned. */
+  limit?: number;
+  /** Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the "orphan" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both. */
+  orphanDependents?: boolean;
+  /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
+  propagationPolicy?: string;
+  /** resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
+    
+    Defaults to unset */
+  resourceVersion?: string;
+  /** resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
+    
+    Defaults to unset */
+  resourceVersionMatch?: string;
+  /** `sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic "Bookmark" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `"k8s.io/initial-events-end": "true"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.
+    
+    When `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan
+      is interpreted as "data at least as new as the provided `resourceVersion`"
+      and the bookmark event is send when the state is synced
+      to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
+      If `resourceVersion` is unset, this is interpreted as "consistent read" and the
+      bookmark event is send when the state is synced at least to the moment
+      when request started being processed.
+    - `resourceVersionMatch` set to any other value or unset
+      Invalid error is returned.
+    
+    Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
+  sendInitialEvents?: boolean;
+  /** shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:
+    
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000')
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+    
+    Field paths use CEL-style object-rooted syntax (e.g. "object.metadata.uid"), NOT the fieldSelector format ("metadata.uid"). Currently supported paths:
+      - object.metadata.uid
+      - object.metadata.namespace
+    
+    hexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.
+    
+    Examples:
+      2-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+      4-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')
+        shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')
+        shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')
+    
+    This is an alpha field and requires enabling the ShardedListAndWatch feature gate. */
+  shardSelector?: string;
+  /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
+  timeoutSeconds?: number;
+};
+export type GetVariableApiResponse = /** status 200 OK */ Variable;
+export type GetVariableApiArg = {
+  /** name of the Variable */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+};
+export type ReplaceVariableApiResponse = /** status 200 OK */ Variable | /** status 201 Created */ Variable;
+export type ReplaceVariableApiArg = {
+  /** name of the Variable */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  variable: Variable;
+};
+export type DeleteVariableApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
+export type DeleteVariableApiArg = {
+  /** name of the Variable */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately. */
+  gracePeriodSeconds?: number;
+  /** if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it */
+  ignoreStoreReadErrorWithClusterBreakingPotential?: boolean;
+  /** Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the "orphan" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both. */
+  orphanDependents?: boolean;
+  /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
+  propagationPolicy?: string;
+};
+export type UpdateVariableApiResponse = /** status 200 OK */ Variable | /** status 201 Created */ Variable;
+export type UpdateVariableApiArg = {
+  /** name of the Variable */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch). */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
+  force?: boolean;
+  patch: Patch;
 };
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
@@ -579,6 +1032,8 @@ export type DashboardAction = {
 export type DashboardFieldColor = {
   /** The fixed color value for fixed or shades color modes. */
   fixedColor?: string;
+  /** The end color for the gradient color mode (smallest value). Only used when mode is gradient. */
+  gradientColorTo?: string;
   /** The main color scheme mode. */
   mode: string;
   /** Some visualizations need to know how to assign a series color from by value color schemes. */
@@ -1303,7 +1758,6 @@ export type AnnotationActions = {
 };
 export type AnnotationPermission = {
   dashboard: AnnotationActions;
-  organization: AnnotationActions;
 };
 export type DashboardAccess = {
   annotationsPermissions: AnnotationPermission;
@@ -1329,13 +1783,435 @@ export type DashboardWithAccessInfo = {
   spec: DashboardSpec;
   status: DashboardStatus;
 };
+export type NotebookCodeCellContentSpec = {
+  annotation?: string;
+  code: string;
+  highlight?: number[];
+  language: string;
+};
+export type NotebookCodeCellContentKind = {
+  kind: string;
+  spec: NotebookCodeCellContentSpec;
+};
+export type NotebookMarkdownCellContentSpec = {
+  text: string;
+};
+export type NotebookMarkdownCellContentKind = {
+  kind: string;
+  spec: NotebookMarkdownCellContentSpec;
+};
+export type NotebookMarkdownCellContentKindOrCodeCellContentKind = {
+  CodeCellContentKind?: NotebookCodeCellContentKind;
+  MarkdownCellContentKind?: NotebookMarkdownCellContentKind;
+};
+export type NotebookCellSpec = {
+  content: NotebookMarkdownCellContentKindOrCodeCellContentKind;
+};
+export type NotebookCellKind = {
+  kind: string;
+  spec: NotebookCellSpec;
+};
+export type NotebookLibraryPanelRef = {
+  /** Library panel name */
+  name: string;
+  /** Library panel uid */
+  uid: string;
+};
+export type NotebookLibraryPanelKindSpec = {
+  /** Panel ID for the library panel in the dashboard */
+  id: number;
+  libraryPanel: NotebookLibraryPanelRef;
+  /** Title for the library panel in the dashboard */
+  title: string;
+};
+export type NotebookLibraryPanelKind = {
+  kind: string;
+  spec: NotebookLibraryPanelKindSpec;
+};
+export type NotebookV2Beta1DataQueryKindDatasource = {
+  name?: string;
+};
+export type NotebookDataQueryKind = {
+  /** New type for datasource reference Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS. */
+  datasource?: NotebookV2Beta1DataQueryKindDatasource;
+  group: string;
+  kind: string;
+  labels?: {
+    [key: string]: string;
+  };
+  spec: {
+    [key: string]: object;
+  };
+  version: string;
+};
+export type NotebookPanelQuerySpec = {
+  hidden: boolean;
+  query: NotebookDataQueryKind;
+  refId: string;
+};
+export type NotebookPanelQueryKind = {
+  kind: string;
+  spec: NotebookPanelQuerySpec;
+};
+export type NotebookQueryOptionsSpec = {
+  cacheTimeout?: string;
+  hideTimeOverride?: boolean;
+  interval?: string;
+  maxDataPoints?: number;
+  queryCachingTTL?: number;
+  timeCompare?: string;
+  timeFrom?: string;
+  timeShift?: string;
+};
+export type NotebookMatcherConfig = {
+  /** The matcher id. This is used to find the matcher implementation from registry. */
+  id: string;
+  /** The matcher options. This is specific to the matcher implementation. */
+  options?: object;
+  /** If set, limits this matcher to fields of that type. If not set, "series" mode is used. */
+  scope?: string;
+};
+export type NotebookDataTransformerConfig = {
+  /** Disabled transformations are skipped */
+  disabled?: boolean;
+  /** Optional frame matcher. When missing it will be applied to all results */
+  filter?: NotebookMatcherConfig;
+  /** Unique identifier of transformer */
+  id: string;
+  /** Options to be passed to the transformer Valid options depend on the transformer id */
+  options: object;
+  /** Where to pull DataFrames from as input to transformation */
+  topic?: string;
+};
+export type NotebookTransformationKind = {
+  /** The kind of a TransformationKind is the transformation ID */
+  kind: string;
+  spec: NotebookDataTransformerConfig;
+};
+export type NotebookQueryGroupSpec = {
+  queries: NotebookPanelQueryKind[];
+  queryOptions: NotebookQueryOptionsSpec;
+  transformations: NotebookTransformationKind[];
+};
+export type NotebookQueryGroupKind = {
+  kind: string;
+  spec: NotebookQueryGroupSpec;
+};
+export type NotebookDataLink = {
+  targetBlank?: boolean;
+  title: string;
+  url: string;
+};
+export type NotebookFetchOptions = {
+  body?: string;
+  headers?: string[][];
+  method: string;
+  /** These are 2D arrays of strings, each representing a key-value pair We are defining them this way because we can't generate a go struct that that would have exactly two strings in each sub-array */
+  queryParams?: string[][];
+  url: string;
+};
+export type NotebookInfinityOptions = {
+  body?: string;
+  datasourceUid: string;
+  headers?: string[][];
+  method: string;
+  /** These are 2D arrays of strings, each representing a key-value pair We are defining them this way because we can't generate a go struct that that would have exactly two strings in each sub-array */
+  queryParams?: string[][];
+  url: string;
+};
+export type NotebookV2Beta1ActionStyle = {
+  backgroundColor?: string;
+};
+export type NotebookActionVariable = {
+  key: string;
+  name: string;
+  type: string;
+};
+export type NotebookAction = {
+  confirmation?: string;
+  fetch?: NotebookFetchOptions;
+  infinity?: NotebookInfinityOptions;
+  oneClick?: boolean;
+  style?: NotebookV2Beta1ActionStyle;
+  title: string;
+  type: string;
+  variables?: NotebookActionVariable[];
+};
+export type NotebookFieldColor = {
+  /** The fixed color value for fixed or shades color modes. */
+  fixedColor?: string;
+  /** The end color for the gradient color mode (smallest value). Only used when mode is gradient. */
+  gradientColorTo?: string;
+  /** The main color scheme mode. */
+  mode: string;
+  /** Some visualizations need to know how to assign a series color from by value color schemes. */
+  seriesBy?: string;
+};
+export type NotebookValueMappingResult = {
+  /** Text to use when the value matches */
+  color?: string;
+  /** Icon to display when the value matches. Only specific visualizations. */
+  icon?: string;
+  /** Position in the mapping array. Only used internally. */
+  index?: number;
+  /** Text to display when the value matches */
+  text?: string;
+};
+export type NotebookV2Beta1RangeMapOptions = {
+  /** Min value of the range. It can be null which means -Infinity */
+  from: number;
+  /** Config to apply when the value is within the range */
+  result: NotebookValueMappingResult;
+  /** Max value of the range. It can be null which means +Infinity */
+  to: number;
+};
+export type NotebookRangeMap = {
+  /** Range to match against and the result to apply when the value is within the range */
+  options: NotebookV2Beta1RangeMapOptions;
+  type: string;
+};
+export type NotebookV2Beta1RegexMapOptions = {
+  /** Regular expression to match against */
+  pattern: string;
+  /** Config to apply when the value matches the regex */
+  result: NotebookValueMappingResult;
+};
+export type NotebookRegexMap = {
+  /** Regular expression to match against and the result to apply when the value matches the regex */
+  options: NotebookV2Beta1RegexMapOptions;
+  type: string;
+};
+export type NotebookV2Beta1SpecialValueMapOptions = {
+  /** Special value to match against */
+  match: string;
+  /** Config to apply when the value matches the special value */
+  result: NotebookValueMappingResult;
+};
+export type NotebookSpecialValueMap = {
+  options: NotebookV2Beta1SpecialValueMapOptions;
+  type: string;
+};
+export type NotebookValueMap = {
+  /** Map with <value_to_match>: ValueMappingResult. For example: { "10": { text: "Perfection!", color: "green" } } */
+  options: {
+    [key: string]: NotebookValueMappingResult;
+  };
+  type: string;
+};
+export type NotebookValueMapOrRangeMapOrRegexMapOrSpecialValueMap = {
+  RangeMap?: NotebookRangeMap;
+  RegexMap?: NotebookRegexMap;
+  SpecialValueMap?: NotebookSpecialValueMap;
+  ValueMap?: NotebookValueMap;
+};
+export type NotebookThreshold = {
+  color: string;
+  /** Value null means -Infinity */
+  value: number;
+};
+export type NotebookThresholdsConfig = {
+  mode: string;
+  steps: NotebookThreshold[];
+};
+export type NotebookFieldConfig = {
+  /** Define interactive HTTP requests that can be triggered from data visualizations. */
+  actions?: NotebookAction[];
+  /** Panel color configuration */
+  color?: NotebookFieldColor;
+  /** custom is specified by the FieldConfig field in panel plugin schemas. */
+  custom?: {
+    [key: string]: object;
+  };
+  /** Specify the number of decimals Grafana includes in the rendered value. If you leave this field blank, Grafana automatically truncates the number of decimals based on the value. For example 1.1234 will display as 1.12 and 100.456 will display as 100. To display all decimals, set the unit to `String`. */
+  decimals?: number;
+  /** Human readable field metadata */
+  description?: string;
+  /** The display value for this field.  This supports template variables blank is auto */
+  displayName?: string;
+  /** This can be used by data sources that return and explicit naming structure for values and labels When this property is configured, this value is used rather than the default naming strategy. */
+  displayNameFromDS?: string;
+  /** Calculate min max per field */
+  fieldMinMax?: boolean;
+  /** True if data source field supports ad-hoc filters */
+  filterable?: boolean;
+  /** The behavior when clicking on a result */
+  links?: object[];
+  /** Convert input values into a display string */
+  mappings?: NotebookValueMapOrRangeMapOrRegexMapOrSpecialValueMap[];
+  /** The maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields. */
+  max?: number;
+  /** The minimum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields. */
+  min?: number;
+  /** Alternative to empty string */
+  noValue?: string;
+  /** How null values should be handled when calculating field stats "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero */
+  nullValueMode?: string;
+  /** An explicit path to the field in the datasource.  When the frame meta includes a path, This will default to `${frame.meta.path}/${field.name}
+    
+    When defined, this value can be used as an identifier within the datasource scope, and may be used to update the results */
+  path?: string;
+  /** Map numeric values to states */
+  thresholds?: NotebookThresholdsConfig;
+  /** Unit a field should use. The unit you select is applied to all fields except time. You can use the units ID available in Grafana or a custom unit. Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts As custom unit, you can use the following formats: `suffix:<suffix>` for custom unit that should go after value. `prefix:<prefix>` for custom unit that should go before value. `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`. `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character. `count:<unit>` for a custom count unit. `currency:<unit>` for custom a currency unit. */
+  unit?: string;
+  /** True if data source can write a value to the path. Auth/authz are supported separately */
+  writeable?: boolean;
+};
+export type NotebookDynamicConfigValue = {
+  id: string;
+  value?: object;
+};
+export type NotebookV2Beta1FieldConfigSourceOverrides = {
+  /** Describes config override rules created when interacting with Grafana. */
+  __systemRef?: string;
+  matcher: NotebookMatcherConfig;
+  properties: NotebookDynamicConfigValue[];
+};
+export type NotebookFieldConfigSource = {
+  /** Defaults are the options applied to all fields. */
+  defaults: NotebookFieldConfig;
+  /** Overrides are the options applied to specific fields overriding the defaults. */
+  overrides: NotebookV2Beta1FieldConfigSourceOverrides[];
+};
+export type NotebookVizConfigSpec = {
+  fieldConfig: NotebookFieldConfigSource;
+  options: {
+    [key: string]: object;
+  };
+};
+export type NotebookVizConfigKind = {
+  /** The group is the plugin ID */
+  group: string;
+  kind: string;
+  spec: NotebookVizConfigSpec;
+  version: string;
+};
+export type NotebookPanelSpec = {
+  data: NotebookQueryGroupKind;
+  description: string;
+  id: number;
+  links: NotebookDataLink[];
+  title: string;
+  transparent?: boolean;
+  vizConfig: NotebookVizConfigKind;
+};
+export type NotebookPanelKind = {
+  kind: string;
+  spec: NotebookPanelSpec;
+};
+export type NotebookCellKindOrPanelKindOrLibraryPanelKind = {
+  CellKind?: NotebookCellKind;
+  LibraryPanelKind?: NotebookLibraryPanelKind;
+  PanelKind?: NotebookPanelKind;
+};
+export type NotebookElementReference = {
+  kind: string;
+  name: string;
+};
+export type NotebookNotebookLayoutItemSpec = {
+  collapsed?: boolean;
+  element: NotebookElementReference;
+  source: string;
+};
+export type NotebookNotebookLayoutItemKind = {
+  kind: string;
+  spec: NotebookNotebookLayoutItemSpec;
+};
+export type NotebookNotebookLayoutSpec = {
+  cells: NotebookNotebookLayoutItemKind[];
+};
+export type NotebookNotebookLayoutKind = {
+  kind: string;
+  spec: NotebookNotebookLayoutSpec;
+};
+export type NotebookTimeRangeOption = {
+  display: string;
+  from: string;
+  to: string;
+};
+export type NotebookTimeSettingsSpec = {
+  /** Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d". v1: refresh */
+  autoRefresh: string;
+  /** Interval options available in the refresh picker dropdown. v1: timepicker.refresh_intervals */
+  autoRefreshIntervals: string[];
+  /** The month that the fiscal year starts on. 0 = January, 11 = December */
+  fiscalYearStartMonth: number;
+  /** Start time range for dashboard. Accepted values are relative time strings like "now-6h" or absolute time strings like "2020-07-10T08:00:00.000Z". */
+  from: string;
+  /** Whether timepicker is visible or not. v1: timepicker.hidden */
+  hideTimepicker: boolean;
+  /** Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values. v1: timepicker.nowDelay */
+  nowDelay?: string;
+  /** Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard. v1: timepicker.quick_ranges , not exposed in the UI */
+  quickRanges?: NotebookTimeRangeOption[];
+  /** Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc". */
+  timezone?: string;
+  /** End time range for dashboard. Accepted values are relative time strings like "now-6h" or absolute time strings like "2020-07-10T08:00:00.000Z". */
+  to: string;
+  /** Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday". */
+  weekStart?: string;
+};
+export type NotebookSpec = {
+  description?: string;
+  elements: {
+    [key: string]: NotebookCellKindOrPanelKindOrLibraryPanelKind;
+  };
+  layout: NotebookNotebookLayoutKind;
+  tags: string[];
+  timeSettings: NotebookTimeSettingsSpec;
+  title: string;
+};
+export type Notebook = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata: ObjectMeta;
+  /** Spec is the spec of the Notebook */
+  spec: NotebookSpec;
+};
+export type NotebookList = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: Notebook[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata: ListMeta;
+};
+export type VariableSpec = {
+  AdhocVariableKind?: DashboardAdhocVariableKind;
+  ConstantVariableKind?: DashboardConstantVariableKind;
+  CustomVariableKind?: DashboardCustomVariableKind;
+  DatasourceVariableKind?: DashboardDatasourceVariableKind;
+  GroupByVariableKind?: DashboardGroupByVariableKind;
+  IntervalVariableKind?: DashboardIntervalVariableKind;
+  QueryVariableKind?: DashboardQueryVariableKind;
+  SwitchVariableKind?: DashboardSwitchVariableKind;
+  TextVariableKind?: DashboardTextVariableKind;
+};
+export type Variable = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata: ObjectMeta;
+  /** Spec is the spec of the Variable */
+  spec: VariableSpec;
+};
+export type VariableList = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: Variable[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata: ListMeta;
+};
 export const {
   useGetApiResourcesQuery,
   useLazyGetApiResourcesQuery,
   useListDashboardQuery,
   useLazyListDashboardQuery,
   useCreateDashboardMutation,
-  useDeletecollectionDashboardMutation,
   useGetDashboardQuery,
   useLazyGetDashboardQuery,
   useReplaceDashboardMutation,
@@ -1343,4 +2219,22 @@ export const {
   useUpdateDashboardMutation,
   useGetDashboardDtoQuery,
   useLazyGetDashboardDtoQuery,
+  useListNotebookQuery,
+  useLazyListNotebookQuery,
+  useCreateNotebookMutation,
+  useDeletecollectionNotebookMutation,
+  useGetNotebookQuery,
+  useLazyGetNotebookQuery,
+  useReplaceNotebookMutation,
+  useDeleteNotebookMutation,
+  useUpdateNotebookMutation,
+  useListVariableQuery,
+  useLazyListVariableQuery,
+  useCreateVariableMutation,
+  useDeletecollectionVariableMutation,
+  useGetVariableQuery,
+  useLazyGetVariableQuery,
+  useReplaceVariableMutation,
+  useDeleteVariableMutation,
+  useUpdateVariableMutation,
 } = injectedRtkApi;

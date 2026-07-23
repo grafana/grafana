@@ -1,14 +1,14 @@
 import debounce from 'debounce-promise';
 import { forwardRef, useCallback, useEffect, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
-import { AsyncSelectProps, AsyncSelect } from '@grafana/ui';
+import { type SelectableValue } from '@grafana/data';
+import { type AsyncSelectProps, AsyncSelect } from '@grafana/ui';
 import { AnnoKeyFolder, AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource } from 'app/features/dashboard/api/utils';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { DashboardQueryResult } from 'app/features/search/service/types';
-import { DashboardDTO } from 'app/types/dashboard';
+import { type DashboardQueryResult } from 'app/features/search/service/types';
+import { type DashboardDTO } from 'app/types/dashboard';
 
 interface Props extends Omit<AsyncSelectProps<DashboardPickerDTO>, 'value' | 'onChange' | 'loadOptions' | ''> {
   value?: DashboardPickerDTO['uid'];

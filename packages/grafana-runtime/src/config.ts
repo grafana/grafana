@@ -1,31 +1,31 @@
 import { merge } from 'lodash';
 
 import {
-  AppPluginConfig as AppPluginConfigGrafanaData,
-  AuthSettings,
-  AzureSettings as AzureSettingsGrafanaData,
-  BootData,
-  BuildInfo,
-  DataSourceInstanceSettings,
-  FeatureToggles,
-  GrafanaTheme,
-  GrafanaTheme2,
-  LicenseInfo,
-  MapLayerOptions,
-  OAuthSettings,
-  PanelPluginMeta,
-  PreinstalledPlugin as PreinstalledPluginGrafanaData,
+  type AppPluginConfig as AppPluginConfigGrafanaData,
+  type AuthSettings,
+  type AzureSettings as AzureSettingsGrafanaData,
+  type BootData,
+  type BuildInfo,
+  type DataSourceInstanceSettings,
+  type FeatureToggles,
+  type GrafanaTheme,
+  type GrafanaTheme2,
+  type LicenseInfo,
+  type MapLayerOptions,
+  type OAuthSettings,
+  type PanelPluginMeta,
+  type PreinstalledPlugin as PreinstalledPluginGrafanaData,
   systemDateFormats,
-  SystemDateFormatSettings,
+  type SystemDateFormatSettings,
   getThemeById,
-  AngularMeta,
-  PluginLoadingStrategy,
-  PluginDependencies,
-  PluginExtensions,
-  TimeOption,
-  UnifiedAlertingConfig,
-  GrafanaConfig,
-  CurrentUserDTO,
+  type AngularMeta,
+  type PluginLoadingStrategy,
+  type PluginDependencies,
+  type PluginExtensions,
+  type TimeOption,
+  type UnifiedAlertingConfig,
+  type GrafanaConfig,
+  type CurrentUserDTO,
 } from '@grafana/data';
 
 /**
@@ -143,7 +143,7 @@ export class GrafanaBootConfig {
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
-  featureToggles: FeatureToggles & { kubernetesDashboards?: boolean } = {};
+  featureToggles: FeatureToggles = {};
   anonymousEnabled = false;
   anonymousDeviceLimit?: number;
   licenseInfo: LicenseInfo = {} as LicenseInfo;
@@ -222,6 +222,7 @@ export class GrafanaBootConfig {
   };
   analytics = {
     enabled: true,
+    presenceIndicatorsDisabled: false,
   };
   googleAnalyticsId?: string;
   googleAnalytics4Id?: string;
@@ -232,6 +233,8 @@ export class GrafanaBootConfig {
   rudderstackV3SdkUrl?: string;
   rudderstackConfigUrl?: string;
   rudderstackIntegrationsUrl?: string;
+  postHogToken?: string;
+  postHogHost?: string;
   analyticsConsoleReporting = false;
   dashboardPerformanceMetrics: string[] = [];
   panelSeriesLimit = 0;
@@ -263,11 +266,6 @@ export class GrafanaBootConfig {
    */
   language: string | undefined;
 
-  /**
-   * regionalFormat used in Grafana's UI. Default to 'es-US' in the backend and overwritten when the user select a different one in SharedPreferences.
-   * This is the regionalFormat that is used for date formatting and other locale-specific features.
-   */
-  regionalFormat: string;
   listDashboardScopesEndpoint = '';
   listScopesEndpoint = '';
 
@@ -289,14 +287,12 @@ export class GrafanaBootConfig {
     overrideFeatureTogglesFromUrl(this);
     overrideFeatureTogglesFromLocalStorage(this);
 
-    this.featureToggles.kubernetesDashboards = true; // Force true
     this.bootData.settings.featureToggles = this.featureToggles;
 
     // Creating theme after applying feature toggle overrides in case we need to toggle anything
     this.theme2 = getThemeById(this.bootData.user.theme);
     this.bootData.user.lightTheme = this.theme2.isLight;
     this.theme = this.theme2.v1;
-    this.regionalFormat = options.bootData.user.regionalFormat;
   }
 }
 

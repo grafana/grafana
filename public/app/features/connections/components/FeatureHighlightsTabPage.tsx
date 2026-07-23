@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Icon, LinkButton, TextLink, useStyles2 } from '@grafana/ui';
 import { CloudEnterpriseBadge } from 'app/core/components/Branding/CloudEnterpriseBadge';
 import { Page } from 'app/core/components/Page/Page';
-import { DataSourceTitle } from 'app/features/datasources/components/DataSourceTitle';
 import { EditDataSourceActions } from 'app/features/datasources/components/EditDataSourceActions';
 import { useDataSourceInfo } from 'app/features/datasources/components/useDataSourceInfo';
 import { useInitDataSourceSettings } from 'app/features/datasources/state/hooks';
@@ -39,16 +38,11 @@ export function FeatureHighlightsTabPage({
   const info = useDataSourceInfo({
     dataSourcePluginName: pageNav.dataSourcePluginName,
     alertingSupported: dataSourceHeader.alertingSupported,
+    alertingLoading: dataSourceHeader.alertingLoading,
   });
 
   return (
-    <Page
-      navId={navId}
-      pageNav={pageNav}
-      renderTitle={(title) => <DataSourceTitle title={title} />}
-      info={info}
-      actions={<EditDataSourceActions uid={uid} />}
-    >
+    <Page navId={navId} pageNav={pageNav} info={info} actions={<EditDataSourceActions uid={uid} />}>
       <Page.Contents>
         <div className={styles.container}>
           <div className={styles.content}>

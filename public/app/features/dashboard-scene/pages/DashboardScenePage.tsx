@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Params, useParams } from 'react-router-dom-v5-compat';
+import { type Params, useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
 
 import { PageLayoutType } from '@grafana/data';
@@ -8,22 +8,31 @@ import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import {
   DashboardBrandingFooter,
   DashboardBrandingFooterVariant,
 } from 'app/features/dashboard/components/PublicDashboard/DashboardBrandingFooter';
 import { DashboardPageError } from 'app/features/dashboard/containers/DashboardPageError';
-import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
+import {
+  type DashboardPageRouteParams,
+  type DashboardPageRouteSearchParams,
+} from 'app/features/dashboard/containers/types';
+import { TemplateDashboardModal } from 'app/features/dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal';
+import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardPreviewBanner } from 'app/features/provisioning/components/Dashboards/DashboardPreviewBanner';
 import { OrphanedDashboardBanner } from 'app/features/provisioning/components/Dashboards/OrphanedDashboardBanner';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardConversionWarningBanner } from '../components/DashboardConversionWarningBanner';
+import { DashboardTemplateEditBanner } from '../components/DashboardTemplateEditBanner';
+import { DashboardTemplateSavedBanner } from '../components/DashboardTemplateSavedBanner';
+import { DashboardTemplateUseBanner } from '../components/DashboardTemplateUseBanner';
 import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
+import { useScenesFlickeringFix } from '../utils/utils';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 import { shouldHideDashboardKioskFooter } from './utils';
@@ -34,6 +43,9 @@ export interface Props
 export function DashboardScenePage({ route, queryParams, location }: Props) {
   const params = useParams();
   const { type, slug, uid } = params;
+  // Custom templates also require the dashboardtemplates:read RBAC permission (the API denies
+  // listing without it), matching useTemplateDashboardsAvailability's showCustomTemplates.
+  const { showCustomTemplates } = useTemplateDashboardsAvailability();
   // Used by /dashboard/provisioning/:slug/preview/* to load dashboards based on their file path in a remote repository
   // Also used by /dashboard/assistant-preview/* to load the assistant preview dashboard
   const path = params['*'];
@@ -43,6 +55,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
   const routeReloadCounter = (location.state as any)?.routeReloadCounter;
   const prevParams = useRef<Params<string>>(params);
+
+  useScenesFlickeringFix();
 
   useEffect(() => {
     if (route.routeName === DashboardRoutes.Normal && type === 'snapshot') {
@@ -57,6 +71,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
         slug,
         route: route.routeName as DashboardRoutes,
         urlFolderUid: queryParams.folderUid,
+        dashboardTemplateUid: queryParams.dashboardTemplateUid,
+        editTemplate: queryParams.editTemplate === true,
       });
     }
 
@@ -80,6 +96,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     type,
     queryParams.path,
     queryParams.gnetId,
+    queryParams.dashboardTemplateUid,
+    queryParams.editTemplate,
   ]);
 
   useEffect(() => {
@@ -103,19 +121,18 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   }, [route, slug, type, uid]);
 
   if (!dashboard) {
-    let errorElement;
-    if (loadError) {
-      errorElement = <DashboardPageError error={loadError} type={type} />;
-    }
-
-    return (
-      errorElement || (
-        <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} data-testid={'dashboard-scene-page'}>
-          <Box paddingY={4} display="flex" direction="column" alignItems="center">
-            {isLoading && <PageLoader />}
-          </Box>
-        </Page>
-      )
+    return loadError ? (
+      <DashboardPageError
+        error={loadError}
+        type={type}
+        isProvisioned={route.routeName === DashboardRoutes.Provisioning}
+      />
+    ) : (
+      <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} data-testid={'dashboard-scene-page'}>
+        <Box paddingY={4} display="flex" direction="column" alignItems="center">
+          {isLoading && <PageLoader />}
+        </Box>
+      </Page>
     );
   }
 
@@ -137,8 +154,12 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       <DashboardConversionWarningBanner dashboard={dashboard} />
       <OrphanedDashboardBanner dashboard={dashboard} />
       <SuggestedDashboardsBanner route={route.routeName} dashboard={dashboard} />
+      <DashboardTemplateSavedBanner />
+      <DashboardTemplateUseBanner dashboard={dashboard} />
+      <DashboardTemplateEditBanner dashboard={dashboard} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
+      {showCustomTemplates && <TemplateDashboardModal />}
       <DashboardBrandingFooter
         variant={DashboardBrandingFooterVariant.Kiosk}
         paddingX={2}

@@ -25,7 +25,7 @@ func (_m *MockResourceClients) EXPECT() *MockResourceClients_Expecter {
 }
 
 // Folder provides a mock function with given fields: ctx
-func (_m *MockResourceClients) Folder(ctx context.Context) (dynamic.ResourceInterface, error) {
+func (_m *MockResourceClients) Folder(ctx context.Context) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
@@ -33,8 +33,9 @@ func (_m *MockResourceClients) Folder(ctx context.Context) (dynamic.ResourceInte
 	}
 
 	var r0 dynamic.ResourceInterface
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (dynamic.ResourceInterface, error)); ok {
+	var r1 schema.GroupVersionKind
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context) (dynamic.ResourceInterface, schema.GroupVersionKind, error)); ok {
 		return rf(ctx)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context) dynamic.ResourceInterface); ok {
@@ -45,13 +46,19 @@ func (_m *MockResourceClients) Folder(ctx context.Context) (dynamic.ResourceInte
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context) schema.GroupVersionKind); ok {
 		r1 = rf(ctx)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(schema.GroupVersionKind)
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(2).(func(context.Context) error); ok {
+		r2 = rf(ctx)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // MockResourceClients_Folder_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Folder'
@@ -72,12 +79,12 @@ func (_c *MockResourceClients_Folder_Call) Run(run func(ctx context.Context)) *M
 	return _c
 }
 
-func (_c *MockResourceClients_Folder_Call) Return(_a0 dynamic.ResourceInterface, _a1 error) *MockResourceClients_Folder_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *MockResourceClients_Folder_Call) Return(_a0 dynamic.ResourceInterface, _a1 schema.GroupVersionKind, _a2 error) *MockResourceClients_Folder_Call {
+	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *MockResourceClients_Folder_Call) RunAndReturn(run func(context.Context) (dynamic.ResourceInterface, error)) *MockResourceClients_Folder_Call {
+func (_c *MockResourceClients_Folder_Call) RunAndReturn(run func(context.Context) (dynamic.ResourceInterface, schema.GroupVersionKind, error)) *MockResourceClients_Folder_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -268,6 +275,53 @@ func (_c *MockResourceClients_User_Call) Return(_a0 dynamic.ResourceInterface, _
 }
 
 func (_c *MockResourceClients_User_Call) RunAndReturn(run func(context.Context) (dynamic.ResourceInterface, error)) *MockResourceClients_User_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SupportedResources provides a mock function with given fields:
+func (_m *MockResourceClients) SupportedResources() []SupportedResource {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for SupportedResources")
+	}
+
+	var r0 []SupportedResource
+	if rf, ok := ret.Get(0).(func() []SupportedResource); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]SupportedResource)
+		}
+	}
+
+	return r0
+}
+
+// MockResourceClients_SupportedResources_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SupportedResources'
+type MockResourceClients_SupportedResources_Call struct {
+	*mock.Call
+}
+
+// SupportedResources is a helper method to define mock.On call
+func (_e *MockResourceClients_Expecter) SupportedResources() *MockResourceClients_SupportedResources_Call {
+	return &MockResourceClients_SupportedResources_Call{Call: _e.mock.On("SupportedResources")}
+}
+
+func (_c *MockResourceClients_SupportedResources_Call) Run(run func()) *MockResourceClients_SupportedResources_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockResourceClients_SupportedResources_Call) Return(_a0 []SupportedResource) *MockResourceClients_SupportedResources_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockResourceClients_SupportedResources_Call) RunAndReturn(run func() []SupportedResource) *MockResourceClients_SupportedResources_Call {
 	_c.Call.Return(run)
 	return _c
 }

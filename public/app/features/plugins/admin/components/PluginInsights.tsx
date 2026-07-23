@@ -2,12 +2,12 @@ import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Stack, Text, TextLink, CollapsableSection, Tooltip, Icon, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { CatalogPluginInsights } from '../types';
+import { type CatalogPluginInsights } from '../types';
 
 type Props = { pluginInsights: CatalogPluginInsights | undefined };
 
@@ -125,7 +125,7 @@ export function PluginInsights(props: Props): React.ReactElement | null {
   );
 }
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     pluginVersionDetails: css({ wordBreak: 'break-word' }),
     pluginInsightsItems: css({ marginLeft: '26px', paddingTop: '0 !important' }),

@@ -209,6 +209,10 @@ func (s *Service) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUsersQ
 	return s.store.SearchOrgUsers(ctx, query)
 }
 
+func (s *Service) SearchOrgUsersByEmails(ctx context.Context, query *org.SearchOrgUsersByEmailsQuery) ([]*org.OrgUserDTO, error) {
+	return s.store.SearchOrgUsersByEmails(ctx, query)
+}
+
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	limits := &quota.Map{}
 

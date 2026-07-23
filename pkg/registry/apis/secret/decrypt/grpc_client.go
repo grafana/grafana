@@ -130,21 +130,36 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, nam
 		return nil, err
 	}
 
-	unique := make(map[string]bool, len(names))
+	unique := make(map[string]struct{}, len(names))
 	for _, v := range names {
 		if v != "" {
-			unique[v] = true
+			unique[v] = struct{}{}
 		}
 	}
 	if len(unique) < 1 {
 		return map[string]decrypt.DecryptResult{}, nil
 	}
 
-	tokenExchangerInterceptor := authnlib.NewGrpcClientInterceptor(
-		g.tokenExchanger,
+	opts := []authnlib.GrpcClientInterceptorOption{
 		authnlib.WithClientInterceptorTracer(g.tracer),
 		authnlib.WithClientInterceptorNamespace(namespace),
 		authnlib.WithClientInterceptorAudience([]string{secretv1beta1.APIGroup}),
+	}
+
+	// Forward an access token from an access policy if exists to craft an OBO token and keep chain of request identity.
+	// If there's a user in the flow, skip doing this as users can't decrypt secrets.
+	if authInfo, ok := types.AuthInfoFrom(ctx); ok && authInfo != nil {
+		isAccessPolicy := types.IsIdentityType(authInfo.GetIdentityType(), types.TypeAccessPolicy)
+		id := authInfo.GetIDToken()
+		at := authInfo.GetAccessToken()
+		if isAccessPolicy && id == "" && at != "" {
+			opts = append(opts, authnlib.WithClientInterceptorSubjectToken(at))
+		}
+	}
+
+	tokenExchangerInterceptor := authnlib.NewGrpcClientInterceptor(
+		g.tokenExchanger,
+		opts...,
 	)
 
 	clientConn := grpchan.InterceptClientConn(
@@ -175,6 +190,11 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, nam
 	results := make(map[string]decrypt.DecryptResult, len(resp.GetDecryptedValues()))
 
 	for name, result := range resp.GetDecryptedValues() {
+		// Only accept results for names that were actually requested.
+		if _, ok := unique[name]; !ok {
+			continue
+		}
+
 		if result.GetErrorMessage() != "" {
 			results[name] = decrypt.NewDecryptResultErr(errors.New(result.GetErrorMessage()))
 		} else {

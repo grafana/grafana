@@ -1,36 +1,139 @@
 package api
 
 import (
-	"context"
 	"encoding/base64"
+	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	alertingmodels "github.com/grafana/alerting/models"
-	"github.com/grafana/alerting/notify"
-	"github.com/grafana/alerting/notify/notifytest"
-	"github.com/grafana/alerting/receivers/line"
-	receiversTesting "github.com/grafana/alerting/receivers/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	alertingmodels "github.com/grafana/alerting/models"
+	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/notify/notifytest"
+	"github.com/grafana/alerting/receivers/schema"
 
 	apicompat "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/util"
 )
 
-// Test that conversion notify.APIReceiver -> definitions.ContactPoint -> notify.APIReceiver does not lose data
-func TestContactPointFromContactPointExports(t *testing.T) {
-	getContactPointExport := func(t *testing.T, receiver *notify.APIReceiver) definitions.ContactPointExport {
+// knownSchemaTypos lists (integration type, PropertyName) pairs where alerting's v1 schema declares a field name
+// that doesn't match the actual JSON key its Config struct reads, so the check below would otherwise flag a false
+// gap in definitions.go. These are upstream bugs in github.com/grafana/alerting, not fixable from this repo.
+var knownSchemaTypos = map[schema.IntegrationType]map[string]bool{
+	schema.TelegramType: {
+		// grafana/alerting's telegram v1 schema declares PropertyName "disable_notification" but
+		// Config.DisableNotifications actually reads "disable_notifications" (typo introduced in
+		// alerting@3da3b9a5, "Improve schemas"). The UI checkbox for this field is currently a no-op.
+		// Fix upstream, then remove this entry.
+		"disable_notification": true,
+	},
+}
+
+// TestContactPointDefinitionsMatchSchema asserts that every field declared in the v1 schema of an integration
+// (github.com/grafana/alerting) has a matching field in the corresponding definitions.XXXIntegration struct below.
+// Without this check, a new or renamed field in alerting's schema could silently fail to round-trip through
+// Grafana's contact point API (provisioning, export, Terraform) without any test noticing.
+func TestContactPointDefinitionsMatchSchema(t *testing.T) {
+	for _, integrationSchema := range alertingNotify.GetSchemaForAllIntegrations() {
+		v1, ok := integrationSchema.GetVersion(schema.V1)
+		if !ok {
+			continue
+		}
+		t.Run(string(integrationSchema.Type), func(t *testing.T) {
+			goType := definitionsStructFor(t, integrationSchema.Type)
+			assertFieldsMatchSchema(t, integrationSchema.Type, v1.Options, goType)
+		})
+	}
+}
+
+// definitionsStructFor returns the definitions.XXXIntegration struct type that
+// ContactPointFromContactPointExport populates for the given integration type.
+func definitionsStructFor(t *testing.T, integrationType schema.IntegrationType) reflect.Type {
+	t.Helper()
+	export := definitions.ContactPointExport{
+		Receivers: []definitions.ReceiverExport{{Type: string(integrationType), Settings: definitions.RawMessage(`{}`)}},
+	}
+	cp, err := ContactPointFromContactPointExport(export)
+	require.NoError(t, err)
+
+	for _, f := range reflect.ValueOf(cp).Fields() {
+		if f.Kind() == reflect.Slice && f.Len() == 1 {
+			return f.Index(0).Type()
+		}
+	}
+	t.Fatalf("no definitions.ContactPoint field is populated for integration type %q; add it to ContactPointFromContactPointExport", integrationType)
+	return nil
+}
+
+// assertFieldsMatchSchema asserts that every field declared in fields has a matching JSON field in goType,
+// recursing into the nested struct for subform fields.
+func assertFieldsMatchSchema(t *testing.T, integrationType schema.IntegrationType, fields []schema.Field, goType reflect.Type) {
+	t.Helper()
+	for _, field := range fields {
+		if knownSchemaTypos[integrationType][field.PropertyName] {
+			continue
+		}
+		structField, ok := jsonField(goType, field.PropertyName)
+		if !assert.Truef(t, ok, "%s: schema field %q has no matching field in definitions.%s", integrationType, field.PropertyName, goType.Name()) {
+			continue
+		}
+		if field.Element != schema.ElementTypeSubform {
+			continue
+		}
+		nested := structType(structField.Type)
+		if !assert.NotNilf(t, nested, "%s: schema field %q is a subform but definitions.%s.%s is not a struct", integrationType, field.PropertyName, goType.Name(), structField.Name) {
+			continue
+		}
+		assertFieldsMatchSchema(t, integrationType, field.SubformOptions, nested)
+	}
+}
+
+// jsonField returns the field of struct type t whose JSON tag matches name.
+func jsonField(t reflect.Type, name string) (reflect.StructField, bool) {
+	for f := range t.Fields() {
+		tag, ok := f.Tag.Lookup("json")
+		if !ok {
+			continue
+		}
+		tagName, _, _ := strings.Cut(tag, ",")
+		if tagName == name {
+			return f, true
+		}
+	}
+	return reflect.StructField{}, false
+}
+
+// structType returns the underlying struct type of t (dereferencing a pointer), or nil if t is not a struct.
+func structType(t reflect.Type) reflect.Type {
+	if t.Kind() == reflect.Pointer {
+		t = t.Elem()
+	}
+	if t.Kind() == reflect.Struct {
+		return t
+	}
+	return nil
+}
+
+// TestContactPointRoundTrip complements TestContactPointDefinitionsMatchSchema: that test checks the definitions
+// structs declare every field the schema knows about, but says nothing about whether values actually survive the
+// conversion (ContactPointToContactPointExport, the custom jsoniter codecs, secret-setting handling). This test
+// covers that: it converts a fully-populated config to a typed ContactPoint and back to raw settings, then
+// re-imports those raw settings and asserts the result is unchanged. A field that is declared but dropped or
+// mis-serialized during the round trip will show up as a diff here.
+func TestContactPointRoundTrip(t *testing.T) {
+	getContactPointExport := func(t *testing.T, receiver *alertingmodels.ReceiverConfig) definitions.ContactPointExport {
 		export := make([]definitions.ReceiverExport, 0, len(receiver.Integrations))
 		for _, integrationConfig := range receiver.Integrations {
 			postable := &definitions.PostableGrafanaReceiver{
 				UID:                   integrationConfig.UID,
 				Name:                  integrationConfig.Name,
-				Type:                  integrationConfig.Type,
+				Type:                  string(integrationConfig.Type),
+				Version:               string(integrationConfig.Version),
 				DisableResolveMessage: integrationConfig.DisableResolveMessage,
 				Settings:              definitions.RawMessage(integrationConfig.Settings),
 				SecureSettings:        integrationConfig.SecureSettings,
@@ -59,63 +162,33 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 	// use the configs for testing because they have all fields supported by integrations
 	for integrationType, cfg := range notifytest.AllKnownV1ConfigsForTesting {
 		t.Run(string(integrationType), func(t *testing.T) {
-			recCfg := &notify.APIReceiver{
-				ConfigReceiver: notify.ConfigReceiver{Name: "test-receiver"},
-				ReceiverConfig: alertingmodels.ReceiverConfig{
-					Integrations: []*alertingmodels.IntegrationConfig{
-						cfg.GetRawNotifierConfig("test"),
-					},
+			recCfg := &alertingmodels.ReceiverConfig{
+				Name: "test-receiver",
+				Integrations: []*alertingmodels.IntegrationConfig{
+					cfg.GetRawNotifierConfig("test"),
 				},
 			}
 
-			expected, err := notify.BuildReceiverConfiguration(context.Background(), recCfg, notify.DecodeSecretsFromBase64, func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
-				return receiversTesting.DecryptForTesting(sjd)(key, fallback)
-			})
+			expected, err := ContactPointFromContactPointExport(getContactPointExport(t, recCfg))
 			require.NoError(t, err)
 
-			result, err := ContactPointFromContactPointExport(getContactPointExport(t, recCfg))
+			back, err := ContactPointToContactPointExport(expected)
 			require.NoError(t, err)
 
-			back, err := ContactPointToContactPointExport(result)
+			// Run the export/import conversion a second time on the round-tripped config. If the conversion
+			// lost or altered any data, re-importing it will no longer match `expected`.
+			actual, err := ContactPointFromContactPointExport(getContactPointExport(t, &back))
 			require.NoError(t, err)
 
-			actual, err := notify.BuildReceiverConfiguration(context.Background(), &back, notify.DecodeSecretsFromBase64, func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
-				return receiversTesting.DecryptForTesting(sjd)(key, fallback)
-			})
-			require.NoError(t, err)
-
-			pathFilters := []string{
-				"Metadata.UID",
-				"Metadata.Name",
-				"WecomConfigs.Settings.EndpointURL", // This field is not exposed to user
-			}
-			if integrationType != "webhook" {
-				// Many notifiers now support HTTPClientConfig but only Webhook currently has it enabled in schema.
-				// TODO: Remove this once HTTPClientConfig is added to other schemas.
-				pathFilters = append(pathFilters, "HTTPClientConfig")
-			}
-			if integrationType == line.Type {
-				for _, l := range actual.LineConfigs {
-					assert.Equal(t, "line", l.Type)
-					l.Type = string(line.Type)
-				}
-			}
-			pathFilter := cmp.FilterPath(func(path cmp.Path) bool {
-				for _, filter := range pathFilters {
-					if strings.Contains(path.String(), filter) {
-						return true
-					}
-				}
-				return false
-			}, cmp.Ignore())
-
-			diff := cmp.Diff(expected, actual, pathFilter)
+			diff := cmp.Diff(expected, actual)
 			if len(diff) != 0 {
 				require.Failf(t, "The re-marshalled configuration does not match the expected one", diff)
 			}
 		})
 	}
+}
 
+func TestContactPointFromContactPointExport(t *testing.T) {
 	t.Run("pushover optional numbers as string", func(t *testing.T) {
 		export := definitions.ContactPointExport{
 			Name: "test",
@@ -248,17 +321,17 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 			{
 				name:     "standard map[string]string",
 				input:    definitions.RawMessage(`{ "fields" : {"test-data" : "test-value"} }`),
-				expected: util.Pointer(`{"test-data":"test-value"}`),
+				expected: new(`{"test-data":"test-value"}`),
 			},
 			{
 				name:     "map[string]int",
 				input:    definitions.RawMessage(`{ "fields" : {"test-data" : 42} }`),
-				expected: util.Pointer(`{"test-data":42}`),
+				expected: new(`{"test-data":42}`),
 			},
 			{
 				name:     "map[string]interface{} with null value",
 				input:    definitions.RawMessage(`{ "fields" : {"test-data" : null} }`),
-				expected: util.Pointer(`{"test-data":null}`),
+				expected: new(`{"test-data":null}`),
 			},
 			{
 				name:     "null fields",
@@ -268,17 +341,17 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 			{
 				name:     "empty map",
 				input:    definitions.RawMessage(`{ "fields" : {} }`),
-				expected: util.Pointer(`{}`),
+				expected: new(`{}`),
 			},
 			{
 				name:     "nested map",
 				input:    definitions.RawMessage(`{ "fields" : {"test-data" : {"test-data-nested" : "test-value-nested"}} }`),
-				expected: util.Pointer(`{"test-data":{"test-data-nested":"test-value-nested"}}`),
+				expected: new(`{"test-data":{"test-data-nested":"test-value-nested"}}`),
 			},
 			{
 				name:     "nested slice",
 				input:    definitions.RawMessage(`{ "fields" : {"test-data" : ["slice1", "slice2"]} }`),
-				expected: util.Pointer(`{"test-data":["slice1","slice2"]}`),
+				expected: new(`{"test-data":["slice1","slice2"]}`),
 			},
 			{
 				name:        "string value",

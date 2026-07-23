@@ -19,13 +19,11 @@ export const addTagTypes = [
   'health',
   'folders',
   'permissions',
-  'group_attribute_sync',
   'library_elements',
   'licensing',
   'saml',
   'org',
   'invites',
-  'preferences',
   'orgs',
   'query_history',
   'recording_rules',
@@ -35,6 +33,7 @@ export const addTagTypes = [
   'signing_keys',
   'teams',
   'sync_team_groups',
+  'preferences',
   'signed_in_user',
   'user',
   'users',
@@ -366,6 +365,7 @@ const injectedRtkApi = api
             from: queryArg['from'],
             to: queryArg.to,
             userId: queryArg.userId,
+            userUID: queryArg.userUid,
             alertId: queryArg.alertId,
             alertUID: queryArg.alertUid,
             dashboardId: queryArg.dashboardId,
@@ -886,34 +886,6 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['folders', 'permissions'],
       }),
-      getMappedGroups: build.query<GetMappedGroupsApiResponse, GetMappedGroupsApiArg>({
-        query: () => ({ url: `/groupsync/groups` }),
-        providesTags: ['group_attribute_sync', 'enterprise'],
-      }),
-      deleteGroupMappings: build.mutation<DeleteGroupMappingsApiResponse, DeleteGroupMappingsApiArg>({
-        query: (queryArg) => ({ url: `/groupsync/groups/${queryArg.groupId}`, method: 'DELETE' }),
-        invalidatesTags: ['group_attribute_sync', 'enterprise'],
-      }),
-      createGroupMappings: build.mutation<CreateGroupMappingsApiResponse, CreateGroupMappingsApiArg>({
-        query: (queryArg) => ({
-          url: `/groupsync/groups/${queryArg.groupId}`,
-          method: 'POST',
-          body: queryArg.groupAttributes,
-        }),
-        invalidatesTags: ['group_attribute_sync', 'enterprise'],
-      }),
-      updateGroupMappings: build.mutation<UpdateGroupMappingsApiResponse, UpdateGroupMappingsApiArg>({
-        query: (queryArg) => ({
-          url: `/groupsync/groups/${queryArg.groupId}`,
-          method: 'PUT',
-          body: queryArg.groupAttributes,
-        }),
-        invalidatesTags: ['group_attribute_sync', 'enterprise'],
-      }),
-      getGroupRoles: build.query<GetGroupRolesApiResponse, GetGroupRolesApiArg>({
-        query: (queryArg) => ({ url: `/groupsync/groups/${queryArg.groupId}/roles` }),
-        providesTags: ['group_attribute_sync', 'enterprise'],
-      }),
       getHealth: build.query<GetHealthApiResponse, GetHealthApiArg>({
         query: () => ({ url: `/health` }),
         providesTags: ['health'],
@@ -1017,18 +989,6 @@ const injectedRtkApi = api
       revokeInvite: build.mutation<RevokeInviteApiResponse, RevokeInviteApiArg>({
         query: (queryArg) => ({ url: `/org/invites/${queryArg.invitationCode}/revoke`, method: 'DELETE' }),
         invalidatesTags: ['org', 'invites'],
-      }),
-      getOrgPreferences: build.query<GetOrgPreferencesApiResponse, GetOrgPreferencesApiArg>({
-        query: () => ({ url: `/org/preferences` }),
-        providesTags: ['org', 'preferences'],
-      }),
-      patchOrgPreferences: build.mutation<PatchOrgPreferencesApiResponse, PatchOrgPreferencesApiArg>({
-        query: (queryArg) => ({ url: `/org/preferences`, method: 'PATCH', body: queryArg.patchPrefsCmd }),
-        invalidatesTags: ['org', 'preferences'],
-      }),
-      updateOrgPreferences: build.mutation<UpdateOrgPreferencesApiResponse, UpdateOrgPreferencesApiArg>({
-        query: (queryArg) => ({ url: `/org/preferences`, method: 'PUT', body: queryArg.updatePrefsCmd }),
-        invalidatesTags: ['org', 'preferences'],
       }),
       getCurrentOrgQuota: build.query<GetCurrentOrgQuotaApiResponse, GetCurrentOrgQuotaApiArg>({
         query: () => ({ url: `/org/quotas` }),
@@ -1584,14 +1544,6 @@ const injectedRtkApi = api
         query: () => ({ url: `/user/email/update` }),
         providesTags: ['user'],
       }),
-      clearHelpFlags: build.query<ClearHelpFlagsApiResponse, ClearHelpFlagsApiArg>({
-        query: () => ({ url: `/user/helpflags/clear` }),
-        providesTags: ['signed_in_user'],
-      }),
-      setHelpFlag: build.mutation<SetHelpFlagApiResponse, SetHelpFlagApiArg>({
-        query: (queryArg) => ({ url: `/user/helpflags/${queryArg.flagId}`, method: 'PUT' }),
-        invalidatesTags: ['signed_in_user'],
-      }),
       getSignedInUserOrgList: build.query<GetSignedInUserOrgListApiResponse, GetSignedInUserOrgListApiArg>({
         query: () => ({ url: `/user/orgs` }),
         providesTags: ['signed_in_user'],
@@ -1599,18 +1551,6 @@ const injectedRtkApi = api
       changeUserPassword: build.mutation<ChangeUserPasswordApiResponse, ChangeUserPasswordApiArg>({
         query: (queryArg) => ({ url: `/user/password`, method: 'PUT', body: queryArg.changeUserPasswordCommand }),
         invalidatesTags: ['signed_in_user'],
-      }),
-      getUserPreferences: build.query<GetUserPreferencesApiResponse, GetUserPreferencesApiArg>({
-        query: () => ({ url: `/user/preferences` }),
-        providesTags: ['signed_in_user', 'preferences'],
-      }),
-      patchUserPreferences: build.mutation<PatchUserPreferencesApiResponse, PatchUserPreferencesApiArg>({
-        query: (queryArg) => ({ url: `/user/preferences`, method: 'PATCH', body: queryArg.patchPrefsCmd }),
-        invalidatesTags: ['signed_in_user', 'preferences'],
-      }),
-      updateUserPreferences: build.mutation<UpdateUserPreferencesApiResponse, UpdateUserPreferencesApiArg>({
-        query: (queryArg) => ({ url: `/user/preferences`, method: 'PUT', body: queryArg.updatePrefsCmd }),
-        invalidatesTags: ['signed_in_user', 'preferences'],
       }),
       getUserQuotas: build.query<GetUserQuotasApiResponse, GetUserQuotasApiArg>({
         query: () => ({ url: `/user/quotas` }),
@@ -1698,26 +1638,6 @@ const injectedRtkApi = api
         }),
         providesTags: ['provisioning'],
       }),
-      routeGetContactpoints: build.query<RouteGetContactpointsApiResponse, RouteGetContactpointsApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/contact-points`,
-          params: {
-            name: queryArg.name,
-          },
-        }),
-        providesTags: ['provisioning'],
-      }),
-      routePostContactpoints: build.mutation<RoutePostContactpointsApiResponse, RoutePostContactpointsApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/contact-points`,
-          method: 'POST',
-          body: queryArg.embeddedContactPoint,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
       routeGetContactpointsExport: build.query<
         RouteGetContactpointsExportApiResponse,
         RouteGetContactpointsExportApiArg
@@ -1733,21 +1653,6 @@ const injectedRtkApi = api
         }),
         providesTags: ['provisioning'],
       }),
-      routeDeleteContactpoints: build.mutation<RouteDeleteContactpointsApiResponse, RouteDeleteContactpointsApiArg>({
-        query: (queryArg) => ({ url: `/v1/provisioning/contact-points/${queryArg.uid}`, method: 'DELETE' }),
-        invalidatesTags: ['provisioning'],
-      }),
-      routePutContactpoint: build.mutation<RoutePutContactpointApiResponse, RoutePutContactpointApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/contact-points/${queryArg.uid}`,
-          method: 'PUT',
-          body: queryArg.embeddedContactPoint,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
       routeGetAlertRuleGroupExport: build.query<
         RouteGetAlertRuleGroupExportApiResponse,
         RouteGetAlertRuleGroupExportApiArg
@@ -1761,21 +1666,6 @@ const injectedRtkApi = api
         }),
         providesTags: ['provisioning'],
       }),
-      routeGetMuteTimings: build.query<RouteGetMuteTimingsApiResponse, RouteGetMuteTimingsApiArg>({
-        query: () => ({ url: `/v1/provisioning/mute-timings` }),
-        providesTags: ['provisioning'],
-      }),
-      routePostMuteTiming: build.mutation<RoutePostMuteTimingApiResponse, RoutePostMuteTimingApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/mute-timings`,
-          method: 'POST',
-          body: queryArg.muteTimeInterval,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
       routeExportMuteTimings: build.query<RouteExportMuteTimingsApiResponse, RouteExportMuteTimingsApiArg>({
         query: (queryArg) => ({
           url: `/v1/provisioning/mute-timings/export`,
@@ -1785,34 +1675,6 @@ const injectedRtkApi = api
           },
         }),
         providesTags: ['provisioning'],
-      }),
-      routeDeleteMuteTiming: build.mutation<RouteDeleteMuteTimingApiResponse, RouteDeleteMuteTimingApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/mute-timings/${queryArg.name}`,
-          method: 'DELETE',
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-          params: {
-            version: queryArg.version,
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
-      routeGetMuteTiming: build.query<RouteGetMuteTimingApiResponse, RouteGetMuteTimingApiArg>({
-        query: (queryArg) => ({ url: `/v1/provisioning/mute-timings/${queryArg.name}` }),
-        providesTags: ['provisioning'],
-      }),
-      routePutMuteTiming: build.mutation<RoutePutMuteTimingApiResponse, RoutePutMuteTimingApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/mute-timings/${queryArg.name}`,
-          method: 'PUT',
-          body: queryArg.muteTimeInterval,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
       }),
       routeExportMuteTiming: build.query<RouteExportMuteTimingApiResponse, RouteExportMuteTimingApiArg>({
         query: (queryArg) => ({
@@ -1824,57 +1686,9 @@ const injectedRtkApi = api
         }),
         providesTags: ['provisioning'],
       }),
-      routeResetPolicyTree: build.mutation<RouteResetPolicyTreeApiResponse, RouteResetPolicyTreeApiArg>({
-        query: () => ({ url: `/v1/provisioning/policies`, method: 'DELETE' }),
-        invalidatesTags: ['provisioning'],
-      }),
-      routeGetPolicyTree: build.query<RouteGetPolicyTreeApiResponse, RouteGetPolicyTreeApiArg>({
-        query: () => ({ url: `/v1/provisioning/policies` }),
-        providesTags: ['provisioning'],
-      }),
-      routePutPolicyTree: build.mutation<RoutePutPolicyTreeApiResponse, RoutePutPolicyTreeApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/policies`,
-          method: 'PUT',
-          body: queryArg.route,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
       routeGetPolicyTreeExport: build.query<RouteGetPolicyTreeExportApiResponse, RouteGetPolicyTreeExportApiArg>({
         query: () => ({ url: `/v1/provisioning/policies/export` }),
         providesTags: ['provisioning'],
-      }),
-      routeGetTemplates: build.query<RouteGetTemplatesApiResponse, RouteGetTemplatesApiArg>({
-        query: () => ({ url: `/v1/provisioning/templates` }),
-        providesTags: ['provisioning'],
-      }),
-      routeDeleteTemplate: build.mutation<RouteDeleteTemplateApiResponse, RouteDeleteTemplateApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/templates/${queryArg.name}`,
-          method: 'DELETE',
-          params: {
-            version: queryArg.version,
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
-      routeGetTemplate: build.query<RouteGetTemplateApiResponse, RouteGetTemplateApiArg>({
-        query: (queryArg) => ({ url: `/v1/provisioning/templates/${queryArg.name}` }),
-        providesTags: ['provisioning'],
-      }),
-      routePutTemplate: build.mutation<RoutePutTemplateApiResponse, RoutePutTemplateApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/templates/${queryArg.name}`,
-          method: 'PUT',
-          body: queryArg.notificationTemplateContent,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
       }),
       listAllProvidersSettings: build.query<ListAllProvidersSettingsApiResponse, ListAllProvidersSettingsApiArg>({
         query: () => ({ url: `/v1/sso-settings` }),
@@ -2138,6 +1952,8 @@ export type GetAnnotationsApiArg = {
   to?: number;
   /** Limit response to annotations created by specific user. */
   userId?: number;
+  /** Limit response to annotations created by a specific user, identified by UID. */
+  userUid?: string;
   /** Find annotations for a specified alert rule by its ID.
     deprecated: AlertID is deprecated and will be removed in future versions. Please use AlertUID instead. */
   alertId?: number;
@@ -2549,27 +2365,6 @@ export type UpdateFolderPermissionsApiArg = {
   folderUid: string;
   updateDashboardAclCommand: UpdateDashboardAclCommand;
 };
-export type GetMappedGroupsApiResponse = /** status 200 (empty) */ GetGroupsResponse;
-export type GetMappedGroupsApiArg = void;
-export type DeleteGroupMappingsApiResponse =
-  /** status 204 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type DeleteGroupMappingsApiArg = {
-  groupId: string;
-};
-export type CreateGroupMappingsApiResponse = /** status 201 (empty) */ MessageResponse;
-export type CreateGroupMappingsApiArg = {
-  groupId: string;
-  groupAttributes: GroupAttributes;
-};
-export type UpdateGroupMappingsApiResponse = /** status 201 (empty) */ MessageResponse;
-export type UpdateGroupMappingsApiArg = {
-  groupId: string;
-  groupAttributes: GroupAttributes;
-};
-export type GetGroupRolesApiResponse = /** status 200 (empty) */ RoleDto[];
-export type GetGroupRolesApiArg = {
-  groupId: string;
-};
 export type GetHealthApiResponse = /** status 200 healthResponse */ HealthResponse;
 export type GetHealthApiArg = void;
 export type GetLibraryElementsApiResponse =
@@ -2669,18 +2464,6 @@ export type RevokeInviteApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type RevokeInviteApiArg = {
   invitationCode: string;
-};
-export type GetOrgPreferencesApiResponse = /** status 200 (empty) */ PreferencesSpec;
-export type GetOrgPreferencesApiArg = void;
-export type PatchOrgPreferencesApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type PatchOrgPreferencesApiArg = {
-  patchPrefsCmd: PatchPrefsCmd;
-};
-export type UpdateOrgPreferencesApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type UpdateOrgPreferencesApiArg = {
-  updatePrefsCmd: UpdatePrefsCmd;
 };
 export type GetCurrentOrgQuotaApiResponse = /** status 200 (empty) */ QuotaDto[];
 export type GetCurrentOrgQuotaApiArg = void;
@@ -3175,18 +2958,6 @@ export type GetUserAuthTokensApiResponse = /** status 200 (empty) */ UserToken[]
 export type GetUserAuthTokensApiArg = void;
 export type UpdateUserEmailApiResponse = unknown;
 export type UpdateUserEmailApiArg = void;
-export type ClearHelpFlagsApiResponse = /** status 200 (empty) */ {
-  helpFlags1?: number;
-  message?: string;
-};
-export type ClearHelpFlagsApiArg = void;
-export type SetHelpFlagApiResponse = /** status 200 (empty) */ {
-  helpFlags1?: number;
-  message?: string;
-};
-export type SetHelpFlagApiArg = {
-  flagId: string;
-};
 export type GetSignedInUserOrgListApiResponse = /** status 200 (empty) */ UserOrgDto[];
 export type GetSignedInUserOrgListApiArg = void;
 export type ChangeUserPasswordApiResponse =
@@ -3194,18 +2965,6 @@ export type ChangeUserPasswordApiResponse =
 export type ChangeUserPasswordApiArg = {
   /** To change the email, name, login, theme, provide another one. */
   changeUserPasswordCommand: ChangeUserPasswordCommand;
-};
-export type GetUserPreferencesApiResponse = /** status 200 (empty) */ PreferencesSpec;
-export type GetUserPreferencesApiArg = void;
-export type PatchUserPreferencesApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type PatchUserPreferencesApiArg = {
-  patchPrefsCmd: PatchPrefsCmd;
-};
-export type UpdateUserPreferencesApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type UpdateUserPreferencesApiArg = {
-  updatePrefsCmd: UpdatePrefsCmd;
 };
 export type GetUserQuotasApiResponse = /** status 200 (empty) */ QuotaDto[];
 export type GetUserQuotasApiArg = void;
@@ -3288,16 +3047,6 @@ export type RouteGetAlertRuleExportApiArg = {
   /** Alert rule UID */
   uid: string;
 };
-export type RouteGetContactpointsApiResponse = /** status 200 ContactPoints */ ContactPointsRead;
-export type RouteGetContactpointsApiArg = {
-  /** Filter by name */
-  name?: string;
-};
-export type RoutePostContactpointsApiResponse = /** status 202 EmbeddedContactPoint */ EmbeddedContactPointRead;
-export type RoutePostContactpointsApiArg = {
-  'X-Disable-Provenance'?: string;
-  embeddedContactPoint: EmbeddedContactPoint;
-};
 export type RouteGetContactpointsExportApiResponse =
   /** status 200 AlertingFileExport */ AlertingFileExportIsTheFullProvisionedFileExport;
 export type RouteGetContactpointsExportApiArg = {
@@ -3310,18 +3059,6 @@ export type RouteGetContactpointsExportApiArg = {
   /** Filter by name */
   name?: string;
 };
-export type RouteDeleteContactpointsApiResponse = unknown;
-export type RouteDeleteContactpointsApiArg = {
-  /** UID is the contact point unique identifier */
-  uid: string;
-};
-export type RoutePutContactpointApiResponse = /** status 202 Ack */ Ack;
-export type RoutePutContactpointApiArg = {
-  /** UID is the contact point unique identifier */
-  uid: string;
-  'X-Disable-Provenance'?: string;
-  embeddedContactPoint: EmbeddedContactPoint;
-};
 export type RouteGetAlertRuleGroupExportApiResponse =
   /** status 200 AlertingFileExport */ AlertingFileExportIsTheFullProvisionedFileExport;
 export type RouteGetAlertRuleGroupExportApiArg = {
@@ -3332,14 +3069,6 @@ export type RouteGetAlertRuleGroupExportApiArg = {
   folderUid: string;
   group: string;
 };
-export type RouteGetMuteTimingsApiResponse = /** status 200 MuteTimings */ MuteTimings;
-export type RouteGetMuteTimingsApiArg = void;
-export type RoutePostMuteTimingApiResponse =
-  /** status 201 MuteTimeInterval */ MuteTimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted;
-export type RoutePostMuteTimingApiArg = {
-  'X-Disable-Provenance'?: string;
-  muteTimeInterval: MuteTimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted;
-};
 export type RouteExportMuteTimingsApiResponse =
   /** status 200 AlertingFileExport */ AlertingFileExportIsTheFullProvisionedFileExport;
 export type RouteExportMuteTimingsApiArg = {
@@ -3347,28 +3076,6 @@ export type RouteExportMuteTimingsApiArg = {
   download?: boolean;
   /** Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence. */
   format?: 'yaml' | 'json' | 'hcl';
-};
-export type RouteDeleteMuteTimingApiResponse = unknown;
-export type RouteDeleteMuteTimingApiArg = {
-  /** Mute timing name */
-  name: string;
-  /** Version of mute timing to use for optimistic concurrency. Leave empty to disable validation */
-  version?: string;
-  'X-Disable-Provenance'?: string;
-};
-export type RouteGetMuteTimingApiResponse =
-  /** status 200 MuteTimeInterval */ MuteTimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted;
-export type RouteGetMuteTimingApiArg = {
-  /** Mute timing name */
-  name: string;
-};
-export type RoutePutMuteTimingApiResponse =
-  /** status 202 MuteTimeInterval */ MuteTimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted;
-export type RoutePutMuteTimingApiArg = {
-  /** Mute timing name */
-  name: string;
-  'X-Disable-Provenance'?: string;
-  muteTimeInterval: MuteTimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted;
 };
 export type RouteExportMuteTimingApiResponse =
   /** status 200 AlertingFileExport */ AlertingFileExportIsTheFullProvisionedFileExport;
@@ -3380,40 +3087,9 @@ export type RouteExportMuteTimingApiArg = {
   /** Mute timing name */
   name: string;
 };
-export type RouteResetPolicyTreeApiResponse = /** status 202 Ack */ Ack;
-export type RouteResetPolicyTreeApiArg = void;
-export type RouteGetPolicyTreeApiResponse = /** status 200 Route */ Route;
-export type RouteGetPolicyTreeApiArg = void;
-export type RoutePutPolicyTreeApiResponse = /** status 202 Ack */ Ack;
-export type RoutePutPolicyTreeApiArg = {
-  'X-Disable-Provenance'?: string;
-  /** The new notification routing tree to use */
-  route: Route;
-};
 export type RouteGetPolicyTreeExportApiResponse =
   /** status 200 AlertingFileExport */ AlertingFileExportIsTheFullProvisionedFileExport;
 export type RouteGetPolicyTreeExportApiArg = void;
-export type RouteGetTemplatesApiResponse = /** status 200 NotificationTemplates */ NotificationTemplates;
-export type RouteGetTemplatesApiArg = void;
-export type RouteDeleteTemplateApiResponse = unknown;
-export type RouteDeleteTemplateApiArg = {
-  /** Template group name */
-  name: string;
-  /** Version of template to use for optimistic concurrency. Leave empty to disable validation */
-  version?: string;
-};
-export type RouteGetTemplateApiResponse = /** status 200 NotificationTemplate */ NotificationTemplate;
-export type RouteGetTemplateApiArg = {
-  /** Template group name */
-  name: string;
-};
-export type RoutePutTemplateApiResponse = /** status 202 NotificationTemplate */ NotificationTemplate;
-export type RoutePutTemplateApiArg = {
-  /** Template group name */
-  name: string;
-  'X-Disable-Provenance'?: string;
-  notificationTemplateContent: NotificationTemplateContent;
-};
 export type ListAllProvidersSettingsApiResponse = /** status 200 (empty) */ {
   id?: string;
   provider?: string;
@@ -4509,20 +4185,6 @@ export type DashboardAclUpdateItem = {
 export type UpdateDashboardAclCommand = {
   items?: DashboardAclUpdateItem[];
 };
-export type Group = {
-  groupID?: string;
-  mappings?: any;
-};
-export type GetGroupsResponse = {
-  groups?: Group[];
-  total?: number;
-};
-export type MessageResponse = {
-  message?: string;
-};
-export type GroupAttributes = {
-  roles?: string[];
-};
 export type HealthResponse = {
   apiserver?: string;
   commit?: string;
@@ -4707,62 +4369,6 @@ export type AddInviteForm = {
   role?: 'None' | 'Viewer' | 'Editor' | 'Admin';
   sendEmail?: boolean;
 };
-export type PreferencesNavbarPreference = {
-  bookmarkUrls?: string[];
-};
-export type PreferencesQueryHistoryPreference = {
-  /** one of: '' | 'query' | 'starred'; */
-  homeTab?: string;
-};
-export type PreferencesSpec = {
-  /** UID for the home dashboard */
-  homeDashboardUID?: string;
-  /** Selected language (beta) */
-  language?: string;
-  navbar?: PreferencesNavbarPreference;
-  queryHistory?: PreferencesQueryHistoryPreference;
-  /** Selected locale (beta) */
-  regionalFormat?: string;
-  /** light, dark, empty is default */
-  theme?: string;
-  /** The timezone selection
-    TODO: this should use the timezone defined in common */
-  timezone?: string;
-  /** day of the week (sunday, monday, etc) */
-  weekStart?: string;
-};
-export type NavbarPreference = {
-  bookmarkUrls?: string[];
-};
-export type QueryHistoryPreference = {
-  homeTab?: string;
-};
-export type PatchPrefsCmd = {
-  /** The numerical :id of a favorited dashboard */
-  homeDashboardId?: number;
-  homeDashboardUID?: string;
-  language?: string;
-  navbar?: NavbarPreference;
-  queryHistory?: QueryHistoryPreference;
-  regionalFormat?: string;
-  theme?: 'light' | 'dark';
-  /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
-  timezone?: string;
-  weekStart?: string;
-};
-export type UpdatePrefsCmd = {
-  /** The numerical :id of a favorited dashboard */
-  homeDashboardId?: number;
-  homeDashboardUID?: string;
-  language?: string;
-  navbar?: NavbarPreference;
-  queryHistory?: QueryHistoryPreference;
-  regionalFormat?: string;
-  theme?: 'light' | 'dark' | 'system';
-  /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
-  timezone?: string;
-  weekStart?: string;
-};
 export type OrgUserDto = {
   accessControl?: {
     [key: string]: boolean;
@@ -4816,7 +4422,6 @@ export type AnnotationActions = {
 };
 export type AnnotationPermission = {
   dashboard?: AnnotationActions;
-  organization?: AnnotationActions;
 };
 export type DashboardMeta = {
   annotationsPermissions?: AnnotationPermission;
@@ -4837,7 +4442,6 @@ export type DashboardMeta = {
   hasAcl?: boolean;
   isFolder?: boolean;
   isSnapshot?: boolean;
-  isStarred?: boolean;
   provisioned?: boolean;
   provisionedExternalId?: string;
   publicDashboardEnabled?: boolean;
@@ -4999,6 +4603,10 @@ export type ReportSchedule = {
   workdaysOnly?: boolean;
 };
 export type State = string;
+export type ReportUrlItem = {
+  title?: string;
+  url?: string;
+};
 export type Report = {
   created?: string;
   dashboards?: ReportDashboard[];
@@ -5018,6 +4626,7 @@ export type Report = {
   subject?: string;
   uid?: string;
   updated?: string;
+  urls?: ReportUrlItem[];
   userId?: number;
 };
 export type CreateOrUpdateReport = {
@@ -5034,6 +4643,7 @@ export type CreateOrUpdateReport = {
   schedule?: ReportSchedule;
   state?: State;
   subject?: string;
+  urls?: ReportUrlItem[];
 };
 export type ReportEmail = {
   /** Comma-separated list of emails to which to send the report to. */
@@ -5050,9 +4660,19 @@ export type ReportBrandingOptions = {
   emailLogoUrl?: string;
   reportLogoUrl?: string;
 };
+export type FooterItem = {
+  color?: string;
+  fontSize?: string;
+  fontStyle?: string;
+  fontWeight?: string;
+  type?: string;
+  value?: string;
+};
 export type ReportSettings = {
   branding?: ReportBrandingOptions;
   embeddedImageTheme?: string;
+  footerFontFamily?: string;
+  footerItems?: FooterItem[];
   id?: number;
   orgId?: number;
   pdfDashboardTitleEnabled?: boolean;
@@ -5450,6 +5070,7 @@ export type TeamGroupDto = {
   orgId?: number;
   teamId?: number;
   teamUid?: string;
+  /** Deprecated: always empty; no per-entry id. */
   uid?: string;
 };
 export type TeamGroupMapping = {
@@ -5490,6 +5111,47 @@ export type SetTeamMembershipsCommand = {
 export type UpdateTeamMemberCommand = {
   permission?: PermissionType;
 };
+export type PreferencesNavbarPreference = {
+  bookmarkUrls?: string[];
+};
+export type PreferencesQueryHistoryPreference = {
+  /** one of: '' | 'query' | 'starred'; */
+  homeTab?: string;
+};
+export type PreferencesSpec = {
+  /** UID for the home dashboard */
+  homeDashboardUID?: string;
+  /** Explicit home URL (NOTE: this can only be modified in the system settings) */
+  homeURL?: string;
+  /** Selected language */
+  language?: string;
+  navbar?: PreferencesNavbarPreference;
+  queryHistory?: PreferencesQueryHistoryPreference;
+  /** user interface theme */
+  theme?: string;
+  /** The timezone selection */
+  timezone?: string;
+  /** day of the week (sunday, monday, etc) */
+  weekStart?: string;
+};
+export type NavbarPreference = {
+  bookmarkUrls?: string[];
+};
+export type QueryHistoryPreference = {
+  homeTab?: string;
+};
+export type UpdatePrefsCmd = {
+  /** The numerical :id of a favorited dashboard */
+  homeDashboardId?: number;
+  homeDashboardUID?: string;
+  language?: string;
+  navbar?: NavbarPreference;
+  queryHistory?: QueryHistoryPreference;
+  theme?: 'light' | 'dark' | 'system';
+  /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
+  timezone?: string;
+  weekStart?: string;
+};
 export type UserProfileDto = {
   accessControl?: {
     [key: string]: boolean;
@@ -5528,6 +5190,9 @@ export type ChangeUserPasswordCommand = {
   oldPassword?: Password;
 };
 export type UserSearchHitDto = {
+  accessControl?: {
+    [key: string]: boolean;
+  };
   authLabels?: string[];
   avatarUrl?: string;
   created?: string;
@@ -5540,6 +5205,7 @@ export type UserSearchHitDto = {
   lastSeenAtAge?: string;
   login?: string;
   name?: string;
+  role?: string;
   uid?: string;
 };
 export type SearchUserQueryResult = {
@@ -5682,109 +5348,8 @@ export type AlertingFileExportIsTheFullProvisionedFileExport = {
   muteTimes?: MuteTimeIntervalExport[];
   policies?: NotificationPolicyExportIsTheProvisionedFileExportOfAlertingNotificiationPolicyV1[];
 };
-export type EmbeddedContactPoint = {
-  disableResolveMessage?: boolean;
-  /** Name is used as grouping key in the UI. Contact points with the
-    same name will be grouped in the UI. */
-  name?: string;
-  settings: Json;
-  type:
-    | 'alertmanager'
-    | 'dingding'
-    | 'discord'
-    | 'email'
-    | 'googlechat'
-    | 'kafka'
-    | 'line'
-    | 'opsgenie'
-    | 'pagerduty'
-    | 'pushover'
-    | 'sensugo'
-    | 'slack'
-    | 'teams'
-    | 'telegram'
-    | 'threema'
-    | 'victorops'
-    | 'webhook'
-    | 'wecom';
-  /** UID is the unique identifier of the contact point. The UID can be
-    set by the user. */
-  uid?: string;
-};
-export type EmbeddedContactPointRead = {
-  disableResolveMessage?: boolean;
-  /** Name is used as grouping key in the UI. Contact points with the
-    same name will be grouped in the UI. */
-  name?: string;
-  provenance?: string;
-  settings: Json;
-  type:
-    | 'alertmanager'
-    | 'dingding'
-    | 'discord'
-    | 'email'
-    | 'googlechat'
-    | 'kafka'
-    | 'line'
-    | 'opsgenie'
-    | 'pagerduty'
-    | 'pushover'
-    | 'sensugo'
-    | 'slack'
-    | 'teams'
-    | 'telegram'
-    | 'threema'
-    | 'victorops'
-    | 'webhook'
-    | 'wecom';
-  /** UID is the unique identifier of the contact point. The UID can be
-    set by the user. */
-  uid?: string;
-};
-export type ContactPoints = EmbeddedContactPoint[];
-export type ContactPointsRead = EmbeddedContactPointRead[];
-export type ValidationError = {
-  message?: string;
-};
 export type PermissionDenied = object;
-export type Ack = object;
-export type MuteTimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted = {
-  name?: string;
-  time_intervals?: TimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted[];
-};
-export type MuteTimings = MuteTimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted[];
-export type Provenance = string;
-export type Route = {
-  active_time_intervals?: string[];
-  continue?: boolean;
-  group_by?: string[];
-  group_interval?: string;
-  group_wait?: string;
-  /** Deprecated. Remove before v1.0 release. */
-  match?: {
-    [key: string]: string;
-  };
-  match_re?: MatchRegexpsRepresentsAMapOfRegexp;
-  matchers?: Matchers;
-  mute_time_intervals?: string[];
-  object_matchers?: ObjectMatchersIsAListOfMatchersThatCanBeUsedToFilterAlerts;
-  provenance?: Provenance;
-  receiver?: string;
-  repeat_interval?: string;
-  routes?: Route[];
-};
 export type NotFound = object;
-export type NotificationTemplate = {
-  name?: string;
-  provenance?: Provenance;
-  template?: string;
-  version?: string;
-};
-export type NotificationTemplates = NotificationTemplate[];
-export type NotificationTemplateContent = {
-  template?: string;
-  version?: string;
-};
 export const {
   useListRolesQuery,
   useLazyListRolesQuery,
@@ -5949,13 +5514,6 @@ export const {
   useEnableDataSourceCacheMutation,
   useQueryMetricsWithExpressionsMutation,
   useUpdateFolderPermissionsMutation,
-  useGetMappedGroupsQuery,
-  useLazyGetMappedGroupsQuery,
-  useDeleteGroupMappingsMutation,
-  useCreateGroupMappingsMutation,
-  useUpdateGroupMappingsMutation,
-  useGetGroupRolesQuery,
-  useLazyGetGroupRolesQuery,
   useGetHealthQuery,
   useLazyGetHealthQuery,
   useGetLibraryElementsQuery,
@@ -5988,10 +5546,6 @@ export const {
   useLazyGetPendingOrgInvitesQuery,
   useAddOrgInviteMutation,
   useRevokeInviteMutation,
-  useGetOrgPreferencesQuery,
-  useLazyGetOrgPreferencesQuery,
-  usePatchOrgPreferencesMutation,
-  useUpdateOrgPreferencesMutation,
   useGetCurrentOrgQuotaQuery,
   useLazyGetCurrentOrgQuotaQuery,
   useGetOrgUsersForCurrentOrgQuery,
@@ -6119,16 +5673,9 @@ export const {
   useLazyGetUserAuthTokensQuery,
   useUpdateUserEmailQuery,
   useLazyUpdateUserEmailQuery,
-  useClearHelpFlagsQuery,
-  useLazyClearHelpFlagsQuery,
-  useSetHelpFlagMutation,
   useGetSignedInUserOrgListQuery,
   useLazyGetSignedInUserOrgListQuery,
   useChangeUserPasswordMutation,
-  useGetUserPreferencesQuery,
-  useLazyGetUserPreferencesQuery,
-  usePatchUserPreferencesMutation,
-  useUpdateUserPreferencesMutation,
   useGetUserQuotasQuery,
   useLazyGetUserQuotasQuery,
   useRevokeUserAuthTokenMutation,
@@ -6154,38 +5701,16 @@ export const {
   useLazyRouteGetAlertRulesExportQuery,
   useRouteGetAlertRuleExportQuery,
   useLazyRouteGetAlertRuleExportQuery,
-  useRouteGetContactpointsQuery,
-  useLazyRouteGetContactpointsQuery,
-  useRoutePostContactpointsMutation,
   useRouteGetContactpointsExportQuery,
   useLazyRouteGetContactpointsExportQuery,
-  useRouteDeleteContactpointsMutation,
-  useRoutePutContactpointMutation,
   useRouteGetAlertRuleGroupExportQuery,
   useLazyRouteGetAlertRuleGroupExportQuery,
-  useRouteGetMuteTimingsQuery,
-  useLazyRouteGetMuteTimingsQuery,
-  useRoutePostMuteTimingMutation,
   useRouteExportMuteTimingsQuery,
   useLazyRouteExportMuteTimingsQuery,
-  useRouteDeleteMuteTimingMutation,
-  useRouteGetMuteTimingQuery,
-  useLazyRouteGetMuteTimingQuery,
-  useRoutePutMuteTimingMutation,
   useRouteExportMuteTimingQuery,
   useLazyRouteExportMuteTimingQuery,
-  useRouteResetPolicyTreeMutation,
-  useRouteGetPolicyTreeQuery,
-  useLazyRouteGetPolicyTreeQuery,
-  useRoutePutPolicyTreeMutation,
   useRouteGetPolicyTreeExportQuery,
   useLazyRouteGetPolicyTreeExportQuery,
-  useRouteGetTemplatesQuery,
-  useLazyRouteGetTemplatesQuery,
-  useRouteDeleteTemplateMutation,
-  useRouteGetTemplateQuery,
-  useLazyRouteGetTemplateQuery,
-  useRoutePutTemplateMutation,
   useListAllProvidersSettingsQuery,
   useLazyListAllProvidersSettingsQuery,
   useRemoveProviderSettingsMutation,

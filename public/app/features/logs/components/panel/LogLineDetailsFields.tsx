@@ -3,21 +3,30 @@ import { isEqual } from 'lodash';
 import { parse, stringify } from 'lossless-json';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { CoreApp, Field, fuzzySearch, GrafanaTheme2, IconName, LinkModel, LogLabelStatsModel } from '@grafana/data';
+import {
+  CoreApp,
+  type Field,
+  fuzzySearch,
+  type GrafanaTheme2,
+  type IconName,
+  type LinkModel,
+  type LogLabelStatsModel,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { ClipboardButton, DataLinkButton, IconButton, IconSize, useStyles2 } from '@grafana/ui';
+import { ClipboardButton, DataLinkButton, IconButton, useStyles2 } from '@grafana/ui';
 
 import { logRowToSingleRowDataFrame } from '../../logsModel';
 import { calculateLogsLabelStats, calculateStats } from '../../utils';
 import { LogLabelStats } from '../LogLabelStats';
 import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
-import { FieldDef } from '../logParser';
+import { type FieldDef } from '../logParser';
 
+import { AsyncIconButton } from './AsyncIconButton';
 import { useLogDetailsContext } from './LogDetailsContext';
-import { LogListFontSize } from './LogList';
+import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
-import { LogListModel, getNormalizedFieldName } from './processing';
+import { type LogListModel, getNormalizedFieldName } from './processing';
 
 interface LogLineDetailsFieldsProps {
   disableActions?: boolean;
@@ -28,8 +37,8 @@ interface LogLineDetailsFieldsProps {
 }
 
 export const LogLineDetailsFields = memo(({ disableActions, fields, log, logs, search }: LogLineDetailsFieldsProps) => {
-  const { fontSize } = useLogListContext();
-  const styles = useStyles2(getFieldsStyles, fontSize);
+  const { onClickShowField, fontSize } = useLogListContext();
+  const styles = useStyles2(getFieldsStyles, fontSize, onClickShowField);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterFields(fields, search) : fields), [fields, search]);
 
@@ -76,8 +85,8 @@ interface LogLineDetailsLabelFieldsProps {
 }
 
 export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLineDetailsLabelFieldsProps) => {
-  const { fontSize } = useLogListContext();
-  const styles = useStyles2(getFieldsStyles, fontSize);
+  const { fontSize, onClickShowField } = useLogListContext();
+  const styles = useStyles2(getFieldsStyles, fontSize, onClickShowField);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterLabels(fields, search) : fields), [fields, search]);
 
@@ -104,11 +113,15 @@ export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLine
   );
 };
 
-const getFieldsStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
+const getFieldsStyles = (
+  theme: GrafanaTheme2,
+  fontSize: LogListFontSize,
+  onClickShowField?: (key: string) => void
+) => ({
   fieldsTable: css({
     display: 'grid',
     gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
-    gridTemplateColumns: `${fontSize === 'small' ? theme.spacing(10) : theme.spacing(11.5)} fit-content(30%) 1fr`,
+    gridTemplateColumns: `${fontSize === 'small' ? (onClickShowField ? theme.spacing(10) : theme.spacing(7)) : onClickShowField ? theme.spacing(11.5) : theme.spacing(7.5)} fit-content(30%) 1fr`,
   }),
   fieldsTableNoActions: css({
     display: 'grid',
@@ -128,7 +141,7 @@ interface LogLineDetailsFieldProps {
   log: LogListModel;
 }
 
-export const LogLineDetailsField = ({
+const LogLineDetailsField = ({
   disableActions = false,
   fieldIndex,
   getLogs,
@@ -238,12 +251,41 @@ export const LogLineDetailsField = ({
     });
   }, [onClickFilterOutLabel, reportInteractionWrapper, log, keys, values]);
 
-  const labelFilterActive = useCallback(async () => {
-    if (isLabelFilterActive) {
-      return await isLabelFilterActive(keys[0], values[0], log.dataFrame?.refId);
-    }
-    return false;
-  }, [isLabelFilterActive, keys, values, log.dataFrame?.refId]);
+  const includeAdhocValue = useCallback(
+    (value: string) => {
+      onClickFilterLabel?.(keys[0], value, logRowToSingleRowDataFrame(log) || undefined);
+
+      reportInteractionWrapper('logs_log_line_details_filter_clicked', {
+        datasourceType: log.datasourceType,
+        filterType: 'include',
+        logRowUid: log.uid,
+      });
+    },
+    [onClickFilterLabel, reportInteractionWrapper, log, keys]
+  );
+
+  const excludeAdhocValue = useCallback(
+    (value: string) => {
+      onClickFilterOutLabel?.(keys[0], value, logRowToSingleRowDataFrame(log) || undefined);
+
+      reportInteractionWrapper('logs_log_line_details_filter_clicked', {
+        datasourceType: log.datasourceType,
+        filterType: 'exclude',
+        logRowUid: log.uid,
+      });
+    },
+    [onClickFilterOutLabel, reportInteractionWrapper, log, keys]
+  );
+
+  const labelFilterActive = useCallback(
+    async (value?: string) => {
+      if (isLabelFilterActive) {
+        return await isLabelFilterActive(keys[0], value ?? values[0], log.dataFrame?.refId);
+      }
+      return false;
+    },
+    [isLabelFilterActive, keys, values, log.dataFrame?.refId]
+  );
 
   const showStats = useCallback(() => {
     setShowFieldStats((showFieldStats: boolean) => !showFieldStats);
@@ -256,6 +298,20 @@ export const LogLineDetailsField = ({
       app,
     });
   }, [app, isLabel, log.datasourceType, log.uid, reportInteractionWrapper, showFieldsStats]);
+
+  const reportLinkClick = useCallback(
+    (link: LinkModelWithIcon) => {
+      reportInteractionWrapper('logs_log_line_details_extension_link_clicked', {
+        app,
+        linkApp: resolveAppFromLink(link.href),
+        fieldKey: keys[0],
+        fieldType: isLabel ? 'label' : 'field',
+        datasourceType: log.datasourceType,
+        logLevel: log.logLevel,
+      });
+    },
+    [app, isLabel, keys, log.datasourceType, log.logLevel, reportInteractionWrapper]
+  );
 
   const refIdTooltip = useMemo(
     () => (app === CoreApp.Explore && log.dataFrame?.refId ? ` in query ${log.dataFrame?.refId}` : ''),
@@ -296,7 +352,7 @@ export const LogLineDetailsField = ({
                   onClick={filterOutLabel}
                 />
               )}
-              {singleKey && displayedFields.includes(keys[0]) && (
+              {onClickHideField && singleKey && displayedFields.includes(keys[0]) && (
                 <IconButton
                   variant="primary"
                   size={fontSize === 'small' ? 'sm' : undefined}
@@ -305,7 +361,7 @@ export const LogLineDetailsField = ({
                   onClick={hideField}
                 />
               )}
-              {singleKey && !displayedFields.includes(keys[0]) && (
+              {onClickShowField && singleKey && !displayedFields.includes(keys[0]) && (
                 <IconButton
                   tooltip={t(
                     'logs.log-line-details.fields.toggle-field-button.field-instead-message',
@@ -366,6 +422,7 @@ export const LogLineDetailsField = ({
                       : undefined,
                   variant: 'secondary',
                   fill: 'outline',
+                  onClick: () => reportLinkClick(link),
                   ...(link.icon && { icon: link.icon }),
                 }}
                 link={link}
@@ -378,6 +435,10 @@ export const LogLineDetailsField = ({
         <div className={styles.row}>
           <div className={disableActions ? undefined : styles.statsColumn}>
             <LogLabelStats
+              include={includeAdhocValue}
+              exclude={excludeAdhocValue}
+              isValueActive={labelFilterActive}
+              iconSize={fontSize === 'small' ? 'sm' : undefined}
               className={styles.stats}
               stats={fieldStats}
               label={keys[0]}
@@ -391,6 +452,10 @@ export const LogLineDetailsField = ({
     </>
   );
 };
+
+export function resolveAppFromLink(href: string): string | undefined {
+  return href.match(/\/a\/([^/?#]+)/)?.[1];
+}
 
 const getFieldStyles = (theme: GrafanaTheme2) => ({
   row: css({
@@ -531,24 +596,6 @@ export const SingleValue = ({ value: originalValue, prettifyJSON }: { value: str
       <ClipboardButtonWrapper value={value} />
     </>
   );
-};
-
-interface AsyncIconButtonProps extends Pick<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> {
-  name: IconName;
-  isActive(): Promise<boolean>;
-  size?: IconSize;
-  tooltipSuffix: string;
-}
-
-const AsyncIconButton = ({ isActive, tooltipSuffix, ...rest }: AsyncIconButtonProps) => {
-  const [active, setActive] = useState(false);
-  const tooltip = active ? 'Remove filter' : 'Filter for value';
-
-  useEffect(() => {
-    isActive().then(setActive);
-  }, [isActive]);
-
-  return <IconButton {...rest} variant={active ? 'primary' : undefined} tooltip={tooltip + tooltipSuffix} />;
 };
 
 export function filterFields(fields: FieldDef[], search: string) {

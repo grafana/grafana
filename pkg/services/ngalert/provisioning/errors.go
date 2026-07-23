@@ -2,10 +2,13 @@ package provisioning
 
 import (
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
 var ErrValidation = fmt.Errorf("invalid object specification")
@@ -14,10 +17,13 @@ var ErrNotFound = fmt.Errorf("object not found")
 var (
 	ErrVersionConflict = errutil.Conflict("alerting.notifications.conflict")
 
-	ErrTimeIntervalNotFound                     = errutil.NotFound("alerting.notifications.time-intervals.notFound")
-	ErrTimeIntervalExists                       = errutil.BadRequest("alerting.notifications.time-intervals.nameExists", errutil.WithPublicMessage("Time interval with this name already exists. Use a different name or update existing one."))
-	ErrTimeIntervalInvalid                      = errutil.BadRequest("alerting.notifications.time-intervals.invalidFormat").MustTemplate("Invalid format of the submitted time interval", errutil.WithPublic("Time interval is in invalid format. Correct the payload and try again."))
-	ErrTimeIntervalInUse                        = errutil.Conflict("alerting.notifications.time-intervals.used").MustTemplate("Time interval is used")
+	ErrTimeIntervalNotFound = errutil.NotFound("alerting.notifications.time-intervals.notFound")
+	ErrTimeIntervalExists   = errutil.BadRequest("alerting.notifications.time-intervals.nameExists", errutil.WithPublicMessage("Time interval with this name already exists. Use a different name or update existing one."))
+	ErrTimeIntervalInvalid  = errutil.BadRequest("alerting.notifications.time-intervals.invalidFormat").MustTemplate("Invalid format of the submitted time interval", errutil.WithPublic("Time interval is in invalid format. Correct the payload and try again."))
+	ErrTimeIntervalInUse    = errutil.Conflict("alerting.notifications.time-intervals.used").MustTemplate(
+		"Time interval '{{ .Private.Name }}' is used by {{ if .Public.UsedByRules }}alert rules {{ .Private.UsedByRules }}{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}",
+		errutil.WithPublic("Time interval is used by {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}"),
+	)
 	ErrTimeIntervalDependentResourcesProvenance = errutil.Conflict("alerting.notifications.time-intervals.usedProvisioned").MustTemplate(
 		"Time interval cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}",
 		errutil.WithPublic(`Time interval cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}. You must update those resources first using the original provision method.`),
@@ -57,23 +63,39 @@ func MakeErrTimeIntervalInvalid(err error) error {
 	return ErrTimeIntervalInvalid.Build(data)
 }
 
-func MakeErrTimeIntervalInUse(usedByRoutes bool, rules []models.AlertRuleKey) error {
-	uids := make([]string, 0, len(rules))
-	for _, key := range rules {
-		uids = append(uids, key.UID)
-	}
-	data := make(map[string]any, 2)
-	if len(uids) > 0 {
-		data["UsedByRules"] = uids
+// maxDisplayedRuleUIDs caps how many rule UIDs appear in the error payload
+// returned to the caller. The log message lists every rule.
+const maxDisplayedRuleUIDs = 5
+
+func MakeErrTimeIntervalInUse(name string, usedByRoutes bool, rules []models.AlertRuleKey) error {
+	private := map[string]any{"Name": name}
+	public := make(map[string]any, 2)
+	if len(rules) > 0 {
+		uids := make([]string, 0, len(rules))
+		for _, key := range rules {
+			uids = append(uids, key.UID)
+		}
+		slices.Sort(uids)
+		private["UsedByRules"] = strings.Join(uids, ", ")
+		public["UsedByRules"] = truncateRuleUIDs(uids)
 	}
 	if usedByRoutes {
-		data["UsedByRoutes"] = true
+		public["UsedByRoutes"] = true
 	}
 
 	return ErrTimeIntervalInUse.Build(errutil.TemplateData{
-		Public: data,
-		Error:  nil,
+		Private: private,
+		Public:  public,
+		Error:   nil,
 	})
+}
+
+func truncateRuleUIDs(uids []string) string {
+	if len(uids) <= maxDisplayedRuleUIDs {
+		return strings.Join(uids, ", ")
+	}
+	remaining := len(uids) - maxDisplayedRuleUIDs
+	return fmt.Sprintf("%s and %d others", strings.Join(uids[:maxDisplayedRuleUIDs], ", "), remaining)
 }
 
 // MakeErrTimeIntervalInvalid creates an error with the ErrTimeIntervalInvalid template
@@ -115,8 +137,8 @@ func MakeErrContactPointUidExists(uid, name string) error {
 	})
 }
 
-func makeErrTemplateOrigin(t definitions.NotificationTemplate, action string) error {
-	return ErrTemplateOrigin.Build(errutil.TemplateData{Public: map[string]interface{}{"Action": action, "Name": t.Name}})
+func makeErrTemplateOrigin(t v1.TemplateGroup, action string) error {
+	return ErrTemplateOrigin.Build(errutil.TemplateData{Public: map[string]interface{}{"Action": action, "Name": t.Title}})
 }
 
 func makeErrMuteTimeIntervalOrigin(mt definitions.MuteTimeInterval, action string) error {

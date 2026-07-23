@@ -2,8 +2,8 @@ import { useCallback } from 'react';
 
 import { t } from '@grafana/i18n';
 
-import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
+import { type DashboardSceneLike } from '../../scene/types/dashboard';
 import { annotationEditActions } from '../../settings/annotations/actions';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 
@@ -18,7 +18,7 @@ export const useBuildAddAnnotation = (dataLayers: DashboardDataLayerSet) =>
     });
   }, [dataLayers]);
 
-export function AddAnnotationQuery({ dashboardScene }: { dashboardScene: DashboardScene }) {
+export function AddAnnotationQuery({ dashboardScene }: { dashboardScene: DashboardSceneLike }) {
   const onAddAnnotationClick = useBuildAddAnnotation(dashboardSceneGraph.getDataLayers(dashboardScene));
 
   return (

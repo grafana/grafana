@@ -1,7 +1,6 @@
 package provisioning
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,30 +13,30 @@ import (
 
 func TestIntegrationProvisioning_Stats(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "stats-test-repo1"
 
 	testRepo := common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"testdata/all-panels.json":   "dashboard1.json",
 			"testdata/text-options.json": "folder/dashboard2.json",
 		},
-		ExpectedDashboards: 2,
-		ExpectedFolders:    2, // folder sync creates a folder for the repo + one nested folder
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireRepoDashboardCount(t, repo, 2)
+	helper.RequireRepoFolderCount(t, repo, 2)
 
 	// Create some unmanaged dashboards directly in Grafana
 	unmanagedDash1 := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v1.yaml")
-	dashboard1Obj, err := helper.DashboardsV1.Resource.Create(ctx, unmanagedDash1, metav1.CreateOptions{})
+	dashboard1Obj, err := helper.DashboardsV1.Resource.Create(t.Context(), unmanagedDash1, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create unmanaged dashboard")
 	dashboard1Name := dashboard1Obj.GetName()
 
 	// Verify that the unmanaged dashboard is indeed unmanaged
-	dashboard1, err := helper.DashboardsV1.Resource.Get(ctx, dashboard1Name, metav1.GetOptions{})
+	dashboard1, err := helper.DashboardsV1.Resource.Get(t.Context(), dashboard1Name, metav1.GetOptions{})
 	require.NoError(t, err)
 	manager1, found1 := dashboard1.GetAnnotations()[utils.AnnoKeyManagerIdentity]
 	require.True(t, !found1 || manager1 == "", "dashboard1 should be unmanaged")
@@ -46,7 +45,7 @@ func TestIntegrationProvisioning_Stats(t *testing.T) {
 	result := helper.AdminREST.Get().
 		Namespace("default").
 		Resource("stats").
-		Do(ctx)
+		Do(t.Context())
 	require.NoError(t, result.Error(), "should be able to get global stats")
 
 	statsObj, err := result.Get()

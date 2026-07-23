@@ -2508,7 +2508,7 @@ func createV2DashboardWithRowsExpanded() *dashv2alpha1.Dashboard {
 
 func createV0V1FlatPanels(numPanels, queriesPerPanel int) map[string]interface{} {
 	panels := make([]interface{}, numPanels)
-	for i := 0; i < numPanels; i++ {
+	for i := range numPanels {
 		targets := make([]interface{}, queriesPerPanel)
 		for q := 0; q < queriesPerPanel; q++ {
 			targets[q] = map[string]interface{}{"refId": fmt.Sprintf("%c", 'A'+q)}

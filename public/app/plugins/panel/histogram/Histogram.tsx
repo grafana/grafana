@@ -1,20 +1,26 @@
 import * as React from 'react';
-import uPlot, { AlignedData } from 'uplot';
+import uPlot, { type AlignedData } from 'uplot';
 
 import {
-  DataFrame,
+  type DataFrame,
   FieldType,
   formattedValueToString,
   getFieldColorModeForField,
   getFieldSeriesColor,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   roundDecimals,
   histogramBucketSizes,
   histogramFrameBucketMaxFieldName,
 } from '@grafana/data';
-import { VizLegendOptions, ScaleDistribution, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import {
-  Themeable2,
+  type VizLegendOptions,
+  ScaleDistribution,
+  AxisPlacement,
+  ScaleDirection,
+  ScaleOrientation,
+} from '@grafana/schema';
+import {
+  type Themeable2,
   UPlotConfigBuilder,
   UPlotChart,
   VizLayout,
@@ -24,7 +30,7 @@ import {
 } from '@grafana/ui';
 import { getStackingGroups, preparePlotData2 } from '@grafana/ui/internal';
 
-import { defaultFieldConfig, FieldConfig, Options } from './panelcfg.gen';
+import { defaultFieldConfig, type FieldConfig, type Options } from './panelcfg.gen';
 
 function incrRoundDn(num: number, incr: number) {
   return Math.floor(num / incr) * incr;
@@ -54,7 +60,7 @@ export function getBucketSize(frame: DataFrame) {
     : roundDecimals(frame.fields[1].values[0] - frame.fields[0].values[0], 9);
 }
 
-export function getBucketSize1(frame: DataFrame) {
+function getBucketSize1(frame: DataFrame) {
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
   return frame.fields[0].type === FieldType.string
     ? 1
@@ -71,14 +77,17 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   let builder = new UPlotConfigBuilder();
 
   let isOrdinalX = frame.fields[0].type === FieldType.string;
+  let isOneValue = frame.fields[0].values.length === 1;
 
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
   let bucketSize = getBucketSize(frame);
-  let bucketSize1 = getBucketSize1(frame);
-
-  let bucketFactor = bucketSize1 / bucketSize;
-
-  let useLogScale = bucketSize1 !== bucketSize; // (imperfect floats)
+  let bucketFactor: number; // only used for log scale
+  let useLogScale = false;
+  if (!isOneValue) {
+    let bucketSize1 = getBucketSize1(frame);
+    bucketFactor = bucketSize1 / bucketSize;
+    useLogScale = bucketSize1 !== bucketSize; // (imperfect floats)
+  }
 
   // splits shifter, to ensure splits always start at first bucket
   let xSplits: uPlot.Axis.Splits = (u, axisIdx, scaleMin, scaleMax, foundIncr, foundSpace) => {
@@ -121,6 +130,8 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
           }
           if (xScaleMax != null) {
             wantedMax = xScaleMax;
+          } else if (isOneValue) {
+            wantedMax = bucketSize; // if theres only one bucket, the max is the size of that bucket
           }
 
           let fullRangeMax = u.data[0][u.data[0].length - 1];
@@ -215,7 +226,25 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   let stackingGroups = getStackingGroups(xMinOnlyFrame(frame));
   builder.setStackingGroups(stackingGroups);
 
-  let pathBuilder = uPlot.paths.bars!({ align: 1, size: [1, Infinity] });
+  // Uniform bucket width only applies to linear numeric histograms.
+  let pathBuilder = uPlot.paths.bars!(
+    isOrdinalX || useLogScale
+      ? { align: 1, size: [1, Infinity] }
+      : {
+          align: 1,
+          disp: {
+            x0: {
+              unit: 1,
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+              values: (u) => u.data[0] as number[],
+            },
+            size: {
+              unit: 1,
+              values: () => [bucketSize],
+            },
+          },
+        }
+  );
 
   let seriesIndex = 0;
 

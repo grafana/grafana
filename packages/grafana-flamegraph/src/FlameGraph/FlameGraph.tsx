@@ -19,18 +19,26 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Button, ButtonGroup, Icon, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { ColorSchemeButton } from '../ColorSchemeButton';
 import { alignOptions } from '../FlameGraphHeader';
 import { PIXELS_PER_LEVEL } from '../constants';
-import { ClickedItemData, ColorScheme, ColorSchemeDiff, PaneView, SelectedView, ViewMode, TextAlign } from '../types';
+import {
+  type ClickedItemData,
+  type ColorScheme,
+  type ColorSchemeDiff,
+  type PaneView,
+  type SelectedView,
+  type ViewMode,
+  type TextAlign,
+} from '../types';
 
 import FlameGraphCanvas from './FlameGraphCanvas';
-import { GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
+import { type GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
 import FlameGraphMetadata from './FlameGraphMetadata';
-import { CollapsedMap, FlameGraphDataContainer, LevelItem } from './dataTransform';
+import { type CollapsedMap, type FlameGraphDataContainer, type LevelItem } from './dataTransform';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -281,7 +289,7 @@ const getStylesLegacy = () => ({
   sandwichCanvasWrapper: css({
     label: 'sandwichCanvasWrapper',
     display: 'flex',
-    marginBottom: `${PIXELS_PER_LEVEL / window.devicePixelRatio}px`,
+    marginBottom: `${PIXELS_PER_LEVEL}px`,
   }),
   sandwichMarker: css({
     label: 'sandwichMarker',
@@ -326,7 +334,7 @@ const getStylesNew = (theme: GrafanaTheme2) => ({
   sandwichCanvasWrapper: css({
     label: 'sandwichCanvasWrapper',
     display: 'flex',
-    marginBottom: `${PIXELS_PER_LEVEL / window.devicePixelRatio}px`,
+    marginBottom: `${PIXELS_PER_LEVEL}px`,
   }),
   sandwichMarker: css({
     label: 'sandwichMarker',

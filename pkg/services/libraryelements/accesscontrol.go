@@ -61,36 +61,46 @@ func LibraryPanelUIDScopeResolver(l *LibraryElementService, folderSvc folder.Ser
 			}
 		}
 
-		libElDTO, err := l.getLibraryElementByUid(ctx, user, model.GetLibraryElementCommand{
-			UID:        uid,
-			FolderName: dashboards.RootFolderName,
-		}, tree)
-		if err != nil {
-			return nil, err
+		// The caller (e.g. the list endpoint) may already know this panel's folder.
+		// If so, use it and skip the per-panel database lookup; otherwise fetch it.
+		folderUID, ok := panelFolderFromContext(ctx, uid)
+		if !ok {
+			libElDTO, err := l.getLibraryElementByUid(ctx, user, model.GetLibraryElementCommand{
+				UID:        uid,
+				FolderName: dashboards.RootFolderName,
+			}, tree)
+			if err != nil {
+				return nil, err
+			}
+			folderUID = libElDTO.FolderUID
+		} else if folderUID == "" {
+			// The list endpoint represents the general folder as "", but the scope
+			// machinery (and getLibraryElementByUid) uses the General folder UID.
+			folderUID = ac.GeneralFolderUID
 		}
 
 		var inheritedScopes []string
 		if tree != nil {
-			inheritedScopes = getInheritedScopesFromTree(libElDTO.FolderUID, tree)
+			inheritedScopes = getInheritedScopesFromTree(folderUID, tree)
 		} else {
-			inheritedScopes, err = dashboards.GetInheritedScopes(ctx, orgID, libElDTO.FolderUID, folderSvc)
+			inheritedScopes, err = folder.GetInheritedScopes(ctx, orgID, folderUID, folderSvc)
 			if err != nil {
 				return nil, err
 			}
 		}
-		return append(inheritedScopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(libElDTO.FolderUID), ScopeLibraryPanelsProvider.GetResourceScopeUID(uid)), nil
+		return append(inheritedScopes, folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID), ScopeLibraryPanelsProvider.GetResourceScopeUID(uid)), nil
 	})
 }
 
 // getInheritedScopesFromTree returns ancestor scopes using a pre-built folder tree.
 func getInheritedScopesFromTree(folderUID string, tree *folder.FolderTree) []string {
-	if folderUID == ac.GeneralFolderUID || folderUID == "" {
+	if folder.IsRootFolderUID(folderUID) {
 		return nil
 	}
 
 	result := make([]string, 0)
 	for ancestor := range tree.Ancestors(folderUID) {
-		result = append(result, dashboards.ScopeFoldersProvider.GetResourceScopeUID(ancestor.UID))
+		result = append(result, folder.ScopeFoldersProvider.GetResourceScopeUID(ancestor.UID))
 	}
 	return result
 }

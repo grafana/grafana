@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -14,17 +13,17 @@ import (
 
 func TestIntegrationProvisioning_HistoricJobsAuthorization(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "historicjobs-auth-test"
 	testRepo := common.TestRepo{
-		Name:               repo,
-		Target:             "folder",
-		Copies:             map[string]string{}, // No files needed for this test
-		ExpectedDashboards: 0,
-		ExpectedFolders:    1, // Repository creates a folder
+		Name:       repo,
+		SyncTarget: "folder",
+		Copies:     map[string]string{}, // No files needed for this test
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireRepoDashboardCount(t, repo, 0)
+	helper.RequireRepoFolderCount(t, repo, 1)
 
 	// Trigger a job to create a historic job entry
 	jobSpec := provisioning.JobSpec{
@@ -42,7 +41,7 @@ func TestIntegrationProvisioning_HistoricJobsAuthorization(t *testing.T) {
 		SubResource("jobs").
 		Body(body).
 		SetHeader("Content-Type", "application/json").
-		Do(ctx).StatusCode(&statusCode)
+		Do(t.Context()).StatusCode(&statusCode)
 	require.NoError(t, result.Error(), "should be able to create job")
 	require.Equal(t, http.StatusAccepted, statusCode)
 
@@ -59,7 +58,7 @@ func TestIntegrationProvisioning_HistoricJobsAuthorization(t *testing.T) {
 			Namespace("default").
 			Resource("historicjobs").
 			Name(historicJobName).
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.NoError(t, result.Error(), "admin should be able to GET historic job")
 		require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
@@ -71,7 +70,7 @@ func TestIntegrationProvisioning_HistoricJobsAuthorization(t *testing.T) {
 			Namespace("default").
 			Resource("historicjobs").
 			Name(historicJobName).
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "editor should not be able to GET historic job")
 		require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
@@ -84,7 +83,7 @@ func TestIntegrationProvisioning_HistoricJobsAuthorization(t *testing.T) {
 			Namespace("default").
 			Resource("historicjobs").
 			Name(historicJobName).
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "viewer should not be able to GET historic job")
 		require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")

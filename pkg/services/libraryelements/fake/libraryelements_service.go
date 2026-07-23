@@ -95,18 +95,6 @@ func (l *LibraryElementService) GetElement(c context.Context, signedInUser ident
 	return libraryElement, nil
 }
 
-func (l *LibraryElementService) GetElementsForDashboard(c context.Context, dashboardID int64) (map[string]model.LibraryElementDTO, error) {
-	return map[string]model.LibraryElementDTO{}, nil
-}
-
-func (l *LibraryElementService) ConnectElementsToDashboard(c context.Context, signedInUser identity.Requester, elementUIDs []string, dashboardID int64) error {
-	return nil
-}
-
-func (l *LibraryElementService) DisconnectElementsFromDashboard(c context.Context, dashboardID int64) error {
-	return nil
-}
-
 func (l *LibraryElementService) DeleteLibraryElementsInFolder(c context.Context, signedInUser identity.Requester, folderUID string) error {
 	return nil
 }

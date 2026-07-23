@@ -1,27 +1,61 @@
 import { useEffect } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen, userEvent } from 'test/test-utils';
 
 import { Stepper } from './Stepper';
 import { StepperStateProvider, useStepperState } from './StepperState';
-import { StepKey } from './types';
+import { type ImportMethod, StepKey } from './types';
 
-const renderWithProvider = (ui: React.ReactElement, initialStep?: StepKey) => {
-  return render(<StepperStateProvider initialStep={initialStep}>{ui}</StepperStateProvider>);
+/**
+ * Seeds the new first "Import method" step as completed so the existing stepper
+ * mechanics tests (which exercise the later steps) can navigate past it.
+ */
+function MethodStepSeeder() {
+  const { setStepCompleted, setVisitedStep } = useStepperState();
+  useEffect(() => {
+    setVisitedStep(StepKey.Method);
+    setStepCompleted(StepKey.Method, true);
+  }, [setStepCompleted, setVisitedStep]);
+  return null;
+}
+
+function FormWrapper({ children, method = 'stage' }: { children: React.ReactNode; method?: ImportMethod }) {
+  const formAPI = useForm<{ importMethod: ImportMethod }>({ defaultValues: { importMethod: method } });
+  return <FormProvider {...formAPI}>{children}</FormProvider>;
+}
+
+const renderWithProvider = (ui: React.ReactElement, initialStep?: StepKey, method?: ImportMethod) => {
+  return render(
+    <FormWrapper method={method}>
+      <StepperStateProvider initialStep={initialStep}>
+        <MethodStepSeeder />
+        {ui}
+      </StepperStateProvider>
+    </FormWrapper>
+  );
 };
 
 describe('Stepper', () => {
   const user = userEvent.setup();
 
-  it('should render all steps with correct numbers and names', () => {
+  it('should render the full import rail with the new method step first', () => {
     renderWithProvider(<Stepper />);
 
-    expect(screen.getByText('1')).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument();
-    expect(screen.getByText('3')).toBeInTheDocument();
-
+    expect(screen.getByText(/import method/i)).toBeInTheDocument();
     expect(screen.getByText(/notification resources/i)).toBeInTheDocument();
     expect(screen.getByText(/alert rules/i)).toBeInTheDocument();
     expect(screen.getByText(/review & import/i)).toBeInTheDocument();
+  });
+
+  it('collapses to a two-step rail for the autosync method', () => {
+    renderWithProvider(<Stepper />, StepKey.Method, 'autosync');
+
+    expect(screen.getByText(/import method/i)).toBeInTheDocument();
+    expect(screen.getByText(/review & enable/i)).toBeInTheDocument();
+    // The import-only steps are not rendered at all for autosync.
+    expect(screen.queryByText(/notification resources/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/alert rules/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/review & import/i)).not.toBeInTheDocument();
   });
 
   it('should highlight the active step', () => {

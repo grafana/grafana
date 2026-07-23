@@ -178,15 +178,15 @@ To remove the filter, click the blue filter icon and then click **Clear filter**
 <!-- vale Grafana.WordList = NO -->
 <!-- vale Grafana.Spelling = NO -->
 
-### Apply ad hoc filters from the table
+### Apply filters from the table
 
-In tables, you can apply ad hoc filters directly from the visualization with one click.
+In tables, you can apply filters directly from the visualization with one click.
 
 To display the filter icons, hover your cursor over the cell that has the value for which you want to filter:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-adhoc-filter-v12.2.png" max-width="500px" alt="Table with ad hoc filter icon displayed on a cell" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-adhoc-filter-v12.2.png" max-width="500px" alt="Table with filter icon displayed on a cell" >}}
 
-For more information about applying ad hoc filters this way, refer to [Dashboard drilldown with ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#dashboard-drilldown-with-ad-hoc-filters).
+For more information about applying filters this way, refer to [Dashboard drilldown with filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/#dashboard-drilldown-with-filters).
 
 <!-- vale Grafana.Spelling = YES -->
 <!-- vale Grafana.WordList = YES -->
@@ -206,6 +206,25 @@ If the data queried contains multiple datasets, a table displays a drop-down lis
 This option is only available when you're editing the panel.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-multi-dataset-v11.3.png" max-width="650px" alt="Table visualization with multiple datasets" >}}
+
+## Nested tables
+
+A table can display sub-tables inside expandable rows. You can add these nested tables using the [Group to nested tables transformation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#group-to-nested-tables), which groups rows by one or more fields, and can summarize nested row data by applying calculations.
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-nested-table-collapsed-v13.1.png" max-width="650px" alt="Table with all rows collapsed" >}}
+
+Click the expand icon on a row to toggle the visibility of its nested table:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-nested-table-expanded-v13.1.png" max-width="650px" alt="Table with two rows expanded showing nested sub-tables" >}}
+
+To sort nested and top-level rows in nested tables, click a column title to change the sort order from default to descending to ascending.
+Each time you click, the sort order changes to the next option in the cycle.
+You can sort multiple columns by holding the `Cmd` or `Ctrl` key and clicking the column name.
+
+{{< figure src="/static/img/docs/tables/sort-descending.png" max-width="350px" alt="Sort descending" class="docs-image--no-shadow" >}}
+
+To control the display of fields inside a nested table&mdash;for example, to apply thresholds, units, or a different cell type&mdash;use [field overrides](#field-overrides) with the **Target fields** option set to **Nested**.
+For more information, refer to [Apply overrides to nested table fields](#apply-overrides-to-nested-table-fields).
 
 ## Configuration options
 
@@ -322,7 +341,7 @@ The colored background cell type has the following options:
 | Option | Description |
 | ------ | ----------- |
 | Background display mode | Choose between **Basic** and **Gradient**. |
-| Apply to entire row | Toggle the switch on to apply the background color that's configured for the cell to the whole row. |
+| Apply to entire row | Toggle the switch on to apply the background color that's configured for the cell to the whole row. When more than one field has this option enabled (for example, when it's set through the panel-level cell type or through overrides that target multiple fields), the row uses the color from the first (leftmost) matching column. |
 | Cell value inspect | <p>Enables value inspection from table cells. When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.</p><p>Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.</p> |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to the [Tooltip from field](#tooltip-from-field). |
 | Styling from field | Toggle on the **Styling from field** switch to apply the styling from another field (or column). The referenced field must contain CSS properties formatted in JSON object syntax (for example, `{"name":"John"}`). For more information, refer to the [Styling from field](#styling-from-field). |
@@ -384,6 +403,8 @@ Labels displayed alongside of the gauges can be set to be colored by value, matc
 This cell type shows values rendered as a sparkline.
 To show sparklines on data with multiple time series, use the [Time series to table transformation](ref:time-series-to-table-transformation) to process it into a format the table can show.
 
+You can color sparklines using thresholds by setting the field's color scheme to **From thresholds (by value)** in the [standard color scheme options](ref:color-scheme), using an override, and setting **Gradient mode** to **Scheme**. When thresholds are defined, the sparkline automatically reflects threshold levels along the line.
+
 ![Table using sparkline cell type](/media/docs/grafana/panels-visualizations/screenshot-table-as-sparkline-v11.3.png)
 
 The sparkline cell type options are described in the following table.
@@ -397,7 +418,7 @@ For more detailed information about all of the sparkline styling options (except
 | Line interpolation  | How the graph interpolates the series line. Choose from:<ul><li>**Linear** - Points are joined by straight lines.</li><li>**Smooth** - Points are joined by curved lines that smooths transitions between points.</li><li>**Step before** - The line is displayed as steps between points. Points are rendered at the end of the step.</li><li>**Step after** - The line is displayed as steps between points. Points are rendered at the beginning of the step.</li></ul> |
 | Line width          | The thickness of the series lines or the outline for bars using the **Line width** slider. |
 | Fill opacity        | The series area fill color using the **Fill opacity** slider. |
-| Gradient mode       | Gradient mode controls the gradient fill, which is based on the series color. Gradient appearance is influenced by the **Fill opacity** setting. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme](ref:color-scheme). Choose from:<ul><li>**None** - No gradient fill. This is the default setting.</li><li>**Opacity** - An opacity gradient where the opacity of the fill increases as y-axis values increase.</li><li>**Hue** - A subtle gradient that's based on the hue of the series color.</li></ul>                                                                                                    |
+| Gradient mode       | Gradient mode controls the gradient fill, which is based on the series color. Gradient appearance is influenced by the **Fill opacity** setting. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme](ref:color-scheme). Choose from:<ul><li>**None** - No gradient fill. This is the default setting.</li><li>**Opacity** - An opacity gradient where the opacity of the fill increases as y-axis values increase.</li><li>**Hue** - A subtle gradient that's based on the hue of the series color.</li><li>**Scheme** - The sparkline line color automatically reflects the configured threshold levels when the color scheme is set to **From thresholds (by value)** and thresholds are defined.</li></ul> |
 | Line style          | Choose from:<ul><li>**Solid**</li><li>**Dash** - Select the length and gap for the line dashes. Default dash spacing is 10, 10.</li><li>**Dots** - Select the gap for the dot spacing. Default dot spacing is 0, 10.</li></ul> |
 | Connect null values | How null values, which are gaps in the data, appear on the graph. Null values can be connected to form a continuous line or set to a threshold above which gaps in the data are no longer connected. Choose from:<ul><li>**Never** - Time series data points with gaps in the data are never connected.</li><li>**Always** - Time series data points with gaps in the data are always connected.</li><li>**Threshold** - Specify a threshold above which gaps in the data are no longer connected. This can be useful when the connected gaps in the data are of a known size or within a known range, and gaps outside this range should no longer be connected.</li></ul> |
 | Show points         | Whether to show data points to lines or bars. Choose from: <ul><li>**Auto** - Grafana determines a point's visibility based on the density of the data. If the density is low, then points appear.</li><li>**Always** - Show the points regardless of how dense the dataset is.</li><li>**Never** - Don't show points.</li></ul> |
@@ -473,8 +494,7 @@ It has the following options:
 
 #### Actions
 
-The cell displays a button that triggers a basic, unauthenticated API call when clicked.
-Configure the API call with the following options:
+Actions add a button to a cell that triggers a basic, unauthenticated API call when clicked. Configure actions from **Data links and actions** or with field overrides.
 
 <!-- prettier-ignore-start -->
 | Option             | Description  |
@@ -586,3 +606,14 @@ The following image shows the "Info" field with the styling from the "Style" fie
 ### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+#### Apply overrides to nested table fields
+
+By default, field overrides apply only to columns in the parent table.
+To target columns inside a nested table, set the **Target fields** option on the override to **Nested**:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-override-nested-scope-v13.x.png" max-width="350px" alt="Field override configuration with the Target fields selector showing Series and Nested options" >}}
+
+All standard override properties&mdash;including thresholds, value mappings, units, data links, and cell type&mdash;apply the same way to nested fields.
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-nested-table-w-overrides-v13.1.png" max-width="650px" alt="Nested table with a threshold override applied to a column inside an expanded sub-table" >}}

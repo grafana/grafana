@@ -7,13 +7,21 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { ConstantVariable, sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
-import { SaveDashboardResponseDTO } from 'app/types/dashboard';
+import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
-import { DashboardSceneState } from '../scene/DashboardScene';
+import { type DashboardSceneState } from '../scene/types/dashboard';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 
-import { SaveDashboardDrawer } from './SaveDashboardDrawer';
+import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
+import {
+  registerSaveAsTemplateForm,
+  type SaveAsTemplateFormProps,
+} from './enterprise-components/SaveAsTemplateFormExtension';
+import {
+  registerSaveDashboardTemplateForm,
+  type SaveDashboardTemplateFormProps,
+} from './enterprise-components/SaveDashboardTemplateFormExtension';
 
 jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => ({
   validationSrv: {
@@ -26,6 +34,18 @@ const saveDashboardMutationMock = jest.fn();
 jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => ({
   ...jest.requireActual('app/features/browse-dashboards/api/browseDashboardsAPI'),
   useSaveDashboardMutation: () => [saveDashboardMutationMock],
+}));
+
+jest.mock('app/features/dashboard/api/dashboard_api', () => ({
+  ...jest.requireActual('app/features/dashboard/api/dashboard_api'),
+  getDashboardAPI: jest.fn().mockResolvedValue({
+    getDashboardDTO: jest.fn().mockResolvedValue({
+      apiVersion: 'dashboard.grafana.app/v2beta1',
+      kind: 'Dashboard',
+      metadata: {},
+      spec: {},
+    }),
+  }),
 }));
 
 const ui = {
@@ -245,6 +265,7 @@ describe('SaveDashboardDrawer', () => {
       dashboard.setState({ title: 'updated title' });
       openAndRender();
 
+      expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.queryByRole('tab', { name: /Changes/ })).not.toBeInTheDocument();
     });
 
@@ -256,6 +277,7 @@ describe('SaveDashboardDrawer', () => {
       dashboard.setState({ title: 'updated title' });
       openAndRender();
 
+      expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.queryByRole('tab', { name: /Changes/ })).not.toBeInTheDocument();
     });
 
@@ -269,6 +291,7 @@ describe('SaveDashboardDrawer', () => {
       dashboard.setState({ title: 'updated title' });
       openAndRender();
 
+      expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.queryByRole('tab', { name: /Changes/ })).not.toBeInTheDocument();
     });
   });
@@ -276,7 +299,7 @@ describe('SaveDashboardDrawer', () => {
   describe('Save as copy', () => {
     it('Should show save as form', async () => {
       const { openAndRender } = setup();
-      openAndRender(true);
+      openAndRender({ saveAsCopy: true });
 
       expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
 
@@ -286,6 +309,51 @@ describe('SaveDashboardDrawer', () => {
 
       const dataSent = saveDashboardMutationMock.mock.calls[0][0];
       expect(dataSent.dashboard.uid).toEqual('');
+    });
+  });
+
+  describe('Template save flows', () => {
+    afterEach(() => {
+      registerSaveAsTemplateForm(null as unknown as Parameters<typeof registerSaveAsTemplateForm>[0]);
+      registerSaveDashboardTemplateForm(null as unknown as Parameters<typeof registerSaveDashboardTemplateForm>[0]);
+    });
+
+    it('renders the registered SaveAsTemplateForm when saveAsDashboardTemplate is true', async () => {
+      const StubForm = (_: SaveAsTemplateFormProps) => (
+        <div data-testid="stub-save-as-template-form">SaveAsTemplateForm stub</div>
+      );
+      registerSaveAsTemplateForm(StubForm);
+
+      const { openAndRender } = setup();
+      openAndRender({ saveAsDashboardTemplate: true });
+
+      expect(await screen.findByTestId('stub-save-as-template-form')).toBeInTheDocument();
+      expect(await screen.findByText('Save as template')).toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: /Details/i })).toBeInTheDocument();
+    });
+
+    it('renders the registered SaveDashboardTemplateForm when saveDashboardTemplate is true', async () => {
+      const StubForm = (_: SaveDashboardTemplateFormProps) => (
+        <div data-testid="stub-update-template-form">SaveDashboardTemplateForm stub</div>
+      );
+      registerSaveDashboardTemplateForm(StubForm);
+
+      const { openAndRender } = setup();
+      openAndRender({ saveDashboardTemplate: true });
+
+      expect(await screen.findByTestId('stub-update-template-form')).toBeInTheDocument();
+      expect(await screen.findByText('Save template')).toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: /Details/i })).toBeInTheDocument();
+    });
+
+    it('falls back to the standard save form when saveAsDashboardTemplate is true but no form is registered', async () => {
+      const { openAndRender } = setup();
+      openAndRender({ saveAsDashboardTemplate: true });
+
+      // No crash, drawer still mounts with the save-as-template title even without the extension form
+      expect(await screen.findByText('Save as template')).toBeInTheDocument();
+      // The standard save form should be rendered as the fallback
+      expect(screen.queryByTestId('stub-save-as-template-form')).not.toBeInTheDocument();
     });
   });
 });
@@ -353,8 +421,10 @@ function setup(overrides?: Partial<DashboardSceneState>) {
 
   dashboard.onEnterEditMode();
 
-  const openAndRender = (saveAsCopy?: boolean) => {
-    dashboard.openSaveDrawer({ saveAsCopy });
+  const openAndRender = (
+    opts: { saveAsCopy?: boolean; saveAsDashboardTemplate?: boolean; saveDashboardTemplate?: boolean } = {}
+  ) => {
+    dashboard.openSaveDrawer(opts);
     const drawer = dashboard.state.overlay as SaveDashboardDrawer;
     render(
       <TestProvider>

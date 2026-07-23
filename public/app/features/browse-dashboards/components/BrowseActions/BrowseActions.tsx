@@ -4,13 +4,13 @@ import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack, Text } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
-import { ManagerKind } from 'app/features/apiserver/types';
 import { BulkDeleteProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkDeleteProvisionedResource';
 import { BulkMoveProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource';
 import { useSelectionProvisioningStatus } from 'app/features/provisioning/hooks/useSelectionProvisioningStatus';
+import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { ShowModalReactEvent } from 'app/types/events';
-import { FolderDTO } from 'app/types/folders';
+import { type FolderDTO } from 'app/types/folders';
 import { useDispatch } from 'app/types/store';
 
 import {
@@ -20,7 +20,7 @@ import {
 import { useDeleteDashboardsMutation, useMoveDashboardsMutation } from '../../api/browseDashboardsAPI';
 import { useActionSelectionState } from '../../state/hooks';
 import { setAllSelection } from '../../state/slice';
-import { DashboardTreeSelection } from '../../types';
+import { type DashboardTreeSelection } from '../../types';
 
 import { DeleteModal } from './DeleteModal';
 import { MoveModal } from './MoveModal';
@@ -45,7 +45,7 @@ export function BrowseActions({ folderDTO }: Props) {
 
   const { hasProvisioned, hasNonProvisioned } = useSelectionProvisioningStatus(
     selectedItems,
-    folderDTO?.managedBy === ManagerKind.Repo
+    isItemManagedByRepository(folderDTO)
   );
 
   const isSearching = stateManager.hasSearchFilters();
@@ -211,6 +211,5 @@ function trackAction(action: keyof typeof actionMap, selectedItems: Omit<Dashboa
       dashboard: selectedDashboards.length,
     },
     source: 'tree_actions',
-    restore_enabled: Boolean(config.featureToggles.restoreDashboards),
   });
 }

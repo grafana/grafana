@@ -289,6 +289,7 @@ func (s *testBulkProcessServer) RecvMsg(any) error {
 const errPanicBulkProcess = "panic from ProcessBulk"
 
 type panicBulkBackend struct {
+	UnimplementedStorageBackend
 	sendDone chan bool
 }
 
@@ -334,8 +335,10 @@ func (b *panicBulkBackend) ListModifiedSince(context.Context, NamespacedResource
 	return 0, nil
 }
 
-func (b *panicBulkBackend) WatchWriteEvents(context.Context) (<-chan *WrittenEvent, error) {
-	return nil, nil
+func (b *panicBulkBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
+	ch := make(chan *WrittenEvent)
+	context.AfterFunc(ctx, func() { close(ch) })
+	return ch, nil
 }
 
 func (b *panicBulkBackend) GetResourceStats(context.Context, NamespacedResource, int) ([]ResourceStats, error) {

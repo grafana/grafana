@@ -1,5 +1,5 @@
-import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
-import { UseFormSetValue, useForm } from 'react-hook-form';
+import { type ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { type UseFormSetValue, useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -8,9 +8,9 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { getProvisionedMeta } from 'app/features/provisioning/components/utils/getProvisionedMeta';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 
-import { DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
+import { type DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
 import { useSaveDashboard } from './useSaveDashboard';
 
 interface SaveDashboardAsFormDTO {
@@ -128,7 +128,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
     const formValuesMatchContentSent =
       formValues.title.trim() === contentSent.title && formValues.folder.uid === contentSent.folderUid;
     if (isNameExistsError(error) && formValuesMatchContentSent) {
-      return <NameAlreadyExistsError cancelButton={cancelButton} saveButton={saveButton} />;
+      return <NameAlreadyExistsError />;
     }
     return (
       <>
@@ -217,42 +217,30 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   );
 }
 
-export interface TitleLabelProps {
+interface TitleLabelProps {
   onChange: UseFormSetValue<SaveDashboardAsFormDTO>;
 }
 
-export function TitleFieldLabel(props: TitleLabelProps) {
+function TitleFieldLabel(props: TitleLabelProps) {
   return (
     <Stack justifyContent="space-between">
       <Label htmlFor="description">
         <Trans i18nKey="dashboard-scene.title-field-label.title">Title</Trans>
       </Label>
-      {/* {config.featureToggles.dashgpt && isNew && (
-                <GenAIDashDescriptionButton
-                  onGenerate={(description) => field.onChange(description)}
-                  dashboard={dashboard}
-                />
-              )} */}
     </Stack>
   );
 }
 
-export interface DescriptionLabelProps {
+interface DescriptionLabelProps {
   onChange: UseFormSetValue<SaveDashboardAsFormDTO>;
 }
 
-export function DescriptionLabel(props: DescriptionLabelProps) {
+function DescriptionLabel(props: DescriptionLabelProps) {
   return (
     <Stack justifyContent="space-between">
       <Label htmlFor="description">
         <Trans i18nKey="dashboard-scene.description-label.description">Description</Trans>
       </Label>
-      {/* {config.featureToggles.dashgpt && isNew && (
-                <GenAIDashDescriptionButton
-                  onGenerate={(description) => field.onChange(description)}
-                  dashboard={dashboard}
-                />
-              )} */}
     </Stack>
   );
 }

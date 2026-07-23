@@ -1,23 +1,16 @@
-import { css } from '@emotion/css';
-
-import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { SceneComponentProps } from '@grafana/scenes';
-import { Alert, ClipboardButton, Divider, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { type SceneComponentProps } from '@grafana/scenes';
+import { Alert, ClipboardButton, Divider, Stack, Text, TextLink } from '@grafana/ui';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 import ShareInternallyConfiguration from '../ShareInternallyConfiguration';
-import { ShareLinkTab, ShareLinkTabState } from '../ShareLinkTab';
+import { ShareLinkTab } from '../ShareLinkTab';
 
 import { SharePanelPreview } from './SharePanelPreview';
 
 export class SharePanelInternally extends ShareLinkTab {
   static Component = SharePanelInternallyRenderer;
-
-  constructor(state: Partial<ShareLinkTabState>) {
-    super(state);
-  }
 
   public getTabLabel() {
     return t('share-panel.drawer.share-link-title', 'Link settings');
@@ -25,23 +18,22 @@ export class SharePanelInternally extends ShareLinkTab {
 }
 
 function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelInternally>) {
-  const styles = useStyles2(getStyles);
-
-  const { useLockedTime, useShortUrl, selectedTheme, isBuildUrlLoading, imageUrl, panelRef } = model.useState();
+  const { useLockedTime, useShortUrl, selectedTheme, isBuildUrlLoading, imageUrl, absoluteImageUrl, panelRef } =
+    model.useState();
 
   const panelTitle = panelRef?.resolve().state.title;
   const dashboard = getDashboardSceneFor(model);
   const isDashboardSaved = Boolean(dashboard.state.uid);
 
   return (
-    <div>
+    <Stack gap={2} direction="column">
       <Text variant="body">
         <Trans i18nKey="link.share-panel.config-description">
           Create a personalized, direct link to share your panel within your organization, with the following
           customization settings:
         </Trans>
       </Text>
-      <div className={styles.configurationContainer}>
+      <Stack gap={2} direction="column" alignItems="flex-start">
         <ShareInternallyConfiguration
           useLockedTime={useLockedTime}
           onToggleLockedTime={model.onToggleLockedTime}
@@ -61,8 +53,8 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
         >
           <Trans i18nKey="link.share.copy-link-button">Copy link</Trans>
         </ClipboardButton>
-      </div>
-      <Divider spacing={2} />
+      </Stack>
+      <Divider spacing={0} />
       <Stack gap={2} direction="column">
         {!isDashboardSaved && (
           <Alert severity="info" title={t('share-modal.link.save-alert', 'Dashboard is not saved')} bottomSpacing={0}>
@@ -90,16 +82,11 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
           title={panelTitle || ''}
           buildUrl={model.buildUrl}
           imageUrl={imageUrl}
+          absoluteImageUrl={absoluteImageUrl}
           disabled={!isDashboardSaved}
           theme={selectedTheme}
         />
       </Stack>
-    </div>
+    </Stack>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  configurationContainer: css({
-    marginTop: theme.spacing(2),
-  }),
-});

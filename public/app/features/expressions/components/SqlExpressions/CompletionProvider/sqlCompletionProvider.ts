@@ -1,12 +1,19 @@
-import { SelectableValue } from '@grafana/data';
-import { ColumnDefinition, LanguageCompletionProvider, TableDefinition, TableIdentifier } from '@grafana/plugin-ui';
-import { config } from '@grafana/runtime';
+import { type SelectableValue } from '@grafana/data';
+import {
+  type ColumnDefinition,
+  type LanguageCompletionProvider,
+  type TableDefinition,
+  type TableIdentifier,
+} from '@grafana/plugin-ui';
+import { quoteIdentifierIfNecessary } from '@grafana/sql';
 
 import { ALLOWED_FUNCTIONS } from '../../../utils/metaSqlExpr';
+import { SQL_EXPRESSIONS_DIALECT } from '../../../utils/sqlIdentifier';
 
 interface CompletionProviderGetterArgs {
   getFields: (t: TableIdentifier) => Promise<ColumnDefinition[]>;
   refIds: Array<SelectableValue<string>>;
+  columnAutoCompleteEnabled: boolean;
 }
 
 export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => LanguageCompletionProvider =
@@ -16,9 +23,10 @@ export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => L
     tables: {
       resolve: async () => {
         const refIdsToTableDefs = args.refIds.map((refId) => {
+          const name = refId.label || refId.value || '';
           const tableDef: TableDefinition = {
-            name: refId.label || refId.value || '',
-            completion: refId.label || refId.value || '',
+            name,
+            completion: quoteIdentifierIfNecessary(name, SQL_EXPRESSIONS_DIALECT),
           };
           return tableDef;
         });
@@ -27,7 +35,7 @@ export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => L
     },
     columns: {
       resolve: async (t?: TableIdentifier) => {
-        if (config.featureToggles.sqlExpressionsColumnAutoComplete) {
+        if (args.columnAutoCompleteEnabled) {
           try {
             return await args.getFields({ table: t?.table });
           } catch {

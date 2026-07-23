@@ -42,6 +42,10 @@ type SyncWorker struct {
 	tracer tracing.Tracer
 
 	maxSyncWorkers int
+
+	// maxFileSize caps the size in bytes of files read from the repository
+	// during sync. <=0 disables the check.
+	maxFileSize int64
 }
 
 func NewSyncWorker(
@@ -52,6 +56,7 @@ func NewSyncWorker(
 	metrics jobs.JobMetrics,
 	tracer tracing.Tracer,
 	maxSyncWorkers int,
+	maxFileSize int64,
 ) *SyncWorker {
 	return &SyncWorker{
 		clients:             clients,
@@ -61,6 +66,7 @@ func NewSyncWorker(
 		metrics:             metrics,
 		tracer:              tracer,
 		maxSyncWorkers:      maxSyncWorkers,
+		maxFileSize:         maxFileSize,
 	}
 }
 
@@ -99,6 +105,11 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	if !ok {
 		err := fmt.Errorf("sync job submitted for repository that does not support read-write")
 		return tracing.Error(span, err)
+	}
+	if r.maxFileSize > 0 {
+		if m, ok := rw.(repository.SizeLimitedReader); ok {
+			m.WithMaxFileSize(r.maxFileSize)
+		}
 	}
 
 	syncStatus := job.Status.ToSyncStatus(job.Name)

@@ -1184,6 +1184,9 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 	if queryOptions.TimeShift != nil {
 		panel["timeShift"] = *queryOptions.TimeShift
 	}
+	if queryOptions.TimeCompare != nil {
+		panel["timeCompare"] = *queryOptions.TimeCompare
+	}
 
 	// Convert transparent
 	if spec.Transparent != nil {
@@ -1668,6 +1671,9 @@ func convertAdhocVariableToV1(variable *dashv2alpha1.DashboardAdhocVariableKind)
 	}
 	// Always include allowCustomValue for adhoc variables, including false values
 	varMap["allowCustomValue"] = spec.AllowCustomValue
+	if spec.EnableGroupBy != nil {
+		varMap["enableGroupBy"] = *spec.EnableGroupBy
+	}
 
 	// Resolve datasource - Adhoc variables don't have a query kind, so use empty string (will fall back to default)
 	datasource := getDataSourceForQuery(spec.Datasource, "")
@@ -1937,6 +1943,8 @@ func transformVariableHideFromEnum(hide dashv2alpha1.DashboardVariableHide) inte
 		return 1
 	case dashv2alpha1.DashboardVariableHideHideVariable:
 		return 2
+	case dashv2alpha1.DashboardVariableHideInControlsMenu:
+		return 3
 	default:
 		return 0
 	}

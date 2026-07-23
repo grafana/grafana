@@ -1,7 +1,6 @@
 package foldermetadata
 
 import (
-	"context"
 	"strings"
 	"testing"
 
@@ -15,14 +14,13 @@ import (
 func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 	t.Run("invalid folder metadata created on existing folder keeps unstable uid and preserves children", func(t *testing.T) {
 		helper := sharedHelper(t)
-		ctx := context.Background()
+
 		const repo = "full-sync-invalid-meta-existing"
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:                   repo,
-			Target:                 "folder",
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
+			SkipSync:   true,
 		})
 		writeToProvisioningPath(t, helper, "myfolder/dashboard.json", common.DashboardJSON("existing-parent-dash", "Parent Dashboard", 1))
 		writeToProvisioningPath(t, helper, "myfolder/child/child-dashboard.json", common.DashboardJSON("existing-child-dash", "Child Dashboard", 1))
@@ -31,7 +29,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 
 		parentUID := findFolderUIDBySourcePath(t, helper, repo, "myfolder")
 		childUID := findFolderUIDBySourcePath(t, helper, repo, "myfolder/child")
-		common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "existing-child-dash", "Child Dashboard")
+		common.RequireDashboardTitle(t, helper.DashboardsV1, "existing-child-dash", "Child Dashboard")
 		requireDashboardParents(t, helper, repo, map[string]string{
 			"myfolder/dashboard.json":             parentUID,
 			"myfolder/child/child-dashboard.json": childUID,
@@ -49,7 +47,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 
 		require.Equal(t, parentUID, findFolderUIDBySourcePath(t, helper, repo, "myfolder"))
 		require.Equal(t, childUID, findFolderUIDBySourcePath(t, helper, repo, "myfolder/child"))
-		common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "existing-child-dash", "Child Dashboard Updated")
+		common.RequireDashboardTitle(t, helper.DashboardsV1, "existing-child-dash", "Child Dashboard Updated")
 		requireDashboardParents(t, helper, repo, map[string]string{
 			"myfolder/dashboard.json":             parentUID,
 			"myfolder/child/child-dashboard.json": childUID,
@@ -58,14 +56,13 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 
 	t.Run("invalid folder metadata on new folder falls back to unstable uid and reconciles children", func(t *testing.T) {
 		helper := sharedHelper(t)
-		ctx := context.Background()
+
 		const repo = "full-sync-invalid-meta-new"
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:                   repo,
-			Target:                 "folder",
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
+			SkipSync:   true,
 		})
 		writeToProvisioningPath(t, helper, "myfolder/_folder.json", invalidFolderMetadataMissingNameJSON("Broken Folder"))
 		writeToProvisioningPath(t, helper, "myfolder/dashboard.json", common.DashboardJSON("new-parent-dash", "Parent Dashboard", 1))
@@ -82,8 +79,8 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 		childUID := findFolderUIDBySourcePath(t, helper, repo, "myfolder/child")
 		require.NotEmpty(t, parentUID)
 		require.NotEmpty(t, childUID)
-		common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "new-parent-dash", "Parent Dashboard")
-		common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "new-child-dash", "Child Dashboard")
+		common.RequireDashboardTitle(t, helper.DashboardsV1, "new-parent-dash", "Parent Dashboard")
+		common.RequireDashboardTitle(t, helper.DashboardsV1, "new-child-dash", "Child Dashboard")
 		requireDashboardParents(t, helper, repo, map[string]string{
 			"myfolder/dashboard.json":             parentUID,
 			"myfolder/child/child-dashboard.json": childUID,
@@ -94,11 +91,10 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 		helper := sharedHelper(t)
 		const repo = "fs-inv-move-existing"
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:                   repo,
-			Target:                 "folder",
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
+			SkipSync:   true,
 		})
 		writeToProvisioningPath(t, helper, "dashboard.json", common.DashboardJSON("move-into-existing-invalid", "Move Into Existing Invalid", 1))
 		writeToProvisioningPath(t, helper, "broken/existing.json", common.DashboardJSON("existing-invalid-target", "Existing Invalid Target", 1))
@@ -138,11 +134,10 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 		helper := sharedHelper(t)
 		const repo = "fs-inv-move-new"
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:                   repo,
-			Target:                 "folder",
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
+			SkipSync:   true,
 		})
 		writeToProvisioningPath(t, helper, "dashboard.json", common.DashboardJSON("move-into-new-invalid", "Move Into New Invalid", 1))
 
@@ -169,11 +164,10 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 		helper := sharedHelper(t)
 		const repo = "fs-inv-folder-move"
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:                   repo,
-			Target:                 "folder",
-			SkipSync:               true,
-			SkipResourceAssertions: true,
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
+			SkipSync:   true,
 		})
 		writeToProvisioningPath(t, helper, "broken/_folder.json", invalidFolderMetadataMissingNameJSON("Broken Folder"))
 		writeToProvisioningPath(t, helper, "broken/dashboard.json", common.DashboardJSON("move-invalid-folder", "Move Invalid Folder", 1))
@@ -210,7 +204,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 
 func invalidFolderMetadataMissingNameJSON(title string) []byte {
 	return []byte(`{
-		"apiVersion": "folder.grafana.app/v1beta1",
+		"apiVersion": "folder.grafana.app/v1",
 		"kind": "Folder",
 		"metadata": {
 			"name": ""

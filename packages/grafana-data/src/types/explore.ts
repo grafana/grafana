@@ -1,8 +1,8 @@
-import { DataQuery, LogsSortOrder } from '@grafana/schema';
+import { type DataQuery, type LogsSortOrder } from '@grafana/schema';
 
-import { PreferredVisualisationType } from './data';
-import { SelectableValue } from './select';
-import { TimeRange } from './time';
+import { type PreferredVisualisationType } from './data';
+import { type SelectableValue } from './select';
+import { type TimeRange } from './time';
 
 type AnyQuery = DataQuery & Record<string, any>;
 

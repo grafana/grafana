@@ -1,9 +1,9 @@
 import { store } from '@grafana/data';
-import { VizPanel } from '@grafana/scenes';
+import { type VizPanel } from '@grafana/scenes';
 import { createAndCopyShareDashboardLink } from 'app/core/utils/shortLinks';
 import { getTrackingSource } from 'app/features/dashboard/components/ShareModal/utils';
 
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
 
 export type ShareLinkConfiguration = {
@@ -26,11 +26,15 @@ export const buildShareUrl = async (dashboard: DashboardScene, panel?: VizPanel)
     shortenURL: useShortUrl,
     shareResource: getTrackingSource(panel?.getRef()),
   });
-  return await createAndCopyShareDashboardLink(dashboard, {
-    useAbsoluteTimeRange,
-    theme,
-    useShortUrl,
-  });
+  return await createAndCopyShareDashboardLink(
+    dashboard,
+    {
+      useAbsoluteTimeRange,
+      theme,
+      useShortUrl,
+    },
+    panel
+  );
 };
 
 const SHARE_LINK_CONFIGURATION = 'grafana.dashboard.link.shareConfiguration';

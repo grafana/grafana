@@ -1,43 +1,18 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, ButtonVariant, ComponentSize, ModalsController } from '@grafana/ui';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { Button, type ButtonVariant, type ComponentSize, ModalsController } from '@grafana/ui';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { SaveDashboardDrawer } from './SaveDashboardDrawer';
 
-interface SaveDashboardButtonProps {
+interface Props {
   dashboard: DashboardModel;
   onSaveSuccess?: () => void;
   size?: ComponentSize;
   onClick?: () => void;
+  variant?: ButtonVariant;
 }
-
-export const SaveDashboardButton = ({ dashboard, onSaveSuccess, size }: SaveDashboardButtonProps) => {
-  return (
-    <ModalsController>
-      {({ showModal, hideModal }) => {
-        return (
-          <Button
-            size={size}
-            onClick={() => {
-              showModal(SaveDashboardDrawer, {
-                dashboard,
-                onSaveSuccess,
-                onDismiss: hideModal,
-              });
-            }}
-            aria-label={selectors.pages.Dashboard.Settings.General.saveDashBoard}
-          >
-            <Trans i18nKey="dashboard.save-dashboard-button.save-dashboard">Save dashboard</Trans>
-          </Button>
-        );
-      }}
-    </ModalsController>
-  );
-};
-
-type Props = SaveDashboardButtonProps & { variant?: ButtonVariant };
 
 export const SaveDashboardAsButton = ({ dashboard, onClick, onSaveSuccess, variant, size }: Props) => {
   return (
@@ -57,7 +32,7 @@ export const SaveDashboardAsButton = ({ dashboard, onClick, onSaveSuccess, varia
               });
             }}
             variant={variant}
-            aria-label={selectors.pages.Dashboard.Settings.General.saveAsDashBoard}
+            data-testid={selectors.pages.Dashboard.Settings.General.saveAsDashBoard}
           >
             <Trans i18nKey="dashboard.save-dashboard-as-button.save-as">Save as</Trans>
           </Button>

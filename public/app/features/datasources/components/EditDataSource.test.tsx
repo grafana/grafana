@@ -2,8 +2,9 @@ import { screen, render } from '@testing-library/react';
 import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 
-import { DataSourceJsonData, PluginExtensionDataSourceConfigContext, PluginState } from '@grafana/data';
+import { type DataSourceJsonData, type PluginExtensionDataSourceConfigContext, PluginState } from '@grafana/data';
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
+import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 import { configureStore } from 'app/store/configureStore';
 
@@ -11,18 +12,21 @@ import { getMockDataSource, getMockDataSourceMeta, getMockDataSourceSettingsStat
 
 import { missingRightsMessage } from './DataSourceMissingRightsMessage';
 import { readOnlyMessage } from './DataSourceReadOnlyMessage';
-import { EditDataSourceView, ViewProps } from './EditDataSource';
+import { EditDataSourceView, type ViewProps } from './EditDataSource';
 
 const onOptionsChange = jest.fn();
 
-jest.mock('@grafana/runtime', () => {
+jest.mock('@grafana/runtime/unstable', () => {
   return {
-    ...jest.requireActual('@grafana/runtime'),
-    getDataSourceSrv: jest.fn(() => ({
-      getInstanceSettings: (uid: string) => ({
-        uid,
-        meta: getMockDataSourceMeta(),
-      }),
+    ...jest.requireActual('@grafana/runtime/unstable'),
+    useDataSourceInstanceSettings: jest.fn((uid?: string) => ({
+      isLoading: false,
+      settings: uid
+        ? {
+            uid,
+            meta: getMockDataSourceMeta(),
+          }
+        : undefined,
     })),
   };
 });
@@ -41,8 +45,6 @@ const setup = (props?: Partial<ViewProps>) => {
         dataSourceRights={{ readOnly: false, hasWriteRights: true, hasDeleteRights: true }}
         exploreUrl={'/explore'}
         onDelete={jest.fn()}
-        onDefaultChange={jest.fn()}
-        onNameChange={jest.fn()}
         onOptionsChange={onOptionsChange}
         onTest={jest.fn()}
         onUpdate={jest.fn()}
@@ -123,6 +125,17 @@ describe('<EditDataSource>', () => {
       setup({
         dataSource: getMockDataSource({ name: 'My Datasource' }),
         dataSourceSettings: getMockDataSourceSettingsState({ loading: true }),
+      });
+
+      expect(screen.queryByText('Loading ...')).toBeVisible();
+      expect(screen.queryByText('My Datasource')).not.toBeInTheDocument();
+    });
+
+    it('should render a loading indicator while the data source instance settings are being fetched', () => {
+      jest.mocked(useDataSourceInstanceSettings).mockReturnValueOnce({ isLoading: true });
+
+      setup({
+        dataSource: getMockDataSource({ name: 'My Datasource' }),
       });
 
       expect(screen.queryByText('Loading ...')).toBeVisible();

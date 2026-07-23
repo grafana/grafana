@@ -376,6 +376,372 @@ func TestAddAppLinks(t *testing.T) {
 	})
 }
 
+func TestAssistantStubNav(t *testing.T) {
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+	onboardingPlugin := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:          assistantOnboardingAppID,
+			Name:        "Grafana Assistant Onboarding",
+			Type:        plugins.TypeApp,
+			AutoEnabled: true,
+		},
+	}
+	assistantPlugin := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:          assistantAppID,
+			Name:        "Grafana Assistant",
+			Type:        plugins.TypeApp,
+			AutoEnabled: true,
+		},
+	}
+	appAccess := ac.Permission{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"}
+	installAccess := ac.Permission{Action: pluginaccesscontrol.ActionInstall, Scope: "*"}
+
+	tests := []struct {
+		name        string
+		plugins     []pluginstore.Plugin
+		permissions []ac.Permission
+		wantStub    bool
+	}{
+		{
+			name:        "adds stub when onboarding plugin is enabled and Assistant is absent",
+			plugins:     []pluginstore.Plugin{onboardingPlugin},
+			permissions: []ac.Permission{appAccess, installAccess},
+			wantStub:    true,
+		},
+		{
+			name:        "suppresses stub when Assistant is enabled",
+			plugins:     []pluginstore.Plugin{onboardingPlugin, assistantPlugin},
+			permissions: []ac.Permission{appAccess, installAccess},
+		},
+		{
+			name:        "suppresses stub when onboarding plugin is absent",
+			permissions: []ac.Permission{appAccess, installAccess},
+		},
+		{
+			name:        "adds stub when user cannot install plugins",
+			plugins:     []pluginstore.Plugin{onboardingPlugin},
+			permissions: []ac.Permission{appAccess},
+			wantStub:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := ServiceImpl{
+				log:            log.New("navtree"),
+				cfg:            setting.NewCfg(),
+				accessControl:  accesscontrolmock.New().WithPermissions(tt.permissions),
+				pluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{}},
+				features:       featuremgmt.WithFeatures(),
+				pluginStore:    &pluginstore.FakePluginStore{PluginList: tt.plugins},
+			}
+
+			treeRoot := navtree.NavTreeRoot{}
+			err := service.addAppLinks(&treeRoot, reqCtx)
+			require.NoError(t, err)
+
+			node := treeRoot.FindById("plugin-page-" + assistantAppID)
+			if !tt.wantStub {
+				require.Nil(t, node)
+				return
+			}
+
+			require.NotNil(t, node)
+			require.Equal(t, "Assistant", node.Text)
+			require.Equal(t, "/a/"+assistantAppID, node.Url)
+			require.Equal(t, "ai-sparkle", node.Icon)
+			require.Equal(t, assistantAppID, node.PluginID)
+			require.Equal(t, int64(navtree.WeightAssistant), node.SortWeight)
+		})
+	}
+}
+
+func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+	permissions := []ac.Permission{
+		{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"},
+	}
+
+	assertsApp := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:   "grafana-asserts-app",
+			Name: "Knowledge graph",
+			Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{
+					Name:       "Knowledge graph",
+					Path:       "/a/grafana-asserts-app/",
+					Type:       "page",
+					AddToNav:   true,
+					DefaultNav: true,
+				},
+				{
+					Name:     "Entity graph",
+					Path:     "/a/grafana-asserts-app/entities",
+					Type:     "page",
+					AddToNav: true,
+				},
+				{
+					Name:     "Application",
+					Path:     "/a/grafana-asserts-app/services",
+					Type:     "page",
+					AddToNav: true,
+				},
+			},
+		},
+	}
+
+	frontendApp := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:   "grafana-kowalski-app",
+			Name: "Frontend",
+			Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{
+					Name:       "Frontend",
+					Path:       "/a/grafana-kowalski-app/",
+					Type:       "page",
+					AddToNav:   true,
+					DefaultNav: true,
+				},
+				{
+					Name:     "Overview",
+					Path:     "/a/grafana-kowalski-app/overview",
+					Type:     "page",
+					AddToNav: true,
+				},
+			},
+		},
+	}
+
+	applicationApp := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:   "grafana-app-observability-app",
+			Name: "Application",
+			Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{
+					Name:       "Application",
+					Path:       "/a/grafana-app-observability-app/",
+					Type:       "page",
+					AddToNav:   true,
+					DefaultNav: true,
+				},
+				{
+					Name:     "Services",
+					Path:     "/a/grafana-app-observability-app/services",
+					Type:     "page",
+					AddToNav: true,
+				},
+			},
+		},
+	}
+
+	// Enabled and accessible, but none of its includes are added to the nav, so
+	// processAppPlugin returns no node. This still lands in
+	// enabledAccessibleAppPluginMap yet never adds an "Application" entry, so the
+	// asserts page must stay visible (exercises the tree lookup over the map).
+	applicationAppNoNav := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:   "grafana-app-observability-app",
+			Name: "Application",
+			Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{
+					Name:     "Application",
+					Path:     "/a/grafana-app-observability-app/",
+					Type:     "page",
+					AddToNav: false,
+				},
+			},
+		},
+	}
+
+	newService := func(pluginList []pluginstore.Plugin) ServiceImpl {
+		settings := map[string]*pluginsettings.DTO{}
+		for _, p := range pluginList {
+			settings[p.ID] = &pluginsettings.DTO{ID: 0, OrgID: 1, PluginID: p.ID, PluginVersion: "1.0.0", Enabled: true}
+		}
+		service := ServiceImpl{
+			log:            log.New("navtree"),
+			cfg:            setting.NewCfg(),
+			accessControl:  accesscontrolmock.New().WithPermissions(permissions),
+			pluginSettings: &pluginsettings.FakePluginSettings{Plugins: settings},
+			features:       featuremgmt.WithFeatures(),
+			pluginStore:    &pluginstore.FakePluginStore{PluginList: pluginList},
+		}
+		// Use the production nav defaults instead of a hand-rolled map so the test
+		// exercises the real section/weight config (asserts=2, Frontend=3, Application=4).
+		service.readNavigationSettings()
+		return service
+	}
+
+	t.Run("without the App Observability plugin, the asserts Application page sits between Frontend and App Observability", func(t *testing.T) {
+		service := newService([]pluginstore.Plugin{assertsApp, frontendApp})
+
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		treeRoot.Sort()
+
+		monitoringNode := treeRoot.FindById(navtree.NavIDObservability)
+		require.NotNil(t, monitoringNode)
+		require.Len(t, monitoringNode.Children, 3)
+
+		// Asserts "Entity graph" stays hoisted to the top, then Frontend, then the
+		// asserts "Application" page (weight 4).
+		require.Equal(t, "Entity graph", monitoringNode.Children[0].Text)
+		require.Equal(t, "Frontend", monitoringNode.Children[1].Text)
+		require.Equal(t, "Application", monitoringNode.Children[2].Text)
+		require.Equal(t, "standalone-plugin-page-application", monitoringNode.Children[2].Id)
+	})
+
+	t.Run("when the App Observability plugin is present, it replaces the asserts Application page", func(t *testing.T) {
+		service := newService([]pluginstore.Plugin{assertsApp, frontendApp, applicationApp})
+
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		treeRoot.Sort()
+
+		monitoringNode := treeRoot.FindById(navtree.NavIDObservability)
+		require.NotNil(t, monitoringNode)
+
+		var hasAppObservability bool
+		for _, child := range monitoringNode.Children {
+			// The appo11y "Application" page is shown instead of the asserts "Application" page.
+			if child.Text == "Application" && child.Url == "/a/grafana-app-observability-app/" {
+				hasAppObservability = true
+			}
+			// The asserts "Application" page must not be shown when appo11y is present.
+			require.NotEqual(t, "/a/grafana-asserts-app/services", child.Url)
+		}
+
+		require.True(t, hasAppObservability, "expected the appo11y Application page to be present")
+	})
+
+	t.Run("when the App Observability plugin is present but contributes no nav node, the asserts Application page stays visible", func(t *testing.T) {
+		service := newService([]pluginstore.Plugin{assertsApp, frontendApp, applicationAppNoNav})
+
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		treeRoot.Sort()
+
+		monitoringNode := treeRoot.FindById(navtree.NavIDObservability)
+		require.NotNil(t, monitoringNode)
+
+		var hasAssertsApplication bool
+		for _, child := range monitoringNode.Children {
+			if child.Url == "/a/grafana-asserts-app/services" {
+				hasAssertsApplication = true
+			}
+		}
+		require.True(t, hasAssertsApplication, "expected the asserts Application page to stay visible when appo11y contributes no nav node")
+	})
+}
+
+func TestBuildDataConnectionsNavLink(t *testing.T) {
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+
+	t.Run("core items (add-new-connection, datasources) are added when user has ConfigurationPageAccess", func(t *testing.T) {
+		service := ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions([]ac.Permission{{Action: datasources.ActionCreate, Scope: "*"}}),
+			features:      featuremgmt.WithFeatures(),
+		}
+
+		section := service.buildDataConnectionsNavLink(reqCtx)
+		require.NotNil(t, section)
+		require.Len(t, section.Children, 2)
+		require.Equal(t, "connections-add-new-connection", section.Children[0].Id)
+		require.Equal(t, "connections-datasources", section.Children[1].Id)
+	})
+
+	t.Run("section is returned with no core children when user lacks ConfigurationPageAccess", func(t *testing.T) {
+		service := ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions([]ac.Permission{}),
+			features:      featuremgmt.WithFeatures(),
+		}
+
+		section := service.buildDataConnectionsNavLink(reqCtx)
+		require.NotNil(t, section, "section must always be returned so plugins can attach children")
+		require.Empty(t, section.Children)
+	})
+
+	t.Run("plugin pages under the connections section are visible to users without ConfigurationPageAccess", func(t *testing.T) {
+		pluginApp := pluginstore.Plugin{
+			JSONData: plugins.JSONData{
+				ID:   "grafana-collector-app",
+				Name: "Collector",
+				Type: plugins.TypeApp,
+				Includes: []*plugins.Includes{
+					{
+						Name:     "Collector",
+						Path:     "/a/grafana-collector-app",
+						Type:     "page",
+						AddToNav: false,
+					},
+				},
+			},
+		}
+		pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+			pluginApp.ID: {ID: 0, OrgID: 1, PluginID: pluginApp.ID, PluginVersion: "1.0.0", Enabled: true},
+		}}
+		service := ServiceImpl{
+			cfg: setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions([]ac.Permission{
+				{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"},
+			}),
+			pluginSettings: &pluginSettings,
+			features:       featuremgmt.WithFeatures(),
+			pluginStore: &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{pluginApp},
+			},
+		}
+		service.navigationAppPathConfig = map[string]NavigationAppConfig{
+			"/a/grafana-collector-app": {SectionID: "connections"},
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+		treeRoot.AddSection(service.buildDataConnectionsNavLink(reqCtx))
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		connectionsNode := treeRoot.FindById("connections")
+		require.NotNil(t, connectionsNode)
+		require.Len(t, connectionsNode.Children, 1)
+		require.Equal(t, "standalone-plugin-page-/a/grafana-collector-app", connectionsNode.Children[0].Id)
+	})
+
+	t.Run("RemoveEmptyConnectionsSection removes the section when it has no children", func(t *testing.T) {
+		service := ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions([]ac.Permission{}),
+			features:      featuremgmt.WithFeatures(),
+			pluginStore:   &pluginstore.FakePluginStore{},
+			pluginSettings: &pluginsettings.FakePluginSettings{
+				Plugins: map[string]*pluginsettings.DTO{},
+			},
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+		treeRoot.AddSection(service.buildDataConnectionsNavLink(reqCtx))
+		require.NotNil(t, treeRoot.FindById("connections"), "section should exist before app links are applied")
+
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		treeRoot.RemoveEmptyConnectionsSection()
+		require.Nil(t, treeRoot.FindById("connections"), "empty section should be pruned")
+	})
+}
+
 func TestReadingNavigationSettings(t *testing.T) {
 	t.Run("Should include defaults", func(t *testing.T) {
 		service := ServiceImpl{
@@ -406,7 +772,7 @@ func TestReadingNavigationSettings(t *testing.T) {
 		require.Equal(t, "dashboards", service.navigationAppConfig["grafana-k8s-app"].SectionID)
 		require.Equal(t, "admin", service.navigationAppConfig["other-app"].SectionID)
 
-		require.Equal(t, int64(5), service.navigationAppConfig["grafana-k8s-app"].SortWeight)
+		require.Equal(t, int64(6), service.navigationAppConfig["grafana-k8s-app"].SortWeight)
 		require.Equal(t, int64(12), service.navigationAppConfig["other-app"].SortWeight)
 
 		require.Equal(t, "admin", service.navigationAppPathConfig["/a/grafana-k8s-app/foo"].SectionID)
@@ -531,5 +897,160 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		require.Equal(t, "/a/test-app1/home", appsNode.Children[0].Url)
 		require.Len(t, appsNode.Children[0].Children, 1)
 		require.Equal(t, "/a/test-app1/announcements", appsNode.Children[0].Children[0].Url)
+	})
+}
+
+func TestProcessAssistantAppPlugin(t *testing.T) {
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	reqCtx := &contextmodel.ReqContext{
+		SignedInUser: &user.SignedInUser{OrgRole: identity.RoleAdmin},
+		Context:      &web.Context{Req: httpReq},
+	}
+	assistantApp := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:   assistantAppID,
+			Name: "Assistant",
+			Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{Name: "Home", Path: "/a/grafana-assistant-app", Type: "page", AddToNav: true, DefaultNav: true},
+				{Name: "Workspace", Path: "/a/grafana-assistant-app/workspace", Type: "page", AddToNav: true},
+				{Name: "Settings", Path: "/a/grafana-assistant-app/settings", Type: "page", AddToNav: true},
+				{Name: "Irrelevant", Path: "/a/grafana-assistant-app/irrelevant", Type: "page", AddToNav: true},
+			},
+		},
+	}
+
+	for _, tt := range []struct {
+		name           string
+		cfg            *setting.Cfg
+		trialMode      bool
+		wantChildPaths []string
+	}{
+		{
+			name: "OSS only includes supported entries",
+			cfg:  setting.NewCfg(),
+			wantChildPaths: []string{
+				"/a/grafana-assistant-app/workspace",
+				"/a/grafana-assistant-app/settings",
+			},
+		},
+		{
+			name: "Enterprise includes all entries",
+			cfg:  &setting.Cfg{IsEnterprise: true},
+			wantChildPaths: []string{
+				"/a/grafana-assistant-app/workspace",
+				"/a/grafana-assistant-app/settings",
+				"/a/grafana-assistant-app/irrelevant",
+			},
+		},
+		{
+			name: "Cloud includes all entries",
+			cfg:  &setting.Cfg{StackID: "1"},
+			wantChildPaths: []string{
+				"/a/grafana-assistant-app/workspace",
+				"/a/grafana-assistant-app/settings",
+				"/a/grafana-assistant-app/irrelevant",
+			},
+		},
+		{
+			name:      "Trial mode only includes the homepage",
+			cfg:       setting.NewCfg(),
+			trialMode: true,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			service := ServiceImpl{
+				cfg: tt.cfg,
+				pluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+					assistantAppID: {OrgID: 1, PluginID: assistantAppID, JSONData: map[string]any{"trialMode": tt.trialMode}},
+				}},
+			}
+			treeRoot := navtree.NavTreeRoot{}
+			service.processAppPlugin(assistantApp, reqCtx, &treeRoot)
+			appLink := treeRoot.FindById("plugin-page-" + assistantAppID)
+
+			require.NotNil(t, appLink)
+			require.Equal(t, "/a/grafana-assistant-app", appLink.Url)
+			require.Len(t, appLink.Children, len(tt.wantChildPaths))
+			for i, wantPath := range tt.wantChildPaths {
+				require.Equal(t, wantPath, appLink.Children[i].Url)
+			}
+		})
+	}
+}
+
+func TestNestMaintenanceWindowsUnderSLO(t *testing.T) {
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+	permissions := []ac.Permission{
+		{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"},
+	}
+
+	sloApp := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID: "grafana-slo-app", Name: "SLO", Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{Name: "Home", Path: "/a/grafana-slo-app/home", Type: "page", AddToNav: true, DefaultNav: true},
+				{Name: "Manage SLOs", Path: "/a/grafana-slo-app/manage-slos", Type: "page", AddToNav: true},
+			},
+		},
+	}
+	mwApp := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID: "grafana-maintenancewindows-app", Name: "Maintenance Windows", Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{Name: "Maintenance windows", Path: "/a/grafana-maintenancewindows-app/maintenance-windows", Type: "page", AddToNav: true, DefaultNav: true},
+			},
+		},
+	}
+
+	newService := func(plugins ...pluginstore.Plugin) ServiceImpl {
+		ps := map[string]*pluginsettings.DTO{}
+		list := make([]pluginstore.Plugin, 0, len(plugins))
+		for _, p := range plugins {
+			ps[p.ID] = &pluginsettings.DTO{OrgID: 1, PluginID: p.ID, PluginVersion: "1.0.0", Enabled: true}
+			list = append(list, p)
+		}
+		return ServiceImpl{
+			log:            log.New("navtree"),
+			cfg:            setting.NewCfg(),
+			accessControl:  accesscontrolmock.New().WithPermissions(permissions),
+			pluginSettings: &pluginsettings.FakePluginSettings{Plugins: ps},
+			features:       featuremgmt.WithFeatures(),
+			pluginStore:    &pluginstore.FakePluginStore{PluginList: list},
+			navigationAppConfig: map[string]NavigationAppConfig{
+				"grafana-slo-app": {SectionID: navtree.NavIDRoot},
+			},
+		}
+	}
+
+	t.Run("Should nest Maintenance Windows under SLO when both are enabled", func(t *testing.T) {
+		service := newService(sloApp, mwApp)
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		require.Nil(t, treeRoot.FindById("plugin-page-grafana-maintenancewindows-app"))
+
+		sloNode := treeRoot.FindById("plugin-page-grafana-slo-app")
+		require.NotNil(t, sloNode)
+		mwChild := navtree.FindByURL(sloNode.Children, "/a/grafana-maintenancewindows-app/maintenance-windows")
+		require.NotNil(t, mwChild)
+		require.Equal(t, "Maintenance Windows", mwChild.Text)
+		require.Equal(t, "grafana-maintenancewindows-app", mwChild.PluginID)
+		require.Equal(t, "standalone-plugin-page-grafana-maintenancewindows-app", mwChild.Id)
+		require.True(t, mwChild.IsNew)
+
+		require.Nil(t, treeRoot.FindById(navtree.NavIDApps))
+	})
+
+	t.Run("Should keep Maintenance Windows as its own app when SLO is not enabled", func(t *testing.T) {
+		service := newService(mwApp)
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		require.Nil(t, treeRoot.FindById("plugin-page-grafana-slo-app"))
+		require.NotNil(t, treeRoot.FindById("plugin-page-grafana-maintenancewindows-app"))
 	})
 }

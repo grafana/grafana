@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
 import { useCallback } from 'react';
-import Calendar, { CalendarType } from 'react-calendar';
+import Calendar, { type CalendarType } from 'react-calendar';
 
-import { GrafanaTheme2, dateTimeParse, DateTime, TimeZone } from '@grafana/data';
+import { type GrafanaTheme2, dateTimeParse, type DateTime, type TimeZone } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { Icon } from '../../Icon/Icon';
-import { getWeekStart, WeekStart } from '../WeekStartPicker';
+import { getWeekStart, type WeekStart } from '../WeekStartPicker';
 import { adjustDateForReactCalendar } from '../utils/adjustDateForReactCalendar';
 
-import { TimePickerCalendarProps } from './TimePickerCalendar';
+import { type TimePickerCalendarProps } from './TimePickerCalendar';
 
 const weekStartMap: Record<WeekStart, CalendarType> = {
   saturday: 'islamic',
@@ -195,9 +195,9 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
 
       [`${hasActiveSelector}, .react-calendar__tile--active, .react-calendar__tile--rangeEnd, .react-calendar__tile--rangeStart`]:
         {
-          color: theme.colors.primary.contrastText,
+          color: theme.colors.accent.contrastText,
           fontWeight: theme.typography.fontWeightMedium,
-          background: theme.colors.primary.main,
+          background: theme.colors.accent.main,
           border: '0px',
         },
     }),
