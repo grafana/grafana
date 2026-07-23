@@ -4,9 +4,9 @@ import { useDebounce } from 'react-use';
 
 import {
   ContactPointSelector as GrafanaManagedContactPointSelector,
+  type RoutingTree,
   RoutingTreeSelector,
 } from '@grafana/alerting/unstable';
-import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, Stack, Tooltip } from '@grafana/ui';
 import { ContactPointAction } from 'app/features/alerting/unified/hooks/abilities/types';

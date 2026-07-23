@@ -1,9 +1,8 @@
 import { faker } from '@faker-js/faker';
 import { Factory } from 'fishery';
 
-import { API_GROUP, API_VERSION } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
-
-import { DEFAULT_NAMESPACE, generateResourceVersion, generateTitle, generateUID } from '../../../../../mocks/util';
+import { API_GROUP, API_VERSION } from '../..';
+import { DEFAULT_NAMESPACE, generateResourceVersion, generateTitle, generateUID } from '../../../../mocks/util';
 import {
   type ContactPoint,
   type ContactPointMetadataAnnotations,

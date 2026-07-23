@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { getWrapper } from 'test/test-utils';
 
-import { type CreateReceiverIntegrationTestResponse } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type CreateReceiverIntegrationTestResponse } from '@grafana/alerting/unstable';
 import {
   type GrafanaManagedContactPoint,
   type GrafanaManagedReceiverConfig,

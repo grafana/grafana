@@ -1,17 +1,11 @@
 import { faker } from '@faker-js/faker';
 import { Factory } from 'fishery';
 
-import {
-  API_GROUP,
-  API_VERSION,
-  type ListRoutingTreeApiResponse,
-  type RoutingTree,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
-
-import { type LabelMatcher } from '../../../../../matchers/types';
-import { DEFAULT_NAMESPACE, generateResourceVersion } from '../../../../../mocks/util';
-import { USER_DEFINED_TREE_NAME } from '../../../../../notificationPolicies/routingTrees';
-import { type Route } from '../../../../../notificationPolicies/types';
+import { API_GROUP, API_VERSION, type ListRoutingTreeApiResponse, type RoutingTree } from '../..';
+import { type LabelMatcher } from '../../../../matchers/types';
+import { DEFAULT_NAMESPACE, generateResourceVersion } from '../../../../mocks/util';
+import { USER_DEFINED_TREE_NAME } from '../../../../notificationPolicies/routingTrees';
+import { type Route } from '../../../../notificationPolicies/types';
 
 export const LabelMatcherFactory = Factory.define<LabelMatcher>(() => {
   const operators: Array<LabelMatcher['type']> = ['=', '!=', '=~', '!~'];

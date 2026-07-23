@@ -3,8 +3,11 @@
  */
 
 // Contact Points
-export * from './grafana/api/notifications/v0alpha1/types';
-export { useListContactPoints } from './grafana/contactPoints/hooks/v0alpha1/useContactPoints';
+// Enhanced types (ContactPoint, EnhancedListReceiverApiResponse, …) are sourced from the centralized
+// notifications types module, which pins to v1beta1's underlying generated types. See
+// notifications/types.ts for the rationale.
+export * from './grafana/api/notifications/types';
+export { useListContactPoints, useCreateContactPoint } from './grafana/contactPoints/hooks/useContactPoints';
 export { ContactPointSelector } from './grafana/contactPoints/components/ContactPointSelector/ContactPointSelector';
 export {
   getContactPointDescription,
@@ -29,7 +32,15 @@ export { AlertLabels, type AlertLabelsProps } from './grafana/rules/components/l
 export { type LabelMatcher, type Label } from './grafana/matchers/types';
 export { matchLabelsSet, matchLabels, isLabelMatch, type LabelMatchDetails } from './grafana/matchers/utils';
 
-// API endpoints
+// Notifications API — toggle-aware re-export. Use this in new code; the version-specific exports below are kept
+// for the duration of the v0alpha1 → v1beta1 migration and will be removed in the cleanup PR.
+export { notificationsAPI, API_GROUP, API_VERSION, BASE_URL } from './grafana/api/notifications';
+// Types from the generated client (Receiver, RoutingTree, TimeInterval, etc.). Sourced from v1beta1;
+// structurally identical to v0alpha1.
+export type * from './grafana/api/notifications';
 export { generatedAPI as notificationsAPIv0alpha1 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+export { generatedAPI as notificationsAPIv1beta1 } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+
+// Other alerting API endpoints
 export { generatedAPI as rulesAPIv0alpha1 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 export { generatedAPI as historianAPIv0alpha1 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';

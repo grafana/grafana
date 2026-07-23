@@ -1,12 +1,7 @@
 import { HttpResponse, http } from 'msw';
 
-import {
-  API_GROUP,
-  API_VERSION,
-  type ReplaceReceiverApiResponse,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
-
-import { getAPIBaseURLForMocks } from '../../../../../../mocks/util';
+import { API_GROUP, API_VERSION, type ReplaceReceiverApiResponse } from '../../..';
+import { getAPIBaseURLForMocks } from '../../../../../mocks/util';
 
 export function replaceReceiverHandler(
   data: ReplaceReceiverApiResponse | ((info: Parameters<Parameters<typeof http.put>[1]>[0]) => Response)

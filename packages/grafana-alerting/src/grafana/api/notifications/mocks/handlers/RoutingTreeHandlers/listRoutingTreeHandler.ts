@@ -1,12 +1,7 @@
 import { HttpResponse, http } from 'msw';
 
-import {
-  API_GROUP,
-  API_VERSION,
-  type ListRoutingTreeApiResponse,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
-
-import { getAPIBaseURLForMocks } from '../../../../../../mocks/util';
+import { API_GROUP, API_VERSION, type ListRoutingTreeApiResponse } from '../../..';
+import { getAPIBaseURLForMocks } from '../../../../../mocks/util';
 
 export function listRoutingTreeHandler(
   data: ListRoutingTreeApiResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Response)

@@ -1,10 +1,6 @@
 import { type TypedUseQueryHookResult, type fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-import {
-  type ListRoutingTreeApiArg,
-  type ListRoutingTreeApiResponse,
-  generatedAPI as notificationsAPIv0alpha1,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type ListRoutingTreeApiArg, type ListRoutingTreeApiResponse, notificationsAPI } from '../../api/notifications';
 
 type ListRoutingTreesHookResult = TypedUseQueryHookResult<
   ListRoutingTreeApiResponse,
@@ -13,17 +9,17 @@ type ListRoutingTreesHookResult = TypedUseQueryHookResult<
 >;
 
 type ListRoutingTreesQueryArgs = Parameters<
-  typeof notificationsAPIv0alpha1.endpoints.listRoutingTree.useQuery<ListRoutingTreesHookResult>
+  typeof notificationsAPI.endpoints.listRoutingTree.useQuery<ListRoutingTreesHookResult>
 >[0];
 
 type ListRoutingTreesQueryOptions = Parameters<
-  typeof notificationsAPIv0alpha1.endpoints.listRoutingTree.useQuery<ListRoutingTreesHookResult>
+  typeof notificationsAPI.endpoints.listRoutingTree.useQuery<ListRoutingTreesHookResult>
 >[1];
 
 /**
  * useListRoutingTrees is a hook that fetches a list of routing trees (notification policy trees).
  *
- * This function wraps the notificationsAPIv0alpha1.useListRoutingTreeQuery with proper typing.
+ * This function wraps the notificationsAPI.useListRoutingTreeQuery with proper typing.
  *
  * The backend returns all available routing trees.
  *
@@ -34,5 +30,5 @@ export function useListRoutingTrees(
   queryArgs: ListRoutingTreesQueryArgs = {},
   queryOptions: ListRoutingTreesQueryOptions = {}
 ): ListRoutingTreesHookResult {
-  return notificationsAPIv0alpha1.useListRoutingTreeQuery<ListRoutingTreesHookResult>(queryArgs, queryOptions);
+  return notificationsAPI.useListRoutingTreeQuery<ListRoutingTreesHookResult>(queryArgs, queryOptions);
 }

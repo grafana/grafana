@@ -1,11 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
-import {
-  API_GROUP,
-  API_VERSION,
-  type TemplateGroup,
-  type TemplateGroupTemplateKind,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { API_GROUP, API_VERSION, type TemplateGroup, type TemplateGroupTemplateKind } from '@grafana/alerting/unstable';
 import { getAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
 import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';

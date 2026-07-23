@@ -1,12 +1,7 @@
 import { HttpResponse, http } from 'msw';
 import { getWrapper, renderHook, waitFor } from 'test/test-utils';
 
-import {
-  API_GROUP,
-  API_VERSION,
-  type RoutingTree,
-  type RoutingTreeRoute,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { API_GROUP, API_VERSION, type RoutingTree, type RoutingTreeRoute } from '@grafana/alerting/unstable';
 import { MatcherOperator, ROUTES_META_SYMBOL, type Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { setupMswServer } from '../../mockApi';

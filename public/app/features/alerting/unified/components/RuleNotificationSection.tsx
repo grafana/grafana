@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useId, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { notificationsAPIv0alpha1 } from '@grafana/alerting/unstable';
+import { notificationsAPI } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2, textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -87,8 +87,8 @@ export function RuleNotificationSection() {
   const selectedContactPoint = watch(CONTACT_POINT_PATH);
   const annotations = watch('annotations');
 
-  // Fetch contact points from Alerting API v0alpha1
-  const { currentData, status, refetch } = notificationsAPIv0alpha1.endpoints.listReceiver.useQuery({});
+  // Fetch contact points from the notifications.alerting API (resolved to v0alpha1 or v1beta1 by toggle)
+  const { currentData, status, refetch } = notificationsAPI.endpoints.listReceiver.useQuery({});
   const options = useMemo<Array<ComboboxOption<string>>>(
     () =>
       (currentData?.items ?? []).map((item) => ({

@@ -1,9 +1,9 @@
 import { type ComponentProps, useMemo } from 'react';
 
-import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { t } from '@grafana/i18n';
 import { Alert, Combobox, type ComboboxOption, MultiCombobox } from '@grafana/ui';
 
+import { type RoutingTree } from '../../../api/notifications';
 import { type CustomComboBoxProps } from '../../../common/ComboBox.types';
 import { useListRoutingTrees } from '../../hooks/useRoutingTrees';
 import { isDefaultRoutingTreeName } from '../../routingTrees';

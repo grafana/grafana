@@ -1,8 +1,7 @@
 import { countBy, isEmpty } from 'lodash';
 
-import { type Receiver } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
-
-import { type ContactPoint, type ContactPointMetadataAnnotations } from '../api/notifications/v0alpha1/types';
+import { type Receiver } from '../api/notifications';
+import { type ContactPoint, type ContactPointMetadataAnnotations } from '../api/notifications/types';
 
 // Annotation key that indicates whether a contact point can be used in routes and rules
 const CAN_USE_ANNOTATION = 'grafana.com/canUse';

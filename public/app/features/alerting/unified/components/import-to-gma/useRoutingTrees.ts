@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
 
 import { isDefaultRoutingTreeName } from '@grafana/alerting';
-import { useListRoutingTreeQuery } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { notificationsAPI } from '@grafana/alerting/unstable';
 import { t } from '@grafana/i18n';
 
+const { useListRoutingTreeQuery } = notificationsAPI;
 interface RoutingTreeOption {
   /** The actual routing tree name (used as value) */
   name: string;
