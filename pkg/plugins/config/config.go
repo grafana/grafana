@@ -22,6 +22,18 @@ type PluginManagementCfg struct {
 	GrafanaAppURL string
 
 	Features Features
+
+	// ActiveExternalOverrides is the set of external plugin overrides that are currently active,
+	// either because the operator has configured alias_ids in the ini file or because the stage
+	// is OverrideStagePermanent. It is the single source of truth for the pipeline and bootstrap
+	// stages, avoiding re-derivation from PluginSettings.
+	ActiveExternalOverrides []ExternalOverride
+}
+
+// ExternalOverride carries the IDs needed at pipeline time for an active external plugin override.
+type ExternalOverride struct {
+	CorePluginID     string
+	ExternalPluginID string
 }
 
 // Features contains the feature toggles used for the plugin management system.
@@ -40,18 +52,20 @@ type PluginSettings map[string]map[string]string
 func NewPluginManagementCfg(devMode bool, pluginsPaths []string, pluginSettings PluginSettings, pluginsAllowUnsigned []string,
 	pluginsCDNURLTemplate string, appURL string, features Features,
 	grafanaComAPIURL string, disablePlugins []string, forwardHostEnvVars []string, grafanaComAPIToken string,
+	activeExternalOverrides []ExternalOverride,
 ) *PluginManagementCfg {
 	return &PluginManagementCfg{
-		PluginsPaths:          pluginsPaths,
-		DevMode:               devMode,
-		PluginSettings:        pluginSettings,
-		PluginsAllowUnsigned:  pluginsAllowUnsigned,
-		DisablePlugins:        disablePlugins,
-		PluginsCDNURLTemplate: pluginsCDNURLTemplate,
-		GrafanaComAPIURL:      grafanaComAPIURL,
-		GrafanaAppURL:         appURL,
-		Features:              features,
-		ForwardHostEnvVars:    forwardHostEnvVars,
-		GrafanaComAPIToken:    grafanaComAPIToken,
+		PluginsPaths:            pluginsPaths,
+		DevMode:                 devMode,
+		PluginSettings:          pluginSettings,
+		PluginsAllowUnsigned:    pluginsAllowUnsigned,
+		DisablePlugins:          disablePlugins,
+		PluginsCDNURLTemplate:   pluginsCDNURLTemplate,
+		GrafanaComAPIURL:        grafanaComAPIURL,
+		GrafanaAppURL:           appURL,
+		Features:                features,
+		ForwardHostEnvVars:      forwardHostEnvVars,
+		GrafanaComAPIToken:      grafanaComAPIToken,
+		ActiveExternalOverrides: activeExternalOverrides,
 	}
 }
