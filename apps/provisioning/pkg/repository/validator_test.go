@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"net"
 	"testing"
 	"time"
 
@@ -544,6 +545,111 @@ func TestValidator_Validate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidator_ValidatePrivateEndpoint(t *testing.T) {
+	tests := []struct {
+		name             string
+		repository       *provisioning.Repository
+		allowlistEntries []string
+		wantErrContains  string
+	}{
+		{
+			name: "blocks generic git loopback IP without allowlist",
+			repository: testPrivateEndpointGitRepository(
+				provisioning.GitRepositoryType,
+				"https://127.0.0.1/grafana/grafana.git",
+			),
+			wantErrContains: "repository URL host must resolve to a public or allowed address",
+		},
+		{
+			name: "blocks github DNS resolving to private IP without allowlist",
+			repository: testPrivateEndpointGitRepository(
+				provisioning.GitHubRepositoryType,
+				"https://github.internal.example.com/grafana/grafana",
+			),
+			wantErrContains: "repository URL host must resolve to a public or allowed address",
+		},
+		{
+			name: "allows generic git loopback IP when allowlisted",
+			repository: testPrivateEndpointGitRepository(
+				provisioning.GitRepositoryType,
+				"https://127.0.0.1/grafana/grafana.git",
+			),
+			allowlistEntries: []string{"127.0.0.1"},
+		},
+		{
+			name: "allows github private DNS when hostname is allowlisted",
+			repository: testPrivateEndpointGitRepository(
+				provisioning.GitHubRepositoryType,
+				"https://github.internal.example.com/grafana/grafana",
+			),
+			allowlistEntries: []string{"github.internal.example.com"},
+		},
+		{
+			name: "allows github private DNS when resolved IP is in allowlisted CIDR",
+			repository: testPrivateEndpointGitRepository(
+				provisioning.GitHubRepositoryType,
+				"https://github.internal.example.com/grafana/grafana",
+			),
+			allowlistEntries: []string{"10.0.0.0/24"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockFactory := NewMockFactory(t)
+			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
+
+			allowlist, err := NewAllowlist(tt.allowlistEntries)
+			require.NoError(t, err)
+
+			urlValidator := NewURLValidator(allowlist, func(_ context.Context, host string) ([]net.IPAddr, error) {
+				if host == "github.internal.example.com" {
+					return []net.IPAddr{{IP: net.ParseIP("10.0.0.10")}}, nil
+				}
+				return []net.IPAddr{{IP: net.ParseIP("93.184.216.34")}}, nil
+			})
+			opts := []ValidatorOption{WithURLValidator(urlValidator)}
+			validator := NewValidator(false, mockFactory, opts...)
+
+			errors := validator.Validate(context.Background(), tt.repository)
+			if tt.wantErrContains != "" {
+				require.NotEmpty(t, errors)
+				require.Contains(t, errors.ToAggregate().Error(), tt.wantErrContains)
+				return
+			}
+			require.Empty(t, errors)
+		})
+	}
+}
+
+func testPrivateEndpointGitRepository(repoType provisioning.RepositoryType, rawURL string) *provisioning.Repository {
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test",
+			Finalizers: []string{CleanFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{
+			Title: "Test Repo",
+			Type:  repoType,
+		},
+	}
+	switch repoType {
+	case provisioning.GitRepositoryType:
+		repo.Spec.Git = &provisioning.GitRepositoryConfig{
+			URL:    rawURL,
+			Branch: "main",
+		}
+	case provisioning.GitHubRepositoryType:
+		repo.Spec.GitHub = &provisioning.GitHubRepositoryConfig{
+			URL:    rawURL,
+			Branch: "main",
+		}
+	default:
+		// Do nothing
+	}
+	return repo
 }
 
 func newAdmissionValidatorTestAttributes(obj, old runtime.Object, op admission.Operation) admission.Attributes {
