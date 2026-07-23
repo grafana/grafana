@@ -157,7 +157,7 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
       ) : (repoType === 'gitlab' || repoType === 'bitbucket') && githubAuthType === 'github-app' ? (
         <>
           <OAuthAppFields connectionType={repoType} />
-          <RepositoryField isSelectedConnectionReady={isSelectedConnectionReady} />
+          {shouldShowRepositories && <RepositoryField isSelectedConnectionReady={isSelectedConnectionReady} />}
         </>
       ) : (
         <>

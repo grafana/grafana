@@ -25,8 +25,7 @@ type extra struct {
 }
 
 // Extra builds a connection.Extra shared by all OAuth app connection types.
-// Mutation (defaulting spec.URL to the provider's app management page) and
-// structural credential validation are handled here; validate optionally adds
+// Structural credential validation is handled here; validate optionally adds
 // type-specific checks.
 func Extra(
 	decrypter connection.Decrypter,
@@ -87,21 +86,7 @@ func (e *extra) Build(ctx context.Context, conn *provisioning.Connection) (conne
 	return &c, nil
 }
 
-func (e *extra) Mutate(_ context.Context, obj runtime.Object) error {
-	conn, ok := obj.(*provisioning.Connection)
-	if !ok || conn.Spec.Type != e.connType {
-		return nil
-	}
-
-	provider, _, ok := e.from(conn)
-	if !ok {
-		return nil
-	}
-
-	if conn.Spec.URL == "" {
-		conn.Spec.URL = provider.AppURL
-	}
-
+func (e *extra) Mutate(_ context.Context, _ runtime.Object) error {
 	return nil
 }
 

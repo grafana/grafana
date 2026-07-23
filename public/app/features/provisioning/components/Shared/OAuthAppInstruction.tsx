@@ -1,11 +1,12 @@
-import { Trans } from '@grafana/i18n';
-import { Text, TextLink } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { ClipboardButton, Field, Input, Text, TextLink } from '@grafana/ui';
 
 import { type OAuthConnectionType } from '../../types';
 import { getOAuthCallbackUri } from '../../utils/connectionOAuth';
 
 const docsUrls: Record<OAuthConnectionType, string> = {
   githubOAuth: 'https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app',
+  githubEnterpriseOAuth: 'https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app',
   gitlab: 'https://docs.gitlab.com/integration/oauth_provider/',
   bitbucket: 'https://support.atlassian.com/bitbucket-cloud/docs/use-oauth-on-bitbucket-cloud/',
 };
@@ -20,7 +21,7 @@ export function OAuthAppInstruction({ type }: { type: OAuthConnectionType }) {
       </Text>
 
       <Text element="p" color="secondary">
-        {type === 'githubOAuth' ? (
+        {type === 'githubOAuth' || type === 'githubEnterpriseOAuth' ? (
           <Trans i18nKey="provisioning.oauth-app.help-instructions-github">
             In GitHub, go to your developer settings and create an OAuth app with the callback URL below, then paste
             its client ID and a generated client secret here.{' '}
@@ -47,9 +48,18 @@ export function OAuthAppInstruction({ type }: { type: OAuthConnectionType }) {
         )}
       </Text>
 
-      <Text element="p" color="secondary">
-        <Trans i18nKey="provisioning.oauth-app.callback-url">Callback URL:</Trans> <code>{callbackUri}</code>
-      </Text>
+      <Field noMargin label={t('provisioning.oauth-app.callback-url', 'Callback URL')}>
+        <Input
+          id="oauth-callback-url"
+          value={callbackUri}
+          readOnly
+          addonAfter={
+            <ClipboardButton icon="copy" getText={() => callbackUri}>
+              <Trans i18nKey="provisioning.oauth-app.copy">Copy</Trans>
+            </ClipboardButton>
+          }
+        />
+      </Field>
     </div>
   );
 }

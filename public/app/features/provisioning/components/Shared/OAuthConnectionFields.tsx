@@ -1,8 +1,8 @@
 import { memo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { t } from '@grafana/i18n';
-import { Field, Input, SecretInput, Stack } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Button, Field, Input, SecretInput, Stack } from '@grafana/ui';
 
 import { type ConnectionFormData, type OAuthConnectionType } from '../../types';
 
@@ -14,10 +14,13 @@ export interface OAuthConnectionFieldsProps {
   /** Initial value for whether client secret is configured (edit mode) */
   clientSecretConfigured?: boolean;
   type: OAuthConnectionType;
+  /** When set, renders a create button that calls this handler (wizard inline creation) */
+  onNewConnectionCreation?: () => void;
+  isCreating?: boolean;
 }
 
 export const OAuthConnectionFields = memo<OAuthConnectionFieldsProps>(
-  ({ required = true, clientSecretConfigured = false, type }) => {
+  ({ required = true, clientSecretConfigured = false, type, onNewConnectionCreation, isCreating = false }) => {
     const [isClientSecretConfigured, setIsClientSecretConfigured] = useState(clientSecretConfigured);
     const {
       register,
@@ -50,7 +53,7 @@ export const OAuthConnectionFields = memo<OAuthConnectionFieldsProps>(
             placeholder={
               type === 'gitlab'
                 ? t('provisioning.connection-form.placeholder-title-gitlab', 'My GitLab App')
-                : type === 'githubOAuth'
+                : type === 'githubOAuth' || type === 'githubEnterpriseOAuth'
                   ? t('provisioning.connection-form.placeholder-title-github-oauth', 'My GitHub OAuth App')
                   : t('provisioning.connection-form.placeholder-title-bitbucket', 'My Bitbucket App')
             }
@@ -73,6 +76,29 @@ export const OAuthConnectionFields = memo<OAuthConnectionFieldsProps>(
             placeholder={t('provisioning.connection-form.placeholder-description', 'Optional description')}
           />
         </Field>
+
+        {type === 'githubEnterpriseOAuth' && (
+          <Field
+            noMargin
+            label={t('provisioning.github-enterprise.server-url-label', 'Custom server URL')}
+            description={t(
+              'provisioning.github-enterprise.server-url-description',
+              'The custom server URL where your GitHub Enterprise is hosted'
+            )}
+            invalid={!!errors.serverUrl}
+            error={errors.serverUrl?.message}
+            required={required}
+          >
+            <Input
+              id="serverUrl"
+              {...register('serverUrl', {
+                required: requiredValidation,
+              })}
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+              placeholder="https://your-enterprise-url.com or https://<enterprise-slug>.ghe.com"
+            />
+          </Field>
+        )}
 
         <Field
           noMargin
@@ -141,6 +167,18 @@ export const OAuthConnectionFields = memo<OAuthConnectionFieldsProps>(
             )}
           />
         </Field>
+
+        {onNewConnectionCreation && (
+          <Stack>
+            <Button onClick={onNewConnectionCreation} disabled={isCreating}>
+              {isCreating ? (
+                <Trans i18nKey="provisioning.connection-form.creating-connection-button">Creating connection...</Trans>
+              ) : (
+                <Trans i18nKey="provisioning.oauth-app.create-and-authorize-button">Create and authorize</Trans>
+              )}
+            </Button>
+          </Stack>
+        )}
       </Stack>
     );
   }

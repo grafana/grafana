@@ -43,6 +43,9 @@ func EnabledTypesFromRepositoryTypes(repositoryTypes []string) map[provisioning.
 	if _, ok := enabled[provisioning.GithubConnectionType]; ok {
 		enabled[provisioning.GithubOAuthConnectionType] = struct{}{}
 	}
+	if _, ok := enabled[provisioning.GithubEnterpriseConnectionType]; ok {
+		enabled[provisioning.GithubEnterpriseOAuthConnectionType] = struct{}{}
+	}
 	return enabled
 }
 

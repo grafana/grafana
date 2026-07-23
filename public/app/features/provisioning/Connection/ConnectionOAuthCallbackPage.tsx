@@ -13,6 +13,7 @@ export default function ConnectionOAuthCallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [error, setError] = useState<string>();
+  const [done, setDone] = useState(false);
   const startedRef = useRef(false);
 
   useEffect(() => {
@@ -35,7 +36,14 @@ export default function ConnectionOAuthCallbackPage() {
     }
 
     completeOAuthAuthorization(code, state)
-      .then((name) => navigate(`${CONNECTIONS_URL}/${name}/edit`))
+      .then(({ name, popup }) => {
+        if (popup) {
+          setDone(true);
+          window.close();
+          return;
+        }
+        navigate(`${CONNECTIONS_URL}/${name}/edit`);
+      })
       .catch((err) => {
         setError(
           extractErrorMessage(err) ||
@@ -58,6 +66,10 @@ export default function ConnectionOAuthCallbackPage() {
                 <Trans i18nKey="provisioning.oauth-callback.back-to-connections">Back to connections</Trans>
               </TextLink>
             </div>
+          </Alert>
+        ) : done ? (
+          <Alert severity="success" title={t('provisioning.oauth-callback.done-title', 'Authorization complete')}>
+            <Trans i18nKey="provisioning.oauth-callback.done-message">You can close this tab.</Trans>
           </Alert>
         ) : (
           <LoadingPlaceholder text={t('provisioning.oauth-callback.loading', 'Completing authorization...')} />

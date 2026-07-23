@@ -22,15 +22,9 @@ import (
 type Provider struct {
 	// RepositoryType is the repository type this connection serves (e.g. a
 	// githubOAuth connection serves github repositories).
-	RepositoryType provisioning.RepositoryType
-	TokenURL       string
-	// AppURL is the management page of the OAuth application, used as the
-	// default spec.URL.
-	AppURL           string
+	RepositoryType   provisioning.RepositoryType
+	Endpoint         oauth2.Endpoint
 	ListRepositories func(ctx context.Context, accessToken string) ([]provisioning.ExternalRepository, error)
-	// AppSettingsURL optionally resolves a deep link to the OAuth application's
-	// settings page using an access token.
-	AppSettingsURL func(ctx context.Context, accessToken, clientID string) string
 }
 
 type ConnectionSecrets struct {
@@ -136,7 +130,7 @@ func (c *Connection) GenerateConnectionToken(ctx context.Context) (common.RawSec
 	cfg := oauth2.Config{
 		ClientID:     c.clientID,
 		ClientSecret: string(c.secrets.ClientSecret),
-		Endpoint:     oauth2.Endpoint{TokenURL: c.provider.TokenURL},
+		Endpoint:     c.provider.Endpoint,
 	}
 
 	token, err := cfg.TokenSource(ctx, &oauth2.Token{RefreshToken: payload.RefreshToken}).Token()
@@ -153,7 +147,7 @@ func (c *Connection) GenerateConnectionToken(ctx context.Context) (common.RawSec
 }
 
 // ExchangeAuthorizationCode exchanges an OAuth authorization code for tokens.
-// Implements the connection.AuthCodeConnection interface.
+// Implements the connection.OAuthConnection interface.
 func (c *Connection) ExchangeAuthorizationCode(ctx context.Context, code, redirectURI string) (common.RawSecureValue, error) {
 	if code == "" {
 		return "", errors.New("an authorization code is required")
@@ -162,7 +156,7 @@ func (c *Connection) ExchangeAuthorizationCode(ctx context.Context, code, redire
 	cfg := oauth2.Config{
 		ClientID:     c.clientID,
 		ClientSecret: string(c.secrets.ClientSecret),
-		Endpoint:     oauth2.Endpoint{TokenURL: c.provider.TokenURL},
+		Endpoint:     c.provider.Endpoint,
 		RedirectURL:  redirectURI,
 	}
 
@@ -172,22 +166,6 @@ func (c *Connection) ExchangeAuthorizationCode(ctx context.Context, code, redire
 	}
 
 	return buildPayload(token).Marshal()
-}
-
-// ResolveAppURL returns the management URL for the OAuth application when the
-// provider can look it up with the given token.
-// Implements the connection.AuthCodeConnection interface.
-func (c *Connection) ResolveAppURL(ctx context.Context, token common.RawSecureValue) string {
-	if c.provider.AppSettingsURL == nil {
-		return ""
-	}
-
-	payload, err := ParseToken(token)
-	if err != nil || payload.AccessToken == "" {
-		return ""
-	}
-
-	return c.provider.AppSettingsURL(ctx, payload.AccessToken, c.clientID)
 }
 
 // TokenCreationTime returns when the underlying token has been created.
@@ -236,8 +214,4 @@ func buildPayload(token *oauth2.Token) TokenPayload {
 	return payload
 }
 
-var (
-	_ connection.Connection         = (*Connection)(nil)
-	_ connection.TokenConnection    = (*Connection)(nil)
-	_ connection.AuthCodeConnection = (*Connection)(nil)
-)
+var _ connection.OAuthConnection = (*Connection)(nil)

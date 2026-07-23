@@ -50,6 +50,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.GitHubConnectionConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitHubEnterpriseConnectionConfig"):
 		return &provisioningv0alpha1.GitHubEnterpriseConnectionConfigApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("GitHubEnterpriseOAuthConnectionConfig"):
+		return &provisioningv0alpha1.GitHubEnterpriseOAuthConnectionConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitHubEnterpriseRepositoryConfig"):
 		return &provisioningv0alpha1.GitHubEnterpriseRepositoryConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitHubOAuthConnectionConfig"):

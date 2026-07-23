@@ -9,7 +9,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -97,7 +96,7 @@ func (c *connectionAuthorizeConnector) Connect(ctx context.Context, name string,
 			return
 		}
 
-		ac, ok := built.(connection.AuthCodeConnection)
+		ac, ok := built.(connection.OAuthConnection)
 		if !ok {
 			responder.Error(&apierrors.StatusError{
 				ErrStatus: metav1.Status{
@@ -144,19 +143,6 @@ func (c *connectionAuthorizeConnector) Connect(ctx context.Context, name string,
 			logger.Error("failed to store connection token", "error", err)
 			responder.Error(apierrors.NewInternalError(err))
 			return
-		}
-
-		// Best-effort: point the connection URL at the OAuth application settings
-		// page when the provider can resolve it with the fresh token.
-		if appURL := ac.ResolveAppURL(ctx, token); appURL != "" {
-			specPatch, err := json.Marshal([]map[string]interface{}{
-				{"op": "add", "path": "/spec/url", "value": appURL},
-			})
-			if err == nil {
-				if _, err := c.access.GetClient().Connections(conn.Namespace).Patch(ctx, conn.Name, types.JSONPatchType, specPatch, metav1.PatchOptions{}); err != nil {
-					logger.Warn("failed to update connection URL", "error", err)
-				}
-			}
 		}
 
 		responder.Object(http.StatusOK, &provisioning.TestResults{

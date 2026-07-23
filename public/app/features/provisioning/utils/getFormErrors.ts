@@ -167,6 +167,8 @@ export const getConnectionFormErrors = (data: ErrorDetails[] | Status): Connecti
     'gitlab.clientID': 'clientID',
     'bitbucket.clientID': 'clientID',
     'githubOAuth.clientID': 'clientID',
+    'githubEnterpriseOAuth.clientID': 'clientID',
+    'githubEnterpriseOAuth.serverUrl': 'serverUrl',
     'secure.clientSecret': 'clientSecret',
     clientSecret: 'clientSecret',
     'bitbucket.workspace': 'workspace',

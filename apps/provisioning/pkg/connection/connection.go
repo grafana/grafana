@@ -36,17 +36,6 @@ type Connection interface {
 	Test(ctx context.Context) (*provisioning.TestResults, error)
 }
 
-// AuthCodeConnection is an optional interface for connections that complete their
-// authorization by exchanging an OAuth authorization code for tokens.
-type AuthCodeConnection interface {
-	// ExchangeAuthorizationCode exchanges an OAuth authorization code for tokens.
-	// Returns the value to store as the connection token.
-	ExchangeAuthorizationCode(ctx context.Context, code, redirectURI string) (common.RawSecureValue, error)
-	// ResolveAppURL returns the management URL for the OAuth application, or an
-	// empty string when it cannot be determined.
-	ResolveAppURL(ctx context.Context, token common.RawSecureValue) string
-}
-
 // TokenConnection is an optional interface that connections can implement if they need
 // to handle tokens in their secrets.
 //
@@ -61,4 +50,14 @@ type TokenConnection interface {
 	// GenerateConnectionToken generates a connection-level token.
 	// Returns the generated token value.
 	GenerateConnectionToken(ctx context.Context) (common.RawSecureValue, error)
+}
+
+// OAuthConnection is the interface implemented by all OAuth app connections.
+type OAuthConnection interface {
+	Connection
+	TokenConnection
+
+	// ExchangeAuthorizationCode exchanges an OAuth authorization code for tokens.
+	// Returns the value to store as the connection token.
+	ExchangeAuthorizationCode(ctx context.Context, code, redirectURI string) (common.RawSecureValue, error)
 }

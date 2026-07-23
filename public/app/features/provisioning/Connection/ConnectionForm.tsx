@@ -15,7 +15,7 @@ import { WebhookDisabledField } from '../components/Shared/WebhookDisabledField'
 import { CONNECTIONS_TAB_URL } from '../constants';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 import { type ConnectionFormData } from '../types';
-import { startOAuthAuthorization } from '../utils/connectionOAuth';
+import { isOAuthConnectionType, startOAuthAuthorization } from '../utils/connectionOAuth';
 import { extractFormErrors, getConnectionFormErrors } from '../utils/getFormErrors';
 import { isGitHubBased } from '../utils/repositoryTypes';
 
@@ -40,8 +40,12 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
     // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
     { value: 'githubOAuth', label: 'GitHub OAuth App' },
     ...(availableTypes.includes('githubEnterprise')
-      ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        [{ value: 'githubEnterprise', label: 'GitHub Enterprise' }]
+      ? [
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+          { value: 'githubEnterprise', label: 'GitHub Enterprise' },
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+          { value: 'githubEnterpriseOAuth', label: 'GitHub Enterprise OAuth App' },
+        ]
       : []),
     ...(availableTypes.includes('gitlab')
       ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
@@ -55,7 +59,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
 
   const formMethods = useForm<ConnectionFormData>({
     defaultValues:
-      data?.spec?.type === 'gitlab' || data?.spec?.type === 'bitbucket' || data?.spec?.type === 'githubOAuth'
+      isOAuthConnectionType(data?.spec?.type)
         ? {
             type: data.spec.type,
             title: data?.spec?.title || '',
@@ -65,9 +69,12 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
                 ? data.spec.gitlab?.clientID
                 : data.spec.type === 'bitbucket'
                   ? data.spec.bitbucket?.clientID
-                  : data.spec.githubOAuth?.clientID) || '',
+                  : data.spec.type === 'githubEnterpriseOAuth'
+                    ? data.spec.githubEnterpriseOAuth?.clientID
+                    : data.spec.githubOAuth?.clientID) || '',
             clientSecret: '',
             workspace: data.spec.bitbucket?.workspace || '',
+            serverUrl: data.spec.githubEnterpriseOAuth?.serverUrl || '',
             webhookDisabled: data?.spec?.webhook?.disabled ?? false,
           }
         : data?.spec?.type === 'githubEnterprise'
@@ -117,13 +124,10 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       reset(formData);
 
       // OAuth app connections need the user to authorize the app before tokens can be issued
-      if (
-        (formData.type === 'gitlab' || formData.type === 'bitbucket' || formData.type === 'githubOAuth') &&
-        (!isEdit || formData.clientSecret)
-      ) {
+      if (isOAuthConnectionType(formData.type) && (!isEdit || formData.clientSecret)) {
         const name = connectionName ?? request.data?.metadata?.name;
         if (name && formData.clientID) {
-          startOAuthAuthorization(formData.type, formData.clientID, name);
+          startOAuthAuthorization(formData.type, formData.clientID, name, formData.serverUrl);
           return;
         }
       }
@@ -171,7 +175,9 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
               ? { gitlab: { clientID: form.clientID ?? '' } }
               : form.type === 'githubOAuth'
                 ? { githubOAuth: { clientID: form.clientID ?? '' } }
-                : { bitbucket: { clientID: form.clientID ?? '', workspace: form.workspace ?? '' } }),
+                : form.type === 'githubEnterpriseOAuth'
+                  ? { githubEnterpriseOAuth: { clientID: form.clientID ?? '', serverUrl: form.serverUrl ?? '' } }
+                  : { bitbucket: { clientID: form.clientID ?? '', workspace: form.workspace ?? '' } }),
       };
 
       await submitData(spec, form.privateKey, form.clientSecret);
@@ -232,7 +238,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
             <GitHubConnectionFields required={!isEdit} privateKeyConfigured={Boolean(privateKey)} type={selectedType} />
           )}
 
-          {(selectedType === 'gitlab' || selectedType === 'bitbucket' || selectedType === 'githubOAuth') && (
+          {isOAuthConnectionType(selectedType) && (
             <OAuthConnectionFields
               required={!isEdit}
               clientSecretConfigured={Boolean(data?.secure?.clientSecret)}

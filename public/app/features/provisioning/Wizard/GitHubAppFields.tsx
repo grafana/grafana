@@ -18,6 +18,7 @@ import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnectio
 import { type ConnectionFormData } from '../types';
 import { getConnectionFormErrors } from '../utils/getFormErrors';
 
+import { NewOAuthConnectionFields } from './NewOAuthConnectionFields';
 import { useStepStatus } from './StepStatusContext';
 import { GithubAppStepInstruction } from './components/GithubAppStepInstruction';
 import { type ConnectionCreationResult, type GitHubBasedConnectionType, type WizardFormData } from './types';
@@ -78,7 +79,11 @@ export function GitHubAppFields({ connectionType, onGitHubAppSubmit }: GitHubApp
     }
   }, [hasNoConnections, setValue]);
 
-  const [githubAppMode, githubAppConnectionName] = watch(['githubAppMode', 'githubApp.connectionName']);
+  const [githubAppMode, githubAppKind = 'app', githubAppConnectionName] = watch([
+    'githubAppMode',
+    'githubAppKind',
+    'githubApp.connectionName',
+  ]);
   const { connection: selectedConnection } = useConnectionStatus(githubAppConnectionName);
 
   const handleCreateConnection = async () => {
@@ -240,19 +245,46 @@ export function GitHubAppFields({ connectionType, onGitHubAppSubmit }: GitHubApp
       )}
 
       {githubAppMode === 'new' && (
-        <FormProvider {...credentialForm}>
-          <GitHubConnectionFields
-            required
-            type={connectionType}
-            onNewConnectionCreation={handleCreateConnection}
-            isCreating={connectionRequest.isLoading}
-          />
-          <WebhookDisabledField
-            registration={credentialForm.register('webhookDisabled')}
-            invalid={!!credentialForm.formState.errors.webhookDisabled}
-            error={credentialForm.formState.errors.webhookDisabled?.message}
-          />
-        </FormProvider>
+        <>
+          <Field noMargin label={t('provisioning.wizard.github-app-kind-label', 'App type')}>
+            <Controller
+              name="githubAppKind"
+              control={control}
+              render={({ field: { ref, onChange, value, ...field } }) => (
+                <RadioButtonGroup
+                  options={[
+                    { value: 'app', label: t('provisioning.wizard.github-app-kind-app', 'GitHub App') },
+                    { value: 'oauth', label: t('provisioning.wizard.github-app-kind-oauth', 'OAuth App') },
+                  ]}
+                  value={value ?? 'app'}
+                  onChange={onChange}
+                  {...field}
+                />
+              )}
+            />
+          </Field>
+
+          {githubAppKind === 'oauth' ? (
+            <NewOAuthConnectionFields
+              type={connectionType === 'githubEnterprise' ? 'githubEnterpriseOAuth' : 'githubOAuth'}
+              onAuthorized={(name) => onGitHubAppSubmit({ success: true, connectionName: name })}
+            />
+          ) : (
+            <FormProvider {...credentialForm}>
+              <GitHubConnectionFields
+                required
+                type={connectionType}
+                onNewConnectionCreation={handleCreateConnection}
+                isCreating={connectionRequest.isLoading}
+              />
+              <WebhookDisabledField
+                registration={credentialForm.register('webhookDisabled')}
+                invalid={!!credentialForm.formState.errors.webhookDisabled}
+                error={credentialForm.formState.errors.webhookDisabled?.message}
+              />
+            </FormProvider>
+          )}
+        </>
       )}
     </Stack>
   );

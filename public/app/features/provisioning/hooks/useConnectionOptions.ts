@@ -17,7 +17,10 @@ export function useConnectionOptions(enabled: boolean, connectionType?: GitHubBa
   const githubConnections = useMemo(
     () =>
       connections?.filter(
-        (c) => c.spec?.type === connectionType || (connectionType === 'github' && c.spec?.type === 'githubOAuth')
+        (c) =>
+          c.spec?.type === connectionType ||
+          (connectionType === 'github' && c.spec?.type === 'githubOAuth') ||
+          (connectionType === 'githubEnterprise' && c.spec?.type === 'githubEnterpriseOAuth')
       ) ?? [],
     [connections, connectionType]
   );

@@ -1,9 +1,10 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, Card, EmptyState, Stack, Text, TextLink } from '@grafana/ui';
+import { Alert, Card, Collapse, EmptyState, Stack, Text, TextLink } from '@grafana/ui';
 import { useGetConnectionRepositoriesQuery, useListRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -16,6 +17,7 @@ import { ConnectionForm } from './ConnectionForm';
 export default function ConnectionFormPage() {
   const { name = '' } = useParams();
   const isCreate = !name;
+  const [availableReposOpen, setAvailableReposOpen] = useState(false);
 
   const { connection, isLoading, isError, error, isDisconnected, disconnectMessage } = useConnectionStatus(
     isCreate ? undefined : name
@@ -97,28 +99,41 @@ export default function ConnectionFormPage() {
               </div>
             )}
 
-            {!isCreate && availableRepos.length > 0 && (
+            {!isCreate && (availableReposQuery.isLoading || availableRepos.length > 0) && (
               <div style={{ maxWidth: 700 }}>
-                <Card noMargin>
-                  <Card.Heading>
-                    <Trans i18nKey="provisioning.connection-form.available-repositories">
-                      This connection has access to the following repositories
-                    </Trans>
-                  </Card.Heading>
-                  <Card.Description>
+                <Collapse
+                  label={
+                    availableReposQuery.isLoading
+                      ? t('provisioning.connection-form.available-repositories-loading', 'Loading repositories...')
+                      : t(
+                          'provisioning.connection-form.available-repositories-count',
+                          'This connection has access to {{count}} repositories',
+                          { count: availableRepos.length }
+                        )
+                  }
+                  loading={availableReposQuery.isLoading}
+                  isOpen={availableReposOpen && !availableReposQuery.isLoading}
+                  onToggle={() => {
+                    if (!availableReposQuery.isLoading) {
+                      setAvailableReposOpen(!availableReposOpen);
+                    }
+                  }}
+                >
+                  <div style={{ maxHeight: 300, overflowY: 'auto' }}>
                     <Stack direction="column" gap={0.5}>
-                      {availableRepos.map((repo: ExternalRepository, index: number) =>
-                        repo.url ? (
-                          <TextLink key={repo.name || index} href={repo.url} external>
-                            {repo.name || repo.url}
+                      {availableRepos.map((repo: ExternalRepository, index: number) => {
+                        const label = repo.owner ? `${repo.owner}/${repo.name}` : repo.name;
+                        return repo.url ? (
+                          <TextLink key={label || index} href={repo.url} external>
+                            {label || repo.url}
                           </TextLink>
                         ) : (
-                          <Text key={repo.name || index}>{repo.name || 'Unknown'}</Text>
-                        )
-                      )}
+                          <Text key={label || index}>{label || 'Unknown'}</Text>
+                        );
+                      })}
                     </Stack>
-                  </Card.Description>
-                </Card>
+                  </div>
+                </Collapse>
               </div>
             )}
 

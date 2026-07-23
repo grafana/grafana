@@ -13,8 +13,21 @@ import (
 )
 
 func listRepositories(ctx context.Context, accessToken string) ([]provisioning.ExternalRepository, error) {
+	return ListRepositories(ctx, accessToken, "")
+}
+
+// ListRepositories lists the repositories accessible to the OAuth access token.
+// A non-empty apiBaseURL points the client at a GitHub Enterprise server.
+func ListRepositories(ctx context.Context, accessToken, apiBaseURL string) ([]provisioning.ExternalRepository, error) {
 	httpClient := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{AccessToken: accessToken}))
 	client := github.NewClient(httpClient)
+	if apiBaseURL != "" {
+		var err error
+		client, err = client.WithEnterpriseURLs(apiBaseURL, apiBaseURL)
+		if err != nil {
+			return nil, fmt.Errorf("create github client: %w", err)
+		}
+	}
 
 	opts := &github.RepositoryListByAuthenticatedUserOptions{
 		ListOptions: github.ListOptions{PerPage: 100},
