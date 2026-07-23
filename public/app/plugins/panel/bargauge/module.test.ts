@@ -1,4 +1,11 @@
-import { PanelOptionsEditorBuilder, standardEditorsRegistry, VizOrientation } from '@grafana/data';
+import {
+  createDataFrame,
+  FieldType,
+  getPanelDataSummary,
+  PanelOptionsEditorBuilder,
+  standardEditorsRegistry,
+  VizOrientation,
+} from '@grafana/data';
 import { BarGaugeDisplayMode, BarGaugeSizing } from '@grafana/schema';
 import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
 
@@ -17,28 +24,26 @@ describe('bargauge module', () => {
   it('wires up all shared handlers on the plugin', () => {
     expect(plugin.onPanelTypeChanged).toBeDefined();
     expect(plugin.onPanelMigration).toBeDefined();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect((plugin as any).suggestionsSupplier).toBeDefined();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect((plugin as any).presetsSupplier).toBeDefined();
     expect(plugin.fieldConfigRegistry).toBeDefined();
+
+    // Exercise the public suggestions/presets API rather than reaching into the
+    // private suppliers to prove they are wired up.
+    const dataSummary = getPanelDataSummary([
+      createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'value', type: FieldType.number, values: [10, 20, 30] },
+        ],
+      }),
+    ]);
+
+    expect(plugin.getSuggestions(dataSummary)?.length).toBeGreaterThan(0);
+    expect(plugin.getPresets({ dataSummary })?.length).toBeGreaterThan(0);
   });
 
   it('registers the expected bar gauge options', () => {
     const paths = buildItems().map((item) => item.path);
-
-    expect(paths).toEqual(
-      expect.arrayContaining([
-        'displayMode',
-        'valueMode',
-        'namePlacement',
-        'showUnfilled',
-        'sizing',
-        'minVizWidth',
-        'minVizHeight',
-        'maxVizHeight',
-      ])
-    );
+    expect(paths).toMatchSnapshot();
   });
 
   it('uses defaults from panelcfg for the display mode option', () => {

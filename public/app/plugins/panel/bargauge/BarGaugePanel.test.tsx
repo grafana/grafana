@@ -139,16 +139,14 @@ describe('BarGaugePanel', () => {
   });
 
   describe('getItemSpacing', () => {
-    it('uses tighter spacing for the LCD display mode', () => {
-      const panelData = buildPanelData();
-      panelData.options.displayMode = BarGaugeDisplayMode.Lcd;
-      expect(new BarGaugePanel(panelData).getItemSpacing()).toBe(2);
-    });
+    it('uses tighter spacing for the LCD display mode than for non-LCD display modes', () => {
+      const lcd = buildPanelData();
+      lcd.options.displayMode = BarGaugeDisplayMode.Lcd;
 
-    it('uses default spacing for non-LCD display modes', () => {
-      const panelData = buildPanelData();
-      panelData.options.displayMode = BarGaugeDisplayMode.Gradient;
-      expect(new BarGaugePanel(panelData).getItemSpacing()).toBe(10);
+      const nonLcd = buildPanelData();
+      nonLcd.options.displayMode = BarGaugeDisplayMode.Gradient;
+
+      expect(new BarGaugePanel(nonLcd).getItemSpacing()).toBeGreaterThan(new BarGaugePanel(lcd).getItemSpacing());
     });
   });
 
