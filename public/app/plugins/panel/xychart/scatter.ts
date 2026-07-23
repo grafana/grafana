@@ -669,6 +669,16 @@ export function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValu
     }
 
     getAll = (vals, min, max) => valuesToFills(vals as number[], index as string[], min!, max!);
+  } else if (f.config.color?.mode?.startsWith('palette')) {
+    const fieldColorMode = getFieldColorModeForField(f);
+    if (fieldColorMode.getColors) {
+      // We need to explicitly add an alpha component here, or hasAlpha will be detected as false,
+      // and the user's opacity setting will be ignored.
+      index = fieldColorMode.getColors(theme).map((color) => color + 'ff');
+      getAll = (vals, min?, max?) => {
+        return (vals as number[]).map((v) => v % index.length);
+      };
+    }
   }
 
   if (conds !== '') {
