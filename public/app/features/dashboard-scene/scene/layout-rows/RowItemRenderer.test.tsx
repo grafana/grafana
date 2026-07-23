@@ -26,6 +26,22 @@ function renderRow({ collapse = false, title = 'My row' } = {}) {
 }
 
 describe('RowItemRenderer', () => {
+  it('stamps data-dashboard-element-key and data-dashboard-element-type on the row header', () => {
+    renderRow({ collapse: false });
+
+    const header = document.querySelector('[data-dashboard-element-key="row-1"]');
+    expect(header).toBeInTheDocument();
+    expect(header).toHaveAttribute('data-dashboard-element-type', 'row');
+  });
+
+  it('stamps the row header when the row is collapsed', () => {
+    renderRow({ collapse: true });
+
+    const header = document.querySelector('[data-dashboard-element-key="row-1"]');
+    expect(header).toBeInTheDocument();
+    expect(header).toHaveAttribute('data-dashboard-element-type', 'row');
+  });
+
   it('exposes aria-expanded=true on the toggle button when the row is expanded', () => {
     const { row } = renderRow({ collapse: false });
 
