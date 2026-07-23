@@ -148,15 +148,13 @@ func (c *connectionAuthorizeConnector) Connect(ctx context.Context, name string,
 
 		// Best-effort: point the connection URL at the OAuth application settings
 		// page when the provider can resolve it with the fresh token.
-		if uc, ok := built.(connection.AppURLConnection); ok {
-			if appURL := uc.ResolveAppURL(ctx, token); appURL != "" {
-				specPatch, err := json.Marshal([]map[string]interface{}{
-					{"op": "add", "path": "/spec/url", "value": appURL},
-				})
-				if err == nil {
-					if _, err := c.access.GetClient().Connections(conn.Namespace).Patch(ctx, conn.Name, types.JSONPatchType, specPatch, metav1.PatchOptions{}); err != nil {
-						logger.Warn("failed to update connection URL", "error", err)
-					}
+		if appURL := ac.ResolveAppURL(ctx, token); appURL != "" {
+			specPatch, err := json.Marshal([]map[string]interface{}{
+				{"op": "add", "path": "/spec/url", "value": appURL},
+			})
+			if err == nil {
+				if _, err := c.access.GetClient().Connections(conn.Namespace).Patch(ctx, conn.Name, types.JSONPatchType, specPatch, metav1.PatchOptions{}); err != nil {
+					logger.Warn("failed to update connection URL", "error", err)
 				}
 			}
 		}

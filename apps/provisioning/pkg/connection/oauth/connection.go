@@ -176,7 +176,7 @@ func (c *Connection) ExchangeAuthorizationCode(ctx context.Context, code, redire
 
 // ResolveAppURL returns the management URL for the OAuth application when the
 // provider can look it up with the given token.
-// Implements the connection.AppURLConnection interface.
+// Implements the connection.AuthCodeConnection interface.
 func (c *Connection) ResolveAppURL(ctx context.Context, token common.RawSecureValue) string {
 	if c.provider.AppSettingsURL == nil {
 		return ""
@@ -240,5 +240,4 @@ var (
 	_ connection.Connection         = (*Connection)(nil)
 	_ connection.TokenConnection    = (*Connection)(nil)
 	_ connection.AuthCodeConnection = (*Connection)(nil)
-	_ connection.AppURLConnection   = (*Connection)(nil)
 )
