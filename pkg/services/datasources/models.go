@@ -1,6 +1,7 @@
 package datasources
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"time"
@@ -183,6 +184,10 @@ type AddDataSourceCommand struct {
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
+	// BeforeSave runs after a UID is assigned (client-provided or generated)
+	// and before insert, in the same DB transaction. Used for fields that must
+	// bind to the final UID (e.g. grafanaExternalId).
+	BeforeSave func(ctx context.Context, uid string, jsonData *simplejson.Json) `json:"-"`
 }
 
 // Also acts as api DTO
@@ -215,6 +220,8 @@ type UpdateDataSourceCommand struct {
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
 	IgnoreOldSecureJsonData bool              `json:"-"`
+	// BeforeSave runs before the update is persisted, in the same DB transaction.
+	BeforeSave func(ctx context.Context, uid string, jsonData *simplejson.Json) `json:"-"`
 
 	AllowLBACRuleUpdates bool `json:"-"`
 }

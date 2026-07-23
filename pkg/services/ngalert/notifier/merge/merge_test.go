@@ -26,7 +26,8 @@ func TestReceivers(t *testing.T) {
 		}
 	}
 
-	suffix := "-dupe"
+	identifier := "dupe"
+	suffix := getDedupSuffix(identifier)
 
 	r1 := r("r1")
 	r2 := r("r2")
@@ -126,7 +127,7 @@ func TestReceivers(t *testing.T) {
 				incomingNames = append(incomingNames, r.Name)
 			}
 
-			actual, actualRenames, actualAdded := Receivers(tc.existing, tc.incoming, suffix)
+			actual, actualRenames, actualAdded := Receivers(tc.existing, tc.incoming, identifier)
 			require.Len(t, actual, len(tc.expected))
 			assert.EqualValues(t, tc.expectedRenames, actualRenames)
 			assert.Equal(t, tc.expectedAdded, actualAdded)
@@ -168,7 +169,8 @@ func TestTimeIntervals(t *testing.T) {
 		}
 	}
 
-	suffix := "-dupe"
+	identifier := "dupe"
+	suffix := getDedupSuffix(identifier)
 
 	testCases := []struct {
 		name                  string
@@ -320,7 +322,7 @@ func TestTimeIntervals(t *testing.T) {
 				incomingNames = append(incomingNames, r.Name)
 			}
 
-			actualTimeIntervals, actualRenames, actualAdded := TimeIntervals(tc.existingMuteIntervals, tc.existingTimeIntervals, tc.incomingMuteIntervals, tc.incomingTimeIntervals, suffix)
+			actualTimeIntervals, actualRenames, actualAdded := TimeIntervals(tc.existingMuteIntervals, tc.existingTimeIntervals, tc.incomingMuteIntervals, tc.incomingTimeIntervals, identifier)
 			assert.Equal(t, tc.expected, actualTimeIntervals)
 			assert.EqualValues(t, tc.expectedRenames, actualRenames)
 			assert.Equal(t, tc.expectedAdded, actualAdded)
@@ -449,7 +451,7 @@ func TestMergeExtraConfig(t *testing.T) {
 	t.Run("should append index suffix if rename still collides", func(t *testing.T) {
 		grafana := load(t, fullGrafanaConfig, func(p *v1.PostableApiAlertingConfig) {
 			p.Receivers = append(p.Receivers, &v1.PostableApiReceiver{
-				Receiver: definition.Receiver{Name: "grafana-default-email" + identifier},
+				Receiver: definition.Receiver{Name: "grafana-default-email" + getDedupSuffix(identifier)},
 			})
 		})
 		input := withExtra(t, grafana, fullMimirWithOnlyExtraReceiver)
@@ -524,7 +526,7 @@ func TestMergeExtraConfig(t *testing.T) {
 		_, result, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
 
-		assert.ElementsMatch(t, []string{"recv", "recv2", "grafana-default-email" + identifier}, result.AddedReceivers)
+		assert.ElementsMatch(t, []string{"recv", "recv2", "grafana-default-email" + getDedupSuffix(identifier)}, result.AddedReceivers)
 	})
 
 	t.Run("should report added template names in stats", func(t *testing.T) {
@@ -635,7 +637,7 @@ func TestMergeExtraConfig(t *testing.T) {
 		config, result, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
 
-		renamedName := templateName + identifier
+		renamedName := templateName + getDedupSuffix(identifier)
 		require.Len(t, result.AddedTemplates, 1)
 		assert.Equal(t, renamedName, result.AddedTemplates[0])
 		assert.Equal(t, map[string]string{templateName: renamedName}, result.Templates)
@@ -827,12 +829,12 @@ func TestMergeTemplates(t *testing.T) {
 
 		result, renames, added, err := MergeTemplates(existing, incoming, "suffix")
 		require.NoError(t, err)
-		require.Equal(t, map[string]string{"foo": "foosuffix"}, renames)
+		require.Equal(t, map[string]string{"foo": "foo" + getDedupSuffix("suffix")}, renames)
 		require.Len(t, added, 1)
 		assert.Contains(t, result, v1.ResourceUID("uid1"), "original template should be preserved")
 		tmpl, ok := result[added[0]]
 		require.True(t, ok)
-		assert.Equal(t, "foosuffix", tmpl.Title)
+		assert.Equal(t, "foo"+getDedupSuffix("suffix"), tmpl.Title)
 		assert.Equal(t, v1.TemplateKindMimir, tmpl.Kind)
 	})
 
