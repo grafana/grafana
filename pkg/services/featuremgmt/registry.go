@@ -417,6 +417,15 @@ var (
 			Generate:     Generate{LegacyGo: true},
 		},
 		{
+			Name:         "kubernetesFolderCascadeDeleteAsync",
+			Description:  "Enable asynchronous folder.grafana.app cascade deletion: the delete request marks the folder terminating with a finalizer and a background reconciler drains its subtree. Requires kubernetesFolderCascadeDelete",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true},
+		},
+		{
 			Name:            "grafana.kubernetesAnnotationsClient",
 			Description:     "Enables usage of the new annotations API client",
 			Stage:           FeatureStageExperimental,

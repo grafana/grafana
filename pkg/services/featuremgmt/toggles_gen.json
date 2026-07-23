@@ -3698,6 +3698,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesFolderCascadeDeleteAsync",
+        "resourceVersion": "1784767749374",
+        "creationTimestamp": "2026-07-23T00:49:09Z"
+      },
+      "spec": {
+        "description": "Enable asynchronous folder.grafana.app cascade deletion: the delete request marks the folder terminating with a finalizer and a background reconciler drains its subtree. Requires kubernetesFolderCascadeDelete",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesLibraryPanels",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-06-25T22:21:56Z"
