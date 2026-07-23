@@ -172,7 +172,7 @@ interface LinkValuesMenuProps {
   children: ReactNode;
 }
 
-export const LinkValuesMenu = ({ links, children }: LinkValuesMenuProps) => {
+const LinkValuesMenu = ({ links, children }: LinkValuesMenuProps) => {
   const styles = useStyles2(getStyles);
   const openValueInLabel = t('explore.key-values-table.open-value-in', 'Open value in');
   const triggerId = useId();
