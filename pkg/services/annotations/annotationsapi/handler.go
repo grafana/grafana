@@ -180,12 +180,14 @@ func (h *MigrationProxy) Update(ctx context.Context, orgID int64, annotationID i
 	if item.Epoch != 0 {
 		anno.Spec.Time = item.Epoch
 	}
-	if item.EpochEnd != 0 {
-		anno.Spec.TimeEnd = &item.EpochEnd
-	}
-	// An end time at or before the start is a point and the new store represents that by omitting TimeEnd.
-	if anno.Spec.TimeEnd != nil && *anno.Spec.TimeEnd <= anno.Spec.Time {
+	// Legacy API treats a point annotation as having EpochEnd == Epoch, so if the caller
+	// sends EpochEnd == Epoch, we treat it as a point and clear the end time. This prevents
+	// it from changing to a range when the caller only intended to move the point in time.
+	isPoint := existing.Spec.TimeEnd == nil && item.EpochEnd == existing.Spec.Time
+	if isPoint {
 		anno.Spec.TimeEnd = nil
+	} else if item.EpochEnd != 0 {
+		anno.Spec.TimeEnd = &item.EpochEnd
 	}
 	if item.Data != nil {
 		raw, err := item.Data.Encode()

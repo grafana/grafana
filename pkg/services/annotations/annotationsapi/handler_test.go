@@ -278,6 +278,36 @@ func TestMigrationProxy(t *testing.T) {
 			assert.Equal(t, int64(3000), *client.created.Spec.TimeEnd)
 		})
 
+		t.Run("moving a point to an earlier time keeps it a point", func(t *testing.T) {
+			existing := existingAnno("anno-1") // Time: 1000, TimeEnd: nil (a point)
+			client := &fakeClient{existing: existing}
+			proxy := newProxy(client)
+
+			// The stale coerced end (1000) now exceeds the new start (500), but the caller
+			// only moved the time, so it stays a point rather than becoming a range.
+			err := proxy.Update(context.Background(), orgID, legacyID, &annotations.Item{Text: "after", Epoch: 500, EpochEnd: 1000})
+			require.NoError(t, err)
+
+			require.NotNil(t, client.created)
+			assert.Equal(t, int64(500), client.created.Spec.Time)
+			assert.Nil(t, client.created.Spec.TimeEnd, "a point edit stays a point in any direction")
+		})
+
+		t.Run("editing a range preserves its end", func(t *testing.T) {
+			existing := existingAnno("anno-1")
+			existing.Spec.TimeEnd = ptr.To(int64(2000)) // range 1000->2000
+			client := &fakeClient{existing: existing}
+			proxy := newProxy(client)
+
+			// PATCH fills EpochEnd from the stored range; a text-only edit must keep the range.
+			err := proxy.Update(context.Background(), orgID, legacyID, &annotations.Item{Text: "after", Epoch: 1000, EpochEnd: 2000})
+			require.NoError(t, err)
+
+			require.NotNil(t, client.updated, "an in-place range edit updates, not re-creates")
+			require.NotNil(t, client.updated.Spec.TimeEnd, "the range end is preserved")
+			assert.Equal(t, int64(2000), *client.updated.Spec.TimeEnd)
+		})
+
 		t.Run("time change with omitted data preserves the stored legacy data", func(t *testing.T) {
 			existing := existingAnno("anno-1")
 			annotationpkg.SetLegacyData(existing, `{"foo":"bar"}`)
