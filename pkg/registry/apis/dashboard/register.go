@@ -8,21 +8,6 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/prometheus/client_golang/prometheus"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/admission"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/registry/rest"
-	genericapiserver "k8s.io/apiserver/pkg/server"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/kube-openapi/pkg/common"
-	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/kube-openapi/pkg/validation/spec"
-
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	manifestdata "github.com/grafana/grafana/apps/dashboard/pkg/apis"
@@ -62,7 +47,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/live"
-	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -71,6 +55,20 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/prometheus/client_golang/prometheus"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/rest"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 )
 
 var (
@@ -120,7 +118,6 @@ type DashboardsAPIBuilder struct {
 	scheme                   *runtime.Scheme
 	search                   *SearchHandler
 	QuotaService             quota.Service
-	ProvisioningService      provisioning.ProvisioningService
 	minRefreshInterval       string
 	dualWriter               dualwrite.Service
 	folderClientProvider     client.K8sHandlerProvider
@@ -151,7 +148,6 @@ func RegisterAPIService(
 	dashboardPermissionsSvc accesscontrol.DashboardPermissionsService,
 	accessControl accesscontrol.AccessControl,
 	accessClient authlib.AccessClient,
-	provisioning provisioning.ProvisioningService,
 	reg prometheus.Registerer,
 	sql db.DB,
 	tracing *tracing.TracingService,
@@ -196,7 +192,6 @@ func RegisterAPIService(
 		unified:                  unified,
 		search:                   NewSearchHandler(tracing, unified, features),
 		QuotaService:             quotaService,
-		ProvisioningService:      provisioning,
 		minRefreshInterval:       cfg.MinRefreshInterval,
 		dualWriter:               dual,
 		dashboardK8sClient:       dashboardClient,
@@ -208,7 +203,7 @@ func RegisterAPIService(
 		snapshotOptions:          snapshotOptions,
 		namespacer:               namespacer,
 		dashboardActivityChannel: dashboardActivityChannel,
-		legacy:                   legacy.NewDashboardSQLAccess(dbp, namespacer, provisioning, accessControl),
+		legacy:                   legacy.NewDashboardSQLAccess(dbp, namespacer, accessControl),
 		homeDashboard:            home.NewHomeDashboardSupport(cfg),
 	}
 
