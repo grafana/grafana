@@ -28,10 +28,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// defaultEnterpriseCommit mirrors grafana-cli's DefaultCommitValue sentinel. An
-// enterprise commit equal to this (or empty) means "not an enterprise build",
-// so it is omitted from the version string. Kept local to avoid coupling
-// bootstrap to the CLI commands package.
+// defaultEnterpriseCommit is the placeholder the build stamps in for the
+// enterprise commit when Grafana was not built from the enterprise repo. When
+// the enterprise commit is this value (or empty), it means this isn't an
+// enterprise build, so it's left out of the printed version string. The value
+// matches grafana-cli's DefaultCommitValue; we redeclare it here so bootstrap
+// doesn't have to import the CLI package.
 const defaultEnterpriseCommit = "NA"
 
 // ServerInitializer builds the full Grafana server. OSS supplies the generated
