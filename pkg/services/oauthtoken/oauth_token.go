@@ -438,7 +438,7 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 	// TokenSource handles refreshing the token if it has expired
 	token, refreshErr := connect.TokenSource(ctx, persistedToken).Token()
 	duration := time.Since(start)
-	o.tokenRefreshDuration.WithLabelValues(tokenRefreshMetadata.AuthModule, fmt.Sprintf("%t", err == nil)).Observe(duration.Seconds())
+	o.tokenRefreshDuration.WithLabelValues(tokenRefreshMetadata.AuthModule, tokenRefreshSuccessLabel(refreshErr)).Observe(duration.Seconds())
 
 	if refreshErr != nil {
 		span.SetAttributes(attribute.Bool("token_refreshed", false))
@@ -461,8 +461,8 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 			ctxLogger.Debug("Oauth got token",
 				"auth_module", usr.GetAuthenticatedBy(),
 				"expiry", fmt.Sprintf("%v", token.Expiry),
-				"access_token", fmt.Sprintf("%v", token.AccessToken),
-				"refresh_token", fmt.Sprintf("%v", token.RefreshToken),
+				"access_token_present", token.AccessToken != "",
+				"refresh_token_present", token.RefreshToken != "",
 			)
 		}
 
@@ -506,6 +506,10 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 	return token, nil
 }
 
+func tokenRefreshSuccessLabel(err error) string {
+	return fmt.Sprintf("%t", err == nil)
+}
+
 func newTokenRefreshDurationMetric(registerer prometheus.Registerer) *prometheus.HistogramVec {
 	tokenRefreshDuration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
@@ -514,8 +518,18 @@ func newTokenRefreshDurationMetric(registerer prometheus.Registerer) *prometheus
 		Help:      "Time taken to fetch access token using refresh token",
 	},
 		[]string{"auth_provider", "success"})
-	if registerer != nil {
-		registerer.MustRegister(tokenRefreshDuration)
+	if registerer == nil {
+		return tokenRefreshDuration
+	}
+
+	if err := registerer.Register(tokenRefreshDuration); err != nil {
+		var alreadyRegistered prometheus.AlreadyRegisteredError
+		if errors.As(err, &alreadyRegistered) {
+			if existing, ok := alreadyRegistered.ExistingCollector.(*prometheus.HistogramVec); ok {
+				return existing
+			}
+		}
+		panic(err)
 	}
 	return tokenRefreshDuration
 }
