@@ -1503,12 +1503,25 @@ func TestGetFoldersMetadata(t *testing.T) {
 		TotalHits: 3,
 	}
 
+	emptyResponse := &resourcepb.ResourceSearchResponse{
+		Results: &resourcepb.ResourceTable{
+			Columns: searchResponse.Results.Columns,
+		},
+	}
+
 	expectSearchAll := func(mockCli *client.MockK8sHandler) {
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{},
 			Limit:   searchPageSize,
 			Offset:  0,
 		}).Return(searchResponse, nil).Once()
+		// searchAllFolders pages until an empty page, so it issues a trailing
+		// Search past the last hit (offset = number of hits returned above).
+		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{},
+			Limit:   searchPageSize,
+			Offset:  int64(len(searchResponse.Results.Rows)),
+		}).Return(emptyResponse, nil).Once()
 	}
 
 	t.Run("builds full paths from the search index without reading full objects", func(t *testing.T) {

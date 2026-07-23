@@ -468,7 +468,7 @@ func (ss *FolderUnifiedStoreImpl) searchAllFolders(ctx context.Context, orgID in
 			return nil, err
 		}
 		all = append(all, hits...)
-		if raw < searchPageSize {
+		if raw == 0 {
 			return all, nil
 		}
 		offset += int64(raw)
