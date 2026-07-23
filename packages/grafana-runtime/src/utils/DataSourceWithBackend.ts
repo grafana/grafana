@@ -1,4 +1,4 @@
-import { lastValueFrom, merge, type Observable, of } from 'rxjs';
+import { from, lastValueFrom, merge, type Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 import {
@@ -162,7 +162,7 @@ class DataSourceWithBackend<
     this.datasourceInstanceSettings = instanceSettings;
   }
 
-  private createBackendRequest(request: DataQueryRequest<TQuery>): [BackendSrvRequest, DataQuery[]]{
+  private async createBackendRequest(request: DataQueryRequest<TQuery>): Promise<[BackendSrvRequest, DataQuery[]]> {
     const { intervalMs, maxDataPoints, queryCachingTTL, range, requestId, hideFromInspector = false } = request;
     let targets = request.targets;
 
@@ -290,7 +290,6 @@ class DataSourceWithBackend<
     ];
   }
 
-
   /**
    * Ideally final -- any other implementation may not work as expected
    */
@@ -303,23 +302,25 @@ class DataSourceWithBackend<
       return of({ data: [] });
     }
 
-    const [req, queries] = this.createBackendRequest(request)
-
-    return getBackendSrv()
-      .fetch<BackendDataSourceResponse>(req)
-      .pipe(
-        switchMap((raw) => {
-          const rsp = toDataQueryResponse(raw, queries);
-          // Check if any response should subscribe to a live stream
-          if (rsp.data?.length && rsp.data.find((f: DataFrame) => f.meta?.channel)) {
-            return toStreamingDataResponse(rsp, request, this.streamOptionsProvider);
-          }
-          return of(rsp);
-        }),
-        catchError((err) => {
-          return of(toDataQueryResponse(err));
-        })
-      );
+    return from(this.createBackendRequest(request)).pipe(
+      switchMap(([req, queries]) =>
+        getBackendSrv()
+          .fetch<BackendDataSourceResponse>(req)
+          .pipe(
+            switchMap((raw) => {
+              const rsp = toDataQueryResponse(raw, queries);
+              // Check if any response should subscribe to a live stream
+              if (rsp.data?.length && rsp.data.find((f: DataFrame) => f.meta?.channel)) {
+                return toStreamingDataResponse(rsp, request, this.streamOptionsProvider);
+              }
+              return of(rsp);
+            })
+          )
+      ),
+      catchError((err) => {
+        return of(toDataQueryResponse(err));
+      })
+    );
   }
 
   /** Get request headers with plugin ID+UID set */
