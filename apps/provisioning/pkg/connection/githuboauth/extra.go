@@ -7,12 +7,19 @@ import (
 )
 
 func Extra(decrypter connection.Decrypter) connection.Extra {
-	return oauth.Extra(decrypter, provisioning.GithubOAuthConnectionType, fromConnection, Mutate, Validate)
+	return oauth.Extra(decrypter, provisioning.GithubOAuthConnectionType, fromConnection, nil)
+}
+
+var provider = oauth.Provider{
+	RepositoryType:   provisioning.GitHubRepositoryType,
+	TokenURL:         "https://github.com/login/oauth/access_token",
+	AppURL:           "https://github.com/settings/developers",
+	ListRepositories: listRepositories,
 }
 
 func fromConnection(c *provisioning.Connection) (oauth.Provider, string, bool) {
 	if c.Spec.GitHubOAuth == nil {
-		return nil, "", false
+		return oauth.Provider{}, "", false
 	}
-	return Provider{}, c.Spec.GitHubOAuth.ClientID, true
+	return provider, c.Spec.GitHubOAuth.ClientID, true
 }

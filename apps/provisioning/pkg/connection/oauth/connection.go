@@ -19,19 +19,18 @@ import (
 // Provider supplies the provider-specific pieces of an OAuth app connection
 // (e.g. GitLab, Bitbucket). Everything else — token refresh, storage format,
 // repository token generation — is shared and provider agnostic.
-type Provider interface {
-	Type() provisioning.ConnectionType
+type Provider struct {
 	// RepositoryType is the repository type this connection serves (e.g. a
 	// githubOAuth connection serves github repositories).
-	RepositoryType() provisioning.RepositoryType
-	TokenURL() string
-	ListRepositories(ctx context.Context, accessToken string) ([]provisioning.ExternalRepository, error)
-}
-
-// AppURLResolver is an optional interface providers can implement to resolve the
-// management URL of the OAuth application.
-type AppURLResolver interface {
-	AppSettingsURL(ctx context.Context, accessToken, clientID string) string
+	RepositoryType provisioning.RepositoryType
+	TokenURL       string
+	// AppURL is the management page of the OAuth application, used as the
+	// default spec.URL.
+	AppURL           string
+	ListRepositories func(ctx context.Context, accessToken string) ([]provisioning.ExternalRepository, error)
+	// AppSettingsURL optionally resolves a deep link to the OAuth application's
+	// settings page using an access token.
+	AppSettingsURL func(ctx context.Context, accessToken, clientID string) string
 }
 
 type ConnectionSecrets struct {
@@ -93,8 +92,8 @@ func (c *Connection) GenerateRepositoryToken(_ context.Context, repo *provisioni
 	if repo == nil {
 		return nil, errors.New("a repository is required to generate a token")
 	}
-	if repo.Spec.Type != c.provider.RepositoryType() {
-		return nil, fmt.Errorf("repository type %q does not match connection type %q", repo.Spec.Type, c.provider.Type())
+	if repo.Spec.Type != c.provider.RepositoryType {
+		return nil, fmt.Errorf("repository type %q does not match connection type %q", repo.Spec.Type, c.obj.Spec.Type)
 	}
 
 	payload, err := ParseToken(c.secrets.Token)
@@ -137,7 +136,7 @@ func (c *Connection) GenerateConnectionToken(ctx context.Context) (common.RawSec
 	cfg := oauth2.Config{
 		ClientID:     c.clientID,
 		ClientSecret: string(c.secrets.ClientSecret),
-		Endpoint:     oauth2.Endpoint{TokenURL: c.provider.TokenURL()},
+		Endpoint:     oauth2.Endpoint{TokenURL: c.provider.TokenURL},
 	}
 
 	token, err := cfg.TokenSource(ctx, &oauth2.Token{RefreshToken: payload.RefreshToken}).Token()
@@ -163,7 +162,7 @@ func (c *Connection) ExchangeAuthorizationCode(ctx context.Context, code, redire
 	cfg := oauth2.Config{
 		ClientID:     c.clientID,
 		ClientSecret: string(c.secrets.ClientSecret),
-		Endpoint:     oauth2.Endpoint{TokenURL: c.provider.TokenURL()},
+		Endpoint:     oauth2.Endpoint{TokenURL: c.provider.TokenURL},
 		RedirectURL:  redirectURI,
 	}
 
@@ -179,8 +178,7 @@ func (c *Connection) ExchangeAuthorizationCode(ctx context.Context, code, redire
 // provider can look it up with the given token.
 // Implements the connection.AppURLConnection interface.
 func (c *Connection) ResolveAppURL(ctx context.Context, token common.RawSecureValue) string {
-	resolver, ok := c.provider.(AppURLResolver)
-	if !ok {
+	if c.provider.AppSettingsURL == nil {
 		return ""
 	}
 
@@ -189,7 +187,7 @@ func (c *Connection) ResolveAppURL(ctx context.Context, token common.RawSecureVa
 		return ""
 	}
 
-	return resolver.AppSettingsURL(ctx, payload.AccessToken, c.clientID)
+	return c.provider.AppSettingsURL(ctx, payload.AccessToken, c.clientID)
 }
 
 // TokenCreationTime returns when the underlying token has been created.

@@ -21,23 +21,23 @@ type extra struct {
 	decrypter connection.Decrypter
 	connType  provisioning.ConnectionType
 	from      ProviderFromConnection
-	mutate    func(ctx context.Context, obj runtime.Object) error
-	validate  func(ctx context.Context, obj runtime.Object) field.ErrorList
+	validate  func(conn *provisioning.Connection) field.ErrorList
 }
 
 // Extra builds a connection.Extra shared by all OAuth app connection types.
+// Mutation (defaulting spec.URL to the provider's app management page) and
+// structural credential validation are handled here; validate optionally adds
+// type-specific checks.
 func Extra(
 	decrypter connection.Decrypter,
 	connType provisioning.ConnectionType,
 	from ProviderFromConnection,
-	mutate func(ctx context.Context, obj runtime.Object) error,
-	validate func(ctx context.Context, obj runtime.Object) field.ErrorList,
+	validate func(conn *provisioning.Connection) field.ErrorList,
 ) connection.Extra {
 	return &extra{
 		decrypter: decrypter,
 		connType:  connType,
 		from:      from,
-		mutate:    mutate,
 		validate:  validate,
 	}
 }
@@ -87,10 +87,63 @@ func (e *extra) Build(ctx context.Context, conn *provisioning.Connection) (conne
 	return &c, nil
 }
 
-func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {
-	return e.mutate(ctx, obj)
+func (e *extra) Mutate(_ context.Context, obj runtime.Object) error {
+	conn, ok := obj.(*provisioning.Connection)
+	if !ok || conn.Spec.Type != e.connType {
+		return nil
+	}
+
+	provider, _, ok := e.from(conn)
+	if !ok {
+		return nil
+	}
+
+	if conn.Spec.URL == "" {
+		conn.Spec.URL = provider.AppURL
+	}
+
+	return nil
 }
 
-func (e *extra) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return e.validate(ctx, obj)
+func (e *extra) Validate(_ context.Context, obj runtime.Object) field.ErrorList {
+	conn, ok := obj.(*provisioning.Connection)
+	if !ok || conn.Spec.Type != e.connType {
+		return nil
+	}
+
+	_, clientID, cfgPresent := e.from(conn)
+
+	list := validateCredentials(conn, e.connType, cfgPresent, clientID)
+	if e.validate != nil {
+		list = append(list, e.validate(conn)...)
+	}
+
+	return list
+}
+
+// validateCredentials performs the structural validation shared by all OAuth
+// app connections: the provider section with a clientID and a clientSecret are
+// required, a privateKey is forbidden. The connection type doubles as the name
+// of the spec field holding the provider configuration.
+func validateCredentials(conn *provisioning.Connection, connType provisioning.ConnectionType, cfgPresent bool, clientID string) field.ErrorList {
+	var list field.ErrorList
+	section := string(connType)
+
+	if !cfgPresent {
+		list = append(
+			list, field.Required(field.NewPath("spec", section), fmt.Sprintf("%s info must be specified in %s connection", section, connType)),
+		)
+	} else if clientID == "" {
+		list = append(list, field.Required(field.NewPath("spec", section, "clientID"), fmt.Sprintf("clientID must be specified for %s connection", connType)))
+	}
+
+	if conn.Secure.ClientSecret.IsZero() {
+		list = append(list, field.Required(field.NewPath("secure", "clientSecret"), fmt.Sprintf("clientSecret must be specified for %s connection", connType)))
+	}
+
+	if !conn.Secure.PrivateKey.IsZero() {
+		list = append(list, field.Forbidden(field.NewPath("secure", "privateKey"), fmt.Sprintf("privateKey is forbidden in %s connection", connType)))
+	}
+
+	return list
 }

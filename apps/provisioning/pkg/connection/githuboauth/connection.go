@@ -10,27 +10,9 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
-	"github.com/grafana/grafana/apps/provisioning/pkg/connection/oauth"
 )
 
-const tokenURL = "https://github.com/login/oauth/access_token"
-
-// Provider implements the GitHub-specific parts of an OAuth app connection.
-type Provider struct{}
-
-func (Provider) Type() provisioning.ConnectionType {
-	return provisioning.GithubOAuthConnectionType
-}
-
-func (Provider) RepositoryType() provisioning.RepositoryType {
-	return provisioning.GitHubRepositoryType
-}
-
-func (Provider) TokenURL() string {
-	return tokenURL
-}
-
-func (Provider) ListRepositories(ctx context.Context, accessToken string) ([]provisioning.ExternalRepository, error) {
+func listRepositories(ctx context.Context, accessToken string) ([]provisioning.ExternalRepository, error) {
 	httpClient := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{AccessToken: accessToken}))
 	client := github.NewClient(httpClient)
 
@@ -64,5 +46,3 @@ func (Provider) ListRepositories(ctx context.Context, accessToken string) ([]pro
 
 	return result, nil
 }
-
-var _ oauth.Provider = Provider{}
