@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -153,17 +154,17 @@ func (s *annotationAPIClient) GetByLegacyID(ctx context.Context, orgID int64, an
 		return nil, ErrNotFound
 	}
 
-	// Return the first non-deleted annotation, or the tombstone if all are deleted.
-	var tombstone *annotationV0.Annotation
-	for i := range list.Items {
-		if list.Items[i].GetDeletionTimestamp() == nil {
-			return &list.Items[i], nil
-		}
-		if tombstone == nil {
-			tombstone = &list.Items[i]
-		}
+	// Return the newest live annotation, or the tombstone if all are deleted.
+	live := slices.DeleteFunc(slices.Clone(list.Items), func(a annotationV0.Annotation) bool {
+		return a.GetDeletionTimestamp() != nil
+	})
+	if len(live) > 0 {
+		newest := slices.MaxFunc(live, func(a, b annotationV0.Annotation) int {
+			return a.GetCreationTimestamp().Compare(b.GetCreationTimestamp().Time)
+		})
+		return &newest, nil
 	}
-	return tombstone, nil
+	return &list.Items[0], nil
 }
 
 func (s *annotationAPIClient) GetUsersFromMeta(ctx context.Context, usersMeta []string) (map[string]*user.User, error) {
