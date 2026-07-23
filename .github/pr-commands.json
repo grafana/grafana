@@ -110,15 +110,6 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/loki/**/*",
-      "pkg/tsdb/loki/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Loki"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/datasource/mysql/**/*",
       "pkg/tsdb/mysql/**/*"
     ],

@@ -117,14 +117,6 @@
   },
   {
     "type": "label",
-    "name": "datasource/Loki",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
-    }
-  },
-  {
-    "type": "label",
     "name": "datasource/Elasticsearch",
     "action": "addToProject",
     "addToProject": {

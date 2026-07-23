@@ -228,7 +228,6 @@
 /devenv/docker/blocks/auth/ @grafana/identity-access-team
 
 # Logs code, developers environment
-/devenv/docker/blocks/loki* @grafana/data-sources-plugins
 /devenv/docker/blocks/elastic* @grafana/data-sources-plugins
 /devenv/docker/blocks/self-instrumentation* @grafana/data-sources-plugins
 
@@ -271,7 +270,6 @@
 /devenv/dev-dashboards/home.json @grafana/dataviz-squad
 /devenv/dev-dashboards/datasource-elasticsearch/ @grafana/data-sources-plugins
 /devenv/dev-dashboards/datasource-influxdb/ @grafana/data-sources-plugins
-/devenv/dev-dashboards/datasource-loki/ @grafana/grafana-catalog
 /devenv/dev-dashboards/datasource-testdata/ @grafana/grafana-catalog
 /devenv/dev-dashboards/datasource-mysql/ @grafana/data-sources-plugins
 
@@ -359,7 +357,6 @@
 
 # Observability backend code
 /pkg/tsdb/prometheus/ @grafana/data-sources-plugins
-/pkg/tsdb/loki/ @grafana/data-sources-plugins
 
 # OSS Big Tent backend code
 /pkg/tsdb/mysql/ @grafana/data-sources-plugins
@@ -503,8 +500,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/graph-auto-migrate.spec.ts @grafana/dataviz-squad
 /e2e-playwright/various-suite/inspect-drawer.spec.ts @grafana/dashboards-squad
 /e2e-playwright/various-suite/keybinds.spec.ts @grafana/grafana-frontend-platform
-/e2e-playwright/various-suite/loki-query-builder.spec.ts @grafana/data-sources-plugins
-/e2e-playwright/various-suite/loki-table-explore-to-dash.spec.ts @grafana/data-sources-plugins
 /e2e-playwright/various-suite/migrate-to-cloud.spec.ts @grafana/grafana-operator-experience-squad
 /e2e-playwright/various-suite/navigation.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/various-suite/pie-chart.spec.ts @grafana/dataviz-squad
@@ -706,7 +701,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-schema/src/**/histogram @grafana/dataviz-squad
 /packages/grafana-schema/src/**/logs @grafana/observability-logs
 /packages/grafana-schema/src/**/logsnew @grafana/observability-logs
-/packages/grafana-schema/src/**/loki @grafana/data-sources-plugins @grafana/observability-logs
 /packages/grafana-schema/src/**/news @grafana/dataviz-squad
 /packages/grafana-schema/src/**/nodegraph @grafana/observability-traces-and-profiling @grafana/app-o11y-visualizations
 /packages/grafana-schema/src/**/piechart @grafana/dataviz-squad
@@ -1156,7 +1150,6 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/azuremonitor/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/graphite/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/influxdb/ @grafana/data-sources-plugins
-/public/app/plugins/datasource/loki/ @grafana/data-sources-plugins @grafana/observability-logs
 /public/app/plugins/datasource/mixed/ @grafana/dashboards-squad
 /public/app/plugins/datasource/mysql/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/prometheus/ @grafana/data-sources-plugins

@@ -113,10 +113,3 @@ datasources:
     jsonData:
       authType: credentials
       defaultRegion: eu-west-2
-
-  - name: gdev-loki
-    type: loki
-    uid: gdev-loki
-    access: proxy
-    url: http://loki:3100
-    editable: false
