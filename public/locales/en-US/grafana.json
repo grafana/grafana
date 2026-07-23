@@ -1755,6 +1755,7 @@
         "source": "Source",
         "start": "Start import",
         "subtitle": "Review each section and once you are happy, start the import.",
+        "templates": "Templates",
         "validation-error": "Validation failed.",
         "validation-ok": "No conflicts found. Ready to import.",
         "validation-warning": "Some resources will be renamed to avoid conflicts.",
@@ -1775,6 +1776,7 @@
       "step1": {
         "datasource": "Alertmanager data source",
         "heading": "Import Notification Resources",
+        "next-disabled-tooltip": "Complete the required fields and wait for validation to pass before continuing.",
         "no-datasources": "No Alertmanager data sources found",
         "no-permission-desc": "You do not have permission to import notification resources. You need the <strong>alerting.notifications:write</strong> permission. You can skip this step.",
         "no-permission-title": "Insufficient permissions",
@@ -1795,6 +1797,11 @@
         },
         "source-title": "Import Source",
         "subtitle": "Import contact points, notification policies, templates, and mute timings from an external Alertmanager.",
+        "templates-desc": "Optional. Upload the template files referenced by your Alertmanager config. Each file is imported as a template named after the file.",
+        "templates-dropzone": "Drop template files here or click to upload",
+        "templates-duplicate": "Duplicate template file name: \"{{name}}\". Template file names must be unique.",
+        "templates-label": "Notification templates",
+        "templates-remove": "Remove {{name}}",
         "upload": "Upload YAML file",
         "validating": "Validating configuration...",
         "validation-error": "Validation failed",
@@ -1853,6 +1860,10 @@
       "target-folder": {
         "description": "The folder to import the rules to",
         "label": "Target folder"
+      },
+      "templates": {
+        "conflicts-with-config": "Template file \"{{name}}\" conflicts with a template already defined in the config",
+        "duplicate-file-name": "Duplicate template file name: \"{{name}}\""
       },
       "wizard": {
         "cancel": "Cancel",
@@ -15713,6 +15724,8 @@
           "confirm-button": "Delete",
           "title": "Delete"
         },
+        "delete-modal-error-text": "Failed to delete team. Please try again.",
+        "delete-modal-error-title": "Failed to delete team",
         "delete-modal-invalid-text": "This team is the owner of one or more folders. Remove ownership first in order to proceed.",
         "delete-modal-invalid-title": "Cannot delete team",
         "delete-modal-text": "This action will delete the team \"<1>{{ teamName }}</1>\".",

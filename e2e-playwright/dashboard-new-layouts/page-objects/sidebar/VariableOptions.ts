@@ -35,6 +35,16 @@ export class VariableOptions extends PageObject {
     });
   }
 
+  async selectDisplay(displayLabel: string) {
+    await test.step(`Select variable display "${displayLabel}"`, async () => {
+      await this.dashboardPage
+        .getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.General.generalDisplaySelect)
+        .click();
+      // the option also renders a description so we can't just use getByRole('option', {name,exact})
+      await this.page.getByRole('option').getByText(displayLabel, { exact: true }).click();
+    });
+  }
+
   readonly datasource = {
     selectType: async (dsType: string) => {
       await test.step(`Select variable datasource type "${dsType}"`, async () => {
@@ -169,6 +179,44 @@ export class VariableOptions extends PageObject {
       await test.step('Apply variable changes', async () => {
         await this.dashboardPage
           .getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.applyButton)
+          .click();
+      });
+    },
+  };
+
+  readonly constant = {
+    setValue: async (value: string) => {
+      await test.step(`Set constant variable value to "${value}"`, async () => {
+        const valueInput = this.dashboardPage
+          .getByGrafanaSelector(this.selectors.components.PanelEditor.OptionsPane.fieldLabel('variable-type Value'))
+          .locator('input');
+
+        await valueInput.fill(value);
+        await valueInput.blur();
+      });
+    },
+  };
+
+  readonly textbox = {
+    setValue: async (value: string) => {
+      await test.step(`Set textbox variable value to "${value}"`, async () => {
+        const valueInput = this.dashboardPage
+          .getByGrafanaSelector(this.selectors.components.PanelEditor.OptionsPane.fieldLabel('variable-type Value'))
+          .locator('input');
+
+        await valueInput.fill(value);
+        await valueInput.blur();
+      });
+    },
+  };
+
+  readonly interval = {
+    toggleAuto: async () => {
+      await test.step('Toggle auto option for interval variable', async () => {
+        await this.dashboardPage
+          .getByGrafanaSelector(this.selectors.components.Sidebar.container)
+          // there's a checkbox input in the DOM with a proper data-testid, but it's hidden (opacity 0) so Playwright cannot check it
+          .getByText('Auto option')
           .click();
       });
     },
