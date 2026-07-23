@@ -397,6 +397,124 @@ func TestRenewLease_ThenUpdateDoesNotConflict(t *testing.T) {
 			"If it does, RenewLease stored a stale ResourceVersion.")
 }
 
+// seedJob creates a pre-existing queued job with the given name and repository
+// label so queue-limit tests can populate the queue directly.
+func seedJob(ctx context.Context, t *testing.T, client provisioningv0alpha1.ProvisioningV0alpha1Interface, namespace, name, repository string) {
+	t.Helper()
+	_, err := client.Jobs(namespace).Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+			Labels:    map[string]string{LabelRepository: repository},
+		},
+		Spec: provisioning.JobSpec{Repository: repository, Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+}
+
+func TestInsert_QueueLimits(t *testing.T) {
+	const namespace = "stacks-123"
+
+	t.Run("no limits configured allows insert", func(t *testing.T) {
+		fakeClient := newTestClientset()
+		store := newTestStore(fakeClient)
+
+		ctx, _, err := identity.WithProvisioningIdentity(context.Background(), namespace)
+		require.NoError(t, err)
+		seedJob(ctx, t, fakeClient, namespace, "other-a", "repo-a")
+		seedJob(ctx, t, fakeClient, namespace, "other-b", "repo-a")
+
+		job, err := store.Insert(ctx, namespace, provisioning.JobSpec{
+			Repository: "repo-a",
+			Action:     provisioning.JobActionPull,
+			Pull:       &provisioning.SyncJobOptions{},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, "repo-a-sync", job.GetName())
+	})
+
+	t.Run("per-repository limit rejects with TooManyRequests", func(t *testing.T) {
+		fakeClient := newTestClientset()
+		store := newTestStore(fakeClient)
+		store.maxQueuedJobsPerRepository = 2
+
+		ctx, _, err := identity.WithProvisioningIdentity(context.Background(), namespace)
+		require.NoError(t, err)
+		seedJob(ctx, t, fakeClient, namespace, "repo-a-1", "repo-a")
+		seedJob(ctx, t, fakeClient, namespace, "repo-a-2", "repo-a")
+
+		_, err = store.Insert(ctx, namespace, provisioning.JobSpec{
+			Repository: "repo-a",
+			Action:     provisioning.JobActionPull,
+			Pull:       &provisioning.SyncJobOptions{},
+		})
+		require.Error(t, err)
+		assert.True(t, apierrors.IsTooManyRequests(err), "expected TooManyRequests, got %v", err)
+	})
+
+	t.Run("per-repository limit ignores other repositories", func(t *testing.T) {
+		fakeClient := newTestClientset()
+		store := newTestStore(fakeClient)
+		store.maxQueuedJobsPerRepository = 2
+
+		ctx, _, err := identity.WithProvisioningIdentity(context.Background(), namespace)
+		require.NoError(t, err)
+		seedJob(ctx, t, fakeClient, namespace, "repo-b-1", "repo-b")
+		seedJob(ctx, t, fakeClient, namespace, "repo-b-2", "repo-b")
+		seedJob(ctx, t, fakeClient, namespace, "repo-b-3", "repo-b")
+
+		job, err := store.Insert(ctx, namespace, provisioning.JobSpec{
+			Repository: "repo-a",
+			Action:     provisioning.JobActionPull,
+			Pull:       &provisioning.SyncJobOptions{},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, "repo-a-sync", job.GetName())
+	})
+
+	t.Run("per-namespace limit rejects with TooManyRequests", func(t *testing.T) {
+		fakeClient := newTestClientset()
+		store := newTestStore(fakeClient)
+		store.maxQueuedJobsPerNamespace = 3
+
+		ctx, _, err := identity.WithProvisioningIdentity(context.Background(), namespace)
+		require.NoError(t, err)
+		seedJob(ctx, t, fakeClient, namespace, "j-1", "repo-a")
+		seedJob(ctx, t, fakeClient, namespace, "j-2", "repo-b")
+		seedJob(ctx, t, fakeClient, namespace, "j-3", "repo-c")
+
+		_, err = store.Insert(ctx, namespace, provisioning.JobSpec{
+			Repository: "repo-d",
+			Action:     provisioning.JobActionPull,
+			Pull:       &provisioning.SyncJobOptions{},
+		})
+		require.Error(t, err)
+		assert.True(t, apierrors.IsTooManyRequests(err), "expected TooManyRequests, got %v", err)
+	})
+
+	t.Run("re-inserting an already-queued job is allowed at the limit", func(t *testing.T) {
+		fakeClient := newTestClientset()
+		store := newTestStore(fakeClient)
+		store.maxQueuedJobsPerRepository = 1
+
+		ctx, _, err := identity.WithProvisioningIdentity(context.Background(), namespace)
+		require.NoError(t, err)
+		// The deterministic sync-job name already occupies the single slot.
+		seedJob(ctx, t, fakeClient, namespace, "repo-a-sync", "repo-a")
+
+		// Re-inserting the same job must not be rejected by the limit; it falls
+		// through to Create, which reports AlreadyExists as before.
+		_, err = store.Insert(ctx, namespace, provisioning.JobSpec{
+			Repository: "repo-a",
+			Action:     provisioning.JobActionPull,
+			Pull:       &provisioning.SyncJobOptions{},
+		})
+		require.Error(t, err)
+		assert.True(t, apierrors.IsAlreadyExists(err), "expected AlreadyExists, got %v", err)
+		assert.False(t, apierrors.IsTooManyRequests(err), "re-insert must not be rejected as TooManyRequests")
+	})
+}
+
 func TestGenerateJobName(t *testing.T) {
 	t.Run("pull and migrate share a deterministic sync name", func(t *testing.T) {
 		pull := &provisioning.Job{Spec: provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull}}

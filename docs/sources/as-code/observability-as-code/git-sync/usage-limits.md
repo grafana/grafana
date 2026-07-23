@@ -104,6 +104,8 @@ On-prem users can customize the limits with the following configuration settings
 
 - Use `max_repositories` to set the amount of repositories you can sync. Refer to [`max_repositories`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#max_repositories) in the Configure Grafana section to learn more.
 - Use `max_resources_per_repository` to set the amount of resources per repository to sync. Refer to [`max_resources_per_repository`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#max_resources_per_repository) in the Configure Grafana section to learn more.
+- Use `max_queued_jobs_per_repository` to cap the number of queued jobs (such as sync or migrate jobs) for a single repository. Refer to [`max_queued_jobs_per_repository`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#max_queued_jobs_per_repository) in the Configure Grafana section to learn more.
+- Use `max_queued_jobs_per_namespace` to cap the number of queued jobs across all repositories in a namespace. Refer to [`max_queued_jobs_per_namespace`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#max_queued_jobs_per_namespace) in the Configure Grafana section to learn more.
 
 ### Nested folders
 
