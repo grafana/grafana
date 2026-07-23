@@ -210,11 +210,12 @@ describe('<ContentOutline />', () => {
       expect(screen.getByText('up')).toBeInTheDocument();
     });
 
-    it('does not render the metrics explorer when the toggle is enabled but Prometheus is not selected', () => {
+    it('does not render the metrics explorer or header title when the toggle is enabled but Prometheus is not selected', () => {
       useBooleanFlagValueMock.mockReturnValue(true);
       setup(false, false);
       expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
-      expect(screen.getByText('Outline')).toBeInTheDocument();
+      expect(screen.queryByText('Datasource explorer')).not.toBeInTheDocument();
+      expect(screen.queryByText('Outline')).not.toBeInTheDocument();
     });
   });
 });

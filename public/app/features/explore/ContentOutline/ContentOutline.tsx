@@ -168,14 +168,14 @@ export function ContentOutline({
     }
   }, [outlineItems, verticalScroll]);
 
-  const outlineTitle = metricsExplorerVisible
-    ? t('explore.content-outline.title-datasource-explorer', 'Datasource explorer')
-    : t('explore.content-outline.title-outline', 'Outline');
-
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
       <div className={styles.header}>
-        {contentOutlineExpanded && metricsSidebarEnabled && <span className={styles.headerTitle}>{outlineTitle}</span>}
+        {metricsExplorerVisible && (
+          <span className={styles.headerTitle}>
+            {t('explore.content-outline.title-datasource-explorer', 'Datasource explorer')}
+          </span>
+        )}
         <div className={styles.toggleWrapper}>
           <ContentOutlineItemButton
             icon={'arrow-from-right'}
