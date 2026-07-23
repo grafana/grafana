@@ -407,28 +407,45 @@ func (s *Service) getRootFolders(ctx context.Context, q *folder.GetChildrenQuery
 		return nil, nil
 	}
 
-	q.FolderUIDs = make([]string, 0, len(folderPermissions))
+	hasWildcard := false
+	realFolderUIDs := make([]string, 0, len(folderPermissions))
 	for _, p := range folderPermissions {
 		if p == folder.ScopeFoldersAll {
 			// no need to query for folders with permissions
 			// the user has permission to access all folders
-			q.FolderUIDs = nil
+			hasWildcard = true
 			break
 		}
 		if folderUid, found := strings.CutPrefix(p, folder.ScopeFoldersPrefix); found {
-			if !slices.Contains(q.FolderUIDs, folderUid) {
-				q.FolderUIDs = append(q.FolderUIDs, folderUid)
+			// sharedwithme is virtual and never exists in the search index
+			if folderUid == folder.SharedWithMeFolderUID {
+				continue
+			}
+			if !slices.Contains(realFolderUIDs, folderUid) {
+				realFolderUIDs = append(realFolderUIDs, folderUid)
 			}
 		}
 	}
 
-	children, err := s.unifiedStore.GetChildren(ctx, *q)
-	if err != nil {
-		return nil, err
+	var children []*folder.FolderReference
+	var err error
+	// Only sharedwithme scopes and no wildcard: skip the search (an empty FolderUIDs
+	// filter would return every root folder). Otherwise query with real UIDs or nil for wildcard.
+	onlySharedWithMe := !hasWildcard && len(realFolderUIDs) == 0 && len(folderPermissions) > 0
+	if !onlySharedWithMe {
+		if hasWildcard {
+			q.FolderUIDs = nil
+		} else {
+			q.FolderUIDs = realFolderUIDs
+		}
+		children, err = s.unifiedStore.GetChildren(ctx, *q)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	// add "shared with me" folder on the 1st page
-	if (q.Page == 0 || q.Page == 1) && len(q.FolderUIDs) != 0 {
+	// add "shared with me" folder on the 1st page for non-wildcard users
+	if (q.Page == 0 || q.Page == 1) && !hasWildcard && len(folderPermissions) > 0 {
 		children = append([]*folder.FolderReference{folder.SharedWithMeFolder.ToFolderReference()}, children...)
 	}
 

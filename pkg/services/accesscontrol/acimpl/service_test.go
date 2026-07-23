@@ -1512,3 +1512,26 @@ func countDBRows(t testing.TB, ctx context.Context, store db.DB, table, where st
 	}))
 	return count
 }
+
+func TestService_ClearBasicRoleAndTeamPermissionCache(t *testing.T) {
+	s := &Service{cache: localcache.ProvideService()}
+	const orgID int64 = 1
+
+	basicKey := accesscontrol.GetBasicRolePermissionCacheKey("Editor", orgID)
+	s.cache.Set(basicKey, []accesscontrol.Permission{{Action: "folders:read", Scope: "folders:uid:old"}}, time.Minute)
+	_, ok := s.cache.Get(basicKey)
+	require.True(t, ok)
+
+	s.ClearBasicRolePermissionCache("Editor", orgID)
+	_, ok = s.cache.Get(basicKey)
+	require.False(t, ok, "basic-role cache should be cleared")
+
+	teamKey := accesscontrol.GetTeamPermissionCacheKey(7, orgID)
+	s.cache.Set(teamKey, []accesscontrol.Permission{{Action: "folders:read", Scope: "folders:uid:team"}}, time.Minute)
+	_, ok = s.cache.Get(teamKey)
+	require.True(t, ok)
+
+	s.ClearTeamPermissionCache(7, orgID)
+	_, ok = s.cache.Get(teamKey)
+	require.False(t, ok, "team cache should be cleared")
+}
