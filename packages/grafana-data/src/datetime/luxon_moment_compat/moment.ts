@@ -460,15 +460,6 @@ function toRelativeString(
   return stripRelativeAffixes(relative);
 }
 
-function makeAccessor(get: () => number, set: (value: number) => MomentLike): UnitAccessor {
-  function accessor(): number;
-  function accessor(value: number): MomentLike;
-  function accessor(value?: number): number | MomentLike {
-    return value == null ? get() : set(value);
-  }
-  return accessor;
-}
-
 function toMomentDay(weekday: number): number {
   return weekday % 7;
 }
@@ -624,311 +615,317 @@ function weekdayNames(locale: string): string[] {
   return Array.from({ length: 7 }, (_, i) => dateFmt.format(new Date(Date.UTC(2020, 5, 7 + i))));
 }
 
-function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?: ParseOptions): MomentLike {
-  let dt = normalizeInput(input, options, parseOptions);
+// millis of `dt` and `other`, truncated to `unit` when given, for comparisons
+function comparableMillis(dt: DateTime, other: MomentInput, unit?: DateTimeUnit): [number, number] {
+  const b = normalizeInput(other);
 
-  const setDt = (next: DateTime): MomentLike => {
-    dt = next;
-    return api;
-  };
-
-  function setZone(): string | undefined;
-  function setZone(zone: string, keepLocalTime?: boolean): MomentLike;
-  function setZone(zone?: string, keepLocalTime = false): string | undefined | MomentLike {
-    if (zone == null) {
-      return dt.zoneName ?? undefined;
-    }
-
-    return setDt(dt.setZone(zone, { keepLocalTime }));
+  if (unit) {
+    return [dt.startOf(unit).toMillis(), b.startOf(unit).toMillis()];
   }
 
-  // each accessor is shared by every moment spelling of the unit: the plural aliases
-  // (e.g. `minutes()` === `minute()`), plus day/weekday and week/isoWeek synonyms
-  const yearAccessor = makeAccessor(
-    () => dt.year,
-    (value) => setDt(dt.set({ year: value }))
-  );
+  return [dt.toMillis(), b.toMillis()];
+}
 
-  // moment months are 0-based
-  const monthAccessor = makeAccessor(
-    () => dt.month - 1,
-    (value) => setDt(dt.set({ month: value + 1 }))
-  );
+function startOfLocaleWeek(dt: DateTime): DateTime {
+  const weekStart = getLocaleFirstDayOfWeek(dt.locale || currentLocale);
+  const currentDay = toMomentDay(dt.weekday);
+  const daysSinceWeekStart = (currentDay - weekStart + 7) % 7;
+  return dt.startOf('day').minus({ days: daysSinceWeekStart });
+}
 
-  const dateAccessor = makeAccessor(
-    () => dt.day,
-    (value) => setDt(dt.set({ day: value }))
-  );
+function endOfLocaleWeek(dt: DateTime): DateTime {
+  return startOfLocaleWeek(dt).plus({ days: 6 }).endOf('day');
+}
 
-  // moment days are 0-based starting on Sunday
-  const dayAccessor = makeAccessor(
-    () => toMomentDay(dt.weekday),
-    (value) => setDt(dt.plus({ days: value - toMomentDay(dt.weekday) }))
-  );
+// a class with a shared prototype rather than a per-call object literal: instances are created on
+// every formatted value in hot paths, and the literal version allocated ~60 closures per instance
+// where the class allocates one object holding a single field. Real moment is also prototype-based,
+// so instance shape (methods not own-enumerable) matches what callers saw before the migration.
+class MomentCompat implements MomentLike {
+  declare _isAMomentObject: boolean;
 
-  const weekAccessor = makeAccessor(
-    () => dt.weekNumber,
-    (value) => setDt(dt.plus({ weeks: value - dt.weekNumber }))
-  );
+  // plural/synonym unit spellings share the canonical unit's prototype method (assigned below the
+  // class): moment treats e.g. minutes() as minute(), and week()/isoWeek() as synonyms.
+  declare years: UnitAccessor;
+  declare months: UnitAccessor;
+  declare dates: UnitAccessor;
+  declare days: UnitAccessor;
+  declare weekday: UnitAccessor;
+  declare weeks: UnitAccessor;
+  declare isoWeek: UnitAccessor;
+  declare isoWeeks: UnitAccessor;
+  declare hours: UnitAccessor;
+  declare minutes: UnitAccessor;
+  declare seconds: UnitAccessor;
+  declare milliseconds: UnitAccessor;
 
-  const hourAccessor = makeAccessor(
-    () => dt.hour,
-    (value) => setDt(dt.set({ hour: value }))
-  );
+  private _dt: DateTime;
 
-  const minuteAccessor = makeAccessor(
-    () => dt.minute,
-    (value) => setDt(dt.set({ minute: value }))
-  );
+  constructor(dt: DateTime) {
+    this._dt = dt;
+  }
 
-  const secondAccessor = makeAccessor(
-    () => dt.second,
-    (value) => setDt(dt.set({ second: value }))
-  );
+  private _setDt(next: DateTime): MomentLike {
+    this._dt = next;
+    return this;
+  }
 
-  const millisecondAccessor = makeAccessor(
-    () => dt.millisecond,
-    (value) => setDt(dt.set({ millisecond: value }))
-  );
+  add(value: number, unit?: MomentUnit | string): MomentLike {
+    return this._setDt(this._dt.plus(normalizeDurationInput(value, unit)));
+  }
 
-  const fieldAccessors = {
-    year: yearAccessor,
-    month: monthAccessor,
-    date: dateAccessor,
-    week: weekAccessor,
-    hour: hourAccessor,
-    minute: minuteAccessor,
-    second: secondAccessor,
-    millisecond: millisecondAccessor,
-  } as const;
+  subtract(value: number, unit?: MomentUnit | string): MomentLike {
+    return this._setDt(this._dt.minus(normalizeDurationInput(value, unit)));
+  }
 
-  const getLocaleWeekStart = () => getLocaleFirstDayOfWeek(dt.locale || currentLocale);
-
-  // millis of this instant and `other`, truncated to `unit` when given, for comparisons
-  const comparableMillis = (other: MomentInput, unit?: DateTimeUnit): [number, number] => {
-    const b = normalizeInput(other);
-
-    if (unit) {
-      return [dt.startOf(unit).toMillis(), b.startOf(unit).toMillis()];
+  startOf(unit: StartEndUnit): MomentLike {
+    if (unit === 'week' || unit === 'w') {
+      return this._setDt(startOfLocaleWeek(this._dt));
     }
 
-    return [dt.toMillis(), b.toMillis()];
-  };
+    return this._setDt(this._dt.startOf(normalizeStartEndUnit(unit)));
+  }
 
-  const startOfLocaleWeek = () => {
-    const weekStart = getLocaleWeekStart();
-    const currentDay = toMomentDay(dt.weekday);
-    const daysSinceWeekStart = (currentDay - weekStart + 7) % 7;
-    return dt.startOf('day').minus({ days: daysSinceWeekStart });
-  };
+  endOf(unit: StartEndUnit): MomentLike {
+    if (unit === 'week' || unit === 'w') {
+      return this._setDt(endOfLocaleWeek(this._dt));
+    }
 
-  const endOfLocaleWeek = () => startOfLocaleWeek().plus({ days: 6 }).endOf('day');
+    return this._setDt(this._dt.endOf(normalizeStartEndUnit(unit)));
+  }
 
-  const api: MomentLike = {
-    _isAMomentObject: true,
+  set(unit: UnitGetter, value: number): MomentLike {
+    if (value == null) {
+      return this;
+    }
 
-    add(value, unit) {
-      const duration = normalizeDurationInput(value, unit);
-      return setDt(dt.plus(duration));
-    },
+    if (unit === 'month' || unit === 'months' || unit === 'M') {
+      return this._setDt(this._dt.set({ month: value + 1 }));
+    }
+    if (unit === 'date') {
+      return this._setDt(this._dt.set({ day: value }));
+    }
 
-    subtract(value, unit) {
-      const duration = normalizeDurationInput(value, unit);
-      return setDt(dt.minus(duration));
-    },
+    return this._setDt(this._dt.set({ [normalizeUnit(unit)]: value }));
+  }
 
-    startOf(unit) {
-      if (unit === 'week' || unit === 'w') {
-        return setDt(startOfLocaleWeek());
-      }
+  get(unit: UnitGetter): number {
+    const field = FIELD_BY_UNIT[unit];
 
-      return setDt(dt.startOf(normalizeStartEndUnit(unit)));
-    },
+    if (field === undefined) {
+      return Number.NaN;
+    }
 
-    endOf(unit) {
-      if (unit === 'week' || unit === 'w') {
-        return setDt(endOfLocaleWeek());
-      }
+    // quarter has no moment-style accessor on the shim
+    return field === 'quarter' ? this._dt.quarter : this[field]();
+  }
 
-      return setDt(dt.endOf(normalizeStartEndUnit(unit)));
-    },
+  locale(value: string): MomentLike {
+    return this._setDt(this._dt.setLocale(normalizeLocale(value) ?? DEFAULT_LOCALE));
+  }
 
-    set(unit, value) {
-      if (value == null) {
-        return api;
-      }
+  utc(keepLocalTime = false): MomentLike {
+    return this._setDt(this._dt.setZone('utc', { keepLocalTime }));
+  }
 
-      if (unit === 'month' || unit === 'months' || unit === 'M') {
-        return setDt(dt.set({ month: value + 1 }));
-      }
-      if (unit === 'date') {
-        return setDt(dt.set({ day: value }));
-      }
+  local(): MomentLike {
+    return this._setDt(this._dt.setZone('local'));
+  }
 
-      return setDt(dt.set({ [normalizeUnit(unit)]: value }));
-    },
+  tz(): string | undefined;
+  tz(zone: string, keepLocalTime?: boolean): MomentLike;
+  tz(zone?: string, keepLocalTime = false): string | undefined | MomentLike {
+    if (zone == null) {
+      return this._dt.zoneName ?? undefined;
+    }
 
-    get(unit) {
-      const field = FIELD_BY_UNIT[unit];
+    return this._setDt(this._dt.setZone(zone, { keepLocalTime }));
+  }
 
-      if (field === undefined) {
-        return Number.NaN;
-      }
+  clone(): MomentLike {
+    return new MomentCompat(this._dt);
+  }
 
-      // quarter has no moment-style accessor on the shim
-      return field === 'quarter' ? dt.quarter : fieldAccessors[field]();
-    },
+  year(): number;
+  year(value: number): MomentLike;
+  year(value?: number): number | MomentLike {
+    return value == null ? this._dt.year : this._setDt(this._dt.set({ year: value }));
+  }
 
-    locale(value) {
-      return setDt(dt.setLocale(normalizeLocale(value) ?? DEFAULT_LOCALE));
-    },
+  // moment months are 0-based
+  month(): number;
+  month(value: number): MomentLike;
+  month(value?: number): number | MomentLike {
+    return value == null ? this._dt.month - 1 : this._setDt(this._dt.set({ month: value + 1 }));
+  }
 
-    utc(keepLocalTime = false) {
-      return setDt(dt.setZone('utc', { keepLocalTime }));
-    },
+  date(): number;
+  date(value: number): MomentLike;
+  date(value?: number): number | MomentLike {
+    return value == null ? this._dt.day : this._setDt(this._dt.set({ day: value }));
+  }
 
-    local() {
-      return setDt(dt.setZone('local'));
-    },
+  // moment days are 0-based starting on Sunday
+  day(): number;
+  day(value: number): MomentLike;
+  day(value?: number): number | MomentLike {
+    return value == null
+      ? toMomentDay(this._dt.weekday)
+      : this._setDt(this._dt.plus({ days: value - toMomentDay(this._dt.weekday) }));
+  }
 
-    tz: setZone,
+  isoWeekday(): number;
+  isoWeekday(value: number): MomentLike;
+  isoWeekday(value?: number): number | MomentLike {
+    return value == null ? this._dt.weekday : this._setDt(this._dt.plus({ days: value - this._dt.weekday }));
+  }
 
-    clone() {
-      return makeMoment(dt);
-    },
+  week(): number;
+  week(value: number): MomentLike;
+  week(value?: number): number | MomentLike {
+    return value == null
+      ? this._dt.weekNumber
+      : this._setDt(this._dt.plus({ weeks: value - this._dt.weekNumber }));
+  }
 
-    year: yearAccessor,
-    years: yearAccessor,
+  hour(): number;
+  hour(value: number): MomentLike;
+  hour(value?: number): number | MomentLike {
+    return value == null ? this._dt.hour : this._setDt(this._dt.set({ hour: value }));
+  }
 
-    month: monthAccessor,
-    months: monthAccessor,
+  minute(): number;
+  minute(value: number): MomentLike;
+  minute(value?: number): number | MomentLike {
+    return value == null ? this._dt.minute : this._setDt(this._dt.set({ minute: value }));
+  }
 
-    date: dateAccessor,
-    dates: dateAccessor,
+  second(): number;
+  second(value: number): MomentLike;
+  second(value?: number): number | MomentLike {
+    return value == null ? this._dt.second : this._setDt(this._dt.set({ second: value }));
+  }
 
-    day: dayAccessor,
-    days: dayAccessor,
+  millisecond(): number;
+  millisecond(value: number): MomentLike;
+  millisecond(value?: number): number | MomentLike {
+    return value == null ? this._dt.millisecond : this._setDt(this._dt.set({ millisecond: value }));
+  }
 
-    weekday: dayAccessor,
+  isValid(): boolean {
+    return this._dt.isValid;
+  }
 
-    isoWeekday: makeAccessor(
-      () => dt.weekday,
-      (value) => setDt(dt.plus({ days: value - dt.weekday }))
-    ),
+  isBefore(other: MomentInput, unit?: DateTimeUnit): boolean {
+    const [a, b] = comparableMillis(this._dt, other, unit);
+    return a < b;
+  }
 
-    week: weekAccessor,
-    weeks: weekAccessor,
+  isAfter(other: MomentInput, unit?: DateTimeUnit): boolean {
+    const [a, b] = comparableMillis(this._dt, other, unit);
+    return a > b;
+  }
 
-    isoWeek: weekAccessor,
-    isoWeeks: weekAccessor,
+  // like moment, bounds are not reordered (a reversed range is simply never matched) and the
+  // unit truncates the endpoints as well as this instant
+  isBetween(a: MomentInput, b: MomentInput, unit?: DateTimeUnit, inclusivity = '()'): boolean {
+    const [value, left] = comparableMillis(this._dt, a, unit);
+    const [, right] = comparableMillis(this._dt, b, unit);
 
-    hour: hourAccessor,
-    hours: hourAccessor,
+    const afterStart = inclusivity.startsWith('[') ? value >= left : value > left;
+    const beforeEnd = inclusivity.endsWith(']') ? value <= right : value < right;
 
-    minute: minuteAccessor,
-    minutes: minuteAccessor,
+    return afterStart && beforeEnd;
+  }
 
-    second: secondAccessor,
-    seconds: secondAccessor,
+  isSame(other: MomentInput, unit?: DateTimeUnit): boolean {
+    const [a, b] = comparableMillis(this._dt, other, unit);
+    return a === b;
+  }
 
-    millisecond: millisecondAccessor,
-    milliseconds: millisecondAccessor,
+  diff(other: MomentInput, unit: DurationUnit = 'milliseconds', asFloat = false): number {
+    const b = normalizeInput(other);
+    const value = this._dt.diff(b, unit).as(unit);
+    // moment truncates toward zero (returning 0, never -0) unless asFloat is passed
+    return asFloat ? value : Math.trunc(value) || 0;
+  }
 
-    isValid() {
-      return dt.isValid;
-    },
+  toDate(): Date {
+    return this._dt.toJSDate();
+  }
 
-    isBefore(other, unit) {
-      const [a, b] = comparableMillis(other, unit);
-      return a < b;
-    },
+  toISOString(keepOffset = false): string | null {
+    return !keepOffset ? this._dt.toUTC().toISO() : this._dt.toISO();
+  }
 
-    isAfter(other, unit) {
-      const [a, b] = comparableMillis(other, unit);
-      return a > b;
-    },
+  toJSON(): string | null {
+    return this._dt.toJSON();
+  }
 
-    // like moment, bounds are not reordered (a reversed range is simply never matched) and the
-    // unit truncates the endpoints as well as this instant
-    isBetween(a, b, unit, inclusivity = '()') {
-      const [value, left] = comparableMillis(a, unit);
-      const [, right] = comparableMillis(b, unit);
+  toString(): string {
+    if (!this._dt.isValid) {
+      return 'Invalid date';
+    }
 
-      const afterStart = inclusivity.startsWith('[') ? value >= left : value > left;
-      const beforeEnd = inclusivity.endsWith(']') ? value <= right : value < right;
+    return this._dt.setLocale('en').toFormat("ccc MMM dd yyyy HH:mm:ss 'GMT'ZZZ");
+  }
 
-      return afterStart && beforeEnd;
-    },
+  valueOf(): number {
+    return this._dt.toMillis();
+  }
 
-    isSame(other, unit) {
-      const [a, b] = comparableMillis(other, unit);
-      return a === b;
-    },
+  unix(): number {
+    return Math.floor(this._dt.toSeconds());
+  }
 
-    diff(other, unit = 'milliseconds', asFloat = false) {
-      const b = normalizeInput(other);
-      const value = dt.diff(b, unit).as(unit);
-      // moment truncates toward zero (returning 0, never -0) unless asFloat is passed
-      return asFloat ? value : Math.trunc(value) || 0;
-    },
+  toLocaleString(): string {
+    return this._dt.toLocaleString(DateTime.DATETIME_MED);
+  }
 
-    toDate() {
-      return dt.toJSDate();
-    },
+  utcOffset(): number {
+    return this._dt.offset;
+  }
 
-    toISOString(keepOffset = false) {
-      return !keepOffset ? dt.toUTC().toISO() : dt.toISO();
-    },
+  format(template?: FormatArg): string {
+    if (template == null) {
+      return this._dt.toISO({ precision: 'second' }) ?? '';
+    }
+    return formatWithOrdinal(this._dt, template);
+  }
 
-    toJSON() {
-      return dt.toJSON();
-    },
+  fromNow(withoutSuffix = false): string {
+    return toRelativeString(this._dt, undefined, this._dt.locale, withoutSuffix);
+  }
 
-    toString() {
-      if (!dt.isValid) {
-        return 'Invalid date';
-      }
+  toNow(withoutSuffix = false): string {
+    return toRelativeString(DateTime.now(), this._dt, this._dt.locale, withoutSuffix);
+  }
 
-      return dt.setLocale('en').toFormat("ccc MMM dd yyyy HH:mm:ss 'GMT'ZZZ");
-    },
+  from(input: MomentInput, withoutSuffix = false): string {
+    return toRelativeString(this._dt, normalizeInput(input), this._dt.locale, withoutSuffix);
+  }
+}
 
-    valueOf() {
-      return dt.toMillis();
-    },
+MomentCompat.prototype._isAMomentObject = true;
 
-    unix() {
-      return Math.floor(dt.toSeconds());
-    },
+const proto = MomentCompat.prototype;
+proto.years = proto.year;
+proto.months = proto.month;
+proto.dates = proto.date;
+proto.days = proto.day;
+// moment's weekday() is locale-aware; the shim aliases it to Sunday-based day(), matching the
+// behavior this shim has always had (see the migration notes)
+proto.weekday = proto.day;
+proto.weeks = proto.week;
+proto.isoWeek = proto.week;
+proto.isoWeeks = proto.week;
+proto.hours = proto.hour;
+proto.minutes = proto.minute;
+proto.seconds = proto.second;
+proto.milliseconds = proto.millisecond;
 
-    toLocaleString() {
-      return dt.toLocaleString(DateTime.DATETIME_MED);
-    },
-
-    utcOffset() {
-      return dt.offset;
-    },
-
-    format(template) {
-      if (template == null) {
-        return dt.toISO({ precision: 'second' }) ?? '';
-      }
-      return formatWithOrdinal(dt, template);
-    },
-
-    fromNow(withoutSuffix = false) {
-      return toRelativeString(dt, undefined, dt.locale, withoutSuffix);
-    },
-
-    toNow(withoutSuffix = false) {
-      return toRelativeString(DateTime.now(), dt, dt.locale, withoutSuffix);
-    },
-
-    from(input, withoutSuffix = false) {
-      return toRelativeString(dt, normalizeInput(input), dt.locale, withoutSuffix);
-    },
-  };
-
-  return api;
+function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?: ParseOptions): MomentLike {
+  return new MomentCompat(normalizeInput(input, options, parseOptions));
 }
 
 function makeDuration(input?: MomentDurationInput, unit?: MomentUnit): MomentDurationLike {
