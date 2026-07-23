@@ -35,16 +35,14 @@ if [ "$1" -eq 1 ] ; then
   fi
 
   # Set user permissions on /var/log/grafana, /var/lib/grafana
-  mkdir -p /var/log/grafana /var/lib/grafana
+  mkdir -p /var/log/grafana "$DATA_DIR"
   # Move plugins-bundled into place - see https://github.com/grafana/grafana/issues/123110
   if [ -d "$GRAFANA_HOME/data/plugins-bundled" ]; then
-    mkdir -p "$DATA_DIR"
     rm -rf "${DATA_DIR:?}/plugins-bundled"
     mv "$GRAFANA_HOME/data/plugins-bundled" "$DATA_DIR"
-    chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" "$DATA_DIR/plugins-bundled"
   fi
-  chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" /var/log/grafana /var/lib/grafana
-  chmod 755 /var/log/grafana /var/lib/grafana
+  chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" /var/log/grafana "$DATA_DIR"
+  chmod 755 /var/log/grafana "$DATA_DIR"
 
   # copy user config files
   if [ ! -f "$CONF_FILE" ]; then
@@ -96,8 +94,8 @@ elif [ "$1" -ge 2 ] ; then
   fi
 
   # Replace bundled plugins with the new version - see https://github.com/grafana/grafana/issues/123110
+  mkdir -p "$DATA_DIR"
   if [ -d "$GRAFANA_HOME/data/plugins-bundled" ]; then
-    mkdir -p "$DATA_DIR"
     rm -rf "${DATA_DIR:?}/plugins-bundled"
     mv "$GRAFANA_HOME/data/plugins-bundled" "$DATA_DIR"
     chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" "$DATA_DIR/plugins-bundled"

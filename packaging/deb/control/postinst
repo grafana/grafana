@@ -32,7 +32,7 @@ if [ "$1" = configure ]; then
   fi
 
   # Set user permissions on /var/log/grafana, /var/lib/grafana
-  mkdir -p /var/log/grafana /var/lib/grafana
+  mkdir -p /var/log/grafana "$DATA_DIR"
   # Move plugins-bundled into place, see https://github.com/grafana/grafana/issues/123110
   if [ -d "$GRAFANA_HOME/data/plugins-bundled" ]; then
     if [ "$IS_UPGRADE" = "true" ] && [ "$RESTART_ON_UPGRADE" = "true" ]; then
@@ -40,15 +40,14 @@ if [ "$1" = configure ]; then
         systemctl stop grafana-server || true
       fi
     fi
-    mkdir -p "$DATA_DIR"
     rm -rf "${DATA_DIR:?}/plugins-bundled"
     mv "$GRAFANA_HOME/data/plugins-bundled" "$DATA_DIR"
     chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" "$DATA_DIR/plugins-bundled"
   fi
 
   if [ "$IS_UPGRADE" != "true" ]; then
-    chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" /var/log/grafana /var/lib/grafana
-    chmod 755 /var/log/grafana /var/lib/grafana
+    chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" /var/log/grafana "$DATA_DIR"
+    chmod 755 /var/log/grafana "$DATA_DIR"
   fi
 
   # copy user config files
