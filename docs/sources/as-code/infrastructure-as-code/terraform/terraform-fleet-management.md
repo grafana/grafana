@@ -269,7 +269,7 @@ This Terraform configuration creates an Alloy configuration file with the [`remo
 1. Replace the following field values:
    - `<ALLOY_CONFIG_PATH>` with the path the Alloy configuration file should be written to, for example `config.alloy`
 
-### OpAMP Supervisor
+### OpenTelemetry Collector
 
 This Terraform configuration creates a Supervisor configuration file that connects the OpenTelemetry Collector to Fleet Management over [OpAMP](https://github.com/open-telemetry/opamp-spec), using [`local_file` (Resource)](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file).
 
@@ -335,24 +335,24 @@ You must complete the [Run the collector](#run-the-collector) step for the colle
    resource "grafana_fleet_management_collector" "fm_collector_alloy" {
      provider = grafana.fm
 
-     id = "prod_collector"
+     id = "prod_alloy_collector"
+     collector_type = "ALLOY"
      remote_attributes = {
        "env" = "PROD"
      }
-     enabled        = true
-     collector_type = "ALLOY"
+     enabled = true
    }
    ```
 
 ### OpenTelemetry Collector
 
-1. Create a file named `fm-collector-otel.tf` and add the following code block, replacing `<COLLECTOR_ID>` with a universally unique identifier (UUID):
+1. Create a file named `fm-collector-otel.tf` and add the following code block:
 
    ```terraform
    resource "grafana_fleet_management_collector" "fm_collector_otel" {
      provider = grafana.fm
 
-     id = "<COLLECTOR_ID>"
+     id = "prod_otel_collector"
      collector_type = "OTEL"
      remote_attributes = {
        "env" = "PROD"
@@ -363,8 +363,9 @@ You must complete the [Run the collector](#run-the-collector) step for the colle
 
 ## Create a Fleet Management pipeline
 
-The following Terraform configurations create pipelines with matchers for the collectors declared in the previous step, using [`grafana_fleet_management_pipeline` (Resource)](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/fleet_management_pipeline).
+The following Terraform configurations create pipelines with [matchers](https://grafana.com/docs/grafana-cloud/send-data/fleet-management/introduction/glossary/#attribute-matching) for the collectors declared in the previous step, using [`grafana_fleet_management_pipeline` (Resource)](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/fleet_management_pipeline).
 The `config_type` argument tells Fleet Management how to parse and validate the `contents` argument: `ALLOY` (the default) expects Alloy configuration syntax, and `OTEL` expects OpenTelemetry Collector YAML.
+
 Fleet Management delivers a pipeline only to collectors of the matching `collector_type`, so an `ALLOY` pipeline and an `OTEL` pipeline can safely share the same matchers.
 
 ### Alloy profiling pipeline
@@ -436,10 +437,10 @@ This pipeline profiles Alloy itself and writes the profiles to [Grafana Cloud Pr
      profiles_url = data.grafana_cloud_stack.stack.profiles_url
    }
 
-   resource "grafana_fleet_management_pipeline" "pipeline" {
+   resource "grafana_fleet_management_pipeline" "profiles" {
      provider = grafana.fm
 
-     name        = "profiling"
+     name        = "alloy_profiling"
      config_type = "ALLOY"
      contents = templatefile(
        "profiling.alloy.tftpl",
