@@ -83,6 +83,15 @@ type RoleRegistry interface {
 	RegisterFixedRoles(ctx context.Context) error
 }
 
+// RoleSourceReporter lets declare-only role sources (e.g. the enterprise IAM
+// roles syncer) report that they failed to declare their roles for this run.
+// While any source is incomplete, seeding will not delete absent fixed roles,
+// since deleting a role also permanently deletes its user and team
+// assignments.
+type RoleSourceReporter interface {
+	ReportIncompleteRoleSource(source string)
+}
+
 type Options struct {
 	ReloadCache bool
 }
