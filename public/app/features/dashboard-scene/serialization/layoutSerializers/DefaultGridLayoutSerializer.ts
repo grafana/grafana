@@ -55,7 +55,7 @@ function getGridLayoutItems(body: DefaultGridLayoutManager, isSnapshot?: boolean
       if (child.state.variableName) {
         items = items.concat(repeaterToLayoutItems(child, isSnapshot));
       } else {
-        items.push(gridItemToGridLayoutItemKind(child));
+        items.push(gridItemToGridLayoutItemKind(child, undefined, isSnapshot));
       }
     }
   }
@@ -63,7 +63,11 @@ function getGridLayoutItems(body: DefaultGridLayoutManager, isSnapshot?: boolean
   return items;
 }
 
-export function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, yOverride?: number): GridLayoutItemKind {
+export function gridItemToGridLayoutItemKind(
+  gridItem: DashboardGridItem,
+  yOverride?: number,
+  isSnapshot = false
+): GridLayoutItemKind {
   let elementGridItem: GridLayoutItemKind | undefined;
   let x = 0,
     y = 0,
@@ -83,8 +87,11 @@ export function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, yOverr
   width = gridItem_.state.width ?? 0;
   const repeatVar = gridItem_.state.variableName;
 
-  // For serialization we should retrieve the original element key
-  let elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(gridItem_.state.body);
+  // For serialization we should retrieve the original element key. In snapshot mode we must also
+  // disambiguate panels that live inside a repeated row/tab clone (they reuse the source keys).
+  let elementKey = isSnapshot
+    ? dashboardSceneGraph.getSnapshotElementIdentifierForVizPanel(gridItem_.state.body)
+    : dashboardSceneGraph.getElementIdentifierForVizPanel(gridItem_.state.body);
 
   elementGridItem = {
     kind: 'GridLayoutItem',
@@ -137,9 +144,12 @@ function repeaterToLayoutItems(repeater: DashboardGridItem, isSnapshot = false):
 
     const vizPanels = [repeater.state.body, ...(repeater.state.repeatedPanels ?? [])];
 
-    // If repeats haven't been processed yet, fall back to serializing the source panel only.
+    // If repeats haven't been processed yet, fall back to serializing the source panel only. Pass
+    // isSnapshot so the element reference is resolved with the same (clone-row-aware) key that
+    // getElements uses — otherwise a single-value repeater inside a repeated row clone would reference
+    // a non-prefixed key that isn't present in `elements`.
     if (vizPanels.length === 1) {
-      return [gridItemToGridLayoutItemKind(repeater)];
+      return [gridItemToGridLayoutItemKind(repeater, undefined, isSnapshot)];
     }
 
     if (vizPanels.length > 1) {
@@ -161,10 +171,7 @@ function repeaterToLayoutItems(repeater: DashboardGridItem, isSnapshot = false):
           throw new Error('Snapshot serialization expected repeat clone to have a key');
         }
 
-        const elementName =
-          panel.state.repeatSourceKey && panel.state.key
-            ? panel.state.key
-            : dashboardSceneGraph.getElementIdentifierForVizPanel(repeater.state.body);
+        const elementName = dashboardSceneGraph.getSnapshotElementIdentifierForVizPanel(panel);
 
         const result: GridLayoutItemKind = {
           kind: 'GridLayoutItem',

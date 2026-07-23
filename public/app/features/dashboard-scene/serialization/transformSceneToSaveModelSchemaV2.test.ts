@@ -22,6 +22,7 @@ import {
   SceneTimePicker,
   SceneTimeRange,
   SceneVariableSet,
+  LocalValueVariable,
   TextBoxVariable,
   VizPanel,
   type SceneDataQuery,
@@ -82,13 +83,32 @@ import {
 // Mock dependencies
 jest.mock('../utils/dashboardSceneGraph', () => {
   const original = jest.requireActual('../utils/dashboardSceneGraph');
+  const getElementIdentifierForVizPanel = jest.fn().mockImplementation((panel) => {
+    // Return the panel key if it exists, otherwise use panel-1 as default
+    return panel?.state?.key || 'panel-1';
+  });
+  // Walk up from a panel to the nearest enclosing repeat-clone section key.
+  const getEnclosingRepeatCloneKey = jest.fn().mockImplementation((panel) => {
+    let current = panel?.parent;
+    while (current) {
+      if (current.state?.repeatSourceKey && current.state?.key) {
+        return current.state.key;
+      }
+      current = current.parent;
+    }
+    return undefined;
+  });
   return {
     ...original,
     dashboardSceneGraph: {
       ...original.dashboardSceneGraph,
-      getElementIdentifierForVizPanel: jest.fn().mockImplementation((panel) => {
-        // Return the panel key if it exists, otherwise use panel-1 as default
-        return panel?.state?.key || 'panel-1';
+      getElementIdentifierForVizPanel,
+      getEnclosingRepeatCloneKey,
+      getSnapshotElementIdentifierForVizPanel: jest.fn().mockImplementation((panel) => {
+        const base =
+          panel?.state?.repeatSourceKey && panel?.state?.key ? panel.state.key : getElementIdentifierForVizPanel(panel);
+        const enclosingCloneKey = getEnclosingRepeatCloneKey(panel);
+        return enclosingCloneKey ? `${enclosingCloneKey}-${base}` : base;
       }),
       getPanelLinks: jest.fn().mockImplementation(() => {
         return new VizPanelLinks({
@@ -1546,6 +1566,242 @@ describe('snapshot mode: repeated panels', () => {
     // Snapshot mode must include repeat clones in `elements`.
     expect(result.elements[cloneKey]).toBeDefined();
     expect(result.elements[cloneKey].spec.id).toBe(djb2Hash(cloneKey));
+  });
+});
+
+describe('snapshot mode: repeated rows', () => {
+  it('should materialize repeated row clones into concrete rows with unique, baked panels', () => {
+    // A repeated row clone reuses the source row's inner panel keys, so the source and clone both
+    // reference a panel keyed `panel-1`. Snapshot serialization must disambiguate them.
+    const buildRow = (rowKey: string, panelKey: string, serverValue: string, repeatSourceKey?: string) =>
+      new RowItem({
+        key: rowKey,
+        title: 'Row for server $server',
+        repeatByVariable: 'server',
+        repeatSourceKey,
+        $variables: new SceneVariableSet({
+          variables: [new LocalValueVariable({ name: 'server', value: serverValue, text: serverValue })],
+        }),
+        layout: new DefaultGridLayoutManager({
+          grid: new SceneGridLayout({
+            children: [
+              new DashboardGridItem({
+                key: `grid-item-${rowKey}`,
+                body: new VizPanel({ key: panelKey, pluginId: 'timeseries', title: 'server = $server' }),
+              }),
+            ],
+          }),
+        }),
+      });
+
+    const sourceRow = buildRow('row-1', 'panel-1', 'A');
+    const cloneRow = buildRow('row-1-clone-1', 'panel-1', 'B', 'row-1');
+    sourceRow.setState({ repeatedRows: [cloneRow] });
+
+    const scene = setupDashboardScene(getMinimalSceneState(new RowsLayoutManager({ rows: [sourceRow] })));
+
+    const result = transformSceneToSaveModelSchemaV2(scene, true);
+    const rowsLayout = result.layout.spec as RowsLayoutSpec;
+
+    // Both the source row and its clone are materialized as concrete rows.
+    expect(result.layout.kind).toBe('RowsLayout');
+    expect(rowsLayout.rows).toHaveLength(2);
+
+    // Repeat directive must be stripped so the viewer doesn't re-expand (and collapse) the repeat.
+    expect(rowsLayout.rows[0].spec.repeat).toBeUndefined();
+    expect(rowsLayout.rows[1].spec.repeat).toBeUndefined();
+
+    // The title's $server is baked per row (the repeat's local value isn't persisted in the snapshot).
+    expect(rowsLayout.rows[0].spec.title).toBe('Row for server A');
+    expect(rowsLayout.rows[1].spec.title).toBe('Row for server B');
+
+    // The clone row's panel is disambiguated by the enclosing clone key.
+    const sourceGrid = rowsLayout.rows[0].spec.layout.spec as GridLayoutSpec;
+    const cloneGrid = rowsLayout.rows[1].spec.layout.spec as GridLayoutSpec;
+    expect(sourceGrid.items[0].spec.element.name).toBe('panel-1');
+    expect(cloneGrid.items[0].spec.element.name).toBe('row-1-clone-1-panel-1');
+
+    // Both panels exist as distinct elements with distinct ids so their baked data doesn't collide.
+    expect(result.elements['panel-1']).toBeDefined();
+    expect(result.elements['row-1-clone-1-panel-1']).toBeDefined();
+    expect(result.elements['panel-1'].spec.id).not.toBe(result.elements['row-1-clone-1-panel-1'].spec.id);
+  });
+
+  it('should uniquely key panel-repeat clones nested inside a row-repeat clone', () => {
+    // Reproduces the reported "Repeating rows" dashboard: a row repeats on $server and contains a panel
+    // that repeats on $pod. Both the source row and its clone hold a pod repeater whose body/clones reuse
+    // the same keys, so nested clones must be disambiguated by the enclosing row-clone key.
+    const localVar = (name: string, value: string, text: string) =>
+      new SceneVariableSet({ variables: [new LocalValueVariable({ name, value, text })] });
+
+    // pod is a key:value variable (Bob:1, Rob:2) — titles should show the display text, not the value.
+    const buildRow = (rowKey: string, serverValue: string, repeatSourceKey?: string) => {
+      const podBody = new VizPanel({
+        key: 'panel-2',
+        pluginId: 'timeseries',
+        title: 'server = $server, pod = $pod',
+        description: 'srv=$server pod=$pod',
+        $variables: localVar('pod', '1', 'Bob'),
+      });
+      const podClone = podBody.clone({ key: 'panel-2-clone-1', repeatSourceKey: 'panel-2' });
+      podClone.setState({ $variables: localVar('pod', '2', 'Rob') });
+      return new RowItem({
+        key: rowKey,
+        title: 'Row for server $server',
+        repeatByVariable: 'server',
+        repeatSourceKey,
+        $variables: localVar('server', serverValue, serverValue),
+        layout: new DefaultGridLayoutManager({
+          grid: new SceneGridLayout({
+            children: [
+              new DashboardGridItem({
+                key: `grid-item-${rowKey}`,
+                body: podBody,
+                variableName: 'pod',
+                repeatedPanels: [podClone],
+              }),
+            ],
+          }),
+        }),
+      });
+    };
+
+    const sourceRow = buildRow('row-1', 'A', undefined);
+    const cloneRow = buildRow('row-1-clone-1', 'B', 'row-1');
+    sourceRow.setState({ repeatedRows: [cloneRow] });
+
+    const scene = setupDashboardScene(getMinimalSceneState(new RowsLayoutManager({ rows: [sourceRow] })));
+
+    const result = transformSceneToSaveModelSchemaV2(scene, true);
+    const rowsLayout = result.layout.spec as RowsLayoutSpec;
+
+    expect(rowsLayout.rows).toHaveLength(2);
+
+    // Source row expands its pod repeater with the base keys.
+    const sourceGrid = rowsLayout.rows[0].spec.layout.spec as GridLayoutSpec;
+    expect(sourceGrid.items.map((i) => i.spec.element.name)).toEqual(['panel-2', 'panel-2-clone-1']);
+
+    // Clone row expands its pod repeater with keys prefixed by the enclosing row-clone key.
+    const cloneGrid = rowsLayout.rows[1].spec.layout.spec as GridLayoutSpec;
+    expect(cloneGrid.items.map((i) => i.spec.element.name)).toEqual([
+      'row-1-clone-1-panel-2',
+      'row-1-clone-1-panel-2-clone-1',
+    ]);
+
+    // All four panels are distinct elements.
+    for (const name of ['panel-2', 'panel-2-clone-1', 'row-1-clone-1-panel-2', 'row-1-clone-1-panel-2-clone-1']) {
+      expect(result.elements[name]).toBeDefined();
+    }
+    const ids = ['panel-2', 'panel-2-clone-1', 'row-1-clone-1-panel-2', 'row-1-clone-1-panel-2-clone-1'].map(
+      (name) => result.elements[name].spec.id
+    );
+    expect(new Set(ids).size).toBe(4);
+
+    // Panel titles bake both the row's $server and the panel's own $pod per repeat.
+    expect(result.elements['panel-2'].spec.title).toBe('server = A, pod = Bob');
+    expect(result.elements['panel-2-clone-1'].spec.title).toBe('server = A, pod = Rob');
+    expect(result.elements['row-1-clone-1-panel-2'].spec.title).toBe('server = B, pod = Bob');
+    expect(result.elements['row-1-clone-1-panel-2-clone-1'].spec.title).toBe('server = B, pod = Rob');
+
+    // Descriptions are baked with the default (value) format, matching the panel renderer / live
+    // dashboard: the title shows the display text (Bob) but the description shows the value (1).
+    expect(result.elements['panel-2'].spec.description).toBe('srv=A pod=1');
+    expect(result.elements['row-1-clone-1-panel-2'].spec.description).toBe('srv=B pod=1');
+  });
+
+  it('keeps element references resolvable for an unexpanded (single-value) panel repeater inside a row clone', () => {
+    // A panel repeater with no repeatedPanels (single value) hits the fallback path. Its element reference
+    // must still be prefixed with the enclosing row-clone key so it resolves against `elements`.
+    const buildRow = (rowKey: string, repeatSourceKey?: string) =>
+      new RowItem({
+        key: rowKey,
+        title: 'Row $server',
+        repeatByVariable: 'server',
+        repeatSourceKey,
+        layout: new DefaultGridLayoutManager({
+          grid: new SceneGridLayout({
+            children: [
+              new DashboardGridItem({
+                key: `grid-item-${rowKey}`,
+                variableName: 'pod',
+                repeatedPanels: [], // unexpanded → fallback path
+                body: new VizPanel({ key: 'panel-9', pluginId: 'timeseries', title: 'p' }),
+              }),
+            ],
+          }),
+        }),
+      });
+
+    const sourceRow = buildRow('row-1');
+    const cloneRow = buildRow('row-1-clone-1', 'row-1');
+    sourceRow.setState({ repeatedRows: [cloneRow] });
+
+    const scene = setupDashboardScene(getMinimalSceneState(new RowsLayoutManager({ rows: [sourceRow] })));
+    const result = transformSceneToSaveModelSchemaV2(scene, true);
+    const rowsLayout = result.layout.spec as RowsLayoutSpec;
+
+    // Every element referenced by the layout must exist in `elements` (no dangling references).
+    for (const row of rowsLayout.rows) {
+      const grid = row.spec.layout.spec as GridLayoutSpec;
+      for (const item of grid.items) {
+        expect(result.elements[item.spec.element.name]).toBeDefined();
+      }
+    }
+
+    const cloneGrid = rowsLayout.rows[1].spec.layout.spec as GridLayoutSpec;
+    expect(cloneGrid.items[0].spec.element.name).toBe('row-1-clone-1-panel-9');
+  });
+});
+
+describe('snapshot mode: repeated tabs', () => {
+  it('should materialize repeated tab clones into concrete tabs with unique, baked panels', () => {
+    const buildTab = (tabKey: string, panelKey: string, serverValue: string, repeatSourceKey?: string) =>
+      new TabItem({
+        key: tabKey,
+        title: 'Tab for $server',
+        repeatByVariable: 'server',
+        repeatSourceKey,
+        $variables: new SceneVariableSet({
+          variables: [new LocalValueVariable({ name: 'server', value: serverValue, text: serverValue })],
+        }),
+        layout: new DefaultGridLayoutManager({
+          grid: new SceneGridLayout({
+            children: [
+              new DashboardGridItem({
+                key: `grid-item-${tabKey}`,
+                body: new VizPanel({ key: panelKey, pluginId: 'timeseries', title: 'srv $server' }),
+              }),
+            ],
+          }),
+        }),
+      });
+
+    const sourceTab = buildTab('tab-1', 'panel-1', 'A', undefined);
+    const cloneTab = buildTab('tab-1-clone-1', 'panel-1', 'B', 'tab-1');
+    sourceTab.setState({ repeatedTabs: [cloneTab] });
+
+    const scene = setupDashboardScene(getMinimalSceneState(new TabsLayoutManager({ tabs: [sourceTab] })));
+
+    const result = transformSceneToSaveModelSchemaV2(scene, true);
+    const tabsLayout = result.layout.spec as TabsLayoutSpec;
+
+    // Both the source tab and its clone are materialized as concrete tabs, with the repeat stripped.
+    expect(result.layout.kind).toBe('TabsLayout');
+    expect(tabsLayout.tabs).toHaveLength(2);
+    expect(tabsLayout.tabs[0].spec.repeat).toBeUndefined();
+    expect(tabsLayout.tabs[1].spec.repeat).toBeUndefined();
+
+    // Titles are baked per tab.
+    expect(tabsLayout.tabs[0].spec.title).toBe('Tab for A');
+    expect(tabsLayout.tabs[1].spec.title).toBe('Tab for B');
+
+    // Clone tab's panel is disambiguated and both panels are distinct baked elements.
+    const cloneGrid = tabsLayout.tabs[1].spec.layout.spec as GridLayoutSpec;
+    expect(cloneGrid.items[0].spec.element.name).toBe('tab-1-clone-1-panel-1');
+    expect(result.elements['panel-1']).toBeDefined();
+    expect(result.elements['tab-1-clone-1-panel-1']).toBeDefined();
+    expect(result.elements['panel-1'].spec.title).toBe('srv A');
+    expect(result.elements['tab-1-clone-1-panel-1'].spec.title).toBe('srv B');
   });
 });
 

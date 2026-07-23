@@ -3,6 +3,7 @@ import { type Spec as DashboardV2Spec, type TabsLayoutTabKind } from '@grafana/s
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
+import { interpolateSectionTitle } from '../../utils/utils';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
 import { deserializeSectionVariables, serializeSectionVariables } from './sectionVariables';
@@ -14,24 +15,41 @@ export function serializeTabsLayout(layoutManager: TabsLayoutManager, isSnapshot
     spec: {
       tabs: layoutManager.state.tabs
         .filter((tab) => !tab.state.repeatSourceKey)
-        .map((tab) => serializeTab(tab, isSnapshot)),
+        .flatMap((tab) => {
+          // Snapshots cannot re-run the repeat on the viewer (there is no live datasource to query),
+          // so materialize each repeated tab clone into a concrete tab with its own baked data.
+          if (isSnapshot && tab.state.repeatedTabs?.length) {
+            return [tab, ...tab.state.repeatedTabs].map((repeatedTab) => serializeTab(repeatedTab, isSnapshot));
+          }
+          return [serializeTab(tab, isSnapshot)];
+        }),
     },
   };
 }
 
 export function serializeTab(tab: TabItem, isSnapshot?: boolean): TabsLayoutTabKind {
   const layout = tab.state.layout.serialize(isSnapshot);
+
+  // A repeated tab's title typically references the repeat variable. The repeat's local variable value is
+  // not persisted in the snapshot, so bake the interpolated title here (matching the tab renderer) —
+  // otherwise every materialized tab would fall back to the global variable value (e.g. "All").
+  const isRepeatTab = Boolean(tab.state.repeatByVariable || tab.state.repeatSourceKey);
+  const title = isSnapshot && isRepeatTab ? interpolateSectionTitle(tab, tab.state.title) : tab.state.title;
+
   const tabKind: TabsLayoutTabKind = {
     kind: 'TabsLayoutTab',
     spec: {
-      title: tab.state.title,
+      title,
       layout: layout,
-      ...(tab.state.repeatByVariable && {
-        repeat: {
-          mode: 'variable',
-          value: tab.state.repeatByVariable,
-        },
-      }),
+      // In snapshot mode the repeat is already materialized into concrete tabs, so we must not emit the
+      // repeat directive (it would make the viewer re-expand and collapse back to a single tab).
+      ...(tab.state.repeatByVariable &&
+        !isSnapshot && {
+          repeat: {
+            mode: 'variable',
+            value: tab.state.repeatByVariable,
+          },
+        }),
     },
   };
 
