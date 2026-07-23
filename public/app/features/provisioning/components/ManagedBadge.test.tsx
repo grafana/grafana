@@ -236,6 +236,5 @@ describe('ManagedBadge', () => {
       await waitFor(() => expect(screen.getByTestId('icon-exclamation-triangle')).toBeInTheDocument());
       expect(screen.queryByRole('button')).not.toBeInTheDocument();
     });
-
   });
 });
