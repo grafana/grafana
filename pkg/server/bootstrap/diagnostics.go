@@ -3,10 +3,13 @@ package bootstrap
 import (
 	"fmt"
 	"net/http"
+	_ "net/http/pprof" // registers pprof handlers on the default mux served by setupProfiling
 	"os"
 	"runtime"
 	"runtime/trace"
 	"strconv"
+
+	_ "github.com/grafana/pyroscope-go/godeltaprof/http/pprof" // registers godeltaprof pprof handlers
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
