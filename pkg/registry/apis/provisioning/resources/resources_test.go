@@ -79,8 +79,8 @@ func TestWriteResourceFileFromObject_RejectsPathTraversal(t *testing.T) {
 	repo.On("Config").Return(replaceRepoConfig())
 
 	// Folder tree with a folder whose title traverses out of the repository.
-	tree := NewEmptyFolderTree()
-	tree.Add(Folder{ID: "evil", Title: "../../etc", Path: "../../etc"}, "")
+	tree := NewMockFolderTree(t)
+	tree.EXPECT().DirPath("evil", "").Return(Folder{ID: "evil", Title: "../../etc", Path: "../../etc"}, true)
 	folderMgr := NewFolderManager(repo, nil, tree, FolderKind)
 	mgr := NewResourcesManager(repo, folderMgr, nil, NewMockResourceClients(t))
 
