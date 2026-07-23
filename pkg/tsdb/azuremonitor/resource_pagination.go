@@ -10,7 +10,7 @@ import (
 	"strconv"
 )
 
-const MaxArmPages = 50
+const MaxArmPages = 5
 
 type armListResponse struct {
 	Value    []json.RawMessage `json:"value"`
