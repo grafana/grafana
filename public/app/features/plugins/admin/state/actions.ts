@@ -27,8 +27,11 @@ import {
   type LocalPlugin,
   type InstancePlugin,
   type ProvisionedPlugin,
+  type PluginCatalogStoreState,
   PluginStatus,
 } from '../types';
+
+import { selectByIdOrAlias } from './selectors';
 
 // Fetches
 export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, thunkApi) => {
@@ -157,14 +160,14 @@ export const fetchRemotePlugins = createAsyncThunk<RemotePlugin[], void, { rejec
   }
 );
 
-export const fetchDetails = createAsyncThunk<Update<CatalogPlugin, string>, string>(
+export const fetchDetails = createAsyncThunk<Update<CatalogPlugin, string>, string, { state: PluginCatalogStoreState }>(
   `${STATE_PREFIX}/fetchDetails`,
   async (id, thunkApi) => {
     try {
       const details = await getPluginDetails(id);
-
+      const canonicalId = selectByIdOrAlias(thunkApi.getState(), id)?.id ?? id;
       return {
-        id,
+        id: canonicalId,
         changes: { details },
       };
     } catch (e) {
