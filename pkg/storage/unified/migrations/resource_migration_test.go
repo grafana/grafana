@@ -1084,3 +1084,88 @@ func TestIntegrationIsAlreadyOnUnifiedStorage(t *testing.T) {
 		require.Equal(t, 1, fake.migrateCalled, "Migrate should be called when not on unified storage")
 	})
 }
+
+type failingValidator struct {
+	name     string
+	calls    int
+	failWith error
+}
+
+func (f *failingValidator) Name() string { return f.name }
+
+func (f *failingValidator) Validate(context.Context, *xorm.Session, *resourcepb.BulkResponse, log.Logger) error {
+	f.calls++
+	return f.failWith
+}
+
+type recordingRenamer struct {
+	renameCalled int
+	lastTables   []string
+}
+
+func (r *recordingRenamer) Init(*xorm.Session, *migrator.Migrator) {}
+
+func (r *recordingRenamer) RenameTables(_ context.Context, tables []string, _ func(context.Context) error) error {
+	r.renameCalled++
+	r.lastTables = append([]string(nil), tables...)
+	return nil
+}
+
+func (r *recordingRenamer) RecoverRenamedTables([]string) error { return nil }
+
+// TestIntegrationRun_ValidatorSoftFail reproduces #129089: a failed validator must
+// not fail Run (so the success checkpoint can be recorded) and must skip rename.
+func TestIntegrationRun_ValidatorSoftFail(t *testing.T) {
+	env := newTestEnv(t)
+	table := uniqueTable(t, env.engine)
+
+	t.Run("failed validator does not fail Run and skips rename", func(t *testing.T) {
+		gr := dummyGR()
+		def := testDef(gr, []string{table}, []string{table})
+		failing := &failingValidator{name: "boom", failWith: fmt.Errorf("count mismatch")}
+		renamer := &recordingRenamer{}
+		fake := &fakeUnifiedMigrator{migrateResponse: &resourcepb.BulkResponse{}}
+		runner := NewMigrationRunner(fake, noopLocker(), renamer, setting.NewCfg(), def, []Validator{failing})
+
+		runMigration(t, env.engine, runner, migrator.SQLite)
+
+		require.Equal(t, 1, fake.migrateCalled)
+		require.Equal(t, 1, fake.rebuildCalled)
+		require.Equal(t, 1, failing.calls)
+		require.Equal(t, 0, renamer.renameCalled, "rename must be skipped when validation fails")
+		assertNotRenamed(t, env.engine, table)
+	})
+
+	t.Run("passing validators still rename", func(t *testing.T) {
+		table2 := uniqueTable(t, env.engine)
+		gr := dummyGR()
+		def := testDef(gr, []string{table2}, []string{table2})
+		renamer := &recordingRenamer{}
+		fake := &fakeUnifiedMigrator{migrateResponse: &resourcepb.BulkResponse{}}
+		runner := NewMigrationRunner(fake, noopLocker(), renamer, setting.NewCfg(), def, nil)
+
+		runMigration(t, env.engine, runner, migrator.SQLite)
+
+		require.Equal(t, 1, fake.migrateCalled)
+		require.Equal(t, 1, renamer.renameCalled)
+		require.Equal(t, []string{table2}, renamer.lastTables)
+	})
+
+	t.Run("MigrateOrg returns validationFailed without error", func(t *testing.T) {
+		gr := dummyGR()
+		def := testDef(gr, nil, nil)
+		failing := &failingValidator{name: "boom", failWith: fmt.Errorf("folder tree mismatch")}
+		fake := &fakeUnifiedMigrator{migrateResponse: &resourcepb.BulkResponse{}}
+		runner := NewMigrationRunner(fake, noopLocker(), &recordingRenamer{}, setting.NewCfg(), def, []Validator{failing})
+
+		sess := env.engine.NewSession()
+		defer sess.Close()
+		info, err := authlib.ParseNamespace("default")
+		require.NoError(t, err)
+
+		failed, err := runner.MigrateOrg(context.Background(), sess, env.engine, info, RunOptions{DriverName: migrator.SQLite})
+		require.NoError(t, err)
+		require.True(t, failed)
+	})
+}
+
