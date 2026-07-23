@@ -20,7 +20,8 @@ import {
 import { convertSpecToWireFormat } from 'app/features/dashboard-scene/serialization/transformationCompat';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { type DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { buildSourceLink, removeExistingSourceLinks } from 'app/features/provisioning/utils/sourceLink';
+import { isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
+import { removeExistingSourceLinks } from 'app/features/provisioning/utils/sourceLink';
 import { isRootFolderUID } from 'app/features/search/constants';
 import { type DashboardDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
@@ -35,7 +36,7 @@ import {
   type ListDashboardHistoryOptions,
   type ListDeletedDashboardsOptions,
 } from './types';
-import { buildRestorePayload, isV0V1StoredVersion } from './utils';
+import { buildRestorePayload, fetchDeletedDashboard, isV0V1StoredVersion } from './utils';
 
 export function getK8sV2DashboardApiConfig() {
   return {
@@ -84,11 +85,10 @@ export class K8sDashboardV2API
         dashboard.metadata.annotations[AnnoKeyFolder] = '';
       }
 
-      // Inject source link for repo-managed dashboards
-      const sourceLink = await buildSourceLink(dashboard.metadata.annotations);
-      if (sourceLink) {
-        const linksWithoutSource = removeExistingSourceLinks(dashboard.spec.links);
-        dashboard.spec.links = [sourceLink, ...linksWithoutSource];
+      // Strip runtime-injected source links that older Grafana versions committed to the
+      // dashboard JSON. Source links now live in the managed badge and are never persisted.
+      if (isManagedByRepository(dashboard) && dashboard.spec.links?.length) {
+        dashboard.spec.links = removeExistingSourceLinks(dashboard.spec.links);
       }
 
       return dashboard;
@@ -255,6 +255,10 @@ export class K8sDashboardV2API
 
   async listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<TableResponse> {
     return this.client.listAsTable({ ...options, labelSelector: 'grafana.app/get-trash=true' });
+  }
+
+  async getDeletedDashboard(name: string): Promise<Resource<DashboardV2Spec> | undefined> {
+    return fetchDeletedDashboard(this.client, name);
   }
 
   async getDashboard(name: string, params?: Record<string, unknown>): Promise<Resource<DashboardV2Spec>> {

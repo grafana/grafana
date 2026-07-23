@@ -2,7 +2,6 @@ package nats
 
 import (
 	"context"
-	"net"
 	"testing"
 	"time"
 
@@ -100,13 +99,4 @@ func startService(t *testing.T, ctx context.Context, svc services.Service) {
 		svc.StopAsync()
 		_ = svc.AwaitTerminated(context.Background())
 	})
-}
-
-func freePort(t *testing.T) int {
-	t.Helper()
-	l, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
-	port := l.Addr().(*net.TCPAddr).Port
-	require.NoError(t, l.Close())
-	return port
 }

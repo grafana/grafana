@@ -1,7 +1,6 @@
 package provisioning
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -15,13 +14,12 @@ import (
 func TestIntegrationProvisioning_Client(t *testing.T) {
 	helper := sharedHelper(t)
 
-	ctx := context.Background()
 	clientFactory := resources.NewClientFactory(&helper.Org1.Admin)
-	clients, err := clientFactory.Clients(ctx, "default")
+	clients, err := clientFactory.Clients(t.Context(), "default")
 	require.NoError(t, err)
 
 	t.Run("dashboard client support", func(t *testing.T) {
-		_, _, err := clients.ForResource(ctx, schema.GroupVersionResource{
+		_, _, err := clients.ForResource(t.Context(), schema.GroupVersionResource{
 			Group:    dashboardV2.GROUP,
 			Version:  dashboardV2.VERSION,
 			Resource: "dashboards",
@@ -29,7 +27,7 @@ func TestIntegrationProvisioning_Client(t *testing.T) {
 		require.NoError(t, err)
 
 		// With empty version, we should get the preferred version (v2)
-		_, gvk, err := clients.ForResource(ctx, schema.GroupVersionResource{
+		_, gvk, err := clients.ForResource(t.Context(), schema.GroupVersionResource{
 			Group:    dashboardV2.GROUP,
 			Resource: "dashboards",
 		})
@@ -37,7 +35,7 @@ func TestIntegrationProvisioning_Client(t *testing.T) {
 		require.Equal(t, dashboardV2.VERSION, gvk.Version)
 		require.Equal(t, "Dashboard", gvk.Kind)
 
-		_, _, err = clients.ForKind(ctx, schema.GroupVersionKind{
+		_, _, err = clients.ForKind(t.Context(), schema.GroupVersionKind{
 			Group:   dashboardV2.GROUP,
 			Version: dashboardV2.VERSION,
 			Kind:    "Dashboard",

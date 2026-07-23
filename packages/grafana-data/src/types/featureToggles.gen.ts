@@ -119,11 +119,6 @@ export interface FeatureToggles {
   */
   mlExpressions?: boolean;
   /**
-  * Expose some datasources as apiservers.
-  * @default false
-  */
-  datasourceAPIServers?: boolean;
-  /**
   * Register experimental APIs with the k8s API server, including all datasources
   * @default false
   */
@@ -774,11 +769,6 @@ export interface FeatureToggles {
   * @default true
   */
   alertingNotificationsStepMode?: boolean;
-  /**
-  * Enables cross cluster search in the Elasticsearch data source
-  * @default false
-  */
-  elasticsearchCrossClusterSearch?: boolean;
   /**
   * Defaults to using the Loki `/labels` API instead of `/series`
   * @default true
