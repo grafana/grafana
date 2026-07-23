@@ -181,6 +181,37 @@ func Test_expandAnnotationsAndLabels(t *testing.T) {
 
 		require.Equal(t, "production host1", annotations["summary"])
 	})
+
+	t.Run("rule labels take precedence over result labels in annotation templates", func(t *testing.T) {
+		rule := &models.AlertRule{
+			Title:       "test",
+			Labels:      map[string]string{"environment": "production"},
+			Annotations: map[string]string{"summary": "{{ $labels.environment }}"},
+		}
+		result := eval.Result{
+			Instance: data.Labels{"environment": "staging"},
+		}
+
+		_, annotations := expandAnnotationsAndLabels(ctx, logger, rule, result, nil, nil)
+
+		require.Equal(t, "production", annotations["summary"])
+	})
+
+	t.Run("extra labels take precedence over rule labels in annotation templates", func(t *testing.T) {
+		rule := &models.AlertRule{
+			Title:       "test",
+			Labels:      map[string]string{"environment": "production"},
+			Annotations: map[string]string{"summary": "{{ $labels.environment }}"},
+		}
+		extra := data.Labels{"environment": "system"}
+		result := eval.Result{
+			Instance: data.Labels{"environment": "staging"},
+		}
+
+		_, annotations := expandAnnotationsAndLabels(ctx, logger, rule, result, extra, nil)
+
+		require.Equal(t, "system", annotations["summary"])
+	})
 }
 
 func Test_mergeLabels(t *testing.T) {
