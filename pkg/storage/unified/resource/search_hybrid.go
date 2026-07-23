@@ -3,7 +3,6 @@ package resource
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -206,16 +205,10 @@ func (s *searchServer) rerankHybridResults(ctx context.Context, query string, re
 	return results, nil
 }
 
-// rerankFallback logs, counts, and returns the RRF-ordered input.
+// rerankFallback logs and returns the RRF-ordered input. Failed provider
+// calls are visible in the rerank duration histogram's error/timeout series.
 func (s *searchServer) rerankFallback(results []*resourcepb.HybridSearchResult, msg string, err error) []*resourcepb.HybridSearchResult {
-	reason := "error"
-	if errors.Is(err, rerank.ErrCallTimeout) {
-		reason = "timeout"
-	}
 	s.log.Warn(msg+"; returning RRF-ordered results", "err", err, "model", s.reranker.Model)
-	if s.vectorMetrics != nil {
-		s.vectorMetrics.RerankFallbacksTotal.WithLabelValues(s.reranker.Model, reason).Inc()
-	}
 	return results
 }
 
@@ -226,7 +219,7 @@ const rrfK = 60
 // influences score, the rest are payload for RAG consumers.
 const maxChunksPerHybridResult = 10
 
-// maxRerankCandidates caps the scored pool (fused legs can reach 2x200) to one provider call; must stay within maxVectorSearchLimit <= this <= Vertex's 200-records/call cap.
+// maxRerankCandidates caps the scored pool (fused legs can reach 2x200) to one provider call
 const maxRerankCandidates = 200
 
 type lexicalHit struct {

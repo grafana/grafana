@@ -21,7 +21,7 @@ service ResourceIndex {
   // Semantic search
   rpc VectorSearch(VectorSearchRequest) returns (VectorSearchResponse);
 
-  // Hybrid search: RRF fuse lexical and vector
+  // Hybrid search: RRF fuse lexical and vector with optional reranker
   rpc HybridSearch(HybridSearchRequest) returns (HybridSearchResponse);
 }
 
