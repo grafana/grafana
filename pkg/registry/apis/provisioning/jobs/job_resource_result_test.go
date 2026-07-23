@@ -599,6 +599,23 @@ func TestIsNonFailingWarning(t *testing.T) {
 		assert.False(t, isNonFailingWarning(resources.NewResourceValidationError(errors.New("invalid"))))
 	})
 
+	t.Run("ResourceManagedByOtherFile is a non-failing warning", func(t *testing.T) {
+		assert.True(t, isNonFailingWarning(&resources.ResourceManagedByOtherFileError{
+			ResourceName: "shared-uid",
+			CurrentPath:  "dir-b/dashboard.json",
+			RequestPath:  "dir-a/dashboard.json",
+		}))
+	})
+
+	t.Run("wrapped ResourceManagedByOtherFile is a non-failing warning", func(t *testing.T) {
+		wrapped := fmt.Errorf("replacing resource from file dir-a/dashboard.json: %w", &resources.ResourceManagedByOtherFileError{
+			ResourceName: "shared-uid",
+			CurrentPath:  "dir-b/dashboard.json",
+			RequestPath:  "dir-a/dashboard.json",
+		})
+		assert.True(t, isNonFailingWarning(wrapped))
+	})
+
 	t.Run("generic error is not a non-failing warning", func(t *testing.T) {
 		assert.False(t, isNonFailingWarning(errors.New("something went wrong")))
 	})
