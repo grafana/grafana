@@ -19,6 +19,8 @@ export interface ConfirmModalWithErrorProps {
   state: AsyncState<unknown>;
   onConfirm: () => Promise<unknown>;
   onDismiss: () => void;
+  /** Called alongside `onDismiss` to clear the error state once the user acknowledges it. */
+  onReset: () => void;
 }
 
 export const ConfirmModalWithError = ({
@@ -32,6 +34,7 @@ export const ConfirmModalWithError = ({
   state,
   onConfirm,
   onDismiss,
+  onReset,
 }: ConfirmModalWithErrorProps) => {
   const isRunning = isLoading(state);
 
@@ -41,8 +44,13 @@ export const ConfirmModalWithError = ({
     onConfirm().then(() => handleDismiss());
   };
 
+  const handleErrorDismiss = () => {
+    onReset();
+    onDismiss();
+  };
+
   if (isError(state)) {
-    return <ErrorModal isOpen onDismiss={onDismiss} error={state.error} />;
+    return <ErrorModal isOpen onDismiss={handleErrorDismiss} error={state.error} />;
   }
 
   return (

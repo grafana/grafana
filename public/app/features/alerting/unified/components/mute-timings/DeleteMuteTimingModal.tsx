@@ -21,5 +21,6 @@ export const useDeleteMuteTimingModal = ({ muteTiming, alertManagerSourceName }:
     ),
     state: deleteMuteTimingState,
     onConfirm: () => deleteMuteTiming.execute({ name: muteTiming?.metadata?.name ?? muteTiming.name }),
+    onReset: deleteMuteTiming.reset,
   });
 };
