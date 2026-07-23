@@ -5126,6 +5126,11 @@
         "unknown-datasource": "Unknown datasource"
       }
     },
+    "datasource-troubleshooting-banner": {
+      "assistant-context": "Troubleshoot data source health",
+      "body": "Uncover and fix potential issues with your data sources.",
+      "fix-with-assistant": "Fix with assistant"
+    },
     "feature-highlight-page": {
       "foot-note": "After creating an account, you can easily <2>migrate this instance to Grafana Cloud</2> with our Migration Assistant.",
       "footer": "Create a Grafana Cloud Free account to start using data source permissions. This feature is also available with a Grafana Enterprise license.",
@@ -8114,6 +8119,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Add to favorites",
+      "configure-with-assistant": "Configure with assistant",
       "explore-data": "Explore data",
       "open-in-explore": "Open in Explore View",
       "remove-favorite": "Remove from favorites"
@@ -13032,12 +13038,12 @@
     },
     "get-started-with-data-source": {
       "add-new-data-source": "Add new data source",
+      "plugin-id": "Plugin ID",
       "setup-assistant": "Set up with assistant",
       "setup-assistant-description": "Guided configuration",
       "setup-manually": "Set up manually",
       "setup-manually-description": "Configure all settings yourself",
-      "title-button-disabled": "The plugin isn't usable yet, it may take some time to complete the installation.",
-      "plugin-id": "Plugin ID"
+      "title-button-disabled": "The plugin isn't usable yet, it may take some time to complete the installation."
     },
     "install-controls": {
       "contact-us": "Contact us",
