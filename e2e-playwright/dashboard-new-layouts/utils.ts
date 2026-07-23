@@ -1,11 +1,11 @@
 import { type Page } from '@playwright/test';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Components, type DashboardPage, type E2ESelectorGroups, expect } from '@grafana/plugin-e2e';
+import { Components, type DashboardPage, type E2ESelectorGroups, expect, test } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
-import { Controls, Sidebar } from './page-objects';
+import { Controls, Panel, Sidebar } from './page-objects';
 
 export const flows = {
   async addNewGenericVariable(
@@ -108,19 +108,15 @@ export async function movePanel(
   sourcePanel: string | RegExp,
   targetPanel: string | RegExp
 ) {
-  // Get target panel position
-  const targetPanelElement = dashboardPage
-    .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-    .filter({ hasText: targetPanel })
-    .first();
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const panel = new Panel({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
 
-  // Get source panel element
-  const sourcePanelElement = dashboardPage
-    .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-    .filter({ hasText: sourcePanel });
-
-  // Perform drag and drop
-  await sourcePanelElement.dragTo(targetPanelElement);
+  await test.step(`Move panel "${sourcePanel}" onto "${targetPanel}"`, async () => {
+    // Perform drag and drop; pixel-sensitive mechanics stay out of page objects
+    await panel.getHeaderByTitle(sourcePanel).dragTo(panel.getHeaderByTitle(targetPanel));
+  });
 }
 
 export async function getPanelPosition(
@@ -128,12 +124,13 @@ export async function getPanelPosition(
   selectors: E2ESelectorGroups,
   panelTitle: string | RegExp
 ) {
-  const panel = dashboardPage
-    .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-    .filter({ hasText: panelTitle })
-    .first();
-  const boundingBox = await panel.boundingBox();
-  return boundingBox;
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const panel = new Panel({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
+
+  // boundingBox() is a point-in-time snapshot and stays out of page objects
+  return panel.getHeaderByTitle(panelTitle).boundingBox();
 }
 
 export async function verifyChanges(
