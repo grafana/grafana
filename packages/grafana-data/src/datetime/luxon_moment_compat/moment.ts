@@ -346,6 +346,18 @@ function parseWithFormat(value: string, format: MomentFormat, options?: MomentOp
     return DateTime.fromISO(value, options);
   }
 
+  // moment's unix timestamp tokens (X = seconds, x = millis) are output-only in luxon;
+  // DateTime.fromFormat cannot parse them, so handle them numerically here.
+  if (format === 'X' || format === 'x') {
+    const num = Number(value);
+
+    if (value.trim() === '' || Number.isNaN(num)) {
+      return DateTime.invalid('unparsable unix timestamp');
+    }
+
+    return format === 'X' ? DateTime.fromSeconds(num, options) : DateTime.fromMillis(num, options);
+  }
+
   // ISO_8601 is the only non-string MomentFormat member and it is handled above, so this
   // fallback never changes behavior; it only narrows the type for the format conversions below.
   const fmt = convertMomentToLuxonWithOrdinal(typeof format === 'string' ? format : 'ISO_8601');

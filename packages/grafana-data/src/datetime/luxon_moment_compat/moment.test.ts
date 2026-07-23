@@ -84,6 +84,25 @@ describe('string parsing fallbacks', () => {
   });
 });
 
+describe('unix timestamp format tokens', () => {
+  // luxon's fromFormat cannot parse X/x (they are output-only), so the shim special-cases them.
+  // used by e.g. the convertFieldType transformation with dateFormat: 'X'.
+  it('parses unix seconds strings with the X token', () => {
+    expect(moment('1759565902', 'X').valueOf()).toBe(1759565902000);
+    expect(moment('1759565902.5', 'X').valueOf()).toBe(1759565902500);
+    expect(moment('-86400', 'X').valueOf()).toBe(-86400000);
+  });
+
+  it('parses unix millisecond strings with the x token', () => {
+    expect(moment('1759565902000', 'x').valueOf()).toBe(1759565902000);
+  });
+
+  it('stays invalid for non-numeric input', () => {
+    expect(moment('garbage', 'X').isValid()).toBe(false);
+    expect(moment('', 'X').isValid()).toBe(false);
+  });
+});
+
 describe('year/month/date accessors', () => {
   it('gets with moment semantics (0-based month, 1-based day)', () => {
     const d = moment.utc([2024, 4, 6]);
