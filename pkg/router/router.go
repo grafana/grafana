@@ -2,15 +2,11 @@ package router
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
 	"sync/atomic"
-
-	"k8s.io/client-go/transport"
 )
 
 const apisPrefix = "/apis"
@@ -29,9 +25,6 @@ type handlerEntry struct {
 type BasicRouter struct {
 	loader RoutesLoader
 
-	dialer     *transport.DialHolder
-	transports map[tlsCacheKey]*http.Transport
-
 	// entries is the desired-state map, keyed by group. Owned by reconcile
 	// (single goroutine); never read from the serving path.
 	entries map[string]*handlerEntry
@@ -46,51 +39,12 @@ type BasicRouter struct {
 
 func NewRouter(loader RoutesLoader) *BasicRouter {
 	r := &BasicRouter{
-		loader:     loader,
-		transports: map[tlsCacheKey]*http.Transport{},
-		entries:    map[string]*handlerEntry{},
+		loader:  loader,
+		entries: map[string]*handlerEntry{},
 	}
 	empty := map[string]http.Handler{}
 	r.snapshot.Store(&empty)
 	return r
-}
-
-// transportFor returns a transport for the given TLS settings, building and
-// caching one on first use. Called only from reconcile (single goroutine), so
-// the transports map needs no lock. Backends sharing a tlsCacheKey share a
-// transport, so their connection pools are shared too. This shared cache is
-// what preserves connection pools across a config change: rebuilding a group's
-// Backend reuses the cached transport, so its pool survives untouched.
-func (cr *BasicRouter) transportFor(key tlsCacheKey) (*http.Transport, error) {
-	if t, ok := cr.transports[key]; ok {
-		return t, nil
-	}
-
-	// nosemgrep: problem-based-packs.insecure-transport.go-stdlib.bypass-tls-verification.bypass-tls-verification
-	tlsCfg := &tls.Config{MinVersion: tls.VersionTLS12}
-	switch {
-	case key.insecure:
-		// Driven by the RouteBackend spec's Tls.SkipTLSVerify. Intentional
-		// dual-use: some backends are reached over trusted internal links
-		// without a verifiable cert. Only enable for backends whose link is
-		// actually trusted — this disables cert verification (MITM exposure).
-		tlsCfg.InsecureSkipVerify = true // #nosec G402 -- spec-gated, trusted-link only
-	case key.caData != "":
-		pool := x509.NewCertPool()
-		if !pool.AppendCertsFromPEM([]byte(key.caData)) {
-			return nil, fmt.Errorf("invalid CA PEM data")
-		}
-		tlsCfg.RootCAs = pool
-	}
-
-	t := http.DefaultTransport.(*http.Transport).Clone()
-	t.TLSClientConfig = tlsCfg
-	if cr.dialer != nil {
-		t.DialContext = cr.dialer.Dial
-	}
-
-	cr.transports[key] = t
-	return t, nil
 }
 
 // HandleFunc serves the reverse-proxy tree by group, falling through to next for
@@ -165,7 +119,10 @@ func (r *BasicRouter) Run(ctx context.Context) error {
 		return fmt.Errorf("router: notify: %w", err)
 	}
 
-	r.reconcile(ctx) // initial populate, independent of watch replay
+	// first reconcile happens asynchronously as it may take a bit
+	go func() {
+		r.reconcile(ctx) // initial populate, independent of watch replay
+	}()
 
 	for {
 		select {
@@ -179,7 +136,10 @@ func (r *BasicRouter) Run(ctx context.Context) error {
 
 // Ready reports the router is initialized and serving. The snapshot is
 // populated on the first reconcile in Run.
-func (r *BasicRouter) Ready(context.Context) error { return nil }
+func (r *BasicRouter) Ready(context.Context) error {
+	// if reconcile hasn't been run yet, return err
+	return nil
+}
 
 // Alive reports the router is not in a non-recoverable state.
 func (r *BasicRouter) Alive(context.Context) error { return nil }

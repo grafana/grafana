@@ -35,6 +35,7 @@ type RoutesLoader interface {
 type Router interface {
 	// Run runs the loop that sets up the loader's notify and process ongoing events.
 	// Ready will return nil when it's done.
+	// Load on RoutesLoader shouldn't be run until after Run is run.
 	Run(context.Context) error
 
 	// Health returns nil when the router is fully initialized, connected to required databases, and ready to receive traffic.
