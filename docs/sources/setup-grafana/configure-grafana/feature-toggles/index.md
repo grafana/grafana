@@ -88,7 +88,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                             |
 | `timeComparison`                  | Enables time comparison option in supported panels                                             |
 | `secretsManagementAppPlatformUI`  | Enable the secrets management app platform UI                                                  |
-| `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage. Default is enabled.                 |
 | `queryLibrary`                    | Enables Saved queries (query library) feature                                                  |
 | `savedQueriesRBAC`                | Enables Saved queries (query library) RBAC permissions                                         |
 | `newSavedQueriesExperience`       | Enables the new Saved queries (query library) modal experience                                 |

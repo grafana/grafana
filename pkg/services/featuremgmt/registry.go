@@ -844,14 +844,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "alertingSaveStateCompressed",
-			Description: "Enables the compressed protobuf-based alert state storage. Default is enabled.",
-			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "scopeApi",
 			Description: "In-development feature flag for the scope api using the app platform.",
 			Stage:       FeatureStageExperimental,

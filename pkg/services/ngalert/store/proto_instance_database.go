@@ -325,3 +325,15 @@ func nullableTimestampToTime(ts *timestamppb.Timestamp) *time.Time {
 	t := ts.AsTime()
 	return &t
 }
+
+const maxLastErrorLength = 1000
+
+func truncate(s string, maxLen int) string {
+	runes := []rune(s)
+	if len(runes) <= maxLen {
+		return s
+	}
+	const suffix = "... (truncated)"
+	suffixRunes := []rune(suffix)
+	return string(runes[:maxLen-len(suffixRunes)]) + suffix
+}
