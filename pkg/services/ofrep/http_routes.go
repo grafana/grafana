@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
+	k8smux "k8s.io/apiserver/pkg/server/mux"
 )
 
 // RegisterHTTPRoutes mounts the OFREP evaluation endpoints on Grafana's HTTP router.
@@ -34,6 +35,15 @@ func (b *APIBuilder) RegisterHTTPRoutes(rr routing.RouteRegister) {
 
 	rr.Group("/ofrep", routes)
 	rr.Group("/apis/features.grafana.app/v0alpha1/namespaces/:namespace/ofrep", routes)
+}
+
+// Setup is used by the standalone enterprise features.grafana.app APIServer
+func (b *APIBuilder) Setup(m *k8smux.PathRecorderMux) {
+	r := mux.NewRouter()
+	r.Methods(http.MethodPost).Path("/ofrep/v1/evaluate/flags").HandlerFunc(b.allFlagsHandler)
+	r.Methods(http.MethodPost).Path("/ofrep/v1/evaluate/flags/{flagKey}").HandlerFunc(b.oneFlagHandler)
+
+	m.HandlePrefix("/ofrep", r)
 }
 
 // grafanaHTTPHandler adapts an OFREP http.HandlerFunc to Grafana's router. It injects the
