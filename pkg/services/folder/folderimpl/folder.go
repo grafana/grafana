@@ -267,9 +267,12 @@ func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folde
 }
 
 // SplitFullpath splits a fullpath into its component titles on unescaped
-// FULLPATH_SEPARATOR characters. It unescapes escape sequences within each
-// title (\\ -> \ and \/ -> /), so it is the inverse of the escaping applied
-// when a fullpath is built. The resulting array does not contain empty strings.
+// FULLPATH_SEPARATOR characters. It unescapes the escape sequences within each
+// title (\\ -> \ and \/ -> /), so it is the inverse of the escaping applied when
+// a fullpath is built. A backslash that does not form one of those sequences
+// (including a trailing backslash) is treated as a literal character and left
+// untouched, so legacy, unescaped provisioning paths such as "team\ops" pass
+// through unchanged. The resulting array does not contain empty strings.
 func SplitFullpath(s string) []string {
 	result := make([]string, 0)
 	var current strings.Builder
@@ -278,7 +281,11 @@ func SplitFullpath(s string) []string {
 	for _, r := range s {
 		switch {
 		case escaped:
-			// if we have seen an escape sequence, write the next rune no matter what it is
+			// Only "\\" and "\/" are escape sequences. Any other backslash is a literal
+			// character (e.g. legacy unescaped titles such as "team\ops"), so preserve it.
+			if r != '\\' && r != FULLPATH_SEPARATOR {
+				current.WriteRune('\\')
+			}
 			current.WriteRune(r)
 			escaped = false
 		case r == '\\':
@@ -291,6 +298,12 @@ func SplitFullpath(s string) []string {
 		default:
 			current.WriteRune(r)
 		}
+	}
+
+	// A trailing backslash is a literal character, not the start of an escape
+	// sequence, so preserve it (e.g. legacy unescaped title "team\").
+	if escaped {
+		current.WriteRune('\\')
 	}
 
 	// Add the last string to the result
