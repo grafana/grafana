@@ -530,7 +530,7 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 		orgService,
 		nil,
 		dualwrite.ProvideTestService(),
-		serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
+		serverlock.ProvideService(legacysql.NewDatabaseProvider(sqlStore), tracing.InitializeTracerForTest()),
 		kvstore.NewFakeKVStore(),
 		dashclient.NewK8sClientWithFallback(
 			cfg,

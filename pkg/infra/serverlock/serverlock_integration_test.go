@@ -14,7 +14,7 @@ import (
 func TestIntegrationServerLock_LockAndExecute(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sl := createTestableServerLock(t)
+	sl, _ := createTestableServerLock(t)
 
 	counter := 0
 	fn := func(context.Context) { counter++ }
@@ -42,7 +42,7 @@ func TestIntegrationServerLock_LockExecuteAndRelease(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("lock is released", func(t *testing.T) {
-		sl := createTestableServerLock(t)
+		sl, _ := createTestableServerLock(t)
 
 		counter := 0
 		fn := func(context.Context) { counter++ }
@@ -65,7 +65,7 @@ func TestIntegrationServerLock_LockExecuteAndRelease(t *testing.T) {
 	})
 
 	t.Run("lock is released when context is cancelled", func(t *testing.T) {
-		sl := createTestableServerLock(t)
+		sl, store := createTestableServerLock(t)
 		operationUID := "test-operation-context-cancel"
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -76,7 +76,7 @@ func TestIntegrationServerLock_LockExecuteAndRelease(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		err = sl.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
 			lockRows := []*serverLock{}
 			err := sess.Where("operation_uid = ?", operationUID).Find(&lockRows)
 			require.NoError(t, err)
@@ -91,7 +91,7 @@ func TestIntegrationServerLock_LockExecuteAndReleaseWithRetries(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("retries when lock is already taken", func(t *testing.T) {
-		sl := createTestableServerLock(t)
+		sl, _ := createTestableServerLock(t)
 
 		retries := 0
 		expectedRetries := 10
@@ -150,7 +150,7 @@ func TestIntegrationServerLock_LockExecuteAndReleaseWithRetries(t *testing.T) {
 	})
 
 	t.Run("lock is released when context is cancelled", func(t *testing.T) {
-		sl := createTestableServerLock(t)
+		sl, store := createTestableServerLock(t)
 		operationUID := "test-operation-context-cancel-retries"
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -167,7 +167,7 @@ func TestIntegrationServerLock_LockExecuteAndReleaseWithRetries(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		err = sl.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
 			lockRows := []*serverLock{}
 			err := sess.Where("operation_uid = ?", operationUID).Find(&lockRows)
 			require.NoError(t, err)
