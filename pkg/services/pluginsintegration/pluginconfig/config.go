@@ -6,11 +6,15 @@ import (
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/externaloverrides"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+var logger = log.New("plugins.externaloverrides")
 
 // ProvidePluginManagementConfig returns a new config.PluginManagementCfg.
 // It is used to provide configuration to Grafana's implementation of the plugin management system.
@@ -21,10 +25,13 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		allowedUnsigned = strings.Split(plugins.KeyValue("allow_loading_unsigned_plugins").Value(), ",")
 	}
 
+	pluginSettings := extractPluginSettings(settingProvider)
+	activeOverrides := externalOverridesFromIni(cfg, pluginSettings)
+
 	return config.NewPluginManagementCfg(
 		settingProvider.KeyValue("", "app_mode").MustBool(cfg.Env == setting.Dev),
 		cfg.PluginsPaths,
-		extractPluginSettings(settingProvider),
+		pluginSettings,
 		allowedUnsigned,
 		cfg.PluginsCDNURLTemplate,
 		cfg.AppURL,
@@ -37,7 +44,60 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		cfg.DisablePlugins,
 		cfg.ForwardHostEnvVars,
 		cfg.GrafanaComProxyAPIToken,
+		activeOverrides,
 	), nil
+}
+
+// externalOverridesFromIni builds the active external override list by scanning plugin ini settings.
+// For each known override, activation is determined by two operator-set ini keys:
+//   - [plugin.<CorePluginID>] as_external = true  — tells the AsExternal pipeline step to skip loading the core bundle
+//   - [plugin.<ExternalPluginID>] alias_ids = <CorePluginID,...>  — injects the alias and activates the override
+//
+// Both keys must be set for a Migrating override to be fully active. OverrideStagePermanent overrides
+// are always active regardless of ini config, for backwards compatibility after the core plugin is deleted.
+// A misconfiguration warning is logged if an override is active but the external plugin is not in the preinstall list.
+func externalOverridesFromIni(cfg *setting.Cfg, pluginSettings config.PluginSettings) []config.ExternalOverride {
+	preinstalled := make(map[string]bool, len(cfg.PreinstallPluginsAsync))
+	for _, p := range cfg.PreinstallPluginsAsync {
+		preinstalled[p.ID] = true
+	}
+
+	var activeOverrides []config.ExternalOverride
+	for _, o := range externaloverrides.Overrides {
+		active := o.Stage == externaloverrides.OverrideStagePermanent || isAliasConfigured(pluginSettings, o)
+		if active {
+			if !preinstalled[o.ExternalPluginID] {
+				logger.Warn("External plugin override is active but plugin is not in the preinstall list — it must be installed manually",
+					"corePluginID", o.CorePluginID,
+					"externalPluginID", o.ExternalPluginID,
+				)
+			}
+			activeOverrides = append(activeOverrides, config.ExternalOverride{
+				CorePluginID:     o.CorePluginID,
+				ExternalPluginID: o.ExternalPluginID,
+			})
+		}
+	}
+	return activeOverrides
+}
+
+// isAliasConfigured returns true when the external plugin's ini section declares alias_ids
+// containing the core plugin ID, indicating the operator has opted in to the migration.
+func isAliasConfigured(pluginSettings config.PluginSettings, o externaloverrides.Override) bool {
+	extSettings, ok := pluginSettings[o.ExternalPluginID]
+	if !ok {
+		return false
+	}
+	raw := extSettings["alias_ids"]
+	if raw == "" {
+		return false
+	}
+	for _, alias := range strings.Split(raw, ",") {
+		if strings.TrimSpace(alias) == o.CorePluginID {
+			return true
+		}
+	}
+	return false
 }
 
 // PluginInstanceCfg contains the configuration for a plugin instance.
