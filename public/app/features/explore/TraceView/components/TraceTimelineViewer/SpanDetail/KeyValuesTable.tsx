@@ -15,7 +15,7 @@
 import { css } from '@emotion/css';
 import cx from 'clsx';
 import DOMPurify from 'dompurify';
-import { type PropsWithChildren, type ReactNode, useLayoutEffect, useRef, useState } from 'react';
+import { type PropsWithChildren, type ReactNode, useId, useLayoutEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2, type PluginExtensionLink, type TraceKeyValuePair } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -97,6 +97,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     multiLinkContent: css({
       color: theme.colors.text.link,
+      cursor: 'pointer',
+      '&:hover': {
+        textDecoration: 'underline',
+      },
       // Match single-link styling so json-markup spans use the link color
       span: {
         color: `${theme.colors.text.link} !important`,
@@ -173,6 +177,7 @@ interface LinkValuesMenuProps {
 export const LinkValuesMenu = ({ links, children }: LinkValuesMenuProps) => {
   const styles = useStyles2(getStyles);
   const openValueInLabel = t('explore.key-values-table.open-value-in', 'Open value in');
+  const triggerId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const [menuOffset, setMenuOffset] = useState<[number, number]>([8, 0]);
 
@@ -188,7 +193,9 @@ export const LinkValuesMenu = ({ links, children }: LinkValuesMenuProps) => {
 
   return (
     <div className={styles.multiLinkValue} ref={containerRef}>
-      <span className={styles.multiLinkContent}>{children}</span>
+      <label htmlFor={triggerId} className={styles.multiLinkContent}>
+        {children}
+      </label>
       <Dropdown
         placement="bottom-start"
         offset={menuOffset}
@@ -210,7 +217,13 @@ export const LinkValuesMenu = ({ links, children }: LinkValuesMenuProps) => {
           </Menu>
         }
       >
-        <button type="button" className={styles.multiLinkTrigger} aria-label={openValueInLabel} title={openValueInLabel}>
+        <button
+          id={triggerId}
+          type="button"
+          className={styles.multiLinkTrigger}
+          aria-label={openValueInLabel}
+          title={openValueInLabel}
+        >
           <Icon name="angle-down" size="sm" className={styles.multiLinkChevron} />
         </button>
       </Dropdown>

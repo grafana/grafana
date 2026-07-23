@@ -134,6 +134,32 @@ describe('KeyValuesTable tests', () => {
     expect(screen.getByTitle('Dashboard')).toBeInTheDocument();
   });
 
+  it('opens the dropdown when clicking the attribute value text', async () => {
+    const user = userEvent.setup();
+    setup({
+      linksGetter: (array, i) =>
+        array[i].key === 'span.kind'
+          ? [
+              {
+                path: 'http://example.com/docs',
+                title: 'Docs',
+                description: 'Documentation',
+              },
+              {
+                path: 'http://example.com/dashboard',
+                title: 'Dashboard',
+                description: 'Service dashboard',
+              },
+            ]
+          : [],
+    } as KeyValuesTableProps);
+
+    await user.click(screen.getByText(/"client"/));
+
+    expect(await screen.findByRole('menuitem', { name: 'Documentation' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Service dashboard' })).toBeInTheDocument();
+  });
+
   it('renders a <CopyIcon /> for each data element', () => {
     setup();
 
