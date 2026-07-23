@@ -1314,6 +1314,18 @@ func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefiniti
 			}
 		}
 
+		// Fix union type schemas for structured-merge-diff (SMD).
+		// The CUE-generated OpenAPI describes union types (CUE disjunctions) using oneOf with $ref
+		// to individual variant schemas. However, SMD needs properties declared directly on the type
+		// to understand which fields exist on the object. Without this, SMD reports "field not declared
+		// in schema" for fields like 'kind' and 'spec' on union-typed values, causing the
+		// "[SHOULD NOT HAPPEN] failed to update managedFields" error.
+		// This fix merges the properties from oneOf branches into parent schemas that have no
+		// properties of their own (i.e., bare oneOf wrappers). For properties whose types differ
+		// across branches (like 'spec' which references different types per variant), we use
+		// x-kubernetes-preserve-unknown-fields to allow any value.
+		fixUnionTypeSchemas(defs)
+
 		// Fix legacyOptions schema for v2alpha1, v2beta1, and v2 to allow any value type
 		// The generated schema incorrectly restricts values to objects, but map[string]interface{} can hold any type
 		// This fix must be applied here so structured-merge-diff uses the correct schema
@@ -1337,6 +1349,158 @@ func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefiniti
 
 		return defs
 	}
+}
+
+// fixUnionTypeSchemas fixes schemas that use bare oneOf with $ref but have no properties,
+// as well as properties that use bare oneOf inline. SMD (structured-merge-diff) requires
+// properties to be declared directly on a type to know which fields exist.
+// When a schema only has oneOf refs (like CUE disjunctions produce), SMD cannot see the
+// fields and reports "field not declared in schema".
+// This function resolves each oneOf branch, merges their properties into the parent schema,
+// and for properties whose types differ across branches, adds x-kubernetes-preserve-unknown-fields.
+func fixUnionTypeSchemas(defs map[string]common.OpenAPIDefinition) {
+	// Pass 1: Fix top-level schemas that are bare oneOf wrappers (no properties, no type)
+	for key, def := range defs {
+		schema := &def.Schema
+		if len(schema.OneOf) == 0 || len(schema.Properties) > 0 || schema.Type != nil {
+			continue
+		}
+		if fixOneOfSchema(schema, defs) {
+			defs[key] = def
+		}
+	}
+
+	// Pass 2: Fix properties within schemas that contain inline oneOf references.
+	// For example, DashboardSpec.layout has an inline oneOf referencing layout kind types,
+	// and DashboardPreferences.layout has an inline oneOf referencing layout kind types.
+	for key, def := range defs {
+		modified := false
+		for propName, propSchema := range def.Schema.Properties {
+			if len(propSchema.OneOf) > 0 && len(propSchema.Properties) == 0 && propSchema.Type == nil {
+				fixed := propSchema
+				if fixOneOfSchema(&fixed, defs) {
+					def.Schema.Properties[propName] = fixed
+					modified = true
+				}
+			}
+		}
+		if modified {
+			defs[key] = def
+		}
+	}
+}
+
+// fixOneOfSchema merges properties from oneOf branches into a parent schema that has no properties.
+// Returns true if the schema was modified.
+func fixOneOfSchema(schema *spec.Schema, defs map[string]common.OpenAPIDefinition) bool {
+	if len(schema.OneOf) == 0 || len(schema.Properties) > 0 {
+		return false
+	}
+
+	// Resolve all oneOf branches and collect their properties
+	mergedProps := map[string]spec.Schema{}
+	// Track required fields per branch - a field is required in the merged schema
+	// only if it's required in ALL branches
+	branchCount := 0
+	requiredCounts := map[string]int{}
+
+	for i := range schema.OneOf {
+		branch := resolveSchemaRef(&schema.OneOf[i], defs)
+		if branch == nil {
+			return false
+		}
+		branchCount++
+		for propName, propSchema := range branch.Properties {
+			if existing, ok := mergedProps[propName]; ok {
+				// Property already seen from another branch.
+				// If types match, keep it. If types differ, replace with a permissive schema.
+				if !schemasEqualType(&existing, &propSchema) {
+					mergedProps[propName] = spec.Schema{
+						SchemaProps: spec.SchemaProps{
+							Type:        propSchema.Type,
+							Description: propSchema.Description,
+						},
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-preserve-unknown-fields": true,
+							},
+						},
+					}
+				}
+			} else {
+				mergedProps[propName] = propSchema
+			}
+		}
+		for _, req := range branch.Required {
+			requiredCounts[req]++
+		}
+	}
+
+	if len(mergedProps) == 0 {
+		return false
+	}
+
+	schema.Type = []string{"object"}
+	schema.Properties = mergedProps
+	// Only mark a field as required if it's required in ALL branches
+	schema.Required = make([]string, 0)
+	for req, count := range requiredCounts {
+		if count == branchCount {
+			schema.Required = append(schema.Required, req)
+		}
+	}
+	return true
+}
+
+// resolveSchemaRef follows a $ref to find the referenced definition, resolving one level deep.
+func resolveSchemaRef(ref *spec.Schema, defs map[string]common.OpenAPIDefinition) *spec.Schema {
+	if ref.Ref.String() == "" {
+		return ref
+	}
+	refURL := ref.Ref.GetURL()
+	if refURL == nil {
+		return ref
+	}
+	// Fragment is "/definitions/<name>" (leading slash from url.Parse)
+	fragment := refURL.Fragment
+	if fragment == "" {
+		return ref
+	}
+	// Strip "/definitions/" or "#/definitions/" prefix
+	const prefixA = "/definitions/"
+	const prefixB = "#/definitions/"
+	refName := fragment
+	if len(refName) > len(prefixA) && refName[:len(prefixA)] == prefixA {
+		refName = refName[len(prefixA):]
+	} else if len(refName) > len(prefixB) && refName[:len(prefixB)] == prefixB {
+		refName = refName[len(prefixB):]
+	}
+	if def, ok := defs[refName]; ok {
+		return &def.Schema
+	}
+	return nil
+}
+
+// schemasEqualType returns true if two schemas have the same type and $ref.
+// Properties with different types or different $refs across oneOf branches need
+// x-kubernetes-preserve-unknown-fields so SMD doesn't incorrectly validate them.
+func schemasEqualType(a, b *spec.Schema) bool {
+	if len(a.Type) == 0 && len(b.Type) == 0 && a.Ref.String() == "" && b.Ref.String() == "" {
+		return true
+	}
+	// If either has a $ref and they differ, treat as different
+	if a.Ref.String() != b.Ref.String() {
+		return false
+	}
+	if len(a.Type) != len(b.Type) {
+		return false
+	}
+	for i := range a.Type {
+		if a.Type[i] != b.Type[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
