@@ -91,6 +91,9 @@ func (r *configMapRepository) Test(ctx context.Context) (*provisioning.TestResul
 	}
 	ns := r.namespace()
 	cfg := r.cfg()
+	if cfg.Name == "" && cfg.LabelSelector == "" {
+		return repository.FromFieldError(field.Required(fld, "must set name or labelSelector")), nil
+	}
 	if cfg.Name != "" {
 		_, err = core.ConfigMaps(ns).Get(ctx, cfg.Name, metav1.GetOptions{})
 		if apierrors.IsNotFound(err) {

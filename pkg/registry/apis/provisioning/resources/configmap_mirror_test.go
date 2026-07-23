@@ -64,15 +64,16 @@ func TestConfigMapMirrorUpsertAndDelete(t *testing.T) {
 	}
 
 	dashGVK := schema.GroupVersionKind{Group: "dashboard.grafana.app", Version: "v0alpha1", Kind: "Dashboard"}
-	m.mirrorUpsert(context.Background(), "a.json", "", "uid1", dashGVK)
+	m.mirrorUpsert(context.Background(), "a.json", "", "UID_With_Underscores", dashGVK)
 
-	cm, err := client.CoreV1().ConfigMaps("ns1").Get(context.Background(), "grafana-dashboard-uid1", metav1.GetOptions{})
+	cm, err := client.CoreV1().ConfigMaps("ns1").Get(context.Background(), "grafana-dashboard-uid-with-underscores", metav1.GetOptions{})
 	require.NoError(t, err)
 	require.Equal(t, `{"uid":"uid1"}`, cm.Data[dashboardDataKey])
 	require.Equal(t, "1", cm.Labels["grafana_dashboard"])
+	require.Equal(t, "UID_With_Underscores", cm.Labels[mirrorUIDLabel])
 
-	m.OnResourceDeleted(context.Background(), "uid1", dashGVK)
-	_, err = client.CoreV1().ConfigMaps("ns1").Get(context.Background(), "grafana-dashboard-uid1", metav1.GetOptions{})
+	m.OnResourceDeleted(context.Background(), "UID_With_Underscores", dashGVK)
+	_, err = client.CoreV1().ConfigMaps("ns1").Get(context.Background(), "grafana-dashboard-uid-with-underscores", metav1.GetOptions{})
 	require.True(t, apierrors.IsNotFound(err))
 }
 

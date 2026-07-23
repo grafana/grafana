@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -42,7 +43,9 @@ func encodeKey(filePath, keyPrefix string) (string, error) {
 	return key, nil
 }
 
-// matchLabelsFromSelector extracts equality labels suitable for Create ObjectMeta.
+// matchLabelsFromSelector builds labels for Create that satisfy the selector.
+// Returns an error when the selector cannot be satisfied with concrete labels
+// (e.g. NotIn / multi-value In without equality labels).
 func matchLabelsFromSelector(sel string) (map[string]string, error) {
 	if sel == "" {
 		return nil, nil
@@ -56,9 +59,23 @@ func matchLabelsFromSelector(sel string) (map[string]string, error) {
 		out[k] = v
 	}
 	for _, expr := range ls.MatchExpressions {
-		if expr.Operator == metav1.LabelSelectorOpIn && len(expr.Values) == 1 {
-			out[expr.Key] = expr.Values[0]
+		switch expr.Operator {
+		case metav1.LabelSelectorOpIn:
+			if len(expr.Values) == 1 {
+				out[expr.Key] = expr.Values[0]
+			}
+		case metav1.LabelSelectorOpExists:
+			if _, ok := out[expr.Key]; !ok {
+				out[expr.Key] = "true"
+			}
 		}
+	}
+	parsed, err := labels.Parse(sel)
+	if err != nil {
+		return nil, err
+	}
+	if !parsed.Empty() && !parsed.Matches(labels.Set(out)) {
+		return nil, fmt.Errorf("labelSelector %q cannot be satisfied when creating ConfigMaps; use equality selectors (key=value)", sel)
 	}
 	return out, nil
 }

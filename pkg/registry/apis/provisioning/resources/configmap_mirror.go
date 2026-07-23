@@ -12,6 +12,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 const (
@@ -19,6 +20,7 @@ const (
 	mirrorRepoLabel      = "provisioning.grafana.app/repository"
 	mirrorUIDLabel       = "provisioning.grafana.app/dashboard-uid"
 	dashboardDataKey     = "dashboard.json"
+	mirrorUpdateRetries  = 5
 )
 
 type configMapMirrorResources struct {
@@ -107,6 +109,24 @@ func (m *configMapMirrorResources) mirrorNamespace() string {
 	return m.cfg.Namespace
 }
 
+func mirrorConfigMapName(repoName, dashboardUID string, perDashboard bool) string {
+	if perDashboard {
+		return "grafana-dashboard-" + sanitiseKubeName(dashboardUID)
+	}
+	return repoName
+}
+
+func mirrorDataKey(dashboardUID string, perDashboard bool) string {
+	if perDashboard {
+		return dashboardDataKey
+	}
+	key := dashboardUID + ".json"
+	if errs := validation.IsConfigMapKey(key); len(errs) > 0 {
+		key = sanitiseKubeName(dashboardUID) + ".json"
+	}
+	return key
+}
+
 func (m *configMapMirrorResources) mirrorUpsert(ctx context.Context, path, ref, name string, gvk schema.GroupVersionKind) {
 	if !isDashboardGVK(gvk) || name == "" {
 		return
@@ -124,12 +144,8 @@ func (m *configMapMirrorResources) mirrorUpsert(ctx context.Context, path, ref, 
 	}
 	ns := m.mirrorNamespace()
 	opts := m.mirrorOpts()
-	cmName := m.cfg.Name
-	dataKey := name + ".json"
-	if opts.PerDashboard {
-		cmName = fmt.Sprintf("grafana-dashboard-%s", name)
-		dataKey = dashboardDataKey
-	}
+	cmName := mirrorConfigMapName(m.cfg.Name, name, opts.PerDashboard)
+	dataKey := mirrorDataKey(name, opts.PerDashboard)
 	labels := map[string]string{
 		mirrorManagedByLabel: "true",
 		mirrorRepoLabel:      m.cfg.Name,
@@ -144,64 +160,69 @@ func (m *configMapMirrorResources) mirrorUpsert(ctx context.Context, path, ref, 
 	}
 
 	cmClient := client.CoreV1().ConfigMaps(ns)
-	existing, err := cmClient.Get(ctx, cmName, metav1.GetOptions{})
-	if apierrors.IsNotFound(err) {
-		cm := &corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        cmName,
-				Namespace:   ns,
-				Labels:      labels,
-				Annotations: annotations,
-			},
-			Data: map[string]string{dataKey: string(info.Data)},
-		}
-		if err := ensureMirrorSize(cm.Data); err != nil {
-			logger.Error("configmap mirror: size limit", "error", err)
-			return
-		}
-		_, createErr := cmClient.Create(ctx, cm, metav1.CreateOptions{})
-		if createErr == nil {
-			return
-		}
-		if !apierrors.IsAlreadyExists(createErr) {
+	for attempt := 0; attempt < mirrorUpdateRetries; attempt++ {
+		existing, err := cmClient.Get(ctx, cmName, metav1.GetOptions{})
+		if apierrors.IsNotFound(err) {
+			cm := &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        cmName,
+					Namespace:   ns,
+					Labels:      labels,
+					Annotations: annotations,
+				},
+				Data: map[string]string{dataKey: string(info.Data)},
+			}
+			if err := ensureMirrorSize(cm.Data); err != nil {
+				logger.Error("configmap mirror: size limit", "error", err)
+				return
+			}
+			_, createErr := cmClient.Create(ctx, cm, metav1.CreateOptions{})
+			if createErr == nil {
+				return
+			}
+			if apierrors.IsAlreadyExists(createErr) {
+				continue
+			}
 			logger.Error("configmap mirror: create failed", "name", cmName, "error", createErr)
 			return
 		}
-		// Parallel sync workers raced; fall through to get+update.
-		existing, err = cmClient.Get(ctx, cmName, metav1.GetOptions{})
 		if err != nil {
-			logger.Error("configmap mirror: get after create race failed", "name", cmName, "error", err)
+			logger.Error("configmap mirror: get failed", "name", cmName, "error", err)
 			return
 		}
-	} else if err != nil {
-		logger.Error("configmap mirror: get failed", "name", cmName, "error", err)
-		return
-	}
-	if existing.Data == nil {
-		existing.Data = map[string]string{}
-	}
-	existing.Data[dataKey] = string(info.Data)
-	if existing.Labels == nil {
-		existing.Labels = map[string]string{}
-	}
-	for k, v := range labels {
-		existing.Labels[k] = v
-	}
-	if len(annotations) > 0 {
-		if existing.Annotations == nil {
-			existing.Annotations = map[string]string{}
+		if existing.Data == nil {
+			existing.Data = map[string]string{}
 		}
-		for k, v := range annotations {
-			existing.Annotations[k] = v
+		existing.Data[dataKey] = string(info.Data)
+		if existing.Labels == nil {
+			existing.Labels = map[string]string{}
 		}
-	}
-	if err := ensureMirrorSize(existing.Data); err != nil {
-		logger.Error("configmap mirror: size limit", "error", err)
-		return
-	}
-	if _, err := cmClient.Update(ctx, existing, metav1.UpdateOptions{}); err != nil {
+		for k, v := range labels {
+			existing.Labels[k] = v
+		}
+		if len(annotations) > 0 {
+			if existing.Annotations == nil {
+				existing.Annotations = map[string]string{}
+			}
+			for k, v := range annotations {
+				existing.Annotations[k] = v
+			}
+		}
+		if err := ensureMirrorSize(existing.Data); err != nil {
+			logger.Error("configmap mirror: size limit", "error", err)
+			return
+		}
+		_, err = cmClient.Update(ctx, existing, metav1.UpdateOptions{})
+		if err == nil {
+			return
+		}
+		if apierrors.IsConflict(err) {
+			continue
+		}
 		logger.Error("configmap mirror: update failed", "name", cmName, "error", err)
+		return
 	}
+	logger.Error("configmap mirror: exhausted retries", "name", cmName)
 }
 
 func (m *configMapMirrorResources) mirrorDelete(ctx context.Context, name string) {
@@ -217,30 +238,38 @@ func (m *configMapMirrorResources) mirrorDelete(ctx context.Context, name string
 	ns := m.mirrorNamespace()
 	opts := m.mirrorOpts()
 	cmClient := client.CoreV1().ConfigMaps(ns)
+	cmName := mirrorConfigMapName(m.cfg.Name, name, opts.PerDashboard)
 	if opts.PerDashboard {
-		cmName := fmt.Sprintf("grafana-dashboard-%s", name)
 		if err := cmClient.Delete(ctx, cmName, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
 			logger.Error("configmap mirror: delete failed", "name", cmName, "error", err)
 		}
 		return
 	}
-	cmName := m.cfg.Name
-	cm, err := cmClient.Get(ctx, cmName, metav1.GetOptions{})
-	if apierrors.IsNotFound(err) {
-		return
-	}
-	if err != nil {
-		logger.Error("configmap mirror: get failed", "name", cmName, "error", err)
-		return
-	}
-	key := name + ".json"
-	if _, ok := cm.Data[key]; !ok {
-		return
-	}
-	delete(cm.Data, key)
-	if _, err := cmClient.Update(ctx, cm, metav1.UpdateOptions{}); err != nil {
+	dataKey := mirrorDataKey(name, false)
+	for attempt := 0; attempt < mirrorUpdateRetries; attempt++ {
+		cm, err := cmClient.Get(ctx, cmName, metav1.GetOptions{})
+		if apierrors.IsNotFound(err) {
+			return
+		}
+		if err != nil {
+			logger.Error("configmap mirror: get failed", "name", cmName, "error", err)
+			return
+		}
+		if _, ok := cm.Data[dataKey]; !ok {
+			return
+		}
+		delete(cm.Data, dataKey)
+		_, err = cmClient.Update(ctx, cm, metav1.UpdateOptions{})
+		if err == nil {
+			return
+		}
+		if apierrors.IsConflict(err) {
+			continue
+		}
 		logger.Error("configmap mirror: prune failed", "name", cmName, "error", err)
+		return
 	}
+	logger.Error("configmap mirror: prune exhausted retries", "name", cmName)
 }
 
 func ensureMirrorSize(data map[string]string) error {

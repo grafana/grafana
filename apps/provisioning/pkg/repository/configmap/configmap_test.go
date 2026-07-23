@@ -25,6 +25,13 @@ func TestEncodeDecodeKey(t *testing.T) {
 
 	_, err = encodeKey("folder/has space.json", "")
 	require.Error(t, err)
+
+	labels, err := matchLabelsFromSelector("grafana_dashboard=1")
+	require.NoError(t, err)
+	require.Equal(t, "1", labels["grafana_dashboard"])
+
+	_, err = matchLabelsFromSelector("grafana_dashboard in (1,2)")
+	require.Error(t, err)
 }
 
 func TestLabelSelectorCreateAppliesLabels(t *testing.T) {
