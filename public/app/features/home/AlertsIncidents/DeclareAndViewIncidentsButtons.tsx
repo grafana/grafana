@@ -6,15 +6,15 @@ import { incidentsCardClicked } from '../analytics/main';
 
 interface Props {
   pluginId: string;
-  count: number;
+  hasIncidents: boolean;
   canDeclare: boolean;
   canAccess: boolean;
 }
 
-export const DeclareAndViewIncidentsButtons = ({ pluginId, count, canDeclare, canAccess }: Props) => {
+export const DeclareAndViewIncidentsButtons = ({ pluginId, hasIncidents, canDeclare, canAccess }: Props) => {
   return (
     <Stack justifyContent="flex-end" wrap="wrap">
-      {count > 0 && canDeclare && (
+      {hasIncidents && canDeclare && (
         <LinkButton
           variant="secondary"
           size="sm"

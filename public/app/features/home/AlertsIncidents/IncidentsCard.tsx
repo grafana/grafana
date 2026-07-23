@@ -102,7 +102,7 @@ export function IncidentsCardView({
         !hideFooterActions && (
           <DeclareAndViewIncidentsButtons
             pluginId={pluginId}
-            count={count}
+            hasIncidents={count > 0}
             canDeclare={canDeclare}
             canAccess={canAccess}
           />

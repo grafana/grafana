@@ -135,7 +135,7 @@ function AlertIncidentTabsInner({
             {isIncidentsActionsVisible && (
               <DeclareAndViewIncidentsButtons
                 pluginId={incidentsPluginId}
-                count={incidentsData.count}
+                hasIncidents={incidentsData.count > 0}
                 canDeclare={incidentsCanDeclare}
                 canAccess={incidentsCanAccess}
               />
