@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -26,10 +27,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// folderTerminatingLabel is stamped on a folder once cascade deletion of its subtree has started.
+// Cascade-delete labels/finalizer are defined in foldersv1 as the shared contract with the reconciler.
 const (
-	folderTerminatingLabel      = "grafana.app/folder-terminating"
-	folderTerminatingLabelValue = "true"
+	folderTerminatingLabel       = foldersv1.LabelTerminating
+	folderTerminatingLabelValue  = foldersv1.LabelValueTrue
+	folderCascadeDeleteFinalizer = foldersv1.FinalizerCascadeDelete
 )
 
 // childFolderPageSize bounds each search page when enumerating child folders or dashboards.
@@ -119,6 +121,17 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 		return nil, false, err
 	}
 
+	// Async cascade: stamp the finalizer + terminating label and delegate. With a finalizer present
+	// the generic store records deletionTimestamp and keeps the folder for the background reconciler.
+	// Validation already ran above, but the graceful-deletion path dereferences deleteValidation
+	// unconditionally, so pass the admit-everything func rather than nil.
+	if folderCascadeDeleteAsyncEnabled(ctx) {
+		if err := s.markTerminating(ctx, name, options, true); err != nil {
+			return nil, false, err
+		}
+		return s.Storage.Delete(ctx, name, rest.ValidateAllObjectFunc, options)
+	}
+
 	// Capture the requester before switching to the service identity, so the per-folder access checks
 	// in the cascade run as the user rather than the service.
 	user, err := identity.GetRequester(ctx)
@@ -176,7 +189,7 @@ func checkDeletePreconditions(obj runtime.Object, options *metav1.DeleteOptions)
 // NotFound errors for children, since they might be already deleted or a stale search-index entry,
 // but we keep the error for the user-requested folder.
 func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.Requester, namespace, parentUID, name string, options *metav1.DeleteOptions, requested bool) (runtime.Object, bool, error) {
-	if err := s.markTerminating(ctx, name, options); err != nil {
+	if err := s.markTerminating(ctx, name, options, false); err != nil {
 		if apierrors.IsNotFound(err) && !requested {
 			return nil, false, nil
 		}
@@ -314,9 +327,9 @@ func (s *cascadeDeleteStorage) dashboardsInFolder(ctx context.Context, namespace
 }
 
 // markTerminating stamps the terminating label on the folder so the in-progress subtree deletion is
-// observable before its leaves are removed. It honors the delete dry-run so a dry-run folder delete
-// does not actually mutate folders.
-func (s *cascadeDeleteStorage) markTerminating(ctx context.Context, name string, options *metav1.DeleteOptions) error {
+// observable before its leaves are removed. When withFinalizer is set it also adds the cascade
+// finalizer, which keeps the folder alive after delete for the background reconciler. Honors dry-run.
+func (s *cascadeDeleteStorage) markTerminating(ctx context.Context, name string, options *metav1.DeleteOptions, withFinalizer bool) error {
 	objInfo := rest.DefaultUpdatedObjectInfo(nil, func(_ context.Context, newObj, oldObj runtime.Object) (runtime.Object, error) {
 		// With a nil base object, DefaultUpdatedObjectInfo passes a nil newObj; mutate a copy of the
 		// existing folder instead.
@@ -334,6 +347,9 @@ func (s *cascadeDeleteStorage) markTerminating(ctx context.Context, name string,
 		}
 		labels[folderTerminatingLabel] = folderTerminatingLabelValue
 		meta.SetLabels(labels)
+		if withFinalizer {
+			addFinalizer(meta, folderCascadeDeleteFinalizer)
+		}
 		return obj, nil
 	})
 
@@ -343,6 +359,14 @@ func (s *cascadeDeleteStorage) markTerminating(ctx context.Context, name string,
 	}
 	_, _, err := s.Update(ctx, name, objInfo, nil, nil, false, updateOpts)
 	return err
+}
+
+// addFinalizer appends finalizer to meta unless it is already present.
+func addFinalizer(meta utils.GrafanaMetaAccessor, finalizer string) {
+	if slices.Contains(meta.GetFinalizers(), finalizer) {
+		return
+	}
+	meta.SetFinalizers(append(meta.GetFinalizers(), finalizer))
 }
 
 // childFolders returns the UIDs of all direct child folders of parentUID, paging through the search

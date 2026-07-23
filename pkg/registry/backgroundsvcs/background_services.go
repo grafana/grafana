@@ -87,6 +87,7 @@ func ProvideBackgroundServiceRegistry(
 	natsSubscriber *infranats.SubscriberService,
 	sqlStore *sqlstore.SQLStore,
 	folderReconciler *folderreconcile.Reconciler,
+	asyncFolderReconciler *folderreconcile.AsyncReconciler,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
 	_ serviceaccounts.Service,
@@ -142,6 +143,7 @@ func ProvideBackgroundServiceRegistry(
 		zanzanaService,
 		sqlStore,
 		folderReconciler,
+		asyncFolderReconciler,
 	)
 }
 

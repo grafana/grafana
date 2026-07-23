@@ -46,6 +46,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-21,externalSnapshotsSupportLegacyAPI,experimental,@grafana/sharing-squad,false,true,false
 2025-06-25,kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-22,kubernetesFolderCascadeDelete,experimental,@grafana/search-and-storage,false,false,false
+2026-07-23,kubernetesFolderCascadeDeleteAsync,experimental,@grafana/search-and-storage,false,false,false
 2026-05-22,grafana.kubernetesAnnotationsClient,experimental,@grafana/dashboards-squad,false,false,true
 2026-06-18,grafana.newPanelQueryErrorsUI,experimental,@grafana/dashboards-squad,false,false,true
 2025-08-29,useKubernetesShortURLsAPI,GA,@grafana/sharing-squad,false,false,true
@@ -294,6 +295,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,alertingNotificationHistoryTriage,experimental,@grafana/alerting-squad,false,false,false
 2026-05-22,alertingNotificationHistoryDetail,experimental,@grafana/alerting-squad,false,false,false
 2026-07-14,deletedFolderResourceCleanup,experimental,@grafana/search-and-storage,false,false,false
+2026-07-23,deletedFolderResourceCleanupAsync,experimental,@grafana/search-and-storage,false,false,false
 2026-05-22,react19,GA,@grafana/grafana-frontend-platform,false,false,false
 2026-05-22,frontendService.settingsSourceFilter,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-05-22,managedPluginsV2,experimental,@grafana/grafana-catalog,false,false,false

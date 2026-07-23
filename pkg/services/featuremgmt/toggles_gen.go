@@ -151,6 +151,10 @@ const (
 	// Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned
 	FlagKubernetesFolderCascadeDelete = "kubernetesFolderCascadeDelete"
 
+	// FlagKubernetesFolderCascadeDeleteAsync
+	// Enable asynchronous folder.grafana.app cascade deletion: the delete request marks the folder terminating with a finalizer and a background reconciler drains its subtree. Requires kubernetesFolderCascadeDelete
+	FlagKubernetesFolderCascadeDeleteAsync = "kubernetesFolderCascadeDeleteAsync"
+
 	// FlagKubernetesCorrelations
 	// Adds support for Kubernetes correlations
 	FlagKubernetesCorrelations = "kubernetesCorrelations"
@@ -833,6 +837,10 @@ const (
 	// FlagDeletedFolderResourceCleanup
 	// Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server
 	FlagDeletedFolderResourceCleanup = "deletedFolderResourceCleanup"
+
+	// FlagDeletedFolderResourceCleanupAsync
+	// Periodically drains folders marked terminating by async cascade delete: deletes their contained resources and removes the cascade finalizer. Requires kubernetesFolderCascadeDeleteAsync
+	FlagDeletedFolderResourceCleanupAsync = "deletedFolderResourceCleanupAsync"
 
 	// FlagReact19
 	// Whether to use the new React 19 runtime
