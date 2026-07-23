@@ -188,18 +188,18 @@ describe('<ContentOutline />', () => {
       useBooleanFlagValueMock.mockImplementation((_: string, defaultValue: boolean) => defaultValue);
     });
 
-    it('shows the "Outline" title and hides the metrics explorer by default', () => {
+    it('hides the header title and the metrics explorer by default (feature toggle off)', () => {
       setup();
-      expect(screen.getByText('Outline')).toBeInTheDocument();
+      expect(screen.queryByText('Outline')).not.toBeInTheDocument();
       expect(screen.queryByText('Datasource explorer')).not.toBeInTheDocument();
       expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
     });
 
-    it('does not render the metrics explorer when the feature toggle is disabled', () => {
+    it('does not render the metrics explorer or header title when the feature toggle is disabled', () => {
       useBooleanFlagValueMock.mockReturnValue(false);
       setup(false, true);
       expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
-      expect(screen.getByText('Outline')).toBeInTheDocument();
+      expect(screen.queryByText('Outline')).not.toBeInTheDocument();
     });
 
     it('renders the metrics explorer and "Datasource explorer" title when the toggle is enabled and Prometheus is selected', () => {

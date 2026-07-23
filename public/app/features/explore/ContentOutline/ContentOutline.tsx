@@ -175,7 +175,7 @@ export function ContentOutline({
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
       <div className={styles.header}>
-        {contentOutlineExpanded && <span className={styles.headerTitle}>{outlineTitle}</span>}
+        {contentOutlineExpanded && metricsSidebarEnabled && <span className={styles.headerTitle}>{outlineTitle}</span>}
         <div className={styles.toggleWrapper}>
           <ContentOutlineItemButton
             icon={'arrow-from-right'}
