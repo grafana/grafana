@@ -1483,6 +1483,12 @@ export type GitHubEnterpriseConnectionConfig = {
   /** The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`). */
   serverUrl: string;
 };
+export type GitHubEnterpriseOAuthConnectionConfig = {
+  /** App client ID */
+  clientID: string;
+  /** The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`). */
+  serverUrl: string;
+};
 export type GitHubOAuthConnectionConfig = {
   /** App client ID */
   clientID: string;
@@ -1504,6 +1510,8 @@ export type ConnectionSpec = {
   github?: GitHubConnectionConfig;
   /** GitHub Enterprise Server connection configuration Only applicable when provider is "githubEnterprise" */
   githubEnterprise?: GitHubEnterpriseConnectionConfig;
+  /** GitHub Enterprise Server OAuth app connection configuration Only applicable when provider is "githubEnterpriseOAuth" */
+  githubEnterpriseOAuth?: GitHubEnterpriseOAuthConnectionConfig;
   /** GitHub OAuth app connection configuration Only applicable when provider is "githubOAuth" */
   githubOAuth?: GitHubOAuthConnectionConfig;
   /** Gitlab connection configuration Only applicable when provider is "gitlab" */
@@ -1516,9 +1524,10 @@ export type ConnectionSpec = {
      - `"bitbucket"`
      - `"github"`
      - `"githubEnterprise"`
+     - `"githubEnterpriseOAuth"`
      - `"githubOAuth"`
      - `"gitlab"` */
-  type: 'bitbucket' | 'github' | 'githubEnterprise' | 'githubOAuth' | 'gitlab';
+  type: 'bitbucket' | 'github' | 'githubEnterprise' | 'githubEnterpriseOAuth' | 'githubOAuth' | 'gitlab';
   /** The connection URL */
   url?: string;
   /** Webhook configuration for this connection */

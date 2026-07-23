@@ -4427,6 +4427,14 @@
               }
             ]
           },
+          "githubEnterpriseOAuth": {
+            "description": "GitHub Enterprise Server OAuth app connection configuration Only applicable when provider is \"githubEnterpriseOAuth\"",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.GitHubEnterpriseOAuthConnectionConfig"
+              }
+            ]
+          },
           "githubOAuth": {
             "description": "GitHub OAuth app connection configuration Only applicable when provider is \"githubOAuth\"",
             "allOf": [
@@ -4449,13 +4457,14 @@
             "default": ""
           },
           "type": {
-            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubOAuth\"`\n - `\"gitlab\"`",
+            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubEnterpriseOAuth\"`\n - `\"githubOAuth\"`\n - `\"gitlab\"`",
             "type": "string",
             "default": "",
             "enum": [
               "bitbucket",
               "github",
               "githubEnterprise",
+              "githubEnterpriseOAuth",
               "githubOAuth",
               "gitlab"
             ]
@@ -4807,6 +4816,25 @@
           },
           "installationID": {
             "description": "GitHub App installation ID",
+            "type": "string",
+            "default": ""
+          },
+          "serverUrl": {
+            "description": "The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.GitHubEnterpriseOAuthConnectionConfig": {
+        "type": "object",
+        "required": [
+          "clientID",
+          "serverUrl"
+        ],
+        "properties": {
+          "clientID": {
+            "description": "App client ID",
             "type": "string",
             "default": ""
           },
