@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { type PropsWithChildren } from 'react';
 
 import { CoreApp, type DataQueryRequest, dateTime, LoadingState, type PanelData, toDataFrame } from '@grafana/data';
@@ -8,6 +8,13 @@ import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 
 import { filterPanelDataToQuery, type Props, QueryEditorRow } from './QueryEditorRow';
+import { pinScrollIntoView } from './pinScrollIntoView';
+
+// Spy on the pin helper while keeping its real behavior, so tests can assert how often a pin starts.
+jest.mock('./pinScrollIntoView', () => {
+  const actual = jest.requireActual('./pinScrollIntoView');
+  return { ...actual, pinScrollIntoView: jest.fn(actual.pinScrollIntoView) };
+});
 
 const mockDS = mockDataSource({
   name: 'test',
@@ -437,6 +444,72 @@ describe('QueryEditorRow', () => {
     render(<QueryEditorRow {...props(data)} />);
     await waitFor(() => {
       expect(screen.queryByText('Error!!')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('scroll into view', () => {
+    let scrollIntoViewSpy: jest.Mock;
+    let originalScrollIntoView: typeof HTMLElement.prototype.scrollIntoView;
+
+    const data: PanelData = {
+      state: LoadingState.Done,
+      series: [],
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+
+    beforeEach(() => {
+      // jsdom doesn't implement scrollIntoView, so patch the prototype rather than spy on it.
+      originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+      scrollIntoViewSpy = jest.fn();
+      HTMLElement.prototype.scrollIntoView = scrollIntoViewSpy;
+      jest.mocked(pinScrollIntoView).mockClear();
+    });
+
+    afterEach(() => {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    });
+
+    it('scrolls the row into view once it renders (after the datasource loads)', async () => {
+      render(<QueryEditorRow {...props(data)} scrollIntoView />);
+
+      // The row renders nothing until its datasource resolves, so the scroll must wait for that.
+      // The jest-setup ResizeObserver mock may fire an extra re-pin, so assert on the first
+      // (deliberate) call rather than the total count.
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+      expect(scrollIntoViewSpy.mock.instances[0]).toBe(screen.getByTestId(selectors.components.QueryEditorRows.rows));
+      expect(scrollIntoViewSpy).toHaveBeenNthCalledWith(1, { behavior: 'smooth', block: 'start' });
+    });
+
+    it('keeps pinning after the scroll and reports back when the user takes over', async () => {
+      const onScrollIntoView = jest.fn();
+      render(<QueryEditorRow {...props(data)} scrollIntoView onScrollIntoView={onScrollIntoView} />);
+
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+      // The row stays pinned until the layout settles or the user scrolls, so the flag isn't
+      // cleared right after the first scroll.
+      expect(onScrollIntoView).not.toHaveBeenCalled();
+
+      fireEvent.wheel(window);
+
+      expect(onScrollIntoView).toHaveBeenCalledTimes(1);
+    });
+
+    it('starts the pin only once, even as the row keeps re-rendering', async () => {
+      const initialProps = props(data);
+      const { rerender } = render(<QueryEditorRow {...initialProps} scrollIntoView />);
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+
+      rerender(<QueryEditorRow {...initialProps} scrollIntoView data={{ ...data }} />);
+
+      expect(pinScrollIntoView).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not scroll when the flag is not set', async () => {
+      render(<QueryEditorRow {...props(data)} />);
+
+      await waitFor(() => expect(screen.getByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument());
+
+      expect(scrollIntoViewSpy).not.toHaveBeenCalled();
     });
   });
 
