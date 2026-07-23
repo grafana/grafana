@@ -43,12 +43,20 @@ The following Git Sync per-tier limits apply:
 
 | Tier                                      | **Cloud - Free** | **Cloud - Other** | **On-prem OSS** | **On-prem Enterprise** |
 | ----------------------------------------- | ---------------- | ----------------- | --------------- | ---------------------- |
-| Amount of repositories                    | 1                | 10                | 10              | 10                     |
+| Amount of repositories                    | 1                | 10                | 10 (default)    | 10 (default)           |
 | Amount of synced resources per repository | 20               | 1,000             | No limit        | No limit               |
+
+{{< admonition type="note" >}}
+
+On self-managed Grafana (OSS or Enterprise), the repository count of **10** in the table is the **default**, not a hard ceiling. Raise or remove it with `[provisioning] max_repositories` in the Grafana configuration file (`0` means unlimited). Refer to [`max_repositories`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#max_repositories) and [Modify your usage limits](#modify-your-usage-limits).
+
+On Grafana Cloud, tier limits can't be changed from configuration. Contact Support if you need a higher connection limit, or prefer [sharding by capacity](#shard-by-capacity-not-by-team) instead of one connection per team or microservice.
+
+{{< /admonition >}}
 
 **Do not sync more than 1,000 resources per repository connection as of today.** This isn't an arbitrary cap: beyond roughly 1,000 resources per connection, the sync workflow puts noticeable load on Grafana itself, which may result in slower syncs and increased database load. In any case, Git Sync is under continuous development and the recommended ceiling will increase in upcoming releases.
 
-The limit of 10 repository connections is a per-stack limit.
+On Grafana Cloud, the repository-connection limit is a per-stack limit. On self-managed Grafana, the effective limit is whatever you set for `max_repositories` (default `10`).
 
 Both of these limits are early figures. As Git Sync matures, these limits will raise by orders of magnitude. The goal is for Git Sync to support around 100 repository connections per stack, and up to roughly 1,000 in the longer term, with similar increases to the number of resources you can sync per connection.
 
@@ -98,11 +106,11 @@ On Grafana Cloud, limit increases aren't granted automatically. When you request
 How you change the limits depends on your deployment:
 
 - **Grafana Cloud**: Limits are enforced per tier and can't be edited from configuration. The 10-connection limit can be increased slightly on request — contact Support to discuss your use case. Splitting a single repository across multiple connections (see [Scale beyond 1,000 resources per repository](#scale-beyond-1000-resources-per-repository)) is the recommended way to sync more resources without changing tier limits.
-- **On-prem (OSS or Enterprise)**: There's no hard resource limit, but the 1,000-resources-per-connection recommendation still applies for performance reasons. You can customize both limits through configuration settings (see below), though splitting a single repository across connections is preferable to raising `max_resources_per_repository`.
+- **On-prem (OSS or Enterprise)**: The table value of 10 repositories is only the default, not a hard ceiling. The 1,000-resources-per-connection recommendation still applies for performance reasons. You can customize both limits through configuration settings (see below). Prefer splitting a single repository across connections when you need more resources, rather than raising `max_resources_per_repository` far above the recommended range.
 
 On-prem users can customize the limits with the following configuration settings:
 
-- Use `max_repositories` to set the amount of repositories you can sync. Refer to [`max_repositories`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#max_repositories) in the Configure Grafana section to learn more.
+- Use `max_repositories` to set how many repositories you can sync. Default is `10`. Set to `0` for unlimited repositories. Refer to [`max_repositories`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#max_repositories) in the Configure Grafana section to learn more.
 - Use `max_resources_per_repository` to set the amount of resources per repository to sync. Refer to [`max_resources_per_repository`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#max_resources_per_repository) in the Configure Grafana section to learn more.
 
 ### Nested folders
