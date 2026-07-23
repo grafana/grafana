@@ -311,6 +311,120 @@ describe('InfiniteScroll', () => {
   );
 });
 
+// Regression test for https://github.com/grafana/grafana/issues/129033: in interval mode the loader
+// loaded more logs only once and then got stuck showing "End of the selected time range". While a
+// load-more was in flight, Loki query splitting re-emits the previous response (same rows, new array)
+// with state=Loading; the loader treated that same-length change as "no new logs" and latched
+// 'out-of-bounds' before the real page arrived. The fix waits for the request to settle (loading
+// true -> false) and compares against the row count captured when the load-more started.
+describe('InfiniteScroll consecutive loads (regression #129033)', () => {
+  // Page 1 sits early in the range so canScrollBottom returns a valid next window.
+  const pageFrom = absoluteRange.from + 2 * SCROLLING_THRESHOLD;
+  const pageTo = absoluteRange.from + 50 * SCROLLING_THRESHOLD;
+
+  function ui(
+    currentLogs: LogListModel[],
+    element: ReturnType<typeof getMockElement>['element'],
+    loadMore: jest.Mock,
+    loading = false
+  ) {
+    return (
+      <InfiniteScroll
+        {...defaultProps}
+        sortOrder={LogsSortOrder.Ascending}
+        logs={currentLogs}
+        scrollElement={element as unknown as HTMLDivElement}
+        loadMore={loadMore}
+        loading={loading}
+        infiniteScrollMode="interval"
+      >
+        {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
+          <VariableSizeList
+            height={100}
+            itemCount={itemCount}
+            itemSize={() => virtualization.getLineHeight()}
+            itemKey={getItemKey}
+            layout="vertical"
+            onItemsRendered={onItemsRendered}
+            style={{ overflow: 'scroll' }}
+            width="100%"
+          >
+            {Renderer}
+          </VariableSizeList>
+        )}
+      </InfiniteScroll>
+    );
+  }
+
+  function scroll(
+    element: { scrollTop: number },
+    events: Record<string, (e: Event | WheelEvent) => void>,
+    position: number,
+    timeStamp: number
+  ) {
+    element.scrollTop = position;
+    act(() => {
+      const event = new Event('scroll');
+      jest.spyOn(event, 'timeStamp', 'get').mockReturnValue(timeStamp);
+      events['scroll'](event);
+    });
+  }
+
+  test('an intermediate same-length emission does not latch out-of-bounds (Ascending)', async () => {
+    const loadMoreMock = jest.fn();
+    const { element, events } = getMockElement(50);
+
+    const page1 = createLogs(pageFrom, pageTo);
+    const { rerender } = render(ui(page1, element, loadMoreMock, false));
+
+    expect(await screen.findByText('log line 1')).toBeInTheDocument();
+
+    // First scroll to the bottom triggers the first load-more.
+    scroll(element, events, 59, 1);
+    scroll(element, events, 60, 600);
+    expect(loadMoreMock).toHaveBeenCalledTimes(1);
+
+    // While the request is loading, Loki query splitting re-emits the previous rows (same length,
+    // new array) with state=Loading. The buggy code latched 'out-of-bounds' here; it must not.
+    act(() => {
+      rerender(ui(createLogs(pageFrom, pageTo), element, loadMoreMock, true));
+    });
+    expect(screen.queryByText('End of the selected time range.')).not.toBeInTheDocument();
+
+    // The real, larger page arrives and the request settles (loading true -> false). Because new
+    // rows were returned, the loader returns to idle rather than end-of-range.
+    const grown = [...page1, createLogLine({ entry: 'log line 3', uid: 'log-3', timeEpochMs: pageTo })];
+    act(() => {
+      rerender(ui(grown, element, loadMoreMock, false));
+    });
+    expect(screen.queryByText('End of the selected time range.')).not.toBeInTheDocument();
+  });
+
+  test('flags out-of-bounds only when a settled load-more returns no new rows (Ascending)', async () => {
+    const loadMoreMock = jest.fn();
+    const { element, events } = getMockElement(50);
+
+    const page1 = createLogs(pageFrom, pageTo);
+    const { rerender } = render(ui(page1, element, loadMoreMock, false));
+
+    expect(await screen.findByText('log line 1')).toBeInTheDocument();
+
+    scroll(element, events, 59, 1);
+    scroll(element, events, 60, 600);
+    expect(loadMoreMock).toHaveBeenCalledTimes(1);
+
+    // Request settles (loading true -> false) with the same number of rows → genuine end of range.
+    act(() => {
+      rerender(ui(page1, element, loadMoreMock, true));
+    });
+    act(() => {
+      rerender(ui(page1, element, loadMoreMock, false));
+    });
+
+    expect(await screen.findByText('End of the selected time range.')).toBeInTheDocument();
+  });
+});
+
 function createLogs(from: number, to: number) {
   const rows = [
     createLogLine({ entry: 'log line 1', uid: 'log-1' }),

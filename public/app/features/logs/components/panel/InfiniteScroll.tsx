@@ -82,26 +82,35 @@ export const InfiniteScroll = ({
   const resetStateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollToLogLineRef = useRef<LogListModel | undefined>(undefined);
   const noScrollRef = useRef<undefined | boolean>(undefined);
+  const prevLoading = usePrevious(loading);
+  const loadMoreCountRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // Logs have not changed, ignore effect
-    if (!prevLogs || prevLogs === logs) {
+    // Fresh logs from a new query (not infinite scrolling): reset paging and scroll.
+    if (prevLogs && prevLogs !== logs && infiniteLoaderState !== 'loading') {
+      lastLogOfPage.current = [];
+      setAutoScroll(true);
       return;
     }
-    // New logs are from infinite scrolling
-    if (infiniteLoaderState === 'loading') {
-      // out-of-bounds if no new logs returned
+    // Resolve a load-more only once the request has finished. Intermediate emissions
+    // (e.g. Loki query splitting re-emits the previous response with state=Loading
+    // before the new page arrives) carry the same rows, so deciding on every logs
+    // change would prematurely flag "out-of-bounds" and stop infinite scrolling. We
+    // wait for the request to settle (loading true -> false) and compare against the
+    // row count captured when the load-more started.
+    if (infiniteLoaderState === 'loading' && prevLoading && !loading) {
+      const startCount = loadMoreCountRef.current;
+      loadMoreCountRef.current = null;
       setInfiniteLoaderState(
-        logs.length === prevLogs.length && infiniteScrollMode === 'interval' ? 'out-of-bounds' : 'idle'
+        startCount !== null && logs.length === startCount && infiniteScrollMode === 'interval'
+          ? 'out-of-bounds'
+          : 'idle'
       );
       if (scrollToLogLineRef.current) {
         setAutoScroll(true);
       }
-    } else {
-      lastLogOfPage.current = [];
-      setAutoScroll(true);
     }
-  }, [infiniteLoaderState, infiniteScrollMode, logs, prevLogs]);
+  }, [infiniteLoaderState, infiniteScrollMode, loading, prevLoading, logs, prevLogs]);
 
   useEffect(() => {
     if (prevSortOrder && prevSortOrder !== sortOrder) {
@@ -133,6 +142,9 @@ export const InfiniteScroll = ({
         scrollToLogLineRef.current = logs[0];
         lastLogOfPage.current.push(logs[0].uid);
       }
+      // Remember how many logs we had so the completion effect can tell whether the
+      // load-more actually returned new rows (vs. reaching the range boundary).
+      loadMoreCountRef.current = logs.length;
       setInfiniteLoaderState('loading');
       loadMore?.(newRange ?? getVisibleRange(logs), scrollDirection);
 
