@@ -152,7 +152,18 @@ func (s *annotationAPIClient) GetByLegacyID(ctx context.Context, orgID int64, an
 	if len(list.Items) == 0 {
 		return nil, ErrNotFound
 	}
-	return &list.Items[0], nil
+
+	// Return the first non-deleted annotation, or the tombstone if all are deleted.
+	var tombstone *annotationV0.Annotation
+	for i := range list.Items {
+		if list.Items[i].GetDeletionTimestamp() == nil {
+			return &list.Items[i], nil
+		}
+		if tombstone == nil {
+			tombstone = &list.Items[i]
+		}
+	}
+	return tombstone, nil
 }
 
 func (s *annotationAPIClient) GetUsersFromMeta(ctx context.Context, usersMeta []string) (map[string]*user.User, error) {
