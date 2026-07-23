@@ -608,6 +608,10 @@ class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewP
   scrollToTop = () => {
     const { topOfViewRef, datasourceType, trace } = this.props;
     topOfViewRef?.current?.scrollIntoView({ behavior: 'smooth' });
+    // trace can be unset (button still renders); skip analytics rather than dereference it.
+    if (!trace) {
+      return;
+    }
     reportInteraction('grafana_traces_trace_view_scroll_to_top_clicked', {
       datasourceType: datasourceType,
       grafana_version: config.buildInfo.version,

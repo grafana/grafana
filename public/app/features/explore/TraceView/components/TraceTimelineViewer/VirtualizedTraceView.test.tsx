@@ -122,4 +122,16 @@ describe('<VirtualizedTraceViewImpl>', () => {
       expect.objectContaining({ numSpans: summaryTrace.spans.length, numSummarySpans: summaryTrace.spans.length })
     );
   });
+
+  it('does not throw or report when scrolling to top with no trace', async () => {
+    (reportInteraction as jest.Mock).mockClear();
+    render(<VirtualizedTraceView {...{ ...props, trace: null as unknown as Trace }} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /Scroll to top/i }));
+
+    expect(reportInteraction).not.toHaveBeenCalledWith(
+      'grafana_traces_trace_view_scroll_to_top_clicked',
+      expect.anything()
+    );
+  });
 });
