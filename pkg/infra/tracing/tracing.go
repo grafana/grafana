@@ -212,15 +212,21 @@ func (ots *TracingService) initFileTracerProvider() (tracerProvider, error) {
 	sampler, err := ots.initSampler()
 	if err != nil {
 		_ = exp.Shutdown(context.Background())
-		return nil, err
+		return ots.disableFileExporter(err)
 	}
 
-	return initTracerProvider(exp, ots.cfg.ServiceName, ots.cfg.ServiceVersion, sampler, ots.cfg.CustomAttribs...)
+	tp, err := initTracerProvider(exp, ots.cfg.ServiceName, ots.cfg.ServiceVersion, sampler, ots.cfg.CustomAttribs...)
+	if err != nil {
+		_ = exp.Shutdown(context.Background())
+		return ots.disableFileExporter(err)
+	}
+	return tp, nil
 }
 
 // disableFileExporter degrades to a noop tracer when the file exporter can't be
-// set up. Trace file capture is an optional support workflow, so a bad capture
-// path or exporter failure must not prevent Grafana from starting.
+// set up. Trace file capture is an optional support workflow, so no setup
+// failure (bad path, invalid sampler, exporter error) may prevent Grafana from
+// starting.
 func (ots *TracingService) disableFileExporter(err error) (tracerProvider, error) {
 	ots.log.Error("Disabling trace file exporter", "path", ots.cfg.FilePath, "err", err)
 	ots.cfg.enabled = noopExporter

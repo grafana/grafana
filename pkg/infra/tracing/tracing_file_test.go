@@ -118,6 +118,26 @@ func TestFileExporter_DisablesWhenCaptureDurationIsInvalid(t *testing.T) {
 	assert.NoFileExists(t, path)
 }
 
+func TestFileExporter_DisablesWhenSamplerIsInvalid(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "traces.json")
+	cfg := newFileTracingConfig(path)
+	cfg.Sampler = "not-a-sampler"
+
+	ots, err := ProvideService(cfg)
+	require.NoError(t, err, "an invalid sampler must disable the file exporter, not block startup")
+	assert.Equal(t, noopExporter, cfg.enabled)
+
+	_, span := ots.GetTracerProvider().Tracer("test").Start(context.Background(), "test-span")
+	span.End()
+	require.NoError(t, ots.GetTracerProvider().Shutdown(t.Context()))
+
+	// The capture file is created before the sampler is initialized, so it may
+	// exist, but nothing may have been captured.
+	if contents, err := os.ReadFile(path); err == nil { //nolint:gosec // G304: path is a test-controlled t.TempDir() path
+		assert.Empty(t, contents)
+	}
+}
+
 func TestFileClient_SkipsUploadsOnceCaptureEnds(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "traces.json")
 	cfg := newFileTracingConfig(path)
