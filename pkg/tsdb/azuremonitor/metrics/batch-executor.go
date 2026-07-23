@@ -143,6 +143,10 @@ func fanOutByResource(query backend.DataQuery, model dataquery.AzureMonitorQuery
 func (e *AzureMonitorDatasource) buildQueriesForBatch(query backend.DataQuery, queryJSONModel dataquery.AzureMonitorQuery, dsInfo types.DatasourceInfo) ([]*types.AzureMonitorQuery, error) {
 	azJSONModel := queryJSONModel.AzureMonitor
 
+	if _, err := buildDimensionFilterString(azJSONModel); err != nil {
+		return nil, err
+	}
+
 	// Determine the query-level defaults for subscription and region.
 	defaultSub := dsInfo.Settings.SubscriptionId
 	if queryJSONModel.Subscription != nil && *queryJSONModel.Subscription != "" {
