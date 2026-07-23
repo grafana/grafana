@@ -5,19 +5,15 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/grafana/authlib/types"
-	"go.opentelemetry.io/otel/attribute"
-	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
-
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
+	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 )
-
-var _ builder.HTTPRouteRegistrar = (*APIBuilder)(nil)
 
 // RegisterHTTPRoutes registers the /ofrep/v1/... routes on Grafana's HTTP router.
 // Used when the features-apiserver runs embedded in Grafana.
@@ -25,7 +21,7 @@ var _ builder.HTTPRouteRegistrar = (*APIBuilder)(nil)
 // which grafanaHTTPHandler injects into the request context before the handler runs.
 // In standalone mode, RootHTTPHandler is used instead.
 func (b *APIBuilder) RegisterHTTPRoutes(rr routing.RouteRegister) {
-	rr.Group("/ofrep", func(r routing.RouteRegister) {
+	ofrep := func(r routing.RouteRegister) {
 		r.Post("/v1/evaluate/flags", b.grafanaHTTPHandler(func(c *contextmodel.ReqContext) {
 			b.rootAllFlagsHandler(c.Resp, c.Req)
 		}))
@@ -35,7 +31,12 @@ func (b *APIBuilder) RegisterHTTPRoutes(rr routing.RouteRegister) {
 			})
 			b.rootOneFlagHandler(c.Resp, req)
 		}))
-	})
+	}
+
+	rr.Group("/ofrep", ofrep)
+
+	// Register the same service in the API server URL flavor
+	rr.Group("/apis/features.grafana.app/v0alpha1/", ofrep)
 }
 
 // RootHTTPHandler registers the /ofrep/v1/... routes directly on the k8s NonGoRestfulMux.
