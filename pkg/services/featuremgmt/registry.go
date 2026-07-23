@@ -226,15 +226,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:            "datasourceAPIServers",
-			Description:     "Expose some datasources as apiservers.",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true, // changes the API routing
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:            "grafanaAPIServerWithExperimentalAPIs",
 			Description:     "Register experimental APIs with the k8s API server, including all datasources",
 			Stage:           FeatureStageExperimental,
@@ -813,11 +804,11 @@ var (
 		{
 			Name:            "auditLoggingAppPlatform",
 			Description:     "Enable audit logging with Kubernetes under app platform",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStagePublicPreview,
 			Owner:           grafanaOperatorExperienceSquad,
 			HideFromDocs:    true,
 			RequiresRestart: true,
-			Expression:      "false",
+			Expression:      "true",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
@@ -889,7 +880,7 @@ var (
 			Name:        "sqlExpressionsColumnAutoComplete",
 			Description: "Enables column autocomplete for SQL Expressions",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
 		},
@@ -975,7 +966,7 @@ var (
 			Expression:   "true",
 		},
 		{
-			Name:        "dashboards.filterablePanels",
+			Name:        "grafana.filterablePanels",
 			Description: "Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{React: true},
@@ -3061,7 +3052,6 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
-
 			Name:        "cujTracking",
 			Description: "Enables Critical User Journey (CUJ) tracking",
 			Stage:       FeatureStageExperimental,

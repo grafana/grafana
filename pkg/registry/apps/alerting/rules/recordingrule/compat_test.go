@@ -86,7 +86,7 @@ func TestPrometheusRuleDefinitionRoundTrip(t *testing.T) {
 		rule.Record.From = rule.Data[0].RefID // mark the single query as the source so the round-trip is valid
 		rule.Metadata.PrometheusStyleRule = &ngmodels.PrometheusStyleRule{OriginalRuleDefinition: def}
 
-		k8sRule, err := convertToK8sResource(1, rule, ngmodels.ProvenanceConvertedPrometheus, mapper)
+		k8sRule, err := convertToK8sResource(1, rule, ngmodels.ProvenanceToManagerProperties(ngmodels.ProvenanceConvertedPrometheus), mapper)
 		require.NoError(t, err)
 
 		domainRule, _, err := convertToDomainModel(1, k8sRule)
@@ -100,7 +100,7 @@ func TestPrometheusRuleDefinitionRoundTrip(t *testing.T) {
 		rule.Record.From = rule.Data[0].RefID
 		rule.Metadata.PrometheusStyleRule = nil
 
-		k8sRule, err := convertToK8sResource(1, rule, ngmodels.ProvenanceNone, mapper)
+		k8sRule, err := convertToK8sResource(1, rule, ngmodels.ProvenanceToManagerProperties(ngmodels.ProvenanceNone), mapper)
 		require.NoError(t, err)
 
 		domainRule, _, err := convertToDomainModel(1, k8sRule)

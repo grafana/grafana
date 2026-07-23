@@ -1,9 +1,8 @@
 import { useMemo } from 'react';
 
+import { isDefaultRoutingTreeName } from '@grafana/alerting';
 import { Trans } from '@grafana/i18n';
 import { Drawer, Text } from '@grafana/ui';
-
-import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 
 import { type JourneyEntry, NotificationPolicyContent } from './NotificationPolicyDrawer';
 
@@ -14,13 +13,13 @@ type NotificationPolicySidebarProps = {
 };
 
 export function NotificationPolicySidebar({ journeys, labels, onClose }: NotificationPolicySidebarProps) {
-  // The default tree's metadata.name is ROOT_ROUTE_NAME ("user-defined"); treat that as no name
+  // The default tree may be named "user-defined" or "default"; treat either as no name
   // so downstream rendering shows "Default policy" rather than the internal identifier.
   const normalizedJourneys = useMemo(
     () =>
       journeys.map(({ journey, policyName }) => ({
         journey,
-        policyName: policyName !== ROOT_ROUTE_NAME ? policyName : undefined,
+        policyName: isDefaultRoutingTreeName(policyName) ? undefined : policyName,
       })),
     [journeys]
   );

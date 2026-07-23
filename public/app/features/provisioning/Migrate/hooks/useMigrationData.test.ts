@@ -152,6 +152,27 @@ describe('useMigrationData (folder-scoped kinds)', () => {
     expect(result.current.data.find((f) => f.uid === 'a')?.directResources.map((d) => d.uid)).toEqual(['a1']);
   });
 
+  it('excludes app-generated (SLO app) dashboards and folders from the selectable set', async () => {
+    mockSearch([
+      folder('a'),
+      folder('grafana_slo_app-slofolder'),
+      dashboard('a1', 'a'),
+      dashboard('grafana_slo_app-slodash', 'a'), // app-generated dashboard in a normal folder
+      dashboard('grafana_slo_app-slodash2', 'grafana_slo_app-slofolder'), // app-generated dash in the SLO folder
+    ]);
+
+    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // The SLO folder never surfaces as a selectable row.
+    expect(result.current.data.find((f) => f.uid === 'grafana_slo_app-slofolder')).toBeUndefined();
+    // Folder `a` keeps only the unmanaged, non-app-generated dashboard.
+    expect(result.current.data.find((f) => f.uid === 'a')?.directResources.map((d) => d.uid)).toEqual(['a1']);
+    // No app-generated resource appears in any row.
+    const allUids = result.current.data.flatMap((f) => f.directResources.map((d) => d.uid));
+    expect(allUids.some((uid) => uid.startsWith('grafana_slo_app-'))).toBe(false);
+  });
+
   it('sets isError when the search request fails', async () => {
     server.use(http.get(searchRoute, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
 

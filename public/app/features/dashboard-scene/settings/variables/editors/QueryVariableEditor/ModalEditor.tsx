@@ -217,7 +217,7 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
   const { options, staticOptions = [], staticOptionsOrder } = draftVariable.useState();
   const [queryError, setQueryError] = useState<Error>();
   const [isLoading, setIsLoading] = useState(false);
-  const [hasRunQuery, setHasRunQuery] = useState(false);
+  const [hasRunQuery, setHasRunQuery] = useState(Boolean(initialState.query));
 
   const updateVariable = async (targetVariable: QueryVariable, stateUpdate?: Partial<QueryVariable['state']>) => {
     if (stateUpdate) {

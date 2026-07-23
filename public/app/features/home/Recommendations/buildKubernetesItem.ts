@@ -71,6 +71,7 @@ export function buildKubernetesItem(parts: KubernetesItemParts, settings: Plugin
   const hasInventoryStats = inventory !== undefined && (clusterCount > 0 || podCount > 0);
 
   return {
+    id: 'kubernetes-monitoring',
     title: t('home.recommendations.kubernetes.title', 'Kubernetes Monitoring'),
     icon: 'kubernetes',
     subtitle: t('home.recommendations.kubernetes.datasource', 'via {{name}}', { name: parts.datasourceName }),

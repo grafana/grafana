@@ -51,15 +51,32 @@ func V19(_ context.Context, dashboard map[string]interface{}) error {
 			continue
 		}
 
-		links, ok := panel["links"].([]interface{})
-		if !ok {
+		upgradePanelLinksInPanel(panel)
+
+		// Handle nested panels in collapsed rows
+		if !IsArray(panel["panels"]) {
 			continue
 		}
 
-		panel["links"] = upgradePanelLinks(links)
+		for _, nestedPanel := range panel["panels"].([]interface{}) {
+			np, ok := nestedPanel.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			upgradePanelLinksInPanel(np)
+		}
 	}
 
 	return nil
+}
+
+func upgradePanelLinksInPanel(panel map[string]interface{}) {
+	links, ok := panel["links"].([]interface{})
+	if !ok {
+		return
+	}
+
+	panel["links"] = upgradePanelLinks(links)
 }
 
 func upgradePanelLinks(links []interface{}) []interface{} {

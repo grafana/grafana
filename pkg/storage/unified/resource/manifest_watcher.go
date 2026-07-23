@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -19,12 +20,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/transport"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 
 	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // v1alpha2 is the only version with SearchFields.
@@ -55,6 +58,39 @@ type ManifestWatcherConfig struct {
 	// PollInterval is the delay between poll cycles. Defaults to 1 hour if zero.
 	PollInterval time.Duration
 	Log          log.Logger
+}
+
+// NewManifestWatcherConfig builds a ManifestWatcherConfig from Grafana settings
+// and returns nil when the apiserver URL, token, or token exchange URL are
+// unset, so the watcher stays off unless explicitly configured.
+func NewManifestWatcherConfig(cfg *setting.Cfg) *ManifestWatcherConfig {
+	logger := log.New("search-manifest-watcher")
+	if cfg == nil {
+		return nil
+	}
+
+	grpcSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+	allowInsecure := cfg.ManifestWatcherAllowInsecureTLS
+	if allowInsecure && cfg.Env != setting.Dev {
+		logger.Error("manifest_watcher_allow_insecure_tls is set but app_mode is not 'development'; enforcing TLS verification", "app_mode", cfg.Env)
+		allowInsecure = false
+	}
+
+	wc := &ManifestWatcherConfig{
+		APIServerURL:     strings.TrimSpace(cfg.ManifestApiServerAddress),
+		Token:            strings.TrimSpace(grpcSection.Key("token").MustString("")),
+		TokenExchangeURL: strings.TrimSpace(grpcSection.Key("token_exchange_url").MustString("")),
+		CAFile:           strings.TrimSpace(cfg.ManifestWatcherCAFile),
+		AllowInsecure:    allowInsecure,
+		PollInterval:     cfg.ManifestWatcherPollInterval,
+		Log:              logger,
+	}
+
+	if wc.APIServerURL == "" || wc.Token == "" || wc.TokenExchangeURL == "" {
+		logger.Warn("manifest watcher not configured - ensure manifest api server address, token, and token exchange url are set")
+		return nil
+	}
+	return wc
 }
 
 // ManifestWatcher polls the app-platform apiserver for AppManifests and keeps a
@@ -97,17 +133,24 @@ func newManifestRESTConfig(cfg ManifestWatcherConfig) (*rest.Config, error) {
 		return nil, fmt.Errorf("creating token exchange client: %w", err)
 	}
 
-	// The token audience for an app-platform apiserver is its API group.
 	return &rest.Config{
 		APIPath:       "/apis",
 		Host:          cfg.APIServerURL,
 		Timeout:       manifestPollTimeout,
-		WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(tc, appManifestGVR.Group, clientauth.WildcardNamespace),
+		WrapTransport: manifestAuthWrapper(tc),
 		TLSClientConfig: rest.TLSClientConfig{
 			CAFile:   cfg.CAFile,
 			Insecure: cfg.AllowInsecure && cfg.CAFile == "",
 		},
 	}, nil
+}
+
+// manifestAuthWrapper builds the transport wrapper used to reach the app-platform
+// apiserver. That server authenticates a standard bearer token from the
+// Authorization header, so the exchanged token must go there rather than in the
+// authlib X-Access-Token header. The token audience is the API group.
+func manifestAuthWrapper(exchanger authnlib.TokenExchanger) transport.WrapperFunc {
+	return clientauth.NewStaticTokenExchangeAuthorizationTransportWrapper(exchanger, appManifestGVR.Group, clientauth.WildcardNamespace)
 }
 
 // NewManifestWatcher creates a ManifestWatcher as a dskit service. The initial
