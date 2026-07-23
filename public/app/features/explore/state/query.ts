@@ -53,7 +53,11 @@ import { createErrorNotification } from '../../../core/copy/appNotification';
 import { SupportingQueryType } from '../../loki-helpers/types';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData, decorateWithLogsResult } from '../utils/decorators';
-import { getSupplementaryQueryProvider, storeSupplementaryQueryEnabled, supplementaryQueryTypes, } from '../utils/supplementaryQueries';
+import {
+  getSupplementaryQueryProvider,
+  storeSupplementaryQueryEnabled,
+  supplementaryQueryTypes,
+} from '../utils/supplementaryQueries';
 
 import { getCorrelations } from './correlations';
 import { saveCorrelationsAction } from './explorePane';

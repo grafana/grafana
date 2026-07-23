@@ -1,10 +1,4 @@
-import {
-  type DataFrame,
-  DataFrameType,
-  type DataSourceInstanceSettings,
-  FieldType,
-  PluginType,
-} from '@grafana/data';
+import { type DataFrame, DataFrameType, type DataSourceInstanceSettings, FieldType, PluginType } from '@grafana/data';
 import { type TemplateSrv } from '@grafana/runtime';
 import { type LokiDatasource, type LokiOptions } from 'app/features/loki-helpers/types';
 

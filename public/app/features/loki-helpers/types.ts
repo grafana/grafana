@@ -1,8 +1,4 @@
-import {
-  type DataSourceApi,
-  type DataSourceJsonData,
-  type DataSourceWithLogsLabelTypesSupport,
-} from '@grafana/data';
+import { type DataSourceApi, type DataSourceJsonData, type DataSourceWithLogsLabelTypesSupport } from '@grafana/data';
 import type * as common from '@grafana/schema';
 
 enum QueryEditorMode {
