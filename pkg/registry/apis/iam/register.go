@@ -214,6 +214,7 @@ func NewAPIService(
 	serviceAccountAuthorizer := newServiceAccountAuthorizer(accessClient)
 	teamLBACAuthorizer := teamLBACApiInstaller.GetAuthorizer()
 	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
+	userAuthorizer := newUserAuthorizer(accessClient)
 
 	resourceParentProvider := iamauthorizer.NewApiParentProvider(
 		iamauthorizer.NewRemoteConfigProvider(authorizerDialConfigs, tokenExchanger),
@@ -298,7 +299,7 @@ func NewAPIService(
 				}
 
 				if a.GetResource() == "users" {
-					return resourceAuthorizer.Authorize(ctx, a)
+					return userAuthorizer.Authorize(ctx, a)
 				}
 
 				if a.GetResource() == iamv0.ServiceAccountResourceInfo.GetName() {
