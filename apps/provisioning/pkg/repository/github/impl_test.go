@@ -18,6 +18,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	repo "github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
@@ -342,7 +343,7 @@ func TestGithubClient_GetCommits(t *testing.T) {
 			// Create a mock client
 			factory := ProvideFactory()
 			factory.Client = tt.mockHandler
-			client, err := factory.New(t.Context(), tt.owner, tt.repository, "")
+			client, err := factory.New(tt.owner, tt.repository, "")
 			assert.NoError(t, err)
 
 			// Call the method being tested
@@ -577,7 +578,7 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 			// Create a mock client
 			factory := ProvideFactory()
 			factory.Client = tt.mockHandler
-			client, err := factory.New(t.Context(), tt.owner, tt.repository, "")
+			client, err := factory.New(tt.owner, tt.repository, "")
 			assert.NoError(t, err)
 
 			// Call the method being tested
@@ -750,7 +751,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			// Create a mock client
 			factory := ProvideFactory()
 			factory.Client = tt.mockHandler
-			client, err := factory.New(t.Context(), tt.owner, tt.repository, "")
+			client, err := factory.New(tt.owner, tt.repository, "")
 			assert.NoError(t, err)
 
 			// Call the method being tested
@@ -889,7 +890,7 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 			// Create a mock client
 			factory := ProvideFactory()
 			factory.Client = tt.mockHandler
-			client, err := factory.New(t.Context(), tt.owner, tt.repository, "")
+			client, err := factory.New(tt.owner, tt.repository, "")
 			assert.NoError(t, err)
 
 			// Call the method being tested
@@ -1079,7 +1080,7 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 			// Create a mock client
 			factory := ProvideFactory()
 			factory.Client = tt.mockHandler
-			client, err := factory.New(t.Context(), tt.owner, tt.repository, "")
+			client, err := factory.New(tt.owner, tt.repository, "")
 			assert.NoError(t, err)
 
 			// Call the method being tested
@@ -1259,7 +1260,7 @@ func TestGithubClient_ListPullRequestFiles(t *testing.T) {
 			// Create a mock client
 			factory := ProvideFactory()
 			factory.Client = tt.mockHandler
-			client, err := factory.New(t.Context(), tt.owner, tt.repository, "")
+			client, err := factory.New(tt.owner, tt.repository, "")
 			assert.NoError(t, err)
 
 			// Call the method being tested
@@ -1379,7 +1380,7 @@ func TestCreatePullRequestComment(t *testing.T) {
 			// Create a mock client
 			factory := ProvideFactory()
 			factory.Client = tt.mockHandler
-			client, err := factory.New(t.Context(), tt.owner, tt.repository, "")
+			client, err := factory.New(tt.owner, tt.repository, "")
 			assert.NoError(t, err)
 
 			// Call the method being tested
@@ -2477,7 +2478,7 @@ func TestGithubClient_GetRepository(t *testing.T) {
 			// Create a mock client
 			factory := ProvideFactory()
 			factory.Client = tt.mockHandler
-			client, err := factory.New(t.Context(), tt.owner, tt.repository, "")
+			client, err := factory.New(tt.owner, tt.repository, "")
 			assert.NoError(t, err)
 
 			// Call the method being tested
@@ -2581,7 +2582,7 @@ func TestGithubClient_MergeBase(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			factory := ProvideFactory()
 			factory.Client = tt.mockHandler
-			client, err := factory.New(t.Context(), "test-owner", "test-repo", "")
+			client, err := factory.New("test-owner", "test-repo", "")
 			require.NoError(t, err)
 
 			sha, err := client.MergeBase(t.Context(), "main", "feature")
@@ -2598,6 +2599,83 @@ func TestGithubClient_MergeBase(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.wantSHA, sha)
 			}
+		})
+	}
+}
+
+func TestGithubClient_ListRepositories(t *testing.T) {
+	mockHandler := mockhub.NewMockedHTTPClient(
+		mockhub.WithRequestMatchPages(
+			mockhub.GetUserRepos,
+			[]*github.Repository{
+				{Name: new("repo-one"), HTMLURL: new("https://github.com/my-org/repo-one"), Owner: &github.User{Login: new("my-org")}},
+			},
+			[]*github.Repository{
+				{Name: new("repo-two"), HTMLURL: new("https://github.com/my-org/repo-two"), Owner: &github.User{Login: new("my-org")}},
+			},
+		),
+	)
+
+	factory := ProvideFactory()
+	factory.Client = mockHandler
+	client, err := factory.New("", "", "")
+	require.NoError(t, err)
+
+	repos, err := client.ListRepositories(t.Context())
+	require.NoError(t, err)
+	assert.Equal(t, []provisioning.ExternalRepository{
+		{Name: "repo-one", Owner: "my-org", URL: "https://github.com/my-org/repo-one"},
+		{Name: "repo-two", Owner: "my-org", URL: "https://github.com/my-org/repo-two"},
+	}, repos)
+}
+
+func TestGithubClient_ListRepositories_Errors(t *testing.T) {
+	tests := []struct {
+		name    string
+		status  int
+		wantErr error
+	}{
+		{name: "unauthorized", status: http.StatusUnauthorized, wantErr: repo.ErrUnauthorized},
+		{name: "permission denied", status: http.StatusForbidden, wantErr: repo.ErrPermissionDenied},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockHandler := mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetUserRepos,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						mockhub.WriteError(w, tt.status, "nope")
+					}),
+				),
+			)
+
+			factory := ProvideFactory()
+			factory.Client = mockHandler
+			client, err := factory.New("", "", "")
+			require.NoError(t, err)
+
+			_, err = client.ListRepositories(t.Context())
+			assert.ErrorIs(t, err, tt.wantErr)
+		})
+	}
+}
+
+func TestGithubClient_ListRepositories_ContextCancelled(t *testing.T) {
+	tests := map[string][]ClientOption{
+		"github":            nil,
+		"github enterprise": {WithCustomServerURL("https://ghes.example.com")},
+	}
+	for name, opts := range tests {
+		t.Run(name, func(t *testing.T) {
+			client, err := ProvideFactory().New("", "", "test-token", opts...)
+			require.NoError(t, err)
+
+			ctx, cancel := context.WithCancel(t.Context())
+			cancel()
+
+			_, err = client.ListRepositories(ctx)
+			require.ErrorIs(t, err, context.Canceled)
 		})
 	}
 }
