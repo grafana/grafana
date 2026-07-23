@@ -9,8 +9,8 @@ import { type PromQuery } from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
-import { type LokiQuery } from 'app/plugins/datasource/loki/types';
 
+import { type LokiQuery } from '../../../../loki-helpers/types';
 import { isSupportedExternalRulesSourceType } from '../../utils/datasource';
 
 import { CloudAlertPreview } from './CloudAlertPreview';
