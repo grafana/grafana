@@ -896,6 +896,10 @@ function makeDuration(input?: MomentDurationInput, unit?: MomentUnit): MomentDur
     duration = normalizeDurationInput(input, unit);
   }
 
+  // moment's seconds()/minutes()/hours() return integer components (0-59, 0-59, 0-23 with the
+  // remainder carried into days), unlike as(unit) which returns the fractional total
+  const parts = duration.shiftTo('days', 'hours', 'minutes', 'seconds', 'milliseconds');
+
   return {
     asMilliseconds() {
       return duration.as('milliseconds');
@@ -914,15 +918,15 @@ function makeDuration(input?: MomentDurationInput, unit?: MomentUnit): MomentDur
     },
 
     seconds() {
-      return duration.as('seconds');
+      return parts.seconds;
     },
 
     minutes() {
-      return duration.as('minutes');
+      return parts.minutes;
     },
 
     hours() {
-      return duration.as('hours');
+      return parts.hours;
     },
   };
 }

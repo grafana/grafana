@@ -137,3 +137,35 @@ describe('year/month/date accessors', () => {
     expect(d.minute()).toBe(4);
   });
 });
+
+describe('duration component getters', () => {
+  it('returns integer components like moment, not fractional totals', () => {
+    const d = moment.duration(90, 'minutes');
+    expect(d.hours()).toBe(1);
+    expect(d.minutes()).toBe(30);
+    expect(d.seconds()).toBe(0);
+    expect(d.asHours()).toBe(1.5);
+    expect(d.asMilliseconds()).toBe(5400000);
+  });
+
+  it('returns 0 components for sub-second durations (like moment)', () => {
+    const d = moment.duration(23, 'milliseconds');
+    expect(d.hours()).toBe(0);
+    expect(d.minutes()).toBe(0);
+    expect(d.seconds()).toBe(0);
+    expect(d.asSeconds()).toBe(0.023);
+  });
+
+  it('truncates seconds and carries hours into days (like moment)', () => {
+    const d = moment.duration(25 * 3600 * 1000 + 1500);
+    expect(d.hours()).toBe(1);
+    expect(d.minutes()).toBe(0);
+    expect(d.seconds()).toBe(1);
+  });
+
+  it('returns negative components for negative durations (like moment)', () => {
+    const d = moment.duration(-90, 'seconds');
+    expect(d.minutes()).toBe(-1);
+    expect(d.seconds()).toBe(-30);
+  });
+});
