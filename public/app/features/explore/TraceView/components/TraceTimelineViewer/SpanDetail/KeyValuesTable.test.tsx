@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import KeyValuesTable, { LinkValue, type KeyValuesTableProps } from './KeyValuesTable';
 
@@ -97,6 +98,40 @@ describe('KeyValuesTable tests', () => {
     expect(link).toBeInTheDocument();
     expect(link.firstChild).toBe(link.querySelector('svg'));
     expect(screen.getByRole('row', { name: 'span.kind More info about client' })).toBeInTheDocument();
+  });
+
+  it('renders a dropdown menu when multiple links are available', async () => {
+    const user = userEvent.setup();
+    setup({
+      linksGetter: (array, i) =>
+        array[i].key === 'span.kind'
+          ? [
+              {
+                path: 'http://example.com/docs',
+                title: 'Docs',
+                description: 'Documentation',
+                icon: 'book',
+              },
+              {
+                path: 'http://example.com/dashboard',
+                title: 'Dashboard',
+                description: 'Service dashboard',
+                icon: 'apps',
+              },
+            ]
+          : [],
+    } as KeyValuesTableProps);
+
+    expect(screen.queryByRole('link', { name: 'Documentation' })).not.toBeInTheDocument();
+    expect(screen.getByRole('row', { name: /span\.kind.*"client"/ })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Open value in' }));
+
+    expect(await screen.findByText('OPEN VALUE IN')).toBeInTheDocument();
+    expect(await screen.findByRole('menuitem', { name: 'Documentation' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Service dashboard' })).toBeInTheDocument();
+    expect(screen.getByTitle('Docs')).toBeInTheDocument();
+    expect(screen.getByTitle('Dashboard')).toBeInTheDocument();
   });
 
   it('renders a <CopyIcon /> for each data element', () => {

@@ -15,10 +15,11 @@
 import { css } from '@emotion/css';
 import cx from 'clsx';
 import DOMPurify from 'dompurify';
-import { type PropsWithChildren } from 'react';
+import { type PropsWithChildren, type ReactNode } from 'react';
 
 import { type GrafanaTheme2, type PluginExtensionLink, type TraceKeyValuePair } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { Dropdown, Icon, Menu, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';
@@ -89,6 +90,29 @@ const getStyles = (theme: GrafanaTheme2) => {
     linkIcon: css({
       flexShrink: 0,
     }),
+    multiLinkTrigger: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.25),
+      padding: 0,
+      margin: 0,
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      color: theme.colors.text.link,
+      font: 'inherit',
+      textAlign: 'left',
+      '&:hover': {
+        textDecoration: 'underline',
+      },
+      // Match single-link styling so json-markup spans use the link color
+      span: {
+        color: `${theme.colors.text.link} !important`,
+      },
+    }),
+    multiLinkChevron: css({
+      flexShrink: 0,
+    }),
     jsonTable: css({
       display: 'inline-block',
     }),
@@ -109,7 +133,9 @@ function parseIfComplexJson(value: unknown) {
   return value;
 }
 
-export type KeyValuesTableLink = Pick<PluginExtensionLink, 'path' | 'title' | 'onClick' | 'icon'>;
+export type KeyValuesTableLink = Partial<
+  Pick<PluginExtensionLink, 'path' | 'title' | 'description' | 'onClick' | 'icon'>
+>;
 
 interface LinkValueProps {
   link: KeyValuesTableLink;
@@ -124,6 +150,46 @@ export const LinkValue = ({ link, children }: PropsWithChildren<LinkValueProps>)
       <Icon name={icon} className={styles.linkIcon} />
       {children}
     </a>
+  );
+};
+
+interface LinkValuesMenuProps {
+  links: KeyValuesTableLink[];
+  children: ReactNode;
+}
+
+export const LinkValuesMenu = ({ links, children }: LinkValuesMenuProps) => {
+  const styles = useStyles2(getStyles);
+  const openValueInLabel = t('explore.key-values-table.open-value-in', 'Open value in');
+
+  return (
+    <Dropdown
+      placement="bottom-start"
+      overlay={
+        <Menu>
+          <Menu.Group label={openValueInLabel.toLocaleUpperCase()}>
+            {links.map((link, index) => (
+              <div key={index} title={link.title}>
+                <Menu.Item
+                  label={
+                    link.description || link.title || t('explore.key-values-table.link-fallback-label', 'Link')
+                  }
+                  icon={link.icon}
+                  url={link.path}
+                  target="_blank"
+                  onClick={link.onClick}
+                />
+              </div>
+            ))}
+          </Menu.Group>
+        </Menu>
+      }
+    >
+      <button type="button" className={styles.multiLinkTrigger} aria-label={openValueInLabel} title={openValueInLabel}>
+        {children}
+        <Icon name="angle-down" size="sm" className={styles.multiLinkChevron} />
+      </button>
+    </Dropdown>
   );
 };
 
@@ -153,18 +219,16 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
             const jsonTable = (
               <div className={styles.jsonTable} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }} />
             );
-            const links = linksGetter?.(data, i);
-            let valueMarkup;
-            if (links && links.length) {
-              // TODO: handle multiple items
-              valueMarkup = (
-                <div>
-                  <LinkValue link={links[0]}>{jsonTable}</LinkValue>
-                </div>
+            const links = linksGetter?.(data, i) ?? [];
+            const valueMarkup =
+              links.length > 1 ? (
+                <LinkValuesMenu links={links}>{jsonTable}</LinkValuesMenu>
+              ) : links.length === 1 ? (
+                <LinkValue link={links[0]}>{jsonTable}</LinkValue>
+              ) : (
+                jsonTable
               );
-            } else {
-              valueMarkup = jsonTable;
-            }
+
             return (
               // `i` is necessary in the key because row.key can repeat
               <tr className={styles.row} key={`${row.key}-${i}`}>
