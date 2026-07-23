@@ -76,6 +76,15 @@ func (GitHubEnterpriseConnectionConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "GitHubEnterpriseConnectionConfig"
 }
 
+type GitHubEnterpriseOAuthConnectionConfig struct {
+	// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
+	ServerURL string `json:"serverUrl"`
+}
+
+func (GitHubEnterpriseOAuthConnectionConfig) OpenAPIModelName() string {
+	return OpenAPIPrefix + "GitHubEnterpriseOAuthConnectionConfig"
+}
+
 type BitbucketConnectionConfig struct {
 	// The workspace the OAuth consumer belongs to
 	Workspace string `json:"workspace"`
@@ -115,11 +124,12 @@ func (ConnectionType) OpenAPIModelName() string {
 
 // ConnectionType values.
 const (
-	GithubConnectionType           ConnectionType = "github"
-	GithubEnterpriseConnectionType ConnectionType = "githubEnterprise"
-	GithubOAuthConnectionType      ConnectionType = "githubOAuth"
-	GitlabConnectionType           ConnectionType = "gitlab"
-	BitbucketConnectionType        ConnectionType = "bitbucket"
+	GithubConnectionType                ConnectionType = "github"
+	GithubEnterpriseConnectionType      ConnectionType = "githubEnterprise"
+	GithubOAuthConnectionType           ConnectionType = "githubOAuth"
+	GithubEnterpriseOAuthConnectionType ConnectionType = "githubEnterpriseOAuth"
+	GitlabConnectionType                ConnectionType = "gitlab"
+	BitbucketConnectionType             ConnectionType = "bitbucket"
 )
 
 type ConnectionSpec struct {
@@ -138,6 +148,9 @@ type ConnectionSpec struct {
 	// GitHub Enterprise Server connection configuration
 	// Only applicable when provider is "githubEnterprise"
 	GitHubEnterprise *GitHubEnterpriseConnectionConfig `json:"githubEnterprise,omitempty"`
+	// GitHub Enterprise Server OAuth app connection configuration
+	// Only applicable when provider is "githubEnterpriseOAuth"
+	GitHubEnterpriseOAuth *GitHubEnterpriseOAuthConnectionConfig `json:"githubEnterpriseOAuth,omitempty"`
 	// Bitbucket connection configuration
 	// Only applicable when provider is "bitbucket"
 	Bitbucket *BitbucketConnectionConfig `json:"bitbucket,omitempty"`
