@@ -76,6 +76,15 @@ func (GitHubEnterpriseConnectionConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "GitHubEnterpriseConnectionConfig"
 }
 
+type GitHubOAuthConnectionConfig struct {
+	// App client ID
+	ClientID string `json:"clientID"`
+}
+
+func (GitHubOAuthConnectionConfig) OpenAPIModelName() string {
+	return OpenAPIPrefix + "GitHubOAuthConnectionConfig"
+}
+
 type BitbucketConnectionConfig struct {
 	// App client ID
 	ClientID string `json:"clientID"`
@@ -120,6 +129,7 @@ func (ConnectionType) OpenAPIModelName() string {
 const (
 	GithubConnectionType           ConnectionType = "github"
 	GithubEnterpriseConnectionType ConnectionType = "githubEnterprise"
+	GithubOAuthConnectionType      ConnectionType = "githubOAuth"
 	GitlabConnectionType           ConnectionType = "gitlab"
 	BitbucketConnectionType        ConnectionType = "bitbucket"
 )
@@ -140,6 +150,9 @@ type ConnectionSpec struct {
 	// GitHub Enterprise Server connection configuration
 	// Only applicable when provider is "githubEnterprise"
 	GitHubEnterprise *GitHubEnterpriseConnectionConfig `json:"githubEnterprise,omitempty"`
+	// GitHub OAuth app connection configuration
+	// Only applicable when provider is "githubOAuth"
+	GitHubOAuth *GitHubOAuthConnectionConfig `json:"githubOAuth,omitempty"`
 	// Bitbucket connection configuration
 	// Only applicable when provider is "bitbucket"
 	Bitbucket *BitbucketConnectionConfig `json:"bitbucket,omitempty"`

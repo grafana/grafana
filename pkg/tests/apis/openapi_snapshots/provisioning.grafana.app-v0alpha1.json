@@ -4427,6 +4427,14 @@
               }
             ]
           },
+          "githubOAuth": {
+            "description": "GitHub OAuth app connection configuration Only applicable when provider is \"githubOAuth\"",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.GitHubOAuthConnectionConfig"
+              }
+            ]
+          },
           "gitlab": {
             "description": "Gitlab connection configuration Only applicable when provider is \"gitlab\"",
             "allOf": [
@@ -4441,13 +4449,14 @@
             "default": ""
           },
           "type": {
-            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`",
+            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubOAuth\"`\n - `\"gitlab\"`",
             "type": "string",
             "default": "",
             "enum": [
               "bitbucket",
               "github",
               "githubEnterprise",
+              "githubOAuth",
               "gitlab"
             ]
           },
@@ -4831,6 +4840,19 @@
           "url": {
             "description": "The repository URL on the GHES server (e.g. `https://ghes.example.com/example/test`).",
             "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.GitHubOAuthConnectionConfig": {
+        "type": "object",
+        "required": [
+          "clientID"
+        ],
+        "properties": {
+          "clientID": {
+            "description": "App client ID",
+            "type": "string",
+            "default": ""
           }
         }
       },
