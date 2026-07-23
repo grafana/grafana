@@ -3,6 +3,8 @@ import { useCallback, useState } from 'react';
 
 import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config, locationService } from '@grafana/runtime';
+import { useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/internal';
 import { type SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, sceneUtils } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -14,6 +16,7 @@ import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
 import { type DashboardDataDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
+import { DashboardCodePane } from '../edit-pane/DashboardCodePane';
 import { getDashboardResourceText, validateDashboardResourceEnvelope } from '../edit-pane/codePaneUtils';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import {
@@ -28,6 +31,7 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { type DashboardSceneState } from '../scene/types/dashboard';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 import { DashboardSchemaEditor, type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
 
@@ -169,6 +173,9 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
   const canSave = dashboard.useState().meta.canSave;
   const { jsonText } = model.useState();
 
+  const isDynamicDashboardsEnabled = config.featureToggles.dashboardNewLayouts;
+  const isSettingsPageRedesignEnabled = useFlagGrafanaDashboardSettingsRedesign();
+
   const handleValidationChange = useCallback((hasErrors: boolean) => {
     setHasValidationErrors(hasErrors);
   }, []);
@@ -179,6 +186,15 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
     },
     [model]
   );
+
+  const goToSidebar = () => {
+    // close settings and open the "Edit as code" sidebar pane
+    const dashboard = getDashboardSceneFor(model);
+    dashboard.state.editPane.openPane(new DashboardCodePane({}));
+    locationService.partial({ editview: null });
+
+    DashboardInteractions.takeMeToSidebarClicked({ item: 'json-model' });
+  };
 
   const onSave = async (overwrite: boolean) => {
     const validation = model.validateEditedResource();
@@ -318,6 +334,25 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
   }
   // For v2 dashboards, disable save if there are validation errors
   const isSaveDisabled = isV2Dashboard && hasValidationErrors;
+
+  if (isDynamicDashboardsEnabled && isSettingsPageRedesignEnabled) {
+    return (
+      <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
+        <NavToolbarActions dashboard={dashboard} />
+        <Alert
+          severity="info"
+          title={t('dashboard-scene.dashboard-settings.json.title-moved', 'Looking for the JSON model?')}
+        >
+          <Trans i18nKey="dashboard-scene.dashboard-settings.json.description-moved">
+            The JSON model has moved to the dashboard&apos;s sidebar, under &quot;Edit as code&quot;.
+          </Trans>
+          <Button onClick={goToSidebar} fill="text" variant="primary" size="md">
+            <Trans i18nKey="dashboard-scene.dashboard-settings.json.button-moved">Take me there</Trans>
+          </Button>
+        </Alert>
+      </Page>
+    );
+  }
 
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>

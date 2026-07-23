@@ -1,0 +1,27 @@
+import { ArgTypes, Meta } from '@storybook/addon-docs/blocks';
+import { QueryInput } from './QueryInput';
+
+<Meta title="MDX|QueryInput" component={QueryInput} />
+
+# QueryInput
+
+A controlled query input backed by CodeMirror. Use it for query text that may
+span multiple lines and can be run with Shift+Enter or Ctrl+Enter.
+
+### Usage
+
+```tsx
+import { QueryInput } from '@grafana/ui';
+
+<QueryInput
+  value={query}
+  onChange={setQuery}
+  onRunQuery={runQuery}
+  placeholder="Enter a query (run with Shift+Enter)"
+  aria-label="Query"
+/>;
+```
+
+## Props
+
+<ArgTypes of={QueryInput} />
