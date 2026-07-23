@@ -264,6 +264,7 @@ export function InstallControlsButton({
           description: t('plugins.install-controls.install-manually-description', 'Install it yourself'),
           onClick: onInstall,
         }}
+        source="plugin_details_install"
         buttonProps={{ disabled: shouldDisable }}
       >
         {installButtonText}

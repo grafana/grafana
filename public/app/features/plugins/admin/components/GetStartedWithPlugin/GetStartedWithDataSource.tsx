@@ -95,6 +95,7 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
         ),
         onClick: onAddDataSource,
       }}
+      source="plugin_details_add_datasource"
       buttonProps={{ variant: 'primary', disabled: disabledButton, title: buttonTitle }}
     >
       {addNewDataSourceLabel}
