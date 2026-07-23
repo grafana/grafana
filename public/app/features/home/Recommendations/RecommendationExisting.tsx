@@ -7,6 +7,7 @@ import { createBridgeURL } from 'app/features/alerting/unified/components/Plugin
 import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 
 import { ExistingSolutionCard } from './ExistingSolutionCard';
+import { NoDataCard } from './NoDataCard';
 import { buildKubernetesItem } from './buildKubernetesItem';
 import { KUBERNETES_APP_ID } from './kubernetesData';
 import { type ExistingItem } from './types';
@@ -14,6 +15,7 @@ import { useKubernetesCardData } from './useKubernetesCardData';
 
 const stubbedExisting: ExistingItem[] = [
   {
+    id: 'hosted-metrics',
     title: 'Hosted Metrics',
     icon: 'chart-line',
     stats: {
@@ -30,6 +32,7 @@ const stubbedExisting: ExistingItem[] = [
     href: '#',
   },
   {
+    id: 'hosted-logs',
     title: 'Hosted Logs',
     icon: 'file-alt',
     stats: {
@@ -49,7 +52,6 @@ const stubbedExisting: ExistingItem[] = [
 
 export function RecommendationExisting() {
   const { settings, installed, loading: settingsLoading } = usePluginBridge(KUBERNETES_APP_ID);
-  const [selectedTitle, setSelectedTitle] = useState<string>();
 
   if (settingsLoading) {
     return <RecommendationExistingSkeleton />;
@@ -57,20 +59,18 @@ export function RecommendationExisting() {
 
   const bridgePath = createBridgeURL(KUBERNETES_APP_ID, '/home');
   if (!installed || !settings || !canAccessPluginPage(settings, bridgePath)) {
-    const selected = stubbedExisting.find((item) => item.title === selectedTitle) ?? stubbedExisting[0];
-    return <ExistingSolutionCard existing={stubbedExisting} selected={selected} onSelect={setSelectedTitle} />;
+    return <NoDataCard />;
   }
 
-  return <LiveSolutionsCard settings={settings} selectedTitle={selectedTitle} onSelect={setSelectedTitle} />;
+  return <LiveSolutionsCard settings={settings} />;
 }
 
 interface LiveSolutionsCardProps {
   settings: PluginMeta<{}>;
-  selectedTitle: string | undefined;
-  onSelect: (title: string) => void;
 }
 
-function LiveSolutionsCard({ settings, selectedTitle, onSelect }: LiveSolutionsCardProps) {
+function LiveSolutionsCard({ settings }: LiveSolutionsCardProps) {
+  const [selectedTitle, setSelectedTitle] = useState<string>();
   const { datasource, resolving, resolutionError, inventory, inventoryLoading, health, cpuSeries, cpuLoading } =
     useKubernetesCardData();
 
@@ -93,9 +93,14 @@ function LiveSolutionsCard({ settings, selectedTitle, onSelect }: LiveSolutionsC
         )
       : null;
 
-  const existing = kubernetesItem ? [kubernetesItem, ...stubbedExisting] : stubbedExisting;
+  // No datasource has Kubernetes data (or the probe failed): nothing live to show.
+  if (!kubernetesItem) {
+    return <NoDataCard />;
+  }
+
+  const existing = [kubernetesItem, ...stubbedExisting];
   const selected = existing.find((item) => item.title === selectedTitle) ?? existing[0];
-  return <ExistingSolutionCard existing={existing} selected={selected} onSelect={onSelect} />;
+  return <ExistingSolutionCard existing={existing} selected={selected} onSelect={setSelectedTitle} />;
 }
 
 // Mirrors the card body (dropdown pill, icon + title, stats, CTA) while the Kubernetes lookups

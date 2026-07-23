@@ -1,0 +1,539 @@
+//go:build wireinject && (enterprise || pro)
+// +build wireinject
+// +build enterprise pro
+
+// Core Wire provider sets for Enterprise wire generation.
+// OSS uses the equivalent sets exported from pkg/server/bootstrap/wire.
+package server
+
+import (
+	"github.com/google/wire"
+
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
+	ghconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
+	"github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/pkg/api/avatar"
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
+	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log/slogadapter"
+	"github.com/grafana/grafana/pkg/infra/metrics"
+	infranats "github.com/grafana/grafana/pkg/infra/nats"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
+	uss "github.com/grafana/grafana/pkg/infra/usagestats/service"
+	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
+	"github.com/grafana/grafana/pkg/infra/usagestats/validator"
+	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/connectors"
+	"github.com/grafana/grafana/pkg/login/social/socialimpl"
+	"github.com/grafana/grafana/pkg/middleware/csrf"
+	"github.com/grafana/grafana/pkg/middleware/loggermw"
+	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
+	legacystars "github.com/grafana/grafana/pkg/registry/apis/collections/legacy"
+	dashboardlegacy "github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	dashboardmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
+	snapshotmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot/migrator"
+	dsmigrator "github.com/grafana/grafana/pkg/registry/apis/datasource/migrator"
+	legacypreferences "github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
+	secretclock "github.com/grafana/grafana/pkg/registry/apis/secret/clock"
+	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
+	cipher "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
+	encryptionManager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
+	secretsgarbagecollectionworker "github.com/grafana/grafana/pkg/registry/apis/secret/garbagecollectionworker"
+	secretinline "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
+	secretmutator "github.com/grafana/grafana/pkg/registry/apis/secret/mutator"
+	secretsecurevalueservice "github.com/grafana/grafana/pkg/registry/apis/secret/service"
+	secretvalidator "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
+	appregistry "github.com/grafana/grafana/pkg/registry/apps"
+	playlistmigrator "github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
+	querycachingmigrator "github.com/grafana/grafana/pkg/registry/apps/querycaching/migrator"
+	shorturlmigrator "github.com/grafana/grafana/pkg/registry/apps/shorturl/migrator"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationsapi"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
+	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
+	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/idimpl"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
+	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
+	"github.com/grafana/grafana/pkg/services/authz"
+	"github.com/grafana/grafana/pkg/services/caching"
+	"github.com/grafana/grafana/pkg/services/cleanup"
+	"github.com/grafana/grafana/pkg/services/cloudmigration/cloudmigrationimpl"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/correlations"
+	"github.com/grafana/grafana/pkg/services/dashboardimport"
+	dashboardimportservice "github.com/grafana/grafana/pkg/services/dashboardimport/service"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
+	dashboardclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	dashsnapstore "github.com/grafana/grafana/pkg/services/dashboardsnapshots/database"
+	dashsnapsvc "github.com/grafana/grafana/pkg/services/dashboardsnapshots/service"
+	"github.com/grafana/grafana/pkg/services/dashboardversion/dashverimpl"
+	"github.com/grafana/grafana/pkg/services/datasourceproxy"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
+	"github.com/grafana/grafana/pkg/services/encryption"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
+	"github.com/grafana/grafana/pkg/services/extsvcauth"
+	extsvcreg "github.com/grafana/grafana/pkg/services/extsvcauth/registry"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/folderreconcile"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
+	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
+	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
+	"github.com/grafana/grafana/pkg/services/hooks"
+	ldapapi "github.com/grafana/grafana/pkg/services/ldap/api"
+	ldapservice "github.com/grafana/grafana/pkg/services/ldap/service"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/librarypanels"
+	"github.com/grafana/grafana/pkg/services/live"
+	"github.com/grafana/grafana/pkg/services/live/pushhttp"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
+	"github.com/grafana/grafana/pkg/services/loginattempt"
+	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
+	"github.com/grafana/grafana/pkg/services/navtree/navtreeimpl"
+	"github.com/grafana/grafana/pkg/services/ngalert"
+	ngimage "github.com/grafana/grafana/pkg/services/ngalert/image"
+	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
+	"github.com/grafana/grafana/pkg/services/ofrep"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/plugindashboards"
+	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration"
+	pluginDashboards "github.com/grafana/grafana/pkg/services/pluginsintegration/dashboards"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/preference/prefapi"
+	"github.com/grafana/grafana/pkg/services/preference/prefimpl"
+	promTypeMigration "github.com/grafana/grafana/pkg/services/promtypemigration"
+	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/queryhistory"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
+	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/search/sort"
+	"github.com/grafana/grafana/pkg/services/secrets"
+	secretsDatabase "github.com/grafana/grafana/pkg/services/secrets/database"
+	secretsStore "github.com/grafana/grafana/pkg/services/secrets/kvstore"
+	secretsMigrations "github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/extsvcaccounts"
+	serviceaccountsmanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
+	serviceaccountsproxy "github.com/grafana/grafana/pkg/services/serviceaccounts/proxy"
+	serviceaccountsretriever "github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
+	"github.com/grafana/grafana/pkg/services/shorturls"
+	"github.com/grafana/grafana/pkg/services/shorturls/shorturlimpl"
+	"github.com/grafana/grafana/pkg/services/signingkeys"
+	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeysimpl"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
+	ssoSettingsImpl "github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
+	starApi "github.com/grafana/grafana/pkg/services/star/api"
+	"github.com/grafana/grafana/pkg/services/star/starimpl"
+	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
+	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/supportbundles"
+	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
+	"github.com/grafana/grafana/pkg/services/tag"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/teamapi"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
+	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
+	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
+	"github.com/grafana/grafana/pkg/services/updatemanager"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	legacydualwrite "github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	secretdatabase "github.com/grafana/grafana/pkg/storage/secret/database"
+	secretencryption "github.com/grafana/grafana/pkg/storage/secret/encryption"
+	secretmetadata "github.com/grafana/grafana/pkg/storage/secret/metadata"
+	secretmigrator "github.com/grafana/grafana/pkg/storage/secret/migrator"
+	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
+	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
+	"github.com/grafana/grafana/pkg/tsdb/grafanads"
+	"github.com/grafana/grafana/pkg/tsdb/graphite"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb"
+	"github.com/grafana/grafana/pkg/tsdb/loki"
+	"github.com/grafana/grafana/pkg/tsdb/mysql"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus"
+)
+
+var withOTelSet = wire.NewSet(
+	OtelTracer,
+	grpcserver.ProvideService,
+	interceptors.ProvideAuthenticator,
+)
+
+var wireBasicSet = wire.NewSet(
+	annotationsimpl.ProvideService,
+	wire.Bind(new(annotations.Repository), new(*annotationsimpl.RepositoryImpl)),
+	New,
+	api.ProvideHTTPServer,
+	query.ProvideService,
+	wire.Bind(new(query.Service), new(*query.ServiceImpl)),
+	bus.ProvideBus,
+	wire.Bind(new(bus.Bus), new(*bus.InProcBus)),
+	rendering.ProvideService,
+	wire.Bind(new(rendering.Service), new(*rendering.RenderingService)),
+	routing.ProvideRegister,
+	wire.Bind(new(routing.RouteRegister), new(*routing.RouteRegisterImpl)),
+	hooks.ProvideService,
+	kvstore.ProvideService,
+	localcache.ProvideService,
+	bundleregistry.ProvideService,
+	wire.Bind(new(supportbundles.Service), new(*bundleregistry.Service)),
+	updatemanager.ProvideGrafanaService,
+	updatemanager.ProvidePluginsService,
+	uss.ProvideService,
+	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
+	validator.ProvideService,
+	provisioning.ProvideStubProvisioningService,
+	dashboardlegacy.ProvideMigrator,
+	dashboardmigrator.ProvideFoldersDashboardsMigrator,
+	playlistmigrator.ProvidePlaylistMigrator,
+	querycachingmigrator.ProvideQueryCacheConfigMigrator,
+	shorturlmigrator.ProvideShortURLMigrator,
+	snapshotmigrator.ProvideSnapshotMigrator,
+	legacystars.ProvideStarsMigrator,
+	legacypreferences.ProvidePreferencesMigrator,
+	dsmigrator.ProvideDataSourceMigrator,
+	ProvideMigrationRegistry,
+	unifiedmigrations.ProvideUnifiedMigrator,
+	pluginsintegration.WireSet,
+	pluginDashboards.ProvideFileStoreManager,
+	wire.Bind(new(pluginDashboards.FileStore), new(*pluginDashboards.FileStoreManager)),
+	cloudwatch.ProvideService,
+	azuremonitor.ProvideService,
+	mysql.ProvideService,
+	legacydualwrite.ProvideService,
+	httpclientprovider.New,
+	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
+	serverlock.ProvideService,
+	wire.Bind(new(installsync.ServerLock), new(*serverlock.ServerLockService)),
+	annotationsimpl.ProvideCleanupService,
+	wire.Bind(new(annotations.Cleaner), new(*annotationsimpl.CleanupServiceImpl)),
+	cleanup.ProvideService,
+	shorturlimpl.ProvideService,
+	wire.Bind(new(shorturls.Service), new(*shorturlimpl.ShortURLService)),
+	queryhistory.ProvideService,
+	wire.Bind(new(queryhistory.Service), new(*queryhistory.QueryHistoryService)),
+	correlations.ProvideService,
+	correlations.ProvideLegacyService,
+	quotaimpl.ProvideService,
+	remotecache.ProvideService,
+	wire.Bind(new(remotecache.CacheStorage), new(*remotecache.RemoteCache)),
+	authinfoimpl.ProvideService,
+	wire.Bind(new(login.AuthInfoService), new(*authinfoimpl.Service)),
+	authinfoimpl.ProvideStore,
+	datasourceproxy.ProvideService,
+	sort.ProvideService,
+	search.ProvideService,
+	store.ProvideService,
+	store.ProvideSystemUsersService,
+	live.ProvideService,
+	live.ProvideDashboardActivityChannel,
+	pushhttp.ProvideService,
+	contexthandler.ProvideService,
+	ldapservice.ProvideService,
+	wire.Bind(new(ldapservice.LDAP), new(*ldapservice.LDAPImpl)),
+	jwt.ProvideService,
+	wire.Bind(new(jwt.JWTService), new(*jwt.AuthService)),
+	ngstore.ProvideDBStore,
+	ngimage.ProvideDeleteExpiredService,
+	ngalert.ProvideService,
+	librarypanels.ProvideService,
+	wire.Bind(new(librarypanels.Service), new(*librarypanels.LibraryPanelService)),
+	libraryelements.ProvideService,
+	wire.Bind(new(libraryelements.Service), new(*libraryelements.LibraryElementService)),
+	libraryelements.ProvideFolderConsumer,
+	ngalert.ProvideAlertRuleFolderConsumer,
+	folderreconcile.ProvideReconciler,
+	notifications.ProvideService,
+	notifications.ProvideSmtpService,
+	github.ProvideFactory,
+	ghconnection.ProvideFactory,
+	tracing.ProvideService,
+	tracing.ProvideTracingConfig,
+	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
+	infranats.ProvideNATSConfig,
+	infranats.ProvideServer,
+	infranats.ProvidePublisher,
+	wire.Bind(new(infranats.Publisher), new(*infranats.PublisherService)),
+	infranats.ProvideSubscriber,
+	wire.Bind(new(infranats.Subscriber), new(*infranats.SubscriberService)),
+	withOTelSet,
+	testdatasource.ProvideService,
+	ldapapi.ProvideService,
+	socialimpl.ProvideService,
+	influxdb.ProvideService,
+	wire.Bind(new(social.Service), new(*socialimpl.SocialService)),
+	loki.ProvideService,
+	graphite.ProvideService,
+	prometheus.ProvideService,
+	datasourceservice.ProvideCacheService,
+	wire.Bind(new(datasources.CacheService), new(*datasourceservice.CacheServiceImpl)),
+	encryptionservice.ProvideEncryptionService,
+	wire.Bind(new(encryption.Internal), new(*encryptionservice.Service)),
+	secretsManager.ProvideSecretsService,
+	ofrep.ProvideService,
+	wire.Bind(new(secrets.Service), new(*secretsManager.SecretsService)), //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	secretsDatabase.ProvideSecretsStore,
+	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)), //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	secretsgarbagecollectionworker.ProvideWorker,
+	grafanads.ProvideService,
+	wire.Bind(new(dashboardsnapshots.Store), new(*dashsnapstore.DashboardSnapshotStore)),
+	dashsnapstore.ProvideStore,
+	wire.Bind(new(dashboardsnapshots.Service), new(*dashsnapsvc.ServiceImpl)),
+	dashsnapsvc.ProvideService,
+	datasourceservice.ProvideDataSourceRetriever,
+	datasourceservice.ProvideService,
+	wire.Bind(new(datasources.DataSourceService), new(*datasourceservice.Service)),
+	datasourceservice.ProvideLegacyDataSourceLookup,
+	serviceaccountsretriever.ProvideService,
+	wire.Bind(new(serviceaccounts.ServiceAccountRetriever), new(*serviceaccountsretriever.Service)),
+	ossaccesscontrol.ProvideServiceAccountPermissions,
+	wire.Bind(new(accesscontrol.ServiceAccountPermissionsService), new(*ossaccesscontrol.ServiceAccountPermissionsService)),
+	serviceaccountsmanager.ProvideServiceAccountsService,
+	serviceaccountsproxy.ProvideServiceAccountsProxy,
+	wire.Bind(new(serviceaccounts.Service), new(*serviceaccountsproxy.ServiceAccountsProxy)),
+	dsquerierclient.NewNullQSDatasourceClientBuilder,
+	expr.ProvideService,
+	featuremgmt.ProvideManagerService,
+	featuremgmt.ProvideToggles,
+	dashboardservice.ProvideDashboardServiceImpl,
+	wire.Bind(new(dashboards.PermissionsRegistrationService), new(*dashboardservice.DashboardServiceImpl)),
+	dashboardservice.ProvideDashboardService,
+	dashboardservice.ProvideDashboardProvisioningService,
+	dashboardservice.ProvideDashboardPluginService,
+	dashboardservice.ProvideDashboardAccessService,
+	folderimpl.ProvideService,
+	wire.Bind(new(folder.Service), new(*folderimpl.Service)),
+	dashboardimportservice.ProvideService,
+	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
+	plugindashboardsservice.ProvideService,
+	wire.Bind(new(plugindashboards.Service), new(*plugindashboardsservice.Service)),
+	plugindashboardsservice.ProvideDashboardUpdater,
+	secretsStore.ProvideService,
+	avatar.ProvideAvatarCacheServer,
+	statscollector.ProvideService,
+	csrf.ProvideCSRFFilter,
+	wire.Bind(new(csrf.Service), new(*csrf.CSRF)),
+	ossaccesscontrol.ProvideTeamPermissions,
+	wire.Bind(new(accesscontrol.TeamPermissionsService), new(*ossaccesscontrol.TeamPermissionsService)),
+	ossaccesscontrol.ProvideFolderPermissions,
+	wire.Bind(new(accesscontrol.FolderPermissionsService), new(*ossaccesscontrol.FolderPermissionsService)),
+	ossaccesscontrol.ProvideDashboardPermissions,
+	wire.Bind(new(accesscontrol.DashboardPermissionsService), new(*ossaccesscontrol.DashboardPermissionsService)),
+	ossaccesscontrol.ProvideReceiverPermissionsService,
+	wire.Bind(new(accesscontrol.ReceiverPermissionsService), new(*ossaccesscontrol.ReceiverPermissionsService)),
+	ossaccesscontrol.ProvideRoutePermissionsService,
+	wire.Bind(new(accesscontrol.RoutePermissionsService), new(*ossaccesscontrol.RoutePermissionsService)),
+	starimpl.ProvideService,
+	apikeyimpl.ProvideService,
+	dashverimpl.ProvideService,
+	publicdashboards.ProvideService,
+	publicdashboards.ProvideStore,
+	publicdashboards.ProvideMetricsService,
+	publicdashboards.ProvideApi,
+	starApi.ProvideApi,
+	prefapi.ProvideK8sHandler,
+	annotationsapi.ProvideTokenExchanger,
+	annotationsapi.ProvideMigrationProxy,
+	starApi.ProvideK8sClients,
+	userimpl.ProvideService,
+	wire.Bind(new(user.Service), new(*userimpl.Service)),
+	orgimpl.ProvideService,
+	orgimpl.ProvideDeletionService,
+	statsimpl.ProvideService,
+	grpccontext.ProvideContextHandler,
+	grpcserver.ProvideHealthService,
+	grpcserver.ProvideReflectionService,
+	teamimpl.ProvideService,
+	wire.Bind(new(team.Service), new(*teamimpl.Service)),
+	teamapi.ProvideTeamAPI,
+	tempuserimpl.ProvideService,
+	loginattemptimpl.ProvideService,
+	wire.Bind(new(loginattempt.Service), new(*loginattemptimpl.Service)),
+	secretsMigrations.ProvideDataSourceMigrationService,
+	secretsMigrations.ProvideSecretMigrationProvider,
+	wire.Bind(new(secretsMigrations.SecretMigrationProvider), new(*secretsMigrations.SecretMigrationProviderImpl)),
+	promTypeMigration.ProvideAzurePromMigrationService,
+	promTypeMigration.ProvideAmazonPromMigrationService,
+	promTypeMigration.ProvidePromTypeMigrationProvider,
+	wire.Bind(new(promTypeMigration.PromTypeMigrationProvider), new(*promTypeMigration.PromTypeMigrationProviderImpl)),
+	resourcepermissions.NewActionSetService,
+	wire.Bind(new(accesscontrol.ActionResolver), new(resourcepermissions.ActionSetService)),
+	wire.Bind(new(pluginaccesscontrol.ActionSetRegistry), new(resourcepermissions.ActionSetService)),
+	permreg.ProvidePermissionRegistry,
+	acimpl.ProvideAccessControl,
+	accesscontrol.ProvideFixedRolesLoader,
+	accesscontrol.ProvideNoopIAMRolesSyncer,
+	accesscontrol.ProvideNoopGlobalRoleSeeder,
+	dualwrite.ProvideZanzanaReconciler,
+	navtreeimpl.ProvideService,
+	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),
+	wire.Bind(new(notifications.TempUserStore), new(tempuser.Service)),
+	tagimpl.ProvideService,
+	wire.Bind(new(tag.Service), new(*tagimpl.Service)),
+	authnimpl.ProvideService,
+	authnimpl.ProvideIdentitySynchronizer,
+	authnimpl.ProvideAuthnService,
+	authnimpl.ProvideAuthnServiceAuthenticateOnly,
+	authnimpl.ProvideRegistration,
+	supportbundlesimpl.ProvideService,
+	extsvcaccounts.ProvideExtSvcAccountsService,
+	wire.Bind(new(serviceaccounts.ExtSvcAccountsService), new(*extsvcaccounts.ExtSvcAccountsService)),
+	extsvcreg.ProvideExtSvcRegistry,
+	wire.Bind(new(extsvcauth.ExternalServiceRegistry), new(*extsvcreg.Registry)),
+	anonstore.ProvideAnonDBStore,
+	wire.Bind(new(anonstore.AnonStore), new(*anonstore.AnonDBStore)),
+	loggermw.Provide,
+	slogadapter.Provide,
+	signingkeysimpl.ProvideEmbeddedSigningKeysService,
+	wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)),
+	ssoSettingsImpl.ProvideService,
+	wire.Bind(new(ssosettings.Service), new(*ssoSettingsImpl.Service)),
+	idimpl.ProvideService,
+	wire.Bind(new(auth.IDService), new(*idimpl.Service)),
+	cloudmigrationimpl.ProvideService,
+	caching.ProvideCachingServiceClient,
+	userimpl.ProvideVerifier,
+	connectors.ProvideOrgRoleMapper,
+	wire.Bind(new(user.Verifier), new(*userimpl.Verifier)),
+	authz.WireSetBase,
+	// Secrets Manager
+	secretmetadata.ProvideSecureValueMetadataStorage,
+	secretmetadata.ProvideKeeperMetadataStorage,
+	secretmetadata.ProvideDecryptStorage,
+	secretdecrypt.ProvideDecryptAuthorizer,
+	wire.Value([]secretdecrypt.ExtraOwnerDecrypter(nil)),
+	secretdecrypt.ProvideDecryptService,
+	secretinline.ProvideInlineSecureValueService,
+	secretencryption.ProvideDataKeyStorage,
+	secretencryption.ProvideGlobalDataKeyStorage,
+	secretencryption.ProvideEncryptedValueStorage,
+	secretencryption.ProvideGlobalEncryptedValueStorage,
+	secretencryption.ProvideEncryptedValueMigrationExecutor,
+	secretsecurevalueservice.ProvideSecureValueService,
+	secretvalidator.ProvideKeeperValidator,
+	secretvalidator.ProvideSecureValueValidator,
+	secretmutator.ProvideKeeperMutator,
+	secretmutator.ProvideSecureValueMutator,
+	secretmigrator.NewWithEngine,
+	secretdatabase.ProvideDatabase,
+	secretclock.ProvideClock,
+	wire.Bind(new(secretcontracts.Database), new(*secretdatabase.Database)),
+	wire.Bind(new(secretcontracts.Clock), new(*secretclock.Clock)),
+	encryptionManager.ProvideEncryptionManager,
+	cipher.ProvideAESGCMCipherService,
+	// Unified storage
+	resource.ProvideStorageMetrics,
+	resource.ProvideIndexMetrics,
+	resource.ProvideVectorMetrics,
+	unifiedmigrations.ProvideUnifiedStorageMigrationService,
+	unifiedmigrations.ProvideMigrationStatusReader,
+	// Kubernetes API server
+	grafanaapiserver.WireSet,
+	apiregistry.WireSet,
+	appregistry.WireSet,
+	// Dashboard Kubernetes helpers
+	dashboardclient.ProvideK8sClientWithFallback,
+)
+
+var wireSet = wire.NewSet(
+	wireBasicSet,
+	metrics.WireSet,
+	sqlstore.ProvideService,
+	ngmetrics.ProvideService,
+	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
+	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
+	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
+	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
+	prefimpl.ProvideService,
+	oauthtoken.ProvideService,
+	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
+	wire.Bind(new(cleanup.AlertRuleService), new(*ngstore.DBstore)),
+	// Server only — builds the kvlease-backed Elector for the embedded zanzana
+	// reconciler. CLI/test sets bind Elector to NewDefaultElector instead, so
+	// the unified-storage KV is never opened from grafana-cli.
+	authz.ProvideEmbeddedZanzanaElector,
+)
+
+var wireCLISet = wire.NewSet(
+	NewRunner,
+	wireBasicSet,
+	metrics.WireSet,
+	sqlstore.ProvideService,
+	ngmetrics.ProvideService,
+	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
+	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
+	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
+	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
+	prefimpl.ProvideService,
+	oauthtoken.ProvideService,
+	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
+	// CLI never participates in leader election; binding directly to the
+	// default elector keeps grafana-cli from pulling in the KV store.
+	leaderelection.NewDefaultElector,
+	wire.Bind(new(leaderelection.Elector), new(*leaderelection.DefaultElector)),
+)
+
+var wireTestSet = wire.NewSet(
+	wireBasicSet,
+	ProvideTestEnv,
+	metrics.WireSetForTest,
+	sqlstore.ProvideServiceForTests,
+	ngmetrics.ProvideService,
+	notifications.MockNotificationService,
+	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
+	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),
+	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)),
+	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
+	prefimpl.ProvideService,
+	oauthtoken.ProvideService,
+	oauthtokentest.ProvideService,
+	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtokentest.Service)),
+	wire.Bind(new(cleanup.AlertRuleService), new(*ngstore.DBstore)),
+	// Tests get a default elector — none of the integration tests today need to
+	// exercise real leader election.
+	leaderelection.NewDefaultElector,
+	wire.Bind(new(leaderelection.Elector), new(*leaderelection.DefaultElector)),
+)

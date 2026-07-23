@@ -109,6 +109,9 @@ func (f *fakeVectorBackend) Delete(context.Context, string, string, string, stri
 func (f *fakeVectorBackend) DeleteSubresources(context.Context, string, string, string, string, []string) error {
 	return nil
 }
+func (f *fakeVectorBackend) DeleteNamespace(context.Context, string) (int64, error) {
+	return 0, nil
+}
 func (f *fakeVectorBackend) GetSubresourceContent(context.Context, string, string, string, string) (map[string]string, string, error) {
 	return nil, "", nil
 }
