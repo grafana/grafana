@@ -28,8 +28,10 @@ export interface UseFolderReadmeResult {
 }
 
 /**
- * Resolves a folder's README.md path (using the source-path annotation when
- * present) and fetches it through the provisioning files API.
+ * Resolves a folder documentation file and fetches it through the provisioning
+ * files API. Defaults to the folder's `README.md` (derived from the source-path
+ * annotation); pass `docPath` to fetch a specific convention doc instead — the
+ * fetch, live-refresh, and status machinery are identical for every doc.
  *
  * Callers must gate on the `provisioning.readmes` OpenFeature toggle before
  * mounting any component that invokes this hook.
@@ -37,11 +39,12 @@ export interface UseFolderReadmeResult {
  * Returns a tagged `status` instead of raw boolean flags so callers can
  * exhaustively switch on the four states without reconstructing the machine.
  */
-export function useFolderReadme(folderUID: string): UseFolderReadmeResult {
+export function useFolderReadme(folderUID: string, docPath?: string): UseFolderReadmeResult {
   const { repository, folder, isLoading: isRepoLoading } = useGetResourceRepositoryView({ folderName: folderUID });
 
   const sourcePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
-  const readmePath = sourcePath ? `${sourcePath.replace(/\/+$/, '')}/README.md` : 'README.md';
+  const defaultReadmePath = sourcePath ? `${sourcePath.replace(/\/+$/, '')}/README.md` : 'README.md';
+  const readmePath = docPath || defaultReadmePath;
 
   const shouldFetch = !!repository && !!folderUID && !isRepoLoading;
 

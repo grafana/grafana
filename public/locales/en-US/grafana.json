@@ -4493,11 +4493,17 @@
     },
     "readme": {
       "add-readme": "Add README",
-      "edit-tooltip": "Edit README",
+      "edit-doc-tooltip": "Edit {{name}}",
       "empty-message": "Add a README to describe what's in this folder and where to find the right dashboards.",
       "load-error-retry": "Try again",
       "load-error-title": "Couldn't load README",
-      "parse-error": "Unable to display README content."
+      "panel-label": "Folder documentation",
+      "parse-error": "Unable to display README content.",
+      "tab-code-of-conduct": "Code of conduct",
+      "tab-contributing": "Contributing",
+      "tab-license": "License",
+      "tab-readme": "README",
+      "tab-security": "Security"
     },
     "recently-viewed": {
       "clear": "Clear history",

@@ -6,6 +6,7 @@ import {
   type ReadmeLinkClickedProperties,
   type ReadmePanelViewedProperties,
   type ReadmeRetryClickedProperties,
+  type ReadmeTabSelectedProperties,
 } from './types';
 
 const createProvisioningEvent = defineFeatureEvents('grafana', 'provisioning');
@@ -24,4 +25,6 @@ export const FolderReadmeEvents = {
   linkClicked: createProvisioningEvent<ReadmeLinkClickedProperties>('readme_link_clicked'),
   /** Fired when the user clicks "Try again" after a README load failure. */
   retryClicked: createProvisioningEvent<ReadmeRetryClickedProperties>('readme_retry_clicked'),
+  /** Fired when the user switches to a different documentation tab (including from the More menu). */
+  tabSelected: createProvisioningEvent<ReadmeTabSelectedProperties>('readme_tab_selected'),
 };
