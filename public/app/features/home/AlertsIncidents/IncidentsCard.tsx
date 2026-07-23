@@ -8,7 +8,7 @@ import { canonicalSeverity } from 'app/features/alerting/unified/triage/scene/fi
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 
-import { incidentsCardClicked } from '../analytics/main';
+import { ctaClicked } from '../analytics/main';
 
 import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons';
 import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
@@ -76,13 +76,7 @@ export function IncidentsCardView({
           title={incident.title}
           trailing={<SummaryCardAge date={new Date(incident.createdTime)} />}
           href={canAccess ? createBridgeURL(pluginId, `/incidents/${incident.incidentID}`) : undefined}
-          onClick={() =>
-            incidentsCardClicked({
-              action: 'incident_detail',
-              placement: 'list',
-              severity: canonicalSeverity(incident.severityLabel),
-            })
-          }
+          onClick={() => ctaClicked({ surface: 'incidents_card', action: 'incident_detail', placement: 'list' })}
           showDivider={redesignEnabled}
         />
       )}
@@ -92,7 +86,9 @@ export function IncidentsCardView({
             variant="primary"
             icon="fire"
             href={createBridgeURL(pluginId, '/incidents', { declare: 'new' })}
-            onClick={() => incidentsCardClicked({ action: 'declare_incident', placement: 'empty_state' })}
+            onClick={() =>
+              ctaClicked({ surface: 'incidents_card', action: 'declare_incident', placement: 'empty_state' })
+            }
           >
             <Trans i18nKey="home.incidents-card.declare">Declare an incident</Trans>
           </LinkButton>
