@@ -33,6 +33,7 @@ import { serializeDefaultGridLayout } from '../../serialization/layoutSerializer
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
+import { DashboardInteractions } from '../../utils/interactions';
 import { getTestIdForLayout } from '../../utils/test-utils';
 import {
   forceRenderChildren,
@@ -47,6 +48,14 @@ import {
 } from '../../utils/utils';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
+import { LayoutModePill } from '../layouts-shared/LayoutModePill';
+import {
+  dashboardHasRowsOrTabs,
+  getLayoutContainer,
+  getLayoutModePill,
+  getLayoutScope,
+  selectAndEditLayout,
+} from '../layouts-shared/autoLayoutActions';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
@@ -667,6 +676,13 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   const showCanvasActions = isEditing && config.featureToggles.dashboardNewLayouts && !hasClonedParents;
   const soloPanelContext = useSoloPanelContext();
 
+  // Only the top-level (dashboard-scope) grid shows an always-visible pill here; row/tab grids
+  // surface it in their own container header on hover.
+  const container = showCanvasActions ? getLayoutContainer(model) : undefined;
+  const pillInfo = getLayoutModePill(model);
+  const showDashboardPill =
+    !!container && getLayoutScope(container) === 'dashboard' && !!pillInfo && dashboardHasRowsOrTabs(model);
+
   if (soloPanelContext) {
     return children.map((child) => <child.Component model={child} key={child.state.key!} />);
   }
@@ -694,6 +710,19 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
       {showCanvasActions && (
         <div className={styles.actionsWrapper}>
           <CanvasGridAddActions layoutManager={model} />
+          {showDashboardPill && (
+            <LayoutModePill
+              className={styles.dashboardPill}
+              data-testid="dashboard-layout-mode-pill"
+              icon={pillInfo!.icon}
+              label={pillInfo!.label}
+              tooltip={pillInfo!.tooltip}
+              onClick={() => {
+                DashboardInteractions.layoutModePillClicked({ scope: 'dashboard', layout: pillInfo!.layout });
+                selectAndEditLayout(container!);
+              }}
+            />
+          )}
         </div>
       )}
     </div>
@@ -738,6 +767,13 @@ function getStyles(theme: GrafanaTheme2) {
     actionsWrapper: css({
       position: 'relative',
       paddingBottom: theme.spacing(5),
+    }),
+    // Sits in the reserved editing strip at the bottom of the grid so it never overlaps panels.
+    dashboardPill: css({
+      position: 'absolute',
+      bottom: theme.spacing(1),
+      right: 0,
+      zIndex: 1,
     }),
   };
 }

@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { Draggable, type DraggableStateSnapshot } from '@hello-pangea/dnd';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
+import { useMemo } from 'react';
 import { useLocation } from 'react-router';
 
 import { type GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
@@ -12,8 +13,11 @@ import { Box, Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDis
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
+import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor, interpolateSectionTitle, useDashboardState } from '../../utils/utils';
 import { SectionVariableControls } from '../VariableControls';
+import { LayoutModePill } from '../layouts-shared/LayoutModePill';
+import { getLayoutModePill, selectAndEditLayout } from '../layouts-shared/autoLayoutActions';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
 import { type TabItem } from './TabItem';
@@ -40,6 +44,43 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const soloPanelContext = useSoloPanelContext();
 
   const isDraggable = !isClone && isEditing;
+
+  // Show the layout mode pill next to the title, inside the tab card (via the Tab suffix slot).
+  const tabLayoutPill = getLayoutModePill(layout);
+  const showPill = isEditing && isActive && !!tabLayoutPill;
+  const pillIcon = tabLayoutPill?.icon;
+  const pillLabel = tabLayoutPill?.label;
+  const pillTooltip = tabLayoutPill?.tooltip;
+  const pillLayout = tabLayoutPill?.layout;
+
+  const TabSuffix = useMemo(() => {
+    if (!isConditionallyHidden && !showPill) {
+      return undefined;
+    }
+
+    const Suffix = ({ className }: { className?: string }) => (
+      <span className={cx(styles.tabSuffix, className)}>
+        {isConditionallyHidden && <IsHiddenSuffix />}
+        {showPill && pillIcon && pillLabel && pillTooltip && pillLayout && (
+          // Hidden until the active tab (bar or content) is hovered — see tabLayoutContainer styles.
+          <span className={cx(styles.tabPill, 'dashboard-tab-auto-pill')}>
+            <LayoutModePill
+              data-testid="dashboard-tab-layout-mode-pill"
+              icon={pillIcon}
+              label={pillLabel}
+              tooltip={pillTooltip}
+              onClick={() => {
+                DashboardInteractions.layoutModePillClicked({ scope: 'tab', layout: pillLayout });
+                selectAndEditLayout(model);
+              }}
+            />
+          </span>
+        )}
+      </span>
+    );
+
+    return Suffix;
+  }, [isConditionallyHidden, showPill, pillIcon, pillLabel, pillTooltip, pillLayout, model, styles.tabSuffix, styles.tabPill]);
 
   if (isConditionallyHidden && !isEditing && !isActive) {
     return null;
@@ -83,7 +124,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             )}
             active={isActive}
             title={titleInterpolated}
-            suffix={isConditionallyHidden ? IsHiddenSuffix : undefined}
+            suffix={TabSuffix}
             href={href}
             aria-selected={isActive}
             onChangeTab={(evt) => {
@@ -210,6 +251,21 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '&:hover .dashboard-row-wrapper:hover .dashboard-canvas-controls': {
       opacity: 1,
     },
+  }),
+  // Holds the tab's suffix content (hidden icon and/or layout mode pill) next to the title.
+  tabSuffix: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  }),
+  // Hidden by default; revealed only while the active tab (bar or content) is hovered.
+  // height:0 + verticalAlign keeps the (taller-than-text) pill from growing the tab's line box when
+  // it appears — it overflows into the tab's vertical padding instead of making the whole bar jump.
+  tabPill: css({
+    display: 'none',
+    alignItems: 'center',
+    height: 0,
+    verticalAlign: 'middle',
   }),
 });
 

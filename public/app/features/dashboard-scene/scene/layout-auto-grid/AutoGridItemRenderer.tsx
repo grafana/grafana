@@ -15,6 +15,7 @@ import { AUTO_GRID_ITEM_DROP_TARGET_ATTR } from '../types/DashboardDropTarget';
 
 import { type AutoGridItem } from './AutoGridItem';
 import { AutoGridLayoutManager } from './AutoGridLayoutManager';
+import { AutoGridResizeIntercept } from './AutoGridResizeIntercept';
 import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_WIDTH } from './const';
 
 export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem>) {
@@ -53,6 +54,25 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay, renderHidden] =
             useIsConditionallyHidden(conditionalRendering);
 
+          // Intercept resize gestures only on the interactive source panel, never on repeats or while dragging.
+          const showResizeIntercept = isEditing && !isRepeat && !isDragged && !isConditionallyHidden;
+
+          const wrapperClass = cx(
+            conditionalRenderingClass,
+            styles.wrapper,
+            isDragged && !isRepeat && styles.draggedWrapper,
+            isDragged && isRepeat && styles.draggedRepeatWrapper,
+            isSelected && 'dashboard-selected-element'
+          );
+
+          const wrapperContent = (
+            <>
+              <item.Component model={item} />
+              {conditionalRenderingOverlay}
+              {showResizeIntercept && <AutoGridResizeIntercept item={model} />}
+            </>
+          );
+
           return isConditionallyHidden && !isEditing && !renderHidden ? null : (
             <div
               {...(addDndContainer
@@ -64,33 +84,11 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
               {
                 // The lazy loader causes issues when used with conditional rendering
                 isLazy && (!isConditionallyHidden || !renderHidden) ? (
-                  <LazyLoader
-                    key={item.state.key!}
-                    mode="query"
-                    className={cx(
-                      conditionalRenderingClass,
-                      styles.wrapper,
-                      isDragged && !isRepeat && styles.draggedWrapper,
-                      isDragged && isRepeat && styles.draggedRepeatWrapper,
-                      isSelected && 'dashboard-selected-element'
-                    )}
-                  >
-                    <item.Component model={item} />
-                    {conditionalRenderingOverlay}
+                  <LazyLoader key={item.state.key!} mode="query" className={wrapperClass}>
+                    {wrapperContent}
                   </LazyLoader>
                 ) : (
-                  <div
-                    className={cx(
-                      conditionalRenderingClass,
-                      styles.wrapper,
-                      isDragged && !isRepeat && styles.draggedWrapper,
-                      isDragged && isRepeat && styles.draggedRepeatWrapper,
-                      isSelected && 'dashboard-selected-element'
-                    )}
-                  >
-                    <item.Component model={item} />
-                    {conditionalRenderingOverlay}
-                  </div>
+                  <div className={wrapperClass}>{wrapperContent}</div>
                 )
               }
             </div>

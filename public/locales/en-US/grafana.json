@@ -5375,6 +5375,12 @@
         "min-width-custom": "Custom min width",
         "min-width-custom-clear": "Back to standard min column width",
         "min-width-error": "A number between 50 and 2000 is required"
+      },
+      "resize-intercept": {
+        "aria-label": "Panel sizes are managed by auto layout",
+        "edit": "Edit auto layout",
+        "header": "Cannot resize in auto layout",
+        "switch": "Switch to custom"
       }
     },
     "canvas-actions": {
@@ -5992,6 +5998,10 @@
       "ungroup-nested-text": "This will ungroup all nested groups.",
       "ungroup-nested-title": "Ungroup nested groups?"
     },
+    "layout-mode-pill": {
+      "auto-tooltip": "Panel sizes are managed automatically.",
+      "custom-tooltip": "Drag panels to move them and drag their edges to resize."
+    },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} of {{numberOfPages}}",
       "tooltip-next": "Next",
@@ -6530,6 +6540,9 @@
       "options": {
         "configure-button-tooltip": "Edit queries and visualization options",
         "description": "Description",
+        "size": "Size",
+        "size-edit-layout": "Edit layout",
+        "size-managed": "Managed by Auto layout",
         "title-option": "Title",
         "transparent-background": "Transparent background"
       }

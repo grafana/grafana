@@ -7,9 +7,18 @@ import { useStyles2 } from '@grafana/ui';
 
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
+import { DashboardInteractions } from '../../utils/interactions';
 import { getTestIdForLayout } from '../../utils/test-utils';
 import { useDashboardState } from '../../utils/utils';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
+import { LayoutModePill } from '../layouts-shared/LayoutModePill';
+import {
+  dashboardHasRowsOrTabs,
+  getLayoutContainer,
+  getLayoutModePill,
+  getLayoutScope,
+  selectAndEditLayout,
+} from '../layouts-shared/autoLayoutActions';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
@@ -33,6 +42,15 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
   }
 
   const showCanvasActions = !isEmbedded && !isRepeatCloneOrChildOf(model) && isEditing;
+
+  // Only the top-level (dashboard-scope) grid shows an always-visible pill here; row/tab grids
+  // surface it in their own container header on hover. Resolve the container lazily so we don't
+  // reach for the dashboard root outside of the editing render path.
+  const container = showCanvasActions ? getLayoutContainer(layoutManager) : undefined;
+  const scope = container ? getLayoutScope(container) : undefined;
+  const pillInfo = getLayoutModePill(layoutManager);
+  const showDashboardPill =
+    !!container && scope === 'dashboard' && !!pillInfo && dashboardHasRowsOrTabs(layoutManager);
 
   if (soloPanelContext) {
     return children.map((item) => <item.Component key={item.state.key} model={item} />);
@@ -69,6 +87,19 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
     >
       {renderChildren()}
       {showCanvasActions && <CanvasGridAddActions layoutManager={layoutManager} />}
+      {showDashboardPill && (
+        <LayoutModePill
+          className={styles.dashboardPill}
+          data-testid="dashboard-layout-mode-pill"
+          icon={pillInfo!.icon}
+          label={pillInfo!.label}
+          tooltip={pillInfo!.tooltip}
+          onClick={() => {
+            DashboardInteractions.layoutModePillClicked({ scope: 'dashboard', layout: pillInfo!.layout });
+            selectAndEditLayout(container!);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -106,6 +137,13 @@ const getStyles = (theme: GrafanaTheme2, state: AutoGridLayoutState) => ({
   }),
   containerFillScreen: css({ flexGrow: 1 }),
   containerEditing: css({ paddingBottom: theme.spacing(5), position: 'relative' }),
+  // Sits in the reserved editing strip at the bottom of the grid so it never overlaps panel headers.
+  dashboardPill: css({
+    position: 'absolute',
+    bottom: theme.spacing(1),
+    right: 0,
+    zIndex: 1,
+  }),
   dropPlaceholder: css({
     border: `1px dashed ${theme.colors.primary.main}`,
     borderRadius: theme.shape.radius.default,

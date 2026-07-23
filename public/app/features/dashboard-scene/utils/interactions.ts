@@ -369,7 +369,33 @@ export const DashboardInteractions = {
   setVisualOption: (properties?: { ui: 'panel-edit' | 'view-panel'; option: string; value: string }) => {
     reportDashboardInteraction('set_visualization_option', properties);
   },
+
+  // Layout mode UX hints
+  // dashboards_layout_mode_pill_clicked
+  // when a user clicks the layout mode pill (Auto/Custom) shown on a dashboard/row/tab container in edit mode
+  layoutModePillClicked: (properties: { scope: AutoLayoutScope; layout: 'auto' | 'custom' }) => {
+    reportDashboardInteraction('layout_mode_pill_clicked', properties);
+  },
+
+  // dashboards_auto_layout_resize_intercepted
+  // when a user tries to resize a panel that is managed by auto layout (hover/press on the
+  // invisible resize corner). This is the "attempt" side of the attempt -> resolution funnel.
+  autoLayoutResizeIntercepted: (properties: { scope: AutoLayoutScope; trigger: 'hover' | 'press' | 'drag' }) => {
+    reportDashboardInteraction('auto_layout_resize_intercepted', properties);
+  },
+
+  // dashboards_auto_layout_intercept_resolved
+  // the action a user took after being intercepted. `switch_to_custom` vs `edit_auto_layout`
+  // is the product signal for whether people tune the grid or flee to custom.
+  autoLayoutInterceptResolved: (properties: {
+    scope: AutoLayoutScope;
+    action: 'edit_auto_layout' | 'switch_to_custom' | 'dismissed';
+  }) => {
+    reportDashboardInteraction('auto_layout_intercept_resolved', properties);
+  },
 };
+
+export type AutoLayoutScope = 'dashboard' | 'row' | 'tab';
 
 const reportDashboardInteraction = (
   name: string,
