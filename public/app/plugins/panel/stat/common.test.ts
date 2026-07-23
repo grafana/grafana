@@ -1,10 +1,4 @@
-import {
-  createDataFrame,
-  FieldType,
-  PanelOptionsEditorBuilder,
-  ReducerID,
-  standardEditorsRegistry,
-} from '@grafana/data';
+import { createDataFrame, FieldType, PanelOptionsEditorBuilder, standardEditorsRegistry } from '@grafana/data';
 import { type SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
 import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
 
