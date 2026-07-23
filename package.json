@@ -285,8 +285,8 @@
     "@grafana/plugin-ui": "^0.13.1",
     "@grafana/prometheus": "13.1.2",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "8.14.0--canary.1583.29911997371.0",
-    "@grafana/scenes-react": "8.14.0--canary.1583.29749836995.0",
+    "@grafana/scenes": "8.13.4",
+    "@grafana/scenes-react": "8.13.4",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
@@ -420,7 +420,6 @@
     "whatwg-fetch": "3.6.20"
   },
   "resolutions": {
-    "@grafana/scenes-react/@grafana/scenes": "8.14.0--canary.1583.29911997371.0",
     "underscore": "1.13.8",
     "@types/slate": "0.47.11",
     "semver@npm:~7.3.5": "^7.3.5",
