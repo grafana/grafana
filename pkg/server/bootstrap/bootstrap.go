@@ -1,7 +1,9 @@
 // Package bootstrap contains the edition-neutral server startup lifecycle for
 // Grafana: version handling, logging, diagnostics, panic recovery, build
 // metadata, config loading, feature-flag init, signal handling and the run
-// loop. It is independent of the CLI layer and of any particular edition — the
+// loop.
+//
+// It is independent of the CLI layer and of any particular edition — the
 // Wire initializer is supplied by the caller (OSS passes the generated
 // server.Initialize; Grafana Enterprise passes its own injector), which lets GE
 // import and drive startup without the dual-repo overlay.
@@ -28,12 +30,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// defaultEnterpriseCommit is the placeholder the build stamps in for the
-// enterprise commit when Grafana was not built from the enterprise repo. When
-// the enterprise commit is this value (or empty), it means this isn't an
-// enterprise build, so it's left out of the printed version string. The value
-// matches grafana-cli's DefaultCommitValue; we redeclare it here so bootstrap
-// doesn't have to import the CLI package.
+// defaultEnterpriseCommit is the placeholder value used for the enterprise
+// commit when Grafana was not built from the enterprise repo. A commit equal to
+// this (or empty) marks a non-enterprise build, so printVersion omits the
+// enterprise commit from the version string in that case. The value matches
+// grafana-cli's DefaultCommitValue; we redeclare it here so bootstrap doesn't
+// have to import the CLI package.
 const defaultEnterpriseCommit = "NA"
 
 // ServerInitializer builds the full Grafana server. OSS supplies the generated
