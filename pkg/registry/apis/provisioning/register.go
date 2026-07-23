@@ -340,7 +340,7 @@ func RegisterAPIService(
 	quotaGetter quotas.QuotaGetter,
 	natsSubscriber nats.Subscriber,
 ) (*APIBuilder, error) {
-	allowedTargets := []provisioning.SyncTargetType{}
+	allowedTargets := make([]provisioning.SyncTargetType, 0, len(cfg.ProvisioningAllowedTargets))
 	for _, target := range cfg.ProvisioningAllowedTargets {
 		allowedTargets = append(allowedTargets, provisioning.SyncTargetType(target))
 	}
