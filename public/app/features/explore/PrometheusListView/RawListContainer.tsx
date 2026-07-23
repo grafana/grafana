@@ -6,7 +6,6 @@ import { VariableSizeList as List } from 'react-window';
 
 import { type DataFrame, type Field as DataFrameField } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-
 import { Field, Switch } from '@grafana/ui';
 
 import { ItemLabels } from './ItemLabels';
@@ -78,9 +77,6 @@ const RawListContainer = (props: RawListContainerProps) => {
 
   const onContentClick = () => {
     setIsExpandedView(!isExpandedView);
-    const props = {
-      isExpanded: !isExpandedView,
-    };
   };
 
   useEffect(() => {

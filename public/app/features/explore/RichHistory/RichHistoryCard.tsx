@@ -148,8 +148,6 @@ export function RichHistoryCard(props: Props) {
     : undefined;
 
   const onCopyQuery = async () => {
-    const datasources = [...queryHistoryItem.queries.map((query) => query.datasource?.type || 'unknown')];
-
     const queriesText = queryHistoryItem.queries
       .map((query) => {
         let queryDS = datasourceInstances?.find((di) => di.uid === queryHistoryItem.datasourceUid);
