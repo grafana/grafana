@@ -363,3 +363,5 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-17,features.bulkFlagEvalFiltering,experimental,@grafana/grafana-backend-services-squad,false,false,false
 2026-07-14,grafana.multiTenantNavTree,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-07-20,grafana.exploreMetricsSidebar,experimental,@grafana/datapro,false,false,true
+2026-06-24,authz.listFoldersViaSearch,experimental,@grafana/identity-access-team,false,false,false
+2026-06-24,libraryElements.folderTreeViaSearch,experimental,@grafana/identity-access-team,false,false,false

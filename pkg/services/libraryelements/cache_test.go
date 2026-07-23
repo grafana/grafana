@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
+	searchmodel "github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -60,7 +61,7 @@ func TestIntegration_FolderTreeCache(t *testing.T) {
 
 		originalFolderSvc := sc.service.folderService
 		sc.service.folderService = trackingSvc
-		sc.service.treeCache = newFolderTreeCache(trackingSvc)
+		sc.service.treeCache = newFolderTreeCache(trackingSvc, false)
 		defer func() { sc.service.folderService = originalFolderSvc }()
 
 		// First request
@@ -90,7 +91,7 @@ func TestFolderTreeCache_Unit(t *testing.T) {
 			{UID: "folder-b", Title: "Folder B", OrgID: 1, ParentUID: "folder-a"},
 		}
 
-		cache := newFolderTreeCache(fakeSvc)
+		cache := newFolderTreeCache(fakeSvc, false)
 		tree, err := cache.get(context.Background(), sc.reqContext.SignedInUser)
 		require.NoError(t, err)
 		require.NotNil(t, tree)
@@ -101,6 +102,59 @@ func TestFolderTreeCache_Unit(t *testing.T) {
 		assert.Equal(t, "Folder B", tree.GetTitle("folder-b"))
 	})
 
+	t.Run("builds tree from SearchFolders result when useSearch is set", func(t *testing.T) {
+		sc := setupTestScenario(t)
+
+		fakeSvc := foldertest.NewFakeService()
+		// SearchFolders returns lightweight hits (UID + parent via FolderUID).
+		fakeSvc.ExpectedHitList = searchmodel.HitList{
+			{UID: "folder-a", Title: "Folder A"},
+			{UID: "folder-b", Title: "Folder B", FolderUID: "folder-a"},
+		}
+
+		cache := newFolderTreeCache(fakeSvc, true)
+		tree, err := cache.get(context.Background(), sc.reqContext.SignedInUser)
+		require.NoError(t, err)
+		require.NotNil(t, tree)
+
+		// Same tree as the GetFolders path, but sourced from the search index.
+		assert.True(t, tree.Contains("folder-a"))
+		assert.True(t, tree.Contains("folder-b"))
+		assert.Equal(t, "Folder A", tree.GetTitle("folder-a"))
+		assert.Equal(t, "Folder B", tree.GetTitle("folder-b"))
+		// folder-b's parent (folder-a) is reflected in the tree.
+		parents := make([]string, 0)
+		for ancestor := range tree.Ancestors("folder-b") {
+			parents = append(parents, ancestor.UID)
+		}
+		assert.Contains(t, parents, "folder-a")
+	})
+
+	t.Run("falls back to GetFolders when useSearch is set but the requester has no ID token", func(t *testing.T) {
+		sc := setupTestScenario(t)
+		sc.reqContext.IDToken = ""
+
+		trackingSvc := newTrackingFolderService()
+		trackingSvc.ExpectedFolders = []*folder.Folder{
+			{UID: "folder-a", Title: "Folder A", OrgID: 1},
+		}
+		// Populate a hit list too — if the search path were taken, folder-b would
+		// leak into the tree.
+		trackingSvc.ExpectedHitList = searchmodel.HitList{
+			{UID: "folder-b", Title: "Folder B"},
+		}
+
+		cache := newFolderTreeCache(trackingSvc, true)
+		tree, err := cache.get(context.Background(), sc.reqContext.SignedInUser)
+		require.NoError(t, err)
+		require.NotNil(t, tree)
+
+		assert.True(t, tree.Contains("folder-a"))
+		// folder-b would only appear if the search path had been taken.
+		assert.False(t, tree.Contains("folder-b"))
+		assert.Equal(t, 1, trackingSvc.GetCallCount())
+	})
+
 	t.Run("caches tree and returns same instance on repeated calls", func(t *testing.T) {
 		sc := setupTestScenario(t)
 
@@ -109,7 +163,7 @@ func TestFolderTreeCache_Unit(t *testing.T) {
 			{UID: "folder-a", Title: "Folder A", OrgID: 1},
 		}
 
-		cache := newFolderTreeCache(trackingSvc)
+		cache := newFolderTreeCache(trackingSvc, false)
 		ctx := context.Background()
 
 		tree1, err := cache.get(ctx, sc.reqContext.SignedInUser)
@@ -130,7 +184,7 @@ func TestFolderTreeCache_Unit(t *testing.T) {
 			{UID: "folder-a", Title: "Folder A", OrgID: 1},
 		}
 
-		cache := newFolderTreeCache(trackingSvc)
+		cache := newFolderTreeCache(trackingSvc, false)
 		ctx := context.Background()
 
 		// First user fetches and caches tree
@@ -175,7 +229,7 @@ func TestIntegration_SkipFolderTreeForAdmin(t *testing.T) {
 		trackingSvc.ExpectedFolders = []*folder.Folder{sc.folder}
 		trackingSvc.AddFolder(sc.folder)
 		sc.service.folderService = trackingSvc
-		sc.service.treeCache = newFolderTreeCache(trackingSvc)
+		sc.service.treeCache = newFolderTreeCache(trackingSvc, false)
 		return trackingSvc
 	}
 
