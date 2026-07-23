@@ -1,4 +1,4 @@
-import { type DateTimeUnit, type DurationUnit, DateTime, Duration, IANAZone, Settings } from 'luxon';
+import { type DateTimeUnit, type DurationUnit, type TokenParser, DateTime, Duration, IANAZone, Settings } from 'luxon';
 
 import { convertMomentToLuxonWithOrdinal, formatWithOrdinal } from './format';
 
@@ -237,13 +237,27 @@ Settings.defaultLocale = currentLocale;
 const localeWeekStart: Record<string, number> = {};
 const intlFormatterCache = new Map<string, Intl.DateTimeFormat>();
 const zoneValidityCache = new Map<string, boolean>();
+const normalizedLocaleCache = new Map<string, string | undefined>();
 let cachedGuessedZone: string | null = null;
 
+// memoized because this runs on every instance construction (the factories always pass the
+// current locale) and Intl.getCanonicalLocales is not free. Keys only come from config/runtime
+// locale strings, so the cache stays small for the lifetime of the page.
 function normalizeLocale(locale?: string): string | undefined {
   if (locale == null) {
     return undefined;
   }
 
+  if (normalizedLocaleCache.has(locale)) {
+    return normalizedLocaleCache.get(locale);
+  }
+
+  const normalized = computeNormalizedLocale(locale);
+  normalizedLocaleCache.set(locale, normalized);
+  return normalized;
+}
+
+function computeNormalizedLocale(locale: string): string | undefined {
   const trimmed = locale.trim();
   if (trimmed === '') {
     return undefined;
@@ -343,6 +357,23 @@ function normalizeDurationInput(input: number, unit?: MomentUnit | string): Dura
   return Duration.fromObject({ [normalizeUnit(unit)]: input });
 }
 
+const formatParserCache = new Map<string, TokenParser>();
+
+// DateTime.fromFormat recompiles its token parser (including regex construction) on every call
+// and parse formats are highly repetitive, so cache the compiled parser. The parser is
+// locale-bound (fromFormatParser rejects a locale mismatch), so the locale is part of the key.
+function parseFromCachedFormat(value: string, fmt: string, options?: MomentOptions): DateTime {
+  const key = `${options?.locale ?? ''}|${fmt}`;
+  let parser = formatParserCache.get(key);
+
+  if (!parser) {
+    parser = DateTime.buildFormatParser(fmt, { locale: options?.locale });
+    formatParserCache.set(key, parser);
+  }
+
+  return DateTime.fromFormatParser(value, parser, options);
+}
+
 function parseWithFormat(value: string, format: MomentFormat, options?: MomentOptions): DateTime {
   if (format === ISO_8601) {
     return DateTime.fromISO(value, options);
@@ -364,7 +395,7 @@ function parseWithFormat(value: string, format: MomentFormat, options?: MomentOp
   // fallback never changes behavior; it only narrows the type for the format conversions below.
   const fmt = convertMomentToLuxonWithOrdinal(typeof format === 'string' ? format : 'ISO_8601');
 
-  const parsed = DateTime.fromFormat(value, fmt, options);
+  const parsed = parseFromCachedFormat(value, fmt, options);
   if (parsed.isValid) {
     return parsed;
   }
@@ -376,7 +407,7 @@ function parseWithFormat(value: string, format: MomentFormat, options?: MomentOp
     // re-parse with only the requested tokens; if that truncation loses validity, keep the full
     // fallback parse (the same result normalizeInput would otherwise recompute via its own
     // parseWithFallbacks pass)
-    const reparsed = DateTime.fromFormat(formatted, fmt, options);
+    const reparsed = parseFromCachedFormat(formatted, fmt, options);
     return reparsed.isValid ? reparsed : fallbackParsed;
   }
 
