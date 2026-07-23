@@ -807,13 +807,16 @@ func TestSearchOrgUsersUsingK8s(t *testing.T) {
 			Created:       created,
 			IsDisabled:    true,
 			IsProvisioned: true,
+			AuthModule:    user.AuthModuleConversion{login.LDAPAuthModule},
 		},
 		{ID: 99, UID: "uid-two", Login: "other", Role: "Viewer"},
 	}
 
 	newHS := func() *HTTPServer {
+		cfg := setting.NewCfg()
+		cfg.LDAPAuthEnabled = true
 		return &HTTPServer{
-			Cfg: setting.NewCfg(),
+			Cfg: cfg,
 			userService: &usertest.FakeUserService{
 				ExpectedSearchUsers: user.SearchUserQueryResult{TotalCount: 2, Users: hits, Page: 1, PerPage: 50},
 			},
@@ -844,6 +847,13 @@ func TestSearchOrgUsersUsingK8s(t *testing.T) {
 		assert.True(t, got.IsProvisioned)
 		assert.Equal(t, map[string]bool{"org.users:write": true}, got.AccessControl)
 		assert.NotEmpty(t, got.AvatarURL)
+		assert.Equal(t, []string{login.LDAPLabel}, got.AuthLabels)
+		assert.True(t, got.IsExternallySynced)
+
+		// A user without auth modules has no labels and is not externally synced.
+		other := res.OrgUsers[1]
+		assert.Empty(t, other.AuthLabels)
+		assert.False(t, other.IsExternallySynced)
 	})
 
 	t.Run("filters by UserID and adjusts total", func(t *testing.T) {

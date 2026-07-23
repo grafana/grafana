@@ -96,8 +96,13 @@ export const useNotificationPolicyRoute = (
 ) => {
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
 
+  // Callers may address the default (root) tree by any alias the backend recognizes (e.g. "default"),
+  // for instance from a rule's notification_settings.policy or the /policy/:name route. Canonicalize to
+  // ROOT_ROUTE_NAME so the GET resolves the same tree the send side (add/update/delete) targets.
+  const name = isDefaultRoutingTreeName(routeName) ? ROOT_ROUTE_NAME : routeName;
+
   const k8sRouteQuery = useGetRoutingTreeQuery(
-    { name: routeName },
+    { name },
     {
       skip: skip || !k8sApiSupported,
       selectFromResult: (result) => {
@@ -414,10 +419,14 @@ export function isNamedRootMatcher(matcher: ObjectMatcher): boolean {
 }
 
 export function k8sRouteToRoute(route: RoutingTree): Route {
+  // The frontend always addresses the default (root) routing tree as ROOT_ROUTE_NAME on the wire, even when
+  // the backend names it with the "default" alias. Canonicalize the name on read so downstream mutations
+  // (delete/add/update) send "user-defined" instead of echoing the backend's alias back to the API.
+  const routeName = isDefaultRoutingTreeName(route.metadata.name) ? ROOT_ROUTE_NAME : route.metadata.name;
   return {
     ...route.spec.defaults,
-    name: route.metadata.name,
-    routes: route.spec.routes?.map((subroute) => k8sSubRouteToRoute(subroute, route.metadata.name)),
+    name: routeName,
+    routes: route.spec.routes?.map((subroute) => k8sSubRouteToRoute(subroute, routeName)),
     // This assumes if a `NAMED_ROOT_LABEL_NAME` label exists, it will NOT go to the default route, which is a fair but
     // not perfect assumption since we don't yet protect the label.
     object_matchers: isDefaultRoutingTreeName(route.metadata.name)
@@ -426,6 +435,7 @@ export function k8sRouteToRoute(route: RoutingTree): Route {
     [ROUTES_META_SYMBOL]: {
       provenance: getAnnotation(route, K8sAnnotations.Provenance),
       resourceVersion: route.metadata.resourceVersion,
+      // Keep the raw backend name here for reference/round-tripping; only the emitted name is canonicalized.
       name: route.metadata.name,
       metadata: route.metadata,
     },

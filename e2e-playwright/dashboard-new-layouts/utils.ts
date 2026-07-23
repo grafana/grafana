@@ -36,24 +36,20 @@ export const flows = {
       await sidebar.variableOptions.setLabel(variable.label);
     }
   },
-  async addNewTextBoxVariable(dashboardPage: DashboardPage, variable: Variable) {
-    await flows.addNewGenericVariable(dashboardPage.ctx.page, dashboardPage, selectors, variable);
-    // set the textbox variable value
-    const type = 'variable-type Value';
-    const fieldLabel = dashboardPage.getByGrafanaSelector(
-      selectors.components.PanelEditor.OptionsPane.fieldLabel(type)
-    );
-    await expect(fieldLabel).toBeVisible();
-    const inputField = fieldLabel.locator('input');
-    await expect(inputField).toBeVisible();
-    await inputField.fill(variable.value);
-    await inputField.blur();
+  async addNewTextBoxVariable(
+    page: Page,
+    dashboardPage: DashboardPage,
+    selectors: E2ESelectorGroups,
+    variable: Variable
+  ) {
+    await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
 
+    const components = new Components(dashboardPage.ctx);
+    const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+
+    await sidebar.variableOptions.textbox.setValue(variable.value);
     if (variable.display) {
-      await dashboardPage
-        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.General.generalDisplaySelect)
-        .click();
-      await dashboardPage.ctx.page.getByText(variable.display, { exact: true }).click();
+      await sidebar.variableOptions.selectDisplay(variable.display);
     }
   },
 };
@@ -73,11 +69,12 @@ export async function saveDashboard(
   selectors: E2ESelectorGroups,
   title?: string
 ) {
-  await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
-  if (title) {
-    await page.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput).fill(title);
-  }
-  await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton).click();
+  // Keep the flows signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const controls = new Controls({ page, dashboardPage, selectors, components });
+
+  await controls.saveDashboard(title);
 
   // wait for the toast
   const toast = page.getByRole('status', { name: 'Dashboard saved' });

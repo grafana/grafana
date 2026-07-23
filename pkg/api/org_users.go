@@ -444,21 +444,33 @@ func (hs *HTTPServer) searchOrgUsersPageUsingK8s(c *contextmodel.ReqContext, que
 		if query.UserID != 0 && u.ID != query.UserID {
 			continue
 		}
+
+		authLabels := make([]string, 0, len(u.AuthModule))
+		isExternallySynced := false
+		for _, module := range u.AuthModule {
+			authLabels = append(authLabels, login.GetAuthProviderLabel(module))
+			if hs.isExternallySynced(hs.Cfg, module) {
+				isExternallySynced = true
+			}
+		}
+
 		orgUsers = append(orgUsers, &org.OrgUserDTO{
-			OrgID:         query.OrgID,
-			UserID:        u.ID,
-			UID:           u.UID,
-			Email:         u.Email,
-			Name:          u.Name,
-			Login:         u.Login,
-			Role:          u.Role,
-			AvatarURL:     dtos.GetGravatarUrl(hs.Cfg, u.Email),
-			AccessControl: u.AccessControl,
-			LastSeenAt:    u.LastSeenAt,
-			LastSeenAtAge: u.LastSeenAtAge,
-			Created:       u.Created,
-			IsDisabled:    u.IsDisabled,
-			IsProvisioned: u.IsProvisioned,
+			OrgID:              query.OrgID,
+			UserID:             u.ID,
+			UID:                u.UID,
+			Email:              u.Email,
+			Name:               u.Name,
+			Login:              u.Login,
+			Role:               u.Role,
+			AvatarURL:          dtos.GetGravatarUrl(hs.Cfg, u.Email),
+			AccessControl:      u.AccessControl,
+			LastSeenAt:         u.LastSeenAt,
+			LastSeenAtAge:      u.LastSeenAtAge,
+			Created:            u.Created,
+			IsDisabled:         u.IsDisabled,
+			IsProvisioned:      u.IsProvisioned,
+			AuthLabels:         authLabels,
+			IsExternallySynced: isExternallySynced,
 		})
 	}
 
