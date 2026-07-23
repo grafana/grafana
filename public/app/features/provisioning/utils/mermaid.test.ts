@@ -1,11 +1,6 @@
 import mermaid from 'mermaid';
 
-import {
-  MERMAID_DIAGRAM_CLASS,
-  MERMAID_ERROR_CLASS,
-  MERMAID_CODE_SELECTOR,
-  renderMermaidDiagrams,
-} from './mermaid';
+import { MERMAID_DIAGRAM_CLASS, MERMAID_ERROR_CLASS, MERMAID_CODE_SELECTOR, renderMermaidDiagrams } from './mermaid';
 
 jest.mock('mermaid', () => ({
   __esModule: true,
@@ -17,6 +12,9 @@ jest.mock('mermaid', () => ({
 
 const mockInitialize = mermaid.initialize as jest.MockedFunction<typeof mermaid.initialize>;
 const mockRender = mermaid.render as jest.MockedFunction<typeof mermaid.render>;
+
+// Only the `svg` field is read by the renderer; cast covers the rest of RenderResult.
+const svgResult = { svg: '<svg data-testid="diagram"></svg>' } as Awaited<ReturnType<typeof mockRender>>;
 
 const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -37,7 +35,7 @@ describe('renderMermaidDiagrams', () => {
   beforeEach(() => {
     mockInitialize.mockReset();
     mockRender.mockReset();
-    mockRender.mockResolvedValue({ svg: '<svg data-testid="diagram"></svg>' } as never);
+    mockRender.mockResolvedValue(svgResult);
   });
 
   afterEach(() => {
@@ -130,9 +128,7 @@ describe('renderMermaidDiagrams', () => {
   });
 
   it('renders remaining diagrams even if an earlier one fails', async () => {
-    mockRender
-      .mockRejectedValueOnce(new Error('parse error'))
-      .mockResolvedValueOnce({ svg: '<svg data-testid="diagram"></svg>' } as never);
+    mockRender.mockRejectedValueOnce(new Error('parse error')).mockResolvedValueOnce(svgResult);
     const container = mountContainer(mermaidBlock('broken') + mermaidBlock('graph TD; A-->B;'));
 
     await renderMermaidDiagrams(container, { isDark: false });
@@ -142,7 +138,7 @@ describe('renderMermaidDiagrams', () => {
   });
 
   it('does not mutate the DOM once the signal is cancelled', async () => {
-    let resolveRender: (value: { svg: string }) => void = () => {};
+    let resolveRender!: (value: Awaited<ReturnType<typeof mockRender>>) => void;
     mockRender.mockImplementation(() => new Promise((resolve) => (resolveRender = resolve)));
     const container = mountContainer(mermaidBlock('graph TD; A-->B;'));
     const signal = { cancelled: false };
@@ -152,7 +148,7 @@ describe('renderMermaidDiagrams', () => {
     await flushPromises();
 
     signal.cancelled = true;
-    resolveRender({ svg: '<svg data-testid="diagram"></svg>' });
+    resolveRender(svgResult);
     await done;
 
     // The block should be left untouched because cancellation happened mid-render.

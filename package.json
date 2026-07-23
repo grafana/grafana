@@ -436,6 +436,7 @@
     "@grafana/scenes/@grafana/e2e-selectors": "workspace:*",
     "@grafana/scenes-react/@grafana/e2e-selectors": "workspace:*",
     "swagger-ui-react/dompurify": "3.4.12",
+    "mermaid/@braintree/sanitize-url": "7.0.1",
     "socks/ip-address": "10.2.0",
     "refractor/prismjs": "^1.27.0",
     "@mapbox/jsonlint-lines-primitives": "workspace:*",
