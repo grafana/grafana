@@ -1,4 +1,5 @@
 import { type DataQuery, type DataQueryRequest, type DataSourceJsonData, type TimeRange } from '@grafana/data';
+import { type QueryBuilderOperation } from '@grafana/plugin-ui';
 
 import {
   type LokiDataQuery as LokiQueryFromSchema,
@@ -6,6 +7,11 @@ import {
   type SupportingQueryType,
   type LokiQueryDirection,
 } from './dataquery.gen';
+
+export interface LokiDisabledOperation {
+  index: number;
+  operation: QueryBuilderOperation;
+}
 
 // @todo import from core
 export const DATAPLANE_LABEL_TYPES_NAME = 'labelTypes';
@@ -25,6 +31,7 @@ export interface LokiQuery extends LokiQueryFromSchema {
   // the temporary fix (until this gets improved in the codegen), is to
   // override it here
   queryType?: LokiQueryType;
+  disabledOperations?: LokiDisabledOperation[];
 }
 
 export interface LokiOptions extends DataSourceJsonData {
