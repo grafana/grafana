@@ -4032,10 +4032,10 @@
             "default": ""
           },
           "type": {
-            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`",
+            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubOAuth\"`\n - `\"gitlab\"`",
             "type": "string",
             "default": "",
-            "enum": ["bitbucket", "github", "githubEnterprise", "gitlab"]
+            "enum": ["bitbucket", "github", "githubEnterprise", "githubOAuth", "gitlab"]
           },
           "url": {
             "description": "The connection URL",
