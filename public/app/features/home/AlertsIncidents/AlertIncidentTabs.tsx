@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { ScrollContainer, Stack, Tab, TabContent, TabsBar, Text, useStyles2 } from '@grafana/ui';
+import { Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, Text, useStyles2 } from '@grafana/ui';
 import { ACTIVE_INCIDENTS_QUERY_LIMIT } from 'app/features/alerting/unified/api/incidentsApi';
 import { useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
@@ -120,25 +120,27 @@ function AlertIncidentTabsInner({
             {activeTab === INCIDENTS_TAB_ID && <IncidentsCardView data={incidentsData} hideFooterActions />}
           </ScrollContainer>
 
-          {/* Alerts tab footer */}
-          {isAlertActionsVisible && (
-            <CreateAndViewAlertsButtons
-              hasAlerts={hasAlerts}
-              canCreate={canCreate}
-              newRuleHref={newRuleHref}
-              viewAllHref={viewAllHref}
-            />
-          )}
+          <Box paddingTop={1.5}>
+            {/* Alerts tab footer */}
+            {isAlertActionsVisible && (
+              <CreateAndViewAlertsButtons
+                hasAlerts={hasAlerts}
+                canCreate={canCreate}
+                newRuleHref={newRuleHref}
+                viewAllHref={viewAllHref}
+              />
+            )}
 
-          {/* Incidents tab footer */}
-          {isIncidentsActionsVisible && (
-            <DeclareAndViewIncidentsButtons
-              pluginId={incidentsPluginId}
-              count={incidentsData.count}
-              canDeclare={incidentsCanDeclare}
-              canAccess={incidentsCanAccess}
-            />
-          )}
+            {/* Incidents tab footer */}
+            {isIncidentsActionsVisible && (
+              <DeclareAndViewIncidentsButtons
+                pluginId={incidentsPluginId}
+                count={incidentsData.count}
+                canDeclare={incidentsCanDeclare}
+                canAccess={incidentsCanAccess}
+              />
+            )}
+          </Box>
         </TabContent>
       </HomeSection>
     </Stack>
