@@ -80,10 +80,20 @@ func (m *mockStageableRepoWithURLs) Test(ctx context.Context) (*provisioning.Tes
 	return &provisioning.TestResults{}, nil
 }
 
+func (m *mockStageableRepoWithURLs) ValidatePermissions(ctx context.Context) ([]repository.Permission, error) {
+	return nil, nil
+}
+
 // mockNonRWRepo implements only repository.Repository (no staging, no read/write)
 type mockNonRWRepo struct{}
 
 func (m *mockNonRWRepo) Config() *provisioning.Repository { return &provisioning.Repository{} }
+func (m *mockNonRWRepo) ValidatePermissions(ctx context.Context) ([]repository.Permission, error) {
+	return nil, nil
+}
+func (m *mockStageableRepo) ValidatePermissions(ctx context.Context) ([]repository.Permission, error) {
+	return nil, nil
+}
 func (m *mockNonRWRepo) Test(_ context.Context) (*provisioning.TestResults, error) {
 	return &provisioning.TestResults{}, nil
 }

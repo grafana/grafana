@@ -859,6 +859,13 @@ func (rc *RepositoryController) process(key string) error {
 	// Is there are risk of race condition here?
 	// Trigger sync job after we have applied all patch operations
 	if syncOptions != nil {
+		missingPermissions, err := repo.ValidatePermissions(ctx)
+		if err != nil || len(missingPermissions) > 0 {
+			logger.Error("skipping sync: repository is missing required permissions",
+				"error", err, "missingPermissions", missingPermissions)
+			return nil
+		}
+
 		if err := rc.addSyncJob(ctx, obj, syncOptions); err != nil {
 			return err
 		}

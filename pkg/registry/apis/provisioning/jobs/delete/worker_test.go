@@ -33,7 +33,10 @@ func (m *mockReaderWriter) Delete(ctx context.Context, path, ref, message string
 type simpleRepository struct{}
 
 func (s *simpleRepository) Config() *v0alpha1.Repository { return nil }
-func (s *simpleRepository) Validate() field.ErrorList    { return nil }
+func (s *simpleRepository) ValidatePermissions(ctx context.Context) ([]repository.Permission, error) {
+	return nil, nil
+}
+func (s *simpleRepository) Validate() field.ErrorList { return nil }
 func (s *simpleRepository) Test(ctx context.Context) (*v0alpha1.TestResults, error) {
 	return nil, nil
 }
