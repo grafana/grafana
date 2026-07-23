@@ -298,9 +298,6 @@ func NewAPIService(
 				}
 
 				if a.GetResource() == "users" {
-					if user.GetIdentityType() != types.TypeAccessPolicy {
-						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
-					}
 					return resourceAuthorizer.Authorize(ctx, a)
 				}
 
