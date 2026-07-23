@@ -30,9 +30,8 @@ if [ "$1" = configure ]; then
     mkdir -p "$DATA_DIR"
     rm -rf "${DATA_DIR:?}/plugins-bundled"
     mv "$GRAFANA_HOME/data/plugins-bundled" "$DATA_DIR"
-    chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" "$DATA_DIR/plugins-bundled"
   fi
-  chown -R $GRAFANA_USER:$GRAFANA_GROUP /var/log/grafana /var/lib/grafana
+  chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" /var/log/grafana "$DATA_DIR"
   chmod 755 /var/log/grafana /var/lib/grafana
 
   # copy user config files
