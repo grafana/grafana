@@ -592,7 +592,12 @@ func (hs *HTTPServer) updateOrgUserHelper(c *contextmodel.ReqContext, cmd org.Up
 	return response.Success("Organization user updated")
 }
 
-// orgHasOtherAdmin mirrors the legacy validateOneAdminLeftInOrg guard
+// orgHasOtherAdmin mirrors the legacy validateOneAdminLeftInOrg guard for the
+// k8s-redirected update path, reading the admin list through the k8s user
+// search. Scoped to Cloud single-org instances (multi-org unsupported). The
+// search hides HiddenUsers from non-Grafana-admins, so a hidden admin isn't
+// counted and a valid demotion may be wrongly blocked; this only over-restricts
+// and never allows removing the last admin.
 func (hs *HTTPServer) orgHasOtherAdmin(c *contextmodel.ReqContext, orgID, excludeUserID int64) (bool, error) {
 	result, err := hs.searchOrgUsersUsingK8s(c, &org.SearchOrgUsersQuery{
 		OrgID: orgID,
