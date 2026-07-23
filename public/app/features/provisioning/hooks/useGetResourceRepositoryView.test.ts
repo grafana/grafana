@@ -413,6 +413,5 @@ describe('useGetResourceRepositoryView', () => {
       expect(result.current.status).toBe(RepoViewStatus.Error);
       expect(result.current.isMissingRepo).toBe(true);
     });
-
   });
 });

@@ -1462,9 +1462,7 @@ describe('SaveProvisionedDashboardForm', () => {
 
   it('syncs dashboard meta with the created folder so defaults recompute against it', async () => {
     const FOLDER_BASE = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace';
-    server.use(
-      http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json({ metadata: { annotations: {} } }))
-    );
+    server.use(http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json({ metadata: { annotations: {} } })));
 
     let dashboardRequest: { url: URL; body: unknown } | null = null;
     server.use(
