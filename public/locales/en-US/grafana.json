@@ -7978,7 +7978,12 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Add new data source"
+      "assistant-context": "Add a new data source",
+      "label": "Add new data source",
+      "setup-assistant": "Set up with assistant",
+      "setup-assistant-description": "Guided configuration",
+      "setup-manually": "Set up manually",
+      "setup-manually-description": "Configure all settings yourself"
     },
     "empty-state": {
       "message": "No data sources found"
