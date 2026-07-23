@@ -79,6 +79,7 @@ export function DataSourceAddButton(): JSX.Element | null {
         ),
         onClick: onAddDataSource,
       }}
+      source="datasources_list"
       buttonProps={{ variant: 'primary' }}
     >
       {addNewDataSourceLabel}
