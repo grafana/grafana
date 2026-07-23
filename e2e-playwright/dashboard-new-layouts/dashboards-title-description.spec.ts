@@ -16,11 +16,11 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can change dashboard description and title', async ({ gotoDashboardPage, selectors, page }) => {
+    test('can change dashboard description and title', async ({ gotoDashboardPage, selectors, page, components }) => {
       const dashboardPage = await gotoDashboardPage({ uid: 'ed155665/annotation-filtering' });
 
-      const controls = new Controls(page, dashboardPage, selectors);
-      const sidebar = new Sidebar(page, dashboardPage, selectors);
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
       await controls.enterEditMode();
       await sidebar.toolbar.clickButton('Options');

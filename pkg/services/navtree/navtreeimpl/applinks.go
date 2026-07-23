@@ -19,6 +19,15 @@ import (
 // The Knowledge Graph's version of the "Application" page.
 const assertsServicesPath = "/a/grafana-asserts-app/services"
 const appObservabilityAppID = "grafana-app-observability-app"
+const assistantAppID = "grafana-assistant-app"
+const assistantOnboardingAppID = "grafana-assistant-onboarding-app"
+const assistantAppHomePath = "/a/" + assistantAppID
+
+var assistantOSSNavigationPaths = map[string]struct{}{
+	assistantAppHomePath:                 {},
+	"/a/grafana-assistant-app/workspace": {},
+	"/a/grafana-assistant-app/settings":  {},
+}
 
 func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) error {
 	hasAccess := ac.HasAccess(s.accessControl, c)
@@ -42,10 +51,19 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 	}
 
 	enabledAccessibleAppPluginMap := make(map[string]*pluginstore.Plugin)
+	assistantAppEnabled := false
+	assistantOnboardingAppEnabled := false
 
 	for _, plugin := range s.pluginStore.Plugins(c.Req.Context(), plugins.TypeApp) {
 		if !isPluginEnabled(plugin) {
 			continue
+		}
+
+		switch plugin.ID {
+		case assistantAppID:
+			assistantAppEnabled = true
+		case assistantOnboardingAppID:
+			assistantOnboardingAppEnabled = true
 		}
 
 		if !hasAccess(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginaccesscontrol.ScopeProvider.GetResourceScope(plugin.ID))) {
@@ -56,6 +74,19 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 		if appNode := s.processAppPlugin(plugin, c, treeRoot); appNode != nil {
 			appLinks = append(appLinks, appNode)
 		}
+	}
+
+	if assistantOnboardingAppEnabled && !assistantAppEnabled {
+		treeRoot.AddSection(&navtree.NavLink{
+			Text:       "Assistant",
+			Id:         "plugin-page-" + assistantAppID,
+			SubTitle:   "AI-powered assistant for Grafana",
+			Icon:       "ai-sparkle",
+			SortWeight: navtree.WeightAssistant,
+			IsSection:  true,
+			PluginID:   assistantAppID,
+			Url:        s.cfg.AppSubURL + "/a/" + assistantAppID,
+		})
 	}
 
 	if adaptiveTelemetryPlugin := enabledAccessibleAppPluginMap["grafana-adaptivetelemetry-app"]; adaptiveTelemetryPlugin != nil {
@@ -152,6 +183,7 @@ func (s *ServiceImpl) shouldIncludeInvestigations(plugin pluginstore.Plugin, inc
 
 func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
 	hasAccessToInclude := s.hasAccessToInclude(c, plugin.ID)
+	assistantTrialMode := s.isAssistantTrialMode(plugin, c)
 	appLink := &navtree.NavLink{
 		Text:       plugin.Name,
 		Id:         "plugin-page-" + plugin.ID,
@@ -165,6 +197,10 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 
 	for _, include := range plugin.Includes {
 		if !hasAccessToInclude(include) {
+			continue
+		}
+
+		if !s.shouldIncludeAssistantNavigation(plugin, include, assistantTrialMode) {
 			continue
 		}
 
@@ -273,6 +309,38 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 	}
 
 	return nil
+}
+
+func (s *ServiceImpl) isAssistantTrialMode(plugin pluginstore.Plugin, c *contextmodel.ReqContext) bool {
+	if plugin.ID != assistantAppID {
+		return false
+	}
+
+	ps, err := s.pluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &pluginsettings.GetByPluginIDArgs{
+		PluginID: plugin.ID,
+		OrgID:    c.GetOrgID(),
+	})
+	if err != nil {
+		return false
+	}
+
+	trialMode, ok := ps.JSONData["trialMode"].(bool)
+	return ok && trialMode
+}
+
+func (s *ServiceImpl) shouldIncludeAssistantNavigation(plugin pluginstore.Plugin, include *plugins.Includes, trialMode bool) bool {
+	if plugin.ID != assistantAppID {
+		return true
+	}
+	if trialMode {
+		return include.Path == assistantAppHomePath
+	}
+	if s.cfg.IsEnterprise || s.cfg.StackID != "" {
+		return true
+	}
+
+	_, allowed := assistantOSSNavigationPaths[include.Path]
+	return allowed
 }
 
 func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot, plugin pluginstore.Plugin, appLink *navtree.NavLink) {
@@ -423,7 +491,8 @@ func (s *ServiceImpl) hasAccessToInclude(c *contextmodel.ReqContext, pluginID st
 
 func (s *ServiceImpl) readNavigationSettings() {
 	s.navigationAppConfig = map[string]NavigationAppConfig{
-		"grafana-sigil-app":                {SectionID: navtree.NavIDObservability, SortWeight: 1, Text: "AI", IsNew: true},
+		"grafana-sigil-app":                {SectionID: navtree.NavIDObservability, SortWeight: 1, Text: "AI", IsNew: true}, // TODO: remove this after sigil is renamed to grafana-agento11y-app, but we need to keep it for now to avoid breaking changes
+		"grafana-agento11y-app":            {SectionID: navtree.NavIDObservability, SortWeight: 1, Text: "Agent", IsNew: true},
 		"grafana-asserts-app":              {SectionID: navtree.NavIDObservability, SortWeight: 2, Icon: "asserts"},
 		"grafana-kowalski-app":             {SectionID: navtree.NavIDObservability, SortWeight: 3, Text: "Frontend"},
 		appObservabilityAppID:              {SectionID: navtree.NavIDObservability, SortWeight: 4, Text: "Application"},

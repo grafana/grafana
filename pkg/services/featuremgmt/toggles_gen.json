@@ -23,7 +23,8 @@
       "metadata": {
         "name": "advisorDatasourceIntegration",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-15T11:02:00Z"
       },
       "spec": {
         "description": "Enables the advisor report integration with datasource pages",
@@ -1026,17 +1027,34 @@
     },
     {
       "metadata": {
+        "name": "assistant.fullscreenWorkspace",
+        "resourceVersion": "1782120503827",
+        "creationTimestamp": "2026-06-22T09:28:23Z"
+      },
+      "spec": {
+        "description": "Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "auditLoggingAppPlatform",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-12-29T15:28:29Z"
+        "resourceVersion": "1784025329122",
+        "creationTimestamp": "2025-12-29T15:28:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-14 10:35:29.122409 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable audit logging with Kubernetes under app platform",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "requiresRestart": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -1756,6 +1774,21 @@
     },
     {
       "metadata": {
+        "name": "dashboards.filterablePanels",
+        "resourceVersion": "1784277442129",
+        "creationTimestamp": "2026-07-17T08:37:22Z",
+        "deletionTimestamp": "2026-07-22T08:31:47Z"
+      },
+      "spec": {
+        "description": "Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashgpt",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2023-08-30T20:22:05Z",
@@ -1786,7 +1819,8 @@
       "metadata": {
         "name": "datasourceAPIServers",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-09-19T08:28:27Z"
+        "creationTimestamp": "2024-09-19T08:28:27Z",
+        "deletionTimestamp": "2026-07-21T07:41:20Z"
       },
       "spec": {
         "description": "Expose some datasources as apiservers.",
@@ -2074,7 +2108,8 @@
       "metadata": {
         "name": "elasticsearchCrossClusterSearch",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-12-12T22:20:04Z"
+        "creationTimestamp": "2024-12-12T22:20:04Z",
+        "deletionTimestamp": "2026-07-10T20:51:17Z"
       },
       "spec": {
         "description": "Enables cross cluster search in the Elasticsearch data source",
@@ -2421,6 +2456,20 @@
     },
     {
       "metadata": {
+        "name": "features.bulkFlagEvalFiltering",
+        "resourceVersion": "1784293594749",
+        "creationTimestamp": "2026-07-17T13:06:34Z"
+      },
+      "spec": {
+        "description": "Filters bulk OFREP flag evaluations to public-metadata flags only",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "feedbackButton",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-12-02T17:08:15Z",
@@ -2663,6 +2712,34 @@
     },
     {
       "metadata": {
+        "name": "grafana.exploreMetricsSidebar",
+        "resourceVersion": "1784553980624",
+        "creationTimestamp": "2026-07-20T13:26:20Z"
+      },
+      "spec": {
+        "description": "Enables the sidebar in Explore metrics (Metrics Drilldown)",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.filterablePanels",
+        "resourceVersion": "1784637166683",
+        "creationTimestamp": "2026-07-21T12:32:46Z"
+      },
+      "spec": {
+        "description": "Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.frontendLegacyAPIHandling",
         "resourceVersion": "1783501568190",
         "creationTimestamp": "2026-07-08T09:06:08Z"
@@ -2805,6 +2882,23 @@
         "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.newTextPanel",
+        "resourceVersion": "1784552406696",
+        "creationTimestamp": "2026-07-17T19:10:43Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-20 13:00:06.696376 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the new text panel",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
@@ -2959,11 +3053,14 @@
     {
       "metadata": {
         "name": "grafana.useDefaultScopesEndpoint",
-        "resourceVersion": "1783088074749",
-        "creationTimestamp": "2026-07-03T14:14:34Z"
+        "resourceVersion": "1784292490130",
+        "creationTimestamp": "2026-07-03T14:14:34Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-17 12:48:10.130812 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Use the find default scope endpoint to seed the initial scope selection when none is set and grafana.enableScopesFirstMode is enabled.",
+        "description": "Use the find default scope endpoint to seed the initial scope selection when none is set.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
@@ -4193,6 +4290,24 @@
     },
     {
       "metadata": {
+        "name": "ofrep.bulkFlagEvalFiltering",
+        "resourceVersion": "1783006061209",
+        "creationTimestamp": "2026-07-02T15:25:13Z",
+        "deletionTimestamp": "2026-07-17T13:06:34Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-02 15:27:41.20966 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Filters bulk OFREP flag evaluations to public-metadata flags only",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "onlyStoreActionSets",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-10-20T15:02:56Z"
@@ -4714,6 +4829,22 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "provisioning.performance",
+        "resourceVersion": "1784287498952",
+        "creationTimestamp": "2026-07-16T08:21:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-17 11:24:58.952225 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
         "expression": "false"
       }
     },

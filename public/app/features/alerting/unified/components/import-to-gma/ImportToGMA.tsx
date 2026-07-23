@@ -5,7 +5,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   Alert,
   Box,
@@ -21,8 +21,6 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import {
@@ -60,6 +58,7 @@ import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
 import { StepImportMethod, isAutoSyncSegmentEnabled } from './steps/StepImportMethod';
 import { StepReviewEnableAutoSync } from './steps/StepReviewEnableAutoSync';
 import { type DryRunValidationResult, type PromoteStatsSummary } from './types';
+import { useCanImportToGMA } from './useCanImportToGMA';
 import {
   buildRoutingParams,
   filterRulerRulesConfig,
@@ -79,7 +78,7 @@ export interface ImportFormValues {
   step1Completed: boolean;
   step1Skipped: boolean;
   /**
-   * Name of the imported policy tree (value for __grafana_managed_route__ label).
+   * Name of the imported policy tree (the config identifier for the imported Alertmanager config).
    * For now, this is free-form as we don't have an API to retrieve the list of available policy trees.
    */
   policyTreeName: string;
@@ -87,6 +86,7 @@ export interface ImportFormValues {
   notificationsDatasourceUID?: string;
   notificationsDatasourceName: string | null;
   notificationsYamlFile: File | null;
+  notificationsTemplateFiles: File[];
 
   // Step 2: Alert rules
   step2Completed: boolean;
@@ -175,18 +175,13 @@ function ImportWizardContent() {
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [importStatus, setImportStatus] = useState<'idle' | 'importing' | 'success' | 'error'>('idle');
-  const { runDryRun, isLoading: isDryRunLoading, result: dryRunData, error: dryRunError } = useDryRunNotifications();
-
-  // Derive dry-run result from RTK Query state (success data or synthetic error result)
-  const dryRunResult: DryRunValidationResult | undefined = useMemo(() => {
-    if (dryRunData) {
-      return dryRunData;
-    }
-    if (dryRunError) {
-      return { valid: false, error: dryRunError, renamedReceivers: [], renamedTimeIntervals: [], stats: undefined };
-    }
-    return undefined;
-  }, [dryRunData, dryRunError]);
+  const {
+    runDryRun,
+    reset: resetDryRun,
+    isLoading: isDryRunLoading,
+    result: dryRunResult,
+    error: dryRunError,
+  } = useDryRunNotifications();
 
   // Derive dry-run UI state from RTK Query state
   const dryRunState = useMemo((): 'idle' | 'loading' | 'success' | 'warning' | 'error' => {
@@ -209,8 +204,8 @@ function ImportWizardContent() {
 
   const formAPI = useForm<ImportFormValues>({
     defaultValues: {
-      // Step 0 — default to auto-sync when it's available, otherwise the one-time import
-      importMethod: isAutoSyncSegmentEnabled() ? 'autosync' : 'stage',
+      // Step 0 — default to the staged one-time import (auto-sync stays opt-in)
+      importMethod: 'stage',
       autosyncDatasourceUID: undefined,
       // Step 1
       step1Completed: false,
@@ -220,6 +215,7 @@ function ImportWizardContent() {
       notificationsDatasourceUID: undefined,
       notificationsDatasourceName: null,
       notificationsYamlFile: null,
+      notificationsTemplateFiles: [],
       // Step 2
       step2Completed: false,
       step2Skipped: false,
@@ -241,10 +237,7 @@ function ImportWizardContent() {
   const [step1Completed, step1Skipped] = watch(['step1Completed', 'step1Skipped']);
 
   // Permission checks aligned with backend authorization.go
-  const canImportNotifications = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsWrite);
-  const canImportRules =
-    contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
-    contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
+  const { canImportNotifications, canImportRules } = useCanImportToGMA();
 
   // Trigger dry-run validation (called automatically by Step1 when source changes)
   const handleTriggerDryRun = useCallback(() => {
@@ -267,6 +260,7 @@ function ImportWizardContent() {
       source: formValues.notificationsSource,
       datasourceName: formValues.notificationsDatasourceName ?? undefined,
       yamlFile: formValues.notificationsYamlFile,
+      templateFiles: formValues.notificationsTemplateFiles,
       configIdentifier: formValues.policyTreeName,
       promote: formValues.importMethod === 'promote',
     });
@@ -352,6 +346,7 @@ function ImportWizardContent() {
           source: values.notificationsSource,
           datasourceName: values.notificationsDatasourceName ?? undefined,
           yamlFile: values.notificationsYamlFile,
+          templateFiles: values.notificationsTemplateFiles,
           configIdentifier: values.policyTreeName,
           promote: values.importMethod === 'promote',
         });
@@ -376,16 +371,8 @@ function ImportWizardContent() {
           targetDatasourceUID: values.targetDatasourceUID,
         };
 
-        const { notificationSettings, extraLabels } = buildRoutingParams(
-          values.selectedRoutingTree,
-          Boolean(config.featureToggles.alertingPolicyRoutingSettings)
-        );
-
-        if (notificationSettings !== undefined) {
-          await importRules({ ...baseParams, notificationSettings });
-        } else {
-          await importRules({ ...baseParams, extraLabels });
-        }
+        const { notificationSettings } = buildRoutingParams(values.selectedRoutingTree);
+        await importRules({ ...baseParams, notificationSettings });
       }
 
       setImportStatus('success');
@@ -476,6 +463,7 @@ function ImportWizardContent() {
               dryRunState={dryRunState}
               dryRunResult={dryRunResult}
               onTriggerDryRun={handleTriggerDryRun}
+              onResetDryRun={resetDryRun}
             />
           )}
 
@@ -526,6 +514,7 @@ interface Step1WrapperProps {
   dryRunState: 'idle' | 'loading' | 'success' | 'warning' | 'error';
   dryRunResult?: DryRunValidationResult;
   onTriggerDryRun: () => void;
+  onResetDryRun: () => void;
 }
 
 function Step1Wrapper({
@@ -536,10 +525,13 @@ function Step1Wrapper({
   dryRunState,
   dryRunResult,
   onTriggerDryRun,
+  onResetDryRun,
 }: Step1WrapperProps) {
   const isStep1Valid = useStep1Validation(canImport);
-  // Can proceed if form is valid and dry-run passed (existing config will be force-replaced)
-  const canProceed = isStep1Valid && dryRunState !== 'loading' && dryRunState !== 'error';
+  // Only advance once a dry-run has actually passed for the current inputs. An `idle`/`loading` state
+  // means the config hasn't been validated yet, so it must not count as "ready to import".
+  const dryRunPassed = dryRunState === 'success' || dryRunState === 'warning';
+  const canProceed = isStep1Valid && dryRunPassed;
 
   return (
     <WizardStep
@@ -556,12 +548,17 @@ function Step1Wrapper({
       canSkip
       skipLabel={t('alerting.import-to-gma.step1.skip', 'Skip this step')}
       disableNext={!canProceed}
+      disabledNextTooltip={t(
+        'alerting.import-to-gma.step1.next-disabled-tooltip',
+        'Complete the required fields and wait for validation to pass before continuing.'
+      )}
     >
       <Step1Content
         canImport={canImport}
         dryRunState={dryRunState}
         dryRunResult={dryRunResult}
         onTriggerDryRun={onTriggerDryRun}
+        onResetDryRun={onResetDryRun}
       />
     </WizardStep>
   );
@@ -852,6 +849,14 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
                         : formData.notificationsDatasourceName || 'Data source'}
                     </Text>
                   </div>
+                  {/* Uploaded template files only apply to the YAML source; list them so the user can
+                      confirm which templates will be imported. */}
+                  {formData.notificationsSource === 'yaml' && formData.notificationsTemplateFiles.length > 0 && (
+                    <div className={styles.row}>
+                      <Text color="secondary">{t('alerting.import-to-gma.review.templates', 'Templates')}</Text>
+                      <Text>{formData.notificationsTemplateFiles.map((file) => file.name).join(', ')}</Text>
+                    </div>
+                  )}
                   <div className={styles.row}>
                     <Text color="secondary">{t('alerting.import-to-gma.review.policy-tree', 'Policy tree')}</Text>
                     <Stack direction="row" gap={1} alignItems="center" wrap="wrap">

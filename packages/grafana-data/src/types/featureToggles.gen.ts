@@ -119,11 +119,6 @@ export interface FeatureToggles {
   */
   mlExpressions?: boolean;
   /**
-  * Expose some datasources as apiservers.
-  * @default false
-  */
-  datasourceAPIServers?: boolean;
-  /**
   * Register experimental APIs with the k8s API server, including all datasources
   * @default false
   */
@@ -390,7 +385,7 @@ export interface FeatureToggles {
   jitterAlertRulesWithinGroups?: boolean;
   /**
   * Enable audit logging with Kubernetes under app platform
-  * @default false
+  * @default true
   */
   auditLoggingAppPlatform?: boolean;
   /**
@@ -774,11 +769,6 @@ export interface FeatureToggles {
   * @default true
   */
   alertingNotificationsStepMode?: boolean;
-  /**
-  * Enables cross cluster search in the Elasticsearch data source
-  * @default false
-  */
-  elasticsearchCrossClusterSearch?: boolean;
   /**
   * Defaults to using the Loki `/labels` API instead of `/series`
   * @default true
@@ -1375,11 +1365,6 @@ export interface FeatureToggles {
   * @default false
   */
   flameGraphWithCallTree?: boolean;
-  /**
-  * Enables the advisor report integration with datasource pages
-  * @default false
-  */
-  advisorDatasourceIntegration?: boolean;
   /**
   * Enables an inline version of Log Details that creates no new scrolls
   * @default false

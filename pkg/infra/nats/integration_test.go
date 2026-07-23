@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
@@ -279,12 +280,10 @@ func startEmbeddedStack(t *testing.T) (context.Context, *Server, *PublisherServi
 		Enabled:       true,
 		Mode:          setting.NATSModeEmbedded,
 		ListenAddress: "127.0.0.1",
-		// Bind free ports rather than the conventional 4222/6222 so parallel or
-		// repeated runs — and a dev Grafana already holding 4222 — don't collide;
-		// clients connect via the server's actual ClientURL. A zero ClusterPort
-		// leaves ClusterAddr() nil, which routeURLForServer dereferences.
-		ClientPort:  freePort(t),
-		ClusterPort: freePort(t),
+		// Let NATS bind ephemeral ports atomically so parallel or repeated runs —
+		// and a dev Grafana already holding 4222 — don't collide.
+		ClientPort:  natsserver.RANDOM_PORT,
+		ClusterPort: natsserver.RANDOM_PORT,
 	}
 
 	server, err := ProvideServer(cfg, nil, prometheus.NewRegistry())

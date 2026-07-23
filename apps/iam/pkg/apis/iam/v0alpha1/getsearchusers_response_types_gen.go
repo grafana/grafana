@@ -19,6 +19,8 @@ type GetSearchUsersUserHit struct {
 	Created       int64           `json:"created"`
 	Score         float64         `json:"score"`
 	AccessControl map[string]bool `json:"accessControl,omitempty"`
+	// Auth module identifiers the user is externally synced with.
+	ExternalAuthModules []string `json:"externalAuthModules,omitempty"`
 }
 
 // NewGetSearchUsersUserHit creates a new GetSearchUsersUserHit object.

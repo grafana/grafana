@@ -1,7 +1,6 @@
 package foldermetadata
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -43,7 +42,7 @@ func githubHealthCheckMockClient() *http.Client {
 // new branch creation and a later update to the same branch.
 func TestIntegrationGitHubFiles_DashboardBranchURLs(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
+
 	helper.GetEnv().GithubRepoFactory.Client = githubHealthCheckMockClient()
 
 	const repoName = "github-dashboard-urls"
@@ -61,7 +60,7 @@ func TestIntegrationGitHubFiles_DashboardBranchURLs(t *testing.T) {
 		Param("message", "Create dashboard on branch").
 		Body(common.DashboardJSON("github-url-dash", "GitHub URL Dashboard", 1)).
 		SetHeader("Content-Type", "application/json").
-		Do(ctx)
+		Do(t.Context())
 	require.NoError(t, result.Error(), "should create dashboard on branch")
 	assertGitHubFileURLs(t, decodeResourceWrapperResult(t, result), remote.URL, branch, dashboardPath)
 
@@ -74,7 +73,7 @@ func TestIntegrationGitHubFiles_DashboardBranchURLs(t *testing.T) {
 		Param("message", "Update dashboard on branch").
 		Body(common.DashboardJSON("github-url-dash", "GitHub URL Dashboard Updated", 2)).
 		SetHeader("Content-Type", "application/json").
-		Do(ctx)
+		Do(t.Context())
 	require.NoError(t, result.Error(), "should update dashboard on existing branch")
 	assertGitHubFileURLs(t, decodeResourceWrapperResult(t, result), remote.URL, branch, dashboardPath)
 }
@@ -84,7 +83,7 @@ func TestIntegrationGitHubFiles_DashboardBranchURLs(t *testing.T) {
 // which is the regression surface for folder rename/update operations.
 func TestIntegrationGitHubFiles_FolderMetadataBranchURLs(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
+
 	helper.GetEnv().GithubRepoFactory.Client = githubHealthCheckMockClient()
 
 	const repoName = "github-folder-urls"
@@ -95,7 +94,7 @@ func TestIntegrationGitHubFiles_FolderMetadataBranchURLs(t *testing.T) {
 	_ = resp.Body.Close()
 	require.Equal(t, http.StatusOK, resp.StatusCode, "creating folder on default branch should succeed: %s", string(body))
 
-	uid := readFolderFieldOnRef(t, helper, ctx, repoName, "team-a/_folder.json", "", "metadata", "name")
+	uid := readFolderFieldOnRef(t, helper, repoName, "team-a/_folder.json", "", "metadata", "name")
 	require.NotEmpty(t, uid, "setup: folder should have a UID")
 
 	const branch = "feature-folder-urls"

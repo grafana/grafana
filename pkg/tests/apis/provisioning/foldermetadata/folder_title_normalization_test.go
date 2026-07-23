@@ -61,7 +61,6 @@ import (
 // migrate reported "no changes to sync" as a success while exporting nothing.
 func TestIntegrationProvisioning_MigrateFolderTitleNormalization(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := t.Context()
 
 	// Fixed UIDs keep every assertion deterministic — including the UID-fallback
 	// case, where the path segment is the UID itself.
@@ -76,18 +75,17 @@ func TestIntegrationProvisioning_MigrateFolderTitleNormalization(t *testing.T) {
 		deltaTitle = "🚀🎉"
 	)
 
-	createUnmanagedFolder(t, helper, alphaUID, alphaTitle)
-	createUnmanagedFolderWithParent(t, helper, betaUID, betaTitle, alphaUID)
-	createUnmanagedFolderWithParent(t, helper, gammaUID, gammaTitle, betaUID)
-	createUnmanagedFolderWithParent(t, helper, deltaUID, deltaTitle, gammaUID)
-	dashName := helper.CreateUnmanagedDashboard(t, ctx, "Sample Dashboard", deltaUID)
+	helper.CreateUnmanagedFolderWithName(t, alphaUID, alphaTitle, "")
+	helper.CreateUnmanagedFolderWithName(t, betaUID, betaTitle, alphaUID)
+	helper.CreateUnmanagedFolderWithName(t, gammaUID, gammaTitle, betaUID)
+	helper.CreateUnmanagedFolderWithName(t, deltaUID, deltaTitle, gammaUID)
+	dashName := helper.CreateUnmanagedDashboard(t, "Sample Dashboard", deltaUID)
 
 	const repo = "folder-title-normalization-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		Workflows:              []string{"write"},
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 	})
 
 	// Expected normalized path segments. Titles themselves are preserved in
@@ -147,21 +145,21 @@ func TestIntegrationProvisioning_MigrateFolderTitleNormalization(t *testing.T) {
 	// The /files endpoint always uses forward slashes; ToSlash keeps the path
 	// correct if filepath.Join produced OS-specific separators (e.g. on Windows).
 	files := helper.NewFilesClient(repo)
-	require.Equal(t, betaTitle, files.ReadFolderTitle(t, ctx, filepath.ToSlash(betaPath)+"/_folder.json"),
+	require.Equal(t, betaTitle, files.ReadFolderTitle(t, filepath.ToSlash(betaPath)+"/_folder.json"),
 		"reading a _folder.json at a path with a space through the /files endpoint should work")
-	require.Equal(t, deltaUID, files.ReadFolderUID(t, ctx, filepath.ToSlash(deltaPath)+"/_folder.json"))
+	require.Equal(t, deltaUID, files.ReadFolderUID(t, filepath.ToSlash(deltaPath)+"/_folder.json"))
 
 	// 4) The pull half of the migrate consumed the normalized/space paths: the
 	// deepest folder and the dashboard end up managed by the repository.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		f, err := helper.Folders.Resource.Get(ctx, deltaUID, metav1.GetOptions{})
+		f, err := helper.Folders.Resource.Get(t.Context(), deltaUID, metav1.GetOptions{})
 		if !assert.NoError(collect, err, "deepest folder should exist") {
 			return
 		}
 		assert.Equal(collect, repo, f.GetAnnotations()[utils.AnnoKeyManagerIdentity],
 			"deepest folder should be managed by the repo after migrate")
 
-		d, err := helper.DashboardsV1.Resource.Get(ctx, dashName, metav1.GetOptions{})
+		d, err := helper.DashboardsV1.Resource.Get(t.Context(), dashName, metav1.GetOptions{})
 		if !assert.NoError(collect, err, "dashboard should exist") {
 			return
 		}
@@ -185,7 +183,7 @@ func TestIntegrationProvisioning_MigrateFolderTitleNormalization(t *testing.T) {
 	// A pull must read the space path back out of the repo tree and reconcile it.
 	helper.SyncAndWait(t, repo, nil)
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		d, err := helper.DashboardsV1.Resource.Get(ctx, writtenUID, metav1.GetOptions{})
+		d, err := helper.DashboardsV1.Resource.Get(t.Context(), writtenUID, metav1.GetOptions{})
 		if !assert.NoError(collect, err, "written dashboard should exist after pull") {
 			return
 		}
@@ -211,7 +209,6 @@ func TestIntegrationProvisioning_MigrateFolderTitleNormalization(t *testing.T) {
 //	   └─ pulled-dashboard.json            └─ dashboard "pull-dash"
 func TestIntegrationProvisioning_PullFoldersWithSpaces(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := t.Context()
 
 	const (
 		repo        = "pull-space-folders-repo"
@@ -226,11 +223,10 @@ func TestIntegrationProvisioning_PullFoldersWithSpaces(t *testing.T) {
 	// SkipSync so the repository exists before we seed it; the pull below is the
 	// action under test.
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		Workflows:              []string{"write"},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
+		SkipSync:   true,
 	})
 
 	// Seed a repository whose directory names contain spaces, each carrying a
@@ -247,7 +243,7 @@ func TestIntegrationProvisioning_PullFoldersWithSpaces(t *testing.T) {
 	})
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		parent, err := helper.Folders.Resource.Get(ctx, parentUID, metav1.GetOptions{})
+		parent, err := helper.Folders.Resource.Get(t.Context(), parentUID, metav1.GetOptions{})
 		if !assert.NoError(collect, err, "parent folder should be created by the pull") {
 			return
 		}
@@ -256,7 +252,7 @@ func TestIntegrationProvisioning_PullFoldersWithSpaces(t *testing.T) {
 		parentGrafanaTitle, _, _ := unstructured.NestedString(parent.Object, "spec", "title")
 		assert.Equal(collect, parentTitle, parentGrafanaTitle, "parent title should survive the pull")
 
-		child, err := helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		child, err := helper.Folders.Resource.Get(t.Context(), childUID, metav1.GetOptions{})
 		if !assert.NoError(collect, err, "nested folder should be created by the pull") {
 			return
 		}
@@ -267,7 +263,7 @@ func TestIntegrationProvisioning_PullFoldersWithSpaces(t *testing.T) {
 		childGrafanaTitle, _, _ := unstructured.NestedString(child.Object, "spec", "title")
 		assert.Equal(collect, childTitle, childGrafanaTitle, "nested folder title should survive the pull")
 
-		d, err := helper.DashboardsV1.Resource.Get(ctx, dashUID, metav1.GetOptions{})
+		d, err := helper.DashboardsV1.Resource.Get(t.Context(), dashUID, metav1.GetOptions{})
 		if !assert.NoError(collect, err, "dashboard should be created by the pull") {
 			return
 		}
@@ -286,15 +282,14 @@ func TestIntegrationProvisioning_PullFoldersWithSpaces(t *testing.T) {
 func TestIntegrationProvisioning_MigrateFolderTitleCollisionFails(t *testing.T) {
 	helper := sharedHelper(t)
 
-	createUnmanagedFolder(t, helper, "collision-a", "» Reports")
-	createUnmanagedFolder(t, helper, "collision-b", "Reports")
+	helper.CreateUnmanagedFolderWithName(t, "collision-a", "» Reports", "")
+	helper.CreateUnmanagedFolderWithName(t, "collision-b", "Reports", "")
 
 	const repo = "folder-title-collision-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		Workflows:              []string{"write"},
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 	})
 
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{

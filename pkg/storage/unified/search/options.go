@@ -86,21 +86,24 @@ func NewSearchOptions(
 			return resource.SearchOptions{}, err
 		}
 
-		// docs is optional in some tests; only install the search-field mappings
-		// and their hashes when a real supplier is present. Both come from the app
-		// manifests, and the hashes are derived from the same providers that drive
-		// the mappings so the two always agree.
-		var searchFieldsHashes map[resource.LowerGroupResource]string
-		var searchFieldsProviders map[resource.LowerGroupResource]resource.SearchFieldsProvider
-		if docs != nil {
-			// Search fields come from the app manifests: every in-tree kind that
-			// has custom search fields declares them in its CUE manifest.
-			searchFieldsProviders, err = resource.SearchFieldProviders(resource.AppManifests())
-			if err != nil {
-				return resource.SearchOptions{}, err
-			}
-			searchFieldsHashes = resource.SearchFieldsHashesForProviders(searchFieldsProviders)
+		// MergeManifestsByKind is the single point a future live-manifest source will
+		// be added to; the built-in manifests are the only source today.
+		manifests := resource.MergeManifestsByKind(resource.AppManifests())
+		selectableFields, searchFieldsHashes, searchFieldsProviders, err := resource.SearchFieldsForManifests(manifests)
+		if err != nil {
+			return resource.SearchOptions{}, err
 		}
+
+		// Without a document supplier (some tests) the index has nothing to map, so
+		// leave out the mappings and their hashes; the selectable fields stay.
+		if docs == nil {
+			searchFieldsHashes, searchFieldsProviders = nil, nil
+		}
+
+		// One registry holds selectable fields, hashes, and providers, shared by the
+		// index backend and the search server so a future live-manifest source can
+		// swap them consistently.
+		searchFields := resource.NewSearchFieldsRegistry(selectableFields, searchFieldsHashes, searchFieldsProviders)
 
 		bleve, err := NewBleveBackend(BleveOptions{
 			Root:                           root,
@@ -109,9 +112,7 @@ func NewSearchOptions(
 			BuildVersion:                   cfg.BuildVersion,
 			OwnsIndex:                      ownsIndexFn,
 			IndexMinUpdateInterval:         cfg.IndexMinUpdateInterval,
-			SelectableFieldsForKinds:       resource.SelectableFields(),
-			SearchFieldsHashesForKinds:     searchFieldsHashes,
-			SearchFieldsProvidersForKinds:  searchFieldsProviders,
+			SearchFields:                   searchFields,
 			Snapshot:                       snapshot,
 			DiskCleanupInterval:            cfg.DiskIndexCleanupInterval,
 			DiskCleanupGracePeriod:         cfg.DiskIndexCleanupGracePeriod,
@@ -151,7 +152,7 @@ func NewSearchOptions(
 			IndexSnapshotLockTTL:            DefaultSnapshotLockTTL,
 			IndexSnapshotCleanupInterval:    DefaultSnapshotCleanupInterval,
 			IndexSnapshotCleanupGracePeriod: cleanupGracePeriodOrDefault(cfg.IndexSnapshotCleanupGracePeriod),
-			SearchFieldsHashesForKinds:      searchFieldsHashes,
+			SearchFields:                    searchFields,
 		}, nil
 	}
 	return resource.SearchOptions{

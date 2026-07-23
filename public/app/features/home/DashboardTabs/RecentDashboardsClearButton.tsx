@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, Stack, useStyles2 } from '@grafana/ui';
 import impressionSrv from 'app/core/services/impression_srv';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
 
@@ -28,17 +28,21 @@ export function RecentDashboardsClearButton({ dashboards, retry, redesignEnabled
   };
 
   return (
-    <div className={styles.clearButton}>
+    <>
       {redesignEnabled ? (
-        <Button size="sm" fill="text" onClick={handleClearHistory}>
-          <Trans i18nKey="home.recent-dashboards-tab.reset">Reset recent dashboards</Trans>
-        </Button>
+        <Stack justifyContent="flex-end" wrap="wrap">
+          <Button size="sm" fill="text" onClick={handleClearHistory}>
+            <Trans i18nKey="home.recent-dashboards-tab.reset">Reset recent dashboards</Trans>
+          </Button>
+        </Stack>
       ) : (
-        <Button icon="times" size="sm" variant="secondary" fill="text" onClick={handleClearHistory}>
-          <Trans i18nKey="home.recent-dashboards-tab.clear">Clear history</Trans>
-        </Button>
+        <div className={styles.clearButton}>
+          <Button icon="times" size="sm" variant="secondary" fill="text" onClick={handleClearHistory}>
+            <Trans i18nKey="home.recent-dashboards-tab.clear">Clear history</Trans>
+          </Button>
+        </div>
       )}
-    </div>
+    </>
   );
 }
 

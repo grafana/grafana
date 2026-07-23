@@ -456,6 +456,38 @@ describe('CloudWatchLogsQueryRunner', () => {
       });
     });
 
+    it('allows query with data sources and no log groups', async () => {
+      const { runner } = setupMockedLogsQueryRunner();
+
+      const queryWithDataSources: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+        logGroups: [],
+        logDataSources: [{ name: 'amazon_vpc', type: 'flow' }],
+      };
+
+      const options: DataQueryRequest<CloudWatchLogsQuery> = {
+        ...LogsRequestMock,
+        targets: [queryWithDataSources],
+      };
+
+      const queryFn = jest
+        .fn()
+        .mockReturnValueOnce(of(startQuerySuccessResponseStub))
+        .mockReturnValueOnce(of(getQuerySuccessResponseStub));
+      await expect(runner.handleLogQueries([queryWithDataSources], options, queryFn)).toEmitValuesWith(() => {
+        expect(queryFn).toHaveBeenCalledWith(
+          expect.objectContaining({
+            targets: expect.arrayContaining([
+              expect.objectContaining({
+                subtype: 'StartQuery',
+                logDataSources: [{ name: 'amazon_vpc', type: 'flow' }],
+              }),
+            ]),
+          })
+        );
+      });
+    });
+
     it('filters out non-CWLI query when namePrefix scope would otherwise bypass missing log groups', async () => {
       const { runner } = setupMockedLogsQueryRunner();
 

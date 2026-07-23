@@ -13,12 +13,10 @@ import (
 	apischema "k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
-	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 const threshold = 9999
@@ -447,7 +445,7 @@ func TestWildcardQuery(t *testing.T) {
 		checkSearchQuery(t, index, newTestQuery("*Dev Overview*"), []string{"name1"})
 	})
 
-	t.Run("default wildcard searches email and login fields", func(t *testing.T) {
+	t.Run("wildcard searches email and login only with explicit QueryFields", func(t *testing.T) {
 		// Use an index with keyword-analyzed email/login fields (matching
 		// production IAM config) so wildcards match full email addresses.
 		index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
@@ -469,12 +467,26 @@ func TestWildcardQuery(t *testing.T) {
 			},
 		}))
 
-		// Default wildcard (no QueryFields) should match email field
-		checkSearchQuery(t, index, newTestQuery("*uniquemail@grafana.com*"), []string{"user1"})
-		// Default wildcard should match login field
-		checkSearchQuery(t, index, newTestQuery("*secondlogin*"), []string{"user2"})
-		// Wildcard matching domain across both users (order is non-deterministic)
-		res, err := index.Search(context.Background(), nil, newTestQuery("*grafana.com*"), nil, nil)
+		emailField := resource.SEARCH_FIELD_PREFIX + "email"
+		loginField := resource.SEARCH_FIELD_PREFIX + "login"
+
+		// Default wildcard (no QueryFields) searches title only, so email/login queries don't match.
+		checkSearchQuery(t, index, newTestQuery("*uniquemail@grafana.com*"), nil)
+		checkSearchQuery(t, index, newTestQuery("*secondlogin*"), nil)
+
+		// With explicit QueryFields, wildcards match the named identity fields.
+		reqEmail := newTestQuery("*uniquemail@grafana.com*")
+		reqEmail.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{{Name: emailField}}
+		checkSearchQuery(t, index, reqEmail, []string{"user1"})
+
+		reqLogin := newTestQuery("*secondlogin*")
+		reqLogin.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{{Name: loginField}}
+		checkSearchQuery(t, index, reqLogin, []string{"user2"})
+
+		// Wildcard on email matching domain across both users (order is non-deterministic).
+		reqDomain := newTestQuery("*grafana.com*")
+		reqDomain.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{{Name: emailField}}
+		res, err := index.Search(context.Background(), nil, reqDomain, nil, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(2), res.TotalHits)
 	})
@@ -655,28 +667,128 @@ func TestDoubleEqualsExactMatch(t *testing.T) {
 	})
 }
 
+func titleFilterQuery(operator string, values ...string) *resourcepb.ResourceSearchRequest {
+	return &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+			},
+			Fields: []*resourcepb.Requirement{{Key: "title", Operator: operator, Values: values}},
+		},
+		// Sort by name so multi-hit expectations are deterministic (filters alone
+		// impose no order).
+		SortBy: []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_NAME}},
+		Limit:  100000,
+	}
+}
+
+// TestTitleSetFilterExactMatch covers the "in"/"notin" title filters the v1
+// search API emits: set membership is exact (whole title, case-insensitive via
+// title_phrase), unlike the fuzzy "=" filter.
+func TestTitleSetFilterExactMatch(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+	seed := func(t *testing.T) resource.ResourceIndex {
+		index := newTestDashboardsIndex(t, threshold, 3, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Test",
+			"name2": "Test Team 1",
+			"name3": "Other",
+		})
+		return index
+	}
+
+	t.Run("in on title matches only the exact title", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), titleFilterQuery("in", "Test"), []string{"name1"})
+	})
+
+	t.Run("in on title is case insensitive", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), titleFilterQuery("in", "tEsT"), []string{"name1"})
+	})
+
+	t.Run("in on title matches any listed value", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), titleFilterQuery("in", "Test", "Other"), []string{"name1", "name3"})
+	})
+
+	t.Run("notin on title excludes the exact title only", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), titleFilterQuery("notin", "Test"), []string{"name2", "name3"})
+	})
+}
+
+// TestPublicFieldNameFilter checks the filter path resolves a public field name
+// to its physical fields.* location, so callers don't supply the prefix.
+func TestPublicFieldNameFilter(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
+		{Name: "team", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
+	})
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d1", Title: "One",
+			Key:    &resourcepb.ResourceKey{Name: "d1", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+			Fields: map[string]any{"team": "red"}}},
+		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d2", Title: "Two",
+			Key:    &resourcepb.ResourceKey{Name: "d2", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+			Fields: map[string]any{"team": "blue"}}},
+	}}))
+
+	filter := func(field string) *resourcepb.ResourceSearchRequest {
+		return &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+				Fields: []*resourcepb.Requirement{{Key: field, Operator: "in", Values: []string{"red"}}},
+			},
+			Limit: 100000,
+		}
+	}
+
+	// Public name resolves to the fields.* sub-document.
+	checkSearchQuery(t, index, filter("team"), []string{"d1"})
+	// An explicitly prefixed name still works (passthrough).
+	checkSearchQuery(t, index, filter(resource.SEARCH_FIELD_PREFIX+"team"), []string{"d1"})
+}
+
+// TestPublicFieldNameTextQuery checks a free-text query resolves a public
+// QueryField name to its physical fields.* location.
+func TestPublicFieldNameTextQuery(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
+		{Name: "team", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
+	})
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d1", Title: "One",
+			Key:    &resourcepb.ResourceKey{Name: "d1", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+			Fields: map[string]any{"team": "redteam"}}},
+		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d2", Title: "Two",
+			Key:    &resourcepb.ResourceKey{Name: "d2", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+			Fields: map[string]any{"team": "blueteam"}}},
+	}}))
+
+	req := &resourcepb.ResourceSearchRequest{
+		Options:     &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
+		Query:       "redteam",
+		QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{{Name: "team", Type: resourcepb.QueryFieldType_TEXT, Boost: 1}},
+		Limit:       100000,
+	}
+	checkSearchQuery(t, index, req, []string{"d1"})
+}
+
 func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer resource.BuildFn) resource.ResourceIndex {
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
 	}
-	info, err := builders.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
-		return &builders.DashboardDocumentBuilder{
-			Namespace:        namespace,
-			Blob:             blob,
-			Stats:            make(map[string]map[string]int64), // empty stats
-			DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{{}}),
-		}, nil
-	})
-	require.NoError(t, err)
-
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:          t.TempDir(),
 		FileThreshold: threshold, // use in-memory for tests
-		SearchFieldsProvidersForKinds: map[resource.LowerGroupResource]resource.SearchFieldsProvider{
-			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): info.SearchFieldsProvider,
-		},
+		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
+		}),
 	}, nil)
 	require.NoError(t, err)
 
@@ -716,9 +828,9 @@ func newTestIndexWithFields(t testing.TB, key resource.NamespacedResource, colum
 	sfKey := resource.NewLowerGroupResource(key.Group, key.Resource)
 
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                          t.TempDir(),
-		FileThreshold:                 threshold,
-		SearchFieldsProvidersForKinds: map[resource.LowerGroupResource]resource.SearchFieldsProvider{sfKey: provider},
+		Root:          t.TempDir(),
+		FileThreshold: threshold,
+		SearchFields:  resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{sfKey: provider}),
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
@@ -782,9 +894,9 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:          t.TempDir(),
 		FileThreshold: threshold, // use in-memory for tests
-		SelectableFieldsForKinds: map[resource.LowerGroupResource][]string{
+		SearchFields: resource.NewSearchFieldsRegistry(map[resource.LowerGroupResource][]string{
 			resource.NewLowerGroupResource(key.Group, key.Resource): {"spec.some.field", "spec.some.other.field"},
-		},
+		}, nil, nil),
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
@@ -1009,24 +1121,14 @@ func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg sear
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
 	}
-	info, err := builders.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
-		return &builders.DashboardDocumentBuilder{
-			Namespace:        namespace,
-			Blob:             blob,
-			Stats:            make(map[string]map[string]int64),
-			DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{{}}),
-		}, nil
-	})
-	require.NoError(t, err)
-
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:                 t.TempDir(),
 		FileThreshold:        threshold, // use in-memory for tests
 		PostRankAuthzEnabled: true,
 		PostRankAuthz:        cfg,
-		SearchFieldsProvidersForKinds: map[resource.LowerGroupResource]resource.SearchFieldsProvider{
-			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): info.SearchFieldsProvider,
-		},
+		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
+		}),
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)

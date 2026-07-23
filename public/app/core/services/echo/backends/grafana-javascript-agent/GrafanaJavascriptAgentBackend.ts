@@ -73,6 +73,9 @@ export class GrafanaJavascriptAgentBackend
       );
     }
 
+    // Assigned after init; onSessionChange can fire during initializeFaro, before page meta exists.
+    let refreshFaroPageMeta: (() => void) | undefined;
+
     // initialize GrafanaJavascriptAgent so it can set up its hooks and start collecting errors
     const grafanaJavaScriptAgentOptions: BrowserConfig = {
       app: {
@@ -100,6 +103,9 @@ export class GrafanaJavascriptAgentBackend
       ignoreUrls,
       sessionTracking: {
         persistent: true,
+        // Faro rotates sessions on expiration/inactivity without navigation; re-anchor the
+        // sessionStart page attribute so it never describes the previous session.
+        onSessionChange: () => refreshFaroPageMeta?.(),
       },
       batching: {
         sendTimeout: 2000,
@@ -112,8 +118,9 @@ export class GrafanaJavascriptAgentBackend
     const faro = initializeFaro(grafanaJavaScriptAgentOptions);
 
     if (faro) {
-      // Attach navigation context (referrer, previousUrl) to the meta of every emitted signal.
-      setupFaroPageMeta(faro);
+      // Attach navigation + session context (referrer, previousUrl, sessionStart) to the meta of
+      // every emitted signal.
+      refreshFaroPageMeta = setupFaroPageMeta(faro);
 
       if (sessionReplayEnabled) {
         this.initReplayAfterDomRendered(faro);

@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo, type JSX } from 'react';
 
 import { type GrafanaTheme2, PluginContextProvider, type UrlQueryMap, PluginType } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type PageInfoItem } from '@grafana/runtime/internal';
@@ -147,7 +148,10 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
     for (const configPage of pluginConfig.configPages) {
       if (pageId === configPage.id) {
         return (
-          <div>
+          <div
+            data-testid={selectors.components.Plugins.configPage(plugin.id, configPage.id)}
+            data-plugin-id={plugin.id}
+          >
             <PluginContextProvider meta={pluginConfig.meta}>
               <configPage.body plugin={pluginConfig} query={queryParams} />
             </PluginContextProvider>

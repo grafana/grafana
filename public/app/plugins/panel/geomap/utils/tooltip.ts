@@ -102,10 +102,6 @@ export const pointerMoveListener = (evt: MapBrowserEvent, panel: GeomapPanel) =>
           hoverPayload.data = ttip.data = frame;
           hoverPayload.rowIndex = ttip.rowIndex = props['rowIndex'];
         }
-
-        if (s?.mouseEvents) {
-          s.mouseEvents.next(feature);
-        }
       }
 
       if (s) {
@@ -181,13 +177,6 @@ export const pointerMoveListener = (evt: MapBrowserEvent, panel: GeomapPanel) =>
   // This check optimizes Geomap panel re-render behavior (without it, Geomap renders on every mouse move event)
   if (panel.state.ttip === undefined || panel.state.ttip?.layers !== hoverPayload.layers || hoverPayload.layers) {
     panel.setState({ ttip: { ...hoverPayload } });
-  }
-
-  if (!layers.length) {
-    // clear mouse events
-    panel.layers.forEach((layer) => {
-      layer.mouseEvents.next(undefined);
-    });
   }
 
   const found = Boolean(layers.length);

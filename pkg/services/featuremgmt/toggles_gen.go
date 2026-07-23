@@ -75,10 +75,6 @@ const (
 	// Enable support for Machine Learning in server-side expressions
 	FlagMlExpressions = "mlExpressions"
 
-	// FlagDatasourceAPIServers
-	// Expose some datasources as apiservers.
-	FlagDatasourceAPIServers = "datasourceAPIServers"
-
 	// FlagGrafanaAPIServerWithExperimentalAPIs
 	// Register experimental APIs with the k8s API server, including all datasources
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
@@ -102,6 +98,10 @@ const (
 	// FlagProvisioningUserAttribution
 	// Author Git Sync commits as the acting Grafana user
 	FlagProvisioningUserAttribution = "provisioning.userAttribution"
+
+	// FlagProvisioningPerformance
+	// Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers
+	FlagProvisioningPerformance = "provisioning.performance"
 
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
@@ -503,10 +503,6 @@ const (
 	// Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.
 	FlagAlertingRuleQuality = "alerting.ruleQuality"
 
-	// FlagElasticsearchCrossClusterSearch
-	// Enables cross cluster search in the Elasticsearch data source
-	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
-
 	// FlagLokiLabelNamesQueryApi
 	// Defaults to using the Loki `/labels` API instead of `/series`
 	FlagLokiLabelNamesQueryApi = "lokiLabelNamesQueryApi"
@@ -866,10 +862,6 @@ const (
 	// Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.
 	FlagDatasourcesApiServerEnableHealthEndpointRedirect = "datasourcesApiServerEnableHealthEndpointRedirect"
 
-	// FlagAdvisorDatasourceIntegration
-	// Enables the advisor report integration with datasource pages
-	FlagAdvisorDatasourceIntegration = "advisorDatasourceIntegration"
-
 	// FlagStreamingForwardTeamHeadersTempo
 	// Enables forwarding team headers from tempo for streaming requests with LBAC rules
 	FlagStreamingForwardTeamHeadersTempo = "streamingForwardTeamHeadersTempo"
@@ -977,4 +969,8 @@ const (
 	// FlagGrafanaFrontendLegacyAPIHandling
 	// Controls whether the frontend blocks calls to legacy /api/ endpoints
 	FlagGrafanaFrontendLegacyAPIHandling = "grafana.frontendLegacyAPIHandling"
+
+	// FlagFeaturesBulkFlagEvalFiltering
+	// Filters bulk OFREP flag evaluations to public-metadata flags only
+	FlagFeaturesBulkFlagEvalFiltering = "features.bulkFlagEvalFiltering"
 )

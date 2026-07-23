@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"sync"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -143,6 +144,17 @@ func SearchFieldDefinitionsToTableColumns(sfds []SearchFieldDefinition) []*resou
 			}
 		}
 		out = append(out, col)
+	}
+	return out
+}
+
+// TableColumnsByName keys the table columns by field name, so the IAM legacy
+// SQL search backends can look one up by a requested field name.
+func TableColumnsByName(sfds []SearchFieldDefinition) map[string]*resourcepb.ResourceTableColumnDefinition {
+	cols := SearchFieldDefinitionsToTableColumns(sfds)
+	out := make(map[string]*resourcepb.ResourceTableColumnDefinition, len(cols))
+	for _, c := range cols {
+		out[c.Name] = c
 	}
 	return out
 }
@@ -552,4 +564,52 @@ func (p *mapProvider) IndexAffectingHash(group, resource string) string {
 	}
 	sum := sha256.Sum256(blob)
 	return hex.EncodeToString(sum[:])
+}
+
+// SearchFieldsRegistry holds the per-kind search-field wiring shared by the
+// index backend (which builds the bleve mapping) and the search server (which
+// decides when an index must be rebuilt). A mutex guards all three maps so a
+// future live-manifest source can replace them together, keeping the mapping
+// the backend builds and the hash the server compares consistent.
+type SearchFieldsRegistry struct {
+	mu                   sync.RWMutex
+	selectableFields     map[LowerGroupResource][]string
+	searchFieldsHashes   map[LowerGroupResource]string
+	searchFieldsProvider map[LowerGroupResource]SearchFieldsProvider
+}
+
+// NewSearchFieldsRegistry returns a registry seeded with the given per-kind
+// maps. Nil maps are allowed; lookups then return zero values.
+func NewSearchFieldsRegistry(
+	selectableFields map[LowerGroupResource][]string,
+	searchFieldsHashes map[LowerGroupResource]string,
+	searchFieldsProvider map[LowerGroupResource]SearchFieldsProvider,
+) *SearchFieldsRegistry {
+	return &SearchFieldsRegistry{
+		selectableFields:     selectableFields,
+		searchFieldsHashes:   searchFieldsHashes,
+		searchFieldsProvider: searchFieldsProvider,
+	}
+}
+
+// For returns the mapping inputs for a kind: its selectable fields, the hash of
+// its search-field definitions, and the provider that drives its bleve mapping.
+func (r *SearchFieldsRegistry) For(key LowerGroupResource) (selectableFields []string, hash string, provider SearchFieldsProvider) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.selectableFields[key], r.searchFieldsHashes[key], r.searchFieldsProvider[key]
+}
+
+// Replace atomically swaps all three maps. Callers must not mutate the maps
+// afterwards. A live-manifest source uses this to reload search fields.
+func (r *SearchFieldsRegistry) Replace(
+	selectableFields map[LowerGroupResource][]string,
+	searchFieldsHashes map[LowerGroupResource]string,
+	searchFieldsProvider map[LowerGroupResource]SearchFieldsProvider,
+) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.selectableFields = selectableFields
+	r.searchFieldsHashes = searchFieldsHashes
+	r.searchFieldsProvider = searchFieldsProvider
 }
