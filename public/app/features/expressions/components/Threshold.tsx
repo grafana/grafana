@@ -436,12 +436,14 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
           </InlineFieldRow>
         );
       case EvalFunction.IsNotEqual:
+        // An "is not equal to X" alert recovers when the value returns to X, so the recovery
+        // condition is "equal to" (matching the IsEqual unload evaluator it generates).
         return (
           <InlineFieldRow className={styles.hysteresis}>
             <InlineField
               label={t(
-                'alerting.rule-form.threshold.recovery.stop-alerting-not-equal',
-                'Stop alerting (or pending state) when not equal to'
+                'alerting.rule-form.threshold.recovery.stop-alerting-equal',
+                'Stop alerting (or pending state) when equal to'
               )}
               labelWidth={'auto'}
               invalid={Boolean(invalidErrorMsg)}

@@ -121,8 +121,10 @@ function getUnloadEvaluatorTypeFromEvaluatorType(type: EvalFunction) {
   if (type === EvalFunction.IsBelow) {
     return EvalFunction.IsAbove;
   }
+  // Equality has no directional opposite. Both equal/not-equal thresholds recover when the
+  // value equals the recovery value, so the unload evaluator is IsEqual in both cases.
   if (type === EvalFunction.IsEqual) {
-    return EvalFunction.IsNotEqual;
+    return EvalFunction.IsEqual;
   }
   if (type === EvalFunction.IsNotEqual) {
     return EvalFunction.IsEqual;

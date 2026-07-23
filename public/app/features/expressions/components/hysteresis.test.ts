@@ -287,6 +287,58 @@ describe('thresholdReducer', () => {
     expect(newState.conditions[0].unloadEvaluator?.type).toEqual(EvalFunction.IsBelow);
     expect(newState.conditions[0].unloadEvaluator?.params[0]).toEqual(10);
   });
+  it('sets the unloadEvaluator type to IsEqual when checking hysteresis on an "is equal to" threshold', () => {
+    // Equality has no directional opposite: the alert should recover when the value
+    // equals the recovery value, so the unload evaluator must stay IsEqual (not IsNotEqual).
+    const initialState: ThresholdExpressionQuery = {
+      type: ExpressionQueryType.threshold,
+      refId: 'A',
+      conditions: [
+        {
+          ...thresholdCondition,
+          evaluator: { type: EvalFunction.IsEqual, params: [20] },
+          unloadEvaluator: undefined,
+        },
+      ],
+    };
+
+    const newState = thresholdReducer(initialState, updateHysteresisChecked({ hysteresisChecked: true, onError }));
+
+    expect(newState.conditions[0].unloadEvaluator?.type).toEqual(EvalFunction.IsEqual);
+  });
+
+  it('sets the unloadEvaluator type to IsEqual when switching the threshold type to "is equal to" with hysteresis on', () => {
+    const initialState: ThresholdExpressionQuery = {
+      type: ExpressionQueryType.threshold,
+      refId: 'A',
+      conditions: [thresholdCondition],
+    };
+
+    const newState = thresholdReducer(initialState, updateThresholdType({ evalFunction: EvalFunction.IsEqual, onError }));
+
+    expect(newState.conditions[0].evaluator.type).toEqual(EvalFunction.IsEqual);
+    expect(newState.conditions[0].unloadEvaluator?.type).toEqual(EvalFunction.IsEqual);
+  });
+
+  it('sets the unloadEvaluator type to IsEqual when checking hysteresis on an "is not equal to" threshold', () => {
+    // "is not equal to X" recovers when the value returns to X, so the unload evaluator is IsEqual.
+    const initialState: ThresholdExpressionQuery = {
+      type: ExpressionQueryType.threshold,
+      refId: 'A',
+      conditions: [
+        {
+          ...thresholdCondition,
+          evaluator: { type: EvalFunction.IsNotEqual, params: [20] },
+          unloadEvaluator: undefined,
+        },
+      ],
+    };
+
+    const newState = thresholdReducer(initialState, updateHysteresisChecked({ hysteresisChecked: true, onError }));
+
+    expect(newState.conditions[0].unloadEvaluator?.type).toEqual(EvalFunction.IsEqual);
+  });
+
   it('Should update unlooadEvaluator when unchecking hysteresis', () => {
     const initialState: ThresholdExpressionQuery = {
       type: ExpressionQueryType.threshold,
