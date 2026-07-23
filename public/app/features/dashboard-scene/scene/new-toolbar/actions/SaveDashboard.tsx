@@ -11,13 +11,13 @@ import { getSaveAsTemplateForm } from 'app/features/dashboard-scene/saving/enter
 import { type ToolbarActionProps } from '../types';
 
 export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
-  const { meta, isDirty, uid, editview, editPanel } = dashboard.state;
+  const { meta, isDirty, uid, editview } = dashboard.state;
   const isDashboardTemplatesFlagEnabled = useFlagGrafanaCustomDashboardTemplates();
 
   const isNew = !Boolean(uid || dashboard.isManaged());
   const isManaged = dashboard.isManaged();
   // In dashboard settings we still use the nav toolbar for a short while
-  const buttonSize = Boolean(editview) || editPanel ? 'sm' : 'md';
+  const buttonSize = Boolean(editview) ? 'sm' : 'md';
 
   const onSaveAsCopy = () => {
     reportInteraction('grafana_dashboard_save_as_copy_clicked');

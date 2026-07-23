@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, type ReactNode, useEffect, useState } from 'react';
+import { memo, type ReactNode, useState } from 'react';
 
 import { type GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -20,7 +20,7 @@ import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 import { useSelector } from 'app/types/store';
 
 import { selectFolderRepository } from '../../provisioning/utils/selectors';
-import { type PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
 import ShareButton from '../sharing/ShareButton/ShareButton';
 import { DashboardInteractions } from '../utils/interactions';
@@ -77,7 +77,6 @@ export function ToolbarActions({ dashboard }: Props) {
   const styles = useStyles2(getStyles);
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanel);
-  const isEditedPanelDirty = usePanelEditDirty(editPanel);
 
   const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
   const isNew = !Boolean(uid || dashboard.isManaged());
@@ -273,7 +272,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'back-button',
-    condition: (isViewingPanel || isEditingPanel) && !isEditingLibraryPanel,
+    condition: isViewingPanel,
     render: () => (
       <Button
         onClick={() => {
@@ -417,87 +416,6 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditingPanel && !isEditingLibraryPanel && !editview && !isViewingPanel,
-    render: () => (
-      <Button
-        onClick={editPanel?.onDiscard}
-        tooltip={
-          editPanel?.state.isNewPanel
-            ? t('dashboard.toolbar.discard-panel-new', 'Discard panel')
-            : t('dashboard.toolbar.discard-panel', 'Discard panel changes')
-        }
-        size="sm"
-        disabled={!isEditedPanelDirty}
-        key="discard"
-        fill="outline"
-        variant="destructive"
-        data-testid={selectors.components.NavToolbar.editDashboard.discardChangesButton}
-      >
-        {editPanel?.state.isNewPanel ? (
-          <Trans i18nKey="dashboard.toolbar.discard-panel-new">Discard panel</Trans>
-        ) : (
-          <Trans i18nKey="dashboard.toolbar.discard-panel">Discard panel changes</Trans>
-        )}
-      </Button>
-    ),
-  });
-
-  toolbarActions.push({
-    group: 'main-buttons',
-    condition: isEditingPanel && isEditingLibraryPanel && !editview && !isViewingPanel,
-    render: () => (
-      <Button
-        onClick={editPanel?.onDiscard}
-        tooltip={t('dashboard.toolbar.discard-library-panel-changes', 'Discard library panel changes')}
-        size="sm"
-        key="discardLibraryPanel"
-        fill="outline"
-        variant="destructive"
-        data-testid={selectors.components.NavToolbar.editDashboard.discardChangesButton}
-      >
-        <Trans i18nKey="dashboard.toolbar.discard-library-panel-changes">Discard library panel changes</Trans>
-      </Button>
-    ),
-  });
-
-  toolbarActions.push({
-    group: 'main-buttons',
-    condition: isEditingPanel && isEditingLibraryPanel && !editview && !isViewingPanel,
-    render: () => (
-      <Button
-        onClick={editPanel?.onUnlinkLibraryPanel}
-        tooltip={t('dashboard.toolbar.unlink-library-panel', 'Unlink library panel')}
-        size="sm"
-        key="unlinkLibraryPanel"
-        fill="outline"
-        variant="secondary"
-        data-testid={selectors.components.NavToolbar.editDashboard.unlinkLibraryPanelButton}
-      >
-        <Trans i18nKey="dashboard.toolbar.unlink-library-panel">Unlink library panel</Trans>
-      </Button>
-    ),
-  });
-
-  toolbarActions.push({
-    group: 'main-buttons',
-    condition: isEditingPanel && isEditingLibraryPanel && !editview && !isViewingPanel,
-    render: () => (
-      <Button
-        onClick={editPanel?.onSaveLibraryPanel}
-        tooltip={t('dashboard.toolbar.save-library-panel', 'Save library panel')}
-        size="sm"
-        key="saveLibraryPanel"
-        fill="outline"
-        variant="primary"
-        data-testid={selectors.components.NavToolbar.editDashboard.saveLibraryPanelButton}
-      >
-        <Trans i18nKey="dashboard.toolbar.save-library-panel">Save library panel</Trans>
-      </Button>
-    ),
-  });
-
-  toolbarActions.push({
-    group: 'main-buttons',
     condition: isEditing && !isEditingLibraryPanel && (canSave || canSaveAs),
     render: () => {
       // if we  only can save
@@ -624,26 +542,6 @@ function addDynamicActions(
       }
     }
   }
-}
-
-// This hook handles when panelEditor is not defined to avoid conditionally hook usage
-function usePanelEditDirty(panelEditor?: PanelEditor) {
-  const [isDirty, setIsDirty] = useState<Boolean | undefined>();
-
-  useEffect(() => {
-    if (panelEditor) {
-      const unsub = panelEditor.subscribeToState((state) => {
-        if (state.isDirty !== isDirty) {
-          setIsDirty(state.isDirty);
-        }
-      });
-
-      return () => unsub.unsubscribe();
-    }
-    return;
-  }, [panelEditor, isDirty]);
-
-  return isDirty;
 }
 
 interface ToolbarAction {

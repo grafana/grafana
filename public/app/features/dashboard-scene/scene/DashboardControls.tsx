@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   type SceneObjectState,
@@ -30,8 +30,10 @@ import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/C
 import { KioskMode } from 'app/types/dashboard';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
+import { type PanelEditor } from '../panel-edit/PanelEditor';
+import { usePanelEditDirty } from '../panel-edit/usePanelEditDirty';
 import { findVizPanelByPathId } from '../utils/pathId';
-import { getDashboardSceneFor } from '../utils/utils';
+import { getDashboardSceneFor, isLibraryPanel } from '../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';
@@ -45,6 +47,7 @@ import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
 import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboardEditableButton';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
 import { ShareDashboardButton } from './new-toolbar/actions/ShareDashboardButton';
+import { type ToolbarActionProps } from './new-toolbar/types';
 
 function getPanelEditVariables(
   dashboard: DashboardScene,
@@ -218,8 +221,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
 
   const dashboard = getDashboardSceneFor(model);
   const { links, editPanel } = dashboard.useState();
-  const isQueryEditorNext = Boolean(editPanel?.state.useQueryExperienceNext);
-  const styles = useStyles2(getStyles, isQueryEditorNext);
+  const styles = useStyles2(getStyles);
   const showDebugger = window.location.search.includes('scene-debugger');
   const hasDashboardControls = useHasDashboardControls(dashboard);
   // OpenFeature is not initialized for anonymous users, so fall back to
@@ -233,26 +235,28 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const { kioskMode } = chrome.useState();
 
   if (!model.hasControls()) {
-    // If dynamic dashboards is enabled, we need to show the edit/share/playlist buttons
-    // However we shouldn't do it if we're in edit panel view
-    // `DashboardControlActions` already check for edit panel view but we need to prevent showing the container as well
-    if (config.featureToggles.dashboardNewLayouts && !editPanel && kioskMode !== KioskMode.Full) {
+    // The controls row hosts the dashboard action buttons (with new layouts) and the panel edit
+    // actions, so it must render even when the dashboard itself contributes no other controls.
+    // DashboardControlActions handles the per-button visibility, including the edit-panel cases.
+    if ((config.featureToggles.dashboardNewLayouts || editPanel) && kioskMode !== KioskMode.Full) {
       return (
         <>
           <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
             {!hideVariableControls && <VariableControls dashboard={dashboard} />}
-            <div className={styles.rightControls}>
+            <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
               <div className={styles.fixedControls}>
                 <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
               </div>
             </div>
+            {editPanel && <PanelEditControls panelEditor={editPanel} />}
           </div>
           <RenderHiddenVariables dashboard={dashboard} />
         </>
       );
     }
 
-    // To still have spacing when no controls are rendered
+    // To still have spacing when no controls are rendered. Panel edit keeps its controls here too,
+    // for the cases the full row above is suppressed (e.g. kiosk mode).
     return (
       <Box padding={1}>
         <RenderHiddenVariables dashboard={dashboard} />
@@ -262,10 +266,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   }
 
   return (
-    <div
-      data-testid={selectors.pages.Dashboard.Controls}
-      className={cx(styles.controls, editPanel && styles.controlsPanelEdit)}
-    >
+    <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
       <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
         {!hideTimeControls && (
           <div className={styles.fixedControls}>
@@ -273,7 +274,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             <refreshPicker.Component model={refreshPicker} />
           </div>
         )}
-        {config.featureToggles.dashboardNewLayouts && (
+        {(config.featureToggles.dashboardNewLayouts || editPanel) && (
           <div className={styles.fixedControls}>
             <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
           </div>
@@ -318,10 +319,6 @@ function DashboardControlActions({
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
 
-  if (editPanel) {
-    return null;
-  }
-
   if (kioskMode === KioskMode.Full) {
     return null;
   }
@@ -334,11 +331,13 @@ function DashboardControlActions({
   const isSnapshot = Boolean(meta.isSnapshot);
   const isEmbedded = meta.isEmbedded;
   const isEditable = Boolean(editable);
+  const isEditingLibraryPanel = Boolean(editPanel && isLibraryPanel(editPanel.state.panelRef.resolve()));
 
-  const showShareButton = hasUid && !isSnapshot && !isEmbedded && !isPlaying;
-  const showSaveButton = isEditing && (canSave || canSaveAs);
-  const showEditButton = hasUid && !isPlaying && canEditDashboard && isEditable;
+  const showShareButton = hasUid && !isSnapshot && !isEmbedded && !isPlaying && !editPanel;
+  const showSaveButton = isEditing && (canSave || canSaveAs) && !isEditingLibraryPanel;
+  const showEditButton = hasUid && !isPlaying && canEditDashboard && isEditable && !editPanel;
   const showMakeEditableButton = !isPlaying && canEditDashboard && !isEditable && !isEditing;
+  const showPanelEditButtons = Boolean(editPanel);
 
   return (
     <>
@@ -346,6 +345,7 @@ function DashboardControlActions({
       {showSaveButton && <SaveDashboard dashboard={dashboard} />}
       {showEditButton && <EditDashboardSwitch dashboard={dashboard} />}
       {showMakeEditableButton && <MakeDashboardEditableButton dashboard={dashboard} />}
+      {showPanelEditButtons && <PanelEditButtons dashboard={dashboard} />}
       {isPlaying && (
         <ButtonGroup>
           {!hidePlaylistNav && (
@@ -375,6 +375,89 @@ function DashboardControlActions({
           )}
         </ButtonGroup>
       )}
+    </>
+  );
+}
+
+function PanelEditButtons({ dashboard }: ToolbarActionProps) {
+  const { editPanel } = dashboard.useState();
+
+  if (!editPanel) {
+    return null;
+  }
+
+  return <PanelEditButtonsContent editPanel={editPanel} />;
+}
+
+function PanelEditButtonsContent({ editPanel }: { editPanel: PanelEditor }) {
+  const isEditedPanelDirty = usePanelEditDirty(editPanel);
+  const panel = editPanel.state.panelRef.resolve();
+  // Subscribe to the panel so unlinking a library panel (which removes the library behavior) swaps
+  // the library actions back to the regular discard/back set without needing an unrelated re-render.
+  panel.useState();
+
+  // Library panels have their own set of actions (the changes are saved to the shared library
+  // panel rather than the dashboard), so they replace the regular discard/back buttons.
+  if (isLibraryPanel(panel)) {
+    return <LibraryPanelEditButtons editPanel={editPanel} />;
+  }
+
+  return (
+    <>
+      <Button
+        tooltip={t('dashboard.toolbar.panel-edit-discard-tooltip', 'Discard panel changes')}
+        data-testid={selectors.components.NavToolbar.editDashboard.discardChangesButton}
+        disabled={!isEditedPanelDirty}
+        fill="outline"
+        variant="destructive"
+        onClick={editPanel.onDiscard}
+      >
+        <Trans i18nKey="dashboard.toolbar.panel-edit-discard">Discard</Trans>
+      </Button>
+      <Button
+        tooltip={t('dashboard.toolbar.panel-edit-back-tooltip', 'Back to dashboard view')}
+        data-testid={selectors.components.NavToolbar.editDashboard.backToDashboardButton}
+        icon="arrow-left"
+        variant="secondary"
+        onClick={() => {
+          locationService.partial({ viewPanel: null, editPanel: null });
+        }}
+      >
+        <Trans i18nKey="dashboard.toolbar.panel-edit-back">Back</Trans>
+      </Button>
+    </>
+  );
+}
+
+function LibraryPanelEditButtons({ editPanel }: { editPanel: PanelEditor }) {
+  return (
+    <>
+      <Button
+        onClick={editPanel.onDiscard}
+        tooltip={t('dashboard.toolbar.discard-library-panel-changes', 'Discard library panel changes')}
+        data-testid={selectors.components.NavToolbar.editDashboard.discardChangesButton}
+        fill="outline"
+        variant="destructive"
+      >
+        <Trans i18nKey="dashboard.toolbar.discard-library-panel-changes-short">Discard</Trans>
+      </Button>
+      <Button
+        onClick={editPanel.onUnlinkLibraryPanel}
+        tooltip={t('dashboard.toolbar.unlink-library-panel', 'Unlink library panel')}
+        data-testid={selectors.components.NavToolbar.editDashboard.unlinkLibraryPanelButton}
+        fill="outline"
+        variant="secondary"
+      >
+        <Trans i18nKey="dashboard.toolbar.unlink-library-panel-short">Unlink</Trans>
+      </Button>
+      <Button
+        onClick={editPanel.onSaveLibraryPanel}
+        tooltip={t('dashboard.toolbar.save-library-panel', 'Save library panel')}
+        data-testid={selectors.components.NavToolbar.editDashboard.saveLibraryPanelButton}
+        variant="primary"
+      >
+        <Trans i18nKey="dashboard.toolbar.save-library-panel-short">Save</Trans>
+      </Button>
     </>
   );
 }
@@ -426,7 +509,7 @@ const getSkeletonStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     // Original controls style
     controls: css({
@@ -437,7 +520,12 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
       position: 'relative',
       width: '100%',
       marginLeft: 'auto',
-      display: 'inline-block',
+      // flow-root, not inline-block: both establish a BFC that contains the floated rightControls,
+      // but inline-block participates in inline layout, so its height depends on baseline alignment
+      // (an inline-block with only floated children has its baseline at its bottom edge), adding a
+      // few px of phantom space below the bar that varies between view/edit/panel-edit. flow-root is
+      // a block-level box and avoids that.
+      display: 'flow-root',
       [theme.breakpoints.down('sm')]: {
         flexDirection: 'column-reverse',
         alignItems: 'stretch',
@@ -446,14 +534,6 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
       '&:hover .dashboard-canvas-controls': {
         opacity: 1,
       },
-    }),
-    controlsPanelEdit: css({
-      flexWrap: 'wrap-reverse',
-      ...(isQueryEditorNext && {
-        padding: 0,
-        marginBottom: theme.spacing(-1),
-      }),
-      paddingRight: 0,
     }),
     embedded: css({
       background: 'unset',
