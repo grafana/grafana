@@ -29,7 +29,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderBottom: `1px solid ${theme.colors.border.weak}`,
   }),
   contentWrap: css({
-    height: 'calc(100vh - 350px)',
+    flex: 1,
+    minHeight: 0,
     overflowY: 'auto',
   }),
   spacer: css({
