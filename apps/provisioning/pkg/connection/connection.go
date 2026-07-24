@@ -51,3 +51,10 @@ type TokenConnection interface {
 	// Returns the generated token value.
 	GenerateConnectionToken(ctx context.Context) (common.RawSecureValue, error)
 }
+
+// OAuthConnection is the interface implemented by all OAuth app connections.
+type OAuthConnection interface {
+	// ExchangeAuthorizationCode exchanges an OAuth authorization code for tokens.
+	// Returns the value to store as the connection token.
+	ExchangeAuthorizationCode(ctx context.Context, code, redirectURI string) (common.RawSecureValue, error)
+}

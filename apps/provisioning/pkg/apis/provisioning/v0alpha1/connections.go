@@ -79,6 +79,9 @@ func (GitHubEnterpriseConnectionConfig) OpenAPIModelName() string {
 type BitbucketConnectionConfig struct {
 	// App client ID
 	ClientID string `json:"clientID"`
+
+	// The workspace the OAuth consumer belongs to
+	Workspace string `json:"workspace"`
 }
 
 func (BitbucketConnectionConfig) OpenAPIModelName() string {
@@ -150,6 +153,45 @@ type ConnectionSpec struct {
 
 func (c *ConnectionSpec) IsGitHub() bool {
 	return c.GitHub != nil || c.GitHubEnterprise != nil
+}
+
+// ConnectionAuthorizeRequest completes the OAuth authorization of a connection
+// by exchanging an authorization code for tokens. It is the request and
+// response body of the connection authorize subresource.
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type ConnectionAuthorizeRequest struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec ConnectionAuthorizeRequestSpec `json:"spec"`
+
+	// +optional
+	Status ConnectionAuthorizeRequestStatus `json:"status,omitempty"`
+}
+
+func (ConnectionAuthorizeRequest) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ConnectionAuthorizeRequest"
+}
+
+type ConnectionAuthorizeRequestSpec struct {
+	// The authorization code returned by the provider
+	Code string `json:"code"`
+
+	// The redirect URI used in the authorization request
+	RedirectURI string `json:"redirectURI,omitempty"`
+}
+
+func (ConnectionAuthorizeRequestSpec) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ConnectionAuthorizeRequestSpec"
+}
+
+type ConnectionAuthorizeRequestStatus struct {
+	// Whether the connection has been authorized
+	Authorized bool `json:"authorized"`
+}
+
+func (ConnectionAuthorizeRequestStatus) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ConnectionAuthorizeRequestStatus"
 }
 
 func (ConnectionSpec) OpenAPIModelName() string {

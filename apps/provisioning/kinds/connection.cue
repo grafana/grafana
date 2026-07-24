@@ -41,6 +41,9 @@ connection: {
 				#BitbucketConnectionConfig: {
 					// The app clientID
 					clientID: string
+
+					// The workspace the OAuth consumer belongs to
+					workspace: string
 				}
 				#GitlabConnectionConfig: {
 					// The app clientID
