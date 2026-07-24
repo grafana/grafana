@@ -79,7 +79,7 @@ export const SummaryCard = forwardRef(function SummaryCard<T>(
           </Stack>
         )}
 
-        {error && (
+        {!loading && error && (
           <Alert
             severity="warning"
             title={error.title}
