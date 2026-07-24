@@ -121,6 +121,40 @@ func TestInfluxdbQueryParser_Parse(t *testing.T) {
 		require.Equal(t, "series alias", res.Alias)
 	})
 
+	t.Run("can parse tag dataType into tag type", func(t *testing.T) {
+		json := `
+      {
+        "measurement": "cpu",
+        "policy": "default",
+        "resultFormat": "time_series",
+        "tags": [
+          {
+            "key": "usage::field",
+            "operator": "=",
+            "value": "42",
+            "dataType": "integer"
+          },
+          {
+            "key": "host",
+            "operator": "=",
+            "value": "server1"
+          }
+        ]
+      }
+      `
+
+		query := backend.DataQuery{
+			JSON:     []byte(json),
+			Interval: time.Second * 20,
+		}
+
+		res, err := QueryParse(query, nil)
+		require.NoError(t, err)
+		require.Len(t, res.Tags, 2)
+		require.Equal(t, "integer", res.Tags[0].Type)
+		require.Empty(t, res.Tags[1].Type)
+	})
+
 	t.Run("can parse raw query json model", func(t *testing.T) {
 		json := `
       {
