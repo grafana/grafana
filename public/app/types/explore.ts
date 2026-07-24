@@ -159,6 +159,11 @@ export interface ExploreItemState {
    */
   queryLibraryRef?: string;
   /**
+   * True when this pane was opened to compose and save a brand-new saved query (no existing
+   * query to reference). Drives the "Adding a new saved query" banner above the query editor.
+   */
+  addingSavedQuery?: boolean;
+  /**
    * Log query result to be displayed in the logs result viewer.
    */
   logsResult: LogsModel | null;

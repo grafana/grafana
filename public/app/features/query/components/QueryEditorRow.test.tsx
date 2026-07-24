@@ -470,7 +470,25 @@ describe('QueryEditorRow', () => {
           'test-ref', // queryLibraryRef
           mockOnCancelEdit, // onCancelEdit
           expect.any(Function), // onUpdateSuccess
-          expect.any(Function) // onSelectQuery
+          expect.any(Function), // onSelectQuery
+          'edit' // mode
+        );
+      });
+    });
+
+    it('should render the add-mode header when addingSavedQuery is set without a queryLibraryRef', async () => {
+      const mockOnCancelAdd = jest.fn();
+      render(<QueryEditorRow {...props(testData)} addingSavedQuery={true} onCancelAddSavedQuery={mockOnCancelAdd} />);
+
+      await waitFor(() => {
+        expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).toHaveBeenCalledWith(
+          expect.objectContaining({ refId: 'B' }),
+          undefined, // app
+          undefined, // queryLibraryRef (none for a brand-new query)
+          mockOnCancelAdd, // onCancelEdit → exits add mode
+          expect.any(Function), // onUpdateSuccess
+          expect.any(Function), // onSelectQuery
+          'add' // mode
         );
       });
     });

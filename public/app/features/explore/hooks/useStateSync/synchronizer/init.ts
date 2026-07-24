@@ -32,6 +32,10 @@ export function initializeFromURL(
   // Clear all the panes in the store first to avoid stale data.
   dispatch(clearPanes());
 
+  // Transient flag set by the Saved Queries "New query" entry point (/explore?createSavedQuery=true).
+  // Seeded onto the first pane only so the "Adding a new saved query" banner shows; split-view URLs are unaffected.
+  const addingSavedQuery = location.getSearch().get('createSavedQuery') === 'true';
+
   Promise.all(
     Object.entries(urlState.panes).map(([exploreId, { datasource, queries, range, panelsState, compact }]) => {
       return getPaneDatasource(datasource, queries, orgId).then((paneDatasource) => {
@@ -70,7 +74,7 @@ export function initializeFromURL(
     })
   ).then(async (panes) => {
     const initializedPanes = await Promise.all(
-      panes.map(({ exploreId, range, panelsState, queries, datasource, compact }) => {
+      panes.map(({ exploreId, range, panelsState, queries, datasource, compact }, index) => {
         return dispatch(
           initializeExplore({
             exploreId,
@@ -80,6 +84,7 @@ export function initializeFromURL(
             panelsState,
             eventBridge: new EventBusSrv(),
             compact: !!compact,
+            addingSavedQuery: index === 0 ? addingSavedQuery : undefined,
           })
         ).unwrap();
       })

@@ -79,6 +79,8 @@ export type QueryLibraryContextType = {
    * @param queryLibraryRef
    * @param onCancelEdit
    * @param onUpdateSuccess
+   * @param onSelectQuery
+   * @param mode 'edit' when editing an existing saved query (the default), 'add' when composing a brand-new one
    */
   renderQueryLibraryEditingHeader: (
     query: DataQuery,
@@ -86,7 +88,8 @@ export type QueryLibraryContextType = {
     queryLibraryRef?: string,
     onCancelEdit?: () => void,
     onUpdateSuccess?: () => void,
-    onSelectQuery?: (query: DataQuery) => void
+    onSelectQuery?: (query: DataQuery) => void,
+    mode?: 'edit' | 'add'
   ) => ReactNode;
 
   queryLibraryEnabled: boolean;

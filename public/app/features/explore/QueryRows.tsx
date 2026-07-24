@@ -13,7 +13,7 @@ import { QueryEditorRows } from '../query/components/QueryEditorRows';
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
 import { changeDatasource } from './state/datasource';
-import { updateQueryLibraryRefAction } from './state/explorePane';
+import { setAddingSavedQueryAction, updateQueryLibraryRefAction } from './state/explorePane';
 import { changeQueries, runQueries } from './state/query';
 import { getExploreItemSelector } from './state/selectors';
 
@@ -35,6 +35,7 @@ const makeSelectors = (exploreId: string) => {
       (s: ExploreItemState | undefined) => getDatasourceSrv().getInstanceSettings(s!.datasourceInstance?.uid)!
     ),
     getQueryLibraryRef: createSelector(exploreItemSelector, (s) => s!.queryLibraryRef),
+    getAddingSavedQuery: createSelector(exploreItemSelector, (s) => s!.addingSavedQuery),
   };
 };
 
@@ -48,6 +49,7 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
     getHistory,
     getEventBridge,
     getQueryLibraryRef,
+    getAddingSavedQuery,
   } = useMemo(() => makeSelectors(exploreId), [exploreId]);
 
   const queries = useSelector(getQueries);
@@ -56,6 +58,7 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
   const history = useSelector(getHistory);
   const eventBridge = useSelector(getEventBridge);
   const queryLibraryRef = useSelector(getQueryLibraryRef);
+  const addingSavedQuery = useSelector(getAddingSavedQuery);
 
   const onRunQueries = useCallback(() => {
     dispatch(runQueries({ exploreId }));
@@ -117,6 +120,11 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
     }
   };
 
+  // Exit "adding a new saved query" mode (e.g. the banner's Discard, or after saving-and-continuing).
+  const onCancelAddSavedQuery = useCallback(() => {
+    dispatch(setAddingSavedQueryAction({ exploreId, addingSavedQuery: false }));
+  }, [dispatch, exploreId]);
+
   const onQueryOpenChanged = () => {
     // Disables compact mode when query is opened.
     // Compact mode can also be disabled by opening Content Outline.
@@ -142,6 +150,8 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
       eventBus={eventBridge}
       queryLibraryRef={queryLibraryRef}
       onCancelQueryLibraryEdit={onCancelQueryLibraryEdit}
+      addingSavedQuery={addingSavedQuery}
+      onCancelAddSavedQuery={onCancelAddSavedQuery}
       isOpen={isOpen}
       queryRowWrapper={(children, refId) => (
         <ContentOutlineItem

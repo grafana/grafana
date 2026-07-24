@@ -96,6 +96,13 @@ export interface UpdateQueryLibraryRefPayload {
 
 export const updateQueryLibraryRefAction = createAction<UpdateQueryLibraryRefPayload>('explore/updateQueryLibraryRef');
 
+export interface SetAddingSavedQueryPayload {
+  exploreId: string;
+  addingSavedQuery: boolean;
+}
+
+export const setAddingSavedQueryAction = createAction<SetAddingSavedQueryPayload>('explore/setAddingSavedQuery');
+
 /**
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
@@ -109,6 +116,7 @@ interface InitializeExplorePayload {
   compact: boolean;
   eventBridge: EventBusExtended;
   queryLibraryRef?: string;
+  addingSavedQuery?: boolean;
 }
 
 const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExploreAction');
@@ -142,6 +150,7 @@ export interface InitializeExploreOptions {
   position?: number;
   eventBridge: EventBusExtended;
   queryLibraryRef?: string;
+  addingSavedQuery?: boolean;
   compact: boolean;
 }
 
@@ -166,6 +175,7 @@ export const initializeExplore = createAsyncThunk(
       correlationHelperData,
       eventBridge,
       queryLibraryRef,
+      addingSavedQuery,
     }: InitializeExploreOptions,
     { dispatch, getState, fulfillWithValue }
   ) => {
@@ -189,6 +199,7 @@ export const initializeExplore = createAsyncThunk(
         compact,
         eventBridge,
         queryLibraryRef,
+        addingSavedQuery,
       })
     );
     if (panelsState !== undefined) {
@@ -265,8 +276,16 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
     };
   }
 
+  if (setAddingSavedQueryAction.match(action)) {
+    return {
+      ...state,
+      addingSavedQuery: action.payload.addingSavedQuery,
+    };
+  }
+
   if (initializeExploreAction.match(action)) {
-    const { queries, range, datasourceInstance, history, eventBridge, compact, queryLibraryRef } = action.payload;
+    const { queries, range, datasourceInstance, history, eventBridge, compact, queryLibraryRef, addingSavedQuery } =
+      action.payload;
 
     return {
       ...state,
@@ -281,6 +300,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       cache: [],
       correlations: [],
       queryLibraryRef,
+      addingSavedQuery,
       compact,
     };
   }

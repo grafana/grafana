@@ -48,6 +48,8 @@ export interface Props {
   queryRowWrapper?: (children: ReactNode, refId: string) => ReactNode;
   queryLibraryRef?: string;
   onCancelQueryLibraryEdit?: () => void;
+  addingSavedQuery?: boolean;
+  onCancelAddSavedQuery?: () => void;
   isOpen?: boolean;
   panelRef?: SceneObjectRef<VizPanel>;
 }
@@ -251,6 +253,8 @@ export class QueryEditorRows extends PureComponent<Props> {
       queryRowWrapper,
       queryLibraryRef,
       onCancelQueryLibraryEdit,
+      addingSavedQuery,
+      onCancelAddSavedQuery,
       isOpen,
       panelRef,
     } = this.props;
@@ -301,6 +305,8 @@ export class QueryEditorRows extends PureComponent<Props> {
                       eventBus={eventBus}
                       queryLibraryRef={queryLibraryRef}
                       onCancelQueryLibraryEdit={onCancelQueryLibraryEdit}
+                      addingSavedQuery={addingSavedQuery}
+                      onCancelAddSavedQuery={onCancelAddSavedQuery}
                       isOpen={isOpen}
                     />
                   );
