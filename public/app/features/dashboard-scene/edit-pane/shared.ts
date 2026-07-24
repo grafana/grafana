@@ -15,6 +15,7 @@ import { type ElementSelectionContextItem } from '@grafana/ui';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
 import { type BulkActionElement, isBulkActionElement } from '../scene/types/BulkActionElement';
 import { type EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
@@ -167,6 +168,12 @@ export interface MoveElementActionHelperProps {
   source: SceneObject;
   perform: () => void;
   undo: () => void;
+}
+
+export interface ChangeGridPositionActionHelperProps {
+  /** Panel whose wrapping DashboardGridItem should be repositioned/resized. */
+  source: VizPanel;
+  position: { x?: number; y?: number; width?: number; height?: number };
 }
 
 export const dashboardEditActions = {
@@ -352,6 +359,35 @@ export const dashboardEditActions = {
       source,
       perform,
       undo,
+    });
+  },
+
+  changeGridPosition({ source, position }: ChangeGridPositionActionHelperProps) {
+    const gridItem = source.parent;
+    if (!(gridItem instanceof DashboardGridItem)) {
+      return;
+    }
+
+    const updates: Record<string, number> = {};
+    const previous: Record<string, number> = {};
+
+    for (const key of ['x', 'y', 'width', 'height'] as const) {
+      const value = position[key];
+      if (value !== undefined) {
+        updates[key] = value;
+        previous[key] = gridItem.state[key];
+      }
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return;
+    }
+
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.change-grid-position', 'Change panel position'),
+      source,
+      perform: () => gridItem.setState(updates),
+      undo: () => gridItem.setState(previous),
     });
   },
 };
