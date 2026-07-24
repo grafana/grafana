@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/ofrep"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
@@ -92,7 +93,7 @@ func ProvideBackgroundServiceRegistry(
 	_ serviceaccounts.Service,
 	_ *grpcserver.HealthService, _ *grpcserver.ReflectionService,
 	_ *ldapapi.Service, _ *apiregistry.Service, _ auth.IDService, _ *teamapi.TeamAPI, _ ssosettings.Service,
-	_ cloudmigration.Service, _ authnimpl.Registration,
+	_ cloudmigration.Service, _ authnimpl.Registration, _ *ofrep.APIBuilder,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,

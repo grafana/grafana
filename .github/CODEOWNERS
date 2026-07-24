@@ -184,6 +184,7 @@
 /pkg/services/navtree/ @grafana/grafana-backend-group @grafana/grafana-frontend-navigation
 /pkg/services/notifications/ @grafana/grafana-backend-group
 /pkg/services/org/ @grafana/grafana-backend-group
+/pkg/services/ofrep/ @grafana/grafana-backend-services-squad
 /pkg/services/preference/ @grafana/grafana-backend-group
 /pkg/services/provisioning/ @grafana/grafana-search-and-storage
 /pkg/services/provisioning/alerting/ @grafana/alerting-backend
@@ -1243,7 +1244,6 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/apis/datasource @grafana/grafana-datasources-core-services
 /pkg/registry/apis/query @grafana/grafana-datasources-core-services
 /pkg/registry/apis/secret @grafana/grafana-operator-experience-squad
-/pkg/registry/apis/ofrep @grafana/grafana-backend-services-squad
 /pkg/registry/apis/userstorage @grafana/grafana-app-platform-squad @grafana/grafana-catalog
 /pkg/registry/apis/dashboard/search.go @grafana/grafana-search-and-storage
 /pkg/registry/apis/dashboard/search_test.go @grafana/grafana-search-and-storage
