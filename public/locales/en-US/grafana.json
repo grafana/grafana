@@ -13060,12 +13060,22 @@
     },
     "get-started-with-data-source": {
       "add-new-data-source": "Add new data source",
+      "plugin-id": "Plugin ID",
+      "setup-assistant": "Set up with assistant",
+      "setup-assistant-description": "Guided configuration",
+      "setup-manually": "Set up manually",
+      "setup-manually-description": "Configure all settings yourself",
       "title-button-disabled": "The plugin isn't usable yet, it may take some time to complete the installation."
     },
     "install-controls": {
       "contact-us": "Contact us",
       "install": "Install",
+      "install-assistant": "Install with assistant",
+      "install-assistant-description": "Guided installation",
+      "install-manually": "Install manually",
+      "install-manually-description": "Install it yourself",
       "installing": "Installing",
+      "plugin-id": "Plugin ID",
       "update": "Update",
       "updating": "Updating"
     },
