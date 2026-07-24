@@ -1,6 +1,15 @@
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+
+import { Trans } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
+import { Button, Stack } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
+import { SaveDashboardAsForm } from 'app/features/dashboard-scene/saving/SaveDashboardAsForm';
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from 'app/features/dashboard-scene/saving/shared';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { type DashboardMeta } from 'app/types/dashboard';
+import { DashboardSavedEvent } from 'app/types/events';
 
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
@@ -18,25 +27,130 @@ export interface SaveProvisionedDashboardProps {
 export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAsCopy }: SaveProvisionedDashboardProps) {
   const { isNew, defaultValues, canPushToConfiguredBranch, readOnly, repository, repoDataStatus, error } =
     useProvisionedDashboardData(dashboard, saveAsCopy);
+  const [saveToDatabase, setSaveToDatabase] = useState(false);
+  const [canSaveToDatabaseInstead, setCanSaveToDatabaseInstead] = useState(false);
+  const dbSwitchRef = useRef<{ active: boolean; gitMeta?: DashboardMeta; wasNew?: boolean }>({ active: false });
+
+  // changeInfo.isNew stays stable across repo resolution; the hook's isNew flips false on error
+  const isNewDashboard = changeInfo.isNew || !!saveAsCopy;
+
+  const isDeadEnd = repoDataStatus === RepoViewStatus.Error || repoDataStatus === RepoViewStatus.Orphaned;
+
+  // Keep the escape available for folderless repos and whenever a new dashboard dead-ends
+  useEffect(() => {
+    if (repository) {
+      setCanSaveToDatabaseInstead(repository.target === 'folderless' && isNewDashboard);
+    } else if (isDeadEnd && isNewDashboard) {
+      setCanSaveToDatabaseInstead(true);
+    }
+  }, [repository, isDeadEnd, isNewDashboard]);
+
+  // A completed save owns the resulting meta, so the switch must not be undone afterwards. The
+  // database form replaces meta wholesale on a folder pick, so it can't be inferred from meta itself.
+  useEffect(() => {
+    const sub = appEvents.subscribe(DashboardSavedEvent, () => {
+      dbSwitchRef.current.active = false;
+    });
+    return () => sub.unsubscribe();
+  }, []);
+
+  // Consumes a pending switch, so it can only ever be undone once
+  const takePendingSwitch = useCallback(() => {
+    const pending = dbSwitchRef.current;
+    dbSwitchRef.current = { active: false };
+    return pending.active ? pending : undefined;
+  }, []);
+
+  // Cancel in the database form bypasses drawer.onClose, so undo the switch on unmount too. New
+  // dashboards go back to their initial meta like onClose does, otherwise closing via the drawer's
+  // X would put the provisioned fields it just cleared straight back.
+  useEffect(() => {
+    return () => {
+      const pending = takePendingSwitch();
+      if (!pending?.gitMeta) {
+        return;
+      }
+      const initialMeta = dashboard.getInitialState()?.meta;
+      dashboard.setState({ meta: pending.wasNew && initialMeta ? initialMeta : pending.gitMeta });
+    };
+  }, [takePendingSwitch, dashboard]);
+
+  const handleSwitchToDatabase = () => {
+    const meta = dashboard.state.meta;
+    const folderUid = locationService.getSearchObject().folderUid;
+    const entryFolderUid = typeof folderUid === 'string' ? folderUid : undefined;
+
+    // Dead-ends go back to the folder the drawer resolved from, so switch-back lands on a working Git form
+    const gitMeta = isDeadEnd ? { ...meta, folderUid: entryFolderUid, k8s: undefined } : { ...meta };
+    dbSwitchRef.current = { active: true, gitMeta, wasNew: changeInfo.isNew };
+
+    // Only an unmanaged folder is a valid database target; provisioned and orphaned ones are rejected.
+    // Manager annotations go with it, or saveCompleted would carry them into the saved database dashboard.
+    if (repoDataStatus !== RepoViewStatus.Error) {
+      dashboard.setState({ meta: { ...meta, folderUid: undefined, k8s: undefined } });
+    }
+
+    setSaveToDatabase(true);
+  };
+
+  const handleSwitchToGit = () => {
+    const pending = takePendingSwitch();
+    if (pending?.gitMeta) {
+      dashboard.setState({ meta: pending.gitMeta });
+    }
+    setSaveToDatabase(false);
+  };
+
+  // Latched on saveToDatabase alone: folder picks in the database form can make the repository
+  // stop resolving, and that must not collapse this branch into the provisioning error gate
+  if (saveToDatabase) {
+    return (
+      <Stack direction="column" gap={2}>
+        <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} />
+        <SwitchSaveTargetButton onClick={handleSwitchToGit}>
+          <Trans i18nKey="dashboard-scene.save-provisioned-dashboard.save-to-git">Save to Git repository instead</Trans>
+        </SwitchSaveTargetButton>
+      </Stack>
+    );
+  }
 
   return (
-    <ProvisionedFormGate
-      isLoading={repoDataStatus === RepoViewStatus.Loading}
-      isOrphaned={repoDataStatus === RepoViewStatus.Orphaned}
-      isError={repoDataStatus === RepoViewStatus.Error || !defaultValues}
-      error={error}
-    >
-      <SaveProvisionedDashboardForm
-        dashboard={dashboard}
-        drawer={drawer}
-        changeInfo={changeInfo}
-        isNew={isNew || !!saveAsCopy}
-        defaultValues={defaultValues!}
-        repository={repository}
-        canPushToConfiguredBranch={canPushToConfiguredBranch}
-        readOnly={readOnly}
-        saveAsCopy={saveAsCopy}
-      />
-    </ProvisionedFormGate>
+    <Stack direction="column" gap={2}>
+      <ProvisionedFormGate
+        isLoading={repoDataStatus === RepoViewStatus.Loading}
+        isOrphaned={repoDataStatus === RepoViewStatus.Orphaned}
+        isError={repoDataStatus === RepoViewStatus.Error || !defaultValues}
+        error={error}
+      >
+        <SaveProvisionedDashboardForm
+          dashboard={dashboard}
+          drawer={drawer}
+          changeInfo={changeInfo}
+          isNew={isNew || !!saveAsCopy}
+          defaultValues={defaultValues!}
+          repository={repository}
+          canPushToConfiguredBranch={canPushToConfiguredBranch}
+          readOnly={readOnly}
+          saveAsCopy={saveAsCopy}
+        />
+      </ProvisionedFormGate>
+      {canSaveToDatabaseInstead && (
+        <SwitchSaveTargetButton onClick={handleSwitchToDatabase}>
+          <Trans i18nKey="dashboard-scene.save-provisioned-dashboard.save-to-database">
+            Save to Grafana database instead
+          </Trans>
+        </SwitchSaveTargetButton>
+      )}
+    </Stack>
+  );
+}
+
+function SwitchSaveTargetButton({ onClick, children }: { onClick: () => void; children: ReactNode }) {
+  return (
+    <div>
+      <Button variant="secondary" size="sm" fill="text" onClick={onClick}>
+        {children}
+      </Button>
+    </div>
   );
 }

@@ -370,6 +370,57 @@ describe('useGetResourceRepositoryView', () => {
     });
   });
 
+  describe('includeFolderless', () => {
+    it('returns the folderless repo at root when nothing else matches', () => {
+      const folderlessRepo = repoView({ name: 'folderless-repo', target: 'folderless' });
+      setupMocks({ settingsItems: [folderlessRepo] });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ includeFolderless: true }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Ready);
+      expect(result.current.repository).toBe(folderlessRepo);
+    });
+
+    it('prefers the instance repo over a folderless one', () => {
+      const instanceRepo = repoView({ name: 'instance-repo', target: 'instance' });
+      const folderlessRepo = repoView({ name: 'folderless-repo', target: 'folderless' });
+      setupMocks({ settingsItems: [instanceRepo, folderlessRepo] });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ includeFolderless: true }));
+
+      expect(result.current.repository).toBe(instanceRepo);
+    });
+
+    it('does not fall back to the folderless repo when a folder is targeted', () => {
+      const folderlessRepo = repoView({ name: 'folderless-repo', target: 'folderless' });
+      setupMocks({ settingsItems: [folderlessRepo], folder: folderData() });
+
+      const { result } = renderHook(() =>
+        useGetResourceRepositoryView({ folderName: 'unmanaged-db-folder', includeFolderless: true })
+      );
+
+      expect(result.current.status).toBe(RepoViewStatus.Ready);
+      expect(result.current.repository).toBeUndefined();
+    });
+
+    it('does not resolve a folderless repo unless the caller asks for it', () => {
+      const folderlessRepo = repoView({ name: 'folderless-repo', target: 'folderless' });
+      setupMocks({ settingsItems: [folderlessRepo] });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({}));
+
+      expect(result.current.repository).toBeUndefined();
+    });
+
+    it('overrides the query skip so root-level lookups still fetch settings', () => {
+      setupMocks();
+
+      renderHook(() => useGetResourceRepositoryView({ includeFolderless: true }));
+
+      expect(mockUseGetFrontendSettingsQuery).not.toHaveBeenCalledWith(skipToken);
+    });
+  });
+
   describe('isMissingRepo', () => {
     it('is false while loading, even though no repository is resolved yet', () => {
       setupMocks({ settingsLoading: true });

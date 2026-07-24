@@ -1308,6 +1308,60 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(screen.queryByRole('button', { name: /new folder/i })).not.toBeInTheDocument();
   });
 
+  it('shows the No folder button for folderless repos', async () => {
+    setupFolderless();
+
+    expect(await screen.findByRole('button', { name: /no folder/i })).toBeInTheDocument();
+  });
+
+  it('does not show the No folder button for non-folderless repos', async () => {
+    setup({
+      repository: { type: 'github', name: 'test-repo', title: 'Test Repo', workflows: ['write'], target: 'folder' },
+    });
+
+    await screen.findByRole('form');
+    expect(screen.queryByRole('button', { name: /no folder/i })).not.toBeInTheDocument();
+  });
+
+  it('clears the selected folder and saves at the repository root', async () => {
+    let dashboardRequest: { url: URL; body: unknown } | null = null;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        dashboardRequest = { url: new URL(request.url), body: await request.json() };
+        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+      })
+    );
+
+    // The navigation URL must stay untouched: the form only manages the scene meta
+    window.history.replaceState({}, '', '/?folderUid=my-team-uid');
+    const { user, props } = setupFolderless({
+      defaultValues: {
+        folder: { uid: 'my-team-uid', title: 'My Team' },
+        path: 'My Team/test-dashboard.json',
+      },
+    });
+    props.dashboard.getSaveResource = jest.fn().mockReturnValue({
+      apiVersion: 'dashboard.grafana.app/v1alpha1',
+      kind: 'Dashboard',
+      metadata: { generateName: 'p' },
+      spec: { title: 'Test Dashboard', panels: [], schemaVersion: 36 },
+    });
+
+    await user.click(await screen.findByRole('button', { name: /no folder/i }));
+
+    const folderCombobox = screen.getByRole('combobox', { name: /folder/i });
+    await waitFor(() => expect(folderCombobox).toHaveValue(''));
+    expect(new URL(window.location.href).searchParams.get('folderUid')).toBe('my-team-uid');
+
+    await user.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => expect(dashboardRequest).not.toBeNull());
+    expect(decodeURIComponent(dashboardRequest!.url.pathname)).toContain(
+      '/repositories/test-repo/files/test-dashboard.json'
+    );
+    expect(props.dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: undefined } });
+  });
+
   it('creates a folder when New folder is used in folderless mode', async () => {
     let folderRequest: { url: URL; body: unknown } | null = null;
     let dashboardRequest: { url: URL; body: unknown } | null = null;
@@ -1389,6 +1443,36 @@ describe('SaveProvisionedDashboardForm', () => {
     await waitFor(() => expect(screen.queryByRole('textbox', { name: /folder name/i })).not.toBeInTheDocument());
     expect(folderPostCount).toBe(1);
     expect(dashboardRequest).toBeNull();
+  });
+
+  it('disables the No folder button while a folder is being created', async () => {
+    let folderPostStarted = false;
+    let releaseFolderPost: () => void = () => {};
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async () => {
+        folderPostStarted = true;
+        await new Promise<void>((resolve) => {
+          releaseFolderPost = resolve;
+        });
+        return HttpResponse.json({
+          resource: { upsert: { metadata: { name: 'new-folder-uid' }, spec: { title: 'My Team' } } },
+        });
+      })
+    );
+
+    const { user } = setupFolderless();
+
+    await user.click(await screen.findByRole('button', { name: /new folder/i }));
+    await user.type(screen.getByRole('textbox', { name: /folder name/i }), 'My Team');
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
+
+    // a root click mid-flight would be overwritten when the folder create lands
+    expect(screen.getByRole('button', { name: /no folder/i })).toBeDisabled();
+
+    await waitFor(() => expect(folderPostStarted).toBe(true));
+    releaseFolderPost();
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /no folder/i })).toBeEnabled());
   });
 
   it('shows a required error for whitespace-only folder names without sending a request', async () => {

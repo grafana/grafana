@@ -7537,6 +7537,10 @@
       "placeholder-search-affected-dashboards": "Search affected dashboards",
       "update-all": "Update all"
     },
+    "save-provisioned-dashboard": {
+      "save-to-database": "Save to Grafana database instead",
+      "save-to-git": "Save to Git repository instead"
+    },
     "save-provisioned-dashboard-form": {
       "advanced-options": "Advanced options",
       "cancel": "Cancel",
@@ -7559,6 +7563,7 @@
       "label-target-folder": "Target folder",
       "label-title": "Title",
       "new-folder": "New folder",
+      "no-folder-root": "No folder (repository root)",
       "repo-path-required": "Missing required fields for saving",
       "save": "Save",
       "save-json-to-file": "Save JSON to file",

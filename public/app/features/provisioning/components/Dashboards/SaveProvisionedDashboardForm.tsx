@@ -268,7 +268,6 @@ export function SaveProvisionedDashboardForm({
   const selectFolder = useCallback(
     async (uid?: string, title?: string) => {
       setValue('folder', { uid, title });
-      updateURLParams('folderUid', uid);
       const meta = await getProvisionedMeta(uid);
       dashboard.setState({
         meta: {
@@ -279,6 +278,12 @@ export function SaveProvisionedDashboardForm({
     },
     [setValue, dashboard]
   );
+
+  const handleSaveAtRoot = useCallback(() => {
+    const { filename } = splitPath(getValues('path'));
+    setValue('path', filename);
+    selectFolder();
+  }, [getValues, setValue, selectFolder]);
 
   const handleCreateFolder = useCallback(async () => {
     if (isCreatingFolderRef.current) {
@@ -502,6 +507,21 @@ export function SaveProvisionedDashboardForm({
                   }}
                 />
               </Field>
+              {isFolderless && (
+                <div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    fill="text"
+                    onClick={handleSaveAtRoot}
+                    disabled={isCreatingFolder}
+                  >
+                    <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.no-folder-root">
+                      No folder (repository root)
+                    </Trans>
+                  </Button>
+                </div>
+              )}
               {isFolderless && workflow === 'write' && (
                 <>
                   {!showNewFolderForm && (
@@ -635,17 +655,6 @@ async function validateTitle(title: string, formValues: ProvisionedDashboardForm
           'Dashboard title validation failed.'
         );
   }
-}
-
-// Update the URL params without reloading the page
-function updateURLParams(param: string, value?: string) {
-  // only check undefine and null, empty string = root folder, we still want to update the URL
-  if (value === undefined || value === null) {
-    return;
-  }
-  const url = new URL(window.location.href);
-  url.searchParams.set(param, value);
-  window.history.replaceState({}, '', url);
 }
 
 /**
