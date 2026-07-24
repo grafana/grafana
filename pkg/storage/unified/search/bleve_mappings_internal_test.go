@@ -526,14 +526,15 @@ func TestCombineFilterAndTextQueries(t *testing.T) {
 	// No filters: the text query is used as-is (it is the only scoring clause).
 	assert.Same(t, text, combineFilterAndTextQueries(nil, text))
 
-	// Filters only: constrain via the non-scoring Filter slot, nothing in Must.
-	bq, ok := combineFilterAndTextQueries([]query.Query{f1}, nil).(*query.BooleanQuery)
+	// Filters only (no text): the filters drive the query directly so bleve
+	// iterates their posting lists rather than scanning every document.
+	assert.Same(t, f1, combineFilterAndTextQueries([]query.Query{f1}, nil))
+	conj, ok := combineFilterAndTextQueries([]query.Query{f1, f2}, nil).(*query.ConjunctionQuery)
 	require.True(t, ok)
-	assert.Nil(t, bq.Must)
-	assert.Same(t, f1, bq.Filter)
+	assert.Equal(t, []query.Query{f1, f2}, conj.Conjuncts)
 
 	// Filters + text: text scores in Must, the filter stays in the Filter slot.
-	bq, ok = combineFilterAndTextQueries([]query.Query{f1}, text).(*query.BooleanQuery)
+	bq, ok := combineFilterAndTextQueries([]query.Query{f1}, text).(*query.BooleanQuery)
 	require.True(t, ok)
 	must, ok := bq.Must.(*query.ConjunctionQuery)
 	require.True(t, ok)

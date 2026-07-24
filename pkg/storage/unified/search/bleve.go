@@ -2323,21 +2323,33 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	return searchrequest, nil
 }
 
-// combineFilterAndTextQueries assembles the final bleve query from the non-scoring
-// filter clauses and the optional scoring free-text query. Filters go in the
-// boolean Filter slot so they constrain matches without contributing to the score.
+// combineFilterAndTextQueries assembles the final bleve query from the filter
+// clauses and the optional free-text query.
+//
+// Filters are non-scoring only when there is a free-text query to rank by: they
+// go in the boolean Filter slot so text relevance alone drives the score, and the
+// text query drives iteration. Without a free-text query the results are ordered
+// by the sort fields (not score), so the filters go straight into the query,
+// which keeps bleve iterating their posting lists instead of scanning every
+// document (a filter-only boolean query wraps a match-all searcher).
 func combineFilterAndTextQueries(filters []query.Query, textQuery query.Query) query.Query {
-	if len(filters) == 0 {
-		if textQuery == nil {
+	if textQuery == nil {
+		switch len(filters) {
+		case 0:
 			return bleve.NewMatchAllQuery()
+		case 1:
+			return filters[0]
+		default:
+			return bleve.NewConjunctionQuery(filters...)
 		}
+	}
+
+	if len(filters) == 0 {
 		return textQuery
 	}
 
 	bq := bleve.NewBooleanQuery()
-	if textQuery != nil {
-		bq.AddMust(textQuery)
-	}
+	bq.AddMust(textQuery)
 	if len(filters) == 1 {
 		bq.AddFilter(filters[0])
 	} else {
