@@ -12,7 +12,7 @@ import { defaultCodeOptions, defaultOptions, type Options, TextMode } from '../.
 import { TextNGCodeView } from './TextNGCodeView';
 import { getInterpolateFormat, transformContent } from './textContent';
 
-const TextNGEditor = lazy(() => import('./TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
+const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
 
 export interface Props extends PanelProps<Options> {}
 

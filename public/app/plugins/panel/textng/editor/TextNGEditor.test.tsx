@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import config from 'app/core/config';
 
-import { CodeLanguage, TextMode } from '../../schemas/textng/panelcfg.gen';
+import { CodeLanguage, TextMode } from '../../../schemas/textng/panelcfg.gen';
 
 import { TextNGEditor } from './TextNGEditor';
 
