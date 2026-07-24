@@ -296,6 +296,42 @@ describe('filterSpans', () => {
     ).toEqual(new Set([spanID2]));
   });
 
+  it('should return spans whose kind, statusCode, statusMessage, libraryName, libraryVersion, traceState, or id partially match a regex filter', () => {
+    expect(
+      filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'kind', operator: '=~', value: 'kind' }] }, spans)
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'status', operator: '=~', value: 'set' }] }, spans)
+    ).toEqual(new Set([spanID0]));
+    expect(
+      filterSpans(
+        { ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'status.message', operator: '=~', value: 'statusMessage' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpans(
+        { ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'library.name', operator: '=~', value: 'library' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpans(
+        { ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'library.version', operator: '=~', value: 'Version' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpans(
+        { ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'trace.state', operator: '=~', value: 'traceState' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'id', operator: '=~', value: 'span-id' }] }, spans)
+    ).toEqual(new Set([spanID0, spanID2]));
+  });
+
   it('should return spans whose process.tags kv.key match a filter', () => {
     expect(
       filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'processTagKey1' }] }, spans)
