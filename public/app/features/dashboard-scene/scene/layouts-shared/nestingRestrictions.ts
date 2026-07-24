@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
 
-export const MAX_NESTING_DEPTH = 4;
+const MAX_NESTING_DEPTH = 4;
 
 export function useNestingRestrictions(layoutManager: DashboardLayoutManager) {
   return useMemo(() => {
