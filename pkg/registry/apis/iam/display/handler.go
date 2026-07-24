@@ -159,6 +159,12 @@ func (r *DisplayHandler) handleDisplay(w http.ResponseWriter, req *http.Request)
 		pending = unresolvedKeys(keys, rsp.Items, rsp.InvalidKeys)
 	}
 
+	// Display must serialize as an empty array ([]) rather than null when no
+	// identities resolve, so clients can always iterate over it. (#128232)
+	if rsp.Items == nil {
+		rsp.Items = []iam.Display{}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(rsp)
 }
