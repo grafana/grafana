@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -70,6 +71,15 @@ type RepositoryController struct {
 	resyncInterval  time.Duration
 	minSyncInterval time.Duration
 	drainTimeout    time.Duration
+
+	// notObservedAttempts counts consecutive ErrNotObserved retries per work key so
+	// the read-after-write requeue (scheduled via AddAfter, which the workqueue's
+	// rate limiter does not count) stays bounded. Entries are removed on success,
+	// on a different error, or once maxNotObservedAttempts is reached.
+	notObservedAttempts sync.Map // string -> int
+	// notObservedRetryDelay is the backoff before an ErrNotObserved requeue;
+	// injectable so tests need not wait the production delay.
+	notObservedRetryDelay time.Duration
 
 	registry                      prometheus.Registerer
 	tracer                        tracing.Tracer
@@ -138,6 +148,7 @@ func NewRepositoryController(
 		tokenMetrics:                  repoTokenMetrics,
 		incrementalPolicy:             incrementalPolicy,
 		webhookSecretRotationInterval: webhookSecretRotationInterval,
+		notObservedRetryDelay:         notObservedRetryDelay,
 	}
 
 	rc.processFn = rc.process
@@ -241,8 +252,32 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	err := rc.processFn(key)
 	if err == nil {
 		rc.queue.Forget(key)
+		rc.notObservedAttempts.Delete(key)
 		return true
 	}
+
+	// The reconcile read has not observed the repository yet. Under the NATS read
+	// seam the read is decoupled from the notification that enqueued this key, so
+	// this is typically a read-after-write race on a just-created or just-updated
+	// repository. Requeue with a fixed short delay (bounded) to let the write
+	// become visible, rather than dropping the key until the next resync; a
+	// genuinely deleted repository exhausts the retries and is then forgotten.
+	if errors.Is(err, informer.ErrNotObserved) {
+		prev, _ := rc.notObservedAttempts.Load(key)
+		attempts, _ := prev.(int)
+		attempts++
+		if attempts >= maxNotObservedAttempts {
+			logger.With("attempts", attempts).Info("RepositoryController: repository still not observed after retries; leaving for the next resync")
+			rc.queue.Forget(key)
+			rc.notObservedAttempts.Delete(key)
+			return true
+		}
+		rc.notObservedAttempts.Store(key, attempts)
+		logger.With("attempts", attempts).Debug("RepositoryController: repository not yet observed, requeuing")
+		rc.queue.AddAfter(key, rc.notObservedRetryDelay)
+		return true
+	}
+	rc.notObservedAttempts.Delete(key)
 
 	// NumRequeues counts prior AddRateLimited calls; add 1 for the current attempt.
 	attempts := rc.queue.NumRequeues(key) + 1
@@ -579,8 +614,15 @@ func (rc *RepositoryController) process(key string) error {
 	// fresh is the informer.RepositoryGetter's concern, not the controller's.
 	obj, err := rc.repos.Get(ctx, namespace, name)
 	switch {
+	case errors.Is(err, informer.ErrNotObserved):
+		// Retryable: the read seam has not observed the repository yet (a NATS
+		// read-after-write race). processNextWorkItem requeues it with backoff.
+		return err
 	case apierrors.IsNotFound(err):
-		return errors.New("repository not found")
+		// Authoritative delete from the apiserver cache lister: the repository is
+		// gone, so there is nothing to reconcile.
+		logger.Debug("repository not found; already deleted, nothing to reconcile")
+		return nil
 	case err != nil:
 		return err
 	}

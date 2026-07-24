@@ -2,8 +2,10 @@ package informer
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -80,5 +82,17 @@ type clientConnectionGetter struct {
 }
 
 func (g clientConnectionGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Connection, error) {
-	return g.client.Connections(namespace).Get(ctx, name, metav1.GetOptions{})
+	conn, err := g.client.Connections(namespace).Get(ctx, name, metav1.GetOptions{})
+	if apierrors.IsNotFound(err) {
+		// This read is decoupled from the NATS notification that enqueued the key,
+		// so a 404 is usually a read-after-write race on a just-created connection,
+		// not a deletion. Surface it as ErrNotObserved so the controller retries
+		// (bounded) instead of dropping the key until the next resync; a genuine
+		// delete exhausts the retries and is then forgotten.
+		return nil, fmt.Errorf("%w: %s/%s", ErrNotObserved, namespace, name)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return conn, nil
 }
