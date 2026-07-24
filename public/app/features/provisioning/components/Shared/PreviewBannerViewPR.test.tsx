@@ -1,5 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { render } from 'test/test-utils';
 
 import { textUtil } from '@grafana/data';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
@@ -25,7 +26,14 @@ const mockTextUtil = jest.mocked(textUtil);
 const mockUsePullRequestParam = jest.mocked(usePullRequestParam);
 
 function setup(
-  options: { prURL: string; isNewPr?: boolean; repoType?: RepoType; action?: string; prTitle?: string } = {
+  options: {
+    prURL: string;
+    isNewPr?: boolean;
+    repoType?: RepoType;
+    action?: string;
+    prTitle?: string;
+    originalUrl?: string;
+  } = {
     prURL: 'test-url',
     repoType: 'github',
   }
@@ -33,6 +41,7 @@ function setup(
   const componentProps = {
     prURL: options.prURL,
     isNewPr: options.isNewPr || false,
+    originalUrl: options.originalUrl,
   };
 
   mockUsePullRequestParam.mockReturnValue({
@@ -135,6 +144,22 @@ describe('PreviewBannerViewPR', () => {
       setup({ prURL: 'test-url', isNewPr: false });
 
       expect(screen.getByText('View pull request in GitHub')).toBeInTheDocument();
+    });
+  });
+
+  describe('Original resource link', () => {
+    it('should render a link back to the original version when originalUrl is provided', () => {
+      setup({ prURL: 'test-url', isNewPr: false, originalUrl: '/d/original-uid' });
+
+      const link = screen.getByRole('link', { name: 'Go back to the original version' });
+      expect(link).toBeInTheDocument();
+      expect(link).toHaveAttribute('href', '/d/original-uid');
+    });
+
+    it('should not render the link when originalUrl is not provided', () => {
+      setup({ prURL: 'test-url', isNewPr: false });
+
+      expect(screen.queryByRole('link', { name: 'Go back to the original version' })).not.toBeInTheDocument();
     });
   });
 

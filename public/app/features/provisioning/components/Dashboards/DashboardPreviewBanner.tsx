@@ -54,7 +54,11 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
     repoBaseUrl,
   };
 
-  return <PreviewBannerViewPR prURL={prURL} isNewPr={!hasExistingPr} branchInfo={branchInfo} />;
+  // The version currently saved in Grafana, if the dashboard already exists on the configured branch
+  const existingUid = file.data?.resource?.existing?.metadata?.name;
+  const originalUrl = typeof existingUid === 'string' && existingUid ? `/d/${existingUid}` : undefined;
+
+  return <PreviewBannerViewPR prURL={prURL} isNewPr={!hasExistingPr} branchInfo={branchInfo} originalUrl={originalUrl} />;
 }
 
 export function DashboardPreviewBanner({ queryParams, route, slug, path }: DashboardPreviewBannerProps) {
