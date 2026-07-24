@@ -271,7 +271,9 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
       logos,
       keywords,
     },
-    isCore: Boolean(remote?.internal || local?.signature === PluginSignatureStatus.internal),
+    isCore: matchedViaAlias
+      ? local?.signature === PluginSignatureStatus.internal
+      : Boolean(remote?.internal || local?.signature === PluginSignatureStatus.internal),
     isDev: Boolean(local?.dev),
     isEnterprise: remote?.status === RemotePluginStatus.Enterprise,
     isInstalled: Boolean(local) || isDisabled,
