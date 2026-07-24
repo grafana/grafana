@@ -31,6 +31,21 @@ describe('useOptions', () => {
     expect(result.current.options).toEqual([{ label: 'Option 1', value: '1' }]);
   });
 
+  it('should match options by description as well as label', () => {
+    const options = [
+      { label: 'Option 1', value: '1', description: 'privileged user' },
+      { label: 'Option 2', value: '2', description: 'read-only user' },
+      { label: 'Option 3', value: '3' },
+    ];
+    const { result } = renderHook(() => useOptions(options, false));
+
+    act(() => {
+      result.current.updateOptions('privileged');
+    });
+
+    expect(result.current.options).toEqual([{ label: 'Option 1', value: '1', description: 'privileged user' }]);
+  });
+
   it('should handle asynchronous options', async () => {
     const asyncOptions = jest.fn().mockResolvedValue([
       { label: 'Async Option 1', value: '1' },

@@ -307,7 +307,7 @@ export * from './components/Select/types';
 
 export { Combobox } from './components/Combobox/Combobox';
 export { MultiCombobox } from './components/Combobox/MultiCombobox';
-export { type ComboboxOption } from './components/Combobox/types';
+export { type ComboboxOption, type ComboboxDescriptionPosition } from './components/Combobox/types';
 
 export { HorizontalGroup, VerticalGroup, Container } from './components/Layout/Layout';
 export { Badge, type BadgeColor, type BadgeProps } from './components/Badge/Badge';

@@ -143,6 +143,17 @@ describe('Combobox', () => {
     expect(screen.getByDisplayValue('Option 3')).toBeInTheDocument();
   });
 
+  it('filters options by description text as well as label', async () => {
+    render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
+
+    const input = screen.getByRole('combobox');
+    await userEvent.type(input, 'This is');
+
+    const optionsEls = await screen.findAllByRole('option');
+    expect(optionsEls).toHaveLength(1);
+    expect(screen.getByText('This is option 3')).toBeInTheDocument();
+  });
+
   it('selects value by using keyboard only', async () => {
     render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
 

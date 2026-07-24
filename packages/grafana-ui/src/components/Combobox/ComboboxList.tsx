@@ -11,7 +11,7 @@ import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { AsyncError, LoadingOptions, NotFoundError } from './MessageRows';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
-import { ALL_OPTION_VALUE, type ComboboxOption } from './types';
+import { ALL_OPTION_VALUE, type ComboboxDescriptionPosition, type ComboboxOption } from './types';
 import { isNewGroup } from './utils';
 
 const VIRTUAL_OVERSCAN_ITEMS = 4;
@@ -27,6 +27,7 @@ interface ComboboxListProps<T extends string | number> {
   noOptionsMessage?: string;
   error?: boolean;
   loading?: boolean;
+  descriptionPosition?: ComboboxDescriptionPosition;
 }
 
 export const ComboboxList = <T extends string | number>({
@@ -40,13 +41,15 @@ export const ComboboxList = <T extends string | number>({
   error = false,
   loading = false,
   noOptionsMessage,
+  descriptionPosition = 'bottom',
 }: ComboboxListProps<T>) => {
   const styles = useStyles2(getComboboxStyles);
 
   const estimateSize = useCallback(
     (index: number) => {
       const firstGroupItem = isNewGroup(options[index], index > 0 ? options[index - 1] : undefined);
-      const hasDescription = 'description' in options[index];
+      // Right-positioned descriptions render on the same line as the label, so they don't add height
+      const hasDescription = 'description' in options[index] && descriptionPosition === 'bottom';
       const hasGroup = 'group' in options[index];
 
       let itemHeight = MENU_OPTION_HEIGHT;
@@ -58,7 +61,7 @@ export const ComboboxList = <T extends string | number>({
       }
       return itemHeight;
     },
-    [options]
+    [options, descriptionPosition]
   );
 
   const rowVirtualizer = useVirtualizer({
@@ -154,7 +157,9 @@ export const ComboboxList = <T extends string | number>({
                   </div>
                 )}
 
-                <div className={styles.optionBody}>
+                <div
+                  className={cx(styles.optionBody, descriptionPosition === 'right' && styles.optionBodyDescriptionRight)}
+                >
                   <Stack direction="row" alignItems="center">
                     {item.icon && <Icon name={item.icon} />}
                     <div className={styles.optionLabel}>{item.label ?? item.value}</div>

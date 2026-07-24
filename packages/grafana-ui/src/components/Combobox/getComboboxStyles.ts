@@ -98,6 +98,16 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
     }),
 
+    // Lays out label and description as two "columns" on a single line,
+    // with the description pushed to the right edge.
+    optionBodyDescriptionRight: css({
+      label: 'combobox-option-body-description-right',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: theme.spacing(2),
+    }),
+
     optionLabel: css({
       label: 'combobox-option-label',
       fontSize: MENU_ITEM_FONT_SIZE,

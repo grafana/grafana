@@ -35,6 +35,10 @@ Options can be an array of objects with seperate label and values, or an array o
 
 While Combobox can handle large sets of options, you should consider both the user experience of searching through many options, and the performance of loading many options from an API.
 
+### Descriptions
+
+Options may include a `description` string, which is included in type-ahead filtering alongside the label. By default the description renders underneath the label. Set `descriptionPosition="right"` to render it right-aligned on the same line as the label, giving a table-like two column layout.
+
 ### Grouping
 
 Each option object may also have a `group` string property. Options with matching group names will be sorted together, as will options with undefined groups. Combobox will order these based on the first occurence of each `group` (or absence of `group`) in the `options` prop.

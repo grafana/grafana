@@ -16,7 +16,7 @@ import { ComboboxList } from './ComboboxList';
 import { SuffixIcon } from './SuffixIcon';
 import { itemToString } from './filter';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
-import { type ComboboxOption } from './types';
+import { type ComboboxDescriptionPosition, type ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { useOptions } from './useOptions';
 import { isNewGroup } from './utils';
@@ -72,6 +72,13 @@ interface ComboboxStaticProps<T extends string | number>
    * Message to display when there are no options found. Defaults to "No options found."
    */
   noOptionsMessage?: string;
+
+  /**
+   * Where to render option descriptions. 'bottom' (default) renders the description underneath
+   * the label. 'right' renders it right-aligned on the same line as the label, giving a
+   * table-like two column layout.
+   */
+  descriptionPosition?: ComboboxDescriptionPosition;
 
   /**
    * When set, the dropdown open state is fully controlled by the parent. Use with {@link onIsOpenChange}
@@ -166,6 +173,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     invalid: invalidProp,
     prefixIcon,
     noOptionsMessage,
+    descriptionPosition = 'bottom',
     isOpen: isOpenProp,
     onIsOpenChange: onIsOpenChangeProp,
     loading: loadingProp,
@@ -267,7 +275,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     getScrollElement: () => scrollRef.current,
     estimateSize: (index: number) => {
       const firstGroupItem = isNewGroup(filteredOptions[index], index > 0 ? filteredOptions[index - 1] : undefined);
-      const hasDescription = 'description' in filteredOptions[index];
+      // Right-positioned descriptions render on the same line as the label, so they don't add height
+      const hasDescription = 'description' in filteredOptions[index] && descriptionPosition === 'bottom';
       const hasGroup = 'group' in filteredOptions[index];
 
       let itemHeight = MENU_OPTION_HEIGHT;
@@ -382,7 +391,11 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     },
   });
 
-  const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(filteredOptions, isOpen);
+  const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(
+    filteredOptions,
+    isOpen,
+    descriptionPosition
+  );
 
   const isAutoSize = width === 'auto';
   const InputComponent = isAutoSize ? AutoSizeInput : Input;
@@ -472,6 +485,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
               getItemProps={getItemProps}
               error={asyncError}
               noOptionsMessage={noOptionsMessage}
+              descriptionPosition={descriptionPosition}
             />
           )}
         </div>
