@@ -369,29 +369,19 @@ export function interpolateV1Dashboard(
       }))
     : inputMappings;
 
-  const formDataSources: DataSourceInstanceSettings[] = [];
-  const seenPluginIds = new Set<string>();
-  for (const mapping of effectiveMappings.filter((m) => m.type === 'datasource')) {
-    const dsInput = dsInputs.find((i) => i.name === mapping.name);
-    const pluginId = mapping.pluginId ?? dsInput?.pluginId;
-    if (!pluginId || seenPluginIds.has(pluginId)) {
-      continue;
-    }
-
-    // Expression datasources are always forced to __expr__ regardless of user input,
-    // matching the backend behavior:
-    //   if inputDefJson.Get("pluginId").MustString() == expr.DatasourceType {
-    //       input = &dashboardimport.ImportDashboardInput{Value: expr.DatasourceType}
-    //   }
-    if (pluginId === ExpressionDatasourceRef.type) {
+  const formDataSources: DataSourceInstanceSettings[] = dsInputs.map((dsInput) => {
+    if (dsInput.pluginId === ExpressionDatasourceRef.type) {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      formDataSources.push({
+      return {
         uid: ExpressionDatasourceRef.uid,
         type: ExpressionDatasourceRef.type,
         name: ExpressionDatasourceRef.name,
-      } as DataSourceInstanceSettings);
-      seenPluginIds.add(pluginId);
-      continue;
+      } as DataSourceInstanceSettings;
+    }
+
+    const mapping = effectiveMappings.find((m) => m.type === 'datasource' && m.name === dsInput.name);
+    if (!mapping) {
+      throw new Error(`Dashboard import failed: no datasource mapping found for input "${dsInput.name}"`);
     }
 
     const settings = getDataSourceSrv().getInstanceSettings(mapping.value);
@@ -400,21 +390,8 @@ export function interpolateV1Dashboard(
         `Dashboard import failed: datasource input "${mapping.name}" references UID "${mapping.value}" which was not found`
       );
     }
-    formDataSources.push(settings);
-    seenPluginIds.add(pluginId);
-  }
-  // Ensure expression datasources are included even when not explicitly mapped
-  for (const dsInput of dsInputs) {
-    if (dsInput.pluginId === ExpressionDatasourceRef.type && !seenPluginIds.has(ExpressionDatasourceRef.type)) {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      formDataSources.push({
-        uid: ExpressionDatasourceRef.uid,
-        type: ExpressionDatasourceRef.type,
-        name: ExpressionDatasourceRef.name,
-      } as DataSourceInstanceSettings);
-      seenPluginIds.add(ExpressionDatasourceRef.type);
-    }
-  }
+    return settings;
+  });
 
   const constants: DashboardInput[] = constantRawInputs.map((input) => ({
     name: String(input.name ?? ''),
@@ -778,9 +755,8 @@ function checkUserInputMatch(
   userDsInputs: DataSourceInstanceSettings[]
 ) {
   const dsName = templateizedUid.replace(/\$\{(.*)\}/, '$1');
-  const input = datasourceInputs?.find((ds) => ds.name === dsName);
-  const userInput = input && userDsInputs.find((ds) => ds.type === input.pluginId);
-  return userInput;
+  const index = datasourceInputs?.findIndex((ds) => ds.name === dsName) ?? -1;
+  return index === -1 ? undefined : userDsInputs[index];
 }
 
 function processAnnotation(

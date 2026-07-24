@@ -985,6 +985,60 @@ describe('applyV1Inputs', () => {
       expect((result.panels?.[3] as unknown as { type: string }).type).toBe('row');
     });
   });
+
+  it('maps each datasource input to its own form selection when multiple inputs share a pluginId', () => {
+    const dashboard = {
+      title: 'old',
+      uid: 'old',
+      panels: [
+        { datasource: { type: 'influxdb', uid: '${DS_KUBERNETES}' }, targets: [] },
+        { datasource: { type: 'influxdb', uid: '${DS_VANTIQSERVER}' }, targets: [] },
+      ],
+    } as unknown as Dashboard;
+
+    const inputs: DashboardInputs = {
+      dataSources: [
+        {
+          name: 'DS_KUBERNETES',
+          label: 'kubernetes',
+          description: '',
+          info: '',
+          value: '',
+          type: InputType.DataSource,
+          pluginId: 'influxdb',
+        },
+        {
+          name: 'DS_VANTIQSERVER',
+          label: 'vantiqServer',
+          description: '',
+          info: '',
+          value: '',
+          type: InputType.DataSource,
+          pluginId: 'influxdb',
+        },
+      ],
+      constants: [],
+      libraryPanels: [],
+    };
+
+    const form: ImportDashboardDTO = {
+      title: 'new-title',
+      uid: 'new-uid',
+      gnetId: '',
+      constants: [],
+      dataSources: [
+        { uid: 'influx-a-uid', type: 'influxdb', name: 'influx-a' } as DataSourceInstanceSettings,
+        { uid: 'influx-b-uid', type: 'influxdb', name: 'influx-b' } as DataSourceInstanceSettings,
+      ],
+      elements: [],
+      folder: { uid: 'folder' },
+    };
+
+    const result = applyV1Inputs(dashboard, inputs, form);
+
+    expect(result.panels?.[0].datasource?.uid).toBe('influx-a-uid');
+    expect(result.panels?.[1].datasource?.uid).toBe('influx-b-uid');
+  });
 });
 
 describe('interpolateLibraryPanelDatasources', () => {
@@ -1886,5 +1940,42 @@ describe('interpolateV1Dashboard', () => {
         { name: 'DS_PROMETHEUS', type: 'datasource', pluginId: 'prometheus', value: 'nonexistent-uid' },
       ])
     ).toThrow('datasource input "DS_PROMETHEUS" references UID "nonexistent-uid" which was not found');
+  });
+
+  it('should map each datasource input to its own mapping when multiple inputs share a pluginId', () => {
+    mockGetDataSourceSrv.getInstanceSettings = jest.fn().mockImplementation((uid: string) => {
+      if (uid === 'influx-a-uid') {
+        return { uid: 'influx-a-uid', type: 'influxdb', name: 'influx-a' };
+      }
+      if (uid === 'influx-b-uid') {
+        return { uid: 'influx-b-uid', type: 'influxdb', name: 'influx-b' };
+      }
+      return undefined;
+    });
+
+    const dashboard = makeDashboard({
+      __inputs: [
+        { name: 'DS_KUBERNETES', type: 'datasource', pluginId: 'influxdb', label: 'kubernetes', description: '', value: '' },
+        { name: 'DS_VANTIQSERVER', type: 'datasource', pluginId: 'influxdb', label: 'vantiqServer', description: '', value: '' },
+      ] as unknown as DashboardJson['__inputs'],
+      panels: [
+        { datasource: { type: 'influxdb', uid: '${DS_KUBERNETES}' }, targets: [], type: 'timeseries' },
+        { datasource: { type: 'influxdb', uid: '${DS_VANTIQSERVER}' }, targets: [], type: 'timeseries' },
+      ] as unknown as DashboardJson['panels'],
+    });
+
+    const result = interpolateV1Dashboard(dashboard, [
+      { name: 'DS_KUBERNETES', type: 'datasource', pluginId: 'influxdb', value: 'influx-a-uid' },
+      { name: 'DS_VANTIQSERVER', type: 'datasource', pluginId: 'influxdb', value: 'influx-b-uid' },
+    ]);
+
+    expect(getPanel(result, 0).datasource!.uid).toBe('influx-a-uid');
+    expect(getPanel(result, 1).datasource!.uid).toBe('influx-b-uid');
+  });
+
+  it('should throw when a datasource input has no matching mapping', () => {
+    expect(() => interpolateV1Dashboard(makeDashboard(), [])).toThrow(
+      'no datasource mapping found for input "DS_PROMETHEUS"'
+    );
   });
 });
