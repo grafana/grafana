@@ -292,6 +292,35 @@ func TestReadClassicResource_TypeAssertions(t *testing.T) {
 	})
 }
 
+func TestReadClassicResource_EmptyInput(t *testing.T) {
+	// Regression for the panic reported in #129162: empty or BOM-only files
+	// used to crash with `index out of range [0] with length 0` because the
+	// function unconditionally indexed cleanData[0] after stripping the BOM.
+	// They must return a clean validation error instead.
+	t.Run("empty file returns a validation error, not a panic", func(t *testing.T) {
+		_, _, _, err := ReadClassicResource(context.Background(), &repository.FileInfo{
+			Data: []byte{},
+		})
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrUnableToReadResourceBytes)
+	})
+
+	t.Run("BOM-only file returns a validation error, not a panic", func(t *testing.T) {
+		_, _, _, err := ReadClassicResource(context.Background(), &repository.FileInfo{
+			Data: []byte{0xEF, 0xBB, 0xBF},
+		})
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrUnableToReadResourceBytes)
+	})
+
+	t.Run("whitespace-only file returns a validation error, not a panic", func(t *testing.T) {
+		_, _, _, err := ReadClassicResource(context.Background(), &repository.FileInfo{
+			Data: []byte("   \n\t\n"),
+		})
+		require.Error(t, err)
+	})
+}
+
 func TestParseFileResource(t *testing.T) {
 	t.Run("k8s resource parsed directly", func(t *testing.T) {
 		info := &repository.FileInfo{

@@ -38,6 +38,13 @@ func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstr
 	// Strip BOMs from file data before parsing
 	cleanData := util.StripBOMFromBytes(info.Data)
 
+	// An empty file (or one whose only contents are a BOM) leaves cleanData
+	// as an empty slice. Without this guard, the next line indexes
+	// cleanData[0] and panics with `index out of range [0] with length 0`.
+	if len(cleanData) == 0 {
+		return nil, nil, "", ErrUnableToReadResourceBytes
+	}
+
 	// Try parsing as JSON
 	if cleanData[0] == '{' {
 		err := json.Unmarshal(cleanData, &value)
