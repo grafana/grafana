@@ -127,7 +127,7 @@ function AlertIncidentTabsInner({
             {activeTab === INCIDENTS_TAB_ID && <IncidentsCardView data={incidentsData} hideFooterActions />}
           </ScrollContainer>
 
-          <Box padding={1}>
+          <Box padding={1} paddingTop={1.5}>
             {/* Alerts tab footer */}
             {isAlertActionsVisible && (
               <CreateAndViewAlertsButtons

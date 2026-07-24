@@ -1,6 +1,6 @@
 import { Trans } from '@grafana/i18n';
-import { Icon, Stack, TextLink } from '@grafana/ui';
 
+import { FooterAction, FooterActions } from '../FooterActions';
 import { ctaClicked } from '../analytics/main';
 
 interface Props {
@@ -12,26 +12,18 @@ interface Props {
 
 export const CreateAndViewAlertsButtons = ({ hasAlerts, canCreate, newRuleHref, viewAllHref }: Props) => {
   return (
-    <Stack justifyContent="flex-end" wrap="wrap" gap={2.5}>
+    <FooterActions>
       {hasAlerts && canCreate && (
-        <TextLink
-          inline={false}
-          color="primary"
-          variant="bodySmall"
+        <FooterAction
+          icon="plus"
           href={newRuleHref}
           onClick={() => ctaClicked({ surface: 'alerts_card', action: 'create_rule', placement: 'footer' })}
         >
-          {/* In children instead of the icon prop so it sits left of the text; the 1px lift optically centers the baseline-aligned svg in the text line */}
-          <Stack alignItems="center">
-            <Icon name="plus" size="xs" /> <Trans i18nKey="home.firing-alerts-card.create">Create an alert rule</Trans>
-          </Stack>
-        </TextLink>
+          <Trans i18nKey="home.firing-alerts-card.create">Create an alert rule</Trans>
+        </FooterAction>
       )}
 
-      <TextLink
-        inline={false}
-        color="primary"
-        variant="bodySmall"
+      <FooterAction
         href={viewAllHref}
         onClick={() =>
           ctaClicked({
@@ -46,7 +38,7 @@ export const CreateAndViewAlertsButtons = ({ hasAlerts, canCreate, newRuleHref, 
         ) : (
           <Trans i18nKey="home.firing-alerts-card.view-rules">View all alert rules</Trans>
         )}
-      </TextLink>
-    </Stack>
+      </FooterAction>
+    </FooterActions>
   );
 };

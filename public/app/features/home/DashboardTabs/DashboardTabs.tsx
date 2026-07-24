@@ -257,7 +257,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
           </ScrollContainer>
           {/* Show reset recent dashboards button in the redesign UI and when tab is recent tab */}
           {redesignEnabled && activeTab === RECENT_TAB_ID && !recentLoading && !recentError && (
-            <Box padding={1}>
+            <Box padding={1} paddingTop={1.5}>
               <RecentDashboardsClearButton dashboards={recentDashboards ?? []} retry={recentRetry} redesignEnabled />
             </Box>
           )}
