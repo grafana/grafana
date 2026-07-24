@@ -169,6 +169,12 @@ type SearchBackend interface {
 	// TotalDocs returns the total number of documents across all indexes.
 	TotalDocs() int64
 
+	// SnapshotCountThreshold returns the document count at or above which
+	// BuildIndex uses remote snapshots, or 0 when snapshots are inactive (no
+	// store configured). The startup prebuild uses it to cap counting without
+	// changing the snapshot decision.
+	SnapshotCountThreshold() int64
+
 	// GetOpenIndexes returns the list of indexes that are currently open.
 	GetOpenIndexes() []NamespacedResource
 
@@ -1186,9 +1192,18 @@ func (s *searchServer) startupIndexStats(ctx context.Context) ([]ResourceStats, 
 		s.log.FromContext(ctx).Debug("open index stats unavailable, falling back to resource stats")
 	}
 
+	// The prebuild only compares counts against thresholds, so cap counting above
+	// the highest one that consumes the count: init min size, plus the snapshot
+	// threshold when a snapshot store is active.
+	limit := s.initMinSize
+	if t := int(s.search.SnapshotCountThreshold()); t > limit {
+		limit = t
+	}
+	limit++
+
 	start := time.Now()
-	stats, err = s.storage.GetResourceStats(ctx, NamespacedResource{}, s.initMinSize)
-	s.log.Debug("startupIndexStats: got resource stats from storage", "elapsed", time.Since(start).String(), "stats", len(stats), "err", err)
+	stats, err = s.storage.GetResourceStatsWithLimit(ctx, NamespacedResource{}, s.initMinSize, limit)
+	s.log.Debug("startupIndexStats: got resource stats from storage", "elapsed", time.Since(start).String(), "stats", len(stats), "err", err, "countLimit", limit)
 	return stats, err
 }
 

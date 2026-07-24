@@ -1,7 +1,7 @@
-import { type Page } from '@playwright/test';
+import { type Locator, type Page } from '@playwright/test';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Components, type DashboardPage, type E2ESelectorGroups, expect } from '@grafana/plugin-e2e';
+import { Components, type DashboardPage, type E2ESelectorGroups, expect, test } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
@@ -221,6 +221,27 @@ export async function goToPanelSnapshot(page: Page) {
   expect(snapshotUrl).toBeDefined();
 
   await page.goto(snapshotUrl);
+}
+
+/**
+ * Coordinate-based drag: hover the source, press, move in steps, release.
+ * Playwright's locator.dragTo() does not trigger the dnd library (pangea) used by
+ * tabs/rows, which requires intermediate mousemove events.
+ */
+export async function dragTo(
+  page: Page,
+  sourceName: string,
+  source: Locator,
+  toX: number,
+  toY: number,
+  options?: { steps?: number }
+) {
+  await test.step(`Drag ${sourceName} to (${toX}, ${toY})`, async () => {
+    await source.hover();
+    await page.mouse.down();
+    await page.mouse.move(toX, toY, { steps: options?.steps ?? 5 });
+    await page.mouse.up();
+  });
 }
 
 export async function moveTab(

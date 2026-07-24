@@ -512,3 +512,39 @@ func TestBleveIndex_resolveQueryFields(t *testing.T) {
 	}
 	assert.Equal(t, titleVariants, names(b.resolveQueryFields(legacy)))
 }
+
+func TestCombineFilterAndTextQueries(t *testing.T) {
+	text := bleve.NewMatchQuery("cpu")
+	f1 := bleve.NewTermQuery("a")
+	f1.SetField("x")
+	f2 := bleve.NewTermQuery("b")
+	f2.SetField("y")
+
+	// No filters and no text query matches everything.
+	assert.IsType(t, &query.MatchAllQuery{}, combineFilterAndTextQueries(nil, nil))
+
+	// No filters: the text query is used as-is (it is the only scoring clause).
+	assert.Same(t, text, combineFilterAndTextQueries(nil, text))
+
+	// Filters only (no text): the filters drive the query directly so bleve
+	// iterates their posting lists rather than scanning every document.
+	assert.Same(t, f1, combineFilterAndTextQueries([]query.Query{f1}, nil))
+	conj, ok := combineFilterAndTextQueries([]query.Query{f1, f2}, nil).(*query.ConjunctionQuery)
+	require.True(t, ok)
+	assert.Equal(t, []query.Query{f1, f2}, conj.Conjuncts)
+
+	// Filters + text: text scores in Must, the filter stays in the Filter slot.
+	bq, ok := combineFilterAndTextQueries([]query.Query{f1}, text).(*query.BooleanQuery)
+	require.True(t, ok)
+	must, ok := bq.Must.(*query.ConjunctionQuery)
+	require.True(t, ok)
+	assert.Equal(t, []query.Query{text}, must.Conjuncts)
+	assert.Same(t, f1, bq.Filter)
+
+	// Multiple filters are combined into a single conjunction in the Filter slot.
+	bq, ok = combineFilterAndTextQueries([]query.Query{f1, f2}, text).(*query.BooleanQuery)
+	require.True(t, ok)
+	filter, ok := bq.Filter.(*query.ConjunctionQuery)
+	require.True(t, ok)
+	assert.Equal(t, []query.Query{f1, f2}, filter.Conjuncts)
+}

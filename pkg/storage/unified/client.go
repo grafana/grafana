@@ -57,6 +57,9 @@ type Options struct {
 	DashboardStats builders.DashboardStats
 	KV             kv.KV
 	EDB            sqldb.DBProvider
+	// ExperimentalKV, when set, routes flagged use-cases in the in-process KV
+	// storage backend to an alternative KV. Nil disables the routing.
+	ExperimentalKV *resource.ExperimentalKVOptions
 	// Publisher announces committed writes on the NATS bus. It is wired into the
 	// in-process storage backend so a monolith run (storage_type=unified) emits
 	// the same resource-change notifications as the storage-server module. Nil-safe
@@ -103,7 +106,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(options.DefaultGrpcClientKeepaliveTime),
-	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.DashboardStats, opts.KV, opts.EDB, gcGate, opts.Publisher, opts.Subscriber)
+	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.DashboardStats, opts.KV, opts.EDB, gcGate, opts.Publisher, opts.Subscriber, opts.ExperimentalKV)
 	if err == nil {
 		// Used to get the folder stats
 		// Pass cfg directly so the federated client reads the current dual-writer mode
@@ -138,6 +141,7 @@ func newClient(opts options.StorageOptions,
 	gcGate *resource.GCGate,
 	eventPublisher nats.Publisher,
 	eventSubscriber nats.Subscriber,
+	experimentalKV *resource.ExperimentalKVOptions,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 
@@ -190,7 +194,7 @@ func newClient(opts options.StorageOptions,
 		return resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
 
 	default:
-		searchOptions, err := search.NewSearchOptions(features, cfg, docs, indexMetrics, nil, nil)
+		searchOptions, err := search.NewSearchOptions(cfg, docs, indexMetrics, nil, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -200,6 +204,9 @@ func newClient(opts options.StorageOptions,
 			storageOpts = append(storageOpts, sql.WithNatsNotifier(natsEventSubscriber{sub: eventSubscriber}))
 		} else if cfg.NATS.NotifierShadow && eventSubscriber != nil {
 			storageOpts = append(storageOpts, sql.WithNatsNotifierShadow(natsEventSubscriber{sub: eventSubscriber}))
+		}
+		if experimentalKV != nil {
+			storageOpts = append(storageOpts, sql.WithExperimentalKV(experimentalKV))
 		}
 		backend, err := sql.NewStorageBackend(cfg, eDB, reg, storageMetrics, false, kvStore, gcGate, storageOpts...)
 		if err != nil {

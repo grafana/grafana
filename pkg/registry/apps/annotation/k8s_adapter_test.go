@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	registryrest "k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/utils/ptr"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -429,6 +430,41 @@ func TestK8sAdapter_Update(t *testing.T) {
 		}
 		_, _, err = adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
 		assert.True(t, apierrors.IsGone(err), "expected 410 Gone, got %v", err)
+	})
+
+	t.Run("rejects updates to immutable fields", func(t *testing.T) {
+		cases := []struct {
+			name   string
+			mutate func(*annotationV0.Annotation)
+		}{
+			{"time", func(a *annotationV0.Annotation) { a.Spec.Time = 2000 }},
+			{"timeEnd", func(a *annotationV0.Annotation) { a.Spec.TimeEnd = ptr.To(int64(3000)) }},
+			{"dashboardUID", func(a *annotationV0.Annotation) { a.Spec.DashboardUID = ptr.To("dash") }},
+			{"panelID", func(a *annotationV0.Annotation) { a.Spec.PanelID = ptr.To(int64(7)) }},
+		}
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				adapter, ctx := seedWithData(t)
+				incoming := &annotationV0.Annotation{
+					ObjectMeta: metav1.ObjectMeta{Name: "anno", Namespace: ns},
+					Spec:       annotationV0.AnnotationSpec{Text: "updated", Time: 1000},
+				}
+				tc.mutate(incoming)
+				_, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
+				assert.True(t, apierrors.IsBadRequest(err), "expected 400 BadRequest, got %v", err)
+			})
+		}
+	})
+
+	t.Run("allows updates that leave immutable fields unchanged", func(t *testing.T) {
+		adapter, ctx := seedWithData(t)
+		incoming := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "anno", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "updated text", Time: 1000, Tags: []string{"new"}},
+		}
+		updated, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, "updated text", updated.(*annotationV0.Annotation).Spec.Text)
 	})
 }
 
