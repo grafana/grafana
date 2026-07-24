@@ -4,7 +4,8 @@ keywords:
   - grafana
   - loki
   - mimir
-  - lbac
+  - tempo
+  - traces
 labels:
   products:
     - enterprise
@@ -18,22 +19,27 @@ weight: 100
 Label Based Access Control (LBAC) for data sources simplifies and streamlines data source access management based on team memberships.
 Label-Based Access Control (LBAC) allows fine-grained access control to data sources by filtering logs or metrics based on labels. It lets administrators configure access rules for teams, ensuring that users only query data relevant to their assigned permissions.
 
-## Supported Data Sources
+## Supported data sources
 
-### Feature availability
+LBAC for data sources is currently supported for Loki and Prometheus.
 
-LBAC for data sources is currently for `Loki` and `Prometheus`. Support for additional data sources may be added in future updates.
+{{< admonition type="note" >}}
+Traces support is in public preview and available on Grafana Cloud only. Team LBAC is available for traces that Grafana Cloud can access, whether those traces are available through a Tempo data source configured for a Grafana Cloud stack or the built-in Cloud Traces database.
+{{< /admonition >}}
 
-| Data source | Grafana Cloud | Grafana Enterprise                             | Cross-tenant query support |
-| ----------- | ------------- | ---------------------------------------------- | -------------------------- |
-| Loki        | GA            | GA (requires GEL - Grafana Enterprise Logs)    | ❌                         |
-| Prometheus  | GA            | GA (requires GEM - Grafana Enterprise Metrics) | ❌                         |
+Support for additional data sources may be added in future updates.
+
+| Data source | Grafana Cloud  | Grafana Enterprise                             | Cross-tenant query support |
+| ----------- | -------------- | ---------------------------------------------- | -------------------------- |
+| Loki        | GA             | GA (requires GEL - Grafana Enterprise Logs)    | ❌                         |
+| Prometheus  | GA             | GA (requires GEM - Grafana Enterprise Metrics) | ❌                         |
+| Tempo       | Public preview | Not available                                  | ❌                         |
 
 {{< admonition type="note" >}}
 For enterprise this feature requires Grafana Enterprise Metrics (GEM) or Grafana Enterprise Logs (GEL) to function.
 {{< /admonition >}}
 
-**LBAC for data sources offers:**
+LBAC for data sources offers:
 
 - Team-based access control using `LogQL` rules.
 - Simplified data source management by consolidating multiple sources into one.
@@ -51,13 +57,17 @@ This feature addresses two common challenges faced by Grafana users:
 
 To set up LBAC for data sources for a Loki data source, refer to [Configure LBAC for Loki Data Source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-loki/).
 To set up LBAC for data sources for a Prometheus data source, refer to [Configure LBAC for Prometheus Data Source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-prometheus/).
+To set up LBAC for data sources for Cloud Traces or Tempo data source, refer to [Configure team LBAC for Tempo](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-tempo/).
 
-## Logs and Metrics Filtering with LBAC
+## Logs, metrics, and traces filtering with LBAC
 
-LBAC for data sources enables you to filter access for both logs and metrics. By defining rules with label selectors, you can specify:
+LBAC for data sources enables you to filter access for logs, metrics, and traces. By defining rules with label or attribute selectors, you can specify:
 
 - **Logs**: Control access to log lines using LogQL queries with labels such as `namespace` or `cluster`.
 - **Metrics**: Control access to metric data points using LogQL with labels such as `job` or `region` and access for metrics `__name__`.
+- **Traces**: Control access to spans using attribute selectors with resource scope attributes such as `resource.service.name` or `resource.env`.
+
+Traces use attributes, not labels, for access control, and rely on TraceQL-style attribute selectors rather than LogQL. Traces LBAC is available only at the team level.
 
 This flexibility allows teams to use the same data source for multiple use cases while maintaining secure access boundaries.
 
@@ -71,6 +81,7 @@ This flexibility allows teams to use the same data source for multiple use cases
   CAP are the access controls from Grafana Cloud.
 - Note that these data sources must be created manually - provisioning is not yet supported.
 - Cross-tenant querying is currently not supported
+- For Tempo and Cloud Traces, LBAC is available only at the team level. Data source-level LBAC rules, configured through cloud access policies, aren't supported for traces. Rules are restricted to resource scope attributes.
 
 You must remove any label selectors from your Cloud Access Policy that is configured for the data source, otherwise the CAP label selectors override the LBAC for data sources rules. For more information about CAP label selectors, refer to [Use label-based access control (LBAC) with access policies](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/label-access-policies/).
 
