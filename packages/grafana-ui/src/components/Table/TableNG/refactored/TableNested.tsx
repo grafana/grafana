@@ -32,6 +32,7 @@ import {
   useRowCompiler,
   useRowHeight,
   useScrollbarWidth,
+  useDebouncedNumber,
   useSortedRows,
 } from '../hooks';
 import { getGridStyles, IS_SAFARI_26 } from '../styles';
@@ -194,7 +195,9 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   // nested tables don't support frozen columns; subtract expander column width
   const frozenColumns = 0;
   const numFrozenColsFullyInView = 0;
-  const availableWidth = useMemo(() => width - COLUMN.EXPANDER_WIDTH - scrollbarWidth, [width, scrollbarWidth]);
+  const rawAvailableWidth = useMemo(() => width - COLUMN.EXPANDER_WIDTH - scrollbarWidth, [width, scrollbarWidth]);
+  // debounced so a panel-width drag doesn't recompute widths/row-heights on every frame
+  const availableWidth = useDebouncedNumber(rawAvailableWidth);
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
   const applyToRowBgFn = useMemo(

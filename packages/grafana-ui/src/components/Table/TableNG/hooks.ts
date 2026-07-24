@@ -710,6 +710,30 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
   return scrollbarWidth;
 }
 
+// How long to wait after the last width change before recomputing the width-driven layout.
+const RESIZE_WIDTH_DEBOUNCE_MS = 120;
+
+/**
+ * Trailing-debounces a numeric value. Used to throttle the expensive width-driven recompute chain
+ * (column widths → row heights → column rebuild → full grid re-render) during a panel-width
+ * resize. The grid itself stretches live via CSS (its width isn't derived from this value), so
+ * only the auto-column proportions and row heights lag, settling once the drag pauses.
+ */
+export function useDebouncedNumber(value: number, wait = RESIZE_WIDTH_DEBOUNCE_MS): number {
+  const [debounced, setDebounced] = useState(value);
+
+  const setDebouncedValue = useMemo(() => debounce(setDebounced, wait), [wait]);
+
+  useEffect(() => {
+    setDebouncedValue(value);
+  }, [value, setDebouncedValue]);
+
+  // flush pending work on unmount
+  useEffect(() => () => setDebouncedValue.cancel(), [setDebouncedValue]);
+
+  return debounced;
+}
+
 interface UseNestedColWidthsOptions {
   nestedVisibleFields: Field[];
   availableWidth: number;

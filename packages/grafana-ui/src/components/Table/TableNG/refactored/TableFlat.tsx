@@ -18,6 +18,7 @@ import {
   useManagedSort,
   usePaginatedRows,
   useScrollbarWidth,
+  useDebouncedNumber,
   useSortedRows,
   useRowCompiler,
 } from '../hooks';
@@ -139,7 +140,9 @@ export function TableFlat(props: TableNGProps) {
 
   const gridRef = useRef<DataGridHandle>(null);
   const scrollbarWidth = useScrollbarWidth(gridRef, height);
-  const availableWidth = useMemo(() => width - scrollbarWidth, [width, scrollbarWidth]);
+  const rawAvailableWidth = useMemo(() => width - scrollbarWidth, [width, scrollbarWidth]);
+  // debounced so a panel-width drag doesn't recompute widths/row-heights on every frame
+  const availableWidth = useDebouncedNumber(rawAvailableWidth);
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
   const applyToRowBgFn = useMemo(
