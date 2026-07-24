@@ -51,6 +51,8 @@ interface PanelDataQueriesTabState extends SceneObjectState {
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
   panelRef: SceneObjectRef<VizPanel>;
+  /** refId of a query row to scroll into view once it renders; cleared after the scroll happens. */
+  scrollToRefId?: string;
 }
 export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabState> implements PanelDataPaneTab {
   static Component = PanelDataQueriesTabRendered;
@@ -325,7 +327,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     return (dsSettings.meta.backend || dsSettings.meta.alerting || dsSettings.meta.mixed) === true;
   }
 
-  public onAddExpressionOfType = (type: ExpressionQueryType) => {
+  public onAddExpressionOfType = (type: ExpressionQueryType): string => {
     const queries = this.getQueries();
     // Create base expression query with the specified type
     const baseQuery = expressionDatasource.newQuery();
@@ -333,7 +335,10 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     // Apply defaults specific to the expression type
     const queryWithDefaults = getDefaults(queryWithType);
 
-    this.onQueriesChange(addQuery(queries, queryWithDefaults));
+    const newQueries = addQuery(queries, queryWithDefaults);
+    this.onQueriesChange(newQueries);
+
+    return newQueries[newQueries.length - 1].refId;
   };
 
   public renderExtraActions() {
@@ -369,7 +374,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 }
 
 export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
-  const { datasource, dsSettings } = model.useState();
+  const { datasource, dsSettings, scrollToRefId } = model.useState();
   const { data, queries, datasource: datasourceState } = model.queryRunner.useState();
   const { openDrawer: openQueryLibraryDrawer, queryLibraryEnabled } = useQueryLibraryContext();
   const canReadQueries = config.featureToggles.savedQueriesRBAC
@@ -387,6 +392,10 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
     },
     [model]
   );
+
+  const handleScrollIntoView = useCallback(() => {
+    model.setState({ scrollToRefId: undefined });
+  }, [model]);
 
   // Determine which expressions should be disabled (for frontend-only datasources)
   const disabledExpressions = useMemo(() => {
@@ -454,6 +463,8 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
         onUpdateDatasources={queryLibraryEnabled ? model.updateDatasourceIfNeeded : undefined}
         app={CoreApp.PanelEditor}
         panelRef={model.state.panelRef}
+        scrollToRefId={scrollToRefId}
+        onScrollIntoView={handleScrollIntoView}
       />
 
       <Stack gap={2}>

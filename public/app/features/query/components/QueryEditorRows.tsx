@@ -50,6 +50,10 @@ export interface Props {
   onCancelQueryLibraryEdit?: () => void;
   isOpen?: boolean;
   panelRef?: SceneObjectRef<VizPanel>;
+  /** refId of a row to scroll into view once it renders (e.g. a freshly added query). */
+  scrollToRefId?: string;
+  /** Called after the row identified by scrollToRefId has been scrolled into view. */
+  onScrollIntoView?: () => void;
 }
 
 export class QueryEditorRows extends PureComponent<Props> {
@@ -253,6 +257,8 @@ export class QueryEditorRows extends PureComponent<Props> {
       onCancelQueryLibraryEdit,
       isOpen,
       panelRef,
+      scrollToRefId,
+      onScrollIntoView,
     } = this.props;
 
     // Scene scope for resolving section-scoped (row/tab) datasource variables, which live on a
@@ -302,6 +308,8 @@ export class QueryEditorRows extends PureComponent<Props> {
                       queryLibraryRef={queryLibraryRef}
                       onCancelQueryLibraryEdit={onCancelQueryLibraryEdit}
                       isOpen={isOpen}
+                      scrollIntoView={scrollToRefId !== undefined && query.refId === scrollToRefId}
+                      onScrollIntoView={onScrollIntoView}
                     />
                   );
 
