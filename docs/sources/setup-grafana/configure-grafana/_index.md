@@ -2165,6 +2165,16 @@ Set the default data source UID to use for query execution when importing Promet
 
 <hr>
 
+### `[recording_rules]`
+
+This section controls how Grafana-managed recording rules remote write their evaluation results.
+
+#### `max_batch_size_bytes`
+
+Estimated uncompressed size, in bytes, above which a recording rule remote write is split into multiple sequential requests. This keeps individual requests under the target's maximum write message size. The default value is `0`, which disables batching and sends all series in a single request (the original behavior). To enable batching, set a positive value; `20971520` (20 MiB) is a sensible choice that leaves headroom below the typical 100 MB distributor limit.
+
+<hr>
+
 ### `[annotations]`
 
 #### `cleanupjob_batchsize`

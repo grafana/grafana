@@ -938,6 +938,7 @@ func createRecordingWriter(settings setting.RecordingRuleSettings, httpClientPro
 			Timeout:              settings.Timeout,
 			CustomHeaders:        settings.CustomHeaders,
 			DefaultDatasourceUID: settings.DefaultDatasourceUID,
+			MaxBatchSizeBytes:    settings.MaxBatchSizeBytes,
 		}
 
 		logger.Info("Setting up remote write using data sources",
