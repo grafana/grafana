@@ -79,13 +79,15 @@ export function createTtlCachedPromise<T>(fn: () => Promise<T>, ttlMs: number): 
 }
 
 /**
- * Candidate datasources of `type` for a data-existence probe: cloud utility datasources are
+ * Candidate datasources of `type` for a data-existence probe: `excludeUids` are dropped
+ * unconditionally (never re-admitted by any fallback), cloud utility datasources are
  * skipped (unless they are all there is), the default datasource leads, capped for fan-out.
  * Pass an Infinity `cap` when the caller reorders before capping itself.
  */
 export async function listProbeCandidates(
   type: string,
-  cap = MAX_PROBED_DATASOURCES
+  cap = MAX_PROBED_DATASOURCES,
+  excludeUids?: ReadonlySet<string>
 ): Promise<DataSourceInstanceListItem[]> {
   const list = await withRetry(() =>
     getDataSourceInstanceList({
@@ -94,8 +96,9 @@ export async function listProbeCandidates(
       filter: (ds) => ds.meta.id !== 'grafana',
     })
   );
-  const preferred = list.filter((ds) => !CLOUD_UTILITY_DATASOURCE_NAMES[ds.name]);
-  const pool = preferred.length > 0 ? preferred : list;
+  const eligible = excludeUids ? list.filter((ds) => !excludeUids.has(ds.uid)) : list;
+  const preferred = eligible.filter((ds) => !CLOUD_UTILITY_DATASOURCE_NAMES[ds.name]);
+  const pool = preferred.length > 0 ? preferred : eligible;
   const def = pool.find((ds) => ds.isDefault);
   const ordered = def ? [def, ...pool.filter((ds) => ds !== def)] : [...pool];
   return ordered.slice(0, cap);
