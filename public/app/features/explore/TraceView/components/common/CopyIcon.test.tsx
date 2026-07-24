@@ -43,12 +43,44 @@ describe('<CopyIcon />', () => {
     expect(() => render(<CopyIcon {...props} />)).not.toThrow();
   });
 
-  it('copies when clicked', async () => {
-    render(<CopyIcon {...props} />);
+  describe('in a secure context', () => {
+    beforeEach(() => {
+      Object.defineProperty(window, 'isSecureContext', { value: true, configurable: true });
+    });
 
-    const button = screen.getByRole('button');
-    await userEvent.click(button);
+    it('copies via the Clipboard API when clicked', async () => {
+      render(<CopyIcon {...props} />);
 
-    expect(copySpy).toHaveBeenCalledWith(props.copyText);
+      const button = screen.getByRole('button');
+      await userEvent.click(button);
+
+      expect(copySpy).toHaveBeenCalledWith(props.copyText);
+    });
+  });
+
+  describe('in an insecure context', () => {
+    beforeEach(() => {
+      Object.defineProperty(window, 'isSecureContext', { value: false, configurable: true });
+      document.execCommand = jest.fn();
+    });
+
+    it('falls back to execCommand and does not throw', async () => {
+      render(<CopyIcon {...props} />);
+
+      const button = screen.getByRole('button');
+      await userEvent.click(button);
+
+      expect(document.execCommand).toHaveBeenCalledWith('copy');
+      expect(copySpy).not.toHaveBeenCalled();
+    });
+
+    it('restores focus to the previously active element after copying', async () => {
+      render(<CopyIcon {...props} />);
+
+      const button = screen.getByRole('button');
+      await userEvent.click(button);
+
+      expect(document.activeElement).toBe(button);
+    });
   });
 });
