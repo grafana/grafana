@@ -373,18 +373,20 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
 
   let backgroundColor = color.main;
   let hoverBackgroundColor = color.shade;
-  let textColor = visualRefreshEnabled ? color.text : color.contrastText;
-  let hoverTextColor = visualRefreshEnabled ? color.textEmphasis : color.contrastText;
+  let textColor = color.contrastText;
+  let hoverTextColor = color.contrastText;
 
   if (visualRefreshEnabled) {
+    textColor = color.text;
+    hoverTextColor = color.textEmphasis;
     backgroundColor = color.background;
     hoverBackgroundColor = color.backgroundEmphasis;
 
     if (color.name === 'primary' && fill === 'solid') {
       backgroundColor = color.main;
+      hoverBackgroundColor = color.mainEmphasis;
       borderColor = 'transparent';
       hoverBorderColor = 'transparent';
-      hoverBackgroundColor = color.mainEmphasis;
       textColor = color.contrastText;
       hoverTextColor = color.contrastText;
     }
