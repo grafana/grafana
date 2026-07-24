@@ -3,7 +3,7 @@ import { connect, type ConnectedProps } from 'react-redux';
 
 import { GrafanaEdition } from '@grafana/data/internal';
 import { Trans } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { Grid, TextLink, ToolbarButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { type StoreState } from 'app/types/store';
@@ -50,7 +50,6 @@ export const AuthConfigPageUnconnected = ({
   const authProviders = getRegisteredAuthProviders();
   const availableProviders = authProviders.filter((p) => !providerStatuses[p.id]?.hide);
   const onProviderCardClick = (providerType: string, enabled: boolean) => {
-    reportInteraction('authentication_ui_provider_clicked', { provider: providerType, enabled });
   };
 
   // filter out saml from sso providers because it is already included in availableProviders

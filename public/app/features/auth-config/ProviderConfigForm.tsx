@@ -145,10 +145,6 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
   const isEnabled = config?.settings.enabled;
 
   const onSaveAttempt = (toggleEnabled: boolean) => {
-    reportInteraction('grafana_authentication_ssosettings_save_attempt', {
-      provider,
-      enabled: toggleEnabled ? !isEnabled : isEnabled,
-    });
 
     if (toggleEnabled) {
       setValue('enabled', !isEnabled);
@@ -161,9 +157,6 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
         <FormPrompt
           confirmRedirect={!!Object.keys(dirtyFields).length && !dataSubmitted}
           onDiscard={() => {
-            reportInteraction('grafana_authentication_ssosettings_abandoned', {
-              provider,
-            });
             reset();
           }}
         />
