@@ -58,11 +58,19 @@ export function mergeLocalsAndRemotes({
     }
   });
 
+  // Track canonical IDs already emitted from the remote loop to avoid duplicates when
+  // both a legacy alias slug (e.g. "canvas") and the real slug ("grafana-canvas-panel")
+  // appear in the GCOM response and both resolve to the same local plugin.
+  const emittedCanonicalIds = new Set<string>();
+
   // add remote
   remote.forEach((remotePlugin) => {
     const localCounterpart = localMap.get(remotePlugin.slug);
     const error = errorByPluginId[remotePlugin.slug];
-    const shouldSkip = remotePlugin.status === RemotePluginStatus.Deprecated && !localCounterpart; // We are only listing deprecated plugins in case they are installed.
+    const canonicalId = localCounterpart?.id ?? remotePlugin.slug;
+    const shouldSkip =
+      (remotePlugin.status === RemotePluginStatus.Deprecated && !localCounterpart) || // We are only listing deprecated plugins in case they are installed.
+      emittedCanonicalIds.has(canonicalId);
 
     if (!shouldSkip) {
       let catalogPlugin = mergeLocalAndRemote(localCounterpart, remotePlugin, error);
@@ -74,6 +82,7 @@ export function mergeLocalsAndRemotes({
           localMap.has(remotePlugin.slug)
         );
       }
+      emittedCanonicalIds.add(canonicalId);
       catalogPlugins.push(catalogPlugin);
     }
   });
