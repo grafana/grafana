@@ -8,7 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { getFocusStyles } from '../../themes/mixins';
+import { getFocusStyles, getInternalRadius } from '../../themes/mixins';
 import { DelayRender } from '../../utils/DelayRender';
 import { usePointerDistance } from '../../utils/usePointerDistance';
 import { useElementSelection } from '../ElementSelectionContext/ElementSelectionContext';
@@ -605,6 +605,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'absolute',
       top: 0,
       width: '100%',
+      overflow: 'hidden',
+      borderTopLeftRadius: getInternalRadius(theme, 0, { parentBorderRadius: 'lg' }),
+      borderTopRightRadius: getInternalRadius(theme, 0, { parentBorderRadius: 'lg' }),
       // this is to force the loading bar container to create a new stacking context
       // otherwise, in webkit browsers on windows/linux, the aliasing of panel text changes when the loading bar is shown
       // see https://github.com/grafana/grafana/issues/88104
