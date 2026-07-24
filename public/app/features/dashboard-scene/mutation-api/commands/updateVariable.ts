@@ -78,6 +78,15 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
 
       replaceScopeVariableSet(scopeOwner, currentVariables);
 
+      // The element edit pane memoizes its editable element per selection, so a pane
+      // open on the replaced variable would keep editing the detached object.
+      // Re-selecting the successor (same key, force) remounts the pane against it.
+      const editPane = scene.state.editPane;
+      const selected = editPane?.state.selectionContext.selected;
+      if (selected?.length === 1 && selected[0].id === previousState.key) {
+        editPane.selectObject(newSceneVariable, { force: true });
+      }
+
       const changePath = buildVariableChangePath(layoutPathPrefix, name);
 
       return {
