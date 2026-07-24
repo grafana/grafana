@@ -9,15 +9,18 @@ import { useStoredBoolean } from 'app/core/hooks/useStoredBoolean';
 import { RecommendationCard } from './RecommendationCard';
 import { RecommendationExisting } from './RecommendationExisting';
 import { RecommendationPill } from './RecommendationPill';
+import { type BaseRow } from './solutionsMatrix';
 import { type RecommendationItem } from './types';
 
 const HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY = 'grafana.home.recommendations.collapsed';
 
 interface RecommendationsViewProps {
   recommendations: RecommendationItem[];
+  /** Matrix row that drove the selection; threaded into cta_clicked as starting_state. */
+  startingState: BaseRow;
 }
 
-export function RecommendationsView({ recommendations }: RecommendationsViewProps) {
+export function RecommendationsView({ recommendations, startingState }: RecommendationsViewProps) {
   const styles = useStyles2(getStyles);
   const [collapsed, setCollapsed] = useStoredBoolean(HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY, false);
 
@@ -35,22 +38,14 @@ export function RecommendationsView({ recommendations }: RecommendationsViewProp
   const [activeId, setActiveId] = useState<string>();
   const [paused, setPaused] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
-  // First card while unanchored (mount, or the anchored card disappeared).
-  const foundIndex = recommendations.findIndex((recommendation) => recommendation.id === activeId);
-  const safeIndex = foundIndex === -1 ? 0 : foundIndex;
-  const nextId = recommendations[(safeIndex + 1) % recommendations.length].id;
-
-  // Capture the anchor as soon as a card is showing: without this, activeId stays undefined
-  // until the first interaction and the displayed slide would still track position 0.
-  const firstId = recommendations[0].id;
-  useEffect(() => {
-    if (foundIndex === -1) {
-      setActiveId(firstId);
-    }
-  }, [foundIndex, firstId]);
+  // Clamp during render so a shrinking list cannot select an undefined entry.
+  const safeIndex = Math.min(index, recommendations.length - 1);
+  const hasRecommendations = recommendations.length > 0;
+  // A single card needs no carousel controls and must not auto-advance onto itself.
+  const showControls = recommendations.length > 1;
 
   useEffect(() => {
-    if (collapsed || paused) {
+    if (collapsed || paused || !showControls) {
       return;
     }
 
@@ -59,7 +54,7 @@ export function RecommendationsView({ recommendations }: RecommendationsViewProp
     }, 5000);
 
     return () => clearTimeout(timeout);
-  }, [collapsed, paused, nextId]);
+  }, [collapsed, paused, safeIndex, recommendations.length, showControls]);
 
   return (
     <div>
@@ -68,11 +63,15 @@ export function RecommendationsView({ recommendations }: RecommendationsViewProp
           <Trans i18nKey="home.recommendations.title">Recommendations for your stack</Trans>
         </Text>
 
-        {collapsed && (
+        {collapsed && hasRecommendations && (
           <div className={styles.pills}>
             <Stack direction="row" alignItems="center" gap={1} wrap="wrap">
               {recommendations.map((recommendation) => (
-                <RecommendationPill key={recommendation.id} recommendation={recommendation} />
+                <RecommendationPill
+                  key={recommendation.id}
+                  recommendation={recommendation}
+                  startingState={startingState}
+                />
               ))}
             </Stack>
           </div>
@@ -101,90 +100,99 @@ export function RecommendationsView({ recommendations }: RecommendationsViewProp
 
       {cardsMounted && (
         <div className={styles.cards} hidden={collapsed}>
-          <Grid gap={0} columns={{ xs: 1, md: 2 }}>
+          <Grid gap={0} columns={hasRecommendations ? { xs: 1, md: 2 } : 1}>
             <div className={styles.card}>
               <RecommendationExisting />
 
-              <div className={styles.arrow}>
-                <Icon name="arrow-right" size="xl" />
-              </div>
+              {hasRecommendations && (
+                <div className={styles.arrow}>
+                  <Icon name="arrow-right" size="xl" />
+                </div>
+              )}
             </div>
 
-            <div
-              className={cx(styles.card, styles.recommended)}
-              role="region"
-              aria-roledescription={t('home.recommendations.carousel-roledescription', 'carousel')}
-              aria-label={t('home.recommendations.carousel-label', 'Recommended apps')}
-            >
-              <Stack direction="row" justifyContent="space-between" alignItems="center" gap={2}>
-                <Badge color="brand" icon="bolt" text={t('home.recommendations.recommended', 'Recommended')} />
+            {hasRecommendations && (
+              <div
+                className={cx(styles.card, styles.recommended)}
+                role="region"
+                aria-roledescription={t('home.recommendations.carousel-roledescription', 'carousel')}
+                aria-label={t('home.recommendations.carousel-label', 'Recommended apps')}
+              >
+                <Stack direction="row" justifyContent="space-between" alignItems="center" gap={2}>
+                  <Badge color="brand" icon="bolt" text={t('home.recommendations.recommended', 'Recommended')} />
 
-                <Stack direction="row" alignItems="center" gap={1}>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    fill="text"
-                    icon="angle-left"
-                    onClick={() =>
-                      setActiveId(recommendations[(safeIndex - 1 + recommendations.length) % recommendations.length].id)
-                    }
-                    aria-label={t('home.recommendations.previous', 'Previous')}
-                  />
-
-                  {recommendations.map((recommendation, i) =>
-                    i === safeIndex ? (
+                  {showControls && (
+                    <Stack direction="row" alignItems="center" gap={1}>
                       <Button
-                        key={recommendation.id}
                         variant="secondary"
                         size="sm"
-                        fill="solid"
-                        icon={paused ? 'play' : 'pause'}
-                        onClick={() => setPaused(!paused)}
-                        aria-label={
-                          paused ? t('home.recommendations.resume', 'Resume') : t('home.recommendations.pause', 'Pause')
-                        }
-                        data-paused={paused ? true : undefined}
-                        className={cx(styles.dot, styles.active)}
+                        fill="text"
+                        icon="angle-left"
+                        onClick={() => setIndex((safeIndex - 1 + recommendations.length) % recommendations.length)}
+                        aria-label={t('home.recommendations.previous', 'Previous')}
                       />
-                    ) : (
+
+                      {recommendations.map((_, i) =>
+                        i === safeIndex ? (
+                          <Button
+                            key={i}
+                            variant="secondary"
+                            size="sm"
+                            fill="solid"
+                            icon={paused ? 'play' : 'pause'}
+                            onClick={() => setPaused(!paused)}
+                            aria-label={
+                              paused
+                                ? t('home.recommendations.resume', 'Resume')
+                                : t('home.recommendations.pause', 'Pause')
+                            }
+                            data-paused={paused ? true : undefined}
+                            className={cx(styles.dot, styles.active)}
+                          />
+                        ) : (
+                          <Button
+                            key={i}
+                            variant="secondary"
+                            size="sm"
+                            fill="solid"
+                            onClick={() => setIndex(i)}
+                            aria-label={t('home.recommendations.go-to', 'Go to recommendation {{index}}', {
+                              index: i + 1,
+                            })}
+                            className={styles.dot}
+                          />
+                        )
+                      )}
+
                       <Button
-                        key={recommendation.id}
                         variant="secondary"
                         size="sm"
-                        fill="solid"
-                        onClick={() => setActiveId(recommendation.id)}
-                        aria-label={t('home.recommendations.go-to', 'Go to recommendation {{index}}', { index: i + 1 })}
-                        className={styles.dot}
+                        fill="text"
+                        icon="angle-right"
+                        onClick={() => setIndex((safeIndex + 1) % recommendations.length)}
+                        aria-label={t('home.recommendations.next', 'Next')}
                       />
-                    )
+                    </Stack>
                   )}
 
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    fill="text"
-                    icon="angle-right"
-                    onClick={() => setActiveId(nextId)}
-                    aria-label={t('home.recommendations.next', 'Next')}
-                  />
                 </Stack>
-              </Stack>
 
-              <div className={styles.outer}>
-                <div className={styles.inner} style={{ transform: `translateX(-${safeIndex * 100}%)` }}>
-                  {recommendations.map((recommendation, i) => (
-                    <div
-                      key={recommendation.id}
-                      className={styles.item}
-                      aria-hidden={i !== safeIndex}
-                      {...(i !== safeIndex && { inert: '' })}
-                    >
-                      <RecommendationCard recommendation={recommendation} />
-                    </div>
-                  ))}
+                <div className={styles.outer}>
+                  <div className={styles.inner} style={{ transform: `translateX(-${safeIndex * 100}%)` }}>
+                    {recommendations.map((recommendation, i) => (
+                      <div
+                        key={recommendation.id}
+                        className={styles.item}
+                        aria-hidden={i !== safeIndex}
+                        {...(i !== safeIndex && { inert: '' })}
+                      >
+                        <RecommendationCard recommendation={recommendation} startingState={startingState} />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </Grid>
         </div>
       )}

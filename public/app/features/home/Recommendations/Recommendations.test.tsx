@@ -1,4 +1,4 @@
-import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { type PluginMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -17,7 +17,8 @@ import {
   fetchKubernetesInventory,
   resolveKubernetesDatasource,
 } from './kubernetesData';
-import { hasSolutionData } from './solutionDataProbes';
+import { useSolutionState } from './solutionState';
+import { type SolutionState } from './solutionsMatrix';
 
 const mockGet = jest.fn();
 jest.mock('@grafana/runtime', () => ({
@@ -49,18 +50,13 @@ jest.mock('./kubernetesData', () => ({
   fetchClusterCpuSeries: jest.fn().mockResolvedValue(null),
 }));
 
-// Enabled solutions report data by default so the pre-probe expectations (enabled -> hidden)
-// keep holding; individual tests flip specific solutions to the no-data state.
-jest.mock('./solutionDataProbes', () => ({
-  hasSolutionData: jest.fn().mockResolvedValue(true),
+jest.mock('./solutionState', () => ({
+  useSolutionState: jest.fn(),
 }));
 
-const APP_IDS = [
-  'grafana-exploretraces-app',
-  'grafana-synthetic-monitoring-app',
-  'grafana-app-observability-app',
-  'grafana-kowalski-app',
-];
+const LEGACY_APP_IDS = ['grafana-synthetic-monitoring-app', 'grafana-app-observability-app', 'grafana-kowalski-app'];
+const APP_IDS = ['grafana-exploretraces-app', 'grafana-k8s-app', ...LEGACY_APP_IDS];
+
 const listItem = (id: string, overrides: Partial<LocalPlugin> = {}) => ({
   id,
   enabled: false,
@@ -69,6 +65,18 @@ const listItem = (id: string, overrides: Partial<LocalPlugin> = {}) => ({
 });
 
 const mockUsePluginBridge = jest.mocked(usePluginBridge);
+const mockUseSolutionState = jest.mocked(useSolutionState);
+
+function setSolutionState(overrides: Partial<SolutionState>) {
+  mockUseSolutionState.mockReturnValue({
+    value: {
+      state: { metrics: 'inactive', logs: 'inactive', traces: 'inactive', kubernetes: 'inactive', ...overrides },
+      lokiDatasource: null,
+      tempoDatasource: null,
+    },
+    loading: false,
+  });
+}
 
 beforeEach(() => {
   window.localStorage.clear();
@@ -81,24 +89,40 @@ beforeEach(() => {
   });
   mockGet.mockReset();
   mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id)));
-  jest.mocked(hasSolutionData).mockReset();
-  jest.mocked(hasSolutionData).mockResolvedValue(true);
+  mockUseSolutionState.mockReset();
+  // Metrics + Logs, no Traces: the two-card row (hosted-traces, kubernetes-monitoring).
+  setSolutionState({ metrics: 'active', logs: 'active' });
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 });
 
 afterEach(() => jest.restoreAllMocks());
 
+const carouselRegion = async () => screen.findByRole('region', { name: 'Recommended apps' });
+
 describe('Recommendations', () => {
-  it('renders nothing while plugin data is loading', async () => {
-    mockUsePluginBridge.mockReturnValue({ loading: true });
+  it('renders the matrix-selected cards in matrix order for ml_no_traces', async () => {
+    render(<Recommendations />);
 
-    const { container } = render(<Recommendations />);
-
-    await waitFor(() => expect(container).toBeEmptyDOMElement());
+    const region = await carouselRegion();
+    const titles = within(region)
+      .getAllByRole('heading', { level: 3, hidden: true })
+      .map((heading) => heading.textContent?.trim());
+    expect(titles).toEqual(['Trace requests across services', 'Monitor your Kubernetes fleet']);
+    expect(within(region).getByRole('link', { name: /Enable Hosted Traces/ })).toBeInTheDocument();
+    expect(
+      within(region).getByRole('link', { name: /Enable Kubernetes Monitoring/, hidden: true })
+    ).toBeInTheDocument();
   });
 
-  it('holds a skeleton while loading when the section was visible on the last visit', async () => {
-    window.localStorage.setItem('grafana.home.recommendations.was-visible', 'true');
+  it('shows a skeleton while the solution state is resolving', async () => {
+    mockUseSolutionState.mockReturnValue({ value: undefined, loading: true });
+
+    render(<Recommendations />);
+
+    expect(await screen.findByTestId('recommendations-skeleton')).toBeInTheDocument();
+  });
+
+  it('holds the skeleton while a selected plugin card waits on the plugin list', async () => {
     mockGet.mockImplementation(() => new Promise(() => {}));
 
     render(<Recommendations />);
@@ -106,159 +130,24 @@ describe('Recommendations', () => {
     expect(await screen.findByTestId('recommendations-skeleton')).toBeInTheDocument();
   });
 
-  it('shows no skeleton while loading when the section was not visible before', async () => {
-    mockGet.mockImplementation(() => new Promise(() => {}));
-
-    const { container } = render(<Recommendations />);
-
-    await waitFor(() => expect(container).toBeEmptyDOMElement());
-  });
-
-  it('stores the visibility hint when the section renders', async () => {
-    render(<Recommendations />);
-
-    await screen.findByText('Recommendations for your stack');
-    await waitFor(() => expect(window.localStorage.getItem('grafana.home.recommendations.was-visible')).toBe('true'));
-  });
-
-  it('clears the visibility hint when everything settles to zero recommendations', async () => {
-    window.localStorage.setItem('grafana.home.recommendations.was-visible', 'true');
-    // All apps enabled and (per the default mock) receiving data: nothing to recommend.
-    mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id, { enabled: true })));
-
-    const { container } = render(<Recommendations />);
-
-    await waitFor(() => expect(container).toBeEmptyDOMElement());
-    await waitFor(() => expect(window.localStorage.getItem('grafana.home.recommendations.was-visible')).toBe('false'));
-  });
-
-  it('renders the section even when Kubernetes Monitoring is not installed', async () => {
-    mockUsePluginBridge.mockReturnValue({ loading: false, installed: false });
-
-    render(<Recommendations />);
-
-    expect(await screen.findByText('Recommendations for your stack')).toBeInTheDocument();
-  });
-
-  it('shows the no-data card when no datasource has Kubernetes data', async () => {
-    render(<Recommendations />);
-
-    expect(await screen.findByRole('heading', { name: 'No data flowing yet' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Hosted Metrics' })).not.toBeInTheDocument();
-  });
-
-  it('renders nothing when the user cannot manage plugins', async () => {
-    jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
-
-    const { container } = render(<Recommendations />);
-
-    await waitFor(() => expect(container).toBeEmptyDOMElement());
-    expect(mockGet).not.toHaveBeenCalled();
-    expect(mockUsePluginBridge).not.toHaveBeenCalled();
-  });
-
-  it('drops recommendations whose app is already enabled and receiving data', async () => {
-    mockGet.mockResolvedValue(
-      APP_IDS.map((id) =>
-        listItem(id, {
-          enabled: id === 'grafana-exploretraces-app' || id === 'grafana-synthetic-monitoring-app',
-        })
-      )
-    );
-
-    render(<Recommendations />);
-
-    expect(await screen.findByRole('link', { name: /Enable Application Observability/ })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Enable Hosted Traces/ })).not.toBeInTheDocument();
-  });
-
-  it('keeps recommending an enabled app that has no data, with a setup CTA into the app', async () => {
-    jest
-      .mocked(hasSolutionData)
-      .mockImplementation(async (pluginId: string) => pluginId !== 'grafana-synthetic-monitoring-app');
-    mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id, { enabled: true })));
-
-    render(<Recommendations />);
-
-    const setupLink = await screen.findByRole('link', { name: /Set up Synthetic Monitoring/, hidden: true });
-    expect(setupLink).toHaveAttribute('href', '/a/grafana-synthetic-monitoring-app/home');
-    expect(screen.queryByRole('link', { name: /Enable Hosted Traces/, hidden: true })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Add Synthetic Monitoring/, hidden: true })).not.toBeInTheDocument();
-  });
-
-  it('renders known cards immediately and appends the setup card when its probe settles', async () => {
-    let resolveProbe: (hasData: boolean) => void = () => {};
-    jest
-      .mocked(hasSolutionData)
-      .mockImplementation((pluginId: string) =>
-        pluginId === 'grafana-synthetic-monitoring-app'
-          ? new Promise((resolve) => (resolveProbe = resolve))
-          : Promise.resolve(true)
-      );
-    mockGet.mockResolvedValue(
-      APP_IDS.map((id) => listItem(id, { enabled: id === 'grafana-synthetic-monitoring-app' }))
-    );
-
-    render(<Recommendations />);
-
-    // Disabled apps render without waiting for the synthetic-monitoring probe.
-    expect(await screen.findByRole('link', { name: /Enable Hosted Traces/, hidden: true })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Set up Synthetic Monitoring/, hidden: true })).not.toBeInTheDocument();
-
-    resolveProbe(false);
-
-    expect(await screen.findByRole('link', { name: /Set up Synthetic Monitoring/, hidden: true })).toBeInTheDocument();
-  });
-
-  it('keeps the visible slide when an earlier-ordered setup card settles later', async () => {
-    let resolveProbe: (hasData: boolean) => void = () => {};
-    jest
-      .mocked(hasSolutionData)
-      .mockImplementation((pluginId: string) =>
-        pluginId === 'grafana-exploretraces-app'
-          ? new Promise((resolve) => (resolveProbe = resolve))
-          : Promise.resolve(true)
-      );
+  it('gives an enabled-but-silent app a setup CTA into the app', async () => {
     mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id, { enabled: id === 'grafana-exploretraces-app' })));
 
     render(<Recommendations />);
 
-    // Hosted Traces is still probing; Synthetic Monitoring's enable card leads the deck and is
-    // the visible (non-aria-hidden) slide.
-    expect(await screen.findByRole('link', { name: /Add Synthetic Monitoring/ })).toBeInTheDocument();
+    const setupLink = await screen.findByRole('link', { name: /Set up Hosted Traces/, hidden: true });
+    expect(setupLink).toHaveAttribute('href', '/a/grafana-exploretraces-app');
+    expect(screen.queryByRole('link', { name: /Enable Hosted Traces/, hidden: true })).not.toBeInTheDocument();
 
-    resolveProbe(false);
-
-    // The traces setup card joins the deck without stealing the visible slide.
-    expect(await screen.findByRole('link', { name: /Set up Hosted Traces/, hidden: true })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Add Synthetic Monitoring/ })).toBeInTheDocument();
-
-    // Late-settling cards append behind cards already showing (never insert in front — the
-    // carousel animates position shifts). getAllByRole returns document order.
-    const links = screen.getAllByRole('link', { hidden: true });
-    const smIndex = links.findIndex((link) => /Add Synthetic Monitoring/.test(link.textContent ?? ''));
-    const tracesIndex = links.findIndex((link) => /Set up Hosted Traces/.test(link.textContent ?? ''));
-    expect(smIndex).toBeGreaterThan(-1);
-    expect(tracesIndex).toBeGreaterThan(smIndex);
-  });
-
-  it('hides the section when every enabled app has data', async () => {
-    mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id, { enabled: true })));
-
-    const { container } = render(<Recommendations />);
-
-    await waitFor(() => expect(container).toBeEmptyDOMElement());
   });
 
   it('hides the setup card when the user lacks app access to the silent app', async () => {
-    jest.mocked(hasSolutionData).mockResolvedValue(false);
     mockGet.mockResolvedValue(
       APP_IDS.map((id) =>
         listItem(id, {
-          enabled: true,
+          enabled: id === 'grafana-exploretraces-app',
           accessControl:
-            id === 'grafana-synthetic-monitoring-app'
+            id === 'grafana-exploretraces-app'
               ? { [AccessControlAction.PluginsWrite]: true }
               : { [AccessControlAction.PluginsWrite]: true, [AccessControlAction.PluginsAppAccess]: true },
         })
@@ -267,103 +156,176 @@ describe('Recommendations', () => {
 
     render(<Recommendations />);
 
-    expect(await screen.findByRole('link', { name: /Set up Hosted Traces/, hidden: true })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Set up Synthetic Monitoring/, hidden: true })).not.toBeInTheDocument();
-    // Inaccessible apps are excluded before probing: their probe could never produce a card.
-    expect(jest.mocked(hasSolutionData)).not.toHaveBeenCalledWith('grafana-synthetic-monitoring-app');
+    const region = await carouselRegion();
+    expect(within(region).queryByRole('link', { name: /Hosted Traces/, hidden: true })).not.toBeInTheDocument();
+    expect(
+      within(region).getByRole('link', { name: /Enable Kubernetes Monitoring/, hidden: true })
+    ).toBeInTheDocument();
   });
 
-  it('shows a settled setup card while another probe is still pending', async () => {
-    jest.mocked(hasSolutionData).mockImplementation((pluginId: string) => {
-      if (pluginId === 'grafana-synthetic-monitoring-app') {
-        return Promise.resolve(false);
-      }
-      if (pluginId === 'grafana-exploretraces-app') {
-        return new Promise(() => {}); // Never settles.
-      }
-      return Promise.resolve(true);
-    });
-    mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id, { enabled: true })));
+  it('renders a single connection card for metrics_only without carousel controls or auto-advance', async () => {
+    jest.useFakeTimers();
+    try {
+      setSolutionState({ metrics: 'active' });
+
+      render(<Recommendations />);
+
+      // Flush the plugin-list fetch inside act; fake timers leave it pending otherwise.
+      await act(async () => {});
+
+      const addLogs = await screen.findByRole('link', { name: /Add Logs/ });
+      expect(addLogs).toHaveAttribute('href', '/connections/add-new-connection');
+      expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Previous' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Go to recommendation/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Pause' })).not.toBeInTheDocument();
+
+      act(() => {
+        jest.advanceTimersByTime(11_000);
+      });
+
+      expect(screen.getByRole('link', { name: /Add Logs/ })).toBeInTheDocument();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('selects the Helm-flavored logs card when kubernetes is active without logs', async () => {
+    setSolutionState({ metrics: 'active', kubernetes: 'active' });
 
     render(<Recommendations />);
 
-    // The settled no-data probe renders its setup card without waiting for the hanging probe.
-    expect(await screen.findByRole('link', { name: /Set up Synthetic Monitoring/, hidden: true })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Set up Hosted Traces/, hidden: true })).not.toBeInTheDocument();
+    const setupLogs = await screen.findByRole('link', { name: /Set up log collection/ });
+    expect(setupLogs).toHaveAttribute('href', '/connections/add-new-connection');
   });
 
-  it('shows installed-but-disabled cards but hides not-installed cards for a write-only user', async () => {
-    jest.mocked(contextSrv.hasPermission).mockImplementation((action) => action === AccessControlAction.PluginsWrite);
-    mockGet.mockResolvedValue(APP_IDS.filter((id) => id !== 'grafana-exploretraces-app').map((id) => listItem(id)));
+  it('hides connection cards without datasource creation permission', async () => {
+    setSolutionState({ metrics: 'active' });
+    jest
+      .mocked(contextSrv.hasPermission)
+      .mockImplementation((action) => action !== AccessControlAction.DataSourcesCreate);
 
     render(<Recommendations />);
 
     await screen.findByText('Recommendations for your stack');
-    // Cards past the active one are aria-hidden in the carousel, so query with { hidden: true }.
-    expect(screen.queryByRole('link', { name: /Add Synthetic Monitoring/, hidden: true })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Enable Hosted Traces/, hidden: true })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Add Logs/, hidden: true })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Recommended apps' })).not.toBeInTheDocument();
   });
 
-  it('shows not-installed cards but hides installed-but-disabled cards for an install-only user', async () => {
-    jest.mocked(contextSrv.hasPermission).mockImplementation((action) => action === AccessControlAction.PluginsInstall);
-    mockGet.mockResolvedValue(
-      APP_IDS.filter((id) => id !== 'grafana-exploretraces-app').map((id) => listItem(id, { accessControl: {} }))
-    );
-
-    render(<Recommendations />);
-
-    await screen.findByText('Recommendations for your stack');
-    expect(screen.queryByRole('link', { name: /Enable Hosted Traces/, hidden: true })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Add Synthetic Monitoring/, hidden: true })).not.toBeInTheDocument();
-  });
-
-  it('hides the section when the plugin list cannot be fetched', async () => {
+  it('keeps connection cards when the plugin fetch rejects, while plugin cards fail closed', async () => {
+    // DataSourcesCreate-only user: the plugin list request fails outright.
+    jest
+      .mocked(contextSrv.hasPermission)
+      .mockImplementation((action) => action === AccessControlAction.DataSourcesCreate);
     mockGet.mockRejectedValue(new Error('boom'));
+    setSolutionState({ metrics: 'active' });
 
-    const { container } = render(<Recommendations />);
+    render(<Recommendations />);
 
-    await waitFor(() => expect(container).toBeEmptyDOMElement());
+    expect(await screen.findByRole('link', { name: /Add Logs/ })).toBeInTheDocument();
+
+    // Same failure with a plugin-card selection: nothing renders but the region stays.
+    setSolutionState({ metrics: 'active', logs: 'active' });
+    render(<Recommendations />);
+
+    expect(await screen.findByText('Recommendations for your stack')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Hosted Traces/, hidden: true })).not.toBeInTheDocument();
   });
 
-  it('renders nothing when the plugin list is empty', async () => {
+  it('fails plugin cards closed when the plugin list is empty', async () => {
     mockGet.mockResolvedValue([]);
 
-    const { container } = render(<Recommendations />);
+    render(<Recommendations />);
 
-    await waitFor(() => expect(container).toBeEmptyDOMElement());
+    await screen.findByText('Recommendations for your stack');
+    expect(screen.queryByRole('region', { name: 'Recommended apps' })).not.toBeInTheDocument();
   });
 
-  it('renders nothing for legacy Admin roles without plugin permissions', async () => {
-    jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
-    jest.spyOn(contextSrv, 'hasRole').mockImplementation((role) => role === 'Admin');
-
-    const { container } = render(<Recommendations />);
-
-    await waitFor(() => expect(container).toBeEmptyDOMElement());
-  });
-
-  it('only shows disabled cards the user can write', async () => {
-    jest.mocked(contextSrv.hasPermission).mockImplementation((action) => action === AccessControlAction.PluginsWrite);
-    mockGet.mockResolvedValue(
-      APP_IDS.map((id) =>
-        listItem(id, {
-          accessControl: id === 'grafana-exploretraces-app' ? { [AccessControlAction.PluginsWrite]: true } : {},
-        })
-      )
-    );
+  it('renders the region left-only when any signal is unknown', async () => {
+    setSolutionState({ metrics: 'active', logs: 'unknown' });
 
     render(<Recommendations />);
 
-    expect(await screen.findByRole('link', { name: /Enable Hosted Traces/ })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Add Synthetic Monitoring/ })).not.toBeInTheDocument();
+    await screen.findByText('Recommendations for your stack');
+    expect(await screen.findByRole('heading', { name: 'No data flowing yet' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Recommended apps' })).not.toBeInTheDocument();
+  });
+
+  it('renders the region left-only with no pills for fully active stacks', async () => {
+    setSolutionState({ metrics: 'active', logs: 'active', traces: 'active', kubernetes: 'active' });
+
+    const { user } = render(<Recommendations />);
+
+    await screen.findByText('Recommendations for your stack');
+    expect(screen.queryByRole('region', { name: 'Recommended apps' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Hide' }));
+
+    // Collapsed with zero recommendations: no pill row either.
+    expect(screen.queryByRole('link', { name: /Enable/ })).not.toBeInTheDocument();
+  });
+
+  it('never renders the removed legacy cards, even installed and disabled', async () => {
+    render(<Recommendations />);
+
+    const region = await carouselRegion();
+    expect(within(region).queryByRole('link', { name: /Synthetic Monitoring/, hidden: true })).not.toBeInTheDocument();
+    expect(
+      within(region).queryByRole('link', { name: /Application Observability/, hidden: true })
+    ).not.toBeInTheDocument();
+    expect(
+      within(region).queryByRole('link', { name: /Frontend Observability/, hidden: true })
+    ).not.toBeInTheDocument();
+  });
+
+  it('renders nothing when the user can manage neither plugins nor datasources', async () => {
+    jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
+
+    const { container } = render(<Recommendations />);
+
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
+    expect(mockGet).not.toHaveBeenCalled();
+    expect(mockUseSolutionState).not.toHaveBeenCalled();
+  });
+
+  it('renders the section for a datasource-creation-only user', async () => {
+    jest
+      .mocked(contextSrv.hasPermission)
+      .mockImplementation((action) => action === AccessControlAction.DataSourcesCreate);
+    setSolutionState({ metrics: 'active' });
+
+    render(<Recommendations />);
+
+    expect(await screen.findByRole('link', { name: /Add Logs/ })).toBeInTheDocument();
+  });
+
+  it('shows installed-but-disabled cards only with a scoped write permission', async () => {
+    jest.mocked(contextSrv.hasPermission).mockImplementation((action) => action === AccessControlAction.PluginsWrite);
+    mockGet.mockResolvedValue([
+      listItem('grafana-exploretraces-app'),
+      listItem('grafana-k8s-app', { accessControl: {} }),
+    ]);
+
+    render(<Recommendations />);
+
+    expect(await screen.findByRole('link', { name: /Enable Hosted Traces/, hidden: true })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Enable Kubernetes Monitoring/, hidden: true })).not.toBeInTheDocument();
+  });
+
+  it('shows not-installed cards but hides installed-but-disabled ones for an install-only user', async () => {
+    jest.mocked(contextSrv.hasPermission).mockImplementation((action) => action === AccessControlAction.PluginsInstall);
+    mockGet.mockResolvedValue([listItem('grafana-k8s-app', { accessControl: {} })]);
+
+    render(<Recommendations />);
+
+    expect(await screen.findByRole('link', { name: /Enable Hosted Traces/, hidden: true })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Enable Kubernetes Monitoring/, hidden: true })).not.toBeInTheDocument();
   });
 
   it('hides install cards when plugin admin is disabled', async () => {
     config.pluginAdminEnabled = false;
     jest.mocked(contextSrv.hasPermission).mockImplementation((action) => action === AccessControlAction.PluginsInstall);
-    mockGet.mockResolvedValue(
-      APP_IDS.filter((id) => id !== 'grafana-exploretraces-app').map((id) => listItem(id, { accessControl: {} }))
-    );
+    mockGet.mockResolvedValue([]);
 
     try {
       const { container } = render(<Recommendations />);
@@ -443,44 +405,27 @@ describe('Recommendations', () => {
     expect(screen.queryByTestId('recommendation-existing-skeleton')).not.toBeInTheDocument();
   });
 
-  it('loads the collapsed state from local storage', async () => {
-    window.localStorage.setItem('grafana.home.recommendations.collapsed', 'true');
-    render(<Recommendations />);
-
-    expect(await screen.findByRole('button', { name: 'Show' })).toBeInTheDocument();
-    expect(screen.getByText('Recommendations for your stack')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Show' })).toHaveAttribute('aria-expanded', 'false');
-  });
-
   it('navigates recommendations with previous/next buttons', async () => {
     const { user } = render(<Recommendations />);
 
+    const region = await carouselRegion();
     const getVisibleHeading = () =>
-      screen.getAllByRole('heading', { level: 3 }).find((heading) => heading.closest('div[aria-hidden="false"]'));
+      within(region)
+        .getAllByRole('heading', { level: 3, hidden: true })
+        .find((heading) => heading.closest('div[aria-hidden="false"]'));
     const getVisibleTitle = () => getVisibleHeading()?.textContent?.trim() ?? '';
-    const getVisibleSlide = () => getVisibleHeading()?.closest('div[aria-hidden="false"]');
 
-    // The enabled lookup resolves async; wait for the carousel before reading slides.
     await screen.findByRole('button', { name: 'Next' });
 
-    const initialVisibleSlide = getVisibleSlide();
-    const initialVisibleTitle = getVisibleTitle();
-
-    expect(initialVisibleSlide).toBeInTheDocument();
-    expect(getVisibleHeading()).toBeInTheDocument();
+    expect(getVisibleTitle()).toBe('Trace requests across services');
 
     await user.click(screen.getByRole('button', { name: 'Next' }));
 
-    expect(getVisibleSlide()).toBeInTheDocument();
-    expect(getVisibleSlide()).not.toBe(initialVisibleSlide);
-    expect(getVisibleTitle()).not.toBe(initialVisibleTitle);
-    expect(getVisibleHeading()).toBeInTheDocument();
+    expect(getVisibleTitle()).toBe('Monitor your Kubernetes fleet');
 
     await user.click(screen.getByRole('button', { name: 'Previous' }));
 
-    expect(getVisibleSlide()).toBe(initialVisibleSlide);
-    expect(getVisibleTitle()).toBe(initialVisibleTitle);
-    expect(getVisibleHeading()).toBeInTheDocument();
+    expect(getVisibleTitle()).toBe('Trace requests across services');
   });
 
   it('navigates recommendations with dots', async () => {
@@ -488,13 +433,11 @@ describe('Recommendations', () => {
 
     expect(await screen.findByRole('button', { name: 'Go to recommendation 2' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Go to recommendation 1' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Go to recommendation 3' })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Go to recommendation 3' }));
+    await user.click(screen.getByRole('button', { name: 'Go to recommendation 2' }));
 
     expect(screen.getByRole('button', { name: 'Go to recommendation 1' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Go to recommendation 2' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Go to recommendation 3' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Go to recommendation 2' })).not.toBeInTheDocument();
   });
 
   it('pauses by default when reduced motion is preferred', async () => {
@@ -518,7 +461,7 @@ describe('Recommendations', () => {
     }
   });
 
-  it('pauses and resumes autoplay', async () => {
+  it('auto-advances a multi-card carousel and pauses on demand', async () => {
     jest.useFakeTimers();
 
     try {
@@ -549,10 +492,11 @@ describe('Recommendations', () => {
       jest.useRealTimers();
     }
   });
+
   it('announces the recommendation slides as a carousel region', async () => {
     render(<Recommendations />);
 
-    const region = await screen.findByRole('region', { name: 'Recommended apps' });
+    const region = await carouselRegion();
     expect(region).toHaveAttribute('aria-roledescription', 'carousel');
   });
 
@@ -568,7 +512,7 @@ describe('Recommendations', () => {
       document.removeEventListener('click', interceptLinkClicks);
     });
 
-    it('tracks enable from the active recommendation card', async () => {
+    it('tracks enable with the driving matrix row from the active card', async () => {
       const { user } = render(<Recommendations />);
 
       await user.click(await screen.findByRole('link', { name: /Enable Hosted Traces/ }));
@@ -578,6 +522,23 @@ describe('Recommendations', () => {
         action: 'enable',
         placement: 'card',
         recommendation_id: 'hosted-traces',
+        starting_state: 'ml_no_traces',
+      });
+    });
+
+    it('tracks setup from an enabled-but-silent app card', async () => {
+      mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id, { enabled: id === 'grafana-exploretraces-app' })));
+
+      const { user } = render(<Recommendations />);
+
+      await user.click(await screen.findByRole('link', { name: /Set up Hosted Traces/ }));
+
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'recommendations',
+        action: 'setup',
+        placement: 'card',
+        recommendation_id: 'hosted-traces',
+        starting_state: 'ml_no_traces',
       });
     });
 
@@ -593,6 +554,7 @@ describe('Recommendations', () => {
         action: 'enable',
         placement: 'pill',
         recommendation_id: 'hosted-traces',
+        starting_state: 'ml_no_traces',
       });
     });
   });

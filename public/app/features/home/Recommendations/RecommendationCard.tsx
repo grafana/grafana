@@ -9,9 +9,10 @@ import type { RecommendationItem } from './types';
 
 interface RecommendationCardProps {
   recommendation: RecommendationItem;
+  startingState: string;
 }
 
-export function RecommendationCard({ recommendation }: RecommendationCardProps) {
+export function RecommendationCard({ recommendation, startingState }: RecommendationCardProps) {
   const styles = useStyles2(getStyles, recommendation.color);
 
   return (
@@ -45,6 +46,7 @@ export function RecommendationCard({ recommendation }: RecommendationCardProps) 
               action: recommendation.cta ?? 'enable',
               placement: 'card',
               recommendation_id: recommendation.id,
+              starting_state: startingState,
             })
           }
         >

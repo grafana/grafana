@@ -46,6 +46,11 @@ export interface CtaClicked extends EventProperty {
   placement: 'list' | 'empty_state' | 'footer' | 'card' | 'pill';
   /** Stable id of the recommendation whose Enable CTA was clicked (surface 'recommendations' only). */
   recommendation_id?: string;
+  /**
+   * Matrix base-row id driving the current card selection (surface 'recommendations' only);
+   * values are the BaseRow union in solutionsMatrix.ts.
+   */
+  starting_state?: string;
   /** Stable id of the solution whose control was clicked (surfaces 'existing_solution' and 'no_data_card' only). */
   solution?: string;
 }
