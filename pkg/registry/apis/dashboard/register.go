@@ -385,7 +385,7 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		case admission.Update:
 			return b.validateVariableUpdate(ctx, a)
 		case admission.Delete:
-			return b.validateVariableDelete(ctx)
+			return b.validateVariableDelete(ctx, a)
 		case admission.Connect:
 			return nil
 		}
@@ -600,10 +600,6 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 }
 
 func (b *DashboardsAPIBuilder) validateVariableCreate(ctx context.Context, a admission.Attributes) error {
-	if err := b.validateVariableMutationPermissions(ctx); err != nil {
-		return err
-	}
-
 	variable, ok := a.GetObject().(*dashv2beta1.Variable)
 	if !ok {
 		return fmt.Errorf("unsupported variable version: %T", a.GetObject())
@@ -618,21 +614,22 @@ func (b *DashboardsAPIBuilder) validateVariableCreate(ctx context.Context, a adm
 		return fmt.Errorf("error getting variable meta accessor: %w", err)
 	}
 
-	if err := validateVariableMetadataName(variable.GetName(), getVariableName(variable.Spec), accessor.GetFolder()); err != nil {
+	folderUID := accessor.GetFolder()
+	if err := validateVariableMetadataName(variable.GetName(), getVariableName(variable.Spec), folderUID); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
-	if !a.IsDryRun() && accessor.GetFolder() != "" {
+	if err := b.validateVariableMutationPermissions(ctx, a, folderUID); err != nil {
+		return err
+	}
+
+	if !a.IsDryRun() && folderUID != "" {
 		id, err := identity.GetRequester(ctx)
 		if err != nil {
 			return fmt.Errorf("error getting requester: %w", err)
 		}
 
-		if err := b.verifyFolderAccessPermissions(ctx, id, accessor.GetFolder()); err != nil {
-			return err
-		}
-
-		if _, err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
+		if _, err := b.validateFolderExists(ctx, folderUID, id.GetOrgID()); err != nil {
 			return err
 		}
 	}
@@ -641,10 +638,6 @@ func (b *DashboardsAPIBuilder) validateVariableCreate(ctx context.Context, a adm
 }
 
 func (b *DashboardsAPIBuilder) validateVariableUpdate(ctx context.Context, a admission.Attributes) error {
-	if err := b.validateVariableMutationPermissions(ctx); err != nil {
-		return err
-	}
-
 	newVariable, ok := a.GetObject().(*dashv2beta1.Variable)
 	if !ok {
 		return fmt.Errorf("unsupported variable version: %T", a.GetObject())
@@ -677,25 +670,49 @@ func (b *DashboardsAPIBuilder) validateVariableUpdate(ctx context.Context, a adm
 		return apierrors.NewBadRequest("folder scope cannot be changed; delete the variable and create a new one")
 	}
 
-	return nil
+	return b.validateVariableMutationPermissions(ctx, a, oldAccessor.GetFolder())
 }
 
-func (b *DashboardsAPIBuilder) validateVariableDelete(ctx context.Context) error {
-	return b.validateVariableMutationPermissions(ctx)
+func (b *DashboardsAPIBuilder) validateVariableDelete(ctx context.Context, a admission.Attributes) error {
+	obj := a.GetOldObject()
+	if obj == nil {
+		obj = a.GetObject()
+	}
+	variable, ok := obj.(*dashv2beta1.Variable)
+	if !ok {
+		return fmt.Errorf("unsupported variable version: %T", obj)
+	}
+
+	accessor, err := utils.MetaAccessor(variable)
+	if err != nil {
+		return fmt.Errorf("error getting variable meta accessor: %w", err)
+	}
+
+	return b.validateVariableMutationPermissions(ctx, a, accessor.GetFolder())
 }
 
-func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.Context) error {
+// validateVariableMutationPermissions authorizes variable create/update/delete.
+// Global variables (no folder) require org Editor or Admin. Folder-scoped
+// variables require edit access on that folder, regardless of org role.
+func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.Context, a admission.Attributes, folderUID string) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("variable mutation requires editor or admin role"))
 	}
 
-	role := requester.GetOrgRole()
-	if role != identity.RoleEditor && role != identity.RoleAdmin {
-		return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("variable mutation requires editor or admin role"))
+	if folderUID == "" {
+		role := requester.GetOrgRole()
+		if role != identity.RoleEditor && role != identity.RoleAdmin {
+			return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("variable mutation requires editor or admin role"))
+		}
+		return nil
 	}
 
-	return nil
+	if a.IsDryRun() {
+		return nil
+	}
+
+	return b.verifyFolderAccessPermissions(ctx, requester, folderUID)
 }
 
 // validateFolderExists checks if a folder exists

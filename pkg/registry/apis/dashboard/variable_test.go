@@ -254,18 +254,18 @@ func TestVariableMutationPermissionsByRole(t *testing.T) {
 		op       admission.Operation
 		expected bool
 	}{
-		{name: "admin can create", role: identity.RoleAdmin, op: admission.Create, expected: true},
-		{name: "editor can create", role: identity.RoleEditor, op: admission.Create, expected: true},
-		{name: "viewer cannot create", role: identity.RoleViewer, op: admission.Create, expected: false},
-		{name: "none cannot create", role: identity.RoleNone, op: admission.Create, expected: false},
-		{name: "admin can update", role: identity.RoleAdmin, op: admission.Update, expected: true},
-		{name: "editor can update", role: identity.RoleEditor, op: admission.Update, expected: true},
-		{name: "viewer cannot update", role: identity.RoleViewer, op: admission.Update, expected: false},
-		{name: "none cannot update", role: identity.RoleNone, op: admission.Update, expected: false},
-		{name: "admin can delete", role: identity.RoleAdmin, op: admission.Delete, expected: true},
-		{name: "editor can delete", role: identity.RoleEditor, op: admission.Delete, expected: true},
-		{name: "viewer cannot delete", role: identity.RoleViewer, op: admission.Delete, expected: false},
-		{name: "none cannot delete", role: identity.RoleNone, op: admission.Delete, expected: false},
+		{name: "admin can create global", role: identity.RoleAdmin, op: admission.Create, expected: true},
+		{name: "editor can create global", role: identity.RoleEditor, op: admission.Create, expected: true},
+		{name: "viewer cannot create global", role: identity.RoleViewer, op: admission.Create, expected: false},
+		{name: "none cannot create global", role: identity.RoleNone, op: admission.Create, expected: false},
+		{name: "admin can update global", role: identity.RoleAdmin, op: admission.Update, expected: true},
+		{name: "editor can update global", role: identity.RoleEditor, op: admission.Update, expected: true},
+		{name: "viewer cannot update global", role: identity.RoleViewer, op: admission.Update, expected: false},
+		{name: "none cannot update global", role: identity.RoleNone, op: admission.Update, expected: false},
+		{name: "admin can delete global", role: identity.RoleAdmin, op: admission.Delete, expected: true},
+		{name: "editor can delete global", role: identity.RoleEditor, op: admission.Delete, expected: true},
+		{name: "viewer cannot delete global", role: identity.RoleViewer, op: admission.Delete, expected: false},
+		{name: "none cannot delete global", role: identity.RoleNone, op: admission.Delete, expected: false},
 	}
 
 	for _, tc := range tests {
@@ -281,6 +281,60 @@ func TestVariableMutationPermissionsByRole(t *testing.T) {
 
 			require.Error(t, err)
 			require.Contains(t, err.Error(), "variable mutation requires editor or admin role")
+		})
+	}
+}
+
+func TestVariableMutationPermissionsFolderScoped(t *testing.T) {
+	folderUID := "folder-a"
+	oldVariable := newCustomVariable("region", "region--folder-a")
+	oldVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
+	newVariable := newCustomVariable("region", "region--folder-a")
+	newVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
+
+	tests := []struct {
+		name      string
+		role      identity.RoleType
+		op        admission.Operation
+		forbidden bool
+		expected  bool
+	}{
+		{name: "viewer with folder edit can create", role: identity.RoleViewer, op: admission.Create, expected: true},
+		{name: "viewer with folder edit can update", role: identity.RoleViewer, op: admission.Update, expected: true},
+		{name: "viewer with folder edit can delete", role: identity.RoleViewer, op: admission.Delete, expected: true},
+		{name: "viewer without folder edit cannot create", role: identity.RoleViewer, op: admission.Create, forbidden: true, expected: false},
+		{name: "viewer without folder edit cannot update", role: identity.RoleViewer, op: admission.Update, forbidden: true, expected: false},
+		{name: "viewer without folder edit cannot delete", role: identity.RoleViewer, op: admission.Delete, forbidden: true, expected: false},
+		{name: "none with folder edit can create", role: identity.RoleNone, op: admission.Create, expected: true},
+		{name: "editor with folder edit can create", role: identity.RoleEditor, op: admission.Create, expected: true},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			folderHandler := &variableFolderAccessHandler{
+				forbiddenAccessSubresource: tc.forbidden,
+			}
+			builder := &DashboardsAPIBuilder{
+				folderClientProvider: &staticHandlerProvider{handler: folderHandler},
+			}
+
+			ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+			ctx = identity.WithRequester(ctx, &identity.StaticRequester{
+				OrgRole: tc.role,
+				OrgID:   1,
+			})
+			attrs := buildVariableAttributesForOp(tc.op, newVariable, oldVariable)
+
+			err := builder.Validate(ctx, attrs, nil)
+			if tc.expected {
+				require.NoError(t, err)
+				require.True(t, folderHandler.accessSubresourceChecked)
+				return
+			}
+
+			require.Error(t, err)
+			require.True(t, apierrors.IsForbidden(err))
+			require.True(t, folderHandler.accessSubresourceChecked)
 		})
 	}
 }
@@ -406,9 +460,7 @@ func (h *variableFolderAccessHandler) Get(_ context.Context, name string, _ int6
 
 		return &unstructured.Unstructured{
 			Object: map[string]any{
-				"spec": map[string]any{
-					"canEdit": true,
-				},
+				"canEdit": true,
 			},
 		}, nil
 	}
