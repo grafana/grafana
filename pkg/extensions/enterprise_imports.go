@@ -147,6 +147,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/apimachinery/errutil"
 	_ "github.com/grafana/grafana/pkg/apimachinery/identity"
 	_ "github.com/grafana/grafana/pkg/apimachinery/utils"
+	_ "github.com/grafana/grafana/pkg/apimachinery/validation"
 	_ "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	_ "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	_ "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
