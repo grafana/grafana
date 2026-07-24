@@ -29,11 +29,11 @@ Traces support is in public preview and available on Grafana Cloud only. Team LB
 
 Support for additional data sources may be added in future updates.
 
-| Data source          | Grafana Cloud  | Grafana Enterprise                             | Cross-tenant query support |
-| -------------------- | -------------- | ---------------------------------------------- | -------------------------- |
-| Loki                 | GA             | GA (requires GEL - Grafana Enterprise Logs)    | ❌                         |
-| Prometheus           | GA             | GA (requires GEM - Grafana Enterprise Metrics) | ❌                         |
-| Tempo                | Public preview | Not available                                  | ❌                         |
+| Data source | Grafana Cloud  | Grafana Enterprise                             | Cross-tenant query support |
+| ----------- | -------------- | ---------------------------------------------- | -------------------------- |
+| Loki        | GA             | GA (requires GEL - Grafana Enterprise Logs)    | ❌                         |
+| Prometheus  | GA             | GA (requires GEM - Grafana Enterprise Metrics) | ❌                         |
+| Tempo       | Public preview | Not available                                  | ❌                         |
 
 {{< admonition type="note" >}}
 For enterprise this feature requires Grafana Enterprise Metrics (GEM) or Grafana Enterprise Logs (GEL) to function.
