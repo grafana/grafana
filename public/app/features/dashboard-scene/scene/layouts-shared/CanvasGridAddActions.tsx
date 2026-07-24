@@ -90,7 +90,7 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
           disabled={disableGrouping}
           tooltip={
             disableGrouping
-              ? t('dashboard.canvas-actions.disabled-nested-grouping', 'Grouping is limited to 3 levels')
+              ? t('dashboard.canvas-actions.disabled-nested-grouping', 'Grouping is limited to 4 levels')
               : undefined
           }
         >
@@ -115,7 +115,7 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
   );
 }
 
-const MAX_NESTING_DEPTH = 3;
+const MAX_NESTING_DEPTH = 4;
 
 export function useNestingRestrictions(layoutManager: DashboardLayoutManager) {
   return useMemo(() => {
@@ -135,7 +135,7 @@ export function useNestingRestrictions(layoutManager: DashboardLayoutManager) {
     }
 
     const disableGrouping = layouts.length >= MAX_NESTING_DEPTH;
-    const disableTabs = disableGrouping || layouts.includes(TabsLayoutManager.descriptor.id);
+    const disableTabs = disableGrouping || layouts[0] === TabsLayoutManager.descriptor.id;
 
     return { disableGrouping, disableTabs };
   }, [layoutManager]);

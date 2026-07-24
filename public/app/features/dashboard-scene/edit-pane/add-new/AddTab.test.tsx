@@ -87,7 +87,7 @@ describe('AddTab', () => {
 
     const button = screen.getByRole('button', { name: 'Group into tabs' });
     expect(button).toBeDisabled();
-    expect(button).toHaveAttribute('data-tooltip', 'Grouping is limited to 3 levels');
+    expect(button).toHaveAttribute('data-tooltip', 'Grouping is limited to 4 levels');
   });
 
   it('adds a tab when enabled', async () => {

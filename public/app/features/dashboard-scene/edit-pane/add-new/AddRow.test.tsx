@@ -76,7 +76,7 @@ describe('AddRow', () => {
 
     const button = screen.getByRole('button', { name: 'Group into rows' });
     expect(button).toBeDisabled();
-    expect(button).toHaveAttribute('data-tooltip', 'Grouping is limited to 3 levels');
+    expect(button).toHaveAttribute('data-tooltip', 'Grouping is limited to 4 levels');
   });
 
   it('adds a row when enabled', async () => {
