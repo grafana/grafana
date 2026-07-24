@@ -92,10 +92,11 @@ func dashboardSourcePath(t *testing.T, helper *common.GitTestHelper, uid string)
 	var sourcePath string
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		obj, err := helper.DashboardsV1.Resource.Get(t.Context(), uid, metav1.GetOptions{})
-		if !assert.NoError(c, err, "failed to get dashboard %s", uid) {
-			return
-		}
-		sourcePath = obj.GetAnnotations()["grafana.app/sourcePath"]
+		require.NoError(c, err, "failed to get dashboard %s", uid)
+
+		sp := obj.GetAnnotations()["grafana.app/sourcePath"]
+		assert.NotEmpty(c, sp, "dashboard %q should have sourcePath annotation", uid)
+		sourcePath = sp
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard %q should be retrievable", uid)
 	return sourcePath
 }
