@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
 
 import { createDataFrame } from '@grafana/data';
@@ -9,7 +9,11 @@ import { data } from '../FlameGraph/testData/dataNestedSet';
 import { textToDataContainer } from '../FlameGraph/testHelpers';
 import { ColorScheme } from '../types';
 
-import FlameGraphTopTableContainer, { buildFilteredTable } from './FlameGraphTopTableContainer';
+import FlameGraphTopTableContainer, {
+  buildFilteredTable,
+  getMinTotal,
+  splitOtherRow,
+} from './FlameGraphTopTableContainer';
 
 describe('FlameGraphTopTableContainer', () => {
   const setup = () => {
@@ -81,6 +85,103 @@ describe('FlameGraphTopTableContainer', () => {
     await userEvents.click(sandwichButtons[0]);
 
     expect(mocks.onSandwich).toHaveBeenCalledWith('net/http.HandlerFunc.ServeHTTP');
+  });
+});
+
+describe('other row', () => {
+  // Minimal tree: total -> [foo, bar, other]. "other" mimics the truncation row a backend like Pyroscope sends
+  // when a profile has more stack traces than the maxNodes limit.
+  const dataWithOther = {
+    fields: [
+      { name: 'level', values: [0, 1, 1, 1] },
+      { name: 'value', values: [10, 4, 3, 3] },
+      { name: 'self', values: [0, 4, 3, 3] },
+      { name: 'label', values: ['total', 'foo', 'bar', 'other'] },
+    ],
+  };
+
+  const setup = () => {
+    const flameGraphData = createDataFrame(dataWithOther);
+    const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
+    const onSearch = jest.fn();
+    const onSandwich = jest.fn();
+
+    const renderResult = render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={onSearch}
+        onSandwich={onSandwich}
+        colorScheme={ColorScheme.ValueBased}
+      />
+    );
+
+    return { renderResult, mocks: { onSearch, onSandwich } };
+  };
+
+  it('does not show "other" as a row in the table', () => {
+    mockBoundingClientRect({ width: 500, height: 500 });
+    setup();
+
+    const rows = screen.getAllByRole('row');
+    // Header + 3 rows (total, foo, bar) - "other" is excluded.
+    expect(rows).toHaveLength(4);
+    expect(screen.queryByRole('cell', { name: 'other' })).not.toBeInTheDocument();
+  });
+
+  it('explains the truncated "other" row below the table', () => {
+    mockBoundingClientRect({ width: 500, height: 500 });
+    setup();
+
+    const explanation = screen.getByTestId('topTableOtherRow');
+    expect(explanation).toHaveTextContent(/has been truncated/);
+  });
+
+  it('lets you search and sandwich the "other" aggregate', async () => {
+    mockBoundingClientRect({ width: 500, height: 500 });
+    const { mocks } = setup();
+
+    const explanation = screen.getByTestId('topTableOtherRow');
+    const searchButton = within(explanation).getByLabelText(/Search for symbol/);
+    await userEvents.click(searchButton);
+    expect(mocks.onSearch).toHaveBeenCalledWith('other');
+
+    const sandwichButton = within(explanation).getByLabelText(/Show in sandwich view/);
+    await userEvents.click(sandwichButton);
+    expect(mocks.onSandwich).toHaveBeenCalledWith('other');
+  });
+});
+
+describe('splitOtherRow', () => {
+  it('pulls the other row out of the table', () => {
+    const table = {
+      foo: { self: 1, total: 2, totalRight: 0 },
+      other: { self: 3, total: 3, totalRight: 0 },
+    };
+
+    expect(splitOtherRow(table)).toEqual({
+      rest: { foo: { self: 1, total: 2, totalRight: 0 } },
+      other: { self: 3, total: 3, totalRight: 0 },
+    });
+  });
+
+  it('returns the table unchanged when there is no other row', () => {
+    const table = { foo: { self: 1, total: 2, totalRight: 0 } };
+    expect(splitOtherRow(table)).toEqual({ rest: table, other: undefined });
+  });
+});
+
+describe('getMinTotal', () => {
+  it('returns the smallest total value', () => {
+    const table = {
+      foo: { self: 1, total: 5, totalRight: 0 },
+      bar: { self: 1, total: 2, totalRight: 0 },
+    };
+    expect(getMinTotal(table)).toBe(2);
+  });
+
+  it('returns undefined for an empty table', () => {
+    expect(getMinTotal({})).toBeUndefined();
   });
 });
 
