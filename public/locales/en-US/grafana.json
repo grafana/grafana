@@ -6344,6 +6344,9 @@
         "title-not-unique": "This title is not unique"
       }
     },
+    "time-compare": {
+      "no-data-notice": "No data returned for time comparison"
+    },
     "title": {
       "action": "Change dashboard title"
     },

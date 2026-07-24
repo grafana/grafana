@@ -4,7 +4,8 @@
 
 import { of } from 'rxjs';
 
-import { dateTime, type DateTime, rangeUtil, type TimeRange } from '@grafana/data';
+import { dateTime, type DataFrame, type DateTime, rangeUtil, type TimeRange } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { type ExtraQueryDataProcessor } from '@grafana/scenes';
 
 import type { PanelTimeRangeState } from './PanelTimeRange';
@@ -12,6 +13,15 @@ import type { PanelTimeRangeState } from './PanelTimeRange';
 // rendered appropriately.
 export const timeShiftAlignmentProcessor: ExtraQueryDataProcessor = (primary, secondary) => {
   const diff = secondary.timeRange.from.diff(primary.timeRange.from);
+  // Data sources signal "no data" either by returning no frames at all or by returning empty frames.
+  if (secondary.series.every((series) => series.length === 0) && primary.series.some((series) => series.length > 0)) {
+    const refIds = secondary.series.length
+      ? secondary.series.map((series) => series.refId)
+      : secondary.request?.targets.map((target) => target.refId);
+    secondary.series = getTimeCompareNoDataFrames(diff, refIds);
+    return of(secondary);
+  }
+
   secondary.series.forEach((series) => {
     series.refId = getCompareSeriesRefId(series.refId || '');
     series.meta = {
@@ -27,6 +37,28 @@ export const timeShiftAlignmentProcessor: ExtraQueryDataProcessor = (primary, se
 };
 
 export const getCompareSeriesRefId = (refId: string) => (refId.endsWith('-compare') ? refId : `${refId}-compare`);
+
+function getTimeCompareNoDataFrames(diffMs: number, refIds: Array<string | undefined> = []): DataFrame[] {
+  const frameRefIds = refIds.length ? refIds : [undefined];
+
+  return frameRefIds.map((refId) => ({
+    refId: getCompareSeriesRefId(refId ?? ''),
+    fields: [],
+    length: 0,
+    meta: {
+      notices: [
+        {
+          severity: 'info',
+          text: t('dashboard.time-compare.no-data-notice', 'No data returned for time comparison'),
+        },
+      ],
+      timeCompare: {
+        diffMs,
+        isTimeShiftQuery: true,
+      },
+    },
+  }));
+}
 
 /**
  * Whether a panel should use a hover header, used when there's
