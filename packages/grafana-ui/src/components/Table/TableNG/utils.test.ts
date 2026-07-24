@@ -1150,6 +1150,18 @@ describe('TableNG utils', () => {
       expect(widthMeasurement).toHaveBeenCalledTimes(6); // Should only call for unique values
     });
 
+    it('does not re-measure pill text when only the column width changes (resize)', () => {
+      const widthMeasurement = jest.fn((str) => str.length * 5);
+      const measurer = getPillCellHeightMeasurer(widthMeasurement);
+      const value = 'aaaa,bbbb,cccc';
+      measurer(value, 100, {} as Field, 0, 20);
+      expect(widthMeasurement).toHaveBeenCalledTimes(3); // one per unique pill
+      // resizing re-runs only the wrap arithmetic; pill text is not measured again
+      measurer(value, 60, {} as Field, 0, 20);
+      measurer(value, 300, {} as Field, 0, 20);
+      expect(widthMeasurement).toHaveBeenCalledTimes(3);
+    });
+
     it('returns a consistent line count when the same value and width are measured repeatedly', () => {
       const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
       const first = measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20);

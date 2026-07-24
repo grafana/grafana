@@ -261,41 +261,58 @@ const PILLS_GAP = 4; // gap between pills
 const PILL_LINE_CACHE_MAX = 2048;
 
 export function getPillCellHeightMeasurer(measureWidth: (value: string) => number): MeasureCellHeight {
-  const widthCache: Record<string, number> = {};
-  // The number of wrapped lines for a cell depends only on its value and the column width, but
-  // react-data-grid measures every row in the frame (not just the viewport) on each resize, so the
-  // same values get laid out repeatedly. Cache the line count per (width, value) to skip the wrap
-  // loop on repeats. Line height is applied after the lookup so it isn't part of the key. Bounded
-  // FIFO; the whole measurer closure is rebuilt when fields/typography/maxHeight change, so cached
-  // counts never outlive a layout-affecting change.
+  // Per-pill intrinsic width, keyed by the pill string — shared across values (e.g. an actor who
+  // appears in many rows) and across column widths, so a resize never re-measures pill text.
+  const pillWidthCache: Record<string, number> = {};
+  // Per-value laid-out pill widths (intrinsic width + chip padding), keyed by the cell value and
+  // therefore width-independent: on a resize we reuse these and skip both inferPills and text
+  // measurement, redoing only the cheap wrap arithmetic below.
+  const valuePillWidthsCache = new Map<string, number[]>();
+  // The wrapped line count depends on value AND width. react-data-grid measures every row in the
+  // frame (not just the viewport) on each resize, so cache the count per (width, value) to skip even
+  // the wrap arithmetic on exact repeats. Line height is applied after the lookup so it isn't part
+  // of the key. All caches are bounded FIFO; the closure is rebuilt when fields/typography/maxHeight
+  // change, so nothing outlives a layout-affecting change.
   const lineCountCache = new Map<string, number>();
+
+  const evictOldest = (cache: Map<string, unknown>) => {
+    if (cache.size >= PILL_LINE_CACHE_MAX) {
+      cache.delete(cache.keys().next().value!);
+    }
+  };
 
   return (value, width, _field, _rowIdx, lineHeight) => {
     if (value == null) {
       return 0;
     }
 
-    const cacheKey = `${width} ${value}`;
+    const strValue = String(value);
+    const cacheKey = `${width}:${strValue}`;
     let lines = lineCountCache.get(cacheKey);
 
     if (lines === undefined) {
-      const pillValues = inferPills(String(value));
-      if (pillValues.length === 0) {
+      let pillWidths = valuePillWidthsCache.get(strValue);
+      if (pillWidths === undefined) {
+        pillWidths = inferPills(strValue).map((pill) => {
+          const strPill = String(pill);
+          let rawWidth = pillWidthCache[strPill];
+          if (rawWidth === undefined) {
+            rawWidth = measureWidth(strPill);
+            pillWidthCache[strPill] = rawWidth;
+          }
+          return rawWidth + PILLS_SPACING;
+        });
+        evictOldest(valuePillWidthsCache);
+        valuePillWidthsCache.set(strValue, pillWidths);
+      }
+
+      if (pillWidths.length === 0) {
         return 0;
       }
 
       lines = 0;
       let currentLineUse = width;
-
-      for (const pillValue of pillValues) {
-        const strPill = String(pillValue);
-        let rawWidth = widthCache[strPill];
-        if (rawWidth === undefined) {
-          rawWidth = measureWidth(strPill);
-          widthCache[strPill] = rawWidth;
-        }
-        const pillWidth = rawWidth + PILLS_SPACING;
-
+      for (const pillWidth of pillWidths) {
         if (currentLineUse + pillWidth + PILLS_GAP > width) {
           lines++;
           currentLineUse = pillWidth;
@@ -304,10 +321,7 @@ export function getPillCellHeightMeasurer(measureWidth: (value: string) => numbe
         }
       }
 
-      if (lineCountCache.size >= PILL_LINE_CACHE_MAX) {
-        // evict the oldest entry (Map preserves insertion order)
-        lineCountCache.delete(lineCountCache.keys().next().value!);
-      }
+      evictOldest(lineCountCache);
       lineCountCache.set(cacheKey, lines);
     }
 
