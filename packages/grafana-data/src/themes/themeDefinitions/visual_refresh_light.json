@@ -40,12 +40,12 @@
       "contrastText": "palette.white"
     },
     "error": {
-      "main": "palette.red1000",
-      "text": "palette.red1000",
-      "textEmphasis": "palette.red1100",
-      "background": "palette.red300",
-      "backgroundEmphasis": "palette.red400",
-      "border": "palette.red400"
+      "main": "palette.red700",
+      "text": "palette.red700",
+      "textEmphasis": "palette.red800",
+      "background": "palette.red200",
+      "backgroundEmphasis": "palette.red300",
+      "border": "palette.red300"
     },
     "warning": {
       "main": "palette.amber600",

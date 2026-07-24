@@ -39,12 +39,12 @@
       "border": "palette.orange900"
     },
     "error": {
-      "main": "palette.red500",
-      "text": "palette.red500",
-      "textEmphasis": "palette.red400",
-      "background": "palette.red1400",
-      "backgroundEmphasis": "palette.red1100",
-      "border": "palette.red1100"
+      "main": "palette.red400",
+      "text": "palette.red400",
+      "textEmphasis": "palette.red300",
+      "background": "palette.red950",
+      "backgroundEmphasis": "palette.red800",
+      "border": "palette.red800"
     },
     "warning": {
       "main": "palette.amber400",
