@@ -924,6 +924,41 @@ describe('setFieldConfigDefaults', () => {
 
     expect(config.thresholds).toMatchSnapshot();
   });
+
+  it('normalizes a datasource base threshold serialized as null', () => {
+    const defaultConfig: FieldConfig = {
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [{ value: -Infinity, color: 'blue' }],
+      },
+    };
+
+    const config: FieldConfig = {
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: null as unknown as number, color: 'red' },
+          { value: 9, color: 'green' },
+          { value: 15, color: 'red' },
+        ],
+      },
+    };
+
+    const context: FieldOverrideEnv = {
+      data: [],
+      field: { type: FieldType.number } as Field,
+      dataFrameIndex: 0,
+      fieldConfigRegistry: customFieldRegistry,
+    };
+
+    setFieldConfigDefaults(config, defaultConfig, context);
+
+    expect(config.thresholds?.steps).toEqual([
+      { value: -Infinity, color: 'red' },
+      { value: 9, color: 'green' },
+      { value: 15, color: 'red' },
+    ]);
+  });
 });
 
 describe('setDynamicConfigValue', () => {
