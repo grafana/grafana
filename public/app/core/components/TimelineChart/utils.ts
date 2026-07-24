@@ -54,6 +54,7 @@ interface UPlotConfigOptions {
   getValueColor: (frameIdx: number, fieldIdx: number, value: unknown) => string;
   hoverMulti: boolean;
   axisWidth?: number;
+  namePosition?: 'left' | 'top';
 }
 
 /**
@@ -94,6 +95,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   getValueColor,
   hoverMulti,
   xAxisConfig,
+  namePosition,
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -140,12 +142,17 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     // hardcoded formatter for state values
     formatValue: (seriesIdx, value) => formattedValueToString(frame.fields[seriesIdx].display!(value)),
     hoverMulti,
+    namePosition,
   };
 
   const coreConfig = getConfig(opts);
 
   builder.addHook('init', coreConfig.init);
   builder.addHook('drawClear', coreConfig.drawClear);
+
+  if (coreConfig.drawSeriesLabels) {
+    builder.addHook('draw', coreConfig.drawSeriesLabels);
+  }
 
   builder.setPrepData((frames) => preparePlotData2(frames[0], getStackingGroups(frames[0])));
 
@@ -210,18 +217,31 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
 
   const yCustomConfig = frame.fields[1].config.custom;
   const yAxisWidth = yCustomConfig.axisWidth;
-  const yAxisHidden = yCustomConfig.axisPlacement === AxisPlacement.Hidden;
+  const userHiddenYAxis = yCustomConfig.axisPlacement === AxisPlacement.Hidden;
+
+  const aboveBarLabelsActive = namePosition === 'top' && !userHiddenYAxis;
 
   builder.addAxis({
     scaleKey: FIXED_UNIT, // y
     isTime: false,
     placement: AxisPlacement.Left,
     splits: coreConfig.ySplits,
-    values: yAxisHidden ? (u, splits) => splits.map((v) => null) : coreConfig.yValues,
+    values: userHiddenYAxis
+      ? (u: uPlot, splits: number[]) => splits.map(() => null)
+      : aboveBarLabelsActive
+        ? (u: uPlot, splits: number[]) => {
+            const numFields = frame.fields.length - 1;
+            const slotH = u.bbox.height / numFields;
+            if (slotH > coreConfig.labelHeightPx) {
+              return splits.map(() => '');
+            }
+            return coreConfig.yValues(u, splits);
+          }
+        : coreConfig.yValues,
     grid: { show: false },
-    ticks: { show: false },
-    gap: yAxisHidden ? 0 : 16,
-    size: yAxisHidden ? 0 : yAxisWidth,
+    ticks: aboveBarLabelsActive ? { show: false, size: 0 } : { show: false },
+    gap: aboveBarLabelsActive ? 0 : userHiddenYAxis ? 0 : 16,
+    size: userHiddenYAxis ? 0 : aboveBarLabelsActive ? null : yAxisWidth,
     theme,
   });
 

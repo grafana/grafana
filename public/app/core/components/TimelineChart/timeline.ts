@@ -54,6 +54,7 @@ export interface TimelineCoreOptions {
   formatValue?: (seriesIdx: number, value: unknown) => string;
   getFieldConfig: (seriesIdx: number) => StateTimeLineFieldConfig | StatusHistoryFieldConfig;
   hoverMulti: boolean;
+  namePosition?: 'left' | 'top';
 }
 
 /**
@@ -100,7 +101,10 @@ export function getConfig(opts: TimelineCoreOptions) {
     getValueColor,
     getFieldConfig,
     hoverMulti,
+    namePosition: rawNamePosition,
   } = opts;
+
+  const namePosition = rawNamePosition === 'top' ? 'top' : 'left';
 
   let qt: Quadtree;
 
@@ -114,6 +118,36 @@ export function getConfig(opts: TimelineCoreOptions) {
   };
 
   const font = `500 ${Math.round(12 * devicePixelRatio)}px ${theme.typography.fontFamily}`;
+  const labelHeightPx =
+    namePosition === 'top' ? Math.round(12 * devicePixelRatio) + Math.round(4 * devicePixelRatio) : 0;
+
+  function walkWithLabels(
+    rh: number,
+    yIdx: number | null,
+    count: number,
+    dim: number,
+    draw: (idx: number, labelY: number, labelH: number, barY: number, barH: number) => void
+  ) {
+    const slotH = dim / count;
+    const minGap = Math.round(4 * devicePixelRatio);
+    const barArea = Math.max(0, slotH - labelHeightPx);
+    const barH = Math.min(barArea * Math.min(rh, 1), Math.max(0, barArea - minGap));
+
+    const doOne = (i: number) => {
+      const slotTop = i * slotH;
+      const lH = barArea > 0 ? labelHeightPx : 0;
+      draw(i, slotTop, lH, slotTop + labelHeightPx, barH);
+    };
+
+    if (yIdx == null) {
+      for (let i = 0; i < count; i++) {
+        doOne(i);
+      }
+    } else {
+      doOne(yIdx);
+    }
+  }
+
   const hovered: Array<Rect | null> = Array(numSeries).fill(null);
   let hoveredAtCursor: Rect | null = null;
 
@@ -228,7 +262,7 @@ export function getConfig(opts: TimelineCoreOptions) {
         rect(u.ctx, u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
         u.ctx.clip();
 
-        walk(rowHeight, sidx - 1, numSeries, yDim, (iy, y0, height) => {
+        const drawRow = (iy: number, barY0: number, barHeight: number) => {
           if (mode === TimelineMode.Changes) {
             for (let ix = 0; ix < dataY.length; ix++) {
               let yVal = dataY[ix];
@@ -255,9 +289,9 @@ export function getConfig(opts: TimelineCoreOptions) {
                   xOff,
                   yOff,
                   left,
-                  round(yOff + y0),
+                  round(yOff + barY0),
                   right - left,
-                  round(height),
+                  round(barHeight),
                   strokeWidth,
                   iy,
                   ix,
@@ -289,9 +323,9 @@ export function getConfig(opts: TimelineCoreOptions) {
                   xOff,
                   yOff,
                   round(left - xShift),
-                  round(yOff + y0),
+                  round(yOff + barY0),
                   barWid,
-                  round(height),
+                  round(barHeight),
                   strokeWidth,
                   iy,
                   ix,
@@ -301,7 +335,17 @@ export function getConfig(opts: TimelineCoreOptions) {
               }
             }
           }
-        });
+        };
+
+        if (namePosition === 'top') {
+          walkWithLabels(rowHeight, sidx - 1, numSeries, yDim, (iy, _labelY, _labelH, barY, barH) => {
+            drawRow(iy, barY, barH);
+          });
+        } else {
+          walk(rowHeight, sidx - 1, numSeries, yDim, (iy, y0, height) => {
+            drawRow(iy, y0, height);
+          });
+        }
 
         if (discrete) {
           u.ctx.lineWidth = strokeWidth;
@@ -482,6 +526,41 @@ export function getConfig(opts: TimelineCoreOptions) {
   const ySplits: number[] = Array(numSeries).fill(0);
   const yRange: uPlot.Range.MinMax = [0, 1];
 
+  const drawSeriesLabels: ((u: uPlot) => void) | undefined =
+    namePosition === 'top'
+      ? (u: uPlot) => {
+          u.ctx.save();
+          u.ctx.font = font;
+          u.ctx.textBaseline = 'top';
+          u.ctx.textAlign = 'left';
+          u.ctx.fillStyle = theme.colors.text.primary;
+
+          const bbox = u.bbox;
+
+          walkWithLabels(rowHeight, null, numSeries, bbox.height, (iy, labelY, labelH, _barY, _barH) => {
+            if (labelH === 0) {
+              return;
+            }
+
+            const text = label(iy + 1);
+            const maxWidth = bbox.width;
+            let displayText = text;
+
+            const measured = u.ctx.measureText(displayText);
+            if (measured.width > maxWidth) {
+              while (displayText.length > 0 && u.ctx.measureText(displayText + '\u2026').width > maxWidth) {
+                displayText = displayText.slice(0, -1);
+              }
+              displayText += '\u2026';
+            }
+
+            u.ctx.fillText(displayText, bbox.left, bbox.top + labelY);
+          });
+
+          u.ctx.restore();
+        }
+      : undefined;
+
   return {
     cursor,
 
@@ -531,17 +610,25 @@ export function getConfig(opts: TimelineCoreOptions) {
     },
 
     ySplits: (u: uPlot) => {
-      walk(rowHeight, null, numSeries, u.bbox.height, (iy, y0, hgt) => {
-        // vertical midpoints of each series' timeline (stored relative to .u-over)
-        let yMid = round(y0 + hgt / 2);
-        ySplits[iy] = u.posToVal(yMid / uPlot.pxRatio, FIXED_UNIT);
-      });
+      if (namePosition === 'top') {
+        walkWithLabels(rowHeight, null, numSeries, u.bbox.height, (iy, _labelY, _labelH, barY, barH) => {
+          let yMid = round(barY + barH / 2);
+          ySplits[iy] = u.posToVal(yMid / uPlot.pxRatio, FIXED_UNIT);
+        });
+      } else {
+        walk(rowHeight, null, numSeries, u.bbox.height, (iy, y0, hgt) => {
+          let yMid = round(y0 + hgt / 2);
+          ySplits[iy] = u.posToVal(yMid / uPlot.pxRatio, FIXED_UNIT);
+        });
+      }
 
       return ySplits;
     },
 
     yValues: (u: uPlot, splits: number[]) => splits.map((v, i) => label(i + 1)),
     yRange,
+
+    labelHeightPx,
 
     // pathbuilders
     drawPaths,
@@ -550,6 +637,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     // hooks
     init,
     drawClear,
+    drawSeriesLabels,
   };
 }
 
