@@ -54,6 +54,7 @@ import type DetailState from './DetailState';
 import { ShareSpanButton } from './ShareSpanButton';
 import { SpanDetailLinkButtons } from './SpanDetailLinkButtons';
 import SpanFlameGraph from './SpanFlameGraph';
+import { TEMPO_DATASOURCE_TYPE } from './traceQLFilter';
 
 const useResourceAttributesExtensionLinks = ({
   process,
@@ -458,6 +459,7 @@ export default function SpanDetail(props: SpanDetailProps) {
   });
 
   const listOfContentCards = [];
+  const enableTraceQLCopy = datasourceType === TEMPO_DATASOURCE_TYPE;
 
   if (isSummarySpan && aggregationTags.length > 0) {
     listOfContentCards.push(
@@ -479,6 +481,7 @@ export default function SpanDetail(props: SpanDetailProps) {
       isOpen={isTagsOpen}
       linksGetter={resourceLinksGetter}
       onToggle={() => tagsToggle(spanID)}
+      enableTraceQLCopy={enableTraceQLCopy}
     />
   );
 
@@ -502,6 +505,7 @@ export default function SpanDetail(props: SpanDetailProps) {
         linksGetter={resourceLinksGetter}
         isOpen={isProcessOpen}
         onToggle={() => processToggle(spanID)}
+        enableTraceQLCopy={enableTraceQLCopy}
       />
     );
   }

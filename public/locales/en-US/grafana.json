@@ -8981,7 +8981,8 @@
       },
       "aria-label-copy": "Copy to clipboard",
       "no-data": "No data",
-      "tooltip-copy-icon": "Copied"
+      "tooltip-copy-icon": "Copied",
+      "tooltip-copy-traceql": "Copy as TraceQL"
     },
     "trace-view-container": {
       "title-trace": "Trace"

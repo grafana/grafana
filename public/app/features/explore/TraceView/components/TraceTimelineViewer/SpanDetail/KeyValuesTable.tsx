@@ -18,13 +18,16 @@ import DOMPurify from 'dompurify';
 import { type PropsWithChildren } from 'react';
 
 import { type GrafanaTheme2, type PluginExtensionLink, type TraceKeyValuePair } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';
 import type TNil from '../../types/TNil';
 
+import { type AttributeSectionType } from './attributeCategories';
 import jsonMarkup from './jsonMarkup';
+import { attributeToTraceQLFilter } from './traceQLFilter';
 
 const getStyles = (theme: GrafanaTheme2) => {
   const keyColor = theme.colors.text.secondary;
@@ -126,10 +129,13 @@ export type KeyValuesTableProps = {
   data: TraceKeyValuePair[];
   linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[]) | TNil;
   onlyValues?: boolean;
+  // Only span/resource attribute tables have a TraceQL scope; when set, rows with a scalar value
+  // also get a "Copy as TraceQL" button alongside the plain copy button.
+  scope?: AttributeSectionType;
 };
 
 export default function KeyValuesTable(props: KeyValuesTableProps) {
-  const { data, linksGetter, onlyValues } = props;
+  const { data, linksGetter, onlyValues, scope } = props;
   const styles = useStyles2(getStyles);
   return (
     <div className={cx(styles.KeyValueTable)} data-testid="KeyValueTable">
@@ -149,6 +155,7 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
               <div className={styles.jsonTable} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }} />
             );
             const links = linksGetter?.(data, i);
+            const traceQLFilter = scope ? attributeToTraceQLFilter(row, scope) : null;
             let valueMarkup;
             if (links && links.length) {
               // TODO: handle multiple items
@@ -170,6 +177,15 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
                 )}
                 <td>{valueMarkup}</td>
                 <td className={styles.copyColumn}>
+                  {traceQLFilter && (
+                    <CopyIcon
+                      className={styles.copyIcon}
+                      copyText={traceQLFilter}
+                      icon="filter"
+                      tooltipTitle={t('explore.trace-view.tooltip-copy-traceql', 'Copy as TraceQL')}
+                      ariaLabel={t('explore.trace-view.tooltip-copy-traceql', 'Copy as TraceQL')}
+                    />
+                  )}
                   <CopyIcon
                     className={styles.copyIcon}
                     copyText={row.type === 'code' || row.type === 'text' ? row.value : JSON.stringify(row, null, 2)}

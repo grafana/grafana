@@ -87,6 +87,21 @@ describe('KeyValuesTable tests', () => {
     expect(screen.getAllByRole('button', { hidden: true })).toHaveLength(4);
   });
 
+  it('renders an extra "Copy as TraceQL" button per row when scope is provided', () => {
+    setup({ scope: 'span' });
+
+    const buttons = screen.getAllByRole('button', { hidden: true });
+    expect(buttons).toHaveLength(8);
+    expect(buttons.filter((button) => button.getAttribute('aria-label') === 'Copy as TraceQL')).toHaveLength(4);
+    expect(buttons.filter((button) => button.getAttribute('aria-label') === 'Copy to clipboard')).toHaveLength(4);
+  });
+
+  it('does not render a "Copy as TraceQL" button for non-scalar values', () => {
+    setup({ scope: 'span', data: [{ key: 'foo', value: { nested: true } }] });
+
+    expect(screen.getAllByRole('button', { hidden: true })).toHaveLength(1);
+  });
+
   it('renders a link in json and properly escapes it', () => {
     setup({
       data: [
