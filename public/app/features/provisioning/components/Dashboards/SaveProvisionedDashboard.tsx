@@ -3,11 +3,13 @@ import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import { SaveDashboardAsForm } from 'app/features/dashboard-scene/saving/SaveDashboardAsForm';
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from 'app/features/dashboard-scene/saving/shared';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { type DashboardMeta } from 'app/types/dashboard';
+import { DashboardSavedEvent } from 'app/types/events';
 
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
@@ -27,7 +29,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
     useProvisionedDashboardData(dashboard, saveAsCopy);
   const [saveToDatabase, setSaveToDatabase] = useState(false);
   const [canSaveToDatabaseInstead, setCanSaveToDatabaseInstead] = useState(false);
-  const dbSwitchRef = useRef<{ active: boolean; gitMeta?: DashboardMeta; savedUid?: string }>({ active: false });
+  const dbSwitchRef = useRef<{ active: boolean; gitMeta?: DashboardMeta; wasNew?: boolean }>({ active: false });
 
   // changeInfo.isNew stays stable across repo resolution; the hook's isNew flips false on error
   const isNewDashboard = changeInfo.isNew || !!saveAsCopy;
@@ -43,27 +45,35 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
     }
   }, [repository, isDeadEnd, isNewDashboard]);
 
-  // Consumes a pending switch, returning the meta to undo it with. Yields nothing once a save has
-  // moved the uid on, since that dashboard's own meta must stand.
-  const takeGitMeta = useCallback(() => {
-    const { active, gitMeta, savedUid } = dbSwitchRef.current;
-    dbSwitchRef.current.active = false;
-    return active && gitMeta && dashboard.state.meta.uid === savedUid ? gitMeta : undefined;
-  }, [dashboard]);
+  // A completed save owns the resulting meta, so the switch must not be undone afterwards. The
+  // database form replaces meta wholesale on a folder pick, so it can't be inferred from meta itself.
+  useEffect(() => {
+    const sub = appEvents.subscribe(DashboardSavedEvent, () => {
+      dbSwitchRef.current.active = false;
+    });
+    return () => sub.unsubscribe();
+  }, []);
+
+  // Consumes a pending switch, so it can only ever be undone once
+  const takePendingSwitch = useCallback(() => {
+    const pending = dbSwitchRef.current;
+    dbSwitchRef.current = { active: false };
+    return pending.active ? pending : undefined;
+  }, []);
 
   // Cancel in the database form bypasses drawer.onClose, so undo the switch on unmount too. New
   // dashboards go back to their initial meta like onClose does, otherwise closing via the drawer's
   // X would put the provisioned fields it just cleared straight back.
   useEffect(() => {
     return () => {
-      const gitMeta = takeGitMeta();
-      if (!gitMeta) {
+      const pending = takePendingSwitch();
+      if (!pending?.gitMeta) {
         return;
       }
       const initialMeta = dashboard.getInitialState()?.meta;
-      dashboard.setState({ meta: changeInfo.isNew && initialMeta ? initialMeta : gitMeta });
+      dashboard.setState({ meta: pending.wasNew && initialMeta ? initialMeta : pending.gitMeta });
     };
-  }, [takeGitMeta, dashboard, changeInfo.isNew]);
+  }, [takePendingSwitch, dashboard]);
 
   const handleSwitchToDatabase = () => {
     const meta = dashboard.state.meta;
@@ -72,7 +82,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
 
     // Dead-ends go back to the folder the drawer resolved from, so switch-back lands on a working Git form
     const gitMeta = isDeadEnd ? { ...meta, folderUid: entryFolderUid, k8s: undefined } : { ...meta };
-    dbSwitchRef.current = { active: true, savedUid: meta.uid, gitMeta };
+    dbSwitchRef.current = { active: true, gitMeta, wasNew: changeInfo.isNew };
 
     // Only an unmanaged folder is a valid database target; provisioned and orphaned ones are rejected.
     // Manager annotations go with it, or saveCompleted would carry them into the saved database dashboard.
@@ -84,9 +94,9 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
   };
 
   const handleSwitchToGit = () => {
-    const gitMeta = takeGitMeta();
-    if (gitMeta) {
-      dashboard.setState({ meta: gitMeta });
+    const pending = takePendingSwitch();
+    if (pending?.gitMeta) {
+      dashboard.setState({ meta: pending.gitMeta });
     }
     setSaveToDatabase(false);
   };

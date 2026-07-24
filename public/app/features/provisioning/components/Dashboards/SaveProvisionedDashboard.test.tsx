@@ -1,10 +1,12 @@
 import { render, screen } from 'test/test-utils';
 
+import { appEvents } from 'app/core/app_events';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from 'app/features/dashboard-scene/saving/shared';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { type DashboardMeta } from 'app/types/dashboard';
+import { DashboardSavedEvent } from 'app/types/events';
 
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
@@ -311,8 +313,8 @@ describe('SaveProvisionedDashboard', () => {
 
     await user.click(screen.getByRole('button', { name: /grafana database/i }));
 
-    // A completed save assigns a new uid via saveCompleted before the overlay closes
-    dashboard.state.meta.uid = 'saved-uid';
+    // useSaveDashboard publishes this before the overlay closes
+    appEvents.publish(new DashboardSavedEvent());
     dashboard.state.meta.folderUid = 'db-folder-uid';
     unmount();
 
@@ -330,8 +332,8 @@ describe('SaveProvisionedDashboard', () => {
 
     await user.click(screen.getByRole('button', { name: /grafana database/i }));
 
-    // Cancel leaves the uid untouched (no new resource created), so the restore must still run
-    dashboard.state.meta.folderUid = 'db-folder-uid';
+    // The database form's folder picker replaces meta wholesale, dropping uid along the way
+    dashboard.state.meta = { folderUid: 'db-folder-uid' };
     unmount();
 
     expect(dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: 'git-folder-uid', uid: 'existing-uid' } });
