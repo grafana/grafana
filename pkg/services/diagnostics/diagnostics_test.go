@@ -8,8 +8,10 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -20,7 +22,7 @@ import (
 
 func TestBundler_Build(t *testing.T) {
 	// No HAR captured (empty buffer, nil response) -> traffic.har omitted; only panel.json present.
-	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, json.RawMessage(`{"id":1}`), nil, nil)
+	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, json.RawMessage(`{"id":1}`), nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -34,12 +36,147 @@ func TestBundler_Build(t *testing.T) {
 
 func TestBundler_Build_recordsQueryError(t *testing.T) {
 	// A failed query must still produce a bundle, with the error recorded (capture is not discarded).
-	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, errors.New("datasource timeout"))
+	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, errors.New("datasource timeout"))
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
 	require.Contains(t, files, "query-error.txt")
 	require.Contains(t, string(files["query-error.txt"]), "datasource timeout")
+}
+
+func TestBundler_Build_recordsQueryDataMarshalError(t *testing.T) {
+	// A query-data artifact that cannot be JSON-encoded (here forced with an invalid request payload,
+	// the same failure mode as a non-finite float in a response) must not sink the whole bundle: the
+	// error is recorded and the other artifacts still ship, mirroring the per-panel dashboard path.
+	buf := bufferWithEntry(t, "http://ds/1")
+
+	blob, err := NewBundler().Build(nil, buf, nil, nil, json.RawMessage(`{invalid`), nil, nil)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.NotContains(t, files, "querydata.json", "unserializable query data is omitted")
+	require.Contains(t, files, "querydata-error.txt")
+	require.Contains(t, string(files["querydata-error.txt"]), "invalid character")
+	require.Contains(t, files, "traffic.har", "other artifacts still ship")
+}
+
+func TestBundler_Build_recordsQueryRequestSerializeError(t *testing.T) {
+	// The caller failing to serialize the request (queryRequestErr) must not silently omit the request:
+	// the failure is recorded in querydata-error.txt and the other captured artifacts still ship,
+	// mirroring how the per-panel dashboard path surfaces the same failure via manifest.queryDataError.
+	buf := bufferWithEntry(t, "http://ds/1")
+
+	blob, err := NewBundler().Build(nil, buf, nil, nil, nil, errors.New("unsupported value: +Inf"), nil)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.NotContains(t, files, "querydata.json", "request could not be serialized")
+	require.Contains(t, files, "querydata-error.txt")
+	require.Contains(t, string(files["querydata-error.txt"]), "serialize query request")
+	require.Contains(t, string(files["querydata-error.txt"]), "unsupported value: +Inf")
+	require.Contains(t, files, "traffic.har", "other artifacts still ship")
+}
+
+func TestBundler_Build_recordsQueryDataResponse(t *testing.T) {
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{
+		"A": {Frames: data.Frames{frame}},
+	}}
+
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.Contains(t, files, "querydata.json")
+	require.Contains(t, string(files["querydata.json"]), `"A"`)
+	require.Contains(t, string(files["querydata.json"]), `42`)
+}
+
+func TestBundler_Build_recordsQueryDataRequest(t *testing.T) {
+	request := json.RawMessage(`{"from":"now-1h","to":"now","queries":[{"refId":"A","expr":"up"}]}`)
+
+	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, request, nil, nil)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.Contains(t, files, "querydata.json")
+	require.Contains(t, string(files["querydata.json"]), `"request"`)
+	require.Contains(t, string(files["querydata.json"]), `"expr": "up"`)
+}
+
+func TestBundler_Build_excludesCaptureFramesFromQueryData(t *testing.T) {
+	result := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	capture := data.NewFrame("")
+	capture.Meta = &data.FrameMeta{Custom: map[string]interface{}{"har": `{"log":{"entries":[]}}`}}
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{
+		"A":         {Frames: data.Frames{result}},
+		"__har__ds": {Frames: data.Frames{capture}},
+	}}
+
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.NotContains(t, string(files["querydata.json"]), "__har__")
+	require.Contains(t, string(files["querydata.json"]), `"A"`)
+}
+
+func TestBundler_Build_boundsOversizedQueryData(t *testing.T) {
+	frame := data.NewFrame("logs", data.NewField("line", nil, []string{strings.Repeat("x", maxQueryDataArtifactBytes)}))
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{
+		"A": {Frames: data.Frames{frame}},
+	}}
+
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	queryData := files["querydata.json"]
+	require.LessOrEqual(t, len(queryData), maxQueryDataArtifactBytes)
+	require.Contains(t, string(queryData), `"truncated": true`)
+	require.Contains(t, string(queryData), `"rows": 1`)
+	require.Contains(t, string(queryData), `"refId": "A"`)
+}
+
+func TestBundler_Build_boundsOversizedRequestWithoutResponse(t *testing.T) {
+	// An oversized request with no response must truncate without claiming a response was omitted.
+	request := json.RawMessage(`{"expr":"` + strings.Repeat("x", maxQueryDataArtifactBytes) + `"}`)
+
+	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, request, nil, nil)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	queryData := files["querydata.json"]
+	require.LessOrEqual(t, len(queryData), maxQueryDataArtifactBytes)
+	require.Contains(t, string(queryData), `"truncated": true`)
+	require.Contains(t, string(queryData), `"requestOmitted": true`)
+	require.NotContains(t, string(queryData), `"responseOmitted"`)
+}
+
+func TestBundler_Build_preservesUpstreamAndPluginResultsForComparison(t *testing.T) {
+	req, err := http.NewRequest(http.MethodGet, "http://prometheus/api/v1/query", nil)
+	require.NoError(t, err)
+	resp := &http.Response{
+		StatusCode: http.StatusOK,
+		Status:     "200 OK",
+		Proto:      "HTTP/1.1",
+		Header:     http.Header{"Content-Type": []string{"application/json"}},
+		Body:       io.NopCloser(strings.NewReader(`{"series":["host-a","host-b"]}`)),
+	}
+	buf := &harcapture.Buffer{}
+	buf.AddEntry(req, resp, nil, time.Now(), time.Millisecond)
+
+	pluginFrame := data.NewFrame("cpu", data.NewField("host", nil, []string{"host-a"}))
+	queryResp := &backend.QueryDataResponse{Responses: backend.Responses{
+		"A": {Frames: data.Frames{pluginFrame}},
+	}}
+	blob, err := NewBundler().Build(queryResp, buf, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.Contains(t, string(files["traffic.har"]), "host-b", "upstream returned host-b")
+	require.NotContains(t, string(files["querydata.json"]), "host-b", "plugin dropped host-b")
+	require.Contains(t, string(files["querydata.json"]), "host-a")
 }
 
 func TestMergeHAR(t *testing.T) {
@@ -170,7 +307,7 @@ func TestCollectHAR_nilBuffer_noPanic(t *testing.T) {
 	require.Nil(t, out)
 
 	// A nil buffer must also flow through Build without panicking.
-	bundle, err := NewBundler().Build(nil, nil, nil, nil, nil)
+	bundle, err := NewBundler().Build(nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, bundle)
 }
@@ -417,6 +554,53 @@ func TestBuildDashboard(t *testing.T) {
 	require.Positive(t, m.Panels[0].HARBytes)
 }
 
+func TestBuildDashboard_recordsQueryDataPerPanel(t *testing.T) {
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	panels := []DashboardPanel{{
+		ID:           1,
+		Title:        "CPU Usage",
+		QueryRequest: json.RawMessage(`{"from":"now-1h","to":"now","queries":[{"refId":"A"}]}`),
+		Resp: &backend.QueryDataResponse{Responses: backend.Responses{
+			"A": {Frames: data.Frames{frame}},
+		}},
+	}}
+
+	blob, err := NewBundler().BuildDashboard(nil, panels)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.Contains(t, files, "panels/1-cpu-usage/querydata.json")
+	require.Contains(t, string(files["panels/1-cpu-usage/querydata.json"]), `"refId": "A"`)
+	require.Contains(t, string(files["panels/1-cpu-usage/querydata.json"]), `42`)
+}
+
+func TestBuildDashboard_boundsAggregateQueryData(t *testing.T) {
+	panels := make([]DashboardPanel, 0, 5)
+	for i := 1; i <= 5; i++ {
+		frame := data.NewFrame("logs", data.NewField("line", nil, []string{strings.Repeat("x", maxQueryDataArtifactBytes-4096)}))
+		panels = append(panels, DashboardPanel{
+			ID:    int64(i),
+			Title: "Logs",
+			Resp: &backend.QueryDataResponse{Responses: backend.Responses{
+				"A": {Frames: data.Frames{frame}},
+			}},
+		})
+	}
+
+	blob, err := NewBundler().BuildDashboard(nil, panels)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	queryDataBytes := 0
+	for name, contents := range files {
+		if strings.HasSuffix(name, "/querydata.json") {
+			queryDataBytes += len(contents)
+		}
+	}
+	require.LessOrEqual(t, queryDataBytes, maxDashboardQueryDataBytes)
+	require.Contains(t, string(files["manifest.json"]), `"queryDataTruncated": true`)
+}
+
 // The whole-dashboard client posts the dashboard save model once instead of each panel's JSON, so
 // BuildDashboard must resolve each panel's panel.json from that model by id -- including panels nested
 // inside a collapsed row.
@@ -516,6 +700,51 @@ func TestBuildDashboard_dirCollision(t *testing.T) {
 	var m dashboardManifest
 	require.NoError(t, json.Unmarshal(files["manifest.json"], &m))
 	require.Equal(t, 2, m.PanelsTotal)
+}
+
+// A panel whose MetricRequest can't be serialized must not abort the whole archive: the failure is
+// recorded against the panel and the other panels' artifacts survive.
+func TestBuildDashboard_recordsQueryRequestError(t *testing.T) {
+	panels := []DashboardPanel{
+		{ID: 1, Title: "Broken request", QueryRequestErr: errors.New("unsupported value: NaN")},
+		{ID: 2, Title: "CPU Usage", HARBuffer: bufferWithEntry(t, "http://ds/2")},
+	}
+	blob, err := NewBundler().BuildDashboard(nil, panels)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.Contains(t, files, "panels/2-cpu-usage/traffic.har", "the healthy panel's artifacts survive")
+
+	var m dashboardManifest
+	require.NoError(t, json.Unmarshal(files["manifest.json"], &m))
+	require.Contains(t, m.Panels[0].QueryDataError, "serialize query request")
+	require.Contains(t, m.Panels[0].QueryDataError, "unsupported value: NaN")
+}
+
+func TestTruncateDiagnosticString_runeBoundary(t *testing.T) {
+	// A single "世" is 3 bytes; a 4-byte limit lands mid-rune and must back off to the boundary.
+	got := truncateDiagnosticString("世界", 4)
+	require.True(t, utf8.ValidString(got), "truncation must not split a rune")
+	require.Equal(t, "世"+"…", got)
+
+	// ASCII within the limit is returned untouched.
+	require.Equal(t, "hello", truncateDiagnosticString("hello", 10))
+}
+
+func TestMarshalQueryDataArtifactWithLimit_reportsTruncation(t *testing.T) {
+	frame := data.NewFrame("logs", data.NewField("line", nil, []string{strings.Repeat("x", maxQueryDataArtifactBytes)}))
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
+
+	_, truncated, err := marshalQueryDataArtifactWithLimit(nil, resp, maxQueryDataArtifactBytes)
+	require.NoError(t, err)
+	require.True(t, truncated, "an oversized response must report truncated=true")
+
+	small := &backend.QueryDataResponse{Responses: backend.Responses{
+		"A": {Frames: data.Frames{data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))}},
+	}}
+	_, truncated, err = marshalQueryDataArtifactWithLimit(nil, small, maxQueryDataArtifactBytes)
+	require.NoError(t, err)
+	require.False(t, truncated, "a response that fits must report truncated=false")
 }
 
 func readTarGz(t *testing.T, data []byte) map[string][]byte {
