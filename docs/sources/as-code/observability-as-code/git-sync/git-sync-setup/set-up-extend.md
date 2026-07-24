@@ -60,6 +60,18 @@ root_url = https://<PUBLIC_DOMAIN>
 
 To check the configured webhooks, go to **Administration > General > Provisioning** and click the **View** link for your GitHub repository.
 
+{{< admonition type="warning" >}}
+
+GitHub limits each repository to **20 webhooks per event type** (for example, `push` and `pull_request`). Git Sync registers its own webhooks for each repository connection, so when several Grafana instances sync the same repository, each connection adds to this total. After the limit is exceeded, GitHub rejects new webhooks with an error such as:
+
+```
+GitHub API error (HTTP 422: Validation Failed: The "pull_request" event cannot have more than 20 hooks; The "push" event cannot have more than 20 hooks)
+```
+
+If you hit this limit, remove unused or duplicate webhooks from your repository's **Settings > Webhooks** page, or disable webhook integration for connections that don't need real-time sync so those instances poll on an interval instead. Refer to [Webhook options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/#webhook-options) to disable webhook integration.
+
+{{< /admonition >}}
+
 {{< admonition type="note" >}}
 
 If your `[server] root_url` must point at an internal address (for example, when Grafana runs behind a private ingress in a Kubernetes cluster), set the publicly-reachable URL with `[provisioning] public_root_url` instead. This URL is used both to register webhook callbacks with the Git provider and as the base for screenshot images embedded in pull-request comments, which the Git provider's servers fetch from the public internet.
