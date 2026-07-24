@@ -302,7 +302,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,datasourcesApiServerEnableHealthEndpoint,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-05-22,analyticsFramework,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-05-06,grafana.scenesFlickeringFix,GA,@grafana/dashboards-squad,false,false,true
-2026-05-14,grafana.viewPanelPane,experimental,@grafana/dashboards-squad,false,false,true
+2026-05-14,grafana.viewPanelPane,preview,@grafana/dashboards-squad,false,false,true
 2026-05-22,datasourcesApiServerEnableHealthEndpointFrontend,experimental,@grafana/grafana-datasources-core-services,false,false,true
 2026-05-22,datasourcesApiServerEnableHealthEndpointRedirect,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-05-22,flameGraphWithCallTree,preview,@grafana/observability-traces-and-profiling,false,false,true

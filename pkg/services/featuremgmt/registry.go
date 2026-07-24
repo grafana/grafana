@@ -2612,7 +2612,7 @@ var (
 		{
 			Name:         "grafana.viewPanelPane",
 			Description:  "Enables the sidebar pane with new toggles and options in panel view mode",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
 			Expression:   "true",

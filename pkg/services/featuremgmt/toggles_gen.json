@@ -3085,15 +3085,15 @@
     {
       "metadata": {
         "name": "grafana.viewPanelPane",
-        "resourceVersion": "1784895764529",
+        "resourceVersion": "1784896787869",
         "creationTimestamp": "2026-05-14T12:19:55Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-07-24 12:22:44.52952 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-07-24 12:39:47.869351 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables the sidebar pane with new toggles and options in panel view mode",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "hideFromDocs": true,
