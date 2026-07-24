@@ -1,17 +1,44 @@
+import { of } from 'rxjs';
+
 import { AppEvents } from '@grafana/data';
-import { getAppEvents, logWarning } from '@grafana/runtime';
+import { config, logWarning } from '@grafana/runtime';
 
 import { initialCustomVariableModelState } from '../mocks/variables';
 
-import { fetchAllArmPages, hasOption, interpolateVariable, MAX_ARM_PAGES, nextLinkToPath } from './common';
+import {
+  fetchAllArmResources,
+  fetchArmResourcePage,
+  hasOption,
+  interpolateVariable,
+  nextLinkToPath,
+  parseNextLinkToken,
+  skipTokenFromNextLink,
+  warnResultsTruncated,
+} from './common';
 
 const publish = jest.fn();
+const fetchMock = jest.fn();
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   logWarning: jest.fn(),
   getAppEvents: jest.fn(() => ({ publish })),
+  getBackendSrv: jest.fn(() => ({ fetch: fetchMock })),
 }));
+
+const setServerSidePagination = (enabled: boolean) => {
+  (config.featureToggles as Record<string, boolean | undefined>).azureMonitorServerSidePagination = enabled;
+};
+
+// Flag ON: normalized body + Link/X-Results-Truncated headers.
+function onPageResponse<T>(value: T[], headers: Record<string, string> = {}) {
+  return of({ data: { value }, headers: new Headers(headers) });
+}
+
+// Flag OFF: raw ARM body carrying nextLink, no Link header.
+function offPageResponse<T>(value: T[], nextLink?: string) {
+  return of({ data: { value, nextLink } });
+}
 
 describe('AzureMonitor: hasOption', () => {
   it('can find an option in flat array', () => {
@@ -54,120 +81,224 @@ describe('AzureMonitor: hasOption', () => {
   });
 });
 
-describe('AzureMonitor: nextLinkToPath', () => {
-  it('drops the ARM host and joins pathname + query onto the prefix', () => {
-    const nextLink = 'https://management.azure.com/subscriptions?api-version=2019-03-01&$skiptoken=TOKEN';
-    expect(nextLinkToPath('azuremonitor', nextLink)).toBe(
-      'azuremonitor/subscriptions?api-version=2019-03-01&$skiptoken=TOKEN'
-    );
+describe('AzureMonitor: parseNextLinkToken', () => {
+  it('extracts the nextToken from a Link: rel="next" header', () => {
+    expect(parseNextLinkToken('<?nextToken=page2>; rel="next"')).toBe('page2');
   });
 
-  it('works for a full resources base URL prefix and sovereign clouds', () => {
-    const nextLink = 'https://management.usgovcloudapi.net/subscriptions?api-version=2019-03-01&$skiptoken=TOKEN';
-    expect(nextLinkToPath('/api/datasources/uid/abc/resources/azuremonitor', nextLink)).toBe(
-      '/api/datasources/uid/abc/resources/azuremonitor/subscriptions?api-version=2019-03-01&$skiptoken=TOKEN'
-    );
+  it('extracts the nextToken alongside other params', () => {
+    expect(parseNextLinkToken('<?nextToken=page2&subscriptionId=sub-1>; rel="next"')).toBe('page2');
+  });
+
+  it('returns undefined when the header does not match', () => {
+    expect(parseNextLinkToken('garbage')).toBeUndefined();
+  });
+
+  it('returns undefined when there is no nextToken param', () => {
+    expect(parseNextLinkToken('<?subscriptionId=sub-1>; rel="next"')).toBeUndefined();
   });
 });
 
-describe('AzureMonitor: fetchAllArmPages', () => {
+describe('AzureMonitor: skipTokenFromNextLink', () => {
+  it('extracts the $skiptoken from a raw ARM nextLink', () => {
+    expect(
+      skipTokenFromNextLink('https://management.azure.com/subscriptions?api-version=2019-03-01&$skiptoken=tok2')
+    ).toBe('tok2');
+  });
+
+  it('returns undefined when there is no nextLink or no $skiptoken', () => {
+    expect(skipTokenFromNextLink(undefined)).toBeUndefined();
+    expect(skipTokenFromNextLink('https://management.azure.com/subscriptions?api-version=2019-03-01')).toBeUndefined();
+    expect(skipTokenFromNextLink('not-a-url')).toBeUndefined();
+  });
+});
+
+describe('AzureMonitor: nextLinkToPath', () => {
+  it('rewrites a raw ARM nextLink onto the passthrough prefix, keeping path + query', () => {
+    expect(
+      nextLinkToPath(
+        '/api/datasources/uid/abc/resources/azuremonitor',
+        'https://management.azure.com/subscriptions?api-version=2019-03-01&$skiptoken=tok2'
+      )
+    ).toBe('/api/datasources/uid/abc/resources/azuremonitor/subscriptions?api-version=2019-03-01&$skiptoken=tok2');
+  });
+});
+
+describe('AzureMonitor: fetchArmResourcePage (server-side pagination ON)', () => {
+  beforeEach(() => {
+    fetchMock.mockClear();
+    setServerSidePagination(true);
+  });
+
+  afterEach(() => {
+    setServerSidePagination(false);
+  });
+
+  it('requests the passthrough resource path forwarding listAll', async () => {
+    fetchMock.mockReturnValue(onPageResponse([{ id: 1 }, { id: 2 }]));
+
+    const page = await fetchArmResourcePage<{ id: number }>('abc', 'subscriptions', { listAll: 'true' });
+
+    expect(fetchMock).toHaveBeenCalledWith({
+      url: '/api/datasources/uid/abc/resources/azuremonitor/subscriptions?api-version=2019-03-01&listAll=true',
+      method: 'GET',
+    });
+    expect(page.value).toEqual([{ id: 1 }, { id: 2 }]);
+    expect(page.nextToken).toBeUndefined();
+    expect(page.truncated).toBe(false);
+  });
+
+  it('interpolates the subscriptionId into the workspaces path (not as a query param)', async () => {
+    fetchMock.mockReturnValue(onPageResponse([{ id: 1 }]));
+
+    await fetchArmResourcePage<{ id: number }>('abc', 'workspaces', { subscriptionId: 'sub-1', listAll: 'false' });
+
+    expect(fetchMock).toHaveBeenCalledWith({
+      url: '/api/datasources/uid/abc/resources/azuremonitor/subscriptions/sub-1/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview&listAll=false',
+      method: 'GET',
+    });
+  });
+
+  it('surfaces the continuation token from the Link header and forwards nextToken', async () => {
+    fetchMock.mockReturnValue(onPageResponse([{ id: 1 }], { Link: '<?nextToken=page2>; rel="next"' }));
+
+    const page = await fetchArmResourcePage<{ id: number }>('abc', 'subscriptions', {
+      listAll: 'false',
+      nextToken: 'page1',
+    });
+
+    expect(fetchMock.mock.calls[0][0].url).toContain('&listAll=false');
+    expect(fetchMock.mock.calls[0][0].url).toContain('&nextToken=page1');
+    expect(page.value).toEqual([{ id: 1 }]);
+    expect(page.nextToken).toBe('page2');
+  });
+
+  it('flags truncation from the X-Results-Truncated header', async () => {
+    fetchMock.mockReturnValue(onPageResponse([{ id: 1 }], { 'X-Results-Truncated': 'true' }));
+
+    const page = await fetchArmResourcePage<{ id: number }>('abc', 'subscriptions', { listAll: 'true' });
+
+    expect(page.truncated).toBe(true);
+  });
+});
+
+describe('AzureMonitor: fetchArmResourcePage (server-side pagination OFF)', () => {
+  beforeEach(() => {
+    fetchMock.mockClear();
+    setServerSidePagination(false);
+  });
+
+  it('requests the passthrough path without listAll/nextToken and reads the body', async () => {
+    fetchMock.mockReturnValue(offPageResponse([{ id: 1 }, { id: 2 }]));
+
+    const page = await fetchArmResourcePage<{ id: number }>('abc', 'subscriptions', { listAll: 'true' });
+
+    expect(fetchMock).toHaveBeenCalledWith({
+      url: '/api/datasources/uid/abc/resources/azuremonitor/subscriptions?api-version=2019-03-01',
+      method: 'GET',
+    });
+    expect(page.value).toEqual([{ id: 1 }, { id: 2 }]);
+    expect(page.nextToken).toBeUndefined();
+    expect(page.truncated).toBe(false);
+  });
+
+  it('derives the continuation token from the body nextLink $skiptoken', async () => {
+    fetchMock.mockReturnValue(
+      offPageResponse([{ id: 1 }], 'https://management.azure.com/subscriptions?api-version=2019-03-01&$skiptoken=tok2')
+    );
+
+    const page = await fetchArmResourcePage<{ id: number }>('abc', 'subscriptions', { listAll: 'false' });
+
+    expect(page.nextToken).toBe('tok2');
+  });
+
+  it('forwards a prior nextToken to ARM as $skiptoken', async () => {
+    fetchMock.mockReturnValue(offPageResponse([{ id: 1 }]));
+
+    await fetchArmResourcePage<{ id: number }>('abc', 'subscriptions', { listAll: 'false', nextToken: 'tok2' });
+
+    expect(fetchMock.mock.calls[0][0].url).toContain('&$skiptoken=tok2');
+    expect(fetchMock.mock.calls[0][0].url).not.toContain('listAll');
+    expect(fetchMock.mock.calls[0][0].url).not.toContain('nextToken=');
+  });
+});
+
+describe('AzureMonitor: fetchAllArmResources (server-side pagination ON)', () => {
+  beforeEach(() => {
+    fetchMock.mockClear();
+    publish.mockClear();
+    setServerSidePagination(true);
+  });
+
+  afterEach(() => {
+    setServerSidePagination(false);
+  });
+
+  it('requests eager listing on the passthrough path and returns the value array', async () => {
+    fetchMock.mockReturnValue(onPageResponse([{ id: 1 }, { id: 2 }]));
+
+    const value = await fetchAllArmResources<{ id: number }>('abc', 'workspaces', { subscriptionId: 'sub-1' });
+
+    expect(fetchMock).toHaveBeenCalledWith({
+      url: '/api/datasources/uid/abc/resources/azuremonitor/subscriptions/sub-1/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview&listAll=true',
+      method: 'GET',
+    });
+    expect(value).toEqual([{ id: 1 }, { id: 2 }]);
+    expect(publish).not.toHaveBeenCalled();
+  });
+
+  it('warns when the backend truncated the listing', async () => {
+    fetchMock.mockReturnValue(onPageResponse([{ id: 1 }], { 'X-Results-Truncated': 'true' }));
+
+    await fetchAllArmResources<{ id: number }>('abc', 'subscriptions');
+
+    expect(publish).toHaveBeenCalledWith(expect.objectContaining({ type: AppEvents.alertWarning.name }));
+  });
+});
+
+describe('AzureMonitor: fetchAllArmResources (server-side pagination OFF)', () => {
+  beforeEach(() => {
+    fetchMock.mockClear();
+    publish.mockClear();
+    setServerSidePagination(false);
+  });
+
+  it('follows the raw ARM nextLink across pages, rewriting it onto the passthrough path', async () => {
+    fetchMock
+      .mockReturnValueOnce(
+        offPageResponse(
+          [{ id: 1 }],
+          'https://management.azure.com/subscriptions?api-version=2019-03-01&$skiptoken=tok2'
+        )
+      )
+      .mockReturnValueOnce(offPageResponse([{ id: 2 }]));
+
+    const value = await fetchAllArmResources<{ id: number }>('abc', 'subscriptions');
+
+    expect(value).toEqual([{ id: 1 }, { id: 2 }]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[0][0].url).toBe(
+      '/api/datasources/uid/abc/resources/azuremonitor/subscriptions?api-version=2019-03-01'
+    );
+    expect(fetchMock.mock.calls[1][0].url).toBe(
+      '/api/datasources/uid/abc/resources/azuremonitor/subscriptions?api-version=2019-03-01&$skiptoken=tok2'
+    );
+    expect(publish).not.toHaveBeenCalled();
+  });
+});
+
+describe('AzureMonitor: warnResultsTruncated', () => {
   beforeEach(() => {
     jest.mocked(logWarning).mockClear();
-    jest.mocked(getAppEvents).mockClear();
     publish.mockClear();
   });
 
-  it('returns the single page when there is no nextLink', async () => {
-    const fetchPage = jest.fn().mockResolvedValue({ value: [{ id: 1 }, { id: 2 }] });
+  it('logs and publishes an alert-warning app event', () => {
+    warnResultsTruncated();
 
-    const results = await fetchAllArmPages('azuremonitor', 'azuremonitor/subscriptions?api-version=x', fetchPage);
-
-    expect(results).toEqual([{ id: 1 }, { id: 2 }]);
-    expect(fetchPage).toHaveBeenCalledTimes(1);
-    expect(fetchPage).toHaveBeenCalledWith('azuremonitor/subscriptions?api-version=x');
-  });
-
-  it('follows nextLink across pages and rebuilds the path via the resource prefix', async () => {
-    const fetchPage = jest
-      .fn()
-      .mockResolvedValueOnce({
-        value: [{ id: 1 }],
-        nextLink: 'https://management.azure.com/subscriptions?api-version=x&$skiptoken=abc',
-      })
-      .mockResolvedValueOnce({ value: [{ id: 2 }] });
-
-    const results = await fetchAllArmPages('azuremonitor', 'azuremonitor/subscriptions?api-version=x', fetchPage);
-
-    expect(results).toEqual([{ id: 1 }, { id: 2 }]);
-    expect(fetchPage).toHaveBeenNthCalledWith(2, 'azuremonitor/subscriptions?api-version=x&$skiptoken=abc');
-  });
-
-  it('stops early and warns when a page returns no result', async () => {
-    const fetchPage = jest.fn().mockResolvedValue(undefined);
-
-    const results = await fetchAllArmPages('azuremonitor', 'azuremonitor/subscriptions?api-version=x', fetchPage);
-
-    expect(results).toEqual([]);
-    expect(fetchPage).toHaveBeenCalledTimes(1);
     expect(logWarning).toHaveBeenCalledTimes(1);
-    expect(logWarning).toHaveBeenCalledWith('[azuremonitor] ARM page request returned no result; stopping pagination.');
-  });
-
-  it('does not emit the page-cap warning when a later page returns no result', async () => {
-    const fetchPage = jest
-      .fn()
-      .mockResolvedValueOnce({
-        value: [{ id: 1 }],
-        nextLink: 'https://management.azure.com/subscriptions?api-version=x&$skiptoken=abc',
-      })
-      .mockResolvedValueOnce(undefined);
-
-    const results = await fetchAllArmPages('azuremonitor', 'azuremonitor/subscriptions?api-version=x', fetchPage);
-
-    expect(results).toEqual([{ id: 1 }]);
-    expect(logWarning).toHaveBeenCalledTimes(1);
-    expect(logWarning).toHaveBeenCalledWith('[azuremonitor] ARM page request returned no result; stopping pagination.');
-    expect(logWarning).not.toHaveBeenCalledWith(expect.stringContaining('ARM listing stopped after'));
-  });
-
-  it('stops after MAX_ARM_PAGES even if nextLink never clears, and warns', async () => {
-    const fetchPage = jest.fn().mockResolvedValue({
-      value: [{ id: 1 }],
-      nextLink: 'https://management.azure.com/subscriptions?api-version=x&$skiptoken=loop',
-    });
-
-    const results = await fetchAllArmPages('azuremonitor', 'azuremonitor/subscriptions?api-version=x', fetchPage);
-
-    expect(fetchPage).toHaveBeenCalledTimes(MAX_ARM_PAGES);
-    expect(results).toHaveLength(MAX_ARM_PAGES);
-    expect(logWarning).toHaveBeenCalledTimes(1);
-    expect(logWarning).toHaveBeenCalledWith(
-      `[azuremonitor] ARM listing stopped after ${MAX_ARM_PAGES} pages; some results may be omitted.`
-    );
     expect(publish).toHaveBeenCalledTimes(1);
     expect(publish).toHaveBeenCalledWith(expect.objectContaining({ type: AppEvents.alertWarning.name }));
-  });
-
-  it('does not emit a warning toast when all pages load within the cap', async () => {
-    const fetchPage = jest
-      .fn()
-      .mockResolvedValueOnce({
-        value: [{ id: 1 }],
-        nextLink: 'https://management.azure.com/subscriptions?api-version=x&$skiptoken=abc',
-      })
-      .mockResolvedValueOnce({ value: [{ id: 2 }] });
-
-    await fetchAllArmPages('azuremonitor', 'azuremonitor/subscriptions?api-version=x', fetchPage);
-
-    expect(publish).not.toHaveBeenCalled();
-  });
-
-  it('does not emit a warning toast when a page returns no result', async () => {
-    const fetchPage = jest.fn().mockResolvedValue(undefined);
-
-    await fetchAllArmPages('azuremonitor', 'azuremonitor/subscriptions?api-version=x', fetchPage);
-
-    expect(publish).not.toHaveBeenCalled();
   });
 });
 

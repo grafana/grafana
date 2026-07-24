@@ -12,13 +12,12 @@ import { Alert, Divider, SecureSocksProxySettings } from '@grafana/ui';
 
 import ResponseParser from '../../azure_monitor/response_parser';
 import {
-  type AzureAPIResponse,
   type AzureMonitorDataSourceJsonData,
   type AzureMonitorDataSourceSecureJsonData,
   type AzureMonitorDataSourceSettings,
   type Subscription,
 } from '../../types/types';
-import { fetchAllArmPages, routeNames } from '../../utils/common';
+import { fetchAllArmResources, paginatedRoutes } from '../../utils/common';
 
 import { MonitorConfig } from './MonitorConfig';
 
@@ -37,8 +36,6 @@ export const ConfigEditor = memo(function ConfigEditor(props: Props) {
   const { options, onOptionsChange } = props;
   const [unsaved, setUnsaved] = useState(false);
   const [error, setError] = useState<ErrorMessage | undefined>(undefined);
-
-  const baseURL = `/api/datasources/uid/${options.uid}/resources/${routeNames.azureMonitor}/subscriptions`;
 
   function updateOptions(
     optionsFunc: (options: AzureMonitorDataSourceSettings) => AzureMonitorDataSourceSettings
@@ -63,16 +60,8 @@ export const ConfigEditor = memo(function ConfigEditor(props: Props) {
   async function getSubscriptions(): Promise<Array<SelectableValue<string>>> {
     await saveOptions();
 
-    const query = `?api-version=2019-03-01`;
-    const resourcePath = `/api/datasources/uid/${options.uid}/resources/${routeNames.azureMonitor}`;
     try {
-      const value = await fetchAllArmPages<Subscription>(resourcePath, baseURL + query, async (path) => {
-        const response = await getBackendSrv()
-          .fetch<AzureAPIResponse<Subscription>>({ url: path, method: 'GET' })
-          .toPromise();
-        return response?.data;
-      });
-
+      const value = await fetchAllArmResources<Subscription>(options.uid, paginatedRoutes.subscriptions);
       setError(undefined);
       return ResponseParser.parseSubscriptionsForSelect({ value });
     } catch (err) {

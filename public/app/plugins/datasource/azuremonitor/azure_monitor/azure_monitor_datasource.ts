@@ -33,7 +33,13 @@ import {
   type Subscription,
   TablePlan,
 } from '../types/types';
-import { fetchAllArmPages, replaceTemplateVariables, routeNames } from '../utils/common';
+import {
+  fetchAllArmResources,
+  fetchArmResourcePage,
+  paginatedRoutes,
+  replaceTemplateVariables,
+  routeNames,
+} from '../utils/common';
 import migrateQuery from '../utils/migrateQuery';
 
 import ResponseParser from './response_parser';
@@ -207,12 +213,23 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
       return [];
     }
 
-    const value = await fetchAllArmPages<Subscription>(
-      this.resourcePath,
-      `${this.resourcePath}/subscriptions?api-version=2019-03-01`,
-      (path) => this.getResource<AzureAPIResponse<Subscription>>(path)
-    );
+    const value = await fetchAllArmResources<Subscription>(this.uid, paginatedRoutes.subscriptions);
     return ResponseParser.parseSubscriptions({ value });
+  }
+
+  async getSubscriptionsPage(
+    nextToken?: string
+  ): Promise<{ subscriptions: Array<{ text: string; value: string }>; nextToken?: string }> {
+    const params: Record<string, string> = { listAll: 'false' };
+    if (nextToken) {
+      params.nextToken = nextToken;
+    }
+    const { value, nextToken: next } = await fetchArmResourcePage<Subscription>(
+      this.uid,
+      paginatedRoutes.subscriptions,
+      params
+    );
+    return { subscriptions: ResponseParser.parseSubscriptions({ value }), nextToken: next };
   }
 
   // Note globalRegion should be false when querying custom metric namespaces

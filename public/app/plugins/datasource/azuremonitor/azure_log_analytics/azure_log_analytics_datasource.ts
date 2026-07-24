@@ -11,15 +11,24 @@ import { type AzureMonitorQuery } from '../types/query';
 import {
   type AzureMonitorDataSourceJsonData,
   type AzureMonitorDataSourceInstanceSettings,
-  type AzureAPIResponse,
   type AzureLogsVariable,
   type Workspace,
   type DatasourceValidationResult,
   type Subscription,
 } from '../types/types';
-import { fetchAllArmPages, interpolateVariable, routeNames } from '../utils/common';
+import {
+  fetchAllArmResources,
+  fetchArmResourcePage,
+  interpolateVariable,
+  paginatedRoutes,
+  routeNames,
+} from '../utils/common';
 
 import { transformMetadataToKustoSchema } from './utils';
+
+function workspacesToVariables(value: Workspace[]): AzureLogsVariable[] {
+  return map(value, (val: Workspace) => ({ text: val.name, value: val.id })) || [];
+}
 
 export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   AzureMonitorQuery,
@@ -31,7 +40,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
   defaultSubscriptionId?: string;
 
-  azureMonitorPath: string;
   firstWorkspace?: string;
 
   constructor(
@@ -42,7 +50,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     this.credentials = getCredentials(instanceSettings);
 
     this.resourcePath = `${routeNames.logAnalytics}`;
-    this.azureMonitorPath = `${routeNames.azureMonitor}/subscriptions`;
 
     this.defaultSubscriptionId = this.instanceSettings.jsonData.subscriptionId || '';
   }
@@ -66,33 +73,33 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       return [];
     }
 
-    const value = await fetchAllArmPages<Subscription>(
-      routeNames.azureMonitor,
-      `${this.azureMonitorPath}?api-version=2019-03-01`,
-      (path) => this.getResource<AzureAPIResponse<Subscription>>(path)
-    );
+    const value = await fetchAllArmResources<Subscription>(this.uid, paginatedRoutes.subscriptions);
     return ResponseParser.parseSubscriptions({ value });
   }
 
   async getWorkspaces(subscription: string): Promise<AzureLogsVariable[]> {
     const subscriptionId = this.templateSrv.replace(subscription || this.defaultSubscriptionId);
 
-    const workspaceListUrl =
-      this.azureMonitorPath +
-      `/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
+    const value = await fetchAllArmResources<Workspace>(this.uid, paginatedRoutes.workspaces, { subscriptionId });
+    return workspacesToVariables(value);
+  }
 
-    const value = await fetchAllArmPages<Workspace>(routeNames.azureMonitor, workspaceListUrl, (path) =>
-      this.getResource<AzureAPIResponse<Workspace>>(path)
-    );
+  async getWorkspacesPage(
+    subscription: string,
+    nextToken?: string
+  ): Promise<{ workspaces: AzureLogsVariable[]; nextToken?: string }> {
+    const subscriptionId = this.templateSrv.replace(subscription || this.defaultSubscriptionId);
 
-    return (
-      map(value, (val: Workspace) => {
-        return {
-          text: val.name,
-          value: val.id,
-        };
-      }) || []
+    const params: Record<string, string> = { subscriptionId, listAll: 'false' };
+    if (nextToken) {
+      params.nextToken = nextToken;
+    }
+    const { value, nextToken: next } = await fetchArmResourcePage<Workspace>(
+      this.uid,
+      paginatedRoutes.workspaces,
+      params
     );
+    return { workspaces: workspacesToVariables(value), nextToken: next };
   }
 
   async getMetadata(resourceUri: string) {
