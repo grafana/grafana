@@ -953,9 +953,12 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 			},
 		},
 		{
-			name:      "Trial mode only includes the homepage",
+			name:      "Trial mode only includes the homepage and workspace",
 			cfg:       setting.NewCfg(),
 			trialMode: true,
+			wantChildPaths: []string{
+				"/a/grafana-assistant-app/workspace",
+			},
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
