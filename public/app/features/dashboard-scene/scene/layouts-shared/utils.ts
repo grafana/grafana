@@ -4,6 +4,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
+import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 export interface EditPaneInputAutoFocusProps {
   autoFocus?: boolean;
@@ -52,6 +53,18 @@ export function generateUniqueTitle(title: string | undefined, existingTitles: S
   }
 
   return baseTitle;
+}
+
+export function changeLayoutTo(
+  currentManager: DashboardLayoutManager,
+  layoutItem: LayoutRegistryItem,
+  skipUndo?: boolean
+) {
+  const layoutParent = currentManager.parent;
+
+  if (layoutParent && isLayoutParent(layoutParent)) {
+    layoutParent.switchLayout(layoutItem.createFromLayout(currentManager), skipUndo);
+  }
 }
 
 export function ungroupLayout(layout: DashboardLayoutManager, innerLayout: DashboardLayoutManager, skipUndo?: boolean) {
