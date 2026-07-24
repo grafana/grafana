@@ -1,8 +1,11 @@
 package provisioning
 
 import (
+	"context"
 	"fmt"
 	"time"
+
+	"github.com/open-feature/go-sdk/openfeature"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -14,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/perftest"
 	releaseresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/releaseresources"
 	jobsync "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -86,6 +90,11 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	features := featuremgmt.ProvideToggles(featureManager)
 	exportEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningExport)                 //nolint:staticcheck
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
+	// Evaluated per job via OpenFeature so the flag behaves consistently with the
+	// API server (see performanceEnabled in the provisioning apiserver package).
+	perfTestingEnabled := func(ctx context.Context) bool {
+		return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningPerformance, false, openfeature.TransactionContext(ctx))
+	}
 
 	clients, err := controllerCfg.Clients()
 	if err != nil {
@@ -174,6 +183,9 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	// Delete Resources (orphan cleanup — deletes managed resources)
 	deleteResourcesWorker := deleteresourcespkg.NewWorker(resourceLister, clients, 10)
 
+	// Synthetic load-testing worker; a no-op unless provisioning.performance is enabled.
+	perfTestWorker := perftest.NewWorker(perfTestingEnabled)
+
 	// PullRequest
 	renderer := pullrequest.NewNoOpRenderer()
 	evaluator := pullrequest.NewEvaluator(renderer, parsers, pullrequest.URLProvider{
@@ -192,6 +204,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		fixMetadataWorker,
 		releaseResourcesWorker,
 		deleteResourcesWorker,
+		perfTestWorker,
 		prWorker,
 	}
 

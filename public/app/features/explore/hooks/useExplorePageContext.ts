@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { createAssistantContextItem, type ChatContextItem, useProvidePageContext } from '@grafana/assistant';
 import { type DataSourceApi } from '@grafana/data';
@@ -7,19 +7,27 @@ import { type DataQuery } from '@grafana/schema';
 import { type ExploreItemState } from 'app/types/explore';
 
 export function useExplorePageContext(panes: Array<[string, ExploreItemState]>): void {
-  const setContext = useProvidePageContext(/^\/explore/);
+  const [items, setItems] = useState<ChatContextItem[]>([]);
 
   useEffect(() => {
     let cancelled = false;
-    buildContext(panes).then((items) => {
+    buildContext(panes).then((built) => {
       if (!cancelled) {
-        setContext(items);
+        setItems(built);
       }
     });
     return () => {
       cancelled = true;
     };
-  }, [panes, setContext]);
+  }, [panes]);
+
+  // Provide the built items as the registration's context. Passing them here
+  // (rather than via the imperative setter) means the assistant SDK both
+  // re-applies them whenever they change and re-creates the registration with
+  // them if it remounts — otherwise the items are lost when the registration
+  // is re-created empty and the effect that set them
+  // doesn't re-run, leaving Explore context missing until an unrelated render.
+  useProvidePageContext(/^\/explore/, items);
 }
 
 async function buildContext(panes: Array<[string, ExploreItemState]>): Promise<ChatContextItem[]> {

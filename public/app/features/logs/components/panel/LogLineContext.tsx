@@ -31,6 +31,7 @@ import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataQuery, type TimeZone } from '@grafana/schema';
 import { Button, Collapse, Combobox, type ComboboxOption, InlineLabel, Modal, Stack, useTheme2 } from '@grafana/ui';
 import { splitOpen } from 'app/features/explore/state/main';
+import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { useDispatch } from 'app/types/store';
 
 import { dataFrameToLogsModel } from '../../logsModel';
@@ -56,6 +57,7 @@ interface LogLineContextProps {
     options?: LogRowContextOptions,
     cacheFilters?: boolean
   ) => Promise<DataQuery | null>;
+  getFieldLinks?: GetFieldLinksFn;
   sortOrder?: LogsSortOrder;
   runContextQuery?: () => void;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
@@ -80,6 +82,7 @@ export const LogLineContext = memo(
     timeZone,
     getLogRowContextUi,
     getRowContextQuery,
+    getFieldLinks,
     onClose,
     getRowContext,
     displayedFields: displayedFieldsProp = [],
@@ -445,6 +448,7 @@ export const LogLineContext = memo(
                 displayedFields={displayedFields}
                 enableLogDetails={true}
                 eventBus={eventBusRef.current}
+                getFieldLinks={getFieldLinks}
                 infiniteScrollMode="unlimited"
                 loadMore={handleLoadMore}
                 logLineMenuCustomItems={logLineMenuCustomItems}

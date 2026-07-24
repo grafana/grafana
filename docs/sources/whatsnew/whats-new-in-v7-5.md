@@ -135,7 +135,7 @@ If you have created dashboards with template variables, then you can choose whic
 
 Enable this feature in configuration settings using the `templateVariables` flag.
 
-For more information, refer to [Reporting](../../dashboards/share-dashboards-panels/#choose-template-variables).
+For more information, refer to [Reporting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/create-reports/#customize-template-variables).
 
 ### Active user limits
 

@@ -32,6 +32,10 @@ var (
 	sqlVectorCollectionUpsert            = mustTemplate("vector_collection_upsert.sql")
 	sqlVectorCollectionDelete            = mustTemplate("vector_collection_delete.sql")
 	sqlVectorCollectionDeleteSubresource = mustTemplate("vector_collection_delete_subresources.sql")
+	sqlVectorNamespaceDeleteEmbeddings   = mustTemplate("vector_namespace_delete_embeddings.sql")
+	sqlVectorNamespaceDeleteQueryCache   = mustTemplate("vector_namespace_delete_query_cache.sql")
+	sqlVectorNamespaceDeleteRateBuckets  = mustTemplate("vector_namespace_delete_rate_buckets.sql")
+	sqlVectorNamespaceDeletePromoted     = mustTemplate("vector_namespace_delete_promoted.sql")
 	sqlVectorCollectionGetContent        = mustTemplate("vector_collection_get_content.sql")
 	sqlVectorCollectionExists            = mustTemplate("vector_collection_exists.sql")
 	sqlVectorCollectionSearch            = mustTemplate("vector_collection_search.sql")
@@ -46,6 +50,7 @@ var (
 	sqlQueryCacheInsert                  = mustTemplate("query_cache_insert.sql")
 	sqlRateBucketIncrement               = mustTemplate("rate_bucket_increment.sql")
 	sqlRateBucketSweep                   = mustTemplate("rate_bucket_sweep.sql")
+	sqlVectorCatalogList                 = mustTemplate("vector_catalog_list.sql")
 )
 
 // All queries target `embeddings` and include `resource = $1 AND
@@ -106,6 +111,21 @@ func (r *sqlVectorCollectionDeleteSubresourcesRequest) SubresourcesSlice() refle
 	return reflect.ValueOf(r.Subresources)
 }
 
+// sqlVectorNamespaceDeleteRequest deletes every row for a namespace across all
+// resources/models. Shared by the four namespace-scoped delete templates
+// (embeddings, query_embedding_cache, vector_search_rate_buckets, vector_promoted).
+type sqlVectorNamespaceDeleteRequest struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+}
+
+func (r *sqlVectorNamespaceDeleteRequest) Validate() error {
+	if r.Namespace == "" {
+		return fmt.Errorf("missing namespace")
+	}
+	return nil
+}
+
 type sqlVectorCollectionExistsResponse struct {
 	Exists int
 }
@@ -157,6 +177,25 @@ func (r *sqlVectorBackfillJobsListRequest) Validate() error {
 func (r *sqlVectorBackfillJobsListRequest) Results() (*sqlVectorBackfillJobsListResponse, error) {
 	cp := *r.Response
 	return &cp, nil
+}
+
+type sqlVectorCatalogListRequest struct {
+	sqltemplate.SQLTemplate
+	Response *sqlVectorCatalogListResponse
+}
+
+func (r *sqlVectorCatalogListRequest) Validate() error { return nil }
+
+func (r *sqlVectorCatalogListRequest) Results() (*sqlVectorCatalogListResponse, error) {
+	cp := *r.Response
+	return &cp, nil
+}
+
+type sqlVectorCatalogListResponse struct {
+	GroupName    string
+	Resource     string
+	PartitionKey string
+	IsExternal   bool
 }
 
 type sqlVectorBackfillJobsCreateRequest struct {

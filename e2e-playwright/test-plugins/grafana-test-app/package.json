@@ -1,0 +1,31 @@
+{
+  "name": "@test-plugins/grafana-e2etest-app",
+  "version": "13.1.0-pre",
+  "private": true,
+  "scripts": {
+    "build": "NODE_OPTIONS='--experimental-strip-types --no-warnings=ExperimentalWarning' webpack -c ./webpack.config.ts --env production",
+    "dev": "NODE_OPTIONS='--experimental-strip-types --no-warnings=ExperimentalWarning' webpack -w -c ./webpack.config.ts --env development",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint --cache --ignore-path ./.gitignore --ext .js,.jsx,.ts,.tsx ."
+  },
+  "author": "Grafana",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@grafana/plugin-configs": "workspace:*",
+    "@types/node": "24.9.2",
+    "@types/react": "18.3.18",
+    "@types/react-dom": "18.3.5",
+    "typescript": "6.0.2",
+    "webpack": "^5.105.0",
+    "webpack-merge": "5.10.0"
+  },
+  "engines": {
+    "node": ">= 22 <25"
+  },
+  "dependencies": {
+    "@grafana/data": "workspace:*",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "packageManager": "yarn@4.17.1"
+}

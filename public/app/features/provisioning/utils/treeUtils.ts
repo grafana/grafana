@@ -253,3 +253,53 @@ export function filterTree(items: TreeItem[], searchQuery: string): TreeItem[] {
 
   return items.map(filterNode).filter((n): n is TreeItem => n !== null);
 }
+
+/**
+ * A tree item's status as shown in the Resources tab. `warning` mirrors the folder
+ * metadata warning icon, which takes precedence over the sync icons. This is the single
+ * source of truth shared by the status cell and the status filter so they never drift.
+ */
+export type StatusCategory = 'warning' | 'pending' | 'synced';
+
+export function getStatusCategory(node: TreeItem, includeWarnings: boolean): StatusCategory | undefined {
+  if (includeWarnings && node.missingFolderMetadata) {
+    return 'warning';
+  }
+  return node.status;
+}
+
+/**
+ * Filter tree to items whose status is in `categories`, keeping ancestor folders so the
+ * hierarchy stays intact. An empty `categories` list disables the filter (returns everything).
+ * `includeWarnings` controls whether the folder-metadata warning is treated as its own category.
+ */
+export function filterByStatusCategories(
+  items: TreeItem[],
+  categories: StatusCategory[],
+  includeWarnings = false
+): TreeItem[] {
+  if (categories.length === 0) {
+    return items;
+  }
+
+  const selected = new Set(categories);
+  const matches = (node: TreeItem): boolean => {
+    const category = getStatusCategory(node, includeWarnings);
+    return category !== undefined && selected.has(category);
+  };
+
+  const filterNode = (node: TreeItem): TreeItem | null => {
+    if (node.type === 'Folder' && node.children.length > 0) {
+      const filteredChildren = node.children.map(filterNode).filter((n): n is TreeItem => n !== null);
+      if (filteredChildren.length > 0) {
+        return { ...node, children: filteredChildren };
+      }
+      // No matching descendants — keep the folder only if it matches itself.
+      return matches(node) ? { ...node, children: [] } : null;
+    }
+
+    return matches(node) ? node : null;
+  };
+
+  return items.map(filterNode).filter((n): n is TreeItem => n !== null);
+}

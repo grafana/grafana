@@ -31,6 +31,7 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 		Name: "external_alertmanager_uid", Type: migrator.DB_NVarchar, Length: UIDMaxLength, Nullable: true,
 	}))
 
+	AddManagerPropertiesColumnsToProvenanceType(mg)
 	// End of migration log, add new migrations above this line.
 }
 

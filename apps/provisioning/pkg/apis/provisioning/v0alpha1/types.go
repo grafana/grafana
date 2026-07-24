@@ -138,6 +138,8 @@ type BitbucketRepositoryConfig struct {
 	Branch string `json:"branch"`
 	// TokenUser is the user that will be used to access the repository if it's a personal access token.
 	TokenUser string `json:"tokenUser,omitempty"`
+	// Email is the Atlassian account email used to authenticate the Bitbucket REST API. Required to enable webhooks.
+	Email string `json:"email,omitempty"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
@@ -655,7 +657,10 @@ func (SyncStatus) OpenAPIModelName() string {
 }
 
 type WebhookStatus struct {
-	ID               int64    `json:"id,omitempty"`
+	// TODO: consolidate ID and UUID into a single string identifier in the next api version.
+	ID   int64  `json:"id,omitempty"`
+	UUID string `json:"uuid,omitempty"`
+
 	URL              string   `json:"url,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 	LastEvent        int64    `json:"lastEvent,omitempty"`

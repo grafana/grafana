@@ -2,6 +2,7 @@ import {
   type ApiMachineryError,
   type ApiMachineryErrorResponse,
   ERROR_ROUTES_MATCHER_CONFLICT,
+  ERROR_TIME_INTERVAL_IN_USE,
   getErrorMessageFromApiMachineryErrorResponse,
 } from './errors';
 
@@ -59,6 +60,19 @@ describe('getErrorMessageFromCode', () => {
     delete error.data.details?.causes;
     expect(getErrorMessageFromApiMachineryErrorResponse(error)).toBe(
       'Cannot add or update route: matchers conflict with an external routing tree if we merged matchers <unknown matchers>. This would make the route unreachable.'
+    );
+  });
+
+  it(`should handle ${ERROR_TIME_INTERVAL_IN_USE} regardless of the raw API message`, () => {
+    const error = buildApiMachineryError({
+      message: 'Time interval is used',
+      code: 409,
+      reason: 'Conflict',
+      details: { uid: ERROR_TIME_INTERVAL_IN_USE },
+    });
+
+    expect(getErrorMessageFromApiMachineryErrorResponse(error)).toBe(
+      'This time interval cannot be deleted because it is still used by one or more notification policies or alert rules.'
     );
   });
 });
