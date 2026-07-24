@@ -1,0 +1,56 @@
+diff --git a/dist/cjs/components/metrics-browser/MetricSelector.cjs b/dist/cjs/components/metrics-browser/MetricSelector.cjs
+index 76c32e789c5846c10ef3f245ab799f8b7709eac4..ce9bad4fdd81a97781bd6df98cf08cb3a71a877a 100644
+--- a/dist/cjs/components/metrics-browser/MetricSelector.cjs
++++ b/dist/cjs/components/metrics-browser/MetricSelector.cjs
+@@ -17,6 +17,7 @@ function MetricSelector() {
+   const styles$1 = ui.useStyles2(styles.getStylesMetricSelector);
+   const [metricSearchTerm, setMetricSearchTerm] = React.useState("");
+   const { metrics, selectedMetric, seriesLimit, setSeriesLimit, onMetricClick } = MetricsBrowserContext.useMetricsBrowser();
++  const [seriesLimitInput, setSeriesLimitInput] = React.useState(String(seriesLimit));
+   const filteredMetrics = React.useMemo(() => {
+     return metrics.filter((m) => m.name === selectedMetric || m.name.includes(metricSearchTerm));
+   }, [metrics, selectedMetric, metricSearchTerm]);
+@@ -56,12 +57,13 @@ function MetricSelector() {
+     /* @__PURE__ */ jsxRuntime.jsx("div", { children: /* @__PURE__ */ jsxRuntime.jsx(
+       ui.Input,
+       {
+-        onChange: (e) => setSeriesLimit(parseInt(e.currentTarget.value.trim(), 10)),
++        onChange: (e) => setSeriesLimitInput(e.currentTarget.value),
++        onBlur: (e) => setSeriesLimit(parseInt(e.currentTarget.value.trim(), 10)),
+         "aria-label": i18n.t(
+           "grafana-prometheus.components.metric-selector.aria-label-limit-results-from-series-endpoint",
+           "Limit results from series endpoint"
+         ),
+-        value: seriesLimit,
++        value: seriesLimitInput,
+         "data-testid": e2eSelectors.selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.seriesLimit
+       }
+     ) }),
+diff --git a/dist/esm/components/metrics-browser/MetricSelector.mjs b/dist/esm/components/metrics-browser/MetricSelector.mjs
+index c805c870b40aeb8c33dc4ce82b2a9d3d8e7f27d5..b91e76c07fa4f8241df5df6a18f22d5785b0140e 100644
+--- a/dist/esm/components/metrics-browser/MetricSelector.mjs
++++ b/dist/esm/components/metrics-browser/MetricSelector.mjs
+@@ -13,6 +13,7 @@ function MetricSelector() {
+   const styles = useStyles2(getStylesMetricSelector);
+   const [metricSearchTerm, setMetricSearchTerm] = useState("");
+   const { metrics, selectedMetric, seriesLimit, setSeriesLimit, onMetricClick } = useMetricsBrowser();
++  const [seriesLimitInput, setSeriesLimitInput] = useState(String(seriesLimit));
+   const filteredMetrics = useMemo(() => {
+     return metrics.filter((m) => m.name === selectedMetric || m.name.includes(metricSearchTerm));
+   }, [metrics, selectedMetric, metricSearchTerm]);
+@@ -52,12 +53,13 @@ function MetricSelector() {
+     /* @__PURE__ */ jsx("div", { children: /* @__PURE__ */ jsx(
+       Input,
+       {
+-        onChange: (e) => setSeriesLimit(parseInt(e.currentTarget.value.trim(), 10)),
++        onChange: (e) => setSeriesLimitInput(e.currentTarget.value),
++        onBlur: (e) => setSeriesLimit(parseInt(e.currentTarget.value.trim(), 10)),
+         "aria-label": t(
+           "grafana-prometheus.components.metric-selector.aria-label-limit-results-from-series-endpoint",
+           "Limit results from series endpoint"
+         ),
+-        value: seriesLimit,
++        value: seriesLimitInput,
+         "data-testid": selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.seriesLimit
+       }
+     ) }),
