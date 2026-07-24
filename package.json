@@ -174,7 +174,7 @@
     "css-loader": "7.1.2",
     "css-minimizer-webpack-plugin": "^8.0.0",
     "enquirer": "^2.4.1",
-    "esbuild": "0.25.8",
+    "esbuild": "0.28.1",
     "esbuild-loader": "4.3.0",
     "esbuild-plugin-browserslist": "^1.0.0",
     "eslint": "9.32.0",
