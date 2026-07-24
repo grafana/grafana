@@ -22,7 +22,7 @@ import (
 
 func TestBundler_Build(t *testing.T) {
 	// No HAR captured (empty buffer, nil response) -> traffic.har omitted; only panel.json present.
-	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, json.RawMessage(`{"id":1}`), nil, nil, nil)
+	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, json.RawMessage(`{"id":1}`), nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -36,7 +36,7 @@ func TestBundler_Build(t *testing.T) {
 
 func TestBundler_Build_recordsQueryError(t *testing.T) {
 	// A failed query must still produce a bundle, with the error recorded (capture is not discarded).
-	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, nil, errors.New("datasource timeout"))
+	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, errors.New("datasource timeout"))
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -50,7 +50,7 @@ func TestBundler_Build_recordsQueryDataMarshalError(t *testing.T) {
 	// error is recorded and the other artifacts still ship, mirroring the per-panel dashboard path.
 	buf := bufferWithEntry(t, "http://ds/1")
 
-	blob, err := NewBundler().Build(nil, buf, nil, nil, json.RawMessage(`{invalid`), nil)
+	blob, err := NewBundler().Build(nil, buf, nil, nil, json.RawMessage(`{invalid`), nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -60,13 +60,30 @@ func TestBundler_Build_recordsQueryDataMarshalError(t *testing.T) {
 	require.Contains(t, files, "traffic.har", "other artifacts still ship")
 }
 
+func TestBundler_Build_recordsQueryRequestSerializeError(t *testing.T) {
+	// The caller failing to serialize the request (queryRequestErr) must not silently omit the request:
+	// the failure is recorded in querydata-error.txt and the other captured artifacts still ship,
+	// mirroring how the per-panel dashboard path surfaces the same failure via manifest.queryDataError.
+	buf := bufferWithEntry(t, "http://ds/1")
+
+	blob, err := NewBundler().Build(nil, buf, nil, nil, nil, errors.New("unsupported value: +Inf"), nil)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.NotContains(t, files, "querydata.json", "request could not be serialized")
+	require.Contains(t, files, "querydata-error.txt")
+	require.Contains(t, string(files["querydata-error.txt"]), "serialize query request")
+	require.Contains(t, string(files["querydata-error.txt"]), "unsupported value: +Inf")
+	require.Contains(t, files, "traffic.har", "other artifacts still ship")
+}
+
 func TestBundler_Build_recordsQueryDataResponse(t *testing.T) {
 	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
 	resp := &backend.QueryDataResponse{Responses: backend.Responses{
 		"A": {Frames: data.Frames{frame}},
 	}}
 
-	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil)
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -78,7 +95,7 @@ func TestBundler_Build_recordsQueryDataResponse(t *testing.T) {
 func TestBundler_Build_recordsQueryDataRequest(t *testing.T) {
 	request := json.RawMessage(`{"from":"now-1h","to":"now","queries":[{"refId":"A","expr":"up"}]}`)
 
-	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, request, nil)
+	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, request, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -96,7 +113,7 @@ func TestBundler_Build_excludesCaptureFramesFromQueryData(t *testing.T) {
 		"__har__ds": {Frames: data.Frames{capture}},
 	}}
 
-	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil)
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -110,7 +127,7 @@ func TestBundler_Build_boundsOversizedQueryData(t *testing.T) {
 		"A": {Frames: data.Frames{frame}},
 	}}
 
-	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil)
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -125,7 +142,7 @@ func TestBundler_Build_boundsOversizedRequestWithoutResponse(t *testing.T) {
 	// An oversized request with no response must truncate without claiming a response was omitted.
 	request := json.RawMessage(`{"expr":"` + strings.Repeat("x", maxQueryDataArtifactBytes) + `"}`)
 
-	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, request, nil)
+	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, request, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -153,7 +170,7 @@ func TestBundler_Build_preservesUpstreamAndPluginResultsForComparison(t *testing
 	queryResp := &backend.QueryDataResponse{Responses: backend.Responses{
 		"A": {Frames: data.Frames{pluginFrame}},
 	}}
-	blob, err := NewBundler().Build(queryResp, buf, nil, nil, nil, nil)
+	blob, err := NewBundler().Build(queryResp, buf, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -290,7 +307,7 @@ func TestCollectHAR_nilBuffer_noPanic(t *testing.T) {
 	require.Nil(t, out)
 
 	// A nil buffer must also flow through Build without panicking.
-	bundle, err := NewBundler().Build(nil, nil, nil, nil, nil, nil)
+	bundle, err := NewBundler().Build(nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, bundle)
 }

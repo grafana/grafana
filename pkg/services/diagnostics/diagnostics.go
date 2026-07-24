@@ -49,18 +49,29 @@ func NewBundler() *Bundler {
 //
 // Server logs are intentionally omitted because they are not scoped to this request and would leak
 // unrelated activity into a bundle meant for external sharing; they will be tackled in a follow-up.
-func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer, panelJSON, dashboardJSON, queryRequestJSON json.RawMessage, queryErr error) ([]byte, error) {
+func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer, panelJSON, dashboardJSON, queryRequestJSON json.RawMessage, queryRequestErr, queryErr error) ([]byte, error) {
 	files := map[string][]byte{}
+
+	// queryRequestErr is the caller's failure to serialize the request into queryRequestJSON. Record it
+	// so a support engineer can tell the request JSON was omitted because serialization failed rather
+	// than silently dropped, mirroring how the per-panel dashboard path records manifest.queryDataError.
+	var queryDataErr error
+	if queryRequestErr != nil {
+		queryDataErr = fmt.Errorf("serialize query request: %w", queryRequestErr)
+	}
 	if resp != nil || len(queryRequestJSON) > 0 {
 		queryData, err := marshalQueryDataArtifact(queryRequestJSON, resp)
 		if err != nil {
 			// A response that cannot be JSON-encoded (e.g. non-finite floats) must not sink the whole
 			// bundle: record the failure and still ship HAR and the other artifacts, mirroring how the
 			// dashboard path degrades per panel via manifest.queryDataError.
-			files["querydata-error.txt"] = []byte(err.Error() + "\n")
+			queryDataErr = errors.Join(queryDataErr, err)
 		} else {
 			files["querydata.json"] = queryData
 		}
+	}
+	if queryDataErr != nil {
+		files["querydata-error.txt"] = []byte(queryDataErr.Error() + "\n")
 	}
 
 	har, err := collectHAR(resp, harBuffer)
