@@ -64,6 +64,10 @@ func newScopedMapping(relation, group, resource, subresource string) actionMappi
 	return actionMapping{relation: relation, group: group, resource: resource, subresource: subresource}
 }
 
+// SubresourceAnnotations is the dashboards subresource that gates the legacy
+// annotations:* actions (mirrors "dashboards/annotations" in the RBAC mapper).
+const SubresourceAnnotations = "annotations"
+
 var (
 	folderGroup    = folders.FolderResourceInfo.GroupResource().Group
 	folderResource = folders.FolderResourceInfo.GroupResource().Resource
@@ -95,6 +99,13 @@ var resourceTranslations = map[string]resourceTranslation{
 			"folders.permissions:write":    newMapping(RelationSetPermissions, ""),
 			"dashboards.permissions:read":  newScopedMapping(RelationGetPermissions, dashboardGroup, dashboardResource, ""),
 			"dashboards.permissions:write": newScopedMapping(RelationSetPermissions, dashboardGroup, dashboardResource, ""),
+			// Dashboard annotations, modeled as the dashboards/annotations subresource
+			// (mirrors the RBAC mapper). Legacy folder view/edit/admin action sets pair
+			// these with the dashboard actions on the same folder scope.
+			"annotations:read":   newScopedMapping(RelationGet, dashboardGroup, dashboardResource, SubresourceAnnotations),
+			"annotations:write":  newScopedMapping(RelationUpdate, dashboardGroup, dashboardResource, SubresourceAnnotations),
+			"annotations:create": newScopedMapping(RelationCreate, dashboardGroup, dashboardResource, SubresourceAnnotations),
+			"annotations:delete": newScopedMapping(RelationDelete, dashboardGroup, dashboardResource, SubresourceAnnotations),
 			// Action sets
 			"folders:view":     newMapping(RelationSetView, ""),
 			"folders:edit":     newMapping(RelationSetEdit, ""),
@@ -116,6 +127,12 @@ var resourceTranslations = map[string]resourceTranslation{
 			// Permission management
 			"dashboards.permissions:read":  newMapping(RelationGetPermissions, ""),
 			"dashboards.permissions:write": newMapping(RelationSetPermissions, ""),
+			// Dashboard annotations (dashboards/annotations subresource); legacy dashboard
+			// view/edit/admin action sets pair these with the dashboard actions.
+			"annotations:read":   newMapping(RelationGet, SubresourceAnnotations),
+			"annotations:write":  newMapping(RelationUpdate, SubresourceAnnotations),
+			"annotations:create": newMapping(RelationCreate, SubresourceAnnotations),
+			"annotations:delete": newMapping(RelationDelete, SubresourceAnnotations),
 			// Action sets
 			"dashboards:view":  newMapping(RelationSetView, ""),
 			"dashboards:edit":  newMapping(RelationSetEdit, ""),
@@ -174,11 +191,12 @@ func TranslateToCheckRequest(namespace, action, kind, name string) (*authlib.Che
 	}
 
 	req := &authlib.CheckRequest{
-		Namespace: namespace,
-		Verb:      verb,
-		Group:     translation.group,
-		Resource:  translation.resource,
-		Name:      name,
+		Namespace:   namespace,
+		Verb:        verb,
+		Group:       translation.group,
+		Resource:    translation.resource,
+		Subresource: m.subresource,
+		Name:        name,
 	}
 
 	return req, true
@@ -217,7 +235,7 @@ func IsBasicRole(name string) bool {
 	return slices.Contains(basicRolesUIDs, name)
 }
 
-func actionListParams(translation resourceTranslation, m actionMapping) (group, resource, verb string, ok bool) {
+func actionListParams(translation resourceTranslation, m actionMapping) (group, resource, subresource, verb string, ok bool) {
 	group = translation.group
 	resource = translation.resource
 	if m.group != "" && m.resource != "" {
@@ -227,15 +245,15 @@ func actionListParams(translation resourceTranslation, m actionMapping) (group, 
 
 	verb, ok = RelationToVerbMapping[m.relation]
 	if !ok {
-		return "", "", "", false
+		return "", "", "", "", false
 	}
 
-	return group, resource, verb, true
+	return group, resource, m.subresource, verb, true
 }
 
-// TranslateActionToListParams translates an RBAC action to Zanzana List request parameters (group, resource, verb).
-// Returns empty strings if the action cannot be translated.
-func TranslateActionToListParams(action string) (group, resource, verb string) {
+// TranslateActionToListParams translates an RBAC action to Zanzana List request parameters
+// (group, resource, subresource, verb). Returns empty strings if the action cannot be translated.
+func TranslateActionToListParams(action string) (group, resource, subresource, verb string) {
 	translationTypes := make([]string, 0, len(resourceTranslations))
 	for typ := range resourceTranslations {
 		translationTypes = append(translationTypes, typ)
@@ -245,23 +263,24 @@ func TranslateActionToListParams(action string) (group, resource, verb string) {
 	for _, typ := range translationTypes {
 		translation := resourceTranslations[typ]
 		if m, ok := translation.mapping[action]; ok {
-			group, resource, verb, ok := actionListParams(translation, m)
+			group, resource, subresource, verb, ok := actionListParams(translation, m)
 			if !ok {
-				return "", "", ""
+				return "", "", "", ""
 			}
-			return group, resource, verb
+			return group, resource, subresource, verb
 		}
 	}
-	return "", "", ""
+	return "", "", "", ""
 }
 
 // ActionListEntry describes an action that Zanzana supports, along with
 // its List request parameters.
 type ActionListEntry struct {
-	Action   string
-	Group    string
-	Resource string
-	Verb     string
+	Action      string
+	Group       string
+	Resource    string
+	Subresource string
+	Verb        string
 }
 
 // supportedActions is the memoized result of building the action list from
@@ -290,17 +309,18 @@ var supportedActions = func() []ActionListEntry {
 			if _, ok := seen[action]; ok {
 				continue
 			}
-			group, resource, verb, ok := actionListParams(translation, m)
+			group, resource, subresource, verb, ok := actionListParams(translation, m)
 			if !ok {
 				continue
 			}
 
 			seen[action] = struct{}{}
 			out = append(out, ActionListEntry{
-				Action:   action,
-				Group:    group,
-				Resource: resource,
-				Verb:     verb,
+				Action:      action,
+				Group:       group,
+				Resource:    resource,
+				Subresource: subresource,
+				Verb:        verb,
 			})
 		}
 	}

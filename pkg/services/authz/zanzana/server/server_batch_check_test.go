@@ -111,6 +111,42 @@ func TestIntegrationServerBatchCheck(t *testing.T) {
 		assert.False(t, res.GetResults()["check2"].GetAllowed())
 	})
 
+	// Action-set grants carry no subresource information; subresource batch items must
+	// resolve through the action-set fallback (view → get, edit → create/update/delete).
+	t.Run("per-object and org-wide action-set grants imply subresource verbs", func(t *testing.T) {
+		items := []*authzv1.BatchCheckItem{
+			newItem("view-get", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, "", "1"),
+			newItem("view-update", utils.VerbUpdate, dashboardGroup, dashboardResource, statusSubresource, "", "1"),
+			newItem("view-other", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, "", "2"),
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:3", items))
+		require.NoError(t, err)
+		require.Len(t, res.GetResults(), 3)
+		assert.True(t, res.GetResults()["view-get"].GetAllowed(), "view grant must imply subresource read")
+		assert.False(t, res.GetResults()["view-update"].GetAllowed(), "view grant must not imply subresource write")
+		assert.False(t, res.GetResults()["view-other"].GetAllowed(), "other dashboards are not covered")
+
+		items = []*authzv1.BatchCheckItem{
+			newItem("edit-update", utils.VerbUpdate, dashboardGroup, dashboardResource, statusSubresource, "", "24"),
+			newItem("edit-get", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, "", "24"),
+		}
+		res, err = server.BatchCheck(newContextWithNamespace(), newBatchReq("user:24", items))
+		require.NoError(t, err)
+		require.Len(t, res.GetResults(), 2)
+		assert.True(t, res.GetResults()["edit-update"].GetAllowed(), "edit grant must imply subresource write")
+		assert.True(t, res.GetResults()["edit-get"].GetAllowed(), "edit grant must imply subresource read")
+
+		items = []*authzv1.BatchCheckItem{
+			newItem("org-get", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, "", "1"),
+			newItem("org-update", utils.VerbUpdate, dashboardGroup, dashboardResource, statusSubresource, "", "1"),
+		}
+		res, err = server.BatchCheck(newContextWithNamespace(), newBatchReq("user:25", items))
+		require.NoError(t, err)
+		require.Len(t, res.GetResults(), 2)
+		assert.True(t, res.GetResults()["org-get"].GetAllowed(), "org-wide view grant must imply subresource read")
+		assert.False(t, res.GetResults()["org-update"].GetAllowed(), "org-wide view grant must not imply subresource write")
+	})
+
 	t.Run("user:4 should have folder-based access", func(t *testing.T) {
 		items := []*authzv1.BatchCheckItem{
 			newItem("check1", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "1"), // folder 1 access

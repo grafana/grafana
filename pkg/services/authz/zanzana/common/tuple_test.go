@@ -165,3 +165,22 @@ func TestTranslateToResourceTuple(t *testing.T) {
 		})
 	}
 }
+
+func TestSubresourceActionSetRelation(t *testing.T) {
+	expected := map[string]string{
+		RelationGet:            RelationSetView,
+		RelationCreate:         RelationSetEdit,
+		RelationUpdate:         RelationSetEdit,
+		RelationDelete:         RelationSetEdit,
+		RelationGetPermissions: RelationSetAdmin,
+		RelationSetPermissions: RelationSetAdmin,
+	}
+	for relation, fallback := range expected {
+		require.Equal(t, fallback, SubresourceActionSetRelation(relation), relation)
+	}
+
+	// action-set relations themselves and unknown relations have no fallback
+	for _, relation := range []string{RelationSetView, RelationSetEdit, RelationSetAdmin, "unknown"} {
+		require.Empty(t, SubresourceActionSetRelation(relation), relation)
+	}
+}

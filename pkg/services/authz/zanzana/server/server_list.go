@@ -213,10 +213,53 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 		objects = res.GetObjects()
 	}
 
+	items := genericObjects(resource.GroupResource(), objects)
+
+	// 3. For subresource requests, include resources whose base object carries an
+	// action-set grant (view/edit/admin): those tuples are written on the base object
+	// without subresource information but imply the subresource verbs, mirroring the
+	// legacy action sets (dashboard View bundles annotations:read).
+	if resource.HasSubresource() {
+		if fallback := common.SubresourceActionSetRelation(relation); fallback != "" {
+			base := resource.WithoutSubresource()
+			res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
+				StoreId:              store.ID,
+				AuthorizationModelId: store.ModelID,
+				Type:                 common.TypeResource,
+				Relation:             fallback,
+				User:                 subject,
+				Context:              base.Context(),
+			}, contextuals)
+			if err != nil {
+				return nil, err
+			}
+			items = mergeUnique(items, genericObjects(base.GroupResource(), res.GetObjects()))
+		}
+	}
+
 	return &authzv1.ListResponse{
 		Folders: folderObject(folders),
-		Items:   genericObjects(resource.GroupResource(), objects),
+		Items:   items,
 	}, nil
+}
+
+// mergeUnique appends the entries of b that are not already present in a.
+func mergeUnique(a, b []string) []string {
+	if len(b) == 0 {
+		return a
+	}
+	seen := make(map[string]struct{}, len(a))
+	for _, s := range a {
+		seen[s] = struct{}{}
+	}
+	for _, s := range b {
+		if _, ok := seen[s]; ok {
+			continue
+		}
+		a = append(a, s)
+		seen[s] = struct{}{}
+	}
+	return a
 }
 
 func (s *Server) listObjects(

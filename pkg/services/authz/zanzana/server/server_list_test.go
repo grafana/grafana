@@ -172,6 +172,30 @@ func TestIntegrationServerList(t *testing.T) {
 		assert.Contains(t, res.GetItems(), "1")
 	})
 
+	// Action-set grants carry no subresource information; subresource listing must
+	// include them via the action-set fallback (view/edit on the base object).
+	t.Run("user:3 per-object view grant lists dashboard 1 for the status subresource", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newList("user:3", dashboardGroup, dashboardResource, statusSubresource))
+		require.NoError(t, err)
+		assert.Len(t, res.GetFolders(), 0)
+		assert.Equal(t, []string{"1"}, res.GetItems())
+	})
+
+	t.Run("user:24 per-object edit grant lists dashboard 24 for the status subresource", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newList("user:24", dashboardGroup, dashboardResource, statusSubresource))
+		require.NoError(t, err)
+		assert.Len(t, res.GetFolders(), 0)
+		assert.Equal(t, []string{"24"}, res.GetItems())
+	})
+
+	t.Run("user:25 org-wide view grant lists all for the status subresource", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newList("user:25", dashboardGroup, dashboardResource, statusSubresource))
+		require.NoError(t, err)
+		assert.True(t, res.GetAll())
+		assert.Len(t, res.GetItems(), 0)
+		assert.Len(t, res.GetFolders(), 0)
+	})
+
 	// Typed `create` listing. user / service-account have no per-object `create`, so listing
 	// them must return empty rather than issue an invalid ListObjects that OpenFGA rejects.
 	newCreateList := func(subject, group, resource string) *authzv1.ListRequest {
@@ -432,6 +456,30 @@ func TestIntegrationServerListStreaming(t *testing.T) {
 		assert.Contains(t, res.GetItems(), "1")
 	})
 
+	// Action-set grants carry no subresource information; subresource listing must
+	// include them via the action-set fallback (view/edit on the base object).
+	t.Run("user:3 per-object view grant lists dashboard 1 for the status subresource", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newList("user:3", dashboardGroup, dashboardResource, statusSubresource))
+		require.NoError(t, err)
+		assert.Len(t, res.GetFolders(), 0)
+		assert.Equal(t, []string{"1"}, res.GetItems())
+	})
+
+	t.Run("user:24 per-object edit grant lists dashboard 24 for the status subresource", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newList("user:24", dashboardGroup, dashboardResource, statusSubresource))
+		require.NoError(t, err)
+		assert.Len(t, res.GetFolders(), 0)
+		assert.Equal(t, []string{"24"}, res.GetItems())
+	})
+
+	t.Run("user:25 org-wide view grant lists all for the status subresource", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newList("user:25", dashboardGroup, dashboardResource, statusSubresource))
+		require.NoError(t, err)
+		assert.True(t, res.GetAll())
+		assert.Len(t, res.GetItems(), 0)
+		assert.Len(t, res.GetFolders(), 0)
+	})
+
 	// Typed `create` listing. user / service-account have no per-object `create`, so listing
 	// them must return empty rather than issue an invalid ListObjects that OpenFGA rejects.
 	newCreateList := func(subject, group, resource string) *authzv1.ListRequest {
@@ -614,6 +662,70 @@ func TestStripHelpersDoNotMutateInput(t *testing.T) {
 		require.Equal(t, []string{"folder:abc", "folder:def"}, in, "input must not be mutated")
 		require.Equal(t, []string{"abc", "def"}, out)
 	})
+}
+
+func TestMergeUnique(t *testing.T) {
+	tests := []struct {
+		name     string
+		a        []string
+		b        []string
+		expected []string
+	}{
+		{
+			name:     "both empty",
+			a:        nil,
+			b:        nil,
+			expected: nil,
+		},
+		{
+			name:     "empty b returns a unchanged",
+			a:        []string{"x", "y"},
+			b:        nil,
+			expected: []string{"x", "y"},
+		},
+		{
+			name:     "empty a returns all of b",
+			a:        nil,
+			b:        []string{"x", "y"},
+			expected: []string{"x", "y"},
+		},
+		{
+			name:     "disjoint slices are concatenated",
+			a:        []string{"a", "b"},
+			b:        []string{"c", "d"},
+			expected: []string{"a", "b", "c", "d"},
+		},
+		{
+			name:     "entries of b already in a are skipped",
+			a:        []string{"a", "b"},
+			b:        []string{"b", "c", "a"},
+			expected: []string{"a", "b", "c"},
+		},
+		{
+			name:     "duplicates within b are added once",
+			a:        []string{"a"},
+			b:        []string{"b", "b", "c", "b"},
+			expected: []string{"a", "b", "c"},
+		},
+		{
+			name:     "duplicates already in a are not deduped",
+			a:        []string{"a", "a"},
+			b:        []string{"a", "b"},
+			expected: []string{"a", "a", "b"},
+		},
+		{
+			name:     "order preserved: a first then first occurrence in b",
+			a:        []string{"d2", "d1"},
+			b:        []string{"d3", "d1", "d0"},
+			expected: []string{"d2", "d1", "d3", "d0"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, mergeUnique(tt.a, tt.b))
+		})
+	}
 }
 
 // TestIntegrationListDoesNotPoisonBatchCheckCache reproduces the end-to-end bug: with the query

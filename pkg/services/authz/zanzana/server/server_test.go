@@ -83,6 +83,11 @@ func setup(t *testing.T, srv *Server) *Server {
 		// These types have no per-object base `create`, but they do support subresource create.
 		common.NewTypedResourceTuple("user:22", common.RelationCreate, common.TypeUser, userGroup, userResource, statusSubresource, "1"),
 		common.NewTypedResourceTuple("user:23", common.RelationCreate, common.TypeServiceAccount, serviceAccountGroup, serviceAccountResource, statusSubresource, "1"),
+		// user:24 has a per-object edit action-set grant; user:25 an org-wide view
+		// action-set grant. Both must imply the matching subresource verbs via the
+		// action-set fallback (per-object tuples carry no subresource information).
+		common.NewResourceTuple("user:24", common.RelationSetEdit, dashboardGroup, dashboardResource, "", "24"),
+		common.NewGroupResourceTuple("user:25", common.RelationSetView, dashboardGroup, dashboardResource, ""),
 		common.NewResourceTuple("team:ctx-check#member", common.RelationGet, dashboardGroup, dashboardResource, "", "ctx-check-dashboard"),
 		common.NewResourceTuple("team:ctx-list#member", common.RelationGet, dashboardGroup, dashboardResource, "", "ctx-list-dashboard"),
 		common.NewResourceTuple("team:ctx-batch#member", common.RelationGet, dashboardGroup, dashboardResource, "", "ctx-batch-dashboard"),

@@ -99,13 +99,13 @@ func legacyFilter(perms []ac.Permission, action, scope string) []ac.Permission {
 
 // zanzanaResolve runs the Zanzana list → legacy permission mapping for one action.
 func zanzanaResolve(resp *authzv1.ListResponse, action, scope string) ([]ac.Permission, error) {
-	group, resource, verb := common.TranslateActionToListParams(action)
+	group, resource, subresource, verb := common.TranslateActionToListParams(action)
 	if group == "" || resource == "" {
 		return nil, nil
 	}
 	fake := &fakeZanzanaClient{listResp: resp}
 	r := &ZanzanaPermissionResolver{client: fake}
-	return r.listPermissions(context.Background(), "org:1", "user:parity", nil, group, resource, verb, action, scope)
+	return r.listPermissions(context.Background(), "org:1", "user:parity", nil, group, resource, subresource, verb, action, scope)
 }
 
 func TestSearchPermissionsForIdentity_NoActionOrPrefix_ListsAllSupportedActions(t *testing.T) {
@@ -166,7 +166,7 @@ func TestSearchPermissionsForIdentity_WithAction_DoesNotListAll(t *testing.T) {
 }
 
 func TestListPermissions_ScopeFilter_AppliesToFolderScopes(t *testing.T) {
-	group, resource, verb := common.TranslateActionToListParams("dashboards:read")
+	group, resource, subresource, verb := common.TranslateActionToListParams("dashboards:read")
 	fake := &fakeZanzanaClient{
 		listResp: &authzv1.ListResponse{
 			Folders: []string{"keep-me", "drop-me"},
@@ -181,6 +181,7 @@ func TestListPermissions_ScopeFilter_AppliesToFolderScopes(t *testing.T) {
 		nil,
 		group,
 		resource,
+		subresource,
 		verb,
 		"dashboards:read",
 		ac.Scope("folders", "uid", "keep-me"),
@@ -195,7 +196,7 @@ func TestListPermissions_ScopeFilter_AppliesToFolderScopes(t *testing.T) {
 // Scope filter edge cases not covered by TestLegacyZanzanaParity (dashboard-namespace filter
 // with All=true; UID prefix must not false-positive).
 func TestListPermissions_ScopeFilter_IncludesWildcardGrants(t *testing.T) {
-	group, resource, verb := common.TranslateActionToListParams("dashboards:read")
+	group, resource, subresource, verb := common.TranslateActionToListParams("dashboards:read")
 
 	t.Run("All=true keeps dashboards wildcard when scope is dashboards namespace", func(t *testing.T) {
 		fake := &fakeZanzanaClient{
@@ -210,6 +211,7 @@ func TestListPermissions_ScopeFilter_IncludesWildcardGrants(t *testing.T) {
 			nil,
 			group,
 			resource,
+			subresource,
 			verb,
 			"dashboards:read",
 			ac.Scope("dashboards", "uid", "some-dash"),
@@ -237,6 +239,7 @@ func TestListPermissions_ScopeFilter_IncludesWildcardGrants(t *testing.T) {
 			nil,
 			group,
 			resource,
+			subresource,
 			verb,
 			"dashboards:read",
 			ac.Scope("dashboards", "uid", "abc"),
@@ -250,7 +253,7 @@ func TestListPermissions_ScopeFilter_IncludesWildcardGrants(t *testing.T) {
 }
 
 func TestListPermissions_ScopeFilter_WildcardScopeQuery(t *testing.T) {
-	group, resource, verb := common.TranslateActionToListParams("dashboards:read")
+	group, resource, subresource, verb := common.TranslateActionToListParams("dashboards:read")
 
 	t.Run("wildcard query scope matches only wildcards, not individual items", func(t *testing.T) {
 		fake := &fakeZanzanaClient{
@@ -270,6 +273,7 @@ func TestListPermissions_ScopeFilter_WildcardScopeQuery(t *testing.T) {
 			nil,
 			group,
 			resource,
+			subresource,
 			verb,
 			"dashboards:read",
 			ac.Scope("dashboards", "uid", "*"),
@@ -291,6 +295,7 @@ func TestListPermissions_ScopeFilter_WildcardScopeQuery(t *testing.T) {
 			nil,
 			group,
 			resource,
+			subresource,
 			verb,
 			"dashboards:read",
 			ac.Scope("dashboards", "uid", "*"),
@@ -736,6 +741,47 @@ func TestResolveCurrentUserPermissions_PassesTeamsAsContextualGroups(t *testing.
 			}
 		})
 	}
+}
+
+func TestResolveCurrentUserPermissions_AnnotationsResolveAsDashboardScopes(t *testing.T) {
+	cap := &capturingZanzanaClient{}
+	cap.listResp = &authzv1.ListResponse{
+		Items:   []string{"dash-1"},
+		Folders: []string{"fold-1"},
+	}
+	r := NewZanzanaPermissionResolver(cap, &usertest.FakeUserService{}, nil, false)
+
+	usr := &identity.StaticRequester{
+		Type:    claims.TypeUser,
+		UserID:  1,
+		UserUID: "u1",
+		OrgID:   1,
+	}
+
+	perms, err := r.ResolveCurrentUserPermissions(context.Background(), usr)
+	require.NoError(t, err)
+
+	for _, action := range []string{"annotations:read", "annotations:write", "annotations:create", "annotations:delete"} {
+		scopes := permScopes(perms, action)
+		require.Contains(t, scopes, ac.Scope("dashboards", "uid", "dash-1"), action)
+		require.Contains(t, scopes, ac.Scope("folders", "uid", "fold-1"), action)
+	}
+
+	// The annotation actions must be listed as the dashboards/annotations subresource.
+	subresourceVerbs := map[string]int{}
+	for _, c := range cap.listCalls {
+		if c.GetSubresource() == common.SubresourceAnnotations {
+			require.Equal(t, "dashboard.grafana.app", c.GetGroup())
+			require.Equal(t, "dashboards", c.GetResource())
+			subresourceVerbs[c.GetVerb()]++
+		}
+	}
+	require.Equal(t, map[string]int{
+		utils.VerbGet:    1,
+		utils.VerbUpdate: 1,
+		utils.VerbCreate: 1,
+		utils.VerbDelete: 1,
+	}, subresourceVerbs)
 }
 
 // permScopes returns the scopes the resolver produced for the given action.

@@ -192,6 +192,46 @@ func TestIntegrationServerCheck(t *testing.T) {
 		assert.True(t, res.GetAllowed())
 	})
 
+	// Per-object action-set grants carry no subresource information; subresource verbs
+	// must resolve through the action-set fallback (view → get, edit → create/update/delete).
+	t.Run("user:3 per-object view grant implies subresource read but not write", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq("user:3", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, "", "1"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+
+		res, err = server.Check(newContextWithNamespace(), newReq("user:3", utils.VerbUpdate, dashboardGroup, dashboardResource, statusSubresource, "", "1"))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
+
+		// other dashboards are not covered
+		res, err = server.Check(newContextWithNamespace(), newReq("user:3", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, "", "2"))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
+	})
+
+	t.Run("user:24 per-object edit grant implies subresource read and write", func(t *testing.T) {
+		for _, verb := range []string{utils.VerbGet, utils.VerbCreate, utils.VerbUpdate, utils.VerbDelete} {
+			res, err := server.Check(newContextWithNamespace(), newReq("user:24", verb, dashboardGroup, dashboardResource, statusSubresource, "", "24"))
+			require.NoError(t, err)
+			assert.True(t, res.GetAllowed(), verb)
+		}
+
+		// edit does not grant permission management on the subresource
+		res, err := server.Check(newContextWithNamespace(), newReq("user:24", utils.VerbGetPermissions, dashboardGroup, dashboardResource, statusSubresource, "", "24"))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
+	})
+
+	t.Run("user:25 org-wide view grant implies subresource read on every dashboard", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq("user:25", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, "", "1"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+
+		res, err = server.Check(newContextWithNamespace(), newReq("user:25", utils.VerbUpdate, dashboardGroup, dashboardResource, statusSubresource, "", "1"))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
+	})
+
 	t.Run("user:17 should be able to view dashboards in folder 4 and all subfolders", func(t *testing.T) {
 		// Check for folders
 		res, err := server.Check(newContextWithNamespace(), newReq("user:17", utils.VerbGet, folderGroup, folderResource, "", "", "4"))
