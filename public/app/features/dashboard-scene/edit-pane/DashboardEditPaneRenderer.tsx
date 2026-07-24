@@ -20,6 +20,7 @@ import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardCodePane } from './DashboardCodePane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
+import { DashboardSidebarExtensionPoint } from './DashboardSidebarExtensionPoint';
 import { AddNewEditPane } from './add-new/AddNewEditPane';
 import { ToggleViewPanePaneEvent } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
@@ -144,6 +145,7 @@ export function DashboardEditPaneRenderer({ dashboard }: Props) {
           )}
           {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
           {renderEnterpriseItems()}
+          <DashboardSidebarExtensionPoint dashboardUid={uid} />
           {viewPanel && viewPanelPane && (
             <Sidebar.Button
               icon="layer-group"
