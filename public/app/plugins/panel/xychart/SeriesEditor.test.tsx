@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import {
   createDataFrame,
@@ -11,54 +12,21 @@ import {
   FrameMatcherID,
   type StandardEditorProps,
 } from '@grafana/data';
+import { FieldNamePicker } from '@grafana/ui/internal';
 
 import { SeriesEditor } from './SeriesEditor';
 import { type Options, type XYSeriesConfig, SeriesMapping } from './panelcfg.gen';
 
-// The picker items built by SeriesEditor are captured here on render so tests can
-// assert on the `filter` and `baseNameMode` settings passed to each FieldNamePicker.
-let mockPickerItems: Record<string, { id: string; name: string; settings?: FieldNamePickerConfigSettings }> = {};
-
-jest.mock('@grafana/ui', () => {
-  const actual = jest.requireActual('@grafana/ui');
-  return {
-    ...actual,
-    Select: ({
-      options,
-      onChange,
-    }: {
-      options: Array<{ value: number; label: string }>;
-      onChange: (value: { value: number } | null) => void;
-    }) => (
-      <div data-testid="frame-select">
-        {options.map((opt) => (
-          <button key={opt.value} type="button" data-testid={`frame-option-${opt.value}`} onClick={() => onChange(opt)}>
-            {opt.label}
-          </button>
-        ))}
-        <button type="button" data-testid="frame-option-clear" onClick={() => onChange(null)}>
-          clear frame
-        </button>
-      </div>
-    ),
-  };
-});
-
+// FieldNamePicker is a Combobox-backed field selector; stubbing it with plain buttons
+// keeps these tests focused on SeriesEditor without driving the Combobox internals. The
+// props each picker receives are read back via `pickerSettings` (see below) — no module
+// global is needed because the stub is a jest.fn whose calls are already recorded.
 jest.mock('@grafana/ui/internal', () => {
   const actual = jest.requireActual('@grafana/ui/internal');
   return {
     ...actual,
-    FieldNamePicker: ({
-      item,
-      onChange,
-      value,
-    }: {
-      item: { id: string; name: string };
-      onChange: (v: string | null | undefined) => void;
-      value?: string;
-    }) => {
-      mockPickerItems[item.id] = item;
-      return (
+    FieldNamePicker: jest.fn(
+      ({ item, value, onChange }: StandardEditorProps<string, FieldNamePickerConfigSettings>) => (
         <>
           <button
             type="button"
@@ -67,14 +35,33 @@ jest.mock('@grafana/ui/internal', () => {
           >
             {item.name} ({value ?? 'empty'})
           </button>
-          <button type="button" data-testid={`field-name-picker-${item.id}-clear`} onClick={() => onChange(null)}>
+          {/* The real picker passes `undefined` (not null) when a selection is cleared. */}
+          <button type="button" data-testid={`field-name-picker-${item.id}-clear`} onClick={() => onChange(undefined)}>
             clear {item.name}
           </button>
         </>
-      );
-    },
+      )
+    ),
   };
 });
+
+const fieldNamePickerMock = jest.mocked(FieldNamePicker);
+
+/**
+ * The `filter`/`baseNameMode` settings SeriesEditor builds for a dimension's picker,
+ * read from the most recent render. Typed via jest.mocked, so no manual casting.
+ */
+function pickerSettings(dim: 'x' | 'y' | 'size' | 'color'): FieldNamePickerConfigSettings {
+  const call = fieldNamePickerMock.mock.calls.filter(([props]) => props.item.id === dim).at(-1);
+  if (call == null) {
+    throw new Error(`FieldNamePicker was never rendered for the "${dim}" dimension`);
+  }
+  const settings = call[0].item.settings;
+  if (settings == null) {
+    throw new Error(`expected settings for the "${dim}" picker`);
+  }
+  return settings;
+}
 
 const defaultFrameMatcher = { frame: { matcher: { id: FrameMatcherID.byIndex, options: 0 } } };
 
@@ -103,17 +90,19 @@ function makeField(type: FieldType, overrides: Partial<Field> = {}): Field {
   return { name: 'field', type, config: {}, values: [], ...overrides };
 }
 
-const minimalItem: StandardEditorProps<XYSeriesConfig[], unknown, Options>['item'] = {
+type SeriesEditorProps = StandardEditorProps<XYSeriesConfig[], unknown, Options>;
+
+type EditorOverrides = Partial<SeriesEditorProps> & {
+  contextOverrides?: Partial<SeriesEditorProps['context']>;
+};
+
+const minimalItem: SeriesEditorProps['item'] = {
   id: 'series-editor',
   name: 'Series',
 };
 
-function buildProps(
-  overrides: Partial<StandardEditorProps<XYSeriesConfig[], unknown, Options>> & {
-    contextOverrides?: Partial<StandardEditorProps<XYSeriesConfig[], unknown, Options>['context']>;
-  }
-): StandardEditorProps<XYSeriesConfig[], unknown, Options> {
-  const { value = [{ ...defaultFrameMatcher }], onChange = jest.fn(), contextOverrides, ...rest } = overrides;
+function buildProps(onChange: SeriesEditorProps['onChange'], overrides: EditorOverrides = {}): SeriesEditorProps {
+  const { value = [{ ...defaultFrameMatcher }], contextOverrides, ...rest } = overrides;
 
   return {
     value,
@@ -128,14 +117,46 @@ function buildProps(
   };
 }
 
+/**
+ * Renders SeriesEditor with a typed onChange spy and typed accessors for the config
+ * arrays it emits, so tests never index-and-cast into `onChange.mock.calls`.
+ */
+function renderEditor(overrides: EditorOverrides = {}) {
+  const onChange: jest.MockedFunction<SeriesEditorProps['onChange']> = jest.fn();
+  const utils = render(<SeriesEditor {...buildProps(onChange, overrides)} />);
+
+  return {
+    ...utils,
+    onChange,
+    /** The config array passed to the Nth onChange call. */
+    configAt: (call: number): XYSeriesConfig[] => {
+      const config = onChange.mock.calls[call]?.[0];
+      if (config == null) {
+        throw new Error(`expected onChange call #${call} to have received a config`);
+      }
+      return config;
+    },
+    /** The config array from the most recent onChange call. */
+    lastConfig: (): XYSeriesConfig[] => {
+      const config = onChange.mock.calls.at(-1)?.[0];
+      if (config == null) {
+        throw new Error('expected onChange to have been called with a config');
+      }
+      return config;
+    },
+    /** Re-render with the same onChange spy, merging in new overrides. */
+    rerenderEditor: (next: EditorOverrides = {}) => utils.rerender(<SeriesEditor {...buildProps(onChange, next)} />),
+  };
+}
+
 describe('SeriesEditor', () => {
   beforeEach(() => {
-    mockPickerItems = {};
+    fieldNamePickerMock.mockClear();
   });
 
   describe('rendering', () => {
     it('renders frame and dimension fields in auto mapping mode', () => {
-      render(<SeriesEditor {...buildProps({})} />);
+      renderEditor();
 
       expect(screen.getByText('Frame')).toBeVisible();
       expect(screen.getByText('X field')).toBeVisible();
@@ -145,13 +166,7 @@ describe('SeriesEditor', () => {
     });
 
     it('shows the series list and add button in manual mapping', () => {
-      render(
-        <SeriesEditor
-          {...buildProps({
-            contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
-          })}
-        />
-      );
+      renderEditor({ contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options } });
 
       expect(screen.getByRole('button', { name: /add series/i })).toBeVisible();
       expect(screen.getByTestId('layer-name-div')).toBeVisible();
@@ -162,51 +177,36 @@ describe('SeriesEditor', () => {
   describe('series management', () => {
     it('adds a series', async () => {
       const user = userEvent.setup();
-      const onChange = jest.fn();
-      const initial: XYSeriesConfig[] = [{ ...defaultFrameMatcher }];
-
-      render(
-        <SeriesEditor
-          {...buildProps({
-            value: initial,
-            onChange,
-            contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
-          })}
-        />
-      );
+      const { onChange, configAt } = renderEditor({
+        value: [{ ...defaultFrameMatcher }],
+        contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
+      });
 
       await user.click(screen.getByRole('button', { name: /add series/i }));
 
       expect(onChange).toHaveBeenCalledTimes(1);
-      const next = onChange.mock.calls[0][0] as XYSeriesConfig[];
+      const next = configAt(0);
       expect(next).toHaveLength(2);
       expect(next[1]).toEqual(defaultFrameMatcher);
     });
 
     it('deletes a series', async () => {
       const user = userEvent.setup();
-      const onChange = jest.fn();
       const twoSeries: XYSeriesConfig[] = [
         { ...defaultFrameMatcher, name: { fixed: 'First' } },
         { ...defaultFrameMatcher },
       ];
-
-      render(
-        <SeriesEditor
-          {...buildProps({
-            value: twoSeries,
-            onChange,
-            contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
-          })}
-        />
-      );
+      const { onChange, configAt } = renderEditor({
+        value: twoSeries,
+        contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
+      });
 
       const firstRow = screen.getByRole('button', { name: /select series 1/i });
       const deleteBtn = within(firstRow).getByRole('button', { name: /delete series/i });
       await user.click(deleteBtn);
 
       expect(onChange).toHaveBeenCalledTimes(1);
-      expect((onChange.mock.calls[0][0] as XYSeriesConfig[]).length).toBe(1);
+      expect(configAt(0)).toHaveLength(1);
     });
 
     it('selects a series with the keyboard', () => {
@@ -215,14 +215,10 @@ describe('SeriesEditor', () => {
         { ...defaultFrameMatcher, x: { matcher: { id: FieldMatcherID.byName, options: 'bx' } } },
       ];
 
-      render(
-        <SeriesEditor
-          {...buildProps({
-            value: twoSeries,
-            contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
-          })}
-        />
-      );
+      renderEditor({
+        value: twoSeries,
+        contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
+      });
 
       expect(screen.getByTestId('field-name-picker-x')).toHaveTextContent('x (ax)');
 
@@ -233,16 +229,9 @@ describe('SeriesEditor', () => {
 
     it('renames a series', async () => {
       const user = userEvent.setup();
-      const onChange = jest.fn();
-
-      render(
-        <SeriesEditor
-          {...buildProps({
-            onChange,
-            contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
-          })}
-        />
-      );
+      const { lastConfig } = renderEditor({
+        contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
+      });
 
       await user.click(screen.getByTestId('layer-name-div'));
       const input = screen.getByTestId('layer-name-input');
@@ -250,24 +239,16 @@ describe('SeriesEditor', () => {
       await user.type(input, 'Revenue');
       await user.keyboard('{Enter}');
 
-      const next = onChange.mock.calls.at(-1)![0] as XYSeriesConfig[];
-      expect(next[0].name).toEqual({ fixed: 'Revenue' });
+      expect(lastConfig()[0].name).toEqual({ fixed: 'Revenue' });
     });
 
     it('resets a series name to the default label', async () => {
       const user = userEvent.setup();
-      const onChange = jest.fn();
       const named: XYSeriesConfig[] = [{ ...defaultFrameMatcher, name: { fixed: 'Revenue' } }];
-
-      render(
-        <SeriesEditor
-          {...buildProps({
-            value: named,
-            onChange,
-            contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
-          })}
-        />
-      );
+      const { lastConfig } = renderEditor({
+        value: named,
+        contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
+      });
 
       await user.click(screen.getByTestId('layer-name-div'));
       const input = screen.getByTestId('layer-name-input');
@@ -275,8 +256,7 @@ describe('SeriesEditor', () => {
       await user.type(input, 'Series 1');
       await user.keyboard('{Enter}');
 
-      const next = onChange.mock.calls.at(-1)![0] as XYSeriesConfig[];
-      expect(next[0].name).toEqual({ fixed: undefined });
+      expect(lastConfig()[0].name).toEqual({ fixed: undefined });
     });
 
     it('resets the selected series to the first when the mapping changes', async () => {
@@ -286,26 +266,15 @@ describe('SeriesEditor', () => {
         { ...defaultFrameMatcher, x: { matcher: { id: FieldMatcherID.byName, options: 'bx' } } },
       ];
 
-      const { rerender } = render(
-        <SeriesEditor
-          {...buildProps({
-            value: twoSeries,
-            contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
-          })}
-        />
-      );
+      const { rerenderEditor } = renderEditor({
+        value: twoSeries,
+        contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
+      });
 
       await user.click(screen.getByRole('button', { name: /select series 2/i }));
       expect(screen.getByTestId('field-name-picker-x')).toHaveTextContent('x (bx)');
 
-      rerender(
-        <SeriesEditor
-          {...buildProps({
-            value: twoSeries,
-            contextOverrides: { options: { mapping: SeriesMapping.Auto } as Options },
-          })}
-        />
-      );
+      rerenderEditor({ value: twoSeries, contextOverrides: { options: { mapping: SeriesMapping.Auto } as Options } });
 
       // The reset drops back to the default first series, so the X picker is empty again.
       expect(screen.getByTestId('field-name-picker-x')).toHaveTextContent('x (empty)');
@@ -314,7 +283,6 @@ describe('SeriesEditor', () => {
 
   describe('config initialization', () => {
     it('resets the config when the panel mapping changes', () => {
-      const onChange = jest.fn();
       const customSeries: XYSeriesConfig[] = [
         {
           frame: { matcher: { id: FrameMatcherID.byIndex, options: 1 } },
@@ -322,36 +290,25 @@ describe('SeriesEditor', () => {
         },
       ];
 
-      const { rerender } = render(
-        <SeriesEditor
-          {...buildProps({
-            value: customSeries,
-            onChange,
-            contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
-          })}
-        />
-      );
+      const { onChange, lastConfig, rerenderEditor } = renderEditor({
+        value: customSeries,
+        contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
+      });
 
-      rerender(
-        <SeriesEditor
-          {...buildProps({
-            value: customSeries,
-            onChange,
-            contextOverrides: { options: { mapping: SeriesMapping.Auto } as Options },
-          })}
-        />
-      );
+      rerenderEditor({
+        value: customSeries,
+        contextOverrides: { options: { mapping: SeriesMapping.Auto } as Options },
+      });
 
       expect(onChange).toHaveBeenCalled();
-      expect(onChange.mock.calls.at(-1)![0]).toEqual([{ ...defaultFrameMatcher }]);
+      expect(lastConfig()).toEqual([{ ...defaultFrameMatcher }]);
     });
 
     it('initializes a default series when the config is missing', () => {
-      const onChange = jest.fn();
       // The panel option can be undefined before the editor has run once; SeriesEditor guards for it.
       const missingValue = null as unknown as XYSeriesConfig[];
 
-      render(<SeriesEditor {...buildProps({ onChange })} value={missingValue} />);
+      const { onChange } = renderEditor({ value: missingValue });
 
       expect(onChange).toHaveBeenCalledWith([{ ...defaultFrameMatcher }]);
     });
@@ -362,20 +319,16 @@ describe('SeriesEditor', () => {
       'sets the %s field matcher',
       async (dim) => {
         const user = userEvent.setup();
-        const onChange = jest.fn();
-
-        render(<SeriesEditor {...buildProps({ onChange })} />);
+        const { lastConfig } = renderEditor();
 
         await user.click(screen.getByTestId(`field-name-picker-${dim}`));
 
-        const next = onChange.mock.calls.at(-1)![0] as XYSeriesConfig[];
-        expect(next[0][dim]?.matcher).toEqual({ id: FieldMatcherID.byName, options: `${dim}-field` });
+        expect(lastConfig()[0][dim]?.matcher).toEqual({ id: FieldMatcherID.byName, options: `${dim}-field` });
       }
     );
 
     it.each(['x', 'y', 'size', 'color'] as Array<'x' | 'y' | 'size' | 'color'>)('clears the %s field', async (dim) => {
       const user = userEvent.setup();
-      const onChange = jest.fn();
       const series: XYSeriesConfig[] = [
         {
           ...defaultFrameMatcher,
@@ -386,38 +339,30 @@ describe('SeriesEditor', () => {
         },
       ];
 
-      render(<SeriesEditor {...buildProps({ value: series, onChange })} />);
+      const { lastConfig } = renderEditor({ value: series });
 
       await user.click(screen.getByTestId(`field-name-picker-${dim}-clear`));
 
-      const next = onChange.mock.calls.at(-1)![0] as XYSeriesConfig[];
-      expect(next[0][dim]).toBeUndefined();
+      expect(lastConfig()[0][dim]).toBeUndefined();
     });
   });
 
   describe('frame field', () => {
     it('sets the frame matcher when a frame is selected', async () => {
-      const user = userEvent.setup();
-      const onChange = jest.fn();
+      const { lastConfig } = renderEditor();
 
-      render(<SeriesEditor {...buildProps({ onChange })} />);
+      await selectOptionInTest(screen.getByLabelText('Frame'), /index: 1/);
 
-      await user.click(screen.getByTestId('frame-option-1'));
-
-      const next = onChange.mock.calls.at(-1)![0] as XYSeriesConfig[];
-      expect(next[0].frame?.matcher).toEqual({ id: FrameMatcherID.byIndex, options: 1 });
+      expect(lastConfig()[0].frame?.matcher).toEqual({ id: FrameMatcherID.byIndex, options: 1 });
     });
 
     it('clears the frame matcher when the selection is cleared', async () => {
       const user = userEvent.setup();
-      const onChange = jest.fn();
+      const { lastConfig } = renderEditor();
 
-      render(<SeriesEditor {...buildProps({ onChange })} />);
+      await user.click(screen.getByLabelText('Clear value'));
 
-      await user.click(screen.getByTestId('frame-option-clear'));
-
-      const next = onChange.mock.calls.at(-1)![0] as XYSeriesConfig[];
-      expect(next[0].frame).toBeUndefined();
+      expect(lastConfig()[0].frame).toBeUndefined();
     });
   });
 
@@ -427,22 +372,25 @@ describe('SeriesEditor', () => {
       { dim: 'y', accepts: [FieldType.number], rejects: [FieldType.time, FieldType.string] },
       { dim: 'size', accepts: [FieldType.number], rejects: [FieldType.time, FieldType.string] },
       { dim: 'color', accepts: [FieldType.number], rejects: [FieldType.time, FieldType.string] },
-    ])('filters the $dim field picker by field type', ({ dim, accepts, rejects }) => {
-      render(<SeriesEditor {...buildProps({})} />);
+    ] as Array<{ dim: 'x' | 'y' | 'size' | 'color'; accepts: FieldType[]; rejects: FieldType[] }>)(
+      'filters the $dim field picker by field type',
+      ({ dim, accepts, rejects }) => {
+        renderEditor();
 
-      const filter = mockPickerItems[dim].settings?.filter;
-      if (filter == null) {
-        throw new Error(`expected a filter for the ${dim} picker`);
+        const filter = pickerSettings(dim).filter;
+        if (filter == null) {
+          throw new Error(`expected a filter for the ${dim} picker`);
+        }
+
+        accepts.forEach((type) => expect(filter(makeField(type))).toBe(true));
+        rejects.forEach((type) => expect(filter(makeField(type))).toBe(false));
       }
-
-      accepts.forEach((type) => expect(filter(makeField(type))).toBe(true));
-      rejects.forEach((type) => expect(filter(makeField(type))).toBe(false));
-    });
+    );
 
     it('excludes fields hidden from the visualization', () => {
-      render(<SeriesEditor {...buildProps({})} />);
+      renderEditor();
 
-      const filter = mockPickerItems.x.settings?.filter;
+      const filter = pickerSettings('x').filter;
       if (filter == null) {
         throw new Error('expected a filter for the x picker');
       }
@@ -451,28 +399,27 @@ describe('SeriesEditor', () => {
       expect(filter(hiddenField)).toBe(false);
     });
 
-    it.each(['x', 'y', 'size', 'color'])('restricts the %s picker to the selected frame in manual mapping', (dim) => {
-      const series: XYSeriesConfig[] = [{ frame: { matcher: { id: FrameMatcherID.byIndex, options: 1 } } }];
+    it.each(['x', 'y', 'size', 'color'] as Array<'x' | 'y' | 'size' | 'color'>)(
+      'restricts the %s picker to the selected frame in manual mapping',
+      (dim) => {
+        const series: XYSeriesConfig[] = [{ frame: { matcher: { id: FrameMatcherID.byIndex, options: 1 } } }];
 
-      render(
-        <SeriesEditor
-          {...buildProps({
-            value: series,
-            contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
-          })}
-        />
-      );
+        renderEditor({
+          value: series,
+          contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
+        });
 
-      const filter = mockPickerItems[dim].settings?.filter;
-      if (filter == null) {
-        throw new Error(`expected a filter for the ${dim} picker`);
+        const filter = pickerSettings(dim).filter;
+        if (filter == null) {
+          throw new Error(`expected a filter for the ${dim} picker`);
+        }
+
+        const inSelectedFrame = makeField(FieldType.number, { state: { origin: { frameIndex: 1, fieldIndex: 0 } } });
+        const inOtherFrame = makeField(FieldType.number, { state: { origin: { frameIndex: 0, fieldIndex: 0 } } });
+        expect(filter(inSelectedFrame)).toBe(true);
+        expect(filter(inOtherFrame)).toBe(false);
       }
-
-      const inSelectedFrame = makeField(FieldType.number, { state: { origin: { frameIndex: 1, fieldIndex: 0 } } });
-      const inOtherFrame = makeField(FieldType.number, { state: { origin: { frameIndex: 0, fieldIndex: 0 } } });
-      expect(filter(inSelectedFrame)).toBe(true);
-      expect(filter(inOtherFrame)).toBe(false);
-    });
+    );
 
     it.each([
       { mapping: SeriesMapping.Manual, frames: 2, expected: FieldNamePickerBaseNameMode.ExcludeBaseNames },
@@ -481,15 +428,11 @@ describe('SeriesEditor', () => {
     ])(
       'uses the $expected base name mode for $mapping mapping with $frames frame(s)',
       ({ mapping, frames, expected }) => {
-        render(
-          <SeriesEditor
-            {...buildProps({
-              contextOverrides: { data: makeTestData().slice(0, frames), options: { mapping } as Options },
-            })}
-          />
-        );
+        renderEditor({
+          contextOverrides: { data: makeTestData().slice(0, frames), options: { mapping } as Options },
+        });
 
-        expect(mockPickerItems.x.settings?.baseNameMode).toBe(expected);
+        expect(pickerSettings('x').baseNameMode).toBe(expected);
       }
     );
   });
