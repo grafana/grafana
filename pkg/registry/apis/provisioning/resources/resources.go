@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -296,6 +297,21 @@ func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, re
 	}
 	r.addResource(id, path)
 
+	// resourcesLookup only catches two files colliding within this run. A file
+	// unchanged since a previous sync is never re-written, so its UID is absent
+	// from the map even though the resource already exists owned by that file.
+	// Writing here would upsert that resource in place and silently flip its
+	// ownership to this file, turning the original owner into an invisible
+	// zombie. Detect the accidental duplicate and block the write with an error,
+	// preserving the original owner.
+	owner, dup, err := r.accidentalDuplicateOwner(ctx, path, ref, parsed)
+	if err != nil {
+		return "", parsed.GVK, err
+	}
+	if dup {
+		return "", parsed.GVK, fmt.Errorf("duplicate resource name: %s, %s and %s: %w", parsed.Obj.GetName(), path, owner, ErrDuplicateName)
+	}
+
 	// For resources that exist in folders, set the header annotation
 	if supportsFolderAnnotation(r.clients.SupportedResources(), parsed.GVK) {
 		// Make sure the parent folders exist.
@@ -320,7 +336,7 @@ func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, re
 	parsed.Meta.SetResourceVersion("")
 
 	runCtx, runSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.run_resource")
-	err := parsed.Run(runCtx)
+	err = parsed.Run(runCtx)
 	if err != nil {
 		runSpan.RecordError(err)
 		// Wrap resource validation errors (like dashboard refresh interval) as warnings
@@ -329,6 +345,62 @@ func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, re
 	runSpan.End()
 
 	return parsed.Obj.GetName(), parsed.GVK, err
+}
+
+// accidentalDuplicateOwner reports whether writing parsed at path would silently
+// hijack a UID already owned by a different file, and if so returns that file's
+// path. Provisioned resources are keyed by the UID in their content
+// (metadata.name), not by file path, so two files declaring the same UID would
+// otherwise upsert the same resource in place, flipping its sourcePath annotation
+// to the second file.
+//
+// It returns (owner, true) only when the UID already exists owned by another file
+// that, read at the current ref, still declares the same UID — an accidental
+// duplicate. It returns ("", false) for normal updates (same file), moves (the
+// owning file is gone), and intentional takeovers (the owning file now declares a
+// different UID). A non-NotFound error while probing is returned so the caller can
+// surface it rather than silently proceed with an ambiguous write.
+func (r *ResourcesManager) accidentalDuplicateOwner(ctx context.Context, path, ref string, parsed *ParsedResource) (string, bool, error) {
+	name := parsed.Obj.GetName()
+
+	// parsed.Client is populated by the parser and reused by parsed.Run; guard
+	// against a nil client (including a typed nil) rather than risk a panic on the
+	// shared write path — a genuinely missing client is surfaced by parsed.Run.
+	if util.IsInterfaceNil(parsed.Client) {
+		return "", false, nil
+	}
+
+	existing, err := parsed.Client.Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return "", false, nil // no existing resource → no collision
+		}
+		return "", false, fmt.Errorf("checking whether resource name %s is already in use: %w", name, err)
+	}
+
+	owner := existing.GetAnnotations()[utils.AnnoKeySourcePath]
+	if owner == "" || owner == path {
+		return "", false, nil // unowned or owned by this same file → normal update
+	}
+
+	// The UID is owned by a different file. Read that file at the current ref: if
+	// it is gone the owner moved or was deleted (re-home); if it now declares a
+	// different UID the owner intentionally released this one (takeover); only if
+	// it still declares this UID are both files accidentally claiming it.
+	info, err := r.repo.Read(ctx, owner, ref)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return "", false, nil // owner moved or was deleted → re-home
+		}
+		return "", false, fmt.Errorf("reading owning file %s: %w", owner, err)
+	}
+
+	ownerParsed, err := r.parser.Parse(ctx, info)
+	if err != nil {
+		return "", false, fmt.Errorf("parsing owning file %s: %w", owner, err)
+	}
+
+	return owner, ownerParsed.Obj.GetName() == name, nil
 }
 
 // ReplaceResourceFromFile writes a resource from file and, if the resource name
