@@ -45,7 +45,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -968,26 +967,28 @@ func (c *K8sTestHelper) SetPermissions(user User, permissions []resourcepermissi
 }
 
 func (c *K8sTestHelper) AddOrUpdateTeamMember(user User, teamID int64, permission team.PermissionType) {
-	teampermissionSvc, err := ossaccesscontrol.ProvideTeamPermissions(
-		c.env.Cfg,
-		c.env.FeatureToggles,
-		c.env.Server.HTTPServer.RouteRegister,
-		c.env.SQLStore,
-		c.env.Server.HTTPServer.AccessControl,
-		c.env.Server.HTTPServer.License,
-		c.env.Server.HTTPServer.AlertNG.AccesscontrolService,
-		c.teamSvc,
-		c.userSvc,
-		resourcepermissions.NewActionSetService(),
-		apiserver.ProvideDirectRestConfigProvider(),
-	)
-	require.NoError(c.t, err)
+	c.t.Helper()
 
 	id, err := user.Identity.GetInternalID()
 	require.NoError(c.t, err)
 
-	teamIDString := strconv.FormatInt(teamID, 10)
-	_, err = teampermissionSvc.SetUserPermission(context.Background(), user.Identity.GetOrgID(), accesscontrol.User{ID: id}, teamIDString, permission.String())
+	actions := ossaccesscontrol.TeamMemberActions
+	if permission == team.PermissionTypeAdmin {
+		actions = ossaccesscontrol.TeamAdminActions
+	}
+
+	// The helper's seeded teams exist only in legacy SQL, so add membership through
+	// the legacy store instead of the redirect-aware TeamPermissionsService.
+	store := resourcepermissions.NewStore(c.env.Cfg, c.env.SQLStore, c.env.FeatureToggles)
+	_, err = store.SetUserResourcePermission(context.Background(), user.Identity.GetOrgID(), accesscontrol.User{ID: id}, resourcepermissions.SetResourcePermissionCommand{
+		Actions:           actions,
+		Permission:        permission.String(),
+		Resource:          "teams",
+		ResourceID:        strconv.FormatInt(teamID, 10),
+		ResourceAttribute: "id",
+	}, func(session *db.Session, orgID int64, u accesscontrol.User, _, _ string) error {
+		return teamimpl.AddOrUpdateTeamMemberHook(session, u.ID, orgID, teamID, false, permission)
+	})
 	require.NoError(c.t, err)
 }
 

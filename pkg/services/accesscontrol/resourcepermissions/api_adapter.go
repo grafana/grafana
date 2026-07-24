@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -38,11 +39,19 @@ var ErrRestConfigNotAvailable = errors.New("k8s rest config provider not availab
 const subjectKindUser = "User"
 
 func (a *api) getDynamicClient(c *contextmodel.ReqContext) (dynamic.Interface, error) {
-	if a.restConfigProvider == nil {
+	return newDynamicClient(a.restConfigProvider, c)
+}
+
+// newDynamicClient builds a K8s dynamic client from the direct (loopback) rest
+// config. It's a package helper rather than a method so both the HTTP handlers
+// (via api.getDynamicClient) and the service methods invoked by direct in-process
+// callers can reach the K8s APIs without one layer reaching into the other.
+func newDynamicClient(restConfigProvider apiserver.DirectRestConfigProvider, c *contextmodel.ReqContext) (dynamic.Interface, error) {
+	if restConfigProvider == nil {
 		return nil, ErrRestConfigNotAvailable
 	}
 
-	dynamicClient, err := dynamic.NewForConfig(a.restConfigProvider.GetDirectRestConfig(c))
+	dynamicClient, err := dynamic.NewForConfig(restConfigProvider.GetDirectRestConfig(c))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dynamic client: %w", err)
 	}
@@ -744,14 +753,15 @@ func (a *api) setUserPermissionInTeamMembers(c *contextmodel.ReqContext, namespa
 	if err != nil {
 		return false, err
 	}
-	return a.setTeamMember(c, dynamicClient, namespace, resourceID, userID, permission)
+	return a.service.setTeamMember(c.Req.Context(), dynamicClient, c.GetOrgID(), namespace, resourceID, userID, permission)
 }
 
-// setTeamMember writes the membership change; the bool reports if an existing member was removed.
-func (a *api) setTeamMember(c *contextmodel.ReqContext, dynamicClient dynamic.Interface, namespace string, resourceID string, userID int64, permission string) (bool, error) {
-	ctx := c.Req.Context()
-
-	userDetails, err := a.service.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
+// setTeamMember reconciles a single team membership in Team.Spec.Members via the
+// K8s API. It's a service method (not an api method) so both the HTTP handlers and
+// direct in-process callers share one implementation; the deps it needs (team/user
+// services) live on the service. The bool reports whether an existing member was removed.
+func (s *Service) setTeamMember(ctx context.Context, dynamicClient dynamic.Interface, orgID int64, namespace string, resourceID string, userID int64, permission string) (bool, error) {
+	userDetails, err := s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
 	if err != nil {
 		return false, fmt.Errorf("failed to get user details: %w", err)
 	}
@@ -761,8 +771,8 @@ func (a *api) setTeamMember(c *contextmodel.ReqContext, dynamicClient dynamic.In
 		return false, fmt.Errorf("invalid team resource ID: %w", err)
 	}
 
-	teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
-		OrgID: c.GetOrgID(),
+	teamDetails, err := s.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
+		OrgID: orgID,
 		ID:    teamID,
 	})
 	if err != nil {
