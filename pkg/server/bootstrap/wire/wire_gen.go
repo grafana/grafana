@@ -530,6 +530,10 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
+	experimentalKVOptions, err := sql.ProvideExperimentalKV(cfg)
+	if err != nil {
+		return nil, err
+	}
 	natsServer, err := nats.ProvideServer(cfg, sqlStore, registerer)
 	if err != nil {
 		return nil, err
@@ -551,6 +555,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		DashboardStats: ossDashboardStats,
 		KV:             kv,
 		EDB:            dbProvider,
+		ExperimentalKV: experimentalKVOptions,
 		Publisher:      publisherService,
 		Subscriber:     subscriberService,
 	}
@@ -583,7 +588,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
 	orgRoleMapper := connectors.ProvideOrgRoleMapper(cfg, orgService)
 	socialService := socialimpl.ProvideService(cfg, featureToggles, usageStats, bundleregistryService, remoteCache, orgRoleMapper, ssosettingsimplService)
-	loginStore, err := authinfoimpl.ProvideStore(sqlStore, secretsService)
+	loginStore, err := authinfoimpl.ProvideStore(ctx, legacyDatabaseProvider, secretsService)
 	if err != nil {
 		return nil, err
 	}
@@ -800,7 +805,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	v8 := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
-	appInstaller, err := playlist2.RegisterAppInstaller(featureToggles, acimplService, accessControl)
+	appInstaller, err := playlist2.RegisterAppInstaller(cfg, featureToggles, acimplService, accessControl)
 	if err != nil {
 		return nil, err
 	}
@@ -849,7 +854,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	historianAppInstaller, err := historian.RegisterAppInstaller(cfg, alertNG)
+	historianAppInstaller, err := historian.RegisterAppInstaller(cfg, alertNG, accessClient)
 	if err != nil {
 		return nil, err
 	}
@@ -1278,6 +1283,10 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
+	experimentalKVOptions, err := sql.ProvideExperimentalKV(cfg)
+	if err != nil {
+		return nil, err
+	}
 	natsServer, err := nats.ProvideServer(cfg, sqlStore, registerer)
 	if err != nil {
 		return nil, err
@@ -1299,6 +1308,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		DashboardStats: ossDashboardStats,
 		KV:             kv,
 		EDB:            dbProvider,
+		ExperimentalKV: experimentalKVOptions,
 		Publisher:      publisherService,
 		Subscriber:     subscriberService,
 	}
@@ -1422,7 +1432,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	orgRoleMapper := connectors.ProvideOrgRoleMapper(cfg, orgService)
 	socialService := socialimpl.ProvideService(cfg, featureToggles, usageStats, bundleregistryService, remoteCache, orgRoleMapper, ssosettingsimplService)
-	loginStore, err := authinfoimpl.ProvideStore(sqlStore, secretsService)
+	loginStore, err := authinfoimpl.ProvideStore(ctx, legacyDatabaseProvider, secretsService)
 	if err != nil {
 		return nil, err
 	}
@@ -1550,7 +1560,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	v8 := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
-	appInstaller, err := playlist2.RegisterAppInstaller(featureToggles, acimplService, accessControl)
+	appInstaller, err := playlist2.RegisterAppInstaller(cfg, featureToggles, acimplService, accessControl)
 	if err != nil {
 		return nil, err
 	}
@@ -1599,7 +1609,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	historianAppInstaller, err := historian.RegisterAppInstaller(cfg, alertNG)
+	historianAppInstaller, err := historian.RegisterAppInstaller(cfg, alertNG, accessClient)
 	if err != nil {
 		return nil, err
 	}

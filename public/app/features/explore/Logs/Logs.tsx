@@ -160,6 +160,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     logsVolumeData,
     loadLogsVolumeData,
     loading = false,
+    loadingState,
     onClickFilterLabel,
     onClickFilterOutLabel,
     timeZone,
@@ -939,7 +940,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   getFieldLinks={getFieldLinks}
                   getRowContextQuery={getRowContextQuery}
                   isLabelFilterActive={props.isFilterLabelActive}
-                  loading={loading}
+                  loadingState={loadingState}
                   loadMore={infiniteScrollAvailable ? loadMoreLogs : undefined}
                   logOptionsStorageKey={SETTING_KEY_ROOT}
                   logs={dedupedRows}
