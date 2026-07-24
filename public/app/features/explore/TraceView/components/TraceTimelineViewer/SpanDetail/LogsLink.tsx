@@ -15,6 +15,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTraceToLogsOptions } from '@grafana/o11y-ds-frontend';
+import { reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaDynamicTraceToLogs } from '@grafana/runtime/internal';
 import { getDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { useStyles2, DataLinkButton, Menu } from '@grafana/ui';
@@ -122,6 +123,15 @@ function useHasLogs(spanLinkModel: SpanLinkModel): LogsPresence {
     // `query`/`timeRange` are intentionally omitted; their content is captured by the serialized keys.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryKey, timeRangeKey]);
+
+  useEffect(() => {
+    if (presence === 'loading') {
+      return;
+    }
+    reportInteraction('grafana_traces_trace_view_span_logs_checked', {
+      logs: presence === 'present',
+    });
+  }, [presence]);
 
   return presence;
 }
