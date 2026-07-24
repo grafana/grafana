@@ -31,7 +31,7 @@ export function RecentDashboardsClearButton({ dashboards, retry, redesignEnabled
     <>
       {redesignEnabled ? (
         <Stack justifyContent="flex-end" wrap="wrap">
-          <Button size="sm" fill="text" onClick={handleClearHistory}>
+          <Button variant="secondary" size="sm" fill="text" className={styles.resetButton} onClick={handleClearHistory}>
             <Trans i18nKey="home.recent-dashboards-tab.reset">Reset recent dashboards</Trans>
           </Button>
         </Stack>
@@ -47,6 +47,16 @@ export function RecentDashboardsClearButton({ dashboards, retry, redesignEnabled
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  // Visually align the reset button with the TextLink footer actions of the alerts/incidents card
+  resetButton: css({
+    '&&': {
+      height: theme.spacing(2.25),
+      padding: 0,
+    },
+    '&&:hover': {
+      color: theme.colors.text.link,
+    },
+  }),
   clearButton: css({
     display: 'flex',
     justifyContent: 'flex-end',

@@ -10884,7 +10884,9 @@
     "alerts-incidents": {
       "alert-tab-label": "Firing alerts",
       "incident-tab-label": "Incidents",
-      "title": "Alerts & incidents"
+      "title": "Alerts & incidents",
+      "title-alerts": "Alerts",
+      "title-incidents": "Incidents"
     },
     "dashboard-tabs": {
       "most-used": "Most used",

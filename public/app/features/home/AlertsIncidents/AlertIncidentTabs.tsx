@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { t, Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, Text, useStyles2 } from '@grafana/ui';
 import { ACTIVE_INCIDENTS_QUERY_LIMIT } from 'app/features/alerting/unified/api/incidentsApi';
 import { useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
@@ -60,6 +60,13 @@ function AlertIncidentTabsInner({
   const isIncidentsActionsVisible =
     canViewIncidents && !incidentsLoading && !incidentsError && activeTab === INCIDENTS_TAB_ID;
 
+  const title =
+    canViewAlerts && canViewIncidents
+      ? t('home.alerts-incidents.title', 'Alerts & incidents')
+      : canViewIncidents
+        ? t('home.alerts-incidents.title-incidents', 'Incidents')
+        : t('home.alerts-incidents.title-alerts', 'Alerts');
+
   const tabs = [
     ...(canViewAlerts
       ? [
@@ -89,7 +96,7 @@ function AlertIncidentTabsInner({
     <Stack direction="column" gap={2} minWidth={0}>
       <Stack justifyContent="space-between" alignItems="center">
         <Text element="h2" variant="h5">
-          <Trans i18nKey="home.alerts-incidents.title">Alerts & incidents</Trans>
+          {title}
         </Text>
         {/* TODO: team dropdown */}
       </Stack>
@@ -120,7 +127,7 @@ function AlertIncidentTabsInner({
             {activeTab === INCIDENTS_TAB_ID && <IncidentsCardView data={incidentsData} hideFooterActions />}
           </ScrollContainer>
 
-          <Box paddingTop={1.5}>
+          <Box padding={1}>
             {/* Alerts tab footer */}
             {isAlertActionsVisible && (
               <CreateAndViewAlertsButtons

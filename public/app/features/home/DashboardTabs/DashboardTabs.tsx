@@ -5,7 +5,7 @@ import { useAsyncRetry } from 'react-use';
 import { type ComponentTypeWithExtensionMeta, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
-import { ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2, Text, TextLink } from '@grafana/ui';
+import { Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2, Text, TextLink } from '@grafana/ui';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { getMostUsedDashboards, isMostUsedAvailable } from 'app/features/browse-dashboards/api/mostUsed';
 import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
@@ -257,7 +257,9 @@ export function DashboardTabs({ extensionComponents }: Props) {
           </ScrollContainer>
           {/* Show reset recent dashboards button in the redesign UI and when tab is recent tab */}
           {redesignEnabled && activeTab === RECENT_TAB_ID && !recentLoading && !recentError && (
-            <RecentDashboardsClearButton dashboards={recentDashboards ?? []} retry={recentRetry} redesignEnabled />
+            <Box padding={1}>
+              <RecentDashboardsClearButton dashboards={recentDashboards ?? []} retry={recentRetry} redesignEnabled />
+            </Box>
           )}
         </TabContent>
       )}

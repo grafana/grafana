@@ -1,5 +1,5 @@
 import { Trans } from '@grafana/i18n';
-import { LinkButton, Stack } from '@grafana/ui';
+import { Icon, Stack, TextLink } from '@grafana/ui';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 
 import { ctaClicked } from '../analytics/main';
@@ -15,27 +15,29 @@ export const DeclareAndViewIncidentsButtons = ({ pluginId, hasIncidents, canDecl
   return (
     <Stack justifyContent="flex-end" wrap="wrap">
       {hasIncidents && canDeclare && (
-        <LinkButton
-          variant="secondary"
-          size="sm"
-          fill="text"
-          icon="fire"
+        <TextLink
+          inline={false}
+          color="primary"
+          variant="bodySmall"
           href={createBridgeURL(pluginId, '/incidents', { declare: 'new' })}
           onClick={() => ctaClicked({ surface: 'incidents_card', action: 'declare_incident', placement: 'footer' })}
         >
-          <Trans i18nKey="home.incidents-card.declare">Declare an incident</Trans>
-        </LinkButton>
+          {/* In children instead of the icon prop so it sits left of the text; the 1px lift optically centers the baseline-aligned svg in the text line */}
+          <Stack alignItems="center">
+            <Icon name="fire" size="xs" /> <Trans i18nKey="home.incidents-card.declare">Declare an incident</Trans>
+          </Stack>
+        </TextLink>
       )}
       {canAccess && (
-        <LinkButton
-          variant="secondary"
-          size="sm"
-          fill="text"
+        <TextLink
+          inline={false}
+          color="primary"
+          variant="bodySmall"
           href={createBridgeURL(pluginId, '/incidents')}
           onClick={() => ctaClicked({ surface: 'incidents_card', action: 'view_all_incidents', placement: 'footer' })}
         >
           <Trans i18nKey="home.incidents-card.view-all">View all incidents</Trans>
-        </LinkButton>
+        </TextLink>
       )}
     </Stack>
   );
