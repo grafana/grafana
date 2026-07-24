@@ -27,6 +27,7 @@ import { invalidatePredefinedVariableCaches, recreateVariable } from './api';
 import { useVariableNameCollisionCheck } from './useVariableNameCollisionCheck';
 import {
   buildVariableResource,
+  canManageGlobalVariables,
   getNextAvailableVariableName,
   getVariableFolderPickerExcludeUIDs,
   getVariableFolderUid,
@@ -80,7 +81,10 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
     source?.metadata.name,
     hasNameError
   );
-  const canSave = !isBusy && !hasNameError && !collisionError && !isCheckingName;
+  const allowGlobalScope = canManageGlobalVariables();
+  // Non-editors may only save folder-scoped variables (root/global requires Editor/Admin).
+  const hasValidFolderScope = allowGlobalScope || Boolean(folderUid);
+  const canSave = !isBusy && !hasNameError && !collisionError && !isCheckingName && hasValidFolderScope;
 
   const scene = useMemo(
     () =>
@@ -184,13 +188,20 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
         noMargin
         className={styles.folderField}
         label={t('variables-management.editor.folder-label', 'Folder')}
-        description={t(
-          'variables-management.editor.folder-description',
-          'Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)'
-        )}
+        description={
+          allowGlobalScope
+            ? t(
+                'variables-management.editor.folder-description',
+                'Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)'
+              )
+            : t(
+                'variables-management.editor.folder-description-folder-only',
+                'Scope the variable to a folder you can edit'
+              )
+        }
       >
         <FolderPicker
-          showRootFolder
+          showRootFolder={allowGlobalScope}
           value={folderUid}
           onChange={(uid) => setFolderUid(uid ?? '')}
           excludeUIDs={getVariableFolderPickerExcludeUIDs()}
