@@ -7,11 +7,11 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
-import { isLayoutParent } from '../types/LayoutParent';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { containsTabsLayout } from './findAllGridTypes';
 import { layoutRegistry } from './layoutRegistry';
+import { changeLayoutTo } from './utils';
 
 export interface Props {
   layoutManager: DashboardLayoutManager;
@@ -44,11 +44,7 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
 
   const switchLayout = useCallback(
     (layoutItem: LayoutRegistryItem) => {
-      const layoutParent = layoutManager.parent;
-
-      if (layoutParent && isLayoutParent(layoutParent)) {
-        layoutParent.switchLayout(layoutItem.createFromLayout(layoutManager));
-      }
+      changeLayoutTo(layoutManager, layoutItem);
     },
     [layoutManager]
   );
@@ -101,20 +97,35 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
         />
       </Box>
       {isGridLayout && (
-        <ConfirmModal
-          isOpen={!!newLayout}
-          title={t('dashboard.layout.panel.modal.title', 'Change layout')}
-          body={t('dashboard.layout.panel.modal.body', 'Changing the layout will reset all panel positions and sizes.')}
-          confirmText={t('dashboard.layout.panel.modal.confirm', 'Change layout')}
-          dismissText={t('dashboard.layout.panel.modal.dismiss', 'Cancel')}
-          confirmVariant="primary"
-          onConfirm={onConfirmNewLayout}
-          onDismiss={onDismissNewLayout}
-        />
+        <ConfirmChangeLayoutModal isOpen={!!newLayout} onConfirm={onConfirmNewLayout} onDismiss={onDismissNewLayout} />
       )}
     </>
   );
 }
+
+export const ConfirmChangeLayoutModal = ({
+  isOpen,
+  onConfirm,
+  onDismiss,
+}: {
+  isOpen: boolean;
+  onConfirm: () => void;
+  onDismiss: () => void;
+}) => {
+  return (
+    <ConfirmModal
+      isOpen={isOpen}
+      title={t('dashboard.layout.panel.modal.title', 'Change layout')}
+      body={t('dashboard.layout.panel.modal.body', 'Changing the layout will reset all panel positions and sizes.')}
+      confirmText={t('dashboard.layout.panel.modal.confirm', 'Change layout')}
+      dismissText={t('dashboard.layout.panel.modal.dismiss', 'Cancel')}
+      confirmVariant="primary"
+      onConfirm={onConfirm}
+      onDismiss={onDismiss}
+    />
+  );
+};
+
 export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
   return useMemo(() => {
     const layout = new OptionsPaneCategoryDescriptor({
