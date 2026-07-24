@@ -1,7 +1,7 @@
 import { uniq } from 'lodash';
 
 import { AzureCloud, getDefaultAzureCloud } from '@grafana/azure-sdk';
-import { DataSourceWithBackend, reportInteraction } from '@grafana/runtime';
+import { DataSourceWithBackend } from '@grafana/runtime';
 
 import { logsResourceTypes } from '../azureMetadata/logsResourceTypes';
 import { resourceTypeDisplayNames, resourceTypes } from '../azureMetadata/resourceTypes';
@@ -330,7 +330,6 @@ export default class ResourcePickerData extends DataSourceWithBackend<
 
   private async fetchAllNamespaces() {
     const subscriptions = await this.getSubscriptions();
-    reportInteraction('grafana_ds_azuremonitor_subscriptions_loaded', { subscriptions: subscriptions.length });
 
     let supportedMetricNamespaces: Set<string> = new Set();
     // Include a predefined set of metric namespaces as a fallback in the case the user cannot query subscriptions
