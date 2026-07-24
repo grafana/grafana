@@ -3038,6 +3038,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.thresholdsInterpolation",
+        "resourceVersion": "1784639663172",
+        "creationTimestamp": "2026-07-21T13:14:23Z"
+      },
+      "spec": {
+        "description": "Enables using dashboard variables in panel threshold values",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.unifiedHomepage",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"

@@ -4695,6 +4695,13 @@ func schema_pkg_apis_dashboard_v2_DashboardThreshold(ref common.ReferenceCallbac
 							Format:      "double",
 						},
 					},
+					"valueExpr": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"color": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",

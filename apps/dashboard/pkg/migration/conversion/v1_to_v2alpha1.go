@@ -2925,6 +2925,9 @@ func buildThresholdsConfig(thresholdsMap map[string]interface{}) *dashv2alpha1.D
 					// Value not present, leave as nil (represents -Infinity)
 					threshold.Value = nil
 				}
+				if valueExpr, ok := stepMap["valueExpr"].(string); ok {
+					threshold.ValueExpr = &valueExpr
+				}
 				if color, ok := stepMap["color"].(string); ok {
 					threshold.Color = color
 				}

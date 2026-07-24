@@ -3127,6 +3127,14 @@ var (
 			Expression:  "false",
 			Generate:    Generate{React: true},
 		},
+		{
+			Name:        "grafana.thresholdsInterpolation",
+			Description: "Enables using dashboard variables in panel threshold values",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle
