@@ -43,6 +43,22 @@ func TestBundler_Build_recordsQueryError(t *testing.T) {
 	require.Contains(t, string(files["query-error.txt"]), "datasource timeout")
 }
 
+func TestBundler_Build_recordsQueryDataMarshalError(t *testing.T) {
+	// A query-data artifact that cannot be JSON-encoded (here forced with an invalid request payload,
+	// the same failure mode as a non-finite float in a response) must not sink the whole bundle: the
+	// error is recorded and the other artifacts still ship, mirroring the per-panel dashboard path.
+	buf := bufferWithEntry(t, "http://ds/1")
+
+	blob, err := NewBundler().Build(nil, buf, nil, nil, json.RawMessage(`{invalid`), nil)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.NotContains(t, files, "querydata.json", "unserializable query data is omitted")
+	require.Contains(t, files, "querydata-error.txt")
+	require.Contains(t, string(files["querydata-error.txt"]), "invalid character")
+	require.Contains(t, files, "traffic.har", "other artifacts still ship")
+}
+
 func TestBundler_Build_recordsQueryDataResponse(t *testing.T) {
 	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
 	resp := &backend.QueryDataResponse{Responses: backend.Responses{

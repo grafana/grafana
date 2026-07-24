@@ -28,6 +28,9 @@ type Bundler struct{}
 const (
 	maxQueryDataArtifactBytes  = 8 << 20
 	maxDashboardQueryDataBytes = 32 << 20
+	// minQueryDataArtifactBytes is the smallest budget worth attempting: below it not even a truncated
+	// artifact (version + omission markers) fits, so the panel's query data is skipped up front.
+	minQueryDataArtifactBytes = 256
 )
 
 // queryDataArtifactVersion is the schema version stamped into every querydata.json (including its
@@ -50,9 +53,13 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 	if resp != nil || len(queryRequestJSON) > 0 {
 		queryData, err := marshalQueryDataArtifact(queryRequestJSON, resp)
 		if err != nil {
-			return nil, err
+			// A response that cannot be JSON-encoded (e.g. non-finite floats) must not sink the whole
+			// bundle: record the failure and still ship HAR and the other artifacts, mirroring how the
+			// dashboard path degrades per panel via manifest.queryDataError.
+			files["querydata-error.txt"] = []byte(err.Error() + "\n")
+		} else {
+			files["querydata.json"] = queryData
 		}
-		files["querydata.json"] = queryData
 	}
 
 	har, err := collectHAR(resp, harBuffer)
@@ -293,9 +300,9 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 		}
 		if p.Resp != nil || len(p.QueryRequest) > 0 {
 			queryDataLimit := min(maxQueryDataArtifactBytes, queryDataBytesRemaining)
-			if queryDataLimit < 256 {
+			if queryDataLimit < minQueryDataArtifactBytes {
 				entry.QueryDataTruncated = true
-				entry.QueryDataError = "dashboard query-data budget exhausted"
+				entry.QueryDataError = fmt.Sprintf("remaining dashboard query-data budget (%d bytes) below the %d-byte minimum artifact size", queryDataBytesRemaining, minQueryDataArtifactBytes)
 			} else {
 				queryData, err := marshalQueryDataArtifactWithLimit(p.QueryRequest, p.Resp, queryDataLimit)
 				if err != nil {
