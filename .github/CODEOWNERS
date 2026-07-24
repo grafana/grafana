@@ -1062,6 +1062,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/plugins/panel/text/ @grafana/dataviz-squad
 /public/app/plugins/panel/textng/ @grafana/dataviz-squad
 /public/app/plugins/panel/welcome/ @grafana/grafana-frontend-navigation
+/public/app/plugins/schemas/ @grafana/dataviz-squad
 /public/app/plugins/panel/xychart/ @grafana/dataviz-squad
 /public/app/routes/ @grafana/grafana-frontend-navigation
 /public/app/store/ @grafana/grafana-frontend-platform
