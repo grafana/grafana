@@ -229,9 +229,12 @@ func (NotebookPanelKind) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type NotebookPanelSpec struct {
-	Id          float64                `json:"id"`
-	Title       string                 `json:"title"`
-	Description string                 `json:"description"`
+	Id    float64 `json:"id"`
+	Title string  `json:"title"`
+	// Shown in a info icon tooltip next to panel title
+	Description *string `json:"description,omitempty"`
+	// Shown in a sub header below the title.
+	Subtitle    *string                `json:"subtitle,omitempty"`
 	Links       []NotebookDataLink     `json:"links"`
 	Data        NotebookQueryGroupKind `json:"data"`
 	VizConfig   NotebookVizConfigKind  `json:"vizConfig"`

@@ -106,7 +106,10 @@ export const defaultPanelKind = (): PanelKind => ({
 export interface PanelSpec {
 	id: number;
 	title: string;
-	description: string;
+	// Shown in a info icon tooltip next to panel title
+	description?: string;
+	// Shown in a sub header below the title.
+	subtitle?: string;
 	links: DataLink[];
 	data: QueryGroupKind;
 	vizConfig: VizConfigKind;
@@ -116,7 +119,6 @@ export interface PanelSpec {
 export const defaultPanelSpec = (): PanelSpec => ({
 	id: 0,
 	title: "",
-	description: "",
 	links: [],
 	data: defaultQueryGroupKind(),
 	vizConfig: defaultVizConfigKind(),
