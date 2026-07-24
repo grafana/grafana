@@ -3016,6 +3016,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "table.autoColumnWidths",
+			Description:  "Sizes TableNG auto-width columns to fit their content instead of distributing evenly",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "dataviz.experimentalColorSchemes",
 			Description:  "Enables additional experimental color schemes for visualizations.",
 			Stage:        FeatureStageExperimental,

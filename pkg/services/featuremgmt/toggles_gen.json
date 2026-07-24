@@ -5778,6 +5778,21 @@
     },
     {
       "metadata": {
+        "name": "table.autoColumnWidths",
+        "resourceVersion": "1784908309843",
+        "creationTimestamp": "2026-07-24T15:51:49Z"
+      },
+      "spec": {
+        "description": "Sizes TableNG auto-width columns to fit their content instead of distributing evenly",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "table.protoRowParser",
         "resourceVersion": "1782139478281",
         "creationTimestamp": "2026-06-22T14:44:38Z"
