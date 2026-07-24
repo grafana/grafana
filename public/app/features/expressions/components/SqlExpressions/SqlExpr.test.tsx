@@ -603,7 +603,35 @@ describe('SqlExpr', () => {
     );
   });
 
-  it('runs the query on cmd/ctrl + Enter', async () => {
+  it('runs the query on cmd/ctrl + Enter from inside the editor', async () => {
+    setTestFlags({ sqlExpressionsCodeMirror: true });
+
+    const onRunQuery = jest.fn();
+
+    const { getByTestId } = render(
+      <SqlExpr
+        onChange={jest.fn()}
+        refIds={[{ value: 'A' }]}
+        query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+        queries={[]}
+        onRunQuery={onRunQuery}
+      />
+    );
+
+    getByTestId('sql-editor').dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true })
+    );
+
+    await waitFor(() => {
+      expect(onRunQuery).toHaveBeenCalled();
+    });
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'dashboards_expression_interaction',
+      expect.objectContaining({ action: 'execute_expression', expression_type: 'sql' })
+    );
+  });
+
+  it('does not run the query when cmd/ctrl + Enter fires outside the editor', async () => {
     setTestFlags({ sqlExpressionsCodeMirror: true });
 
     const onRunQuery = jest.fn();
@@ -618,15 +646,46 @@ describe('SqlExpr', () => {
       />
     );
 
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true }));
+    // Target is document, i.e. focus in some other editor on the page. The old global listener stole this.
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true }));
+    });
+
+    expect(onRunQuery).not.toHaveBeenCalled();
+  });
+
+  it('only runs the query for the editor instance that received the shortcut', async () => {
+    setTestFlags({ sqlExpressionsCodeMirror: true });
+
+    const onRunQueryA = jest.fn();
+    const onRunQueryB = jest.fn();
+
+    const { getAllByTestId } = render(
+      <>
+        <SqlExpr
+          onChange={jest.fn()}
+          refIds={[{ value: 'A' }]}
+          query={{ refId: 'exprA', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+          queries={[]}
+          onRunQuery={onRunQueryA}
+        />
+        <SqlExpr
+          onChange={jest.fn()}
+          refIds={[{ value: 'B' }]}
+          query={{ refId: 'exprB', type: 'sql', expression: 'SELECT * FROM B' } as ExpressionQuery}
+          queries={[]}
+          onRunQuery={onRunQueryB}
+        />
+      </>
+    );
+
+    const [firstEditor] = getAllByTestId('sql-editor');
+    firstEditor.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true }));
 
     await waitFor(() => {
-      expect(onRunQuery).toHaveBeenCalled();
+      expect(onRunQueryA).toHaveBeenCalled();
     });
-    expect(reportInteraction).toHaveBeenCalledWith(
-      'dashboards_expression_interaction',
-      expect.objectContaining({ action: 'execute_expression', expression_type: 'sql' })
-    );
+    expect(onRunQueryB).not.toHaveBeenCalled();
   });
 });
 
