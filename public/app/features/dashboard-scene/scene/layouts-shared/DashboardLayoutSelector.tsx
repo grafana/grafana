@@ -10,7 +10,7 @@ import { type DashboardLayoutManager, isDashboardLayoutManager } from '../types/
 import { isLayoutParent } from '../types/LayoutParent';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
-import { hasDirectTabsChild } from './findAllGridTypes';
+import { hasDirectTabsChild } from './hasDirectTabsChild';
 import { layoutRegistry } from './layoutRegistry';
 
 export interface Props {
