@@ -495,6 +495,10 @@ const (
 	// Enable Assistant Investigations enrichment type.
 	FlagAlertingEnrichmentAssistantInvestigations = "alertingEnrichmentAssistantInvestigations"
 
+	// FlagAlertingManualAssistantInvestigation
+	// Enable manually starting an Assistant investigation from the alert instance drawer.
+	FlagAlertingManualAssistantInvestigation = "alertingManualAssistantInvestigation"
+
 	// FlagAlertingAIAnalyzeCentralStateHistory
 	// Enable AI-analyze central state history.
 	FlagAlertingAIAnalyzeCentralStateHistory = "alertingAIAnalyzeCentralStateHistory"

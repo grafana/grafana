@@ -1,0 +1,168 @@
+import { type Labels } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { type GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
+
+import { type StartInvestigationFromAlertRequest } from '../../api/assistantApi';
+import { createBridgeURL } from '../../components/PluginBridge';
+import { type LogRecord } from '../../components/rules/state-history/common';
+import { SupportedPlugin } from '../../types/pluginBridges';
+
+/** How often to refresh investigation state while a report is still generating. */
+export const ASSISTANT_INVESTIGATION_POLL_INTERVAL_MS = 3000;
+
+/** True when both product toggles for the manual investigation entry point are on. */
+export function isManualAssistantInvestigationEnabled(): boolean {
+  return Boolean(
+    config.featureToggles.alertingEnrichmentAssistantInvestigations &&
+      config.featureToggles.alertingManualAssistantInvestigation
+  );
+}
+
+// Includes paused — loops can pause mid-run and should keep the "in progress" UI.
+const ACTIVE_INVESTIGATION_STATES = new Set(['pending', 'running', 'in_progress', 'in-progress', 'paused']);
+
+const TERMINAL_INVESTIGATION_STATES = new Set(['completed', 'failed', 'cancelled', 'canceled']);
+
+/** True while the Assistant is still producing the report (or paused mid-run). */
+export function isAssistantInvestigationActive(state: string | undefined): boolean {
+  return !!state && ACTIVE_INVESTIGATION_STATES.has(state);
+}
+
+/** True when the investigation finished successfully. */
+export function isAssistantInvestigationCompleted(state: string | undefined): boolean {
+  return state === 'completed';
+}
+
+/** True when the investigation failed or was cancelled. */
+export function isAssistantInvestigationFailed(state: string | undefined): boolean {
+  return state === 'failed' || state === 'cancelled' || state === 'canceled';
+}
+
+/** True when polling can stop — completed, failed, or cancelled. */
+export function isAssistantInvestigationTerminal(state: string | undefined): boolean {
+  return !!state && TERMINAL_INVESTIGATION_STATES.has(state);
+}
+
+export interface AssistantInvestigationSnapshot {
+  id: string;
+  state: string;
+}
+
+/**
+ * Picks the investigation snapshot to show in the drawer.
+ * Terminal state for an id always beats a stale pending/in_progress snapshot from
+ * create mutation or get cache (common on remount). Create/retry with a new id
+ * still prefers the mutation until poll catches that id.
+ */
+export function selectAssistantInvestigation<T extends AssistantInvestigationSnapshot>({
+  started,
+  polled,
+  lookedUp,
+}: {
+  started?: T;
+  polled?: T;
+  lookedUp?: T | null;
+}): T | undefined {
+  const lookup = lookedUp ?? undefined;
+
+  const sameId = (id: string) => [polled, started, lookup].filter((inv): inv is T => inv?.id === id);
+
+  const preferTerminalOrFirst = (candidates: T[]): T | undefined => {
+    const terminal = candidates.find((inv) => isAssistantInvestigationTerminal(inv.state));
+    return terminal ?? candidates[0];
+  };
+
+  // Create/retry handoff: trust mutation for the new id until poll has it — but
+  // never prefer a stale non-terminal mutation over a same-id terminal lookup.
+  if (started && (!polled || polled.id !== started.id)) {
+    return preferTerminalOrFirst(sameId(started.id)) ?? started;
+  }
+
+  const id = polled?.id ?? started?.id ?? lookup?.id;
+  if (!id) {
+    return undefined;
+  }
+
+  return preferTerminalOrFirst(sameId(id)) ?? polled ?? started ?? lookup;
+}
+
+/** Builds a link to the investigation's report in the Assistant app. */
+export function getAssistantInvestigationUrl(investigationId: string): string {
+  return createBridgeURL(SupportedPlugin.Assistant, `/investigations/${encodeURIComponent(investigationId)}`);
+}
+
+function isAlertingState(state: string | undefined): boolean {
+  return String(state ?? '')
+    .toLowerCase()
+    .includes('alerting');
+}
+
+/** Alerting + Recovering are one keep-firing episode; Normal ends it. */
+function isFiringEpisodeState(state: string | undefined): boolean {
+  const normalized = String(state ?? '').toLowerCase();
+  return normalized.includes('alerting') || normalized.includes('recovering');
+}
+
+/**
+ * ISO start time for the current firing episode from state history.
+ * Starts on enter-Alerting and stays open through Recovering. Only a leave to
+ * a non-firing state (e.g. Normal) closes the episode. Truncated or ambiguous
+ * history returns undefined so startsAt is omitted.
+ */
+export function getAlertInstanceStartsAtIso(historyRecords: LogRecord[] | undefined): string | undefined {
+  if (!historyRecords?.length) {
+    return undefined;
+  }
+
+  const ordered = [...historyRecords].sort((a, b) => a.timestamp - b.timestamp);
+  let openEpisodeStart: number | undefined;
+
+  for (const record of ordered) {
+    const wasInEpisode = isFiringEpisodeState(record.line.previous);
+    const isInEpisode = isFiringEpisodeState(record.line.current);
+    // Episode clock starts only when entering Alerting (not Recovering alone).
+    if (!wasInEpisode && isAlertingState(record.line.current)) {
+      openEpisodeStart = record.timestamp;
+    } else if (wasInEpisode && !isInEpisode) {
+      openEpisodeStart = undefined;
+    }
+  }
+
+  return openEpisodeStart !== undefined ? new Date(openEpisodeStart).toISOString() : undefined;
+}
+
+export interface BuildFromAlertRequestArgs {
+  instanceLabels: Labels;
+  commonLabels?: Labels;
+  rule?: GrafanaRuleDefinition;
+}
+
+/** Builds the stable from-alert payload (no startsAt/status/name/generatorURL). */
+export function buildFromAlertRequest({
+  instanceLabels,
+  commonLabels,
+  rule,
+}: BuildFromAlertRequestArgs): StartInvestigationFromAlertRequest {
+  const externalURL = config.appUrl.replace(/\/$/, '');
+
+  // Stable alert-group identity for Assistant dedup/lookup. Prefer instance labels;
+  // when an instance has none, fall back to rule identity so reopen still finds the link.
+  const groupLabels: Record<string, string> =
+    Object.keys(instanceLabels).length > 0
+      ? { ...instanceLabels }
+      : {
+          ...(rule?.title ? { alertname: rule.title } : {}),
+          ...(rule?.uid ? { rule_uid: rule.uid } : {}),
+        };
+
+  return {
+    alerts: [
+      {
+        labels: instanceLabels,
+      },
+    ],
+    commonLabels,
+    groupLabels,
+    externalURL,
+  };
+}

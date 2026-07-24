@@ -461,6 +461,20 @@
     },
     {
       "metadata": {
+        "name": "alertingManualAssistantInvestigation",
+        "resourceVersion": "1784541144107",
+        "creationTimestamp": "2026-07-20T09:52:24Z"
+      },
+      "spec": {
+        "description": "Enable manually starting an Assistant investigation from the alert instance drawer.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingMigrationUI",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-03-14T16:40:05Z"

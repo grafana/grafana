@@ -5,4 +5,5 @@ export enum SupportedPlugin {
   MachineLearning = 'grafana-ml-app',
   Labels = 'grafana-labels-app',
   Slo = 'grafana-slo-app',
+  Assistant = 'grafana-assistant-app',
 }

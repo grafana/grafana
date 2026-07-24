@@ -11,12 +11,14 @@ import { isGranted } from '../../hooks/abilities/abilityUtils';
 import { useGlobalSilenceAbility } from '../../hooks/abilities/alertmanager/useSilenceAbility';
 import { SilenceAction } from '../../hooks/abilities/types';
 import { stringifyFolder, useFolder } from '../../hooks/useFolder';
-import { canAccessPluginPage, useIrmPlugin } from '../../hooks/usePluginBridge';
+import { canAccessPluginPage, useIrmPlugin, usePluginBridge } from '../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../types/pluginBridges';
 import { MATCHER_ALERT_RULE_UID } from '../../utils/constants';
 import { isLocalDevEnv, isOpenSourceEdition, makeLabelBasedSilenceLink } from '../../utils/misc';
 
 import { InstanceLocation } from './InstanceDetailsDrawer';
+import { StartInvestigationButton } from './StartInvestigationButton';
+import { isManualAssistantInvestigationEnabled } from './startInvestigationFromAlert';
 
 type StateTextState = 'normal' | 'firing' | 'pending' | 'recovering' | 'unknown';
 type StateTextHealth = 'ok' | 'nodata' | 'error';
@@ -47,6 +49,8 @@ interface InstanceDetailsDrawerTitleProps {
   instanceLabels: Labels;
   commonLabels?: Labels;
   alertState?: GrafanaAlertState | null;
+  /** ISO start of the current firing episode, for Assistant investigation context. */
+  alertStartsAt?: string;
   rule?: GrafanaRuleDefinition;
   onOpenSilence?: () => void;
   titleText?: string;
@@ -61,6 +65,7 @@ export function InstanceDetailsDrawerTitle({
   instanceLabels,
   commonLabels,
   alertState,
+  alertStartsAt,
   rule,
   onOpenSilence,
   titleText,
@@ -71,6 +76,8 @@ export function InstanceDetailsDrawerTitle({
 }: InstanceDetailsDrawerTitleProps) {
   const { folder } = useFolder(rule?.namespace_uid);
   const { pluginId, installed, settings } = useIrmPlugin(SupportedPlugin.Incident);
+  const { installed: assistantInstalled } = usePluginBridge(SupportedPlugin.Assistant);
+  const showStartInvestigation = !hideActions && isManualAssistantInvestigationEnabled() && Boolean(assistantInstalled);
   const canCreateSilence = isGranted(
     useGlobalSilenceAbility({ action: SilenceAction.Create, folderUID: rule?.namespace_uid })
   );
@@ -186,6 +193,19 @@ export function InstanceDetailsDrawerTitle({
             </Stack>
           )}
         </Stack>
+        {showStartInvestigation && (
+          <Box marginTop={0.5}>
+            <Stack direction="row" justifyContent="flex-end">
+              <StartInvestigationButton
+                instanceLabels={instanceLabels}
+                commonLabels={commonLabels}
+                rule={rule}
+                alertState={alertState}
+                alertStartsAt={alertStartsAt}
+              />
+            </Stack>
+          </Box>
+        )}
       </Stack>
       <Box>
         {Object.keys(instanceLabels).length > 0 ? (

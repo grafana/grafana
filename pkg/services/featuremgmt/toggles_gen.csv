@@ -169,6 +169,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-16,alertingAIGenTemplates,experimental,@grafana/alerting-squad,false,false,false
 2025-07-31,alertingEnrichmentPerRule,experimental,@grafana/alerting-squad,false,false,false
 2025-08-29,alertingEnrichmentAssistantInvestigations,experimental,@grafana/alerting-squad,false,false,false
+2026-07-20,alertingManualAssistantInvestigation,experimental,@grafana/alerting-squad,false,false,false
 2025-07-16,alertingAIAnalyzeCentralStateHistory,experimental,@grafana/alerting-squad,false,false,false
 2026-07-14,alerting.ruleQuality,experimental,@grafana/alerting-squad,false,false,false
 2024-11-22,alertingNotificationsStepMode,GA,@grafana/alerting-squad,false,false,true
