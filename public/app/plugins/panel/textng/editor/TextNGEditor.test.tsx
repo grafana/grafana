@@ -6,7 +6,7 @@ import config from 'app/core/config';
 
 import { CodeLanguage, TextMode } from '../../../schemas/textng/panelcfg.gen';
 
-import { TextNGEditor } from './TextNGEditor';
+import { PREVIEW_TEST_ID, TextNGEditor } from './TextNGEditor';
 
 // The real CodeMirrorEditor pulls in a heavy, lazily-loaded CodeMirror bundle;
 // stub it with a plain textarea so these tests stay fast and deterministic.
@@ -91,7 +91,7 @@ describe('TextNGEditor', () => {
     it('lands on the rendered preview, not the editor', () => {
       setup('# Hello', TextMode.Markdown);
 
-      expect(screen.getByTestId('TextNGEditor-preview').innerHTML).toContain('<h1');
+      expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h1');
       expect(screen.getByRole('radio', { name: 'Preview' })).toBeChecked();
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     });
@@ -108,7 +108,7 @@ describe('TextNGEditor', () => {
 
       await enterWriteMode();
       expect(screen.getByRole('textbox')).toHaveValue('# Hello');
-      expect(screen.queryByTestId('TextNGEditor-preview')).not.toBeInTheDocument();
+      expect(screen.queryByTestId(PREVIEW_TEST_ID)).not.toBeInTheDocument();
     });
   });
 
@@ -117,7 +117,7 @@ describe('TextNGEditor', () => {
       setup('# Hello', TextMode.Markdown);
 
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
-      expect(screen.getByTestId('TextNGEditor-preview').innerHTML).toContain('<h1');
+      expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h1');
     });
 
     it('shows editor and preview side by side in Split view', async () => {
@@ -126,13 +126,13 @@ describe('TextNGEditor', () => {
       await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
 
       expect(screen.getByRole('textbox')).toBeInTheDocument();
-      expect(screen.getByTestId('TextNGEditor-preview')).toBeInTheDocument();
+      expect(screen.getByTestId(PREVIEW_TEST_ID)).toBeInTheDocument();
     });
 
     it('sanitizes script tags in the HTML mode preview', () => {
       setup('<script>alert(1)</script><p>safe</p>', TextMode.HTML);
 
-      const preview = screen.getByTestId('TextNGEditor-preview');
+      const preview = screen.getByTestId(PREVIEW_TEST_ID);
       expect(preview.innerHTML).not.toContain('<script>');
       expect(preview.innerHTML).toContain('safe');
     });
@@ -143,7 +143,7 @@ describe('TextNGEditor', () => {
       try {
         setup('<form><p>kept</p></form>', TextMode.HTML);
 
-        const preview = screen.getByTestId('TextNGEditor-preview');
+        const preview = screen.getByTestId(PREVIEW_TEST_ID);
         expect(preview.innerHTML).toContain('<form>');
       } finally {
         config.disableSanitizeHtml = original;
@@ -153,7 +153,7 @@ describe('TextNGEditor', () => {
     it('renders code mode preview as a raw, unrendered code view', () => {
       setup('# Not a heading in code mode', TextMode.Code);
 
-      const preview = screen.getByTestId('TextNGEditor-preview');
+      const preview = screen.getByTestId(PREVIEW_TEST_ID);
       // The preview reuses the read-only code view, so the content stays raw.
       expect(within(preview).getByRole('textbox')).toHaveValue('# Not a heading in code mode');
       expect(preview.innerHTML).not.toContain('<h1');
@@ -162,7 +162,7 @@ describe('TextNGEditor', () => {
     it('passes language and line numbers to the code mode preview', () => {
       setup('{\n  "a": 1\n}', TextMode.Code, jest.fn(), true, CodeLanguage.Json);
 
-      const preview = screen.getByTestId('TextNGEditor-preview');
+      const preview = screen.getByTestId(PREVIEW_TEST_ID);
       expect(within(preview).getByRole('textbox')).toHaveAttribute('data-line-numbers', 'true');
     });
 
@@ -170,7 +170,7 @@ describe('TextNGEditor', () => {
       const replaceVariables = (value: string) => value.replace('$datacenter', 'A, B, C');
       setup('# Data center = $datacenter', TextMode.Markdown, jest.fn(), false, undefined, replaceVariables);
 
-      expect(screen.getByTestId('TextNGEditor-preview')).toHaveTextContent('Data center = A, B, C');
+      expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('Data center = A, B, C');
 
       await userEvent.click(screen.getByRole('radio', { name: 'Write' }));
       expect(screen.getByRole('textbox')).toHaveValue('# Data center = $datacenter');
@@ -209,6 +209,24 @@ describe('TextNGEditor', () => {
       await userEvent.tab();
 
       expect(onChange).toHaveBeenLastCalledWith('updated');
+    });
+
+    it('does not commit a pending draft on unmount, so Discard is not overwritten', async () => {
+      const onChange = jest.fn();
+      const { unmount } = render(
+        <ControlledEditor initialValue="initial" mode={TextMode.Markdown} onChange={onChange} />
+      );
+      await enterWriteMode();
+
+      const editor = screen.getByRole('textbox');
+      await userEvent.clear(editor);
+      await userEvent.type(editor, 'updated');
+
+      unmount();
+
+      // The debounce timer is canceled on unmount; the pending draft must not
+      // be flushed (it could overwrite a Discard).
+      expect(onChange).not.toHaveBeenCalledWith('updated');
     });
 
     it('interpolates with the json format when code language is json, regardless of mode', () => {

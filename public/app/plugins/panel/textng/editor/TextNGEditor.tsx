@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { type GrafanaTheme2, type InterpolateFunction } from '@grafana/data';
@@ -14,6 +14,8 @@ import { TextNGCodeView } from '../TextNGCodeView';
 import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '../utils';
 
 type ViewMode = 'write' | 'split' | 'preview';
+
+export const PREVIEW_TEST_ID = 'TextNGEditor-preview';
 
 export interface TextNGEditorProps {
   content: string;
@@ -56,18 +58,12 @@ export function TextNGEditor({
     }
   };
 
+  // No unmount flush: exits blur (and commit) first, and flushing here could
+  // overwrite externally reverted options (e.g. Discard).
   useDebounce(commitDraft, COMMIT_DEBOUNCE_MS, [draft]);
 
-  // Flush a pending draft when the editor closes so no keystrokes are lost.
-  const commitDraftRef = useRef(commitDraft);
-  commitDraftRef.current = commitDraft;
-  useEffect(() => () => commitDraftRef.current(), []);
-
   const format = getInterpolateFormat(codeLanguage);
-  const interpolatedContent = useMemo(
-    () => (view === 'write' ? '' : replaceVariables(draft, {}, format)),
-    [view, draft, format, replaceVariables]
-  );
+  const interpolatedContent = view === 'write' ? '' : replaceVariables(draft, {}, format);
 
   const previewHtml = useMemo(
     () => (mode === TextMode.Code ? '' : transformContent(mode, interpolatedContent, config.disableSanitizeHtml)),
@@ -133,9 +129,7 @@ export function TextNGEditor({
             />
           </div>
         )}
-        {showPreview && (
-          <div className={cx(styles.pane, styles.previewPane)}>{renderOutput('TextNGEditor-preview')}</div>
-        )}
+        {showPreview && <div className={cx(styles.pane, styles.previewPane)}>{renderOutput(PREVIEW_TEST_ID)}</div>}
       </div>
     </div>
   );

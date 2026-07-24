@@ -87,11 +87,12 @@ describe('loadLanguageExtension', () => {
     async (language) => {
       await jest.isolateModulesAsync(async () => {
         const { loadLanguageExtension } = await import('./languageLoader');
+        const { Language } = await import('@codemirror/language');
 
         const extension = await loadLanguageExtension(language);
         const again = await loadLanguageExtension(language);
 
-        expect(extension).not.toBeNull();
+        expect(extension).toHaveProperty('language', expect.any(Language));
         expect(again).toBe(extension);
       });
     }

@@ -141,7 +141,6 @@ export const CodeEditor = memo(function CodeEditor({
         basicSetup={basicSetup}
         indentWithTab={indentWithTab}
         readOnly={readOnly}
-        editable={!readOnly}
       />
     </>
   );

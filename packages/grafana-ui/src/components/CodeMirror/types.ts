@@ -162,7 +162,7 @@ export interface CodeMirrorEditorProps {
    */
   indentWithTab?: boolean;
   /**
-   * Renders the editor as a non-editable, read-only view of the content.
+   * Rejects all edits while keeping the text selectable.
    */
   readOnly?: boolean;
   /**

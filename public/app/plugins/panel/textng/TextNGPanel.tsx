@@ -41,6 +41,8 @@ export function TextNGPanel(props: Props) {
     }
   }
 
+  // Batches bursts of interpolated-content changes (data/variable refresh) so
+  // the markdown/sanitize pass runs once per burst, not per intermediate value.
   useDebounce(
     () => {
       if (isEditing) {
