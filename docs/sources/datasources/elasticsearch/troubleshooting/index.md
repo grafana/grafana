@@ -206,7 +206,7 @@ The following errors occur when there are Elasticsearch version compatibility is
 
 **Solution:**
 
-1. Upgrade Elasticsearch to a supported version (7.17+, 8.x, or 9.x).
+1. Upgrade Elasticsearch to a supported version (8.x or 9.x).
 1. Refer to [Elastic Product End of Life Dates](https://www.elastic.co/support/eol) for version support information.
 1. Note that queries may still work, but Grafana does not guarantee functionality for unsupported versions.
 

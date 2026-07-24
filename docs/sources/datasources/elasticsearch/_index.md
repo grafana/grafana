@@ -40,7 +40,7 @@ The Elasticsearch data source supports:
 
 Before you configure the Elasticsearch data source, you need:
 
-- An Elasticsearch instance (v7.17+, v8.x, or v9.x)
+- An Elasticsearch instance (v8.x or v9.x)
 - Network access from Grafana to your Elasticsearch server
 - Appropriate user credentials or API keys with read access
 
@@ -48,7 +48,6 @@ Before you configure the Elasticsearch data source, you need:
 
 This data source supports these versions of Elasticsearch:
 
-- ≥ v7.17
 - v8.x
 - v9.x
 - Elastic Cloud Serverless
