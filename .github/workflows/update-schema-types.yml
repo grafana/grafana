@@ -12,6 +12,8 @@ permissions: {}
 
 jobs:
   bundle-schema-types:
+    # Only run in `grafana/grafana` to prevent double-running on mirrors
+    if: github.repository == 'grafana/grafana'
     runs-on: ubuntu-arm64-small
     permissions:
       contents: read

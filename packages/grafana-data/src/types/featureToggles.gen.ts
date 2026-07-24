@@ -194,11 +194,6 @@ export interface FeatureToggles {
   */
   externalSnapshotsSupportLegacyAPI?: boolean;
   /**
-  * Routes library panel requests from /api to the /apis endpoint
-  * @default false
-  */
-  kubernetesLibraryPanels?: boolean;
-  /**
   * Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
   * @default true
   */
@@ -1205,11 +1200,6 @@ export interface FeatureToggles {
   * @default true
   */
   dashboardSectionVariables?: boolean;
-  /**
-  * Enables global and folder-scoped dashboard variables via dashboard.grafana.app
-  * @default false
-  */
-  globalDashboardVariables?: boolean;
   /**
   * Enables the ASAP smoothing transformation for time series data
   * @default false
