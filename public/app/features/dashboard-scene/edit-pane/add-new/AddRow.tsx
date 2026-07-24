@@ -47,7 +47,7 @@ export function AddRow({ dashboardScene, selectedElement }: AddRowProps) {
       disabled={disableGrouping}
       tooltip={
         disableGrouping
-          ? t('dashboard.canvas-actions.disabled-nested-grouping', 'Grouping is limited to 3 levels')
+          ? t('dashboard.canvas-actions.disabled-nested-grouping', 'Grouping is limited to 4 levels')
           : undefined
       }
     />

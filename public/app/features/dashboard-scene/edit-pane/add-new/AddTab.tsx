@@ -40,7 +40,7 @@ export function AddTab({ dashboardScene, selectedElement }: AddTabProps) {
     }
 
     if (disableGrouping) {
-      return t('dashboard.canvas-actions.disabled-nested-grouping', 'Grouping is limited to 3 levels');
+      return t('dashboard.canvas-actions.disabled-nested-grouping', 'Grouping is limited to 4 levels');
     }
 
     return t('dashboard.canvas-actions.disabled-nested-tabs', 'Tabs cannot be nested inside other tabs');

@@ -2,13 +2,15 @@ import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
-export function containsTabsLayout(layout: DashboardLayoutManager): boolean {
-  if (layout instanceof TabsLayoutManager) {
-    return true;
+export function hasDirectTabsChild(layout: DashboardLayoutManager): boolean {
+  if (!(layout instanceof RowsLayoutManager)) {
+    return false;
   }
 
-  if (layout instanceof RowsLayoutManager) {
-    return layout.state.rows.some((row) => containsTabsLayout(row.getLayout()));
+  for (const row of layout.state.rows) {
+    if (row.getLayout() instanceof TabsLayoutManager) {
+      return true;
+    }
   }
 
   return false;

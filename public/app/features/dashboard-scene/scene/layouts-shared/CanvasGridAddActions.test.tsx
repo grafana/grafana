@@ -179,7 +179,7 @@ describe('CanvasGridAddActions', () => {
       expect(result.current).toEqual({ disableGrouping: false, disableTabs: false });
     });
 
-    it('should allow grouping but disable tabs when nested two levels deep (tabs > rows)', () => {
+    it('should allow both grouping and tabs when nested two levels deep (tabs > rows)', () => {
       const innerLayout = AutoGridLayoutManager.createEmpty();
       buildTestScene(
         new TabsLayoutManager({
@@ -193,7 +193,7 @@ describe('CanvasGridAddActions', () => {
 
       const { result } = renderHook(() => useNestingRestrictions(innerLayout));
 
-      expect(result.current).toEqual({ disableGrouping: false, disableTabs: true });
+      expect(result.current).toEqual({ disableGrouping: false, disableTabs: false });
     });
 
     it('should allow grouping but disable tabs when nested two levels deep (rows > tabs)', () => {
@@ -213,7 +213,7 @@ describe('CanvasGridAddActions', () => {
       expect(result.current).toEqual({ disableGrouping: false, disableTabs: true });
     });
 
-    it('should disable both grouping and tabs when nested three levels deep', () => {
+    it('should allow both grouping and tabs when nested three levels deep (rows > rows > rows)', () => {
       const innerLayout = AutoGridLayoutManager.createEmpty();
       buildTestScene(
         new RowsLayoutManager({
@@ -223,6 +223,58 @@ describe('CanvasGridAddActions', () => {
                 rows: [
                   new RowItem({
                     layout: new RowsLayoutManager({ rows: [new RowItem({ layout: innerLayout })] }),
+                  }),
+                ],
+              }),
+            }),
+          ],
+        })
+      );
+
+      const { result } = renderHook(() => useNestingRestrictions(innerLayout));
+
+      expect(result.current).toEqual({ disableGrouping: false, disableTabs: false });
+    });
+
+    it('should disable tabs but allow grouping when the closest ancestor is tabs, however deep (tabs > rows > tabs)', () => {
+      const innerLayout = AutoGridLayoutManager.createEmpty();
+      buildTestScene(
+        new TabsLayoutManager({
+          tabs: [
+            new TabItem({
+              layout: new RowsLayoutManager({
+                rows: [
+                  new RowItem({
+                    layout: new TabsLayoutManager({ tabs: [new TabItem({ layout: innerLayout })] }),
+                  }),
+                ],
+              }),
+            }),
+          ],
+        })
+      );
+
+      const { result } = renderHook(() => useNestingRestrictions(innerLayout));
+
+      expect(result.current).toEqual({ disableGrouping: false, disableTabs: true });
+    });
+
+    it('should disable both grouping and tabs when nested four levels deep', () => {
+      const innerLayout = AutoGridLayoutManager.createEmpty();
+      buildTestScene(
+        new RowsLayoutManager({
+          rows: [
+            new RowItem({
+              layout: new RowsLayoutManager({
+                rows: [
+                  new RowItem({
+                    layout: new RowsLayoutManager({
+                      rows: [
+                        new RowItem({
+                          layout: new RowsLayoutManager({ rows: [new RowItem({ layout: innerLayout })] }),
+                        }),
+                      ],
+                    }),
                   }),
                 ],
               }),
