@@ -208,6 +208,42 @@ func TestBuildDashboardDiagnosticsArchive_queryV2Dispatch(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestBuildDashboardDiagnosticsArchive_includesFilteredAndWindowLogs(t *testing.T) {
+	require.NoError(t, log.SetupConsoleLogger("info"))
+
+	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Run(func(_ mock.Arguments) {
+			logger := log.New("dashboard-diagnostics-capture-test")
+			logger.Debug("target line", "dsUID", "prom")
+			logger.Debug("decoy line", "dsUID", "other")
+		}).
+		Return(backend.NewQueryDataResponse(), nil).Once()
+	hs := &HTTPServer{queryDataService: fakeQuery}
+
+	reqDTO := dashboardDiagnosticsRequest{
+		IncludeLogs: true,
+		Panels: []panelDiagnosticsSpec{{
+			ID:    1,
+			Title: "Panel 1",
+			MetricRequest: dtos.MetricRequest{
+				Queries: []*simplejson.Json{simplejson.NewFromAny(map[string]any{
+					"refId": "A", "datasource": map[string]any{"uid": "prom"},
+				})},
+			},
+		}},
+	}
+
+	archive, err := hs.buildDashboardDiagnosticsArchive(context.Background(), &user.SignedInUser{OrgID: 1, UserUID: "u1"}, false, false, reqDTO, "job-logs")
+	require.NoError(t, err)
+
+	files := readTarGzFiles(t, archive)
+	require.Contains(t, string(files["query.log"]), "target line")
+	require.NotContains(t, string(files["query.log"]), "decoy line")
+	require.Contains(t, string(files["server-window.log"]), "target line")
+	require.Contains(t, string(files["server-window.log"]), "decoy line")
+}
+
 func readTarGzFiles(t *testing.T, data []byte) map[string][]byte {
 	t.Helper()
 	gz, err := gzip.NewReader(bytes.NewReader(data))
@@ -448,9 +484,19 @@ func TestPanelDatasourceUIDs(t *testing.T) {
 		}
 		return j
 	}
-	req := dtos.MetricRequest{Queries: []*simplejson.Json{q("prom"), q("prom"), q("loki"), q(""), nil}}
-	// Deduplicated, in first-seen order; empty/nil entries dropped.
+	req := dtos.MetricRequest{Queries: []*simplejson.Json{q("prom"), q("prom"), q("loki"), q(""), q("__expr__"), nil}}
+	// Deduplicated, in first-seen order; empty, expression, and nil entries dropped.
 	require.Equal(t, []string{"prom", "loki"}, panelDatasourceUIDs(req))
 
 	require.Empty(t, panelDatasourceUIDs(dtos.MetricRequest{}))
+}
+
+func TestDashboardDiagnosticsRequestIncludeLogsDefaultsOff(t *testing.T) {
+	var absent dashboardDiagnosticsRequest
+	require.NoError(t, json.Unmarshal([]byte(`{"panels":[]}`), &absent))
+	require.False(t, absent.IncludeLogs)
+
+	var enabled dashboardDiagnosticsRequest
+	require.NoError(t, json.Unmarshal([]byte(`{"panels":[],"includeLogs":true}`), &enabled))
+	require.True(t, enabled.IncludeLogs)
 }

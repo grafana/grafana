@@ -16,6 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/httpclient/harcapture"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/diagnostics"
@@ -40,8 +42,9 @@ func diagnosticsEnabled(ctx context.Context) bool {
 // client resolves each data panel's queries (template variables applied) and sends them with the
 // panel definition, so the backend can run them without a dashboard-service lookup.
 type dashboardDiagnosticsRequest struct {
-	Dashboard json.RawMessage        `json:"dashboard"`
-	Panels    []panelDiagnosticsSpec `json:"panels"`
+	Dashboard   json.RawMessage        `json:"dashboard"`
+	Panels      []panelDiagnosticsSpec `json:"panels"`
+	IncludeLogs bool                   `json:"includeLogs"`
 }
 
 type panelDiagnosticsSpec struct {
@@ -373,6 +376,11 @@ func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user
 	if useQueryDataNew {
 		queryData = hs.queryDataService.QueryDataNew
 	}
+	var logCapture *log.Capture
+	if reqDTO.IncludeLogs {
+		logCapture = log.StartCapture()
+		defer logCapture.Stop()
+	}
 
 	panels := make([]diagnostics.DashboardPanel, 0, len(reqDTO.Panels))
 	for i, p := range reqDTO.Panels {
@@ -415,7 +423,32 @@ func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user
 		dashboardDiagnosticsJobs.setProgress(jobUID, i+1)
 	}
 
-	return diagnostics.NewBundler().BuildDashboard(reqDTO.Dashboard, panels)
+	var queryLog, serverWindowLog []byte
+	if logCapture != nil {
+		capturedLines := logCapture.Stop()
+		queryLog = diagnostics.ScopedQueryLog(
+			capturedLines,
+			tracing.TraceIDFromContext(ctx, false),
+			dashboardDatasourceUIDs(reqDTO.Panels),
+		)
+		serverWindowLog = diagnostics.ServerWindowLog(capturedLines)
+	}
+
+	return diagnostics.NewBundler().BuildDashboard(reqDTO.Dashboard, panels, queryLog, serverWindowLog)
+}
+
+func dashboardDatasourceUIDs(panels []panelDiagnosticsSpec) []string {
+	seen := map[string]bool{}
+	uids := make([]string, 0)
+	for _, panel := range panels {
+		for _, uid := range panelDatasourceUIDs(panel.MetricRequest) {
+			if !seen[uid] {
+				seen[uid] = true
+				uids = append(uids, uid)
+			}
+		}
+	}
+	return uids
 }
 
 // panelDatasourceUIDs returns the unique datasource UIDs referenced by a panel's queries.
@@ -427,7 +460,7 @@ func panelDatasourceUIDs(req dtos.MetricRequest) []string {
 			continue
 		}
 		uid := q.Get("datasource").Get("uid").MustString()
-		if uid != "" && !seen[uid] {
+		if uid != "" && uid != "__expr__" && !seen[uid] {
 			seen[uid] = true
 			uids = append(uids, uid)
 		}

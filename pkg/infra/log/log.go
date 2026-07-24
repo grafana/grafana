@@ -85,6 +85,12 @@ func (lm *logManager) initialize(loggers []logWithFilters, levelStr string) {
 	lm.mutex.Lock()
 	defer lm.mutex.Unlock()
 
+	// The capture sink intentionally sees debug records regardless of the configured server level.
+	// Its inactive path is an atomic read, but while any diagnostics capture is active every debug
+	// record emitted process-wide is logfmt-encoded and serialized through the shared ring mutex. This
+	// bounded, admin-triggered overhead is accepted for the experimental diagnostics MVP.
+	loggers = append(loggers, logWithFilters{val: newCaptureLogger(), maxLevel: level.AllowDebug()})
+
 	defaultLoggers := make([]gokitlog.Logger, len(loggers))
 	for index, logger := range loggers {
 		defaultLoggers[index] = level.NewFilter(logger.val, logger.maxLevel)

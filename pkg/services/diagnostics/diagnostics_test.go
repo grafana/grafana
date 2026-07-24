@@ -20,7 +20,7 @@ import (
 
 func TestBundler_Build(t *testing.T) {
 	// No HAR captured (empty buffer, nil response) -> traffic.har omitted; only panel.json present.
-	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, json.RawMessage(`{"id":1}`), nil, nil)
+	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, json.RawMessage(`{"id":1}`), nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -34,12 +34,24 @@ func TestBundler_Build(t *testing.T) {
 
 func TestBundler_Build_recordsQueryError(t *testing.T) {
 	// A failed query must still produce a bundle, with the error recorded (capture is not discarded).
-	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, errors.New("datasource timeout"))
+	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, errors.New("datasource timeout"), nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
 	require.Contains(t, files, "query-error.txt")
 	require.Contains(t, string(files["query-error.txt"]), "datasource timeout")
+}
+
+func TestBundler_Build_includesScopedQueryLog(t *testing.T) {
+	queryLog := []byte("logger=plugin dsUID=prom msg=failed\n")
+	serverWindowLog := []byte("logger=background msg=unrelated\n" + string(queryLog))
+	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, nil, queryLog, serverWindowLog)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.Equal(t, queryLog, files["query.log"])
+	require.Equal(t, serverWindowLog, files["server-window.log"])
+	require.NotContains(t, files, "server.log")
 }
 
 func TestMergeHAR(t *testing.T) {
@@ -170,7 +182,7 @@ func TestCollectHAR_nilBuffer_noPanic(t *testing.T) {
 	require.Nil(t, out)
 
 	// A nil buffer must also flow through Build without panicking.
-	bundle, err := NewBundler().Build(nil, nil, nil, nil, nil)
+	bundle, err := NewBundler().Build(nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, bundle)
 }
@@ -393,7 +405,7 @@ func TestBuildDashboard(t *testing.T) {
 		{ID: 1, Title: "CPU Usage", PanelJSON: json.RawMessage(`{"id":1}`), Datasources: []string{"prom"}, HARBuffer: bufferWithEntry(t, "http://ds/1")},
 		{ID: 2, Title: "Text panel", Skipped: "no queries (non-data panel)"},
 	}
-	blob, err := NewBundler().BuildDashboard(json.RawMessage(`{"title":"My dash"}`), panels)
+	blob, err := NewBundler().BuildDashboard(json.RawMessage(`{"title":"My dash"}`), panels, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -417,6 +429,18 @@ func TestBuildDashboard(t *testing.T) {
 	require.Positive(t, m.Panels[0].HARBytes)
 }
 
+func TestBuildDashboard_includesRootFilteredAndWindowLogs(t *testing.T) {
+	queryLog := []byte("logger=plugin dsUID=prom msg=matching\n")
+	serverWindowLog := []byte("logger=background msg=unrelated\n" + string(queryLog))
+
+	blob, err := NewBundler().BuildDashboard(nil, nil, queryLog, serverWindowLog)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.Equal(t, queryLog, files["query.log"])
+	require.Equal(t, serverWindowLog, files["server-window.log"])
+}
+
 // The whole-dashboard client posts the dashboard save model once instead of each panel's JSON, so
 // BuildDashboard must resolve each panel's panel.json from that model by id -- including panels nested
 // inside a collapsed row.
@@ -435,7 +459,7 @@ func TestBuildDashboard_resolvesPanelJSONFromDashboardModel(t *testing.T) {
 		{ID: 1, Title: "CPU Usage", HARBuffer: bufferWithEntry(t, "http://ds/1")},
 		{ID: 2, Title: "Logs", HARBuffer: bufferWithEntry(t, "http://ds/2")},
 	}
-	blob, err := NewBundler().BuildDashboard(dashboardJSON, panels)
+	blob, err := NewBundler().BuildDashboard(dashboardJSON, panels, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -463,7 +487,7 @@ func TestBuildDashboard_resolvesPanelJSONFromDashboardV2Model(t *testing.T) {
 		{ID: 3, Title: "CPU Usage", HARBuffer: bufferWithEntry(t, "http://ds/3")},
 		{ID: 4, Title: "Shared Errors", HARBuffer: bufferWithEntry(t, "http://ds/4")},
 	}
-	blob, err := NewBundler().BuildDashboard(dashboardJSON, panels)
+	blob, err := NewBundler().BuildDashboard(dashboardJSON, panels, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -487,7 +511,7 @@ func TestBuildDashboard_recordsPanelQueryError(t *testing.T) {
 	panels := []DashboardPanel{
 		{ID: 7, Title: "Broken", QueryErr: errors.New("datasource exploded")},
 	}
-	blob, err := NewBundler().BuildDashboard(nil, panels)
+	blob, err := NewBundler().BuildDashboard(nil, panels, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -506,7 +530,7 @@ func TestBuildDashboard_dirCollision(t *testing.T) {
 		{ID: 3, Title: "Same", HARBuffer: bufferWithEntry(t, "http://ds/a")},
 		{ID: 3, Title: "Same", HARBuffer: bufferWithEntry(t, "http://ds/b")},
 	}
-	blob, err := NewBundler().BuildDashboard(nil, panels)
+	blob, err := NewBundler().BuildDashboard(nil, panels, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)

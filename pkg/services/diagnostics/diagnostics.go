@@ -27,13 +27,10 @@ func NewBundler() *Bundler {
 	return &Bundler{}
 }
 
-// Build assembles a .tar.gz bundle from the query response, the captured HAR buffer, and the
-// optional panel/dashboard JSON the client supplied. traffic.har is omitted when nothing was
-// captured.
-//
-// Server logs are intentionally omitted because they are not scoped to this request and would leak
-// unrelated activity into a bundle meant for external sharing; they will be tackled in a follow-up.
-func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer, panelJSON, dashboardJSON json.RawMessage, queryErr error) ([]byte, error) {
+// Build assembles a .tar.gz bundle from the query response, the captured HAR buffer, the optional
+// panel/dashboard JSON the client supplied, and optional filtered and unfiltered-window query logs.
+// Capture artifacts are omitted when empty; the unfiltered log is bounded by ServerWindowLog.
+func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer, panelJSON, dashboardJSON json.RawMessage, queryErr error, queryLog, serverWindowLog []byte) ([]byte, error) {
 	files := map[string][]byte{}
 
 	har, err := collectHAR(resp, harBuffer)
@@ -55,6 +52,12 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 		// Recorded verbatim -- redaction is intentionally deferred for this experimental feature
 		// (see the harcapture package doc); the error text can embed a request URL with credentials.
 		files["query-error.txt"] = []byte(queryErr.Error() + "\n")
+	}
+	if len(queryLog) > 0 {
+		files["query.log"] = queryLog
+	}
+	if len(serverWindowLog) > 0 {
+		files["server-window.log"] = serverWindowLog
 	}
 
 	return buildTarGz(files)
@@ -97,12 +100,13 @@ type manifestPanelEntry struct {
 	CaptureError string `json:"captureError,omitempty"`
 }
 
-// BuildDashboard assembles a whole-dashboard .tar.gz: a shared dashboard.json and manifest.json plus
-// per-panel panels/<id>-<slug>/{panel.json, traffic.har, query-error.txt}.
+// BuildDashboard assembles a whole-dashboard .tar.gz: shared dashboard.json, manifest.json, and
+// optional root query logs, plus per-panel panels/<id>-<slug>/{panel.json, traffic.har,
+// query-error.txt}.
 //
 // Like Build, captured traffic and error text are recorded VERBATIM -- redaction is intentionally
-// deferred (see the harcapture package doc) -- and server logs are omitted (not request-scoped).
-func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []DashboardPanel) ([]byte, error) {
+// deferred (see the harcapture package doc).
+func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []DashboardPanel, queryLog, serverWindowLog []byte) ([]byte, error) {
 	manifest := dashboardManifest{
 		GeneratedAt: time.Now().UTC().Format(time.RFC3339),
 		PanelsTotal: len(panels),
@@ -111,6 +115,12 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 	files := map[string][]byte{}
 	if len(dashboardJSON) > 0 {
 		files["dashboard.json"] = indentJSON(dashboardJSON)
+	}
+	if len(queryLog) > 0 {
+		files["query.log"] = queryLog
+	}
+	if len(serverWindowLog) > 0 {
+		files["server-window.log"] = serverWindowLog
 	}
 
 	usedDirs := map[string]bool{}
