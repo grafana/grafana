@@ -12,6 +12,10 @@ import (
 	_ "github.com/grafana/grafana/pkg/operators"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
+
+	// Registers the OSS dependency-injection entrypoints (server.InitializeAPIServerFactory etc.)
+	// via bootstrap/wire's init(); without this side-effect import they are nil.
+	_ "github.com/grafana/grafana/pkg/server/bootstrap/wire"
 )
 
 // The following variables cannot be constants, since they can be overridden through the -X link flag

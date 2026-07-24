@@ -2,10 +2,11 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Button, Stack, useStyles2 } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
 import impressionSrv from 'app/core/services/impression_srv';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
 
+import { FooterAction, FooterActions } from '../FooterActions';
 import { clearHistoryClicked } from '../analytics/main';
 
 interface Props {
@@ -30,11 +31,11 @@ export function RecentDashboardsClearButton({ dashboards, retry, redesignEnabled
   return (
     <>
       {redesignEnabled ? (
-        <Stack justifyContent="flex-end" wrap="wrap">
-          <Button size="sm" fill="text" onClick={handleClearHistory}>
+        <FooterActions>
+          <FooterAction onClick={handleClearHistory}>
             <Trans i18nKey="home.recent-dashboards-tab.reset">Reset recent dashboards</Trans>
-          </Button>
-        </Stack>
+          </FooterAction>
+        </FooterActions>
       ) : (
         <div className={styles.clearButton}>
           <Button icon="times" size="sm" variant="secondary" fill="text" onClick={handleClearHistory}>
