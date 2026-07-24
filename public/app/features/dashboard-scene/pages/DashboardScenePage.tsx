@@ -30,6 +30,7 @@ import { DashboardTemplateEditBanner } from '../components/DashboardTemplateEdit
 import { DashboardTemplateSavedBanner } from '../components/DashboardTemplateSavedBanner';
 import { DashboardTemplateUseBanner } from '../components/DashboardTemplateUseBanner';
 import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
+import { useDashboardPageContext } from '../hooks/useDashboardPageContext';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { useScenesFlickeringFix } from '../utils/utils';
@@ -57,6 +58,11 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   const prevParams = useRef<Params<string>>(params);
 
   useScenesFlickeringFix();
+  // Register the active dashboard as Grafana Assistant page context so
+  // the assistant chat surface can auto-ground without an `@` mention.
+  // Called at the top so the registration's cleanup runs on unmount
+  // regardless of which render branch the page takes below.
+  useDashboardPageContext(dashboard);
 
   useEffect(() => {
     if (route.routeName === DashboardRoutes.Normal && type === 'snapshot') {
