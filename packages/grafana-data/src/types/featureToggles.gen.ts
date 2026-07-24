@@ -194,11 +194,6 @@ export interface FeatureToggles {
   */
   externalSnapshotsSupportLegacyAPI?: boolean;
   /**
-  * Routes library panel requests from /api to the /apis endpoint
-  * @default false
-  */
-  kubernetesLibraryPanels?: boolean;
-  /**
   * Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
   * @default true
   */

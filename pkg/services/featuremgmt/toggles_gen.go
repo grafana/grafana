@@ -143,9 +143,9 @@ const (
 	// On a SnapshotPublicMode instance with kubernetesSnapshots enabled, keep accepting anonymous /api/snapshots pushes by routing them through CreateDashboardSnapshotPublic instead of the authenticated k8s create endpoint. Default off: the migrated end state rejects anonymous legacy pushes. Turn on as a temporary backward-compat lever while senders migrate to the authenticated k8s API push, then turn off once migration completes. Not compatible with snapshot dual-write Mode5 (k8s-only storage), where the k8s create API is mandatory.
 	FlagExternalSnapshotsSupportLegacyAPI = "externalSnapshotsSupportLegacyAPI"
 
-	// FlagKubernetesLibraryPanels
+	// FlagLibraryelementsKubernetesLibraryPanels
 	// Routes library panel requests from /api to the /apis endpoint
-	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
+	FlagLibraryelementsKubernetesLibraryPanels = "libraryelements.kubernetesLibraryPanels"
 
 	// FlagKubernetesFolderCascadeDelete
 	// Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned
