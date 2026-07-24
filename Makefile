@@ -345,10 +345,6 @@ bin/$(OS)/$(ARCH)/grafana$(if $(filter windows,$(OS)),.exe):
 .PHONY: build-backend
 build-backend: build-go
 
-.PHONY: build-air
-build-air: build-go
-	@cp ./bin/grafana ./bin/grafana-air
-
 .PHONY: build-js
 build-js: ## Build frontend assets.
 	@echo "building frontend"
