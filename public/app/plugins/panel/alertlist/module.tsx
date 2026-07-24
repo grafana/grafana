@@ -139,6 +139,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
                 inputId={id}
                 type={SUPPORTED_RULE_SOURCE_TYPES}
                 noDefault
+                variables
                 current={props.value}
                 onChange={(ds: DataSourceInstanceSettings) => {
                   if (ds.uid !== 'grafana') {
