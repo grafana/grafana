@@ -94,6 +94,8 @@ export type QueryLibraryContextType = {
 
   queryLibraryEnabled: boolean;
   context: string;
+  /** Set the ambient render context (e.g. so the Explore editing banner marks itself as 'explore'). */
+  setContext: (context: string) => void;
   triggerAnalyticsEvent: (
     handleAnalyticEvent: (properties?: QueryLibraryEventsPropertyMap) => void,
     properties?: QueryLibraryEventsPropertyMap,
@@ -144,6 +146,7 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
 
   queryLibraryEnabled: false,
   context: 'unknown',
+  setContext: () => {},
   triggerAnalyticsEvent: () => {},
   onSelectQuery: () => {},
   onFavorite: () => {},
