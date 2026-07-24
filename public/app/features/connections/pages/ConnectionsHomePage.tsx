@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, type IconName, isIconName } from '@grafana/data';
+import { type GrafanaTheme2, type IconName, isIconName, locationUtil } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
@@ -29,16 +29,21 @@ export default function ConnectionsHomePage() {
   const cardMetadata = getConnectionsCardMetadata(isOnPrem);
   const navIndex = useSelector((state) => state.navIndex);
   const cardsData = (navIndex['connections']?.children ?? [])
-    .filter((item) => item.url)
     .map((item) => {
-      const meta = cardMetadata[item.url!];
+      // Nav tree URLs include the sub-path prefix (appSubUrl). Strip it so the
+      // metadata lookup matches and locationService.push (whose history already
+      // has appSubUrl as basename) does not prepend the prefix a second time.
+      const url = locationUtil.stripBaseFromUrl(item.url ?? '');
+      const meta = cardMetadata[url];
       return {
         ...item,
+        url,
         text: meta?.text ?? item.text,
         icon: resolveIcon(meta?.icon, item.icon),
         subTitle: meta?.subTitle ?? item.subTitle ?? '',
       };
-    });
+    })
+    .filter((item) => item.url);
 
   return (
     <Page
@@ -74,7 +79,7 @@ export default function ConnectionsHomePage() {
                   title={child.text}
                   description={child.subTitle}
                   icon={child.icon}
-                  url={child.url!}
+                  url={child.url}
                   index={index}
                 />
               ))}
