@@ -727,7 +727,77 @@ describe('extractV2Inputs', () => {
     expect(result.dataSources.map((ds) => ds.pluginId).sort()).toEqual(['loki', 'prometheus']);
   });
 
-  it('extracts section constants and dedupes by name against dashboard-level', async () => {
+  it('extracts datasources from $dsVar panel queries only when export-labeled (external share)', async () => {
+    const dashboard = {
+      elements: {
+        labeledVarPanel: {
+          kind: 'Panel',
+          spec: {
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [
+                  {
+                    kind: 'PanelQuery',
+                    spec: {
+                      query: {
+                        group: 'loki',
+                        datasource: { name: '${rowLoki}' },
+                        labels: { [ExportLabel]: 'loki-1', [ExportDatasourceName]: 'Prod Loki' },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+        unlabeledSameInstancePanel: {
+          kind: 'Panel',
+          spec: {
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [
+                  {
+                    kind: 'PanelQuery',
+                    spec: {
+                      query: {
+                        group: 'grafana-sqlite-datasource',
+                        // Same-instance export keeps $var without labels — no picker
+                        datasource: { name: '$rowSqlite' },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      variables: [],
+    };
+
+    mockGetDataSourceSrv.getList.mockImplementation(({ pluginId }: { pluginId: string }) => {
+      if (pluginId === 'loki') {
+        return [{ uid: 'l1', name: 'Prod Loki', type: 'loki' }];
+      }
+      if (pluginId === 'grafana-sqlite-datasource') {
+        return [{ uid: 's1', name: 'SQLite', type: 'grafana-sqlite-datasource' }];
+      }
+      return [];
+    });
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.dataSources).toHaveLength(1);
+    expect(result.dataSources[0]).toMatchObject({
+      name: 'loki-1',
+      pluginId: 'loki',
+    });
+  });
+
+  it('extracts section constants separately when names collide with dashboard-level', async () => {
     const dashboard = {
       elements: {},
       variables: [
@@ -751,15 +821,15 @@ describe('extractV2Inputs', () => {
             {
               kind: 'RowsLayoutRow',
               spec: {
-                title: 'Row 1',
+                title: 'Servers',
                 layout: { kind: 'GridLayout', spec: { items: [] } },
                 variables: [
                   {
                     kind: 'ConstantVariable',
                     spec: {
                       name: 'environment',
-                      query: 'should-not-appear',
-                      current: { text: 'should-not-appear', value: 'should-not-appear' },
+                      query: 'staging',
+                      current: { text: 'staging', value: 'staging' },
                       hide: 'dontHide',
                       skipUrlSync: false,
                     },
@@ -785,10 +855,25 @@ describe('extractV2Inputs', () => {
 
     const result = await extractV2Inputs(dashboard);
 
-    expect(result.constants).toHaveLength(2);
-    expect(result.constants.map((c) => c.name)).toEqual(['environment', 'region']);
-    expect(result.constants[0].value).toBe('production');
-    expect(result.constants[0].info).toBe('Dashboard env');
+    expect(result.constants).toHaveLength(3);
+    expect(result.constants[0]).toMatchObject({
+      name: 'environment',
+      value: 'production',
+      info: 'Dashboard env',
+    });
+    expect(result.constants[0].path).toBeUndefined();
+    expect(result.constants[1]).toMatchObject({
+      name: 'environment',
+      value: 'staging',
+      path: '/rows/0',
+      scopeLabel: 'Row: Servers',
+    });
+    expect(result.constants[2]).toMatchObject({
+      name: 'region',
+      value: 'us-east-1',
+      path: '/rows/0',
+      scopeLabel: 'Row: Servers',
+    });
   });
 });
 
@@ -1404,8 +1489,8 @@ describe('applyV2Inputs', () => {
       dashboard,
       folderUid: 'folder',
       message: '',
-      'constant-environment': 'staging',
-      'constant-region': 'eu-west-1',
+      'constant-dashboard-environment': 'staging',
+      'constant-dashboard-region': 'eu-west-1',
     };
 
     const result = applyV2Inputs(dashboard, form);
@@ -1490,7 +1575,7 @@ describe('applyV2Inputs', () => {
       dashboard,
       folderUid: 'folder',
       message: '',
-      'constant-environment': 'staging',
+      'constant-_rows_0-environment': 'staging',
     };
 
     const result = applyV2Inputs(dashboard, form);
@@ -1506,6 +1591,72 @@ describe('applyV2Inputs', () => {
     }
     expect(sectionConst.spec.query).toBe('staging');
     expect(sectionConst.spec.current).toEqual({ text: 'staging', value: 'staging' });
+  });
+
+  it('applies distinct values to same-named dashboard and section constants', () => {
+    const dashboard = {
+      title: 'old',
+      elements: {},
+      annotations: [],
+      variables: [
+        {
+          kind: 'ConstantVariable',
+          spec: {
+            name: 'environment',
+            query: 'production',
+            current: { text: 'production', value: 'production' },
+            hide: 'dontHide',
+            skipUrlSync: false,
+          },
+        },
+      ],
+      layout: {
+        kind: 'RowsLayout',
+        spec: {
+          rows: [
+            {
+              kind: 'RowsLayoutRow',
+              spec: {
+                title: 'Servers',
+                layout: { kind: 'GridLayout', spec: { items: [] } },
+                variables: [
+                  {
+                    kind: 'ConstantVariable',
+                    spec: {
+                      name: 'environment',
+                      query: 'row-default',
+                      current: { text: 'row-default', value: 'row-default' },
+                      hide: 'dontHide',
+                      skipUrlSync: false,
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    } as unknown as DashboardV2Spec;
+
+    const form: ImportFormDataV2 = {
+      dashboard,
+      folderUid: 'folder',
+      message: '',
+      'constant-dashboard-environment': 'dash-staging',
+      'constant-_rows_0-environment': 'row-staging',
+    };
+
+    const result = applyV2Inputs(dashboard, form);
+
+    const dashConst = result.variables?.find((v) => v.kind === 'ConstantVariable' && v.spec.name === 'environment');
+    expect(dashConst?.kind === 'ConstantVariable' && dashConst.spec.query).toBe('dash-staging');
+
+    expect(result.layout.kind).toBe('RowsLayout');
+    if (result.layout.kind !== 'RowsLayout') {
+      return;
+    }
+    const sectionConst = result.layout.spec.rows[0].spec.variables?.[0];
+    expect(sectionConst?.kind === 'ConstantVariable' && sectionConst.spec.query).toBe('row-staging');
   });
 
   it('remaps datasources on section QueryVariables and clears export labels', () => {
@@ -1891,6 +2042,22 @@ describe('replaceDatasourcesInDashboard', () => {
       expect(variable).toBeDefined();
       expect(variable?.spec.current?.value).toBe('new-prom-uid');
       expect(variable?.spec.current?.text).toBe('New Prometheus');
+    });
+
+    it('uses export-label mapping of the same type when pluginId key is absent', () => {
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [createDatasourceVariable('prometheus', 'old-prom-uid', 'Old Prometheus')],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, {
+        'prometheus-1': { uid: 'mapped-prom-uid', type: 'prometheus', name: 'Mapped Prometheus' },
+      });
+      const variable = getDatasourceVariable(result);
+
+      expect(variable?.spec.current?.value).toBe('mapped-prom-uid');
+      expect(variable?.spec.current?.text).toBe('Mapped Prometheus');
     });
   });
 

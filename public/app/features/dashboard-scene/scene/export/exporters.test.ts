@@ -753,18 +753,26 @@ describe('dashboard exporter v2', () => {
     ) as QueryVariableKind;
     expect(queryVariable.spec.query.labels?.[ExportLabel]).toBe('prometheus-1');
 
+    // panel-using-datasource-var keeps $datasourceVar but is also labeled (prometheus-2)
+    // when the variable's current UID differs from other prometheus datasources.
+    const dsVarPanel = dashboard.elements['panel-using-datasource-var'];
+    if (dsVarPanel.kind !== 'Panel') {
+      throw new Error('Panel should be a Panel');
+    }
+    expect(dsVarPanel.spec.data.spec.queries[0].spec.query.labels?.[ExportLabel]).toBe('prometheus-2');
+
     const groupByVariable = dashboard.variables.find(
       (variable) => variable.kind === 'GroupByVariable'
     ) as GroupByVariableKind;
-    expect(groupByVariable.labels?.[ExportLabel]).toBe('prometheus-2');
+    expect(groupByVariable.labels?.[ExportLabel]).toBe('prometheus-3');
 
     const adhocVariable = dashboard.variables.find(
       (variable) => variable.kind === 'AdhocVariable'
     ) as AdhocVariableKind;
-    expect(adhocVariable.labels?.[ExportLabel]).toBe('prometheus-3');
+    expect(adhocVariable.labels?.[ExportLabel]).toBe('prometheus-4');
 
     const annotationQuery = dashboard.annotations[0];
-    expect(annotationQuery.spec.query.labels?.[ExportLabel]).toBe('prometheus-4');
+    expect(annotationQuery.spec.query.labels?.[ExportLabel]).toBe('prometheus-5');
   });
 
   it('should assign the original datasource name as an export label during export', async () => {
@@ -805,6 +813,7 @@ describe('dashboard exporter v2', () => {
     }
     expect(panel.spec.data.spec.queries[0].spec.query.datasource?.name).toBe('${datasourceVar}');
     expect(panel.spec.data.spec.queries[0].spec.query.group).toBe('prometheus');
+    expect(panel.spec.data.spec.queries[0].spec.query.labels?.[ExportLabel]).toBeDefined();
   });
 
   it('should convert library panels to inline panels when sharing externally', async () => {
@@ -1118,7 +1127,10 @@ describe('dashboard exporter v2', () => {
       if (panel.kind !== 'Panel') {
         throw new Error('Panel should be a Panel');
       }
-      expect(panel.spec.data.spec.queries[0].spec.query.datasource?.name).toBe('${sectionDs}');
+      const query = panel.spec.data.spec.queries[0].spec.query;
+      // Keep $var ref, but attach export labels so external import can show a picker.
+      expect(query.datasource?.name).toBe('${sectionDs}');
+      expect(query.labels?.[ExportLabel]).toBeDefined();
     });
   });
 });

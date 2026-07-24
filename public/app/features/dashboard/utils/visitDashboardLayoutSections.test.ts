@@ -32,13 +32,13 @@ describe('visitDashboardLayoutSections', () => {
     expect(visitor).not.toHaveBeenCalled();
   });
 
-  it('visits row section variables with path', () => {
+  it('visits row section variables with path and scopeLabel', () => {
     const variables = [makeConstant('env')];
     const layout = defaultRowsLayoutKind();
     layout.spec.rows = [
       {
         kind: 'RowsLayoutRow',
-        spec: { title: 'Row 1', layout: defaultGridLayoutKind(), variables },
+        spec: { title: 'Servers', layout: defaultGridLayoutKind(), variables },
       },
     ];
 
@@ -46,16 +46,32 @@ describe('visitDashboardLayoutSections', () => {
     visitDashboardLayoutSections(layout, visitor);
 
     expect(visitor).toHaveBeenCalledTimes(1);
-    expect(visitor).toHaveBeenCalledWith(variables, '/rows/0');
+    expect(visitor).toHaveBeenCalledWith(variables, { path: '/rows/0', scopeLabel: 'Row: Servers' });
   });
 
-  it('visits tab section variables with path', () => {
+  it('uses indexed fallback scopeLabel when row has no title', () => {
+    const variables = [makeConstant('env')];
+    const layout = defaultRowsLayoutKind();
+    layout.spec.rows = [
+      {
+        kind: 'RowsLayoutRow',
+        spec: { layout: defaultGridLayoutKind(), variables },
+      },
+    ];
+
+    const visitor = jest.fn();
+    visitDashboardLayoutSections(layout, visitor);
+
+    expect(visitor).toHaveBeenCalledWith(variables, { path: '/rows/0', scopeLabel: 'Row 1' });
+  });
+
+  it('visits tab section variables with path and scopeLabel', () => {
     const variables = [makeConstant('region')];
     const layout = defaultTabsLayoutKind();
     layout.spec.tabs = [
       {
         kind: 'TabsLayoutTab',
-        spec: { title: 'Tab 1', layout: defaultGridLayoutKind(), variables },
+        spec: { title: 'Overview', layout: defaultGridLayoutKind(), variables },
       },
     ];
 
@@ -63,35 +79,35 @@ describe('visitDashboardLayoutSections', () => {
     visitDashboardLayoutSections(layout, visitor);
 
     expect(visitor).toHaveBeenCalledTimes(1);
-    expect(visitor).toHaveBeenCalledWith(variables, '/tabs/0');
+    expect(visitor).toHaveBeenCalledWith(variables, { path: '/tabs/0', scopeLabel: 'Tab: Overview' });
   });
 
-  it('visits nested TabsLayout > RowsLayout sections', () => {
+  it('visits nested TabsLayout > RowsLayout sections with breadcrumb scopeLabel', () => {
     const tabVariables = [makeConstant('tabConst')];
     const rowVariables = [makeConstant('rowConst')];
     const rowsLayout = defaultRowsLayoutKind();
     rowsLayout.spec.rows = [
       {
         kind: 'RowsLayoutRow',
-        spec: { title: 'Row 1', layout: defaultGridLayoutKind(), variables: rowVariables },
+        spec: { title: 'Metrics', layout: defaultGridLayoutKind(), variables: rowVariables },
       },
     ];
     const tabsLayout = defaultTabsLayoutKind();
     tabsLayout.spec.tabs = [
       {
         kind: 'TabsLayoutTab',
-        spec: { title: 'Tab 1', layout: rowsLayout, variables: tabVariables },
+        spec: { title: 'Overview', layout: rowsLayout, variables: tabVariables },
       },
     ];
 
-    const visited: Array<{ path: string; names: string[] }> = [];
-    visitDashboardLayoutSections(tabsLayout, (variables, path) => {
-      visited.push({ path, names: variables.map((v) => v.spec.name) });
+    const visited: Array<{ path: string; scopeLabel: string; names: string[] }> = [];
+    visitDashboardLayoutSections(tabsLayout, (variables, { path, scopeLabel }) => {
+      visited.push({ path, scopeLabel, names: variables.map((v) => v.spec.name) });
     });
 
     expect(visited).toEqual([
-      { path: '/tabs/0', names: ['tabConst'] },
-      { path: '/tabs/0/rows/0', names: ['rowConst'] },
+      { path: '/tabs/0', scopeLabel: 'Tab: Overview', names: ['tabConst'] },
+      { path: '/tabs/0/rows/0', scopeLabel: 'Tab: Overview › Row: Metrics', names: ['rowConst'] },
     ]);
   });
 
@@ -109,7 +125,7 @@ describe('visitDashboardLayoutSections', () => {
     visitDashboardLayoutSections(layout, visitor);
 
     expect(visitor).toHaveBeenCalledTimes(1);
-    expect(visitor.mock.calls[0][1]).toBe('/rows/1');
+    expect(visitor.mock.calls[0][1]).toEqual({ path: '/rows/1', scopeLabel: 'Row: With vars' });
   });
 });
 
@@ -218,5 +234,27 @@ describe('mapDashboardLayoutSections', () => {
       return;
     }
     expect(nestedRows.spec.rows[0].spec.variables?.[0].spec.name).toBe('rowConst-mapped');
+  });
+
+  it('passes path and scopeLabel to the mapper', () => {
+    const layout = defaultRowsLayoutKind();
+    layout.spec.rows = [
+      {
+        kind: 'RowsLayoutRow',
+        spec: {
+          title: 'Servers',
+          layout: defaultGridLayoutKind(),
+          variables: [makeConstant('env')],
+        },
+      },
+    ];
+
+    const contexts: Array<{ path: string; scopeLabel: string }> = [];
+    mapDashboardLayoutSections(layout, (variables, context) => {
+      contexts.push(context);
+      return variables;
+    });
+
+    expect(contexts).toEqual([{ path: '/rows/0', scopeLabel: 'Row: Servers' }]);
   });
 });

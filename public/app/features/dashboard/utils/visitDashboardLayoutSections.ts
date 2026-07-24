@@ -2,12 +2,29 @@ import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema
 
 export type DashboardLayout = DashboardV2Spec['layout'];
 
-export type SectionVariablesVisitor = (variables: VariableKind[], path: string) => void;
+export interface SectionVariablesContext {
+  path: string;
+  /** Human-readable breadcrumb, e.g. `Row: Servers` or `Tab: Overview › Row: Metrics`. */
+  scopeLabel: string;
+}
+
+export type SectionVariablesVisitor = (variables: VariableKind[], context: SectionVariablesContext) => void;
 
 export type SectionVariablesMapper = (
   variables: VariableKind[] | undefined,
-  path: string
+  context: SectionVariablesContext
 ) => VariableKind[] | undefined;
+
+function sectionSegment(kind: 'row' | 'tab', index: number, title?: string): string {
+  if (title?.trim()) {
+    return kind === 'row' ? `Row: ${title.trim()}` : `Tab: ${title.trim()}`;
+  }
+  return kind === 'row' ? `Row ${index + 1}` : `Tab ${index + 1}`;
+}
+
+function appendScopeLabel(prefix: string, segment: string): string {
+  return prefix ? `${prefix} › ${segment}` : segment;
+}
 
 /**
  * Recursively visit RowsLayout / TabsLayout sections and invoke the visitor
@@ -18,7 +35,8 @@ export type SectionVariablesMapper = (
 export function visitDashboardLayoutSections(
   layout: DashboardLayout | undefined,
   visitor: SectionVariablesVisitor,
-  pathPrefix = ''
+  pathPrefix = '',
+  scopeLabelPrefix = ''
 ): void {
   if (!layout) {
     return;
@@ -30,10 +48,11 @@ export function visitDashboardLayoutSections(
         return;
       }
       const path = `${pathPrefix}/rows/${index}`;
+      const scopeLabel = appendScopeLabel(scopeLabelPrefix, sectionSegment('row', index, row.spec.title));
       if (row.spec.variables) {
-        visitor(row.spec.variables, path);
+        visitor(row.spec.variables, { path, scopeLabel });
       }
-      visitDashboardLayoutSections(row.spec.layout, visitor, path);
+      visitDashboardLayoutSections(row.spec.layout, visitor, path, scopeLabel);
     });
     return;
   }
@@ -44,10 +63,11 @@ export function visitDashboardLayoutSections(
         return;
       }
       const path = `${pathPrefix}/tabs/${index}`;
+      const scopeLabel = appendScopeLabel(scopeLabelPrefix, sectionSegment('tab', index, tab.spec.title));
       if (tab.spec.variables) {
-        visitor(tab.spec.variables, path);
+        visitor(tab.spec.variables, { path, scopeLabel });
       }
-      visitDashboardLayoutSections(tab.spec.layout, visitor, path);
+      visitDashboardLayoutSections(tab.spec.layout, visitor, path, scopeLabel);
     });
   }
 }
@@ -59,7 +79,8 @@ export function visitDashboardLayoutSections(
 export function mapDashboardLayoutSections(
   layout: DashboardLayout | undefined,
   mapper: SectionVariablesMapper,
-  pathPrefix = ''
+  pathPrefix = '',
+  scopeLabelPrefix = ''
 ): DashboardLayout | undefined {
   if (!layout) {
     return layout;
@@ -72,8 +93,10 @@ export function mapDashboardLayoutSections(
         return row;
       }
       const path = `${pathPrefix}/rows/${index}`;
-      const mappedVariables = mapper(row.spec.variables, path);
-      const nestedLayout = mapDashboardLayoutSections(row.spec.layout, mapper, path) ?? row.spec.layout;
+      const scopeLabel = appendScopeLabel(scopeLabelPrefix, sectionSegment('row', index, row.spec.title));
+      const context: SectionVariablesContext = { path, scopeLabel };
+      const mappedVariables = mapper(row.spec.variables, context);
+      const nestedLayout = mapDashboardLayoutSections(row.spec.layout, mapper, path, scopeLabel) ?? row.spec.layout;
       const variablesChanged = mappedVariables !== row.spec.variables;
       const layoutChanged = nestedLayout !== row.spec.layout;
 
@@ -102,8 +125,10 @@ export function mapDashboardLayoutSections(
         return tab;
       }
       const path = `${pathPrefix}/tabs/${index}`;
-      const mappedVariables = mapper(tab.spec.variables, path);
-      const nestedLayout = mapDashboardLayoutSections(tab.spec.layout, mapper, path) ?? tab.spec.layout;
+      const scopeLabel = appendScopeLabel(scopeLabelPrefix, sectionSegment('tab', index, tab.spec.title));
+      const context: SectionVariablesContext = { path, scopeLabel };
+      const mappedVariables = mapper(tab.spec.variables, context);
+      const nestedLayout = mapDashboardLayoutSections(tab.spec.layout, mapper, path, scopeLabel) ?? tab.spec.layout;
       const variablesChanged = mappedVariables !== tab.spec.variables;
       const layoutChanged = nestedLayout !== tab.spec.layout;
 

@@ -190,6 +190,12 @@ export async function extractV1Inputs(dashboard: unknown): Promise<DashboardInpu
   return inputs;
 }
 
+/** Form field key for a V2 constant, scoped by layout path so same-named section vars stay distinct. */
+export function constantFormKey(path: string | undefined, name: string): string {
+  const pathKey = !path || path === 'dashboard' ? 'dashboard' : path.replaceAll('/', '_');
+  return `constant-${pathKey}-${name}`;
+}
+
 /**
  * Extract inputs from a v2 dashboard spec
  */
@@ -204,19 +210,17 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
     return inputs;
   }
 
-  const seenConstantNames = new Set<string>();
-
-  const recordConstant = (variable: DashboardV2Spec['variables'][number]) => {
-    if (variable.kind !== 'ConstantVariable' || seenConstantNames.has(variable.spec.name)) {
+  const recordConstant = (variable: DashboardV2Spec['variables'][number], path?: string, scopeLabel?: string) => {
+    if (variable.kind !== 'ConstantVariable') {
       return;
     }
-    seenConstantNames.add(variable.spec.name);
     inputs.constants.push({
       name: variable.spec.name,
       label: variable.spec.label || variable.spec.name,
       info: variable.spec.description || 'Specify a string constant',
       value: variable.spec.query,
       type: InputType.Constant,
+      ...(path ? { path, scopeLabel } : {}),
     });
   };
 
@@ -225,9 +229,9 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
       recordConstant(variable);
     }
   }
-  visitDashboardLayoutSections(dashboard.layout, (variables) => {
+  visitDashboardLayoutSections(dashboard.layout, (variables, { path, scopeLabel }) => {
     for (const variable of variables) {
-      recordConstant(variable);
+      recordConstant(variable, path, scopeLabel);
     }
   });
 
@@ -510,13 +514,14 @@ export function applyV1Inputs(
  */
 function applyConstantFormValue(
   variable: DashboardV2Spec['variables'][number],
-  form: ImportFormDataV2
+  form: ImportFormDataV2,
+  path?: string
 ): DashboardV2Spec['variables'][number] {
   if (variable.kind !== 'ConstantVariable') {
     return variable;
   }
 
-  const formKey = `constant-${variable.spec.name}`;
+  const formKey = constantFormKey(path, variable.spec.name);
   const userValue = form[formKey];
   if (typeof userValue !== 'string') {
     return variable;
@@ -545,13 +550,13 @@ export function applyV2Inputs(dashboard: DashboardV2Spec, form: ImportFormDataV2
     }
   }
 
-  const variables = dashboard.variables?.map((variable) => applyConstantFormValue(variable, form));
+  const variables = dashboard.variables?.map((variable) => applyConstantFormValue(variable, form, 'dashboard'));
   const layout =
-    mapDashboardLayoutSections(dashboard.layout, (sectionVariables) => {
+    mapDashboardLayoutSections(dashboard.layout, (sectionVariables, { path }) => {
       if (!sectionVariables) {
         return sectionVariables;
       }
-      return sectionVariables.map((variable) => applyConstantFormValue(variable, form));
+      return sectionVariables.map((variable) => applyConstantFormValue(variable, form, path));
     }) ?? dashboard.layout;
 
   return replaceDatasourcesInDashboard({ ...dashboard, variables, layout }, mappings);
@@ -650,7 +655,10 @@ function replaceVariableDatasources(
 
     if (variable.kind === 'DatasourceVariable') {
       const dsType = variable.spec.pluginId;
-      const ds = dsType ? mappings[dsType] : undefined;
+      // Exact pluginId key (from $dsVar query extract) or any export-label of that type.
+      const ds = dsType
+        ? (mappings[dsType] ?? Object.values(mappings).find((mapping) => mapping.type === dsType))
+        : undefined;
 
       if (!dsType || !ds) {
         return variable;
