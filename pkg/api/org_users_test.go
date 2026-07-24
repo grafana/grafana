@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
@@ -766,6 +767,27 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 	}
 }
 
+type pagedUserService struct {
+	*usertest.FakeUserService
+	pages []user.SearchUserQueryResult
+	calls int
+}
+
+func (s *pagedUserService) Search(context.Context, *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
+	r := s.pages[s.calls]
+	s.calls++
+	return &r, nil
+}
+
+func searchHits(n int, startID int64) []*user.UserSearchHitDTO {
+	out := make([]*user.UserSearchHitDTO, n)
+	for i := range out {
+		id := startID + int64(i)
+		out[i] = &user.UserSearchHitDTO{ID: id, UID: fmt.Sprintf("uid-%d", id), Login: fmt.Sprintf("user-%d", id)}
+	}
+	return out
+}
+
 func TestSearchOrgUsersUsingK8s(t *testing.T) {
 	created := time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC)
 	lastSeen := time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC)
@@ -784,13 +806,16 @@ func TestSearchOrgUsersUsingK8s(t *testing.T) {
 			Created:       created,
 			IsDisabled:    true,
 			IsProvisioned: true,
+			AuthModule:    user.AuthModuleConversion{login.LDAPAuthModule},
 		},
 		{ID: 99, UID: "uid-two", Login: "other", Role: "Viewer"},
 	}
 
 	newHS := func() *HTTPServer {
+		cfg := setting.NewCfg()
+		cfg.LDAPAuthEnabled = true
 		return &HTTPServer{
-			Cfg: setting.NewCfg(),
+			Cfg: cfg,
 			userService: &usertest.FakeUserService{
 				ExpectedSearchUsers: user.SearchUserQueryResult{TotalCount: 2, Users: hits, Page: 1, PerPage: 50},
 			},
@@ -821,6 +846,13 @@ func TestSearchOrgUsersUsingK8s(t *testing.T) {
 		assert.True(t, got.IsProvisioned)
 		assert.Equal(t, map[string]bool{"org.users:write": true}, got.AccessControl)
 		assert.NotEmpty(t, got.AvatarURL)
+		assert.Equal(t, []string{login.LDAPLabel}, got.AuthLabels)
+		assert.True(t, got.IsExternallySynced)
+
+		// A user without auth modules has no labels and is not externally synced.
+		other := res.OrgUsers[1]
+		assert.Empty(t, other.AuthLabels)
+		assert.False(t, other.IsExternallySynced)
 	})
 
 	t.Run("filters by UserID and adjusts total", func(t *testing.T) {
@@ -829,5 +861,96 @@ func TestSearchOrgUsersUsingK8s(t *testing.T) {
 		require.Len(t, res.OrgUsers, 1)
 		assert.Equal(t, int64(42), res.OrgUsers[0].UserID)
 		assert.Equal(t, int64(1), res.TotalCount)
+	})
+
+	// With no limit (GetOrgUsersForCurrentOrg), all users must be returned even
+	// when they span multiple search pages, rather than being truncated.
+	t.Run("pages through all users when no limit is requested", func(t *testing.T) {
+		svc := &pagedUserService{
+			FakeUserService: &usertest.FakeUserService{},
+			pages: []user.SearchUserQueryResult{
+				{Users: searchHits(1000, 1), TotalCount: 1500, Page: 1, PerPage: 1000},
+				{Users: searchHits(500, 1001), TotalCount: 1500, Page: 2, PerPage: 1000},
+			},
+		}
+		hs := &HTTPServer{Cfg: setting.NewCfg(), userService: svc}
+
+		res, err := hs.searchOrgUsersUsingK8s(reqCtx(), &org.SearchOrgUsersQuery{OrgID: 1})
+		require.NoError(t, err)
+		assert.Equal(t, 2, svc.calls, "should keep paging until all users are collected")
+		require.Len(t, res.OrgUsers, 1500)
+		assert.Equal(t, int64(1500), res.TotalCount)
+	})
+
+	// A UserID lookup is a single-page request, not a paged sweep.
+	t.Run("fetches a single page when a UserID is requested", func(t *testing.T) {
+		svc := &pagedUserService{
+			FakeUserService: &usertest.FakeUserService{},
+			pages: []user.SearchUserQueryResult{
+				{Users: searchHits(1000, 1), TotalCount: 1500, Page: 1, PerPage: 1000},
+				{Users: searchHits(500, 1001), TotalCount: 1500, Page: 2, PerPage: 1000}, // must not be fetched
+			},
+		}
+		hs := &HTTPServer{Cfg: setting.NewCfg(), userService: svc}
+
+		res, err := hs.searchOrgUsersUsingK8s(reqCtx(), &org.SearchOrgUsersQuery{OrgID: 1, UserID: 5})
+		require.NoError(t, err)
+		assert.Equal(t, 1, svc.calls, "a UserID lookup must not page through all results")
+		require.Len(t, res.OrgUsers, 1)
+		assert.Equal(t, int64(5), res.OrgUsers[0].UserID)
+	})
+
+	// An explicit limit means a paged request, so only that single page is fetched.
+	t.Run("fetches a single page when an explicit limit is requested", func(t *testing.T) {
+		svc := &pagedUserService{
+			FakeUserService: &usertest.FakeUserService{},
+			pages: []user.SearchUserQueryResult{
+				{Users: searchHits(50, 1), TotalCount: 1500, Page: 1, PerPage: 50},
+				{Users: searchHits(50, 51), TotalCount: 1500, Page: 2, PerPage: 50}, // must not be fetched
+			},
+		}
+		hs := &HTTPServer{Cfg: setting.NewCfg(), userService: svc}
+
+		res, err := hs.searchOrgUsersUsingK8s(reqCtx(), &org.SearchOrgUsersQuery{OrgID: 1, Limit: 50, Page: 1})
+		require.NoError(t, err)
+		assert.Equal(t, 1, svc.calls, "explicit limit must fetch exactly one page")
+		require.Len(t, res.OrgUsers, 50)
+	})
+}
+
+func TestGetOrgUsersForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
+	hits := []*user.UserSearchHitDTO{
+		{ID: 42, UID: "uid-one", Login: "jdoe", Email: "jdoe@example.com", Role: "Admin"},
+		{ID: 99, UID: "uid-two", Login: "other", Role: "Viewer"},
+	}
+	newHS := func() *HTTPServer {
+		return &HTTPServer{
+			Cfg: setting.NewCfg(),
+			userService: &usertest.FakeUserService{
+				ExpectedSearchUsers: user.SearchUserQueryResult{TotalCount: 2, Users: hits, Page: 1, PerPage: 1000},
+			},
+		}
+	}
+	reqCtx := func() *contextmodel.ReqContext {
+		return &contextmodel.ReqContext{
+			Context:      &web.Context{Req: httptest.NewRequest(http.MethodGet, "/", nil)},
+			SignedInUser: &user.SignedInUser{OrgID: 1, UserID: 1},
+		}
+	}
+
+	t.Run("reads users from the user service when kubernetesUsersRedirect is enabled", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+
+		resp := newHS().GetOrgUsersForCurrentOrg(reqCtx())
+		normalResp, ok := resp.(*response.NormalResponse)
+		require.True(t, ok)
+		require.Equal(t, http.StatusOK, normalResp.Status())
+
+		var got []org.OrgUserDTO
+		require.NoError(t, json.Unmarshal(normalResp.Body(), &got))
+		require.Len(t, got, 2)
+		assert.Equal(t, "jdoe", got[0].Login)
+		assert.Equal(t, int64(42), got[0].UserID)
+		assert.Equal(t, "other", got[1].Login)
 	})
 }

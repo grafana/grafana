@@ -16,13 +16,15 @@ interface NextButtonProps {
   onSkip?: () => void;
   /** Disable the next button */
   disabled?: boolean;
+  /** Tooltip shown while the button is disabled, explaining why the user can't continue */
+  disabledTooltip?: string;
 }
 
 /**
  * NextButton - navigation button to proceed to the next step
  * Shows the next step name or "Submit" on the last step
  */
-export const NextButton = ({ onNext, canSkip, skipLabel, onSkip, disabled }: NextButtonProps) => {
+export const NextButton = ({ onNext, canSkip, skipLabel, onSkip, disabled, disabledTooltip }: NextButtonProps) => {
   const { activeStep, setActiveStep } = useStepperState();
   const method = useImportMethod();
   const nextStep = getNextStep(activeStep, method);
@@ -61,6 +63,7 @@ export const NextButton = ({ onNext, canSkip, skipLabel, onSkip, disabled }: Nex
         icon="arrow-right"
         onClick={handleClick}
         disabled={disabled}
+        tooltip={disabled && disabledTooltip ? disabledTooltip : undefined}
         data-testid="wizard-next-button"
       >
         {nextStep.name}

@@ -169,7 +169,6 @@ export function PanelChrome({
   subtitle,
 }: PanelChromeProps) {
   const theme = useTheme2();
-  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const styles = useStyles2(getStyles);
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
@@ -477,9 +476,7 @@ export function PanelChrome({
           <div
             id={panelContentId}
             data-testid={selectors.components.Panels.Panel.content}
-            className={cx(styles.content, height === undefined && styles.containNone, {
-              [styles.contentTransparent]: visualRefreshEnabled && isPanelTransparent,
-            })}
+            className={cx(styles.content, height === undefined && styles.containNone)}
             style={contentStyle}
             onPointerDown={onContentPointerDown}
           >
@@ -602,10 +599,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:hover': {
         border: `1px solid ${borderColor}`,
       },
-    }),
-    contentTransparent: css({
-      backgroundColor: 'transparent',
-      border: '1px solid transparent',
     }),
     loadingBarContainer: css({
       label: 'panel-loading-bar-container',

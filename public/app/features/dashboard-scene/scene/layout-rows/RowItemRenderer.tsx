@@ -1,12 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useCallback, useId, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { clearButtonStyles, Icon, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
@@ -49,12 +47,6 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const isTopLevel = model.parent?.parent instanceof DashboardScene;
   const pointerDistance = usePointerDistance();
   const soloPanelContext = useSoloPanelContext();
-  // OpenFeature is not initialized for anonymous users, so fall back to
-  // the static feature toggle to ensure section variables work without auth.
-  const sectionVariablesEnabled = useBooleanFlagValue(
-    'dashboardSectionVariables',
-    Boolean(config.featureToggles.dashboardSectionVariables)
-  );
   const rowVariablesSet = model.state.$variables;
 
   const myIndex = rows.findIndex((row) => row === model);
@@ -180,7 +172,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
           )}
           {!isCollapsed && (
             <div className={styles.rowLayoutWrapper} id={contentId}>
-              {sectionVariablesEnabled && rowVariablesSet && <SectionVariableControls variableSet={rowVariablesSet} />}
+              {rowVariablesSet && <SectionVariableControls variableSet={rowVariablesSet} />}
               <layout.Component model={layout} />
             </div>
           )}
