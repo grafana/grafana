@@ -244,6 +244,9 @@ type KVBackendOptions struct {
 	// TenantDeleterConfig, if set, enables periodic deletion of expired pending-delete tenant data.
 	TenantDeleterConfig *TenantDeleterConfig
 
+	// EmbeddingDeleter, if set, deletes vector embeddings on tenant deletion.
+	EmbeddingDeleter EmbeddingDeleter
+
 	// SearchLookback is the duration subtracted from sinceRv in calls to ListModifiedSince.
 	// This guards against concurrent writes that commit slightly out-of-order. 0 means no lookback.
 	SearchLookback time.Duration
@@ -388,7 +391,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	// Optionally start the tenant deleter.
 	if opts.TenantDeleterConfig != nil {
-		td := NewTenantDeleter(backend.dataStore, pds, *opts.TenantDeleterConfig)
+		td := NewTenantDeleter(backend.dataStore, pds, *opts.TenantDeleterConfig, opts.EmbeddingDeleter)
 		td.Start(ctx)
 		backend.tenantDeleter = td
 	}

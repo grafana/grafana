@@ -190,12 +190,12 @@ func newClient(opts options.StorageOptions,
 		return resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
 
 	default:
-		searchOptions, err := search.NewSearchOptions(features, cfg, docs, indexMetrics, nil, nil)
+		searchOptions, err := search.NewSearchOptions(cfg, docs, indexMetrics, nil, nil)
 		if err != nil {
 			return nil, err
 		}
 
-		storageOpts := []sql.StorageBackendOption{sql.WithEventPublisher(eventPublisher)}
+		storageOpts := []sql.StorageBackendOption{sql.WithEventPublisher(eventPublisher), sql.WithVectorBackend(vectorBackend)}
 		if cfg.NATS.Notifier && eventSubscriber != nil {
 			storageOpts = append(storageOpts, sql.WithNatsNotifier(natsEventSubscriber{sub: eventSubscriber}))
 		} else if cfg.NATS.NotifierShadow && eventSubscriber != nil {

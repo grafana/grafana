@@ -395,7 +395,7 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	features := featuremgmt.WithFeatures()
 	support, err := InitializeSearchSupport(cfg, features, tracing.InitializeTracerForTest(), prometheus.NewRegistry())
 	require.NoError(t, err)
-	searchOpts, err := search.NewSearchOptions(features, cfg, support.DocBuilders, nil, nil, nil)
+	searchOpts, err := search.NewSearchOptions(cfg, support.DocBuilders, nil, nil, nil)
 	require.NoError(t, err)
 	cfg.DisablePruner = dbType == "sqlite3"
 	eDB, err := sql.ProvideResourceDB(cfg, nil)

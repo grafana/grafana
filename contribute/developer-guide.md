@@ -111,7 +111,6 @@ After `yarn start` has built the assets, it will continue to do so whenever any 
 If you want to contribute to any of the plugins listed below (that are found within the `public/app/plugins` directory) they require running additional commands to watch and rebuild them.
 
 - azuremonitor
-- grafana-postgresql-datasource
 - grafana-testdata-datasource
 - mysql
 - loki

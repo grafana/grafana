@@ -186,6 +186,11 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.SearchPostRankAuthzMaxWindow = section.Key("search_post_rank_authz_max_window").MustInt(0)
 	cfg.SearchPostRankAuthzMaxCandidates = section.Key("search_post_rank_authz_max_candidates").MustInt(0)
 	cfg.EnableVectorBackend = section.Key("vector_backend").MustBool(false)
+	cfg.VectorAllowedInternalCollections = section.Key("vector_allowed_internal_collections").Strings(",")
+	if len(cfg.VectorAllowedInternalCollections) == 0 {
+		cfg.VectorAllowedInternalCollections = []string{"dashboard.grafana.app/dashboards"}
+	}
+	cfg.VectorAllowedExternalCollections = section.Key("vector_allowed_external_collections").Strings(",")
 	cfg.VectorIndexingEnabled = section.Key("vector_indexing_enabled").MustBool(false)
 	cfg.VectorReconcilerInterval = section.Key("vector_reconciler_interval").MustDuration(time.Minute)
 	cfg.applyMigrationEnforcements()

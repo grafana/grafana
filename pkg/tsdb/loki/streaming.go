@@ -58,6 +58,14 @@ func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStr
 		}, fmt.Errorf("expected tail in channel path")
 	}
 
+	pluginCfg := backend.PluginConfigFromContext(ctx)
+	namespace := strings.Split(req.Path, "/")[3]
+	if namespace != pluginCfg.Namespace {
+		return &backend.SubscribeStreamResponse{
+			Status: backend.SubscribeStreamStatusPermissionDenied,
+		}, fmt.Errorf("invalid namespace supplied in request")
+	}
+
 	if err := rejectGrafanaSQLStreamPayload(req.Data); err != nil {
 		return &backend.SubscribeStreamResponse{
 			Status: backend.SubscribeStreamStatusPermissionDenied,

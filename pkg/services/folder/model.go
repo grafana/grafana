@@ -268,6 +268,12 @@ type GetFoldersQuery struct {
 	WithFullpathUIDs bool
 	BatchSize        uint64
 
+	// MetadataOnly serves folders from the search index instead of reading each
+	// full stored object. Only UID, ID, OrgID, ParentUID, Title, ManagedBy and
+	// the full paths are populated. For callers that only need the folder
+	// tree/titles and want to avoid the linear full-object fetch on large orgs.
+	MetadataOnly bool
+
 	// Pagination options
 	Limit int64
 	Page  int64

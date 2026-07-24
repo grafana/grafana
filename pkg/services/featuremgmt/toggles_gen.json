@@ -1042,16 +1042,19 @@
     {
       "metadata": {
         "name": "auditLoggingAppPlatform",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-12-29T15:28:29Z"
+        "resourceVersion": "1784025329122",
+        "creationTimestamp": "2025-12-29T15:28:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-14 10:35:29.122409 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable audit logging with Kubernetes under app platform",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "requiresRestart": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -1135,6 +1138,19 @@
         "stage": "GA",
         "codeowner": "@grafana/data-sources-plugins",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "azureMonitorBatchAPI",
+        "resourceVersion": "1782267315125",
+        "creationTimestamp": "2026-06-24T02:15:15Z"
+      },
+      "spec": {
+        "description": "Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "expression": "false"
       }
     },
     {
@@ -1552,7 +1568,8 @@
       "metadata": {
         "name": "dashboardAssistantPopover",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-23T18:07:04Z"
       },
       "spec": {
         "description": "Enables the assistant prompt popover on panel click in dashboard view mode",
@@ -1816,7 +1833,8 @@
       "metadata": {
         "name": "datasourceAPIServers",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-09-19T08:28:27Z"
+        "creationTimestamp": "2024-09-19T08:28:27Z",
+        "deletionTimestamp": "2026-07-21T07:41:20Z"
       },
       "spec": {
         "description": "Expose some datasources as apiservers.",
@@ -2688,6 +2706,20 @@
         "description": "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-catalog",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.dynamicTraceToLogs",
+        "resourceVersion": "1784712177554",
+        "creationTimestamp": "2026-07-22T09:22:57Z"
+      },
+      "spec": {
+        "description": "Check for the existence of logs when linking from the Trace View",
+        "stage": "preview",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -3698,14 +3730,17 @@
     {
       "metadata": {
         "name": "kubernetesLibraryPanels",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-06-25T22:21:56Z"
+        "resourceVersion": "1784652599954",
+        "creationTimestamp": "2025-06-25T22:21:56Z",
+        "deletionTimestamp": "2026-07-21T16:51:34Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-21 16:49:59.954584 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Routes library panel requests from /api to the /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresRestart": true,
         "expression": "false"
       }
     },
@@ -3892,6 +3927,33 @@
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "libpanels.kubernetesLibraryPanels",
+        "resourceVersion": "1784652694911",
+        "creationTimestamp": "2026-07-21T16:51:34Z",
+        "deletionTimestamp": "2026-07-21T16:54:06Z"
+      },
+      "spec": {
+        "description": "Routes library panel requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "libraryelements.kubernetesLibraryPanels",
+        "resourceVersion": "1784652846634",
+        "creationTimestamp": "2026-07-21T16:54:06Z"
+      },
+      "spec": {
+        "description": "Routes library panel requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
         "expression": "false"
       }
     },
@@ -4507,7 +4569,8 @@
       "metadata": {
         "name": "playlistsReconciler",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-12-20T03:09:31Z"
+        "creationTimestamp": "2024-12-20T03:09:31Z",
+        "deletionTimestamp": "2026-07-16T15:23:31Z"
       },
       "spec": {
         "description": "Enables experimental reconciler for playlists",

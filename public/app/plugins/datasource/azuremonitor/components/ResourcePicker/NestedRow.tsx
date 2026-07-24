@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { FadeTransition, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
@@ -49,15 +49,21 @@ const NestedRow = ({
       .catch(() => setRowStatus('closed'));
   };
 
-  // opens the resource group on load of component if there was a previously saved selection
+  // Auto-open the row when the current selection lives inside it. We remember which selection
+  // URI we opened for (rather than a one-shot flag) so a manual collapse survives unrelated
+  // re-renders — e.g. expanding a sibling row gives this row a new `row` prop — while still
+  // re-opening when the selection changes to another resource in this group.
+  const autoOpenedForUri = useRef<string | undefined>(undefined);
   useEffect(() => {
     // Assuming we don't have multi-select yet
-    const selectedRow = selectedRows[0];
+    const selectedUri = selectedRows[0]?.uri;
+    if (autoOpenedForUri.current === selectedUri) {
+      return;
+    }
 
-    const containsChild = selectedRow && !!findRow(row.children ?? [], selectedRow.uri);
-
-    if (containsChild) {
+    if (selectedUri && findRow(row.children ?? [], selectedUri)) {
       setRowStatus('open');
+      autoOpenedForUri.current = selectedUri;
     }
   }, [selectedRows, row]);
 

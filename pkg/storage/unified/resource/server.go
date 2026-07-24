@@ -320,6 +320,10 @@ type SearchOptions struct {
 	RateLimiter        vector.RateLimiter
 	RateLimitPerTenant int
 	RateLimitWindow    time.Duration
+
+	// Vector API collection allowlists: "group/resource" entries; empty allows nothing.
+	AllowedInternalCollections []string
+	AllowedExternalCollections []string
 }
 
 type ResourceServerOptions struct {

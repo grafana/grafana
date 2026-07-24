@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -164,4 +165,85 @@ func TestCanUpdateProvenanceInRuleGroup(t *testing.T) {
 			}
 		}
 	})
+}
+
+func TestCanUpdateManagerInRuleGroup(t *testing.T) {
+	mgr := func(k utils.ManagerKind, id string) utils.ManagerProperties {
+		return utils.ManagerProperties{Kind: k, Identity: id}
+	}
+
+	// apiSourced managers may relinquish management back to Grafana.
+	apiSourced := []utils.ManagerKind{
+		utils.ManagerKindClassicAPI,                 //nolint:staticcheck
+		utils.ManagerKindClassicConvertedPrometheus, //nolint:staticcheck
+		utils.ManagerKindTerraform,
+		utils.ManagerKindKubectl,
+	}
+	// externallySourced managers are backed by an external source of truth and
+	// must not be reset to unmanaged from within Grafana.
+	externallySourced := []utils.ManagerKind{
+		utils.ManagerKindClassicFP, //nolint:staticcheck
+		utils.ManagerKindRepo,
+	}
+
+	t.Run("same kind is always allowed", func(t *testing.T) {
+		for _, k := range append(append([]utils.ManagerKind{}, apiSourced...), externallySourced...) {
+			assert.True(t, CanUpdateManagerInRuleGroup(mgr(k, "a"), mgr(k, "b")),
+				"same kind %q should be allowed regardless of identity", k)
+		}
+	})
+
+	t.Run("any incoming manager is allowed over unmanaged", func(t *testing.T) {
+		for _, k := range append(append([]utils.ManagerKind{}, apiSourced...), externallySourced...) {
+			assert.True(t, CanUpdateManagerInRuleGroup(mgr(utils.ManagerKindUnknown, ""), mgr(k, "id")),
+				"unmanaged -> %q should be allowed", k)
+		}
+	})
+
+	t.Run("only API-sourced managers may reset to unmanaged", func(t *testing.T) {
+		for _, k := range apiSourced {
+			assert.True(t, CanUpdateManagerInRuleGroup(mgr(k, "id"), mgr(utils.ManagerKindUnknown, "")),
+				"%q -> unmanaged should be allowed", k)
+		}
+		for _, k := range externallySourced {
+			assert.False(t, CanUpdateManagerInRuleGroup(mgr(k, "id"), mgr(utils.ManagerKindUnknown, "")),
+				"%q -> unmanaged should NOT be allowed (external source of truth)", k)
+		}
+	})
+
+	t.Run("switching between different non-unknown kinds is not allowed", func(t *testing.T) {
+		all := append(append([]utils.ManagerKind{}, apiSourced...), externallySourced...)
+		for _, from := range all {
+			for _, to := range all {
+				if from == to {
+					continue
+				}
+				assert.False(t, CanUpdateManagerInRuleGroup(mgr(from, "id"), mgr(to, "id")),
+					"%q -> %q should not be allowed", from, to)
+			}
+		}
+	})
+}
+
+func TestIsAPISourcedManager(t *testing.T) {
+	apiSourced := []utils.ManagerKind{
+		utils.ManagerKindClassicAPI,                 //nolint:staticcheck
+		utils.ManagerKindClassicConvertedPrometheus, //nolint:staticcheck
+		utils.ManagerKindTerraform,
+		utils.ManagerKindKubectl,
+	}
+	notAPISourced := []utils.ManagerKind{
+		utils.ManagerKindClassicFP, //nolint:staticcheck
+		utils.ManagerKindRepo,
+		utils.ManagerKindPlugin,
+		utils.ManagerKindGrafana,
+		utils.ManagerKindUnknown,
+	}
+
+	for _, k := range apiSourced {
+		assert.Truef(t, isAPISourcedManager(k), "%q should be API-sourced", k)
+	}
+	for _, k := range notAPISourced {
+		assert.Falsef(t, isAPISourcedManager(k), "%q should not be API-sourced", k)
+	}
 }
