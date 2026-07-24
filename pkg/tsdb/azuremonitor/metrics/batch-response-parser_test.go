@@ -287,8 +287,34 @@ func TestParseBatchResponse(t *testing.T) {
 				},
 			},
 		}
-		_, err := parseBatchResponse(result, "https://portal.azure.com", "sub-123", log.DefaultLogger)
-		assert.Error(t, err)
+		_, errs := parseBatchResponse(result, "https://portal.azure.com", "sub-123", log.DefaultLogger)
+		require.Contains(t, errs, "A")
+		assert.ErrorContains(t, errs["A"], "ResourceNotFound")
+	})
+
+	t.Run("errors are scoped to the owning query, not batch siblings", func(t *testing.T) {
+		// Regression for the batch path over-reporting failures: a per-metric
+		// error for one query's resource must not fail other queries sharing the
+		// batch, matching parseFallbackResponse and the legacy per-query path.
+		idOK := "/subscriptions/sub/resourcegroups/rg/providers/microsoft.compute/virtualmachines/vm-ok"
+		idBad := "/subscriptions/sub/resourcegroups/rg/providers/microsoft.compute/virtualmachines/vm-bad"
+		qA := makeQueryWithResources("A", map[string]dataquery.AzureMonitorResource{idOK: {}})
+		qB := makeQueryWithResources("B", map[string]dataquery.AzureMonitorResource{idBad: {}})
+
+		result := batchResult{
+			Batch: Batch{Queries: []*aztypes.AzureMonitorQuery{qA, qB}},
+			Response: &batchResponse{
+				Values: []batchResponseValue{
+					makeResourceValue(idOK, "ns", "westus2", "Success", 1.0),
+					makeResourceValue(idBad, "ns", "westus2", "ResourceNotFound", 0),
+				},
+			},
+		}
+		frames, errs := parseBatchResponse(result, "https://portal.azure.com", "sub-123", log.DefaultLogger)
+		assert.Len(t, framesForRefID(frames, "A"), 1, "successful query keeps its frames")
+		assert.NotContains(t, errs, "A", "successful query must not inherit a sibling's error")
+		require.Contains(t, errs, "B")
+		assert.ErrorContains(t, errs["B"], "ResourceNotFound")
 	})
 
 	t.Run("a resource shared by multiple queries produces frames for every owner", func(t *testing.T) {
@@ -307,8 +333,8 @@ func TestParseBatchResponse(t *testing.T) {
 				},
 			},
 		}
-		frames, err := parseBatchResponse(result, "https://portal.azure.com", "sub-123", log.DefaultLogger)
-		require.NoError(t, err)
+		frames, errs := parseBatchResponse(result, "https://portal.azure.com", "sub-123", log.DefaultLogger)
+		require.Empty(t, errs)
 		assert.Len(t, framesForRefID(frames, "A"), 1)
 		assert.Len(t, framesForRefID(frames, "B"), 1)
 	})
@@ -330,8 +356,8 @@ func TestParseBatchResponse(t *testing.T) {
 				},
 			},
 		}
-		frames, err := parseBatchResponse(result, "https://portal.azure.com", "sub-123", log.DefaultLogger)
-		require.NoError(t, err)
+		frames, errs := parseBatchResponse(result, "https://portal.azure.com", "sub-123", log.DefaultLogger)
+		require.Empty(t, errs)
 		// A owns vm1+vm2, B owns vm2+vm3; the shared vm2 must reach both.
 		assert.Len(t, framesForRefID(frames, "A"), 2)
 		assert.Len(t, framesForRefID(frames, "B"), 2)

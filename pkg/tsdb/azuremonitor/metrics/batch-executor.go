@@ -400,14 +400,13 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 		}
 
 		// Successful HTTP response: parse and distribute frames.
-		frames, parseErr := parseBatchResponse(br, azurePortalURL, subscription, e.Logger)
+		frames, parseErrs := parseBatchResponse(br, azurePortalURL, subscription, e.Logger)
 		appendFrames(result, frames)
-		if parseErr != nil {
-			// Per-metric or parse error: surface to every query in the batch so
-			// users see it in the Grafana UI rather than it being silently dropped.
-			for _, q := range br.Batch.Queries {
-				attachErr(result, q.RefID, parseErr)
-			}
+		// Per-metric or parse errors are scoped to the query that owns the
+		// failing resource, matching the fallback and legacy paths; sibling
+		// queries in the batch keep their successful responses.
+		for refID, parseErr := range parseErrs {
+			attachErr(result, refID, parseErr)
 		}
 		// Ensure every query in the batch has a response entry even when it
 		// yielded no frames and no error (e.g. an empty timeseries for the

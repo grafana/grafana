@@ -12,14 +12,16 @@ import (
 )
 
 // parseBatchResponse converts a successful batch result into a flat data.Frames
-// slice. Each frame carries its RefID. Resource-level errors are joined and
-// returned alongside any frames that did succeed. subscription is the resolved
-// subscription display name substituted for {{subscription}} in legends,
-// matching the legacy ARM path; all queries in a batch share one subscription
-// (it is part of the batch group key).
-func parseBatchResponse(result batchResult, azurePortalURL string, subscription string, logger log.Logger) (data.Frames, error) {
+// slice. Each frame carries its RefID. Resource-level errors are returned per
+// RefID (joined when a query has several) alongside any frames that did
+// succeed, so one query's failure never marks its batch siblings failed —
+// matching parseFallbackResponse and the legacy per-query path. subscription is
+// the resolved subscription display name substituted for {{subscription}} in
+// legends, matching the legacy ARM path; all queries in a batch share one
+// subscription (it is part of the batch group key).
+func parseBatchResponse(result batchResult, azurePortalURL string, subscription string, logger log.Logger) (data.Frames, map[string]error) {
 	var frames data.Frames
-	var errs []error
+	errsByRefID := make(map[string][]error)
 
 	// Build a lookup from lowercase resource ID -> all queries that own it.
 	// Keys in query.Resources are already stored lowercase (see buildQuery).
@@ -52,12 +54,16 @@ func parseBatchResponse(result batchResult, azurePortalURL string, subscription 
 			f, err := framesFromBatchResponseValue(resourceValue, query, azurePortalURL, subscription)
 			frames = append(frames, f...)
 			if err != nil {
-				errs = append(errs, err)
+				errsByRefID[query.RefID] = append(errsByRefID[query.RefID], err)
 			}
 		}
 	}
 
-	return frames, errors.Join(errs...)
+	joined := make(map[string]error, len(errsByRefID))
+	for refID, errs := range errsByRefID {
+		joined[refID] = errors.Join(errs...)
+	}
+	return frames, joined
 }
 
 // framesFromBatchResponseValue converts a single resource's batch response entry

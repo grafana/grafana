@@ -216,6 +216,45 @@ func TestExecuteBatchTimeSeriesQuery(t *testing.T) {
 		assert.Empty(t, dr.Frames)
 	})
 
+	t.Run("per-metric error fails only the owning query, not batch siblings", func(t *testing.T) {
+		// Regression: queries share a batch (the group key excludes RefID), and a
+		// metric error for one query's resource used to be attached to every
+		// query in the batch, failing siblings whose data was returned fine.
+		idOK := "/subscriptions/sub-123/resourcegroups/rg/providers/microsoft.compute/virtualmachines/vm-ok"
+		idBad := "/subscriptions/sub-123/resourcegroups/rg/providers/microsoft.compute/virtualmachines/vm-bad"
+
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"values":[
+				{"resourceid":"` + idOK + `","namespace":"microsoft.compute/virtualmachines","value":[
+					{"name":{"value":"Percentage CPU","localizedValue":"Percentage CPU"},"unit":"Percent","errorCode":"Success",
+					 "timeseries":[{"data":[{"timeStamp":"2024-01-01T00:00:00Z","average":42}]}]}]},
+				{"resourceid":"` + idBad + `","namespace":"microsoft.compute/virtualmachines","value":[
+					{"name":{"value":"Percentage CPU","localizedValue":"Percentage CPU"},"unit":"Percent","errorCode":"ResourceNotFound"}]}
+			]}`))
+		}))
+		defer srv.Close()
+
+		dsInfo := makeBatchDsInfo(srv)
+		qOK := makeBatchQuery("A", "sub-123", "eastus", []dataquery.AzureMonitorResource{
+			{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm-ok"), Region: strPtr("eastus")},
+		})
+		qBad := makeBatchQuery("B", "sub-123", "eastus", []dataquery.AzureMonitorResource{
+			{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm-bad"), Region: strPtr("eastus")},
+		})
+
+		resp, err := ds.ExecuteTimeSeriesQuery(batchCtx(), []backend.DataQuery{qOK, qBad}, dsInfo, &http.Client{}, "", false)
+		require.NoError(t, err)
+
+		drOK := resp.Responses["A"]
+		require.NoError(t, drOK.Error, "successful query must not inherit a sibling's error")
+		assert.Len(t, drOK.Frames, 1)
+
+		drBad := resp.Responses["B"]
+		require.Error(t, drBad.Error)
+		assert.ErrorContains(t, drBad.Error, "ResourceNotFound")
+	})
+
 	t.Run("batch HTTP failure: error set on all queries in batch", func(t *testing.T) {
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, `{"error":{"code":"Unauthorized"}}`, http.StatusUnauthorized)
