@@ -922,6 +922,205 @@ describe('dashboard exporter v2', () => {
     // Restore console.error
     consoleSpy.mockRestore();
   });
+
+  describe('section variables', () => {
+    const makeSectionQueryVariable = (name: string, datasourceUid: string): QueryVariableKind => ({
+      kind: 'QueryVariable',
+      spec: {
+        name,
+        query: {
+          kind: 'DataQuery',
+          version: 'v0',
+          group: 'prometheus',
+          datasource: { name: datasourceUid },
+          spec: { expr: 'up' },
+        },
+        current: { text: 'a', value: 'a' },
+        options: [{ text: 'a', value: 'a' }],
+        hide: 'dontHide',
+        skipUrlSync: false,
+        multi: false,
+        includeAll: false,
+        allowCustomValue: false,
+        regex: '',
+        refresh: 'never',
+        sort: 'disabled',
+      },
+    });
+
+    const makeSectionDatasourceVariable = (name: string): DatasourceVariableKind => ({
+      kind: 'DatasourceVariable',
+      spec: {
+        name,
+        pluginId: 'prometheus',
+        current: { text: 'Production Prometheus', value: 'datasource1' },
+        options: [],
+        hide: 'dontHide',
+        skipUrlSync: false,
+        multi: false,
+        includeAll: false,
+        allowCustomValue: false,
+        refresh: 'never',
+        regex: '',
+      },
+    });
+
+    it('processes row QueryVariable and DatasourceVariable', async () => {
+      const schemaCopy = JSON.parse(JSON.stringify(handyTestingSchema));
+      schemaCopy.layout = {
+        kind: 'RowsLayout',
+        spec: {
+          rows: [
+            {
+              kind: 'RowsLayoutRow',
+              spec: {
+                title: 'Row 1',
+                layout: { kind: 'GridLayout', spec: { items: [] } },
+                variables: [
+                  makeSectionQueryVariable('rowQuery', 'datasource1'),
+                  makeSectionDatasourceVariable('rowDsVar'),
+                ],
+              },
+            },
+          ],
+        },
+      };
+
+      const dashboard = await makeExportableV2(schemaCopy);
+      if (typeof dashboard === 'object' && 'error' in dashboard) {
+        throw dashboard.error;
+      }
+
+      expect(dashboard.layout.kind).toBe('RowsLayout');
+      if (dashboard.layout.kind !== 'RowsLayout') {
+        return;
+      }
+      const sectionVars = dashboard.layout.spec.rows[0].spec.variables ?? [];
+      const queryVar = sectionVars.find((v) => v.kind === 'QueryVariable') as QueryVariableKind;
+      const dsVar = sectionVars.find((v) => v.kind === 'DatasourceVariable') as DatasourceVariableKind;
+
+      expect(queryVar.spec.query.datasource?.name).toBeUndefined();
+      expect(queryVar.spec.query.labels?.[ExportLabel]).toBeDefined();
+      expect(queryVar.spec.current).toEqual({ text: '', value: '' });
+      expect(queryVar.spec.options).toEqual([]);
+      expect(dsVar.spec.current).toEqual({ text: '', value: '' });
+    });
+
+    it('processes nested tab QueryVariable', async () => {
+      const schemaCopy = JSON.parse(JSON.stringify(handyTestingSchema));
+      schemaCopy.layout = {
+        kind: 'TabsLayout',
+        spec: {
+          tabs: [
+            {
+              kind: 'TabsLayoutTab',
+              spec: {
+                title: 'Tab 1',
+                layout: {
+                  kind: 'RowsLayout',
+                  spec: {
+                    rows: [
+                      {
+                        kind: 'RowsLayoutRow',
+                        spec: {
+                          title: 'Nested row',
+                          layout: { kind: 'GridLayout', spec: { items: [] } },
+                          variables: [makeSectionQueryVariable('nestedQuery', 'datasource2')],
+                        },
+                      },
+                    ],
+                  },
+                },
+                variables: [makeSectionQueryVariable('tabQuery', 'datasource1')],
+              },
+            },
+          ],
+        },
+      };
+
+      const dashboard = await makeExportableV2(schemaCopy);
+      if (typeof dashboard === 'object' && 'error' in dashboard) {
+        throw dashboard.error;
+      }
+
+      expect(dashboard.layout.kind).toBe('TabsLayout');
+      if (dashboard.layout.kind !== 'TabsLayout') {
+        return;
+      }
+      const tabVars = dashboard.layout.spec.tabs[0].spec.variables ?? [];
+      const tabQuery = tabVars[0] as QueryVariableKind;
+      expect(tabQuery.spec.query.datasource?.name).toBeUndefined();
+      expect(tabQuery.spec.query.labels?.[ExportLabel]).toBeDefined();
+
+      const nestedRows = dashboard.layout.spec.tabs[0].spec.layout;
+      expect(nestedRows.kind).toBe('RowsLayout');
+      if (nestedRows.kind !== 'RowsLayout') {
+        return;
+      }
+      const nestedQuery = nestedRows.spec.rows[0].spec.variables?.[0] as QueryVariableKind;
+      expect(nestedQuery.spec.query.datasource?.name).toBeUndefined();
+      expect(nestedQuery.spec.query.labels?.[ExportLabel]).toBeDefined();
+    });
+
+    it('keeps panel datasource ref when it uses a section DatasourceVariable', async () => {
+      const schemaCopy = JSON.parse(JSON.stringify(handyTestingSchema));
+      // Remove top-level datasourceVar so the panel only matches the section-scoped one
+      schemaCopy.variables = schemaCopy.variables.filter(
+        (v: { kind: string; spec: { name: string } }) =>
+          !(v.kind === 'DatasourceVariable' && v.spec.name === 'datasourceVar')
+      );
+      schemaCopy.layout = {
+        kind: 'RowsLayout',
+        spec: {
+          rows: [
+            {
+              kind: 'RowsLayoutRow',
+              spec: {
+                title: 'Row 1',
+                layout: { kind: 'GridLayout', spec: { items: [] } },
+                variables: [makeSectionDatasourceVariable('sectionDs')],
+              },
+            },
+          ],
+        },
+      };
+      schemaCopy.elements['panel-using-section-ds'] = {
+        kind: 'Panel',
+        spec: {
+          data: {
+            kind: 'QueryGroup',
+            spec: {
+              queries: [
+                {
+                  kind: 'PanelQuery',
+                  spec: {
+                    hidden: false,
+                    query: {
+                      datasource: { name: '${sectionDs}' },
+                      group: 'prometheus',
+                      spec: { expr: 'up' },
+                    },
+                    refId: 'A',
+                  },
+                },
+              ],
+            },
+          },
+        },
+      };
+
+      const dashboard = await makeExportableV2(schemaCopy);
+      if (typeof dashboard === 'object' && 'error' in dashboard) {
+        throw dashboard.error;
+      }
+
+      const panel = dashboard.elements['panel-using-section-ds'];
+      if (panel.kind !== 'Panel') {
+        throw new Error('Panel should be a Panel');
+      }
+      expect(panel.spec.data.spec.queries[0].spec.query.datasource?.name).toBe('${sectionDs}');
+    });
+  });
 });
 
 function getStubInstanceSettings(v: string | DataSourceRef): DataSourceInstanceSettings {

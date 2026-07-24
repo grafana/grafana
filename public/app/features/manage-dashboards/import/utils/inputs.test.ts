@@ -657,6 +657,139 @@ describe('extractV2Inputs', () => {
     expect(result.constants).toHaveLength(1);
     expect(result.constants[0].name).toBe('namespace');
   });
+
+  it('extracts datasource inputs from row QueryVariable and tab AdhocVariable', async () => {
+    const dashboard = {
+      elements: {},
+      variables: [],
+      layout: {
+        kind: 'TabsLayout',
+        spec: {
+          tabs: [
+            {
+              kind: 'TabsLayoutTab',
+              spec: {
+                title: 'Tab 1',
+                layout: {
+                  kind: 'RowsLayout',
+                  spec: {
+                    rows: [
+                      {
+                        kind: 'RowsLayoutRow',
+                        spec: {
+                          title: 'Row 1',
+                          layout: { kind: 'GridLayout', spec: { items: [] } },
+                          variables: [
+                            {
+                              kind: 'QueryVariable',
+                              spec: {
+                                name: 'rowQuery',
+                                query: {
+                                  group: 'prometheus',
+                                  labels: { [ExportLabel]: 'prom-1', [ExportDatasourceName]: 'Prod Prom' },
+                                },
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                variables: [
+                  {
+                    kind: 'AdhocVariable',
+                    group: 'loki',
+                    labels: { [ExportLabel]: 'loki-1', [ExportDatasourceName]: 'Prod Loki' },
+                    spec: { name: 'tabAdhoc' },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    };
+
+    mockGetDataSourceSrv.getList.mockImplementation(({ pluginId }: { pluginId: string }) => {
+      if (pluginId === 'prometheus') {
+        return [{ uid: 'p1', name: 'Prod Prom', type: 'prometheus' }];
+      }
+      if (pluginId === 'loki') {
+        return [{ uid: 'l1', name: 'Prod Loki', type: 'loki' }];
+      }
+      return [];
+    });
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.dataSources).toHaveLength(2);
+    expect(result.dataSources.map((ds) => ds.pluginId).sort()).toEqual(['loki', 'prometheus']);
+  });
+
+  it('extracts section constants and dedupes by name against dashboard-level', async () => {
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'ConstantVariable',
+          spec: {
+            name: 'environment',
+            label: 'Environment',
+            query: 'production',
+            description: 'Dashboard env',
+            current: { text: 'production', value: 'production' },
+            hide: 'dontHide',
+            skipUrlSync: false,
+          },
+        },
+      ],
+      layout: {
+        kind: 'RowsLayout',
+        spec: {
+          rows: [
+            {
+              kind: 'RowsLayoutRow',
+              spec: {
+                title: 'Row 1',
+                layout: { kind: 'GridLayout', spec: { items: [] } },
+                variables: [
+                  {
+                    kind: 'ConstantVariable',
+                    spec: {
+                      name: 'environment',
+                      query: 'should-not-appear',
+                      current: { text: 'should-not-appear', value: 'should-not-appear' },
+                      hide: 'dontHide',
+                      skipUrlSync: false,
+                    },
+                  },
+                  {
+                    kind: 'ConstantVariable',
+                    spec: {
+                      name: 'region',
+                      label: 'Region',
+                      query: 'us-east-1',
+                      current: { text: 'us-east-1', value: 'us-east-1' },
+                      hide: 'dontHide',
+                      skipUrlSync: false,
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    };
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.constants).toHaveLength(2);
+    expect(result.constants.map((c) => c.name)).toEqual(['environment', 'region']);
+    expect(result.constants[0].value).toBe('production');
+    expect(result.constants[0].info).toBe('Dashboard env');
+  });
 });
 
 describe('applyV1Inputs', () => {
@@ -1317,6 +1450,157 @@ describe('applyV2Inputs', () => {
 
     const envVar = result.variables?.find((v) => v.kind === 'ConstantVariable' && v.spec.name === 'environment');
     expect(envVar?.kind === 'ConstantVariable' && envVar.spec.query).toBe('production');
+  });
+
+  it('applies constant form values to section ConstantVariables', () => {
+    const dashboard = {
+      title: 'old',
+      elements: {},
+      annotations: [],
+      variables: [],
+      layout: {
+        kind: 'RowsLayout',
+        spec: {
+          rows: [
+            {
+              kind: 'RowsLayoutRow',
+              spec: {
+                title: 'Row 1',
+                layout: { kind: 'GridLayout', spec: { items: [] } },
+                variables: [
+                  {
+                    kind: 'ConstantVariable',
+                    spec: {
+                      name: 'environment',
+                      query: 'production',
+                      current: { text: 'production', value: 'production' },
+                      hide: 'dontHide',
+                      skipUrlSync: false,
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    } as unknown as DashboardV2Spec;
+
+    const form: ImportFormDataV2 = {
+      dashboard,
+      folderUid: 'folder',
+      message: '',
+      'constant-environment': 'staging',
+    };
+
+    const result = applyV2Inputs(dashboard, form);
+
+    expect(result.layout.kind).toBe('RowsLayout');
+    if (result.layout.kind !== 'RowsLayout') {
+      return;
+    }
+    const sectionConst = result.layout.spec.rows[0].spec.variables?.[0];
+    expect(sectionConst?.kind).toBe('ConstantVariable');
+    if (sectionConst?.kind !== 'ConstantVariable') {
+      return;
+    }
+    expect(sectionConst.spec.query).toBe('staging');
+    expect(sectionConst.spec.current).toEqual({ text: 'staging', value: 'staging' });
+  });
+
+  it('remaps datasources on section QueryVariables and clears export labels', () => {
+    const dashboard = {
+      title: 'old',
+      elements: {},
+      annotations: [],
+      variables: [],
+      layout: {
+        kind: 'TabsLayout',
+        spec: {
+          tabs: [
+            {
+              kind: 'TabsLayoutTab',
+              spec: {
+                title: 'Tab 1',
+                layout: {
+                  kind: 'RowsLayout',
+                  spec: {
+                    rows: [
+                      {
+                        kind: 'RowsLayoutRow',
+                        spec: {
+                          title: 'Row 1',
+                          layout: { kind: 'GridLayout', spec: { items: [] } },
+                          variables: [
+                            {
+                              kind: 'QueryVariable',
+                              spec: {
+                                name: 'nestedQuery',
+                                query: {
+                                  group: 'prometheus',
+                                  labels: {
+                                    [ExportLabel]: 'prometheus-1',
+                                    [ExportDatasourceName]: 'Original Prometheus',
+                                  },
+                                  datasource: { name: 'old-ds' },
+                                },
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                variables: [
+                  {
+                    kind: 'QueryVariable',
+                    spec: {
+                      name: 'tabQuery',
+                      query: {
+                        group: 'prometheus',
+                        labels: {
+                          [ExportLabel]: 'prometheus-1',
+                          [ExportDatasourceName]: 'Original Prometheus',
+                        },
+                        datasource: { name: 'old-ds' },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    } as unknown as DashboardV2Spec;
+
+    const form: ImportFormDataV2 = {
+      dashboard,
+      folderUid: 'folder',
+      message: '',
+      'datasource-prometheus-1': { uid: 'ds-uid', type: 'prometheus', name: 'My DS' },
+    };
+
+    const result = applyV2Inputs(dashboard, form);
+
+    expect(result.layout.kind).toBe('TabsLayout');
+    if (result.layout.kind !== 'TabsLayout') {
+      return;
+    }
+    const tabQuery = result.layout.spec.tabs[0].spec.variables?.[0] as QueryVariableKind;
+    expect(tabQuery.spec.query?.datasource?.name).toBe('ds-uid');
+    expect(tabQuery.spec.query?.labels?.[ExportLabel]).toBeUndefined();
+    expect(tabQuery.spec.query?.labels?.[ExportDatasourceName]).toBeUndefined();
+
+    const nestedRows = result.layout.spec.tabs[0].spec.layout;
+    expect(nestedRows.kind).toBe('RowsLayout');
+    if (nestedRows.kind !== 'RowsLayout') {
+      return;
+    }
+    const nestedQuery = nestedRows.spec.rows[0].spec.variables?.[0] as QueryVariableKind;
+    expect(nestedQuery.spec.query?.datasource?.name).toBe('ds-uid');
+    expect(nestedQuery.spec.query?.labels?.[ExportLabel]).toBeUndefined();
   });
 
   it('preserves variable references and does not replace them', () => {
