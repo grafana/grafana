@@ -12,6 +12,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
+import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
 
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import HomePage from './HomePage';
@@ -21,6 +22,7 @@ jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
   ...jest.requireActual('app/features/alerting/unified/hooks/usePluginBridge'),
   useIrmPlugin: jest.fn(),
 }));
+
 jest.mock('./analytics/main', () => ({
   ctaClicked: jest.fn(),
   tabChanged: jest.fn(),
@@ -28,15 +30,22 @@ jest.mock('./analytics/main', () => ({
   homepageViewed: jest.fn(),
 }));
 
+jest.mock('app/plugins/panel/news/useNewsFeed');
+
 setBackendSrv(backendSrv);
 setupMockServer();
 
 const mockUseIrmPlugin = jest.mocked(useIrmPlugin);
+const useNewsFeedMock = jest.mocked(useNewsFeed);
 
 beforeEach(() => {
   jest.clearAllMocks();
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
   mockUseIrmPlugin.mockReturnValue({ pluginId: SupportedPlugin.Incident, installed: false, loading: false });
+  useNewsFeedMock.mockReturnValue({
+    state: { loading: false, error: undefined, value: undefined },
+    getNews: jest.fn(),
+  });
 
   // Deny alerting permission so the FiringAlertsCard renders null
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
