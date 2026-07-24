@@ -164,8 +164,8 @@ export const fetchDetails = createAsyncThunk<Update<CatalogPlugin, string>, stri
   `${STATE_PREFIX}/fetchDetails`,
   async (id, thunkApi) => {
     try {
-      const details = await getPluginDetails(id);
       const canonicalId = selectByIdOrAlias(thunkApi.getState(), id)?.id ?? id;
+      const details = await getPluginDetails(canonicalId);
       return {
         id: canonicalId,
         changes: { details },
