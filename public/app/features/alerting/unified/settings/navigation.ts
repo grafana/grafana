@@ -8,7 +8,7 @@ import { useSelector } from 'app/types/store';
 import { useSettingsExtensionsNav } from './extensions';
 
 /** Deep-link target for the Alerting settings Alertmanager tab. */
-export const ALERTING_SETTINGS_URL = '/alerting/admin/alertmanager';
+const ALERTING_SETTINGS_URL = '/alerting/admin/alertmanager';
 
 /** Deep-link target for the Alerting settings Import tab (auto-sync + staged config live here). */
 export const ALERTING_IMPORT_SETTINGS_URL = '/alerting/admin/import';
@@ -40,6 +40,9 @@ export function useSettingsPageNav() {
       icon: 'cloud',
       parentItem: settingsNav,
     },
+    // alertingMigrationWizardUI and alerting.syncExternalAlertmanager always ship together, so gating the
+    // Import tab (which now hosts the auto-sync card) on the wizard flag never hides auto-sync from an
+    // instance that has sync enabled.
     ...(config.featureToggles.alertingMigrationWizardUI ? [importTab] : []),
     ...extensionTabs,
   ];
