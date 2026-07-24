@@ -337,10 +337,10 @@ message HybridSearchResult {
   // Folder UID.
   string folder = 3;
 
-  // Relevance: higher = better; scale is backend-defined. With a reranker
-  // configured this is the calibrated cross-encoder relevance (roughly
-  // 0-1); otherwise it is the RRF fusion score. Opaque ordering signal;
-  // NOT comparable to VectorSearchResult.score (raw cosine distance).
+  // Relevance: higher = higher quality/score threshold. High thresholds may return far less results. `low` is a recommended starting point.
+  // With a reranker configured this is the calibrated cross-encoder relevance (roughly
+  // 0-1); otherwise it is the RRF fusion score.
+  // This is NOT comparable to VectorSearchResult.score (raw cosine distance).
   double score = 4;
 
   // Matching embedded chunks, best first, capped at 10 per result.
