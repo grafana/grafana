@@ -513,13 +513,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   customGroupDetails: css({
     marginBottom: theme.spacing(0.5),
   }),
-  link: css({
-    wordBreak: 'break-all',
-    color: theme.colors.primary.text,
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-  }),
   hidden: css({
     display: 'none',
   }),
