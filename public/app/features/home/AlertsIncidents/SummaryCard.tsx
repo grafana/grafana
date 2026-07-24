@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
-import { type ReactNode } from 'react';
+import { forwardRef, type ForwardedRef, type ReactElement, type ReactNode, type RefAttributes } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -16,7 +16,7 @@ interface SummaryCardProps<T> {
   title: string;
   // Header count badge: red when count > 0. When countLimit is set and count >= countLimit the badge
   // reads `${countLimit}+` (server-capped data); otherwise the exact count.
-  count: number;
+  count?: number;
   countLimit?: number;
   // Right-aligned header content (e.g. a severity breakdown). Hidden while loading.
   headerExtra?: ReactNode;
@@ -33,20 +33,24 @@ interface SummaryCardProps<T> {
   footer?: ReactNode;
 }
 
-export function SummaryCard<T>({
-  title,
-  count,
-  countLimit,
-  headerExtra,
-  loading,
-  error,
-  emptyMessage,
-  emptyAction,
-  items,
-  getItemKey,
-  renderItem,
-  footer,
-}: SummaryCardProps<T>) {
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+export const SummaryCard = forwardRef(function SummaryCard<T>(
+  {
+    title,
+    count = 0,
+    countLimit,
+    headerExtra,
+    loading,
+    error,
+    emptyMessage,
+    emptyAction,
+    items,
+    getItemKey,
+    renderItem,
+    footer,
+  }: SummaryCardProps<T>,
+  ref: ForwardedRef<HTMLUListElement>
+) {
   const redesignEnabled = useFlagGrafanaGrowthHomepage();
   const styles = useStyles2(getStyles);
 
@@ -75,7 +79,7 @@ export function SummaryCard<T>({
           </Stack>
         )}
 
-        {error && (
+        {!loading && error && (
           <Alert
             severity="warning"
             title={error.title}
@@ -94,7 +98,7 @@ export function SummaryCard<T>({
         )}
 
         {!loading && !error && items.length > 0 && (
-          <ul className={redesignEnabled ? undefined : styles.list}>
+          <ul ref={ref} className={redesignEnabled ? undefined : styles.list}>
             {items.map((item) => (
               <li key={getItemKey(item)} className={!redesignEnabled ? styles.rowPadding : undefined}>
                 {renderItem(item)}
@@ -121,7 +125,7 @@ export function SummaryCard<T>({
       </Stack>
     </HomeSection>
   );
-}
+}) as <T>(props: SummaryCardProps<T> & RefAttributes<HTMLUListElement>) => ReactElement | null;
 
 /** Left-aligned fixed-width prefix cell so titles align across rows. */
 export function SummaryCardPrefix({ children }: { children: ReactNode }) {

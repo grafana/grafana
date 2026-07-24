@@ -10954,6 +10954,12 @@
       "error-title": "Could not load most used dashboards",
       "loading": "Loading most used dashboards..."
     },
+    "news-card": {
+      "empty": "No recent blog posts.",
+      "error-title": "Could not load recent blog posts",
+      "read-more": "Read more from the Grafana Labs blog",
+      "title": "Latest from the blog"
+    },
     "recent-dashboards-tab": {
       "browse": "Browse dashboards",
       "clear": "Clear history",

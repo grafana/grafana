@@ -11,9 +11,13 @@ import { Page } from 'app/core/components/Page/Page';
 import { ASSISTANT_PLUGIN_ID, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
+import { useIrmPlugin } from '../alerting/unified/hooks/usePluginBridge';
+import { SupportedPlugin } from '../alerting/unified/types/pluginBridges';
+
 import { AlertIncidentTabs } from './AlertsIncidents/AlertIncidentTabs';
 import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
 import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
+import { NewsCard } from './AlertsIncidents/NewsCard';
 import { canViewFiringAlerts } from './AlertsIncidents/useFiringAlerts';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
@@ -65,8 +69,11 @@ export default function HomePage() {
     extensionPointId: PluginExtensionPoints.HomepageTabs,
   });
 
+  const irm = useIrmPlugin(SupportedPlugin.Incident);
+
   const isWaitingForTabs = !redesignEnabled && isLoadingTabs;
-  const isLoadingExtensions = isLoadingAssistant || isLoadingExtra || isWaitingForTabs;
+  const isWaitingForIRM = !redesignEnabled && irm.loading;
+  const isLoadingExtensions = isLoadingAssistant || isLoadingExtra || isWaitingForTabs || isWaitingForIRM;
 
   // The impression counts a rendered homepage, never a skeleton: the tracker mounts inside
   // the Suspense boundary below, so a suspended lazy extension defers it until reveal. The
@@ -98,8 +105,14 @@ export default function HomePage() {
   });
   const showExtra = extraContent !== null;
   const showAlertsCard = canViewFiringAlerts();
+  const showIRMNewsCard = irm.loading || irm.installed || config.newsFeedEnabled;
   const skeleton = (
-    <HomePageSkeleton showAlertsCard={showAlertsCard} showExtra={showExtra} redesignEnabled={redesignEnabled} />
+    <HomePageSkeleton
+      showAlertsCard={showAlertsCard}
+      showIRMNewsCard={showIRMNewsCard}
+      showExtra={showExtra}
+      redesignEnabled={redesignEnabled}
+    />
   );
 
   return (
@@ -156,7 +169,7 @@ export default function HomePage() {
 
                   <Grid gap={2} columns={{ xs: 1, md: 2 }}>
                     <FiringAlertsCard />
-                    <IncidentsCard />
+                    {irm.installed ? <IncidentsCard /> : config.newsFeedEnabled && <NewsCard />}
                   </Grid>
                 </>
               )}

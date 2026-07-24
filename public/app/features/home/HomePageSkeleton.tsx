@@ -8,12 +8,13 @@ import { HomeSection } from './HomeSection';
 
 interface Props {
   showAlertsCard?: boolean;
+  showIRMNewsCard?: boolean;
   showExtra?: boolean;
   redesignEnabled?: boolean;
 }
 
 // Opt-in sections so the skeleton never reserves a block the real page won't render.
-export function HomePageSkeleton({ showAlertsCard, showExtra, redesignEnabled }: Props) {
+export function HomePageSkeleton({ showAlertsCard, showIRMNewsCard, showExtra, redesignEnabled }: Props) {
   return (
     <div data-testid="home-page-skeleton">
       <Stack direction="column" gap={2}>
@@ -37,9 +38,10 @@ export function HomePageSkeleton({ showAlertsCard, showExtra, redesignEnabled }:
             <HomeSection direction="column" display="flex" gap={2}>
               <DashboardTabsSkeleton />
             </HomeSection>
-            {showAlertsCard && (
+            {(showAlertsCard || showIRMNewsCard) && (
               <Grid gap={2} columns={{ xs: 1, md: 2 }} data-testid="home-page-skeleton-cards">
-                <CardSkeleton />
+                {showAlertsCard && <CardSkeleton />}
+                {showIRMNewsCard && <CardSkeleton />}
               </Grid>
             )}
           </>
