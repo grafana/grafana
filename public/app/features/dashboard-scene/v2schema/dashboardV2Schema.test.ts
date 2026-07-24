@@ -63,7 +63,6 @@ describe('dashboardV2SpecSchema', () => {
           spec: {
             id: 1,
             title: 'P',
-            description: '',
             links: [],
             data: {
               kind: 'QueryGroup',
@@ -177,7 +176,6 @@ describe('dashboardV2SpecSchema', () => {
           spec: {
             id: 1,
             title: 'P',
-            description: '',
             links: [],
             data: { kind: 'QueryGroup', spec: { queries: [], transformations: [], queryOptions: {} } },
             vizConfig: {
@@ -250,7 +248,6 @@ describe('dashboardV2SpecSchema', () => {
             spec: {
               id: 1,
               title: 'P',
-              description: '',
               links: [],
               // vizConfig intentionally omits `version`.
               vizConfig: {

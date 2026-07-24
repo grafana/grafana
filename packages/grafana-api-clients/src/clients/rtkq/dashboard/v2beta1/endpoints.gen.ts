@@ -1180,9 +1180,12 @@ export type DashboardVizConfigKind = {
 };
 export type DashboardPanelSpec = {
   data: DashboardQueryGroupKind;
-  description: string;
+  /** Shown in a info icon tooltip next to panel title */
+  description?: string;
   id: number;
   links: DashboardDataLink[];
+  /** Shown in a sub header below the title. */
+  subtitle?: string;
   title: string;
   transparent?: boolean;
   vizConfig: DashboardVizConfigKind;
@@ -2088,9 +2091,12 @@ export type NotebookVizConfigKind = {
 };
 export type NotebookPanelSpec = {
   data: NotebookQueryGroupKind;
-  description: string;
+  /** Shown in a info icon tooltip next to panel title */
+  description?: string;
   id: number;
   links: NotebookDataLink[];
+  /** Shown in a sub header below the title. */
+  subtitle?: string;
   title: string;
   transparent?: boolean;
   vizConfig: NotebookVizConfigKind;

@@ -2789,7 +2789,6 @@
         "required": [
           "id",
           "title",
-          "description",
           "links",
           "data",
           "vizConfig"
@@ -2804,8 +2803,8 @@
             ]
           },
           "description": {
-            "type": "string",
-            "default": ""
+            "description": "Shown in a info icon tooltip next to panel title",
+            "type": "string"
           },
           "id": {
             "type": "number",
@@ -2822,6 +2821,10 @@
                 }
               ]
             }
+          },
+          "subtitle": {
+            "description": "Shown in a sub header below the title.",
+            "type": "string"
           },
           "title": {
             "type": "string",
