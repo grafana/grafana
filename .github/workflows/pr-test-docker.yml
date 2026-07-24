@@ -4,6 +4,13 @@ permissions: {}
 
 on:
   pull_request:
+    # Include ready_for_review so the draft gate below re-evaluates when a draft
+    # is marked ready without a new push (default types omit that event).
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
     paths:
       - Makefile
       - Dockerfile
@@ -35,11 +42,36 @@ on:
       - .github/workflows/build-docker-variants.yml
 
 jobs:
+  # Gate the (expensive) build jobs: skip on draft PRs and on PRs that only
+  # touch tests, since neither changes the built Docker image.
+  detect-changes:
+    name: Detect whether the Docker image build is affected
+    # Skip draft PRs entirely: no detect-changes runner, no build jobs.
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.detect-changes.outputs.docker-build }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 0
+          filter: blob:none
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/pr-test-docker.yml
+
   # ── Path 1 ────────────────────────────────────────────────────────────────
   # Full source build inside Docker. Validates that the complete compilation
   # pipeline (go-builder + js-builder + final stage) works end-to-end.
   build-full:
     name: build / full source (alpine)
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
     runs-on: ubuntu-x64-large
     permissions:
       contents: read
@@ -64,6 +96,8 @@ jobs:
 
   build-frontend:
     name: build / frontend
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
     runs-on: ubuntu-x64-large
     permissions:
       contents: read
@@ -84,6 +118,8 @@ jobs:
 
   build-backend:
     name: build / backend (linux-amd64)
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
     runs-on: ubuntu-x64-large
     permissions:
       contents: read

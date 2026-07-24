@@ -11,9 +11,15 @@ outputs:
   backend:
     description: Whether the backend or self have changed in any way
     value: ${{ steps.changed-files.outputs.backend_any_modified || 'true' }}
+  backend-src:
+    description: Whether the backend or self have changed, excluding test-only changes
+    value: ${{ steps.changed-files.outputs.backend_src_any_modified || 'true' }}
   frontend:
     description: Whether the frontend or self has changed in any way
     value: ${{ steps.changed-files.outputs.frontend_any_modified || 'true' }}
+  frontend-src:
+    description: Whether the frontend or self has changed, excluding test-only changes
+    value: ${{ steps.changed-files.outputs.frontend_src_any_modified || 'true' }}
   frontend-dependencies:
     description: Whether the frontend dependencies or self have changed in any way
     value: ${{ steps.changed-files.outputs.frontend_dependencies_any_modified || 'true' }}
@@ -37,6 +43,9 @@ outputs:
   dockerfile:
     description: Whether the dockerfile or self have changed in any way
     value: ${{ steps.changed-files.outputs.dockerfile_any_modified || 'true' }}
+  docker-build:
+    description: Whether files affecting the Docker image build have changed, excluding test-only changes
+    value: ${{ steps.changed-files.outputs.docker_build_any_modified || 'true' }}
   makefile:
     description: Whether any Makefile changed
     value: ${{ steps.changed-files.outputs.makefile_any_modified || 'true' }}
@@ -66,6 +75,47 @@ runs:
           makefile:
             - 'Makefile'
             - '**/Makefile'
+          docker_build:
+            # Mirrors the on.paths trigger of pr-test-docker.yml: files that can
+            # affect the built Docker image. Test-only changes are excluded below
+            # because they never end up in the image.
+            - 'Makefile'
+            - 'Dockerfile'
+            - 'public/**'
+            - 'packages/**'
+            - 'apps/**'
+            - '**/go.mod'
+            - '**/go.sum'
+            - '**/go.work'
+            - '**/go.work.sum'
+            - '**/package.json'
+            - '**/nx.json'
+            - '**/project.json'
+            - '**/yarn.lock'
+            - 'conf/**'
+            - '.yarnrc.yml'
+            - '.yarn/**'
+            - 'tsconfig.json'
+            - '**.js'
+            - '*.ts'
+            - '**.config.ts'
+            - 'scripts/**'
+            - 'emails/**'
+            - '.citools/**'
+            - 'kinds/**'
+            - 'embed.go'
+            - 'packaging/docker/**'
+            - '.github/actions/change-detection/**'
+            - '.github/workflows/build-docker-variants.yml'
+            - '${{ inputs.self }}'
+            - '!**_test.go'
+            - '!**.test.ts'
+            - '!**.test.tsx'
+            - '!**.test.js'
+            - '!**.spec.ts'
+            - '!**.spec.tsx'
+            - '!e2e/**'
+            - '!e2e-playwright/**'
           rpm_packaging:
             - 'scripts/build-rpm.sh'
             - 'scripts/build-deb.sh'
@@ -98,6 +148,34 @@ runs:
             - 'devenv/docker/blocks/*_tests/**'
             - 'scripts/ci/backend-tests/**'
             - '${{ inputs.self }}'
+          backend_src:
+            # Same as `backend` above, but excludes Go test files. Used to gate
+            # jobs (e.g. the PR Docker build) that a test-only PR can't affect.
+            - '!*.md'
+            - '!docs/**'
+            - '!.github/**'
+            - '.github/actions/setup-enterprise/**'
+            - '.github/actions/setup-go/**'
+            - '.github/actions/report-go-cache-sizes/**'
+            - '.github/actions/checkout/**'
+            - '**/go.mod'
+            - '**/go.sum'
+            - 'go.mod'
+            - 'go.sum'
+            - 'go.work'
+            - 'go.work.sum'
+            - '**.go'
+            - 'pkg/**'
+            - '!pkg/**.md'
+            - 'apps/**'
+            - '!apps/**.md'
+            - 'build.sh'
+            - '.github/actions/change-detection/**'
+            - '**.cue'
+            - 'devenv/docker/blocks/*_tests/**'
+            - 'scripts/ci/backend-tests/**'
+            - '${{ inputs.self }}'
+            - '!**_test.go'
           frontend:
             - '.github/actions/setup-enterprise/**'
             - '.github/actions/checkout/**'
@@ -122,6 +200,42 @@ runs:
             - '.yarn/**'
             - 'apps/dashboard/pkg/migration/**'
             - '${{ inputs.self }}'
+          frontend_src:
+            # Same as `frontend` above, but excludes test-only changes. Used to
+            # gate frontend jobs (e.g. Meticulous) that a test-only PR can't affect.
+            - '.github/actions/setup-enterprise/**'
+            - '.github/actions/checkout/**'
+            - 'public/**'
+            - '**.js'
+            - '**.jsx'
+            - '**.ts'
+            - '**.tsx'
+            - '**.css'
+            - '**.mjs'
+            - 'yarn.lock'
+            - 'package.json'
+            - '!**.md'
+            - '.github/actions/change-detection/**'
+            - '**.cue'
+            - '.prettier*'
+            - '.yarnrc.yml'
+            - 'eslint.config.js'
+            - 'jest.config.js'
+            - 'nx.json'
+            - 'tsconfig.json'
+            - '.yarn/**'
+            - 'apps/dashboard/pkg/migration/**'
+            - '${{ inputs.self }}'
+            - '!**.test.ts'
+            - '!**.test.tsx'
+            - '!**.test.js'
+            - '!**.spec.ts'
+            - '!**.spec.tsx'
+            - '!**.spec.js'
+            - '!e2e/**'
+            - '!e2e-playwright/**'
+            # apps/dashboard/pkg/migration/** carries Go tests; exclude them too.
+            - '!**_test.go'
           frontend_dependencies:
             - 'yarn.lock'
             - 'package.json'
@@ -188,8 +302,12 @@ runs:
         echo " --> ${{ steps.changed-files.outputs.self_all_modified_files }}"
         echo "Backend: ${{ steps.changed-files.outputs.backend_any_modified || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.backend_all_modified_files }}"
+        echo "Backend (src): ${{ steps.changed-files.outputs.backend_src_any_modified || 'true' }}"
+        echo " --> ${{ steps.changed-files.outputs.backend_src_all_modified_files }}"
         echo "Frontend: ${{ steps.changed-files.outputs.frontend_any_modified || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.frontend_all_modified_files }}"
+        echo "Frontend (src): ${{ steps.changed-files.outputs.frontend_src_any_modified || 'true' }}"
+        echo " --> ${{ steps.changed-files.outputs.frontend_src_all_modified_files }}"
         echo "Frontend packages: ${{ steps.changed-files.outputs.frontend_packages_any_modified || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.frontend_packages_all_modified_files }}"
         echo "E2E: ${{ steps.changed-files.outputs.e2e_any_modified || 'true' }}"
@@ -204,6 +322,8 @@ runs:
         echo " --> ${{ steps.changed-files.outputs.docs_all_modified_files }}"
         echo "Dockerfile: ${{ steps.changed-files.outputs.dockerfile_any_modified || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.dockerfile_all_modified_files }}"
+        echo "Docker build: ${{ steps.changed-files.outputs.docker_build_any_modified || 'true' }}"
+        echo " --> ${{ steps.changed-files.outputs.docker_build_all_modified_files }}"
         echo "Makefile: ${{ steps.changed-files.outputs.makefile_any_modified || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.makefile_all_modified_files }}"
         echo "RPM packaging: ${{ steps.changed-files.outputs.rpm_packaging_any_modified || 'true' }}"

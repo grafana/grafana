@@ -2,6 +2,13 @@ name: PR build Docker image
 
 on:
   pull_request:
+    # Include ready_for_review so the draft gate below re-evaluates when a draft
+    # is marked ready without a new push (default types omit that event).
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
   workflow_dispatch: {}
 
 concurrency:
@@ -13,15 +20,18 @@ permissions: {}
 
 jobs:
   detect-changes:
-    # Gate the whole workflow behind this check
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+    # Gate the whole workflow behind this check. Skip draft PRs entirely.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && github.event.pull_request.draft == false
     name: Detect whether code changed
     runs-on: ubuntu-x64-small
     permissions:
       contents: read
     outputs:
-      changed: ${{ steps.detect-changes.outputs.frontend == 'true' || steps.detect-changes.outputs.backend == 'true' }}
-      frontend: ${{ steps.detect-changes.outputs.frontend }}
+      # Build when non-test frontend or backend changes: a test-only PR can't
+      # affect the built image, so it shouldn't trigger the Docker build.
+      changed: ${{ steps.detect-changes.outputs.frontend-src == 'true' || steps.detect-changes.outputs.backend-src == 'true' }}
+      # Meticulous only exercises frontend changes, so it gates on this alone.
+      frontend-src: ${{ steps.detect-changes.outputs.frontend-src }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -202,7 +212,7 @@ jobs:
           echo "IMAGE=${DOCKER_IMAGE}" | tee -a "$GITHUB_OUTPUT"
 
   run-meticulous-tests:
-    if: github.repository == 'grafana/grafana' && needs.detect-changes.outputs.frontend == 'true'
+    if: github.repository == 'grafana/grafana' && needs.detect-changes.outputs.frontend-src == 'true'
     needs: [push-docker-image, detect-changes]
     name: Run Meticulous tests
     runs-on: ubuntu-x64-small
