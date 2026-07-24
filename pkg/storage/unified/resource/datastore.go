@@ -656,30 +656,7 @@ func (d *dataStore) GetResourceStats(ctx context.Context, nsr NamespacedResource
 	))
 	defer span.End()
 
-	// First, get all unique group/resource combinations in the store
-	groupResources, err := d.getGroupResources(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get group resources: %w", err)
-	}
-
-	var stats []ResourceStats
-
-	// Process each group/resource combination
-	for _, groupResource := range groupResources {
-		if nsr.Group != "" && groupResource.Group != nsr.Group {
-			continue
-		}
-		if nsr.Resource != "" && groupResource.Resource != nsr.Resource {
-			continue
-		}
-		groupStats, err := d.processGroupResourceStats(ctx, groupResource, nsr.Namespace, minCount)
-		if err != nil {
-			return nil, fmt.Errorf("failed to process stats for %s/%s: %w", groupResource.Group, groupResource.Resource, err)
-		}
-		stats = append(stats, groupStats...)
-	}
-
-	return stats, nil
+	return d.resourceStats(ctx, nsr, minCount, 0)
 }
 
 // ListStoredResources implements StorageBackend for the KV backend.
@@ -747,87 +724,134 @@ func (d *dataStore) groupResourceExistsInNamespace(ctx context.Context, gr Group
 	return false, nil
 }
 
-// processGroupResourceStats processes stats for a specific group/resource combination
-func (d *dataStore) processGroupResourceStats(ctx context.Context, groupResource GroupResource, namespace string, minCount int) ([]ResourceStats, error) {
+// GetResourceStatsWithLimit implements StorageBackend. See the interface docs.
+func (d *dataStore) GetResourceStatsWithLimit(ctx context.Context, nsr NamespacedResource, minCount, countLimit int) ([]ResourceStats, error) {
+	ctx, span := tracer.Start(ctx, "resource.dataStore.GetResourceStatsWithLimit", trace.WithAttributes(
+		attribute.Int("minCount", minCount),
+		attribute.Int("countLimit", countLimit),
+	))
+	defer span.End()
+
+	return d.resourceStats(ctx, nsr, minCount, countLimit)
+}
+
+// resourceStats enumerates the stored group/resources and counts each one per
+// namespace. countLimit is forwarded to processGroupResourceStats (0 = exact).
+func (d *dataStore) resourceStats(ctx context.Context, nsr NamespacedResource, minCount, countLimit int) ([]ResourceStats, error) {
+	groupResources, err := d.getGroupResources(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get group resources: %w", err)
+	}
+
+	var stats []ResourceStats
+	for _, gr := range groupResources {
+		if nsr.Group != "" && gr.Group != nsr.Group {
+			continue
+		}
+		if nsr.Resource != "" && gr.Resource != nsr.Resource {
+			continue
+		}
+		grStats, err := d.processGroupResourceStats(ctx, gr, nsr.Namespace, minCount, countLimit)
+		if err != nil {
+			return nil, fmt.Errorf("failed to process stats for %s/%s: %w", gr.Group, gr.Resource, err)
+		}
+		stats = append(stats, grStats...)
+	}
+	return stats, nil
+}
+
+// processGroupResourceStats counts live resources per namespace for one
+// group/resource. When countLimit > 0 it stops counting a namespace once it
+// reaches countLimit and seeks past the rest of that namespace's keys instead of
+// scanning them, which is cheaper than an exact count on large history; the
+// reported Count is then at least countLimit and ResourceVersion is 0 (the scan
+// may stop before the newest key). countLimit <= 0 produces exact counts.
+func (d *dataStore) processGroupResourceStats(ctx context.Context, gr GroupResource, namespace string, minCount, countLimit int) ([]ResourceStats, error) {
 	ctx, span := tracer.Start(ctx, "resource.dataStore.processGroupResourceStats")
 	defer span.End()
 
-	// Use ListRequestKey to construct the appropriate prefix
-	listKey := ListRequestKey{
-		Group:     groupResource.Group,
-		Resource:  groupResource.Resource,
-		Namespace: namespace, // Empty string if not specified, which will list all namespaces
+	// An empty namespace scans every namespace for this group/resource; the
+	// startup index prebuild relies on this to discover stats across all
+	// namespaces in one pass.
+	basePrefix := gr.Group + "/" + gr.Resource + "/"
+	if namespace != "" {
+		basePrefix += namespace + "/"
 	}
 
-	// Maps to track counts per namespace for this group/resource
-	namespaceCounts := make(map[string]int64)   // namespace -> count of existing resources
-	namespaceVersions := make(map[string]int64) // namespace -> latest resource version
+	var stats []ResourceStats
 
-	// Track current resource being processed
-	var currentResourceKey string
-	var lastDataKey *DataKey
+	// Iterate descending so the first key seen for each name is its latest
+	// version, which decides liveness directly. open distinguishes "not started"
+	// from a cluster-scoped resource (empty namespace).
+	open := false
+	curNS := ""
+	curName := ""
+	var liveCount, maxRV int64
 
-	// Helper function to process the last seen resource
-	processLastResource := func() {
-		if lastDataKey != nil {
-			// Initialize namespace version if not exists
-			if _, exists := namespaceVersions[lastDataKey.Namespace]; !exists {
-				namespaceVersions[lastDataKey.Namespace] = 0
+	emit := func() {
+		if open && liveCount > int64(minCount) {
+			stats = append(stats, ResourceStats{
+				NamespacedResource: NamespacedResource{Namespace: curNS, Group: gr.Group, Resource: gr.Resource},
+				Count:              liveCount,
+				ResourceVersion:    maxRV,
+			})
+		}
+		open, curName, liveCount, maxRV = false, "", 0, 0
+	}
+
+	// endKey is the exclusive upper bound; it shrinks as capped namespaces are
+	// skipped, moving the scan down to the next namespace.
+	endKey := PrefixRangeEnd(basePrefix)
+	for {
+		seeked := false
+		for key, err := range d.kv.Keys(ctx, dataSection, ListOptions{StartKey: basePrefix, EndKey: endKey, Sort: SortOrderDesc}) {
+			if err != nil {
+				return nil, err
+			}
+			dk, err := ParseKey(key)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse key %s: %w", key, err)
 			}
 
-			// If resource exists (not deleted), increment the count for this namespace
-			if lastDataKey.Action != DataActionDeleted {
-				namespaceCounts[lastDataKey.Namespace]++
+			if !open {
+				open, curNS = true, dk.Namespace
+			} else if dk.Namespace != curNS {
+				emit()
+				open, curNS = true, dk.Namespace
+			}
+			if dk.Name == curName {
+				continue // older version of a resource already counted
+			}
+			curName = dk.Name
+			// maxRV is the namespace's latest version, reported as ResourceVersion in
+			// exact mode only; a capped count has no meaningful latest version.
+			if countLimit == 0 && dk.ResourceVersion > maxRV {
+				maxRV = dk.ResourceVersion
+			}
+			if dk.Action != DataActionDeleted {
+				liveCount++
 			}
 
-			// Update to latest resource version seen
-			if lastDataKey.ResourceVersion > namespaceVersions[lastDataKey.Namespace] {
-				namespaceVersions[lastDataKey.Namespace] = lastDataKey.ResourceVersion
+			if countLimit > 0 && liveCount >= int64(countLimit) {
+				ns := curNS
+				emit()
+				// Skip the rest of this namespace by lowering the upper bound to its
+				// prefix. A cluster-scoped resource is one partition under
+				// group/resource, so drop the whole prefix.
+				if ns == "" {
+					endKey = basePrefix
+				} else {
+					endKey = gr.Group + "/" + gr.Resource + "/" + ns + "/"
+				}
+				seeked = true
+				break
 			}
 		}
-	}
-
-	// List all keys using the existing Keys method
-	for dataKey, err := range d.Keys(ctx, listKey, SortOrderAsc) {
-		if err != nil {
-			return nil, err
+		if !seeked {
+			emit()
+			break
 		}
-
-		// Create unique resource identifier (namespace/group/resource/name)
-		resourceKey := fmt.Sprintf("%s/%s/%s/%s", dataKey.Namespace, dataKey.Group, dataKey.Resource, dataKey.Name)
-
-		// If we've moved to a different resource, process the previous one
-		if currentResourceKey != "" && resourceKey != currentResourceKey {
-			processLastResource()
-		}
-
-		// Update tracking variables for the current resource
-		currentResourceKey = resourceKey
-		lastDataKey = &dataKey
 	}
-
-	// Process the final resource
-	processLastResource()
-
-	// Convert namespace counts to ResourceStats
-	stats := make([]ResourceStats, 0, len(namespaceCounts))
-	for ns, count := range namespaceCounts {
-		// Skip if count is below or equal to minimum
-		if count <= int64(minCount) {
-			continue
-		}
-
-		stats = append(stats, ResourceStats{
-			NamespacedResource: NamespacedResource{
-				Namespace: ns,
-				Group:     groupResource.Group,
-				Resource:  groupResource.Resource,
-			},
-			Count:           count,
-			ResourceVersion: namespaceVersions[ns],
-		})
-	}
-
 	return stats, nil
 }
 
