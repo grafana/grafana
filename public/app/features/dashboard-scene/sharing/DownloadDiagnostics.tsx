@@ -93,6 +93,12 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
     if (rawQueries.filter((query) => !query.hide).length === 0) {
       throw new Error(t('dashboard.diagnostics.no-queries', 'This panel has no active queries to capture.'));
     }
+    // Create the controller before interpolating: interpolation awaits datasource round trips, so a
+    // cancel or drawer unmount during that phase must abort here rather than no-op against a null ref
+    // and let the download start after the UI is gone.
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     // Interpolate template and scoped variables so the captured request matches the request the
     // panel actually ran; scopedVars carries the panel so scene variables (including a repeated
     // panel's clone-local value) resolve correctly.
@@ -101,10 +107,11 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
       { __sceneObject: { value: panel } },
       runner?.state.data?.request?.filters
     );
+    if (controller.signal.aborted) {
+      return;
+    }
     const timeRange = sceneGraph.getTimeRange(panel).state.value;
 
-    const controller = new AbortController();
-    abortRef.current = controller;
     await downloadDiagnosticsForQueries(
       queries,
       String(timeRange.from.valueOf()),

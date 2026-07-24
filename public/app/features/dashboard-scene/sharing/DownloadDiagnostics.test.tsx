@@ -5,6 +5,7 @@ import { render } from 'test/test-utils';
 import { type ScopedVars } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { downloadDiagnosticsForQueries } from 'app/features/query/diagnostics/downloadDiagnostics';
@@ -139,6 +140,35 @@ describe('DownloadDiagnostics', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
 
     expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not start the download when cancelled while queries are still being interpolated', async () => {
+    // Park the flow inside interpolation: interpolateDiagnosticsQueries awaits the datasource lookup,
+    // so holding this promise keeps execution before the download starts.
+    let resolveLookup!: () => void;
+    const pendingLookup = new Promise((resolve) => {
+      resolveLookup = () => resolve({ interpolateVariablesInQueries });
+    });
+    jest.mocked(getDataSourceInstance).mockReturnValueOnce(pendingLookup as ReturnType<typeof getDataSourceInstance>);
+    const onDismiss = jest.fn();
+    const runner = new SceneQueryRunner({
+      datasource: { uid: 'prom', type: 'prometheus' },
+      queries: [{ refId: 'A', expr: 'up' }],
+    });
+    const { tab } = setupScenario(onDismiss, runner);
+
+    render(<tab.Component model={tab} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+    // Cancel while interpolation is still in flight; the abort controller now exists (created before
+    // interpolation), so this must abort it rather than no-op against a null ref.
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+
+    // Let interpolation finish: the aborted controller must stop the flow before the download starts.
+    resolveLookup();
+    await screen.findByRole('button', { name: 'Download diagnostics' });
+
+    expect(downloadDiagnosticsForQueries).not.toHaveBeenCalled();
   });
 });
 
