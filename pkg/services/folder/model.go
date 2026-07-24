@@ -189,12 +189,14 @@ type CreateFolderCommand struct {
 
 	SignedInUser identity.Requester `json:"-"`
 
-	// When running classic file provisioning with folders saved in kubernetes,
-	// folders will be marked with a manager of kind ManagerKindClassicFP
+	// FileProvisioningReaderName is the reader/provisioner name of the legacy file
+	// provisioning source. When set, folders saved in kubernetes are marked with a
+	// manager of kind ManagerKindClassicFP and this value as the
+	// manager identity.
 	// NOTE: this is ignored when running legacy SQL storage
 	//
 	// Deprecated: this should only be used by the legacy file provisioning system
-	ManagerKindClassicFP string `json:"-"`
+	FileProvisioningReaderName string `json:"-"`
 }
 
 // UpdateFolderCommand captures the information required by the folder service
@@ -215,12 +217,14 @@ type UpdateFolderCommand struct {
 
 	SignedInUser identity.Requester `json:"-"`
 
-	// When running classic file provisioning with folders saved in kubernetes,
-	// folders will be marked with a manager of kind ManagerKindClassicFP
+	// FileProvisioningReaderName is the reader/provisioner name of the legacy file
+	// provisioning source. When set, folders saved in kubernetes are marked with a
+	// manager of kind ManagerKindClassicFP and this value as the
+	// manager identity.
 	// NOTE: this is ignored when running legacy SQL storage
 	//
 	// Deprecated: this should only be used by the legacy file provisioning system
-	ManagerKindClassicFP string `json:"-"`
+	FileProvisioningReaderName string `json:"-"`
 }
 
 // MoveFolderCommand captures the information required by the folder service

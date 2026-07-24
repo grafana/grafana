@@ -1026,7 +1026,7 @@ func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.C
 	dto.SignedInUser = ident
 
 	// The readerName is the identifier for the file provisioning manager
-	dto.ManagerKindClassicFP = readerName // nolint:staticcheck
+	dto.FileProvisioningReaderName = readerName // nolint:staticcheck
 
 	f, err := dr.folderService.Create(ctx, dto)
 	if err != nil {
@@ -1044,12 +1044,12 @@ func (dr *DashboardServiceImpl) UpdateFolderWithManagedByAnnotation(ctx context.
 
 	ctx, ident := identity.WithServiceIdentity(ctx, f.OrgID)
 	updated, err := dr.folderService.Update(ctx, &folder.UpdateFolderCommand{
-		UID:                  f.UID,
-		OrgID:                f.OrgID,
-		SignedInUser:         ident,
-		ManagerKindClassicFP: readerName, // nolint:staticcheck
-		Overwrite:            true,
-		Version:              f.Version,
+		UID:                        f.UID,
+		OrgID:                      f.OrgID,
+		SignedInUser:               ident,
+		FileProvisioningReaderName: readerName, // nolint:staticcheck
+		Overwrite:                  true,
+		Version:                    f.Version,
 	})
 	if err != nil {
 		dr.log.Error("failed to update folder for provisioned dashboards", "folder", f.Title, "org", f.OrgID, "err", err)

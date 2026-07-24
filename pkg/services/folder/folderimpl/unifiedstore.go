@@ -139,10 +139,10 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 	}
 
 	// nolint:staticcheck
-	if cmd.ManagerKindClassicFP != "" {
+	if cmd.FileProvisioningReaderName != "" {
 		meta.SetManagerProperties(utils.ManagerProperties{
 			Kind:     utils.ManagerKindClassicFP,
-			Identity: cmd.ManagerKindClassicFP,
+			Identity: cmd.FileProvisioningReaderName,
 		})
 	}
 

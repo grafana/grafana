@@ -468,7 +468,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		ParentUID:    cmd.ParentUID,
 		SignedInUser: cmd.SignedInUser,
 		// pass along provisioning details
-		ManagerKindClassicFP: cmd.ManagerKindClassicFP, // nolint:staticcheck
+		FileProvisioningReaderName: cmd.FileProvisioningReaderName, // nolint:staticcheck
 	}
 
 	f, err := s.unifiedStore.Create(ctx, *cmd)
@@ -488,14 +488,14 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 	}
 
 	folder, err := s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
-		UID:                  cmd.UID,
-		OrgID:                cmd.OrgID,
-		NewTitle:             cmd.NewTitle,
-		NewDescription:       cmd.NewDescription,
-		SignedInUser:         cmd.SignedInUser,
-		Overwrite:            cmd.Overwrite,
-		Version:              cmd.Version,
-		ManagerKindClassicFP: cmd.ManagerKindClassicFP, // nolint:staticcheck
+		UID:                        cmd.UID,
+		OrgID:                      cmd.OrgID,
+		NewTitle:                   cmd.NewTitle,
+		NewDescription:             cmd.NewDescription,
+		SignedInUser:               cmd.SignedInUser,
+		Overwrite:                  cmd.Overwrite,
+		Version:                    cmd.Version,
+		FileProvisioningReaderName: cmd.FileProvisioningReaderName, // nolint:staticcheck
 	})
 
 	if err != nil {
