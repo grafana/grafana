@@ -96,9 +96,9 @@ describe('SpanDetailLinkButtons', () => {
         expectedCTA: 'Related logs',
       },
       {
-        name: 'shows "Related logs" when neither filterBySpanID nor filterByTraceID is set',
+        name: 'shows "Logs for this trace" when neither filter is set (trace ID filtering defaults on)',
         settings: { jsonData: { tracesToLogsV2: { customQuery: false } } },
-        expectedCTA: 'Related logs',
+        expectedCTA: 'Logs for this trace',
       },
       {
         name: 'shows "Logs for this trace" when filterByTraceID is set',

@@ -153,7 +153,12 @@ export function TraceView(props: Props) {
   );
 
   const instanceSettings = getDatasourceSrv().getInstanceSettings(datasource?.name);
-  const traceToLogsOptions = getTraceToLogsOptions(instanceSettings?.jsonData);
+  // getTraceToLogsOptions applies defaults and returns a fresh object, so memoize to keep the
+  // createSpanLink useMemo below stable across renders.
+  const traceToLogsOptions = useMemo(
+    () => getTraceToLogsOptions(instanceSettings?.jsonData),
+    [instanceSettings?.jsonData]
+  );
   const traceToMetrics: TraceToMetricsData | undefined = instanceSettings?.jsonData;
   const traceToMetricsOptions = traceToMetrics?.tracesToMetrics;
   const traceToProfilesData: TraceToProfilesData | undefined = instanceSettings?.jsonData;

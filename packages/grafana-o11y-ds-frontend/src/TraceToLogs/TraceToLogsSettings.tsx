@@ -52,10 +52,17 @@ export interface TraceToLogsData extends DataSourceJsonData {
 /**
  * Gets new version of the traceToLogs config from the json data either returning directly or transforming the old
  * version to new and returning that.
+ *
+ * Trace ID filtering defaults to on when unset so the link returns logs for the trace rather than all logs for the
+ * service. trace_id is present in far more logging setups than span_id, so it is the safer default and avoids empty
+ * results. An explicit `false` means the user opted out and is preserved. span ID filtering is left off by default.
  */
 export function getTraceToLogsOptions(data?: TraceToLogsData): TraceToLogsOptionsV2 | undefined {
   if (data?.tracesToLogsV2) {
-    return data.tracesToLogsV2;
+    return {
+      ...data.tracesToLogsV2,
+      filterByTraceID: data.tracesToLogsV2.filterByTraceID ?? true,
+    };
   }
   if (!data?.tracesToLogs) {
     return undefined;
@@ -67,7 +74,7 @@ export function getTraceToLogsOptions(data?: TraceToLogsData): TraceToLogsOption
   traceToLogs.tags = data.tracesToLogs.mapTagNamesEnabled
     ? data.tracesToLogs.mappedTags
     : data.tracesToLogs.tags?.map((tag) => ({ key: tag }));
-  traceToLogs.filterByTraceID = data.tracesToLogs.filterByTraceID;
+  traceToLogs.filterByTraceID = data.tracesToLogs.filterByTraceID ?? true;
   traceToLogs.filterBySpanID = data.tracesToLogs.filterBySpanID;
   traceToLogs.spanStartTimeShift = data.tracesToLogs.spanStartTimeShift;
   traceToLogs.spanEndTimeShift = data.tracesToLogs.spanEndTimeShift;
