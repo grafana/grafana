@@ -2,7 +2,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 import type { MetricType } from '../types';
 
-interface PaneViewState {
+export interface PaneViewState {
   activeRefId?: string;
   selectedMetric?: { refId: string; metricName: string };
   typeFilter: MetricType | null;
