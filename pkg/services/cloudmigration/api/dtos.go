@@ -53,10 +53,30 @@ type CloudMigrationSessionListResponse struct {
 }
 
 type CloudMigrationSessionResponseDTO struct {
-	UID     string    `json:"uid"`
-	Slug    string    `json:"slug"`
-	Created time.Time `json:"created"`
-	Updated time.Time `json:"updated"`
+	UID               string           `json:"uid"`
+	Slug              string           `json:"slug"`
+	Workflow          SessionWorkflow  `json:"workflow"`
+	ActiveSnapshotUID string           `json:"activeSnapshotUid,omitempty"`
+	Created           time.Time        `json:"created"`
+	Updated           time.Time        `json:"updated"`
+}
+
+// swagger:enum SessionWorkflow
+type SessionWorkflow string
+
+const (
+	SessionWorkflowIdle               SessionWorkflow = "idle"
+	SessionWorkflowBuildingSnapshot   SessionWorkflow = "building_snapshot"
+	SessionWorkflowUploadingSnapshot  SessionWorkflow = "uploading_snapshot"
+	SessionWorkflowProcessingSnapshot SessionWorkflow = "processing_snapshot"
+)
+
+type SessionConflictResponseDTO struct {
+	Message           string          `json:"message"`
+	MessageID         string          `json:"messageId"`
+	Workflow          SessionWorkflow `json:"workflow"`
+	ActiveSnapshotUID string          `json:"activeSnapshotUid,omitempty"`
+	CanForce          bool            `json:"canForce"`
 }
 
 type CloudMigrationSessionListResponseDTO struct {
@@ -205,17 +225,29 @@ type DeleteMigrationSessionRequest struct {
 func convertSessionListToDTO(sl cloudmigration.CloudMigrationSessionListResponse) CloudMigrationSessionListResponseDTO {
 	slDTOs := make([]CloudMigrationSessionResponseDTO, len(sl.Sessions))
 	for i := 0; i < len(slDTOs); i++ {
-		s := sl.Sessions[i]
-		slDTOs[i] = CloudMigrationSessionResponseDTO{
-			UID:     s.UID,
-			Slug:    s.Slug,
-			Created: s.Created,
-			Updated: s.Updated,
-		}
+		slDTOs[i] = toCloudMigrationSessionResponseDTO(sl.Sessions[i])
 	}
 	return CloudMigrationSessionListResponseDTO{
 		Sessions: slDTOs,
 	}
+}
+
+func toCloudMigrationSessionResponseDTO(s cloudmigration.CloudMigrationSessionResponse) CloudMigrationSessionResponseDTO {
+	return CloudMigrationSessionResponseDTO{
+		UID:               s.UID,
+		Slug:              s.Slug,
+		Workflow:          SessionWorkflow(s.Workflow),
+		ActiveSnapshotUID: s.ActiveSnapshotUID,
+		Created:           s.Created,
+		Updated:           s.Updated,
+	}
+}
+
+func toSessionWorkflowDTO(workflow cloudmigration.SessionWorkflow) SessionWorkflow {
+	if workflow == "" {
+		return SessionWorkflowIdle
+	}
+	return SessionWorkflow(workflow)
 }
 
 // Base snapshot without results
@@ -279,6 +311,11 @@ type CreateSnapshotRequest struct {
 
 type CreateSnapshotRequestDTO struct {
 	ResourceTypes []MigrateDataType `json:"resourceTypes"`
+	Force         bool              `json:"force"`
+}
+
+type UploadSnapshotRequestDTO struct {
+	Force bool `json:"force"`
 }
 
 // swagger:response createSnapshotResponse

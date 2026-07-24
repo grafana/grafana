@@ -551,9 +551,6 @@ func (s *Service) buildSnapshot(
 	defer span.End()
 
 	// TODO -- make sure we can only build one snapshot at a time
-	s.buildSnapshotMutex.Lock()
-	defer s.buildSnapshotMutex.Unlock()
-
 	start := time.Now()
 	defer func() {
 		s.log.Debug(fmt.Sprintf("buildSnapshot: method completed in %d ms", time.Since(start).Milliseconds()))
@@ -562,6 +559,10 @@ func (s *Service) buildSnapshot(
 	encrypter := crypto.NewNacl()
 	if encryptionAlgo != string(cloudmigration.EncryptionAlgoNacl) {
 		return fmt.Errorf("unsupported encryption algo: %v. only 'nacl' is supported", s.cfg.CloudMigration.EncryptionAlgo)
+	}
+
+	if err := s.operationCanceled(ctx, snapshotMeta.SessionUID, snapshotMeta.UID); err != nil {
+		return err
 	}
 
 	keys, err := encrypter.GenerateKeys()
@@ -588,6 +589,10 @@ func (s *Service) buildSnapshot(
 	migrationData, err := s.getMigrationDataJSON(ctx, signedInUser, resourceTypes)
 	if err != nil {
 		return fmt.Errorf("fetching migration data: %w", err)
+	}
+
+	if err := s.operationCanceled(ctx, snapshotMeta.SessionUID, snapshotMeta.UID); err != nil {
+		return err
 	}
 
 	s.log.Debug(fmt.Sprintf("buildSnapshot: got migration data json in %d ms", time.Since(start).Milliseconds()))
@@ -618,13 +623,13 @@ func (s *Service) buildSnapshot(
 
 	switch s.cfg.CloudMigration.ResourceStorageType {
 	case cloudmigration.ResourceStorageTypeDb:
-		if err := s.buildSnapshotWithDBStorage(ctx, snapshotMeta.UID, snapshotWriter, resourcesGroupedByType, maxItemsPerPartition); err != nil {
+		if err := s.buildSnapshotWithDBStorage(ctx, snapshotMeta.SessionUID, snapshotMeta.UID, snapshotWriter, resourcesGroupedByType, maxItemsPerPartition); err != nil {
 			return fmt.Errorf("building snapshot with database storage: %w", err)
 		}
 		s.log.Debug(fmt.Sprintf("buildSnapshot: wrote data partitions with database storage in %d ms", time.Since(start).Milliseconds()))
 
 	case cloudmigration.ResourceStorageTypeFs:
-		if err := s.buildSnapshotWithFSStorage(keys.Public, metadata, snapshotWriter, resourcesGroupedByType, maxItemsPerPartition); err != nil {
+		if err := s.buildSnapshotWithFSStorage(ctx, snapshotMeta.SessionUID, snapshotMeta.UID, keys.Public, metadata, snapshotWriter, resourcesGroupedByType, maxItemsPerPartition); err != nil {
 			return fmt.Errorf("building snapshot with file system storage: %w", err)
 		}
 		s.log.Debug(fmt.Sprintf("buildSnapshot: wrote data partitions with file system storage in %d ms", time.Since(start).Milliseconds()))
@@ -647,10 +652,13 @@ func (s *Service) buildSnapshot(
 	return nil
 }
 
-func (s *Service) buildSnapshotWithDBStorage(ctx context.Context, snapshotUID string, snapshotWriter *snapshot.SnapshotWriter, resourcesGroupedByType map[cloudmigration.MigrateDataType][]snapshot.MigrateDataRequestItemDTO, maxItemsPerPartition uint32) error {
+func (s *Service) buildSnapshotWithDBStorage(ctx context.Context, sessionUID, snapshotUID string, snapshotWriter *snapshot.SnapshotWriter, resourcesGroupedByType map[cloudmigration.MigrateDataType][]snapshot.MigrateDataRequestItemDTO, maxItemsPerPartition uint32) error {
 	for _, resourceType := range currentMigrationTypes {
 		i := 0
 		for chunk := range slices.Chunk(resourcesGroupedByType[resourceType], int(maxItemsPerPartition)) {
+			if err := s.operationCanceled(ctx, sessionUID, snapshotUID); err != nil {
+				return err
+			}
 			encoded, err := snapshotWriter.EncodePartition(chunk)
 			if err != nil {
 				return fmt.Errorf("encoding snapshot partition: %w", err)
@@ -665,9 +673,12 @@ func (s *Service) buildSnapshotWithDBStorage(ctx context.Context, snapshotUID st
 	return nil
 }
 
-func (s *Service) buildSnapshotWithFSStorage(publicKey, metadata []byte, snapshotWriter *snapshot.SnapshotWriter, resourcesGroupedByType map[cloudmigration.MigrateDataType][]snapshot.MigrateDataRequestItemDTO, maxItemsPerPartition uint32) error {
+func (s *Service) buildSnapshotWithFSStorage(ctx context.Context, sessionUID, snapshotUID string, publicKey, metadata []byte, snapshotWriter *snapshot.SnapshotWriter, resourcesGroupedByType map[cloudmigration.MigrateDataType][]snapshot.MigrateDataRequestItemDTO, maxItemsPerPartition uint32) error {
 	for _, resourceType := range currentMigrationTypes {
 		for chunk := range slices.Chunk(resourcesGroupedByType[resourceType], int(maxItemsPerPartition)) {
+			if err := s.operationCanceled(ctx, sessionUID, snapshotUID); err != nil {
+				return err
+			}
 			if err := snapshotWriter.Write(string(resourceType), chunk); err != nil {
 				return fmt.Errorf("writing resources to snapshot writer: resourceType=%s %w", resourceType, err)
 			}
@@ -693,9 +704,6 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 	defer span.End()
 
 	// TODO -- make sure we can only upload one snapshot at a time
-	s.buildSnapshotMutex.Lock()
-	defer s.buildSnapshotMutex.Unlock()
-
 	start := time.Now()
 	defer func() {
 		s.log.Debug(fmt.Sprintf("uploadSnapshot: method completed in %d ms", time.Since(start).Milliseconds()))
@@ -750,6 +758,9 @@ func (s *Service) uploadSnapshotWithDBStorage(ctx context.Context, session *clou
 
 	for resourceType, partitionsNumbers := range index.Items {
 		for _, partitionNumber := range partitionsNumbers {
+			if err := s.operationCanceled(ctx, session.UID, snapshotMeta.UID); err != nil {
+				return err
+			}
 			fileName := partitionToFileName(resourceType, partitionNumber)
 			snapshotIndex.Items[resourceType] = append(snapshotIndex.Items[resourceType], fileName)
 
@@ -811,6 +822,9 @@ func (s *Service) uploadSnapshotWithFSStorage(ctx context.Context, session *clou
 	// Upload the data files.
 	for _, fileNames := range index.Items {
 		for _, fileName := range fileNames {
+			if err := s.operationCanceled(ctx, session.UID, snapshotMeta.UID); err != nil {
+				return err
+			}
 			filePath := filepath.Join(snapshotMeta.LocalDir, fileName)
 			key := fmt.Sprintf("%d/snapshots/%s/%s", session.StackID, snapshotMeta.GMSSnapshotUID, fileName)
 			if err := s.uploadUsingPresignedURL(uploadCtx, uploadUrl, key, filePath); err != nil {

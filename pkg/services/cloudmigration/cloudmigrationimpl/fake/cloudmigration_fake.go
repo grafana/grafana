@@ -50,10 +50,11 @@ func (m FakeServiceImpl) CreateSession(_ context.Context, _ *user.SignedInUser, 
 		return nil, cloudmigration.ErrSessionCreationFailure
 	}
 	return &cloudmigration.CloudMigrationSessionResponse{
-		UID:     "fake_uid",
-		Slug:    "fake_stack",
-		Created: fixedDate,
-		Updated: fixedDate,
+		UID:      "fake_uid",
+		Slug:     "fake_stack",
+		Workflow: cloudmigration.SessionWorkflowIdle,
+		Created:  fixedDate,
+		Updated:  fixedDate,
 	}, nil
 }
 
@@ -77,8 +78,8 @@ func (m FakeServiceImpl) GetSessionList(_ context.Context, _ int64) (*cloudmigra
 	}
 	return &cloudmigration.CloudMigrationSessionListResponse{
 		Sessions: []cloudmigration.CloudMigrationSessionResponse{
-			{UID: "mock_uid_1", Slug: "mock_stack_1", Created: fixedDate, Updated: fixedDate},
-			{UID: "mock_uid_2", Slug: "mock_stack_2", Created: fixedDate, Updated: fixedDate},
+			{UID: "mock_uid_1", Slug: "mock_stack_1", Workflow: cloudmigration.SessionWorkflowIdle, Created: fixedDate, Updated: fixedDate},
+			{UID: "mock_uid_2", Slug: "mock_stack_2", Workflow: cloudmigration.SessionWorkflowIdle, Created: fixedDate, Updated: fixedDate},
 		},
 	}, nil
 }
@@ -154,14 +155,14 @@ func (m FakeServiceImpl) GetSnapshotList(ctx context.Context, query cloudmigrati
 	return cloudSnapshots, nil
 }
 
-func (m FakeServiceImpl) UploadSnapshot(ctx context.Context, _ int64, _ *user.SignedInUser, sessionUid string, snapshotUid string) error {
+func (m FakeServiceImpl) UploadSnapshot(ctx context.Context, _ int64, _ *user.SignedInUser, cmd cloudmigration.UploadSnapshotCommand) error {
 	if m.ReturnError {
 		return fmt.Errorf("mock error")
 	}
 	return nil
 }
 
-func (m FakeServiceImpl) CancelSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error {
+func (m FakeServiceImpl) CancelSnapshot(ctx context.Context, _ int64, sessionUid string, snapshotUid string) error {
 	if m.ReturnError {
 		return fmt.Errorf("mock error")
 	}
