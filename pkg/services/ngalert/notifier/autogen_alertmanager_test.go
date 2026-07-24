@@ -24,21 +24,23 @@ func TestAddAutogenConfig(t *testing.T) {
 			Receiver: "default",
 		}
 	}
-	configGen := func(receivers []string, muteIntervals []string) *v1.PostableApiAlertingConfig {
-		cfg := &v1.PostableApiAlertingConfig{
-			Config: v1.Config{
-				Route: rootRoute(),
+	configGen := func(receivers []string, muteIntervals []string) *v1.AMConfigV1 {
+		cfg := &v1.AMConfigV1{
+			AlertmanagerConfig: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Route: rootRoute(),
+				},
 			},
 		}
 		for _, receiver := range receivers {
-			cfg.Receivers = append(cfg.Receivers, &v1.PostableApiReceiver{
+			cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, &v1.PostableApiReceiver{
 				Receiver: definitions.Receiver{
 					Name: receiver,
 				},
 			})
 		}
 		for _, muteInterval := range muteIntervals {
-			cfg.MuteTimeIntervals = append(cfg.MuteTimeIntervals, v1.MuteTimeInterval{
+			cfg.AlertmanagerConfig.MuteTimeIntervals = append(cfg.AlertmanagerConfig.MuteTimeIntervals, v1.MuteTimeInterval{
 				Name: muteInterval,
 			})
 		}
@@ -66,7 +68,7 @@ func TestAddAutogenConfig(t *testing.T) {
 
 	testCases := []struct {
 		name             string
-		existingConfig   *v1.PostableApiAlertingConfig
+		existingConfig   *v1.AMConfigV1
 		storeSettings    []models.ContactPointRouting
 		skipInvalid      bool
 		expRoute         *v1.Route
@@ -308,8 +310,8 @@ func TestAddAutogenConfig(t *testing.T) {
 			cOpt := []cmp.Option{
 				cmpopts.IgnoreUnexported(definitions.Route{}, labels.Matcher{}),
 			}
-			if !cmp.Equal(tt.expRoute, tt.existingConfig.Route, cOpt...) {
-				t.Errorf("Unexpected Route: %v", cmp.Diff(tt.expRoute, tt.existingConfig.Route, cOpt...))
+			if !cmp.Equal(tt.expRoute, tt.existingConfig.AlertmanagerConfig.Route, cOpt...) {
+				t.Errorf("Unexpected Route: %v", cmp.Diff(tt.expRoute, tt.existingConfig.AlertmanagerConfig.Route, cOpt...))
 			}
 		})
 	}
