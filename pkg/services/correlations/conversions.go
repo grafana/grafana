@@ -109,6 +109,9 @@ func ToSpecConfig(orig CorrelationConfig) (*correlationsV0.CorrelationConfigSpec
 	if len(out.Target) == 0 {
 		out.Target = nil
 	}
+	if out.TimeRange.Field == nil && out.TimeRange.Range == nil {
+		out.TimeRange = nil
+	}
 	return out, err
 }
 

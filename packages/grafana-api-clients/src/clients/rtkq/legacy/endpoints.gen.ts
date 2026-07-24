@@ -3806,6 +3806,10 @@ export type AddDataSourceCommand = {
   user?: string;
   withCredentials?: boolean;
 };
+export type TimeRange = {
+  from?: string;
+  to?: string;
+};
 export type Transformation = {
   expression?: string;
   field?: string;
@@ -3821,6 +3825,7 @@ export type CorrelationConfig = {
   target: {
     [key: string]: any;
   };
+  timeRange?: TimeRange;
   transformations?: Transformations;
   type?: CorrelationType;
 };
@@ -3869,6 +3874,7 @@ export type CorrelationConfigUpdateDto = {
   target?: {
     [key: string]: any;
   };
+  timeRange?: TimeRange;
   /** Source data transformations */
   transformations?: Transformation[];
 };
@@ -3942,10 +3948,6 @@ export type CacheConfigSetter = {
 };
 export type SourceTypeDefinesTheStatusSource = string;
 export type ExplorePanelsState = any;
-export type TimeRange = {
-  from?: string;
-  to?: string;
-};
 export type SupportedTransformationTypes = string;
 export type LinkTransformationConfig = {
   expression?: string;

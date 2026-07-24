@@ -1364,9 +1364,6 @@
     }
   },
   "public/app/features/correlations/Forms/ConfigureCorrelationTargetForm.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 3
-    },
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
     }

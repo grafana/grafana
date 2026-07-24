@@ -1,3 +1,5 @@
+import { dateTime, rangeUtil } from '@grafana/data';
+
 import { type ScopedVars } from '../types/ScopedVars';
 import { type Field } from '../types/dataFrame';
 import { type DataLink, type InternalDataLink, type LinkModel } from '../types/dataLink';
@@ -56,11 +58,49 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
   const interpolatedPanelsState = interpolateObject(link.internal?.panelsState, scopedVars, replaceVariables);
   const interpolatedCorrelationData = interpolateObject(link.meta?.correlationData, scopedVars, replaceVariables);
   const title = link.title ? link.title : internalLink.datasourceName;
+  let exploreRange = range ? { ...range } : undefined;
+
+  if (
+    link.meta?.timeRange !== undefined &&
+    (link.meta?.timeRange.field !== undefined || link.meta?.timeRange.range !== undefined)
+  ) {
+    const timeRangeField = link.meta?.timeRange?.field;
+    // default to undefined, which is "now", if field is not defined or is not a valid variable
+    let baseTimeStr: string | undefined = undefined;
+
+    //check that timeRangeField is defined, has a variable, and is not a custom variable (logic from isCustomVariableValue in scenes)
+    if (
+      timeRangeField !== undefined &&
+      Object.keys(scopedVars).includes(timeRangeField) &&
+      !(typeof timeRangeField === 'object' && 'formatter' in timeRangeField)
+    ) {
+      const varStringTimeRangeField = `\$\{${timeRangeField}\}`;
+      baseTimeStr = interpolateObject(varStringTimeRangeField, scopedVars, replaceVariables);
+    }
+
+    try {
+      let interpolatedBaseTime = dateTime(baseTimeStr);
+      if (!interpolatedBaseTime.isValid()) {
+        interpolatedBaseTime = dateTime(baseTimeStr, 'x');
+      }
+
+      // if we need a timerange but to and/or from are not defined, make it an hour (3600 seconds)
+      exploreRange = rangeUtil.relativeToTimeRange(
+        {
+          from: link.meta.timeRange.range?.from ?? 3600,
+          to: link.meta.timeRange.range?.to !== undefined ? -Math.abs(link.meta.timeRange.range?.to) : -3600,
+        },
+        interpolatedBaseTime
+      );
+    } catch (e) {
+      // silently fail if this doesn't convert properly, it will use the left pane range
+    }
+  }
 
   const interpolatedParams = interpolatedQuery
     ? {
         query: interpolatedQuery,
-        ...(range && { timeRange: range }),
+        ...(exploreRange && { timeRange: exploreRange }),
       }
     : undefined;
 
@@ -68,7 +108,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
     title: replaceVariables(title, scopedVars),
     // In this case this is meant to be internal link (opens split view by default) the href will also points
     // to explore but this way you can open it in new tab.
-    href: generateInternalHref(internalLink.datasourceUid, interpolatedQuery, range, interpolatedPanelsState),
+    href: generateInternalHref(internalLink.datasourceUid, interpolatedQuery, exploreRange, interpolatedPanelsState),
     onClick: onClickFn
       ? (event) => {
           // Explore data links can be displayed not only in DataLinkButton but it can be used by the consumer in
@@ -83,7 +123,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
             queries: [interpolatedQuery],
             panelsState: interpolatedPanelsState,
             correlationHelperData: interpolatedCorrelationData,
-            range,
+            range: exploreRange,
           });
         }
       : undefined,
