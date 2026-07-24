@@ -140,9 +140,11 @@ export function TableFlat(props: TableNGProps) {
 
   const gridRef = useRef<DataGridHandle>(null);
   const scrollbarWidth = useScrollbarWidth(gridRef, height);
-  const rawAvailableWidth = useMemo(() => width - scrollbarWidth, [width, scrollbarWidth]);
-  // debounced so a panel-width drag doesn't recompute widths/row-heights on every frame
-  const availableWidth = useDebouncedNumber(rawAvailableWidth);
+  // Debounce only the panel width (the value that storms during a resize drag). scrollbarWidth is
+  // applied live so a scrollbar appearing/disappearing re-sizes columns immediately instead of
+  // lagging behind the debounce.
+  const debouncedWidth = useDebouncedNumber(width);
+  const availableWidth = useMemo(() => debouncedWidth - scrollbarWidth, [debouncedWidth, scrollbarWidth]);
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
   const applyToRowBgFn = useMemo(
