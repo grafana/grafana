@@ -143,6 +143,39 @@ func TestClaim_SkipsJobLostBetweenListAndUpdate(t *testing.T) {
 	assert.GreaterOrEqual(t, updates, 2, "should have skipped the lost candidate and claimed the next")
 }
 
+// TestClaim_FailsFastOnUnexpectedError verifies that a non-race error (e.g. the
+// apiserver being unavailable) aborts the claim immediately instead of retrying every
+// listed candidate. Otherwise a single tick would fire up to 16 doomed writes per driver
+// at an already-struggling apiserver.
+func TestClaim_FailsFastOnUnexpectedError(t *testing.T) {
+	cs := fakeclientset.NewSimpleClientset()
+	store := newTestStore(cs.ProvisioningV0alpha1())
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	for _, name := range []string{"job-a", "job-b", "job-c"} {
+		_, err = cs.ProvisioningV0alpha1().Jobs("stacks-123").Create(ctx, &provisioning.Job{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "stacks-123"},
+			Spec:       provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+		}, metav1.CreateOptions{})
+		require.NoError(t, err)
+	}
+
+	var updates int
+	cs.PrependReactor("update", "jobs", func(clienttesting.Action) (bool, runtime.Object, error) {
+		updates++
+		return true, nil, apierrors.NewServiceUnavailable("apiserver down")
+	})
+
+	claimed, rollback, err := store.Claim(ctx)
+	require.Error(t, err)
+	assert.NotErrorIs(t, err, ErrNoJobs, "an unexpected error must surface, not be masked as ErrNoJobs")
+	assert.Nil(t, claimed)
+	assert.Nil(t, rollback)
+	assert.Equal(t, 1, updates, "must fail fast on the first unexpected error, not hammer every candidate")
+}
+
 // TestClaim_LostRowReturnsNoJobs verifies that when the only candidate cannot be
 // claimed (lost in the race window), Claim reports ErrNoJobs rather than a hard
 // error, so the driver simply retries on its next tick.

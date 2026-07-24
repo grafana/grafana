@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -108,6 +109,17 @@ func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry
 	}, nil
 }
 
+// isJobDeletedDuringClaim reports whether a claim Update failed because the job was
+// completed and deleted in the window between the List and the Update. The stale
+// resourceVersion carried from the List turns the Update into a create, which the store
+// rejects. Unified storage surfaces storage.ErrResourceVersionSetOnCreate as a plain
+// 500/Unknown, so its typed identity is lost across the REST boundary and we match on the
+// message. With create-on-update disabled on the jobs store this instead returns NotFound
+// (handled directly by the caller); this covers apiservers that still allow it.
+func isJobDeletedDuringClaim(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "resourceVersion should not be set")
+}
+
 // Claim takes a job from storage, marks it as ours, and returns it.
 //
 // Any job which has not been claimed by another worker is fair game.
@@ -165,19 +177,23 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 		// This is the desired behavior, as it ensures that claims are atomic.
 		updatedJob, err := s.client.Jobs(job.GetNamespace()).Update(ctx, &job, metav1.UpdateOptions{})
 		if err != nil {
-			// Failing to claim this specific job is never fatal, so skip it and try the
-			// next candidate. The claim carries the resourceVersion from the List above;
-			// between List and Update another worker can complete and delete the job. That
-			// turns our Update into a create, which the store rejects because a
-			// resourceVersion is set, or the other worker claims it first (a conflict).
-			// We do not match on the error type: unified storage surfaces the create
-			// rejection as a plain 500/Unknown rather than Conflict/Invalid/NotFound, so
-			// enumerating error kinds here is unreliable. No claim was placed when Update
-			// fails, so there is nothing to roll back. If no candidate can be claimed we
-			// fall through to ErrNoJobs and the driver retries on its next tick.
-			logger.Debug("failed to claim job, trying next candidate",
-				"job", job.GetName(), "namespace", job.GetNamespace(), "error", err)
-			continue
+			// Only skip to the next candidate when the error is specific to THIS job losing
+			// the claim race. Fail fast on anything else (apiserver unavailable, throttling,
+			// permissions) so a struggling apiserver is not hit with up to 16 doomed writes
+			// in a single tick. No claim is placed when Update fails, so there is nothing to
+			// roll back before moving on.
+			//
+			//   - Conflict: another worker claimed it first (resourceVersion mismatch).
+			//   - NotFound / deleted-in-window: the job was completed and deleted between our
+			//     List and Update. With create-on-update disabled the store returns NotFound;
+			//     apiservers that still allow it turn the Update into a create that is rejected
+			//     because a resourceVersion is set (matched via isJobDeletedDuringClaim).
+			if apierrors.IsConflict(err) || apierrors.IsNotFound(err) || isJobDeletedDuringClaim(err) {
+				logger.Debug("job lost in claim race, trying next candidate",
+					"job", job.GetName(), "namespace", job.GetNamespace(), "error", err)
+				continue
+			}
+			return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 		}
 
 		logger.Info("job claim complete",
