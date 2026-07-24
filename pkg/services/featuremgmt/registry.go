@@ -1350,15 +1350,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:            "playlistsReconciler",
-			Description:     "Enables experimental reconciler for playlists",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "prometheusSpecialCharsInLabelValues",
 			Description: "Adds support for quotes and special characters in label values for Prometheus queries",
 			Generate:    Generate{LegacyFrontend: true},

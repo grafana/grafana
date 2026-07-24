@@ -4554,7 +4554,8 @@
       "metadata": {
         "name": "playlistsReconciler",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-12-20T03:09:31Z"
+        "creationTimestamp": "2024-12-20T03:09:31Z",
+        "deletionTimestamp": "2026-07-16T15:23:31Z"
       },
       "spec": {
         "description": "Enables experimental reconciler for playlists",
