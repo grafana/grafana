@@ -51,7 +51,7 @@ import {
 /* ---------------------------- Pill inference ----------------------------- */
 const SPLIT_RE = /\s*,\s*/;
 
-export function inferPills(rawValue: TableCellValue): unknown[] {
+function inferPillsImpl(rawValue: TableCellValue): unknown[] {
   if (rawValue === '' || rawValue == null) {
     return [];
   }
@@ -71,6 +71,44 @@ export function inferPills(rawValue: TableCellValue): unknown[] {
   }
 
   return value.trim().split(SPLIT_RE);
+}
+
+// Row-height measurement re-parses the same pill values on every resize tick (once per frame for
+// the duration of a panel-width drag), which showed up as ~1.4s of self time in CPU traces.
+// inferPills is pure and its inputs are stable across ticks, so we cache results. The cache must be
+// O(1): a large table can hold tens of thousands of distinct pill values, so a linear-scan
+// memoizer (e.g. micro-memoize) spends all its time comparing keys and makes things worse, not
+// better. Object/array values are cached by reference in a WeakMap (unbounded-safe, auto-GC'd);
+// primitives use a small bounded FIFO Map. Callers only read the result, so sharing an array is safe.
+const arrayPillCache = new WeakMap<object, unknown[]>();
+const primitivePillCache = new Map<string, unknown[]>();
+const PRIMITIVE_PILL_CACHE_MAX = 2048;
+
+export function inferPills(rawValue: TableCellValue): unknown[] {
+  if (rawValue == null || rawValue === '') {
+    return [];
+  }
+
+  if (typeof rawValue === 'object') {
+    let cached = arrayPillCache.get(rawValue);
+    if (cached === undefined) {
+      cached = inferPillsImpl(rawValue);
+      arrayPillCache.set(rawValue, cached);
+    }
+    return cached;
+  }
+
+  const key = String(rawValue);
+  let cached = primitivePillCache.get(key);
+  if (cached === undefined) {
+    cached = inferPillsImpl(rawValue);
+    if (primitivePillCache.size >= PRIMITIVE_PILL_CACHE_MAX) {
+      // evict the oldest entry (Map preserves insertion order)
+      primitivePillCache.delete(primitivePillCache.keys().next().value!);
+    }
+    primitivePillCache.set(key, cached);
+  }
+  return cached;
 }
 
 /* ---------------------------- Cell calculations --------------------------- */
