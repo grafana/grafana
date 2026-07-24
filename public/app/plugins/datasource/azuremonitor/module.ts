@@ -1,6 +1,6 @@
 import { DataSourcePlugin, DashboardLoadedEvent } from '@grafana/data';
 import { initPluginTranslations } from '@grafana/i18n';
-import { getAppEvents } from '@grafana/runtime';
+import { config, getAppEvents, getDataSourceSrv } from '@grafana/runtime';
 
 import { ConfigEditor } from './components/ConfigEditor/ConfigEditor';
 import AzureMonitorQueryEditor from './components/QueryEditor/QueryEditor';
@@ -29,6 +29,24 @@ interface Statistics {
   [key: string]: number;
 }
 
+// queryUsesBatchAPI reports whether a metrics query targets a datasource with
+// the Metrics Batch API enabled (feature toggle + datasource setting), i.e.
+// whether it will execute via the batch path. Settings resolve synchronously
+// from bootstrap config, so provisioned datasources are included — which
+// config-editor interactions alone cannot capture.
+function queryUsesBatchAPI(query: AzureMonitorQuery): boolean {
+  if (!config.featureToggles.azureMonitorBatchAPI || !query.datasource) {
+    return false;
+  }
+  try {
+    const settings = getDataSourceSrv().getInstanceSettings(query.datasource);
+    const jsonData: AzureMonitorDataSourceJsonData | undefined = settings?.jsonData;
+    return !!jsonData?.batchAPIEnabled;
+  } catch {
+    return false;
+  }
+}
+
 // Track dashboard loads to RudderStack
 getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
   DashboardLoadedEvent,
@@ -43,6 +61,7 @@ getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
     let stats: { [key in AzureQueryType | string]: Statistics } = {
       [AzureQueryType.AzureMonitor]: {
         ...common,
+        batchAPI: 0,
       },
       [AzureQueryType.LogAnalytics]: {
         ...common,
@@ -76,6 +95,9 @@ getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
         stats[AzureQueryType.AzureMonitor][query.hide ? 'hidden' : 'visible']++;
         if (query.azureMonitor?.resources && query.azureMonitor.resources.length > 1) {
           stats[AzureQueryType.AzureMonitor].multiResource++;
+        }
+        if (queryUsesBatchAPI(query)) {
+          stats[AzureQueryType.AzureMonitor].batchAPI++;
         }
       }
       if (query.queryType === AzureQueryType.LogAnalytics) {
@@ -144,6 +166,7 @@ getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
         azure_monitor_queries_hidden: stats[AzureQueryType.AzureMonitor].hidden,
         azure_monitor_multiple_resource: stats[AzureQueryType.AzureMonitor].multiResource,
         azure_monitor_query: stats[AzureQueryType.AzureMonitor].count,
+        azure_monitor_batch_api_queries: stats[AzureQueryType.AzureMonitor].batchAPI,
 
         // Logs queries stats
         azure_log_analytics_queries: stats[AzureQueryType.LogAnalytics].visible,

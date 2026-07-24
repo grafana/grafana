@@ -88,3 +88,30 @@ folder.grafana.app/folders = 2.0
 		assert.Empty(t, cfg.ZanzanaRollout.ResourcePercentages)
 	})
 }
+
+func TestReadZanzanaSettings_OpenFGAExperimentals(t *testing.T) {
+	t.Run("disabled by default", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes(nil)
+		require.NoError(t, err)
+		assert.Empty(t, cfg.ZanzanaServer.OpenFgaServerSettings.Experimentals)
+	})
+
+	t.Run("reads experimentals from config", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(`
+[openfga]
+experimentals = enable-check-optimizations,weighted_graph_check
+`))
+		require.NoError(t, err)
+		assert.Equal(t, []string{"enable-check-optimizations", "weighted_graph_check"}, cfg.ZanzanaServer.OpenFgaServerSettings.Experimentals)
+	})
+
+	t.Run("environment overrides config", func(t *testing.T) {
+		t.Setenv("GF_OPENFGA_EXPERIMENTALS", "weighted_graph_check")
+		cfg, err := NewCfgFromBytes([]byte(`
+[openfga]
+experimentals = enable-check-optimizations
+`))
+		require.NoError(t, err)
+		assert.Equal(t, []string{"weighted_graph_check"}, cfg.ZanzanaServer.OpenFgaServerSettings.Experimentals)
+	})
+}

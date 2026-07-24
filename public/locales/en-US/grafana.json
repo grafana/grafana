@@ -6084,15 +6084,6 @@
         "title": "Panel time settings"
       }
     },
-    "panel-assistant": {
-      "hint": {
-        "aria-label": "Open assistant for this panel"
-      },
-      "prompt-card": {
-        "placeholder": "Ask Assistant about this panel...",
-        "placeholder-multi": "Ask Assistant about these panels..."
-      }
-    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Dashboard must be saved before alerts can be added.",
@@ -8446,6 +8437,7 @@
       "open-in-new-tab": "Open in new tab"
     },
     "content-outline": {
+      "title-datasource-explorer": "Datasource explorer",
       "tooltip-collapse-outline": "Collapse outline",
       "tooltip-expand-outline": "Expand outline"
     },
@@ -8565,6 +8557,10 @@
     "get-matches-metadata": {
       "matches": "0 matches"
     },
+    "key-values-table": {
+      "link-fallback-label": "Link",
+      "open-value-in": "Open value in"
+    },
     "legacy-create-span-link-factory": {
       "text": {
         "tags": "Tags"
@@ -8668,6 +8664,10 @@
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "No volume information available for the current queries and time range."
+    },
+    "metrics-explorer": {
+      "search-placeholder": "Search metrics",
+      "title-metrics": "Metrics"
     },
     "next-prev-result": {
       "aria-label-next": "Next result button",
@@ -8886,11 +8886,20 @@
       "summary-label": "(summary)"
     },
     "span-detail-link-buttons": {
-      "logs-for-this-span": "Logs for this span",
-      "logs-for-this-trace": "Logs for this trace",
+      "logs-for-this-span": {
+        "button": "Logs for this span",
+        "no-logs-tooltip": "No logs found for this span using the trace data source configuration.",
+        "tooltip": "See logs related to this span using the trace data source configuration."
+      },
+      "logs-for-this-trace": {
+        "button": "Logs for this trace",
+        "no-logs-tooltip": "No logs found for this trace using the trace data source configuration.",
+        "tooltip": "See logs related to this trace using the trace data source configuration."
+      },
       "open-in-profiles-drilldown": "Open in Profiles Drilldown",
       "profiles-for-this-span": "Profiles for this span",
       "related-logs": "Related logs",
+      "related-logs-tooltip": "View related logs using the trace data source configuration.",
       "session-for-this-span": "Session for this span"
     },
     "span-flame-graph": {
@@ -10883,7 +10892,10 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Firing alerts",
-      "title": "Alerts & incidents"
+      "incident-tab-label": "Incidents",
+      "title": "Alerts & incidents",
+      "title-alerts": "Alerts",
+      "title-incidents": "Incidents"
     },
     "dashboard-tabs": {
       "most-used": "Most used",
@@ -13908,16 +13920,17 @@
     "read-only-remote-tooltip": "This resource is read-only and provisioned through Git. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "recent-jobs": {
       "column-action": "Action",
+      "column-author": "Author",
       "column-duration": "Duration",
       "column-job-id": "Job ID",
       "column-message": "Message",
+      "column-origin": "Origin",
       "column-started": "Started",
       "column-status": "Status",
-      "column-triggered-by": "Triggered by",
       "error-loading-active-jobs": "Error loading active jobs",
       "error-loading-historic-jobs": "Error loading historic jobs",
       "jobs": "Jobs",
-      "triggered-by-system": "System"
+      "origin-unknown": "Unknown"
     },
     "repository-actions": {
       "connection": "Connection",

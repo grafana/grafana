@@ -24,7 +24,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -1117,7 +1116,7 @@ func newConfiguredSnapshotBackend(t *testing.T, bucketURL string) (*bleveBackend
 	cfg.IndexSnapshotBucketURL = bucketURL
 
 	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
-	opts, err := NewSearchOptions(featuremgmt.WithFeatures(), cfg, nil, metrics, nil, nil)
+	opts, err := NewSearchOptions(cfg, nil, metrics, nil, nil)
 	require.NoError(t, err)
 	be, ok := opts.Backend.(*bleveBackend)
 	require.True(t, ok)

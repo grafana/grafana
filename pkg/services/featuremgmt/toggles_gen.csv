@@ -44,7 +44,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-12-05,kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-19,externalSnapshotsK8SAPIPush,experimental,@grafana/sharing-squad,false,true,false
 2026-05-21,externalSnapshotsSupportLegacyAPI,experimental,@grafana/sharing-squad,false,true,false
-2025-06-25,kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,true,false
+2026-07-21,libraryelements.kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,false,false
 2026-05-22,kubernetesFolderCascadeDelete,experimental,@grafana/search-and-storage,false,false,false
 2026-05-22,grafana.kubernetesAnnotationsClient,experimental,@grafana/dashboards-squad,false,false,true
 2026-06-18,grafana.newPanelQueryErrorsUI,experimental,@grafana/dashboards-squad,false,false,true
@@ -75,7 +75,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-10-23,dashboardNewLayouts,GA,@grafana/dashboards-squad,false,false,true
 2026-07-08,dashboard.notebooks,experimental,@grafana/sharing-squad,false,false,false
 2026-05-22,dashboardDefaultLayoutSelector,GA,@grafana/dashboards-squad,false,false,true
-2026-05-22,dashboardAssistantPopover,experimental,@grafana/dashboards-squad,false,false,true
 2025-08-29,dashboardUndoRedo,experimental,@grafana/dashboards-squad,false,false,true
 2025-11-21,perPanelNonApplicableDrilldowns,experimental,@grafana/dashboards-squad,false,false,true
 2024-12-02,feedbackButton,preview,@grafana/dashboards-squad,false,false,true
@@ -156,7 +155,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-10-04,pluginsSriChecks,GA,@grafana/grafana-catalog,false,false,false
 2024-10-22,timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
 2024-10-24,azureMonitorDisableLogLimit,GA,@grafana/data-sources-plugins,false,false,false
-2024-12-20,playlistsReconciler,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2024-12-18,prometheusSpecialCharsInLabelValues,experimental,@grafana/data-sources-plugins,false,false,true
 2024-11-05,enableExtensionsAdminPage,experimental,@grafana/grafana-catalog,false,true,false
 2024-11-07,enableSCIM,GA,@grafana/identity-access-team,false,false,false
@@ -196,6 +194,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-05-21,alertingImportYAMLUI,GA,@grafana/alerting-squad,false,false,true
 2026-05-22,alertingMigrationWizardUI,experimental,@grafana/alerting-squad,false,false,true
 2025-04-02,azureMonitorLogsBuilderEditor,preview,@grafana/data-sources-plugins,false,false,false
+2026-06-24,azureMonitorBatchAPI,experimental,@grafana/data-sources-plugins,false,false,false
 2025-04-03,alertingRulePermanentlyDelete,GA,@grafana/alerting-squad,false,false,true
 2025-03-27,alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,false
 2025-04-02,multiTenantTempCredentials,experimental,@grafana/data-sources-plugins,false,false,false
@@ -264,7 +263,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-11-18,ttlPluginInstanceManager,experimental,@grafana/grafana-catalog,false,false,true
 2025-11-21,lokiQueryLimitsContext,experimental,@grafana/observability-logs,false,false,true
 2025-11-27,kubernetesAlertingHistorian,experimental,@grafana/alerting-squad,false,true,false
-2026-05-22,plugins.useMTPlugins,experimental,@grafana/grafana-catalog,false,false,true
+2026-05-22,plugins.useMTPlugins,experimental,@grafana/grafana-catalog,false,false,false
 2026-05-22,dashboardSectionVariables,GA,@grafana/dashboards-squad,false,false,true
 2026-05-22,globalDashboardVariables,experimental,@grafana/dashboards-squad,false,true,false
 2026-01-05,smoothingTransformation,experimental,@grafana/datapro,false,false,true
@@ -361,5 +360,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-06-26,grafana.onDemandDiagnostics,experimental,@grafana/data-sources,false,false,false
 2026-07-08,grafana.frontendLegacyAPIHandling,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-07-17,features.bulkFlagEvalFiltering,experimental,@grafana/grafana-backend-services-squad,false,false,false
-2026-07-14,grafana.multiTenantNavTree,experimental,@grafana/grafana-frontend-navigation,false,false,true
+2026-07-14,grafana.multiTenantNavTree,experimental,@grafana/grafana-frontend-navigation,false,false,false
 2026-07-20,grafana.exploreMetricsSidebar,experimental,@grafana/datapro,false,false,true
+2026-07-22,grafana.dynamicTraceToLogs,preview,@grafana/observability-logs,false,false,true

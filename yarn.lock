@@ -9304,6 +9304,23 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@test-plugins/grafana-e2etest-app@workspace:e2e-playwright/test-plugins/grafana-test-app":
+  version: 0.0.0-use.local
+  resolution: "@test-plugins/grafana-e2etest-app@workspace:e2e-playwright/test-plugins/grafana-test-app"
+  dependencies:
+    "@grafana/data": "workspace:*"
+    "@grafana/plugin-configs": "workspace:*"
+    "@types/node": "npm:24.9.2"
+    "@types/react": "npm:18.3.18"
+    "@types/react-dom": "npm:18.3.5"
+    react: "npm:18.3.1"
+    react-dom: "npm:18.3.1"
+    typescript: "npm:6.0.2"
+    webpack: "npm:^5.105.0"
+    webpack-merge: "npm:5.10.0"
+  languageName: unknown
+  linkType: soft
+
 "@test-plugins/grafana-e2etest-datasource@workspace:e2e-playwright/test-plugins/grafana-test-datasource":
   version: 0.0.0-use.local
   resolution: "@test-plugins/grafana-e2etest-datasource@workspace:e2e-playwright/test-plugins/grafana-test-datasource"

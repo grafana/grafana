@@ -80,4 +80,43 @@ describe('AccordionCategorizedKeyValues', () => {
 
     expect(screen.getByRole('cell', { name: 'http.method' })).toBeInTheDocument();
   });
+
+  it('renders uncategorized attributes flat without an Other section', () => {
+    render(
+      <AccordionCategorizedKeyValues
+        data={[
+          { key: 'custom.field', value: 'value' },
+          { key: 'another.custom', value: 'other' },
+        ]}
+        sectionType="span"
+        isOpen={true}
+        label="Span attributes"
+        onToggle={jest.fn()}
+      />
+    );
+
+    expect(screen.queryByTestId('attribute-category-other')).not.toBeInTheDocument();
+    expect(screen.queryByText('Other')).not.toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'custom.field' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'another.custom' })).toBeInTheDocument();
+  });
+
+  it('still shows Other when mixed with named categories', () => {
+    render(
+      <AccordionCategorizedKeyValues
+        data={[
+          { key: 'http.method', value: 'GET' },
+          { key: 'custom.field', value: 'value' },
+        ]}
+        sectionType="span"
+        isOpen={true}
+        label="Span attributes"
+        onToggle={jest.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('attribute-category-http')).toBeInTheDocument();
+    expect(screen.getByTestId('attribute-category-other')).toBeInTheDocument();
+    expect(screen.getByText('Other')).toBeInTheDocument();
+  });
 });

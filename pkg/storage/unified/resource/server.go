@@ -182,6 +182,15 @@ type StorageBackend interface {
 	// Get resource stats within the storage backend.  When namespace is empty, it will apply to all
 	GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error)
 
+	// GetResourceStatsWithLimit is like GetResourceStats but may stop counting a
+	// namespace once it reaches countLimit, letting callers that only compare
+	// counts against thresholds avoid scanning full history. countLimit <= 0 means
+	// no limit; a backend may also ignore it and return exact counts. In limited
+	// mode (countLimit > 0) ResourceVersion is not populated, and countLimit must
+	// be greater than minCount so a namespace is not dropped by the minCount filter
+	// before it is counted.
+	GetResourceStatsWithLimit(ctx context.Context, nsr NamespacedResource, minCount, countLimit int) ([]ResourceStats, error)
+
 	// ListStoredResources discovers which resource identities exist in storage,
 	// without returning counts. It is a cheaper alternative to GetResourceStats
 	// for callers that only need to know what is stored. The filter's Namespace
