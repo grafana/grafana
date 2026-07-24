@@ -265,6 +265,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                         id={'token'}
                         placeholder={gitFields.tokenConfig.placeholder}
                         isConfigured={tokenConfigured}
+                        revealable
                         onReset={() => {
                           setValue('token', '');
                           setTokenConfigured(false);

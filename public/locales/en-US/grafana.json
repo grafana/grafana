@@ -10485,6 +10485,10 @@
     "secret-form-field": {
       "reset": "Reset"
     },
+    "secret-input": {
+      "hide": "Hide secret",
+      "show": "Show secret"
+    },
     "secret-text-area": {
       "hide-content": "Hide secret content",
       "show-content": "Show secret content"
