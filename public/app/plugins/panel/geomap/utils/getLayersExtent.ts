@@ -1,10 +1,13 @@
 import { createEmpty, extend, type Extent } from 'ol/extent';
+import type BaseLayer from 'ol/layer/Base';
 import LayerGroup from 'ol/layer/Group';
 import VectorLayer from 'ol/layer/Vector';
 import VectorImage from 'ol/layer/VectorImage';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints.js';
 
 import { type MapLayerState } from '../types';
+
+export const EXCLUDE_FROM_FIT_TO_DATA = 'excludeFromFitToData';
 
 export function getLayersExtent(
   layers: MapLayerState[] = [],
@@ -52,7 +55,11 @@ export function getLayerGroupExtent(lg: LayerGroup, lastOnly: boolean) {
   return lg
     .getLayers()
     .getArray()
-    .filter((l) => l instanceof VectorLayer || l instanceof VectorImage || l instanceof WebGLPointsLayer)
+    .filter(
+      (l) =>
+        (l instanceof VectorLayer || l instanceof VectorImage || l instanceof WebGLPointsLayer) &&
+        isIncludedInFitToData(l)
+    )
     .map((l) => {
       if (l instanceof VectorLayer || l instanceof VectorImage || l instanceof WebGLPointsLayer) {
         if (lastOnly) {
@@ -77,4 +84,8 @@ export function getLayerGroupExtent(lg: LayerGroup, lastOnly: boolean) {
         return [];
       }
     });
+}
+
+function isIncludedInFitToData(layer: BaseLayer) {
+  return layer.get(EXCLUDE_FROM_FIT_TO_DATA) !== true;
 }
