@@ -1,10 +1,11 @@
 import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2, type TimeZone } from '@grafana/data';
+import { findTimeZoneAt } from '@grafana/data/unstable';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 
-import { findTimeZoneAt, resolveIanaName } from './timeZoneUtils';
+import { resolveIanaName } from './timeZoneUtils';
 
 interface Props {
   /** preformatted display string, e.g. 'UTC+05:30' (see formatUtcOffset) */

@@ -1,11 +1,12 @@
 /* eslint-disable id-blacklist, no-restricted-imports */
-import moment, { type Moment } from 'moment-timezone';
 
 import { type TimeZone } from '../types/time';
 
 import { type DateTimeOptions, getTimeZone } from './common';
+import { findTimeZoneAt } from './easytz_lookup';
 import { systemDateFormats } from './formats';
-import { type DateTimeInput, toUtc, dateTimeAsMoment } from './moment_wrapper';
+import moment from './luxon_moment_compat/moment';
+import { type DateTimeInput, type Moment, toMomentInput } from './moment_wrapper';
 
 /**
  * The type describing the options that can be passed to the {@link dateTimeFormat}
@@ -75,8 +76,11 @@ export const dateTimeFormatTimeAgo: DateTimeFormatter = (dateInUtc, options?) =>
  *
  * @public
  */
-export const dateTimeFormatWithAbbrevation: DateTimeFormatter = (dateInUtc, options?) =>
-  toTz(dateInUtc, getTimeZone(options)).format(`${systemDateFormats.fullDate} z`);
+export const dateTimeFormatWithAbbrevation: DateTimeFormatter = (dateInUtc, options?) => {
+  const timeZone = getTimeZone(options);
+  const time = toTz(dateInUtc, timeZone);
+  return `${time.format(systemDateFormats.fullDate)} ${zoneAbbreviation(time, timeZone)}`;
+};
 
 /**
  * Helper function to return only the time zone abbreviation for a given date and time value. If no options
@@ -87,8 +91,22 @@ export const dateTimeFormatWithAbbrevation: DateTimeFormatter = (dateInUtc, opti
  *
  * @public
  */
-export const timeZoneAbbrevation: DateTimeFormatter = (dateInUtc, options?) =>
-  toTz(dateInUtc, getTimeZone(options)).format('z');
+export const timeZoneAbbrevation: DateTimeFormatter = (dateInUtc, options?) => {
+  const timeZone = getTimeZone(options);
+  return zoneAbbreviation(toTz(dateInUtc, timeZone), timeZone);
+};
+
+// The luxon-backed `z` token can only produce ICU's localized offset names (e.g. "GMT+2") for
+// most zones, so the DST-correct abbreviation (CEST, EDT, ...) comes from the easy-tz dataset
+// instead. Zone names that don't resolve to an IANA zone ('browser', unknown names) return ''
+// for parity with moment's deprecated `z` token, which rendered '' on plain (non-moment-timezone)
+// instances; 'utc' isn't in the easy-tz list and falls back to the shim's own `z` formatting ("UTC").
+const zoneAbbreviation = (time: Moment, timeZone: TimeZone): string => {
+  if (!moment.tz.isValidZone(timeZone)) {
+    return '';
+  }
+  return findTimeZoneAt(timeZone, time.valueOf())?.abbr ?? time.format('z');
+};
 
 const getFormat = <T extends DateTimeOptionsWithFormat>(options?: T): string => {
   if (options?.defaultWithMS) {
@@ -97,18 +115,20 @@ const getFormat = <T extends DateTimeOptionsWithFormat>(options?: T): string => 
   return options?.format ?? systemDateFormats.fullDate;
 };
 
+// like moment's toUtc-then-convert pattern: the input is parsed in utc (zoneless strings are
+// interpreted as UTC per this module's contract) and the instant is then converted to the target
+// zone. Built as a single shim instance; the zone mutations don't reallocate.
 const toTz = (dateInUtc: DateTimeInput, timeZone: TimeZone): Moment => {
-  const date = dateInUtc;
-  const zone = moment.tz.zone(timeZone);
+  const inUtc = moment.utc(toMomentInput(dateInUtc));
 
-  if (zone && zone.name) {
-    return dateTimeAsMoment(toUtc(date)).tz(zone.name);
+  if (moment.tz.isValidZone(timeZone)) {
+    return inUtc.tz(timeZone);
   }
 
   switch (timeZone) {
     case 'utc':
-      return dateTimeAsMoment(toUtc(date));
+      return inUtc;
     default:
-      return dateTimeAsMoment(toUtc(date)).local();
+      return inUtc.local();
   }
 };

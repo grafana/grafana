@@ -23,6 +23,14 @@ declare global {
        * test fails.
        */
       toEmitValuesWith<E = ObservableType<T>>(expectations: (received: E[]) => void): Promise<CustomMatcherResult>;
+      /** Passes when `received.valueOf()` strictly equals `expectedValue`. See `toHaveValueOf.ts` for details. */
+      toHaveValueOf(expectedValue: unknown): R;
+    }
+    // `expect.extend` also makes custom matchers available in asymmetric form (`expect.toHaveValueOf(...)`
+    // inside e.g. `expect.objectContaining`), which is typed by the `Expect` interface rather than `Matchers`.
+    interface Expect {
+      /** Asymmetric form of `toHaveValueOf`: passes when `received.valueOf()` strictly equals `expectedValue`. */
+      toHaveValueOf(expectedValue: unknown): unknown;
     }
   }
 }

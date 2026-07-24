@@ -1,7 +1,9 @@
-import moment, { type Moment, type MomentInput, type DurationInputArg1, type DurationInputArg2 } from 'moment';
-import { tz } from 'moment-timezone';
-
 import { type TimeZone } from '../types/time';
+
+import moment, { type MomentInput, type MomentLike as Moment, type MomentUnit } from './luxon_moment_compat/moment';
+
+export type { Moment };
+
 /* eslint-disable id-blacklist, no-restricted-imports */
 export interface DateTimeBuiltinFormat {
   __momentBuiltinFormatBrand: any;
@@ -10,35 +12,8 @@ export const ISO_8601: DateTimeBuiltinFormat = moment.ISO_8601;
 export type DateTimeInput = Date | string | number | Array<string | number> | DateTime | null; // | undefined;
 export type FormatInput = string | DateTimeBuiltinFormat | undefined;
 export type DurationInput = string | number | DateTimeDuration;
-export type DurationUnit =
-  | 'year'
-  | 'years'
-  | 'y'
-  | 'month'
-  | 'months'
-  | 'M'
-  | 'week'
-  | 'weeks'
-  | 'isoWeek'
-  | 'w'
-  | 'day'
-  | 'days'
-  | 'd'
-  | 'hour'
-  | 'hours'
-  | 'h'
-  | 'minute'
-  | 'minutes'
-  | 'm'
-  | 'second'
-  | 'seconds'
-  | 's'
-  | 'millisecond'
-  | 'milliseconds'
-  | 'ms'
-  | 'quarter'
-  | 'quarters'
-  | 'Q';
+// same member set as the shim's MomentUnit; aliased so the two cannot drift apart
+export type DurationUnit = MomentUnit;
 
 export interface DateTimeLocale {
   firstDayOfWeek: () => number;
@@ -50,6 +25,7 @@ export interface DateTimeDuration {
   minutes: () => number;
   seconds: () => number;
   asSeconds: () => number;
+  asMilliseconds: () => number;
 }
 
 export interface DateTime extends Object {
@@ -105,21 +81,52 @@ export const isDateTime = (value: unknown): value is DateTime => {
   return moment.isMoment(value);
 };
 
+// package-internal (not re-exported from index.ts): lets hot paths hand a DateTimeInput straight
+// to the shim factories without building an intermediate MomentLike copy first
+export const toMomentInput = (input?: DateTimeInput): MomentInput => {
+  // every `DateTime` this wrapper hands out is a shim `MomentLike` at runtime; the guard
+  // intersection makes that visible to the compiler so the object (and its zone) passes through.
+  if (moment.isMoment(input)) {
+    return input;
+  }
+
+  // unreachable given the above, but it lets the compiler subtract `DateTime` from the union
+  // (the `DateTime` and `MomentLike` interfaces are not structurally compatible).
+  if (isDateTime(input)) {
+    return input.valueOf();
+  }
+
+  return input;
+};
+
+// The public `DateTime` interface and the shim's `MomentLike` describe the same runtime objects
+// but are structurally incompatible (e.g. `set` and `isoWeekday` differ), so handing a shim
+// object out through the public interface needs one unchecked conversion.
+const asDateTime = (value: Moment): DateTime => {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return value as DateTime;
+};
+
 export const toUtc = (input?: DateTimeInput, formatInput?: FormatInput): DateTime => {
-  return moment.utc(input as MomentInput, formatInput) as DateTime;
+  return asDateTime(moment.utc(toMomentInput(input), formatInput));
 };
 
 export const toDuration = (input?: DurationInput, unit?: DurationUnit): DateTimeDuration => {
-  // moment built-in types are a bit flaky, for example `isoWeek` is not in the type definition but it's present in the js source.
-  return moment.duration(input as DurationInputArg1, unit as DurationInputArg2) as DateTimeDuration;
+  if (typeof input === 'string' || typeof input === 'number' || input == null) {
+    return moment.duration(input, unit);
+  }
+
+  // duration-like objects carry their own magnitude, so `unit` does not apply (same as before,
+  // when the shim took the object's `valueOf()` in milliseconds and ignored the unit).
+  return moment.duration(input.asMilliseconds());
 };
 
 export const dateTime = (input?: DateTimeInput, formatInput?: FormatInput): DateTime => {
-  return moment(input as MomentInput, formatInput) as DateTime;
+  return asDateTime(moment(toMomentInput(input), formatInput));
 };
 
 export const dateTimeAsMoment = (input?: DateTimeInput) => {
-  return dateTime(input) as Moment;
+  return moment(toMomentInput(input));
 };
 
 export const dateTimeForTimeZone = (
@@ -128,20 +135,18 @@ export const dateTimeForTimeZone = (
   formatInput?: FormatInput
 ): DateTime => {
   if (timezone && timezone !== 'browser') {
-    let result: moment.Moment;
-
     if (typeof input === 'string' && formatInput) {
-      result = tz(input, formatInput, timezone);
-    } else {
-      result = tz(input, timezone);
+      return asDateTime(moment.tz(input, formatInput, timezone));
     }
 
-    if (isDateTime(result)) {
-      return result;
-    }
+    return asDateTime(moment.tz(toMomentInput(input), timezone));
   }
 
   return dateTime(input, formatInput);
+};
+
+export const guessBrowserTimeZone = (ignoreCache = false): string => {
+  return moment.tz.guess(ignoreCache);
 };
 
 export const getWeekdayIndex = (day: string) => {

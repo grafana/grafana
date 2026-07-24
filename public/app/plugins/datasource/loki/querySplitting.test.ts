@@ -207,14 +207,10 @@ describe.each([false, true])('runSplitQuery(aligned = %s)', (lokiAlignedQuerySpl
             requestId: 'TEST_3',
             intervalMs: 60000,
             range: expect.objectContaining({
-              from: expect.objectContaining({
-                //2023-02-10T00:00:00.000Z
-                _i: 1675987200000,
-              }),
-              to: expect.objectContaining({
-                // 2023-02-10T06:00:00.000Z
-                _i: 1676008800000,
-              }),
+              //2023-02-10T00:00:00.000Z
+              from: expect.toHaveValueOf(1675987200000),
+              // 2023-02-10T06:00:00.000Z
+              to: expect.toHaveValueOf(1676008800000),
             }),
             targets: [
               {
@@ -238,14 +234,10 @@ describe.each([false, true])('runSplitQuery(aligned = %s)', (lokiAlignedQuerySpl
             requestId: 'TEST_2',
             intervalMs: 60000,
             range: expect.objectContaining({
-              from: expect.objectContaining({
-                // 2023-02-09T00:00:00.000Z
-                _i: 1675900800000,
-              }),
-              to: expect.objectContaining({
-                // 2023-02-09T23:59:00.000Z
-                _i: 1675987140000,
-              }),
+              // 2023-02-09T00:00:00.000Z
+              from: expect.toHaveValueOf(1675900800000),
+              // 2023-02-09T23:59:00.000Z
+              to: expect.toHaveValueOf(1675987140000),
             }),
             targets: [
               {
@@ -265,14 +257,10 @@ describe.each([false, true])('runSplitQuery(aligned = %s)', (lokiAlignedQuerySpl
             requestId: 'TEST_1',
             intervalMs: 60000,
             range: expect.objectContaining({
-              from: expect.objectContaining({
-                // 2023-02-08T05:00:00.000Z
-                _i: 1675832400000,
-              }),
-              to: expect.objectContaining({
-                // 2023-02-08T23:59:00.000Z
-                _i: 1675900740000,
-              }),
+              // 2023-02-08T05:00:00.000Z
+              from: expect.toHaveValueOf(1675832400000),
+              // 2023-02-08T23:59:00.000Z
+              to: expect.toHaveValueOf(1675900740000),
             }),
             targets: [
               {
@@ -292,14 +280,10 @@ describe.each([false, true])('runSplitQuery(aligned = %s)', (lokiAlignedQuerySpl
             requestId: 'TEST_3',
             intervalMs: 60000,
             range: expect.objectContaining({
-              from: expect.objectContaining({
-                //2023-02-10T05:00:00.000Z
-                _i: 1676005200000,
-              }),
-              to: expect.objectContaining({
-                // 2023-02-10T06:00:00.000Z
-                _i: 1676008800000,
-              }),
+              //2023-02-10T05:00:00.000Z
+              from: expect.toHaveValueOf(1676005200000),
+              // 2023-02-10T06:00:00.000Z
+              to: expect.toHaveValueOf(1676008800000),
             }),
             targets: [
               {
@@ -323,14 +307,10 @@ describe.each([false, true])('runSplitQuery(aligned = %s)', (lokiAlignedQuerySpl
             requestId: 'TEST_2',
             intervalMs: 60000,
             range: expect.objectContaining({
-              from: expect.objectContaining({
-                // 2023-02-09T05:00:00.000Z
-                _i: 1675918800000,
-              }),
-              to: expect.objectContaining({
-                // 2023-02-10T04:59:00.000Z
-                _i: 1676005140000,
-              }),
+              // 2023-02-09T05:00:00.000Z
+              from: expect.toHaveValueOf(1675918800000),
+              // 2023-02-10T04:59:00.000Z
+              to: expect.toHaveValueOf(1676005140000),
             }),
             targets: [
               {
@@ -350,14 +330,10 @@ describe.each([false, true])('runSplitQuery(aligned = %s)', (lokiAlignedQuerySpl
             requestId: 'TEST_1',
             intervalMs: 60000,
             range: expect.objectContaining({
-              from: expect.objectContaining({
-                // 2023-02-08T05:00:00.000Z
-                _i: 1675832400000,
-              }),
-              to: expect.objectContaining({
-                // 2023-02-09T04:59:00.000Z
-                _i: 1675918740000,
-              }),
+              // 2023-02-08T05:00:00.000Z
+              from: expect.toHaveValueOf(1675832400000),
+              // 2023-02-09T04:59:00.000Z
+              to: expect.toHaveValueOf(1675918740000),
             }),
             targets: [
               {
@@ -385,14 +361,10 @@ describe.each([false, true])('runSplitQuery(aligned = %s)', (lokiAlignedQuerySpl
             requestId: 'TEST_3',
             intervalMs: 60000,
             range: expect.objectContaining({
-              from: expect.objectContaining({
-                // 2023-02-10T00:00:00.000Z
-                _i: 1675987200000,
-              }),
-              to: expect.objectContaining({
-                // 2023-02-10T06:00:00.000Z
-                _i: 1676008800000,
-              }),
+              // 2023-02-10T00:00:00.000Z
+              from: expect.toHaveValueOf(1675987200000),
+              // 2023-02-10T06:00:00.000Z
+              to: expect.toHaveValueOf(1676008800000),
             }),
             targets: [
               {
@@ -416,14 +388,10 @@ describe.each([false, true])('runSplitQuery(aligned = %s)', (lokiAlignedQuerySpl
             requestId: 'TEST_2',
             intervalMs: 60000,
             range: expect.objectContaining({
-              from: expect.objectContaining({
-                // 2023-02-09T00:00:00.000Z
-                _i: 1675900800000,
-              }),
-              to: expect.objectContaining({
-                // 2023-02-09T23:59:50.000Z
-                _i: 1675987190000,
-              }),
+              // 2023-02-09T00:00:00.000Z
+              from: expect.toHaveValueOf(1675900800000),
+              // 2023-02-09T23:59:50.000Z
+              to: expect.toHaveValueOf(1675987190000),
             }),
             targets: [
               {
@@ -443,14 +411,10 @@ describe.each([false, true])('runSplitQuery(aligned = %s)', (lokiAlignedQuerySpl
             requestId: 'TEST_1',
             intervalMs: 60000,
             range: expect.objectContaining({
-              from: expect.objectContaining({
-                // 2023-02-08T05:00:00.000Z
-                _i: 1675832400000,
-              }),
-              to: expect.objectContaining({
-                // 2023-02-08T23:59:50.000Z
-                _i: 1675900790000,
-              }),
+              // 2023-02-08T05:00:00.000Z
+              from: expect.toHaveValueOf(1675832400000),
+              // 2023-02-08T23:59:50.000Z
+              to: expect.toHaveValueOf(1675900790000),
             }),
             targets: [
               {
@@ -470,14 +434,10 @@ describe.each([false, true])('runSplitQuery(aligned = %s)', (lokiAlignedQuerySpl
             requestId: 'TEST_3',
             intervalMs: 60000,
             range: expect.objectContaining({
-              from: expect.objectContaining({
-                // 2023-02-10T05:00:00.000Z
-                _i: 1676005200000,
-              }),
-              to: expect.objectContaining({
-                // 2023-02-10T06:00:00.000Z
-                _i: 1676008800000,
-              }),
+              // 2023-02-10T05:00:00.000Z
+              from: expect.toHaveValueOf(1676005200000),
+              // 2023-02-10T06:00:00.000Z
+              to: expect.toHaveValueOf(1676008800000),
             }),
             targets: [
               {
@@ -501,14 +461,10 @@ describe.each([false, true])('runSplitQuery(aligned = %s)', (lokiAlignedQuerySpl
             requestId: 'TEST_2',
             intervalMs: 60000,
             range: expect.objectContaining({
-              from: expect.objectContaining({
-                // 2023-02-09T05:00:00.000Z
-                _i: 1675918800000,
-              }),
-              to: expect.objectContaining({
-                // 2023-02-10T04:59:50.000Z
-                _i: 1676005190000,
-              }),
+              // 2023-02-09T05:00:00.000Z
+              from: expect.toHaveValueOf(1675918800000),
+              // 2023-02-10T04:59:50.000Z
+              to: expect.toHaveValueOf(1676005190000),
             }),
             targets: [
               {
@@ -528,14 +484,10 @@ describe.each([false, true])('runSplitQuery(aligned = %s)', (lokiAlignedQuerySpl
             requestId: 'TEST_1',
             intervalMs: 60000,
             range: expect.objectContaining({
-              from: expect.objectContaining({
-                // 2023-02-08T05:00:00.000Z
-                _i: 1675832400000,
-              }),
-              to: expect.objectContaining({
-                // 2023-02-09T04:59:50.000Z
-                _i: 1675918790000,
-              }),
+              // 2023-02-08T05:00:00.000Z
+              from: expect.toHaveValueOf(1675832400000),
+              // 2023-02-09T04:59:50.000Z
+              to: expect.toHaveValueOf(1675918790000),
             }),
             targets: [
               {

@@ -1,10 +1,10 @@
 /* eslint-disable id-blacklist, no-restricted-imports */
 import { lowerCase } from 'lodash';
-import moment from 'moment-timezone';
 
 import { type DateTimeOptions, getTimeZone } from './common';
 import { parse, isValid } from './datemath';
 import { systemDateFormats } from './formats';
+import moment from './luxon_moment_compat/moment';
 import { type DateTimeInput, type DateTime, isDateTime, dateTime, toUtc, dateTimeForTimeZone } from './moment_wrapper';
 
 /**
@@ -72,10 +72,8 @@ const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateT
     timeZone = 'utc';
   }
 
-  const zone = moment.tz.zone(timeZone);
-
-  if (zone && zone.name) {
-    return dateTimeForTimeZone(zone.name, value, format);
+  if (moment.tz.isValidZone(timeZone)) {
+    return dateTimeForTimeZone(timeZone, value, format);
   }
 
   switch (lowerCase(timeZone)) {
@@ -89,10 +87,9 @@ const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateT
 const parseOthers = (value: DateTimeInput, options?: DateTimeOptionsWhenParsing): DateTime => {
   const date = value;
   const timeZone = getTimeZone(options);
-  const zone = moment.tz.zone(timeZone);
 
-  if (zone && zone.name) {
-    return dateTimeForTimeZone(zone.name, date);
+  if (moment.tz.isValidZone(timeZone)) {
+    return dateTimeForTimeZone(timeZone, date);
   }
 
   switch (lowerCase(timeZone)) {

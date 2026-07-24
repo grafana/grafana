@@ -102,12 +102,13 @@ describe('LogContextProvider', () => {
       expect(logContextProvider.getInitContextFilters).toHaveBeenCalledWith(
         expect.objectContaining({ labels: { bar: 'baz', foo: 'uniqueParsedLabel', xyz: 'abc' } }),
         { expr: '{bar="baz"}', refId: 'A' },
-        {
-          from: dateTime(defaultLogRow.timeEpochMs),
-          to: dateTime(defaultLogRow.timeEpochMs),
-          raw: { from: dateTime(defaultLogRow.timeEpochMs), to: dateTime(defaultLogRow.timeEpochMs) },
-        }
+        expect.anything()
       );
+      const [, , timeRangeArg] = (logContextProvider.getInitContextFilters as jest.Mock).mock.calls[0];
+      expect(timeRangeArg.from.valueOf()).toBe(defaultLogRow.timeEpochMs);
+      expect(timeRangeArg.to.valueOf()).toBe(defaultLogRow.timeEpochMs);
+      expect(timeRangeArg.raw.from.valueOf()).toBe(defaultLogRow.timeEpochMs);
+      expect(timeRangeArg.raw.to.valueOf()).toBe(defaultLogRow.timeEpochMs);
       expect(logContextProvider.cachedContextFilters).toHaveLength(1);
     });
 

@@ -11,7 +11,6 @@
     "@grafana/ui": "13.2.0-pre",
     "@reduxjs/toolkit": "2.10.1",
     "lodash": "^4.17.23",
-    "moment": "2.30.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-use": "17.6.1",

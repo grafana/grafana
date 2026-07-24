@@ -16,8 +16,8 @@ describe('addDataLinksToLogsResponse', () => {
   });
 
   const time = {
-    from: dateMath.toDateTime('2016-12-31 15:00:00Z', { roundUp: false })!,
-    to: dateMath.toDateTime('2016-12-31 16:00:00Z', { roundUp: false })!,
+    from: dateMath.toDateTime('2016-12-31T15:00:00Z', { roundUp: false })!,
+    to: dateMath.toDateTime('2016-12-31T16:00:00Z', { roundUp: false })!,
   };
   it('should add data links to response from log group names', async () => {
     // @ts-ignore ignore feature toggle type error

@@ -1,9 +1,11 @@
 import { memoize } from 'lodash';
-import moment from 'moment-timezone';
 
 import { type TimeZone } from '@grafana/schema';
 
 import { getTimeZone } from './common';
+import { findTimeZoneAt } from './easytz_lookup';
+import moment from './luxon_moment_compat/moment';
+import { zonesByCountry } from './timezone_countries';
 
 export enum InternalTimeZones {
   default = '',
@@ -66,16 +68,21 @@ export const getTimeZones = memoize((includeInternal: boolean | InternalTimeZone
     initial.push(...includeInternal);
   }
 
-  return moment.tz.names().reduce((zones: TimeZone[], zone: string) => {
-    const countriesForZone = countriesByTimeZone[zone];
+  const now = Date.now();
 
-    if (!Array.isArray(countriesForZone) || countriesForZone.length === 0) {
+  return Object.keys(countriesByTimeZone)
+    .sort()
+    .reduce((zones: TimeZone[], zone: string) => {
+      // the vendored country data can reference zones newer than the runtime's tz
+      // database (e.g. America/Coyhaique on older ICU); skip zones the runtime
+      // cannot resolve, since they cannot be used for formatting.
+      if (!findTimeZoneAt(zone, now)) {
+        return zones;
+      }
+
+      zones.push(zone);
       return zones;
-    }
-
-    zones.push(zone);
-    return zones;
-  }, initial);
+    }, initial);
 });
 
 export const getTimeZoneGroups = memoize(
@@ -164,18 +171,24 @@ const abbrevationWithoutOffset = (abbrevation: string): string => {
 };
 
 const mapToInfo = (timeZone: TimeZone, timestamp: number): TimeZoneInfo | undefined => {
-  const momentTz = moment.tz.zone(timeZone);
-  if (!momentTz) {
+  const zone = moment.tz.zone(timeZone);
+  if (!zone) {
     return undefined;
   }
 
+  // easy-tz curates DST-correct abbreviations (CEST, EDT, ...) and resolves legacy
+  // spellings (e.g. Asia/Calcutta) to their canonical entry; zones it does not list
+  // fall back to the ICU-backed values from the compat shim.
+  const tz = findTimeZoneAt(timeZone, timestamp);
+  const ianaName = tz?.name ?? zone.name;
+
   return {
     name: timeZone,
-    ianaName: momentTz.name,
+    ianaName,
     zone: timeZone,
-    countries: countriesByTimeZone[timeZone] ?? [],
-    abbreviation: abbrevationWithoutOffset(momentTz.abbr(timestamp)),
-    offsetInMins: momentTz.utcOffset(timestamp),
+    countries: countriesByTimeZone[ianaName] ?? [],
+    abbreviation: abbrevationWithoutOffset(tz?.abbr ?? zone.abbr(timestamp)),
+    offsetInMins: zone.utcOffset(timestamp),
   };
 };
 
@@ -429,21 +442,19 @@ const countryByCode: Record<string, string> = {
 };
 
 const countriesByTimeZone = ((): Record<string, TimeZoneCountry[]> => {
-  return moment.tz.countries().reduce<Record<string, TimeZoneCountry[]>>((all, code) => {
-    const timeZones = moment.tz.zonesForCountry(code);
-    return timeZones.reduce((all: Record<string, TimeZoneCountry[]>, timeZone) => {
-      if (!all[timeZone]) {
-        all[timeZone] = [];
-      }
+  const all: Record<string, TimeZoneCountry[]> = {};
 
-      const name = countryByCode[code];
+  for (const [code, timeZones] of Object.entries(zonesByCountry)) {
+    const name = countryByCode[code];
 
-      if (!name) {
-        return all;
-      }
+    if (!name) {
+      continue;
+    }
 
-      all[timeZone].push({ code, name });
-      return all;
-    }, all);
-  }, {});
+    for (const timeZone of timeZones) {
+      (all[timeZone] ??= []).push({ code, name });
+    }
+  }
+
+  return all;
 })();
