@@ -56,5 +56,11 @@ describe('useConfirmModalWithError', () => {
 
     expect(await screen.findByRole('dialog', { name: 'Something went wrong' })).toBeInTheDocument();
     expect(screen.getByText(/delete failed/i)).toBeInTheDocument();
+
+    await user.click(screen.getByText('Close'));
+    expect(screen.queryByRole('dialog', { name: 'Something went wrong' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Open modal' }));
+    expect(await screen.findByRole('dialog', { name: 'Test modal' })).toBeInTheDocument();
   });
 });
