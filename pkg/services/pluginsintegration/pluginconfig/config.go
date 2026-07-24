@@ -98,8 +98,8 @@ func externalOverridesFromIni(cfg *setting.Cfg, pluginSettings config.PluginSett
 			)
 		case !asExternal && aliasConfigured:
 			logger.Warn(
-				"External plugin alias is configured but core plugin is not suppressed — both will attempt to load under the same ID. "+
-					"Set as_external = true on the core plugin's ini section.",
+				"External plugin alias is configured but core plugin suppression is not enabled — the core plugin will continue to load. "+
+					"Set as_external = true on the core plugin's ini section to complete the migration.",
 				"corePluginID", o.CorePluginID,
 				"externalPluginID", o.ExternalPluginID,
 			)
