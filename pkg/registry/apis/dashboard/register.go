@@ -1481,12 +1481,14 @@ func resolveSchemaRef(ref *spec.Schema, defs map[string]common.OpenAPIDefinition
 	return nil
 }
 
-// schemasEqualType returns true if two schemas have the same type and $ref.
-// Properties with different types or different $refs across oneOf branches need
-// x-kubernetes-preserve-unknown-fields so SMD doesn't incorrectly validate them.
+// schemasEqualType returns true if two schemas have the same type, $ref, and enum
+// constraints. Properties with different types, different $refs, or different enum
+// values across oneOf branches need x-kubernetes-preserve-unknown-fields so SMD
+// doesn't incorrectly constrain them (e.g. keeping the first branch's enum on the
+// parent would reject valid values from later branches).
 func schemasEqualType(a, b *spec.Schema) bool {
 	if len(a.Type) == 0 && len(b.Type) == 0 && a.Ref.String() == "" && b.Ref.String() == "" {
-		return true
+		return len(a.Enum) == 0 && len(b.Enum) == 0
 	}
 	// If either has a $ref and they differ, treat as different
 	if a.Ref.String() != b.Ref.String() {
@@ -1497,6 +1499,14 @@ func schemasEqualType(a, b *spec.Schema) bool {
 	}
 	for i := range a.Type {
 		if a.Type[i] != b.Type[i] {
+			return false
+		}
+	}
+	if len(a.Enum) != len(b.Enum) {
+		return false
+	}
+	for i := range a.Enum {
+		if fmt.Sprintf("%v", a.Enum[i]) != fmt.Sprintf("%v", b.Enum[i]) {
 			return false
 		}
 	}
