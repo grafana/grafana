@@ -1,0 +1,180 @@
+import { PanelPlugin, type PanelProps } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+import {
+  type SceneObject,
+  SceneObjectBase,
+  type SceneObjectState,
+  sceneUtils,
+  VizPanel,
+  type VizPanelState,
+} from '@grafana/scenes';
+import { type LibraryPanel } from '@grafana/schema';
+import { Stack } from '@grafana/ui';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { getLibraryPanel } from 'app/features/library-panels/state/api';
+
+import { createPanelDataProvider } from '../utils/createPanelDataProvider';
+import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
+
+import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
+import { panelLinksBehavior } from './PanelMenuBehavior';
+import { PanelNotices } from './PanelNotices';
+import { DashboardGridItem } from './layout-default/DashboardGridItem';
+import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
+import { getUpdatedHoverHeader } from './panel-timerange/utils';
+
+export interface LibraryPanelBehaviorState extends SceneObjectState {
+  uid: string;
+  name: string;
+  isLoaded?: boolean;
+  _loadedPanel?: LibraryPanel;
+}
+
+export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorState> {
+  public static LOADING_VIZ_PANEL_PLUGIN_ID = 'library-panel-loading-plugin';
+
+  public constructor(state: LibraryPanelBehaviorState) {
+    super(state);
+
+    this.addActivationHandler(() => this._activationHandler());
+  }
+
+  private _activationHandler() {
+    if (!this.state.isLoaded) {
+      this.loadLibraryPanelFromPanelModel();
+    }
+  }
+
+  public setPanelFromLibPanel(libPanel: LibraryPanel) {
+    if (this.state._loadedPanel?.version === libPanel.version) {
+      return;
+    }
+
+    const vizPanel = this.parent;
+
+    if (!(vizPanel instanceof VizPanel)) {
+      return;
+    }
+
+    const libPanelModel = new PanelModel(libPanel.model);
+
+    // Use dashboard panel ID for data layer filtering
+    const dashboardPanelId = getPanelIdForVizPanel(vizPanel);
+    libPanelModel.id = dashboardPanelId;
+
+    const titleItems: SceneObject[] = [];
+
+    titleItems.push(
+      new VizPanelLinks({
+        rawLinks: libPanelModel.links,
+        menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
+      })
+    );
+    titleItems.push(new PanelNotices());
+
+    let title;
+    if (config.featureToggles.preferLibraryPanelTitle) {
+      title = libPanelModel.title ?? vizPanel.state.title;
+    } else {
+      title = vizPanel.state.title ?? libPanelModel.title;
+    }
+
+    const timeRange =
+      libPanelModel.timeFrom || libPanelModel.timeShift
+        ? new PanelTimeRange({
+            timeFrom: libPanelModel.timeFrom,
+            timeShift: libPanelModel.timeShift,
+            hideTimeOverride: libPanelModel.hideTimeOverride,
+          })
+        : undefined;
+
+    const vizPanelState: VizPanelState = {
+      title,
+      hoverHeader: getUpdatedHoverHeader(title ?? '', timeRange?.state),
+      options: libPanelModel.options ?? {},
+      fieldConfig: libPanelModel.fieldConfig,
+      pluginId: libPanelModel.type,
+      pluginVersion: libPanelModel.pluginVersion,
+      displayMode: libPanelModel.transparent ? 'transparent' : undefined,
+      description: libPanelModel.description,
+      titleItems: titleItems,
+      $data: createPanelDataProvider(libPanelModel),
+    };
+
+    if (timeRange) {
+      vizPanelState.$timeRange = timeRange;
+    }
+
+    vizPanel.setState(vizPanelState);
+    vizPanel.changePluginType(libPanelModel.type, vizPanelState.options, vizPanelState.fieldConfig);
+
+    this.setState({ _loadedPanel: libPanel, isLoaded: true, name: libPanel.name });
+
+    const layoutElement = vizPanel.parent!;
+
+    // Skip migrating repeat options from library panel when using dynamic dashboards (dashboardNewLayouts),
+    // as repeat options should only come from the dashboard panel instance (grid item),
+    // not from the library panel definition.
+    // Exception: Public dashboards and scripted dashboards still need this migration
+    // even when dashboardNewLayouts is enabled. This is because public and scripted dashboard migrations are still handled in the frontend.
+    const dashboard = getDashboardSceneFor(this);
+    const isPublicDashboard = dashboard.state.meta.publicDashboardEnabled === true;
+    const isScriptedDashboard = dashboard.state.meta.fromScript === true;
+    const shouldSkipRepeatMigration =
+      config.featureToggles.dashboardNewLayouts && !isPublicDashboard && !isScriptedDashboard;
+
+    // Migrate repeat options to layout element (only for legacy dashboards, or public/scripted dashboards)
+    if (!shouldSkipRepeatMigration && libPanelModel.repeat && layoutElement instanceof DashboardGridItem) {
+      layoutElement.setState({
+        variableName: libPanelModel.repeat,
+        repeatDirection: libPanelModel.repeatDirection === 'h' ? 'h' : 'v',
+        maxPerRow: libPanelModel.maxPerRow,
+        itemHeight: layoutElement.state.height ?? 10,
+      });
+      layoutElement.performRepeat();
+    }
+  }
+
+  /**
+   * Removes itself from the parent panel's behaviors array
+   */
+  public unlink() {
+    const panel = this.parent;
+    if (panel instanceof VizPanel) {
+      panel.setState({ $behaviors: panel.state.$behaviors?.filter((b) => b !== this) });
+    }
+  }
+
+  private async loadLibraryPanelFromPanelModel() {
+    let vizPanel = this.parent;
+
+    if (!(vizPanel instanceof VizPanel)) {
+      return;
+    }
+
+    try {
+      const libPanel = await getLibraryPanel(this.state.uid, true);
+      this.setPanelFromLibPanel(libPanel);
+    } catch (err) {
+      vizPanel.setState({
+        _pluginLoadError: `Unable to load library panel: ${this.state.uid}`,
+      });
+    }
+  }
+}
+
+const LoadingVizPanelPlugin = new PanelPlugin(LoadingVizPanel);
+
+function LoadingVizPanel(props: PanelProps) {
+  return (
+    <Stack direction={'column'} justifyContent={'space-between'}>
+      <Trans i18nKey="library-panels.loading-panel-text">Loading library panel</Trans>
+    </Stack>
+  );
+}
+
+sceneUtils.registerRuntimePanelPlugin({
+  pluginId: LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID,
+  plugin: LoadingVizPanelPlugin,
+});

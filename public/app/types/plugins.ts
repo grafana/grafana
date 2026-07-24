@@ -1,0 +1,31 @@
+import { type PanelPlugin, type PluginError, type PluginMeta } from '@grafana/data';
+
+export interface PluginDashboard {
+  dashboardId: number;
+  description: string;
+  imported: boolean;
+  importedRevision: number;
+  importedUri: string;
+  importedUrl: string;
+  path: string;
+  pluginId: string;
+  removed: boolean;
+  revision: number;
+  slug: string;
+  title: string;
+  uid: string;
+}
+
+interface PanelPluginsIndex {
+  [id: string]: PanelPlugin;
+}
+
+export interface PluginsState {
+  plugins: PluginMeta[];
+  errors: PluginError[];
+  searchQuery: string;
+  hasFetched: boolean;
+  dashboards: PluginDashboard[];
+  isLoadingPluginDashboards: boolean;
+  panels: PanelPluginsIndex;
+}

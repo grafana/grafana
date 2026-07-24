@@ -1,0 +1,3 @@
+basic_auth_users:
+  # username: admin, password: admin
+  admin: $2a$12$HvzPxejEHakuEIjxQ8uQrOaZ57GmFznB6M/w.85MpdEtSFFOOyDgW

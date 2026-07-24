@@ -1,0 +1,87 @@
+{
+    "apiVersion": 1,
+    "groups": [
+      {
+        "name": "my_json_group",
+        "folder": "my_json_folder",
+        "interval": "10s",
+        "rules": [
+          {
+            "title": "my_json_rule",
+            "uid": "my_json_rule",
+            "condition": "A",
+            "for": "1m",
+            "annotations": {
+              "runbook": "http://google.com/"
+            },
+            "labels": {
+              "team": "infra",
+              "severity": "warning"
+            },
+            "data": [
+              {
+                "refId": "A",
+                "queryType": "",
+                "relativeTimeRange": {
+                  "from": 600,
+                  "to": 0
+                },
+                "datasourceUID": "PD8C576611E62080A",
+                "model": {
+                  "hide": false,
+                  "intervalMs": 1000,
+                  "maxDataPoints": 43200,
+                  "refId": "A"
+                }
+              },
+              {
+                "refId": "B",
+                "queryType": "",
+                "relativeTimeRange": {
+                  "from": 0,
+                  "to": 0
+                },
+                "datasourceUid": "__expr__",
+                "model": {
+                  "conditions": [
+                    {
+                      "evaluator": {
+                        "params": [
+                          3
+                        ],
+                        "type": "gt"
+                      },
+                      "operator": {
+                        "type": "and"
+                      },
+                      "query": {
+                        "params": [
+                          "A"
+                        ]
+                      },
+                      "reducer": {
+                        "params": [
+
+                        ],
+                        "type": "last"
+                      },
+                      "type": "query"
+                    }
+                  ],
+                  "datasource": {
+                    "type": "__expr__",
+                    "uid": "__expr__"
+                  },
+                  "hide": false,
+                  "intervalMs": 1000,
+                  "maxDataPoints": 43200,
+                  "refId": "B",
+                  "type": "classic_conditions"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }

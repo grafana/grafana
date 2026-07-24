@@ -1,0 +1,173 @@
+import { useEffect, useRef } from 'react';
+import { type Params, useParams } from 'react-router-dom-v5-compat';
+import { usePrevious } from 'react-use';
+
+import { PageLayoutType } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+import { UrlSyncContextProvider } from '@grafana/scenes';
+import { Box } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import {
+  DashboardBrandingFooter,
+  DashboardBrandingFooterVariant,
+} from 'app/features/dashboard/components/PublicDashboard/DashboardBrandingFooter';
+import { DashboardPageError } from 'app/features/dashboard/containers/DashboardPageError';
+import {
+  type DashboardPageRouteParams,
+  type DashboardPageRouteSearchParams,
+} from 'app/features/dashboard/containers/types';
+import { TemplateDashboardModal } from 'app/features/dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal';
+import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
+import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
+import { DashboardPreviewBanner } from 'app/features/provisioning/components/Dashboards/DashboardPreviewBanner';
+import { OrphanedDashboardBanner } from 'app/features/provisioning/components/Dashboards/OrphanedDashboardBanner';
+import { DashboardRoutes } from 'app/types/dashboard';
+
+import { DashboardConversionWarningBanner } from '../components/DashboardConversionWarningBanner';
+import { DashboardTemplateEditBanner } from '../components/DashboardTemplateEditBanner';
+import { DashboardTemplateSavedBanner } from '../components/DashboardTemplateSavedBanner';
+import { DashboardTemplateUseBanner } from '../components/DashboardTemplateUseBanner';
+import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
+import { DashboardPrompt } from '../saving/DashboardPrompt';
+import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
+import { useScenesFlickeringFix } from '../utils/utils';
+
+import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
+import { shouldHideDashboardKioskFooter } from './utils';
+
+export interface Props
+  extends Omit<GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>, 'match'> {}
+
+export function DashboardScenePage({ route, queryParams, location }: Props) {
+  const params = useParams();
+  const { type, slug, uid } = params;
+  // Custom templates also require the dashboardtemplates:read RBAC permission (the API denies
+  // listing without it), matching useTemplateDashboardsAvailability's showCustomTemplates.
+  const { showCustomTemplates } = useTemplateDashboardsAvailability();
+  // Used by /dashboard/provisioning/:slug/preview/* to load dashboards based on their file path in a remote repository
+  // Also used by /dashboard/assistant-preview/* to load the assistant preview dashboard
+  const path = params['*'];
+  const prevMatch = usePrevious({ params });
+  const stateManager = getDashboardScenePageStateManager();
+  const { dashboard, isLoading, loadError } = stateManager.useState();
+  // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
+  const routeReloadCounter = (location.state as any)?.routeReloadCounter;
+  const prevParams = useRef<Params<string>>(params);
+
+  useScenesFlickeringFix();
+
+  useEffect(() => {
+    if (route.routeName === DashboardRoutes.Normal && type === 'snapshot') {
+      stateManager.loadSnapshot(slug!);
+    } else {
+      stateManager.loadDashboard({
+        uid:
+          (route.routeName === DashboardRoutes.Provisioning || route.routeName === DashboardRoutes.AssistantPreview
+            ? path
+            : uid) ?? '',
+        type,
+        slug,
+        route: route.routeName as DashboardRoutes,
+        urlFolderUid: queryParams.folderUid,
+        dashboardTemplateUid: queryParams.dashboardTemplateUid,
+        editTemplate: queryParams.editTemplate === true,
+      });
+    }
+
+    return () => {
+      getDashboardSceneProfiler().cancelProfile();
+      preserveDashboardSceneStateInLocalStorage(locationService.getSearch(), uid);
+      stateManager.clearState();
+      stateManager.resetActiveManager();
+    };
+
+    // removing slug and path (which has slug in it) from dependencies to prevent unmount when data links reference
+    //  the same dashboard with no slug in url
+    // queryParams.path is used by template dashboards to identify the dashboard file; changing it means a new template was selected
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    stateManager,
+    uid,
+    route.routeName,
+    queryParams.folderUid,
+    routeReloadCounter,
+    type,
+    queryParams.path,
+    queryParams.gnetId,
+    queryParams.dashboardTemplateUid,
+    queryParams.editTemplate,
+  ]);
+
+  useEffect(() => {
+    // This use effect corrects URL without refresh when navigating to the same dashboard
+    //  using data link that has no slug in url
+    if (route.routeName === DashboardRoutes.Normal) {
+      // correct URL only when there are no new slug
+      // if slug is defined and incorrect it will be corrected in stateManager
+      if (uid === prevParams.current.uid && prevParams.current.slug && !slug) {
+        const correctedUrl = `/d/${uid}/${prevParams.current.slug}`;
+        locationService.replace({
+          ...locationService.getLocation(),
+          pathname: correctedUrl,
+        });
+      }
+    }
+
+    return () => {
+      prevParams.current = { uid, slug: !slug ? prevParams.current.slug : slug };
+    };
+  }, [route, slug, type, uid]);
+
+  if (!dashboard) {
+    return loadError ? (
+      <DashboardPageError
+        error={loadError}
+        type={type}
+        isProvisioned={route.routeName === DashboardRoutes.Provisioning}
+      />
+    ) : (
+      <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} data-testid={'dashboard-scene-page'}>
+        <Box paddingY={4} display="flex" direction="column" alignItems="center">
+          {isLoading && <PageLoader />}
+        </Box>
+      </Page>
+    );
+  }
+
+  // Do not render anything when transitioning from one dashboard to another
+  // A bit tricky for transition to or from Home dashboard that does not have a uid in the url (but could have it in the dashboard model)
+  // if prevMatch is undefined we are going from normal route to home route or vice versa
+  if (type !== 'snapshot' && (!prevMatch || uid !== prevMatch?.params.uid)) {
+    console.log('skipping rendering');
+    return null;
+  }
+
+  // `locationSearchToObject()` parses `?kiosk` as `true` (boolean param). Some clients can emit `?kiosk=`, which parses as ''.
+  const isKioskMode = queryParams.kiosk === '1' || queryParams.kiosk === true || queryParams.kiosk === '';
+  const hideFooter = shouldHideDashboardKioskFooter(queryParams.hideLogo);
+
+  return (
+    <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
+      <DashboardPreviewBanner queryParams={queryParams} route={route.routeName} slug={slug} path={path} />
+      <DashboardConversionWarningBanner dashboard={dashboard} />
+      <OrphanedDashboardBanner dashboard={dashboard} />
+      <SuggestedDashboardsBanner route={route.routeName} dashboard={dashboard} />
+      <DashboardTemplateSavedBanner />
+      <DashboardTemplateUseBanner dashboard={dashboard} />
+      <DashboardTemplateEditBanner dashboard={dashboard} />
+      <dashboard.Component model={dashboard} key={dashboard.state.key} />
+      <DashboardPrompt dashboard={dashboard} />
+      {showCustomTemplates && <TemplateDashboardModal />}
+      <DashboardBrandingFooter
+        variant={DashboardBrandingFooterVariant.Kiosk}
+        paddingX={2}
+        useMinHeight={true}
+        hide={!isKioskMode || hideFooter}
+      />
+    </UrlSyncContextProvider>
+  );
+}
+
+export default DashboardScenePage;

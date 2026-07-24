@@ -1,0 +1,25 @@
+{
+  "extends": "../../scripts/tsconfig.base.json",
+  "compilerOptions": {
+    "declaration": true,
+    "jsx": "react-jsx",
+    "baseUrl": "./",
+    "declarationDir": "./dist/types",
+    "emitDeclarationOnly": true,
+    "isolatedModules": true,
+    "allowJs": true,
+    "rootDir": "../../",
+    "rootDirs": ["."],
+    "moduleResolution": "bundler"
+  },
+  "exclude": ["dist/**/*"],
+  "include": ["../../public/test/setupTests.ts", "../../public/app/types/*.d.ts", "src/**/*.ts*"],
+  // override for storybook which uses ts-node to compile main.ts / preview.ts files.
+  "ts-node": {
+    "compilerOptions": {
+      "isolatedModules": false,
+      "resolveJsonModule": true,
+      "module": "commonjs"
+    }
+  }
+}

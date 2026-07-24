@@ -1,0 +1,54 @@
+version: '3'
+
+volumes:
+  freeipa_data: {}
+
+services:
+  freeipa:
+    image: freeipa/freeipa-server:fedora-29
+    container_name: freeipa
+    stdin_open: true
+    tty: true
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+    hostname: ipa.example.test
+    environment:
+      # - DEBUG_TRACE=1
+      - IPA_SERVER_IP=172.17.0.2
+      - DEBUG_NO_EXIT=1
+      - IPA_SERVER_HOSTNAME=ipa.example.test
+      - PASSWORD=Secret123
+      - HOSTNAME=ipa.example.test
+    command:
+      - --admin-password=Secret123
+      - --ds-password=Secret123
+      - -U
+      - --realm=EXAMPLE.TEST
+    ports:
+      # FreeIPA WebUI
+      - "80:80"
+      - "443:443"
+      # Kerberos
+      - "88:88/udp"
+      - "88:88"
+      - "464:464/udp"
+      - "464:464"
+      # LDAP
+      - "389:389"
+      - "636:636"
+      # DNS
+      # - "53:53/udp"
+      # - "53:53"
+      # NTP
+      - "123:123/udp"
+      # other
+      - "7389:7389"
+      - "9443:9443"
+      - "9444:9444"
+      - "9445:9445"
+    tmpfs:
+      - /run
+      - /tmp
+    volumes:
+      - freeipa_data:/data:Z
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro

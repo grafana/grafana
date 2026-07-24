@@ -1,0 +1,176 @@
+import { useCallback, useEffect, useState } from 'react';
+import { useAsyncFn } from 'react-use';
+
+import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+import { Alert, Box, Button, ConfirmModal, EmptyState, ScrollContainer, TextLink } from '@grafana/ui';
+import {
+  getDashboardSnapshotSrv,
+  type Snapshot,
+  type SnapshotListOptions,
+  type SnapshotListPage,
+} from 'app/features/dashboard/services/SnapshotSrv';
+
+import { SnapshotListTableRow } from './SnapshotListTableRow';
+
+export async function getSnapshots(opts?: SnapshotListOptions): Promise<SnapshotListPage> {
+  const page = await getDashboardSnapshotSrv().getSnapshots(opts);
+  return {
+    items: page.items.map((snapshot) => ({
+      ...snapshot,
+      url: `${config.appUrl}dashboard/snapshot/${snapshot.key}`,
+    })),
+    continueToken: page.continueToken,
+  };
+}
+
+export const SnapshotListTable = () => {
+  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
+  const [continueToken, setContinueToken] = useState<string | undefined>();
+  const [removeSnapshot, setRemoveSnapshot] = useState<Snapshot | undefined>();
+
+  const [{ loading, error }, loadSnapshots] = useAsyncFn(
+    async (token?: string) => {
+      const page = await getSnapshots(token ? { continue: token } : undefined);
+      setSnapshots((prev) => (token ? [...prev, ...page.items] : page.items));
+      setContinueToken(page.continueToken);
+    },
+    [],
+    { loading: true }
+  );
+
+  useEffect(() => {
+    loadSnapshots();
+  }, [loadSnapshots]);
+
+  const isInitialLoading = loading && snapshots.length === 0;
+  const isLoadingMore = loading && snapshots.length > 0;
+
+  const doRemoveSnapshot = useCallback(
+    async (snapshot: Snapshot) => {
+      const filteredSnapshots = snapshots.filter((ss) => ss.key !== snapshot.key);
+      setSnapshots(filteredSnapshots);
+      await getDashboardSnapshotSrv()
+        .deleteSnapshot(snapshot.key)
+        .catch(() => {
+          setSnapshots(snapshots);
+        });
+    },
+    [snapshots]
+  );
+
+  if (error && snapshots.length === 0 && !continueToken) {
+    return (
+      <Alert
+        severity="error"
+        title={t('snapshot.load-error.title', 'Failed to load snapshots')}
+        action={
+          <Button variant="secondary" onClick={() => loadSnapshots()}>
+            <Trans i18nKey="snapshot.load-error.retry">Retry</Trans>
+          </Button>
+        }
+      >
+        {error.message}
+      </Alert>
+    );
+  }
+
+  if (!isInitialLoading && snapshots.length === 0 && !continueToken) {
+    return (
+      <EmptyState
+        variant="call-to-action"
+        message={t('snapshot.empty-state.message', "You haven't created any snapshots yet")}
+      >
+        <Trans i18nKey="snapshot.empty-state.more-info">
+          You can create a snapshot of any dashboard through the <b>Share</b> modal.{' '}
+          <TextLink
+            external
+            href="https://grafana.com/docs/grafana/latest/visualizations/dashboards/share-dashboards-panels/#share-a-snapshot"
+          >
+            Learn more
+          </TextLink>
+        </Trans>
+      </EmptyState>
+    );
+  }
+
+  return (
+    <ScrollContainer overflowY="visible" overflowX="auto" width="100%">
+      <table className="filter-table">
+        <thead>
+          <tr>
+            <th>
+              <strong>
+                <Trans i18nKey="snapshot.name-column-header">Name</Trans>
+              </strong>
+            </th>
+            <th>
+              <strong>
+                <Trans i18nKey="snapshot.url-column-header">Snapshot url</Trans>
+              </strong>
+            </th>
+            <th style={{ width: '70px' }}></th>
+            <th style={{ width: '30px' }}></th>
+            <th style={{ width: '25px' }}></th>
+          </tr>
+        </thead>
+        <tbody>
+          {isInitialLoading ? (
+            <>
+              <SnapshotListTableRow.Skeleton />
+              <SnapshotListTableRow.Skeleton />
+              <SnapshotListTableRow.Skeleton />
+            </>
+          ) : (
+            snapshots.map((snapshot) => (
+              <SnapshotListTableRow
+                key={snapshot.key}
+                snapshot={snapshot}
+                onRemove={() => setRemoveSnapshot(snapshot)}
+              />
+            ))
+          )}
+        </tbody>
+      </table>
+
+      {!isInitialLoading && continueToken && (
+        <Box paddingTop={2}>
+          <LoadMoreButton onClick={() => loadSnapshots(continueToken)} loading={isLoadingMore} />
+        </Box>
+      )}
+
+      <ConfirmModal
+        isOpen={!!removeSnapshot}
+        title={t('manage-dashboards.snapshot-list-table.title-delete', 'Delete')}
+        body={t(
+          'manage-dashboards.snapshot-list-table.body-delete',
+          "Are you sure you want to delete '{{snapshotToRemove}}'?",
+          { snapshotToRemove: removeSnapshot?.name }
+        )}
+        confirmText={t('manage-dashboards.snapshot-list-table.confirmText-delete', 'Delete')}
+        onDismiss={() => setRemoveSnapshot(undefined)}
+        onConfirm={() => {
+          doRemoveSnapshot(removeSnapshot!);
+          setRemoveSnapshot(undefined);
+        }}
+      />
+    </ScrollContainer>
+  );
+};
+
+interface LoadMoreButtonProps {
+  onClick: () => void;
+  loading: boolean;
+}
+
+function LoadMoreButton({ onClick, loading }: LoadMoreButtonProps) {
+  return (
+    <Button type="button" variant="secondary" onClick={onClick} disabled={loading}>
+      {loading ? (
+        <Trans i18nKey="snapshot.load-more.loading">Loading more snapshots…</Trans>
+      ) : (
+        <Trans i18nKey="snapshot.load-more.label">Show more snapshots</Trans>
+      )}
+    </Button>
+  );
+}

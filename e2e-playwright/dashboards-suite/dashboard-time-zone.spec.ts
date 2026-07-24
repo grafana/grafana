@@ -1,0 +1,272 @@
+import { differenceInMinutes } from 'date-fns/differenceInMinutes';
+import { parseISO } from 'date-fns/parseISO';
+import { toDate } from 'date-fns/toDate';
+import { type Page } from 'playwright-core';
+
+import { test, expect, type DashboardPage, type E2ESelectorGroups, type Components } from '@grafana/plugin-e2e';
+
+import { Sidebar } from '../dashboard-new-layouts/page-objects';
+
+const TIMEZONE_DASHBOARD_UID = 'd41dbaa2-a39e-4536-ab2b-caca52f1a9c8';
+
+test.use({
+  featureToggles: {
+    dashboardNewLayouts: true,
+  },
+});
+
+// New-layouts has no settings toolbar button; settings open from the dashboard edit-pane
+// "Dashboard options" sidebar button, then the "View all settings" button it reveals.
+async function openDashboardSettings(
+  page: Page,
+  dashboardPage: DashboardPage,
+  selectors: E2ESelectorGroups,
+  components: Components
+) {
+  const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+  const editButton = dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton);
+  const optionsButton = sidebar.toolbar.getButton('Options');
+  // The first edit-button click can be swallowed before the scene is interactive, leaving the
+  // edit sidebar unmounted. Re-click only while still in view mode (the button is a toggle) until
+  // the Options button appears.
+  await expect(async () => {
+    if (
+      await editButton
+        .getByText('Edit', { exact: true })
+        .isVisible()
+        .catch(() => false)
+    ) {
+      await editButton.click();
+    }
+    await expect(optionsButton).toBeVisible({ timeout: 3000 });
+  }).toPass();
+  await optionsButton.click();
+  await page.getByRole('button', { name: 'View all settings' }).click();
+}
+
+const TZ_PANEL_TITLE = 'Panel in timezone';
+
+test.describe(
+  'Dashboard time zone support',
+  {
+    tag: ['@dashboards'],
+  },
+  () => {
+    test('Tests dashboard time zone scenarios', async ({ page, gotoDashboardPage, selectors, components }) => {
+      // Opening settings twice via the new-layouts edit-pane flow takes longer than the default budget.
+      test.slow();
+      const dashboardPage = await gotoDashboardPage({ uid: TIMEZONE_DASHBOARD_UID });
+
+      const fromTimeZone = 'UTC';
+      const toTimeZone = 'America/Chicago';
+      const offset = offsetBetweenTimeZones(toTimeZone, fromTimeZone);
+
+      // Wait for the dashboard to load, then open settings (new-layouts flow)
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(TZ_PANEL_TITLE))
+      ).toBeVisible();
+      await openDashboardSettings(page, dashboardPage, selectors, components);
+
+      // Change timezone to UTC
+      await dashboardPage.getByGrafanaSelector(selectors.components.TimeZonePicker.containerV2).click();
+      await page.getByRole('option', { name: 'Coordinated Universal Time ' }).click();
+
+      // Close settings and refresh
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
+        .click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.RefreshPicker.runButtonV2).click();
+
+      const panelsToCheck = ['Panel in timezone'];
+
+      const timesInUtc: Record<string, string> = {};
+
+      // Verify all panels are visible and capture the UTC time once the panel has re-rendered
+      // in the new timezone (the cell text settles a moment after the refresh).
+      for (const title of panelsToCheck) {
+        await expect(dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(title))).toBeVisible();
+        const timeCell = dashboardPage
+          .getByGrafanaSelector(selectors.components.Panels.Panel.title(title))
+          .getByRole('row')
+          .nth(1)
+          .getByRole('gridcell')
+          .first();
+        await expect(timeCell).not.toBeEmpty();
+        const time = await timeCell.textContent();
+        if (time) {
+          timesInUtc[title] = time;
+        }
+      }
+
+      // Open dashboard settings again (new-layouts flow)
+      await openDashboardSettings(page, dashboardPage, selectors, components);
+
+      // Change timezone to Chicago
+      await dashboardPage.getByGrafanaSelector(selectors.components.TimeZonePicker.containerV2).click();
+      await page.getByRole('option', { name: 'Chicago' }).click();
+
+      // Close settings and refresh
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
+        .click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.RefreshPicker.runButtonV2).click();
+
+      // Verify panels are still visible after timezone change
+      for (const title of panelsToCheck) {
+        await expect(dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(title))).toBeVisible();
+        const timeCell = dashboardPage
+          .getByGrafanaSelector(selectors.components.Panels.Panel.title(title))
+          .getByRole('row')
+          .nth(1)
+          .getByRole('gridcell')
+          .first();
+        await expect(async () => {
+          const inUtc = timesInUtc[title];
+          const inTz = await timeCell.textContent();
+          expect(inTz).not.toBeNull();
+          if (inTz) {
+            const isCorrect = isTimeCorrect(inUtc, inTz, offset);
+            expect(isCorrect).toEqual(true);
+          }
+        }).toPass();
+      }
+    });
+
+    test('Tests relative timezone support and overrides', async ({ page, gotoDashboardPage, selectors }) => {
+      // Open dashboard
+      const dashboardPage = await gotoDashboardPage({
+        uid: TIMEZONE_DASHBOARD_UID,
+      });
+
+      // Switch to Browser timezone
+      await setTimeRange(page, dashboardPage, selectors, {
+        from: 'now-6h',
+        to: 'now',
+        zone: 'Browser',
+      });
+
+      const relativeTimeRow = dashboardPage
+        .getByGrafanaSelector(selectors.components.Panels.Panel.title('Panel with relative time override'))
+        .locator('[role="row"]')
+        .filter({ hasText: '00:00:00' })
+        .first();
+      const timezoneRow = dashboardPage
+        .getByGrafanaSelector(selectors.components.Panels.Panel.title('Panel in timezone'))
+        .locator('[role="row"]')
+        .filter({ hasText: '00:00:00' })
+        .first();
+
+      await expect(relativeTimeRow).toBeVisible();
+
+      // Today so far, still in Browser timezone
+      await setTimeRange(page, dashboardPage, selectors, {
+        from: 'now/d',
+        to: 'now',
+      });
+
+      await expect(relativeTimeRow).toBeVisible();
+      await expect(timezoneRow).toBeVisible();
+
+      // Test UTC timezone
+      await setTimeRange(page, dashboardPage, selectors, {
+        from: 'now-6h',
+        to: 'now',
+        zone: 'Coordinated Universal Time',
+      });
+
+      await expect(relativeTimeRow).toBeVisible();
+
+      // Today so far, still in UTC timezone
+      await setTimeRange(page, dashboardPage, selectors, {
+        from: 'now/d',
+        to: 'now',
+      });
+
+      await expect(relativeTimeRow).toBeVisible();
+      await expect(timezoneRow).toBeVisible();
+
+      // Test Tokyo timezone
+      await setTimeRange(page, dashboardPage, selectors, {
+        from: 'now-6h',
+        to: 'now',
+        zone: 'Tokyo',
+      });
+
+      await expect(relativeTimeRow).toBeVisible();
+
+      // Today so far, still in Tokyo timezone
+      await setTimeRange(page, dashboardPage, selectors, {
+        from: 'now/d',
+        to: 'now',
+      });
+
+      await expect(relativeTimeRow).toBeVisible();
+      await expect(timezoneRow).toBeVisible();
+
+      // Test LA timezone
+      await setTimeRange(page, dashboardPage, selectors, {
+        from: 'now-6h',
+        to: 'now',
+        zone: 'Los Angeles',
+      });
+
+      await expect(relativeTimeRow).toBeVisible();
+
+      // Today so far, still in LA timezone
+      await setTimeRange(page, dashboardPage, selectors, {
+        from: 'now/d',
+        to: 'now',
+      });
+
+      await expect(relativeTimeRow).toBeVisible();
+      await expect(timezoneRow).toBeVisible();
+    });
+  }
+);
+
+// Helper function to set time range with optional timezone
+async function setTimeRange(
+  page: Page,
+  dashboardPage: DashboardPage,
+  selectors: E2ESelectorGroups,
+  options: { from: string; to: string; zone?: string }
+) {
+  await dashboardPage.getByGrafanaSelector(selectors.components.TimePicker.openButton).click();
+
+  await dashboardPage.getByGrafanaSelector(selectors.components.TimePicker.fromField).fill(options.from);
+  await dashboardPage.getByGrafanaSelector(selectors.components.TimePicker.toField).fill(options.to);
+
+  if (options.zone) {
+    await page.getByRole('button', { name: 'Change time settings' }).click();
+    await dashboardPage.getByGrafanaSelector(selectors.components.TimeZonePicker.containerV2).click();
+    await page.getByRole('option', { name: options.zone }).click();
+  }
+
+  await dashboardPage.getByGrafanaSelector(selectors.components.TimePicker.applyTimeRange).click();
+}
+
+const isTimeCorrect = (inUtc: string, inTz: string, offset: number): boolean => {
+  if (inUtc === inTz) {
+    // we need to catch issues when timezone isn't changed for some reason like https://github.com/grafana/grafana/issues/35504
+    return false;
+  }
+
+  const utcDate = toDate(parseISO(inUtc));
+  const tzDate = toDate(parseISO(inTz));
+  const diff = Math.abs(differenceInMinutes(utcDate, tzDate)); // use Math.abs if tzDate is in future
+
+  return diff <= Math.abs(offset * 60);
+};
+
+const offsetBetweenTimeZones = (timeZone1: string, timeZone2: string, when: Date = new Date()): number => {
+  const t1 = convertDateToAnotherTimeZone(when, timeZone1);
+  const t2 = convertDateToAnotherTimeZone(when, timeZone2);
+  return (t1.getTime() - t2.getTime()) / (1000 * 60 * 60);
+};
+
+const convertDateToAnotherTimeZone = (date: Date, timeZone: string): Date => {
+  const dateString = date.toLocaleString('en-US', {
+    timeZone: timeZone,
+  });
+  return new Date(dateString);
+};

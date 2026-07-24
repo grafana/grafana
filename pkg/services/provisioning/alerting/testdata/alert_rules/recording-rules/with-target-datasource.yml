@@ -1,0 +1,26 @@
+apiVersion: 1
+groups:
+  - name: recording_rules_group
+    folder: my_folder
+    interval: 1m
+    rules:
+    - uid: recording_rule_with_target
+      title: my_recording_rule_with_target
+      condition: A
+      data:
+      - refId: A
+        queryType: ''
+        relativeTimeRange:
+          from: 600
+          to: 0
+        datasourceUid: prometheus-uid
+        model:
+          expr: up{instance="localhost:9090"}
+          instant: true
+          intervalMs: 1000
+          maxDataPoints: 43200
+          refId: A
+      record:
+        metric: my_recorded_metric
+        from: A
+        targetDatasourceUid: mimir-uid

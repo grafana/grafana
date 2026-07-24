@@ -1,0 +1,208 @@
+package ossaccesscontrol
+
+import (
+	"context"
+	"errors"
+
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
+)
+
+type DashboardPermissionsService struct {
+	*resourcepermissions.Service
+}
+
+var DashboardViewActions = []string{dashboards.ActionDashboardsRead, accesscontrol.ActionAnnotationsRead}
+var DashboardEditActions = append(DashboardViewActions, []string{dashboards.ActionDashboardsWrite, dashboards.ActionDashboardsDelete, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
+var DashboardAdminActions = append(DashboardEditActions, []string{dashboards.ActionDashboardsPermissionsRead, dashboards.ActionDashboardsPermissionsWrite}...)
+
+// DashboardFixedRoleRegistrations returns the wildcard seed role registrations
+// for dashboards. When wildcardSeed is false an empty slice is returned
+// (the feature is disabled for this instance).
+func DashboardFixedRoleRegistrations(wildcardSeed bool) []accesscontrol.RoleRegistration {
+	if !wildcardSeed {
+		return nil
+	}
+
+	viewer := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:dashboards:viewer",
+			DisplayName: "Viewer",
+			Description: "View all dashboards",
+			Group:       "Dashboards",
+			Permissions: accesscontrol.PermissionsForActions(DashboardViewActions, dashboards.ScopeDashboardsAll),
+			Hidden:      true,
+		},
+		Grants: []string{"Viewer"},
+	}
+
+	editor := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:dashboards:editor",
+			DisplayName: "Editor",
+			Description: "Edit all dashboards.",
+			Group:       "Dashboards",
+			Permissions: accesscontrol.PermissionsForActions(DashboardEditActions, dashboards.ScopeDashboardsAll),
+			Hidden:      true,
+		},
+		Grants: []string{"Editor"},
+	}
+
+	admin := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:dashboards:admin",
+			DisplayName: "Admin",
+			Description: "Administer all dashboards.",
+			Group:       "Dashboards",
+			Permissions: accesscontrol.PermissionsForActions(DashboardAdminActions, dashboards.ScopeDashboardsAll),
+			Hidden:      true,
+		},
+		Grants: []string{"Admin"},
+	}
+
+	return []accesscontrol.RoleRegistration{viewer, editor, admin}
+}
+
+func registerDashboardRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, service accesscontrol.Service) error {
+	return service.DeclareFixedRoles(DashboardFixedRoleRegistrations(cfg.RBAC.PermissionsWildcardSeed("dashboard"))...)
+}
+
+// DashboardPermissionsRoleRegistrations returns the templated reader/writer fixed
+// roles for dashboard resource permissions (fixed:dashboards.permissions:reader
+// and :writer). These mirror the roles declared by ProvideDashboardPermissions
+// through resourcepermissions.New; the identity fields below must match the
+// Options passed there.
+func DashboardPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
+	return resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
+		Resource:       dashboardPermissionsResource,
+		APIGroup:       dashboardv1.APIGroup,
+		ReaderRoleName: permissionReaderRoleName,
+		WriterRoleName: permissionWriterRoleName,
+		RoleGroup:      dashboardPermissionsRoleGroup,
+	})
+}
+
+func ProvideDashboardPermissions(
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
+	license licensing.Licensing, dashboardService dashboards.DashboardService, folderService folder.Service, service accesscontrol.Service,
+	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
+	dashboardPermissionsRegistration dashboards.PermissionsRegistrationService, restConfigProvider apiserver.DirectRestConfigProvider,
+) (*DashboardPermissionsService, error) {
+	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*dashboards.Dashboard, error) {
+		query := &dashboards.GetDashboardQuery{UID: resourceID, OrgID: orgID}
+		queryResult, err := dashboardService.GetDashboard(ctx, query)
+		if err != nil {
+			return nil, err
+		}
+		return queryResult, nil
+	}
+
+	if err := registerDashboardRoles(cfg, features, service); err != nil {
+		return nil, err
+	}
+
+	options := resourcepermissions.Options{
+		Resource:          dashboardPermissionsResource,
+		ResourceAttribute: "uid",
+		APIGroup:          dashboardv1.APIGroup,
+		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
+			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideDashboardPermissions.ResourceValidator")
+			defer span.End()
+
+			ctx, _ = identity.WithServiceIdentity(ctx, orgID)
+			dashboard, err := getDashboard(ctx, orgID, resourceID)
+			if err != nil {
+				return err
+			}
+
+			if dashboard.IsFolder {
+				return errors.New("not found")
+			}
+
+			return nil
+		},
+		InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
+			ctx, _ = identity.WithServiceIdentity(ctx, orgID)
+			dashboard, err := getDashboard(ctx, orgID, resourceID)
+			if err != nil {
+				return nil, err
+			}
+
+			scopes := []string(accesscontrol.WildcardsFromPrefix(folder.ScopeFoldersPrefix))
+			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.AccessControl).Inc()
+			if dashboard.FolderUID != "" {
+				nestedScopes, err := folder.GetInheritedScopes(ctx, orgID, dashboard.FolderUID, folderService)
+				if err != nil {
+					return nil, err
+				}
+
+				scopes = append(scopes, folder.ScopeFoldersProvider.GetResourceScopeUID(dashboard.FolderUID))
+				scopes = append(scopes, nestedScopes...)
+				return scopes, nil
+			}
+
+			return append(scopes, folder.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)), nil
+		},
+		Assignments: resourcepermissions.Assignments{
+			Users:           true,
+			Teams:           true,
+			BuiltInRoles:    true,
+			ServiceAccounts: true,
+		},
+		PermissionsToActions: map[string][]string{
+			"View":  DashboardViewActions,
+			"Edit":  DashboardEditActions,
+			"Admin": DashboardAdminActions,
+		},
+		ReaderRoleName: permissionReaderRoleName,
+		WriterRoleName: permissionWriterRoleName,
+		RoleGroup:      dashboardPermissionsRoleGroup,
+		GetParentFolder: func(ctx context.Context, namespace string, dashboardUID string, dynamicClient dynamic.Interface) (string, error) {
+			dashboardsGVR := schema.GroupVersionResource{
+				Group:    dashboardv1.APIGroup,
+				Version:  dashboardv1.APIVersion,
+				Resource: dashboardv1.DASHBOARD_RESOURCE,
+			}
+
+			dashboardResource := dynamicClient.Resource(dashboardsGVR).Namespace(namespace)
+			unstructuredDash, err := dashboardResource.Get(ctx, dashboardUID, metav1.GetOptions{})
+			if err != nil {
+				if k8serrors.IsNotFound(err) {
+					return "", nil
+				}
+				return "", err
+			}
+
+			parentFolderUID := unstructuredDash.GetAnnotations()[utils.AnnoKeyFolder]
+			return parentFolderUID, nil
+		},
+		RestConfigProvider: restConfigProvider,
+	}
+
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, actionSetService)
+	if err != nil {
+		return nil, err
+	}
+	s := &DashboardPermissionsService{srv}
+	dashboardPermissionsRegistration.RegisterDashboardPermissions(s)
+	return s, nil
+}

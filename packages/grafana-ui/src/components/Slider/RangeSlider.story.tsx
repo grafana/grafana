@@ -1,0 +1,46 @@
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+
+import { RangeSlider } from './RangeSlider';
+import mdx from './RangeSlider.mdx';
+
+const meta: Meta<typeof RangeSlider> = {
+  title: 'Inputs/RangeSlider',
+  component: RangeSlider,
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+    controls: {
+      exclude: ['tooltipAlwaysVisible'],
+    },
+  },
+  argTypes: {
+    orientation: { control: { type: 'select', options: ['horizontal', 'vertical'] } },
+    step: { control: { type: 'number', min: 1 } },
+  },
+  args: {
+    min: 0,
+    max: 100,
+    orientation: 'horizontal',
+    reverse: false,
+    step: undefined,
+  },
+};
+
+export const Basic: StoryFn<typeof RangeSlider> = (args) => {
+  return (
+    <div style={{ width: '200px', height: '200px' }}>
+      <RangeSlider {...args} value={[10, 62]} />
+    </div>
+  );
+};
+
+export const Vertical: StoryFn<typeof RangeSlider> = (args) => {
+  return (
+    <div style={{ width: '200px', height: '200px' }}>
+      <RangeSlider {...args} value={[10, 62]} orientation="vertical" />
+    </div>
+  );
+};
+
+export default meta;

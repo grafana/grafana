@@ -1,0 +1,140 @@
+package schemaversion
+
+import (
+	"context"
+	"strings"
+)
+
+// V21 migrates data links to replace __series.labels with __field.labels.
+// This migration updates the variable syntax used in data links from the old series-based
+// syntax to the new field-based syntax.
+//
+// Example before migration:
+//
+//	"panels": [
+//	  {
+//	    "options": {
+//	      "dataLinks": [
+//	        {
+//	          "url": "http://example.com?series=${__series.labels}&${__series.labels.a}"
+//	        }
+//	      ],
+//	      "fieldOptions": {
+//	        "defaults": {
+//	          "links": [
+//	            {
+//	              "url": "http://example.com?series=${__series.labels}&${__series.labels.x}"
+//	            }
+//	          ]
+//	        }
+//	      }
+//	    }
+//	  }
+//	]
+//
+// Example after migration:
+//
+//	"panels": [
+//	  {
+//	    "options": {
+//	      "dataLinks": [
+//	        {
+//	          "url": "http://example.com?series=${__field.labels}&${__field.labels.a}"
+//	        }
+//	      ],
+//	      "fieldOptions": {
+//	        "defaults": {
+//	          "links": [
+//	            {
+//	              "url": "http://example.com?series=${__field.labels}&${__field.labels.x}"
+//	            }
+//	          ]
+//	        }
+//	      }
+//	    }
+//	  }
+//	]
+func V21(_ context.Context, dashboard map[string]interface{}) error {
+	dashboard["schemaVersion"] = 21
+
+	panels, ok := dashboard["panels"].([]interface{})
+	if !ok {
+		return nil
+	}
+
+	for _, p := range panels {
+		panel, ok := p.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		migratePanelV21(panel)
+
+		// Handle nested panels in collapsed rows
+		if !IsArray(panel["panels"]) {
+			continue
+		}
+		nestedPanels := panel["panels"].([]interface{})
+
+		for _, nestedPanel := range nestedPanels {
+			np, ok := nestedPanel.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			migratePanelV21(np)
+		}
+	}
+
+	return nil
+}
+
+// migratePanelV21 updates the data links within a single panel's options.
+func migratePanelV21(panel map[string]interface{}) {
+	options, ok := panel["options"].(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	updateDataLinks(options)
+	updateFieldOptionsLinks(options)
+}
+
+func updateDataLinks(options map[string]interface{}) {
+	dataLinks, ok := options["dataLinks"].([]interface{})
+	if !ok || !IsArray(dataLinks) {
+		return
+	}
+
+	for _, link := range dataLinks {
+		if linkMap, ok := link.(map[string]interface{}); ok {
+			if url, ok := linkMap["url"].(string); ok {
+				linkMap["url"] = strings.ReplaceAll(url, "__series.labels", "__field.labels")
+			}
+		}
+	}
+}
+
+func updateFieldOptionsLinks(options map[string]interface{}) {
+	fieldOptions, ok := options["fieldOptions"].(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	defaults, ok := fieldOptions["defaults"].(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	links, ok := defaults["links"].([]interface{})
+	if !ok {
+		return
+	}
+
+	for _, link := range links {
+		if linkMap, ok := link.(map[string]interface{}); ok {
+			if url, ok := linkMap["url"].(string); ok {
+				linkMap["url"] = strings.ReplaceAll(url, "__series.labels", "__field.labels")
+			}
+		}
+	}
+}

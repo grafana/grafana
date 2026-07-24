@@ -1,0 +1,26 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`new receiver should be able to test and save a receiver 1`] = `
+[
+  {
+    "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+    "kind": "Receiver",
+    "metadata": {},
+    "spec": {
+      "integrations": [
+        {
+          "disableResolveMessage": false,
+          "secureFields": {},
+          "settings": {
+            "addresses": "tester@grafana.com",
+            "singleEmail": false,
+          },
+          "type": "email",
+          "version": "v1",
+        },
+      ],
+      "title": "my new receiver",
+    },
+  },
+]
+`;

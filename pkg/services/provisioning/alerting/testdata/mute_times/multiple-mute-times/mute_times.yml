@@ -1,0 +1,17 @@
+apiVersion: 1
+muteTimes:
+  - name: test
+    time_intervals:
+    - times:
+      - start_time: '06:00'
+        end_time: '23:59'
+      weekdays:
+      - monday
+  - orgId: 1337
+    name: test
+    time_intervals:
+    - times:
+      - start_time: '06:00'
+        end_time: '23:59'
+      weekdays:
+      - monday

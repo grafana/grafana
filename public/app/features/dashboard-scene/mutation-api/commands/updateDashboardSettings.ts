@@ -1,0 +1,140 @@
+import { type z } from 'zod';
+
+import { textUtil } from '@grafana/data';
+import { sceneGraph } from '@grafana/scenes';
+
+import {
+  type DashboardLink,
+  defaultDashboardLink,
+} from '../../../../../../packages/grafana-schema/src/schema/dashboard/v2';
+import { transformCursorSyncV2ToV1 } from '../../serialization/transformToV1TypesUtils';
+
+import { payloads } from './schemas';
+import { findCursorSyncBehavior, findLiveNowBehavior, readDashboardSettings } from './shared';
+import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
+
+const updateDashboardSettingsPayloadSchema = payloads.updateDashboardSettings;
+
+export type UpdateDashboardSettingsPayload = z.infer<typeof updateDashboardSettingsPayloadSchema>;
+
+type DashboardLinkPayload = NonNullable<UpdateDashboardSettingsPayload['links']>[number];
+
+// URLs are sanitized because links render as clickable and the input is
+// model-controlled (could carry a javascript:/data: scheme).
+function normalizeDashboardLink(link: DashboardLinkPayload): DashboardLink {
+  const defaults = defaultDashboardLink();
+  return {
+    title: link.title ?? defaults.title,
+    url: link.url ? textUtil.sanitizeUrl(link.url) : defaults.url,
+    type: link.type ?? defaults.type,
+    icon: link.icon ?? defaults.icon,
+    tooltip: link.tooltip ?? defaults.tooltip,
+    tags: link.tags ?? defaults.tags,
+    asDropdown: link.asDropdown ?? defaults.asDropdown,
+    targetBlank: link.targetBlank ?? defaults.targetBlank,
+    includeVars: link.includeVars ?? defaults.includeVars,
+    keepTime: link.keepTime ?? defaults.keepTime,
+    ...(link.placement !== undefined && { placement: link.placement }),
+  };
+}
+
+export const updateDashboardSettingsCommand: MutationCommand<UpdateDashboardSettingsPayload> = {
+  name: 'UPDATE_DASHBOARD_SETTINGS',
+  description: payloads.updateDashboardSettings.description ?? '',
+
+  payloadSchema: payloads.updateDashboardSettings,
+  permission: requiresEdit,
+  readOnly: false,
+
+  handler: async (payload, context) => {
+    const { scene } = context;
+    enterEditModeIfNeeded(scene);
+
+    try {
+      const previousValue = readDashboardSettings(scene);
+      const warnings: string[] = [];
+
+      const sceneUpdates: Record<string, unknown> = {};
+      if (payload.title !== undefined) {
+        sceneUpdates.title = payload.title;
+      }
+      if (payload.description !== undefined) {
+        sceneUpdates.description = payload.description;
+      }
+      if (payload.tags !== undefined) {
+        sceneUpdates.tags = payload.tags;
+      }
+      if (payload.editable !== undefined) {
+        sceneUpdates.editable = payload.editable;
+      }
+      if (payload.preload !== undefined) {
+        sceneUpdates.preload = payload.preload;
+      }
+      if (payload.links !== undefined) {
+        sceneUpdates.links = payload.links.map(normalizeDashboardLink);
+      }
+
+      if (Object.keys(sceneUpdates).length > 0) {
+        scene.setState(sceneUpdates);
+      }
+
+      const timeRange = sceneGraph.getTimeRange(scene);
+      const timeRangeUpdates: Record<string, unknown> = {};
+      if (payload.timeSettings?.from !== undefined) {
+        timeRangeUpdates.from = payload.timeSettings.from;
+      }
+      if (payload.timeSettings?.to !== undefined) {
+        timeRangeUpdates.to = payload.timeSettings.to;
+      }
+      if (payload.timeSettings?.timezone !== undefined) {
+        timeRangeUpdates.timeZone = payload.timeSettings.timezone;
+      }
+
+      if (Object.keys(timeRangeUpdates).length > 0) {
+        timeRange.setState(timeRangeUpdates);
+      }
+
+      if (payload.timeSettings?.autoRefresh !== undefined) {
+        const refreshPicker = scene.state.controls?.state.refreshPicker;
+        if (refreshPicker) {
+          refreshPicker.setState({ refresh: payload.timeSettings.autoRefresh });
+        } else {
+          warnings.push('autoRefresh could not be set: refresh picker not found in scene controls');
+        }
+      }
+
+      if (payload.cursorSync !== undefined) {
+        const cursorSyncBehavior = findCursorSyncBehavior(scene);
+        if (cursorSyncBehavior) {
+          cursorSyncBehavior.setState({ sync: transformCursorSyncV2ToV1(payload.cursorSync) });
+        } else {
+          warnings.push('cursorSync could not be set: CursorSync behavior not found in scene');
+        }
+      }
+
+      if (payload.liveNow !== undefined) {
+        const liveNowBehavior = findLiveNowBehavior(scene);
+        if (liveNowBehavior) {
+          liveNowBehavior.setState({ enabled: payload.liveNow });
+        } else {
+          warnings.push('liveNow could not be set: LiveNowTimer behavior not found in scene');
+        }
+      }
+
+      const newValue = readDashboardSettings(scene);
+
+      return {
+        success: true,
+        data: newValue,
+        changes: [{ path: '', previousValue, newValue }],
+        warnings: warnings.length > 0 ? warnings : undefined,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        changes: [],
+      };
+    }
+  },
+};

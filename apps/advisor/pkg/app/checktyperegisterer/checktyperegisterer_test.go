@@ -1,0 +1,495 @@
+package checktyperegisterer
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"strings"
+	"testing"
+
+	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/resource"
+	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/pkg/services/org"
+	k8sErrs "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+)
+
+func TestCheckTypesRegisterer_Run(t *testing.T) {
+	newMockCheck := &mockCheck{
+		id: "check1",
+		steps: []checks.Step{
+			&mockStep{id: "step1", title: "Step 1", description: "Description 1"},
+		},
+	}
+	existingObjectDifferentAnnotations := &advisorv0alpha1.CheckType{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "check1",
+			Annotations: map[string]string{
+				checks.NameAnnotation: "existing-name", // Different to trigger update
+			},
+		},
+		Spec: advisorv0alpha1.CheckTypeSpec{
+			Name: "check1",
+			Steps: []advisorv0alpha1.CheckTypeStep{
+				{StepID: "step1", Title: "Step 1", Description: "Description 1"},
+			},
+		},
+	}
+	existingObjectDifferentSteps := &advisorv0alpha1.CheckType{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "check1",
+			Annotations: map[string]string{
+				checks.NameAnnotation: "mock", // Same as check name
+			},
+		},
+		Spec: advisorv0alpha1.CheckTypeSpec{
+			Name: "check1",
+			Steps: []advisorv0alpha1.CheckTypeStep{
+				{StepID: "step2", Title: "Step 2", Description: "Description 2"}, // Different step
+			},
+		},
+	}
+	existingObjectSameContent := &advisorv0alpha1.CheckType{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "check1",
+			Annotations: map[string]string{
+				checks.NameAnnotation: "mock", // Same as check name
+			},
+		},
+		Spec: advisorv0alpha1.CheckTypeSpec{
+			Name: "check1",
+			Steps: []advisorv0alpha1.CheckTypeStep{
+				{StepID: "step1", Title: "Step 1", Description: "Description 1"},
+			},
+		},
+	}
+	tests := []struct {
+		name        string
+		checks      []checks.Check
+		stackID     string
+		orgService  org.Service
+		getFunc     func(ctx context.Context, id resource.Identifier) (resource.Object, error)
+		createFunc  func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error)
+		updateFunc  func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error)
+		expectedErr error
+	}{
+		{
+			name:    "successful create",
+			checks:  []checks.Check{newMockCheck},
+			stackID: "123",
+			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+				return nil, k8sErrs.NewNotFound(schema.GroupResource{}, id.Name)
+			},
+			createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
+				return obj, nil
+			},
+			updateFunc:  nil,
+			expectedErr: nil,
+		},
+		{
+			name:    "resource exists with different annotations, should update",
+			checks:  []checks.Check{newMockCheck},
+			stackID: "123",
+			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+				return existingObjectDifferentAnnotations, nil
+			},
+			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
+				return obj, nil
+			},
+			expectedErr: nil,
+		},
+		{
+			name:    "resource exists with different steps, should update",
+			checks:  []checks.Check{newMockCheck},
+			stackID: "123",
+			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+				return existingObjectDifferentSteps, nil
+			},
+			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
+				return obj, nil
+			},
+			expectedErr: nil,
+		},
+		{
+			name:    "resource exists with same annotations and steps, should not update",
+			checks:  []checks.Check{newMockCheck},
+			stackID: "123",
+			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+				return existingObjectSameContent, nil
+			},
+			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
+				return nil, errors.New("updateFunc should not be called")
+			},
+			expectedErr: nil,
+		},
+		{
+			name:    "resource exists, with custom annotations preserved",
+			checks:  []checks.Check{newMockCheck},
+			stackID: "123",
+			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+				return existingObjectDifferentAnnotations, nil
+			},
+			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
+				if obj.GetAnnotations()[checks.IgnoreStepsAnnotationList] != "step1" {
+					return nil, fmt.Errorf("expected annotation %s, got %s", "step1", obj.GetAnnotations()[checks.IgnoreStepsAnnotationList])
+				}
+				return obj, nil
+			},
+			expectedErr: nil,
+		},
+		{
+			name:    "create error",
+			checks:  []checks.Check{newMockCheck},
+			stackID: "123",
+			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+				return nil, k8sErrs.NewNotFound(schema.GroupResource{}, id.Name)
+			},
+			createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
+				return nil, errors.New("create error")
+			},
+			updateFunc:  nil,
+			expectedErr: errors.New("create error"),
+		},
+		{
+			name:    "update error",
+			checks:  []checks.Check{newMockCheck},
+			stackID: "123",
+			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+				return existingObjectDifferentAnnotations, nil
+			},
+			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
+				return nil, errors.New("update error")
+			},
+			expectedErr: errors.New("update error"),
+		},
+		{
+			name:    "shutting down error",
+			checks:  []checks.Check{newMockCheck},
+			stackID: "123",
+			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+				return existingObjectDifferentAnnotations, nil
+			},
+			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
+				return nil, errors.New("apiserver is shutting down")
+			},
+			expectedErr: nil,
+		},
+		{
+			name:    "cloud stack namespace",
+			checks:  []checks.Check{newMockCheck},
+			stackID: "456",
+			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+				return nil, k8sErrs.NewNotFound(schema.GroupResource{}, id.Name)
+			},
+			createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
+				if obj.GetNamespace() != "stack-456" {
+					return nil, fmt.Errorf("expected namespace %s, got %s", "stack-456", obj.GetNamespace())
+				}
+				return obj, nil
+			},
+			expectedErr: nil,
+		},
+		{
+			name:       "multiple orgs",
+			checks:     []checks.Check{newMockCheck},
+			stackID:    "",
+			orgService: &mockOrgService{orgs: []*org.OrgDTO{{ID: 1, Name: "Org1"}, {ID: 2, Name: "Org2"}}},
+			getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+				return nil, k8sErrs.NewNotFound(schema.GroupResource{}, id.Name)
+			},
+			createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
+				// Should create in both org-1 and org-2 namespaces
+				ns := obj.GetNamespace()
+				if ns != "org-1" && ns != "org-2" {
+					return nil, fmt.Errorf("expected namespace org-1 or org-2, got %s", ns)
+				}
+				return obj, nil
+			},
+			expectedErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			orgSvc := tt.orgService
+			if orgSvc == nil {
+				orgSvc = &mockOrgService{orgs: []*org.OrgDTO{}}
+			}
+			r := &Runner{
+				checkRegistry: &mockCheckRegistry{checks: tt.checks},
+				client: &mockClient{
+					getFunc:    tt.getFunc,
+					createFunc: tt.createFunc,
+					updateFunc: tt.updateFunc,
+				},
+				orgService:    orgSvc,
+				stackID:       tt.stackID,
+				log:           logging.DefaultLogger,
+				retryAttempts: 1,
+				retryDelay:    0,
+			}
+			err := r.Run(context.Background())
+			if err != nil {
+				if tt.expectedErr == nil {
+					t.Errorf("unexpected error: %v", err)
+				} else if err.Error() != tt.expectedErr.Error() {
+					t.Errorf("expected error: %v, got: %v", tt.expectedErr, err)
+				}
+			}
+		})
+	}
+}
+
+func TestCheckTypesRegisterer_CleanupStale(t *testing.T) {
+	registeredCheck := &mockCheck{
+		id: "check1",
+		steps: []checks.Step{
+			&mockStep{id: "step1", title: "Step 1", description: "Description 1"},
+		},
+	}
+	makeCheckType := func(name string) advisorv0alpha1.CheckType {
+		return advisorv0alpha1.CheckType{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "stack-123"},
+			Spec:       advisorv0alpha1.CheckTypeSpec{Name: name},
+		}
+	}
+
+	tests := []struct {
+		name            string
+		registered      []checks.Check
+		existing        []advisorv0alpha1.CheckType
+		listErr         error
+		deleteErr       error
+		expectedDeletes []string
+		expectedErr     string
+	}{
+		{
+			name:            "deletes check types not in registry",
+			registered:      []checks.Check{registeredCheck},
+			existing:        []advisorv0alpha1.CheckType{makeCheckType("check1"), makeCheckType("stale1"), makeCheckType("stale2")},
+			expectedDeletes: []string{"stale1", "stale2"},
+		},
+		{
+			name:            "keeps all check types when registry matches",
+			registered:      []checks.Check{registeredCheck},
+			existing:        []advisorv0alpha1.CheckType{makeCheckType("check1")},
+			expectedDeletes: nil,
+		},
+		{
+			name:            "nothing to delete when no existing types",
+			registered:      []checks.Check{registeredCheck},
+			existing:        nil,
+			expectedDeletes: nil,
+		},
+		{
+			name:            "ignores not found on delete",
+			registered:      []checks.Check{registeredCheck},
+			existing:        []advisorv0alpha1.CheckType{makeCheckType("stale1")},
+			deleteErr:       k8sErrs.NewNotFound(schema.GroupResource{}, "stale1"),
+			expectedDeletes: []string{"stale1"},
+		},
+		{
+			name:        "list error is propagated",
+			registered:  []checks.Check{registeredCheck},
+			listErr:     errors.New("list failure"),
+			expectedErr: "list failure",
+		},
+		{
+			name:            "delete error is propagated",
+			registered:      []checks.Check{registeredCheck},
+			existing:        []advisorv0alpha1.CheckType{makeCheckType("stale1")},
+			deleteErr:       errors.New("delete failure"),
+			expectedDeletes: []string{"stale1"},
+			expectedErr:     "delete failure",
+		},
+		{
+			name:            "shutting down on list is treated as no-op",
+			registered:      []checks.Check{registeredCheck},
+			existing:        []advisorv0alpha1.CheckType{makeCheckType("stale1")},
+			listErr:         errors.New("apiserver is shutting down"),
+			expectedDeletes: nil,
+		},
+		{
+			name:            "shutting down on delete is treated as no-op",
+			registered:      []checks.Check{registeredCheck},
+			existing:        []advisorv0alpha1.CheckType{makeCheckType("stale1"), makeCheckType("stale2")},
+			deleteErr:       errors.New("apiserver is shutting down"),
+			expectedDeletes: []string{"stale1"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var deleted []string
+			items := make([]advisorv0alpha1.CheckType, len(tt.existing))
+			copy(items, tt.existing)
+			r := &Runner{
+				checkRegistry: &mockCheckRegistry{checks: tt.registered},
+				client: &mockClient{
+					getFunc: func(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+						return nil, k8sErrs.NewNotFound(schema.GroupResource{}, id.Name)
+					},
+					createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
+						return obj, nil
+					},
+					listFunc: func(ctx context.Context, namespace string, opts resource.ListOptions) (resource.ListObject, error) {
+						if tt.listErr != nil {
+							return nil, tt.listErr
+						}
+						return &advisorv0alpha1.CheckTypeList{Items: items}, nil
+					},
+					deleteFunc: func(ctx context.Context, id resource.Identifier, opts resource.DeleteOptions) error {
+						deleted = append(deleted, id.Name)
+						return tt.deleteErr
+					},
+				},
+				stackID:       "123",
+				orgService:    &mockOrgService{orgs: []*org.OrgDTO{}},
+				log:           logging.DefaultLogger,
+				retryAttempts: 1,
+				retryDelay:    0,
+			}
+
+			err := r.Run(context.Background())
+			if tt.expectedErr != "" {
+				if err == nil {
+					t.Fatalf("expected error containing %q, got nil", tt.expectedErr)
+				}
+				if !strings.Contains(err.Error(), tt.expectedErr) {
+					t.Fatalf("expected error containing %q, got %v", tt.expectedErr, err)
+				}
+			} else if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if len(deleted) != len(tt.expectedDeletes) {
+				t.Fatalf("expected %d deletes (%v), got %d (%v)", len(tt.expectedDeletes), tt.expectedDeletes, len(deleted), deleted)
+			}
+			for i, name := range tt.expectedDeletes {
+				if deleted[i] != name {
+					t.Errorf("expected delete[%d] to be %q, got %q", i, name, deleted[i])
+				}
+			}
+		})
+	}
+}
+
+type mockCheckRegistry struct {
+	checks []checks.Check
+}
+
+func (m *mockCheckRegistry) Checks() []checks.Check {
+	return m.checks
+}
+
+type mockCheck struct {
+	id    string
+	steps []checks.Step
+}
+
+func (m *mockCheck) Init(ctx context.Context) error {
+	return nil
+}
+
+func (m *mockCheck) ID() string {
+	return m.id
+}
+
+func (m *mockCheck) Name() string {
+	return "mock"
+}
+
+func (m *mockCheck) Steps() []checks.Step {
+	return m.steps
+}
+
+func (m *mockCheck) Item(ctx context.Context, id string) (any, error) {
+	return nil, nil
+}
+
+func (m *mockCheck) Items(ctx context.Context) ([]any, error) {
+	return nil, nil
+}
+
+type mockStep struct {
+	id          string
+	title       string
+	description string
+}
+
+func (m *mockStep) ID() string {
+	return m.id
+}
+
+func (m *mockStep) Title() string {
+	return m.title
+}
+
+func (m *mockStep) Description() string {
+	return m.description
+}
+
+func (m *mockStep) Resolution() string {
+	return ""
+}
+
+func (m *mockStep) Run(ctx context.Context, log logging.Logger, obj *advisorv0alpha1.CheckSpec, item any) ([]advisorv0alpha1.CheckReportFailure, error) {
+	return nil, nil
+}
+
+type mockClient struct {
+	resource.Client
+
+	getFunc    func(ctx context.Context, id resource.Identifier) (resource.Object, error)
+	createFunc func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error)
+	updateFunc func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error)
+	listFunc   func(ctx context.Context, namespace string, opts resource.ListOptions) (resource.ListObject, error)
+	deleteFunc func(ctx context.Context, id resource.Identifier, opts resource.DeleteOptions) error
+}
+
+func (m *mockClient) Get(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+	if m.getFunc != nil {
+		return m.getFunc(ctx, id)
+	}
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockClient) Create(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
+	if m.createFunc != nil {
+		return m.createFunc(ctx, id, obj, opts)
+	}
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockClient) Update(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
+	if m.updateFunc != nil {
+		return m.updateFunc(ctx, id, obj, opts)
+	}
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockClient) List(ctx context.Context, namespace string, opts resource.ListOptions) (resource.ListObject, error) {
+	if m.listFunc != nil {
+		return m.listFunc(ctx, namespace, opts)
+	}
+	return &advisorv0alpha1.CheckTypeList{}, nil
+}
+
+func (m *mockClient) Delete(ctx context.Context, id resource.Identifier, opts resource.DeleteOptions) error {
+	if m.deleteFunc != nil {
+		return m.deleteFunc(ctx, id, opts)
+	}
+	return nil
+}
+
+type mockOrgService struct {
+	org.Service
+	orgs []*org.OrgDTO
+}
+
+func (m *mockOrgService) Search(ctx context.Context, query *org.SearchOrgsQuery) ([]*org.OrgDTO, error) {
+	return m.orgs, nil
+}

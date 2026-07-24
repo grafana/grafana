@@ -1,0 +1,173 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { UNSAFE_PortalProvider } from '@react-aria/overlays';
+import { type Action, KBarProvider } from 'kbar';
+import { type ComponentType, Fragment, type ReactNode, useEffect, useState } from 'react';
+import CacheProvider from 'react-inlinesvg/provider';
+import { Provider } from 'react-redux';
+import { Route, Routes } from 'react-router-dom-v5-compat';
+
+import { config, navigationLogger, reportInteraction } from '@grafana/runtime';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
+import { ErrorBoundaryAlert, getPortalContainer, GlobalStyles, PortalContainer, TimeRangeProvider } from '@grafana/ui';
+import { BrandingContext, type BrandingContextValue } from '@grafana/ui/internal';
+import { getAppRoutes } from 'app/routes/routes';
+import { store } from 'app/store/store';
+
+import { ExtensionSidebarContextProvider } from './core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
+import { FeatureControlContextProvider } from './core/components/AppChrome/FeatureControl/FeatureControlProvider';
+import { Branding } from './core/components/Branding/Branding';
+import { GrafanaContext, type GrafanaContextType } from './core/context/GrafanaContext';
+import { GrafanaRouteWrapper } from './core/navigation/GrafanaRoute';
+import { type RouteDescriptor } from './core/navigation/types';
+import { contextSrv } from './core/services/context_srv';
+import { ThemeProvider } from './core/utils/ConfigProvider';
+import { getCommandPaletteInputMode } from './features/commandPalette/inputMode';
+import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
+import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
+import { getPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
+import { type PluginExtensionRegistries } from './features/plugins/extensions/registry/types';
+import { ScopesContextProvider } from './features/scopes/ScopesContextProvider';
+import { RouterWrapper } from './routes/RoutesWrapper';
+
+interface AppWrapperProps {
+  context: GrafanaContextType;
+}
+
+// Reads Branding.LoginLogo at render time so custom branding applied by enterprise at startup
+// is reflected regardless of module init order. Defined at module scope so the context value
+// keeps a stable identity across renders.
+function AppLogo(props: { className?: string }) {
+  return <Branding.LoginLogo {...props} />;
+}
+const brandingContextValue: BrandingContextValue = { AppLogo };
+
+/** Used by enterprise */
+let bodyRenderHooks: ComponentType[] = [];
+let pageBanners: ComponentType[] = [];
+const enterpriseProviders: Array<ComponentType<{ children: ReactNode }>> = [];
+
+export function addEnterpriseProviders(provider: ComponentType<{ children: ReactNode }>) {
+  enterpriseProviders.push(provider);
+}
+
+export function addBodyRenderHook(fn: ComponentType) {
+  bodyRenderHooks.push(fn);
+}
+
+export function addPageBanner(fn: ComponentType) {
+  pageBanners.push(fn);
+}
+
+const iconCacheID = `grafana-icon-cache-${config.buildInfo.commit}`;
+
+export function AppWrapper({ context }: AppWrapperProps) {
+  const [ready, setReady] = useState(false);
+  const [registries, setRegistries] = useState<PluginExtensionRegistries | undefined>(undefined);
+
+  useEffect(() => {
+    async function init() {
+      const regs = await getPluginExtensionRegistries();
+      setReady(true);
+      setRegistries(regs);
+      removePreloader();
+
+      // clear any old icon caches
+      const cacheKeys = (await window.caches?.keys()) ?? [];
+      for (const key of cacheKeys) {
+        if (key.startsWith('grafana-icon-cache') && key !== iconCacheID) {
+          window.caches.delete(key);
+        }
+      }
+    }
+    init();
+  }, []);
+
+  function removePreloader() {
+    const preloader = document.querySelector('.preloader');
+    if (preloader) {
+      preloader.remove();
+    } else {
+      console.warn('Preloader element not found');
+    }
+  }
+
+  function renderRoute(route: RouteDescriptor) {
+    return (
+      <Route
+        caseSensitive={route.sensitive === undefined ? false : route.sensitive}
+        path={route.path}
+        key={route.path}
+        element={<GrafanaRouteWrapper route={route} />}
+      />
+    );
+  }
+
+  function renderRoutes() {
+    return <Routes>{getAppRoutes().map((r) => renderRoute(r))}</Routes>;
+  }
+
+  navigationLogger('AppWrapper', false, 'rendering');
+
+  const commandPaletteActionSelected = (action: Action) => {
+    reportInteraction('command_palette_action_selected', {
+      actionId: action.id,
+      actionName: action.name,
+      actionSection: action.section,
+      interactionMode: getCommandPaletteInputMode(),
+    });
+  };
+
+  const routerWrapperProps = {
+    routes: ready && renderRoutes(),
+    pageBanners,
+    bodyRenderHooks,
+    providers: enterpriseProviders,
+  };
+
+  // The extensions sidebar calls plugins/settings which requires auth, so only show it if the user has a role (is logged in)
+  const ExtensionsSidebarProvider =
+    contextSrv.user.orgRole !== ''
+      ? ExtensionSidebarContextProvider
+      : ({ children }: { children: ReactNode }) => <>{children}</>;
+  const MaybeTimeRangeProvider = config.featureToggles.timeRangeProvider ? TimeRangeProvider : Fragment;
+
+  return (
+    <Provider store={store}>
+      <ErrorBoundaryAlert boundaryName="app-wrapper" style="page">
+        <OpenFeatureProvider client={getFeatureFlagClient()}>
+          <GrafanaContext.Provider value={context}>
+            <ThemeProvider value={config.theme2}>
+              <BrandingContext.Provider value={brandingContextValue}>
+                <CacheProvider name={iconCacheID}>
+                  <KBarProvider
+                    actions={[]}
+                    options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
+                  >
+                    <MaybeTimeRangeProvider>
+                      <ScopesContextProvider>
+                        <ExtensionRegistriesProvider registries={registries}>
+                          <ExtensionsSidebarProvider>
+                            <FeatureControlContextProvider>
+                              <UNSAFE_PortalProvider getContainer={getPortalContainer}>
+                                <GlobalStyles />
+                                <div className="grafana-app">
+                                  <RouterWrapper {...routerWrapperProps} />
+                                  <LiveConnectionWarning />
+                                  <PortalContainer />
+                                </div>
+                              </UNSAFE_PortalProvider>
+                            </FeatureControlContextProvider>
+                          </ExtensionsSidebarProvider>
+                        </ExtensionRegistriesProvider>
+                      </ScopesContextProvider>
+                    </MaybeTimeRangeProvider>
+                  </KBarProvider>
+                </CacheProvider>
+              </BrandingContext.Provider>
+            </ThemeProvider>
+          </GrafanaContext.Provider>
+        </OpenFeatureProvider>
+      </ErrorBoundaryAlert>
+    </Provider>
+  );
+}

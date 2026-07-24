@@ -1,0 +1,105 @@
+import { type ReplaySubject } from 'rxjs';
+
+import { type AppPluginConfig, type IconName, type PluginExtensionAddedLinkConfig } from '@grafana/data';
+import { type PluginAddedLinksConfigureFunc, type PluginExtensionEventHelpers } from '@grafana/data/internal';
+
+import * as errors from '../errors';
+import { isGrafanaDevMode } from '../utils';
+import { isAddedLinkMetaInfoMissing, isConfigureFnValid } from '../validators';
+
+import { type PluginExtensionConfigs, Registry, type RegistryType } from './Registry';
+
+const logPrefix = 'Could not register link extension. Reason:';
+
+export type AddedLinkRegistryItem<Context extends object = object> = {
+  pluginId: string;
+  extensionPointId: string;
+  title: string;
+  description?: string;
+  path?: string;
+  onClick?: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
+  configure?: PluginAddedLinksConfigureFunc<Context>;
+  icon?: IconName;
+  category?: string;
+  group?: { name: string; icon?: IconName };
+  openInNewTab?: boolean;
+};
+
+export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], PluginExtensionAddedLinkConfig> {
+  constructor(
+    apps: AppPluginConfig[],
+    options: {
+      registrySubject?: ReplaySubject<RegistryType<AddedLinkRegistryItem[]>>;
+      initialState?: RegistryType<AddedLinkRegistryItem[]>;
+    } = {}
+  ) {
+    super(apps, options);
+  }
+
+  mapToRegistry(
+    registry: RegistryType<AddedLinkRegistryItem[]>,
+    item: PluginExtensionConfigs<PluginExtensionAddedLinkConfig>
+  ): RegistryType<AddedLinkRegistryItem[]> {
+    const { pluginId, configs } = item;
+
+    for (const config of configs) {
+      const { path, title, description, configure, onClick, targets, openInNewTab } = config;
+      const configLog = this.logger.child({
+        path: path ?? '',
+        description: description ?? '',
+        title,
+        pluginId,
+        onClick: typeof onClick,
+        openInNewTab: openInNewTab ? 'true' : 'false',
+      });
+
+      if (!title) {
+        configLog.error(`${logPrefix} ${errors.TITLE_MISSING}`);
+        continue;
+      }
+
+      if (!isConfigureFnValid(configure)) {
+        configLog.error(`${logPrefix} ${errors.INVALID_CONFIGURE_FUNCTION}`);
+        continue;
+      }
+
+      if (!path && !onClick) {
+        configLog.error(`${logPrefix} ${errors.INVALID_PATH_OR_ON_CLICK}`);
+        continue;
+      }
+
+      if (
+        pluginId !== 'grafana' &&
+        isGrafanaDevMode() &&
+        isAddedLinkMetaInfoMissing(pluginId, config, configLog, this.apps)
+      ) {
+        continue;
+      }
+
+      const extensionPointIds = Array.isArray(targets) ? targets : [targets];
+
+      for (const extensionPointId of extensionPointIds) {
+        const pointIdLog = configLog.child({ extensionPointId });
+        const { targets, ...registryItem } = config;
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        const { category, group, ...rest } = registryItem as PluginExtensionAddedLinkConfig;
+
+        pointIdLog.debug('Added link extension successfully registered');
+
+        // Creating a new array instead of pushing to get a new references
+        const slice = registry[extensionPointId] ?? [];
+        const result = { ...rest, category, group, pluginId, extensionPointId };
+        registry[extensionPointId] = slice.concat(result);
+      }
+    }
+
+    return registry;
+  }
+
+  // Returns a read-only version of the registry.
+  readOnly() {
+    return new AddedLinksRegistry(this.apps, {
+      registrySubject: this.registrySubject,
+    });
+  }
+}

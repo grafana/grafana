@@ -1,0 +1,285 @@
+# This workflow creates a new PR in Grafana which is triggered after a release is completed.
+# It should include all code changes that are needed after a release is done. This includes the changelog update and
+# version bumps, but could include more in the future.
+# Please refrain from including any processes that do not result in code changes in this workflow. Instead, they should
+# either be triggered in the release promotion process or in the release comms process (that is triggered by merging
+# this PR).
+name: Grafana Release PR
+on:
+  workflow_dispatch:
+    inputs:
+      previous_version:
+        type: string
+        required: false
+        description: 'The release version (semver, git tag, branch or commit) to use for comparison'
+      version:
+        required: true
+        type: string
+        description: The version of Grafana that is being released (without the `v` prefix)`
+      target:
+        required: false
+        type: string
+        description: 'Unused: left here for backwards compatibility'
+      changelog:
+        required: false
+        type: boolean
+        default: true
+      bump:
+        required: false
+        type: boolean
+        default: true
+      dry_run:
+        required: false
+        default: false
+        type: boolean
+      latest:
+        required: false
+        default: false
+        type: boolean
+      release_date:
+        required: false
+        type: string
+        description: "Release date in format YYYY-MM-DD"
+
+permissions:
+  contents: read
+
+jobs:
+  capture-date:
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+      actions: read # gh run view reads the run's createdAt via the Actions API
+    outputs:
+      release_date: ${{ steps.set_release_date.outputs.release_date }}
+    steps:
+      - name: compute_release_date
+        run: |
+          if [ -n "$DATE" ]; then
+            echo "release_date=$DATE" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          echo "Fetching workflow run creation date..."
+          created_at=$(gh run view "$GITHUB_RUN_ID" --repo "$GH_REPO" --json createdAt -q .createdAt)
+          formatted_date=$(date -d "$created_at" +%Y-%m-%d)
+          echo "release_date=$formatted_date" >> "$GITHUB_ENV"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          DATE: ${{ inputs.release_date }}
+
+      - id: set_release_date
+        run: echo "release_date=$release_date" >> "$GITHUB_OUTPUT"
+
+  push-changelog-to-main:
+    needs: capture-date
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
+
+    name: Create PR to main to update the changelog
+    uses: ./.github/workflows/changelog.yml
+    concurrency:
+      group: grafana-release-pr-update-changelog-main
+      cancel-in-progress: false
+    with:
+      previous_version: ${{inputs.previous_version}}
+      version: ${{ inputs.version }}
+      latest: ${{ inputs.latest }}
+      dry_run: ${{ inputs.dry_run }}
+      target: main
+      work_branch: changelog/update-changelog-${{ needs.capture-date.outputs.release_date }}
+
+  create-prs:
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
+    name: Create Release PR
+    runs-on: ubuntu-x64
+    if: github.repository == 'grafana/grafana'
+    env:
+      VERSION: ${{ inputs.version }}
+      LATEST: ${{ inputs.latest }}
+      DRY_RUN: ${{ inputs.dry_run }}
+      RUN_NUMBER: ${{ github.run_number }}
+    steps:
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        with:
+          github_app: grafana-pr-automation
+          permission_set: ${{ startsWith(github.ref_name, 'release-') && 'release' || 'main' }}
+      # The grafana repo is large enough that GitHub's pre-receive scan for workflow-file
+      # modifications ("Restricts updates to workflow files" system rule) consistently
+      # exceeds its server-side timeout on any push -- regardless of whether the push
+      # actually touches workflow files. When the scan times out, GitHub fails closed and
+      # rejects the push with "workflows scope may be required". Granting workflows:write
+      # tells GitHub to skip the scan entirely (the caller is already authorized to modify
+      # workflow files), which is the only documented way to push to this repo from a bot.
+      # grafana-writer is the only app installed with that scope; grafana-pr-automation
+      # cannot push at all because of this.
+      - name: Get GitHub App token (writer)
+        id: get-writer-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        with:
+          github_app: grafana-writer
+          permission_set: ${{ startsWith(github.ref_name, 'release-') && 'release-writer' || 'release-writer-main' }}
+      - run: |
+          {
+            echo "RELEASE_BRANCH=release-${VERSION}"
+            echo "WORK_BRANCH=release/${RUN_NUMBER}/${VERSION}"
+          } >> "$GITHUB_ENV"
+      - name: Checkout Grafana target branch #checkout the target branch to base the release branch on
+        uses: actions/checkout@v5
+        with:
+          token: ${{ steps.get-writer-app-token.outputs.token }} # used only for fetching; commits go via kminehart API
+          ref: ${{ env.RELEASE_BRANCH }}
+          fetch-tags: true
+          fetch-depth: 0
+      - name: Checkout Grafana (main)
+        uses: actions/checkout@v5
+        with:
+          token: ${{ github.token }}
+          ref: main
+          path: .grafana-main
+
+      - name: Setup Node.js
+        if: ${{ !contains(inputs.version, '+security') }}
+        uses: ./.github/actions/setup-node
+      # Use actions/setup-go directly instead of ./.github/actions/setup-go: the composite
+      # references ./.github/actions/report-go-cache-sizes, which resolves from this job's
+      # workspace (the release-branch checkout). That subtree may lag main and miss the action,
+      # failing the step. Mirror cache-build:false behavior (no GOCACHE; modules via actions/cache).
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: .grafana-main/go.mod
+          cache: false
+
+      # planetscale/ghcommit-action commits to an existing remote branch; it doesn't
+      # create the branch itself. Pre-create the ref at the release branch's HEAD via
+      # the Git Data API so subsequent commits have a target.
+      - name: Pre-create branch on remote
+        env:
+          GH_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
+        run: |
+          BASE_SHA=$(git rev-parse "origin/${RELEASE_BRANCH}")
+          gh api "repos/${GITHUB_REPOSITORY}/git/refs" \
+            --method POST \
+            -f "ref=refs/heads/${WORK_BRANCH}" \
+            -f "sha=${BASE_SHA}"
+
+      - name: Generate changelog
+        id: changelog
+        if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
+        uses: ./.grafana-main/.github/actions/changelog
+        with:
+          previous: ${{inputs.previous_version}}
+          target: v${{ env.VERSION }}
+          output_file: changelog_items.md
+          github_token: ${{ steps.get-github-app-token.outputs.token }}
+      - name: Patch CHANGELOG.md
+        if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
+        run: |
+          # Prepare CHANGELOG.md content with version delimiters
+          (
+            echo
+            echo "# $VERSION ($(date '+%F'))"
+            echo
+            cat changelog_items.md
+          ) > CHANGELOG.part
+
+          # Escape BRE metacharacters so versions containing '.' (and the literal '+' in
+          # '+security' builds) match the delimiters literally instead of as a regex.
+          # '+' is left unescaped on purpose: in BRE it is already a literal, and '\+'
+          # would turn it into the one-or-more operator.
+          VERSION_RE=$(printf '%s' "$VERSION" | sed 's/[][\.^$*]/\\&/g')
+
+          # Check if a version exists in the changelog
+          if grep -qF "<!-- $VERSION START" CHANGELOG.md ; then
+            # Replace the content between START and END delimiters
+            echo "Version $VERSION is found in the CHANGELOG.md, patching contents..."
+            sed -i -e "/$VERSION_RE START/,/$VERSION_RE END/{//!d;}" \
+                   -e "/$VERSION_RE START/r CHANGELOG.part" CHANGELOG.md
+          else
+            # Prepend changelog part to the main changelog file
+            echo "Version $VERSION not found in the CHANGELOG.md"
+            (
+              echo "<!-- $VERSION START -->"
+              cat CHANGELOG.part
+              echo "<!-- $VERSION END -->"
+              cat CHANGELOG.md
+            ) > CHANGELOG.tmp
+            mv CHANGELOG.tmp CHANGELOG.md
+          fi
+
+          rm -f CHANGELOG.part changelog_items.md
+
+          git diff CHANGELOG.md
+      - name: "Prettify CHANGELOG.md"
+        if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
+        run: npx prettier --write CHANGELOG.md
+      # Remove the main checkout before lerna runs so nx doesn't see duplicate plugin
+      # package.json files across .grafana-main and the release-branch tree.
+      - name: Remove main checkout before bump
+        if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
+        run: rm -rf .grafana-main
+      - name: Bump versions
+        if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
+        run: |
+          yarn install
+          npm version patch --no-git-tag-version
+          yarn run lerna version patch --no-push --no-git-tag-version --force-publish --exact --yes
+          yarn install
+          yarn prettier:write
+      - name: make gen-cue
+        if: ${{ !contains(inputs.version, '+security') }}
+        shell: bash
+        run: make gen-cue
+
+      # Single commit for all release-PR file changes (changelog + version bumps +
+      # yarn.lock refresh + regenerated CUE schemas). ghcommit-action uses the Git Data
+      # API, which gives us two things in one shot:
+      #   1. Commits made via the API with a GitHub App installation token are auto-signed
+      #      by GitHub under grafana-writer[bot]'s identity (Verified signature),
+      #      satisfying upcoming required_signatures rules.
+      #   2. The grafana-writer token's workflows:write skips the pre-receive workflow-file
+      #      scan that otherwise times out on grafana/grafana (the repo is too large for
+      #      the scan to finish in time, causing pushes to be rejected regardless of
+      #      whether workflow files were touched).
+      # Doing it as a single commit also avoids the parent-SHA mismatch ghcommit-action
+      # hits when multiple sequential API commits are made on the same branch (each
+      # commit advances the remote ref while local HEAD doesn't).
+      - name: Commit release-PR changes
+        uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
+        with:
+          commit_message: "Release: ${{ env.VERSION }}"
+          repo: ${{ github.repository }}
+          branch: ${{ env.WORK_BRANCH }}
+          empty: "true"
+          file_pattern: "**"
+        env:
+          GITHUB_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
+      - name: Create PR
+        env:
+          # grafana-pr-automation token (reader permission-set, now with pull_requests:write)
+          # is used here instead of the default GITHUB_TOKEN so the PR is created under the
+          # grafana-pr-automation[bot] identity.
+          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          LATEST_FLAG=()
+          if [ "$LATEST" = "true" ]; then
+            LATEST_FLAG=(-l "release/latest")
+          fi
+          gh pr create \
+            "${LATEST_FLAG[@]}" \
+            -l "no-changelog" \
+            --dry-run="$DRY_RUN" \
+            -B "${RELEASE_BRANCH}" \
+            -H "${WORK_BRANCH}" \
+            --title "Release: $VERSION" \
+            --body "These code changes must be merged after a release is complete"

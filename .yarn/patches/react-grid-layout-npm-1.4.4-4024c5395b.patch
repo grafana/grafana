@@ -1,0 +1,121 @@
+diff --git a/build/GridItem.js b/build/GridItem.js
+index 0a700da9f1180ca532e32e04dc7ea50f2e67b96c..a2e4673fa1133aeaa4018cc01312ca386c3395f5 100644
+--- a/build/GridItem.js
++++ b/build/GridItem.js
+@@ -5,6 +5,7 @@ Object.defineProperty(exports, "__esModule", {
+ });
+ exports.default = void 0;
+ var _react = _interopRequireDefault(require("react"));
++var _reactDOM = require("react-dom");
+ var _propTypes = _interopRequireDefault(require("prop-types"));
+ var _reactDraggable = require("react-draggable");
+ var _reactResizable = require("react-resizable");
+@@ -147,8 +148,10 @@ class GridItem extends _react.default.Component /*:: <Props, State>*/{
+       const pTop = parentRect.top / transformScale;
+       newPosition.left = cLeft - pLeft + offsetParent.scrollLeft;
+       newPosition.top = cTop - pTop + offsetParent.scrollTop;
+-      this.setState({
+-        dragging: newPosition
++      _reactDOM.flushSync(() => {
++        this.setState({
++          dragging: newPosition
++        });
+       });
+ 
+       // Call callback with this data
+@@ -213,8 +216,10 @@ class GridItem extends _react.default.Component /*:: <Props, State>*/{
+         top,
+         left
+       };
+-      this.setState({
+-        dragging: newPosition
++      _reactDOM.flushSync(() => {
++        this.setState({
++          dragging: newPosition
++        });
+       });
+ 
+       // Call callback with this data
+@@ -261,8 +266,10 @@ class GridItem extends _react.default.Component /*:: <Props, State>*/{
+         top,
+         left
+       };
+-      this.setState({
+-        dragging: null
++      _reactDOM.flushSync(() => {
++        this.setState({
++          dragging: null
++        });
+       });
+       const {
+         x,
+@@ -485,8 +492,10 @@ class GridItem extends _react.default.Component /*:: <Props, State>*/{
+     let updatedSize = size;
+     if (node) {
+       updatedSize = (0, _utils.resizeItemInDirection)(handle, position, size, containerWidth);
+-      this.setState({
+-        resizing: handlerName === "onResizeStop" ? null : updatedSize
++      _reactDOM.flushSync(() => {
++        this.setState({
++          resizing: handlerName === "onResizeStop" ? null : updatedSize
++        });
+       });
+     }
+ 
+diff --git a/lib/GridItem.jsx b/lib/GridItem.jsx
+index dbe41f92388f19d3e476690fa0ee5584ab9d5bb4..1e4713667cd7dadd6618fe06176804a02ee3ccc2 100644
+--- a/lib/GridItem.jsx
++++ b/lib/GridItem.jsx
+@@ -1,5 +1,6 @@
+ // @flow
+ import React from "react";
++import { flushSync } from "react-dom";
+ import PropTypes from "prop-types";
+ import { DraggableCore } from "react-draggable";
+ import { Resizable } from "react-resizable";
+@@ -459,7 +460,9 @@ export default class GridItem extends React.Component<Props, State> {
+     const pTop = parentRect.top / transformScale;
+     newPosition.left = cLeft - pLeft + offsetParent.scrollLeft;
+     newPosition.top = cTop - pTop + offsetParent.scrollTop;
+-    this.setState({ dragging: newPosition });
++    flushSync(() => {
++      this.setState({ dragging: newPosition });
++    });
+ 
+     // Call callback with this data
+     const { x, y } = calcXY(
+@@ -516,7 +519,9 @@ export default class GridItem extends React.Component<Props, State> {
+     }
+ 
+     const newPosition: PartialPosition = { top, left };
+-    this.setState({ dragging: newPosition });
++    flushSync(() => {
++      this.setState({ dragging: newPosition });
++    });
+ 
+     // Call callback with this data
+     const { containerPadding } = this.props;
+@@ -549,7 +554,9 @@ export default class GridItem extends React.Component<Props, State> {
+     const { w, h, i, containerPadding } = this.props;
+     const { left, top } = this.state.dragging;
+     const newPosition: PartialPosition = { top, left };
+-    this.setState({ dragging: null });
++    flushSync(() => {
++      this.setState({ dragging: null });
++    });
+ 
+     const { x, y } = calcXY(
+       this.getPositionParams(),
+@@ -605,8 +612,10 @@ export default class GridItem extends React.Component<Props, State> {
+         size,
+         containerWidth
+       );
+-      this.setState({
+-        resizing: handlerName === "onResizeStop" ? null : updatedSize
++      flushSync(() => {
++        this.setState({
++          resizing: handlerName === "onResizeStop" ? null : updatedSize
++        });
+       });
+     }
+ 

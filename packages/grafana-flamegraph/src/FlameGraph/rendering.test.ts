@@ -1,0 +1,329 @@
+import { createDataFrame, FieldType } from '@grafana/data';
+
+import { FlameGraphDataContainer, type LevelItem } from './dataTransform';
+import { walkTree } from './rendering';
+import { textToDataContainer } from './testHelpers';
+
+function makeDataFrame(fields: Record<string, Array<number | string>>) {
+  return createDataFrame({
+    fields: Object.keys(fields).map((key) => ({
+      name: key,
+      values: fields[key],
+      type: typeof fields[key][0] === 'string' ? FieldType.string : FieldType.number,
+    })),
+  });
+}
+
+type RenderData = {
+  item: LevelItem;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  label: string;
+  muted: boolean;
+};
+
+describe('walkTree', () => {
+  it('correctly compute sizes for a single item', () => {
+    const root: LevelItem = { start: 0, itemIndexes: [0], children: [], value: 100, level: 0 };
+    const container = new FlameGraphDataContainer(
+      makeDataFrame({ value: [100], level: [0], label: ['1'], self: [0] }),
+      { collapsing: true }
+    );
+
+    walkTree(
+      root,
+      'children',
+      container,
+      100,
+      0,
+      1,
+      100,
+      container.getCollapsedMap(),
+      (item, x, y, width, height, label, collapsed) => {
+        expect(item).toEqual(root);
+        expect(x).toEqual(0);
+        expect(y).toEqual(0);
+        expect(width).toEqual(99); // -1 for border
+        expect(height).toEqual(22);
+        expect(label).toEqual('1');
+        expect(collapsed).toEqual(false);
+      }
+    );
+  });
+
+  it('should render a multiple items', () => {
+    const root: LevelItem = {
+      start: 0,
+      itemIndexes: [0],
+      value: 100,
+      level: 0,
+      children: [
+        { start: 0, itemIndexes: [1], children: [], value: 50, level: 1 },
+        { start: 50, itemIndexes: [2], children: [], value: 50, level: 1 },
+      ],
+    };
+    const container = new FlameGraphDataContainer(
+      makeDataFrame({ value: [100, 50, 50], level: [0, 1, 1], label: ['1', '2', '3'], self: [0, 50, 50] }),
+      { collapsing: true }
+    );
+    const renderData: RenderData[] = [];
+    walkTree(
+      root,
+      'children',
+      container,
+      100,
+      0,
+      1,
+      100,
+      container.getCollapsedMap(),
+      (item, x, y, width, height, label, muted) => {
+        renderData.push({ item, x, y, width, height, label, muted });
+      }
+    );
+    expect(renderData).toEqual([
+      { item: root, width: 99, height: 22, x: 0, y: 0, muted: false, label: '1' },
+      { item: root.children[0], width: 49, height: 22, x: 0, y: 22, muted: false, label: '2' },
+      { item: root.children[1], width: 49, height: 22, x: 50, y: 22, muted: false, label: '3' },
+    ]);
+  });
+
+  it('should render a muted items', () => {
+    const root: LevelItem = {
+      start: 0,
+      itemIndexes: [0],
+      value: 100,
+      level: 0,
+      children: [
+        { start: 0, itemIndexes: [1], children: [], value: 1, level: 1 },
+        { start: 1, itemIndexes: [2], children: [], value: 1, level: 1 },
+      ],
+    };
+    const container = new FlameGraphDataContainer(
+      makeDataFrame({ value: [100, 1, 1], level: [0, 1, 1], label: ['1', '2', '3'], self: [0, 1, 1] }),
+      { collapsing: true }
+    );
+    const renderData: RenderData[] = [];
+    walkTree(
+      root,
+      'children',
+      container,
+      100,
+      0,
+      1,
+      100,
+      container.getCollapsedMap(),
+      (item, x, y, width, height, label, muted) => {
+        renderData.push({ item, x, y, width, height, label, muted });
+      }
+    );
+    expect(renderData).toEqual([
+      { item: root, width: 99, height: 22, x: 0, y: 0, muted: false, label: '1' },
+      { item: root.children[0], width: 1, height: 22, x: 0, y: 22, muted: true, label: '2' },
+      { item: root.children[1], width: 1, height: 22, x: 1, y: 22, muted: true, label: '3' },
+    ]);
+  });
+
+  it('skips too small items', () => {
+    const root: LevelItem = {
+      start: 0,
+      itemIndexes: [0],
+      value: 100,
+      level: 0,
+      children: [
+        { start: 0, itemIndexes: [1], children: [], value: 0.1, level: 1 },
+        { start: 1, itemIndexes: [2], children: [], value: 0.1, level: 1 },
+      ],
+    };
+    const container = new FlameGraphDataContainer(
+      makeDataFrame({ value: [100, 0.1, 0.1], level: [0, 1, 1], label: ['1', '2', '3'], self: [0, 0.1, 0.1] }),
+      { collapsing: true }
+    );
+    const renderData: RenderData[] = [];
+    walkTree(
+      root,
+      'children',
+      container,
+      100,
+      0,
+      1,
+      100,
+      container.getCollapsedMap(),
+      (item, x, y, width, height, label, muted) => {
+        renderData.push({ item, x, y, width, height, label, muted });
+      }
+    );
+    expect(renderData).toEqual([{ item: root, width: 99, height: 22, x: 0, y: 0, muted: false, label: '1' }]);
+  });
+
+  it('should correctly skip a collapsed items', () => {
+    const container = textToDataContainer(`
+      [0///////////]
+      [1][3//][4///]
+      [2]     [5///]
+    `)!;
+
+    const root = container.getLevels()[0][0];
+
+    const renderData: RenderData[] = [];
+    walkTree(
+      root,
+      'children',
+      container,
+      14,
+      0,
+      1,
+      14,
+      container.getCollapsedMap(),
+      (item, x, y, width, height, label, muted) => {
+        renderData.push({ item, x, y, width, height, label, muted });
+      }
+    );
+    expect(renderData).toEqual([
+      { item: root, width: 13, height: 22, x: 0, y: 0, muted: false, label: '0' },
+      { item: root.children[0], width: 3, height: 22, x: 0, y: 22, muted: true, label: '1' },
+      { item: root.children[1], width: 5, height: 22, x: 3, y: 22, muted: true, label: '3' },
+      { item: root.children[2], width: 6, height: 22, x: 8, y: 22, muted: true, label: '4' },
+    ]);
+  });
+});
+
+describe('walkTree with HiDPI (devicePixelRatio=2)', () => {
+  it('should scale height and y coordinates by devicePixelRatio', () => {
+    const root: LevelItem = {
+      start: 0,
+      itemIndexes: [0],
+      value: 100,
+      level: 0,
+      children: [{ start: 0, itemIndexes: [1], children: [], value: 100, level: 1 }],
+    };
+    const container = new FlameGraphDataContainer(
+      makeDataFrame({ value: [100, 100], level: [0, 1], label: ['root', 'child'], self: [0, 100] }),
+      { collapsing: false }
+    );
+
+    const renderData: RenderData[] = [];
+    walkTree(
+      root,
+      'children',
+      container,
+      100,
+      0,
+      1,
+      100,
+      container.getCollapsedMap(),
+      (item, x, y, width, height, label, muted) => {
+        renderData.push({ item, x, y, width, height, label, muted });
+      },
+      2
+    );
+
+    // With DPR=2: height = 22*2 = 44, y values are multiples of 44, x/width are also 2x
+    expect(renderData[0]).toMatchObject({ y: 0, height: 44 });
+    expect(renderData[1]).toMatchObject({ y: 44, height: 44 });
+  });
+
+  it('should scale pixelsPerTick by devicePixelRatio, giving 2x wider bars', () => {
+    const root: LevelItem = { start: 0, itemIndexes: [0], children: [], value: 100, level: 0 };
+    const container = new FlameGraphDataContainer(
+      makeDataFrame({ value: [100], level: [0], label: ['root'], self: [100] }),
+      { collapsing: false }
+    );
+
+    const renderData: RenderData[] = [];
+    // wrapperWidth=100, so with DPR=2: pixelsPerTick = 100*2/100 = 2 canvas px/tick
+    // width = 100 ticks * 2 px/tick - BAR_BORDER_WIDTH * 2 * 2 = 200 - 2 = 198
+    walkTree(
+      root,
+      'children',
+      container,
+      100,
+      0,
+      1,
+      100,
+      container.getCollapsedMap(),
+      (item, x, y, width, height, label, muted) => {
+        renderData.push({ item, x, y, width, height, label, muted });
+      },
+      2
+    );
+
+    // With DPR=1 the width would be 99 (100 - 1 border). With DPR=2 it should be 198 (200 - 2 border).
+    expect(renderData[0].width).toBe(198);
+  });
+
+  it('should produce coordinates exactly 2x those from DPR=1', () => {
+    const container = textToDataContainer(`
+      [0///////////]
+      [1][3//][4///]
+      [2]     [5///]
+    `)!;
+    const root = container.getLevels()[0][0];
+
+    const collect = (dpr: number) => {
+      const data: RenderData[] = [];
+      walkTree(
+        root,
+        'children',
+        container,
+        14,
+        0,
+        1,
+        14,
+        container.getCollapsedMap(),
+        (item, x, y, width, height, label, muted) => {
+          data.push({ item, x, y, width, height, label, muted });
+        },
+        dpr
+      );
+      return data;
+    };
+
+    const dpr2Data = collect(2);
+    const dpr1Data = collect(1);
+
+    expect(dpr2Data).toHaveLength(dpr1Data.length);
+    for (let i = 0; i < dpr1Data.length; i++) {
+      expect(dpr2Data[i].x).toBeCloseTo(dpr1Data[i].x * 2);
+      expect(dpr2Data[i].y).toBe(dpr1Data[i].y * 2);
+      expect(dpr2Data[i].height).toBe(dpr1Data[i].height * 2);
+    }
+  });
+});
+
+describe('walkTree with browser zoom (devicePixelRatio=1.5)', () => {
+  it('should scale height and y coordinates by a fractional devicePixelRatio', () => {
+    const root: LevelItem = {
+      start: 0,
+      itemIndexes: [0],
+      value: 100,
+      level: 0,
+      children: [{ start: 0, itemIndexes: [1], children: [], value: 100, level: 1 }],
+    };
+    const container = new FlameGraphDataContainer(
+      makeDataFrame({ value: [100, 100], level: [0, 1], label: ['root', 'child'], self: [0, 100] }),
+      { collapsing: false }
+    );
+
+    const renderData: RenderData[] = [];
+    walkTree(
+      root,
+      'children',
+      container,
+      100,
+      0,
+      1,
+      100,
+      container.getCollapsedMap(),
+      (item, x, y, width, height, label, muted) => {
+        renderData.push({ item, x, y, width, height, label, muted });
+      },
+      1.5
+    );
+
+    // height = 22 * 1.5 = 33, y values are multiples of 33
+    expect(renderData[0]).toMatchObject({ y: 0, height: 33 });
+    expect(renderData[1]).toMatchObject({ y: 33, height: 33 });
+  });
+});

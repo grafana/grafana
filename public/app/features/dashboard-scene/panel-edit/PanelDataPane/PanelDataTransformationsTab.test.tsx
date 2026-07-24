@@ -1,0 +1,287 @@
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
+import {
+  type DataTransformerConfig,
+  FieldType,
+  type LoadingState,
+  type PanelData,
+  type TimeRange,
+  standardTransformersRegistry,
+  toDataFrame,
+} from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
+import { SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
+import config from 'app/core/config';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
+import { type DashboardDataDTO } from 'app/types/dashboard';
+
+import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
+import { DashboardModelCompatibilityWrapper } from '../../utils/DashboardModelCompatibilityWrapper';
+import { findVizPanelByKey } from '../../utils/utils';
+import { testDashboard } from '../testfiles/testDashboard';
+
+import { PanelDataTransformationsTab, PanelDataTransformationsTabRendered } from './PanelDataTransformationsTab';
+
+// FIXME: This file has test encapsulation issues, where failures in one test can cascade to other tests.
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
+function createModelMock(
+  panelData: PanelData,
+  transformations?: DataTransformerConfig[],
+  onChangeTransformationsMock?: Function
+) {
+  return {
+    getDataTransformer: () => new SceneDataTransformer({ data: panelData, transformations: transformations || [] }),
+    getQueryRunner: () => new SceneQueryRunner({ queries: [], data: panelData }),
+    onChangeTransformations: onChangeTransformationsMock,
+  } as unknown as PanelDataTransformationsTab;
+}
+
+const mockData = {
+  timeRange: {} as unknown as TimeRange,
+  state: {} as unknown as LoadingState,
+  series: [
+    toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+        { name: 'values', type: FieldType.number, values: [1, 2, 3] },
+      ],
+    }),
+  ],
+};
+
+describe('PanelDataTransformationsModel', () => {
+  it('can change transformations', () => {
+    const { transformsTab } = setupTabScene('panel-1');
+    transformsTab.onChangeTransformations([{ id: 'calculateField', options: {} }]);
+    expect(transformsTab.getDataTransformer().state.transformations).toEqual([{ id: 'calculateField', options: {} }]);
+  });
+});
+
+describe('PanelDataTransformationsTab', () => {
+  standardTransformersRegistry.setInit(getStandardTransformers);
+
+  it('renders empty message when there are no transformations', async () => {
+    const modelMock = createModelMock({} as PanelData);
+    render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+
+    await screen.findByTestId(selectors.components.Transforms.noTransformationsMessage);
+  });
+
+  it('renders transformations when there are transformations', async () => {
+    const onChangeTransformation = jest.fn();
+    const modelMock = createModelMock(
+      mockData,
+      [
+        {
+          id: 'calculateField',
+          options: {},
+        },
+      ],
+      onChangeTransformation
+    );
+    render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+
+    await screen.findByText('1 - Add field from calculation');
+  });
+
+  it('shows show the transformation selection drawer', async () => {
+    const modelMock = createModelMock(mockData);
+    render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+    const addButton = await screen.findByTestId(selectors.components.Transforms.addTransformationButton);
+    await userEvent.click(addButton);
+    await screen.findByTestId(selectors.components.Transforms.searchInput);
+  });
+
+  it('adds a transformation when a transformation is clicked in the drawer and there are no previous transformations', async () => {
+    const onChangeTransformation = jest.fn();
+    const modelMock = createModelMock(mockData, [], onChangeTransformation);
+    render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+    const addButton = await screen.findByTestId(selectors.components.Transforms.addTransformationButton);
+    await userEvent.click(addButton);
+    const transformationCard = await screen.findByTestId(
+      selectors.components.TransformTab.newTransform('Add field from calculation')
+    );
+    const button = transformationCard.getElementsByTagName('button').item(0);
+    await userEvent.click(button!);
+
+    expect(onChangeTransformation).toHaveBeenCalledWith([{ id: 'calculateField', options: {} }]);
+  });
+
+  it('adds a transformation when a transformation is clicked in the drawer and there are transformations', async () => {
+    const onChangeTransformation = jest.fn();
+    const modelMock = createModelMock(
+      mockData,
+      [
+        {
+          id: 'calculateField',
+          options: {},
+        },
+      ],
+      onChangeTransformation
+    );
+    render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+    const addButton = await screen.findByTestId(selectors.components.Transforms.addTransformationButton);
+    await userEvent.click(addButton);
+    const transformationCard = await screen.findByTestId(
+      selectors.components.TransformTab.newTransform('Add field from calculation')
+    );
+    const button = transformationCard.getElementsByTagName('button').item(0);
+    await userEvent.click(button!);
+    expect(onChangeTransformation).toHaveBeenCalledWith([
+      { id: 'calculateField', options: {} },
+      { id: 'calculateField', options: {} },
+    ]);
+  });
+
+  it('deletes all transformations', async () => {
+    const onChangeTransformation = jest.fn();
+    const modelMock = createModelMock(
+      mockData,
+      [
+        {
+          id: 'calculateField',
+          options: {},
+        },
+      ],
+      onChangeTransformation
+    );
+    render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+    const removeButton = await screen.findByTestId(selectors.components.Transforms.removeAllTransformationsButton);
+    await userEvent.click(removeButton);
+    const confirmButton = await screen.findByTestId(selectors.pages.ConfirmModal.delete);
+    await userEvent.click(confirmButton);
+
+    expect(onChangeTransformation).toHaveBeenCalledWith([]);
+  });
+
+  it('can filter transformations in the drawer', async () => {
+    const modelMock = createModelMock(mockData);
+    render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+    const addButton = await screen.findByTestId(selectors.components.Transforms.addTransformationButton);
+    await userEvent.click(addButton);
+
+    const searchInput = await screen.findByTestId(selectors.components.Transforms.searchInput);
+
+    await screen.findByTestId(selectors.components.TransformTab.newTransform('Reduce'));
+
+    await userEvent.type(searchInput, 'add field');
+
+    await screen.findByTestId(selectors.components.TransformTab.newTransform('Add field from calculation'));
+    const reduce = screen.queryByTestId(selectors.components.TransformTab.newTransform('Reduce'));
+    expect(reduce).toBeNull();
+  });
+
+  it('renders the new empty transformations message with transformationsEmptyPlaceholder on', async () => {
+    config.featureToggles.transformationsEmptyPlaceholder = true;
+    const modelMock = createModelMock(mockData);
+    render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+
+    // Should show SQL transformation card in empty state
+    expect(screen.getByText('Add a Transformation')).toBeInTheDocument();
+  });
+
+  describe('transformation tracking', () => {
+    beforeEach(() => {
+      jest.mocked(reportInteraction).mockClear();
+    });
+
+    it('reports grafana_panel_transformations_clicked with action delete when user deletes a transformation', async () => {
+      const onChangeTransformation = jest.fn();
+      const modelMock = createModelMock(mockData, [{ id: 'calculateField', options: {} }], onChangeTransformation);
+      render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+
+      await screen.findByText('1 - Add field from calculation');
+      const removeButton = screen.getByTestId(selectors.components.QueryEditorRow.actionButton('Remove'));
+      await userEvent.click(removeButton);
+      const confirmButton = await screen.findByTestId(selectors.pages.ConfirmModal.delete);
+      await userEvent.click(confirmButton);
+
+      // CUJ tracking emits a silent grafana_panel_edit_next_interaction alongside
+      // the analytics event - filter to assert only the analytics call.
+      const analyticsCalls = jest
+        .mocked(reportInteraction)
+        .mock.calls.filter((c) => c[0] === 'grafana_panel_transformations_clicked');
+      expect(analyticsCalls).toHaveLength(1);
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformations_clicked', {
+        context: 'transformations_list',
+        type: 'calculateField',
+        action: 'delete',
+        total_transformations: 0,
+      });
+    });
+
+    it('reports total_transformations when user deletes one of multiple transformations', async () => {
+      const onChangeTransformation = jest.fn();
+      const modelMock = createModelMock(
+        mockData,
+        [
+          { id: 'calculateField', options: {} },
+          { id: 'organize', options: {} },
+        ],
+        onChangeTransformation
+      );
+      render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+
+      await screen.findByText('1 - Add field from calculation');
+      const removeButtons = screen.getAllByTestId(selectors.components.QueryEditorRow.actionButton('Remove'));
+      await userEvent.click(removeButtons[0]);
+      const confirmButton = await screen.findByTestId(selectors.pages.ConfirmModal.delete);
+      await userEvent.click(confirmButton);
+
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformations_clicked', {
+        context: 'transformations_list',
+        type: 'calculateField',
+        action: 'delete',
+        total_transformations: 1,
+      });
+    });
+
+    it('reports grafana_panel_transformations_clicked with action delete_all when user deletes all transformations', async () => {
+      const onChangeTransformation = jest.fn();
+      const modelMock = createModelMock(
+        mockData,
+        [
+          { id: 'calculateField', options: {} },
+          { id: 'organize', options: {} },
+        ],
+        onChangeTransformation
+      );
+      render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+
+      await screen.findByText('1 - Add field from calculation');
+      const removeAllButton = screen.getByTestId(selectors.components.Transforms.removeAllTransformationsButton);
+      await userEvent.click(removeAllButton);
+      const confirmButton = await screen.findByTestId(selectors.pages.ConfirmModal.delete);
+      await userEvent.click(confirmButton);
+
+      expect(reportInteraction).toHaveBeenCalledTimes(1);
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformations_clicked', {
+        context: 'transformations_list',
+        action: 'delete_all',
+      });
+    });
+  });
+});
+
+function setupTabScene(panelId: string) {
+  const scene = transformSaveModelToScene({ dashboard: testDashboard as unknown as DashboardDataDTO, meta: {} });
+  const panel = findVizPanelByKey(scene, panelId)!;
+
+  const transformsTab = new PanelDataTransformationsTab({ panelRef: panel.getRef() });
+  transformsTab.activate();
+
+  // The following happens on DahsboardScene activation. For the needs of this test this activation aint needed hence we hand-call it
+  // @ts-expect-error
+  getDashboardSrv().setCurrent(new DashboardModelCompatibilityWrapper(scene));
+
+  return { transformsTab, panel };
+}

@@ -1,0 +1,2028 @@
+package provisioning
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"maps"
+	"slices"
+	"strings"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/notify/notifytest"
+	"github.com/grafana/alerting/receivers/email"
+	"github.com/grafana/alerting/receivers/schema"
+	"github.com/grafana/alerting/receivers/slack"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+	"github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
+)
+
+func TestIntegrationContactPointService(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t)
+	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+
+	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingProvisioningRead: nil,
+			accesscontrol.ActionAlertingReceiversCreate:  nil,
+		},
+	}}
+	decryptedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingProvisioningReadSecrets: nil,
+		},
+	}}
+	// adminUser has all permissions including updating protected fields
+	adminUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingProvisioningRead:         nil,
+			accesscontrol.ActionAlertingProvisioningReadSecrets:  nil,
+			accesscontrol.ActionAlertingNotificationsWrite:       nil,
+			accesscontrol.ActionAlertingProvisioningSetStatus:    nil,
+			accesscontrol.ActionAlertingReceiversUpdate:          nil,
+			accesscontrol.ActionAlertingReceiversUpdateProtected: nil,
+		},
+	}}
+
+	t.Run("service gets contact points from AM config", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), redactedUser)
+		require.NoError(t, err)
+
+		require.Len(t, cps, 2)
+		require.Equal(t, "grafana-default-email", cps[0].Name)
+		require.Equal(t, "slack receiver", cps[1].Name)
+	})
+
+	t.Run("service returns empty list when org has no Alertmanager config", func(t *testing.T) {
+		cfgStore := fakes.NewFakeAlertmanagerConfigStore("")
+		cfgStore.GetFn = func(ctx context.Context, orgID int64) (*models.AlertConfiguration, error) {
+			return nil, store.ErrNoAlertmanagerConfiguration
+		}
+		sut := createContactPointServiceSutWithConfigStore(t, secretsService, cfgStore)
+
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), redactedUser)
+		require.NoError(t, err)
+		require.NotNil(t, cps)
+		require.Empty(t, cps)
+	})
+
+	t.Run("service filters contact points by name", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, "slack receiver"), redactedUser)
+		require.NoError(t, err)
+
+		require.Len(t, cps, 1)
+		require.Equal(t, "slack receiver", cps[0].Name)
+	})
+
+	t.Run("service filters contact points by name, returns empty when no match", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, "unknown"), redactedUser)
+		require.NoError(t, err)
+
+		require.Len(t, cps, 0)
+	})
+
+	t.Run("service stitches contact point into org's AM config", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		newCp := createTestContactPoint()
+
+		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), redactedUser)
+		require.NoError(t, err)
+		require.Len(t, cps, 3)
+		require.Equal(t, "test-contact-point", cps[2].Name)
+		require.Equal(t, "slack", cps[2].Type)
+	})
+
+	t.Run("it's possible to use a custom uid", func(t *testing.T) {
+		customUID := "1337"
+		sut := createContactPointServiceSut(t, secretsService)
+		newCp := createTestContactPoint()
+		newCp.UID = customUID
+
+		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), redactedUser)
+		require.NoError(t, err)
+		require.Len(t, cps, 1)
+		require.Equal(t, customUID, cps[0].UID)
+	})
+
+	t.Run("it's not possible to use the same uid twice", func(t *testing.T) {
+		customUID := "1337"
+		sut := createContactPointServiceSut(t, secretsService)
+		newCp := createTestContactPoint()
+		newCp.UID = customUID
+
+		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		_, err = sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+		require.Error(t, err)
+	})
+
+	t.Run("create rejects invalid contact points", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		testCases := []struct {
+			name string
+			cp   func(*definitions.EmbeddedContactPoint)
+		}{
+			{
+				name: "empty type",
+				cp: func(cp *definitions.EmbeddedContactPoint) {
+					cp.Type = ""
+				},
+			},
+			{
+				name: "empty name",
+				cp: func(cp *definitions.EmbeddedContactPoint) {
+					cp.Name = ""
+				},
+			},
+			{
+				name: "invalid UID",
+				cp: func(cp *definitions.EmbeddedContactPoint) {
+					cp.UID = strings.Repeat("1", util.MaxUIDLength+1)
+				},
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				newCp := createTestContactPoint()
+				tc.cp(&newCp)
+				_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+				require.ErrorIs(t, err, ErrValidation)
+			})
+		}
+	})
+
+	t.Run("create accepts contact point with type in different cases", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		newCp := createTestContactPoint()
+		newCp.Type = "Slack"
+
+		created, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+		assert.EqualValues(t, slack.Type, created.Type)
+
+		got, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), redactedUser)
+		require.NoError(t, err)
+		require.Len(t, got, 1)
+		assert.EqualValues(t, slack.Type, got[0].Type)
+	})
+
+	t.Run("update rejects invalid contact points", func(t *testing.T) {
+		testCases := []struct {
+			name string
+			cp   func(*definitions.EmbeddedContactPoint)
+		}{
+			{
+				name: "empty type",
+				cp: func(cp *definitions.EmbeddedContactPoint) {
+					cp.Type = ""
+				},
+			},
+			{
+				name: "empty name",
+				cp: func(cp *definitions.EmbeddedContactPoint) {
+					cp.Name = ""
+				},
+			},
+			{
+				name: "nil settings",
+				cp: func(cp *definitions.EmbeddedContactPoint) {
+					cp.Settings = nil
+				},
+			},
+			{
+				name: "invalid settings after merge",
+				cp: func(cp *definitions.EmbeddedContactPoint) {
+					cp.Settings, _ = simplejson.NewJson([]byte(`{}`))
+				},
+			},
+		}
+
+		sut := createContactPointServiceSut(t, secretsService)
+		newCp := createTestContactPoint()
+		newCp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				cp := definitions.EmbeddedContactPoint{
+					UID:                   newCp.UID,
+					Name:                  newCp.Name,
+					Type:                  newCp.Type,
+					Settings:              newCp.Settings.DeepCopy(),
+					DisableResolveMessage: newCp.DisableResolveMessage,
+					Provenance:            newCp.Provenance,
+				}
+				tc.cp(&cp)
+				err = sut.UpdateContactPoint(context.Background(), 1, adminUser, cp, models.ProvenanceAPI)
+				require.ErrorIs(t, err, ErrValidation)
+			})
+		}
+	})
+
+	t.Run("update accepts contact points with type in another case", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		newCp := createTestContactPoint()
+		newCp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+		newCp.Type = "Slack"
+
+		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		got, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), redactedUser)
+		require.NoError(t, err)
+		require.Len(t, got, 1)
+		assert.EqualValues(t, slack.Type, got[0].Type)
+	})
+
+	t.Run("update renames references when group is renamed", func(t *testing.T) {
+		cfg := createEncryptedConfig(t, secretsService)
+		store := fakes.NewFakeAlertmanagerConfigStore(cfg)
+		sut := createContactPointServiceSutWithConfigStore(t, secretsService, store)
+
+		svc := &fakeReceiverService{}
+		sut.receiverService = svc
+
+		newCp := createTestContactPoint()
+		oldName := newCp.Name
+		newName := "new-name"
+
+		newCp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		newCp.Name = newName
+
+		svc.RenameReceiverInDependentResourcesFunc = func(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error {
+			revision.RenameReceiverInRoutes(oldName, newName)
+			return nil
+		}
+
+		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		parsed, err := legacy_storage.DeserializeAlertmanagerConfig([]byte(store.LastSaveCommand.AlertmanagerConfiguration))
+		require.NoError(t, err)
+
+		require.Lenf(t, svc.Calls, 1, "service was supposed to be called once")
+		assert.Equal(t, "RenameReceiverInDependentResources", svc.Calls[0].Method)
+		assertInTransaction(t, svc.Calls[0].Args[0].(context.Context))
+		assert.Equal(t, int64(1), svc.Calls[0].Args[1])
+		revision := svc.Calls[0].Args[2].(*legacy_storage.ConfigRevision)
+		assert.EqualValues(t, v1.RouteToModel(parsed.AlertmanagerConfig.Route), revision.Config.AlertmanagerConfig.Route)
+		assert.Equal(t, oldName, svc.Calls[0].Args[3])
+		assert.Equal(t, newName, svc.Calls[0].Args[4])
+		assert.Equal(t, models.ProvenanceAPI, svc.Calls[0].Args[5])
+	})
+
+	t.Run("default provenance of contact points is none", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), redactedUser)
+		require.NoError(t, err)
+
+		require.Equal(t, models.ProvenanceNone, models.Provenance(cps[0].Provenance))
+	})
+
+	t.Run("contact point provenance should be correctly checked", func(t *testing.T) {
+		tests := []struct {
+			name   string
+			from   models.Provenance
+			to     models.Provenance
+			errNil bool
+		}{
+			{
+				name:   "should be able to update from provenance none to api",
+				from:   models.ProvenanceNone,
+				to:     models.ProvenanceAPI,
+				errNil: true,
+			},
+			{
+				name:   "should be able to update from provenance none to file",
+				from:   models.ProvenanceNone,
+				to:     models.ProvenanceFile,
+				errNil: true,
+			},
+			{
+				name:   "should not be able to update from provenance api to file",
+				from:   models.ProvenanceAPI,
+				to:     models.ProvenanceFile,
+				errNil: false,
+			},
+			{
+				name:   "should not be able to update from provenance api to none",
+				from:   models.ProvenanceAPI,
+				to:     models.ProvenanceNone,
+				errNil: false,
+			},
+			{
+				name:   "should not be able to update from provenance file to api",
+				from:   models.ProvenanceFile,
+				to:     models.ProvenanceAPI,
+				errNil: false,
+			},
+			{
+				name:   "should not be able to update from provenance file to none",
+				from:   models.ProvenanceFile,
+				to:     models.ProvenanceNone,
+				errNil: false,
+			},
+		}
+		for _, test := range tests {
+			t.Run(test.name, func(t *testing.T) {
+				sut := createContactPointServiceSut(t, secretsService)
+				newCp := createTestContactPoint()
+
+				newCp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, test.from)
+				require.NoError(t, err)
+
+				cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), redactedUser)
+				require.NoError(t, err)
+				require.Equal(t, newCp.UID, cps[0].UID)
+				require.Equal(t, test.from, models.Provenance(cps[0].Provenance))
+
+				err = sut.UpdateContactPoint(context.Background(), 1, adminUser, newCp, test.to)
+				if test.errNil {
+					require.NoError(t, err)
+
+					cps, err = sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), redactedUser)
+					require.NoError(t, err)
+					require.Equal(t, newCp.UID, cps[0].UID)
+					require.Equal(t, test.to, models.Provenance(cps[0].Provenance))
+				} else {
+					require.Error(t, err)
+					require.Truef(t, validation.ErrProvenanceChangeNotAllowed.Base.Is(err), "expected ErrProvenanceChangeNotAllowed but got %s", err)
+				}
+			})
+		}
+	})
+
+	t.Run("service respects concurrency token when updating", func(t *testing.T) {
+		cfg := createEncryptedConfig(t, secretsService)
+		fakeConfigStore := fakes.NewFakeAlertmanagerConfigStore(cfg)
+		sut := createContactPointServiceSutWithConfigStore(t, secretsService, fakeConfigStore)
+		newCp := createTestContactPoint()
+		config, err := sut.configStore.Get(context.Background(), 1)
+		require.NoError(t, err)
+		expectedConcurrencyToken := config.ConcurrencyToken
+
+		_, err = sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		intercepted := fakeConfigStore.LastSaveCommand
+		require.Equal(t, expectedConcurrencyToken, intercepted.FetchedConfigurationHash)
+	})
+
+	t.Run("secrets are parsed in a case-insensitive way", func(t *testing.T) {
+		// JSON unmarshalling is case-insensitive. This means we can have
+		// a setting named "TOKEN" instead of "token". This test ensures that
+		// we handle such cases correctly and the token value is properly parsed,
+		// even if the setting key does not match the JSON key exactly.
+		tests := []struct {
+			settingsJSON  string
+			expectedValue string
+			name          string
+			expectedError string
+		}{
+			{
+				settingsJSON:  `{"recipient":"value_recipient","TOKEN":"some-other-token"}`,
+				expectedValue: "some-other-token",
+				name:          "token key is uppercased",
+			},
+
+			// This test checks that we reject a payload with multiple token keys in the settings
+			{
+				settingsJSON:  `{"recipient":"value_recipient","TOKEN":"some-other-token", "token": "second-token"}`,
+				expectedValue: "second-token",
+				name:          "multiple token keys",
+				expectedError: "duplicate keys found for secret field token",
+			},
+		}
+
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				sut := createContactPointServiceSut(t, secretsService)
+
+				newCp := createTestContactPoint()
+				settings, _ := simplejson.NewJson([]byte(tc.settingsJSON))
+				newCp.Settings = settings
+
+				_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
+				if tc.expectedError == "" {
+					require.NoError(t, err)
+				} else {
+					require.Error(t, err)
+					require.Contains(t, err.Error(), tc.expectedError)
+					return
+				}
+
+				q := cpsQueryWithName(1, newCp.Name)
+				q.Decrypt = true
+				cps, err := sut.GetContactPoints(context.Background(), q, decryptedUser)
+				require.NoError(t, err)
+				require.Len(t, cps, 1)
+				require.Equal(t, tc.expectedValue, cps[0].Settings.Get("token").MustString())
+			})
+		}
+	})
+
+	t.Run("email contact point create succeeds when validator passes", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		sut.emailValidator = notifier.NewFakeEmailValidator(t, nil)
+
+		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
+		require.NoError(t, err)
+	})
+
+	t.Run("email contact point create fails when validator rejects email", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		sut.emailValidator = notifier.NewFakeEmailValidator(t, fmt.Errorf("not an org member"))
+
+		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
+		require.Error(t, err)
+	})
+
+	t.Run("email contact point update fails when validator rejects email", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		created, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		sut.emailValidator = notifier.NewFakeEmailValidator(t, fmt.Errorf("not an org member"))
+		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, created, models.ProvenanceAPI)
+		require.Error(t, err)
+	})
+}
+
+func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+
+	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingProvisioningRead: nil,
+		},
+	}}
+
+	decryptedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingProvisioningReadSecrets: nil,
+		},
+	}}
+
+	t.Run("GetContactPoints gets redacted contact points by default", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), redactedUser)
+		require.NoError(t, err)
+
+		require.Len(t, cps, 2)
+		require.Equal(t, "slack receiver", cps[1].Name)
+		require.Equal(t, definitions.RedactedValue, cps[1].Settings.Get("url").MustString())
+	})
+
+	t.Run("GetContactPoints errors when Decrypt = true and user does not have permissions", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		q := cpsQuery(1)
+		q.Decrypt = true
+		_, err := sut.GetContactPoints(context.Background(), q, redactedUser)
+		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
+	})
+	t.Run("GetContactPoints errors when Decrypt = true and user is nil", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		q := cpsQuery(1)
+		q.Decrypt = true
+		_, err := sut.GetContactPoints(context.Background(), q, nil)
+		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
+	})
+
+	t.Run("GetContactPoints gets decrypted contact points when Decrypt = true and user has permissions", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		expectedName := "slack receiver"
+		q := cpsQueryWithName(1, expectedName)
+		q.Decrypt = true
+		cps, err := sut.GetContactPoints(context.Background(), q, decryptedUser)
+		require.NoError(t, err)
+
+		require.Len(t, cps, 1)
+		require.Equal(t, expectedName, cps[0].Name)
+		require.Equal(t, "secure url", cps[0].Settings.Get("url").MustString())
+	})
+}
+
+func TestIntegrationContactPointServiceProtectedFields(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+
+	// User with basic read/write permissions but without protected field update permission
+	basicUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingProvisioningRead:   nil,
+			accesscontrol.ActionAlertingNotificationsWrite: nil,
+			accesscontrol.ActionAlertingReceiversRead:      {models.ScopeReceiversAll},
+			accesscontrol.ActionAlertingReceiversUpdate:    {models.ScopeReceiversAll},
+		},
+	}}
+
+	// User with all permissions including protected field update
+	adminUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingProvisioningRead:         nil,
+			accesscontrol.ActionAlertingNotificationsWrite:       nil,
+			accesscontrol.ActionAlertingReceiversRead:            {models.ScopeReceiversAll},
+			accesscontrol.ActionAlertingReceiversUpdate:          {models.ScopeReceiversAll},
+			accesscontrol.ActionAlertingReceiversUpdateProtected: {models.ScopeReceiversAll},
+		},
+	}}
+
+	t.Run("user without protected permission cannot modify protected fields", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		// Create a webhook contact point (webhook has 'url' as a protected field)
+		settings, _ := simplejson.NewJson([]byte(`{"url":"https://example.com/webhook"}`))
+		newCp := definitions.EmbeddedContactPoint{
+			Name:     "test-webhook",
+			Type:     "webhook",
+			Settings: settings,
+		}
+
+		created, err := sut.CreateContactPoint(context.Background(), 1, basicUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		// Try to update the protected field 'url'
+		updatedSettings, _ := simplejson.NewJson([]byte(`{"url":"https://malicious.com/webhook"}`))
+		created.Settings = updatedSettings
+
+		err = sut.UpdateContactPoint(context.Background(), 1, basicUser, created, models.ProvenanceAPI)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "user is not authorized")
+	})
+
+	t.Run("user with protected permission can modify protected fields", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		// Create a webhook contact point
+		settings, _ := simplejson.NewJson([]byte(`{"url":"https://example.com/webhook"}`))
+		newCp := definitions.EmbeddedContactPoint{
+			Name:     "test-webhook-admin",
+			Type:     "webhook",
+			Settings: settings,
+		}
+
+		created, err := sut.CreateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		// Update the protected field 'url' with admin user
+		updatedSettings, _ := simplejson.NewJson([]byte(`{"url":"https://newurl.com/webhook"}`))
+		created.Settings = updatedSettings
+
+		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, created, models.ProvenanceAPI)
+		require.NoError(t, err)
+	})
+
+	t.Run("user without protected permission can modify non-protected fields", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		// Create a slack contact point
+		settings, _ := simplejson.NewJson([]byte(`{"recipient":"#channel","token":"secret-token"}`))
+		newCp := definitions.EmbeddedContactPoint{
+			Name:     "test-slack",
+			Type:     "slack",
+			Settings: settings,
+		}
+
+		created, err := sut.CreateContactPoint(context.Background(), 1, basicUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		// Update non-protected field 'recipient' - keep token as redacted
+		updatedSettings, _ := simplejson.NewJson([]byte(`{"recipient":"#new-channel","token":"[REDACTED]"}`))
+		created.Settings = updatedSettings
+
+		err = sut.UpdateContactPoint(context.Background(), 1, basicUser, created, models.ProvenanceAPI)
+		require.NoError(t, err)
+	})
+
+	t.Run("update with nil user returns error", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		// Create a webhook contact point
+		settings, _ := simplejson.NewJson([]byte(`{"url":"https://example.com/webhook"}`))
+		newCp := definitions.EmbeddedContactPoint{
+			Name:     "test-webhook-nil-user",
+			Type:     "webhook",
+			Settings: settings,
+		}
+
+		created, err := sut.CreateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		// Try to update with nil user (should fail for any protected field change)
+		updatedSettings, _ := simplejson.NewJson([]byte(`{"url":"https://new-url.com/webhook"}`))
+		created.Settings = updatedSettings
+
+		err = sut.UpdateContactPoint(context.Background(), 1, nil, created, models.ProvenanceAPI)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "user is required")
+	})
+
+	t.Run("user without protected permission cannot rename and modify protected fields", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		// Create a webhook contact point
+		settings, _ := simplejson.NewJson([]byte(`{"url":"https://example.com/webhook"}`))
+		newCp := definitions.EmbeddedContactPoint{
+			Name:     "test-webhook-rename",
+			Type:     "webhook",
+			Settings: settings,
+		}
+
+		created, err := sut.CreateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		// Try to rename AND change protected field
+		created.Name = "renamed-webhook"
+		updatedSettings, _ := simplejson.NewJson([]byte(`{"url":"https://malicious.com/webhook"}`))
+		created.Settings = updatedSettings
+
+		err = sut.UpdateContactPoint(context.Background(), 1, basicUser, created, models.ProvenanceAPI)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "user is not authorized")
+	})
+}
+
+func TestRemoveSecretsForContactPoint(t *testing.T) {
+	overrides := map[schema.IntegrationType]func(settings map[string]any){
+		"webhook": func(settings map[string]any) { // add additional field to the settings because valid config does not allow it to be specified along with password
+			settings["authorization_credentials"] = "test-authz-creds"
+		},
+		"jira": func(settings map[string]any) { // add additional field to the settings because valid config does not allow it to be specified along with password
+			settings["api_token"] = "test-token"
+		},
+		"oncall": func(settings map[string]any) { // add authorization_credentials field since it's expected as a secret field
+			settings["authorization_credentials"] = "test-authz-creds"
+		},
+	}
+
+	configs := notifytest.AllKnownV1ConfigsForTesting
+	keys := slices.Sorted(maps.Keys(configs))
+	for _, integrationType := range keys {
+		integration := models.IntegrationGen(models.IntegrationMuts.WithValidConfig(integrationType))()
+		if f, ok := overrides[integrationType]; ok {
+			f(integration.Settings)
+		}
+		settingsRaw, err := json.Marshal(integration.Settings)
+		require.NoError(t, err)
+		typeSchema, _ := notify.GetSchemaVersionForIntegration(integrationType, schema.V1)
+		expectedFields := typeSchema.GetSecretFieldsPaths()
+
+		t.Run(string(integrationType), func(t *testing.T) {
+			cp := definitions.EmbeddedContactPoint{
+				Name:     "integration-" + string(integrationType),
+				Type:     string(integrationType),
+				Settings: simplejson.MustJson(settingsRaw),
+			}
+			secureFields, err := RemoveSecretsForContactPoint(&cp)
+			require.NoError(t, err)
+
+		FIELDS_ASSERT:
+			for _, path := range expectedFields {
+				field := path.String()
+				assert.Contains(t, secureFields, field)
+				var expectedValue any = integration.Settings
+				for _, segment := range path {
+					v, ok := expectedValue.(map[string]any)
+					if !ok {
+						assert.Fail(t, fmt.Sprintf("cannot get expected value for field '%s'", field))
+						continue FIELDS_ASSERT
+					}
+					expectedValue = v[segment]
+				}
+				assert.EqualValues(t, secureFields[field], expectedValue)
+				v, err := cp.Settings.GetPath(path...).Value()
+				assert.NoError(t, err)
+				assert.Nilf(t, v, "field %s is expected to be removed from the settings", field)
+			}
+		})
+	}
+}
+
+func TestRemoveSecretsForContactPoint_CaseInsensitive(t *testing.T) {
+	// Each case stores a secret under a non-canonical casing of the schema's
+	// secret field name and asserts that RemoveSecretsForContactPoint still
+	// extracts it into secureFields and strips it from settings.
+	cases := []struct {
+		name        string
+		integration string
+		field       string // canonical field name from the schema
+		storedKey   string // the differently-cased key actually stored in settings
+	}{
+		{
+			name:        "camelCase field stored uppercase",
+			integration: "opsgenie",
+			field:       "apiKey",
+			storedKey:   "APIKEY",
+		},
+		{
+			name:        "camelCase field stored lowercase",
+			integration: "opsgenie",
+			field:       "apiKey",
+			storedKey:   "apikey",
+		},
+		{
+			name:        "snake_case field stored uppercase",
+			integration: "webhook",
+			field:       "authorization_credentials",
+			storedKey:   "AUTHORIZATION_CREDENTIALS",
+		},
+		{
+			name:        "snake_case field stored mixed-case",
+			integration: "webhook",
+			field:       "authorization_credentials",
+			storedKey:   "Authorization_Credentials",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			settings, err := simplejson.NewJson(fmt.Appendf(nil, `{%q:"test-secret"}`, tc.storedKey))
+			require.NoError(t, err)
+			cp := definitions.EmbeddedContactPoint{
+				Name:     "case-insensitive-" + tc.integration,
+				Type:     tc.integration,
+				Settings: settings,
+			}
+
+			secureFields, err := RemoveSecretsForContactPoint(&cp)
+			require.NoError(t, err)
+
+			assert.Equal(t, "test-secret", secureFields[tc.field])
+
+			settingsMap, err := cp.Settings.Map()
+			require.NoError(t, err)
+			for k := range settingsMap {
+				assert.Falsef(t, strings.EqualFold(k, tc.field), "expected %s to be removed from settings but key %q remains", tc.field, k)
+			}
+		})
+	}
+}
+
+func TestIntegrationAuthorization(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	sutWithAuthz := func() (*ContactPointService, *acfakes.FakeReceiverAccessService[*models.Receiver]) {
+		secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+		sut := createContactPointServiceSut(t, secretsService)
+		authz := &acfakes.FakeReceiverAccessService[*models.Receiver]{}
+		sut.authz = authz
+		return sut, authz
+	}
+
+	user := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{}}
+	receiverA := "receiverA"
+	receiverB := "receiverB"
+	receiverC := "receiverC"
+	sut, authz := sutWithAuthz()
+	gen := models.IntegrationGen(models.IntegrationMuts.WithValidConfig(email.Type), models.IntegrationMuts.WithName(receiverA))
+	g1, g2, g3 := gen(), gen(), gen()
+	integration1 := GrafanaIntegrationConfigToEmbeddedContactPoint(&g1, models.ProvenanceAPI)
+	integration2 := GrafanaIntegrationConfigToEmbeddedContactPoint(&g2, models.ProvenanceAPI)
+	integration3 := GrafanaIntegrationConfigToEmbeddedContactPoint(&g3, models.ProvenanceAPI)
+	t.Run("CreateContactPoint", func(t *testing.T) {
+		t.Run("authorize create if receiver is new", func(t *testing.T) {
+			authz.AuthorizeCreateFunc = func(ctx context.Context, requester identity.Requester) error {
+				assert.Equal(t, user, requester)
+				return nil
+			}
+			var err error
+			integration1, err = sut.CreateContactPoint(context.Background(), user.OrgID, user, integration1, models.ProvenanceAPI)
+			require.NoError(t, err)
+			assert.Len(t, authz.Calls, 1)
+			assert.Equal(t, []string{"AuthorizeCreate"}, authz.Calls.Methods())
+		})
+		t.Run("authorize update if receiver exists", func(t *testing.T) {
+			authz.Reset()
+			authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+				assert.Equal(t, user, requester)
+				assert.Equal(t, models.NameToUid(receiverA), uid)
+				return nil
+			}
+			var err error
+			integration2, err = sut.CreateContactPoint(context.Background(), user.OrgID, user, integration2, models.ProvenanceAPI)
+			require.NoError(t, err)
+			assert.Equal(t, []string{"AuthorizeUpdateByUID"}, authz.Calls.Methods())
+			integration3, err = sut.CreateContactPoint(context.Background(), user.OrgID, user, integration3, models.ProvenanceAPI)
+			require.NoError(t, err)
+			assert.Equal(t, []string{"AuthorizeUpdateByUID", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
+		})
+	})
+	t.Run("UpdateContactPoint", func(t *testing.T) {
+		t.Run("authorize update if receiver exists", func(t *testing.T) {
+			newVersion := integration2
+			newVersion.Settings = integration2.Settings.DeepCopy()
+			newVersion.Settings.Set("message", "something else")
+			authz.Reset()
+			authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+				assert.Equal(t, user, requester)
+				assert.Equal(t, models.NameToUid(receiverA), uid)
+				return nil
+			}
+			err := sut.UpdateContactPoint(context.Background(), user.OrgID, user, newVersion, models.ProvenanceAPI)
+			require.NoError(t, err)
+			assert.Equal(t, []string{"HasUpdateProtected", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
+			integration2 = newVersion
+		})
+		t.Run("when integration is moved between receivers", func(t *testing.T) {
+			t.Run("authorize update A and create B if receiver is not deleted and new is created", func(t *testing.T) {
+				authz.Reset()
+				authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+					assert.Equal(t, user, requester)
+					assert.Equal(t, models.NameToUid(receiverA), uid)
+					return nil
+				}
+				authz.AuthorizeCreateFunc = func(ctx context.Context, requester identity.Requester) error {
+					assert.Equal(t, user, requester)
+					return nil
+				}
+				newVersion := integration1
+				newVersion.Name = receiverB
+				err := sut.UpdateContactPoint(context.Background(), user.OrgID, user, newVersion, models.ProvenanceAPI)
+				require.NoError(t, err)
+				assert.ElementsMatch(t, []string{"HasUpdateProtected", "AuthorizeUpdateByUID", "AuthorizeCreate"}, authz.Calls.Methods())
+				integration1 = newVersion
+			})
+			t.Run("authorize update A and update B if integration is moved to existing receiver", func(t *testing.T) {
+				authz.Reset()
+				checked := make([]string, 0, 2)
+				authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+					assert.Equal(t, user, requester)
+					checked = append(checked, uid)
+					return nil
+				}
+				newVersion := integration2
+				newVersion.Name = receiverB
+				err := sut.UpdateContactPoint(context.Background(), user.OrgID, user, newVersion, models.ProvenanceAPI)
+				require.NoError(t, err)
+				assert.ElementsMatch(t, []string{"HasUpdateProtected", "AuthorizeUpdateByUID", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
+				assert.ElementsMatch(t, []string{models.NameToUid(receiverA), models.NameToUid(receiverB)}, checked)
+				integration2 = newVersion
+			})
+
+			t.Run("authorize delete A and create B if receiver is deleted and new is created", func(t *testing.T) {
+				authz.Reset()
+				authz.AuthorizeDeleteByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+					assert.Equal(t, user, requester)
+					assert.Equal(t, models.NameToUid(receiverA), uid)
+					return nil
+				}
+				authz.AuthorizeCreateFunc = func(ctx context.Context, requester identity.Requester) error {
+					assert.Equal(t, user, requester)
+					return nil
+				}
+				newVersion := integration3
+				newVersion.Name = receiverC
+				err := sut.UpdateContactPoint(context.Background(), user.OrgID, user, newVersion, models.ProvenanceAPI)
+				require.NoError(t, err)
+				assert.ElementsMatch(t, []string{"HasUpdateProtected", "AuthorizeDeleteByUID", "AuthorizeCreate"}, authz.Calls.Methods())
+				integration3 = newVersion
+			})
+			t.Run("authorize delete A and update B if receivers are merged", func(t *testing.T) {
+				authz.Reset()
+				authz.AuthorizeDeleteByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+					assert.Equal(t, user, requester)
+					assert.Equal(t, models.NameToUid(receiverC), uid)
+					return nil
+				}
+				authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+					assert.Equal(t, user, requester)
+					assert.Equal(t, models.NameToUid(receiverB), uid)
+					return nil
+				}
+				newVersion := integration3
+				newVersion.Name = receiverB
+				err := sut.UpdateContactPoint(context.Background(), user.OrgID, user, newVersion, models.ProvenanceAPI)
+				require.NoError(t, err)
+				assert.ElementsMatch(t, []string{"HasUpdateProtected", "AuthorizeDeleteByUID", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
+				integration3 = newVersion
+			})
+		})
+	})
+	t.Run("DeleteContactPoint", func(t *testing.T) {
+		t.Run("authorize update if receiver is not deleted", func(t *testing.T) {
+			authz.Reset()
+			authz.AuthorizeUpdateByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+				assert.Equal(t, user, requester)
+				assert.Equal(t, models.NameToUid(receiverB), uid)
+				return nil
+			}
+			err := sut.DeleteContactPoint(context.Background(), user.OrgID, user, integration3.UID)
+			require.NoError(t, err)
+			err = sut.DeleteContactPoint(context.Background(), user.OrgID, user, integration2.UID)
+			require.NoError(t, err)
+			assert.ElementsMatch(t, []string{"AuthorizeUpdateByUID", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
+		})
+		t.Run("authorize delete if receiver is deleted", func(t *testing.T) {
+			authz.Reset()
+			authz.AuthorizeDeleteByUIDFunc = func(ctx context.Context, requester identity.Requester, uid string) error {
+				assert.Equal(t, user, requester)
+				assert.Equal(t, models.NameToUid(receiverB), uid)
+				return nil
+			}
+			err := sut.DeleteContactPoint(context.Background(), user.OrgID, user, integration1.UID)
+			require.NoError(t, err)
+			assert.ElementsMatch(t, []string{"AuthorizeDeleteByUID"}, authz.Calls.Methods())
+		})
+	})
+}
+
+func createContactPointServiceSut(t *testing.T,
+	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+) *ContactPointService {
+	// Encrypt secure settings.
+	cfg := createEncryptedConfig(t, secretService)
+	store := fakes.NewFakeAlertmanagerConfigStore(cfg)
+	return createContactPointServiceSutWithConfigStore(t, secretService, store)
+}
+
+func createContactPointServiceSutWithConfigStore(t *testing.T,
+	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	configStore legacy_storage.AMConfigStore,
+) *ContactPointService {
+	t.Helper()
+	// Encrypt secure settings.
+	xact := newNopTransactionManager()
+	provisioningStore := fakes.NewFakeProvisioningStore()
+
+	receiverAuthz := ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), true)
+	receiverService := notifier.NewReceiverService(
+		receiverAuthz,
+		legacy_storage.NewAlertmanagerConfigStore(configStore, notifier.NewExtraConfigsCrypto(secretService), featuremgmt.WithFeatures()),
+		provisioningStore,
+		&fakeAlertRuleNotificationStore{},
+		routes.NewFakeService(legacy_storage.ConfigRevision{}),
+		secretService,
+		xact,
+		log.NewNopLogger(),
+		fakes.NewFakeReceiverPermissionsService(),
+		tracing.InitializeTracerForTest(),
+		validation.ValidateProvenanceRelaxed,
+		false,
+		nil,
+		&notifier.NoopOrgEmailValidator{},
+	)
+
+	return NewContactPointService(
+		receiverAuthz,
+		legacy_storage.NewAlertmanagerConfigStore(configStore, notifier.NewExtraConfigsCrypto(secretService), featuremgmt.WithFeatures()),
+		secretService,
+		provisioningStore,
+		xact,
+		receiverService,
+		log.NewNopLogger(),
+		&fakeAlertRuleNotificationStore{},
+		fakes.NewFakeReceiverPermissionsService(),
+		nil,
+		&notifier.NoopOrgEmailValidator{},
+	)
+}
+
+func createTestContactPoint() definitions.EmbeddedContactPoint {
+	settings, _ := simplejson.NewJson([]byte(`{"recipient":"value_recipient","token":"value_token"}`))
+	return definitions.EmbeddedContactPoint{
+		Name:     "test-contact-point",
+		Type:     "slack",
+		Settings: settings,
+	}
+}
+
+func createTestEmailContactPoint() definitions.EmbeddedContactPoint {
+	settings, _ := simplejson.NewJson([]byte(`{"addresses":"test@example.com"}`))
+	return definitions.EmbeddedContactPoint{
+		Name:     "test-email-contact-point",
+		Type:     "email",
+		Settings: settings,
+	}
+}
+
+func cpsQuery(orgID int64) ContactPointQuery {
+	return ContactPointQuery{
+		OrgID: orgID,
+	}
+}
+
+func cpsQueryWithName(orgID int64, name string) ContactPointQuery {
+	return ContactPointQuery{
+		OrgID: orgID,
+		Name:  name,
+	}
+}
+
+func createEncryptedConfig(t *testing.T,
+	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+) string {
+	c, err := notifier.Load([]byte(defaultAlertmanagerConfigJSON))
+	require.NoError(t, err)
+	err = notifier.EncryptReceiverConfigs(c.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
+		return secretService.Encrypt(ctx, payload, secrets.WithoutScope())
+	})
+	require.NoError(t, err)
+	bytes, err := legacy_storage.SerializeAlertmanagerConfig(*c)
+	require.NoError(t, err)
+	return string(bytes)
+}
+
+func TestStitchReceivers(t *testing.T) {
+	type testCase struct {
+		name               string
+		initial            *v1.AMConfigV1
+		new                *v1.PostableGrafanaReceiver
+		expCfg             v1.PostableApiAlertingConfig
+		expOldReceiver     *string
+		expCreatedReceiver bool
+		expFullRemoval     bool
+	}
+
+	cases := []testCase{
+		{
+			name: "non matching receiver by UID, no change",
+			new: &v1.PostableGrafanaReceiver{
+				UID: "does not exist",
+			},
+			expOldReceiver: nil,
+			expCfg:         createTestConfigWithReceivers().AlertmanagerConfig,
+		},
+		{
+			name: "matching receiver with unchanged name, replaces",
+			new: &v1.PostableGrafanaReceiver{
+				UID:  "ghi",
+				Name: "receiver-2",
+				Type: "teams",
+			},
+			expOldReceiver: new("receiver-2"),
+			expCfg: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Route: &v1.Route{
+						Receiver: "receiver-1",
+						Routes: []*v1.Route{
+							{
+								Receiver: "receiver-1",
+							},
+						},
+					},
+				},
+				Receivers: []*v1.PostableApiReceiver{
+					{
+						Receiver: definitions.Receiver{
+							Name: "receiver-1",
+						},
+						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "abc",
+									Name: "receiver-1",
+									Type: "slack",
+								},
+							},
+						},
+					},
+					{
+						Receiver: definitions.Receiver{
+							Name: "receiver-2",
+						},
+						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "def",
+									Name: "receiver-2",
+									Type: "slack",
+								},
+								{
+									UID:  "ghi",
+									Name: "receiver-2",
+									Type: "teams",
+								},
+								{
+									UID:  "jkl",
+									Name: "receiver-2",
+									Type: "discord",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "rename with only one receiver in group, renames group and references",
+			new: &v1.PostableGrafanaReceiver{
+				UID:  "abc",
+				Name: "new-receiver",
+				Type: "slack",
+			},
+			expOldReceiver:     new("receiver-1"),
+			expCreatedReceiver: true,
+			expFullRemoval:     true,
+			expCfg: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Route: &v1.Route{
+						Receiver: "receiver-1",
+						Routes: []*v1.Route{
+							{
+								Receiver: "receiver-1",
+							},
+						},
+					},
+				},
+				Receivers: []*v1.PostableApiReceiver{
+					{
+						Receiver: definitions.Receiver{
+							Name: "new-receiver",
+						},
+						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "abc",
+									Name: "new-receiver",
+									Type: "slack",
+								},
+							},
+						},
+					},
+					{
+						Receiver: definitions.Receiver{
+							Name: "receiver-2",
+						},
+						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "def",
+									Name: "receiver-2",
+									Type: "slack",
+								},
+								{
+									UID:  "ghi",
+									Name: "receiver-2",
+									Type: "email",
+								},
+								{
+									UID:  "jkl",
+									Name: "receiver-2",
+									Type: "discord",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "rename to another existing group, moves receiver",
+			new: &v1.PostableGrafanaReceiver{
+				UID:  "def",
+				Name: "receiver-1",
+				Type: "slack",
+			},
+			expOldReceiver:     new("receiver-2"),
+			expCreatedReceiver: false,
+			expCfg: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Route: &v1.Route{
+						Receiver: "receiver-1",
+						Routes: []*v1.Route{
+							{
+								Receiver: "receiver-1",
+							},
+						},
+					},
+				},
+				Receivers: []*v1.PostableApiReceiver{
+					{
+						Receiver: definitions.Receiver{
+							Name: "receiver-1",
+						},
+						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "abc",
+									Name: "receiver-1",
+									Type: "slack",
+								},
+								{
+									UID:  "def",
+									Name: "receiver-1",
+									Type: "slack",
+								},
+							},
+						},
+					},
+					{
+						Receiver: definitions.Receiver{
+							Name: "receiver-2",
+						},
+						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "ghi",
+									Name: "receiver-2",
+									Type: "email",
+								},
+								{
+									UID:  "jkl",
+									Name: "receiver-2",
+									Type: "discord",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "rename to another, larger group",
+			initial: &v1.AMConfigV1{
+				AlertmanagerConfig: v1.PostableApiAlertingConfig{
+					Config: v1.Config{
+						Route: &v1.Route{
+							Receiver: "receiver-1",
+							Routes: []*v1.Route{
+								{
+									Receiver: "receiver-1",
+								},
+							},
+						},
+					},
+					Receivers: []*v1.PostableApiReceiver{
+						{
+							Receiver: definitions.Receiver{
+								Name: "receiver-1",
+							},
+							PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+								GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+									{
+										UID:  "1",
+										Name: "receiver-1",
+										Type: "slack",
+									},
+									{
+										UID:  "2",
+										Name: "receiver-1",
+										Type: "slack",
+									},
+								},
+							},
+						},
+						{
+							Receiver: definitions.Receiver{
+								Name: "receiver-2",
+							},
+							PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+								GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+									{
+										UID:  "3",
+										Name: "receiver-2",
+										Type: "slack",
+									},
+									{
+										UID:  "4",
+										Name: "receiver-2",
+										Type: "slack",
+									},
+									{
+										UID:  "5",
+										Name: "receiver-2",
+										Type: "slack",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			new: &v1.PostableGrafanaReceiver{
+				UID:  "2",
+				Name: "receiver-2",
+				Type: "slack",
+			},
+			expOldReceiver:     new("receiver-1"),
+			expCreatedReceiver: false,
+			expCfg: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Route: &v1.Route{
+						Receiver: "receiver-1",
+						Routes: []*v1.Route{
+							{
+								Receiver: "receiver-1",
+							},
+						},
+					},
+				},
+				Receivers: []*v1.PostableApiReceiver{
+					{
+						Receiver: definitions.Receiver{
+							Name: "receiver-1",
+						},
+						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "1",
+									Name: "receiver-1",
+									Type: "slack",
+								},
+							},
+						},
+					},
+					{
+						Receiver: definitions.Receiver{
+							Name: "receiver-2",
+						},
+						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "3",
+									Name: "receiver-2",
+									Type: "slack",
+								},
+								{
+									UID:  "4",
+									Name: "receiver-2",
+									Type: "slack",
+								},
+								{
+									UID:  "5",
+									Name: "receiver-2",
+									Type: "slack",
+								},
+								{
+									UID:  "2",
+									Name: "receiver-2",
+									Type: "slack",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "rename when there are many groups",
+			initial: &v1.AMConfigV1{
+				AlertmanagerConfig: v1.PostableApiAlertingConfig{
+					Config: v1.Config{
+						Route: &v1.Route{
+							Receiver: "receiver-1",
+							Routes: []*v1.Route{
+								{
+									Receiver: "receiver-1",
+								},
+							},
+						},
+					},
+					Receivers: []*v1.PostableApiReceiver{
+						{
+							Receiver: definitions.Receiver{
+								Name: "receiver-1",
+							},
+							PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+								GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+									{
+										UID:  "1",
+										Name: "receiver-1",
+										Type: "slack",
+									},
+									{
+										UID:  "2",
+										Name: "receiver-1",
+										Type: "slack",
+									},
+								},
+							},
+						},
+						{
+							Receiver: definitions.Receiver{
+								Name: "receiver-2",
+							},
+							PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+								GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+									{
+										UID:  "3",
+										Name: "receiver-2",
+										Type: "slack",
+									},
+								},
+							},
+						},
+						{
+							Receiver: definitions.Receiver{
+								Name: "receiver-3",
+							},
+							PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+								GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+									{
+										UID:  "4",
+										Name: "receiver-4",
+										Type: "slack",
+									},
+								},
+							},
+						},
+						{
+							Receiver: definitions.Receiver{
+								Name: "receiver-4",
+							},
+							PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+								GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+									{
+										UID:  "5",
+										Name: "receiver-4",
+										Type: "slack",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			new: &v1.PostableGrafanaReceiver{
+				UID:  "2",
+				Name: "receiver-4",
+				Type: "slack",
+			},
+			expOldReceiver:     new("receiver-1"),
+			expCreatedReceiver: false,
+			expCfg: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Route: &v1.Route{
+						Receiver: "receiver-1",
+						Routes: []*v1.Route{
+							{
+								Receiver: "receiver-1",
+							},
+						},
+					},
+				},
+				Receivers: []*v1.PostableApiReceiver{
+					{
+						Receiver: definitions.Receiver{
+							Name: "receiver-1",
+						},
+						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "1",
+									Name: "receiver-1",
+									Type: "slack",
+								},
+							},
+						},
+					},
+					{
+						Receiver: definitions.Receiver{
+							Name: "receiver-2",
+						},
+						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "3",
+									Name: "receiver-2",
+									Type: "slack",
+								},
+							},
+						},
+					},
+					{
+						Receiver: definitions.Receiver{
+							Name: "receiver-3",
+						},
+						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "4",
+									Name: "receiver-4",
+									Type: "slack",
+								},
+							},
+						},
+					},
+					{
+						Receiver: definitions.Receiver{
+							Name: "receiver-4",
+						},
+						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "5",
+									Name: "receiver-4",
+									Type: "slack",
+								},
+								{
+									UID:  "2",
+									Name: "receiver-4",
+									Type: "slack",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "rename to a name that doesn't exist, creates new group and moves",
+			new: &v1.PostableGrafanaReceiver{
+				UID:  "jkl",
+				Name: "brand-new-group",
+				Type: "opsgenie",
+			},
+			expOldReceiver:     new("receiver-2"),
+			expCreatedReceiver: true,
+			expCfg: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Route: &v1.Route{
+						Receiver: "receiver-1",
+						Routes: []*v1.Route{
+							{
+								Receiver: "receiver-1",
+							},
+						},
+					},
+				},
+				Receivers: []*v1.PostableApiReceiver{
+					{
+						Receiver: definitions.Receiver{
+							Name: "receiver-1",
+						},
+						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "abc",
+									Name: "receiver-1",
+									Type: "slack",
+								},
+							},
+						},
+					},
+					{
+						Receiver: definitions.Receiver{
+							Name: "receiver-2",
+						},
+						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "def",
+									Name: "receiver-2",
+									Type: "slack",
+								},
+								{
+									UID:  "ghi",
+									Name: "receiver-2",
+									Type: "email",
+								},
+							},
+						},
+					},
+					{
+						Receiver: definitions.Receiver{
+							Name: "brand-new-group",
+						},
+						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "jkl",
+									Name: "brand-new-group",
+									Type: "opsgenie",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "rename an inconsistent group in the database, algorithm fixes it",
+			initial: createInconsistentTestConfigWithReceivers(),
+			new: &v1.PostableGrafanaReceiver{
+				UID:  "ghi",
+				Name: "brand-new-group",
+				Type: "opsgenie",
+			},
+			expOldReceiver:     new("receiver-2"), // Not the inconsistent receiver-3?
+			expCreatedReceiver: true,
+			expCfg: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Route: &v1.Route{
+						Receiver: "receiver-1",
+						Routes: []*v1.Route{
+							{
+								Receiver: "receiver-1",
+							},
+						},
+					},
+				},
+				Receivers: []*v1.PostableApiReceiver{
+					{
+						Receiver: definitions.Receiver{
+							Name: "receiver-1",
+						},
+						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "abc",
+									Name: "receiver-1",
+									Type: "slack",
+								},
+							},
+						},
+					},
+					{
+						Receiver: definitions.Receiver{
+							Name: "receiver-2",
+						},
+						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "def",
+									Name: "receiver-2",
+									Type: "slack",
+								},
+								{
+									UID:  "jkl",
+									Name: "receiver-2",
+									Type: "discord",
+								},
+							},
+						},
+					},
+					{
+						Receiver: definitions.Receiver{
+							Name: "brand-new-group",
+						},
+						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "ghi",
+									Name: "brand-new-group",
+									Type: "opsgenie",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "single item group rename to existing group",
+			initial: &v1.AMConfigV1{
+				AlertmanagerConfig: v1.PostableApiAlertingConfig{
+					Config: v1.Config{
+						Route: &v1.Route{
+							Receiver: "receiver-1",
+							Routes: []*v1.Route{
+								{
+									Receiver: "receiver-1",
+								},
+								{
+									Receiver: "receiver-2",
+								},
+							},
+						},
+					},
+					Receivers: []*v1.PostableApiReceiver{
+						{
+							Receiver: definitions.Receiver{
+								Name: "receiver-1",
+							},
+							PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+								GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+									{
+										UID:  "1",
+										Name: "receiver-1",
+										Type: "slack",
+									},
+									{
+										UID:  "2",
+										Name: "receiver-1",
+										Type: "slack",
+									},
+								},
+							},
+						},
+						{
+							Receiver: definitions.Receiver{
+								Name: "receiver-2",
+							},
+							PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+								GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+									{
+										UID:  "3",
+										Name: "receiver-2",
+										Type: "slack",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			new: &v1.PostableGrafanaReceiver{
+				UID:  "3",
+				Name: "receiver-1",
+				Type: "slack",
+			},
+			expOldReceiver:     new("receiver-2"),
+			expCreatedReceiver: false,
+			expFullRemoval:     true,
+			expCfg: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Route: &v1.Route{
+						Receiver: "receiver-1",
+						Routes: []*v1.Route{
+							{
+								Receiver: "receiver-1",
+							},
+							{
+								Receiver: "receiver-2",
+							},
+						},
+					},
+				},
+				Receivers: []*v1.PostableApiReceiver{
+					{
+						Receiver: definitions.Receiver{
+							Name: "receiver-1",
+						},
+						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "1",
+									Name: "receiver-1",
+									Type: "slack",
+								},
+								{
+									UID:  "2",
+									Name: "receiver-1",
+									Type: "slack",
+								},
+								{
+									UID:  "3",
+									Name: "receiver-1",
+									Type: "slack",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			cfg := createTestConfigWithReceivers()
+			if c.initial != nil {
+				cfg = c.initial
+			}
+
+			renamedReceiver, fullRemoval, createdReceiver := stitchReceiver(cfg, c.new)
+			assert.EqualValuesf(t, c.expOldReceiver, renamedReceiver, "expected old receiver to be %v, got %v", c.expOldReceiver, renamedReceiver)
+			assert.Equalf(t, c.expFullRemoval, fullRemoval, "expected full removal to be %t, got %t", c.expFullRemoval, fullRemoval)
+			assert.Equalf(t, c.expCreatedReceiver, createdReceiver, "expected created receiver to be %t, got %t", c.expCreatedReceiver, createdReceiver)
+			require.Equal(t, c.expCfg, cfg.AlertmanagerConfig)
+		})
+	}
+}
+
+func createTestConfigWithReceivers() *v1.AMConfigV1 {
+	return &v1.AMConfigV1{
+		AlertmanagerConfig: v1.PostableApiAlertingConfig{
+			Config: v1.Config{
+				Route: &v1.Route{
+					Receiver: "receiver-1",
+					Routes: []*v1.Route{
+						{
+							Receiver: "receiver-1",
+						},
+					},
+				},
+			},
+			Receivers: []*v1.PostableApiReceiver{
+				{
+					Receiver: definitions.Receiver{
+						Name: "receiver-1",
+					},
+					PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "abc",
+								Name: "receiver-1",
+								Type: "slack",
+							},
+						},
+					},
+				},
+				{
+					Receiver: definitions.Receiver{
+						Name: "receiver-2",
+					},
+					PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "def",
+								Name: "receiver-2",
+								Type: "slack",
+							},
+							{
+								UID:  "ghi",
+								Name: "receiver-2",
+								Type: "email",
+							},
+							{
+								UID:  "jkl",
+								Name: "receiver-2",
+								Type: "discord",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+// This is an invalid config, with inconsistently named receivers (intentionally).
+func createInconsistentTestConfigWithReceivers() *v1.AMConfigV1 {
+	return &v1.AMConfigV1{
+		AlertmanagerConfig: v1.PostableApiAlertingConfig{
+			Config: v1.Config{
+				Route: &v1.Route{
+					Receiver: "receiver-1",
+					Routes: []*v1.Route{
+						{
+							Receiver: "receiver-1",
+						},
+					},
+				},
+			},
+			Receivers: []*v1.PostableApiReceiver{
+				{
+					Receiver: definitions.Receiver{
+						Name: "receiver-1",
+					},
+					PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "abc",
+								Name: "receiver-1",
+								Type: "slack",
+							},
+						},
+					},
+				},
+				{
+					Receiver: definitions.Receiver{
+						Name: "receiver-2",
+					},
+					PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "def",
+								Name: "receiver-2",
+								Type: "slack",
+							},
+							{
+								UID:  "ghi",
+								Name: "receiver-3",
+								Type: "email",
+							},
+							{
+								UID:  "jkl",
+								Name: "receiver-2",
+								Type: "discord",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func TestValidateContactPointAllowedIntegrations(t *testing.T) {
+	decryptFn := func(_ context.Context, _ map[string][]byte, _, fallback string) string {
+		return fallback
+	}
+	newCP := func(integrationType string) *definitions.EmbeddedContactPoint {
+		settings, _ := simplejson.NewJson([]byte(`{"recipient":"value_recipient","token":"value_token"}`))
+		return &definitions.EmbeddedContactPoint{
+			Name:     "test-cp",
+			Type:     integrationType,
+			Settings: settings,
+		}
+	}
+
+	testCases := []struct {
+		name            string
+		allowed         map[schema.IntegrationType]struct{}
+		integrationType string
+		wantErr         string
+	}{
+		{
+			name:            "nil allowlist permits any valid type",
+			integrationType: "slack",
+		},
+		{
+			name:            "type in allowlist is permitted",
+			allowed:         map[schema.IntegrationType]struct{}{"slack": {}},
+			integrationType: "slack",
+		},
+		{
+			name:            "type not in allowlist is rejected",
+			allowed:         map[schema.IntegrationType]struct{}{"email": {}},
+			integrationType: "slack",
+			wantErr:         "integration type slack is not allowed",
+		},
+		{
+			name:            "empty non-nil allowlist rejects all types",
+			allowed:         map[schema.IntegrationType]struct{}{},
+			integrationType: "slack",
+			wantErr:         "integration type slack is not allowed",
+		},
+		{
+			name:            "allowlist match is case-insensitive via canonical resolution",
+			allowed:         map[schema.IntegrationType]struct{}{"slack": {}},
+			integrationType: "SLACK",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateContactPoint(context.Background(), newCP(tc.integrationType), decryptFn, tc.allowed)
+			if tc.wantErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				require.Equal(t, err.Error(), tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidateContactPoint_DuplicateSecrets(t *testing.T) {
+	decryptFn := func(_ context.Context, _ map[string][]byte, _, fallback string) string {
+		return fallback
+	}
+	settings, err := simplejson.NewJson([]byte(`{"token":"value_token","TOKEN":"value_token_2"}`))
+	require.NoError(t, err)
+	contactPoint := &definitions.EmbeddedContactPoint{
+		Name:     "test-cp",
+		Type:     "slack",
+		Settings: settings,
+	}
+
+	err = ValidateContactPoint(context.Background(), contactPoint, decryptFn, nil)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "duplicate keys found for secret field")
+}

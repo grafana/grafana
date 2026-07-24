@@ -1,0 +1,92 @@
+import { cloneDeep } from 'lodash';
+import { useAsyncFn } from 'react-use';
+
+import { locationUtil } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
+import { type Dashboard } from '@grafana/schema';
+import { appEvents } from 'app/core/app_events';
+import { useAppNotification } from 'app/core/copy/appNotification';
+import { useSaveDashboardMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+import { DashboardSavedEvent } from 'app/types/events';
+
+import { updateDashboardUidLastUsedDatasource } from '../../utils/dashboard';
+import { trackDashboardCreatedOrSaved } from '../../utils/tracking';
+
+import { type SaveDashboardOptions } from './types';
+
+const saveDashboard = async (
+  saveModel: any,
+  options: SaveDashboardOptions,
+  dashboard: DashboardModel,
+  saveDashboardRtkQuery: ReturnType<typeof useSaveDashboardMutation>[0]
+) => {
+  const query = await saveDashboardRtkQuery({
+    dashboard: saveModel,
+    folderUid: options.folderUid ?? dashboard.meta.folderUid ?? saveModel.meta?.folderUid,
+    message: options.message,
+    overwrite: options.overwrite,
+    k8s: dashboard.meta.k8s,
+  });
+
+  if ('error' in query) {
+    throw query.error;
+  }
+
+  return query.data;
+};
+
+export const useDashboardSave = (isCopy = false) => {
+  const notifyApp = useAppNotification();
+  const [saveDashboardRtkQuery] = useSaveDashboardMutation();
+  const [state, onDashboardSave] = useAsyncFn(
+    async (clone: Dashboard, options: SaveDashboardOptions, dashboard: DashboardModel) => {
+      try {
+        const result = await saveDashboard(clone, options, dashboard, saveDashboardRtkQuery);
+        dashboard.version = result.version;
+
+        // Altering the clone leads to an error due to the clone being immutable
+        clone = cloneDeep(clone);
+        clone.version = result.version;
+        dashboard.clearUnsavedChanges(clone, options);
+
+        // important that these happen before location redirect below
+        appEvents.publish(new DashboardSavedEvent());
+        notifyApp.success(t('dashboard.save-dashboard.message-dashboard-saved', 'Dashboard saved'));
+
+        // Update local storage dashboard to handle things like last used datasource
+        updateDashboardUidLastUsedDatasource(result.uid);
+
+        if (isCopy) {
+          DashboardInteractions.dashboardCopied({ name: dashboard.title || '', url: result.url });
+        } else {
+          trackDashboardCreatedOrSaved(dashboard.uid?.length === 0, {
+            name: dashboard.title,
+            url: result.url,
+            uid: result.uid,
+            numPanels: dashboard.panels.filter((p) => p.type !== 'row').length,
+            numRows: dashboard.panels.filter((p) => p.type === 'row').length,
+          });
+        }
+
+        const currentPath = locationService.getLocation().pathname;
+        const newUrl = locationUtil.stripBaseFromUrl(result.url);
+
+        if (newUrl !== currentPath && result.url) {
+          setTimeout(() => locationService.replace(newUrl));
+        }
+        return result;
+      } catch (error) {
+        if (error instanceof Error) {
+          notifyApp.error(error.message ?? 'Error saving dashboard');
+        }
+        throw error;
+      }
+    },
+    [notifyApp]
+  );
+
+  return { state, onDashboardSave };
+};

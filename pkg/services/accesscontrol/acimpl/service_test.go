@@ -1,0 +1,1514 @@
+package acimpl
+
+import (
+	"context"
+	"strings"
+	"sync"
+	"sync/atomic"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/seeding"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
+)
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
+func setupTestEnv(t testing.TB, registerRoles bool) *Service {
+	t.Helper()
+	cfg := setting.NewCfg()
+
+	sql := db.InitTestDB(t)
+
+	ac := &Service{
+		cache:          localcache.ProvideService(),
+		cfg:            cfg,
+		features:       featuremgmt.WithFeatures(),
+		log:            log.New("accesscontrol"),
+		registrations:  accesscontrol.RegistrationList{},
+		roles:          accesscontrol.BuildBasicRoleDefinitions(),
+		store:          database.ProvideService(sql),
+		sql:            sql,
+		permRegistry:   permreg.ProvidePermissionRegistry(),
+		actionResolver: resourcepermissions.NewActionSetService(),
+	}
+
+	if registerRoles {
+		require.NoError(t, ac.RegisterFixedRoles(context.Background()))
+	}
+
+	return ac
+}
+
+func TestService_getCachedPermissions_CoalescesConcurrentMisses(t *testing.T) {
+	s := &Service{cache: localcache.ProvideService()}
+
+	var calls atomic.Int64
+	fn := func(_ context.Context) ([]accesscontrol.Permission, error) {
+		calls.Add(1)
+		// Hold the computation long enough for the other workers to block on the lock.
+		time.Sleep(20 * time.Millisecond)
+		return []accesscontrol.Permission{{Action: "test:action"}}, nil
+	}
+
+	const numWorkers = 20
+	var wg sync.WaitGroup
+	start := make(chan struct{})
+	results := make([][]accesscontrol.Permission, numWorkers)
+	errs := make([]error, numWorkers)
+	for i := range numWorkers {
+		wg.Go(func() {
+			<-start
+			results[i], errs[i] = s.getCachedPermissions(context.Background(), "test-key", fn, accesscontrol.Options{})
+		})
+	}
+	close(start)
+	wg.Wait()
+
+	require.Equal(t, int64(1), calls.Load(), "getPermissionsFn should run once for concurrent cache misses")
+	for i := range numWorkers {
+		require.NoError(t, errs[i])
+		require.Len(t, results[i], 1)
+		require.Equal(t, "test:action", results[i][0].Action)
+	}
+}
+
+func TestService_getCachedPermissions_ReloadCacheRecomputes(t *testing.T) {
+	s := &Service{cache: localcache.ProvideService()}
+	ctx := context.Background()
+
+	var calls atomic.Int64
+	fn := func(_ context.Context) ([]accesscontrol.Permission, error) {
+		calls.Add(1)
+		return []accesscontrol.Permission{{Action: "test:action"}}, nil
+	}
+
+	_, err := s.getCachedPermissions(ctx, "test-key", fn, accesscontrol.Options{})
+	require.NoError(t, err)
+	require.Equal(t, int64(1), calls.Load())
+
+	// A subsequent read is served from cache without recomputing.
+	_, err = s.getCachedPermissions(ctx, "test-key", fn, accesscontrol.Options{})
+	require.NoError(t, err)
+	require.Equal(t, int64(1), calls.Load())
+
+	// ReloadCache forces a fresh computation.
+	_, err = s.getCachedPermissions(ctx, "test-key", fn, accesscontrol.Options{ReloadCache: true})
+	require.NoError(t, err)
+	require.Equal(t, int64(2), calls.Load())
+}
+
+func TestIntegrationUsageMetrics(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	tests := []struct {
+		name          string
+		expectedValue int
+	}{
+		{
+			name:          "Expecting metric with value 1",
+			expectedValue: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+
+			s := ProvideOSSService(
+				cfg,
+				database.ProvideService(db.InitTestDB(t)),
+				&resourcepermissions.FakeActionSetSvc{},
+				localcache.ProvideService(),
+				featuremgmt.WithFeatures(),
+				tracing.InitializeTracerForTest(),
+				nil,
+				permreg.ProvidePermissionRegistry(),
+				nil,
+			)
+			assert.Equal(t, tt.expectedValue, s.GetUsageStats(context.Background())["stats.oss.accesscontrol.enabled.count"])
+		})
+	}
+}
+
+func TestIntegrationService_DeclareFixedRoles(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	tests := []struct {
+		name          string
+		registrations []accesscontrol.RoleRegistration
+		wantErr       bool
+		err           error
+	}{
+		{
+			name:    "should work with empty list",
+			wantErr: false,
+		},
+		{
+			name: "should add registration",
+			registrations: []accesscontrol.RoleRegistration{
+				{
+					Role:   accesscontrol.RoleDTO{Name: "fixed:test:test"},
+					Grants: []string{"Admin"},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should fail registration invalid role name",
+			registrations: []accesscontrol.RoleRegistration{
+				{
+					Role:   accesscontrol.RoleDTO{Name: "custom:test:test"},
+					Grants: []string{"Admin"},
+				},
+			},
+			wantErr: true,
+			err:     accesscontrol.ErrFixedRolePrefixMissing,
+		},
+		{
+			name: "should fail registration invalid basic role assignment",
+			registrations: []accesscontrol.RoleRegistration{
+				{
+					Role:   accesscontrol.RoleDTO{Name: "fixed:test:test"},
+					Grants: []string{"WrongAdmin"},
+				},
+			},
+			wantErr: true,
+			err:     accesscontrol.ErrInvalidBuiltinRole.Build(accesscontrol.ErrInvalidBuiltinRoleData("WrongAdmin")),
+		},
+		{
+			name: "should add multiple registrations at once",
+			registrations: []accesscontrol.RoleRegistration{
+				{
+					Role:   accesscontrol.RoleDTO{Name: "fixed:test:test"},
+					Grants: []string{"Admin"},
+				},
+				{
+					Role:   accesscontrol.RoleDTO{Name: "fixed:test2:test2"},
+					Grants: []string{"Admin"},
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ac := setupTestEnv(t, true)
+
+			// Reset the registations
+			ac.registrations = accesscontrol.RegistrationList{}
+
+			// Test
+			err := ac.DeclareFixedRoles(tt.registrations...)
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.ErrorIs(t, err, tt.err)
+				return
+			}
+			require.NoError(t, err)
+
+			registrationCnt := 0
+			ac.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
+				registrationCnt++
+				return true
+			})
+			assert.Equal(t, len(tt.registrations), registrationCnt,
+				"expected service registration list to contain all test registrations")
+		})
+	}
+}
+
+func TestIntegrationService_DeclarePluginRoles(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	tests := []struct {
+		name          string
+		pluginID      string
+		registrations []plugins.RoleRegistration
+		wantErr       bool
+		err           error
+	}{
+		{
+			name:    "should work with empty list",
+			wantErr: false,
+		},
+		{
+			name:     "should add registration",
+			pluginID: "test-app",
+			registrations: []plugins.RoleRegistration{
+				{
+					Role:   plugins.Role{Name: "Tester"},
+					Grants: []string{"Admin"},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:     "should add registration with valid permissions",
+			pluginID: "test-app",
+			registrations: []plugins.RoleRegistration{
+				{
+					Role: plugins.Role{
+						Name: "Tester",
+						Permissions: []plugins.Permission{
+							{Action: "plugins.app:access", Scope: "plugins:id:test-app"},
+							{Action: "test-app:read"},
+							{Action: "test-app.resource:read"},
+						},
+					},
+					Grants: []string{"Admin"},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:     "should fail registration invalid permission action",
+			pluginID: "test-app",
+			registrations: []plugins.RoleRegistration{
+				{
+					Role: plugins.Role{
+						Name: "Tester",
+						Permissions: []plugins.Permission{
+							{Action: "invalid.test-app.resource:read"},
+						},
+					},
+					Grants: []string{"Admin"},
+				},
+			},
+			wantErr: true,
+			err:     &accesscontrol.ErrorInvalidRole{},
+		},
+		{
+			name:     "should fail registration invalid basic role assignment",
+			pluginID: "test-app",
+			registrations: []plugins.RoleRegistration{
+				{
+					Role:   plugins.Role{Name: "Tester"},
+					Grants: []string{"WrongAdmin"},
+				},
+			},
+			wantErr: true,
+			err:     accesscontrol.ErrInvalidBuiltinRole.Build(accesscontrol.ErrInvalidBuiltinRoleData("WrongAdmin")),
+		},
+		{
+			name:     "should add multiple registrations at once",
+			pluginID: "test-app",
+			registrations: []plugins.RoleRegistration{
+				{
+					Role:   plugins.Role{Name: "Tester"},
+					Grants: []string{"Admin"},
+				},
+				{
+					Role:   plugins.Role{Name: "Tester2"},
+					Grants: []string{"Admin"},
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ac := setupTestEnv(t, true)
+
+			// Reset the registations
+			ac.registrations = accesscontrol.RegistrationList{}
+
+			// Test
+			err := ac.DeclarePluginRoles(context.Background(), tt.pluginID, tt.pluginID, tt.registrations)
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.ErrorIs(t, err, tt.err)
+				return
+			}
+			require.NoError(t, err)
+
+			registrationCnt := 0
+			ac.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
+				registrationCnt++
+				return true
+			})
+			assert.Equal(t, len(tt.registrations), registrationCnt,
+				"expected service registration list to contain all test registrations")
+		})
+	}
+}
+
+func TestIntegrationService_RegisterFixedRoles(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	tests := []struct {
+		name          string
+		token         licensing.Licensing
+		registrations []accesscontrol.RoleRegistration
+		wantErr       bool
+	}{
+		{
+			name: "should work with empty list",
+		},
+		{
+			name: "should register and assign role",
+			registrations: []accesscontrol.RoleRegistration{
+				{
+					Role: accesscontrol.RoleDTO{
+						Name:        "fixed:test:test",
+						Permissions: []accesscontrol.Permission{{Action: "test:test"}},
+					},
+					Grants: []string{"Editor"},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should register and assign multiple roles",
+			registrations: []accesscontrol.RoleRegistration{
+				{
+					Role: accesscontrol.RoleDTO{
+						Name:        "fixed:test:test",
+						Permissions: []accesscontrol.Permission{{Action: "test:test"}},
+					},
+					Grants: []string{"Editor"},
+				},
+				{
+					Role: accesscontrol.RoleDTO{
+						Name: "fixed:test2:test2",
+						Permissions: []accesscontrol.Permission{
+							{Action: "test:test2"},
+							{Action: "test:test3", Scope: "test:*"},
+						},
+					},
+					Grants: []string{"Viewer"},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should register and assign fixed and plugins roles",
+			registrations: []accesscontrol.RoleRegistration{
+				{
+					Role: accesscontrol.RoleDTO{
+						Name:        accesscontrol.PluginRolePrefix + "test-app:tester",
+						DisplayName: "Tester",
+						Permissions: []accesscontrol.Permission{{Action: "test-app:test"}},
+					},
+					Grants: []string{"Editor"},
+				},
+				{
+					Role: accesscontrol.RoleDTO{
+						Name: "fixed:test2:test2",
+						Permissions: []accesscontrol.Permission{
+							{Action: "test:test2"},
+							{Action: "test:test3", Scope: "test:*"},
+						},
+					},
+					Grants: []string{"Viewer"},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ac := setupTestEnv(t, true)
+
+			ac.registrations.Append(tt.registrations...)
+
+			// Test
+			err := ac.RegisterFixedRoles(context.Background())
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			// Check
+			for _, registration := range tt.registrations {
+				// Check builtin roles (parents included) have been granted with the permissions
+				for br := range accesscontrol.BuiltInRolesWithParents(registration.Grants) {
+					builtinRole, ok := ac.roles[br]
+					assert.True(t, ok)
+					for _, expectedPermission := range registration.Role.Permissions {
+						expectedPermission.Kind, expectedPermission.Attribute, expectedPermission.Identifier = accesscontrol.SplitScope(expectedPermission.Scope)
+						assert.Contains(t, builtinRole.Permissions, expectedPermission)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestIntegrationService_DeclarePluginRoles_DynamicRegistration(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	tests := []struct {
+		name             string
+		postRegister     bool
+		pluginID         string
+		registrations    []plugins.RoleRegistration
+		wantGrantedRoles []string
+		wantPermissions  []string
+		wantPermCount    int
+	}{
+		{
+			name:         "should register plugin roles before initialization",
+			postRegister: false,
+			pluginID:     "test-app",
+			registrations: []plugins.RoleRegistration{
+				{
+					Role: plugins.Role{
+						Name:        "Reader",
+						Description: "Test reader role",
+						Permissions: []plugins.Permission{
+							{Action: "test-app:read", Scope: "test-app:*"},
+						},
+					},
+					Grants: []string{string(identity.RoleViewer)},
+				},
+			},
+			wantGrantedRoles: []string{string(identity.RoleViewer)},
+			wantPermissions:  []string{"test-app:read"},
+			wantPermCount:    1,
+		},
+		{
+			name:         "should register plugin roles dynamically after initialization",
+			postRegister: true,
+			pluginID:     "dynamic-app",
+			registrations: []plugins.RoleRegistration{
+				{
+					Role: plugins.Role{
+						Name:        "DynamicReader",
+						Description: "Dynamic reader role",
+						Permissions: []plugins.Permission{
+							{Action: "dynamic-app:read", Scope: "dynamic-app:*"},
+							{Action: "dynamic-app:query", Scope: "dynamic-app:*"},
+						},
+					},
+					Grants: []string{string(identity.RoleViewer)},
+				},
+			},
+			wantGrantedRoles: []string{string(identity.RoleViewer)},
+			wantPermissions:  []string{"dynamic-app:read", "dynamic-app:query"},
+			wantPermCount:    2,
+		},
+		{
+			name:         "should grant to multiple roles dynamically",
+			postRegister: true,
+			pluginID:     "multi-app",
+			registrations: []plugins.RoleRegistration{
+				{
+					Role: plugins.Role{
+						Name:        "MultiReader",
+						Description: "Multi reader role",
+						Permissions: []plugins.Permission{
+							{Action: "multi-app:read", Scope: "multi-app:*"},
+						},
+					},
+					Grants: []string{string(identity.RoleViewer), string(identity.RoleEditor)},
+				},
+			},
+			wantGrantedRoles: []string{string(identity.RoleViewer), string(identity.RoleEditor)},
+			wantPermissions:  []string{"multi-app:read"},
+			wantPermCount:    1,
+		},
+		{
+			name:         "should register multiple permissions dynamically",
+			postRegister: true,
+			pluginID:     "batch-app",
+			registrations: []plugins.RoleRegistration{
+				{
+					Role: plugins.Role{
+						Name: "BatchReader",
+						Permissions: []plugins.Permission{
+							{Action: "batch-app:read"},
+							{Action: "batch-app:write"},
+							{Action: "batch-app:delete"},
+						},
+					},
+					Grants: []string{string(identity.RoleEditor)},
+				},
+			},
+			wantGrantedRoles: []string{string(identity.RoleEditor)},
+			wantPermissions:  []string{"batch-app:read", "batch-app:write", "batch-app:delete"},
+			wantPermCount:    3,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ac := setupTestEnv(t, tt.postRegister)
+			initialPermCounts := make(map[string]int)
+			for _, roleName := range tt.wantGrantedRoles {
+				if role, ok := ac.roles[roleName]; ok {
+					initialPermCounts[roleName] = len(role.Permissions)
+				}
+			}
+
+			err := ac.DeclarePluginRoles(context.Background(), tt.pluginID, tt.pluginID, tt.registrations)
+			require.NoError(t, err)
+
+			if !tt.postRegister {
+				err = ac.RegisterFixedRoles(context.Background())
+				require.NoError(t, err)
+			}
+
+			// Verify permissions were added to expected roles
+			for _, roleName := range tt.wantGrantedRoles {
+				role, ok := ac.roles[roleName]
+				require.True(t, ok, "Role %s should exist", roleName)
+
+				expectedCount := initialPermCounts[roleName] + tt.wantPermCount
+				assert.Equal(t, expectedCount, len(role.Permissions))
+
+				actions := make([]string, 0, len(role.Permissions))
+				for _, perm := range role.Permissions {
+					actions = append(actions, perm.Action)
+				}
+
+				for _, wantAction := range tt.wantPermissions {
+					assert.Contains(t, actions, wantAction, "Role %s should have permission %s", roleName, wantAction)
+				}
+			}
+		})
+	}
+}
+
+func TestIntegrationService_DeclarePluginRoles_UserPermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("dynamic registration should be reflected in user permissions", func(t *testing.T) {
+		ac := setupTestEnv(t, true)
+
+		// Create a test user with Viewer role
+		testUser := &user.SignedInUser{
+			UserID:  1,
+			OrgID:   1,
+			OrgRole: identity.RoleViewer,
+		}
+
+		// Get initial permissions
+		initialPerms, err := ac.getUserPermissions(context.Background(), testUser, accesscontrol.Options{})
+		require.NoError(t, err)
+		initialCount := len(initialPerms)
+
+		// Register plugin roles dynamically
+		err = ac.DeclarePluginRoles(context.Background(), "perm-test-app", "Perm Test App", []plugins.RoleRegistration{
+			{
+				Role: plugins.Role{
+					Name:        "PermTester",
+					Description: "Permission test role",
+					Permissions: []plugins.Permission{
+						{Action: "perm-test-app:test", Scope: "perm-test-app:*"},
+					},
+				},
+				Grants: []string{string(identity.RoleViewer)},
+			},
+		})
+		require.NoError(t, err)
+
+		updatedPerms, err := ac.getUserPermissions(context.Background(), testUser, accesscontrol.Options{})
+		require.NoError(t, err)
+
+		require.Greater(t, len(updatedPerms), initialCount)
+		hasNewPerm := false
+		hasNewScope := false
+		for _, perm := range updatedPerms {
+			if perm.Action == "perm-test-app:test" {
+				hasNewPerm = true
+			}
+			if perm.Scope == "perm-test-app:*" {
+				hasNewScope = true
+			}
+		}
+		assert.True(t, hasNewPerm)
+		assert.True(t, hasNewScope)
+	})
+}
+
+func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	searchOption := accesscontrol.SearchOptions{ActionPrefix: "teams"}
+	ctx := context.Background()
+	listAllPerms := map[string][]string{accesscontrol.ActionUsersPermissionsRead: {"users:*"}}
+	listSomePerms := map[string][]string{accesscontrol.ActionUsersPermissionsRead: {"users:id:2"}}
+	tests := []struct {
+		name           string
+		siuPermissions map[string][]string
+		searchOption   accesscontrol.SearchOptions
+		ramRoles       map[string]*accesscontrol.RoleDTO    // BasicRole => RBAC BasicRole
+		storedPerms    map[int64][]accesscontrol.Permission // UserID => Permissions
+		storedRoles    map[int64][]string                   // UserID => Roles
+		want           map[int64][]accesscontrol.Permission
+		wantErr        bool
+		// Error injection fields - explicitly control which store methods return errors
+		injectSearchErr bool // When true, SearchUsersPermissions returns an error
+		injectBasicErr  bool // When true, GetUsersBasicRoles returns an error
+	}{
+		{
+			name:           "ram only",
+			siuPermissions: listAllPerms,
+			searchOption:   searchOption,
+			ramRoles: map[string]*accesscontrol.RoleDTO{
+				string(identity.RoleAdmin): {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+				}},
+				accesscontrol.RoleGrafanaAdmin: {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+				}},
+			},
+			storedRoles: map[int64][]string{
+				1: {string(identity.RoleEditor)},
+				2: {string(identity.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+			},
+			want: map[int64][]accesscontrol.Permission{
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
+			},
+		},
+		{
+			name:           "stored only",
+			siuPermissions: listAllPerms,
+			searchOption:   searchOption,
+			storedPerms: map[int64][]accesscontrol.Permission{
+				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
+			},
+			storedRoles: map[int64][]string{
+				1: {string(identity.RoleEditor)},
+				2: {string(identity.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+			},
+			want: map[int64][]accesscontrol.Permission{
+				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
+			},
+		},
+		{
+			name:           "ram and stored",
+			siuPermissions: listAllPerms,
+			searchOption:   searchOption,
+			ramRoles: map[string]*accesscontrol.RoleDTO{
+				string(identity.RoleAdmin): {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+				}},
+				accesscontrol.RoleGrafanaAdmin: {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+				}},
+			},
+			storedPerms: map[int64][]accesscontrol.Permission{
+				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"}},
+			},
+			storedRoles: map[int64][]string{
+				1: {string(identity.RoleEditor)},
+				2: {string(identity.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+			},
+			want: map[int64][]accesscontrol.Permission{
+				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"},
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
+			},
+		},
+		{
+			name:           "ram only search on scope",
+			siuPermissions: listAllPerms,
+			searchOption:   accesscontrol.SearchOptions{Scope: "teams:id:2"},
+			ramRoles: map[string]*accesscontrol.RoleDTO{
+				string(identity.RoleAdmin): {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+				}},
+			},
+			storedRoles: map[int64][]string{
+				1: {string(identity.RoleEditor)},
+				2: {string(identity.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+			},
+			want: map[int64][]accesscontrol.Permission{
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"}},
+			},
+		},
+		{
+			name:           "view permission on subset of users only",
+			siuPermissions: listSomePerms,
+			searchOption:   searchOption,
+			ramRoles: map[string]*accesscontrol.RoleDTO{
+				accesscontrol.RoleGrafanaAdmin: {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+				}},
+			},
+			storedPerms: map[int64][]accesscontrol.Permission{
+				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"}},
+			},
+			storedRoles: map[int64][]string{
+				1: {string(identity.RoleEditor)},
+				2: {accesscontrol.RoleGrafanaAdmin},
+			},
+			want: map[int64][]accesscontrol.Permission{
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
+			},
+		},
+		{
+			name:           "check action filter on RAM permissions works correctly",
+			siuPermissions: listAllPerms,
+			searchOption:   searchOption,
+			ramRoles: map[string]*accesscontrol.RoleDTO{
+				accesscontrol.RoleGrafanaAdmin: {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionUsersCreate},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+				}},
+			},
+			storedRoles: map[int64][]string{1: {accesscontrol.RoleGrafanaAdmin}},
+			want: map[int64][]accesscontrol.Permission{
+				1: {{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
+			},
+		},
+		{
+			name:           "check empty action filter on RAM permissions works correctly",
+			siuPermissions: listAllPerms,
+			searchOption:   accesscontrol.SearchOptions{},
+			ramRoles: map[string]*accesscontrol.RoleDTO{
+				accesscontrol.RoleGrafanaAdmin: {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionUsersCreate},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionAnnotationsRead, Scope: "annotations:*"},
+				}},
+			},
+			storedRoles: map[int64][]string{1: {accesscontrol.RoleGrafanaAdmin}},
+			want: map[int64][]accesscontrol.Permission{
+				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionUsersCreate},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionAnnotationsRead, Scope: "annotations:*"},
+				},
+			},
+		},
+		{
+			// This test is not exactly representative as normally the store would return
+			// only the user's basic roles and the user's stored permissions
+			name:           "check namespacedId filter works correctly",
+			siuPermissions: listAllPerms,
+			searchOption:   accesscontrol.SearchOptions{UserID: 1},
+			ramRoles: map[string]*accesscontrol.RoleDTO{
+				string(identity.RoleEditor): {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+				}},
+				string(identity.RoleAdmin): {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:*"},
+				}},
+				accesscontrol.RoleGrafanaAdmin: {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+				}},
+			},
+			storedPerms: map[int64][]accesscontrol.Permission{
+				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"}},
+			},
+			storedRoles: map[int64][]string{
+				1: {string(identity.RoleEditor)},
+				2: {string(identity.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+			},
+			want: map[int64][]accesscontrol.Permission{
+				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}, {Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"}},
+			},
+		},
+		//canView visibility filtering
+		{
+			name:           "canView with wildcard scope returns all users",
+			siuPermissions: map[string][]string{accesscontrol.ActionUsersPermissionsRead: {"users:*"}},
+			searchOption:   searchOption,
+			storedPerms: map[int64][]accesscontrol.Permission{
+				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:2"}},
+				3: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:3"}},
+			},
+			storedRoles: map[int64][]string{
+				1: {string(identity.RoleEditor)},
+				2: {string(identity.RoleEditor)},
+				3: {string(identity.RoleEditor)},
+			},
+			want: map[int64][]accesscontrol.Permission{
+				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:2"}},
+				3: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:3"}},
+			},
+		},
+		{
+			name:           "canView with no scope returns empty",
+			siuPermissions: map[string][]string{}, // No permissions at all
+			searchOption:   searchOption,
+			storedPerms: map[int64][]accesscontrol.Permission{
+				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:2"}},
+			},
+			storedRoles: map[int64][]string{
+				1: {string(identity.RoleEditor)},
+				2: {string(identity.RoleEditor)},
+			},
+			want: map[int64][]accesscontrol.Permission{},
+		},
+		{
+			name:           "canView with specific scope returns only that user",
+			siuPermissions: map[string][]string{accesscontrol.ActionUsersPermissionsRead: {"users:id:2"}},
+			searchOption:   searchOption,
+			storedPerms: map[int64][]accesscontrol.Permission{
+				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:2"}},
+				3: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:3"}},
+			},
+			storedRoles: map[int64][]string{
+				1: {string(identity.RoleEditor)},
+				2: {string(identity.RoleEditor)},
+				3: {string(identity.RoleEditor)},
+			},
+			want: map[int64][]accesscontrol.Permission{
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:2"}},
+			},
+		},
+		// error handling
+		{
+			name:           "store.SearchUsersPermissions error is propagated",
+			siuPermissions: listAllPerms,
+			searchOption:   searchOption,
+			storedRoles: map[int64][]string{
+				1: {string(identity.RoleEditor)},
+			},
+			wantErr:         true,
+			injectSearchErr: true, // Explicitly inject error from SearchUsersPermissions
+		},
+		{
+			name:           "store.GetUsersBasicRoles error is propagated",
+			siuPermissions: listAllPerms,
+			searchOption:   searchOption,
+			wantErr:        true,
+			injectBasicErr: true, // Explicitly inject error from GetUsersBasicRoles
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ac := setupTestEnv(t, true)
+
+			ac.roles = tt.ramRoles
+			store := actest.FakeStore{
+				ExpectedUsersPermissions: tt.storedPerms,
+				ExpectedUsersRoles:       tt.storedRoles,
+			}
+
+			// Explicit error injection based on test configuration
+			if tt.injectSearchErr {
+				store.ExpectedErr = assert.AnError
+			}
+			if tt.injectBasicErr {
+				store.ExpectedErr = assert.AnError
+			}
+			ac.store = store
+
+			siu := &user.SignedInUser{OrgID: 2, Permissions: map[int64]map[string][]string{2: tt.siuPermissions}}
+			got, err := ac.SearchUsersPermissions(ctx, siu, tt.searchOption)
+			if tt.wantErr {
+				require.NotNil(t, err)
+				return
+			}
+			require.Nil(t, err)
+
+			require.Len(t, got, len(tt.want), "expected more users permissions")
+			for userID, wantPerm := range tt.want {
+				gotPerm, ok := got[userID]
+				require.True(t, ok, "expected permissions for user", userID)
+
+				require.ElementsMatch(t, gotPerm, wantPerm)
+			}
+		})
+	}
+}
+
+// TestIntegrationService_SearchUsersPermissions_SingleUserPath verifies that when UserID is set,
+// the SearchUsersPermissions method delegates to SearchUserPermissions (single-user cached path)
+func TestIntegrationService_SearchUsersPermissions_SingleUserPath(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	ac := setupTestEnv(t, true)
+
+	// Set up data for user 1 - use the FakeStore to provide permissions
+	// The single-user path delegates to searchUserPermissions which uses the store
+	ac.roles = map[string]*accesscontrol.RoleDTO{}
+	ac.store = actest.FakeStore{
+		ExpectedUsersPermissions: map[int64][]accesscontrol.Permission{
+			1: {
+				{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+				{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:1"},
+			},
+		},
+		ExpectedUsersRoles: map[int64][]string{
+			1: {string(identity.RoleEditor)},
+		},
+	}
+
+	// Call with UserID set - should use the single-user cached path
+	opts := accesscontrol.SearchOptions{
+		UserID:       1,
+		ActionPrefix: "teams",
+	}
+	siu := &user.SignedInUser{OrgID: 2, Permissions: map[int64]map[string][]string{2: {
+		accesscontrol.ActionUsersPermissionsRead: {"users:*"},
+	}}}
+
+	got, err := ac.SearchUsersPermissions(ctx, siu, opts)
+	require.NoError(t, err)
+
+	// Should return exactly one user (user 1) with their permissions
+	require.Len(t, got, 1)
+	require.Contains(t, got, int64(1))
+	// The service returns stored permissions from FakeStore
+	require.ElementsMatch(t, got[1], []accesscontrol.Permission{
+		{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+		{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:1"},
+	})
+}
+
+// TestIntegrationService_SearchUsersPermissions_ActionSets verifies action set expansion works
+func TestIntegrationService_SearchUsersPermissions_ActionSets(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	ac := setupTestEnv(t, true)
+
+	// Set up action sets
+	actionSetSvc := resourcepermissions.NewActionSetService()
+	dashboardsOptions := resourcepermissions.Options{Resource: "dashboards"}
+	actionSetSvc.StoreActionSet(dashboardsOptions.GetActionSetName("view"), []string{"dashboards:read"})
+	actionSetSvc.StoreActionSet(dashboardsOptions.GetActionSetName("edit"), []string{"dashboards:read", "dashboards:write"})
+	ac.actionResolver = actionSetSvc
+
+	ac.roles = map[string]*accesscontrol.RoleDTO{}
+	ac.store = actest.FakeStore{
+		ExpectedUsersPermissions: map[int64][]accesscontrol.Permission{
+			1: {
+				{Action: "dashboards:view", Scope: "dashboards:uid:d1"},
+				{Action: "dashboards:edit", Scope: "dashboards:uid:d2"},
+			},
+		},
+		ExpectedUsersRoles: map[int64][]string{
+			1: {string(identity.RoleEditor)},
+		},
+	}
+
+	opts := accesscontrol.SearchOptions{
+		Action: "dashboards:read",
+	}
+	siu := &user.SignedInUser{OrgID: 2, Permissions: map[int64]map[string][]string{2: {
+		accesscontrol.ActionUsersPermissionsRead: {"users:*"},
+	}}}
+
+	got, err := ac.SearchUsersPermissions(ctx, siu, opts)
+	require.NoError(t, err)
+
+	// Should have expanded action sets to include dashboards:read
+	require.Len(t, got, 1)
+	require.Contains(t, got, int64(1))
+
+	// Both view and edit grant dashboards:read, so we should see both scopes
+	require.ElementsMatch(t, got[1], []accesscontrol.Permission{
+		{Action: "dashboards:read", Scope: "dashboards:uid:d1"},
+		{Action: "dashboards:read", Scope: "dashboards:uid:d2"},
+	})
+}
+
+func TestIntegrationService_SearchUserPermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	tests := []struct {
+		name           string
+		searchOption   accesscontrol.SearchOptions
+		withActionSets bool
+		actionSets     map[string][]string
+		ramRoles       map[string]*accesscontrol.RoleDTO    // BasicRole => RBAC BasicRole
+		storedPerms    map[int64][]accesscontrol.Permission // UserID => Permissions
+		storedRoles    map[int64][]string                   // UserID => Roles
+		want           []accesscontrol.Permission
+		wantErr        bool
+	}{
+		{
+			name: "ram only",
+			searchOption: accesscontrol.SearchOptions{
+				ActionPrefix: "teams",
+				UserID:       2,
+			},
+			ramRoles: map[string]*accesscontrol.RoleDTO{
+				string(identity.RoleEditor): {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsCreate},
+				}},
+				string(identity.RoleAdmin): {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+				}},
+				accesscontrol.RoleGrafanaAdmin: {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+				}},
+			},
+			storedRoles: map[int64][]string{
+				1: {string(identity.RoleEditor)},
+				2: {string(identity.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+			},
+			want: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+				{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
+		},
+		{
+			name: "stored only",
+			searchOption: accesscontrol.SearchOptions{
+				ActionPrefix: "teams",
+				UserID:       2,
+			},
+			storedPerms: map[int64][]accesscontrol.Permission{
+				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
+			},
+			storedRoles: map[int64][]string{
+				1: {string(identity.RoleEditor)},
+				2: {string(identity.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+			},
+			want: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+				{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+			},
+		},
+		{
+			name: "ram and stored",
+			searchOption: accesscontrol.SearchOptions{
+				ActionPrefix: "teams",
+				UserID:       2,
+			},
+			ramRoles: map[string]*accesscontrol.RoleDTO{
+				string(identity.RoleAdmin): {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+				}},
+				accesscontrol.RoleGrafanaAdmin: {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+				}},
+			},
+			storedPerms: map[int64][]accesscontrol.Permission{
+				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"}},
+			},
+			storedRoles: map[int64][]string{
+				1: {string(identity.RoleEditor)},
+				2: {string(identity.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+			},
+			want: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+				{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+				{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+			},
+		},
+		{
+			name: "check action prefix filter works correctly",
+			searchOption: accesscontrol.SearchOptions{
+				ActionPrefix: "teams",
+				UserID:       1,
+			},
+			ramRoles: map[string]*accesscontrol.RoleDTO{
+				string(identity.RoleEditor): {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionUsersCreate},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionAnnotationsRead, Scope: "annotations:*"},
+				}},
+			},
+			storedRoles: map[int64][]string{
+				1: {string(identity.RoleEditor)},
+			},
+			want: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+				{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+			},
+		},
+		{
+			name: "check action filter works correctly",
+			searchOption: accesscontrol.SearchOptions{
+				Action: accesscontrol.ActionTeamsRead,
+				UserID: 1,
+			},
+			ramRoles: map[string]*accesscontrol.RoleDTO{
+				string(identity.RoleEditor): {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionUsersCreate},
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+					{Action: accesscontrol.ActionAnnotationsRead, Scope: "annotations:*"},
+				}},
+			},
+			storedRoles: map[int64][]string{
+				1: {string(identity.RoleEditor)},
+			},
+			want: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+			},
+		},
+		{
+			name: "check action sets are correctly included if an action is specified",
+			searchOption: accesscontrol.SearchOptions{
+				Action: "dashboards:read",
+				UserID: 1,
+			},
+			withActionSets: true,
+			actionSets: map[string][]string{
+				"dashboards:view": {"dashboards:read"},
+				"dashboards:edit": {"dashboards:read", "dashboards:write", "dashboards:read-advanced"},
+			},
+			ramRoles: map[string]*accesscontrol.RoleDTO{
+				string(identity.RoleEditor): {Permissions: []accesscontrol.Permission{
+					{Action: "dashboards:read", Scope: "dashboards:uid:ram"},
+				}},
+			},
+			storedRoles: map[int64][]string{
+				1: {string(identity.RoleEditor)},
+			},
+			storedPerms: map[int64][]accesscontrol.Permission{
+				1: {
+					{Action: "dashboards:read", Scope: "dashboards:uid:stored"},
+					{Action: "dashboards:edit", Scope: "dashboards:uid:stored2"},
+					{Action: "dashboards:view", Scope: "dashboards:uid:stored3"},
+				},
+			},
+			want: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:ram"},
+				{Action: "dashboards:read", Scope: "dashboards:uid:stored"},
+				{Action: "dashboards:read", Scope: "dashboards:uid:stored2"},
+				{Action: "dashboards:read", Scope: "dashboards:uid:stored3"},
+			},
+		},
+		{
+			name: "check action sets are correctly included if an action prefix is specified",
+			searchOption: accesscontrol.SearchOptions{
+				ActionPrefix: "dashboards",
+				UserID:       1,
+			},
+			withActionSets: true,
+			actionSets: map[string][]string{
+				"dashboards:view": {"dashboards:read"},
+				"folders:view":    {"dashboards:read", "folders:read"},
+				"dashboards:edit": {"dashboards:read", "dashboards:write"},
+			},
+			ramRoles: map[string]*accesscontrol.RoleDTO{
+				string(identity.RoleEditor): {Permissions: []accesscontrol.Permission{
+					{Action: "dashboards:read", Scope: "dashboards:uid:ram"},
+				}},
+			},
+			storedRoles: map[int64][]string{
+				1: {string(identity.RoleEditor)},
+			},
+			storedPerms: map[int64][]accesscontrol.Permission{
+				1: {
+					{Action: "dashboards:read", Scope: "dashboards:uid:stored"},
+					{Action: "folders:view", Scope: "folders:uid:stored2"},
+					{Action: "dashboards:edit", Scope: "dashboards:uid:stored3"},
+				},
+			},
+			want: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:ram"},
+				{Action: "dashboards:read", Scope: "dashboards:uid:stored"},
+				{Action: "dashboards:read", Scope: "folders:uid:stored2"},
+				{Action: "dashboards:read", Scope: "dashboards:uid:stored3"},
+				{Action: "dashboards:write", Scope: "dashboards:uid:stored3"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ac := setupTestEnv(t, true)
+			if tt.withActionSets {
+				actionSetSvc := resourcepermissions.NewActionSetService()
+				for set, actions := range tt.actionSets {
+					resourceName := strings.Split(set, ":")[0]
+					permissionName := strings.Split(set, ":")[1]
+					setOptions := resourcepermissions.Options{Resource: resourceName}
+					actionSetName := setOptions.GetActionSetName(permissionName)
+					actionSetSvc.StoreActionSet(actionSetName, actions)
+				}
+				ac.actionResolver = actionSetSvc
+			}
+
+			ac.roles = tt.ramRoles
+			ac.store = actest.FakeStore{
+				ExpectedUsersPermissions: tt.storedPerms,
+				ExpectedUsersRoles:       tt.storedRoles,
+			}
+
+			got, err := ac.searchUserPermissions(ctx, 1, tt.searchOption)
+			if tt.wantErr {
+				require.NotNil(t, err)
+				return
+			}
+			require.Nil(t, err)
+
+			assert.ElementsMatch(t, got, tt.want)
+		})
+	}
+}
+
+func TestIntegrationService_SaveExternalServiceRole(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	type run struct {
+		cmd     accesscontrol.SaveExternalServiceRoleCommand
+		wantErr bool
+	}
+	tests := []struct {
+		name string
+		runs []run
+	}{
+		{
+			name: "can create a role",
+			runs: []run{
+				{
+					cmd: accesscontrol.SaveExternalServiceRoleCommand{
+						AssignmentOrgID:   2,
+						ServiceAccountID:  2,
+						ExternalServiceID: "App 1",
+						Permissions:       []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:1"}},
+					},
+					wantErr: false,
+				},
+			},
+		},
+		{
+			name: "can update a role",
+			runs: []run{
+				{
+					cmd: accesscontrol.SaveExternalServiceRoleCommand{
+						AssignmentOrgID:   1,
+						ServiceAccountID:  2,
+						ExternalServiceID: "App 1",
+						Permissions:       []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:1"}},
+					},
+					wantErr: false,
+				},
+				{
+					cmd: accesscontrol.SaveExternalServiceRoleCommand{
+						AssignmentOrgID:   1,
+						ServiceAccountID:  2,
+						ExternalServiceID: "App 1",
+						Permissions: []accesscontrol.Permission{
+							{Action: "users:write", Scope: "users:id:1"},
+							{Action: "users:write", Scope: "users:id:2"},
+						},
+					},
+					wantErr: false,
+				},
+			},
+		},
+		{
+			name: "test command validity - no service account ID",
+			runs: []run{
+				{
+					cmd: accesscontrol.SaveExternalServiceRoleCommand{
+						AssignmentOrgID:   2,
+						ExternalServiceID: "App 1",
+						Permissions:       []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:1"}},
+					},
+					wantErr: true,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			ac := setupTestEnv(t, true)
+			ac.cfg.ManagedServiceAccountsEnabled = true
+			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAccounts)
+			for _, r := range tt.runs {
+				err := ac.SaveExternalServiceRole(ctx, r.cmd)
+				if r.wantErr {
+					require.Error(t, err)
+					continue
+				}
+				require.NoError(t, err)
+
+				// Check that the permissions and assignment are stored correctly
+				perms, errGetPerms := ac.getUserPermissions(ctx, &user.SignedInUser{OrgID: r.cmd.AssignmentOrgID, UserID: 2}, accesscontrol.Options{})
+				require.NoError(t, errGetPerms)
+
+				// Only compare action and scope
+				expPerms := make([]accesscontrol.Permission, len(r.cmd.Permissions))
+				for i, p := range r.cmd.Permissions {
+					expPerms[i] = accesscontrol.Permission{Action: p.Action, Scope: p.Scope}
+				}
+				// shared with me is added by default for all users in pkg/services/accesscontrol/acimpl/service.go
+				assert.Equal(t, append([]accesscontrol.Permission{{Action: "folders:read", Scope: "folders:uid:sharedwithme"}}, expPerms...), perms)
+			}
+		})
+	}
+}
+
+func TestIntegrationService_DeleteExternalServiceRole(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	tests := []struct {
+		name              string
+		initCmd           *accesscontrol.SaveExternalServiceRoleCommand
+		externalServiceID string
+		wantErr           bool
+	}{
+		{
+			name:              "handles deleting role that doesn't exist",
+			externalServiceID: "App 1",
+			wantErr:           false,
+		},
+		{
+			name: "handles deleting role that exists",
+			initCmd: &accesscontrol.SaveExternalServiceRoleCommand{
+				AssignmentOrgID:   1,
+				ServiceAccountID:  2,
+				ExternalServiceID: "App 1",
+				Permissions:       []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:1"}},
+			},
+			externalServiceID: "App 1",
+			wantErr:           false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			ac := setupTestEnv(t, true)
+			ac.cfg.ManagedServiceAccountsEnabled = true
+			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAccounts)
+
+			if tt.initCmd != nil {
+				err := ac.SaveExternalServiceRole(ctx, *tt.initCmd)
+				require.NoError(t, err)
+			}
+
+			err := ac.DeleteExternalServiceRole(ctx, tt.externalServiceID)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			if tt.initCmd != nil {
+				// Check that the permissions and assignment are removed correctly
+				perms, errGetPerms := ac.getUserPermissions(ctx, &user.SignedInUser{OrgID: tt.initCmd.AssignmentOrgID, UserID: 2}, accesscontrol.Options{})
+				require.NoError(t, errGetPerms)
+				// shared with me is added by default for all users in pkg/services/accesscontrol/acimpl/service.go
+				assert.Equal(t, []accesscontrol.Permission{{Action: "folders:read", Scope: "folders:uid:sharedwithme"}}, perms)
+			}
+		})
+	}
+}
+
+func TestIntegrationService_GetRoleByName(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Parallel()
+
+	ctx := context.Background()
+
+	t.Run("when the role does not exists, it returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		ac := setupTestEnv(t, true)
+		ac.registrations = accesscontrol.RegistrationList{}
+
+		role, err := ac.GetRoleByName(ctx, 0, "not-found-role")
+		require.ErrorIs(t, err, accesscontrol.ErrRoleNotFound)
+		require.Nil(t, role)
+	})
+
+	t.Run("when the role exists, it is returned", func(t *testing.T) {
+		t.Parallel()
+
+		roleName := "fixed:test:test"
+
+		ac := setupTestEnv(t, true)
+		ac.registrations = accesscontrol.RegistrationList{}
+		ac.registrations.Append(accesscontrol.RoleRegistration{
+			Role:   accesscontrol.RoleDTO{Name: roleName},
+			Grants: []string{"Admin"},
+		})
+
+		role, err := ac.GetRoleByName(ctx, 0, roleName)
+		require.NoError(t, err)
+		require.NotNil(t, role)
+		require.Equal(t, roleName, role.Name)
+	})
+}
+
+func TestIntegrationCleanupPluginRBAC(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	svc := setupTestEnv(t, false)
+
+	backend := svc.store.(*database.AccessControlStore)
+	// Setup seeder to write roles to the DB
+	svc.seeder = seeding.New(log.New("test"), backend, backend)
+
+	pluginID := "test-plugin"
+	otherPluginID := "other-plugin"
+
+	for _, id := range []string{pluginID, otherPluginID} {
+		require.NoError(t, svc.DeclarePluginRoles(ctx, id, id, []plugins.RoleRegistration{
+			{
+				Role:   plugins.Role{Name: "Admin", Permissions: []plugins.Permission{{Action: id + ".dashboards:read"}}},
+				Grants: []string{"Admin"},
+			},
+		}))
+	}
+	require.NoError(t, svc.RegisterFixedRoles(ctx))
+
+	require.NotZero(t, countDBRows(t, ctx, svc.sql, "role", "name LIKE ?", "plugins:"+pluginID+":%"))
+	require.NotZero(t, countDBRows(t, ctx, svc.sql, "role", "name LIKE ?", "plugins:"+otherPluginID+":%"))
+
+	require.NoError(t, svc.CleanupPluginRBAC(ctx, pluginID))
+
+	assert.Zero(t, countDBRows(t, ctx, svc.sql, "role", "name LIKE ?", "plugins:"+pluginID+":%"), "plugin role should be deleted")
+	assert.Zero(t, countDBRows(t, ctx, svc.sql, "permission", "action LIKE ?", pluginID+".%"), "plugin permissions should be deleted")
+	assert.NotZero(t, countDBRows(t, ctx, svc.sql, "role", "name LIKE ?", "plugins:"+otherPluginID+":%"), "other plugin role should survive")
+	assert.NotZero(t, countDBRows(t, ctx, svc.sql, "permission", "action LIKE ?", otherPluginID+".%"), "other plugin permissions should survive")
+}
+
+func countDBRows(t testing.TB, ctx context.Context, store db.DB, table, where string, args ...any) int64 {
+	t.Helper()
+	var count int64
+	require.NoError(t, store.WithDbSession(ctx, func(sess *db.Session) error {
+		var err error
+		count, err = sess.Table(table).Where(where, args...).Count()
+		return err
+	}))
+	return count
+}

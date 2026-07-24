@@ -1,0 +1,28 @@
+name: Bump version
+description: Updates package.json versions in Grafana and subpackages and regenerates schemas
+inputs:
+  version:
+    description: The new version (ex. 1.2.3)
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: .nvmrc
+    - uses: actions/setup-go@v6
+      with:
+        go-version-file: go.mod
+    - name: Bump versions
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+      run: |
+        yarn install
+        npm version "$VERSION" --no-git-tag-version
+        yarn run lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
+        yarn install
+        yarn prettier:write
+    - name: make gen-cue
+      shell: bash
+      run: make gen-cue

@@ -1,0 +1,327 @@
+import { type UserEvent } from '@testing-library/user-event';
+import { HttpResponse, http } from 'msw';
+import { type ReactNode } from 'react';
+import { GrafanaRuleFormStep, renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
+import { clickSelectOption } from 'test/helpers/selectOptionInTest';
+import { screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
+import { byRole } from 'testing-library-selector';
+
+import { setPluginLinksHook } from '@grafana/runtime';
+import { mockComboboxRect } from '@grafana/test-utils';
+import { contextSrv } from 'app/core/services/context_srv';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
+import { setAlertmanagerChoices } from 'app/features/alerting/unified/mocks/server/configure';
+import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
+import { captureRequests, serializeRequests } from 'app/features/alerting/unified/mocks/server/events';
+import { FOLDER_TITLE_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/folders';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
+import { MANUAL_ROUTING_KEY, SIMPLIFIED_QUERY_EDITOR_KEY } from 'app/features/alerting/unified/utils/rule-form';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction } from 'app/types/accessControl';
+
+import { grafanaRulerGroup, mockPreviewApiResponse } from '../../../../mocks/grafanaRulerApi';
+
+jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
+  AppChromeUpdate: ({ actions }: { actions: ReactNode }) => <div>{actions}</div>,
+}));
+
+jest.setTimeout(90 * 1000);
+
+const dataSources = {
+  default: mockDataSource(
+    {
+      type: 'prometheus',
+      name: 'Prom',
+      uid: PROMETHEUS_DATASOURCE_UID,
+      isDefault: true,
+    },
+    { alerting: true, module: 'core:plugin/prometheus' }
+  ),
+  am: mockDataSource({
+    name: 'Alertmanager',
+    type: DataSourceType.Alertmanager,
+  }),
+};
+
+const selectFolderAndGroup = async (user: UserEvent) => {
+  const folderPicker = ui.inputs.folder.get();
+  const folderButton = await within(folderPicker).findByRole('button', { name: /select folder/i });
+  await user.click(folderButton);
+
+  const folderOption = await within(folderPicker).findByLabelText(FOLDER_TITLE_HAPPY_PATH);
+  await user.click(folderOption);
+
+  const groupInput = await ui.inputs.group.find();
+  const groupCombobox = await byRole('combobox').find(groupInput);
+  await user.click(groupCombobox);
+  await clickSelectOption(groupInput, grafanaRulerGroup.name);
+};
+
+const selectContactPoint = async (contactPointName: string) => {
+  const contactPointInput = await ui.inputs.simplifiedRouting.contactPoint.find();
+  await clickSelectOption(contactPointInput, contactPointName);
+};
+
+const server = setupMswServer();
+
+// combobox hack
+beforeEach(() => {
+  mockComboboxRect();
+
+  mockPreviewApiResponse(server, []);
+});
+
+setupDataSources(dataSources.default, dataSources.am);
+
+// Setup plugin extensions hook to prevent setPluginLinksHook errors
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
+
+describe('Can create a new grafana managed alert using simplified routing', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    contextSrv.isEditor = true;
+    contextSrv.hasEditPermissionInFolders = true;
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleRead,
+      AccessControlAction.AlertingRuleUpdate,
+      AccessControlAction.AlertingRuleDelete,
+      AccessControlAction.AlertingRuleCreate,
+      AccessControlAction.DataSourcesRead,
+      AccessControlAction.DataSourcesWrite,
+      AccessControlAction.DataSourcesCreate,
+      AccessControlAction.FoldersWrite,
+      AccessControlAction.FoldersRead,
+      AccessControlAction.AlertingRuleExternalRead,
+      AccessControlAction.AlertingRuleExternalWrite,
+      AccessControlAction.AlertingNotificationsRead,
+      AccessControlAction.AlertingNotificationsWrite,
+    ]);
+  });
+
+  it('cannot create new grafana managed alert when using simplified routing and not selecting a contact point', async () => {
+    const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
+    const { user } = renderRuleEditor();
+
+    await user.type(await ui.inputs.name.find(), 'my great new rule');
+    await selectFolderAndGroup(user);
+
+    //select contact point routing
+    await user.click(ui.inputs.simplifiedRouting.contactPointRouting.get());
+
+    // do not select a contact point
+    // save and check that call to backend was not made
+    await user.click(ui.buttons.save.get());
+
+    expect(await screen.findByText('Contact point is required.')).toBeInTheDocument();
+    const capturedRequests = await capture;
+    expect(capturedRequests).toHaveLength(0);
+  });
+
+  it('simplified routing is not available when Grafana AM is not enabled', async () => {
+    setAlertmanagerChoices(AlertmanagerChoice.External, 1);
+    const { user } = renderRuleEditor();
+
+    // Just to make sure all dropdowns have been loaded
+    await selectFolderAndGroup(user);
+    await waitFor(() => expect(ui.inputs.simplifiedRouting.contactPointRouting.query()).not.toBeInTheDocument());
+  });
+
+  it('can create new grafana managed alert when using simplified routing and selecting a contact point', async () => {
+    const contactPointName = 'lotsa-emails';
+    const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
+
+    const { user } = renderRuleEditor();
+
+    await user.type(await ui.inputs.name.find(), 'my great new rule');
+
+    await selectFolderAndGroup(user);
+
+    //select contact point routing
+    await user.click(ui.inputs.simplifiedRouting.contactPointRouting.get());
+
+    await selectContactPoint(contactPointName);
+
+    // save and check what was sent to backend
+    await user.click(ui.buttons.save.get());
+    const requests = await capture;
+
+    const serializedRequests = await serializeRequests(requests);
+    expect(serializedRequests).toMatchSnapshot();
+  });
+
+  it('allows selecting a contact point', async () => {
+    const { user } = renderRuleEditor();
+
+    await user.click(await ui.inputs.simplifiedRouting.contactPointRouting.find());
+
+    await selectContactPoint('lotsa-emails');
+    expect(screen.getByDisplayValue('lotsa-emails')).toBeInTheDocument();
+  });
+
+  it('does not show contact points with canUse=false (imported) in the dropdown', async () => {
+    // Override the receivers handler to include a contact point that cannot be used (e.g., imported)
+    server.use(
+      http.get('/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers', () => {
+        return HttpResponse.json({
+          kind: 'ReceiverList',
+          apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
+          metadata: {},
+          items: [
+            {
+              metadata: {
+                uid: 'regular-receiver',
+                annotations: {
+                  'grafana.com/provenance': '',
+                  'grafana.com/canUse': 'true',
+                  'grafana.com/access/canAdmin': 'true',
+                  'grafana.com/access/canDelete': 'true',
+                  'grafana.com/access/canWrite': 'true',
+                },
+              },
+              spec: {
+                title: 'regular-receiver',
+                integrations: [{ type: 'email', settings: { addresses: 'test@example.com' } }],
+              },
+            },
+            {
+              metadata: {
+                uid: 'imported-receiver',
+                annotations: {
+                  'grafana.com/provenance': 'converted_prometheus',
+                  'grafana.com/canUse': 'false',
+                  'grafana.com/access/canAdmin': 'true',
+                  'grafana.com/access/canDelete': 'false',
+                  'grafana.com/access/canWrite': 'false',
+                },
+              },
+              spec: {
+                title: 'imported-receiver',
+                integrations: [{ type: 'email', settings: { addresses: 'imported@example.com' } }],
+              },
+            },
+          ],
+        });
+      })
+    );
+
+    const { user } = renderRuleEditor();
+
+    await user.click(await ui.inputs.simplifiedRouting.contactPointRouting.find());
+
+    // Open the contact point dropdown
+    const contactPointInput = await ui.inputs.simplifiedRouting.contactPoint.find();
+    const combobox = await within(contactPointInput).findByRole('combobox');
+    await user.click(combobox);
+
+    // Wait for options to load and verify contact point with canUse=false is not in the list
+    await waitFor(() => {
+      expect(screen.queryByRole('option', { name: /imported-receiver/i })).not.toBeInTheDocument();
+    });
+
+    // Verify that contact points with canUse=true are shown
+    expect(await screen.findByRole('option', { name: /regular-receiver/i })).toBeInTheDocument();
+  });
+
+  describe('switch modes enabled', () => {
+    testWithFeatureToggles({ enable: ['alertingNotificationsStepMode'] });
+
+    it('can create the new grafana-managed rule with default modes', async () => {
+      const contactPointName = 'lotsa-emails';
+      const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
+
+      const { user } = renderRuleEditor();
+
+      await user.type(await ui.inputs.name.find(), 'my great new rule');
+
+      await selectFolderAndGroup(user);
+
+      await selectContactPoint(contactPointName);
+
+      // save and check what was sent to backend
+      await user.click(ui.buttons.save.get());
+      const requests = await capture;
+      const serializedRequests = await serializeRequests(requests);
+      expect(serializedRequests).toMatchSnapshot();
+    });
+
+    it('can create the new grafana-managed rule with advanced modes', async () => {
+      const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
+
+      const { user } = renderRuleEditor();
+
+      await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get()); // switch to query step advanced mode
+      await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Notification).get()); // switch to notifications step advanced mode
+      await user.type(await ui.inputs.name.find(), 'my great new rule');
+
+      await selectFolderAndGroup(user);
+
+      // save and check what was sent to backend
+      await user.click(ui.buttons.save.get());
+      const requests = await capture;
+      const serializedRequests = await serializeRequests(requests);
+      expect(serializedRequests).toMatchSnapshot();
+    });
+
+    it('can create the new grafana-managed rule with only notifications step advanced mode', async () => {
+      const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
+
+      const { user } = renderRuleEditor();
+
+      await user.type(await ui.inputs.name.find(), 'my great new rule');
+
+      await selectFolderAndGroup(user);
+
+      await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Notification).get()); // switch notifications step to advanced mode
+
+      // save and check what was sent to backend
+      await user.click(ui.buttons.save.get());
+      const requests = await capture;
+      const serializedRequests = await serializeRequests(requests);
+      expect(serializedRequests).toMatchSnapshot();
+    });
+
+    it('can create the new grafana-managed rule with only query step advanced mode', async () => {
+      const contactPointName = 'lotsa-emails';
+      const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
+
+      const { user } = renderRuleEditor();
+
+      await user.type(await ui.inputs.name.find(), 'my great new rule');
+
+      await selectFolderAndGroup(user);
+      await selectContactPoint(contactPointName);
+
+      await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get()); // switch query step to advanced mode
+
+      // save and check what was sent to backend
+      await user.click(ui.buttons.save.get());
+      const requests = await capture;
+      const serializedRequests = await serializeRequests(requests);
+      expect(serializedRequests).toMatchSnapshot();
+    });
+
+    it('switch modes are intiallized depending on the local storage - 1', async () => {
+      localStorage.setItem(SIMPLIFIED_QUERY_EDITOR_KEY, 'false');
+      localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
+
+      const { user } = renderRuleEditor();
+      await selectFolderAndGroup(user);
+
+      expect(ui.inputs.switchModeAdvanced(GrafanaRuleFormStep.Query).get()).toBeInTheDocument();
+      expect(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Notification).get()).toBeInTheDocument();
+    });
+
+    it('switch modes are intiallized depending on the local storage - 2', async () => {
+      localStorage.setItem(SIMPLIFIED_QUERY_EDITOR_KEY, 'true');
+      localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
+
+      const { user } = renderRuleEditor();
+      await selectFolderAndGroup(user);
+
+      expect(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get()).toBeInTheDocument();
+      expect(ui.inputs.switchModeAdvanced(GrafanaRuleFormStep.Notification).get()).toBeInTheDocument();
+    });
+  });
+});

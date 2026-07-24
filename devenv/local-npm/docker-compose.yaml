@@ -1,0 +1,14 @@
+version: '2'
+
+services:
+  verdaccio:
+    image: verdaccio/verdaccio:5
+    container_name: verdaccio
+    ports:
+      - "4873:4873"
+    volumes:
+      - ./conf:/verdaccio/conf
+
+volumes:
+  verdaccio:
+    driver: local

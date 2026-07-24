@@ -1,0 +1,2 @@
+<!-- we define these as global variables so we can refer to it when we are ion a different scope, ie. looping over alerts -->
+<mj-raw position="file-start"></mj-raw>

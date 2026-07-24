@@ -1,0 +1,65 @@
+// Copyright (c) 2019 Uber Technologies, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import { css } from '@emotion/css';
+import cx from 'clsx';
+import { useState } from 'react';
+
+import { t } from '@grafana/i18n';
+import { Button, type IconName, Tooltip, useStyles2 } from '@grafana/ui';
+
+const getStyles = () => ({
+  CopyIcon: css({
+    backgroundColor: 'transparent',
+    border: 'none',
+    color: 'inherit',
+    overflow: 'hidden',
+    '&:focus': {
+      backgroundColor: 'rgba(255, 255, 255, 0.25)',
+      color: 'inherit',
+    },
+  }),
+});
+
+type PropsType = {
+  className?: string;
+  copyText: string;
+  icon?: IconName;
+  tooltipTitle: string;
+};
+
+export default function CopyIcon({ className, copyText, icon = 'copy', tooltipTitle }: PropsType) {
+  const styles = useStyles2(getStyles);
+
+  const [hasCopied, setHasCopied] = useState(false);
+
+  const handleClick = () => {
+    navigator.clipboard.writeText(copyText);
+    setHasCopied(true);
+  };
+
+  return (
+    <Tooltip content={hasCopied ? t('explore.trace-view.tooltip-copy-icon', 'Copied') : tooltipTitle}>
+      <Button
+        aria-label={t('explore.trace-view.aria-label-copy', 'Copy to clipboard')}
+        className={cx(styles.CopyIcon, className)}
+        type="button"
+        icon={icon}
+        fill="text"
+        size="sm"
+        onClick={handleClick}
+      />
+    </Tooltip>
+  );
+}

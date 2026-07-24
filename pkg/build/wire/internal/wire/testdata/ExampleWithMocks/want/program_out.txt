@@ -1,0 +1,7 @@
+Real time greeting: Good day! It is [current time elided]
+Approach A
+Good day! It is 0001-01-01 00:00:00 +0000 UTC
+Good day! It is 2000-01-01 00:00:00 +0000 UTC
+Approach B
+Good day! It is 0001-01-01 00:00:00 +0000 UTC
+Good day! It is 1000-01-01 00:00:00 +0000 UTC

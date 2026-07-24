@@ -1,0 +1,1621 @@
+package alertrule
+
+import (
+	"context"
+	"time"
+
+	"encoding/json"
+	"fmt"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+
+	prom_model "github.com/prometheus/common/model"
+
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
+	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
+
+	"github.com/grafana/grafana/pkg/tests/apis"
+)
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
+func TestIntegrationResourceIdentifier(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := common.GetTestHelper(t)
+	client := common.NewAlertRuleClient(t, helper.Org1.Admin)
+
+	// Create test folder first
+	common.CreateTestFolder(t, helper, "test-folder")
+
+	rule := ngmodels.RuleGen.With(
+		ngmodels.RuleMuts.WithUniqueUID(),
+		ngmodels.RuleMuts.WithUniqueTitle(),
+		ngmodels.RuleMuts.WithNamespaceUID("test-folder"),
+		ngmodels.RuleMuts.WithGroupName("test-group"),
+		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	).Generate()
+
+	newResource := &v0alpha1.AlertRule{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+			Annotations: map[string]string{
+				"grafana.app/folder": "test-folder",
+			},
+		},
+		Spec: v0alpha1.AlertRuleSpec{
+			Title: rule.Title,
+			Expressions: v0alpha1.AlertRuleExpressionMap{
+				"A": {
+					QueryType:     new("query"),
+					DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+					Model:         rule.Data[0].Model,
+					Source:        new(true),
+					RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+						From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+						To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+					},
+				},
+			},
+			Trigger: v0alpha1.AlertRuleIntervalTrigger{
+				Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+			},
+			NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+			ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
+		},
+	}
+
+	// Test 1: Create with explicit name
+	namedResource := newResource.Copy().(*v0alpha1.AlertRule)
+	namedResource.Name = "explicit-name-rule"
+	namedRule, err := client.Create(ctx, namedResource, v1.CreateOptions{})
+	require.NoError(t, err)
+	require.Equal(t, "explicit-name-rule", namedRule.Name)
+	require.NotEmpty(t, namedRule.UID)
+
+	// Test 2: Create without explicit name (auto-generated)
+	autoGenRule, err := client.Create(ctx, newResource, v1.CreateOptions{})
+	require.NoError(t, err)
+	require.NotEmpty(t, autoGenRule.Name)
+	require.NotEmpty(t, autoGenRule.UID)
+
+	// Test 3: Get by identifier
+	retrievedRule, err := client.Get(ctx, autoGenRule.Name, v1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, autoGenRule.Name, retrievedRule.Name)
+	require.Equal(t, newResource.Spec.Title, retrievedRule.Spec.Title)
+
+	// Test 4: Update (should preserve name)
+	updatedRule := retrievedRule.Copy().(*v0alpha1.AlertRule)
+	updatedRule.Spec.Title = "updated-title"
+
+	finalRule, err := client.Update(ctx, updatedRule, v1.UpdateOptions{})
+	require.NoError(t, err)
+	require.Equal(t, "updated-title", finalRule.Spec.Title)
+	require.Equal(t, retrievedRule.Name, finalRule.Name, "Update should preserve the resource name")
+	require.NotEqual(t, retrievedRule.ResourceVersion, finalRule.ResourceVersion, "Update should change the resource version")
+
+	// Test 5: Verify the update persisted
+	finalRetrieved, err := client.Get(ctx, finalRule.Name, v1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, finalRule.Spec.Title, finalRetrieved.Spec.Title)
+	require.Equal(t, finalRule.Name, finalRetrieved.Name)
+	require.Equal(t, finalRule.ResourceVersion, finalRetrieved.ResourceVersion)
+
+	// Cleanup
+	require.NoError(t, client.Delete(ctx, namedRule.Name, v1.DeleteOptions{}))
+	require.NoError(t, client.Delete(ctx, finalRule.Name, v1.DeleteOptions{}))
+}
+
+// TestIntegrationResourcePermissions is skipped for now as access control is handled in the service layer
+func TestIntegrationResourcePermissions(t *testing.T) {
+	t.Skip("Access control tests skipped - handled in service layer")
+}
+
+// TestIntegrationAccessControl tests basic access control functionality
+// Access control is primarily handled in the service layer, so this test focuses on basic CRUD operations
+func TestIntegrationAccessControl(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := common.GetTestHelper(t)
+
+	// Test with admin user for basic functionality
+	adminClient := common.NewAlertRuleClient(t, helper.Org1.Admin)
+
+	// Create test folder first
+	common.CreateTestFolder(t, helper, "test-folder")
+
+	rule := ngmodels.RuleGen.With(
+		ngmodels.RuleMuts.WithUniqueUID(),
+		ngmodels.RuleMuts.WithUniqueTitle(),
+		ngmodels.RuleMuts.WithNamespaceUID("test-folder"),
+		ngmodels.RuleMuts.WithGroupName("test-group"),
+		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	).Generate()
+
+	alertRule := &v0alpha1.AlertRule{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+			Annotations: map[string]string{
+				"grafana.app/folder": "test-folder",
+			},
+		},
+		Spec: v0alpha1.AlertRuleSpec{
+			Title: rule.Title,
+			Expressions: v0alpha1.AlertRuleExpressionMap{
+				"A": {
+					QueryType:     new(rule.Data[0].QueryType),
+					DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+					Model:         rule.Data[0].Model,
+					Source:        new(true),
+					RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+						From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+						To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+					},
+				},
+			},
+			Trigger: v0alpha1.AlertRuleIntervalTrigger{
+				Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+			},
+			NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+			ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
+		},
+	}
+
+	t.Run("admin should be able to create rule", func(t *testing.T) {
+		created, err := adminClient.Create(ctx, alertRule, v1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+		require.Equal(t, alertRule.Spec.Title, created.Spec.Title)
+
+		// Cleanup
+		defer func() {
+			_ = adminClient.Delete(ctx, created.Name, v1.DeleteOptions{})
+		}()
+
+		t.Run("admin should be able to read rule", func(t *testing.T) {
+			read, err := adminClient.Get(ctx, created.Name, v1.GetOptions{})
+			require.NoError(t, err)
+			require.Equal(t, created.Spec.Title, read.Spec.Title)
+		})
+
+		t.Run("admin should be able to update rule", func(t *testing.T) {
+			updated := created.Copy().(*v0alpha1.AlertRule)
+			updated.Spec.Title = "updated-title"
+
+			result, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, "updated-title", result.Spec.Title)
+		})
+
+		t.Run("admin should be able to delete rule", func(t *testing.T) {
+			err := adminClient.Delete(ctx, created.Name, v1.DeleteOptions{})
+			require.NoError(t, err)
+		})
+	})
+}
+
+func TestIntegrationCRUD(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := common.GetTestHelper(t)
+
+	adminClient := common.NewAlertRuleClient(t, helper.Org1.Admin)
+
+	// Create test folder first
+	common.CreateTestFolder(t, helper, "test-folder")
+
+	baseGen := ngmodels.RuleGen.With(
+		ngmodels.RuleMuts.WithUniqueUID(),
+		ngmodels.RuleMuts.WithUniqueTitle(),
+		ngmodels.RuleMuts.WithNamespaceUID("test-folder"),
+		ngmodels.RuleMuts.WithGroupName("test-group"),
+		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	)
+
+	t.Run("should be able to create and read rule", func(t *testing.T) {
+		rule := baseGen.Generate()
+
+		alertRule := &v0alpha1.AlertRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					"grafana.app/folder":     "test-folder",
+					"grafana.com/provenance": "",
+				},
+			},
+			Spec: v0alpha1.AlertRuleSpec{
+				Title: rule.Title,
+				Expressions: v0alpha1.AlertRuleExpressionMap{
+					"A": {
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						Model:         rule.Data[0].Model,
+						Source:        new(true),
+						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+						},
+					},
+				},
+				Trigger: v0alpha1.AlertRuleIntervalTrigger{
+					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+				},
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
+			},
+		}
+
+		created, err := adminClient.Create(ctx, alertRule, v1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+
+		t.Run("should be able to read what it is created", func(t *testing.T) {
+			get, err := adminClient.Get(ctx, created.Name, v1.GetOptions{})
+			require.NoError(t, err)
+			require.Equal(t, alertRule.Spec.Title, get.Spec.Title)
+
+			createdDuration, err := prom_model.ParseDuration(string(alertRule.Spec.Trigger.Interval))
+			require.NoError(t, err)
+			require.Equal(t, createdDuration.String(), string(get.Spec.Trigger.Interval))
+
+			provenance := get.GetProvenanceStatus()
+			require.Equal(t, v0alpha1.ProvenanceStatusNone, provenance)
+		})
+
+		// Cleanup
+		require.NoError(t, adminClient.Delete(ctx, created.Name, v1.DeleteOptions{}))
+	})
+
+	t.Run("should fail to create rule with invalid provenance status", func(t *testing.T) {
+		rule := baseGen.Generate()
+
+		alertRule := &v0alpha1.AlertRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					"grafana.app/folder":     "test-folder",
+					"grafana.com/provenance": "invalid",
+				},
+			},
+			Spec: v0alpha1.AlertRuleSpec{
+				Title: rule.Title,
+				Expressions: v0alpha1.AlertRuleExpressionMap{
+					"A": {
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						Model:         rule.Data[0].Model,
+						Source:        new(true),
+						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+						},
+					},
+				},
+				Trigger: v0alpha1.AlertRuleIntervalTrigger{
+					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+				},
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
+			},
+		}
+
+		_, err := adminClient.Create(ctx, alertRule, v1.CreateOptions{})
+		require.Error(t, err, "Creating invalid rule should fail")
+	})
+
+	t.Run("should fail to create rule with invalid config", func(t *testing.T) {
+		invalidRule := &v0alpha1.AlertRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					"grafana.app/folder": "test-folder",
+				},
+			},
+			Spec: v0alpha1.AlertRuleSpec{
+				Title:       "invalid-rule",
+				Expressions: v0alpha1.AlertRuleExpressionMap{}, // Empty data should fail
+				Trigger: v0alpha1.AlertRuleIntervalTrigger{
+					Interval: "30",
+				},
+				NoDataState:  "NoData",
+				ExecErrState: "Error",
+			},
+		}
+
+		_, err := adminClient.Create(ctx, invalidRule, v1.CreateOptions{})
+		require.Errorf(t, err, "Expected error but got successful result")
+		// The validation happens at the service level, so we just need to verify it fails
+		require.Error(t, err, "Creating invalid rule should fail")
+	})
+
+	t.Run("should not be able to add rule to group", func(t *testing.T) {
+		rule := baseGen.Generate()
+
+		alertRule := &v0alpha1.AlertRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					"grafana.app/folder": "test-folder",
+				},
+			},
+			Spec: v0alpha1.AlertRuleSpec{
+				Title: rule.Title,
+				Expressions: v0alpha1.AlertRuleExpressionMap{
+					"A": {
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						Model:         rule.Data[0].Model,
+						Source:        new(true),
+						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+						},
+					},
+				},
+				Trigger: v0alpha1.AlertRuleIntervalTrigger{
+					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+				},
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
+			},
+		}
+
+		created, err := adminClient.Create(ctx, alertRule, v1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+
+		get, err := adminClient.Get(ctx, created.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, created.Spec.Title, get.Spec.Title)
+
+		// Attempt to update the group name via a patch (should fail)
+		update := get
+		if update.Labels == nil {
+			update.Labels = map[string]string{}
+		}
+		update.Labels[v0alpha1.GroupLabelKey] = "new-group-name"
+		_, err = adminClient.Update(ctx, update, v1.UpdateOptions{})
+		require.Error(t, err, "Updating the group name should fail")
+
+		// Cleanup
+		require.NoError(t, adminClient.Delete(ctx, created.Name, v1.DeleteOptions{}))
+	})
+	t.Run("should not be able to create rule without any source query", func(t *testing.T) {
+		rule := baseGen.Generate()
+
+		alertRule := &v0alpha1.AlertRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					"grafana.app/folder": "test-folder",
+				},
+			},
+			Spec: v0alpha1.AlertRuleSpec{
+				Title: rule.Title,
+				Expressions: v0alpha1.AlertRuleExpressionMap{
+					"A": {
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						Model:         rule.Data[0].Model,
+						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+						},
+					},
+				},
+				Trigger: v0alpha1.AlertRuleIntervalTrigger{
+					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+				},
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
+			},
+		}
+
+		created, err := adminClient.Create(ctx, alertRule, v1.CreateOptions{})
+		require.ErrorContains(t, err, "one expression must be marked as source")
+		require.Nil(t, created)
+	})
+	t.Run("should not be able to create rule with interval less than base", func(t *testing.T) {
+		rule := baseGen.With(
+			ngmodels.RuleMuts.WithInterval(time.Duration(1) * time.Second),
+		).Generate()
+
+		alertRule := &v0alpha1.AlertRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					"grafana.app/folder": "test-folder",
+				},
+			},
+			Spec: v0alpha1.AlertRuleSpec{
+				Title: rule.Title,
+				Expressions: v0alpha1.AlertRuleExpressionMap{
+					"A": {
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						Model:         rule.Data[0].Model,
+						Source:        new(true),
+						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+						},
+					},
+				},
+				Trigger: v0alpha1.AlertRuleIntervalTrigger{
+					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+				},
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
+			},
+		}
+
+		created, err := adminClient.Create(ctx, alertRule, v1.CreateOptions{})
+		require.ErrorContains(t, err, "trigger interval must be a multiple of base evaluation interval")
+		require.Nil(t, created)
+	})
+}
+
+func TestIntegrationPatch(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := common.GetTestHelper(t)
+
+	adminClient := common.NewAlertRuleClient(t, helper.Org1.Admin)
+
+	// Create test folder first
+	common.CreateTestFolder(t, helper, "test-folder")
+
+	rule := ngmodels.RuleGen.With(
+		ngmodels.RuleMuts.WithUniqueUID(),
+		ngmodels.RuleMuts.WithUniqueTitle(),
+		ngmodels.RuleMuts.WithNamespaceUID("test-folder"),
+		ngmodels.RuleMuts.WithGroupName("test-group"),
+		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	).Generate()
+
+	alertRule := &v0alpha1.AlertRule{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+			Annotations: map[string]string{
+				"grafana.app/folder": "test-folder",
+			},
+		},
+		Spec: v0alpha1.AlertRuleSpec{
+			Title: rule.Title,
+			Expressions: v0alpha1.AlertRuleExpressionMap{
+				"A": {
+					QueryType:     new(rule.Data[0].QueryType),
+					DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+					Model:         rule.Data[0].Model,
+					Source:        new(true),
+					RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+						From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+						To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+					},
+				},
+			},
+			Trigger: v0alpha1.AlertRuleIntervalTrigger{
+				Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+			},
+			NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+			ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
+		},
+	}
+
+	current, err := adminClient.Create(ctx, alertRule, v1.CreateOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, current)
+
+	t.Run("should patch with json patch", func(t *testing.T) {
+		current, err := adminClient.Get(ctx, current.Name, v1.GetOptions{})
+		require.NoError(t, err)
+
+		patch := []map[string]any{
+			{
+				"op":    "replace",
+				"path":  "/spec/title",
+				"value": "patched-title",
+			},
+		}
+
+		patchData, err := json.Marshal(patch)
+		require.NoError(t, err)
+
+		result, err := adminClient.Patch(ctx, current.Name, types.JSONPatchType, patchData, v1.PatchOptions{})
+		require.NoError(t, err)
+
+		require.Equal(t, "patched-title", result.Spec.Title)
+	})
+
+	// Cleanup
+	require.NoError(t, adminClient.Delete(ctx, current.Name, v1.DeleteOptions{}))
+}
+
+func TestIntegrationBasicAPI(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := common.GetTestHelper(t)
+	client := common.NewAlertRuleClient(t, helper.Org1.Admin)
+
+	t.Run("should be able to list rules", func(t *testing.T) {
+		list, err := client.List(ctx, v1.ListOptions{})
+		require.NoError(t, err)
+		// Should at least be able to list, even if empty
+		require.NotNil(t, list)
+	})
+
+	t.Run("should handle get of non-existent rule", func(t *testing.T) {
+		_, err := client.Get(ctx, "non-existent", v1.GetOptions{})
+		// The API might return different error types, so just check that it's an error
+		require.Error(t, err)
+		t.Logf("Got error: %s", err)
+	})
+}
+
+func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := common.GetTestHelper(t)
+	client := common.NewAlertRuleClient(t, helper.Org1.Admin)
+
+	// Prepare two folders for label sync update scenario
+	common.CreateTestFolder(t, helper, "test-folder-a")
+	common.CreateTestFolder(t, helper, "test-folder-b")
+
+	baseGen := ngmodels.RuleGen.With(
+		ngmodels.RuleMuts.WithUniqueUID(),
+		ngmodels.RuleMuts.WithUniqueTitle(),
+		ngmodels.RuleMuts.WithNamespaceUID("test-folder-a"),
+		ngmodels.RuleMuts.WithGroupName("test-group"),
+		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	)
+
+	t.Run("should keep folder label in sync with folder annotation on create and update", func(t *testing.T) {
+		rule := baseGen.Generate()
+
+		alertRule := &v0alpha1.AlertRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					v0alpha1.FolderAnnotationKey: "test-folder-a",
+				},
+			},
+			Spec: v0alpha1.AlertRuleSpec{
+				Title: rule.Title,
+				Expressions: v0alpha1.AlertRuleExpressionMap{
+					"A": {
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						Model:         rule.Data[0].Model,
+						Source:        new(true),
+						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+						},
+					},
+				},
+				Trigger: v0alpha1.AlertRuleIntervalTrigger{
+					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+				},
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
+			},
+		}
+
+		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		require.NoError(t, err)
+		defer func() { _ = client.Delete(ctx, created.Name, v1.DeleteOptions{}) }()
+
+		// On create, metadata.labels[v0alpha1.FolderLabelKey] should mirror annotation
+		require.Equal(t, "test-folder-a", created.Labels[v0alpha1.FolderLabelKey])
+
+		// Update annotation to point to a different folder and ensure label follows
+		updated := created.Copy().(*v0alpha1.AlertRule)
+		if updated.Annotations == nil {
+			updated.Annotations = map[string]string{}
+		}
+		updated.Annotations[v0alpha1.FolderAnnotationKey] = "test-folder-b"
+
+		after, err := client.Update(ctx, updated, v1.UpdateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, "test-folder-b", after.Annotations[v0alpha1.FolderAnnotationKey])
+		require.Equal(t, "test-folder-b", after.Labels[v0alpha1.FolderLabelKey])
+	})
+
+	t.Run("should fail to create rule without folder annotation", func(t *testing.T) {
+		rule := baseGen.Generate()
+
+		alertRule := &v0alpha1.AlertRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace:   "default",
+				Annotations: map[string]string{}, // missing grafana.app/folder
+			},
+			Spec: v0alpha1.AlertRuleSpec{
+				Title: rule.Title,
+				Expressions: v0alpha1.AlertRuleExpressionMap{
+					"A": {
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						Model:         rule.Data[0].Model,
+						Source:        new(true),
+						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+						},
+					},
+				},
+				Trigger: v0alpha1.AlertRuleIntervalTrigger{
+					Interval: v0alpha1.AlertRulePromDuration("10s"),
+				},
+				NoDataState:  "NoData",
+				ExecErrState: "Error",
+			},
+		}
+
+		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		require.Error(t, err)
+		require.Nil(t, created)
+	})
+
+	t.Run("should fail to create rule with group labels preset", func(t *testing.T) {
+		rule := baseGen.Generate()
+		alertRule := &v0alpha1.AlertRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					v0alpha1.FolderAnnotationKey: "test-folder-a",
+				},
+				Labels: map[string]string{
+					v0alpha1.GroupLabelKey:      "some-group",
+					v0alpha1.GroupIndexLabelKey: "0",
+				},
+			},
+			Spec: v0alpha1.AlertRuleSpec{
+				Title: rule.Title,
+				Expressions: v0alpha1.AlertRuleExpressionMap{
+					"A": {
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						Model:         rule.Data[0].Model,
+						Source:        new(true),
+						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+						},
+					},
+				},
+				Trigger:      v0alpha1.AlertRuleIntervalTrigger{Interval: v0alpha1.AlertRulePromDuration("10s")},
+				NoDataState:  "NoData",
+				ExecErrState: "Error",
+			},
+		}
+
+		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		require.Error(t, err)
+		require.Nil(t, created)
+	})
+}
+
+func TestIntegrationNotificationSettings(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
+	client := common.NewAlertRuleClient(t, helper.Org1.Admin)
+
+	common.CreateTestFolder(t, helper, "test-folder")
+
+	// Create a named routing tree so NamedRoutingTree notification settings can reference it.
+	routingTreeClient, err := v1beta1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+
+	testTree := &v1beta1.RoutingTree{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "test-routing-tree",
+			Namespace: "default",
+		},
+		Spec: v1beta1.RoutingTreeSpec{
+			Defaults: v1beta1.RoutingTreeRouteDefaults{
+				Receiver: "empty",
+			},
+		},
+	}
+	_, err = routingTreeClient.Create(ctx, testTree, resource.CreateOptions{})
+	require.NoError(t, err)
+	defer func() {
+		_ = routingTreeClient.Delete(ctx, testTree.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+	}()
+
+	baseGen := ngmodels.RuleGen.With(
+		ngmodels.RuleMuts.WithUniqueUID(),
+		ngmodels.RuleMuts.WithUniqueTitle(),
+		ngmodels.RuleMuts.WithNamespaceUID("test-folder"),
+		ngmodels.RuleMuts.WithGroupName("test-group"),
+		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	)
+
+	newAlertRule := func(t *testing.T, ns *v0alpha1.AlertRuleNotificationSettings) *v0alpha1.AlertRule {
+		t.Helper()
+		rule := baseGen.Generate()
+		return &v0alpha1.AlertRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					"grafana.app/folder": "test-folder",
+				},
+			},
+			Spec: v0alpha1.AlertRuleSpec{
+				Title: rule.Title,
+				Expressions: v0alpha1.AlertRuleExpressionMap{
+					"A": {
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						Model:         rule.Data[0].Model,
+						Source:        new(true),
+						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+						},
+					},
+				},
+				Trigger: v0alpha1.AlertRuleIntervalTrigger{
+					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+				},
+				NoDataState:          common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState:         common.ToK8sExecErrState(rule.ExecErrState),
+				NotificationSettings: ns,
+			},
+		}
+	}
+
+	t.Run("should create and read rule with SimplifiedRouting notification settings", func(t *testing.T) {
+		ns := &v0alpha1.AlertRuleNotificationSettings{
+			SimplifiedRouting: &v0alpha1.AlertRuleSimplifiedRouting{
+				Type:     v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting,
+				Receiver: "empty",
+			},
+		}
+		alertRule := newAlertRule(t, ns)
+
+		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		defer func() {
+			_ = client.Delete(ctx, created.GetName(), v1.DeleteOptions{})
+		}()
+		require.NoError(t, err)
+		require.NotNil(t, created)
+
+		got, err := client.Get(ctx, created.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, got.Spec.NotificationSettings)
+		require.NotNil(t, got.Spec.NotificationSettings.SimplifiedRouting)
+		require.Nil(t, got.Spec.NotificationSettings.NamedRoutingTree)
+		require.Equal(t, v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting, got.Spec.NotificationSettings.SimplifiedRouting.Type)
+		require.Equal(t, "empty", got.Spec.NotificationSettings.SimplifiedRouting.Receiver)
+
+		require.NoError(t, client.Delete(ctx, created.Name, v1.DeleteOptions{}))
+	})
+
+	t.Run("should default to SimplifiedRouting if type is unspecified using unstructured object", func(t *testing.T) {
+		rule := baseGen.Generate()
+		unstructuredRule := &unstructured.Unstructured{
+			Object: map[string]any{
+				"metadata": map[string]any{
+					"namespace": "default",
+					"annotations": map[string]string{
+						"grafana.app/folder": "test-folder",
+					},
+				},
+				"spec": map[string]any{
+					"title": rule.Title,
+					"expressions": map[string]any{
+						"A": map[string]any{
+							"queryType":     new(rule.Data[0].QueryType),
+							"datasourceUID": new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+							"model":         rule.Data[0].Model,
+							"source":        new(true),
+							"relativeTimeRange": map[string]any{
+								"from": v0alpha1.AlertRulePromDurationWMillis("5m"),
+								"to":   v0alpha1.AlertRulePromDurationWMillis("0s"),
+							},
+						},
+					},
+					"trigger": map[string]any{
+						"interval": v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+					},
+					"noDataState":  common.ToK8sNoDataState(rule.NoDataState),
+					"execErrState": common.ToK8sExecErrState(rule.ExecErrState),
+					"notificationSettings": map[string]any{
+						"receiver": "empty",
+					},
+				},
+			},
+		}
+
+		unstructuredClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: "default",
+			GVR: schema.GroupVersionResource{
+				Group:    "rules.alerting.grafana.app",
+				Version:  "v0alpha1",
+				Resource: "alertrules",
+			},
+		})
+
+		created, err := unstructuredClient.Resource.Create(ctx, unstructuredRule, v1.CreateOptions{})
+		defer func() {
+			_ = client.Delete(ctx, created.GetName(), v1.DeleteOptions{})
+		}()
+
+		require.NoError(t, err)
+		require.NotNil(t, created)
+
+		createdRule := new(v0alpha1.AlertRule)
+
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(created.Object, createdRule)
+		require.NoError(t, err)
+
+		got, err := client.Get(ctx, createdRule.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, got.Spec.NotificationSettings)
+		require.NotNil(t, got.Spec.NotificationSettings.SimplifiedRouting)
+		require.Nil(t, got.Spec.NotificationSettings.NamedRoutingTree)
+		require.Equal(t, v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting, got.Spec.NotificationSettings.SimplifiedRouting.Type)
+		require.Equal(t, "empty", got.Spec.NotificationSettings.SimplifiedRouting.Receiver)
+	})
+
+	t.Run("should create and read rule with NamedRoutingTree notification settings", func(t *testing.T) {
+		ns := &v0alpha1.AlertRuleNotificationSettings{
+			NamedRoutingTree: &v0alpha1.AlertRuleNamedRoutingTree{
+				Type:        v0alpha1.AlertRuleNotificationSettingsTypeNamedRoutingTree,
+				RoutingTree: "test-routing-tree",
+			},
+		}
+		alertRule := newAlertRule(t, ns)
+
+		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		defer func() {
+			_ = client.Delete(ctx, created.GetName(), v1.DeleteOptions{})
+		}()
+		require.NoError(t, err)
+		require.NotNil(t, created)
+
+		got, err := client.Get(ctx, created.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, got.Spec.NotificationSettings)
+		require.Nil(t, got.Spec.NotificationSettings.SimplifiedRouting)
+		require.NotNil(t, got.Spec.NotificationSettings.NamedRoutingTree)
+		require.Equal(t, v0alpha1.AlertRuleNotificationSettingsTypeNamedRoutingTree, got.Spec.NotificationSettings.NamedRoutingTree.Type)
+		require.Equal(t, "test-routing-tree", got.Spec.NotificationSettings.NamedRoutingTree.RoutingTree)
+
+		require.NoError(t, client.Delete(ctx, created.Name, v1.DeleteOptions{}))
+	})
+
+	t.Run("should update notification settings from SimplifiedRouting to NamedRoutingTree", func(t *testing.T) {
+		ns := &v0alpha1.AlertRuleNotificationSettings{
+			SimplifiedRouting: &v0alpha1.AlertRuleSimplifiedRouting{
+				Type:     v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting,
+				Receiver: "empty",
+			},
+		}
+		alertRule := newAlertRule(t, ns)
+
+		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		defer func() {
+			_ = client.Delete(ctx, created.GetName(), v1.DeleteOptions{})
+		}()
+		require.NoError(t, err)
+		require.NotNil(t, created)
+
+		updated := created.Copy().(*v0alpha1.AlertRule)
+		updated.Spec.NotificationSettings = &v0alpha1.AlertRuleNotificationSettings{
+			NamedRoutingTree: &v0alpha1.AlertRuleNamedRoutingTree{
+				Type:        v0alpha1.AlertRuleNotificationSettingsTypeNamedRoutingTree,
+				RoutingTree: "test-routing-tree",
+			},
+		}
+
+		result, err := client.Update(ctx, updated, v1.UpdateOptions{})
+		require.NoError(t, err)
+
+		got, err := client.Get(ctx, result.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, got.Spec.NotificationSettings)
+		require.Nil(t, got.Spec.NotificationSettings.SimplifiedRouting)
+		require.NotNil(t, got.Spec.NotificationSettings.NamedRoutingTree)
+		require.Equal(t, v0alpha1.AlertRuleNotificationSettingsTypeNamedRoutingTree, got.Spec.NotificationSettings.NamedRoutingTree.Type)
+		require.Equal(t, "test-routing-tree", got.Spec.NotificationSettings.NamedRoutingTree.RoutingTree)
+
+		require.NoError(t, client.Delete(ctx, created.Name, v1.DeleteOptions{}))
+	})
+
+	t.Run("should update notification settings from NamedRoutingTree to SimplifiedRouting", func(t *testing.T) {
+		ns := &v0alpha1.AlertRuleNotificationSettings{
+			NamedRoutingTree: &v0alpha1.AlertRuleNamedRoutingTree{
+				Type:        v0alpha1.AlertRuleNotificationSettingsTypeNamedRoutingTree,
+				RoutingTree: "test-routing-tree",
+			},
+		}
+		alertRule := newAlertRule(t, ns)
+
+		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		defer func() {
+			_ = client.Delete(ctx, created.GetName(), v1.DeleteOptions{})
+		}()
+		require.NoError(t, err)
+		require.NotNil(t, created)
+
+		updated := created.Copy().(*v0alpha1.AlertRule)
+		updated.Spec.NotificationSettings = &v0alpha1.AlertRuleNotificationSettings{
+			SimplifiedRouting: &v0alpha1.AlertRuleSimplifiedRouting{
+				Type:     v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting,
+				Receiver: "empty",
+			},
+		}
+
+		result, err := client.Update(ctx, updated, v1.UpdateOptions{})
+		require.NoError(t, err)
+
+		got, err := client.Get(ctx, result.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, got.Spec.NotificationSettings)
+		require.NotNil(t, got.Spec.NotificationSettings.SimplifiedRouting)
+		require.Nil(t, got.Spec.NotificationSettings.NamedRoutingTree)
+		require.Equal(t, v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting, got.Spec.NotificationSettings.SimplifiedRouting.Type)
+		require.Equal(t, "empty", got.Spec.NotificationSettings.SimplifiedRouting.Receiver)
+
+		require.NoError(t, client.Delete(ctx, created.Name, v1.DeleteOptions{}))
+	})
+
+	t.Run("should remove notification settings via update", func(t *testing.T) {
+		ns := &v0alpha1.AlertRuleNotificationSettings{
+			SimplifiedRouting: &v0alpha1.AlertRuleSimplifiedRouting{
+				Type:     v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting,
+				Receiver: "empty",
+			},
+		}
+		alertRule := newAlertRule(t, ns)
+
+		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		defer func() {
+			_ = client.Delete(ctx, created.GetName(), v1.DeleteOptions{})
+		}()
+		require.NoError(t, err)
+		require.NotNil(t, created)
+
+		updated := created.Copy().(*v0alpha1.AlertRule)
+		updated.Spec.NotificationSettings = nil
+
+		result, err := client.Update(ctx, updated, v1.UpdateOptions{})
+		require.NoError(t, err)
+
+		got, err := client.Get(ctx, result.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.Nil(t, got.Spec.NotificationSettings)
+
+		require.NoError(t, client.Delete(ctx, created.Name, v1.DeleteOptions{}))
+	})
+}
+
+func TestIntegrationListWithLabelSelectors(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := common.GetTestHelper(t)
+	client := common.NewAlertRuleClient(t, helper.Org1.Admin)
+
+	common.CreateTestFolder(t, helper, "folder-alpha")
+	common.CreateTestFolder(t, helper, "folder-beta")
+
+	makeRule := func(folder string) *v0alpha1.AlertRule {
+		rule := ngmodels.RuleGen.With(
+			ngmodels.RuleMuts.WithUniqueUID(),
+			ngmodels.RuleMuts.WithUniqueTitle(),
+			ngmodels.RuleMuts.WithNamespaceUID(folder),
+			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+		).Generate()
+		return &v0alpha1.AlertRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					"grafana.app/folder": folder,
+				},
+			},
+			Spec: v0alpha1.AlertRuleSpec{
+				Title: rule.Title,
+				Expressions: v0alpha1.AlertRuleExpressionMap{
+					"A": {
+						QueryType:     new("query"),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						Model:         rule.Data[0].Model,
+						Source:        new(true),
+						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+						},
+					},
+				},
+				Trigger: v0alpha1.AlertRuleIntervalTrigger{
+					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+				},
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
+			},
+		}
+	}
+
+	// Create 2 rules in folder-alpha and 2 in folder-beta.
+	// Group selector tests are covered in the compat tests since the k8s API does not
+	// support assigning rules to groups directly.
+	alpha1, err := client.Create(ctx, makeRule("folder-alpha"), v1.CreateOptions{})
+	require.NoError(t, err)
+	alpha2, err := client.Create(ctx, makeRule("folder-alpha"), v1.CreateOptions{})
+	require.NoError(t, err)
+	beta1, err := client.Create(ctx, makeRule("folder-beta"), v1.CreateOptions{})
+	require.NoError(t, err)
+	beta2, err := client.Create(ctx, makeRule("folder-beta"), v1.CreateOptions{})
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		_ = client.Delete(ctx, alpha1.Name, v1.DeleteOptions{})
+		_ = client.Delete(ctx, alpha2.Name, v1.DeleteOptions{})
+		_ = client.Delete(ctx, beta1.Name, v1.DeleteOptions{})
+		_ = client.Delete(ctx, beta2.Name, v1.DeleteOptions{})
+	})
+
+	t.Run("filter by folder label include", func(t *testing.T) {
+		list, err := client.List(ctx, v1.ListOptions{LabelSelector: "grafana.app/folder=folder-alpha"})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 2)
+		for _, item := range list.Items {
+			require.Equal(t, "folder-alpha", item.Labels[v0alpha1.FolderLabelKey])
+		}
+	})
+
+	t.Run("filter by folder label exclude", func(t *testing.T) {
+		list, err := client.List(ctx, v1.ListOptions{LabelSelector: "grafana.app/folder!=folder-alpha"})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 2)
+		for _, item := range list.Items {
+			require.Equal(t, "folder-beta", item.Labels[v0alpha1.FolderLabelKey])
+		}
+	})
+}
+
+func TestIntegrationListWithFieldSelectors(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := common.GetTestHelper(t)
+	client := common.NewAlertRuleClient(t, helper.Org1.Admin)
+
+	common.CreateTestFolder(t, helper, "fs-folder")
+
+	baseRule := func(folder string) *v0alpha1.AlertRule {
+		rule := ngmodels.RuleGen.With(
+			ngmodels.RuleMuts.WithUniqueUID(),
+			ngmodels.RuleMuts.WithUniqueTitle(),
+			ngmodels.RuleMuts.WithNamespaceUID(folder),
+			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+		).Generate()
+		return &v0alpha1.AlertRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					"grafana.app/folder": folder,
+				},
+			},
+			Spec: v0alpha1.AlertRuleSpec{
+				Title: rule.Title,
+				Expressions: v0alpha1.AlertRuleExpressionMap{
+					"A": {
+						QueryType:     new("query"),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						Model:         rule.Data[0].Model,
+						Source:        new(true),
+						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+						},
+					},
+				},
+				Trigger: v0alpha1.AlertRuleIntervalTrigger{
+					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+				},
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
+			},
+		}
+	}
+
+	t.Run("filter by spec.title", func(t *testing.T) {
+		r1 := baseRule("fs-folder")
+		r1.Spec.Title = "field-sel-title-unique-abc"
+		r2 := baseRule("fs-folder")
+		r2.Spec.Title = "field-sel-title-unique-other"
+
+		created1, err := client.Create(ctx, r1, v1.CreateOptions{})
+		require.NoError(t, err)
+		created2, err := client.Create(ctx, r2, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, created1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, created2.Name, v1.DeleteOptions{})
+		})
+
+		t.Run("equals returns only matching rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.title=field-sel-title-unique-abc"})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 1)
+			require.Equal(t, "field-sel-title-unique-abc", list.Items[0].Spec.Title)
+		})
+
+		t.Run("not-equals returns only rules whose title differs", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=fs-folder",
+				FieldSelector: "spec.title!=field-sel-title-unique-abc",
+			})
+			require.NoError(t, err)
+			titles := make([]string, 0, len(list.Items))
+			for _, item := range list.Items {
+				titles = append(titles, item.Spec.Title)
+			}
+			require.Contains(t, titles, "field-sel-title-unique-other")
+			require.NotContains(t, titles, "field-sel-title-unique-abc")
+		})
+	})
+
+	t.Run("filter by spec.paused", func(t *testing.T) {
+		paused1 := baseRule("fs-folder")
+		paused1.Spec.Paused = new(true)
+		paused2 := baseRule("fs-folder")
+		paused2.Spec.Paused = new(true)
+		active1 := baseRule("fs-folder")
+		active2 := baseRule("fs-folder")
+
+		cp1, err := client.Create(ctx, paused1, v1.CreateOptions{})
+		require.NoError(t, err)
+		cp2, err := client.Create(ctx, paused2, v1.CreateOptions{})
+		require.NoError(t, err)
+		ca1, err := client.Create(ctx, active1, v1.CreateOptions{})
+		require.NoError(t, err)
+		ca2, err := client.Create(ctx, active2, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, cp1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, cp2.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, ca1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, ca2.Name, v1.DeleteOptions{})
+		})
+
+		t.Run("true returns only paused rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=fs-folder",
+				FieldSelector: "spec.paused=true",
+			})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 2)
+			for _, item := range list.Items {
+				require.NotNil(t, item.Spec.Paused)
+				require.True(t, *item.Spec.Paused)
+			}
+		})
+
+		t.Run("false returns only non-paused rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=fs-folder",
+				FieldSelector: "spec.paused=false",
+			})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 2)
+			for _, item := range list.Items {
+				require.True(t, item.Spec.Paused == nil || !*item.Spec.Paused)
+			}
+		})
+	})
+
+	t.Run("filter by spec.panelRef.dashboardUID", func(t *testing.T) {
+		dashUID := "fs-dash-abc"
+		r1 := baseRule("fs-folder")
+		r1.Spec.PanelRef = &v0alpha1.AlertRulePanelRef{DashboardUID: dashUID, PanelID: 1}
+		r2 := baseRule("fs-folder")
+		r2.Spec.PanelRef = &v0alpha1.AlertRulePanelRef{DashboardUID: dashUID, PanelID: 2}
+		r3 := baseRule("fs-folder")
+		r3.Spec.PanelRef = &v0alpha1.AlertRulePanelRef{DashboardUID: "other-dash", PanelID: 1}
+
+		c1, err := client.Create(ctx, r1, v1.CreateOptions{})
+		require.NoError(t, err)
+		c2, err := client.Create(ctx, r2, v1.CreateOptions{})
+		require.NoError(t, err)
+		c3, err := client.Create(ctx, r3, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, c1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c2.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c3.Name, v1.DeleteOptions{})
+		})
+
+		t.Run("equals returns only matching rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.panelRef.dashboardUID=" + dashUID})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 2)
+			for _, item := range list.Items {
+				require.NotNil(t, item.Spec.PanelRef)
+				require.Equal(t, dashUID, item.Spec.PanelRef.DashboardUID)
+			}
+		})
+
+		t.Run("not-equals excludes matching rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=fs-folder",
+				FieldSelector: "spec.panelRef.dashboardUID!=" + dashUID,
+			})
+			require.NoError(t, err)
+			for _, item := range list.Items {
+				if item.Spec.PanelRef != nil {
+					require.NotEqual(t, dashUID, item.Spec.PanelRef.DashboardUID)
+				}
+			}
+		})
+	})
+
+	t.Run("filter by spec.panelRef.panelID", func(t *testing.T) {
+		dashUID := "fs-dash-panel"
+		r1 := baseRule("fs-folder")
+		r1.Spec.PanelRef = &v0alpha1.AlertRulePanelRef{DashboardUID: dashUID, PanelID: 7}
+		r2 := baseRule("fs-folder")
+		r2.Spec.PanelRef = &v0alpha1.AlertRulePanelRef{DashboardUID: dashUID, PanelID: 7}
+		r3 := baseRule("fs-folder")
+		r3.Spec.PanelRef = &v0alpha1.AlertRulePanelRef{DashboardUID: dashUID, PanelID: 99}
+
+		c1, err := client.Create(ctx, r1, v1.CreateOptions{})
+		require.NoError(t, err)
+		c2, err := client.Create(ctx, r2, v1.CreateOptions{})
+		require.NoError(t, err)
+		c3, err := client.Create(ctx, r3, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, c1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c2.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c3.Name, v1.DeleteOptions{})
+		})
+
+		t.Run("equals returns only matching rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.panelRef.panelID=7"})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 2)
+			for _, item := range list.Items {
+				require.NotNil(t, item.Spec.PanelRef)
+				require.Equal(t, int64(7), item.Spec.PanelRef.PanelID)
+			}
+		})
+
+		t.Run("not-equals excludes matching rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=fs-folder",
+				FieldSelector: "spec.panelRef.panelID!=7",
+			})
+			require.NoError(t, err)
+			for _, item := range list.Items {
+				if item.Spec.PanelRef != nil {
+					require.NotEqual(t, int64(7), item.Spec.PanelRef.PanelID)
+				}
+			}
+		})
+	})
+
+	t.Run("filter by spec.notificationSettings.receiver", func(t *testing.T) {
+		// Use the default "empty" receiver, since creating ad-hoc receivers is heavy and rule
+		// create-time validates that the receiver exists.
+		const matchReceiver = "empty"
+		r1 := baseRule("fs-folder")
+		r1.Spec.NotificationSettings = &v0alpha1.AlertRuleNotificationSettings{
+			SimplifiedRouting: &v0alpha1.AlertRuleSimplifiedRouting{
+				Type:     v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting,
+				Receiver: matchReceiver,
+			},
+		}
+		r2 := baseRule("fs-folder")
+		r2.Spec.NotificationSettings = &v0alpha1.AlertRuleNotificationSettings{
+			SimplifiedRouting: &v0alpha1.AlertRuleSimplifiedRouting{
+				Type:     v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting,
+				Receiver: matchReceiver,
+			},
+		}
+		r3 := baseRule("fs-folder") // no notification settings
+
+		c1, err := client.Create(ctx, r1, v1.CreateOptions{})
+		require.NoError(t, err)
+		c2, err := client.Create(ctx, r2, v1.CreateOptions{})
+		require.NoError(t, err)
+		c3, err := client.Create(ctx, r3, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, c1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c2.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c3.Name, v1.DeleteOptions{})
+		})
+
+		t.Run("equals returns only rules with the matching receiver", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=fs-folder",
+				FieldSelector: "spec.notificationSettings.receiver=" + matchReceiver,
+			})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 2)
+			for _, item := range list.Items {
+				require.NotNil(t, item.Spec.NotificationSettings)
+				require.NotNil(t, item.Spec.NotificationSettings.SimplifiedRouting)
+				require.Equal(t, matchReceiver, item.Spec.NotificationSettings.SimplifiedRouting.Receiver)
+			}
+		})
+
+		t.Run("not-equals excludes rules with the matching receiver", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=fs-folder",
+				FieldSelector: "spec.notificationSettings.receiver!=" + matchReceiver,
+			})
+			require.NoError(t, err)
+			for _, item := range list.Items {
+				if item.Spec.NotificationSettings != nil && item.Spec.NotificationSettings.SimplifiedRouting != nil {
+					require.NotEqual(t, matchReceiver, item.Spec.NotificationSettings.SimplifiedRouting.Receiver)
+				}
+			}
+		})
+	})
+
+	t.Run("filter by spec.notificationSettings.type=SimplifiedRouting", func(t *testing.T) {
+		r1 := baseRule("fs-folder")
+		r1.Spec.NotificationSettings = &v0alpha1.AlertRuleNotificationSettings{
+			SimplifiedRouting: &v0alpha1.AlertRuleSimplifiedRouting{
+				Type:     v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting,
+				Receiver: "empty",
+			},
+		}
+		r2 := baseRule("fs-folder")
+		r2.Spec.NotificationSettings = &v0alpha1.AlertRuleNotificationSettings{
+			SimplifiedRouting: &v0alpha1.AlertRuleSimplifiedRouting{
+				Type:     v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting,
+				Receiver: "empty",
+			},
+		}
+		r3 := baseRule("fs-folder") // no notification settings
+
+		c1, err := client.Create(ctx, r1, v1.CreateOptions{})
+		require.NoError(t, err)
+		c2, err := client.Create(ctx, r2, v1.CreateOptions{})
+		require.NoError(t, err)
+		c3, err := client.Create(ctx, r3, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, c1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c2.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c3.Name, v1.DeleteOptions{})
+		})
+
+		t.Run("equals returns only rules with simplified routing", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=fs-folder",
+				FieldSelector: "spec.notificationSettings.type=SimplifiedRouting",
+			})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 2)
+			for _, item := range list.Items {
+				require.NotNil(t, item.Spec.NotificationSettings)
+				require.NotNil(t, item.Spec.NotificationSettings.SimplifiedRouting)
+			}
+		})
+
+		t.Run("not-equals excludes rules with simplified routing", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=fs-folder",
+				FieldSelector: "spec.notificationSettings.type!=SimplifiedRouting",
+			})
+			require.NoError(t, err)
+			for _, item := range list.Items {
+				require.True(t, item.Spec.NotificationSettings == nil || item.Spec.NotificationSettings.SimplifiedRouting == nil)
+			}
+		})
+	})
+
+	t.Run("invalid value for spec.notificationSettings.type returns 400", func(t *testing.T) {
+		_, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.notificationSettings.type=Invalid"})
+		require.Error(t, err)
+	})
+}
+
+func TestIntegrationListWithNamedRoutingTreeFieldSelectors(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
+	client := common.NewAlertRuleClient(t, helper.Org1.Admin)
+
+	common.CreateTestFolder(t, helper, "rt-fs-folder")
+
+	routingTreeClient, err := v1beta1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+	matchTree := &v1beta1.RoutingTree{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "rt-tree-match",
+			Namespace: "default",
+		},
+		Spec: v1beta1.RoutingTreeSpec{
+			Defaults: v1beta1.RoutingTreeRouteDefaults{Receiver: "empty"},
+		},
+	}
+	otherTree := &v1beta1.RoutingTree{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "rt-tree-other",
+			Namespace: "default",
+		},
+		Spec: v1beta1.RoutingTreeSpec{
+			Defaults: v1beta1.RoutingTreeRouteDefaults{Receiver: "empty"},
+		},
+	}
+	_, err = routingTreeClient.Create(ctx, matchTree, resource.CreateOptions{})
+	require.NoError(t, err)
+	_, err = routingTreeClient.Create(ctx, otherTree, resource.CreateOptions{})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = routingTreeClient.Delete(ctx, matchTree.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		_ = routingTreeClient.Delete(ctx, otherTree.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+	})
+
+	baseRule := func(folder string) *v0alpha1.AlertRule {
+		rule := ngmodels.RuleGen.With(
+			ngmodels.RuleMuts.WithUniqueUID(),
+			ngmodels.RuleMuts.WithUniqueTitle(),
+			ngmodels.RuleMuts.WithNamespaceUID(folder),
+			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+		).Generate()
+		return &v0alpha1.AlertRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					"grafana.app/folder": folder,
+				},
+			},
+			Spec: v0alpha1.AlertRuleSpec{
+				Title: rule.Title,
+				Expressions: v0alpha1.AlertRuleExpressionMap{
+					"A": {
+						QueryType:     new("query"),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						Model:         rule.Data[0].Model,
+						Source:        new(true),
+						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+						},
+					},
+				},
+				Trigger: v0alpha1.AlertRuleIntervalTrigger{
+					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+				},
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
+			},
+		}
+	}
+
+	t.Run("filter by spec.notificationSettings.routingTree", func(t *testing.T) {
+		r1 := baseRule("rt-fs-folder")
+		r1.Spec.NotificationSettings = &v0alpha1.AlertRuleNotificationSettings{
+			NamedRoutingTree: &v0alpha1.AlertRuleNamedRoutingTree{
+				Type:        v0alpha1.AlertRuleNotificationSettingsTypeNamedRoutingTree,
+				RoutingTree: matchTree.Name,
+			},
+		}
+		r2 := baseRule("rt-fs-folder")
+		r2.Spec.NotificationSettings = &v0alpha1.AlertRuleNotificationSettings{
+			NamedRoutingTree: &v0alpha1.AlertRuleNamedRoutingTree{
+				Type:        v0alpha1.AlertRuleNotificationSettingsTypeNamedRoutingTree,
+				RoutingTree: matchTree.Name,
+			},
+		}
+		r3 := baseRule("rt-fs-folder")
+		r3.Spec.NotificationSettings = &v0alpha1.AlertRuleNotificationSettings{
+			NamedRoutingTree: &v0alpha1.AlertRuleNamedRoutingTree{
+				Type:        v0alpha1.AlertRuleNotificationSettingsTypeNamedRoutingTree,
+				RoutingTree: otherTree.Name,
+			},
+		}
+
+		c1, err := client.Create(ctx, r1, v1.CreateOptions{})
+		require.NoError(t, err)
+		c2, err := client.Create(ctx, r2, v1.CreateOptions{})
+		require.NoError(t, err)
+		c3, err := client.Create(ctx, r3, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, c1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c2.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c3.Name, v1.DeleteOptions{})
+		})
+
+		t.Run("equals returns only matching rules", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{FieldSelector: "spec.notificationSettings.routingTree=" + matchTree.Name})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 2)
+			for _, item := range list.Items {
+				require.NotNil(t, item.Spec.NotificationSettings)
+				require.NotNil(t, item.Spec.NotificationSettings.NamedRoutingTree)
+				require.Equal(t, matchTree.Name, item.Spec.NotificationSettings.NamedRoutingTree.RoutingTree)
+			}
+		})
+
+		t.Run("not-equals returns rules whose routing tree differs (or have none)", func(t *testing.T) {
+			list, err := client.List(ctx, v1.ListOptions{
+				LabelSelector: "grafana.app/folder=rt-fs-folder",
+				FieldSelector: "spec.notificationSettings.routingTree!=" + matchTree.Name,
+			})
+			require.NoError(t, err)
+			for _, item := range list.Items {
+				if item.Spec.NotificationSettings != nil && item.Spec.NotificationSettings.NamedRoutingTree != nil {
+					require.NotEqual(t, matchTree.Name, item.Spec.NotificationSettings.NamedRoutingTree.RoutingTree)
+				}
+			}
+		})
+	})
+
+	t.Run("filter by spec.notificationSettings.type=NamedRoutingTree", func(t *testing.T) {
+		r1 := baseRule("rt-fs-folder")
+		r1.Spec.NotificationSettings = &v0alpha1.AlertRuleNotificationSettings{
+			NamedRoutingTree: &v0alpha1.AlertRuleNamedRoutingTree{
+				Type:        v0alpha1.AlertRuleNotificationSettingsTypeNamedRoutingTree,
+				RoutingTree: matchTree.Name,
+			},
+		}
+		r2 := baseRule("rt-fs-folder")
+		r2.Spec.NotificationSettings = &v0alpha1.AlertRuleNotificationSettings{
+			SimplifiedRouting: &v0alpha1.AlertRuleSimplifiedRouting{
+				Type:     v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting,
+				Receiver: "empty",
+			},
+		}
+		r3 := baseRule("rt-fs-folder") // no settings
+
+		c1, err := client.Create(ctx, r1, v1.CreateOptions{})
+		require.NoError(t, err)
+		c2, err := client.Create(ctx, r2, v1.CreateOptions{})
+		require.NoError(t, err)
+		c3, err := client.Create(ctx, r3, v1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, c1.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c2.Name, v1.DeleteOptions{})
+			_ = client.Delete(ctx, c3.Name, v1.DeleteOptions{})
+		})
+
+		list, err := client.List(ctx, v1.ListOptions{
+			LabelSelector: "grafana.app/folder=rt-fs-folder",
+			FieldSelector: "spec.notificationSettings.type=NamedRoutingTree",
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.NotNil(t, list.Items[0].Spec.NotificationSettings)
+		require.NotNil(t, list.Items[0].Spec.NotificationSettings.NamedRoutingTree)
+	})
+}

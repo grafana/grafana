@@ -1,0 +1,92 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
+//  }
+//  Name: 
+//  Dimensions: 3 Fields by 1 Rows
+//  +-----------------------------------------+-----------------------------------------+------------------+
+//  | Name: _start_water                      | Name: _stop_water                       | Name: _value     |
+//  | Labels: st=1                            | Labels: st=1                            | Labels: st=1     |
+//  | Type: []*time.Time                      | Type: []*time.Time                      | Type: []*float64 |
+//  +-----------------------------------------+-----------------------------------------+------------------+
+//  | 2020-06-28 17:50:13.012584046 +0000 UTC | 2020-06-29 17:50:13.012584046 +0000 UTC | 156.304          |
+//  +-----------------------------------------+-----------------------------------------+------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ]
+        },
+        "fields": [
+          {
+            "name": "_start_water",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time",
+              "nullable": true
+            },
+            "labels": {
+              "st": "1"
+            }
+          },
+          {
+            "name": "_stop_water",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time",
+              "nullable": true
+            },
+            "labels": {
+              "st": "1"
+            }
+          },
+          {
+            "name": "_value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "st": "1"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1593366613012
+          ],
+          [
+            1593453013012
+          ],
+          [
+            156.304
+          ]
+        ],
+        "nanos": [
+          [
+            584046
+          ],
+          [
+            584046
+          ],
+          null
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,225 @@
+import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { render } from 'test/test-utils';
+
+import { config, reportInteraction } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
+import { createComponentWithMeta, usePluginComponents } from 'app/features/plugins/extensions/usePluginComponents';
+import { getExternalUserMngLinkUrl } from 'app/features/users/utils';
+
+import { NavRightButton } from './InviteUserButton';
+
+// Mock the API hook
+const mockUseGetCurrentOrgQuotaQuery = jest.fn(() => ({ data: undefined }));
+
+jest.mock('app/api/clients/legacy', () => {
+  const actual = jest.requireActual('app/api/clients/legacy');
+  return {
+    ...actual,
+    useGetCurrentOrgQuotaQuery: () => mockUseGetCurrentOrgQuotaQuery(),
+  };
+});
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
+jest.mock('app/features/plugins/extensions/usePluginComponents', () => ({
+  ...jest.requireActual('app/features/plugins/extensions/usePluginComponents'),
+  usePluginComponents: jest.fn(),
+}));
+
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    hasPermission: jest.fn(),
+    user: {
+      orgId: 1,
+      timezone: 'browser',
+      weekStart: '',
+    },
+  },
+}));
+
+jest.mock('app/features/users/utils', () => ({
+  getExternalUserMngLinkUrl: jest.fn(),
+}));
+
+const mockUsePluginComponents = jest.mocked(usePluginComponents);
+const mockContextSrv = jest.mocked(contextSrv);
+const mockReportInteraction = jest.mocked(reportInteraction);
+const mockGetExternalUserMngLinkUrl = jest.mocked(getExternalUserMngLinkUrl);
+
+const MockPluginComponent = createComponentWithMeta(
+  { pluginId: 'grafana-setupguide-app', title: 'Invite', component: () => <div>plugin-invite-button</div> },
+  'grafana/singletopbar/invite-user/v1'
+);
+
+// Mock window.open
+const mockWindowOpen = jest.fn();
+Object.defineProperty(window, 'open', {
+  value: mockWindowOpen,
+  writable: true,
+});
+
+// Mock window.matchMedia for responsive testing
+const mockMatchMedia = (matches: boolean) => {
+  Object.defineProperty(window, 'matchMedia', {
+    value: jest.fn().mockImplementation(() => ({
+      matches,
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+    })),
+    writable: true,
+  });
+};
+
+describe('NavRightButton', () => {
+  const mockInviteUrl = 'https://example.com/invite?cnt=invite-user-top-bar';
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetExternalUserMngLinkUrl.mockReturnValue(mockInviteUrl);
+    mockUsePluginComponents.mockReturnValue({ components: [], isLoading: false });
+    config.externalUserMngLinkUrl = 'https://example.com/invite';
+    config.externalUserUpgradeLinkUrl = '';
+    config.namespace = 'org-1';
+  });
+
+  describe('Business Logic - When button should appear', () => {
+    it('should not render when user lacks permission', () => {
+      config.externalUserMngLinkUrl = 'https://example.com/invite';
+      mockContextSrv.hasPermission.mockReturnValue(false);
+      mockMatchMedia(true);
+
+      render(<NavRightButton />);
+
+      expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    });
+
+    it('should not render when external user management URL is not configured', () => {
+      config.externalUserMngLinkUrl = '';
+      config.externalUserUpgradeLinkUrl = '';
+      mockContextSrv.hasPermission.mockReturnValue(true);
+      mockMatchMedia(true);
+
+      render(<NavRightButton />);
+
+      expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('User Experience - Responsive behavior', () => {
+    beforeEach(() => {
+      config.externalUserMngLinkUrl = 'https://example.com/invite';
+      mockContextSrv.hasPermission.mockReturnValue(true);
+    });
+
+    it('should show text on large screens', () => {
+      mockMatchMedia(true); // Large screen (≥lg)
+
+      render(<NavRightButton />);
+
+      const button = screen.getByRole('button', { name: /invite user/i });
+      expect(button).toHaveTextContent('Invite');
+    });
+
+    it('should show icon only on small screens', () => {
+      mockMatchMedia(false); // Small screen (<lg)
+
+      render(<NavRightButton />);
+
+      const button = screen.getByRole('button', { name: /invite user/i });
+      expect(button).not.toHaveTextContent('Invite');
+    });
+  });
+
+  describe('Core Functionality - Click behavior', () => {
+    beforeEach(() => {
+      config.externalUserMngLinkUrl = 'https://example.com/invite';
+      mockContextSrv.hasPermission.mockReturnValue(true);
+      mockMatchMedia(true);
+    });
+
+    it('should track analytics and open invite URL when clicked', async () => {
+      const user = userEvent.setup();
+
+      render(<NavRightButton />);
+
+      await user.click(screen.getByRole('button', { name: /invite user/i }));
+
+      // Verify the complete user flow
+      expect(mockReportInteraction).toHaveBeenCalledWith('invite_user_button_clicked', {
+        placement: 'top_bar_right',
+      });
+      expect(mockGetExternalUserMngLinkUrl).toHaveBeenCalledWith('invite-user-top-bar');
+      expect(mockWindowOpen).toHaveBeenCalledWith(mockInviteUrl, '_blank');
+    });
+  });
+
+  describe('Extension point - grafana-setupguide-app override', () => {
+    it('should render the plugin component when grafana-setupguide-app registers one', () => {
+      mockUsePluginComponents.mockReturnValue({ components: [MockPluginComponent], isLoading: false });
+      mockContextSrv.hasPermission.mockReturnValue(true);
+      mockMatchMedia(true);
+
+      render(<NavRightButton />);
+
+      expect(screen.getByText('plugin-invite-button')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /invite user/i })).not.toBeInTheDocument();
+    });
+
+    it('should fall back to the default button when no plugin component is registered', () => {
+      mockContextSrv.hasPermission.mockReturnValue(true);
+      mockMatchMedia(true);
+
+      render(<NavRightButton />);
+
+      expect(screen.getByRole('button', { name: /invite user/i })).toBeInTheDocument();
+    });
+  });
+
+  describe('Error Handling - Preventing crashes', () => {
+    beforeEach(() => {
+      config.externalUserMngLinkUrl = 'https://example.com/invite';
+      mockContextSrv.hasPermission.mockReturnValue(true);
+      mockMatchMedia(true);
+    });
+
+    it('should handle URL generation errors gracefully', async () => {
+      mockGetExternalUserMngLinkUrl.mockImplementation(() => {
+        throw new Error('URL generation failed');
+      });
+
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const user = userEvent.setup();
+
+      render(<NavRightButton />);
+
+      // Should not crash when URL generation fails
+      await user.click(screen.getByRole('button', { name: /invite user/i }));
+
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to handle invite/upgrade user click:', expect.any(Error));
+
+      consoleSpy.mockRestore();
+    });
+
+    it('should handle popup blocking gracefully', async () => {
+      mockWindowOpen.mockImplementation(() => {
+        throw new Error('Popup blocked');
+      });
+
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const user = userEvent.setup();
+
+      render(<NavRightButton />);
+
+      // Should not crash when popup is blocked
+      await user.click(screen.getByRole('button', { name: /invite user/i }));
+
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to handle invite/upgrade user click:', expect.any(Error));
+
+      consoleSpy.mockRestore();
+    });
+  });
+});

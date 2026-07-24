@@ -1,0 +1,69 @@
+import { generatedAPI as preferencesAPI } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { getThemeById } from '@grafana/data/internal';
+import { config, ThemeChangedEvent } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { dispatch } from 'app/store/store';
+
+import { appEvents } from '../app_events';
+import { contextSrv } from '../services/context_srv';
+
+import { PreferencesService } from './PreferencesService';
+
+export async function changeTheme(themeId: string, runtimeOnly?: boolean) {
+  const oldTheme = config.theme2;
+
+  const newTheme = getThemeById(themeId);
+
+  appEvents.publish(new ThemeChangedEvent(newTheme));
+
+  // Add css file for new theme
+  if (oldTheme.colors.mode !== newTheme.colors.mode) {
+    const newCssLink = document.createElement('link');
+    newCssLink.rel = 'stylesheet';
+    newCssLink.href = config.bootData.assets[newTheme.colors.mode];
+    newCssLink.onload = () => {
+      // Remove old css file
+      const bodyLinks = document.getElementsByTagName('link');
+      for (let i = 0; i < bodyLinks.length; i++) {
+        const link = bodyLinks[i];
+
+        if (link.href && link.href.includes(`build/grafana.${oldTheme.colors.mode}`)) {
+          // Remove existing link once the new css has loaded to avoid flickering
+          // If we add new css at the same time we remove current one the page will be rendered without css
+          // As the new css file is loading
+          link.remove();
+        }
+      }
+    };
+    document.head.insertBefore(newCssLink, document.head.firstChild);
+  }
+
+  if (runtimeOnly) {
+    return;
+  }
+
+  if (!contextSrv.isSignedIn) {
+    return;
+  }
+
+  // Persist new theme
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewPreferencesPage, false)) {
+    const resourceName = contextSrv.user.uid ? `user-${contextSrv.user.uid}` : 'user';
+    await dispatch(
+      preferencesAPI.endpoints.updatePreferences.initiate({
+        name: resourceName,
+        patch: { spec: { theme: themeId } },
+      })
+    ).unwrap();
+  } else {
+    const service = new PreferencesService('user');
+    await service.patch({
+      theme: themeId,
+    });
+  }
+}
+
+export async function toggleTheme(runtimeOnly: boolean) {
+  const currentTheme = config.theme2;
+  changeTheme(currentTheme.isDark ? 'light' : 'dark', runtimeOnly);
+}

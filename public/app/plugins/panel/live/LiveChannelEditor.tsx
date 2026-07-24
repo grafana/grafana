@@ -1,0 +1,206 @@
+import { css } from '@emotion/css';
+import { useEffect, useMemo, useState } from 'react';
+
+import {
+  LiveChannelScope,
+  type LiveChannelAddress,
+  type SelectableValue,
+  type StandardEditorProps,
+  type GrafanaTheme2,
+  parseLiveChannelAddress,
+} from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+import { Select, Alert, Label, stylesFactory, Combobox } from '@grafana/ui';
+import {
+  discoveryResources,
+  getAPIGroupDiscoveryList,
+  type GroupDiscoveryResource,
+} from 'app/features/apiserver/discovery';
+import { getManagedChannelInfo } from 'app/features/live/info';
+
+import { type LivePanelOptions } from './types';
+
+type Props = StandardEditorProps<Partial<LiveChannelAddress>, {}, LivePanelOptions>;
+
+const scopes: Array<SelectableValue<LiveChannelScope>> = [
+  { label: 'Grafana', value: LiveChannelScope.Grafana, description: 'Core grafana live features' },
+  { label: 'Data Sources', value: LiveChannelScope.DataSource, description: 'Data sources with live support' },
+  { label: 'Plugins', value: LiveChannelScope.Plugin, description: 'Plugins with live support' },
+  { label: 'Stream', value: LiveChannelScope.Stream, description: 'data streams (eg, influx style)' },
+  { label: 'Watch', value: LiveChannelScope.Watch, description: 'Watch k8s style resources' },
+];
+
+export function LiveChannelEditor(props: Props) {
+  const [channels, setChannels] = useState<Array<SelectableValue<string>>>([]);
+  const [streams, paths] = useMemo(() => {
+    const streams: Array<SelectableValue<string>> = [];
+    const paths: Array<SelectableValue<string>> = [];
+    const scope = props.value.scope;
+    const stream = props.value.stream;
+    if (!scope?.length) {
+      return [streams, paths];
+    }
+    const used: Record<string, boolean> = {};
+
+    for (let channel of channels) {
+      const addr = parseLiveChannelAddress(channel.value);
+      if (!addr || addr.scope !== scope) {
+        continue;
+      }
+
+      if (!used[addr.stream]) {
+        streams.push({
+          value: addr.stream,
+          label: addr.stream,
+        });
+        used[addr.stream] = true;
+      }
+
+      if (stream?.length && stream === addr.stream) {
+        paths.push({
+          ...channel,
+          value: addr.path,
+        });
+      }
+    }
+    return [streams, paths];
+  }, [channels, props.value.scope, props.value.stream]);
+
+  useEffect(() => {
+    getManagedChannelInfo().then((v) => {
+      setChannels(v.channels);
+    });
+  }, [props.value.scope]);
+
+  const onScopeChanged = (v: SelectableValue<LiveChannelScope>) => {
+    if (v.value) {
+      props.onChange({
+        scope: v.value,
+        stream: undefined,
+        path: undefined,
+      });
+    }
+  };
+
+  const onStreamChanged = (v: SelectableValue<string>) => {
+    props.onChange({
+      scope: props.value?.scope,
+      stream: v?.value,
+      path: undefined,
+    });
+  };
+
+  const onPathChanged = (v: SelectableValue<string>) => {
+    const { value, onChange } = props;
+    onChange({
+      scope: value.scope,
+      stream: value.stream,
+      path: v?.value,
+    });
+  };
+
+  const getWatchableResources = async (v: string) => {
+    const apis = await getAPIGroupDiscoveryList();
+    return discoveryResources(apis)
+      .filter((v) => v.verbs.includes('watch'))
+      .map((r) => ({
+        value: `${r.responseKind.group}/${r.responseKind.version}/${r.resource}`, // must be string | number
+        resource: r,
+      }));
+  };
+
+  const { scope, stream, path } = props.value;
+  const style = getStyles(config.theme2);
+
+  return (
+    <>
+      <Alert title={t('live.live-channel-editor.title-grafana-live', 'Grafana Live')} severity="info">
+        <Trans i18nKey="live.live-channel-editor.description-grafana-live">
+          This supports real-time event streams in Grafana core. This feature is under heavy development. Expect the
+          interfaces and structures to change as this becomes more production ready.
+        </Trans>
+      </Alert>
+
+      <div>
+        <div className={style.dropWrap}>
+          <Label>
+            <Trans i18nKey="live.live-channel-editor.scope">Scope</Trans>
+          </Label>
+          <Select options={scopes} value={scopes.find((s) => s.value === scope)} onChange={onScopeChanged} />
+        </div>
+
+        {scope === LiveChannelScope.Watch && (
+          <div className={style.dropWrap}>
+            <Combobox
+              options={getWatchableResources}
+              placeholder={t(
+                'live.live-channel-editor.placeholder-select-watchable-resource',
+                'Select watchable resource'
+              )}
+              onChange={(v) => {
+                const resource: GroupDiscoveryResource = (v as any).resource;
+                if (resource) {
+                  props.onChange({
+                    scope: LiveChannelScope.Watch,
+                    stream: resource.responseKind.group,
+                    path: `${resource.responseKind.version}/${resource.resource}/${config.bootData.user.uid}`, // only works for this user
+                  });
+                }
+              }}
+            />
+          </div>
+        )}
+
+        {scope && (
+          <div className={style.dropWrap}>
+            <Label>
+              <Trans i18nKey="live.live-channel-editor.namespace">Namespace</Trans>
+            </Label>
+            <Select
+              options={streams}
+              value={streams.find((s) => s.value === stream) ?? (stream ? { label: stream, value: stream } : undefined)}
+              onChange={onStreamChanged}
+              allowCustomValue={true}
+              backspaceRemovesValue={true}
+              isClearable={true}
+            />
+          </div>
+        )}
+
+        {scope && stream && (
+          <div className={style.dropWrap}>
+            <Label>
+              <Trans i18nKey="live.live-channel-editor.path">Path</Trans>
+            </Label>
+            <Select
+              options={paths}
+              value={findPathOption(paths, path)}
+              onChange={onPathChanged}
+              allowCustomValue={true}
+              backspaceRemovesValue={true}
+              isClearable={true}
+            />
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+function findPathOption(paths: Array<SelectableValue<string>>, path?: string): SelectableValue<string> | undefined {
+  const v = paths.find((s) => s.value === path);
+  if (v) {
+    return v;
+  }
+  if (path) {
+    return { label: path, value: path };
+  }
+  return undefined;
+}
+
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
+  dropWrap: css({
+    marginBottom: theme.spacing(1),
+  }),
+}));

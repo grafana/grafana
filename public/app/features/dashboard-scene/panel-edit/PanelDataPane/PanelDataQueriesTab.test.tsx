@@ -1,0 +1,1056 @@
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { of, map } from 'rxjs';
+
+import {
+  CoreApp,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+  type DataSourceRef,
+  FieldType,
+  LoadingState,
+  type PanelData,
+  PluginType,
+  type TimeRange,
+  toDataFrame,
+} from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test';
+import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
+import { PANEL_EDIT_LAST_USED_DATASOURCE } from 'app/features/dashboard/utils/dashboard';
+import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
+import { type DashboardDataDTO } from 'app/types/dashboard';
+
+import { PanelInspectDrawer } from '../../inspect/PanelInspectDrawer';
+import { PanelTimeRange, type PanelTimeRangeState } from '../../scene/panel-timerange/PanelTimeRange';
+import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
+import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
+import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
+import { activateSceneObjectAndParentTree, findVizPanelByKey } from '../../utils/utils';
+import { buildPanelEditScene } from '../PanelEditor';
+import {
+  testDashboard,
+  panelWithTransformations,
+  panelWithQueriesOnly,
+  testDashboardV2,
+} from '../testfiles/testDashboard';
+
+import { PanelDataPane } from './PanelDataPane';
+import { type PanelDataQueriesTab, PanelDataQueriesTabRendered } from './PanelDataQueriesTab';
+
+async function createModelMock() {
+  const { queriesTab } = await setupScene('panel-1');
+
+  // mock queryRunner data state
+  jest.spyOn(queriesTab.queryRunner, 'state', 'get').mockReturnValue({
+    ...queriesTab.queryRunner.state,
+    data: {
+      state: LoadingState.Done,
+      series: [
+        toDataFrame({
+          name: 'A',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+            { name: 'values', type: FieldType.number, values: [1, 2, 3] },
+          ],
+        }),
+      ],
+      timeRange: {} as TimeRange,
+    },
+  });
+
+  return queriesTab;
+}
+
+const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
+  const result: PanelData = {
+    state: LoadingState.Loading,
+    series: [],
+    timeRange: request.range,
+  };
+
+  return of([]).pipe(
+    map(() => {
+      result.state = LoadingState.Done;
+      result.series = [
+        toDataFrame({
+          name: 'A',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+            { name: 'values', type: FieldType.number, values: [1, 2, 3] },
+          ],
+        }),
+      ];
+
+      return result;
+    })
+  );
+});
+
+const ds1Mock: DataSourceApi = {
+  meta: {
+    id: 'grafana-testdata-datasource',
+  },
+  name: 'grafana-testdata-datasource',
+  type: 'grafana-testdata-datasource',
+  uid: 'gdev-testdata',
+  getRef: () => {
+    return { type: 'grafana-testdata-datasource', uid: 'gdev-testdata' };
+  },
+} as DataSourceApi<DataQuery, DataSourceJsonData, {}>;
+
+const ds2Mock: DataSourceApi = {
+  meta: {
+    id: 'grafana-prometheus-datasource',
+  },
+  name: 'grafana-prometheus-datasource',
+  type: 'grafana-prometheus-datasource',
+  uid: 'gdev-prometheus',
+  getRef: () => {
+    return { type: 'grafana-prometheus-datasource', uid: 'gdev-prometheus' };
+  },
+} as DataSourceApi<DataQuery, DataSourceJsonData, {}>;
+
+const ds3Mock: DataSourceApi = {
+  meta: {
+    id: DASHBOARD_DATASOURCE_PLUGIN_ID,
+  },
+  name: SHARED_DASHBOARD_QUERY,
+  type: SHARED_DASHBOARD_QUERY,
+  uid: SHARED_DASHBOARD_QUERY,
+  getRef: () => {
+    return { type: SHARED_DASHBOARD_QUERY, uid: SHARED_DASHBOARD_QUERY };
+  },
+} as DataSourceApi<DataQuery, DataSourceJsonData, {}>;
+
+const defaultDsMock: DataSourceApi = {
+  meta: {
+    id: 'grafana-testdata-datasource',
+  },
+  name: 'grafana-testdata-datasource',
+  type: 'grafana-testdata-datasource',
+  uid: 'gdev-testdata',
+  getRef: () => {
+    return { type: 'grafana-testdata-datasource', uid: 'gdev-testdata' };
+  },
+} as DataSourceApi<DataQuery, DataSourceJsonData, {}>;
+
+const instance1SettingsMock = {
+  id: 1,
+  uid: 'gdev-testdata',
+  name: 'testDs1',
+  type: 'grafana-testdata-datasource',
+  meta: {
+    id: 'grafana-testdata-datasource',
+    info: {
+      logos: {
+        small: 'test-logo.png',
+      },
+    },
+  },
+};
+
+const instance2SettingsMock = {
+  id: 1,
+  uid: 'gdev-prometheus',
+  name: 'testDs2',
+  type: 'grafana-prometheus-datasource',
+  meta: {
+    id: 'grafana-prometheus-datasource',
+  },
+};
+
+// Mocking the build in Grafana data source to avoid annotations data layer errors.
+const grafanaDs = {
+  id: 1,
+  uid: '-- Grafana --',
+  name: 'grafana',
+  type: 'grafana',
+  meta: {
+    id: 'grafana',
+  },
+};
+
+// Mocking the build in Grafana data source to avoid annotations data layer errors.
+const MixedDs = {
+  id: 5,
+  uid: '-- Mixed --',
+  name: 'Mixed',
+  type: 'datasource',
+  meta: {
+    id: 'grafana',
+    mixed: true,
+  },
+  getRef: () => {
+    return { type: 'datasource', uid: '-- Mixed --' };
+  },
+};
+
+const MixedDsSettingsMock = {
+  id: 5,
+  uid: '-- Mixed --',
+  name: 'Mixed',
+  type: 'datasource',
+  meta: {
+    id: 'grafana',
+    mixed: true,
+  },
+};
+
+const panelPlugin = getPanelPlugin({ id: 'timeseries', skipDataQuery: false });
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
+    return runRequestMock(ds, request);
+  },
+  getPluginImportUtils: () => ({
+    getPanelPluginFromCache: jest.fn(() => panelPlugin),
+  }),
+  getPluginLinkExtensions: jest.fn(),
+  getDataSourceSrv: () => ({
+    get: async (ref: DataSourceRef) => {
+      // Mocking the build in Grafana data source to avoid annotations data layer errors.
+      if (ref.uid === '-- Grafana --') {
+        return grafanaDs;
+      }
+
+      if (ref.uid === 'gdev-testdata') {
+        return ds1Mock;
+      }
+
+      if (ref.uid === 'gdev-prometheus') {
+        return ds2Mock;
+      }
+
+      if (ref.uid === '-- Mixed --') {
+        return MixedDs;
+      }
+
+      if (ref.uid === SHARED_DASHBOARD_QUERY) {
+        return ds3Mock;
+      }
+
+      // if datasource is not found, return default datasource
+      return defaultDsMock;
+    },
+    getInstanceSettings: (ref: DataSourceRef) => {
+      if (ref.uid === 'gdev-testdata') {
+        return instance1SettingsMock;
+      }
+
+      if (ref.uid === 'gdev-prometheus') {
+        return instance2SettingsMock;
+      }
+
+      if (ref.uid === '-- Mixed --') {
+        return MixedDsSettingsMock;
+      }
+
+      // if datasource is not found, return default instance settings
+      return instance1SettingsMock;
+    },
+    getList: () => [],
+  }),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    defaultDatasource: 'gdev-testdata',
+    expressionsEnabled: true,
+  },
+}));
+
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  store: {
+    exists: jest.fn(),
+    get: jest.fn(),
+    getObject: jest.fn((_a, b) => b),
+    setObject: jest.fn(),
+    delete: jest.fn(),
+  },
+}));
+
+// Mock QueryLibraryContext with minimal setup
+const mockOpenDrawer = jest.fn();
+const mockQueryLibraryEnabled = jest.fn(() => false);
+jest.mock('../../../explore/QueryLibrary/QueryLibraryContext', () => ({
+  useQueryLibraryContext: () => ({
+    openDrawer: mockOpenDrawer,
+    queryLibraryEnabled: mockQueryLibraryEnabled(),
+    renderSavedQueryButtons: jest.fn(() => null), // Add this to prevent errors
+  }),
+}));
+
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    hasPermission: jest.fn(),
+    isSignedIn: jest.fn(),
+    user: { uid: 'test-uid' },
+  },
+}));
+
+const mockContextSrv = jest.mocked(contextSrv);
+
+const data = jest.requireMock('@grafana/data');
+let deactivators = [] as Array<() => void>;
+
+describe('PanelDataQueriesTab', () => {
+  beforeEach(() => {
+    data.store.setObject.mockClear();
+    // Reset mocks to default state
+    mockOpenDrawer.mockClear();
+    mockQueryLibraryEnabled.mockReturnValue(false);
+    mockContextSrv.hasPermission.mockReturnValue(false);
+    mockContextSrv.user.isSignedIn = true;
+  });
+
+  afterEach(() => {
+    deactivators.forEach((deactivate) => deactivate());
+    deactivators = [];
+  });
+
+  describe('Add from saved queries button', () => {
+    it('should show button only when queryLibraryEnabled and canReadQueries are both true', async () => {
+      const modelMock = await createModelMock();
+
+      // Test: Button hidden when both flags are false
+      mockQueryLibraryEnabled.mockReturnValue(false);
+      mockContextSrv.hasPermission.mockReturnValue(false);
+      mockContextSrv.user.isSignedIn = true;
+      const { rerender } = render(<PanelDataQueriesTabRendered model={modelMock} />);
+      expect(screen.queryByTestId(selectors.components.QueryTab.addQueryFromLibrary)).not.toBeInTheDocument();
+
+      // Test: Button hidden when only queryLibraryEnabled is true
+      mockQueryLibraryEnabled.mockReturnValue(true);
+      mockContextSrv.hasPermission.mockReturnValue(false);
+      mockContextSrv.isSignedIn = false;
+      rerender(<PanelDataQueriesTabRendered model={modelMock} />);
+      expect(screen.queryByTestId(selectors.components.QueryTab.addQueryFromLibrary)).not.toBeInTheDocument();
+
+      // Test: Button hidden when only canReadQueries is true (non-RBAC mode)
+      mockQueryLibraryEnabled.mockReturnValue(false);
+      mockContextSrv.isSignedIn = true;
+      rerender(<PanelDataQueriesTabRendered model={modelMock} />);
+      expect(screen.queryByTestId(selectors.components.QueryTab.addQueryFromLibrary)).not.toBeInTheDocument();
+
+      // Test: Button visible when both are true (non-RBAC mode - isSignedIn)
+      mockQueryLibraryEnabled.mockReturnValue(true);
+      mockContextSrv.isSignedIn = true;
+      config.featureToggles.savedQueriesRBAC = false;
+      rerender(<PanelDataQueriesTabRendered model={modelMock} />);
+      let button = await screen.findByTestId(selectors.components.QueryTab.addQueryFromLibrary);
+      expect(button).toBeInTheDocument();
+      expect(screen.getByText('Add from saved queries')).toBeInTheDocument();
+
+      // Test: Button visible when both are true (RBAC mode - hasPermission)
+      config.featureToggles.savedQueriesRBAC = true;
+      mockContextSrv.isSignedIn = true;
+      mockContextSrv.hasPermission.mockReturnValue(true);
+      rerender(<PanelDataQueriesTabRendered model={modelMock} />);
+      button = await screen.findByTestId(selectors.components.QueryTab.addQueryFromLibrary);
+      expect(button).toBeInTheDocument();
+
+      // Test: Button click calls openDrawer with correct params
+      await userEvent.click(button);
+      expect(mockOpenDrawer).toHaveBeenCalledWith({
+        onSelectQuery: expect.any(Function),
+        options: {
+          context: CoreApp.PanelEditor,
+        },
+      });
+    });
+  });
+
+  describe('Adding queries', () => {
+    it('can add a new query', async () => {
+      const { queriesTab } = await setupScene('panel-1');
+
+      queriesTab.addQueryClick();
+
+      expect(queriesTab.queryRunner.state.queries).toHaveLength(2);
+      expect(queriesTab.queryRunner.state.queries[1].refId).toBe('B');
+      expect(queriesTab.queryRunner.state.queries[1].hide).toBe(false);
+      expect(queriesTab.queryRunner.state.queries[1].datasource).toEqual({
+        type: 'grafana-testdata-datasource',
+        uid: 'gdev-testdata',
+      });
+    });
+
+    it('Can add a new query when datasource is mixed', async () => {
+      const { queriesTab } = await setupScene('panel-7');
+
+      expect(queriesTab.state.datasource?.uid).toBe('-- Mixed --');
+      expect(queriesTab.queryRunner.state.datasource?.uid).toBe('-- Mixed --');
+
+      queriesTab.addQueryClick();
+
+      expect(queriesTab.queryRunner.state.queries).toHaveLength(2);
+      expect(queriesTab.queryRunner.state.queries[1].refId).toBe('B');
+      expect(queriesTab.queryRunner.state.queries[1].hide).toBe(false);
+      expect(queriesTab.queryRunner.state.queries[1].datasource?.uid).toBe('gdev-testdata');
+    });
+  });
+
+  describe('PanelDataQueriesTab', () => {
+    it('renders query group top section', async () => {
+      const modelMock = await createModelMock();
+
+      render(<PanelDataQueriesTabRendered model={modelMock}></PanelDataQueriesTabRendered>);
+      await screen.findByTestId(selectors.components.QueryTab.queryGroupTopSection);
+    });
+
+    it('renders queries rows when queries are set', async () => {
+      const modelMock = await createModelMock();
+      render(<PanelDataQueriesTabRendered model={modelMock}></PanelDataQueriesTabRendered>);
+
+      expect(await screen.findAllByTestId(selectors.components.QueryEditorRows.rows)).toHaveLength(1);
+    });
+
+    it('allow to add a new query when user clicks on add new', async () => {
+      const modelMock = await createModelMock();
+      jest.spyOn(modelMock, 'addQueryClick');
+      jest.spyOn(modelMock, 'onQueriesChange');
+      render(<PanelDataQueriesTabRendered model={modelMock}></PanelDataQueriesTabRendered>);
+
+      await screen.findByTestId(selectors.components.QueryTab.addQuery);
+      await userEvent.click(screen.getByTestId(selectors.components.QueryTab.addQuery));
+
+      const expectedQueries = [
+        {
+          datasource: { type: 'grafana-testdata-datasource', uid: 'gdev-testdata' },
+          refId: 'A',
+          scenarioId: 'random_walk',
+          seriesCount: 1,
+        },
+        { datasource: { type: 'grafana-testdata-datasource', uid: 'gdev-testdata' }, hide: false, refId: 'B' },
+      ];
+
+      expect(modelMock.addQueryClick).toHaveBeenCalled();
+      expect(modelMock.onQueriesChange).toHaveBeenCalledWith(expectedQueries);
+    });
+
+    it('allow to remove a query when user clicks on remove', async () => {
+      const modelMock = await createModelMock();
+      jest.spyOn(modelMock, 'addQueryClick');
+      jest.spyOn(modelMock, 'onQueriesChange');
+      render(<PanelDataQueriesTabRendered model={modelMock}></PanelDataQueriesTabRendered>);
+
+      await screen.findByTestId('data-testid Remove query');
+      await userEvent.click(screen.getByTestId('data-testid Remove query'));
+
+      expect(modelMock.onQueriesChange).toHaveBeenCalledWith([]);
+    });
+
+    it('renders add expression button when datasource meta.backend is true', async () => {
+      // arrange
+      const modelMock = await createModelMock();
+      const dsSettingsMock: DataSourceInstanceSettings<DataSourceJsonData> = {
+        uid: 'gdev-testdata',
+        name: 'testDs1',
+        type: 'grafana-testdata-datasource',
+        meta: {
+          id: 'grafana-testdata-datasource',
+          info: {
+            logos: {
+              small: 'test-logo.png',
+              large: 'test-logo.png',
+            },
+            author: {
+              name: '',
+              url: undefined,
+            },
+            description: '',
+            links: [],
+            screenshots: [],
+            updated: '',
+            version: '',
+          },
+          backend: true,
+          name: '',
+          type: PluginType.datasource,
+          module: '',
+          baseUrl: '',
+        },
+        readOnly: false,
+        jsonData: {},
+        access: 'proxy',
+      };
+      modelMock.setState({ datasource: ds1Mock, dsSettings: dsSettingsMock });
+
+      // act
+      render(<PanelDataQueriesTabRendered model={modelMock}></PanelDataQueriesTabRendered>);
+
+      // assert
+      await screen.findByTestId(selectors.components.QueryTab.addExpression);
+    });
+  });
+
+  describe('query options', () => {
+    describe('activation', () => {
+      it('should load data source', async () => {
+        const { queriesTab } = await setupScene('panel-1');
+
+        expect(queriesTab.state.datasource).toEqual(ds1Mock);
+        expect(queriesTab.state.dsSettings).toEqual(instance1SettingsMock);
+      });
+
+      it('should store loaded data source in local storage', async () => {
+        await setupScene('panel-1');
+
+        expect(data.store.setObject).toHaveBeenCalledWith('grafana.dashboards.panelEdit.lastUsedDatasource', {
+          dashboardUid: 'ffbe00e2-803c-4d49-adb7-41aad336234f',
+          datasourceUid: 'gdev-testdata',
+        });
+      });
+
+      it('should load default datasource if the datasource passed is not found', async () => {
+        const { queriesTab } = await setupScene('panel-6');
+
+        expect(queriesTab.queryRunner.state.datasource).toEqual({
+          uid: 'abc',
+          type: 'datasource',
+        });
+
+        expect(config.defaultDatasource).toBe('gdev-testdata');
+        expect(queriesTab.state.datasource).toEqual(defaultDsMock);
+        expect(queriesTab.state.dsSettings).toEqual(instance1SettingsMock);
+      });
+    });
+
+    describe('data source change', () => {
+      it('should load new data source', async () => {
+        const { queriesTab, panel } = await setupScene('panel-1');
+        panel.state.$data?.activate();
+
+        await queriesTab.onChangeDataSource(
+          { type: 'grafana-prometheus-datasource', uid: 'gdev-prometheus' } as DataSourceInstanceSettings,
+          []
+        );
+
+        expect(data.store.setObject).toHaveBeenCalledTimes(2);
+        expect(data.store.setObject).toHaveBeenLastCalledWith('grafana.dashboards.panelEdit.lastUsedDatasource', {
+          dashboardUid: 'ffbe00e2-803c-4d49-adb7-41aad336234f',
+          datasourceUid: 'gdev-prometheus',
+        });
+
+        expect(queriesTab.state.datasource).toEqual(ds2Mock);
+        expect(queriesTab.state.dsSettings).toEqual(instance2SettingsMock);
+      });
+    });
+
+    describe('query options change', () => {
+      describe('time overrides', () => {
+        it('should create PanelTimeRange object', async () => {
+          const { queriesTab, panel } = await setupScene('panel-1');
+
+          panel.state.$data?.activate();
+
+          expect(panel.state.$timeRange).toBeUndefined();
+
+          queriesTab.onQueryOptionsChange({
+            dataSource: { name: 'grafana-testdata', type: 'grafana-testdata-datasource', default: true },
+            queries: [],
+            timeRange: { from: '1h' },
+          });
+
+          expect(panel.state.$timeRange).toBeInstanceOf(PanelTimeRange);
+        });
+
+        it('should update hoverHeader', async () => {
+          const { queriesTab, panel } = await setupScene('panel-1');
+
+          panel.setState({ title: '', hoverHeader: true });
+
+          panel.state.$data?.activate();
+
+          queriesTab.onQueryOptionsChange({
+            dataSource: { name: 'grafana-testdata', type: 'grafana-testdata-datasource', default: true },
+            queries: [],
+            timeRange: { from: '1h' },
+          });
+
+          expect(panel.state.hoverHeader).toBe(false);
+        });
+
+        it('should update PanelTimeRange object on time options update', async () => {
+          const { queriesTab, panel } = await setupScene('panel-1');
+
+          expect(panel.state.$timeRange).toBeUndefined();
+
+          queriesTab.onQueryOptionsChange({
+            dataSource: { name: 'grafana-testdata', type: 'grafana-testdata-datasource', default: true },
+            queries: [],
+            timeRange: { from: '1h' },
+          });
+
+          expect(panel.state.$timeRange).toBeInstanceOf(PanelTimeRange);
+          expect((panel.state.$timeRange?.state as PanelTimeRangeState).timeFrom).toBe('1h');
+
+          queriesTab.onQueryOptionsChange({
+            dataSource: { name: 'grafana-testdata', type: 'grafana-testdata-datasource', default: true },
+            queries: [],
+            timeRange: { from: '2h' },
+          });
+
+          expect((panel.state.$timeRange?.state as PanelTimeRangeState).timeFrom).toBe('2h');
+        });
+
+        it('should remove PanelTimeRange object on time options cleared', async () => {
+          const { queriesTab, panel } = await setupScene('panel-1');
+
+          expect(panel.state.$timeRange).toBeUndefined();
+
+          queriesTab.onQueryOptionsChange({
+            dataSource: { name: 'grafana-testdata', type: 'grafana-testdata-datasource', default: true },
+            queries: [],
+            timeRange: { from: '1h' },
+          });
+
+          queriesTab.onQueryOptionsChange({
+            dataSource: {
+              name: 'grafana-testdata',
+              type: 'grafana-testdata-datasource',
+              default: true,
+            },
+            queries: [],
+            timeRange: { from: null },
+          });
+
+          expect(panel.state.$timeRange).toBeUndefined();
+        });
+
+        it('should preserve compareWith when updating other query options', async () => {
+          const { queriesTab, panel } = await setupScene('panel-1');
+
+          panel.setState({ $timeRange: new PanelTimeRange({ compareWith: '1d' }) });
+
+          queriesTab.onQueryOptionsChange({
+            dataSource: { name: 'grafana-testdata', type: 'grafana-testdata-datasource', default: true },
+            queries: [],
+            maxDataPoints: 100,
+            timeRange: { from: undefined, shift: undefined },
+          });
+
+          expect(panel.state.$timeRange).toBeInstanceOf(PanelTimeRange);
+          expect((panel.state.$timeRange?.state as PanelTimeRangeState).compareWith).toBe('1d');
+        });
+      });
+
+      describe('max data points and interval', () => {
+        it('should update max data points', async () => {
+          const { queriesTab } = await setupScene('panel-1');
+          const dataObj = queriesTab.queryRunner;
+
+          expect(dataObj.state.maxDataPoints).toBeUndefined();
+
+          queriesTab.onQueryOptionsChange({
+            dataSource: { name: 'grafana-testdata', type: 'grafana-testdata-datasource', default: true },
+            queries: [],
+            maxDataPoints: 100,
+          });
+
+          expect(dataObj.state.maxDataPoints).toBe(100);
+        });
+
+        it('should update min interval', async () => {
+          const { queriesTab } = await setupScene('panel-1');
+          const dataObj = queriesTab.queryRunner;
+
+          expect(dataObj.state.maxDataPoints).toBeUndefined();
+
+          queriesTab.onQueryOptionsChange({
+            dataSource: { name: 'grafana-testdata', type: 'grafana-testdata-datasource', default: true },
+            queries: [],
+            minInterval: '1s',
+          });
+          expect(dataObj.state.minInterval).toBe('1s');
+        });
+
+        it('should update min interval to undefined if empty input', async () => {
+          const { queriesTab } = await setupScene('panel-1');
+          const dataObj = queriesTab.queryRunner;
+
+          expect(dataObj.state.maxDataPoints).toBeUndefined();
+
+          queriesTab.onQueryOptionsChange({
+            dataSource: { name: 'grafana-testdata', type: 'grafana-testdata-datasource', default: true },
+            queries: [],
+            minInterval: '1s',
+          });
+          expect(dataObj.state.minInterval).toBe('1s');
+
+          queriesTab.onQueryOptionsChange({
+            dataSource: { name: 'grafana-testdata', type: 'grafana-testdata-datasource', default: true },
+            queries: [],
+            minInterval: null,
+          });
+          expect(dataObj.state.minInterval).toBe(undefined);
+        });
+      });
+
+      describe('query caching', () => {
+        it('updates cacheTimeout and queryCachingTTL', async () => {
+          const { queriesTab } = await setupScene('panel-1');
+          const dataObj = queriesTab.queryRunner;
+
+          queriesTab.onQueryOptionsChange({
+            cacheTimeout: '60',
+            queryCachingTTL: 200000,
+            dataSource: { name: 'grafana-testdata', type: 'grafana-testdata-datasource', default: true },
+            queries: [],
+          });
+
+          expect(dataObj.state.cacheTimeout).toBe('60');
+          expect(dataObj.state.queryCachingTTL).toBe(200000);
+        });
+      });
+    });
+
+    describe('query inspection', () => {
+      it('allows query inspection from the tab', async () => {
+        const { queriesTab, scene } = await setupScene('panel-1');
+        queriesTab.onOpenInspector();
+
+        expect(scene.state.overlay).toBeInstanceOf(PanelInspectDrawer);
+      });
+    });
+
+    describe('data source change', () => {
+      it('changing from one plugin to another', async () => {
+        const { queriesTab } = await setupScene('panel-1');
+
+        expect(queriesTab.queryRunner.state.datasource).toEqual({
+          uid: 'gdev-testdata',
+          type: 'grafana-testdata-datasource',
+        });
+
+        await queriesTab.onChangeDataSource({
+          name: 'grafana-prometheus',
+          type: 'grafana-prometheus-datasource',
+          uid: 'gdev-prometheus',
+          meta: {
+            name: 'Prometheus',
+            module: 'prometheus',
+            id: 'grafana-prometheus-datasource',
+          },
+        } as DataSourceInstanceSettings);
+
+        expect(queriesTab.queryRunner.state.datasource).toEqual({
+          uid: 'gdev-prometheus',
+          type: 'grafana-prometheus-datasource',
+        });
+      });
+
+      it('changing from a plugin to a dashboard data source', async () => {
+        const { queriesTab } = await setupScene('panel-1');
+
+        expect(queriesTab.queryRunner.state.datasource).toEqual({
+          uid: 'gdev-testdata',
+          type: 'grafana-testdata-datasource',
+        });
+
+        await queriesTab.onChangeDataSource({
+          name: SHARED_DASHBOARD_QUERY,
+          type: 'datasource',
+          uid: SHARED_DASHBOARD_QUERY,
+          meta: {
+            name: 'Prometheus',
+            module: 'prometheus',
+            id: DASHBOARD_DATASOURCE_PLUGIN_ID,
+          },
+        } as DataSourceInstanceSettings);
+
+        expect(queriesTab.queryRunner.state.datasource).toEqual({
+          uid: SHARED_DASHBOARD_QUERY,
+          type: 'datasource',
+        });
+      });
+
+      it('changing from dashboard data source to a plugin', async () => {
+        const { queriesTab } = await setupScene('panel-3');
+
+        expect(queriesTab.queryRunner.state.datasource).toEqual({ uid: SHARED_DASHBOARD_QUERY, type: 'datasource' });
+
+        await queriesTab.onChangeDataSource({
+          name: 'grafana-prometheus',
+          type: 'grafana-prometheus-datasource',
+          uid: 'gdev-prometheus',
+          meta: {
+            name: 'Prometheus',
+            module: 'prometheus',
+            id: 'grafana-prometheus-datasource',
+          },
+        } as DataSourceInstanceSettings);
+
+        expect(queriesTab.queryRunner.state.datasource).toEqual({
+          uid: 'gdev-prometheus',
+          type: 'grafana-prometheus-datasource',
+        });
+      });
+    });
+
+    describe('change queries', () => {
+      describe('plugin queries', () => {
+        it('should update queries', async () => {
+          const { queriesTab, panel } = await setupScene('panel-1');
+
+          panel.state.$data?.activate();
+
+          queriesTab.onQueriesChange([
+            {
+              datasource: { type: 'grafana-testdata-datasource', uid: 'gdev-testdata' },
+              refId: 'A',
+              scenarioId: 'random_walk',
+              seriesCount: 5,
+            },
+          ]);
+
+          expect(queriesTab.queryRunner.state.queries).toEqual([
+            {
+              datasource: { type: 'grafana-testdata-datasource', uid: 'gdev-testdata' },
+              refId: 'A',
+              scenarioId: 'random_walk',
+              seriesCount: 5,
+            },
+          ]);
+        });
+      });
+
+      describe('dashboard queries', () => {
+        it('should update queries', async () => {
+          const { queriesTab, panel } = await setupScene('panel-3');
+
+          panel.state.$data?.activate();
+
+          // Changing dashboard query to a panel with transformations
+          queriesTab.onQueriesChange([
+            {
+              refId: 'A',
+              datasource: { type: DASHBOARD_DATASOURCE_PLUGIN_ID },
+              panelId: panelWithTransformations.id,
+            },
+          ]);
+
+          expect(queriesTab.queryRunner.state.queries[0].panelId).toEqual(panelWithTransformations.id);
+
+          // Changing dashboard query to a panel with queries only
+          queriesTab.onQueriesChange([
+            {
+              refId: 'A',
+              datasource: { type: DASHBOARD_DATASOURCE_PLUGIN_ID },
+              panelId: panelWithQueriesOnly.id,
+            },
+          ]);
+
+          expect(queriesTab.queryRunner.state.queries[0].panelId).toBe(panelWithQueriesOnly.id);
+        });
+
+        it('should load last used data source if no data source specified for a panel', async () => {
+          data.store.exists.mockReturnValue(true);
+          data.store.getObject.mockImplementation((key: string, def: unknown) => {
+            if (key === PANEL_EDIT_LAST_USED_DATASOURCE) {
+              return {
+                dashboardUid: 'ffbe00e2-803c-4d49-adb7-41aad336234f',
+                datasourceUid: 'gdev-testdata',
+              };
+            }
+            return def;
+          });
+
+          const { queriesTab } = await setupScene('panel-5');
+
+          expect(queriesTab.state.datasource).toBe(ds1Mock);
+          expect(queriesTab.state.dsSettings).toBe(instance1SettingsMock);
+        });
+      });
+    });
+
+    describe('updateDatasourceIfNeeded', () => {
+      it('should update datasource when different datasource reference is provided', async () => {
+        const { queriesTab } = await setupScene('panel-1');
+
+        // Initially should have testdata datasource
+        expect(queriesTab.state.datasource?.uid).toBe('gdev-testdata');
+
+        // Call updateDatasourceIfNeeded with prometheus datasource
+        await queriesTab.updateDatasourceIfNeeded({ uid: 'gdev-prometheus' });
+
+        // Should update to prometheus datasource
+        expect(queriesTab.state.datasource?.uid).toBe('gdev-prometheus');
+        expect(queriesTab.state.dsSettings?.uid).toBe('gdev-prometheus');
+      });
+
+      it('should not update datasource when same datasource reference is provided', async () => {
+        const { queriesTab } = await setupScene('panel-1');
+
+        // Initially should have testdata datasource
+        expect(queriesTab.state.datasource?.uid).toBe('gdev-testdata');
+
+        const originalDatasource = queriesTab.state.datasource;
+        const originalDsSettings = queriesTab.state.dsSettings;
+
+        // Call updateDatasourceIfNeeded with same datasource
+        await queriesTab.updateDatasourceIfNeeded({ uid: 'gdev-testdata' });
+
+        // Should not change the datasource
+        expect(queriesTab.state.datasource).toBe(originalDatasource);
+        expect(queriesTab.state.dsSettings).toBe(originalDsSettings);
+      });
+
+      it('should update datasource to mixed when mixed datasource reference is provided', async () => {
+        const { queriesTab } = await setupScene('panel-1');
+
+        // Initially should have testdata datasource
+        expect(queriesTab.state.datasource?.uid).toBe('gdev-testdata');
+
+        // Call updateDatasourceIfNeeded with mixed datasource
+        await queriesTab.updateDatasourceIfNeeded({ uid: '-- Mixed --' });
+
+        // Should update to mixed datasource
+        expect(queriesTab.state.datasource?.uid).toBe('-- Mixed --');
+        expect(queriesTab.state.dsSettings?.uid).toBe('-- Mixed --');
+      });
+
+      it('should handle case when datasource instance settings are not found', async () => {
+        const { queriesTab } = await setupScene('panel-1');
+
+        // Initially should have testdata datasource
+        expect(queriesTab.state.datasource?.uid).toBe('gdev-testdata');
+
+        // Call updateDatasourceIfNeeded with non-existent datasource
+        await queriesTab.updateDatasourceIfNeeded({ uid: 'non-existent-ds' });
+
+        // Should fall back to default datasource (since mock returns default when not found)
+        expect(queriesTab.state.datasource?.uid).toBe('gdev-testdata');
+        expect(queriesTab.state.dsSettings?.uid).toBe('gdev-testdata');
+      });
+    });
+
+    describe('V2 schema behavior - panel datasource undefined but queries have datasource', () => {
+      it('should load datasource from first query for V2 panel with prometheus datasource', async () => {
+        // panel-1 has a query with prometheus datasource
+        const { queriesTab } = await setupV2Scene('panel-1');
+
+        // V2 panels have undefined panel-level datasource for non-mixed panels
+        expect(queriesTab.queryRunner.state.datasource).toBeUndefined();
+
+        // But the query has its own datasource
+        expect(queriesTab.queryRunner.state.queries[0].datasource).toEqual({
+          type: 'grafana-prometheus-datasource',
+          uid: 'gdev-prometheus',
+        });
+
+        // Should load the datasource from the first query
+        expect(queriesTab.state.datasource?.uid).toBe('gdev-prometheus');
+        expect(queriesTab.state.dsSettings?.uid).toBe('gdev-prometheus');
+      });
+
+      it('should load datasource from first query for V2 panel with testdata datasource', async () => {
+        // panel-2 has a query with testdata datasource
+        const { queriesTab } = await setupV2Scene('panel-2');
+
+        // V2 panels have undefined panel-level datasource for non-mixed panels
+        expect(queriesTab.queryRunner.state.datasource).toBeUndefined();
+
+        // But the query has its own datasource
+        expect(queriesTab.queryRunner.state.queries[0].datasource).toEqual({
+          type: 'grafana-testdata-datasource',
+          uid: 'gdev-testdata',
+        });
+
+        // Should load the datasource from the first query
+        expect(queriesTab.state.datasource?.uid).toBe('gdev-testdata');
+        expect(queriesTab.state.dsSettings?.uid).toBe('gdev-testdata');
+      });
+
+      it('should fall back to last used datasource when V2 query has no explicit datasource', async () => {
+        data.store.exists.mockReturnValue(true);
+        data.store.getObject.mockImplementation((key: string, def: unknown) => {
+          if (key === PANEL_EDIT_LAST_USED_DATASOURCE) {
+            return {
+              dashboardUid: 'v2-dashboard-uid',
+              datasourceUid: 'gdev-testdata',
+            };
+          }
+          return def;
+        });
+
+        // panel-3 has a query with NO explicit datasource (datasource.name is undefined)
+        const { queriesTab } = await setupV2Scene('panel-3');
+
+        // V2 panel with no explicit datasource on query should fall back to last used
+        expect(queriesTab.state.datasource?.uid).toBe('gdev-testdata');
+        expect(queriesTab.state.dsSettings?.uid).toBe('gdev-testdata');
+      });
+
+      it('should use panel-level datasource when available (V1 behavior preserved)', async () => {
+        const { queriesTab } = await setupScene('panel-1');
+
+        // V1 panels have panel-level datasource set
+        expect(queriesTab.queryRunner.state.datasource).toEqual({
+          uid: 'gdev-testdata',
+          type: 'grafana-testdata-datasource',
+        });
+
+        // Should use the panel-level datasource
+        expect(queriesTab.state.datasource?.uid).toBe('gdev-testdata');
+        expect(queriesTab.state.dsSettings?.uid).toBe('gdev-testdata');
+      });
+    });
+  });
+});
+
+async function setupScene(panelId: string) {
+  const dashboard = transformSaveModelToScene({ dashboard: testDashboard as unknown as DashboardDataDTO, meta: {} });
+  const panel = findVizPanelByKey(dashboard, panelId)!;
+
+  const panelEditor = buildPanelEditScene(panel);
+  dashboard.setState({ editPanel: panelEditor });
+
+  const deactivate = activateSceneObjectAndParentTree(panel);
+
+  deactivators.push(deactivate!);
+  deactivators.push(panelEditor.activate());
+
+  const dataPane = panelEditor.state.dataPane;
+  if (!dataPane || !(dataPane instanceof PanelDataPane)) {
+    throw new Error('Expected PanelDataPane for this test');
+  }
+  const queriesTab = dataPane.state.tabs[0] as PanelDataQueriesTab;
+  deactivators.push(queriesTab.activate());
+
+  await Promise.resolve();
+
+  return { panel, scene: dashboard, queriesTab };
+}
+
+// Setup V2 scene - uses transformSaveModelSchemaV2ToScene
+async function setupV2Scene(panelKey: string) {
+  const dashboard = transformSaveModelSchemaV2ToScene(testDashboardV2);
+
+  const vizPanels = (dashboard.state.body as DashboardLayoutManager).getVizPanels();
+  const panel = vizPanels.find((p) => p.state.key === panelKey)!;
+
+  const panelEditor = buildPanelEditScene(panel);
+  dashboard.setState({ editPanel: panelEditor });
+
+  const deactivate = activateSceneObjectAndParentTree(panel);
+
+  deactivators.push(deactivate!);
+  deactivators.push(panelEditor.activate());
+
+  const dataPane = panelEditor.state.dataPane;
+  if (!dataPane || !(dataPane instanceof PanelDataPane)) {
+    throw new Error('Expected PanelDataPane for this test');
+  }
+  const queriesTab = dataPane.state.tabs[0] as PanelDataQueriesTab;
+  deactivators.push(queriesTab.activate());
+
+  await Promise.resolve();
+
+  return { panel, scene: dashboard, queriesTab };
+}

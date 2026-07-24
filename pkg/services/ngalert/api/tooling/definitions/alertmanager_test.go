@@ -1,0 +1,261 @@
+package definitions
+
+import (
+	"embed"
+	"encoding/json"
+	"path"
+	"reflect"
+	"testing"
+
+	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v3"
+)
+
+//go:embed test-data/*.*
+var testData embed.FS
+
+func Test_GettableStatusUnmarshalJSON(t *testing.T) {
+	incoming, err := testData.ReadFile(path.Join("test-data", "gettable-status.json"))
+	require.Nil(t, err)
+
+	var actual GettableStatus
+	require.NoError(t, json.Unmarshal(incoming, &actual))
+
+	actualJson, err := json.Marshal(actual)
+	require.NoError(t, err)
+
+	expected, err := testData.ReadFile(path.Join("test-data", "gettable-status-expected.json"))
+	require.NoError(t, err)
+	assert.JSONEq(t, string(expected), string(actualJson))
+
+	v := reflect.ValueOf(actual.Config.Config)
+	ty := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		fieldName := ty.Field(i).Name
+		assert.False(t, field.IsZero(), "Field %s should not be zero value", fieldName)
+	}
+}
+
+func Test_Marshaling_Validation(t *testing.T) {
+	jsonEncoded, err := testData.ReadFile(path.Join("test-data", "alertmanager_test_artifact.json"))
+	require.Nil(t, err)
+
+	var tmp GettableUserConfig
+	require.Nil(t, json.Unmarshal(jsonEncoded, &tmp))
+
+	expected := []model.LabelName{"alertname"}
+	require.Equal(t, expected, tmp.AlertmanagerConfig.Route.GroupBy)
+}
+
+func Test_RawMessageMarshaling(t *testing.T) {
+	type Data struct {
+		Field RawMessage `json:"field" yaml:"field"`
+	}
+
+	t.Run("should unmarshal nil", func(t *testing.T) {
+		v := Data{
+			Field: nil,
+		}
+		data, err := json.Marshal(v)
+		require.NoError(t, err)
+		assert.JSONEq(t, `{ "field": null }`, string(data))
+
+		var n Data
+		require.NoError(t, json.Unmarshal(data, &n))
+		assert.Equal(t, RawMessage("null"), n.Field)
+
+		data, err = yaml.Marshal(&v)
+		require.NoError(t, err)
+		assert.Equal(t, "field: null\n", string(data))
+
+		require.NoError(t, yaml.Unmarshal(data, &n))
+		assert.Nil(t, n.Field)
+	})
+
+	t.Run("should unmarshal value", func(t *testing.T) {
+		v := Data{
+			Field: RawMessage(`{ "data": "test"}`),
+		}
+		data, err := json.Marshal(v)
+		require.NoError(t, err)
+		assert.JSONEq(t, `{"field":{"data":"test"}}`, string(data))
+
+		var n Data
+		require.NoError(t, json.Unmarshal(data, &n))
+		assert.Equal(t, RawMessage(`{"data":"test"}`), n.Field)
+
+		data, err = yaml.Marshal(&v)
+		require.NoError(t, err)
+		assert.Equal(t, "field:\n    data: test\n", string(data))
+
+		require.NoError(t, yaml.Unmarshal(data, &n))
+		assert.Equal(t, RawMessage(`{"data":"test"}`), n.Field)
+	})
+}
+
+func TestExtraConfiguration_Validate(t *testing.T) {
+	testCases := []struct {
+		name          string
+		config        ExtraConfiguration
+		expectedError string
+	}{
+		{
+			name: "valid configuration",
+			config: ExtraConfiguration{
+				Identifier: "test-config",
+				AlertmanagerConfig: `route:
+  receiver: default
+receivers:
+  - name: default`,
+			},
+		},
+		{
+			name: "empty identifier",
+			config: ExtraConfiguration{
+				Identifier:         "",
+				AlertmanagerConfig: `route: {receiver: default}`,
+			},
+			expectedError: "identifier is required",
+		},
+		{
+			name: "invalid YAML alertmanager config",
+			config: ExtraConfiguration{
+				Identifier:         "test-config",
+				AlertmanagerConfig: `invalid: yaml: content: [`,
+			},
+			expectedError: "failed to parse alertmanager config",
+		},
+		{
+			name: "missing route in alertmanager config",
+			config: ExtraConfiguration{
+				Identifier: "test-config",
+				AlertmanagerConfig: `receivers:
+  - name: default`,
+			},
+			expectedError: "no routes provided",
+		},
+		{
+			name: "missing receivers in alertmanager config",
+			config: ExtraConfiguration{
+				Identifier: "test-config",
+				AlertmanagerConfig: `route:
+  receiver: default`,
+			},
+			expectedError: "undefined receiver",
+		},
+		{
+			name: "empty alertmanager config",
+			config: ExtraConfiguration{
+				Identifier:         "test-config",
+				AlertmanagerConfig: "",
+			},
+			expectedError: "failed to parse alertmanager config",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.config.Validate()
+			if tc.expectedError == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, tc.expectedError)
+			}
+		})
+	}
+}
+
+// Regression test: upstream Mimir/Cortex-compat Alertmanagers return an empty,
+// null, or missing `alertmanager_config` when no config has been saved. Before
+// the fix, UnmarshalYAML/UnmarshalJSON left amSimple nil, which made the
+// subsequent MarshalJSON return a 500 on GET config requests.
+func Test_ExternalAlertmanagerConfig_EmptyUpstreamConfig_RoundTrip(t *testing.T) {
+	t.Run("YAML", func(t *testing.T) {
+		for _, tc := range []struct {
+			desc  string
+			input string
+		}{
+			{
+				desc: "empty string",
+				input: `
+template_files: {}
+alertmanager_config: ""
+`,
+			},
+			{
+				desc: "null",
+				input: `
+template_files: {}
+alertmanager_config: null
+`,
+			},
+			{
+				desc: "missing",
+				input: `
+template_files: {}
+`,
+			},
+		} {
+			t.Run(tc.desc, func(t *testing.T) {
+				var cfg ExternalAlertmanagerConfig
+				require.NoError(t, yaml.Unmarshal([]byte(tc.input), &cfg))
+				require.NotNil(t, cfg.amSimple, "amSimple must be non-nil so Marshal does not error")
+
+				out, err := yaml.Marshal(&cfg)
+				require.NoError(t, err, "YAML round-trip must not error for empty upstream config")
+				require.NotEmpty(t, out)
+
+				jsonOut, err := json.Marshal(&cfg)
+				require.NoError(t, err, "JSON re-encode must not error for empty upstream config")
+				require.NotEmpty(t, jsonOut)
+			})
+		}
+	})
+
+	t.Run("JSON", func(t *testing.T) {
+		for _, tc := range []struct {
+			desc  string
+			input string
+		}{
+			{
+				desc:  "null",
+				input: `{"template_files":{},"alertmanager_config":null}`,
+			},
+			{
+				desc:  "missing",
+				input: `{"template_files":{}}`,
+			},
+			{
+				desc:  "empty object",
+				input: `{"template_files":{},"alertmanager_config":{}}`,
+			},
+		} {
+			t.Run(tc.desc, func(t *testing.T) {
+				var cfg ExternalAlertmanagerConfig
+				require.NoError(t, json.Unmarshal([]byte(tc.input), &cfg))
+				require.NotNil(t, cfg.amSimple, "amSimple must be non-nil so Marshal does not error")
+
+				jsonOut, err := json.Marshal(&cfg)
+				require.NoError(t, err, "JSON round-trip must not error for empty upstream config")
+				require.NotEmpty(t, jsonOut)
+
+				yamlOut, err := yaml.Marshal(&cfg)
+				require.NoError(t, err, "YAML re-encode must not error for empty upstream config")
+				require.NotEmpty(t, yamlOut)
+			})
+		}
+	})
+
+	// Guard against accidental removal of the nil-check in Marshal: a
+	// zero-value struct that was never decoded must still error out.
+	t.Run("undecoded struct still errors on marshal", func(t *testing.T) {
+		var cfg ExternalAlertmanagerConfig
+		_, err := json.Marshal(&cfg)
+		require.Error(t, err)
+		_, err = yaml.Marshal(&cfg)
+		require.Error(t, err)
+	})
+}

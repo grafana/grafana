@@ -1,0 +1,314 @@
+package mathexp
+
+import (
+	"fmt"
+	"testing"
+	"time"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestResampleSeries(t *testing.T) {
+	var tests = []struct {
+		name             string
+		interval         time.Duration
+		downsampler      ReducerID
+		upsampler        Upsampler
+		timeRange        backend.TimeRange
+		seriesToResample Series
+		series           Series
+		expectedError    string
+	}{
+		{
+			name:        "resample series: time range shorter than the rule interval",
+			interval:    time.Second * 5,
+			downsampler: "mean",
+			upsampler:   "fillna",
+			timeRange: backend.TimeRange{
+				From: time.Unix(0, 0),
+				To:   time.Unix(4, 0),
+			},
+			seriesToResample: makeSeries("", nil, tp{
+				time.Unix(2, 0), new(2.0),
+			}, tp{
+				time.Unix(7, 0), new(1.0),
+			}),
+		},
+		{
+			name:        "resample series: invalid time range",
+			interval:    time.Second * 5,
+			downsampler: "mean",
+			upsampler:   "fillna",
+			timeRange: backend.TimeRange{
+				From: time.Unix(11, 0),
+				To:   time.Unix(0, 0),
+			},
+			seriesToResample: makeSeries("", nil, tp{
+				time.Unix(2, 0), new(2.0),
+			}, tp{
+				time.Unix(7, 0), new(1.0),
+			}),
+		},
+		{
+			name:        "resample series: downsampling (mean / pad)",
+			interval:    time.Second * 5,
+			downsampler: "mean",
+			upsampler:   "pad",
+			timeRange: backend.TimeRange{
+				From: time.Unix(0, 0),
+				To:   time.Unix(16, 0),
+			},
+			seriesToResample: makeSeries("", nil, tp{
+				time.Unix(2, 0), new(2.0),
+			}, tp{
+				time.Unix(4, 0), new(3.0),
+			}, tp{
+				time.Unix(7, 0), new(1.0),
+			}, tp{
+				time.Unix(9, 0), new(2.0),
+			}),
+			series: makeSeries("", nil, tp{
+				time.Unix(0, 0), nil,
+			}, tp{
+				time.Unix(5, 0), new(2.5),
+			}, tp{
+				time.Unix(10, 0), new(1.5),
+			}, tp{
+				time.Unix(15, 0), new(2.0),
+			}),
+		},
+		{
+			name:        "resample series: downsampling (max / fillna)",
+			interval:    time.Second * 5,
+			downsampler: "max",
+			upsampler:   "fillna",
+			timeRange: backend.TimeRange{
+				From: time.Unix(0, 0),
+				To:   time.Unix(16, 0),
+			},
+			seriesToResample: makeSeries("", nil, tp{
+				time.Unix(2, 0), new(2.0),
+			}, tp{
+				time.Unix(4, 0), new(3.0),
+			}, tp{
+				time.Unix(7, 0), new(1.0),
+			}, tp{
+				time.Unix(9, 0), new(2.0),
+			}),
+			series: makeSeries("", nil, tp{
+				time.Unix(0, 0), nil,
+			}, tp{
+				time.Unix(5, 0), new(3.0),
+			}, tp{
+				time.Unix(10, 0), new(2.0),
+			}, tp{
+				time.Unix(15, 0), nil,
+			}),
+		},
+		{
+			name:        "resample series: downsampling (min / fillna)",
+			interval:    time.Second * 5,
+			downsampler: "min",
+			upsampler:   "fillna",
+			timeRange: backend.TimeRange{
+				From: time.Unix(0, 0),
+				To:   time.Unix(16, 0),
+			},
+			seriesToResample: makeSeries("", nil, tp{
+				time.Unix(2, 0), new(2.0),
+			}, tp{
+				time.Unix(4, 0), new(3.0),
+			}, tp{
+				time.Unix(7, 0), new(1.0),
+			}, tp{
+				time.Unix(9, 0), new(2.0),
+			}),
+			series: makeSeries("", nil, tp{
+				time.Unix(0, 0), nil,
+			}, tp{
+				time.Unix(5, 0), new(2.0),
+			}, tp{
+				time.Unix(10, 0), new(1.0),
+			}, tp{
+				time.Unix(15, 0), nil,
+			}),
+		},
+		{
+			name:        "resample series: downsampling (sum / fillna)",
+			interval:    time.Second * 5,
+			downsampler: "sum",
+			upsampler:   "fillna",
+			timeRange: backend.TimeRange{
+				From: time.Unix(0, 0),
+				To:   time.Unix(16, 0),
+			},
+			seriesToResample: makeSeries("", nil, tp{
+				time.Unix(2, 0), new(2.0),
+			}, tp{
+				time.Unix(4, 0), new(3.0),
+			}, tp{
+				time.Unix(7, 0), new(1.0),
+			}, tp{
+				time.Unix(9, 0), new(2.0),
+			}),
+			series: makeSeries("", nil, tp{
+				time.Unix(0, 0), nil,
+			}, tp{
+				time.Unix(5, 0), new(5.0),
+			}, tp{
+				time.Unix(10, 0), new(3.0),
+			}, tp{
+				time.Unix(15, 0), nil,
+			}),
+		},
+		{
+			name:        "resample series: downsampling (mean / fillna)",
+			interval:    time.Second * 5,
+			downsampler: "mean",
+			upsampler:   "fillna",
+			timeRange: backend.TimeRange{
+				From: time.Unix(0, 0),
+				To:   time.Unix(16, 0),
+			},
+			seriesToResample: makeSeries("", nil, tp{
+				time.Unix(2, 0), new(2.0),
+			}, tp{
+				time.Unix(4, 0), new(3.0),
+			}, tp{
+				time.Unix(7, 0), new(1.0),
+			}, tp{
+				time.Unix(9, 0), new(2.0),
+			}),
+			series: makeSeries("", nil, tp{
+				time.Unix(0, 0), nil,
+			}, tp{
+				time.Unix(5, 0), new(2.5),
+			}, tp{
+				time.Unix(10, 0), new(1.5),
+			}, tp{
+				time.Unix(15, 0), nil,
+			}),
+		},
+		{
+			name:        "resample series: upsampling (mean / pad )",
+			interval:    time.Second * 2,
+			downsampler: "mean",
+			upsampler:   "pad",
+			timeRange: backend.TimeRange{
+				From: time.Unix(0, 0),
+				To:   time.Unix(11, 0),
+			},
+			seriesToResample: makeSeries("", nil, tp{
+				time.Unix(2, 0), new(2.0),
+			}, tp{
+				time.Unix(7, 0), new(1.0),
+			}),
+			series: makeSeries("", nil, tp{
+				time.Unix(0, 0), nil,
+			}, tp{
+				time.Unix(2, 0), new(2.0),
+			}, tp{
+				time.Unix(4, 0), new(2.0),
+			}, tp{
+				time.Unix(6, 0), new(2.0),
+			}, tp{
+				time.Unix(8, 0), new(1.0),
+			}, tp{
+				time.Unix(10, 0), new(1.0),
+			}),
+		},
+		{
+			name:        "resample series: upsampling (mean / backfilling )",
+			interval:    time.Second * 2,
+			downsampler: "mean",
+			upsampler:   "backfilling",
+			timeRange: backend.TimeRange{
+				From: time.Unix(0, 0),
+				To:   time.Unix(11, 0),
+			},
+			seriesToResample: makeSeries("", nil, tp{
+				time.Unix(2, 0), new(2.0),
+			}, tp{
+				time.Unix(7, 0), new(1.0),
+			}),
+			series: makeSeries("", nil, tp{
+				time.Unix(0, 0), new(2.0),
+			}, tp{
+				time.Unix(2, 0), new(2.0),
+			}, tp{
+				time.Unix(4, 0), new(1.0),
+			}, tp{
+				time.Unix(6, 0), new(1.0),
+			}, tp{
+				time.Unix(8, 0), new(1.0),
+			}, tp{
+				time.Unix(10, 0), nil,
+			}),
+		},
+		{
+			name:        "resample series: downsampling (last / pad )",
+			interval:    time.Second * 3,
+			downsampler: "last",
+			upsampler:   "pad",
+			timeRange: backend.TimeRange{
+				From: time.Unix(0, 0),
+				To:   time.Unix(11, 0),
+			},
+			seriesToResample: makeSeries("", nil, tp{
+				time.Unix(0, 0), new(0.0),
+			}, tp{
+				time.Unix(2, 0), new(2.0),
+			}, tp{
+				time.Unix(4, 0), new(3.0),
+			}, tp{
+				time.Unix(6, 0), new(4.0),
+			}, tp{
+				time.Unix(8, 0), new(0.0),
+			}, tp{
+				time.Unix(10, 0), new(1.0),
+			}),
+			series: makeSeries("", nil, tp{
+				time.Unix(0, 0), new(0.0),
+			}, tp{
+				time.Unix(3, 0), new(2.0),
+			}, tp{
+				time.Unix(6, 0), new(4.0),
+			}, tp{
+				time.Unix(9, 0), new(0.0),
+			}),
+		},
+		{
+			name:        "resample series: upsampling, result too big",
+			interval:    time.Microsecond,
+			downsampler: "mean",
+			upsampler:   "backfilling",
+			timeRange: backend.TimeRange{
+				From: time.Unix(0, 0),
+				To:   time.Unix(11, 0),
+			},
+			seriesToResample: makeSeries("", nil, tp{
+				time.Unix(2, 0), new(2.0),
+			}, tp{
+				time.Unix(7, 0), new(1.0),
+			}),
+			series:        Series{},
+			expectedError: fmt.Sprintf("Resample series length to large, max allowed %d, wanted 11000000", MaxNewSeriesLength),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			series, err := tt.seriesToResample.Resample("", tt.interval, tt.downsampler, tt.upsampler, tt.timeRange.From, tt.timeRange.To)
+			if tt.series.Frame == nil {
+				require.Error(t, err)
+				if tt.expectedError != "" {
+					require.EqualError(t, err, tt.expectedError)
+				}
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.series, series)
+			}
+		})
+	}
+}

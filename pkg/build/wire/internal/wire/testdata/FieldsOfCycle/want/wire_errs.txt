@@ -1,0 +1,5 @@
+example.com/foo/wire.go:x:y: cycle for example.com/foo.Bar:
+example.com/foo.Bar (example.com/foo.provideBar) ->
+example.com/foo.Foo (example.com/foo.provideFoo) ->
+example.com/foo.Baz (example.com/foo.Bar.Bz) ->
+example.com/foo.Bar

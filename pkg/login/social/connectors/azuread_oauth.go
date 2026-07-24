@@ -1,0 +1,743 @@
+package connectors
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"os"
+	"strings"
+	"time"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	jose "github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
+	"github.com/google/uuid"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
+	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
+	"golang.org/x/oauth2"
+)
+
+const (
+	forceUseGraphAPIKey = "force_use_graph_api" // #nosec G101 not a hardcoded credential
+	domainHintKey       = "domain_hint"
+)
+
+var (
+	ExtraAzureADSettingKeys = map[string]ExtraKeyInfo{
+		forceUseGraphAPIKey:     {Type: Bool, DefaultValue: false},
+		allowedOrganizationsKey: {Type: String},
+		domainHintKey:           {Type: String},
+	}
+	errAzureADMissingGroups = &SocialError{"either the user does not have any group membership or the groups claim is missing from the token."}
+)
+
+// List of supported audiences in Azure
+var supportedFederatedCredentialAudiences = []string{
+	"api://AzureADTokenExchange",      // Public
+	"api://AzureADTokenExchangeUSGov", // US Gov
+	"api://AzureADTokenExchangeChina", // Mooncake
+	"api://AzureADTokenExchangeUSNat", // USNat
+	"api://AzureADTokenExchangeUSSec"} // USSec
+
+var _ social.SocialConnector = (*SocialAzureAD)(nil)
+var _ ssosettings.Reloadable = (*SocialAzureAD)(nil)
+
+type SocialAzureAD struct {
+	*SocialBase
+	cache                remotecache.CacheStorage
+	allowedOrganizations []string
+	forceUseGraphAPI     bool
+}
+
+type azureClaims struct {
+	Audience          string                 `json:"aud"`
+	Email             string                 `json:"email"`
+	PreferredUsername string                 `json:"preferred_username"`
+	Roles             []string               `json:"roles"`
+	Groups            []string               `json:"groups"`
+	Name              string                 `json:"name"`
+	ID                string                 `json:"oid"`
+	ClaimNames        claimNames             `json:"_claim_names,omitempty"`
+	ClaimSources      map[string]claimSource `json:"_claim_sources,omitempty"`
+	TenantID          string                 `json:"tid,omitempty"`
+	OAuthVersion      string                 `json:"ver,omitempty"`
+}
+
+type claimNames struct {
+	Groups string `json:"groups"`
+}
+
+type claimSource struct {
+	Endpoint string `json:"endpoint"`
+}
+
+type azureAccessClaims struct {
+	TenantID string `json:"tid"`
+}
+
+type keySetJWKS struct {
+	jose.JSONWebKeySet
+}
+
+func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialAzureAD {
+	s := newSocialBaseWithCache(social.AzureADProviderName, orgRoleMapper, info, features, cfg, cache)
+
+	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.AzureADProviderName, "error", err)
+	}
+
+	provider := &SocialAzureAD{
+		SocialBase:           s,
+		cache:                cache,
+		allowedOrganizations: allowedOrganizations,
+		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], ExtraAzureADSettingKeys[forceUseGraphAPIKey].DefaultValue.(bool)),
+	}
+
+	if info.UseRefreshToken {
+		appendUniqueScope(provider.Config, social.OfflineAccessScope)
+	}
+
+	ssoSettings.RegisterReloadable(social.AzureADProviderName, provider)
+
+	return provider
+}
+
+func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	idToken := token.Extra("id_token")
+	if idToken == nil {
+		return nil, ErrIDTokenNotFound
+	}
+
+	idTokenStr, ok := idToken.(string)
+	if !ok {
+		return nil, fmt.Errorf("id_token is not a string")
+	}
+
+	claims, err := s.validateClaims(ctx, client, idTokenStr)
+	if err != nil {
+		return nil, err
+	}
+
+	email := claims.extractEmail()
+	if email == "" {
+		return nil, ErrEmailNotFound
+	}
+
+	groups, err := s.extractGroups(ctx, client, claims, token)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract groups: %w", err)
+	}
+
+	s.log.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", fmt.Sprintf("%v", groups))
+
+	userInfo := &social.BasicUserInfo{
+		Id:     claims.ID,
+		Name:   claims.Name,
+		Email:  email,
+		Login:  email,
+		Groups: groups,
+	}
+
+	if !s.info.SkipOrgRoleSync {
+		directlyMappedRole, grafanaAdmin := s.extractRoleAndAdminOptional(claims)
+
+		s.log.Debug("AzureAD OAuth: extracted role", "email", email, "role", directlyMappedRole)
+
+		if s.info.AllowAssignGrafanaAdmin {
+			userInfo.IsGrafanaAdmin = &grafanaAdmin
+		}
+
+		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, userInfo.Groups, directlyMappedRole)
+		if s.info.RoleAttributeStrict && len(userInfo.OrgRoles) == 0 {
+			return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
+		}
+
+		s.log.Debug("AzureAD OAuth: mapped org roles", "email", email, "roles", fmt.Sprintf("%v", userInfo.OrgRoles))
+	}
+
+	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
+		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
+	}
+
+	if !s.isGroupMember(groups) {
+		if len(groups) == 0 {
+			// either they do not have a group or misconfiguration
+			return nil, errAzureADMissingGroups
+		}
+		// user is not a member of any of the allowed groups
+		return nil, errMissingGroupMembership
+	}
+
+	return userInfo, nil
+}
+
+func (s *SocialAzureAD) Exchange(ctx context.Context, code string, authOptions ...oauth2.AuthCodeOption) (*oauth2.Token, error) {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	switch s.info.ClientAuthentication {
+	case social.ManagedIdentity:
+		// Generate client assertion
+		clientAssertion, err := s.managedIdentityCallback(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		// Set client assertion parameters
+		authOptions = append(authOptions,
+			oauth2.SetAuthURLParam("client_assertion", clientAssertion),
+			oauth2.SetAuthURLParam("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
+		)
+
+	case social.ClientSecretPost:
+		// Default behavior for ClientSecretPost, no additional setup needed
+	default:
+		s.log.Debug("ClientAuthentication is not set. Using default client authentication method: none")
+	}
+
+	// Default token exchange
+	return s.Config.Exchange(ctx, code, authOptions...)
+}
+
+func (s *SocialAzureAD) TokenSource(ctx context.Context, t *oauth2.Token) oauth2.TokenSource {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	switch s.info.ClientAuthentication {
+	case social.WorkloadIdentity:
+		return &azureADTokenSource{
+			log:                       s.log,
+			ctx:                       ctx,
+			conf:                      s.Config,
+			token:                     t,
+			clientId:                  s.info.ClientId,
+			workloadIdentityTokenFile: s.info.WorkloadIdentityTokenFile,
+		}
+	case social.ManagedIdentity:
+		return &azureADManagedIdentityTokenSource{
+			log:                         s.log,
+			ctx:                         ctx,
+			conf:                        s.Config,
+			token:                       t,
+			clientId:                    s.info.ClientId,
+			managedIdentityClientID:     s.info.ManagedIdentityClientID,
+			federatedCredentialAudience: s.info.FederatedCredentialAudience,
+		}
+	default:
+		return s.Config.TokenSource(ctx, t)
+	}
+}
+
+type azureADTokenSource struct {
+	log                       log.Logger
+	ctx                       context.Context
+	conf                      *oauth2.Config
+	token                     *oauth2.Token
+	clientId                  string
+	workloadIdentityTokenFile string
+}
+
+type azureADManagedIdentityTokenSource struct {
+	log                         log.Logger
+	ctx                         context.Context
+	conf                        *oauth2.Config
+	token                       *oauth2.Token
+	clientId                    string
+	managedIdentityClientID     string
+	federatedCredentialAudience string
+}
+
+func (s *azureADTokenSource) Token() (*oauth2.Token, error) {
+	s.log.Debug("Fetching Token with AzureAD Token Source and Workload Identity")
+	if s.token.Valid() {
+		return s.token, nil
+	}
+
+	if s.token.RefreshToken == "" {
+		s.log.Warn("AzureADToken fetchToken failed: no refresh token available")
+		return nil, fmt.Errorf("no refresh token available to refresh the access token")
+	}
+
+	// refresh the expired token using the refresh token
+	federatedToken, err := os.ReadFile(s.workloadIdentityTokenFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read workload identity token file: %w", err)
+	}
+
+	v := url.Values{}
+	v.Set("client_id", s.clientId)
+	v.Set("grant_type", "refresh_token")
+	v.Set("refresh_token", s.token.RefreshToken)
+	v.Set("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer")
+	v.Set("client_assertion", strings.TrimSpace(string(federatedToken)))
+
+	token, err := fetchAzureADToken(s.ctx, s.log, s.conf.Endpoint.TokenURL, v)
+	if err != nil {
+		return nil, err
+	}
+	s.log.Debug("AzureADToken fetchToken completed", "expiry", token.Expiry)
+	return token, nil
+}
+
+func (s *azureADManagedIdentityTokenSource) Token() (*oauth2.Token, error) {
+	s.log.Debug("Fetching Token with AzureAD Token Source and Managed Identity")
+	if s.token.Valid() {
+		return s.token, nil
+	}
+
+	if s.token.RefreshToken == "" {
+		s.log.Warn("AzureADManagedIdentityToken fetchToken failed: no refresh token available")
+		return nil, fmt.Errorf("no refresh token available to refresh the access token")
+	}
+
+	// Get a fresh client assertion from the managed identity
+	mic, err := azidentity.NewManagedIdentityCredential(&azidentity.ManagedIdentityCredentialOptions{
+		ID: azidentity.ClientID(s.managedIdentityClientID),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error constructing managed identity credential for token refresh: %w", err)
+	}
+
+	tk, err := mic.GetToken(s.ctx, policy.TokenRequestOptions{
+		Scopes: []string{fmt.Sprintf("%s/.default", s.federatedCredentialAudience)},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error getting managed identity token for refresh: %w", err)
+	}
+
+	v := url.Values{}
+	v.Set("client_id", s.clientId)
+	v.Set("grant_type", "refresh_token")
+	v.Set("refresh_token", s.token.RefreshToken)
+	v.Set("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer")
+	v.Set("client_assertion", tk.Token)
+
+	token, err := fetchAzureADToken(s.ctx, s.log, s.conf.Endpoint.TokenURL, v)
+	if err != nil {
+		return nil, err
+	}
+	s.log.Debug("AzureADManagedIdentityToken fetchToken completed", "expiry", token.Expiry)
+	return token, nil
+}
+
+func fetchAzureADToken(ctx context.Context, log log.Logger, tokenURL string, params url.Values) (*oauth2.Token, error) {
+	req, err := http.NewRequestWithContext(ctx, "POST", tokenURL, strings.NewReader(params.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	httpClient, ok := ctx.Value(oauth2.HTTPClient).(*http.Client)
+	if !ok {
+		httpClient = http.DefaultClient
+	}
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Error("Failed to close response body", "error", err)
+		}
+	}()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("oauth2: cannot fetch token: %v", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		log.Error("oauth2: cannot fetch token", "status", resp.Status, "body", body)
+		return nil, fmt.Errorf("oauth2: cannot fetch token: %v", resp.Status)
+	}
+
+	var rawResponse interface{}
+	if err := json.Unmarshal(body, &rawResponse); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal raw response body: %w", err)
+	}
+
+	var token *oauth2.Token
+	if err := json.Unmarshal(body, &token); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal token response body: %w", err)
+	}
+
+	if token.ExpiresIn > 0 {
+		token.Expiry = time.Now().Add(time.Duration(token.ExpiresIn) * time.Second)
+	}
+
+	return token.WithExtra(rawResponse), nil
+}
+
+// ManagedIdentityCallback retrieves a token using the managed identity credential of the Azure service.
+func (s *SocialAzureAD) managedIdentityCallback(ctx context.Context) (string, error) {
+	// Validate required fields for Managed Identity authentication
+	if s.info.ManagedIdentityClientID == "" {
+		return "", fmt.Errorf("ManagedIdentityClientID is required for Managed Identity or Workload Identity authentication")
+	}
+	if s.info.FederatedCredentialAudience == "" {
+		return "", fmt.Errorf("FederatedCredentialAudience is required for Managed Identity or Workload Identity authentication")
+	}
+
+	// Prepare Managed Identity Credential
+	mic, err := azidentity.NewManagedIdentityCredential(&azidentity.ManagedIdentityCredentialOptions{
+		ID: azidentity.ClientID(s.info.ManagedIdentityClientID),
+	})
+	if err != nil {
+		return "", fmt.Errorf("error constructing managed/workload identity credential: %w", err)
+	}
+
+	// Request token and return
+	tk, err := mic.GetToken(ctx, policy.TokenRequestOptions{
+		Scopes: []string{fmt.Sprintf("%s/.default", s.info.FederatedCredentialAudience)},
+	})
+	if err != nil {
+		return "", fmt.Errorf("error getting managed/workload identity token: %w", err)
+	}
+
+	return tk.Token, nil
+}
+
+func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	newInfo, err := CreateOAuthInfoFromKeyValuesWithLogging(s.log, social.AzureADProviderName, settings.Settings)
+	if err != nil {
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	s.reloadMutex.Lock()
+	defer s.reloadMutex.Unlock()
+
+	s.updateInfo(ctx, social.AzureADProviderName, newInfo)
+
+	if newInfo.UseRefreshToken {
+		appendUniqueScope(s.Config, social.OfflineAccessScope)
+	}
+
+	allowedOrganizations, err := util.SplitStringWithError(newInfo.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.AzureADProviderName, "error", err)
+	}
+
+	s.allowedOrganizations = allowedOrganizations
+	s.forceUseGraphAPI = MustBool(newInfo.Extra[forceUseGraphAPIKey], false)
+
+	return nil
+}
+
+func (s *SocialAzureAD) Validate(ctx context.Context, newSettings ssoModels.SSOSettings, oldSettings ssoModels.SSOSettings, requester identity.Requester) error {
+	info, err := CreateOAuthInfoFromKeyValues(newSettings.Settings)
+	if err != nil {
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	oldInfo, err := CreateOAuthInfoFromKeyValues(oldSettings.Settings)
+	if err != nil {
+		oldInfo = &social.OAuthInfo{}
+	}
+
+	err = validateInfo(info, oldInfo, requester)
+	if err != nil {
+		return err
+	}
+
+	return validation.Validate(info, requester,
+		validateClientAuthentication,
+		validateFederatedCredentialAudience,
+		validateAllowedGroups,
+		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
+		validation.RequiredUrlValidator(info.AuthUrl, "Auth URL"),
+		validation.RequiredUrlValidator(info.TokenUrl, "Token URL"),
+		validation.DomainValidator(info.Extra[domainHintKey], "Domain Hint"))
+}
+
+func validateAllowedGroups(info *social.OAuthInfo, requester identity.Requester) error {
+	for _, groupId := range info.AllowedGroups {
+		_, err := uuid.Parse(groupId)
+		if err != nil {
+			return ssosettings.ErrInvalidOAuthConfig("One or more of the Allowed groups are not in the correct format. Allowed groups should be a list of Object Ids.")
+		}
+	}
+	return nil
+}
+
+func (s *SocialAzureAD) validateClaims(ctx context.Context, client *http.Client, idTokenString string) (*azureClaims, error) {
+	rawJSON, err := s.validateIDTokenSignatureWithURLs(ctx, client, idTokenString, s.getAzureJWKSURLs())
+	if err != nil {
+		return nil, fmt.Errorf("error validating id token signature: %w", err)
+	}
+
+	var claims azureClaims
+	if err := json.Unmarshal(rawJSON, &claims); err != nil {
+		return nil, fmt.Errorf("error parsing id token claims: %w", err)
+	}
+
+	if claims.OAuthVersion == "1.0" {
+		return nil, &SocialError{"AzureAD OAuth: version 1.0 is not supported. Please ensure the auth_url and token_url are set to the v2.0 endpoints."}
+	}
+
+	s.log.Debug("Validating audience", "audience", claims.Audience, "client_id", s.ClientID)
+	if claims.Audience != s.ClientID {
+		return nil, &SocialError{"AzureAD OAuth: audience mismatch"}
+	}
+
+	s.log.Debug("Validating tenant", "tenant", claims.TenantID, "allowed_tenants", s.allowedOrganizations)
+	if !s.isAllowedTenant(claims.TenantID) {
+		return nil, &SocialError{"AzureAD OAuth: tenant mismatch"}
+	}
+	return &claims, nil
+}
+
+func (s *SocialAzureAD) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	if domainHint, ok := s.info.Extra[domainHintKey]; ok && domainHint != "" {
+		opts = append(opts, oauth2.SetAuthURLParam("domain_hint", domainHint))
+	}
+
+	return s.getAuthCodeURL(state, opts...)
+}
+
+// getAzureJWKSURLs returns JWKS URLs for Azure AD (app-specific, then general discovery URL).
+func (s *SocialAzureAD) getAzureJWKSURLs() []string {
+	base := strings.Replace(s.Endpoint.AuthURL, "/oauth2/v2.0/authorize", "/discovery/v2.0/keys", 1)
+	return []string{
+		base + "?appid=" + url.QueryEscape(s.ClientID),
+		base,
+	}
+}
+
+func validateFederatedCredentialAudience(info *social.OAuthInfo, requester identity.Requester) error {
+	if info.ClientAuthentication != social.ManagedIdentity {
+		return nil
+	}
+	for _, supportedFederatedCredentialAudience := range supportedFederatedCredentialAudiences {
+		if info.FederatedCredentialAudience == supportedFederatedCredentialAudience {
+			return nil
+		}
+	}
+	return ssosettings.ErrInvalidOAuthConfig("FIC audience is not a supported audience.")
+}
+
+func validateClientAuthentication(info *social.OAuthInfo, requester identity.Requester) error {
+	switch info.ClientAuthentication {
+	case social.ManagedIdentity:
+		if info.ManagedIdentityClientID == "" {
+			return ssosettings.ErrInvalidOAuthConfig("FIC managed identity client Id is required for Managed identity authentication.")
+		}
+		if info.FederatedCredentialAudience == "" {
+			return ssosettings.ErrInvalidOAuthConfig("FIC audience is required for Managed identity authentication.")
+		}
+		return nil
+
+	case social.WorkloadIdentity:
+		if info.WorkloadIdentityTokenFile == "" {
+			return ssosettings.ErrInvalidOAuthConfig("Workload identity token file is required for Workload identity authentication.")
+		}
+		return nil
+
+	case social.ClientSecretPost, "":
+		if info.ClientSecret == "" {
+			return ssosettings.ErrInvalidOAuthConfig("Client secret is required for Client secret authentication.")
+		}
+		return nil
+
+	case social.None:
+		return nil
+
+	default:
+		return ssosettings.ErrInvalidOAuthConfig("Invalid client authentication method.")
+	}
+}
+
+func (claims *azureClaims) extractEmail() string {
+	if claims.Email == "" {
+		if claims.PreferredUsername != "" {
+			return claims.PreferredUsername
+		}
+	}
+
+	return claims.Email
+}
+
+// extractRoleAndAdmin extracts the role from the claims and returns the role and whether the user is a Grafana admin.
+func (s *SocialAzureAD) extractRoleAndAdminOptional(claims *azureClaims) (org.RoleType, bool) {
+	if len(claims.Roles) == 0 {
+		return "", false
+	}
+
+	roleOrder := []org.RoleType{social.RoleGrafanaAdmin, org.RoleAdmin, org.RoleEditor,
+		org.RoleViewer, org.RoleNone}
+	for _, role := range roleOrder {
+		if found := hasRole(claims.Roles, role); found {
+			if role == social.RoleGrafanaAdmin {
+				return org.RoleAdmin, true
+			}
+
+			return role, false
+		}
+	}
+
+	return "", false
+}
+
+func hasRole(roles []string, role org.RoleType) bool {
+	for _, item := range roles {
+		if strings.EqualFold(item, string(role)) {
+			return true
+		}
+	}
+
+	return false
+}
+
+type getAzureGroupRequest struct {
+	SecurityEnabledOnly bool `json:"securityEnabledOnly"`
+}
+
+type getAzureGroupResponse struct {
+	Value []string `json:"value"`
+}
+
+// extractGroups retrieves groups from the claims.
+// Note: If user groups exceeds 200 no groups will be found in claims and URL to target the Graph API will be
+// given instead.
+//
+// See https://docs.microsoft.com/en-us/azure/active-directory/develop/id-tokens#groups-overage-claim
+func (s *SocialAzureAD) extractGroups(ctx context.Context, client *http.Client, claims *azureClaims, token *oauth2.Token) ([]string, error) {
+	if !s.forceUseGraphAPI {
+		s.log.Debug("Checking the claim for groups")
+		if len(claims.Groups) > 0 {
+			return claims.Groups, nil
+		}
+
+		if claims.ClaimNames.Groups == "" {
+			return []string{}, nil
+		}
+	}
+
+	// Fallback to the Graph API
+	endpoint, errBuildGraphURI := s.groupsGraphAPIURL(claims, token)
+	if errBuildGraphURI != nil {
+		return nil, errBuildGraphURI
+	}
+
+	data, err := json.Marshal(&getAzureGroupRequest{SecurityEnabledOnly: false})
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewBuffer(data))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			s.log.Warn("AzureAD OAuth: failed to close response body", "err", err)
+		}
+	}()
+
+	if res.StatusCode != http.StatusOK {
+		if res.StatusCode == http.StatusForbidden {
+			s.log.Warn("AzureAD OAuth: Token need GroupMember.Read.All permission to fetch all groups")
+		} else {
+			body, _ := io.ReadAll(res.Body)
+			s.log.Warn("AzureAD OAuth: could not fetch user groups", "code", res.StatusCode, "body", string(body))
+		}
+		return []string{}, nil
+	}
+
+	var body getAzureGroupResponse
+	if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
+		return nil, err
+	}
+
+	return body.Value, nil
+}
+
+// groupsGraphAPIURL retrieves the Microsoft Graph API URL to fetch user groups from the _claim_sources if present
+// otherwise it generates an handcrafted URL.
+func (s *SocialAzureAD) groupsGraphAPIURL(claims *azureClaims, token *oauth2.Token) (string, error) {
+	var endpoint string
+	// First check if an endpoint was specified in the claims
+	if claims.ClaimNames.Groups != "" {
+		endpoint = claims.ClaimSources[claims.ClaimNames.Groups].Endpoint
+		s.log.Debug(fmt.Sprintf("endpoint to fetch groups specified in the claims: %s", endpoint))
+	}
+
+	// If no endpoint was specified or if the endpoints provided in _claim_source is pointing to the deprecated
+	// "graph.windows.net" api, use an handcrafted url to graph.microsoft.com
+	// See https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim
+	if endpoint == "" || strings.Contains(endpoint, "graph.windows.net") {
+		tenantID := claims.TenantID
+		// If tenantID wasn't found in the id_token, parse access token
+		if tenantID == "" {
+			parsedToken, err := jwt.ParseSigned(token.AccessToken, []jose.SignatureAlgorithm{jose.PS256, jose.RS256, jose.RS512, jose.ES256})
+			if err != nil {
+				return "", fmt.Errorf("error parsing access token: %w", err)
+			}
+
+			var accessClaims azureAccessClaims
+			if err := parsedToken.UnsafeClaimsWithoutVerification(&accessClaims); err != nil {
+				return "", fmt.Errorf("error getting claims from access token: %w", err)
+			}
+			tenantID = accessClaims.TenantID
+		}
+
+		endpoint = fmt.Sprintf("https://graph.microsoft.com/v1.0/%s/users/%s/getMemberObjects", tenantID, claims.ID)
+		s.log.Debug(fmt.Sprintf("handcrafted endpoint to fetch groups: %s", endpoint))
+	}
+	return endpoint, nil
+}
+
+func (s *SocialAzureAD) SupportBundleContent(bf *bytes.Buffer) error {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	bf.WriteString("## AzureAD specific configuration\n\n")
+	bf.WriteString("```ini\n")
+	fmt.Fprintf(bf, "allowed_groups = %v\n", s.info.AllowedGroups)
+	fmt.Fprintf(bf, "forceUseGraphAPI = %v\n", s.forceUseGraphAPI)
+	bf.WriteString("```\n\n")
+
+	return s.getBaseSupportBundleContent(bf)
+}
+
+func (s *SocialAzureAD) isAllowedTenant(tenantID string) bool {
+	if len(s.allowedOrganizations) == 0 {
+		s.log.Warn("No allowed organizations specified, all tenants are allowed. Configure allowed_organizations to restrict access")
+		return true
+	}
+
+	for _, t := range s.allowedOrganizations {
+		if t == tenantID {
+			return true
+		}
+	}
+	return false
+}

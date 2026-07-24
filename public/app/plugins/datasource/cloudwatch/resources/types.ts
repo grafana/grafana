@@ -1,0 +1,79 @@
+import { type SelectableValue } from '@grafana/data';
+
+import { type Dimensions } from '../dataquery.gen';
+
+export interface ResourceResponse<T> {
+  accountId?: string;
+  value: T;
+}
+
+export interface ResourceRequest {
+  region: string;
+  accountId?: string;
+}
+
+export interface GetDimensionKeysRequest extends ResourceRequest {
+  metricName?: string;
+  namespace?: string;
+  dimensionFilters?: Dimensions;
+}
+
+export interface GetDimensionValuesRequest extends ResourceRequest {
+  dimensionKey: string;
+  namespace: string;
+  metricName?: string;
+  dimensionFilters?: Dimensions;
+}
+
+export interface GetMetricsRequest extends ResourceRequest {
+  namespace?: string;
+}
+
+export interface DescribeLogGroupsRequest extends ResourceRequest {
+  logGroupNamePrefix?: string;
+  logGroupPattern?: string;
+  limit?: number;
+  listAllLogGroups?: boolean;
+  accountId?: string;
+  nextToken?: string;
+}
+
+export interface ListDataSourcesRequest {
+  region: string;
+  pattern?: string;
+}
+
+export interface Account {
+  arn: string;
+  id: string;
+  label: string;
+  isMonitoringAccount: boolean;
+}
+
+export interface LogGroupResponse {
+  arn: string;
+  name: string;
+}
+
+export interface LogDataSourceResponse {
+  name: string;
+  type: string;
+}
+
+export interface MetricResponse {
+  name: string;
+  namespace: string;
+}
+
+export interface RegionResponse {
+  name: string;
+}
+
+export interface LogGroupsResponse {
+  results: Array<ResourceResponse<LogGroupResponse>>;
+  nextToken?: string;
+}
+
+export interface SelectableResourceValue extends SelectableValue<string> {
+  text: string;
+}

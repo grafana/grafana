@@ -1,0 +1,105 @@
+{
+  "name": "Visual Refresh (Light)",
+  "id": "visual_refresh_light",
+  "colors": {
+    "mode": "light",
+    "background": {
+      "canvas": "palette.white",
+      "page": "palette.neutral50",
+      "primary": "palette.white",
+      "secondary": "palette.neutral150",
+      "elevated": "palette.white"
+    },
+    "primary": {
+      "main": "palette.neutral950"
+    },
+    "secondary": {
+      "main": "palette.neutral200",
+      "border": "palette.neutral300",
+      "text": "palette.neutral800",
+      "contrastText": "palette.neutral800"
+    },
+    "tertiary": {
+      "main": "palette.violet700"
+    },
+    "accent": {
+      "main": "palette.orange600",
+      "text": "palette.orange700",
+      "contrastText": "palette.white"
+    },
+    "error": {
+      "main": "palette.coral600",
+      "border": "palette.coral100"
+    },
+    "warning": {
+      "main": "palette.amber600",
+      "border": "palette.amber100"
+    },
+    "success": {
+      "main": "palette.sage600",
+      "border": "palette.sage100"
+    },
+    "info": {
+      "main": "palette.blue600",
+      "border": "palette.blue100"
+    },
+    "text": {
+      "primary": "palette.neutral800",
+      "secondary": "palette.neutral600",
+      "disabled": "palette.neutral500",
+      "link": "palette.orange700"
+    },
+    "border": {
+      "weak": "palette.neutral200",
+      "medium": "palette.neutral300",
+      "strong": "palette.neutral400"
+    },
+    "gradients": {
+      "brandHorizontal": "linear-gradient(270deg, palette.orange400 0%, palette.orange500 100%)",
+      "brandVertical": "linear-gradient(0.01deg, palette.orange400 0.01%, palette.orange500 99.99%)"
+    },
+    "contrastThreshold": 4.5,
+    "action": {
+      "selected": "hsl(from palette.neutral900 h s l / 0.12)",
+      "hover": "hsl(from palette.neutral900 h s l / 0.09)",
+      "focus": "hsl(from palette.neutral900 h s l / 0.09)",
+      "selectedBorder": "palette.orange600"
+    }
+  },
+  "components": {
+    "tag": {
+      "colors": [
+        { "background": "palette.coral300", "text": "palette.coral900" },
+        { "background": "palette.peach300", "text": "palette.peach900" },
+        { "background": "palette.amber300", "text": "palette.amber900" },
+        { "background": "palette.lime300", "text": "palette.lime900" },
+        { "background": "palette.sage300", "text": "palette.sage900" },
+        { "background": "palette.teal300", "text": "palette.teal900" },
+        { "background": "palette.sky300", "text": "palette.sky900" },
+        { "background": "palette.blue300", "text": "palette.blue900" },
+        { "background": "palette.violet300", "text": "palette.violet900" },
+        { "background": "palette.lavender300", "text": "palette.lavender900" },
+        { "background": "palette.rose300", "text": "palette.rose900" },
+        { "background": "palette.coral200", "text": "palette.coral800" },
+        { "background": "palette.peach200", "text": "palette.peach800" },
+        { "background": "palette.amber200", "text": "palette.amber800" },
+        { "background": "palette.lime200", "text": "palette.lime800" },
+        { "background": "palette.sage200", "text": "palette.sage800" },
+        { "background": "palette.teal200", "text": "palette.teal800" },
+        { "background": "palette.sky200", "text": "palette.sky800" },
+        { "background": "palette.blue200", "text": "palette.blue800" },
+        { "background": "palette.violet200", "text": "palette.violet800" },
+        { "background": "palette.lavender200", "text": "palette.lavender800" },
+        { "background": "palette.rose200", "text": "palette.rose800" }
+      ]
+    },
+    "input": {
+      "background": "palette.white"
+    }
+  },
+  "shape": {
+    "borderRadiusSm": 4,
+    "borderRadius": 8,
+    "borderRadiusLg": 12
+  }
+}

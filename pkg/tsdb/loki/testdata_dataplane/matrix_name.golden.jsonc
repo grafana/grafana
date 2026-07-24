@@ -1,0 +1,75 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          1
+//      ],
+//      "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
+//  }
+//  Name: 
+//  Dimensions: 2 Fields by 1 Rows
+//  +-----------------------------------+------------------------------------+
+//  | Name: Time                        | Name: Value                        |
+//  | Labels:                           | Labels: __name__=moon, level=error |
+//  | Type: []time.Time                 | Type: []float64                    |
+//  +-----------------------------------+------------------------------------+
+//  | 2021-12-10 08:36:06.989 +0000 UTC | 0.4                                |
+//  +-----------------------------------+------------------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            1
+          ],
+          "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            },
+            "config": {
+              "interval": 42000
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            },
+            "labels": {
+              "__name__": "moon",
+              "level": "error"
+            },
+            "config": {
+              "displayNameFromDS": "{__name__=\"moon\", level=\"error\"}"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1639125366989
+          ],
+          [
+            0.4
+          ]
+        ]
+      }
+    }
+  ]
+}

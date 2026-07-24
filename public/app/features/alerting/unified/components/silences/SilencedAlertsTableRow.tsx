@@ -1,0 +1,54 @@
+import { useState } from 'react';
+
+import { AlertLabels } from '@grafana/alerting/unstable';
+import { intervalToAbbreviatedDurationString } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
+
+import { CollapseToggle } from '../CollapseToggle';
+
+import { AmAlertStateTag } from './AmAlertStateTag';
+
+interface Props {
+  alert: AlertmanagerAlert;
+  className?: string;
+}
+
+export const SilencedAlertsTableRow = ({ alert, className }: Props) => {
+  const [isCollapsed, setIsCollapsed] = useState(true);
+
+  const duration = intervalToAbbreviatedDurationString({
+    start: new Date(alert.startsAt),
+    end: new Date(alert.endsAt),
+  });
+  const alertName = Object.entries(alert.labels).reduce((name, [labelKey, labelValue]) => {
+    if (labelKey === 'alertname' || labelKey === '__alert_rule_title__') {
+      name = labelValue;
+    }
+    return name;
+  }, '');
+  return (
+    <>
+      <tr className={className}>
+        <td>
+          <CollapseToggle isCollapsed={isCollapsed} onToggle={(collapsed) => setIsCollapsed(collapsed)} />
+        </td>
+        <td>
+          <AmAlertStateTag state={alert.status.state} />
+        </td>
+        <td>
+          <Trans i18nKey="alerting.silenced-alerts-table-row.silenced-for">for {{ duration }}</Trans>
+        </td>
+        <td>{alertName}</td>
+      </tr>
+      {!isCollapsed && (
+        <tr className={className}>
+          <td />
+          <td colSpan={5}>
+            <AlertLabels labels={alert.labels} size="sm" />
+          </td>
+        </tr>
+      )}
+    </>
+  );
+};

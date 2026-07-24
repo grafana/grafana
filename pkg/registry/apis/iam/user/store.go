@@ -1,0 +1,345 @@
+package user
+
+import (
+	"context"
+	"fmt"
+	"strconv"
+
+	"go.opentelemetry.io/otel/trace"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apiserver/pkg/registry/rest"
+
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+
+	claims "github.com/grafana/authlib/types"
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/util"
+)
+
+const AnnoKeyLastSeenAt = "iam.grafana.app/lastSeenAt"
+
+var (
+	_ grafanarest.Storage = (*LegacyStore)(nil)
+)
+
+var userResource = iamv0alpha1.UserResourceInfo
+
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, tracer trace.Tracer) *LegacyStore {
+	return &LegacyStore{store, ac, tracer}
+}
+
+type LegacyStore struct {
+	store  legacy.LegacyIdentityStore
+	ac     claims.AccessClient
+	tracer trace.Tracer
+}
+
+// Update implements rest.Updater.
+func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	ctx, span := s.tracer.Start(ctx, "user.Update")
+	defer span.End()
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	oldObj, err := s.Get(ctx, name, nil)
+	if err != nil {
+		return nil, false, err
+	}
+
+	newObj, err := objInfo.UpdatedObject(ctx, oldObj)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if updateValidation != nil {
+		if err := updateValidation(ctx, newObj, oldObj); err != nil {
+			return nil, false, err
+		}
+	}
+
+	userObj, ok := newObj.(*iamv0alpha1.User)
+	if !ok {
+		return nil, false, fmt.Errorf("expected User object, got %T", newObj)
+	}
+
+	updateCmd := legacy.UpdateUserCommand{
+		UID:           name,
+		Login:         userObj.Spec.Login,
+		Email:         userObj.Spec.Email,
+		Name:          userObj.Spec.Title,
+		IsAdmin:       userObj.Spec.GrafanaAdmin,
+		IsDisabled:    userObj.Spec.Disabled,
+		EmailVerified: userObj.Spec.EmailVerified,
+		Role:          userObj.Spec.Role,
+	}
+
+	result, err := s.store.UpdateUser(ctx, ns, updateCmd)
+	if err != nil {
+		return nil, false, err
+	}
+
+	iamUser := toUserItem(&result.User, ns.Value)
+	return &iamUser, false, nil
+}
+
+// Delete implements rest.GracefulDeleter.
+func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	ctx, span := s.tracer.Start(ctx, "user.Delete")
+	defer span.End()
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
+		OrgID:      ns.OrgID,
+		UID:        name,
+		Pagination: common.Pagination{Limit: 1},
+	})
+	if err != nil {
+		return nil, false, err
+	}
+	if found == nil || len(found.Items) < 1 {
+		return nil, false, userResource.NewNotFound(name)
+	}
+
+	userToDelete := &found.Items[0]
+
+	if deleteValidation != nil {
+		userObj := toUserItem(userToDelete, ns.Value)
+		if err := deleteValidation(ctx, &userObj); err != nil {
+			return nil, false, err
+		}
+	}
+
+	deleteCmd := legacy.DeleteUserCommand{
+		UID: name,
+	}
+
+	err = s.store.DeleteUser(ctx, ns, deleteCmd)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to delete user: %w", err)
+	}
+
+	deletedUser := toUserItem(userToDelete, ns.Value)
+	return &deletedUser, true, nil
+}
+
+func (s *LegacyStore) New() runtime.Object {
+	return userResource.NewFunc()
+}
+
+func (s *LegacyStore) Destroy() {}
+
+func (s *LegacyStore) NamespaceScoped() bool {
+	return true // namespace == org
+}
+
+func (s *LegacyStore) GetSingularName() string {
+	return userResource.GetSingularName()
+}
+
+func (s *LegacyStore) NewList() runtime.Object {
+	return userResource.NewListFunc()
+}
+
+func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	return userResource.TableConverter().ConvertToTable(ctx, object, tableOptions)
+}
+
+func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "user.List")
+	defer span.End()
+
+	query := legacy.ListUserQuery{}
+
+	if options.FieldSelector != nil {
+		if email, ok := options.FieldSelector.RequiresExactMatch("spec.email"); ok {
+			query.Email = email
+		}
+		if login, ok := options.FieldSelector.RequiresExactMatch("spec.login"); ok {
+			query.Login = login
+		}
+	}
+
+	query.ID = getDeprecatedInternalIDFromLabelSelectors(options)
+
+	res, err := common.List(
+		ctx, userResource, s.ac, common.PaginationFromListOptions(options),
+		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[*iamv0alpha1.User], error) {
+			q := query
+			q.Pagination = p
+			found, err := s.store.ListUsers(ctx, ns, q)
+
+			if err != nil {
+				return nil, err
+			}
+
+			users := make([]*iamv0alpha1.User, 0, len(found.Items))
+			for _, u := range found.Items {
+				user := toUserItem(&u, ns.Value)
+				users = append(users, &user)
+			}
+
+			return &common.ListResponse[*iamv0alpha1.User]{
+				Items:    users,
+				RV:       found.RV,
+				Continue: found.Continue,
+			}, nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]iamv0alpha1.User, len(res.Items))
+	for i, u := range res.Items {
+		items[i] = *u
+	}
+
+	obj := &iamv0alpha1.UserList{Items: items}
+	obj.Continue = common.OptionalFormatInt(res.Continue)
+	obj.ResourceVersion = common.OptionalFormatInt(res.RV)
+	return obj, nil
+}
+
+func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "user.Get")
+	defer span.End()
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
+		OrgID:      ns.OrgID,
+		UID:        name,
+		Pagination: common.Pagination{Limit: 1},
+	})
+	if found == nil || err != nil {
+		return nil, userResource.NewNotFound(name)
+	}
+	if len(found.Items) < 1 {
+		return nil, userResource.NewNotFound(name)
+	}
+
+	obj := toUserItem(&found.Items[0], ns.Value)
+	return &obj, nil
+}
+
+// Create implements rest.Creater.
+func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "user.Create")
+	defer span.End()
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	userObj, ok := obj.(*iamv0alpha1.User)
+	if !ok {
+		return nil, fmt.Errorf("expected User object, got %T", obj)
+	}
+
+	if userObj.GenerateName != "" {
+		userObj.Name = userObj.GenerateName + util.GenerateShortUID()
+		userObj.GenerateName = ""
+	}
+
+	if createValidation != nil {
+		if err := createValidation(ctx, obj); err != nil {
+			return nil, err
+		}
+	}
+
+	createCmd := legacy.CreateUserCommand{
+		UID:           userObj.Name,
+		Login:         userObj.Spec.Login,
+		Email:         userObj.Spec.Email,
+		Name:          userObj.Spec.Title,
+		IsAdmin:       userObj.Spec.GrafanaAdmin,
+		IsDisabled:    userObj.Spec.Disabled,
+		EmailVerified: userObj.Spec.EmailVerified,
+		IsProvisioned: userObj.Spec.Provisioned,
+		Role:          userObj.Spec.Role,
+	}
+
+	result, err := s.store.CreateUser(ctx, ns, createCmd)
+	if err != nil {
+		return nil, err
+	}
+
+	iamUser := toUserItem(&result.User, ns.Value)
+	return &iamUser, nil
+}
+
+func getDeprecatedInternalIDFromLabelSelectors(options *internalversion.ListOptions) int64 {
+	if options.LabelSelector == nil {
+		return 0
+	}
+
+	reqs, selectable := options.LabelSelector.Requirements()
+	if !selectable {
+		return 0
+	}
+
+	for _, req := range reqs {
+		if req.Key() != utils.LabelKeyDeprecatedInternalID || req.Operator() != selection.Equals {
+			continue
+		}
+
+		vals := req.Values()
+		if vals.Len() != 1 {
+			return 0
+		}
+
+		idStr, _ := vals.PopAny()
+		if id, err := strconv.ParseInt(idStr, 10, 64); err == nil {
+			return id
+		}
+	}
+
+	return 0
+}
+
+func toUserItem(u *common.UserWithRole, ns string) iamv0alpha1.User {
+	item := &iamv0alpha1.User{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              u.UID,
+			Namespace:         ns,
+			ResourceVersion:   fmt.Sprintf("%d", u.Updated.UnixMilli()),
+			CreationTimestamp: metav1.NewTime(u.Created),
+		},
+		Spec: iamv0alpha1.UserSpec{
+			Title:         u.Name,
+			Login:         u.Login,
+			Email:         u.Email,
+			EmailVerified: u.EmailVerified,
+			Disabled:      u.IsDisabled,
+			GrafanaAdmin:  u.IsAdmin,
+			Provisioned:   u.IsProvisioned,
+			Role:          u.Role,
+		},
+		Status: iamv0alpha1.UserStatus{
+			LastSeenAt: u.LastSeenAt.Unix(),
+		},
+	}
+	obj, _ := utils.MetaAccessor(item)
+	obj.SetUpdatedTimestamp(&u.Updated)
+	obj.SetDeprecatedInternalID(u.ID) // nolint:staticcheck
+	return *item
+}

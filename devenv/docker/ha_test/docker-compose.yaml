@@ -1,0 +1,111 @@
+version: "2.1"
+
+services:
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    logging:
+      driver: "fluentd"
+      options:
+        tag: nginx
+
+  db:
+    image: mysql:8.0.32
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: grafana
+      MYSQL_USER: grafana
+      MYSQL_PASSWORD: password
+    command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --innodb_monitor_enable=all, --max-connections=1001]
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 10
+
+  mysqld-exporter:
+    image: prom/mysqld-exporter
+    environment:
+      - DATA_SOURCE_NAME=root:rootpass@(db:3306)/
+    ports:
+      - 9104
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # db:
+  #   image: postgres:10.15
+  #   environment:
+  #     POSTGRES_DATABASE: grafana
+  #     POSTGRES_USER: grafana
+  #     POSTGRES_PASSWORD: password
+  #   ports:
+  #     - "5432:5432"
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -d grafana -U grafana"]
+  #     timeout: 10s
+  #     retries: 10
+
+  grafana:
+    image: grafana/grafana:dev
+    volumes:
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+    environment:
+      - VIRTUAL_HOST=grafana.loc
+      - GF_SERVER_ROOT_URL=http://grafana.loc
+      - GF_DATABASE_NAME=grafana
+      - GF_DATABASE_USER=grafana
+      - GF_DATABASE_PASSWORD=password
+      - GF_DATABASE_TYPE=mysql
+      - GF_DATABASE_HOST=db:3306
+      - GF_DATABASE_MAX_OPEN_CONN=300
+      # - GF_DATABASE_TYPE=postgres
+      # - GF_DATABASE_HOST=db:5432
+      # - GF_DATABASE_SSL_MODE=disable
+      - GF_SERVER_ROUTER_LOGGING=true
+      - GF_LOG_CONSOLE_FORMAT=json
+      - GF_LOG_FILTERS=alerting.notifier:debug,alerting.notifier.slack:debug,auth:debug
+      - GF_AUTH_TOKEN_ROTATION_INTERVAL_MINUTES=2
+    ports:
+      - 3000
+    depends_on:
+      db:
+        condition: service_healthy
+    logging:
+      driver: "fluentd"
+      options:
+        tag: grafana
+
+  prometheus:
+    image: prom/prometheus:v2.4.2
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+    environment:
+      - VIRTUAL_HOST=prometheus.loc
+    ports:
+      - 9090
+
+  loki:
+    image: grafana/loki:master
+    environment:
+      - VIRTUAL_HOST=loki.loc
+    ports:
+      - 3100
+    command: -config.file=/etc/loki/local-config.yaml
+
+  fluentd:
+    image: grafana/fluent-plugin-loki:master
+    volumes:
+      - ./fluentd/fluentd.conf:/fluentd/etc/fluentd.conf
+    links:
+      - loki
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"

@@ -1,0 +1,66 @@
+import { type MouseEvent, type ChangeEvent, type KeyboardEvent, useState, useMemo } from 'react';
+
+import { type EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+
+export interface OutlineRenameState {
+  isRenaming?: boolean;
+  originalName?: string;
+  error?: string;
+}
+
+export function useOutlineRename(editableElement: EditableDashboardElement, isEditing: boolean | undefined) {
+  const [state, setState] = useState<OutlineRenameState>({});
+
+  const onNameDoubleClicked = (evt: MouseEvent) => {
+    if (!isEditing) {
+      return;
+    }
+
+    if (!editableElement.onChangeName) {
+      return;
+    }
+
+    setState({ isRenaming: true, originalName: editableElement.getEditableElementInfo().instanceName });
+  };
+
+  const onInputBlur = () => {
+    if (state.error) {
+      editableElement.onChangeName!(state.originalName!);
+    } else {
+      editableElement.onCommitName?.();
+    }
+
+    setState({});
+  };
+
+  const renameInputRef = useMemo(() => {
+    return (ref: HTMLInputElement | null) => {
+      ref?.focus();
+      ref?.select();
+    };
+  }, []);
+
+  const onChangeName = (evt: ChangeEvent<HTMLInputElement>) => {
+    const result = editableElement.onChangeName!(evt.target.value);
+    if (result?.errorMessage) {
+      setState({ ...state, error: result.errorMessage });
+    } else if (state.error) {
+      setState({ ...state, error: undefined });
+    }
+  };
+
+  const onInputKeyDown = (evt: KeyboardEvent) => {
+    if (evt.key === 'Enter') {
+      onInputBlur();
+    }
+  };
+
+  return {
+    isRenaming: state.isRenaming,
+    onNameDoubleClicked,
+    renameInputRef,
+    onChangeName,
+    onInputBlur,
+    onInputKeyDown,
+  };
+}

@@ -1,0 +1,58 @@
+// Code generated - EDITING IS FUTILE. DO NOT EDIT.
+
+package v1beta1
+
+// +k8s:openapi-gen=true
+type LogsDrilldownDefaultColumnsLogsDefaultColumnsRecords []LogsDrilldownDefaultColumnsLogsDefaultColumnsRecord
+
+// +k8s:openapi-gen=true
+type LogsDrilldownDefaultColumnsLogsDefaultColumnsRecord struct {
+	Columns []string                                            `json:"columns"`
+	Labels  LogsDrilldownDefaultColumnsLogsDefaultColumnsLabels `json:"labels"`
+}
+
+// NewLogsDrilldownDefaultColumnsLogsDefaultColumnsRecord creates a new LogsDrilldownDefaultColumnsLogsDefaultColumnsRecord object.
+func NewLogsDrilldownDefaultColumnsLogsDefaultColumnsRecord() *LogsDrilldownDefaultColumnsLogsDefaultColumnsRecord {
+	return &LogsDrilldownDefaultColumnsLogsDefaultColumnsRecord{
+		Columns: []string{},
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for LogsDrilldownDefaultColumnsLogsDefaultColumnsRecord.
+func (LogsDrilldownDefaultColumnsLogsDefaultColumnsRecord) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1beta1.LogsDrilldownDefaultColumnsLogsDefaultColumnsRecord"
+}
+
+// +k8s:openapi-gen=true
+type LogsDrilldownDefaultColumnsLogsDefaultColumnsLabels []LogsDrilldownDefaultColumnsLogsDefaultColumnsLabel
+
+// +k8s:openapi-gen=true
+type LogsDrilldownDefaultColumnsLogsDefaultColumnsLabel struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+// NewLogsDrilldownDefaultColumnsLogsDefaultColumnsLabel creates a new LogsDrilldownDefaultColumnsLogsDefaultColumnsLabel object.
+func NewLogsDrilldownDefaultColumnsLogsDefaultColumnsLabel() *LogsDrilldownDefaultColumnsLogsDefaultColumnsLabel {
+	return &LogsDrilldownDefaultColumnsLogsDefaultColumnsLabel{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for LogsDrilldownDefaultColumnsLogsDefaultColumnsLabel.
+func (LogsDrilldownDefaultColumnsLogsDefaultColumnsLabel) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1beta1.LogsDrilldownDefaultColumnsLogsDefaultColumnsLabel"
+}
+
+// +k8s:openapi-gen=true
+type LogsDrilldownDefaultColumnsSpec struct {
+	Records LogsDrilldownDefaultColumnsLogsDefaultColumnsRecords `json:"records"`
+}
+
+// NewLogsDrilldownDefaultColumnsSpec creates a new LogsDrilldownDefaultColumnsSpec object.
+func NewLogsDrilldownDefaultColumnsSpec() *LogsDrilldownDefaultColumnsSpec {
+	return &LogsDrilldownDefaultColumnsSpec{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for LogsDrilldownDefaultColumnsSpec.
+func (LogsDrilldownDefaultColumnsSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1beta1.LogsDrilldownDefaultColumnsSpec"
+}

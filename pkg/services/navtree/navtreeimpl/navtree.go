@@ -1,0 +1,609 @@
+package navtreeimpl
+
+import (
+	"go.opentelemetry.io/otel"
+
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/log"
+	playlistregistry "github.com/grafana/grafana/pkg/registry/apps/playlist"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/authn"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/navtree"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
+	"github.com/grafana/grafana/pkg/setting"
+)
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/navtree/navtreeimpl")
+
+type ServiceImpl struct {
+	cfg                  *setting.Cfg
+	log                  log.Logger
+	accessControl        ac.AccessControl
+	authnService         authn.Service
+	pluginStore          pluginstore.Store
+	pluginSettings       pluginsettings.Service
+	features             featuremgmt.FeatureToggles
+	accesscontrolService ac.Service
+	kvStore              kvstore.KVStore
+	apiKeyService        apikey.Service
+	license              licensing.Licensing
+
+	// Navigation
+	navigationAppConfig     map[string]NavigationAppConfig
+	navigationAppPathConfig map[string]NavigationAppConfig
+}
+
+type NavigationAppConfig struct {
+	SectionID  string
+	SortWeight int64
+	Text       string
+	Icon       string
+	SubTitle   string
+	IsNew      bool
+}
+
+func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service,
+	features featuremgmt.FeatureToggles, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service,
+	license licensing.Licensing, authnService authn.Service,
+) navtree.Service {
+	service := &ServiceImpl{
+		cfg:                  cfg,
+		log:                  log.New("navtree service"),
+		accessControl:        accessControl,
+		authnService:         authnService,
+		pluginStore:          pluginStore,
+		pluginSettings:       pluginSettings,
+		features:             features,
+		accesscontrolService: accesscontrolService,
+		kvStore:              kvStore,
+		apiKeyService:        apiKeyService,
+		license:              license,
+	}
+
+	service.readNavigationSettings()
+
+	return service
+}
+
+//nolint:gocyclo
+func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Preference) (*navtree.NavTreeRoot, error) {
+	// The context is restored on the ReqContext return so the span doesn't leak to sibling operations.
+	ctx, span := tracer.Start(c.Req.Context(), "navtree.GetNavTree")
+	defer span.End()
+	prevReq := c.Req
+	c.Req = c.Req.WithContext(ctx)
+	defer func() { c.Req = prevReq }()
+
+	hasAccess := ac.HasAccess(s.accessControl, c)
+	treeRoot := &navtree.NavTreeRoot{}
+
+	treeRoot.AddSection(s.getHomeNode(c, prefs))
+
+	if hasAccess(ac.EvalPermission(dashboards.ActionDashboardsRead)) {
+		// Starred dashboards are populated client-side (useSyncStarredItemsInNav).
+		// The backend only emits the empty section as a container for the client to fill.
+		treeRoot.AddSection(&navtree.NavLink{
+			Text:           "Starred",
+			Id:             "starred",
+			Icon:           "star",
+			SortWeight:     navtree.WeightSavedItems,
+			Children:       []*navtree.NavLink{},
+			EmptyMessageId: "starred-empty",
+			Url:            s.cfg.AppSubURL + "/dashboards?starred",
+		})
+	}
+
+	if c.IsPublicDashboardView() || hasAccess(ac.EvalAny(
+		ac.EvalPermission(folder.ActionFoldersRead), ac.EvalPermission(folder.ActionFoldersCreate),
+		ac.EvalPermission(dashboards.ActionDashboardsRead), ac.EvalPermission(dashboards.ActionDashboardsCreate)),
+	) {
+		dashboardChildLinks := s.buildDashboardNavLinks(c)
+
+		dashboardLink := &navtree.NavLink{
+			Text:       "Dashboards",
+			Id:         navtree.NavIDDashboards,
+			SubTitle:   "Create and manage dashboards to visualize your data",
+			Icon:       "apps",
+			Url:        s.cfg.AppSubURL + "/dashboards",
+			SortWeight: navtree.WeightDashboard,
+			Children:   dashboardChildLinks,
+		}
+
+		treeRoot.AddSection(dashboardLink)
+	}
+
+	if s.cfg.ExploreEnabled && hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
+		treeRoot.AddSection(&navtree.NavLink{
+			Text:       "Explore",
+			Id:         navtree.NavIDExplore,
+			SubTitle:   "Explore your data",
+			Icon:       "compass",
+			SortWeight: navtree.WeightExplore,
+			Url:        s.cfg.AppSubURL + "/explore",
+		})
+	}
+
+	if hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
+		treeRoot.AddSection(&navtree.NavLink{
+			Text:       "Drilldown",
+			Id:         navtree.NavIDDrilldown,
+			SubTitle:   "Drill down into your data using Grafana's powerful queryless apps",
+			Icon:       "drilldown",
+			SortWeight: navtree.WeightDrilldown,
+			Url:        s.cfg.AppSubURL + "/drilldown",
+		})
+	}
+
+	if s.cfg.ProfileEnabled && c.IsSignedIn {
+		treeRoot.AddSection(s.getProfileNode(c))
+	}
+
+	_, uaIsDisabledForOrg := s.cfg.UnifiedAlerting.DisabledOrgs[c.GetOrgID()]
+	uaVisibleForOrg := s.cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
+
+	if uaVisibleForOrg {
+		if alertingSection := s.buildAlertNavLinks(c); alertingSection != nil {
+			treeRoot.AddSection(alertingSection)
+		}
+	}
+
+	treeRoot.AddSection(s.buildDataConnectionsNavLink(c))
+
+	orgAdminNode, err := s.getAdminNode(c)
+
+	if orgAdminNode != nil && len(orgAdminNode.Children) > 0 {
+		treeRoot.AddSection(orgAdminNode)
+	} else if err != nil {
+		return nil, err
+	}
+
+	s.addHelpLinks(treeRoot, c)
+
+	if err := s.addAppLinks(treeRoot, c); err != nil {
+		return nil, err
+	}
+
+	// NOTE: empty admin section cleanup is intentionally NOT done here.
+	// It happens in setIndexViewData (pkg/api/index.go) AFTER RunIndexDataHooks,
+	// so enterprise hooks have a chance to add items before empty sections are pruned.
+
+	if c.IsSignedIn {
+		treeRoot.AddSection(&navtree.NavLink{
+			Text:           "Bookmarks",
+			Id:             navtree.NavIDBookmarks,
+			Icon:           "bookmark",
+			SortWeight:     navtree.WeightBookmarks,
+			Children:       []*navtree.NavLink{},
+			EmptyMessageId: "bookmarks-empty",
+			Url:            s.cfg.AppSubURL + "/bookmarks",
+		})
+	}
+
+	return treeRoot, nil
+}
+
+func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Preference) *navtree.NavLink {
+	homeUrl := s.cfg.AppSubURL + "/"
+	if !c.IsSignedIn && !s.cfg.Anonymous.Enabled {
+		homeUrl = s.cfg.AppSubURL + "/login"
+	} else {
+		homePage := s.cfg.HomePage
+
+		if prefs.HomeDashboardUID == "" && len(homePage) > 0 {
+			homeUrl = homePage
+		}
+	}
+
+	return &navtree.NavLink{
+		Text:       "Home",
+		Id:         "home",
+		Url:        homeUrl,
+		Icon:       "home-alt",
+		SortWeight: navtree.WeightHome,
+	}
+}
+
+func isSupportBundlesEnabled(s *ServiceImpl) bool {
+	return s.cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true)
+}
+
+// addHelpLinks adds a help menu item to the navigation bar.
+func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) {
+	if s.cfg.HelpEnabled {
+		helpNode := &navtree.NavLink{
+			Text:       "Help",
+			Id:         "help",
+			Url:        "#",
+			Icon:       "question-circle",
+			SortWeight: navtree.WeightHelp,
+			Children:   []*navtree.NavLink{},
+		}
+
+		treeRoot.AddSection(helpNode)
+
+		ctx := c.Req.Context()
+		// The interactive learning plugin ID is transitioning from grafana-grafanadocsplugin-app to grafana-pathfinder-app.
+		// Support both until that migration is complete.
+		_, oldInteractiveLearningPluginInstalled := s.pluginStore.Plugin(ctx, "grafana-grafanadocsplugin-app")
+		_, newInteractiveLearningPluginInstalled := s.pluginStore.Plugin(ctx, "grafana-pathfinder-app")
+		if oldInteractiveLearningPluginInstalled || newInteractiveLearningPluginInstalled {
+			// Add a custom property to indicate this should open the interactive learning plugin if available.
+			helpNode.HideFromTabs = true
+		}
+
+		hasAccess := ac.HasAccess(s.accessControl, c)
+		supportBundleAccess := ac.EvalAny(
+			ac.EvalPermission(supportbundlesimpl.ActionRead),
+			ac.EvalPermission(supportbundlesimpl.ActionCreate),
+		)
+
+		if isSupportBundlesEnabled(s) && hasAccess(supportBundleAccess) {
+			supportBundleNode := &navtree.NavLink{
+				Text:       "Support bundles",
+				Id:         "support-bundles",
+				Url:        s.cfg.AppSubURL + "/support-bundles",
+				Icon:       "wrench",
+				SortWeight: navtree.WeightHelp,
+			}
+
+			helpNode.Children = append(helpNode.Children, supportBundleNode)
+		}
+	}
+}
+
+func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLink {
+	// Only set login if it's different from the name
+	var login string
+	if c.GetLogin() != c.GetName() {
+		login = c.GetLogin()
+	}
+	gravatarURL := dtos.GetGravatarUrl(s.cfg, c.GetEmail())
+
+	children := []*navtree.NavLink{
+		{
+			Text: "Profile", Id: "profile/settings", Url: s.cfg.AppSubURL + "/profile", Icon: "sliders-v-alt",
+		},
+	}
+
+	children = append(children, &navtree.NavLink{
+		Text: "Notification history", Id: "profile/notifications", Url: s.cfg.AppSubURL + "/profile/notifications", Icon: "bell",
+	})
+
+	if s.cfg.AddChangePasswordLink() {
+		children = append(children, &navtree.NavLink{
+			Text: "Change password", Id: "profile/password", Url: s.cfg.AppSubURL + "/profile/password",
+			Icon: "lock",
+		})
+	}
+
+	return &navtree.NavLink{
+		Text:       c.GetName(),
+		SubTitle:   login,
+		Id:         "profile",
+		Img:        gravatarURL,
+		Url:        s.cfg.AppSubURL + "/profile",
+		SortWeight: navtree.WeightProfile,
+		Children:   children,
+		RoundIcon:  true,
+	}
+}
+
+func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {
+	hasAccess := ac.HasAccess(s.accessControl, c)
+
+	dashboardChildNavs := []*navtree.NavLink{}
+
+	// Playlists are visible to anonymous users too, so the nav stays consistent
+	// with the playlist page and API which both serve anonymous Viewers.
+	if c.IsSignedIn || c.IsAnonymous {
+		showPlaylist := c.HasRole(org.RoleViewer)
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPlaylistsRBAC) {
+			showPlaylist = hasAccess(ac.EvalPermission(playlistregistry.ActionPlaylistsRead))
+		}
+		if showPlaylist {
+			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+				Text: "Playlists", SubTitle: "Groups of dashboards that are displayed in a sequence", Id: "dashboards/playlists", Url: s.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
+			})
+		}
+	}
+
+	if c.IsSignedIn {
+		if s.cfg.SnapshotEnabled && hasAccess(ac.EvalPermission(dashboardsnapshots.ActionSnapshotsRead)) {
+			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+				Text:     "Snapshots",
+				SubTitle: "Interactive, publicly available, point-in-time representations of dashboards",
+				Id:       "dashboards/snapshots",
+				Url:      s.cfg.AppSubURL + "/dashboard/snapshots",
+				Icon:     "camera",
+			})
+		}
+
+		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+			Text:     "Library panels",
+			SubTitle: "Reusable panels that can be added to multiple dashboards",
+			Id:       "dashboards/library-panels",
+			Url:      s.cfg.AppSubURL + "/library-panels",
+			Icon:     "library-panel",
+		})
+
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagGlobalDashboardVariables) &&
+			hasAccess(ac.EvalAny(
+				ac.EvalPermission(dashboards.ActionDashboardsCreate),
+				ac.EvalPermission(dashboards.ActionDashboardsWrite),
+			)) {
+			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+				Text:     "Variables",
+				SubTitle: "Template variables shared across dashboards, globally or per folder",
+				Id:       "dashboards/variables",
+				Url:      s.cfg.AppSubURL + "/dashboards/variables",
+				Icon:     "brackets-curly",
+			})
+		}
+
+		if s.cfg.PublicDashboardsEnabled {
+			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+				Text: "Public dashboards",
+				Id:   "dashboards/public",
+				Url:  s.cfg.AppSubURL + "/dashboard/public",
+				Icon: "library-panel",
+			})
+		}
+
+		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+			Text:     "Recently deleted",
+			SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
+			Id:       "dashboards/recently-deleted",
+			Url:      s.cfg.AppSubURL + "/dashboard/recently-deleted",
+		})
+	}
+
+	if hasAccess(ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
+		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+			Text: "New dashboard", Icon: "plus", Url: s.cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "dashboards/new", IsCreateAction: true,
+		})
+
+		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+			Text: "Import dashboard", SubTitle: "Import dashboard from file or Grafana.com", Id: "dashboards/import", Icon: "plus",
+			Url: s.cfg.AppSubURL + "/dashboard/import", HideFromTabs: true, IsCreateAction: true,
+		})
+	}
+
+	return dashboardChildNavs
+}
+
+func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.NavLink {
+	hasAccess := ac.HasAccess(s.accessControl, c)
+	var alertChildNavs []*navtree.NavLink
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingTriage) {
+		alertRulesAccess := hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead)))
+		instanceAccess := hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceRead), ac.EvalPermission(ac.ActionAlertingInstancesExternalRead)))
+
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) {
+			// V2 Navigation: Group Alert activity and Alert groups under single parent (tabs managed on frontend)
+			if alertRulesAccess || instanceAccess {
+				alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+					Text:     "Alert activity",
+					SubTitle: "View alerts and active notifications",
+					Id:       "alert-activity",
+					Url:      s.cfg.AppSubURL + "/alerting/alerts",
+					Icon:     "bell",
+					IsNew:    true,
+				})
+			}
+		} else {
+			// Legacy: Show Alert activity as standalone
+			if alertRulesAccess {
+				alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+					Text: "Alert activity", SubTitle: "Visualize active and pending alerts", Id: "alert-alerts", Url: s.cfg.AppSubURL + "/alerting/alerts", Icon: "bell", IsNew: true,
+				})
+			}
+		}
+	}
+
+	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
+		navLink := &navtree.NavLink{
+			Text:     "Alert rules",
+			SubTitle: "Rules that determine whether an alert will fire",
+			Url:      s.cfg.AppSubURL + "/alerting/list",
+			Icon:     "list-ul",
+		}
+
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		// Since we're changing the navigation structure we have to assign different nav IDs
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) {
+			navLink.Id = "alert-rules" // New navigation: Alert rules (tabs managed on frontend)
+		} else {
+			navLink.Id = "alert-list" // Legacy navigation
+		}
+
+		alertChildNavs = append(alertChildNavs, navLink)
+	}
+
+	// Permissions for notification configuration items
+	contactPointsPerms := []ac.Evaluator{
+		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
+
+		ac.EvalPermission(ac.ActionAlertingReceiversRead),
+		ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
+		ac.EvalPermission(ac.ActionAlertingReceiversCreate),
+
+		ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesRead),
+		ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesWrite),
+		ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesDelete),
+	}
+
+	notificationPoliciesPerms := []ac.Evaluator{
+		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
+		ac.EvalPermission(ac.ActionAlertingRoutesRead),
+		ac.EvalPermission(ac.ActionAlertingRoutesWrite),
+		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsRead),
+		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsWrite),
+		ac.EvalPermission(ac.ActionAlertingManagedRoutesRead),
+		ac.EvalPermission(ac.ActionAlertingManagedRoutesWrite),
+	}
+
+	hasContactPointsAccess := hasAccess(ac.EvalAny(contactPointsPerms...))
+	hasNotificationPoliciesAccess := hasAccess(ac.EvalAny(notificationPoliciesPerms...))
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) {
+		// V2 Navigation: Group notification config items under a single parent (tabs managed on frontend)
+		if hasContactPointsAccess || hasNotificationPoliciesAccess {
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+				Text:     "Notification configuration",
+				SubTitle: "Manage contact points, notification policies, templates, and time intervals",
+				Id:       "notification-config",
+				Url:      s.cfg.AppSubURL + "/alerting/notifications",
+				Icon:     "comment-alt-share",
+			})
+		}
+	} else {
+		// Legacy Navigation: Show contact points and notification policies as separate items
+		if hasContactPointsAccess {
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+				Text: "Contact points", SubTitle: "Choose how to notify your contact points when an alert instance fires", Id: "receivers", Url: s.cfg.AppSubURL + "/alerting/notifications",
+				Icon: "comment-alt-share",
+			})
+		}
+
+		if hasNotificationPoliciesAccess {
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Notification policies", SubTitle: "Determine how alerts are routed to contact points", Id: "am-routes", Url: s.cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
+		}
+	}
+
+	if hasAccess(ac.EvalAny(
+		ac.EvalPermission(ac.ActionAlertingInstanceRead),
+		ac.EvalPermission(ac.ActionAlertingInstancesExternalRead),
+		ac.EvalPermission(ac.ActionAlertingSilencesRead),
+	)) {
+		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Silences", SubTitle: "Stop notifications from one or more alerting rules", Id: "silences", Url: s.cfg.AppSubURL + "/alerting/silences", Icon: "bell-slash"})
+	}
+
+	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceRead), ac.EvalPermission(ac.ActionAlertingInstancesExternalRead))) {
+		// In V2 navigation with triage enabled, Alert groups is shown as a tab under Alert activity
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		isV2WithTriage := s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingTriage)
+		if !isV2WithTriage {
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Alert groups", SubTitle: "See grouped alerts with active notifications", Id: "groups", Url: s.cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
+		}
+	}
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingCentralAlertHistory) {
+		if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead))) {
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+				Text: "History",
+				Id:   "alerts-history",
+				Url:  s.cfg.AppSubURL + "/alerting/history",
+				Icon: "history",
+			})
+		}
+	}
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if c.GetOrgRole() == org.RoleAdmin && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertRuleRestore) && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingRuleRecoverDeleted) {
+		// Only show as standalone item in legacy navigation (V2 shows it as a tab under Alert rules)
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if !s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) {
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+				Text:     "Recently deleted",
+				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
+				Id:       "alerts/recently-deleted",
+				Url:      s.cfg.AppSubURL + "/alerting/recently-deleted",
+			})
+		}
+	}
+
+	if c.GetOrgRole() == org.RoleAdmin {
+		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+			Text: "Settings", Id: "alerting-admin", Url: s.cfg.AppSubURL + "/alerting/admin",
+			Icon: "cog",
+		})
+	}
+
+	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleCreate), ac.EvalPermission(ac.ActionAlertingRuleExternalWrite))) {
+		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+			Text: "Create alert rule", SubTitle: "Create an alert rule", Id: "alert",
+			Icon: "plus", Url: s.cfg.AppSubURL + "/alerting/new", HideFromTabs: true, IsCreateAction: true,
+		})
+	}
+
+	if len(alertChildNavs) > 0 {
+		var alertNav = navtree.NavLink{
+			Text:       "Alerting",
+			SubTitle:   "Learn about problems in your systems moments after they occur",
+			Id:         navtree.NavIDAlerting,
+			Icon:       "bell",
+			Children:   alertChildNavs,
+			SortWeight: navtree.WeightAlerting,
+			Url:        s.cfg.AppSubURL + "/alerting",
+		}
+
+		return &alertNav
+	}
+
+	return nil
+}
+
+func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *navtree.NavLink {
+	hasAccess := ac.HasAccess(s.accessControl, c)
+
+	var children []*navtree.NavLink
+
+	baseUrl := s.cfg.AppSubURL + "/connections"
+
+	if hasAccess(datasources.ConfigurationPageAccess) {
+		// Add new connection — requires create/write permissions
+		children = append(children, &navtree.NavLink{
+			Id:       "connections-add-new-connection",
+			Text:     "Add new connection",
+			SubTitle: "Browse and create new connections",
+			Url:      baseUrl + "/add-new-connection",
+			Children: []*navtree.NavLink{},
+			Keywords: []string{"csv", "graphite", "json", "loki", "prometheus", "sql", "tempo"},
+		})
+
+		// Data sources — also requires write permissions to be useful
+		children = append(children, &navtree.NavLink{
+			Id:       "connections-datasources",
+			Text:     "Data sources",
+			SubTitle: "View and manage your connected data source connections",
+			Url:      baseUrl + "/datasources",
+			Children: []*navtree.NavLink{},
+		})
+	}
+
+	// Always return the section so that plugin pages registered under the
+	// "connections" section ID (via addAppLinks) can be attached regardless
+	// of the user's datasource permissions. The section is pruned after all
+	// app links are processed if it still has no children (see
+	// NavTreeRoot.RemoveEmptyConnectionsSection called in setIndexViewData).
+	return &navtree.NavLink{
+		Text:       "Connections",
+		Icon:       "adjust-circle",
+		Id:         "connections",
+		Url:        baseUrl,
+		Children:   children,
+		SortWeight: navtree.WeightDataConnections,
+	}
+}

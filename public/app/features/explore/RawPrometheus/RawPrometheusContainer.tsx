@@ -1,0 +1,80 @@
+import { memo, useMemo } from 'react';
+import { connect, type ConnectedProps } from 'react-redux';
+
+import { type DataFrame, type SplitOpen } from '@grafana/data';
+import { type TimeZone } from '@grafana/schema';
+import { type AdHocFilterItem } from '@grafana/ui';
+import { type ExploreItemState } from 'app/types/explore';
+import { type StoreState } from 'app/types/store';
+
+import { exploreDataLinkPostProcessorFactory } from '../utils/links';
+
+import { PrometheusQueryResultsContainer } from './PrometheusQueryResultsContainer';
+
+// ============================================================================
+// Redux-connected Component - Used by Explore
+// ============================================================================
+
+interface ExploreRawPrometheusContainerProps {
+  ariaLabel?: string;
+  exploreId: string;
+  width: number;
+  timeZone: TimeZone;
+  onCellFilterAdded?: (filter: AdHocFilterItem) => void;
+  showRawPrometheus?: boolean;
+  splitOpenFn?: SplitOpen;
+}
+
+function mapStateToProps(state: StoreState, { exploreId }: ExploreRawPrometheusContainerProps) {
+  const explore = state.explore;
+  const item: ExploreItemState = explore.panes[exploreId]!;
+  const { rawPrometheusResult, range, queryResponse } = item;
+  const rawPrometheusFrame: DataFrame[] = rawPrometheusResult ? [rawPrometheusResult] : [];
+  const loading = queryResponse.state;
+
+  return { loading, tableResult: rawPrometheusFrame, range };
+}
+
+const connector = connect(mapStateToProps, {});
+
+type ExploreProps = ExploreRawPrometheusContainerProps & ConnectedProps<typeof connector>;
+
+/**
+ * Redux-connected wrapper for Explore.
+ * Gets data from Redux and passes to PrometheusQueryResultsContainer for processing and display.
+ */
+const ExploreRawPrometheusContainer = memo(
+  ({
+    loading,
+    onCellFilterAdded,
+    tableResult,
+    width,
+    ariaLabel,
+    timeZone,
+    showRawPrometheus,
+    range,
+    splitOpenFn,
+  }: ExploreProps) => {
+    const dataLinkPostProcessor = useMemo(
+      () => exploreDataLinkPostProcessorFactory(splitOpenFn, range),
+      [splitOpenFn, range]
+    );
+
+    return (
+      <PrometheusQueryResultsContainer
+        tableResult={tableResult}
+        width={width}
+        timeZone={timeZone}
+        loading={loading}
+        ariaLabel={ariaLabel}
+        showRawPrometheus={showRawPrometheus}
+        onCellFilterAdded={onCellFilterAdded}
+        dataLinkPostProcessor={dataLinkPostProcessor}
+      />
+    );
+  }
+);
+
+ExploreRawPrometheusContainer.displayName = 'ExploreRawPrometheusContainer';
+
+export default connector(ExploreRawPrometheusContainer);

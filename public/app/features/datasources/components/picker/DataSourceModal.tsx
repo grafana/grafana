@@ -1,0 +1,323 @@
+import { css } from '@emotion/css';
+import { once } from 'lodash';
+import { useEffect, useMemo, useRef, useState } from 'react';
+
+import { type DataSourceInstanceSettings, type DataSourceRef, type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
+import { Modal, useStyles2, Input, Icon, ScrollContainer } from '@grafana/ui';
+import { type GrafanaQuery } from 'app/plugins/datasource/grafana/types';
+
+import { useDatasources } from '../../hooks';
+
+import { AddNewDataSourceButton } from './AddNewDataSourceButton';
+import { BuiltInDataSourceList } from './BuiltInDataSourceList';
+import { DataSourceList } from './DataSourceList';
+import { matchDataSourceWithSearch } from './utils';
+
+const INTERACTION_EVENT_NAME = 'dashboards_dspickermodal_clicked';
+const INTERACTION_ITEM = {
+  SELECT_DS: 'select_ds',
+  CONFIG_NEW_DS: 'config_new_ds',
+  CONFIG_NEW_DS_EMPTY_STATE: 'config_new_ds_empty_state',
+  SEARCH: 'search',
+  DISMISS: 'dismiss',
+  OPEN_MODAL: 'open_modal',
+};
+
+export interface DataSourceModalProps {
+  onChange: (ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => void;
+  current: DataSourceRef | string | null | undefined;
+  onDismiss: () => void;
+  recentlyUsed?: string[];
+  reportedInteractionFrom?: string;
+
+  // DS filters
+  filter?: (ds: DataSourceInstanceSettings) => boolean;
+  tracing?: boolean;
+  mixed?: boolean;
+  dashboard?: boolean;
+  metrics?: boolean;
+  type?: string | string[];
+  annotations?: boolean;
+  variables?: boolean;
+  alerting?: boolean;
+  pluginId?: string;
+  logs?: boolean;
+}
+
+export function DataSourceModal({
+  tracing,
+  dashboard,
+  mixed,
+  metrics,
+  type,
+  annotations,
+  variables,
+  alerting,
+  pluginId,
+  logs,
+  filter,
+  onChange,
+  current,
+  onDismiss,
+  reportedInteractionFrom,
+}: DataSourceModalProps) {
+  const styles = useStyles2(getDataSourceModalStyles);
+  const [search, setSearch] = useState('');
+  const analyticsInteractionSrc = reportedInteractionFrom || 'modal';
+  const favoriteDataSources = useFavoriteDatasources();
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const onDismissModal = () => {
+    onDismiss();
+    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.DISMISS, src: analyticsInteractionSrc });
+  };
+  const onChangeDataSource = (ds: DataSourceInstanceSettings) => {
+    onChange(ds);
+    reportInteraction(INTERACTION_EVENT_NAME, {
+      item: INTERACTION_ITEM.SELECT_DS,
+      ds_type: ds.type,
+      src: analyticsInteractionSrc,
+      is_favorite: favoriteDataSources.enabled ? favoriteDataSources.isFavoriteDatasource(ds.uid) : undefined,
+    });
+  };
+
+  // Get all datasources to report total_configured count
+  const dataSources = useDatasources({
+    tracing,
+    dashboard,
+    mixed,
+    metrics,
+    type,
+    annotations,
+    variables,
+    alerting,
+    pluginId,
+    logs,
+  });
+
+  // Report interaction when modal is opened
+  useEffect(() => {
+    if (dataSources.length > 0) {
+      reportInteraction(INTERACTION_EVENT_NAME, {
+        item: INTERACTION_ITEM.OPEN_MODAL,
+        src: analyticsInteractionSrc,
+        creator_team: 'grafana_plugins_catalog',
+        schema_version: '1.0.0',
+        total_configured: dataSources.length,
+      });
+    }
+  }, [analyticsInteractionSrc, dataSources.length]);
+
+  // Memoizing to keep once() cached so it avoids reporting multiple times
+  const reportSearchUsageOnce = useMemo(
+    () =>
+      once(() => {
+        reportInteraction(INTERACTION_EVENT_NAME, { item: 'search', src: analyticsInteractionSrc });
+      }),
+    [analyticsInteractionSrc]
+  );
+
+  // Built-in data sources used twice because of mobile layout adjustments
+  // In movile the list is appended to the bottom of the DS list
+  const BuiltInList = ({ className }: { className?: string }) => {
+    return (
+      <BuiltInDataSourceList
+        className={className}
+        onChange={onChangeDataSource}
+        current={current}
+        filter={filter}
+        variables={variables}
+        tracing={tracing}
+        metrics={metrics}
+        type={type}
+        annotations={annotations}
+        alerting={alerting}
+        pluginId={pluginId}
+        logs={logs}
+        dashboard={dashboard}
+        mixed={mixed}
+      />
+    );
+  };
+
+  return (
+    <Modal
+      title={t('data-source-picker.modal.title', 'Select data source')}
+      closeOnEscape={true}
+      closeOnBackdropClick={true}
+      isOpen={true}
+      className={styles.modal}
+      contentClassName={styles.modalContent}
+      onClickBackdrop={onDismissModal}
+      onDismiss={onDismissModal}
+    >
+      <div className={styles.leftColumn}>
+        <Input
+          type="search"
+          autoFocus
+          className={styles.searchInput}
+          value={search}
+          prefix={<Icon name="search" />}
+          placeholder={t('data-source-picker.modal.input-placeholder', 'Select data source')}
+          onChange={(e) => {
+            setSearch(e.currentTarget.value);
+            reportSearchUsageOnce();
+          }}
+        />
+        <ScrollContainer ref={scrollRef}>
+          <DataSourceList
+            onChange={onChangeDataSource}
+            current={current}
+            onClickEmptyStateCTA={() =>
+              reportInteraction(INTERACTION_EVENT_NAME, {
+                item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,
+                src: analyticsInteractionSrc,
+              })
+            }
+            filter={(ds) => (filter ? filter?.(ds) : true) && matchDataSourceWithSearch(ds, search) && !ds.meta.builtIn}
+            variables={variables}
+            tracing={tracing}
+            metrics={metrics}
+            type={type}
+            annotations={annotations}
+            alerting={alerting}
+            pluginId={pluginId}
+            logs={logs}
+            dashboard={dashboard}
+            mixed={mixed}
+            dataSources={dataSources}
+            favoriteDataSources={favoriteDataSources}
+            scrollRef={scrollRef}
+          />
+          <BuiltInList className={styles.appendBuiltInDataSourcesList} />
+        </ScrollContainer>
+      </div>
+      <div className={styles.rightColumn}>
+        <div className={styles.builtInDataSources}>
+          <div className={styles.builtInDataSourcesList}>
+            <ScrollContainer>
+              <BuiltInList />
+            </ScrollContainer>
+          </div>
+        </div>
+        <div className={styles.newDSSection}>
+          <span className={styles.newDSDescription}>
+            <Trans i18nKey="data-source-picker.modal.configure-new-data-source">
+              Open a new tab and configure a data source
+            </Trans>
+          </span>
+          <AddNewDataSourceButton
+            variant="secondary"
+            onClick={() => {
+              reportInteraction(INTERACTION_EVENT_NAME, {
+                item: INTERACTION_ITEM.CONFIG_NEW_DS,
+                src: analyticsInteractionSrc,
+              });
+              onDismiss();
+            }}
+          />
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+function getDataSourceModalStyles(theme: GrafanaTheme2) {
+  return {
+    modal: css({
+      width: '80%',
+      maxWidth: '1200px',
+      minHeight: '80%',
+
+      [theme.breakpoints.down('md')]: {
+        width: '100%',
+      },
+    }),
+    modalContent: css({
+      display: 'flex',
+      flexDirection: 'row',
+      flex: 1,
+
+      [theme.breakpoints.down('md')]: {
+        flexDirection: 'column',
+      },
+    }),
+    leftColumn: css({
+      display: 'flex',
+      flexDirection: 'column',
+      width: '50%',
+      maxHeight: '100%',
+      paddingRight: theme.spacing(4),
+      borderRight: `1px solid ${theme.colors.border.weak}`,
+
+      [theme.breakpoints.down('md')]: {
+        width: '100%',
+        borderRight: 0,
+        paddingRight: 0,
+        flex: 1,
+        overflowY: 'auto',
+      },
+    }),
+    rightColumn: css({
+      display: 'flex',
+      flexDirection: 'column',
+      width: '50%',
+      minHeight: '100%',
+      justifyItems: 'space-evenly',
+      alignItems: 'stretch',
+      paddingLeft: theme.spacing(4),
+
+      [theme.breakpoints.down('md')]: {
+        width: '100%',
+        paddingLeft: 0,
+        flexShrink: 0,
+      },
+    }),
+    builtInDataSources: css({
+      flex: '1 1',
+
+      [theme.breakpoints.down('md')]: {
+        display: 'none',
+      },
+    }),
+    builtInDataSourcesList: css({
+      [theme.breakpoints.down('md')]: {
+        display: 'none',
+        marginBottom: 0,
+      },
+
+      marginBottom: theme.spacing(4),
+    }),
+    appendBuiltInDataSourcesList: css({
+      [theme.breakpoints.up('md')]: {
+        display: 'none',
+      },
+    }),
+    newDSSection: css({
+      display: 'flex',
+      flexDirection: 'row',
+      width: '100%',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingTop: theme.spacing(1),
+    }),
+    newDSDescription: css({
+      flex: '1 0',
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      color: theme.colors.text.secondary,
+      [theme.breakpoints.down('sm')]: {
+        visibility: 'hidden',
+      },
+    }),
+    searchInput: css({
+      width: '100%',
+      minHeight: '32px',
+      marginBottom: theme.spacing(1),
+    }),
+  };
+}

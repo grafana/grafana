@@ -1,0 +1,26 @@
+name: Analytics Events Report
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  generate-report:
+    runs-on: ubuntu-arm64
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
+
+      - name: Generate analytics report
+        run: yarn analytics-report

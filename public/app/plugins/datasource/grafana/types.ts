@@ -1,0 +1,67 @@
+import { type DataFrameJSON } from '@grafana/data';
+import { type LiveDataFilter } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
+import { type TimeRegionConfig } from 'app/core/utils/timeRegions';
+import { type SearchQuery } from 'app/features/search/service/types';
+
+//----------------------------------------------
+// Query
+//----------------------------------------------
+
+export enum GrafanaQueryType {
+  LiveMeasurements = 'measurements',
+  Annotations = 'annotations',
+  Snapshot = 'snapshot',
+  TimeRegions = 'timeRegions',
+
+  // backend
+  RandomWalk = 'randomWalk',
+  List = 'list',
+}
+
+export interface GrafanaQuery extends DataQuery {
+  queryType: GrafanaQueryType; // RandomWalk by default
+  channel?: string;
+  filter?: LiveDataFilter;
+  buffer?: number;
+  path?: string; // for list
+  search?: SearchQuery;
+  searchNext?: SearchQuery;
+  snapshot?: DataFrameJSON[];
+  timeRegion?: TimeRegionConfig;
+  file?: GrafanaQueryFile;
+  // Random walk configuration
+  seriesCount?: number;
+  startValue?: number;
+  min?: number;
+  max?: number;
+  spread?: number;
+  noise?: number;
+  dropPercent?: number;
+}
+
+interface GrafanaQueryFile {
+  name: string;
+  size: number;
+}
+
+export const defaultQuery: GrafanaQuery = {
+  refId: 'A',
+  queryType: GrafanaQueryType.RandomWalk,
+};
+
+//----------------------------------------------
+// Annotations
+//----------------------------------------------
+
+export enum GrafanaAnnotationType {
+  Dashboard = 'dashboard',
+  Tags = 'tags',
+}
+
+export interface GrafanaAnnotationQuery extends GrafanaQuery {
+  type: GrafanaAnnotationType; // tags
+  limit: number; // 100
+  tags?: string[];
+  matchAny?: boolean; // By default Grafana only shows annotations that match all tags in the query. Enabling this returns annotations that match any of the tags in the query.
+}

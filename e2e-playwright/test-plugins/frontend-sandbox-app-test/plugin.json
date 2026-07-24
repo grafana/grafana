@@ -1,0 +1,35 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "app",
+  "name": "Sandbox app test plugin",
+  "id": "sandbox-app-test",
+  "info": {
+    "keywords": ["app", "sandbox"],
+    "description": "",
+    "author": {
+      "name": "Grafana"
+    },
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [],
+    "screenshots": [],
+    "version": "1.0.0",
+    "updated": "2023-06-27"
+  },
+  "includes": [
+    {
+      "type": "page",
+      "icon": "cog",
+      "name": "Sandbox App Page",
+      "path": "/plugins/sandbox-app-test",
+      "role": "Admin",
+      "addToNav": true
+    }
+  ],
+  "dependencies": {
+    "grafanaDependency": ">=10.0",
+    "plugins": []
+  }
+}

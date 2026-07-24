@@ -1,0 +1,121 @@
+package store
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+)
+
+var (
+	// ErrNoAdminConfiguration is an error for when no admin configuration is found.
+	ErrNoAdminConfiguration = fmt.Errorf("no admin configuration available")
+)
+
+type UpdateAdminConfigurationCmd struct {
+	AdminConfiguration *ngmodels.AdminConfiguration
+}
+
+//go:generate mockery --name AdminConfigurationStore --structname AdminConfigurationStoreMock --inpackage --filename admin_configuration_store_mock.go --with-expecter
+type AdminConfigurationStore interface {
+	GetAdminConfiguration(orgID int64) (*ngmodels.AdminConfiguration, error)
+	GetAdminConfigurations() ([]*ngmodels.AdminConfiguration, error)
+	DeleteAdminConfiguration(orgID int64) error
+	UpdateAdminConfiguration(UpdateAdminConfigurationCmd) error
+}
+
+func (st *DBstore) GetAdminConfiguration(orgID int64) (*ngmodels.AdminConfiguration, error) {
+	cfg := &ngmodels.AdminConfiguration{}
+	err := st.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		ok, err := sess.Table("ngalert_configuration").Where("org_id = ?", orgID).Get(cfg)
+		if err != nil {
+			return err
+		}
+
+		if !ok {
+			return ErrNoAdminConfiguration
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
+}
+
+func (st DBstore) GetAdminConfigurations() ([]*ngmodels.AdminConfiguration, error) {
+	var cfg []*ngmodels.AdminConfiguration
+	err := st.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		if err := sess.Table("ngalert_configuration").Find(&cfg); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
+}
+
+func (st DBstore) DeleteAdminConfiguration(orgID int64) error {
+	return st.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		_, err := sess.Exec("DELETE FROM ngalert_configuration WHERE org_id = ?", orgID)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+func (st DBstore) UpdateAdminConfiguration(cmd UpdateAdminConfigurationCmd) error {
+	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
+		existing := &ngmodels.AdminConfiguration{}
+		has, err := sess.Table("ngalert_configuration").Where("org_id = ?", cmd.AdminConfiguration.OrgID).Get(existing)
+		if err != nil {
+			return err
+		}
+
+		if !has {
+			// Partial writes (e.g. UID-only) can arrive before any row exists; send_alerts_to is
+			// NOT NULL and "no row" behaves as internal-only, so default a copy to internal.
+			cfg := *cmd.AdminConfiguration
+			if cfg.SendAlertsTo == nil {
+				internal := ngmodels.InternalAlertmanager
+				cfg.SendAlertsTo = &internal
+			}
+			_, err := sess.Table("ngalert_configuration").Insert(&cfg)
+			return err
+		}
+
+		cols := buildUpdateCols(cmd.AdminConfiguration)
+		if len(cols) == 0 {
+			return nil
+		}
+		_, err = sess.Table("ngalert_configuration").ID(existing.ID).Cols(cols...).Update(cmd.AdminConfiguration)
+		return err
+	})
+}
+
+// buildUpdateCols builds a list of column names to update based on which fields of the admin configuration are set.
+// this is necessary to avoid overwriting fields with null values when they are not included in the update request.
+func buildUpdateCols(adminConfig *ngmodels.AdminConfiguration) []string {
+	var cols []string
+
+	if adminConfig.SendAlertsTo != nil {
+		cols = append(cols, "send_alerts_to")
+	}
+
+	if adminConfig.ExternalAlertmanagerUID != nil {
+		cols = append(cols, "external_alertmanager_uid")
+	}
+
+	return cols
+}

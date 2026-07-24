@@ -1,0 +1,379 @@
+import { debounce } from 'lodash';
+import { type FormEvent } from 'react';
+
+import { store } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { StateManagerBase } from 'app/core/services/StateManagerBase';
+
+import {
+  RECENTLY_DELETED_SORT_VALUES,
+  SEARCH_PANELS_LOCAL_STORAGE_KEY,
+  SEARCH_SELECTED_LAYOUT,
+  SEARCH_SELECTED_SORT,
+} from '../constants';
+import {
+  reportDashboardListViewed,
+  reportSearchFailedQueryInteraction,
+  reportSearchQueryInteraction,
+  reportSearchResultInteraction,
+} from '../page/reporting';
+import { getGrafanaSearcher } from '../service/searcher';
+import { type SearchQuery } from '../service/types';
+import { SearchLayout, type SearchQueryParams, type SearchState } from '../types';
+import { needsListLayout, parseRouteParams } from '../utils';
+
+export const initialState: SearchState = {
+  query: '',
+  tag: [],
+  ownerReference: [],
+  starred: false,
+  layout: SearchLayout.Folders,
+  sort: undefined,
+  prevSort: undefined,
+  eventTrackingNamespace: 'dashboard_search',
+  deleted: false,
+  createdBy: undefined,
+};
+
+const defaultQueryParams: SearchQueryParams = {
+  sort: null,
+  starred: null,
+  query: null,
+  tag: null,
+  ownerReference: null,
+  layout: null,
+  createdBy: null,
+};
+
+const getLayoutFromStore = (key: string) => {
+  return store.get(key) === SearchLayout.List ? SearchLayout.List : SearchLayout.Folders;
+};
+
+type SearchReportInfo = Parameters<typeof reportSearchQueryInteraction>[1];
+const getSearchReportInfo = (state: SearchState): SearchReportInfo => ({
+  layout: state.layout,
+  starred: state.starred,
+  sortValue: state.sort,
+  query: state.query,
+  tagCount: state.tag?.length,
+  ownerReference: Boolean(state.ownerReference?.length),
+  includePanels: state.includePanels,
+  deleted: state.deleted,
+  createdBy: !!state.createdBy,
+});
+
+export class SearchStateManager extends StateManagerBase<SearchState> {
+  updateLocation = debounce((query) => locationService.partial(query, true), 300);
+  doSearchWithDebounce = debounce(() => this.doSearch(), 300);
+  lastQuery?: SearchQuery;
+
+  lastSearchTimestamp = 0;
+
+  protected sortStorageKey = SEARCH_SELECTED_SORT;
+  protected layoutStorageKey = SEARCH_SELECTED_LAYOUT;
+
+  initStateFromUrl(folderUid?: string, doInitialSearch = true) {
+    const stateFromUrl = parseRouteParams(locationService.getSearchObject());
+
+    // Force list view when conditions are specified from the URL
+    if (needsListLayout(stateFromUrl)) {
+      stateFromUrl.layout = SearchLayout.List;
+    }
+
+    const layout = getLayoutFromStore(this.layoutStorageKey);
+    let prevSort: string | undefined = store.get(this.sortStorageKey) || undefined;
+
+    // Guard against stale recently-deleted sort values persisted to the main sort key
+    // before this fix was introduced. Clear them so the main page renders correctly.
+    if (this.sortStorageKey === SEARCH_SELECTED_SORT && prevSort !== undefined) {
+      const recentlyDeletedValues: string[] = [...RECENTLY_DELETED_SORT_VALUES];
+      if (recentlyDeletedValues.includes(prevSort)) {
+        store.delete(SEARCH_SELECTED_SORT);
+        prevSort = undefined;
+      }
+    }
+
+    const sort = layout === SearchLayout.List ? stateFromUrl.sort || prevSort : null;
+
+    this.setState({
+      ...initialState,
+      ...stateFromUrl,
+      layout,
+      sort: sort ?? initialState.sort,
+      prevSort,
+      folderUid: folderUid,
+      eventTrackingNamespace: folderUid ? 'manage_dashboards' : 'dashboard_search',
+      deleted: this.state.deleted,
+    });
+
+    if (doInitialSearch && this.hasSearchFilters()) {
+      this.doSearch();
+    }
+  }
+
+  /**
+   * Updates internal and url state, then triggers a new search
+   */
+  setStateAndDoSearch(state: Partial<SearchState>) {
+    const sort = state.sort || this.state.sort || store.get(this.sortStorageKey) || undefined;
+
+    // Set internal state
+    this.setState({ sort, ...state });
+
+    // Update url state
+    this.updateLocation({
+      query: this.state.query.length === 0 ? null : this.state.query,
+      tag: this.state.tag,
+      ownerReference: this.state.ownerReference?.length ? this.state.ownerReference : null,
+      datasource: this.state.datasource,
+      panel_type: this.state.panel_type,
+      createdBy: this.state.createdBy ?? null,
+      starred: this.state.starred ? this.state.starred : null,
+      sort: this.state.sort,
+    });
+
+    // Prevent searching when user is only clearing the input.
+    // We don't show these results anyway
+    if (this.hasSearchFilters()) {
+      this.doSearchWithDebounce();
+    }
+  }
+
+  onCloseSearch = () => {
+    this.updateLocation({
+      search: null,
+      folder: null,
+      ...defaultQueryParams,
+    });
+  };
+
+  onClearSearchAndFilters = () => {
+    this.setStateAndDoSearch({
+      query: '',
+      datasource: undefined,
+      tag: [],
+      ownerReference: [],
+      panel_type: undefined,
+      createdBy: undefined,
+      starred: undefined,
+      sort: undefined,
+    });
+  };
+
+  onQueryChange = (query: string) => {
+    this.setStateAndDoSearch({ query });
+  };
+
+  onRemoveTag = (tagToRemove: string) => {
+    this.setStateAndDoSearch({ tag: this.state.tag.filter((tag) => tag !== tagToRemove) });
+  };
+
+  onTagFilterChange = (tags: string[]) => {
+    this.setStateAndDoSearch({ tag: tags });
+  };
+
+  onOwnerReferenceChange = (ownerReference: string[]) => {
+    this.setStateAndDoSearch({ ownerReference });
+  };
+
+  onAddTag = (newTag: string) => {
+    if (this.state.tag && this.state.tag.includes(newTag)) {
+      return;
+    }
+
+    this.setStateAndDoSearch({ tag: [...this.state.tag, newTag] });
+  };
+
+  onCreatedByChange = (createdBy: string | undefined) => {
+    this.setStateAndDoSearch({ createdBy });
+  };
+
+  onDatasourceChange = (datasource: string | undefined) => {
+    this.setStateAndDoSearch({ datasource });
+  };
+
+  onPanelTypeChange = (panel_type?: string) => {
+    this.setStateAndDoSearch({ panel_type });
+  };
+
+  onStarredFilterChange = (e: FormEvent<HTMLInputElement>) => {
+    const starred = e.currentTarget.checked;
+    this.setStateAndDoSearch({ starred });
+  };
+
+  onClearStarred = () => {
+    this.setStateAndDoSearch({ starred: false });
+  };
+
+  onSetStarred = (starred: boolean) => {
+    if (starred !== this.state.starred) {
+      this.setStateAndDoSearch({ starred });
+    }
+  };
+
+  onSortChange = (sort: string | undefined) => {
+    if (sort) {
+      store.set(this.sortStorageKey, sort);
+      // Switch to list view if sort is set to preserve sort order when navigating back
+      store.set(this.layoutStorageKey, SearchLayout.List);
+    } else {
+      store.delete(this.sortStorageKey);
+    }
+
+    if (this.state.layout === SearchLayout.Folders) {
+      this.setStateAndDoSearch({ sort, layout: SearchLayout.List });
+    } else {
+      this.setStateAndDoSearch({ sort });
+    }
+  };
+
+  onLayoutChange = (layout: SearchLayout) => {
+    store.set(this.layoutStorageKey, layout);
+
+    if (layout === SearchLayout.Folders) {
+      // Folders never has sort. Stash current sort so List can restore it later.
+      this.setStateAndDoSearch({ layout, prevSort: this.state.sort, sort: undefined });
+    } else {
+      // List: keep current sort if set, otherwise restore prevSort.
+      this.setStateAndDoSearch({ layout, sort: this.state.sort ?? this.state.prevSort });
+    }
+  };
+
+  onSetIncludePanels = (includePanels: boolean) => {
+    this.setStateAndDoSearch({ includePanels });
+    store.set(SEARCH_PANELS_LOCAL_STORAGE_KEY, includePanels);
+  };
+
+  hasSearchFilters() {
+    return Boolean(
+      this.state.query ||
+        this.state.tag.length ||
+        this.state.ownerReference?.length ||
+        this.state.starred ||
+        this.state.panel_type ||
+        this.state.createdBy ||
+        this.state.sort ||
+        this.state.deleted ||
+        this.state.layout === SearchLayout.List
+    );
+  }
+
+  getSearchQuery() {
+    const q: SearchQuery = {
+      query: this.state.query,
+      tags: this.state.tag,
+      ownerReference: this.state.ownerReference,
+      ds_uid: this.state.datasource,
+      panel_type: this.state.panel_type,
+      createdBy: this.state.createdBy,
+      location: this.state.folderUid, // This will scope all results to the prefix
+      sort: this.state.sort,
+      explain: this.state.explain,
+      withAllowedActions: this.state.explain, // allowedActions are currently not used for anything on the UI and added only in `explain` mode
+      starred: this.state.starred,
+      deleted: this.state.deleted,
+    };
+
+    // Only dashboards have additional properties
+    if (q.sort?.length && !q.sort.includes('name')) {
+      q.kind = ['dashboard', 'folder'];
+    }
+
+    if (!q.query?.length) {
+      q.query = '*';
+      if (!q.location) {
+        q.kind = ['dashboard', 'folder'];
+      }
+    }
+
+    if (!q.kind) {
+      q.kind = ['dashboard', 'folder'];
+    }
+
+    if (this.state.includePanels && q.kind.includes('dashboard')) {
+      q.panelTitleSearch = true;
+    }
+
+    return q;
+  }
+
+  doSearch() {
+    const trackingInfo = getSearchReportInfo(this.state);
+
+    reportSearchQueryInteraction(this.state.eventTrackingNamespace, trackingInfo);
+
+    this.lastQuery = this.getSearchQuery();
+
+    this.setState({ loading: true });
+
+    const searcher = getGrafanaSearcher();
+
+    const searchTimestamp = Date.now();
+    const searchPromise = this.state.starred ? searcher.starred(this.lastQuery) : searcher.search(this.lastQuery);
+
+    return searchPromise
+      .then((result) => {
+        // Only keep the results if it's was issued after the most recently resolved search.
+        // This prevents results showing out of order if first request is slower than later ones
+        if (searchTimestamp > this.lastSearchTimestamp) {
+          this.setState({ result, loading: false });
+          this.lastSearchTimestamp = searchTimestamp;
+        }
+      })
+      .catch((error) => {
+        reportSearchFailedQueryInteraction(this.state.eventTrackingNamespace, {
+          ...trackingInfo,
+          error: error?.message,
+        });
+        this.setState({ loading: false });
+      });
+  }
+
+  // This gets the possible tags from within the query results
+  getTagOptions = (): Promise<TermCount[]> => {
+    const query = this.lastQuery ?? {
+      kind: ['dashboard', 'folder'],
+      query: '*',
+    };
+    return getGrafanaSearcher().tags(query);
+  };
+
+  /**
+   * When item is selected clear some filters and report interaction
+   */
+  onSearchItemClicked = (e: React.MouseEvent<HTMLElement>) => {
+    reportSearchResultInteraction(this.state.eventTrackingNamespace, getSearchReportInfo(this.state));
+  };
+
+  /**
+   * Caller should handle debounce
+   */
+  onReportSearchUsage = () => {
+    reportDashboardListViewed(this.state.eventTrackingNamespace, getSearchReportInfo(this.state));
+  };
+}
+
+let stateManager: SearchStateManager;
+
+function getSearchStateManager() {
+  if (!stateManager) {
+    const layout = getLayoutFromStore(SEARCH_SELECTED_LAYOUT);
+
+    let includePanels = store.getBool(SEARCH_PANELS_LOCAL_STORAGE_KEY, true);
+    if (includePanels) {
+      includePanels = false;
+    }
+
+    stateManager = new SearchStateManager({ ...initialState, layout, includePanels });
+  }
+
+  return stateManager;
+}
+
+export function useSearchStateManager() {
+  const stateManager = getSearchStateManager();
+  const state = stateManager.useState();
+
+  return [state, stateManager] as const;
+}

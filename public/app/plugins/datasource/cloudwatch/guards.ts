@@ -1,0 +1,32 @@
+import { type AnnotationQuery } from '@grafana/data';
+
+import {
+  type CloudWatchAnnotationQuery,
+  type CloudWatchLogsAnomaliesQuery,
+  type CloudWatchLogsQuery,
+  type CloudWatchMetricsQuery,
+  LogsMode,
+} from './dataquery.gen';
+import { type CloudWatchQuery } from './types';
+
+export const isCloudWatchLogsQuery = (cloudwatchQuery: CloudWatchQuery): cloudwatchQuery is CloudWatchLogsQuery =>
+  cloudwatchQuery.queryMode === 'Logs';
+
+export const isLogsAnomaliesQuery = (
+  cloudwatchQuery: CloudWatchQuery
+): cloudwatchQuery is CloudWatchLogsAnomaliesQuery => {
+  if (isCloudWatchLogsQuery(cloudwatchQuery)) {
+    return cloudwatchQuery.logsMode === LogsMode.Anomalies;
+  }
+  return false;
+};
+
+export const isCloudWatchMetricsQuery = (cloudwatchQuery: CloudWatchQuery): cloudwatchQuery is CloudWatchMetricsQuery =>
+  cloudwatchQuery.queryMode === 'Metrics' || !cloudwatchQuery.hasOwnProperty('queryMode'); // in early versions of this plugin, queryMode wasn't defined in a CloudWatchMetricsQuery
+
+export const isCloudWatchAnnotationQuery = (
+  cloudwatchQuery: CloudWatchQuery
+): cloudwatchQuery is CloudWatchAnnotationQuery => cloudwatchQuery.queryMode === 'Annotations';
+
+export const isCloudWatchAnnotation = (query: unknown): query is AnnotationQuery<CloudWatchAnnotationQuery> =>
+  (query as AnnotationQuery<CloudWatchAnnotationQuery>).target?.queryMode === 'Annotations';

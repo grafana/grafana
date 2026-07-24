@@ -1,0 +1,76 @@
+import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
+import { isFetchError } from '@grafana/runtime';
+import { type Dashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { Alert, Button } from '@grafana/ui';
+
+import { type Diffs } from '../settings/version-history/utils';
+
+export interface DashboardChangeInfo {
+  changedSaveModel: Dashboard | DashboardV2Spec;
+  initialSaveModel: Dashboard | DashboardV2Spec;
+  diffs: Diffs;
+  diffCount: number;
+  hasChanges: boolean;
+  hasTimeChanges: boolean;
+  hasVariableValueChanges: boolean;
+  hasRefreshChange: boolean;
+  isNew?: boolean;
+  hasFolderChanges?: boolean;
+  hasMigratedToV2?: boolean;
+}
+
+export function isVersionMismatchError(error?: Error) {
+  return isFetchError(error) && error.data && error.data.status === 'version-mismatch';
+}
+
+export function isNameExistsError(error?: Error) {
+  return isFetchError(error) && error.data && error.data.status === 'name-exists';
+}
+
+export function isPluginDashboardError(error?: Error) {
+  return isFetchError(error) && error.data && error.data.status === 'plugin-dashboard';
+}
+
+export function NameAlreadyExistsError() {
+  return (
+    <Alert title={t('save-dashboards.name-exists.title', 'Dashboard name already exists')} severity="error">
+      <p>
+        <Trans i18nKey="save-dashboards.name-exists.message-info">
+          A dashboard with the same name in the selected folder already exists, including recently deleted dashboards.
+        </Trans>
+      </p>
+      <p>
+        <Trans i18nKey="save-dashboards.name-exists.message-suggestion">
+          Please choose a different name or folder.
+        </Trans>
+      </p>
+    </Alert>
+  );
+}
+
+export interface SaveButtonProps {
+  overwrite: boolean;
+  onSave: (overwrite: boolean) => void;
+  isLoading: boolean;
+  isValid?: boolean;
+}
+
+export function SaveButton({ overwrite, isLoading, isValid, onSave }: SaveButtonProps) {
+  return (
+    <Button
+      disabled={!isValid || isLoading}
+      icon={isLoading ? 'spinner' : undefined}
+      onClick={() => onSave(overwrite)}
+      variant={overwrite ? 'destructive' : 'primary'}
+      data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveButton}
+    >
+      {isLoading
+        ? t('dashboard-scene.save-button.saving', 'Saving...')
+        : overwrite
+          ? t('dashboard-scene.save-button.save-and-overwrite', 'Save and overwrite')
+          : t('dashboard-scene.save-button.save', 'Save')}
+    </Button>
+  );
+}

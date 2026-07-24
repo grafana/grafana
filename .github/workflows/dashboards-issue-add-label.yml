@@ -1,0 +1,80 @@
+name: When an issue changes and it's part of the dashboards project, add the dashboards squad label
+on:
+  issues:
+    types: [opened, closed, edited, reopened, assigned, unassigned, labeled, unlabeled]
+
+permissions: {}
+
+env:
+  ORGANIZATION: ${{ github.repository_owner }}
+  REPO: ${{ github.event.repository.name }}
+  TARGET_PROJECT: 202
+  LABEL_IDS: "LA_kwDOAOaWjc8AAAABT38U-A"
+
+concurrency:
+  group: issue-label-when-in-project-${{ github.event.number }}
+jobs:
+  main:
+    if: github.repository == 'grafana/grafana'
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        with:
+          github_app: grafana-pr-automation
+      - name: Check if issue is in target project
+        env:
+          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          TARGET_PROJECT: ${{ env.TARGET_PROJECT }}
+        run: |
+          # shellcheck disable=SC2016 # we don't want the $s to be expanded
+          gh api graphql -f query='
+            query($org: String!, $repo: String!, $issueNumber: Int!) {
+              repository(name: $repo, owner: $org) {
+                issue (number: $issueNumber) {
+                  id
+                  projectItems(first:20) {
+                    nodes {
+                      project {
+                        number,
+                      },
+                    }
+                  }
+                }
+              }
+            }' -f org="$ORGANIZATION" -f repo="$REPO" -F issueNumber="$ISSUE_NUMBER" > projects_data.json
+
+            {
+              echo "IN_TARGET_PROJ=$(jq '.data.repository.issue.projectItems.nodes[] | select(.project.number=='"$TARGET_PROJECT"') | .project != null' projects_data.json)"
+              echo "ITEM_ID=$(jq '.data.repository.issue.id' projects_data.json)"
+            } >> "$GITHUB_ENV"
+      - name: Set up label array
+        if: env.IN_TARGET_PROJ
+        env:
+          LABEL_IDS: ${{ env.LABEL_IDS }}
+        run: |
+          # shellcheck disable=SC2153 # we define the variable on the line above in 'read'
+          IFS=',' read -ra LABEL_IDs <<< "$LABEL_IDS"
+          for item in "${LABEL_IDs[@]}"; do
+            echo "Item: $item"
+          done
+      - name: Add label to issue
+        if: env.IN_TARGET_PROJ
+        env:
+          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+          LABEL_IDS: ${{ env.LABEL_IDS }}
+        run: |
+          # shellcheck disable=SC2016 # we don't want the $s to be expanded
+          gh api graphql -f query='
+            mutation ($labelableId: ID!, $labelIds: [ID!]!) {
+              addLabelsToLabelable(
+                input: {labelableId: $labelableId, labelIds: $labelIds}
+              ) {
+                  clientMutationId
+              }
+            }' -f labelableId="$ITEM_ID" -f labelIds="$LABEL_IDS"

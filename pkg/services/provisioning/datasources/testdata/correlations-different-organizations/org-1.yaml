@@ -1,0 +1,6 @@
+apiVersion: 1
+
+datasources:
+  - name: Foo
+    orgId: 1
+    type: graphite

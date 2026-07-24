@@ -1,0 +1,400 @@
+{
+  "name": "Panel Tests - Graph",
+  "labels": {
+    "gdev": "",
+    "graph": "",
+    "panel-tests": ""
+  },
+  "fields": {
+    "schemaVersion": "0"
+  },
+  "nested": [
+    {
+      "UID": "graph_tests.json#0",
+      "kind": "panel",
+      "name": "No Data Points Warning",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph_tests.json#0",
+      "kind": "panel",
+      "name": "null value null as zero",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph_tests.json#0",
+      "kind": "panel",
+      "name": "Stacking all series null segment",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph_tests.json#0",
+      "kind": "panel",
+      "fields": {
+        "type": "text"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "text"
+        }
+      ]
+    },
+    {
+      "UID": "graph_tests.json#0",
+      "kind": "panel",
+      "fields": {
+        "type": "text"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "text"
+        }
+      ]
+    },
+    {
+      "UID": "graph_tests.json#0",
+      "kind": "panel",
+      "fields": {
+        "type": "text"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "text"
+        }
+      ]
+    },
+    {
+      "UID": "graph_tests.json#0",
+      "kind": "panel",
+      "name": "Legend Table No Scroll Visible",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph_tests.json#0",
+      "kind": "panel",
+      "name": "Legend Table Should Scroll",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph_tests.json#0",
+      "kind": "panel",
+      "name": "Legend Table No Scroll Visible",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph_tests.json#0",
+      "kind": "panel",
+      "name": "Legend Table No Scroll Visible",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph_tests.json#0",
+      "kind": "panel",
+      "name": "Datapoints Outside Range Warning",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph_tests.json#0",
+      "kind": "panel",
+      "name": "Legend Table Single Series Should Take Minimum Height",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph_tests.json#0",
+      "kind": "panel",
+      "name": "Null between points",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph_tests.json#0",
+      "kind": "panel",
+      "fields": {
+        "type": "text"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "text"
+        }
+      ]
+    },
+    {
+      "UID": "graph_tests.json#0",
+      "kind": "panel",
+      "name": "Random walk series",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph_tests.json#0",
+      "kind": "panel",
+      "name": "Millisecond res x-axis and tooltip",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph_tests.json#0",
+      "kind": "panel",
+      "name": "2 yaxis and axis labels",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph_tests.json#0",
+      "kind": "panel",
+      "fields": {
+        "type": "text"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "text"
+        }
+      ]
+    },
+    {
+      "UID": "graph_tests.json#0",
+      "kind": "panel",
+      "fields": {
+        "type": "text"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "text"
+        }
+      ]
+    },
+    {
+      "UID": "graph_tests.json#0",
+      "kind": "panel",
+      "name": "null value connected",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph_tests.json#0",
+      "kind": "panel",
+      "name": "Stacking value ontop of nulls",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "family": "ds"
+    },
+    {
+      "family": "plugin",
+      "type": "panel",
+      "identifier": "text"
+    },
+    {
+      "family": "plugin",
+      "type": "panel",
+      "identifier": "timeseries"
+    }
+  ]
+}

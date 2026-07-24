@@ -1,0 +1,31 @@
+import { type GrafanaBootConfig, type LocationService } from '@grafana/runtime';
+import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
+import { type GrafanaContextType } from 'app/core/context/GrafanaContext';
+import { type NewFrontendAssetsChecker } from 'app/core/services/NewFrontendAssetsChecker';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { type KeybindingSrv } from 'app/core/services/keybindingSrv';
+
+/** Not sure what this should evolve into, just a starting point */
+export function getGrafanaContextMock(overrides: Partial<GrafanaContextType> = {}): GrafanaContextType {
+  return {
+    chrome: new AppChromeService(),
+    backend: backendSrv,
+    // eslint-disable-next-line
+    location: {} as LocationService,
+    // eslint-disable-next-line
+    config: { featureToggles: {} } as GrafanaBootConfig,
+    // eslint-disable-next-line
+    keybindings: {
+      clearAndInitGlobalBindings: jest.fn(),
+      setupDashboardBindings: jest.fn(),
+      setupTimeRangeBindings: jest.fn(),
+      bind: jest.fn(),
+      unbind: jest.fn(),
+    } as unknown as KeybindingSrv,
+    newAssetsChecker: {
+      start: jest.fn(),
+      reloadIfUpdateDetected: jest.fn(),
+    } as unknown as NewFrontendAssetsChecker,
+    ...overrides,
+  };
+}

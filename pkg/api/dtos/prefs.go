@@ -1,0 +1,39 @@
+package dtos
+
+import (
+	pref "github.com/grafana/grafana/pkg/services/preference"
+)
+
+// swagger:model
+type UpdatePrefsCmd struct {
+	// Enum: light,dark,system
+	Theme string `json:"theme"`
+	// The numerical :id of a favorited dashboard
+	// Default:0
+	// Deprecated: Use HomeDashboardUID instead
+	HomeDashboardID  int64   `json:"homeDashboardId"`
+	HomeDashboardUID *string `json:"homeDashboardUID,omitempty"`
+	// Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string
+	Timezone     string                       `json:"timezone"`
+	WeekStart    string                       `json:"weekStart"`
+	QueryHistory *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
+	Language     string                       `json:"language"`
+	Navbar       *pref.NavbarPreference       `json:"navbar,omitempty"`
+}
+
+// swagger:model
+type PatchPrefsCmd struct {
+	// Enum: light,dark
+	Theme *string `json:"theme,omitempty"`
+	// The numerical :id of a favorited dashboard
+	// Default:0
+	// Deprecated: Use HomeDashboardUID instead
+	HomeDashboardID *int64 `json:"homeDashboardId,omitempty"`
+	// Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string
+	Timezone         *string                      `json:"timezone,omitempty"`
+	WeekStart        *string                      `json:"weekStart,omitempty"`
+	Language         *string                      `json:"language,omitempty"`
+	QueryHistory     *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
+	HomeDashboardUID *string                      `json:"homeDashboardUID,omitempty"`
+	Navbar           *pref.NavbarPreference       `json:"navbar,omitempty"`
+}

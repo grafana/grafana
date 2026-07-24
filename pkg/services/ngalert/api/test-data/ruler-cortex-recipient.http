@@ -1,0 +1,76 @@
+@prometheusDatasourceUID = 7DEsN5_Mk
+
+// should point to an existing folder named alerting
+@namespace1 = test
+
+// create/update test namespace group42 rulegroup
+POST http://admin:admin@localhost:3000/api/ruler/{{prometheusDatasourceUID}}/api/v1/rules/{{namespace1}}
+content-type: application/json
+
+{
+    "name": "group42",
+    "rules": [
+        {
+            "alert": "logs_exist",
+            "expr": "rate({cluster=\"us-central1\", job=\"loki-prod/loki-canary\"}[1m]) > 0",
+            "for": "1m"
+        }
+    ]
+}
+
+###
+// create group101
+POST http://admin:admin@localhost:3000/api/ruler/{{prometheusDatasourceUID}}/api/v1/rules/{{namespace1}}
+content-type: application/json
+
+{
+    "name": "group101",
+    "rules": [
+        {
+            "alert": "logs_exist",
+            "expr": "rate({cluster=\"us-central1\", job=\"loki-prod/loki-canary\"}[1m]) > 0",
+            "for": "2m"
+        }
+    ]
+}
+
+###
+// get group42 rules
+GET http://admin:admin@localhost:3000/api/ruler/{{prometheusDatasourceUID}}/api/v1/rules/{{namespace1}}/group42
+
+###
+// get group101 rules
+GET http://admin:admin@localhost:3000/api/ruler/{{prometheusDatasourceUID}}/api/v1/rules/{{namespace1}}/group101
+
+###
+// get namespace rules
+GET http://admin:admin@localhost:3000/api/ruler/{{prometheusDatasourceUID}}/api/v1/rules/{{namespace1}}
+
+###
+// get org rules
+GET http://admin:admin@localhost:3000/api/ruler/{{prometheusDatasourceUID}}/api/v1/rules
+
+###
+// delete group42 rules
+DELETE http://admin:admin@localhost:3000/api/ruler/{{prometheusDatasourceUID}}/api/v1/rules/{{namespace1}}/group42
+
+###
+// get namespace rules - only group101 should be listed
+GET http://admin:admin@localhost:3000/api/ruler/{{prometheusDatasourceUID}}/api/v1/rules/{{namespace1}}
+
+###
+// delete namespace rules
+DELETE http://admin:admin@localhost:3000/api/ruler/{{prometheusDatasourceUID}}/api/v1/rules/{{namespace1}}
+
+###
+// get namespace rules - no rules
+GET http://admin:admin@localhost:3000/api/ruler/{{prometheusDatasourceUID}}/api/v1/rules/{{namespace1}}
+
+###
+// get group42 rules
+GET http://admin:admin@localhost:3000/api/ruler/{{prometheusDatasourceUID}}/api/v1/rules/{{namespace1}}/group42
+
+###
+// get namespace rules
+GET http://admin:admin@localhost:3000/api/ruler/{{prometheusDatasourceUID}}/api/v1/rules/{{namespace1}}
+U

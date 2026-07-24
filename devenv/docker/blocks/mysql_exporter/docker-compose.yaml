@@ -1,0 +1,6 @@
+  mysql-exporter:
+    image: prom/mysqld-exporter:${mysql_exporter_tag}
+    ports:
+      - "9104:9104"
+    volumes:
+      - ./docker/blocks/mysql_exporter/mysql-exporter.cnf:/home/.my.cnf

@@ -1,0 +1,100 @@
+import { Meta, ArgTypes } from '@storybook/addon-docs/blocks';
+import { RadioButtonList } from './RadioButtonList';
+
+<Meta title="MDX|RadioButtonList" component={RadioButtonList} />
+
+# RadioButtonList
+
+`RadioButtonList` is used to select a single value from a set of mutually-exclusive options, arranged in a _vertical_ list.
+
+## When to use
+
+- When you have four or more _mutually-exclusive_ options
+- When the user needs to see all the available options without first interacting to expand the list
+- When you have a smaller number of options, _but_ their individual label length is too long for a [RadioButtonGroup](?path=/docs/forms-radiobuttongroup--radio-buttons)
+
+## When not to use
+
+- When you have too many options to show without causing excessive scrolling; consider using a [Combobox](?path=/docs/inputs-combobox--docs)
+- When you have _mutually-inclusive_ options; consider using a stacked list of [Checkboxes](https://developers.grafana.com/ui/latest/index.html?path=/story/inputs-checkbox--stacked-list)
+
+## Usage
+
+### Basic radio list
+
+```jsx
+import { RadioButtonList } from '@grafana/ui';
+
+<RadioButtonList options={...} value={...} onChange={...} />
+
+```
+
+### Disabled options
+
+You can disable some options by passing them to the `disabledOptions` prop.
+Keep in mind the `disabledOptions` are compared with options' values by the `===` operator.
+
+```jsx
+import { RadioButtonList } from '@grafana/ui';
+
+const options = [
+  { label: 'Prometheus', value: 'prometheus' },
+  { label: 'Graphite', value: 'graphite' },
+  { label: 'Elastic', value: 'elastic' },
+  { label: 'InfluxDB', value: 'influx' },
+];
+
+const disabledOptions = ['prometheus', 'elastic'];
+
+
+<RadioButtonList
+  options={options}
+  disabledOptions={disabledOptions}
+  value={...}
+  onChange={...}
+/>
+```
+
+### Options with descriptions
+
+You can add descriptions to the options by passing them to the option's description property.
+Descriptions should be short and concise. Try to avoid multiline text.
+
+```jsx
+import { RadioButtonList } from '@grafana/ui';
+
+const options = [
+  { label: 'Prometheus', value: 'prometheus', description: 'Monitoring system & TSDB' },
+  { label: 'Loki', value: 'loki', description: 'Log aggregation system' },
+];
+
+const disabledOptions = ['prometheus', 'elastic'];
+
+
+<RadioButtonList
+  options={options}
+  disabledOptions={disabledOptions}
+  value={...}
+  onChange={...}
+/>
+```
+
+### Changing layout
+
+The `RadioButtonList` layout uses CSS Grid, so it is effortless to split the list into multiple columns
+
+```jsx
+import { RadioButtonList } from '@grafana/ui';
+
+<RadioButtonList
+  options={...}
+  value={...}
+  onChange={...}
+  className={css`
+    grid-template-columns: 1fr 1fr 1fr;
+  `}
+/>
+
+```
+
+<ArgTypes of={RadioButtonList} />

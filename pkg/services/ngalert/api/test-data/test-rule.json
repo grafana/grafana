@@ -1,0 +1,21 @@
+{
+    "grafana_condition": {
+        "condition": "A",
+        "data": [
+            {
+                "refId": "A",
+                "queryType": "",
+                "relativeTimeRange": {
+                    "from": 18000,
+                    "to": 10800
+                },
+                "datasourceUid": "__expr__",
+                "model": {
+                    "type": "math",
+                    "expression": "2 + 2 > 1"
+                }
+            }
+        ],
+        "now": "2021-03-11T14:50:42.218+02:00"
+    }
+}

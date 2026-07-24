@@ -1,0 +1,60 @@
+import { FALLBACK_DOCS_LINK } from './constants';
+
+export async function getTransformationContent(id: string): Promise<{ name: string; helperDocs: string }> {
+  const { transformationDocsContent, ImageRenderType } = await import(
+    /* webpackChunkName: "transformer-docs" */ './content'
+  );
+  if (id in transformationDocsContent) {
+    const { name, getHelperDocs, links } = transformationDocsContent[id];
+
+    const helperDocs = getHelperDocs(ImageRenderType.UIImage);
+
+    const cleansedMarkdown = cleanMarkdownOfUnwantedSyntax(helperDocs);
+
+    // NOTE: string interpolation whitespace/indentation formatting is intentional.
+    if (links?.length) {
+      const renderedLinks = links
+        .map((link) => {
+          return `
+  Or visit <a href="${link.url}" target="_blank">${link.title}</a>\n
+  `;
+        })
+        .join('');
+
+      // If external links exist, build and add them to the returned documentation.
+      return {
+        name,
+        helperDocs: `
+        ${cleansedMarkdown}
+        ${FALLBACK_DOCS_LINK}
+  ${renderedLinks}
+        `,
+      };
+    }
+
+    // If NO external links exist, simply return the basic documentation.
+    return {
+      name,
+      helperDocs: `
+      ${cleansedMarkdown}
+      ${FALLBACK_DOCS_LINK}
+      `,
+    };
+  }
+
+  // If the transformation has no documentation, return an external link to the online documentation.
+  return {
+    name: 'No documentation found',
+    helperDocs: FALLBACK_DOCS_LINK,
+  };
+}
+
+const cleanMarkdownOfUnwantedSyntax = (markdown: string) => {
+  // Remove anchor links: [text](#link)
+  const markdownWithoutAnchorLinks = markdown.replace(/\[(.*?)\]\(#.*?\)/g, '$1');
+
+  // Remove shortcode syntax: [text][]
+  const markdownWithoutShortcodeSyntax = markdownWithoutAnchorLinks.replace(/\[[^\]]*\]\[\]/g, '');
+
+  return markdownWithoutShortcodeSyntax;
+};

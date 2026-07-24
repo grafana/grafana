@@ -1,0 +1,95 @@
+import { css, cx } from '@emotion/css';
+import * as React from 'react';
+
+import { type GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes/ThemeContext';
+import { Icon } from '../Icon/Icon';
+
+export interface FieldValidationMessageProps {
+  /** Override component style */
+  className?: string;
+  horizontal?: boolean;
+  id?: string;
+}
+
+/**
+ * Component for displaying a validation error message under an element.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-fieldvalidationmessage--docs
+ */
+export const FieldValidationMessage = ({
+  children,
+  id,
+  horizontal,
+  className,
+}: React.PropsWithChildren<FieldValidationMessageProps>) => {
+  const styles = useStyles2(getFieldValidationMessageStyles);
+  const cssName = cx(horizontal ? styles.horizontal : styles.vertical, className);
+
+  return (
+    <div id={id} role="alert" aria-live="polite" className={cssName}>
+      <Icon className={styles.fieldValidationMessageIcon} name="exclamation-circle" />
+      {children}
+    </div>
+  );
+};
+
+const getFieldValidationMessageStyles = (theme: GrafanaTheme2) => {
+  const baseStyle = css({
+    fontSize: theme.typography.size.sm,
+    fontWeight: theme.typography.fontWeightMedium,
+    padding: theme.spacing(0.5, 1),
+    color: theme.colors.error.contrastText,
+    background: theme.colors.error.main,
+    borderRadius: theme.shape.radius.lg,
+    position: 'relative',
+    display: 'inline-block',
+    alignSelf: 'flex-start',
+
+    a: {
+      color: theme.colors.error.contrastText,
+      textDecoration: 'underline',
+
+      '&:hover': {
+        textDecoration: 'none',
+      },
+    },
+  });
+
+  return {
+    vertical: css(baseStyle, {
+      margin: theme.spacing(0.5, 0, 0, 0),
+
+      '&:before': {
+        content: '""',
+        position: 'absolute',
+        left: '9px',
+        top: '-5px',
+        width: 0,
+        height: 0,
+        borderWidth: '0 4px 5px 4px',
+        borderColor: `transparent transparent ${theme.colors.error.main} transparent`,
+        borderStyle: 'solid',
+      },
+    }),
+    horizontal: css(baseStyle, {
+      marginLeft: '10px',
+
+      '&:before': {
+        content: '""',
+        position: 'absolute',
+        left: '-5px',
+        top: '9px',
+        width: 0,
+        height: 0,
+        borderWidth: '4px 5px 4px 0',
+        borderColor: 'transparent #e02f44 transparent transparent',
+        borderStyle: 'solid',
+      },
+    }),
+    fieldValidationMessageIcon: css({
+      marginRight: theme.spacing(),
+    }),
+  };
+};

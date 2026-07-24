@@ -1,0 +1,7 @@
+
+@grafanaRecipient = grafana
+
+GET http://admin:admin@localhost:3000/api/prometheus/{{grafanaRecipient}}/api/v1/rules
+
+###
+GET http://admin:admin@localhost:3000/api/prometheus/{{grafanaRecipient}}/api/v1/alerts

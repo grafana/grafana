@@ -1,0 +1,758 @@
+package notifier
+
+import (
+	"bytes"
+	"context"
+	"crypto/md5"
+	"errors"
+	"fmt"
+	"io"
+	"testing"
+	"time"
+
+	"github.com/matttproud/golang_protobuf_extensions/pbutil"
+	"github.com/prometheus/alertmanager/flushlog/flushlogpb"
+	"github.com/prometheus/alertmanager/nflog/nflogpb"
+	"github.com/prometheus/alertmanager/silence/silencepb"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/require"
+
+	alertingCluster "github.com/grafana/alerting/cluster"
+	alertingImages "github.com/grafana/alerting/images"
+	alertingModels "github.com/grafana/alerting/models"
+	alertingNotify "github.com/grafana/alerting/notify"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/validations"
+	"github.com/grafana/grafana/pkg/setting"
+)
+
+type fakeConfigStore struct {
+	configs map[int64]*models.AlertConfiguration
+
+	// historicConfigs stores configs by orgID.
+	historicConfigs map[int64][]*models.HistoricAlertConfiguration
+
+	// notificationSettings stores notification settings by orgID.
+	notificationSettings map[int64]map[models.AlertRuleKey]models.ContactPointRouting
+}
+
+func (f *fakeConfigStore) ListContactPointRoutings(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
+	settings, ok := f.notificationSettings[q.OrgID]
+	if !ok {
+		return nil, nil
+	}
+	if q.ReceiverName != "" {
+		filteredSettings := make(map[models.AlertRuleKey]models.ContactPointRouting)
+		for key, notificationSettings := range settings {
+			if q.ReceiverName == notificationSettings.Receiver {
+				filteredSettings[key] = notificationSettings
+			}
+		}
+		return filteredSettings, nil
+	}
+
+	return settings, nil
+}
+
+// Saves the image or returns an error.
+func (f *fakeConfigStore) SaveImage(ctx context.Context, img *models.Image) error {
+	return alertingImages.ErrImageNotFound
+}
+
+func (f *fakeConfigStore) GetImage(ctx context.Context, token string) (*models.Image, error) {
+	return nil, alertingImages.ErrImageNotFound
+}
+
+func (f *fakeConfigStore) GetImageByURL(ctx context.Context, url string) (*models.Image, error) {
+	return nil, alertingImages.ErrImageNotFound
+}
+
+func (f *fakeConfigStore) URLExists(ctx context.Context, url string) (bool, error) {
+	return false, alertingImages.ErrImageNotFound
+}
+
+func (f *fakeConfigStore) GetImages(ctx context.Context, tokens []string) ([]models.Image, []string, error) {
+	return nil, nil, alertingImages.ErrImageNotFound
+}
+
+func NewFakeConfigStore(t *testing.T, configs map[int64]*models.AlertConfiguration) *fakeConfigStore {
+	t.Helper()
+
+	historicConfigs := make(map[int64][]*models.HistoricAlertConfiguration)
+	for org, config := range configs {
+		historicConfig := models.HistoricConfigFromAlertConfig(*config)
+		historicConfigs[org] = append(historicConfigs[org], &historicConfig)
+	}
+
+	return &fakeConfigStore{
+		configs:         configs,
+		historicConfigs: historicConfigs,
+	}
+}
+
+func NewFakeNotificationStore(t *testing.T, notificationSettings map[int64]map[models.AlertRuleKey]models.ContactPointRouting) *fakeConfigStore {
+	t.Helper()
+	return &fakeConfigStore{
+		notificationSettings: notificationSettings,
+	}
+}
+
+func (f *fakeConfigStore) GetAllLatestAlertmanagerConfiguration(context.Context) ([]*models.AlertConfiguration, error) {
+	result := make([]*models.AlertConfiguration, 0, len(f.configs))
+	for _, configuration := range f.configs {
+		result = append(result, configuration)
+	}
+	return result, nil
+}
+
+func (f *fakeConfigStore) GetLatestAlertmanagerConfiguration(_ context.Context, orgID int64) (*models.AlertConfiguration, error) {
+	config, ok := f.configs[orgID]
+	if !ok {
+		return nil, store.ErrNoAlertmanagerConfiguration
+	}
+	return config, nil
+}
+
+func (f *fakeConfigStore) SaveAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
+	return f.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func(models.AlertConfiguration) error { return nil })
+}
+
+func (f *fakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd, callback store.SaveCallback) error {
+	cfg := models.AlertConfiguration{
+		AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
+		ConfigurationHash:         fmt.Sprintf("%x", md5.Sum([]byte(cmd.AlertmanagerConfiguration))),
+		OrgID:                     cmd.OrgID,
+		ConfigurationVersion:      "v1",
+		Default:                   cmd.Default,
+	}
+	f.configs[cmd.OrgID] = &cfg
+
+	historicConfig := models.HistoricConfigFromAlertConfig(cfg)
+	if cmd.LastApplied != 0 {
+		historicConfig.LastApplied = time.Now().UTC().Unix()
+		f.historicConfigs[cmd.OrgID] = append(f.historicConfigs[cmd.OrgID], &historicConfig)
+	}
+
+	if err := callback(cfg); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (f *fakeConfigStore) UpdateAlertmanagerConfiguration(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
+	if config, exists := f.configs[cmd.OrgID]; exists && config.ConfigurationHash == cmd.FetchedConfigurationHash {
+		newConfig := models.AlertConfiguration{
+			AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
+			OrgID:                     cmd.OrgID,
+			ConfigurationHash:         fmt.Sprintf("%x", md5.Sum([]byte(cmd.AlertmanagerConfiguration))),
+			ConfigurationVersion:      "v1",
+			Default:                   cmd.Default,
+		}
+		f.configs[cmd.OrgID] = &newConfig
+
+		historicConfig := models.HistoricConfigFromAlertConfig(newConfig)
+		f.historicConfigs[cmd.OrgID] = append(f.historicConfigs[cmd.OrgID], &historicConfig)
+		return nil
+	}
+
+	return errors.New("config not found or hash not valid")
+}
+
+func (f *fakeConfigStore) MarkConfigurationAsApplied(_ context.Context, cmd *models.MarkConfigurationAsAppliedCmd) error {
+	orgConfigs, ok := f.historicConfigs[cmd.OrgID]
+	if !ok {
+		return nil
+	}
+
+	// Iterate backwards to find the latest config first.
+	for i := len(orgConfigs) - 1; i >= 0; i-- {
+		for _, config := range orgConfigs {
+			if config.ConfigurationHash == cmd.ConfigurationHash {
+				config.LastApplied = time.Now().UTC().Unix()
+				return nil
+			}
+		}
+	}
+
+	return nil
+}
+
+func (f *fakeConfigStore) GetAppliedConfigurations(_ context.Context, orgID int64, limit int) ([]*models.HistoricAlertConfiguration, error) {
+	configsByOrg, ok := f.historicConfigs[orgID]
+	if !ok {
+		return []*models.HistoricAlertConfiguration{}, nil
+	}
+
+	// Iterate backwards to get the latest applied configs.
+	var configs []*models.HistoricAlertConfiguration
+	start := len(configsByOrg) - 1
+	end := start - limit
+	if end < 0 {
+		end = 0
+	}
+
+	for i := start; i >= end; i-- {
+		if configsByOrg[i].LastApplied > 0 {
+			configs = append(configs, configsByOrg[i])
+		}
+	}
+
+	return configs, nil
+}
+
+func (f *fakeConfigStore) GetHistoricalConfiguration(_ context.Context, orgID int64, id int64) (*models.HistoricAlertConfiguration, error) {
+	configsByOrg, ok := f.historicConfigs[orgID]
+	if !ok {
+		return &models.HistoricAlertConfiguration{}, store.ErrNoAlertmanagerConfiguration
+	}
+
+	for _, conf := range configsByOrg {
+		if conf.ID == id && conf.OrgID == orgID {
+			return conf, nil
+		}
+	}
+
+	return &models.HistoricAlertConfiguration{}, store.ErrNoAlertmanagerConfiguration
+}
+
+type FakeOrgStore struct {
+	orgs []int64
+}
+
+func NewFakeOrgStore(t *testing.T, orgs []int64) *FakeOrgStore {
+	t.Helper()
+
+	return &FakeOrgStore{
+		orgs: orgs,
+	}
+}
+
+func (f *FakeOrgStore) FetchOrgIds(_ context.Context) ([]int64, error) {
+	return f.orgs, nil
+}
+
+type NoValidation struct{}
+
+func (n NoValidation) Validate(_ models.NotificationSettings) error {
+	return nil
+}
+
+type RejectingValidation struct{}
+
+func (n RejectingValidation) Validate(s models.NotificationSettings) error {
+	return ErrorReceiverDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: s.ContactPointRouting.Receiver}}
+}
+
+var errInvalidState = fmt.Errorf("invalid state")
+
+// silenceState copied from state in prometheus-alertmanager/silence/silence.go.
+type silenceState map[string]*silencepb.MeshSilence
+
+// MarshalBinary copied from prometheus-alertmanager/silence/silence.go.
+func (s silenceState) MarshalBinary() ([]byte, error) {
+	var buf bytes.Buffer
+
+	for _, e := range s {
+		if _, err := pbutil.WriteDelimited(&buf, e); err != nil {
+			return nil, err
+		}
+	}
+	return buf.Bytes(), nil
+}
+
+// decodeSilenceState copied from decodeState in prometheus-alertmanager/silence/silence.go.
+func decodeSilenceState(r io.Reader) (silenceState, error) {
+	st := silenceState{}
+	for {
+		var s silencepb.MeshSilence
+		_, err := pbutil.ReadDelimited(r, &s)
+		if err == nil {
+			if s.Silence == nil {
+				return nil, errInvalidState
+			}
+			st[s.Silence.Id] = &s
+			continue
+		}
+		//nolint:errorlint
+		if err == io.EOF {
+			break
+		}
+		return nil, err
+	}
+	return st, nil
+}
+
+func createSilence(id string, startsAt, expiresAt time.Time) *silencepb.MeshSilence {
+	return &silencepb.MeshSilence{
+		Silence: &silencepb.Silence{
+			Id: id,
+			Matchers: []*silencepb.Matcher{
+				{
+					Type:    silencepb.Matcher_EQUAL,
+					Name:    model.AlertNameLabel,
+					Pattern: "test_alert",
+				},
+				{
+					Type:    silencepb.Matcher_EQUAL,
+					Name:    models.FolderTitleLabel,
+					Pattern: "test_alert_folder",
+				},
+			},
+			StartsAt:  startsAt,
+			EndsAt:    expiresAt,
+			CreatedBy: "Grafana Test",
+			Comment:   "Test Silence",
+		},
+		ExpiresAt: expiresAt,
+	}
+}
+
+// receiverKey copied from prometheus-alertmanager/nflog/nflog.go.
+func receiverKey(r *nflogpb.Receiver) string {
+	return fmt.Sprintf("%s/%s/%d", r.GroupName, r.Integration, r.Idx)
+}
+
+// stateKey copied from prometheus-alertmanager/nflog/nflog.go.
+func stateKey(k string, r *nflogpb.Receiver) string {
+	return fmt.Sprintf("%s:%s", k, receiverKey(r))
+}
+
+// nflogState copied from state in prometheus-alertmanager/nflog/nflog.go.
+type nflogState map[string]*nflogpb.MeshEntry
+
+// MarshalBinary copied from prometheus-alertmanager/nflog/nflog.go.
+func (s nflogState) MarshalBinary() ([]byte, error) {
+	var buf bytes.Buffer
+
+	for _, e := range s {
+		if _, err := pbutil.WriteDelimited(&buf, e); err != nil {
+			return nil, err
+		}
+	}
+	return buf.Bytes(), nil
+}
+
+// decodeNflogState copied from decodeState in prometheus-alertmanager/nflog/nflog.go.
+func decodeNflogState(r io.Reader) (nflogState, error) {
+	st := nflogState{}
+	for {
+		var e nflogpb.MeshEntry
+		_, err := pbutil.ReadDelimited(r, &e)
+		if err == nil {
+			if e.Entry == nil || e.Entry.Receiver == nil {
+				return nil, errInvalidState
+			}
+			st[stateKey(string(e.Entry.GroupKey), e.Entry.Receiver)] = &e
+			continue
+		}
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		return nil, err
+	}
+	return st, nil
+}
+
+func createNotificationLog(groupKey string, receiverName string, sentAt, expiresAt time.Time) (string, *nflogpb.MeshEntry) {
+	recv := nflogpb.Receiver{GroupName: receiverName, Integration: "test3", Idx: 0}
+	return stateKey(groupKey, &recv), &nflogpb.MeshEntry{
+		Entry: &nflogpb.Entry{
+			GroupKey:  []byte(groupKey),
+			Receiver:  &recv,
+			Resolved:  false,
+			Timestamp: sentAt,
+		},
+		ExpiresAt: expiresAt,
+	}
+}
+
+// https://github.com/grafana/prometheus-alertmanager/blob/main/flushlog/flushlog.go#L136-L136
+type flushLogState map[uint64]*flushlogpb.MeshFlushLog
+
+func (s flushLogState) MarshalBinary() ([]byte, error) {
+	var buf bytes.Buffer
+
+	for _, e := range s {
+		if _, err := pbutil.WriteDelimited(&buf, e); err != nil {
+			return nil, err
+		}
+	}
+	return buf.Bytes(), nil
+}
+
+func createFlushLog(groupFingerprint uint64, ts, expiresAt time.Time) *flushlogpb.MeshFlushLog {
+	return &flushlogpb.MeshFlushLog{
+		FlushLog: &flushlogpb.FlushLog{
+			GroupFingerprint: groupFingerprint,
+			Timestamp:        ts,
+		},
+		ExpiresAt: expiresAt,
+	}
+}
+
+// decodeFlushLogState copied from decodeState in prometheus-alertmanager/flushlog/flushlog.go
+func decodeFlushLogState(r io.Reader) (flushLogState, error) {
+	st := flushLogState{}
+	for {
+		var e flushlogpb.MeshFlushLog
+		_, err := pbutil.ReadDelimited(r, &e)
+		if err == nil {
+			if e.FlushLog == nil || e.FlushLog.GroupFingerprint == 0 || e.FlushLog.Timestamp.IsZero() {
+				return nil, errInvalidState
+			}
+			st[e.FlushLog.GroupFingerprint] = &e
+			continue
+		}
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		return nil, err
+	}
+	return st, nil
+}
+
+type call struct {
+	Method string
+	Args   []interface{}
+}
+
+type fakeAlertRuleNotificationStore struct {
+	Calls []call
+
+	RenameReceiverInNotificationSettingsFn func(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
+	ListContactPointRoutingsFn             func(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error)
+}
+
+func (f *fakeAlertRuleNotificationStore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
+	call := call{
+		Method: "RenameReceiverInNotificationSettings",
+		Args:   []interface{}{ctx, orgID, oldReceiver, newReceiver, validateProvenance, dryRun},
+	}
+	f.Calls = append(f.Calls, call)
+
+	if f.RenameReceiverInNotificationSettingsFn != nil {
+		return f.RenameReceiverInNotificationSettingsFn(ctx, orgID, oldReceiver, newReceiver, validateProvenance, dryRun)
+	}
+
+	// Default values when no function hook is provided
+	return nil, nil, nil
+}
+
+func (f *fakeAlertRuleNotificationStore) ListContactPointRoutings(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
+	call := call{
+		Method: "ListContactPointRoutings",
+		Args:   []interface{}{ctx, q},
+	}
+	f.Calls = append(f.Calls, call)
+
+	if f.ListContactPointRoutingsFn != nil {
+		return f.ListContactPointRoutingsFn(ctx, q)
+	}
+
+	// Default values when no function hook is provided
+	return nil, nil
+}
+
+// MockBroadcastChannel captures broadcast messages for testing.
+type MockBroadcastChannel struct {
+	broadcasts [][]byte
+}
+
+func withPeer(peer alertingNotify.ClusterPeer) Option {
+	return func(moa *MultiOrgAlertmanager) {
+		moa.peer = peer
+		moa.initAlertBroadcast()
+	}
+}
+
+// ReliableDelivery implements alertingCluster.ClusterChannel.
+func (m *MockBroadcastChannel) ReliableDelivery([]byte) bool { return true }
+
+// Broadcast implements alertingCluster.ClusterChannel.
+func (m *MockBroadcastChannel) Broadcast(b []byte) {
+	m.broadcasts = append(m.broadcasts, b)
+}
+
+// Broadcasts returns all captured broadcast messages.
+func (m *MockBroadcastChannel) Broadcasts() [][]byte {
+	return m.broadcasts
+}
+
+// MockClusterPeer implements alertingNotify.ClusterPeer for testing.
+type MockClusterPeer struct {
+	Channel     *MockBroadcastChannel
+	LastOptions []alertingCluster.ChannelOption
+}
+
+// Position implements alertingNotify.ClusterPeer.
+func (m *MockClusterPeer) Position() int {
+	return 0
+}
+
+// WaitReady implements alertingNotify.ClusterPeer.
+func (m *MockClusterPeer) WaitReady(context.Context) error {
+	return nil
+}
+
+// AddState implements alertingNotify.ClusterPeer.
+func (m *MockClusterPeer) AddState(_ string, _ alertingCluster.State, _ prometheus.Registerer, opts ...alertingCluster.ChannelOption) alertingCluster.ClusterChannel {
+	m.LastOptions = opts
+	return m.Channel
+}
+
+type TestMultiOrgAlertmanagerOptions struct {
+	orgs           []int64
+	configs        map[int64]*models.AlertConfiguration
+	disabledOrgs   map[int64]struct{}
+	featureToggles featuremgmt.FeatureToggles
+	peer           alertingNotify.ClusterPeer
+	waitReady      bool
+	secretService  *secretsManager.SecretsService //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	alertmanagers  map[int64]Alertmanager
+	cfgStore       AlertingStore
+	skipLoad       bool
+}
+
+type TestMultiOrgAlertmanagerOption func(*TestMultiOrgAlertmanagerOptions)
+
+func WithOrgs(orgs []int64) TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.orgs = orgs
+	}
+}
+
+func WithConfigs(configs map[int64]*models.AlertConfiguration) TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.configs = configs
+	}
+}
+
+func WithDisabledOrgs(disabledOrgs map[int64]struct{}) TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.disabledOrgs = disabledOrgs
+	}
+}
+
+func WithFeatureToggles(ft featuremgmt.FeatureToggles) TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.featureToggles = ft
+	}
+}
+
+func WithPeer(peer alertingNotify.ClusterPeer) TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.peer = peer
+	}
+}
+
+func WithWaitReady() TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.waitReady = true
+	}
+}
+
+func WithSecretService(
+	secretService *secretsManager.SecretsService, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+) TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.secretService = secretService
+	}
+}
+
+func WithAlertmanagers(alertmanagers map[int64]Alertmanager) TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.alertmanagers = alertmanagers
+	}
+}
+
+func WithConfigStore(cfgStore AlertingStore) TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.cfgStore = cfgStore
+	}
+}
+
+func WithSkipLoad() TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.skipLoad = true
+	}
+}
+
+func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerOption) *MultiOrgAlertmanager {
+	t.Helper()
+
+	options := TestMultiOrgAlertmanagerOptions{
+		orgs:           []int64{1},
+		configs:        make(map[int64]*models.AlertConfiguration),
+		disabledOrgs:   map[int64]struct{}{},
+		featureToggles: featuremgmt.WithFeatures(),
+		waitReady:      false,
+	}
+	for _, opt := range opts {
+		opt(&options)
+	}
+
+	tmpDir := t.TempDir()
+	orgStore := NewFakeOrgStore(t, options.orgs)
+	var cfgStore AlertingStore
+	if options.cfgStore != nil {
+		cfgStore = options.cfgStore
+	} else {
+		cfgStore = NewFakeConfigStore(t, options.configs)
+	}
+	kvStore := fakes.NewFakeKVStore(t)
+	registry := prometheus.NewPedanticRegistry()
+	m := metrics.NewNGAlert(registry)
+	secretsService := options.secretService
+	if secretsService == nil {
+		secretsService = secretsManager.SetupTestService(t, fake_secrets.NewFakeSecretsStore())
+	}
+	decryptFn := secretsService.GetDecryptedValue
+
+	cfg := &setting.Cfg{
+		DataPath: tmpDir,
+		UnifiedAlerting: setting.UnifiedAlertingSettings{
+			AlertmanagerConfigPollInterval: 3 * time.Minute,
+			DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
+			DisabledOrgs:                   options.disabledOrgs,
+		},
+	}
+
+	var moaOpts []Option
+	if options.peer != nil {
+		moaOpts = append(moaOpts, withPeer(options.peer))
+	}
+
+	moa, err := NewMultiOrgAlertmanager(
+		cfg,
+		cfgStore,
+		orgStore,
+		kvStore,
+		fakes.NewFakeProvisioningStore(),
+		decryptFn,
+		m.GetMultiOrgAlertmanagerMetrics(),
+		nil,
+		fakes.NewFakeReceiverPermissionsService(),
+		fakes.NewFakeRoutePermissionsService(),
+		log.New("testlogger"),
+		secretsService,
+		options.featureToggles,
+		nil,
+		false,
+		// Sync deps are nil — tests do not enable the sync feature flag.
+		NewExternalAMSyncer(nil, nil, &validations.OSSDataSourceRequestValidator{}, cfg, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"), nil, nil, nil),
+		moaOpts...,
+	)
+	require.NoError(t, err)
+
+	if options.alertmanagers != nil {
+		for orgID, am := range options.alertmanagers {
+			moa.alertmanagers[orgID] = am
+		}
+	}
+
+	if !options.skipLoad {
+		require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))
+	}
+
+	if options.waitReady {
+		require.Eventually(t, func() bool {
+			for _, org := range options.orgs {
+				_, err := moa.AlertmanagerFor(org)
+				if err != nil {
+					return false
+				}
+			}
+			return true
+		}, 10*time.Second, 100*time.Millisecond)
+	}
+
+	return moa
+}
+
+type FakeAlertmanagerProvider struct {
+	Calls struct {
+		AlertmanagerFor []AlertmanagerForCall
+	}
+	AlertmanagerForFunc func(orgID int64) (Alertmanager, error)
+}
+
+type AlertmanagerForCall struct {
+	OrgID int64
+}
+
+func (f *FakeAlertmanagerProvider) AlertmanagerFor(orgID int64) (Alertmanager, error) {
+	f.Calls.AlertmanagerFor = append(f.Calls.AlertmanagerFor, AlertmanagerForCall{OrgID: orgID})
+	if f.AlertmanagerForFunc != nil {
+		return f.AlertmanagerForFunc(orgID)
+	}
+	return nil, ErrNoAlertmanagerForOrg
+}
+
+type FakeReceiverService struct {
+	Calls struct {
+		GetReceiver []GetReceiverCall
+	}
+	GetReceiverFunc func(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*models.Receiver, error)
+}
+
+type FakeEmailValidator struct {
+	ValidateIntegrationFunc       func(ctx context.Context, orgID int64, integration models.Integration, decryptFn models.DecryptFn, logger log.Logger) error
+	ValidateIntegrationConfigFunc func(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error
+}
+
+func NewFakeEmailValidator(t *testing.T, err error) *FakeEmailValidator {
+	t.Helper()
+	return &FakeEmailValidator{
+		ValidateIntegrationFunc: func(ctx context.Context, orgID int64, integration models.Integration, decryptFn models.DecryptFn, logger log.Logger) error {
+			return err
+		},
+		ValidateIntegrationConfigFunc: func(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error {
+			return err
+		},
+	}
+}
+
+func (f *FakeEmailValidator) ValidateIntegration(ctx context.Context, orgID int64, integration models.Integration, decryptFn models.DecryptFn, logger log.Logger) error {
+	if f.ValidateIntegrationFunc != nil {
+		return f.ValidateIntegrationFunc(ctx, orgID, integration, decryptFn, logger)
+	}
+	return nil
+}
+
+func (f *FakeEmailValidator) ValidateIntegrationConfig(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error {
+	if f.ValidateIntegrationConfigFunc != nil {
+		return f.ValidateIntegrationConfigFunc(ctx, orgID, integration, logger)
+	}
+	return nil
+}
+
+type GetReceiverCall struct {
+	Ctx     context.Context
+	UID     string
+	Decrypt bool
+	User    identity.Requester
+}
+
+func (f *FakeReceiverService) GetReceiver(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*models.Receiver, error) {
+	f.Calls.GetReceiver = append(f.Calls.GetReceiver, GetReceiverCall{
+		Ctx:     ctx,
+		UID:     uid,
+		Decrypt: decrypt,
+		User:    user,
+	})
+	if f.GetReceiverFunc != nil {
+		return f.GetReceiverFunc(ctx, uid, decrypt, user)
+	}
+	return nil, models.ErrReceiverNotFound.Errorf("")
+}

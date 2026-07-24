@@ -1,0 +1,174 @@
+@alertManagerDatasourceUID = Y4t6ca_Mz
+
+###
+# create AM configuration
+POST http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/config/api/v1/alerts
+content-type: application/json
+
+{
+  "template_files": {},
+  "alertmanager_config": {
+    "global": {
+      "resolve_timeout": "4m",
+      "http_config": {
+        "basic_auth": null,
+        "authorization": null,
+        "bearer_token": "",
+        "bearer_token_file": "",
+        "tls_config": {
+          "ca_file": "",
+          "cert_file": "",
+          "key_file": "",
+          "server_name": "",
+          "insecure_skip_verify": false
+        },
+        "follow_redirects": true
+      },
+      "smtp_from": "youraddress@example.org",
+      "smtp_hello": "localhost",
+      "smtp_smarthost": "localhost:25",
+      "smtp_require_tls": true,
+      "pagerduty_url": "https://events.pagerduty.com/v2/enqueue",
+      "opsgenie_api_url": "https://api.opsgenie.com/",
+      "wechat_api_url": "https://qyapi.weixin.qq.com/cgi-bin/",
+      "victorops_api_url": "https://alert.victorops.com/integrations/generic/20131114/alert/"
+    },
+    "route": {
+      "receiver": "example-email"
+    },
+    "templates": [],
+    "receivers": [
+      {
+        "name": "example-email",
+        "email_configs": [
+          {
+            "send_resolved": false,
+            "to": "youraddress@example.org",
+            "smarthost": "",
+            "html": "{{ template \"email.default.html\" . }}",
+            "tls_config": {
+              "ca_file": "",
+              "cert_file": "",
+              "key_file": "",
+              "server_name": "",
+              "insecure_skip_verify": false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+###
+# get latest AM configuration
+GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/config/api/v1/alerts
+content-type: application/json
+
+###
+# delete AM configuration
+DELETE http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/config/api/v1/alerts
+
+###
+# create AM alerts
+POST http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/api/v2/alerts
+content-type: application/json
+
+[
+  {
+    "startsAt": "2021-04-05T14:08:42.087Z",
+    "endsAt": "2021-04-05T14:08:42.087Z",
+    "annotations": {
+      "additionalProp1": "string",
+      "additionalProp2": "string",
+      "additionalProp3": "string"
+    },
+    "labels": {
+      "additionalProp1": "string",
+      "additionalProp2": "string",
+      "additionalProp3": "string"
+    },
+    "generatorURL": "http://localhost"
+  }
+]
+
+###
+# get AM alerts
+GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/api/v2/alerts
+
+###
+# get status
+GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/api/v2/status
+
+###
+# get AM alert groups
+GET http://admin:admin@localhost:3000/alertmanager/{{alertManagerDatasourceUID}}/api/v2/alerts/groups
+
+###
+# get silences - no silences
+GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/api/v2/silences?Filter=foo="bar"&Filter=bar="foo"
+
+###
+# create silence
+POST http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/api/v2/silences
+content-type: application/json
+
+{
+    "matchers": [
+        {
+            "name": "foo",
+            "value": "bar",
+            "isRegex": true
+        }
+    ],
+    "createdBy": "spapagian",
+    "comment": "a comment",
+    "startsAt": "2023-04-05T14:45:09.885Z",
+    "endsAt": "2023-04-09T16:45:09.885Z"
+}
+
+###
+# update silence - does not exist
+POST http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/api/v2/silences
+content-type: application/json
+
+{
+  "id": "something",
+  "comment": "string",
+  "createdBy": "string",
+  "endsAt": "2023-03-31T14:17:04.419Z",
+  "matchers": [
+    {
+      "isRegex": true,
+      "name": "string",
+      "value": "string"
+    }
+  ],
+  "startsAt": "2021-03-31T13:17:04.419Z"
+}
+
+###
+# get silences
+# @name getSilences
+GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/api/v2/silences
+
+
+###
+@silenceID = {{getSilences.response.body.$.[0].id}}
+
+###
+# get silence
+GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/api/v2/silence/{{silenceID}}
+
+
+###
+# get silence - unknown
+GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/api/v2/silence/unknown
+
+###
+# delete silence
+DELETE http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/api/v2/silence/{{silenceID}}
+
+###
+# delete silence - unknown
+DELETE http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/api/v2/silence/unknown

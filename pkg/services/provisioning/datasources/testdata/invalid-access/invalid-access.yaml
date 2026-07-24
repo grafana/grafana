@@ -1,0 +1,6 @@
+apiVersion: 1
+
+datasources:
+  - name: invalid-access
+    type: prometheus
+    access: INVALID_ACCESS

@@ -1,0 +1,339 @@
+import { css } from '@emotion/css';
+import { negate } from 'lodash';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { type Status } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
+import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import {
+  type CorrelationData,
+  type CorrelationsData,
+  type FetchError,
+  isFetchError,
+  reportInteraction,
+} from '@grafana/runtime';
+import {
+  Badge,
+  Button,
+  DeleteButton,
+  LoadingPlaceholder,
+  useStyles2,
+  Alert,
+  InteractiveTable,
+  type Column,
+  type CellProps,
+  type SortByFn,
+  Pagination,
+  TextLink,
+} from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
+import { useNavModel } from 'app/core/hooks/useNavModel';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
+
+import { AddCorrelationFormWrapper } from './Forms/AddCorrelationForm';
+import { EditCorrelationFormWrapper } from './Forms/EditCorrelationForm';
+import { EmptyCorrelationsCTA } from './components/EmptyCorrelationsCTA';
+import type { Correlation, GetCorrelationsParams, RemoveCorrelationParams } from './types';
+
+type CorrelationsPageProps = {
+  fetchCorrelations: (params: GetCorrelationsParams) => Promise<CorrelationsData> | CorrelationsData;
+  correlations?: CorrelationsData;
+  isLoading: boolean;
+  changePageFn?: (page: number) => void;
+  removeFn?: (params: RemoveCorrelationParams) => Promise<
+    | {
+        message: string;
+      }
+    | Status
+  >;
+  error?: Error | FetchError;
+};
+
+const collator = new Intl.Collator();
+
+const sortDatasource: SortByFn<CorrelationData> = (a, b, column) =>
+  collator.compare(a.values[column].name, b.values[column].name);
+
+const isCorrelationsReadOnly = (correlation: CorrelationData) => correlation.provisioned;
+
+const loaderWrapper = css({
+  display: 'flex',
+  justifyContent: 'center',
+});
+
+/*
+    We need to support pagination for cursor based (app platform), and offset based (legacy) apis
+    cursor based pagination just does page forward/back with no list
+    offset based has a list of pages along with forward/back
+   The legacy api returns correlations.doesContinue as undefined, so we know to show pages
+  */
+
+export default function CorrelationsPage(props: CorrelationsPageProps) {
+  const { fetchCorrelations, correlations, isLoading, error, removeFn, changePageFn } = props;
+  const navModel = useNavModel('correlations');
+  const [isAdding, setIsAddingValue] = useState(false);
+  const page = useRef(1);
+
+  /*
+    We need to support pagination for cursor based (app platform), and offset based (legacy) apis
+    cursor based pagination just does page forward/back with no list
+    offset based has a list of pages along with forward/back
+   The legacy api returns correlations.doesContinue as undefined, so we know to show pages
+  */
+
+  const setIsAdding = (value: boolean) => {
+    setIsAddingValue(value);
+    if (value) {
+      reportInteraction('grafana_correlations_adding_started');
+    }
+  };
+
+  const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
+  const corrData = correlations?.correlations ?? [];
+  const hasWritable = corrData.some(negate(isCorrelationsReadOnly));
+
+  const handleAdded = useCallback(() => {
+    reportInteraction('grafana_correlations_added');
+    fetchCorrelations({ page: page.current });
+    setIsAdding(false);
+  }, [fetchCorrelations]);
+
+  const handleUpdated = useCallback(() => {
+    reportInteraction('grafana_correlations_edited');
+    fetchCorrelations({ page: page.current });
+  }, [fetchCorrelations]);
+
+  const handleDelete = useCallback(
+    async (params: RemoveCorrelationParams, isLastRow: boolean) => {
+      if (removeFn) {
+        await removeFn(params);
+        reportInteraction('grafana_correlations_deleted');
+
+        if (isLastRow) {
+          page.current--;
+        }
+        fetchCorrelations({ page: page.current });
+      }
+    },
+    [removeFn, fetchCorrelations]
+  );
+
+  useEffect(() => {
+    fetchCorrelations({ page: page.current });
+  }, [fetchCorrelations]);
+
+  const RowActions = useCallback(
+    ({
+      row: {
+        index,
+        original: {
+          source: { uid: sourceUID },
+          provisioned,
+          uid,
+        },
+      },
+    }: CellProps<CorrelationData, void>) => {
+      return (
+        !provisioned && (
+          <DeleteButton
+            aria-label={t('correlations.list.delete', 'delete correlation')}
+            onConfirm={() => handleDelete({ sourceUID, uid }, page.current > 1 && index === 0 && corrData.length === 1)}
+            closeOnConfirm
+          />
+        )
+      );
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [handleDelete]
+  );
+
+  const columns = useMemo<Array<Column<CorrelationData>>>(
+    () => [
+      {
+        id: 'info',
+        cell: InfoCell,
+        disableGrow: true,
+        visible: (data) => data.some(isCorrelationsReadOnly),
+      },
+      {
+        id: 'source',
+        header: t('correlations.list.source', 'Source'),
+        cell: DataSourceCell,
+        sortType: sortDatasource,
+      },
+      {
+        id: 'target',
+        header: t('correlations.list.target', 'Target'),
+        cell: DataSourceCell,
+        sortType: sortDatasource,
+      },
+      { id: 'label', header: t('correlations.list.label', 'Label'), sortType: 'alphanumeric' },
+      {
+        id: 'actions',
+        cell: RowActions,
+        disableGrow: true,
+        visible: (data) => canWriteCorrelations && hasWritable,
+      },
+    ],
+    [RowActions, canWriteCorrelations, hasWritable]
+  );
+
+  const showEmptyListCTA = corrData.length === 0 && !isAdding && !error;
+  const addButton = canWriteCorrelations && corrData.length !== 0 && !isAdding && (
+    <Button icon="plus" onClick={() => setIsAdding(true)}>
+      <Trans i18nKey="correlations.add-new">Add new</Trans>
+    </Button>
+  );
+
+  return (
+    <Page
+      navModel={navModel}
+      subTitle={
+        <>
+          <Trans i18nKey="correlations.sub-title">
+            Define how data living in different data sources relates to each other. Read more in the{' '}
+            <TextLink href="https://grafana.com/docs/grafana/next/administration/correlations/" external>
+              documentation
+            </TextLink>
+          </Trans>
+        </>
+      }
+      actions={addButton}
+    >
+      <Page.Contents>
+        <div>
+          {isLoading && (
+            <div className={loaderWrapper}>
+              <LoadingPlaceholder text={t('correlations.list.loading', 'loading...')} />
+            </div>
+          )}
+          {showEmptyListCTA && (
+            <EmptyCorrelationsCTA canWriteCorrelations={canWriteCorrelations} onClick={() => setIsAdding(true)} />
+          )}
+          {
+            // This error is not actionable, it'd be nice to have a recovery button
+            error && (
+              <Alert
+                severity="error"
+                title={t('correlations.alert.title', 'Error fetching correlation data')}
+                topSpacing={2}
+              >
+                {(isFetchError(error) && error.data?.message) ||
+                  t(
+                    'correlations.alert.error-message',
+                    'An unknown error occurred while fetching correlation data. Please try again.'
+                  )}
+              </Alert>
+            )
+          }
+          {isAdding && <AddCorrelationFormWrapper onClose={() => setIsAdding(false)} onCreated={handleAdded} />}
+
+          {correlations && corrData.length >= 1 && (
+            <>
+              <InteractiveTable
+                renderExpandedRow={(correlation) => (
+                  <ExpendedRow
+                    correlation={correlation}
+                    onUpdated={handleUpdated}
+                    readOnly={isCorrelationsReadOnly(correlation) || !canWriteCorrelations}
+                  />
+                )}
+                columns={columns}
+                data={corrData}
+                getRowId={(correlation) => `${correlation.source.uid}-${correlation.uid}`}
+              />
+              <Pagination
+                currentPage={page.current}
+                numberOfPages={
+                  correlations.doesContinue === undefined || correlations.doesContinue === null
+                    ? Math.ceil(correlations?.totalCount / correlations?.limit)
+                    : 0
+                }
+                onNavigate={(toPage: number) => {
+                  if (changePageFn) {
+                    changePageFn(toPage);
+                  }
+                  fetchCorrelations({ page: (page.current = toPage) });
+                }}
+                hasNextPage={
+                  correlations.doesContinue ?? page.current < Math.ceil(correlations?.totalCount / correlations?.limit)
+                }
+              />
+            </>
+          )}
+        </div>
+      </Page.Contents>
+    </Page>
+  );
+}
+
+interface ExpandedRowProps {
+  correlation: CorrelationData;
+  readOnly: boolean;
+  onUpdated: () => void;
+}
+function ExpendedRow({ correlation: { source, ...correlation }, readOnly, onUpdated }: ExpandedRowProps) {
+  useEffect(
+    () => reportInteraction('grafana_correlations_details_expanded'),
+    // we only want to fire this on first render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  let corr: Correlation =
+    correlation.type === 'query'
+      ? { ...correlation, type: 'query', sourceUID: source.uid, targetUID: correlation.target.uid }
+      : { ...correlation, type: 'external', sourceUID: source.uid };
+
+  return <EditCorrelationFormWrapper correlation={corr} onUpdated={onUpdated} readOnly={readOnly} />;
+}
+
+const getDatasourceCellStyles = (theme: GrafanaTheme2) => ({
+  root: css({
+    display: 'flex',
+    alignItems: 'center',
+  }),
+  dsLogo: css({
+    marginRight: theme.spacing(),
+    height: '16px',
+    width: '16px',
+  }),
+});
+
+const DataSourceCell = memo(
+  function DataSourceCell({ cell: { value } }: CellProps<CorrelationData, DataSourceInstanceSettings>) {
+    const styles = useStyles2(getDatasourceCellStyles);
+
+    return (
+      <span className={styles.root}>
+        {value?.name !== undefined && (
+          <>
+            <img src={value.meta.info.logos.small} alt="" className={styles.dsLogo} />
+            {value.name}
+          </>
+        )}
+      </span>
+    );
+  },
+  ({ cell: { value } }, { cell: { value: prevValue } }) => {
+    return value?.type === prevValue?.type && value?.name === prevValue?.name;
+  }
+);
+
+const noWrap = css({
+  whiteSpace: 'nowrap',
+});
+
+const InfoCell = memo(
+  function InfoCell({ ...props }: CellProps<CorrelationData, void>) {
+    const readOnly = props.row.original.provisioned;
+
+    if (readOnly) {
+      return <Badge text={t('correlations.list.read-only', 'Read only')} color="purple" className={noWrap} />;
+    } else {
+      return null;
+    }
+  },
+  (props, prevProps) => props.row.original.source.readOnly === prevProps.row.original.source.readOnly
+);

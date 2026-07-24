@@ -1,0 +1,186 @@
+import { type ComponentProps } from 'react';
+import { render, screen } from 'test/test-utils';
+
+import { setBackendSrv } from '@grafana/runtime';
+import { type DashboardLink } from '@grafana/schema';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { type LinkSrv } from 'app/features/panel/panellinks/link_srv';
+
+import { DashboardLinksDashboard, resolveLinks, searchForTags } from './DashboardLinksDashboard';
+
+const [_, { dashbdD }] = getFolderFixtures();
+setBackendSrv(backendSrv);
+setupMockServer();
+
+const dashboardUID = '1';
+
+type DashboardLinkProps = ComponentProps<typeof DashboardLinksDashboard>['link'];
+type DashboardLinksDashboardProps = Partial<
+  Omit<ComponentProps<typeof DashboardLinksDashboard>, 'link'> & {
+    link: Partial<DashboardLinkProps>;
+  }
+>;
+
+const baseLinkProps: DashboardLinkProps = {
+  asDropdown: true,
+  icon: 'some icon',
+  includeVars: false,
+  keepTime: false,
+  tags: [],
+  targetBlank: false,
+  title: 'some title',
+  tooltip: '',
+  type: 'dashboards',
+};
+
+// Dropdown uses Menu.Item (role="menuitem"); list uses LinkButton (role="link")
+const getDashboardLink = (inDropdown: boolean) =>
+  screen.findByRole(inDropdown ? 'menuitem' : 'link', { name: new RegExp(dashbdD.item.title) });
+
+const renderComponent = (props: DashboardLinksDashboardProps = {}) => {
+  return render(
+    <DashboardLinksDashboard
+      link={{ ...baseLinkProps, ...props.link, tags: (props.link?.tags || []) as string[] }}
+      dashboardUID={props.dashboardUID || dashboardUID}
+      linkInfo={{ title: props.linkInfo?.title || 'some title' }}
+    />
+  );
+};
+
+describe('DashboardLinksDashboard', () => {
+  it('renders a dropdown', async () => {
+    const { user } = renderComponent();
+    const button = screen.getByRole('button', { name: /some title/i });
+    await user.click(button);
+    expect(await screen.findByRole('menu')).toBeInTheDocument();
+    expect(await getDashboardLink(true)).toBeInTheDocument();
+  });
+
+  it('renders dropdown items with target _blank', async () => {
+    const { user } = renderComponent({ link: { targetBlank: true } });
+    const button = screen.getByRole('button', { name: /some title/i });
+    await user.click(button);
+    expect(await screen.findByRole('menu')).toBeInTheDocument();
+    expect(await getDashboardLink(true)).toHaveAttribute('target', '_blank');
+  });
+
+  it('handles an empty list of links', async () => {
+    const { user } = renderComponent({ link: { tags: ['foo-some-tag-of-which-there-are-none'] } });
+    const button = screen.getByRole('button', { name: /some title/i });
+    await user.click(button);
+
+    expect(screen.getByRole('menuitem', { name: /no dashboards found/i })).toBeInTheDocument();
+  });
+
+  it('renders a list of links', async () => {
+    renderComponent({ link: { asDropdown: false } });
+
+    const dashboardLink = await getDashboardLink(false);
+    expect(dashboardLink).toBeInTheDocument();
+    expect(dashboardLink).not.toHaveAttribute('target', '_blank');
+  });
+
+  it('renders a list of links with target _blank', async () => {
+    renderComponent({ link: { asDropdown: false, targetBlank: true } });
+
+    const dashboardLink = await getDashboardLink(false);
+    expect(dashboardLink).toHaveAttribute('target', '_blank');
+  });
+
+  it('does not render a link to its own dashboard', async () => {
+    renderComponent({ link: { asDropdown: false }, dashboardUID: dashbdD.item.uid });
+
+    await screen.findAllByRole('link');
+    expect(screen.queryByRole('link', { name: new RegExp(dashbdD.item.title) })).not.toBeInTheDocument();
+  });
+});
+
+describe('resolveLinks', () => {
+  const setupTestContext = () => {
+    const link: DashboardLink = {
+      targetBlank: false,
+      keepTime: false,
+      includeVars: false,
+      asDropdown: false,
+      icon: 'some icon',
+      tags: [],
+      title: 'some title',
+      tooltip: 'some tooltip',
+      type: 'dashboards',
+      url: '/d/6ieouugGk/DashLinks',
+    };
+    const linkSrv = {
+      getLinkUrl: jest.fn((args) => args.url),
+    } as unknown as LinkSrv;
+    const sanitize = jest.fn((args) => args);
+    const sanitizeUrl = jest.fn((args) => args);
+
+    return { link, linkSrv, sanitize, sanitizeUrl };
+  };
+
+  it('should filter out the calling dashboardUID', async () => {
+    const { link, linkSrv, sanitize, sanitizeUrl } = setupTestContext();
+    const { view: searchHits, totalRows } = await searchForTags([]);
+
+    const results = resolveLinks(link, searchHits, dashbdD.item.uid, {
+      getLinkSrv: () => linkSrv,
+      sanitize,
+      sanitizeUrl,
+    });
+
+    expect(results.find((result) => result.uid === dashbdD.item.uid)).toBeUndefined();
+
+    const expectedNumberOfResults = totalRows - 1;
+    expect(results.length).toEqual(expectedNumberOfResults);
+    expect(linkSrv.getLinkUrl).toHaveBeenCalledTimes(expectedNumberOfResults);
+    expect(sanitize).toHaveBeenCalledTimes(expectedNumberOfResults);
+    expect(sanitizeUrl).toHaveBeenCalledTimes(expectedNumberOfResults);
+  });
+
+  it('should resolve link url', async () => {
+    const { link, linkSrv, sanitize, sanitizeUrl } = setupTestContext();
+    const { view: searchHits, totalRows } = await searchForTags([]);
+
+    const results = resolveLinks(link, searchHits, dashboardUID, {
+      getLinkSrv: () => linkSrv,
+      sanitize,
+      sanitizeUrl,
+    });
+
+    expect(results.length).toBeGreaterThan(0);
+    expect(linkSrv.getLinkUrl).toHaveBeenCalledTimes(totalRows);
+    expect(linkSrv.getLinkUrl).toHaveBeenCalledWith({ ...link, url: searchHits.at(0)?.url });
+  });
+
+  it('should sanitize title', async () => {
+    const { link, linkSrv, sanitize, sanitizeUrl } = setupTestContext();
+    const { view: searchHits, totalRows } = await searchForTags([]);
+
+    const results = resolveLinks(link, searchHits, dashboardUID, {
+      getLinkSrv: () => linkSrv,
+      sanitize,
+      sanitizeUrl,
+    });
+
+    expect(results.length).toBeGreaterThan(0);
+    expect(sanitize).toHaveBeenCalledTimes(totalRows);
+    expect(sanitize).toHaveBeenCalledWith(searchHits.at(0)?.name);
+  });
+
+  it('should sanitize url', async () => {
+    const { link, linkSrv, sanitize, sanitizeUrl } = setupTestContext();
+    const result = await searchForTags([]);
+    const { view: searchHits, totalRows } = result;
+    const results = resolveLinks(link, searchHits, dashboardUID, {
+      getLinkSrv: () => linkSrv,
+      sanitize,
+      sanitizeUrl,
+    });
+
+    expect(results.length).toBeGreaterThan(0);
+    expect(sanitizeUrl).toHaveBeenCalledTimes(totalRows);
+    expect(sanitizeUrl).toHaveBeenCalledWith(searchHits.at(0)?.url);
+  });
+});

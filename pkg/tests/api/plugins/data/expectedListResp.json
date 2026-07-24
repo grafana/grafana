@@ -1,0 +1,1920 @@
+[
+  {
+    "name": "Alert list",
+    "type": "panel",
+    "id": "alertlist",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Shows list of alerts and their current status",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/alert-list/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/alertlist/img/icn-singlestat-panel.svg",
+        "large": "public/plugins/alertlist/img/icn-singlestat-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/alertlist/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Alertmanager",
+    "type": "datasource",
+    "id": "alertmanager",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Prometheus alertmanager",
+        "url": "https://grafana.com"
+      },
+      "description": "Add external Alertmanagers (supports Prometheus and Mimir implementations) so you can use the Grafana Alerting UI to manage silences, contact points, and notification policies.",
+      "links": [
+        {
+          "name": "Learn more",
+          "url": "https://prometheus.io/docs/alerting/latest/alertmanager/"
+        },
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/alertmanager/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/alertmanager/img/logo.svg",
+        "large": "public/plugins/alertmanager/img/logo.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": [
+        "alerts",
+        "alerting",
+        "prometheus",
+        "alertmanager",
+        "mimir",
+        "cortex"
+      ]
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/alertmanager/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Annotations list",
+    "type": "panel",
+    "id": "annolist",
+    "aliasIDs": [
+      "ryantxu-annolist-panel"
+    ],
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "List annotations",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/annotations/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/annolist/img/icn-annolist-panel.svg",
+        "large": "public/plugins/annolist/img/icn-annolist-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/annolist/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Azure Monitor",
+    "type": "datasource",
+    "id": "grafana-azure-monitor-datasource",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Data source for Microsoft Azure Monitor \u0026 Application Insights",
+      "links": [
+        {
+          "name": "Learn more",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/azuremonitor/"
+        },
+        {
+          "name": "License",
+          "url": "https://github.com/grafana/grafana/blob/HEAD/LICENSE"
+        },
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/azure-monitor/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/grafana-azure-monitor-datasource/img/logo.jpg",
+        "large": "public/plugins/grafana-azure-monitor-datasource/img/logo.jpg"
+      },
+      "build": {},
+      "screenshots": [
+        {
+          "name": "Azure Contoso Loans",
+          "path": "public/plugins/grafana-azure-monitor-datasource/img/contoso_loans_grafana_dashboard.png"
+        },
+        {
+          "name": "Azure Monitor Network",
+          "path": "public/plugins/grafana-azure-monitor-datasource/img/azure_monitor_network.png"
+        },
+        {
+          "name": "Azure Monitor CPU",
+          "path": "public/plugins/grafana-azure-monitor-datasource/img/azure_monitor_cpu.png"
+        }
+      ],
+      "version": "12.4.0-pre",
+      "updated": "",
+      "keywords": [
+        "azure",
+        "monitor",
+        "Application Insights",
+        "Log Analytics",
+        "App Insights"
+      ]
+    },
+    "dependencies": {
+      "grafanaDependency": "\u003e=12.3.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/grafana-azure-monitor-datasource/",
+    "category": "cloud",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Bar chart",
+    "type": "panel",
+    "id": "barchart",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Categorical charts with group support",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/bar-chart/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/barchart/img/barchart.svg",
+        "large": "public/plugins/barchart/img/barchart.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/barchart/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Bar gauge",
+    "type": "panel",
+    "id": "bargauge",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Horizontal and vertical gauges",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/bar-gauge/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/bargauge/img/icon_bar_gauge.svg",
+        "large": "public/plugins/bargauge/img/icon_bar_gauge.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/bargauge/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Candlestick",
+    "type": "panel",
+    "id": "candlestick",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Graphical representation of price movements of a security, derivative, or currency.",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/candlestick/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/candlestick/img/candlestick.svg",
+        "large": "public/plugins/candlestick/img/candlestick.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": [
+        "financial",
+        "price",
+        "currency",
+        "k-line"
+      ]
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/candlestick/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Canvas",
+    "type": "panel",
+    "id": "canvas",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Explicit element placement",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/canvas/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/canvas/img/icn-canvas.svg",
+        "large": "public/plugins/canvas/img/icn-canvas.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/canvas/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "CloudWatch",
+    "type": "datasource",
+    "id": "cloudwatch",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Data source for Amazon AWS monitoring service",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/cloudwatch/img/amazon-web-services.png",
+        "large": "public/plugins/cloudwatch/img/amazon-web-services.png"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": [
+        "aws",
+        "amazon"
+      ]
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/cloudwatch/",
+    "category": "cloud",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Dashboard list",
+    "type": "panel",
+    "id": "dashlist",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "List of dynamic links to other dashboards",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/dashboard-list/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/dashlist/img/icn-dashlist-panel.svg",
+        "large": "public/plugins/dashlist/img/icn-dashlist-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/dashlist/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Flame Graph",
+    "type": "panel",
+    "id": "flamegraph",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/flame-graph/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/flamegraph/img/icn-flamegraph.svg",
+        "large": "public/plugins/flamegraph/img/icn-flamegraph.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/flamegraph/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Gauge",
+    "type": "panel",
+    "id": "gauge",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Standard gauge visualization",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/gauge/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/gauge/img/icon_gauge.svg",
+        "large": "public/plugins/gauge/img/icon_gauge.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/gauge/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Geomap",
+    "type": "panel",
+    "id": "geomap",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Geomap panel",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/geomap/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/geomap/img/icn-geomap.svg",
+        "large": "public/plugins/geomap/img/icn-geomap.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/geomap/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Getting Started",
+    "type": "panel",
+    "id": "gettingstarted",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/gettingstarted/img/icn-dashlist-panel.svg",
+        "large": "public/plugins/gettingstarted/img/icn-dashlist-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/gettingstarted/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Graphite",
+    "type": "datasource",
+    "id": "graphite",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Open source time series database",
+      "links": [
+        {
+          "name": "Learn more",
+          "url": "https://graphiteapp.org/"
+        },
+        {
+          "name": "Graphite 1.1 Release",
+          "url": "https://grafana.com/blog/2018/01/11/graphite-1.1-teaching-an-old-dog-new-tricks/"
+        },
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/graphite/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/graphite/img/graphite_logo.png",
+        "large": "public/plugins/graphite/img/graphite_logo.png"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "12.4.0-pre",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "\u003e=12.3.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/graphite/",
+    "category": "tsdb",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Heatmap",
+    "type": "panel",
+    "id": "heatmap",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Like a histogram over time",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/heatmap/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/heatmap/img/icn-heatmap-panel.svg",
+        "large": "public/plugins/heatmap/img/icn-heatmap-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/heatmap/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Histogram",
+    "type": "panel",
+    "id": "histogram",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Distribution of values presented as a bar chart.",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/histogram/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/histogram/img/histogram.svg",
+        "large": "public/plugins/histogram/img/histogram.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": [
+        "distribution",
+        "bar chart",
+        "frequency",
+        "proportional"
+      ]
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/histogram/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "InfluxDB",
+    "type": "datasource",
+    "id": "influxdb",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Open source time series database",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/influxdb/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/influxdb/img/influxdb_logo.svg",
+        "large": "public/plugins/influxdb/img/influxdb_logo.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": ">=12.3.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/influxdb/",
+    "category": "tsdb",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Logs",
+    "type": "panel",
+    "id": "logs",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/logs/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/logs/img/icn-logs-panel.svg",
+        "large": "public/plugins/logs/img/icn-logs-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/logs/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Logs Table",
+    "type": "panel",
+    "id": "logstable",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/logstable/img/icn-logs-panel.svg",
+        "large": "public/plugins/logstable/img/icn-logs-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/logstable/",
+    "category": "",
+    "state": "beta",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Loki",
+    "type": "datasource",
+    "id": "loki",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Like Prometheus but for logs. OSS logging solution from Grafana Labs",
+      "links": [
+        {
+          "name": "Learn more",
+          "url": "https://grafana.com/loki"
+        },
+        {
+          "name": "GitHub Project",
+          "url": "https://github.com/grafana/loki"
+        },
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/loki/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/loki/img/loki_icon.svg",
+        "large": "public/plugins/loki/img/loki_icon.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "12.4.0-pre",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "\u003e=12.3.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/loki/",
+    "category": "logging",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "MySQL",
+    "type": "datasource",
+    "id": "mysql",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Data source for MySQL databases",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/mysql/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/mysql/img/mysql_logo.svg",
+        "large": "public/plugins/mysql/img/mysql_logo.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "12.4.0-pre",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "\u003e=12.3.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/mysql/",
+    "category": "sql",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "News",
+    "type": "panel",
+    "id": "news",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "RSS feed reader",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/news/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/news/img/news.svg",
+        "large": "public/plugins/news/img/news.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/news/",
+    "category": "",
+    "state": "beta",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Node Graph",
+    "type": "panel",
+    "id": "nodeGraph",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/node-graph/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/nodeGraph/img/icn-node-graph.svg",
+        "large": "public/plugins/nodeGraph/img/icn-node-graph.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/nodeGraph/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Pie chart",
+    "type": "panel",
+    "id": "piechart",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "The new core pie chart visualization",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/pie-chart/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/piechart/img/icon_piechart.svg",
+        "large": "public/plugins/piechart/img/icon_piechart.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/piechart/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Prometheus",
+    "type": "datasource",
+    "id": "prometheus",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Open source time series database \u0026 alerting",
+      "links": [
+        {
+          "name": "Learn more",
+          "url": "https://prometheus.io/"
+        },
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/prometheus/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/prometheus/img/prometheus_logo.svg",
+        "large": "public/plugins/prometheus/img/prometheus_logo.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/prometheus/",
+    "category": "tsdb",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Stat",
+    "type": "panel",
+    "id": "stat",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Big stat values \u0026 sparklines",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/stat/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/stat/img/icn-singlestat-panel.svg",
+        "large": "public/plugins/stat/img/icn-singlestat-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/stat/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "State timeline",
+    "type": "panel",
+    "id": "state-timeline",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "State changes and durations",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/state-timeline/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/state-timeline/img/timeline.svg",
+        "large": "public/plugins/state-timeline/img/timeline.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/state-timeline/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Status history",
+    "type": "panel",
+    "id": "status-history",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Periodic status history",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/status-history/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/status-history/img/status.svg",
+        "large": "public/plugins/status-history/img/status.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/status-history/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Table",
+    "type": "panel",
+    "id": "table",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Supports many column styles",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/table/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/table/img/icn-table-panel.svg",
+        "large": "public/plugins/table/img/icn-table-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/table/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "TestData",
+    "type": "datasource",
+    "id": "grafana-testdata-datasource",
+    "aliasIDs": [
+      "testdata"
+    ],
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Generates test data in different forms",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/datasources/testdata/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/grafana-testdata-datasource/img/testdata.svg",
+        "large": "public/plugins/grafana-testdata-datasource/img/testdata.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "12.4.0-pre",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "\u003e=12.3.0",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/grafana-testdata-datasource/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Text",
+    "type": "panel",
+    "id": "text",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Supports markdown and html content",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/text/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/text/img/icn-text-panel.svg",
+        "large": "public/plugins/text/img/icn-text-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/text/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Time series",
+    "type": "panel",
+    "id": "timeseries",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Time based line, area and bar charts",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/time-series/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/timeseries/img/icn-timeseries-panel.svg",
+        "large": "public/plugins/timeseries/img/icn-timeseries-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/timeseries/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Traces",
+    "type": "panel",
+    "id": "traces",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/traces/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/traces/img/traces-panel.svg",
+        "large": "public/plugins/traces/img/traces-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/traces/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Trend",
+    "type": "panel",
+    "id": "trend",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Like timeseries, but when x != time",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/trend/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/trend/img/trend.svg",
+        "large": "public/plugins/trend/img/trend.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/trend/",
+    "category": "",
+    "state": "beta",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Welcome",
+    "type": "panel",
+    "id": "welcome",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/welcome/img/icn-dashlist-panel.svg",
+        "large": "public/plugins/welcome/img/icn-dashlist-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/welcome/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "XY Chart",
+    "type": "panel",
+    "id": "xychart",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Supports arbitrary X vs Y in a graph to visualize the relationship between two variables.",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        },
+        {
+          "name": "Documentation",
+          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/xy-chart/"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/xychart/img/icn-xychart.svg",
+        "large": "public/plugins/xychart/img/icn-xychart.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": [
+        "scatter",
+        "plot"
+      ]
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/xychart/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  }
+]

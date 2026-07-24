@@ -1,0 +1,790 @@
+package notifier
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"sync"
+	"time"
+
+	alertingModels "github.com/grafana/alerting/models"
+	"github.com/grafana/alerting/notify/nfstatus"
+	alertingTemplates "github.com/grafana/alerting/templates"
+	"github.com/prometheus/client_golang/prometheus"
+
+	alertingCluster "github.com/grafana/alerting/cluster"
+
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
+
+	alertingNotify "github.com/grafana/alerting/notify"
+
+	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/setting"
+)
+
+var (
+	ErrNoAlertmanagerForOrg = fmt.Errorf("Alertmanager does not exist for this organization")
+	ErrAlertmanagerNotReady = fmt.Errorf("Alertmanager is not ready yet")
+)
+
+// errutil-based errors.
+// TODO: Should completely replace the fmt.Errorf-based errors.
+var (
+	ErrAlertmanagerNotFound = errutil.NotFound("alerting.notifications.alertmanager.notFound")
+	ErrAlertmanagerConflict = errutil.Conflict("alerting.notifications.alertmanager.conflict")
+
+	ErrSilenceNotFound      = errutil.NotFound("alerting.notifications.silences.notFound")
+	ErrSilencesBadRequest   = errutil.BadRequest("alerting.notifications.silences.badRequest")
+	ErrSilenceInternal      = errutil.Internal("alerting.notifications.silences.internal")
+	ErrSilenceLimitExceeded = errutil.TooManyRequests("alerting.notifications.silences.limitExceeded", errutil.WithPublicMessage("Maximum number of silences has been reached. Delete some silences before creating new ones."))
+	ErrSilenceSizeExceeded  = errutil.BadRequest("alerting.notifications.silences.sizeExceeded", errutil.WithPublicMessage("Silence size exceeds the maximum allowed size."))
+)
+
+//go:generate mockery --name Alertmanager --structname AlertmanagerMock --with-expecter --output alertmanager_mock --outpkg alertmanager_mock
+type Alertmanager interface {
+	// Configuration
+	ApplyConfig(context.Context, alertingNotify.NotificationsConfiguration) (bool, error)
+	GetStatus(context.Context) (apimodels.GettableStatus, error)
+
+	// Silences
+	CreateSilence(context.Context, *apimodels.PostableSilence) (string, error)
+	DeleteSilence(context.Context, string) error
+	GetSilence(context.Context, string) (apimodels.GettableSilence, error)
+	ListSilences(context.Context, []string) (apimodels.GettableSilences, error)
+
+	// SilenceState returns the current state of silences in the Alertmanager. This is used to persist the state
+	// to the kvstore.
+	SilenceState(context.Context) (alertingNotify.SilenceState, error)
+
+	// Alerts
+	GetAlerts(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
+	GetAlertGroups(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
+	PutAlerts(context.Context, apimodels.PostableAlerts) error
+
+	// Receivers
+	GetReceivers(ctx context.Context) ([]alertingModels.ReceiverStatus, error)
+	TestIntegration(ctx context.Context, receiverName string, integrationConfig models.Integration, alert alertingModels.TestReceiversConfigAlertParams) (alertingModels.IntegrationStatus, error)
+	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*TestTemplatesResults, error)
+
+	// Lifecycle
+	StopAndWait()
+	Ready() bool
+}
+
+// ExternalState holds nflog entries and silences from an external Alertmanager.
+type ExternalState struct {
+	Silences []byte
+	Nflog    []byte
+	FlushLog []byte
+}
+
+// StateMerger describes a type that is able to merge external state (nflog, silences) with its own.
+type StateMerger interface {
+	MergeState(ExternalState) error
+}
+
+type MultiOrgAlertmanager struct {
+	Crypto    Crypto
+	ProvStore provisioningStore
+
+	alertmanagersMtx sync.RWMutex
+	alertmanagers    map[int64]Alertmanager
+
+	settings       *setting.Cfg
+	featureManager featuremgmt.FeatureToggles
+	logger         log.Logger
+	limits         alertingNotify.DynamicLimits
+
+	// clusterPeer represents the clustering peers of Alertmanagers between Grafana instances.
+	peer                   alertingNotify.ClusterPeer
+	alertsBroadcastChannel alertingCluster.ClusterChannel
+	settleCancel           context.CancelFunc
+
+	configStore AlertingStore
+	orgStore    store.OrgStore
+	kvStore     kvstore.KVStore
+	factory     OrgAlertmanagerFactory
+
+	decryptFn alertingNotify.GetDecryptedValueFn
+
+	metrics *metrics.MultiOrgAlertmanager
+	ns      notifications.Service
+
+	// externalAMSyncer owns the Mimir/Cortex sync state and dependencies
+	// (datasource service, HTTP transport, request validator). MultiOrgAlertmanager
+	// only delegates to it; the sync surface is intentionally kept off this struct.
+	externalAMSyncer *ExternalAMSyncer
+
+	receiverResourcePermissions ac.ReceiverPermissionsService
+	routesResourcePermissions   ac.RoutePermissionsService
+}
+
+type OrgAlertmanagerFactory func(ctx context.Context, orgID int64) (Alertmanager, error)
+
+type Option func(*MultiOrgAlertmanager)
+
+func WithAlertmanagerOverride(f func(OrgAlertmanagerFactory) OrgAlertmanagerFactory) Option {
+	return func(moa *MultiOrgAlertmanager) {
+		moa.factory = f(moa.factory)
+	}
+}
+
+func NewMultiOrgAlertmanager(
+	cfg *setting.Cfg,
+	configStore AlertingStore,
+	orgStore store.OrgStore,
+	kvStore kvstore.KVStore,
+	provStore provisioningStore,
+	decryptFn alertingNotify.GetDecryptedValueFn,
+	m *metrics.MultiOrgAlertmanager,
+	ns notifications.Service,
+	receiverResourcePermissions ac.ReceiverPermissionsService,
+	routesResourcePermissions ac.RoutePermissionsService,
+	l log.Logger,
+	s secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	featureManager featuremgmt.FeatureToggles,
+	notificationHistorian nfstatus.NotificationHistorian,
+	skipClustering bool,
+	externalAMSyncer *ExternalAMSyncer,
+	opts ...Option,
+) (*MultiOrgAlertmanager, error) {
+	moa := &MultiOrgAlertmanager{
+		Crypto:    NewCrypto(s, configStore, l),
+		ProvStore: provStore,
+
+		logger:                      l,
+		settings:                    cfg,
+		featureManager:              featureManager,
+		alertmanagers:               map[int64]Alertmanager{},
+		configStore:                 configStore,
+		orgStore:                    orgStore,
+		kvStore:                     kvStore,
+		decryptFn:                   decryptFn,
+		receiverResourcePermissions: receiverResourcePermissions,
+		routesResourcePermissions:   routesResourcePermissions,
+		metrics:                     m,
+		ns:                          ns,
+		peer:                        &NilPeer{},
+		// Fetch responsibilities live on ExternalAMSyncer; MOA drives it per-org inside
+		// SyncAlertmanagersForOrgs and owns the save+apply via SaveAndApplyExtraConfiguration.
+		externalAMSyncer: externalAMSyncer,
+	}
+
+	if skipClustering {
+		moa.logger.Info("Not setting up clustering for the multi-org Alertmanager")
+	} else {
+		if err := moa.setupClustering(cfg); err != nil {
+			return nil, err
+		}
+	}
+
+	moa.initAlertBroadcast()
+
+	moa.limits = alertingNotify.DynamicLimits{
+		Dispatcher: nilLimits{},
+		Templates: alertingTemplates.Limits{
+			MaxTemplateOutputSize: moa.settings.UnifiedAlerting.AlertmanagerMaxTemplateOutputSize,
+		},
+	}
+	if err := moa.limits.Templates.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid template limits: %w", err)
+	}
+
+	// Set up the default per tenant Alertmanager factory.
+	moa.factory = func(ctx context.Context, orgID int64) (Alertmanager, error) {
+		m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID), l)
+		stateStore := NewFileStore(orgID, kvStore)
+		return NewAlertmanager(ctx, orgID, moa.settings, moa.configStore, stateStore, moa.peer, moa.decryptFn, moa.ns, m, featureManager, moa.Crypto, notificationHistorian)
+	}
+
+	for _, opt := range opts {
+		opt(moa)
+	}
+
+	return moa, nil
+}
+
+func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
+	clusterLogger := moa.logger.New("component", "clustering")
+	// We set the settlement timeout to be a multiple of the gossip interval,
+	// ensuring that a sufficient number of broadcasts have occurred, thereby
+	// increasing the probability of success when waiting for the cluster to settle.
+	const settleTimeout = alertingCluster.DefaultGossipInterval * 10
+	// Redis setup.
+	if cfg.UnifiedAlerting.HARedisAddr != "" {
+		redisPeer, err := newRedisPeer(redisConfig{
+			addr:             cfg.UnifiedAlerting.HARedisAddr,
+			name:             cfg.UnifiedAlerting.HARedisPeerName,
+			prefix:           cfg.UnifiedAlerting.HARedisPrefix,
+			password:         cfg.UnifiedAlerting.HARedisPassword,
+			username:         cfg.UnifiedAlerting.HARedisUsername,
+			db:               cfg.UnifiedAlerting.HARedisDB,
+			maxConns:         cfg.UnifiedAlerting.HARedisMaxConns,
+			tlsEnabled:       cfg.UnifiedAlerting.HARedisTLSEnabled,
+			tls:              cfg.UnifiedAlerting.HARedisTLSConfig,
+			clusterMode:      cfg.UnifiedAlerting.HARedisClusterModeEnabled,
+			sentinelMode:     cfg.UnifiedAlerting.HARedisSentinelModeEnabled,
+			masterName:       cfg.UnifiedAlerting.HARedisSentinelMasterName,
+			sentinelUsername: cfg.UnifiedAlerting.HARedisSentinelUsername,
+			sentinelPassword: cfg.UnifiedAlerting.HARedisSentinelPassword,
+		}, clusterLogger, moa.metrics.Registerer, cfg.UnifiedAlerting.HAPushPullInterval)
+		if err != nil {
+			return fmt.Errorf("unable to initialize redis: %w", err)
+		}
+		var ctx context.Context
+		ctx, moa.settleCancel = context.WithTimeout(context.Background(), 30*time.Second)
+		go redisPeer.Settle(ctx, settleTimeout)
+		moa.peer = redisPeer
+		return nil
+	}
+	// Memberlist setup.
+	if len(cfg.UnifiedAlerting.HAPeers) > 0 {
+		peer, err := alertingCluster.Create(
+			clusterLogger,
+			moa.metrics.Registerer,
+			cfg.UnifiedAlerting.HAListenAddr,
+			cfg.UnifiedAlerting.HAAdvertiseAddr,
+			cfg.UnifiedAlerting.HAPeers, // peers
+			true,
+			cfg.UnifiedAlerting.HAPushPullInterval,
+			cfg.UnifiedAlerting.HAGossipInterval,
+			alertingCluster.DefaultTCPTimeout,
+			alertingCluster.DefaultProbeTimeout,
+			alertingCluster.DefaultProbeInterval,
+			nil,
+			true,
+			cfg.UnifiedAlerting.HALabel,
+		)
+		if err != nil {
+			return fmt.Errorf("unable to initialize gossip mesh: %w", err)
+		}
+
+		err = peer.Join(alertingCluster.DefaultReconnectInterval, cfg.UnifiedAlerting.HAReconnectTimeout)
+		if err != nil {
+			moa.logger.Error("Msg", "Unable to join gossip mesh while initializing cluster for high availability mode", "error", err)
+		}
+		// Attempt to verify the number of peers for 30s every 2s. The risk here is what we send a notification "too soon".
+		// Which should _never_ happen given we share the notification log via the database so the risk of double notification is very low.
+		var ctx context.Context
+		ctx, moa.settleCancel = context.WithTimeout(context.Background(), 30*time.Second)
+		go peer.Settle(ctx, settleTimeout)
+		moa.peer = peer
+		return nil
+	}
+	return nil
+}
+
+// initAlertBroadcast initializes the alert broadcast channel for HA mode.
+// When enabled, alerts evaluated on the primary instance are broadcast to all peers.
+func (moa *MultiOrgAlertmanager) initAlertBroadcast() {
+	if moa.peer == nil {
+		return
+	}
+	if _, ok := moa.peer.(*NilPeer); ok {
+		return
+	}
+	queueSize := moa.settings.UnifiedAlerting.HASingleEvaluationAlertBroadcastQueueSize
+	if queueSize <= 0 {
+		queueSize = setting.AlertBroadcastDefaultQueueSize
+	}
+	state := newAlertBroadcastState(moa.logger.New("component", "alert-broadcast"), moa)
+	moa.alertsBroadcastChannel = moa.peer.AddState(alertBroadcastKey, state, moa.metrics.Registerer,
+		alertingCluster.WithReliableDelivery(true),
+		alertingCluster.WithQueueSize(queueSize),
+	)
+}
+
+// BroadcastAlerts sends alerts to all peers via the cluster channel.
+// This is used in HA single-node evaluation mode to propagate alerts from the
+// primary evaluator to all other instances.
+func (moa *MultiOrgAlertmanager) BroadcastAlerts(orgID int64, alerts apimodels.PostableAlerts) {
+	if moa.alertsBroadcastChannel == nil {
+		return
+	}
+	if len(alerts.PostableAlerts) == 0 {
+		return
+	}
+	payload := AlertBroadcastPayload{
+		OrgID:  orgID,
+		Alerts: alerts,
+	}
+	buf, err := json.Marshal(payload)
+	if err != nil {
+		moa.logger.Warn("Failed to encode broadcast alerts payload", "error", err)
+		return
+	}
+	moa.alertsBroadcastChannel.Broadcast(buf)
+	moa.logger.Debug("Broadcast alerts to peers", "orgID", orgID, "alerts", len(alerts.PostableAlerts))
+}
+
+func (moa *MultiOrgAlertmanager) Run(ctx context.Context) error {
+	moa.logger.Info("Starting MultiOrg Alertmanager")
+
+	for {
+		select {
+		case <-ctx.Done():
+			moa.StopAndWait()
+			return nil
+		case <-time.After(moa.settings.UnifiedAlerting.AlertmanagerConfigPollInterval):
+			if err := moa.LoadAndSyncAlertmanagersForOrgs(ctx); err != nil {
+				moa.logger.Error("Error while synchronizing Alertmanager orgs", "error", err)
+			}
+		}
+	}
+}
+
+func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Context) error {
+	moa.logger.Debug("Synchronizing Alertmanagers for orgs")
+	// First, load all the organizations from the database.
+	orgIDs, err := moa.orgStore.FetchOrgIds(ctx)
+	if err != nil {
+		return err
+	}
+
+	moa.metrics.DiscoveredConfigurations.Set(float64(len(orgIDs)))
+	moa.SyncAlertmanagersForOrgs(ctx, orgIDs)
+
+	moa.logger.Debug("Done synchronizing Alertmanagers for orgs")
+
+	return nil
+}
+
+// getLatestConfigs retrieves the latest Alertmanager configuration for every organization. It returns a map where the key is the ID of each organization and the value is the configuration.
+func (moa *MultiOrgAlertmanager) getLatestConfigs(ctx context.Context) (map[int64]*models.AlertConfiguration, error) {
+	configs, err := moa.configStore.GetAllLatestAlertmanagerConfiguration(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[int64]*models.AlertConfiguration, len(configs))
+	for _, config := range configs {
+		result[config.OrgID] = config
+	}
+
+	return result, nil
+}
+
+// syncBypassAuthz satisfies ExtraConfigAuthz with no-op checks. Used by the
+// system-driven external Alertmanager sync pre-pass where there is no user
+// request to authorize against — the operator configured sync at the admin
+// layer and the pre-pass is just persisting upstream content under that
+// configuration.
+type syncBypassAuthz struct{}
+
+func (syncBypassAuthz) AuthorizeCreate(context.Context, identity.Requester) error {
+	return nil
+}
+
+func (syncBypassAuthz) AuthorizeUpdate(context.Context, identity.Requester, string) error {
+	return nil
+}
+
+func (syncBypassAuthz) AuthorizeDelete(context.Context, identity.Requester, string) error {
+	return nil
+}
+
+func (syncBypassAuthz) AuthorizePromote(context.Context, identity.Requester, merge.MergeResult) error {
+	return nil
+}
+
+// syncExternalAMConfigForOrgs runs the external Alertmanager fetch for each
+// non-disabled org whose Alertmanager instance has already been created, and
+// persists any changed configs via SaveAndApplyExtraConfiguration.
+//
+// The Alertmanager-exists check matches SaveAndApplyExtraConfiguration's
+// expectation that the org's Alertmanager is at least registered (it tolerates
+// not-ready, but errors when there's no instance at all). On the first sync
+// tick after Grafana startup the instances haven't been created yet — the
+// locked loop below creates them and the next tick picks up the sync.
+//
+// The disabled-orgs filter is duplicated from SyncAlertmanagersForOrgs because
+// the pre-pass runs before the locked loop's own filter.
+//
+// All per-org failures are logged + counted on the failures metric and do not
+// abort other orgs.
+func (moa *MultiOrgAlertmanager) syncExternalAMConfigForOrgs(ctx context.Context, orgIDs []int64) {
+	for _, orgID := range orgIDs {
+		if _, isDisabled := moa.settings.UnifiedAlerting.DisabledOrgs[orgID]; isDisabled {
+			continue
+		}
+		moa.alertmanagersMtx.RLock()
+		_, amExists := moa.alertmanagers[orgID]
+		moa.alertmanagersMtx.RUnlock()
+		if !amExists {
+			continue
+		}
+		ec, hash := moa.externalAMSyncer.FetchExtraConfig(ctx, orgID)
+		if ec == nil {
+			continue
+		}
+		// External sync is system-driven, so we use a service identity and a no-op
+		// authz: there is no end-user request to authorize against.
+		svcCtx, svcUser := identity.WithServiceIdentity(ctx, orgID)
+		if _, err := moa.SaveAndApplyExtraConfiguration(svcCtx, orgID, svcUser, syncBypassAuthz{}, *ec, false /*replace*/, false /*dryRun*/, false /*promote*/); err != nil {
+			// Classify once: the *SyncError flows to both the metric label and
+			// the status condition reason via reasonOf, so the two namespaces
+			// can't drift.
+			syncErr := ClassifySaveError(err)
+			moa.logger.Warn("Failed to save external AM configuration", "org_id", orgID, "reason", syncErr.Reason.Label(), "error", err)
+			moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues(fmt.Sprintf("%d", orgID), syncErr.Reason.Label()).Inc()
+			moa.externalAMSyncer.MarkFailed(ctx, orgID, syncErr)
+			continue
+		}
+		moa.externalAMSyncer.MarkSaved(ctx, orgID, hash)
+	}
+}
+
+// SyncAlertmanagersForOrgs syncs configuration of the Alertmanager required by each organization.
+func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, orgIDs []int64) {
+	orgsFound := make(map[int64]struct{}, len(orgIDs))
+
+	// External Alertmanager sync runs as a pre-pass, before we acquire the
+	// alertmanagersMtx write lock for the per-org sync below. SaveAndApplyExtraConfiguration
+	// internally takes the alertmanagersMtx RLock (via AlertmanagerFor and saveAndApplyConfig),
+	// so calling it from inside the locked loop would deadlock; running it here keeps the
+	// fetch+save coupled to MAM's polling cadence without that conflict.
+	//
+	// On the first tick after startup the per-org Alertmanager instances haven't been
+	// created yet and the pre-pass skips those orgs. The locked loop below creates them
+	// and the next tick picks up the sync.
+	moa.syncExternalAMConfigForOrgs(ctx, orgIDs)
+
+	// Read dbConfigs AFTER the pre-pass so the snapshot includes any saves performed
+	// above. This avoids in-place mutation of a pre-loaded map mid-flow.
+	dbConfigs, err := moa.getLatestConfigs(ctx)
+	if err != nil {
+		moa.logger.Error("Failed to load Alertmanager configurations", "error", err)
+		return
+	}
+
+	moa.alertmanagersMtx.Lock()
+	for _, orgID := range orgIDs {
+		if _, isDisabledOrg := moa.settings.UnifiedAlerting.DisabledOrgs[orgID]; isDisabledOrg {
+			moa.logger.Debug("Skipping syncing Alertmanager for disabled org", "org", orgID)
+			continue
+		}
+		orgsFound[orgID] = struct{}{}
+
+		alertmanager, found := moa.alertmanagers[orgID]
+
+		if !found {
+			// These metrics are not exported by Grafana and are mostly a placeholder.
+			// To export them, we need to translate the metrics from each individual registry and,
+			// then aggregate them on the main registry.
+			am, err := moa.factory(ctx, orgID)
+			if err != nil {
+				moa.logger.Error("Unable to create Alertmanager for org", "org", orgID, "error", err)
+				continue
+			}
+			moa.alertmanagers[orgID] = am
+			alertmanager = am
+		}
+
+		dbConfig, cfgFound := dbConfigs[orgID]
+		if !cfgFound {
+			if found {
+				// This means that the configuration is gone but the organization, as well as the Alertmanager, exists.
+				moa.logger.Warn("Alertmanager exists for org but the configuration is gone. Applying the default configuration", "org", orgID)
+			}
+			err := moa.saveAndApplyDefaultConfig(ctx, orgID, alertmanager)
+			if err != nil {
+				moa.logger.Error("Failed to apply the default Alertmanager configuration", "org", orgID)
+				continue
+			}
+			// init the permissions for the basic role
+			moa.logger.Debug("Setting default permissions for the basic roles")
+			if err := moa.routesResourcePermissions.SetDefaultPermissions(ctx, orgID, nil, models.DefaultRoutingTreeName); err != nil {
+				moa.logger.Error("Failed to set default permissions for the basic roles", "org", orgID, "error", err)
+			}
+			// TODO here we need to do the same for the default receiver.
+			moa.alertmanagers[orgID] = alertmanager
+			continue
+		}
+
+		_, err = moa.applyConfig(ctx, orgID, alertmanager, dbConfig)
+		if err != nil {
+			moa.logger.Error("Failed to apply Alertmanager config for org", "org", orgID, "id", dbConfig.ID, "hash", dbConfig.ConfigurationHash, "error", err)
+			continue
+		}
+		moa.alertmanagers[orgID] = alertmanager
+	}
+
+	amsToStop := map[int64]Alertmanager{}
+	for orgId, am := range moa.alertmanagers {
+		if _, exists := orgsFound[orgId]; !exists {
+			amsToStop[orgId] = am
+			delete(moa.alertmanagers, orgId)
+			moa.metrics.RemoveOrgRegistry(orgId)
+		}
+	}
+	moa.metrics.ActiveConfigurations.Set(float64(len(moa.alertmanagers)))
+	moa.alertmanagersMtx.Unlock()
+
+	// Now, we can stop the Alertmanagers without having to hold a lock.
+	for orgID, am := range amsToStop {
+		moa.logger.Info("Stopping Alertmanager", "org", orgID)
+		am.StopAndWait()
+		moa.logger.Info("Stopped Alertmanager", "org", orgID)
+	}
+
+	moa.cleanupOrphanLocalOrgState(ctx, orgsFound)
+}
+
+// cleanupOrphanLocalOrgState will remove all orphaned nflog and silence states in kvstore by existing to currently
+// active organizations. The original intention for this was the cleanup deleted orgs, that have had their states
+// saved to the kvstore after deletion on instance shutdown.
+func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(ctx context.Context,
+	activeOrganizations map[int64]struct{},
+) {
+	storedFiles := []string{NotificationLogFilename, SilencesFilename, FlushLogFilename}
+	for _, fileName := range storedFiles {
+		keys, err := moa.kvStore.Keys(ctx, kvstore.AllOrganizations, KVNamespace, fileName)
+		if err != nil {
+			moa.logger.Error("Failed to fetch items from kvstore", "error", err,
+				"namespace", KVNamespace, "key", fileName)
+		}
+		for _, key := range keys {
+			if _, exists := activeOrganizations[key.OrgId]; exists {
+				continue
+			}
+			err = moa.kvStore.Del(ctx, key.OrgId, key.Namespace, key.Key)
+			if err != nil {
+				moa.logger.Error("Failed to delete item from kvstore", "error", err,
+					"orgID", key.OrgId, "namespace", KVNamespace, "key", key.Key)
+			}
+		}
+	}
+}
+
+func (moa *MultiOrgAlertmanager) StopAndWait() {
+	moa.alertmanagersMtx.Lock()
+	defer moa.alertmanagersMtx.Unlock()
+
+	for _, am := range moa.alertmanagers {
+		am.StopAndWait()
+	}
+
+	p, ok := moa.peer.(*alertingCluster.Peer)
+	if ok {
+		moa.settleCancel()
+		if err := p.Leave(10 * time.Second); err != nil {
+			moa.logger.Warn("Unable to leave the gossip mesh", "error", err)
+		}
+	}
+	r, ok := moa.peer.(*redisPeer)
+	if ok {
+		moa.settleCancel()
+		r.Shutdown()
+	}
+}
+
+// Peer returns the cluster peer for this Alertmanager.
+// Returns nil if clustering is not configured.
+func (moa *MultiOrgAlertmanager) Peer() alertingNotify.ClusterPeer {
+	return moa.peer
+}
+
+// IsExternalAMSyncConfiguredForOrg reports whether external Alertmanager sync
+// configuration exists for the given org (operator-level ini value or per-org
+// admin_config UID). It does not consider whether the sync feature flag is on —
+// gating on configuration alone is intentional so that the convert API stays
+// consistent with the persisted admin_config regardless of feature-flag state.
+// Thin wrapper around ExternalAMSyncer.IsConfiguredForOrg kept here so the
+// Alertmanager interface used by the convert API does not need to know about
+// ExternalAMSyncer.
+func (moa *MultiOrgAlertmanager) IsExternalAMSyncConfiguredForOrg(ctx context.Context, orgID int64) (bool, error) {
+	return moa.externalAMSyncer.IsConfiguredForOrg(ctx, orgID)
+}
+
+// AlertmanagerFor returns the Alertmanager instance for the organization provided.
+// When the organization does not have an active Alertmanager, it returns a ErrNoAlertmanagerForOrg.
+// When the Alertmanager of the organization is not ready, it returns a ErrAlertmanagerNotReady.
+func (moa *MultiOrgAlertmanager) AlertmanagerFor(orgID int64) (Alertmanager, error) {
+	moa.alertmanagersMtx.RLock()
+	defer moa.alertmanagersMtx.RUnlock()
+
+	orgAM, existing := moa.alertmanagers[orgID]
+	if !existing {
+		return nil, ErrNoAlertmanagerForOrg
+	}
+
+	if !orgAM.Ready() {
+		return orgAM, ErrAlertmanagerNotReady
+	}
+
+	return orgAM, nil
+}
+
+// alertmanagerForOrg returns the Alertmanager instance for the organization provided. Should only be called when the
+// caller has already locked the alertmanagersMtx.
+// TODO: This should eventually replace AlertmanagerFor once the API layer has been refactored to not access the alertmanagers directly
+// and AM route error handling has been fully moved to errorutil.
+func (moa *MultiOrgAlertmanager) alertmanagerForOrg(orgID int64) (Alertmanager, error) {
+	orgAM, existing := moa.alertmanagers[orgID]
+	if !existing {
+		return nil, WithPublicError(ErrAlertmanagerNotFound.Errorf("Alertmanager does not exist for org %d", orgID))
+	}
+
+	if !orgAM.Ready() {
+		return nil, WithPublicError(ErrAlertmanagerConflict.Errorf("Alertmanager is not ready for org %d", orgID))
+	}
+
+	return orgAM, nil
+}
+
+// ListSilences lists silences for the organization provided. Currently, this is a pass-through to the Alertmanager
+// implementation.
+func (moa *MultiOrgAlertmanager) ListSilences(ctx context.Context, orgID int64, filter []string) ([]*models.Silence, error) {
+	moa.alertmanagersMtx.RLock()
+	defer moa.alertmanagersMtx.RUnlock()
+
+	orgAM, err := moa.alertmanagerForOrg(orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	silences, err := orgAM.ListSilences(ctx, filter)
+	if err != nil {
+		if errors.Is(err, alertingNotify.ErrListSilencesBadPayload) {
+			return nil, WithPublicError(ErrSilencesBadRequest.Errorf("invalid filters: %w", err))
+		}
+		return nil, WithPublicError(ErrSilenceInternal.Errorf("failed to list silences: %w", err))
+	}
+	return GettableSilencesToSilences(silences), nil
+}
+
+// GetSilence gets a silence for the organization and silence id provided. Currently, this is a pass-through to the
+// Alertmanager implementation.
+func (moa *MultiOrgAlertmanager) GetSilence(ctx context.Context, orgID int64, id string) (*models.Silence, error) {
+	moa.alertmanagersMtx.RLock()
+	defer moa.alertmanagersMtx.RUnlock()
+
+	orgAM, err := moa.alertmanagerForOrg(orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	s, err := orgAM.GetSilence(ctx, id)
+	if err != nil {
+		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
+			return nil, WithPublicError(ErrSilenceNotFound.Errorf("silence %s not found", id))
+		}
+		return nil, WithPublicError(ErrSilenceInternal.Errorf("failed to get silence: %w", err))
+	}
+
+	return GettableSilenceToSilence(s), nil
+}
+
+// CreateSilence creates a silence in the Alertmanager for the organization provided, returning the silence ID. It will
+// also persist the silence state to the kvstore immediately after creating the silence.
+func (moa *MultiOrgAlertmanager) CreateSilence(ctx context.Context, orgID int64, ps models.Silence) (string, error) {
+	moa.alertmanagersMtx.RLock()
+	defer moa.alertmanagersMtx.RUnlock()
+
+	orgAM, err := moa.alertmanagerForOrg(orgID)
+	if err != nil {
+		return "", err
+	}
+
+	// Need to create the silence in the AM first to get the silence ID.
+	silenceID, err := orgAM.CreateSilence(ctx, SilenceToPostableSilence(ps))
+	if err != nil {
+		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
+			return "", WithPublicError(ErrSilenceNotFound.Errorf("silence %v not found", ps.ID))
+		}
+
+		if errors.Is(err, alertingNotify.ErrCreateSilenceBadPayload) {
+			return "", WithPublicError(ErrSilencesBadRequest.Errorf("invalid silence: %w", err))
+		}
+		return "", WithPublicError(ErrSilenceInternal.Errorf("failed to upsert silence: %w", err))
+	}
+
+	err = moa.updateSilenceState(ctx, orgAM, orgID)
+	if err != nil {
+		moa.logger.Warn("Failed to persist silence state on create, will be corrected by next maintenance run", "orgID", orgID, "silenceID", silenceID, "error", err)
+	}
+
+	return silenceID, nil
+}
+
+// UpdateSilence updates a silence in the Alertmanager for the organization provided, returning the silence ID. It will
+// also persist the silence state to the kvstore immediately after creating the silence.
+// Currently, this just calls CreateSilence as the underlying Alertmanager implementation upserts.
+func (moa *MultiOrgAlertmanager) UpdateSilence(ctx context.Context, orgID int64, ps models.Silence) (string, error) {
+	if ps.ID == nil || *ps.ID == "" { // TODO: Alertmanager interface should probably include a method for updating silences. For now, we leak this implementation detail.
+		return "", WithPublicError(ErrSilencesBadRequest.Errorf("silence ID is required"))
+	}
+	return moa.CreateSilence(ctx, orgID, ps)
+}
+
+// DeleteSilence deletes a silence in the Alertmanager for the organization provided. It will also persist the silence
+// state to the kvstore immediately after deleting the silence.
+func (moa *MultiOrgAlertmanager) DeleteSilence(ctx context.Context, orgID int64, silenceID string) error {
+	moa.alertmanagersMtx.RLock()
+	defer moa.alertmanagersMtx.RUnlock()
+
+	orgAM, err := moa.alertmanagerForOrg(orgID)
+	if err != nil {
+		return err
+	}
+
+	err = orgAM.DeleteSilence(ctx, silenceID)
+	if err != nil {
+		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
+			return WithPublicError(ErrSilenceNotFound.Errorf("silence %s not found", silenceID))
+		}
+		return WithPublicError(ErrSilenceInternal.Errorf("failed to delete silence %s: %w", silenceID, err))
+	}
+
+	err = moa.updateSilenceState(ctx, orgAM, orgID)
+	if err != nil {
+		moa.logger.Warn("Failed to persist silence state on delete, will be corrected by next maintenance run", "orgID", orgID, "silenceID", silenceID, "error", err)
+	}
+
+	return nil
+}
+
+// updateSilenceState persists the silence state to the kvstore immediately instead of waiting for the next maintenance
+// run. This is used after Create/Delete to prevent silences from being lost when a new Alertmanager is started before
+// the state has persisted. This can happen, for example, in a rolling deployment scenario.
+func (moa *MultiOrgAlertmanager) updateSilenceState(ctx context.Context, orgAM Alertmanager, orgID int64) error {
+	// Collect the internal silence state from the AM.
+	// TODO: Currently, we rely on the AM itself for the persisted silence state representation.
+	// Preferably, we would define the state ourselves and persist it in a format that is easy to
+	// guarantee consistency for writes to individual silences.
+	silences, err := orgAM.SilenceState(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Persist to kvstore.
+	fs := NewFileStore(orgID, moa.kvStore)
+	_, err = fs.SaveSilences(ctx, silences)
+	return err
+}
+
+// NilPeer and NilChannel implements the Alertmanager clustering interface.
+type NilPeer struct{}
+
+func (p *NilPeer) Position() int                   { return 0 }
+func (p *NilPeer) WaitReady(context.Context) error { return nil }
+func (p *NilPeer) AddState(string, alertingCluster.State, prometheus.Registerer, ...alertingCluster.ChannelOption) alertingCluster.ClusterChannel {
+	return &NilChannel{}
+}
+
+type NilChannel struct{}
+
+func (c *NilChannel) Broadcast([]byte)             {}
+func (c *NilChannel) ReliableDelivery([]byte) bool { return true }

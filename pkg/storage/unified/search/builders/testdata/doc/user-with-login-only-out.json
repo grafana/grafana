@@ -1,0 +1,22 @@
+{
+  "key": {
+    "namespace": "default",
+    "group": "iam.grafana.app",
+    "resource": "users",
+    "name": "with-login-only"
+  },
+  "name": "with-login-only",
+  "rv": 1234,
+  "title": "with-login-only",
+  "title_ngram": "with-login-only",
+  "title_phrase": "with-login-only",
+  "fields": {
+    "disabled": false,
+    "lastSeenAt": 0,
+    "login": "user.two",
+    "role": "Viewer"
+  },
+  "selectableFields": {
+    "spec.login": "user.two"
+  }
+}

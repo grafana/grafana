@@ -1,0 +1,382 @@
+import 'symbol-observable';
+import 'regenerator-runtime/runtime';
+
+import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
+import 'file-saver';
+import 'jquery';
+
+import { createElement } from 'react';
+import { createRoot } from 'react-dom/client';
+
+import { type Preferences } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import {
+  locationUtil,
+  monacoLanguageRegistry,
+  setLocale,
+  setTimeZoneResolver,
+  setWeekStart,
+  standardEditorsRegistry,
+  standardFieldConfigEditorRegistry,
+  standardTransformersRegistry,
+} from '@grafana/data';
+import { DEFAULT_LANGUAGE } from '@grafana/i18n';
+import { initializeI18n, loadNamespacedResources } from '@grafana/i18n/internal';
+import {
+  locationService,
+  setBackendSrv,
+  setDataSourceSrv,
+  setLocationSrv,
+  setQueryRunnerFactory,
+  setRunRequest,
+  setPluginImportUtils,
+  setEmbeddedDashboard,
+  setAppEvents,
+  setReturnToPreviousHook,
+  setPluginComponentHook,
+  setPluginComponentsHook,
+  setCurrentUser,
+  setChromeHeaderHeightHook,
+  setPluginLinksHook,
+  setHelpNavItemHook,
+  setFolderPicker,
+  setCorrelationsService,
+  setPanelScreenshotService,
+  setPluginFunctionsHook,
+  setMegaMenuOpenHook,
+} from '@grafana/runtime';
+import {
+  getPanelPluginMetas,
+  initDataSourceInstanceSettings,
+  initOpenFeature,
+  setExpressionDataSourceInstance,
+  setDataSourcePluginImporter,
+  setGetObservablePluginComponents,
+  setGetObservablePluginLinks,
+  setJourneyRegistry,
+  setJourneyTracker,
+  setPanelDataErrorView,
+  setPanelRenderer,
+  setPluginPage,
+} from '@grafana/runtime/internal';
+import { initializeLoggersRegistry } from '@grafana/runtime/unstable';
+import { loadResources as loadScenesResources, sceneUtils } from '@grafana/scenes';
+import config, { updateConfig } from 'app/core/config';
+import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
+
+import getDefaultMonacoLanguages from '../lib/monaco-languages';
+
+import { AppWrapper } from './AppWrapper';
+import { appEvents } from './core/app_events';
+import { AppChromeService } from './core/components/AppChrome/AppChromeService';
+import { useChromeHeaderHeight } from './core/components/AppChrome/TopBar/useChromeHeaderHeight';
+import { useHelpNode } from './core/components/AppChrome/TopBar/useHelpNode';
+import { LazyFolderPicker } from './core/components/NestedFolderPicker/LazyFolderPicker';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
+import { PluginPage } from './core/components/Page/PluginPage';
+import {
+  type GrafanaContextType,
+  useMegaMenuOpenInternal,
+  useReturnToPreviousInternal,
+} from './core/context/GrafanaContext';
+import { initializeCrashDetection } from './core/crash';
+import { NAMESPACES, GRAFANA_NAMESPACE } from './core/internationalization/constants';
+import { loadTranslations } from './core/internationalization/loadTranslations';
+import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
+import { setMonacoEnv } from './core/monacoEnv';
+import { handleRedirectTo } from './core/navigation/handleRedirectTo';
+import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
+import { CorrelationsService } from './core/services/CorrelationsService';
+import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
+import { backendSrv } from './core/services/backend_srv';
+import { contextSrv } from './core/services/context_srv';
+import { initEchoSrv } from './core/services/echo/init';
+import { JourneyRegistryImpl } from './core/services/journey/JourneyRegistryImpl';
+import { JourneyTrackerImpl } from './core/services/journey/JourneyTrackerImpl';
+import { JOURNEY_REGISTRY } from './core/services/journey/journeyRegistry';
+import { KeybindingSrv } from './core/services/keybindingSrv';
+import { startMeasure, stopMeasure } from './core/utils/metrics';
+import { initAlerting } from './features/alerting/unified/initAlerting';
+import { getTimeSrv } from './features/dashboard/services/TimeSrv';
+import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
+import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/DashboardLevelTimeMacro';
+import { dataSource as expressionDatasource } from './features/expressions/ExpressionDatasource';
+import { initGrafanaLive } from './features/live';
+import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
+import { PanelRenderer } from './features/panel/components/PanelRenderer';
+import { PanelScreenshotServiceImpl } from './features/panel-screenshot/PanelScreenshotServiceImpl';
+import { DatasourceSrv } from './features/plugins/datasource_srv';
+import {
+  getObservablePluginComponents,
+  getObservablePluginLinks,
+} from './features/plugins/extensions/getPluginExtensions';
+import { getPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
+import { usePluginComponent } from './features/plugins/extensions/usePluginComponent';
+import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
+import { usePluginFunctions } from './features/plugins/extensions/usePluginFunctions';
+import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
+import { getAppPluginsToPreload } from './features/plugins/extensions/utils';
+import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
+import { pluginImporter } from './features/plugins/importer/pluginImporter';
+import { initSystemJSHooks } from './features/plugins/loader/systemjsHooks';
+import { preloadPlugins } from './features/plugins/pluginPreloader';
+import { QueryRunner } from './features/query/state/QueryRunner';
+import { runRequest } from './features/query/state/runRequest';
+import { initWindowRuntime } from './features/runtime/init';
+import { cleanupOldExpandedFolders } from './features/search/utils';
+import { variableAdapters } from './features/variables/adapters';
+import { createAdHocVariableAdapter } from './features/variables/adhoc/adapter';
+import { createConstantVariableAdapter } from './features/variables/constant/adapter';
+import { createCustomVariableAdapter } from './features/variables/custom/adapter';
+import { createDataSourceVariableAdapter } from './features/variables/datasource/adapter';
+import { getVariablesUrlParams } from './features/variables/getAllVariableValuesForUrl';
+import { createIntervalVariableAdapter } from './features/variables/interval/adapter';
+import { setVariableQueryRunner, VariableQueryRunner } from './features/variables/query/VariableQueryRunner';
+import { createQueryVariableAdapter } from './features/variables/query/adapter';
+import { createSwitchVariableAdapter } from './features/variables/switch/adapter';
+import { createSystemVariableAdapter } from './features/variables/system/adapter';
+import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
+import { configureStore } from './store/configureStore';
+
+// import symlinked extensions
+const extensionsIndex = require.context('.', true, /extensions\/index.ts/);
+const extensionsExports = extensionsIndex.keys().map((key) => {
+  return extensionsIndex(key);
+});
+
+export interface AppInitOptions {
+  // Preferences fetched during boot (see initPreferences). Passed through so we
+  // can seed the RTK Query cache and avoid a duplicate preferences/merged request.
+  mergedPreferences?: Preferences;
+}
+
+export class GrafanaApp {
+  context!: GrafanaContextType;
+
+  async init(options?: AppInitOptions) {
+    try {
+      await preInitTasks();
+
+      // Let iframe container know grafana has started loading
+      window.parent.postMessage('GrafanaAppInit', '*');
+
+      initSystemJSHooks();
+      initializeLoggersRegistry();
+
+      // Currently the OpenFeature API requires a signed in user. This means feature flags cannot be used
+      // on the login page.
+      if (contextSrv.user.isSignedIn) {
+        try {
+          await initOpenFeature();
+        } catch (err) {
+          console.error('Failed to initialize OpenFeature provider', err);
+        }
+      }
+
+      const initI18nPromise = initializeI18n({
+        language: contextSrv.user.language,
+        ns: NAMESPACES,
+        module: loadTranslations,
+      });
+
+      // This is a placeholder so we can put a 'comment' in the message json files.
+      // Starts with an underscore so it's sorted to the top of the file. Even though it is in a comment the following line is still extracted
+      // t('_comment', 'The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.');
+      initI18nPromise.then(async ({ language }) => {
+        updateConfig({ language });
+
+        // Initialise scenes translations into the Grafana namespace. Must finish before any scenes UI is rendered.
+        return loadNamespacedResources(GRAFANA_NAMESPACE, language ?? DEFAULT_LANGUAGE, [loadScenesResources]);
+      });
+
+      setBackendSrv(backendSrv);
+      await initEchoSrv();
+      // This needs to be done after the `initEchoSrv` since it is being used under the hood.
+      startMeasure('frontend_app_init');
+
+      if (config.featureToggles.cujTracking) {
+        setJourneyTracker(new JourneyTrackerImpl());
+
+        // Initialize the journey registry (metadata + split triggers)
+        const registry = new JourneyRegistryImpl();
+        registry.init(JOURNEY_REGISTRY);
+        setJourneyRegistry(registry);
+
+        // Eagerly import journey wirings - these only use onInteraction,
+        // no heavy feature-level imports
+        await Promise.all([
+          import('./core/journeys/searchToResource'),
+          import('./core/journeys/browseToResource'),
+          import('./core/journeys/dashboardEdit'),
+          import('./core/journeys/panelEdit'),
+          import('./core/journeys/datasourceConfigure'),
+          import('./core/journeys/exploreToDashboard'),
+        ]);
+
+        // Warn about registry entries that have no start trigger wired up
+        registry.warnUnregistered();
+      }
+
+      setLocale(contextSrv.user.language);
+      setWeekStart(contextSrv.user.weekStart);
+      setPanelRenderer(PanelRenderer);
+      setPluginPage(PluginPage);
+      setFolderPicker(LazyFolderPicker);
+      setPanelDataErrorView(PanelDataErrorView);
+      setLocationSrv(locationService);
+      setCorrelationsService(new CorrelationsService());
+      setPanelScreenshotService(new PanelScreenshotServiceImpl());
+      setEmbeddedDashboard(EmbeddedDashboardLazy);
+      setTimeZoneResolver(() => contextSrv.user.timezone);
+      initGrafanaLive();
+      setCurrentUser(contextSrv.user);
+
+      // Expose the app-wide eventbus
+      setAppEvents(appEvents);
+
+      // We must wait for translations to load because some preloaded store state requires translating
+      await initI18nPromise;
+
+      // Important that extension reducers are initialized before store
+      addExtensionReducers();
+      configureStore(undefined, { mergedPreferences: options?.mergedPreferences });
+      initExtensions();
+
+      initAlerting();
+
+      standardEditorsRegistry.setInit(getAllOptionEditors);
+      standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
+      standardTransformersRegistry.setInit(getStandardTransformers);
+      variableAdapters.setInit(() => [
+        createQueryVariableAdapter(),
+        createCustomVariableAdapter(),
+        createTextBoxVariableAdapter(),
+        createConstantVariableAdapter(),
+        createDataSourceVariableAdapter(),
+        createIntervalVariableAdapter(),
+        createAdHocVariableAdapter(),
+        createSystemVariableAdapter(),
+        createSwitchVariableAdapter(),
+      ]);
+
+      monacoLanguageRegistry.setInit(getDefaultMonacoLanguages);
+      setMonacoEnv();
+
+      setQueryRunnerFactory(() => new QueryRunner());
+      setVariableQueryRunner(new VariableQueryRunner());
+
+      // Provide runRequest implementation to packages, @grafana/scenes in particular
+      setRunRequest(runRequest);
+
+      // Privide plugin import utils to packages, @grafana/scenes in particular
+      setPluginImportUtils({
+        importPanelPlugin,
+        getPanelPluginFromCache: syncGetPanelPlugin,
+      });
+
+      // Login redirect requires locationUtil to be initialized
+      locationUtil.initialize({
+        config: window.grafanaBootData.settings,
+        getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
+        getVariablesUrlParams: getVariablesUrlParams,
+      });
+
+      if (config.featureToggles.useSessionStorageForRedirection) {
+        handleRedirectTo();
+      }
+
+      // intercept anchor clicks and forward it to custom history instead of relying on browser's history
+      document.addEventListener('click', interceptLinkClicks);
+
+      // Init async data source services (populates cache from boot data so
+      // new `getInstanceSettings` / `getInstanceSettingsList` callers don't
+      // need to wait on a network round trip).
+      setExpressionDataSourceInstance(expressionDatasource);
+      initDataSourceInstanceSettings(config.datasources, config.defaultDatasource);
+      setDataSourcePluginImporter(pluginImporter.importDataSource.bind(pluginImporter));
+
+      // Init DataSourceSrv (legacy sync API; retained for backwards compatibility)
+      const dataSourceSrv = new DatasourceSrv();
+      dataSourceSrv.init(config.datasources, config.defaultDatasource);
+      setDataSourceSrv(dataSourceSrv);
+      initWindowRuntime();
+
+      if (contextSrv.user.orgRole !== '') {
+        preloadPlugins(await getAppPluginsToPreload());
+        getPluginExtensionRegistries();
+      }
+
+      await getPanelPluginMetas();
+
+      setHelpNavItemHook(useHelpNode);
+      setPluginLinksHook(usePluginLinks);
+      setPluginComponentHook(usePluginComponent);
+      setPluginComponentsHook(usePluginComponents);
+      setPluginFunctionsHook(usePluginFunctions);
+      setGetObservablePluginLinks(getObservablePluginLinks);
+      setGetObservablePluginComponents(getObservablePluginComponents);
+
+      // initialize chrome service
+      const queryParams = locationService.getSearchObject();
+      const chromeService = new AppChromeService();
+      const keybindingsService = new KeybindingSrv(locationService, chromeService);
+      const newAssetsChecker = new NewFrontendAssetsChecker();
+      newAssetsChecker.start();
+
+      // Read initial kiosk mode from url at app startup
+      chromeService.setKioskModeFromUrl(queryParams.kiosk);
+
+      // Clean up old search local storage values
+      try {
+        cleanupOldExpandedFolders();
+      } catch (err) {
+        console.warn('Failed to clean up old expanded folders', err);
+      }
+
+      this.context = {
+        backend: backendSrv,
+        location: locationService,
+        chrome: chromeService,
+        keybindings: keybindingsService,
+        newAssetsChecker,
+        config,
+      };
+
+      setReturnToPreviousHook(useReturnToPreviousInternal);
+      setMegaMenuOpenHook(useMegaMenuOpenInternal);
+      setChromeHeaderHeightHook(useChromeHeaderHeight);
+
+      if (config.featureToggles.crashDetection) {
+        initializeCrashDetection();
+      }
+
+      if (config.featureToggles.dashboardLevelTimeMacros) {
+        sceneUtils.registerVariableMacro('__from', DashboardLevelTimeMacro, true);
+        sceneUtils.registerVariableMacro('__to', DashboardLevelTimeMacro, true);
+      }
+
+      const root = createRoot(document.getElementById('reactRoot')!);
+      root.render(createElement(AppWrapper, { context: this.context }));
+
+      await postInitTasks();
+    } catch (error) {
+      console.error('Failed to start Grafana', error);
+      window.__grafana_load_failed(error);
+    } finally {
+      stopMeasure('frontend_app_init');
+    }
+  }
+}
+
+function addExtensionReducers() {
+  if (extensionsExports.length > 0) {
+    extensionsExports[0].addExtensionReducers();
+  }
+}
+
+function initExtensions() {
+  if (extensionsExports.length > 0) {
+    extensionsExports[0].init();
+  }
+}
+
+export default new GrafanaApp();

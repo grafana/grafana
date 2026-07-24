@@ -1,0 +1,28 @@
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { action } from 'storybook/actions';
+
+import { Tag } from './Tag';
+import mdx from './Tag.mdx';
+
+const meta: Meta<typeof Tag> = {
+  title: 'Information/Tag',
+  component: Tag,
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+    controls: {
+      exclude: ['onClick'],
+    },
+  },
+  args: {
+    name: 'Tag',
+    colorIndex: 0,
+  },
+};
+
+export const Single: StoryFn<typeof Tag> = (args) => {
+  return <Tag name={args.name} colorIndex={args.colorIndex} onClick={action('Tag clicked')} icon={args.icon} />;
+};
+
+export default meta;

@@ -1,0 +1,514 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`useContactPoints should return contact points with status 1`] = `
+{
+  "contactPoints": [
+    {
+      "grafana_managed_receiver_configs": [
+        {
+          "disableResolveMessage": false,
+          "secureFields": {},
+          "settings": {
+            "addresses": "gilles.demey@grafana.com",
+            "singleEmail": false,
+          },
+          "type": "email",
+          "uid": "xeKQrBrnk",
+          "version": "v1",
+          Symbol(receiver_status): {
+            "lastNotifyAttempt": "2023-07-02T21:35:34.841+02:00",
+            "lastNotifyAttemptDuration": "1ms",
+            "lastNotifyAttemptError": "failed to send notification to email addresses: gilles.demey@grafana.com: dial tcp 192.168.1.21:1025: connect: connection refused",
+            "name": "email",
+            "sendResolved": true,
+          },
+          Symbol(receiver_metadata): {
+            "description": "Sends notifications using Grafana server configured SMTP settings",
+            "name": "Email",
+          },
+          Symbol(receiver_plugin_metadata): undefined,
+        },
+      ],
+      "id": "grafana-default-email",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canAdmin": "true",
+          "grafana.com/access/canDelete": "false",
+          "grafana.com/access/canWrite": "false",
+          "grafana.com/canUse": "true",
+          "grafana.com/inUse/routes": "1",
+          "grafana.com/inUse/rules": "1",
+          "grafana.com/provenance": "none",
+        },
+        "uid": "grafana-default-email",
+      },
+      "name": "grafana-default-email",
+      "policies": [
+        {
+          "receiver": "grafana-default-email",
+          "route": {
+            "type": "normal",
+          },
+        },
+      ],
+      "provenance": undefined,
+    },
+    {
+      "grafana_managed_receiver_configs": [
+        {
+          "disableResolveMessage": false,
+          "secureFields": {},
+          "settings": {
+            "addresses": "gilles.demey+1@grafana.com, gilles.demey+2@grafana.com, gilles.demey+3@grafana.com, gilles.demey+4@grafana.com",
+            "message": "{{ template "slack-template" . }}",
+            "singleEmail": false,
+            "subject": "some custom value",
+          },
+          "type": "email",
+          "uid": "af306c96-35a2-4d6e-908a-4993e245dbb2",
+          "version": "v1",
+          Symbol(receiver_status): {
+            "lastNotifyAttempt": "",
+            "lastNotifyAttemptDuration": "",
+            "name": "email",
+            "sendResolved": true,
+          },
+          Symbol(receiver_metadata): {
+            "description": "Sends notifications using Grafana server configured SMTP settings",
+            "name": "Email",
+          },
+          Symbol(receiver_plugin_metadata): undefined,
+        },
+      ],
+      "id": "lotsa-emails",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canAdmin": "true",
+          "grafana.com/access/canDelete": "true",
+          "grafana.com/access/canWrite": "true",
+          "grafana.com/canUse": "true",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "none",
+        },
+        "uid": "lotsa-emails",
+      },
+      "name": "lotsa-emails",
+      "policies": [],
+      "provenance": undefined,
+    },
+    {
+      "grafana_managed_receiver_configs": [
+        {
+          "disableResolveMessage": false,
+          "settings": {
+            "url": "https://oncall-endpoint.example.com",
+          },
+          "type": "oncall",
+          "version": "v1",
+          Symbol(receiver_status): undefined,
+          Symbol(receiver_metadata): {
+            "description": "Sends notifications to Grafana IRM",
+            "name": "Grafana IRM",
+          },
+          Symbol(receiver_plugin_metadata): {
+            "icon": "__DEFAULT_MOCK_IMAGE_CONTENT__",
+            "title": "Grafana OnCall",
+          },
+        },
+      ],
+      "id": "OnCall Conctact point",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canAdmin": "true",
+          "grafana.com/access/canDelete": "true",
+          "grafana.com/access/canWrite": "true",
+          "grafana.com/canUse": "true",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "none",
+        },
+        "uid": "OnCall Conctact point",
+      },
+      "name": "OnCall Conctact point",
+      "policies": [],
+      "provenance": undefined,
+    },
+    {
+      "grafana_managed_receiver_configs": [
+        {
+          "disableResolveMessage": false,
+          "secureFields": {},
+          "settings": {
+            "addresses": "gilles.demey@grafana.com",
+            "singleEmail": false,
+          },
+          "type": "email",
+          "uid": "s8SdCVjnk",
+          "version": "v1",
+          Symbol(receiver_status): {
+            "lastNotifyAttempt": "",
+            "lastNotifyAttemptDuration": "",
+            "name": "email",
+            "sendResolved": true,
+          },
+          Symbol(receiver_metadata): {
+            "description": "Sends notifications using Grafana server configured SMTP settings",
+            "name": "Email",
+          },
+          Symbol(receiver_plugin_metadata): undefined,
+        },
+      ],
+      "id": "provisioned-contact-point",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canAdmin": "true",
+          "grafana.com/access/canDelete": "true",
+          "grafana.com/access/canWrite": "true",
+          "grafana.com/canUse": "true",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "api",
+        },
+        "uid": "provisioned-contact-point",
+      },
+      "name": "provisioned-contact-point",
+      "policies": [
+        {
+          "receiver": "provisioned-contact-point",
+          "route": {
+            "type": "normal",
+          },
+        },
+      ],
+      "provenance": "api",
+    },
+    {
+      "grafana_managed_receiver_configs": [
+        {
+          "disableResolveMessage": false,
+          "secureFields": {
+            "token": true,
+          },
+          "settings": {
+            "recipient": "test-alerts",
+          },
+          "type": "slack",
+          "uid": "c02ad56a-31da-46b9-becb-4348ec0890fd",
+          "version": "v1",
+          Symbol(receiver_status): {
+            "lastNotifyAttempt": "",
+            "lastNotifyAttemptDuration": "",
+            "name": "slack",
+            "sendResolved": true,
+          },
+          Symbol(receiver_metadata): {
+            "description": "Sends notifications to Slack",
+            "name": "Slack",
+          },
+          Symbol(receiver_plugin_metadata): undefined,
+        },
+        {
+          "disableResolveMessage": false,
+          "secureFields": {
+            "token": true,
+          },
+          "settings": {
+            "recipient": "test-alerts2",
+          },
+          "type": "slack",
+          "uid": "b286a3be-f690-49e2-8605-b075cbace2df",
+          "version": "v1",
+          Symbol(receiver_status): {
+            "lastNotifyAttempt": "",
+            "lastNotifyAttemptDuration": "",
+            "name": "slack",
+            "sendResolved": true,
+          },
+          Symbol(receiver_metadata): {
+            "description": "Sends notifications to Slack",
+            "name": "Slack",
+          },
+          Symbol(receiver_plugin_metadata): undefined,
+        },
+      ],
+      "id": "Slack with multiple channels",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canAdmin": "true",
+          "grafana.com/access/canDelete": "true",
+          "grafana.com/access/canWrite": "true",
+          "grafana.com/canUse": "true",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "none",
+        },
+        "uid": "Slack with multiple channels",
+      },
+      "name": "Slack with multiple channels",
+      "policies": [],
+      "provenance": undefined,
+    },
+  ],
+  "error": undefined,
+  "isLoading": false,
+}
+`;
+
+exports[`useContactPoints when having oncall plugin installed and no alert manager config data should return contact points with oncall metadata 1`] = `
+{
+  "contactPoints": [
+    {
+      "grafana_managed_receiver_configs": [
+        {
+          "disableResolveMessage": false,
+          "secureFields": {},
+          "settings": {
+            "addresses": "gilles.demey@grafana.com",
+            "singleEmail": false,
+          },
+          "type": "email",
+          "uid": "xeKQrBrnk",
+          "version": "v1",
+          Symbol(receiver_status): {
+            "lastNotifyAttempt": "2023-07-02T21:35:34.841+02:00",
+            "lastNotifyAttemptDuration": "1ms",
+            "lastNotifyAttemptError": "failed to send notification to email addresses: gilles.demey@grafana.com: dial tcp 192.168.1.21:1025: connect: connection refused",
+            "name": "email",
+            "sendResolved": true,
+          },
+          Symbol(receiver_metadata): {
+            "description": "Sends notifications using Grafana server configured SMTP settings",
+            "name": "Email",
+          },
+          Symbol(receiver_plugin_metadata): undefined,
+        },
+      ],
+      "id": "grafana-default-email",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canAdmin": "true",
+          "grafana.com/access/canDelete": "false",
+          "grafana.com/access/canWrite": "false",
+          "grafana.com/canUse": "true",
+          "grafana.com/inUse/routes": "1",
+          "grafana.com/inUse/rules": "1",
+          "grafana.com/provenance": "none",
+        },
+        "uid": "grafana-default-email",
+      },
+      "name": "grafana-default-email",
+      "policies": [
+        {
+          "receiver": "grafana-default-email",
+          "route": {
+            "type": "normal",
+          },
+        },
+      ],
+      "provenance": undefined,
+    },
+    {
+      "grafana_managed_receiver_configs": [
+        {
+          "disableResolveMessage": false,
+          "secureFields": {},
+          "settings": {
+            "addresses": "gilles.demey+1@grafana.com, gilles.demey+2@grafana.com, gilles.demey+3@grafana.com, gilles.demey+4@grafana.com",
+            "message": "{{ template "slack-template" . }}",
+            "singleEmail": false,
+            "subject": "some custom value",
+          },
+          "type": "email",
+          "uid": "af306c96-35a2-4d6e-908a-4993e245dbb2",
+          "version": "v1",
+          Symbol(receiver_status): {
+            "lastNotifyAttempt": "",
+            "lastNotifyAttemptDuration": "",
+            "name": "email",
+            "sendResolved": true,
+          },
+          Symbol(receiver_metadata): {
+            "description": "Sends notifications using Grafana server configured SMTP settings",
+            "name": "Email",
+          },
+          Symbol(receiver_plugin_metadata): undefined,
+        },
+      ],
+      "id": "lotsa-emails",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canAdmin": "true",
+          "grafana.com/access/canDelete": "true",
+          "grafana.com/access/canWrite": "true",
+          "grafana.com/canUse": "true",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "none",
+        },
+        "uid": "lotsa-emails",
+      },
+      "name": "lotsa-emails",
+      "policies": [],
+      "provenance": undefined,
+    },
+    {
+      "grafana_managed_receiver_configs": [
+        {
+          "disableResolveMessage": false,
+          "settings": {
+            "url": "https://oncall-endpoint.example.com",
+          },
+          "type": "oncall",
+          "version": "v1",
+          Symbol(receiver_status): undefined,
+          Symbol(receiver_metadata): {
+            "description": "Sends notifications to Grafana IRM",
+            "name": "Grafana IRM",
+          },
+          Symbol(receiver_plugin_metadata): {
+            "description": "grafana-integration",
+            "externalUrl": "/a/grafana-oncall-app/integrations/ABC123",
+            "icon": "__DEFAULT_MOCK_IMAGE_CONTENT__",
+            "title": "Grafana OnCall",
+            "warning": undefined,
+          },
+        },
+      ],
+      "id": "OnCall Conctact point",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canAdmin": "true",
+          "grafana.com/access/canDelete": "true",
+          "grafana.com/access/canWrite": "true",
+          "grafana.com/canUse": "true",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "none",
+        },
+        "uid": "OnCall Conctact point",
+      },
+      "name": "OnCall Conctact point",
+      "policies": [],
+      "provenance": undefined,
+    },
+    {
+      "grafana_managed_receiver_configs": [
+        {
+          "disableResolveMessage": false,
+          "secureFields": {},
+          "settings": {
+            "addresses": "gilles.demey@grafana.com",
+            "singleEmail": false,
+          },
+          "type": "email",
+          "uid": "s8SdCVjnk",
+          "version": "v1",
+          Symbol(receiver_status): {
+            "lastNotifyAttempt": "",
+            "lastNotifyAttemptDuration": "",
+            "name": "email",
+            "sendResolved": true,
+          },
+          Symbol(receiver_metadata): {
+            "description": "Sends notifications using Grafana server configured SMTP settings",
+            "name": "Email",
+          },
+          Symbol(receiver_plugin_metadata): undefined,
+        },
+      ],
+      "id": "provisioned-contact-point",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canAdmin": "true",
+          "grafana.com/access/canDelete": "true",
+          "grafana.com/access/canWrite": "true",
+          "grafana.com/canUse": "true",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "api",
+        },
+        "uid": "provisioned-contact-point",
+      },
+      "name": "provisioned-contact-point",
+      "policies": [
+        {
+          "receiver": "provisioned-contact-point",
+          "route": {
+            "type": "normal",
+          },
+        },
+      ],
+      "provenance": "api",
+    },
+    {
+      "grafana_managed_receiver_configs": [
+        {
+          "disableResolveMessage": false,
+          "secureFields": {
+            "token": true,
+          },
+          "settings": {
+            "recipient": "test-alerts",
+          },
+          "type": "slack",
+          "uid": "c02ad56a-31da-46b9-becb-4348ec0890fd",
+          "version": "v1",
+          Symbol(receiver_status): {
+            "lastNotifyAttempt": "",
+            "lastNotifyAttemptDuration": "",
+            "name": "slack",
+            "sendResolved": true,
+          },
+          Symbol(receiver_metadata): {
+            "description": "Sends notifications to Slack",
+            "name": "Slack",
+          },
+          Symbol(receiver_plugin_metadata): undefined,
+        },
+        {
+          "disableResolveMessage": false,
+          "secureFields": {
+            "token": true,
+          },
+          "settings": {
+            "recipient": "test-alerts2",
+          },
+          "type": "slack",
+          "uid": "b286a3be-f690-49e2-8605-b075cbace2df",
+          "version": "v1",
+          Symbol(receiver_status): {
+            "lastNotifyAttempt": "",
+            "lastNotifyAttemptDuration": "",
+            "name": "slack",
+            "sendResolved": true,
+          },
+          Symbol(receiver_metadata): {
+            "description": "Sends notifications to Slack",
+            "name": "Slack",
+          },
+          Symbol(receiver_plugin_metadata): undefined,
+        },
+      ],
+      "id": "Slack with multiple channels",
+      "metadata": {
+        "annotations": {
+          "grafana.com/access/canAdmin": "true",
+          "grafana.com/access/canDelete": "true",
+          "grafana.com/access/canWrite": "true",
+          "grafana.com/canUse": "true",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "none",
+        },
+        "uid": "Slack with multiple channels",
+      },
+      "name": "Slack with multiple channels",
+      "policies": [],
+      "provenance": undefined,
+    },
+  ],
+  "error": undefined,
+  "isLoading": false,
+}
+`;

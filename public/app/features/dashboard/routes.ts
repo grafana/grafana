@@ -1,0 +1,38 @@
+import { config } from '@grafana/runtime';
+import { DashboardRoutes } from 'app/types/dashboard';
+
+import { SafeDynamicImport } from '../../core/components/DynamicImports/SafeDynamicImport';
+import { type RouteDescriptor } from '../../core/navigation/types';
+
+export const getPublicDashboardRoutes = (): RouteDescriptor[] => {
+  if (!config.publicDashboardsEnabled) {
+    return [];
+  }
+
+  return [
+    {
+      path: '/dashboard/public',
+      pageClass: 'page-dashboard',
+      routeName: DashboardRoutes.Public,
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "ListPublicDashboardPage" */ '../../features/manage-dashboards/PublicDashboardListPage'
+          )
+      ),
+    },
+    {
+      path: '/public-dashboards/:accessToken',
+      pageClass: 'page-dashboard',
+      allowAnonymous: true,
+      routeName: DashboardRoutes.Public,
+      chromeless: true,
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "PublicDashboardPage" */ '../../features/dashboard/containers/PublicDashboardPageProxy'
+          )
+      ),
+    },
+  ];
+};

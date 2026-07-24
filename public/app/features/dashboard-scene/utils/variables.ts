@@ -1,0 +1,393 @@
+import { type AdHocVariableFilter, type TypedVariableModel } from '@grafana/data';
+import { config, getDataSourceSrv } from '@grafana/runtime';
+import {
+  AdHocFiltersVariable,
+  ConstantVariable,
+  CustomVariable,
+  DataSourceVariable,
+  GroupByVariable,
+  IntervalVariable,
+  QueryVariable,
+  sceneGraph,
+  type SceneObject,
+  type SceneVariable,
+  SceneVariableSet,
+  ScopesVariable,
+  SwitchVariable,
+  TextBoxVariable,
+} from '@grafana/scenes';
+import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+
+import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
+import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
+import { migrateGroupByVariablesV1 } from '../serialization/groupByMigration';
+import { createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
+
+import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from './utils';
+
+const DEFAULT_DATASOURCE = 'default';
+
+export const keepOnlyUserDefinedVariables = (v: SceneVariable) => !v.UNSAFE_renderAsHidden;
+
+/**
+ * Collects the user-defined variables visible from `model` by walking up the
+ * scene graph, so that both section-level (tab/row) and dashboard-level
+ * variables are returned. When the same name is defined at multiple levels the
+ * nearest definition wins, matching how `sceneGraph.lookupVariable` resolves a
+ * variable at evaluation time. Internal system variables (e.g. ScopesVariable)
+ * are excluded.
+ */
+function collectInScopeUserDefinedVariables(model: SceneObject): SceneVariable[] {
+  const byName = new Map<string, SceneVariable>();
+
+  let current: SceneObject | undefined = model;
+  while (current) {
+    const variableSet = current.state.$variables;
+
+    if (variableSet) {
+      for (const variable of variableSet.state.variables) {
+        if (keepOnlyUserDefinedVariables(variable) && !byName.has(variable.state.name)) {
+          byName.set(variable.state.name, variable);
+        }
+      }
+    }
+
+    current = current.parent;
+  }
+
+  return Array.from(byName.values());
+}
+
+/**
+ * Excludes internal system variables (e.g. ScopesVariable)
+ */
+export function getUserDefinedVariables(model: SceneObject): SceneVariable[] {
+  return collectInScopeUserDefinedVariables(model);
+}
+
+export function useUserDefinedVariables(model: SceneObject): SceneVariable[] {
+  // Subscribe to the closest variable set so the list reacts to variables being
+  // added or removed; the returned list still spans the whole parent chain.
+  sceneGraph.getVariables(model).useState();
+  return collectInScopeUserDefinedVariables(model);
+}
+
+export function createVariablesForDashboard(oldModel: DashboardModel, defaultVariables: VariableKind[] = []) {
+  const variables = migrateGroupByVariablesV1(oldModel.templating.list);
+  const variableObjects = variables
+    .map((v) => {
+      try {
+        return createSceneVariableFromVariableModel(v);
+      } catch (err) {
+        console.error(err);
+        return null;
+      }
+    })
+    // TODO: Remove filter
+    // Added temporarily to allow skipping non-compatible variables
+    .filter((v): v is SceneVariable => Boolean(v));
+
+  const defaultVariableObjects = defaultVariables
+    .map((v) => {
+      try {
+        return createSceneVariableFromVariableModelV2(v);
+      } catch (err) {
+        console.error(err);
+        return null;
+      }
+    })
+    .filter((v): v is SceneVariable => Boolean(v));
+
+  // Explicitly disable scopes for public dashboards
+  if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {
+    variableObjects.push(new ScopesVariable({ enable: true }));
+  }
+
+  return new SceneVariableSet({
+    variables: [...defaultVariableObjects, ...variableObjects],
+  });
+}
+
+export function createVariablesForSnapshot(oldModel: DashboardModel) {
+  const variableObjects = oldModel.templating.list
+    .map((v) => {
+      try {
+        // for adhoc we are using the AdHocFiltersVariable from scenes becuase of its complexity
+        if (v.type === 'adhoc') {
+          return new AdHocFiltersVariable({
+            name: v.name,
+            label: v.label,
+            readOnly: true,
+            description: v.description,
+            skipUrlSync: v.skipUrlSync,
+            hide: v.hide,
+            datasource: v.datasource,
+            applyMode: 'auto',
+            filters: v.filters ?? [],
+            baseFilters: v.baseFilters ?? [],
+            defaultKeys: v.defaultKeys,
+            useQueriesAsFilterForOptions: true,
+            applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
+            supportsMultiValueOperators: Boolean(
+              getDataSourceSrv().getInstanceSettings({ type: v.datasource?.type })?.meta.multiValueFilterOperators
+            ),
+            enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls ? (v.enableGroupBy ?? false) : false,
+            $behaviors: [new ReportInteractionBehavior({})],
+          });
+        }
+        // for other variable types we are using the SnapshotVariable
+        return createSnapshotVariable(v);
+      } catch (err) {
+        console.error(err);
+        return null;
+      }
+    })
+    // TODO: Remove filter
+    // Added temporarily to allow skipping non-compatible variables
+    .filter((v): v is SceneVariable => Boolean(v));
+
+  return new SceneVariableSet({
+    variables: variableObjects,
+  });
+}
+
+/** Snapshots variables are read-only and should not be updated */
+function createSnapshotVariable(variable: TypedVariableModel): SceneVariable {
+  let snapshotVariable: SnapshotVariable;
+  let current: { value: string | string[]; text: string | string[] };
+  if (variable.type === 'interval') {
+    // If query is missing, extract intervals from options instead of using defaults
+    let intervals: string[];
+    if (variable.query) {
+      intervals = getIntervalsFromQueryString(variable.query);
+    } else if (variable.options && variable.options.length > 0) {
+      // Extract intervals from options when query is missing
+      intervals = variable.options.map((opt) => String(opt.value || opt.text)).filter(Boolean);
+    } else {
+      // Fallback to default intervals only if both query and options are missing
+      intervals = getIntervalsFromQueryString('');
+    }
+    const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
+    snapshotVariable = new SnapshotVariable({
+      name: variable.name,
+      label: variable.label,
+      description: variable.description,
+      value: currentInterval,
+      text: currentInterval,
+      hide: variable.hide,
+    });
+    return snapshotVariable;
+  }
+
+  if (variable.type === 'system' || variable.type === 'constant' || variable.type === 'adhoc') {
+    current = {
+      value: '',
+      text: '',
+    };
+  } else {
+    current = {
+      value: variable.current?.value ?? '',
+      text: variable.current?.text ?? '',
+    };
+  }
+
+  snapshotVariable = new SnapshotVariable({
+    name: variable.name,
+    label: variable.label,
+    description: variable.description,
+    value: current?.value ?? '',
+    text: current?.text ?? '',
+    hide: variable.hide,
+  });
+  return snapshotVariable;
+}
+
+export function createSceneVariableFromVariableModel(variable: TypedVariableModel): SceneVariable {
+  const commonProperties = {
+    name: variable.name,
+    label: variable.label,
+    description: variable.description,
+    origin: variable.origin,
+  };
+  if (variable.type === 'adhoc') {
+    const originFilters: AdHocVariableFilter[] = [];
+    const filters: AdHocVariableFilter[] = [];
+    variable.filters?.forEach((filter) => (filter.origin ? originFilters.push(filter) : filters.push(filter)));
+
+    return new AdHocFiltersVariable({
+      ...commonProperties,
+      description: variable.description,
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+      datasource: variable.datasource,
+      applyMode: 'auto',
+      originFilters,
+      filters,
+      baseFilters: variable.baseFilters ?? [],
+      defaultKeys: variable.defaultKeys,
+      allowCustomValue: variable.allowCustomValue,
+      useQueriesAsFilterForOptions: true,
+      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
+      drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
+      collapsible: config.featureToggles.dashboardUnifiedDrilldownControls,
+      supportsMultiValueOperators: Boolean(
+        getDataSourceSrv().getInstanceSettings({ type: variable.datasource?.type })?.meta.multiValueFilterOperators
+      ),
+      enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
+        ? (variable.enableGroupBy ?? false)
+        : false,
+      $behaviors: [new ReportInteractionBehavior({})],
+    });
+  }
+  // Custom variable
+  if (variable.type === 'custom') {
+    return new CustomVariable({
+      ...commonProperties,
+      value: variable.current?.value ?? '',
+      text: variable.current?.text ?? '',
+      query: variable.query || '',
+      isMulti: variable.multi,
+      allValue: variable.allValue || undefined,
+      includeAll: variable.includeAll,
+      defaultToAll: Boolean(variable.includeAll),
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+      allowCustomValue: variable.allowCustomValue,
+      valuesFormat: variable.valuesFormat ?? 'csv',
+    });
+    // Query variable
+  } else if (variable.type === 'query') {
+    return new QueryVariable({
+      ...commonProperties,
+      value: variable.current?.value ?? '',
+      text: variable.current?.text ?? '',
+      query: variable.query ?? {},
+      datasource: variable.datasource,
+      sort: variable.sort,
+      refresh: variable.refresh,
+      regex: variable.regex,
+      ...(variable.regexApplyTo && { regexApplyTo: variable.regexApplyTo }),
+      allValue: variable.allValue || undefined,
+      includeAll: variable.includeAll,
+      defaultToAll: Boolean(variable.includeAll),
+      isMulti: variable.multi,
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+      definition: variable.definition,
+      allowCustomValue: variable.allowCustomValue,
+      staticOptions: variable.staticOptions?.map((option) => ({
+        label: String(option.text),
+        value: String(option.value),
+        properties: option.properties,
+      })),
+      staticOptionsOrder: variable.staticOptionsOrder,
+    });
+    // Datasource variable
+  } else if (variable.type === 'datasource') {
+    return new DataSourceVariable({
+      ...commonProperties,
+      value: variable.current?.value ?? '',
+      text: variable.current?.text ?? '',
+      regex: variable.regex,
+      pluginId: variable.query,
+      allValue: variable.allValue || undefined,
+      includeAll: variable.includeAll,
+      defaultToAll: Boolean(variable.includeAll),
+      skipUrlSync: variable.skipUrlSync,
+      isMulti: variable.multi,
+      hide: variable.hide,
+      defaultOptionEnabled: variable.current?.value === DEFAULT_DATASOURCE && variable.current?.text === 'default',
+      allowCustomValue: variable.allowCustomValue,
+    });
+    // Interval variable
+  } else if (variable.type === 'interval') {
+    // If query is missing, extract intervals from options instead of using defaults
+    let intervals: string[];
+    if (variable.query) {
+      intervals = getIntervalsFromQueryString(variable.query);
+    } else if (variable.options && variable.options.length > 0) {
+      // Extract intervals from options when query is missing (matches backend behavior)
+      intervals = variable.options.map((opt) => String(opt.value || opt.text)).filter(Boolean);
+    } else {
+      // Fallback to default intervals only if both query and options are missing
+      intervals = getIntervalsFromQueryString('');
+    }
+    const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
+    return new IntervalVariable({
+      ...commonProperties,
+      value: currentInterval,
+      intervals: intervals,
+      autoEnabled: variable.auto,
+      autoStepCount: variable.auto_count,
+      autoMinInterval: variable.auto_min,
+      refresh: variable.refresh,
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+    });
+    // Constant variable
+  } else if (variable.type === 'constant') {
+    return new ConstantVariable({
+      ...commonProperties,
+      value: variable.query,
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+    });
+    // Textbox variable
+  } else if (variable.type === 'textbox') {
+    let val;
+    if (!variable?.current?.value) {
+      val = variable.query;
+    } else {
+      if (typeof variable.current.value === 'string') {
+        val = variable.current.value;
+      } else {
+        val = variable.current.value[0];
+      }
+    }
+
+    return new TextBoxVariable({
+      ...commonProperties,
+      value: val,
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+    });
+    // Groupby variable
+  } else if (config.featureToggles.groupByVariable && variable.type === 'groupby') {
+    return new GroupByVariable({
+      ...commonProperties,
+      datasource: variable.datasource,
+      value: variable.current?.value || [],
+      text: variable.current?.text || [],
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+      // @ts-expect-error
+      defaultOptions: variable.options,
+      defaultValue: variable.defaultValue,
+      allowCustomValue: variable.allowCustomValue,
+      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
+      drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
+    });
+    // Switch variable
+    // In the old variable model we are storing the enabled and disabled values in the options:
+    // the first option is the enabled value and the second is the disabled value
+  } else if (variable.type === 'switch') {
+    const pickFirstValue = (value: string | string[]) => {
+      if (Array.isArray(value)) {
+        return value[0];
+      }
+      return value;
+    };
+
+    return new SwitchVariable({
+      ...commonProperties,
+      value: pickFirstValue(variable.current?.value),
+      enabledValue: pickFirstValue(variable.options?.[0]?.value),
+      disabledValue: pickFirstValue(variable.options?.[1]?.value),
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+    });
+  } else {
+    throw new Error(`Scenes: Unsupported variable type ${variable.type}`);
+  }
+}

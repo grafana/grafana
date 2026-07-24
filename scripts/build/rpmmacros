@@ -1,0 +1,5 @@
+%_signature gpg
+%_gpg_path /root/.gnupg
+%_gpg_name Grafana
+%_gpgbin /usr/bin/gpg
+%_gpg_sign_cmd_extra_args --batch --pinentry-mode loopback --passphrase-file /tmp/gpg-passphrase

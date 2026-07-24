@@ -1,0 +1,238 @@
+package navtree
+
+import (
+	"encoding/json"
+	"sort"
+)
+
+const (
+	// These weights may be used by an extension to reliably place
+	// itself in relation to a particular item in the menu. The weights
+	// are negative to ensure that the default items are placed above
+	// any items with default weight.
+
+	WeightHome = (iota - 40) * 100
+	WeightBookmarks
+	WeightSavedItems
+	WeightDashboard
+	WeightExplore
+	WeightDrilldown
+	WeightAssistant
+	WeightSigil
+	WeightAlerting
+	WeightAlertsAndIncidents
+	WeightAIAndML
+	WeightAdaptiveTelemetry
+	WeightCMAB
+	WeightTestingAndSynthetics
+	WeightObservability
+	WeightCloudServiceProviders
+	WeightInfrastructure
+	WeightApplication
+	WeightAsserts
+	WeightDataConnections
+	WeightApps
+	WeightPlugin
+	WeightConfig
+	WeightProfile
+	WeightHelp
+)
+
+const (
+	NavIDRoot                 = "root"
+	NavIDDashboards           = "dashboards/browse"
+	NavIDExplore              = "explore"
+	NavIDDrilldown            = "drilldown"
+	NavIDAdaptiveTelemetry    = "adaptive-telemetry"
+	NavIDCfg                  = "cfg" // NavIDCfg is the id for org configuration navigation node
+	NavIDAlertsAndIncidents   = "alerts-and-incidents"
+	NavIDTestingAndSynthetics = "testing-and-synthetics"
+	NavIDAlerting             = "alerting"
+	NavIDObservability        = "observability"
+	NavIDInfrastructure       = "infrastructure"
+	NavIDReporting            = "reports"
+	NavIDApps                 = "apps"
+	NavIDCfgGeneral           = "cfg/general"
+	NavIDCfgPlugins           = "cfg/plugins"
+	NavIDCfgAccess            = "cfg/access"
+	NavIDBookmarks            = "bookmarks"
+)
+
+type NavLink struct {
+	Id             string     `json:"id,omitempty"`
+	Text           string     `json:"text"`
+	SubTitle       string     `json:"subTitle,omitempty"`
+	Icon           string     `json:"icon,omitempty"` // Available icons can be browsed in Storybook: https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview
+	Img            string     `json:"img,omitempty"`
+	Url            string     `json:"url,omitempty"`
+	Target         string     `json:"target,omitempty"`
+	SortWeight     int64      `json:"sortWeight,omitempty"`
+	HideFromTabs   bool       `json:"hideFromTabs,omitempty"`
+	RoundIcon      bool       `json:"roundIcon,omitempty"`
+	IsSection      bool       `json:"isSection,omitempty"`
+	Children       []*NavLink `json:"children,omitempty"`
+	HighlightText  string     `json:"highlightText,omitempty"`
+	HighlightID    string     `json:"highlightId,omitempty"`
+	EmptyMessageId string     `json:"emptyMessageId,omitempty"`
+	PluginID       string     `json:"pluginId,omitempty"` // (Optional) The ID of the plugin that registered nav link (e.g. as a standalone plugin page)
+	IsCreateAction bool       `json:"isCreateAction,omitempty"`
+	IsNew          bool       `json:"isNew,omitempty"` // (Optional) Adds "New!" badge to the nav link and expands it by default
+	Keywords       []string   `json:"keywords,omitempty"`
+	ParentItem     *NavLink   `json:"parentItem,omitempty"` // (Optional) The parent item of the nav link
+}
+
+func (node *NavLink) Sort() {
+	Sort(node.Children)
+}
+
+type NavTreeRoot struct {
+	Children []*NavLink
+}
+
+func (root *NavTreeRoot) AddSection(node *NavLink) {
+	root.Children = append(root.Children, node)
+}
+
+// RemoveSection removes a section from the root node. Does not recurse into children.
+func (root *NavTreeRoot) RemoveSection(node *NavLink) {
+	var result []*NavLink
+
+	for _, child := range root.Children {
+		if child != node {
+			result = append(result, child)
+		}
+	}
+
+	root.Children = result
+}
+
+// RemoveSectionByID removes a section by ID from the root node and all its children
+func (root *NavTreeRoot) RemoveSectionByID(id string) bool {
+	var result []*NavLink
+
+	for i, child := range root.Children {
+		if child.Id == id {
+			// Remove the node by slicing it out
+			result = append(root.Children[:i], root.Children[i+1:]...)
+			root.Children = result
+			return true
+		} else if len(child.Children) > 0 {
+			if removed := RemoveById(child, id); removed {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (root *NavTreeRoot) FindById(id string) *NavLink {
+	return FindById(root.Children, id)
+}
+func (root *NavTreeRoot) FindByURL(url string) *NavLink {
+	return FindByURL(root.Children, url)
+}
+func (root *NavTreeRoot) Sort() {
+	Sort(root.Children)
+}
+
+// RemoveEmptyAdminSections removes the Users and access section if it has no children
+// (e.g. grafana-auth-app was not injected), then removes the entire Administration
+// section if it ended up empty. This must be called AFTER all hooks have had a chance
+// to add their nav items.
+func (root *NavTreeRoot) RemoveEmptyAdminSections() {
+	if sec := root.FindById(NavIDCfgAccess); sec != nil && len(sec.Children) == 0 {
+		root.RemoveSectionByID(NavIDCfgAccess)
+	}
+	if sec := root.FindById(NavIDCfg); sec != nil && len(sec.Children) == 0 {
+		root.RemoveSectionByID(NavIDCfg)
+	}
+}
+
+// RemoveEmptyConnectionsSection removes the Connections section if it has no children.
+// The section is always added to the nav tree so that plugin pages can be attached via
+// addAppLinks; this method prunes it when no children were ultimately registered.
+// Must be called AFTER all hooks have had a chance to add their nav items.
+func (root *NavTreeRoot) RemoveEmptyConnectionsSection() {
+	if sec := root.FindById("connections"); sec != nil && len(sec.Children) == 0 {
+		root.RemoveSectionByID("connections")
+	}
+}
+
+func (root *NavTreeRoot) MarshalJSON() ([]byte, error) {
+	return json.Marshal(root.Children)
+}
+
+func Sort(nodes []*NavLink) {
+	sort.SliceStable(nodes, func(i, j int) bool {
+		iw := nodes[i].SortWeight
+		if iw == 0 {
+			iw = int64(i) + 1
+		}
+		jw := nodes[j].SortWeight
+		if jw == 0 {
+			jw = int64(j) + 1
+		}
+
+		return iw < jw
+	})
+
+	for _, child := range nodes {
+		child.Sort()
+	}
+}
+
+func AppendIfNotNil(children []*NavLink, newChild *NavLink) []*NavLink {
+	if newChild != nil {
+		return append(children, newChild)
+	}
+
+	return children
+}
+
+func FindById(nodes []*NavLink, id string) *NavLink {
+	for _, child := range nodes {
+		if child.Id == id {
+			return child
+		} else if len(child.Children) > 0 {
+			if found := FindById(child.Children, id); found != nil {
+				return found
+			}
+		}
+	}
+
+	return nil
+}
+
+func FindByURL(nodes []*NavLink, url string) *NavLink {
+	for _, child := range nodes {
+		if child.Url == url {
+			return child
+		} else if len(child.Children) > 0 {
+			if found := FindByURL(child.Children, url); found != nil {
+				return found
+			}
+		}
+	}
+
+	return nil
+}
+
+func RemoveById(node *NavLink, id string) bool {
+	var result []*NavLink
+
+	for i, child := range node.Children {
+		if child.Id == id {
+			// Remove the node by slicing it out
+			result = append(node.Children[:i], node.Children[i+1:]...)
+			node.Children = result
+			return true
+		} else if len(child.Children) > 0 {
+			if removed := RemoveById(child, id); removed {
+				return true
+			}
+		}
+	}
+
+	return false
+}

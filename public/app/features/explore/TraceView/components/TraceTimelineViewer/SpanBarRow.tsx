@@ -1,0 +1,744 @@
+// Copyright (c) 2017 Uber Technologies, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import { css, keyframes } from '@emotion/css';
+import cx from 'clsx';
+import * as React from 'react';
+import { memo, useMemo } from 'react';
+
+import { type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { DURATION, NONE, TAG } from '@grafana/o11y-ds-frontend';
+import { Icon, stylesFactory, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+
+import { autoColor } from '../Theme';
+import { type SpanBarOptions } from '../settings/SpanBarSettings';
+import type TNil from '../types/TNil';
+import { SpanLinkType, type SpanLinkFunc } from '../types/links';
+import { type TraceSpan, type CriticalPathSection } from '../types/trace';
+import { formatDuration } from '../utils/date';
+import { getServiceDisplayName } from '../utils/service-name';
+import { getSummaryCountBadgeStyle, getSummaryDurationStats } from '../utils/summary-span';
+
+import SpanBar from './SpanBar';
+import { SpanLinksMenu } from './SpanLinks';
+import SpanTreeOffset from './SpanTreeOffset';
+import { SummaryDurationStatsTooltip } from './SummaryDurationStatsTooltip';
+import Ticks from './Ticks';
+import TimelineRow from './TimelineRow';
+import { type ViewedBoundsFunctionType } from './utils';
+
+const GRAFANA_ADAPTIVE_TRACES_RESTORED_TAG_KEY = 'grafana.adaptivetraces.restored';
+
+export function spanHasAdaptiveTraceRestoredTag(tags: TraceKeyValuePair[]): boolean {
+  const tag = tags.find((kv) => kv.key === GRAFANA_ADAPTIVE_TRACES_RESTORED_TAG_KEY);
+  if (!tag) {
+    return false;
+  }
+  const v = tag.value;
+  if (typeof v === 'boolean') {
+    return v;
+  }
+  if (typeof v === 'string') {
+    return v.toLowerCase() === 'true';
+  }
+  return false;
+}
+
+const spanBarClassName = 'spanBar';
+const spanBarLabelClassName = 'spanBarLabel';
+const nameWrapperClassName = 'nameWrapper';
+const nameWrapperMatchingFilterClassName = 'nameWrapperMatchingFilter';
+const viewClassName = 'jaegerView';
+const nameColumnClassName = 'nameColumn';
+
+const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly: boolean, serviceColor: string) => {
+  const animations = {
+    flash: keyframes`
+    from {
+      background-color: ${autoColor(theme, '#68b9ff')};
+    }
+    to {
+      background-color: 'default';
+    }
+  `,
+  };
+  const backgroundColor = showSpanFilterMatchesOnly ? '' : autoColor(theme, '#fffce4');
+
+  return {
+    nameWrapper: css({
+      label: 'nameWrapper',
+      lineHeight: '27px',
+      overflow: 'hidden',
+      display: 'flex',
+
+      [`& > *`]: {
+        background: theme.colors.background.secondary,
+      },
+    }),
+    nameWrapperMatchingFilter: css({
+      label: 'nameWrapperMatchingFilter',
+      backgroundColor: backgroundColor,
+
+      [`& > *`]: {
+        background: backgroundColor,
+      },
+    }),
+    nameColumn: css({
+      label: 'nameColumn',
+      position: 'relative',
+      whiteSpace: 'nowrap',
+      zIndex: 1,
+      '&:hover': {
+        zIndex: 1,
+      },
+    }),
+    endpointName: css({
+      label: 'endpointName',
+      color: autoColor(theme, '#484848'),
+      fontSize: '0.9em',
+    }),
+    view: css({
+      label: 'view',
+      position: 'relative',
+    }),
+    viewExpanded: css({
+      label: 'viewExpanded',
+      background: autoColor(theme, '#f8f8f8'),
+      outline: `1px solid ${autoColor(theme, '#ddd')}`,
+    }),
+    viewExpandedAndMatchingFilter: css({
+      label: 'viewExpandedAndMatchingFilter',
+      background: autoColor(theme, '#fff3d7'),
+      outline: `1px solid ${autoColor(theme, '#ddd')}`,
+    }),
+    row: css({
+      label: 'row',
+      fontSize: '0.9em',
+
+      [`&:hover .${spanBarClassName}`]: {
+        opacity: 1,
+      },
+      [`&:hover .${spanBarLabelClassName}`]: {
+        color: autoColor(theme, '#000'),
+      },
+      [`&:hover .${nameWrapperClassName}`]: {
+        background: `linear-gradient(
+          90deg,
+          ${autoColor(theme, '#fafafa')},
+          ${autoColor(theme, '#f8f8f8')} 75%,
+          ${autoColor(theme, '#eee')}
+        )`,
+      },
+      [`&:hover .${viewClassName}`]: {
+        backgroundColor: autoColor(theme, '#f5f5f5'),
+        outline: `1px solid ${autoColor(theme, '#ddd')}`,
+      },
+      ['& .icon-wrapper']: {
+        borderBottomColor: `${serviceColor}CF`,
+        borderBottomWidth: '2px',
+        borderBottomStyle: 'solid',
+      },
+    }),
+    rowClippingLeft: css({
+      label: 'rowClippingLeft',
+      [`& .${nameColumnClassName}::before`]: {
+        content: '" "',
+        height: '100%',
+        position: 'absolute',
+        width: '6px',
+        backgroundImage: `linear-gradient(
+          to right,
+          ${autoColor(theme, 'rgba(25, 25, 25, 0.25)')},
+          ${autoColor(theme, 'rgba(32, 32, 32, 0)')}
+        )`,
+        left: '100%',
+        zIndex: -1,
+      },
+    }),
+    rowClippingRight: css({
+      label: 'rowClippingRight',
+      [`& .${viewClassName}::before`]: {
+        content: '" "',
+        height: '100%',
+        position: 'absolute',
+        width: '6px',
+        backgroundImage: `linear-gradient(
+          to left,
+          ${autoColor(theme, 'rgba(25, 25, 25, 0.25)')},
+          ${autoColor(theme, 'rgba(25, 25, 25, 0.25)')}
+        )`,
+        right: '0%',
+        zIndex: 1,
+      },
+    }),
+    rowExpanded: css({
+      label: 'rowExpanded',
+      [`& .${spanBarClassName}`]: {
+        opacity: 1,
+      },
+      [`& .${spanBarLabelClassName}`]: {
+        color: autoColor(theme, '#000'),
+      },
+      [`& .${nameWrapperClassName}, &:hover .${nameWrapperClassName}`]: {
+        background: autoColor(theme, '#f0f0f0'),
+        boxShadow: `0 1px 0 ${autoColor(theme, '#ddd')}`,
+      },
+      [`& .${nameWrapperMatchingFilterClassName}`]: {
+        background: autoColor(theme, '#fff3d7'),
+      },
+      [`&:hover .${viewClassName}`]: {
+        background: autoColor(theme, '#eee'),
+      },
+    }),
+    rowMatchingFilter: css({
+      label: 'rowMatchingFilter',
+
+      [`&:hover .${nameWrapperClassName}`]: {
+        background: `linear-gradient(
+          90deg,
+          ${autoColor(theme, '#fffbde')},
+          ${autoColor(theme, '#fffbde')} 75%,
+          ${autoColor(theme, '#f7f1c6')}
+        )`,
+      },
+      [`&:hover .${viewClassName}`]: {
+        backgroundColor: autoColor(theme, '#f7f1c6'),
+        outline: `1px solid ${autoColor(theme, '#ddd')}`,
+      },
+    }),
+    rowFocused: css({
+      label: 'rowFocused',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        animation: `${animations.flash} 1s cubic-bezier(0.12, 0, 0.39, 0)`,
+      },
+      [`& .${viewClassName}`]: {
+        backgroundColor: autoColor(theme, '#cbe7ff'),
+        [theme.transitions.handleMotion('no-preference')]: {
+          animation: `${animations.flash} 1s cubic-bezier(0.12, 0, 0.39, 0)`,
+        },
+      },
+      [`& .${spanBarClassName}`]: {
+        opacity: 1,
+      },
+      [`& .${spanBarLabelClassName}`]: {
+        color: autoColor(theme, '#000'),
+      },
+    }),
+
+    rowError: css({
+      label: 'rowError',
+
+      [`&:hover .${nameWrapperClassName}`]: {
+        background: theme.colors.error.borderTransparent,
+      },
+
+      [`& .${nameWrapperClassName} > *`]: {
+        background: theme.colors.error.transparent,
+      },
+    }),
+
+    rowExpandedAndMatchingFilter: css({
+      label: 'rowExpandedAndMatchingFilter',
+      [`&:hover .${viewClassName}`]: {
+        background: autoColor(theme, '#ffeccf'),
+      },
+    }),
+
+    name: css({
+      label: 'name',
+      color: autoColor(theme, '#000'),
+      cursor: 'pointer',
+      flex: '1 1 auto',
+      outline: 'none',
+      overflowY: 'hidden',
+      overflowX: 'auto',
+      padding: '4px',
+      position: 'relative',
+      '-ms-overflow-style': 'none',
+      scrollbarWidth: 'none',
+      '&::-webkit-scrollbar': {
+        display: 'none',
+      },
+      '&:focus': {
+        textDecoration: 'none',
+      },
+      '&:hover > span': {
+        color: autoColor(theme, '#000'),
+      },
+      textAlign: 'left',
+      border: 'none',
+      borderBottomColor: `${serviceColor}CF`,
+      borderBottomWidth: '2px',
+      borderBottomStyle: 'solid',
+    }),
+    nameDetailExpanded: css({
+      label: 'nameDetailExpanded',
+      '&::before': {
+        bottom: 0,
+      },
+    }),
+    svcName: css({
+      label: 'svcName',
+      fontSize: '0.9em',
+      fontWeight: '500',
+      marginRight: '0.25rem',
+    }),
+    svcNameChildrenCollapsed: css({
+      label: 'svcNameChildrenCollapsed',
+      fontWeight: '500',
+      fontStyle: 'italic',
+    }),
+    errorIcon: css({
+      label: 'errorIcon',
+      borderRadius: theme.shape.radius.md,
+      color: autoColor(theme, '#fff'),
+      fontSize: '0.6em',
+      marginRight: '0.25rem',
+      padding: '1px',
+    }),
+    adaptiveTracesRestoredIconWrap: css({
+      label: 'adaptiveTracesRestoredIconWrap',
+      alignItems: 'center',
+      color: theme.colors.text.secondary,
+      display: 'inline-flex',
+      flexShrink: 0,
+      padding: '4px',
+      '&:hover': {
+        color: `#fff`,
+      },
+    }),
+    rpcColorMarker: css({
+      label: 'rpcColorMarker',
+      borderRadius: theme.shape.radius.md,
+      display: 'inline-block',
+      fontSize: '0.85em',
+      height: '1em',
+      marginRight: '0.25rem',
+      padding: '1px',
+      width: '1em',
+      verticalAlign: 'middle',
+    }),
+    summaryCountBadge: cx(
+      getSummaryCountBadgeStyle(theme),
+      css({ label: 'summaryCountBadge', marginInlineStart: '0.5rem', marginInlineEnd: '0.25rem' })
+    ),
+    // Summary-span label: a non-interactive flex wrapper holding the toggle button and the stats
+    // sibling. Carries the row underline + horizontal scroll that styles.name provides for normal
+    // spans, so the two look consistent.
+    summaryLabel: css({
+      label: 'summaryLabel',
+      alignItems: 'baseline',
+      display: 'flex',
+      flex: '1 1 auto',
+      overflowX: 'auto',
+      overflowY: 'hidden',
+      position: 'relative',
+      scrollbarWidth: 'none',
+      '&::-webkit-scrollbar': {
+        display: 'none',
+      },
+      borderBottomColor: `${serviceColor}CF`,
+      borderBottomWidth: '2px',
+      borderBottomStyle: 'solid',
+    }),
+    summaryToggle: css({
+      label: 'summaryToggle',
+      background: 'transparent',
+      border: 'none',
+      color: autoColor(theme, '#000'),
+      cursor: 'pointer',
+      // Do not shrink: the wrapper (summaryLabel) owns horizontal scroll, so the toggle keeps its
+      // natural width and pushes the stats along rather than shrinking and letting its nowrap text
+      // overflow on top of the adjacent stats when the name column is narrow.
+      flex: '0 0 auto',
+      outline: 'none',
+      padding: '4px',
+      textAlign: 'left',
+      whiteSpace: 'nowrap',
+      '&:focus': {
+        textDecoration: 'none',
+      },
+      '&:hover > span': {
+        color: autoColor(theme, '#000'),
+      },
+    }),
+    summaryStats: css({
+      label: 'summaryStats',
+      color: autoColor(theme, '#484848'),
+      flex: '0 0 auto',
+      fontSize: '0.9em',
+      paddingBlock: '4px',
+      paddingInlineEnd: '4px',
+      whiteSpace: 'nowrap',
+    }),
+    labelRight: css({
+      label: 'labelRight',
+      left: '100%',
+    }),
+    labelLeft: css({
+      label: 'labelLeft',
+      right: '100%',
+    }),
+  };
+});
+
+export type SpanBarRowProps = {
+  className?: string;
+  color: string;
+  spanBarOptions: SpanBarOptions | undefined;
+  columnDivision: number;
+  isChildrenExpanded: boolean;
+  isDetailExpanded: boolean;
+  isMatchingFilter: boolean;
+  isFocused: boolean;
+  showSpanFilterMatchesOnly: boolean;
+  onDetailToggled: (spanID: string) => void;
+  onChildrenToggled: (spanID: string) => void;
+  numTicks: number;
+  showServiceName: boolean;
+  rpc?:
+    | {
+        viewStart: number;
+        viewEnd: number;
+        color: string;
+        operationName: string;
+        serviceName: string;
+      }
+    | TNil;
+  noInstrumentedServer?:
+    | {
+        color: string;
+        serviceName: string;
+      }
+    | TNil;
+  showErrorIcon: boolean;
+  getViewedBounds: ViewedBoundsFunctionType;
+  traceStartTime: number;
+  span: TraceSpan;
+  hoverIndentGuideIds: Set<string>;
+  addHoverIndentGuideId: (spanID: string) => void;
+  removeHoverIndentGuideId: (spanID: string) => void;
+  clippingLeft?: boolean;
+  clippingRight?: boolean;
+  createSpanLink?: SpanLinkFunc;
+  datasourceType: string;
+  visibleSpanIds: string[];
+  criticalPath: CriticalPathSection[];
+};
+
+export const SpanBarRow = memo((props: SpanBarRowProps) => {
+  const {
+    className = '',
+    color,
+    spanBarOptions,
+    columnDivision,
+    isChildrenExpanded,
+    isDetailExpanded,
+    isMatchingFilter,
+    showSpanFilterMatchesOnly,
+    isFocused,
+    numTicks,
+    rpc = null,
+    noInstrumentedServer,
+    showErrorIcon,
+    getViewedBounds,
+    traceStartTime,
+    span,
+    hoverIndentGuideIds,
+    addHoverIndentGuideId,
+    removeHoverIndentGuideId,
+    clippingLeft,
+    clippingRight,
+    createSpanLink,
+    datasourceType,
+    showServiceName,
+    visibleSpanIds,
+    criticalPath,
+    onDetailToggled,
+    onChildrenToggled,
+  } = props;
+
+  const { duration, hasChildren: isParent, operationName, process } = span;
+  const serviceDisplayName = getServiceDisplayName(process);
+  const isSummarySpan = span.aggregation?.isSummary === true;
+  // Summary spans show aggregated (min | median | max) stats in place of the single
+  // duration, falling back to the wall-clock duration when min/max are unavailable.
+  const summaryDurationStats = isSummarySpan && span.aggregation ? getSummaryDurationStats(span.aggregation) : null;
+  const summaryStats = summaryDurationStats?.map((stat) => stat.value).join(' | ') ?? null;
+  const label = summaryStats ?? formatDuration(duration);
+  const showAdaptiveTracesRestoredHint = spanHasAdaptiveTraceRestoredTag(span.tags ?? []);
+
+  const viewBounds = getViewedBounds(span.startTime, span.startTime + span.duration);
+  const viewStart = viewBounds.start;
+  const viewEnd = viewBounds.end;
+  const theme = useTheme2();
+  const styles = useStyles2(getStyles, showSpanFilterMatchesOnly, color);
+
+  const labelDetail = `${serviceDisplayName}::${operationName}`;
+  let longLabel;
+  let hintClassName;
+  if (viewStart > 1 - viewEnd) {
+    longLabel = `${labelDetail} | ${label}`;
+    hintClassName = styles.labelLeft;
+  } else {
+    longLabel = `${label} | ${labelDetail}`;
+    hintClassName = styles.labelRight;
+  }
+
+  const handleDetailToggle = React.useCallback(() => {
+    onDetailToggled(span.spanID);
+  }, [onDetailToggled, span.spanID]);
+
+  const handleChildrenToggle = React.useCallback(() => {
+    onChildrenToggled(span.spanID);
+  }, [onChildrenToggled, span.spanID]);
+
+  const getSpanBarLabel = React.useCallback(
+    (span: TraceSpan, spanBarOptions: SpanBarOptions | undefined, duration: string) => {
+      const type = spanBarOptions?.type ?? '';
+
+      if (type === NONE) {
+        return '';
+      } else if (type === '' || type === DURATION) {
+        return `(${duration})`;
+      } else if (type === TAG) {
+        const tagKey = spanBarOptions?.tag?.trim() ?? '';
+        if (tagKey !== '' && span.tags) {
+          const tag = span.tags?.find((tag: TraceKeyValuePair) => {
+            return tag.key === tagKey;
+          });
+          if (tag) {
+            return `(${tag.value})`;
+          }
+
+          const process = span.process?.tags?.find((process: TraceKeyValuePair) => {
+            return process.key === tagKey;
+          });
+          if (process) {
+            return `(${process.value})`;
+          }
+        }
+      }
+
+      return '';
+    },
+    []
+  );
+
+  const links = useMemo(
+    () => (createSpanLink?.(span) || []).filter((link) => link.type === SpanLinkType.Traces),
+    [createSpanLink, span]
+  );
+
+  // Shared identity content of the label (icon, service, operation, count badge). Rendered inside the
+  // toggle button for both normal and summary spans; summary spans additionally render the duration
+  // stats as a sibling OUTSIDE the button (see below).
+  const labelIdentity = (
+    <>
+      {showErrorIcon && (
+        <Icon
+          name={'exclamation-circle'}
+          style={{
+            backgroundColor: span.errorIconColor ? autoColor(theme, span.errorIconColor) : autoColor(theme, '#db2828'),
+          }}
+          className={styles.errorIcon}
+        />
+      )}
+      {showServiceName && (
+        <span
+          className={cx(styles.svcName, {
+            [styles.svcNameChildrenCollapsed]: isParent && !isChildrenExpanded,
+          })}
+        >
+          {`${serviceDisplayName} `}
+        </span>
+      )}
+      {rpc && (
+        <span>
+          <Icon name={'arrow-right'} /> <i className={styles.rpcColorMarker} style={{ background: rpc.color }} />
+          {rpc.serviceName}
+        </span>
+      )}
+      {noInstrumentedServer && (
+        <span>
+          <Icon name={'arrow-right'} />{' '}
+          <i className={styles.rpcColorMarker} style={{ background: noInstrumentedServer.color }} />
+          {noInstrumentedServer.serviceName}
+        </span>
+      )}
+      <span className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</span>
+      {/* The processor only aggregates groups of >= min_spans_to_aggregate (>= 2), so a real
+          summary span never has a 0 or absent count; guard defensively anyway since span_count
+          arrives as an untrusted tag value and a bare "0" pill conveys nothing. */}
+      {isSummarySpan && span.aggregation && (span.aggregation.spanCount ?? 0) > 0 && (
+        <span
+          className={styles.summaryCountBadge}
+          style={{ background: color, color: theme.colors.getContrastText(color) }}
+          aria-label={t('explore.span-bar-row.summary-count-aria', '', {
+            count: span.aggregation.spanCount,
+            defaultValue_one: '{{count}} aggregated span',
+            defaultValue_other: '{{count}} aggregated spans',
+          })}
+        >
+          {span.aggregation.spanCount}
+        </span>
+      )}
+    </>
+  );
+
+  return (
+    <TimelineRow
+      className={cx(
+        styles.row,
+        {
+          [styles.rowError]: showErrorIcon,
+          [styles.rowExpanded]: isDetailExpanded,
+          [styles.rowMatchingFilter]: isMatchingFilter,
+          [styles.rowExpandedAndMatchingFilter]: isMatchingFilter && isDetailExpanded,
+          [styles.rowFocused]: isFocused,
+          [styles.rowClippingLeft]: clippingLeft,
+          [styles.rowClippingRight]: clippingRight,
+        },
+        className
+      )}
+    >
+      <TimelineRow.Cell className={cx(styles.nameColumn, nameColumnClassName)} width={columnDivision}>
+        <div
+          className={cx(styles.nameWrapper, nameWrapperClassName, {
+            [styles.nameWrapperMatchingFilter]: isMatchingFilter,
+            nameWrapperMatchingFilter: isMatchingFilter,
+          })}
+        >
+          <SpanTreeOffset
+            onClick={isParent ? handleChildrenToggle : undefined}
+            childrenVisible={isChildrenExpanded}
+            span={span}
+            hoverIndentGuideIds={hoverIndentGuideIds}
+            addHoverIndentGuideId={addHoverIndentGuideId}
+            removeHoverIndentGuideId={removeHoverIndentGuideId}
+            visibleSpanIds={visibleSpanIds}
+          />
+          {isSummarySpan ? (
+            // Summary spans render the toggle button (identity only) plus the duration stats as
+            // siblings inside a non-interactive wrapper. The stats tooltip trigger must NOT sit
+            // inside the button: @grafana/ui Tooltip clones its child with tabIndex={0}, and a
+            // <button> may not contain a tabindex/focusable descendant (invalid HTML + extra tab stop).
+            <div className={cx(styles.summaryLabel, { [styles.nameDetailExpanded]: isDetailExpanded })}>
+              <button
+                type="button"
+                className={styles.summaryToggle}
+                aria-checked={isDetailExpanded}
+                title={labelDetail}
+                onClick={handleDetailToggle}
+                role="switch"
+                tabIndex={0}
+              >
+                {labelIdentity}
+              </button>
+              {summaryDurationStats ? (
+                <SummaryDurationStatsTooltip stats={summaryDurationStats}>
+                  <span className={styles.summaryStats}>({label})</span>
+                </SummaryDurationStatsTooltip>
+              ) : (
+                <span className={styles.summaryStats}>({label})</span>
+              )}
+            </div>
+          ) : (
+            <button
+              type="button"
+              className={cx(styles.name, { [styles.nameDetailExpanded]: isDetailExpanded })}
+              aria-checked={isDetailExpanded}
+              title={labelDetail}
+              onClick={handleDetailToggle}
+              role="switch"
+              tabIndex={0}
+            >
+              {labelIdentity}
+              <span className={styles.endpointName}> {getSpanBarLabel(span, spanBarOptions, label)}</span>
+            </button>
+          )}
+          {showAdaptiveTracesRestoredHint && (
+            <Tooltip
+              placement="top"
+              content={t('explore.span-bar-row.tooltip-adaptive-traces-restored', 'Recovered by Adaptive Traces.')}
+            >
+              <span
+                className={cx(styles.adaptiveTracesRestoredIconWrap, 'icon-wrapper')}
+                data-testid="SpanBarRow-adaptiveTracesRestored"
+              >
+                <Icon name="info-circle" />
+              </span>
+            </Tooltip>
+          )}
+          {links.length === 1 && (
+            <a
+              href={links[0].href}
+              // Needs to have target otherwise preventDefault would not work due to angularRouter.
+              target={'_blank'}
+              style={{
+                borderBottom: `2px solid ${color}CF`,
+                paddingInline: '4px',
+              }}
+              rel="noopener noreferrer"
+              onClick={
+                links[0].onClick
+                  ? (event) => {
+                      if (!(event.ctrlKey || event.metaKey || event.shiftKey) && links[0].onClick) {
+                        event.preventDefault();
+                        links[0].onClick(event);
+                      }
+                    }
+                  : undefined
+              }
+            >
+              {links[0].content}
+            </a>
+          )}
+          {links.length > 1 && <SpanLinksMenu links={links} datasourceType={datasourceType} color={color} />}
+        </div>
+      </TimelineRow.Cell>
+      <TimelineRow.Cell
+        className={cx(styles.view, viewClassName, {
+          [styles.viewExpanded]: isDetailExpanded,
+          [styles.viewExpandedAndMatchingFilter]: isMatchingFilter && isDetailExpanded,
+          [styles.rowError]: showErrorIcon,
+        })}
+        data-testid="span-view"
+        style={{ cursor: 'pointer' }}
+        width={1 - columnDivision}
+        onClick={handleDetailToggle}
+      >
+        <Ticks numTicks={numTicks} />
+        <SpanBar
+          criticalPath={criticalPath}
+          rpc={rpc}
+          viewStart={viewStart}
+          viewEnd={viewEnd}
+          getViewedBounds={getViewedBounds}
+          color={color}
+          shortLabel={label}
+          longLabel={longLabel}
+          labelDetail={labelDetail}
+          traceStartTime={traceStartTime}
+          span={span}
+          labelClassName={`${spanBarLabelClassName} ${hintClassName}`}
+          className={spanBarClassName}
+        />
+      </TimelineRow.Cell>
+    </TimelineRow>
+  );
+});
+
+SpanBarRow.displayName = 'SpanBarRow';

@@ -1,0 +1,689 @@
+package sql
+
+import (
+	"database/sql"
+	"embed"
+	"fmt"
+	"text/template"
+	"time"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+)
+
+// Templates setup.
+var (
+	//go:embed data/*.sql
+	sqlTemplatesFS embed.FS
+
+	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `data/*.sql`))
+)
+
+func mustTemplate(filename string) *template.Template {
+	if t := sqlTemplates.Lookup(filename); t != nil {
+		return t
+	}
+	panic(fmt.Sprintf("template file not found: %s", filename))
+}
+
+// Templates.
+var (
+	sqlResourceDelete                      = mustTemplate("resource_delete.sql")
+	sqlResourceInsert                      = mustTemplate("resource_insert.sql")
+	sqlResourceUpdate                      = mustTemplate("resource_update.sql")
+	sqlResourceRead                        = mustTemplate("resource_read.sql")
+	sqlResourceStats                       = mustTemplate("resource_stats.sql")
+	sqlResourceStoredList                  = mustTemplate("resource_stored_list.sql")
+	sqlResourceList                        = mustTemplate("resource_list.sql")
+	sqlResourceHistoryList                 = mustTemplate("resource_history_list.sql")
+	sqlResourceHistoryListModifiedSince    = mustTemplate("resource_history_list_since_modified.sql")
+	sqlResourceHistoryRead                 = mustTemplate("resource_history_read.sql")
+	sqlResourceHistoryReadLatestRV         = mustTemplate("resource_history_read_latest_rv.sql")
+	sqlResourceHistoryInsert               = mustTemplate("resource_history_insert.sql")
+	sqlResourceHistoryInsertBulk           = mustTemplate("resource_history_insert_bulk.sql")
+	sqlResourceHistoryPoll                 = mustTemplate("resource_history_poll.sql")
+	sqlResourceHistoryGet                  = mustTemplate("resource_history_get.sql")
+	sqlResourceHistoryDelete               = mustTemplate("resource_history_delete.sql")
+	sqlResourceHistoryPrune                = mustTemplate("resource_history_prune.sql")
+	sqlResourceHistoryGarbageGetCandidates = mustTemplate("resource_history_gc_get_candidates.sql")
+	sqlResourceHistoryGCDeleteByNames      = mustTemplate("resource_history_gc_delete_by_names.sql")
+	sqlChunkCandidates                     = mustTemplate("chunk_candidates.sql")
+	sqlDeleteByGUIDs                       = mustTemplate("delete_by_guids.sql")
+	sqlResourceTrash                       = mustTemplate("resource_trash.sql")
+	sqlResourceInsertFromHistory           = mustTemplate("resource_insert_from_history.sql")
+	sqlResourceHistoryDistinctNames        = mustTemplate("resource_history_distinct_names.sql")
+
+	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
+	sqlResourceVersionList = mustTemplate("resource_version_list.sql")
+
+	sqlResourceBlobInsert = mustTemplate("resource_blob_insert.sql")
+	sqlResourceBlobQuery  = mustTemplate("resource_blob_query.sql")
+
+	sqlResourceLastImportTimeInsert = mustTemplate("resource_last_import_time_insert.sql")
+	sqlResourceLastImportTimeQuery  = mustTemplate("resource_last_import_time_query.sql")
+	sqlResourceLastImportTimeDelete = mustTemplate("resource_last_import_time_delete.sql")
+)
+
+// TxOptions.
+var (
+	ReadCommitted = &sql.TxOptions{
+		Isolation: sql.LevelReadCommitted,
+	}
+	ReadCommittedRO = &sql.TxOptions{
+		Isolation: sql.LevelReadCommitted,
+		ReadOnly:  true,
+	}
+	RepeatableRead = &sql.TxOptions{
+		Isolation: sql.LevelRepeatableRead,
+	}
+)
+
+type sqlResourceRequest struct {
+	sqltemplate.SQLTemplate
+	GUID       string
+	WriteEvent resource.WriteEvent
+	Generation int64
+	Folder     string
+	KeyPath    string
+
+	// Useful when batch writing
+	ResourceVersion int64
+}
+
+func (r sqlResourceRequest) Validate() error {
+	return nil // TODO
+}
+
+type sqlBulkResourceHistoryInsertRequest struct {
+	sqltemplate.SQLTemplate
+	Rows []sqlResourceRequest
+}
+
+func (r sqlBulkResourceHistoryInsertRequest) Validate() error {
+	if len(r.Rows) == 0 {
+		return fmt.Errorf("missing rows")
+	}
+	for _, row := range r.Rows {
+		if row.WriteEvent.Key == nil {
+			return fmt.Errorf("missing key")
+		}
+		if row.ResourceVersion <= 0 {
+			return fmt.Errorf("missing resource version")
+		}
+	}
+	return nil
+}
+
+type sqlResourceInsertFromHistoryRequest struct {
+	sqltemplate.SQLTemplate
+	Key *resourcepb.ResourceKey
+	// StartName and EndName bound the name range as (StartName, EndName]:
+	// exclusive start, inclusive end. An empty value means unbounded on that side.
+	StartName string
+	EndName   string
+}
+
+func (r sqlResourceInsertFromHistoryRequest) Validate() error {
+	if r.Key == nil {
+		return fmt.Errorf("missing key")
+	}
+	return nil
+}
+
+// distinctName is one row returned by the distinct-names query: a single name
+// from resource_history for a collection.
+type distinctName struct {
+	Name string
+}
+
+// sqlResourceHistoryDistinctNamesRequest selects a collection's distinct names
+// in DB collation order, so the backfill can be split into byte-bounded ranges.
+type sqlResourceHistoryDistinctNamesRequest struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Group     string
+	Resource  string
+	Response  *distinctName
+}
+
+func (r *sqlResourceHistoryDistinctNamesRequest) Validate() error {
+	if r.Namespace == "" {
+		return fmt.Errorf("missing namespace")
+	}
+	if r.Group == "" {
+		return fmt.Errorf("missing group")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	return nil
+}
+
+func (r *sqlResourceHistoryDistinctNamesRequest) Results() (distinctName, error) {
+	return *r.Response, nil
+}
+
+type sqlStatsRequest struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Group     string
+	Resource  string
+	// Folders, when non-empty, restricts the count to rows whose folder is in
+	// this set. A single UID counts that exact folder (no recursion); callers
+	// that need recursive descendant counts pre-expand the subtree and pass
+	// every UID here.
+	Folders  []string
+	MinCount int
+}
+
+func (r sqlStatsRequest) Validate() error {
+	if len(r.Folders) > 0 && r.Namespace == "" {
+		return fmt.Errorf("folder constraint requires a namespace")
+	}
+	return nil
+}
+
+type sqlStoredResourcesRequest struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Group     string
+	Resource  string
+}
+
+func (r sqlStoredResourcesRequest) Validate() error {
+	return nil
+}
+
+type historyPollResponse struct {
+	Key             resourcepb.ResourceKey
+	GUID            string
+	ResourceVersion int64
+	PreviousRV      *int64
+	Value           []byte
+	Action          int
+	Folder          string
+}
+
+func (r *historyPollResponse) Results() (*historyPollResponse, error) {
+	return r, nil
+}
+
+type groupResourceRV map[string]map[string]int64
+
+type sqlResourceHistoryPollRequest struct {
+	sqltemplate.SQLTemplate
+	Resource             string
+	Group                string
+	SinceResourceVersion int64
+	Response             *historyPollResponse
+}
+
+func (r *sqlResourceHistoryPollRequest) Validate() error {
+	return nil // TODO
+}
+
+func (r *sqlResourceHistoryPollRequest) Results() (*historyPollResponse, error) {
+	prevRV := r.Response.PreviousRV
+	if prevRV == nil {
+		prevRV = new(int64)
+	}
+	return &historyPollResponse{
+		Key: resourcepb.ResourceKey{
+			Namespace: r.Response.Key.Namespace,
+			Group:     r.Response.Key.Group,
+			Resource:  r.Response.Key.Resource,
+			Name:      r.Response.Key.Name,
+		},
+		Folder:          r.Response.Folder,
+		ResourceVersion: r.Response.ResourceVersion,
+		PreviousRV:      prevRV,
+		Value:           r.Response.Value,
+		Action:          r.Response.Action,
+	}, nil
+}
+
+// sqlResourceReadRequest can be used to retrieve a row fromthe "resource" tables.
+func NewReadResponse() *resource.BackendReadResponse {
+	return &resource.BackendReadResponse{
+		Key: &resourcepb.ResourceKey{},
+	}
+}
+
+type sqlResourceReadRequest struct {
+	sqltemplate.SQLTemplate
+	Request  *resourcepb.ReadRequest
+	Response *resource.BackendReadResponse
+}
+
+func (r *sqlResourceReadRequest) Validate() error {
+	return nil // TODO
+}
+
+func (r *sqlResourceReadRequest) Results() (*resource.BackendReadResponse, error) {
+	return r.Response, nil
+}
+
+// List
+type sqlResourceListRequest struct {
+	sqltemplate.SQLTemplate
+	Request *resourcepb.ListRequest
+}
+
+func (r sqlResourceListRequest) Validate() error {
+	return nil // TODO
+}
+
+type historyReadRequest struct {
+	Key             *resourcepb.ResourceKey
+	ResourceVersion int64
+}
+
+type historyReadResponse struct {
+	Key             *resourcepb.ResourceKey
+	Folder          string
+	GUID            string
+	ResourceVersion int64
+	Value           []byte
+	Action          int
+}
+
+func NewHistoryReadResponse() *historyReadResponse {
+	return &historyReadResponse{
+		Key: &resourcepb.ResourceKey{},
+	}
+}
+
+func (r *historyReadResponse) ReadResponse() *resource.BackendReadResponse {
+	return &resource.BackendReadResponse{
+		Key:             r.Key,
+		Folder:          r.Folder,
+		GUID:            r.GUID,
+		ResourceVersion: r.ResourceVersion,
+		Value:           r.Value,
+	}
+}
+
+type sqlResourceHistoryReadRequest struct {
+	sqltemplate.SQLTemplate
+	Request  *historyReadRequest
+	Response *historyReadResponse
+}
+
+func (r sqlResourceHistoryReadRequest) Validate() error {
+	return nil // TODO
+}
+
+func (r sqlResourceHistoryReadRequest) Results() (*historyReadResponse, error) {
+	return r.Response, nil
+}
+
+type historyReadLatestRVRequest struct {
+	Key       *resourcepb.ResourceKey
+	EventType resourcepb.WatchEvent_Type
+}
+
+type sqlResourceHistoryReadLatestRVRequest struct {
+	sqltemplate.SQLTemplate
+	Request  *historyReadLatestRVRequest
+	Response *resourceHistoryReadLatestRVResponse
+}
+
+func (r sqlResourceHistoryReadLatestRVRequest) Validate() error {
+	return nil // TODO
+}
+
+func (r sqlResourceHistoryReadLatestRVRequest) Results() (*resourceHistoryReadLatestRVResponse, error) {
+	return r.Response, nil
+}
+
+type resourceHistoryReadLatestRVResponse struct {
+	ResourceVersion int64
+}
+
+func (r *resourceHistoryReadLatestRVResponse) Results() (*resourceHistoryReadLatestRVResponse, error) {
+	return r, nil
+}
+
+type historyListRequest struct {
+	ResourceVersion, Limit, Offset int64
+	Folder                         string
+	Options                        *resourcepb.ListOptions
+}
+type sqlResourceHistoryListRequest struct {
+	sqltemplate.SQLTemplate
+	Request  *historyListRequest
+	Response *resourcepb.ResourceWrapper
+}
+
+func (r sqlResourceHistoryListRequest) Validate() error {
+	return nil // TODO
+}
+
+func (r sqlResourceHistoryListRequest) Results() (*resourcepb.ResourceWrapper, error) {
+	// sqlResourceHistoryListRequest is a set-returning query. As such, it
+	// should not return its *Response, since that will be overwritten in the
+	// next call to `Scan`, so it needs to return a copy of it. Note, though,
+	// that it is safe to return the same `Response.Value` since `Scan`
+	// allocates a new slice of bytes each time.
+	return &resourcepb.ResourceWrapper{
+		ResourceVersion: r.Response.ResourceVersion,
+		Value:           r.Response.Value,
+	}, nil
+}
+
+type sqlResourceHistoryDeleteRequest struct {
+	sqltemplate.SQLTemplate
+	GUID string
+
+	Namespace string
+	Group     string
+	Resource  string
+}
+
+func (r *sqlResourceHistoryDeleteRequest) Validate() error {
+	if r.Namespace == "" {
+		return fmt.Errorf("missing namespace")
+	}
+	if r.GUID == "" {
+		if r.Group == "" {
+			return fmt.Errorf("missing group")
+		}
+		if r.Resource == "" {
+			return fmt.Errorf("missing resource")
+		}
+	}
+	return nil
+}
+
+type sqlGetHistoryRequest struct {
+	sqltemplate.SQLTemplate
+	Key           *resourcepb.ResourceKey
+	Trash         bool  // only deleted items
+	StartRV       int64 // from NextPageToken
+	MinRV         int64 // minimum resource version for NotOlderThan
+	ExactRV       int64 // exact resource version for Exact
+	SortAscending bool  // if true, sort by resource_version ASC, otherwise DESC
+}
+
+func (r sqlGetHistoryRequest) Validate() error {
+	return nil // TODO
+}
+
+// prune resource history
+type sqlPruneHistoryRequest struct {
+	sqltemplate.SQLTemplate
+	Key                   *resourcepb.ResourceKey
+	PartitionByGeneration bool // include generation in the partition
+	HistoryLimit          int64
+}
+
+func (r *sqlPruneHistoryRequest) Validate() error {
+	if r.HistoryLimit <= 0 {
+		return fmt.Errorf("history limit must be greater than zero")
+	}
+	if r.Key == nil {
+		return fmt.Errorf("missing key")
+	}
+	if r.Key.Group == "" {
+		return fmt.Errorf("missing group")
+	}
+	if r.Key.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	return nil
+}
+
+type gcCandidateName struct {
+	Namespace string
+	Name      string
+}
+
+type sqlGarbageCollectCandidatesRequest struct {
+	sqltemplate.SQLTemplate
+	Group           string
+	Resource        string
+	CutoffTimestamp int64
+	BatchSize       int
+	Response        *gcCandidateName
+}
+
+func (r *sqlGarbageCollectCandidatesRequest) Validate() error {
+	if r.Group == "" {
+		return fmt.Errorf("missing group")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	if r.CutoffTimestamp <= 0 {
+		return fmt.Errorf("invalid cutoff timestamp")
+	}
+	if r.BatchSize <= 0 {
+		return fmt.Errorf("invalid batch size")
+	}
+	return nil
+}
+
+func (r *sqlGarbageCollectCandidatesRequest) Results() (gcCandidateName, error) {
+	x := *r.Response
+	return x, nil
+}
+
+type sqlGarbageCollectDeleteByNamesRequest struct {
+	sqltemplate.SQLTemplate
+	Group      string
+	Resource   string
+	Candidates []gcCandidateName
+}
+
+func (r *sqlGarbageCollectDeleteByNamesRequest) Validate() error {
+	if r.Group == "" {
+		return fmt.Errorf("missing group")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	if len(r.Candidates) == 0 {
+		return fmt.Errorf("missing candidates")
+	}
+	return nil
+}
+
+// chunkCandidate is one row returned by the chunked-wipe candidate queries: a
+// row's guid plus the byte size of its value column.
+type chunkCandidate struct {
+	GUID string
+	Size int64
+}
+
+// sqlChunkCandidatesRequest selects a bounded batch of rows for a collection
+// with each row's value byte size. Table selects which table to read
+// ("resource" or "resource_history").
+type sqlChunkCandidatesRequest struct {
+	sqltemplate.SQLTemplate
+	Table     string
+	Namespace string
+	Group     string
+	Resource  string
+	BatchSize int
+	Response  *chunkCandidate
+}
+
+func (r *sqlChunkCandidatesRequest) Validate() error {
+	if err := validateResourceTable(r.Table); err != nil {
+		return err
+	}
+	if r.Namespace == "" {
+		return fmt.Errorf("missing namespace")
+	}
+	if r.Group == "" {
+		return fmt.Errorf("missing group")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	if r.BatchSize <= 0 {
+		return fmt.Errorf("invalid batch size")
+	}
+	return nil
+}
+
+func (r *sqlChunkCandidatesRequest) Results() (chunkCandidate, error) {
+	x := *r.Response
+	return x, nil
+}
+
+// sqlDeleteByGUIDsRequest deletes a sub-batch of rows by guid within a
+// collection. Table selects which table to delete from ("resource" or
+// "resource_history").
+type sqlDeleteByGUIDsRequest struct {
+	sqltemplate.SQLTemplate
+	Table     string
+	Namespace string
+	Group     string
+	Resource  string
+	GUIDs     []string
+}
+
+func (r *sqlDeleteByGUIDsRequest) Validate() error {
+	if err := validateResourceTable(r.Table); err != nil {
+		return err
+	}
+	if r.Namespace == "" {
+		return fmt.Errorf("missing namespace")
+	}
+	if r.Group == "" {
+		return fmt.Errorf("missing group")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	if len(r.GUIDs) == 0 {
+		return fmt.Errorf("missing guids")
+	}
+	return nil
+}
+
+const (
+	tableResource        = "resource"
+	tableResourceHistory = "resource_history"
+)
+
+func validateResourceTable(table string) error {
+	if table != tableResource && table != tableResourceHistory {
+		return fmt.Errorf("invalid table %q: must be %q or %q", table, tableResource, tableResourceHistory)
+	}
+	return nil
+}
+
+type sqlResourceBlobInsertRequest struct {
+	sqltemplate.SQLTemplate
+	Now         time.Time
+	Info        *utils.BlobInfo
+	Key         *resourcepb.ResourceKey
+	Value       []byte
+	ContentType string
+}
+
+func (r sqlResourceBlobInsertRequest) Validate() error {
+	if len(r.Value) < 1 {
+		return fmt.Errorf("missing body")
+	}
+	return nil
+}
+
+type sqlResourceBlobQueryRequest struct {
+	sqltemplate.SQLTemplate
+	Key *resourcepb.ResourceKey
+	UID string
+}
+
+func (r sqlResourceBlobQueryRequest) Validate() error {
+	return nil
+}
+
+type groupResourceVersion struct {
+	Group, Resource string
+	ResourceVersion int64
+}
+
+type sqlResourceVersionListRequest struct {
+	sqltemplate.SQLTemplate
+	*groupResourceVersion
+}
+
+func (r *sqlResourceVersionListRequest) Validate() error {
+	return nil // TODO
+}
+
+func (r *sqlResourceVersionListRequest) Results() (*groupResourceVersion, error) {
+	x := *r.groupResourceVersion
+	return &x, nil
+}
+
+type sqlResourceListModifiedSinceRequest struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Group     string
+	Resource  string
+	SinceRv   int64 // Exclusive
+	LatestRv  int64 // Inclusive
+}
+
+func (r sqlResourceListModifiedSinceRequest) Validate() error {
+	if r.Group == "" {
+		return fmt.Errorf("missing group")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	if r.SinceRv < 0 {
+		return fmt.Errorf("since resource version must be greater than or equal to zero")
+	}
+	if r.LatestRv < r.SinceRv {
+		return fmt.Errorf("latest resource version must be greater or equal to since resource version")
+	}
+	return nil
+}
+
+type sqlResourceLastImportTimeInsertRequest struct {
+	sqltemplate.SQLTemplate
+	Namespace      string
+	Group          string
+	Resource       string
+	LastImportTime time.Time
+}
+
+func (r sqlResourceLastImportTimeInsertRequest) Validate() error {
+	if r.Namespace == "" {
+		return fmt.Errorf("missing namespace")
+	}
+	if r.Group == "" {
+		return fmt.Errorf("missing group")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	if r.LastImportTime.IsZero() {
+		return fmt.Errorf("last import time cannot be zero")
+	}
+	return nil
+}
+
+type sqlResourceLastImportTimeQueryRequest struct {
+	sqltemplate.SQLTemplate
+}
+
+func (r *sqlResourceLastImportTimeQueryRequest) Validate() error {
+	return nil
+}
+
+type sqlResourceLastImportTimeDeleteRequest struct {
+	sqltemplate.SQLTemplate
+	Threshold time.Time
+}
+
+func (r *sqlResourceLastImportTimeDeleteRequest) Validate() error {
+	return nil
+}

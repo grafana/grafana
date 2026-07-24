@@ -1,0 +1,724 @@
+package sql
+
+import (
+	"testing"
+	"text/template"
+	"time"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
+)
+
+func TestUnifiedStorageQueries(t *testing.T) {
+	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
+		RootDir:        "testdata",
+		SQLTemplatesFS: sqlTemplatesFS,
+		Templates: map[*template.Template][]mocks.TemplateTestCase{
+			sqlResourceDelete: {
+				{
+					Name: "simple",
+					Data: &sqlResourceRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						WriteEvent: resource.WriteEvent{
+							Key: &resourcepb.ResourceKey{
+								Namespace: "nn",
+								Group:     "gg",
+								Resource:  "rr",
+								Name:      "name",
+							},
+						},
+					},
+				},
+				{
+					Name: "with rv",
+					Data: &sqlResourceRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						WriteEvent: resource.WriteEvent{
+							Key: &resourcepb.ResourceKey{
+								Namespace: "nn",
+								Group:     "gg",
+								Resource:  "rr",
+								Name:      "name",
+							},
+							PreviousRV: 1234,
+						},
+					},
+				},
+			},
+			sqlResourceInsert: {
+				{
+					Name: "simple",
+					Data: &sqlResourceRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						WriteEvent: resource.WriteEvent{
+							Key: &resourcepb.ResourceKey{
+								Namespace: "nn",
+								Group:     "gg",
+								Resource:  "rr",
+								Name:      "name",
+							},
+							Type:       resourcepb.WatchEvent_ADDED,
+							PreviousRV: 123,
+						},
+						Folder: "fldr",
+					},
+				},
+			},
+			sqlResourceUpdate: {
+				{
+					Name: "single path",
+					Data: &sqlResourceRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						WriteEvent: resource.WriteEvent{
+							Key: &resourcepb.ResourceKey{
+								Namespace: "nn",
+								Group:     "gg",
+								Resource:  "rr",
+								Name:      "name",
+							},
+							PreviousRV: 1759304090100678,
+						},
+						Folder: "fldr",
+					},
+				},
+			},
+			sqlResourceRead: {
+				{
+					Name: "without_resource_version",
+					Data: &sqlResourceReadRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &resourcepb.ReadRequest{
+							Key: &resourcepb.ResourceKey{
+								Namespace: "nn",
+								Group:     "gg",
+								Resource:  "rr",
+								Name:      "name",
+							},
+						},
+						Response: NewReadResponse(),
+					},
+				},
+			},
+
+			sqlResourceList: {
+				{
+					Name: "filter_on_namespace",
+					Data: &sqlResourceListRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &resourcepb.ListRequest{
+							Limit: 10,
+							Options: &resourcepb.ListOptions{
+								Key: &resourcepb.ResourceKey{
+									Namespace: "ns",
+								},
+							},
+						},
+					},
+				},
+			},
+
+			sqlResourceHistoryList: {
+				{
+					Name: "single path",
+					Data: &sqlResourceHistoryListRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &historyListRequest{
+							Limit: 10,
+							Options: &resourcepb.ListOptions{
+								Key: &resourcepb.ResourceKey{
+									Namespace: "ns",
+								},
+							},
+						},
+						Response: new(resourcepb.ResourceWrapper),
+					},
+				},
+			},
+			sqlResourceHistoryListModifiedSince: {
+				{
+					Name: "single path",
+					Data: &sqlResourceListModifiedSinceRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+						Group:       "group",
+						Resource:    "res",
+						SinceRv:     10000,
+						LatestRv:    20000,
+					},
+				},
+				{
+					Name: "cross-namespace",
+					Data: &sqlResourceListModifiedSinceRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "",
+						Group:       "group",
+						Resource:    "res",
+						SinceRv:     10000,
+						LatestRv:    20000,
+					},
+				},
+			},
+			sqlResourceHistoryGarbageGetCandidates: {
+				{
+					Name: "single path",
+					Data: &sqlGarbageCollectCandidatesRequest{
+						SQLTemplate:     mocks.NewTestingSQLTemplate(),
+						Group:           "group",
+						Resource:        "res",
+						CutoffTimestamp: 123456,
+						BatchSize:       100,
+						Response:        new(gcCandidateName),
+					},
+				},
+			},
+			sqlResourceHistoryGCDeleteByNames: {
+				{
+					Name: "single path",
+					Data: &sqlGarbageCollectDeleteByNamesRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Group:       "group",
+						Resource:    "res",
+						Candidates: []gcCandidateName{
+							{Namespace: "ns1", Name: "name1"},
+						},
+					},
+				},
+			},
+			sqlChunkCandidates: {
+				{
+					Name: "resource",
+					Data: &sqlChunkCandidatesRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Table:       tableResource,
+						Namespace:   "ns",
+						Group:       "group",
+						Resource:    "res",
+						BatchSize:   2000,
+						Response:    new(chunkCandidate),
+					},
+				},
+				{
+					Name: "history",
+					Data: &sqlChunkCandidatesRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Table:       tableResourceHistory,
+						Namespace:   "ns",
+						Group:       "group",
+						Resource:    "res",
+						BatchSize:   2000,
+						Response:    new(chunkCandidate),
+					},
+				},
+			},
+			sqlDeleteByGUIDs: {
+				{
+					Name: "resource",
+					Data: &sqlDeleteByGUIDsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Table:       tableResource,
+						Namespace:   "ns",
+						Group:       "group",
+						Resource:    "res",
+						GUIDs:       []string{"guid1", "guid2", "guid3"},
+					},
+				},
+				{
+					Name: "history",
+					Data: &sqlDeleteByGUIDsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Table:       tableResourceHistory,
+						Namespace:   "ns",
+						Group:       "group",
+						Resource:    "res",
+						GUIDs:       []string{"guid1", "guid2", "guid3"},
+					},
+				},
+			},
+			sqlResourceHistoryPoll: {
+				{
+					Name: "single path",
+					Data: &sqlResourceHistoryPollRequest{
+						SQLTemplate:          mocks.NewTestingSQLTemplate(),
+						Resource:             "res",
+						Group:                "group",
+						SinceResourceVersion: 1234,
+						Response:             new(historyPollResponse),
+					},
+				},
+			},
+
+			rvmanager.SqlResourceUpdateRV: {
+				{
+					Name: "single path",
+					Data: &rvmanager.SqlResourceUpdateRVRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						GUIDToRV: map[string]int64{
+							"guid1": 123,
+							"guid2": 456,
+						},
+					},
+				},
+			},
+
+			sqlResourceHistoryRead: {
+				{
+					Name: "single path",
+					Data: &sqlResourceHistoryReadRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &historyReadRequest{
+							ResourceVersion: 123,
+							Key: &resourcepb.ResourceKey{
+								Namespace: "ns",
+								Group:     "gp",
+								Resource:  "rs",
+								Name:      "nm",
+							},
+						},
+						Response: NewHistoryReadResponse(),
+					},
+				},
+			},
+
+			sqlResourceHistoryReadLatestRV: {
+				{
+					Name: "single path",
+					Data: &sqlResourceHistoryReadLatestRVRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &historyReadLatestRVRequest{
+							Key: &resourcepb.ResourceKey{
+								Namespace: "ns",
+								Group:     "gp",
+								Resource:  "rs",
+								Name:      "nm",
+							},
+						},
+						Response: new(resourceHistoryReadLatestRVResponse),
+					},
+				},
+				{
+					Name: "with WatchEvent_DELETED",
+					Data: &sqlResourceHistoryReadLatestRVRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &historyReadLatestRVRequest{
+							Key: &resourcepb.ResourceKey{
+								Namespace: "ns",
+								Group:     "gp",
+								Resource:  "rs",
+								Name:      "nm",
+							},
+							EventType: resourcepb.WatchEvent_DELETED,
+						},
+						Response: new(resourceHistoryReadLatestRVResponse),
+					},
+				},
+			},
+
+			rvmanager.SqlResourceHistoryUpdateRV: {
+				{
+					Name: "single path",
+					Data: &rvmanager.SqlResourceUpdateRVRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						GUIDToRV: map[string]int64{
+							"guid1": 123,
+							"guid2": 456,
+						},
+					},
+				},
+			},
+
+			sqlResourceHistoryInsert: {
+				{
+					Name: "insert into resource_history",
+					Data: &sqlResourceRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Generation:  789,
+						WriteEvent: resource.WriteEvent{
+							Key: &resourcepb.ResourceKey{
+								Namespace: "nn",
+								Group:     "gg",
+								Resource:  "rr",
+								Name:      "name",
+							},
+							PreviousRV: 1234,
+						},
+						Folder: "fldr",
+					},
+				},
+			},
+			sqlResourceHistoryInsertBulk: {
+				{
+					Name: "insert bulk into resource_history",
+					Data: &sqlBulkResourceHistoryInsertRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Rows: []sqlResourceRequest{
+							{
+								Generation:      789,
+								ResourceVersion: 1001,
+								WriteEvent: resource.WriteEvent{
+									Key: &resourcepb.ResourceKey{
+										Namespace: "nn",
+										Group:     "gg",
+										Resource:  "rr",
+										Name:      "name-1",
+									},
+									PreviousRV: 1234,
+								},
+								Folder: "fldr-1",
+							},
+							{
+								Generation:      790,
+								ResourceVersion: 1002,
+								WriteEvent: resource.WriteEvent{
+									Key: &resourcepb.ResourceKey{
+										Namespace: "nn",
+										Group:     "gg",
+										Resource:  "rr",
+										Name:      "name-2",
+									},
+									PreviousRV: 1235,
+								},
+								Folder: "fldr-2",
+							},
+						},
+					},
+				},
+			},
+
+			sqlResourceHistoryGet: {
+				{
+					Name: "read object history",
+					Data: &sqlGetHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resourcepb.ResourceKey{
+							Namespace: "nn",
+							Group:     "gg",
+							Resource:  "rr",
+							Name:      "name",
+						},
+					},
+				},
+			},
+
+			sqlResourceTrash: {
+				{
+					Name: "read trash",
+					Data: &sqlGetHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resourcepb.ResourceKey{
+							Namespace: "nn",
+							Group:     "gg",
+							Resource:  "rr",
+						},
+						Trash: true,
+					},
+				},
+				{
+					Name: "read trash second page",
+					Data: &sqlGetHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resourcepb.ResourceKey{
+							Namespace: "nn",
+							Group:     "gg",
+							Resource:  "rr",
+						},
+						Trash:   true,
+						StartRV: 123456,
+					},
+				},
+			},
+
+			sqlResourceHistoryPrune: {
+				{
+					Name: "max-versions",
+					Data: &sqlPruneHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resourcepb.ResourceKey{
+							Namespace: "default",
+							Group:     "provisioning.grafana.app",
+							Resource:  "repositories",
+							Name:      "repo-xyz",
+						},
+						HistoryLimit: 10,
+					},
+				},
+				{
+					Name: "collapse-generations",
+					Data: &sqlPruneHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resourcepb.ResourceKey{
+							Namespace: "default",
+							Group:     "provisioning.grafana.app",
+							Resource:  "repositories",
+							Name:      "repo-xyz",
+						},
+						PartitionByGeneration: true,
+						HistoryLimit:          1,
+					},
+				},
+				{
+					Name: "cluster-scoped",
+					Data: &sqlPruneHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resourcepb.ResourceKey{
+							Namespace: "",
+							Group:     "cluster.example.io",
+							Resource:  "clusterresources",
+							Name:      "my-cluster-resource",
+						},
+						HistoryLimit: 10,
+					},
+				},
+			},
+
+			rvmanager.SqlResourceVersionGet: {
+				{
+					Name: "single path",
+					Data: &rvmanager.SqlResourceVersionGetRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Resource:    "resource",
+						Group:       "group",
+						Response:    new(rvmanager.ResourceVersionResponse),
+						ReadOnly:    false,
+					},
+				},
+			},
+
+			rvmanager.SqlResourceVersionUpdate: {
+				{
+					Name: "increment resource version",
+					Data: &rvmanager.SqlResourceVersionUpsertRequest{
+						SQLTemplate:     mocks.NewTestingSQLTemplate(),
+						Resource:        "resource",
+						Group:           "group",
+						ResourceVersion: int64(12354),
+					},
+				},
+			},
+
+			rvmanager.SqlResourceVersionInsert: {
+				{
+					Name: "single path",
+					Data: &rvmanager.SqlResourceVersionUpsertRequest{
+						SQLTemplate:     mocks.NewTestingSQLTemplate(),
+						ResourceVersion: int64(12354),
+					},
+				},
+			},
+
+			sqlResourceVersionList: {
+				{
+					Name: "single path",
+					Data: &sqlResourceVersionListRequest{
+						SQLTemplate:          mocks.NewTestingSQLTemplate(),
+						groupResourceVersion: new(groupResourceVersion),
+					},
+				},
+			},
+
+			sqlResourceStats: {
+				{
+					Name: "global",
+					Data: &sqlStatsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						MinCount:    10, // Not yet used in query (only response filter)
+					},
+				},
+				{
+					Name: "namespace",
+					Data: &sqlStatsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "default",
+						MinCount:    10, // Not yet used in query (only response filter)
+					},
+				},
+				{
+					Name: "folder",
+					Data: &sqlStatsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "default",
+						Folders:     []string{"folder"},
+						MinCount:    10, // Not yet used in query (only response filter)
+					},
+				},
+				{
+					Name: "folders",
+					Data: &sqlStatsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "default",
+						Folders:     []string{"a", "b", "c"},
+					},
+				},
+				{
+					Name: "resource",
+					Data: &sqlStatsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "default",
+						Group:       "dashboard.grafana.app",
+						Resource:    "dashboards",
+					},
+				},
+			},
+			sqlResourceStoredList: {
+				{
+					Name: "global",
+					Data: &sqlStoredResourcesRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+					},
+				},
+				{
+					Name: "namespace",
+					Data: &sqlStoredResourcesRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "default",
+					},
+				},
+				{
+					Name: "resource",
+					Data: &sqlStoredResourcesRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "default",
+						Group:       "dashboard.grafana.app",
+						Resource:    "dashboards",
+					},
+				},
+			},
+			sqlResourceBlobInsert: {
+				{
+					Name: "basic",
+					Data: &sqlResourceBlobInsertRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resourcepb.ResourceKey{
+							Namespace: "x",
+							Group:     "g",
+							Resource:  "r",
+							Name:      "name",
+						},
+						Now: time.UnixMilli(1704056400000).UTC(),
+						Info: &utils.BlobInfo{
+							UID:  "abc",
+							Hash: "xxx",
+							Size: 1234,
+						},
+						ContentType: "text/plain",
+						Value:       []byte("abcdefg"),
+					},
+				},
+			},
+
+			sqlResourceBlobQuery: {
+				{
+					Name: "basic",
+					Data: &sqlResourceBlobQueryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resourcepb.ResourceKey{
+							Namespace: "x",
+							Group:     "g",
+							Resource:  "r",
+							Name:      "name",
+						},
+						UID: "abc",
+					},
+				},
+				{
+					Name: "resource", // NOTE: this returns multiple values
+					Data: &sqlResourceBlobQueryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resourcepb.ResourceKey{
+							Namespace: "x",
+							Group:     "g",
+							Resource:  "r",
+						},
+					},
+				},
+			},
+			sqlResourceHistoryDelete: {
+				{
+					Name: "guid",
+					Data: &sqlResourceHistoryDeleteRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						GUID:        `xxxx`,
+						Namespace:   "ns",
+					},
+				},
+				{
+					Name: "wipe",
+					Data: &sqlResourceHistoryDeleteRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+						Group:       "ggg",
+						Resource:    "rrr",
+					},
+				},
+			},
+			sqlResourceInsertFromHistory: {
+				{
+					Name: "update",
+					Data: &sqlResourceInsertFromHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resourcepb.ResourceKey{
+							Namespace: "default",
+							Group:     "dashboard.grafana.app",
+							Resource:  "dashboards",
+						},
+					},
+				},
+				{
+					Name: "update-ranged",
+					Data: &sqlResourceInsertFromHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resourcepb.ResourceKey{
+							Namespace: "default",
+							Group:     "dashboard.grafana.app",
+							Resource:  "dashboards",
+						},
+						StartName: "aaa",
+						EndName:   "mmm",
+					},
+				},
+			},
+			sqlResourceHistoryDistinctNames: {
+				{
+					Name: "single path",
+					Data: &sqlResourceHistoryDistinctNamesRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+						Group:       "group",
+						Resource:    "res",
+						Response:    new(distinctName),
+					},
+				},
+			},
+			sqlResourceLastImportTimeInsert: {
+				{
+					Name: "insert",
+					Data: &sqlResourceLastImportTimeInsertRequest{
+						SQLTemplate:    mocks.NewTestingSQLTemplate(),
+						Namespace:      "ns",
+						Group:          "group",
+						Resource:       "res",
+						LastImportTime: time.Date(2025, 10, 07, 22, 30, 05, 0, time.UTC),
+					},
+				},
+			},
+			sqlResourceLastImportTimeQuery: {
+				{
+					Name: "insert",
+					Data: &sqlResourceLastImportTimeQueryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+					},
+				},
+			},
+			sqlResourceLastImportTimeDelete: {
+				{
+					Name: "delete",
+					Data: &sqlResourceLastImportTimeDeleteRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Threshold:   time.Date(2025, 10, 15, 14, 30, 05, 0, time.UTC),
+					},
+				},
+			},
+		}})
+}

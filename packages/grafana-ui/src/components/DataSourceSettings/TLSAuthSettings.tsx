@@ -1,0 +1,133 @@
+import * as React from 'react';
+
+import { type KeyValue } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
+
+import { FormField } from '../FormField/FormField';
+import { Icon } from '../Icon/Icon';
+import { Box } from '../Layout/Box/Box';
+import { Stack } from '../Layout/Stack/Stack';
+import { Tooltip } from '../Tooltip/Tooltip';
+
+import { CertificationKey } from './CertificationKey';
+import { type HttpSettingsBaseProps } from './types';
+
+export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBaseProps) => {
+  const hasTLSCACert = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsCACert;
+  const hasTLSClientCert = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsClientCert;
+  const hasTLSClientKey = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsClientKey;
+  const hasServerName = dataSourceConfig.jsonData && dataSourceConfig.jsonData.serverName;
+
+  const onResetClickFactory = (field: string) => (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    const newSecureJsonFields: KeyValue<boolean> = { ...dataSourceConfig.secureJsonFields };
+    newSecureJsonFields[field] = false;
+    onChange({
+      ...dataSourceConfig,
+      secureJsonFields: newSecureJsonFields,
+    });
+  };
+
+  const onCertificateChangeFactory = (field: string) => (event: React.SyntheticEvent<HTMLTextAreaElement>) => {
+    const newSecureJsonData = { ...dataSourceConfig.secureJsonData };
+    newSecureJsonData[field] = event.currentTarget.value;
+
+    onChange({
+      ...dataSourceConfig,
+      secureJsonData: newSecureJsonData,
+    });
+  };
+
+  const onServerNameLabelChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
+    const newJsonData = {
+      ...dataSourceConfig.jsonData,
+      serverName: event.currentTarget.value,
+    };
+
+    onChange({
+      ...dataSourceConfig,
+      jsonData: newJsonData,
+    });
+  };
+
+  const certificateBeginsWith = '-----BEGIN CERTIFICATE-----';
+  const privateKeyBeginsWith = '-----BEGIN RSA PRIVATE KEY-----';
+
+  return (
+    <Box marginBottom={5}>
+      <Box marginBottom={0.5} position="relative">
+        <Stack direction="row" alignItems="baseline">
+          <h6>
+            <Trans i18nKey="grafana-ui.data-source-settings.tls-heading">TLS/SSL Auth Details</Trans>
+          </h6>
+          <Tooltip
+            placement="right-end"
+            content={t(
+              'grafana-ui.data-source-settings.tls-tooltip',
+              'TLS/SSL Certs are encrypted and stored in the Grafana database.'
+            )}
+            theme="info"
+          >
+            <Icon name="info-circle" size="xs" style={{ marginLeft: '10px' }} />
+          </Tooltip>
+        </Stack>
+      </Box>
+      <div>
+        {dataSourceConfig.jsonData.tlsAuthWithCACert && (
+          <CertificationKey
+            hasCert={!!hasTLSCACert}
+            onChange={onCertificateChangeFactory('tlsCACert')}
+            placeholder={t(
+              'grafana-ui.data-source-settings.tls-certification-placeholder',
+              'Begins with {{certificateBeginsWith}}',
+              { certificateBeginsWith }
+            )}
+            label={t('grafana-ui.data-source-settings.tls-certification-label', 'CA Cert')}
+            onClick={onResetClickFactory('tlsCACert')}
+          />
+        )}
+
+        {dataSourceConfig.jsonData.tlsAuth && (
+          <>
+            <Box marginBottom={0.5} position="relative">
+              <Stack direction="row" alignItems="baseline">
+                <FormField
+                  label={t('grafana-ui.data-source-settings.tls-server-name-label', 'ServerName')}
+                  labelWidth={7}
+                  inputWidth={30}
+                  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+                  placeholder="domain.example.com"
+                  value={hasServerName && dataSourceConfig.jsonData.serverName}
+                  onChange={onServerNameLabelChange}
+                />
+              </Stack>
+            </Box>
+            <CertificationKey
+              hasCert={!!hasTLSClientCert}
+              label={t('grafana-ui.data-source-settings.tls-client-certification-label', 'Client Cert')}
+              onChange={onCertificateChangeFactory('tlsClientCert')}
+              placeholder={t(
+                'grafana-ui.data-source-settings.tls-certification-placeholder',
+                'Begins with {{certificateBeginsWith}}',
+                { certificateBeginsWith }
+              )}
+              onClick={onResetClickFactory('tlsClientCert')}
+            />
+
+            <CertificationKey
+              hasCert={!!hasTLSClientKey}
+              label={t('grafana-ui.data-source-settings.tls-client-key-label', 'Client Key')}
+              placeholder={t(
+                'grafana-ui.data-source-settings.tls-client-key-placeholder',
+                'Begins with {{privateKeyBeginsWith}}',
+                { privateKeyBeginsWith }
+              )}
+              onChange={onCertificateChangeFactory('tlsClientKey')}
+              onClick={onResetClickFactory('tlsClientKey')}
+            />
+          </>
+        )}
+      </div>
+    </Box>
+  );
+};

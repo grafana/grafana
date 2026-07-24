@@ -1,0 +1,814 @@
+/**
+ * Dashboard Mutation API -- Canonical Zod Schemas & Payload Definitions
+ *
+ * This file contains two layers:
+ *
+ * 1. BUILDING-BLOCK SCHEMAS -- v2beta1 data structures (VariableKind, etc.)
+ *    used internally by core code.
+ *
+ * 2. PAYLOAD SCHEMAS & `payloads` RECORD -- one Zod schema per mutation
+ *    command, accessible via DashboardMutationAPI.getPayloadSchema().
+ *
+ * This file only depends on Zod and enum constants from @grafana/data,
+ * keeping it safe for import from any internal module without pulling in
+ * the DashboardScene dependency tree.
+ *
+ * DEFAULTS: Literal `kind` and `version` fields use .optional().default()
+ * so consumers (e.g. LLM tools) can omit boilerplate. After parsing, these
+ * fields are always present in the output.
+ *
+ * The `.describe()` annotations flow into generated JSON Schema via
+ * `z.toJSONSchema()` and are used by LLM tool consumers for guidance.
+ */
+
+import { z } from 'zod';
+
+import { FieldMatcherID } from '@grafana/data';
+import type { GridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+
+import { annotationQueryKindSchema, variableKindSchema } from '../../v2schema/dashboardV2Schema';
+
+// The canonical schema lets `spec.name` default to '' (the v2 CUE has
+// `name: string | *""`, valid for a full spec). A create/update command must
+// name the variable, so payloads require a non-empty name on top of the shared
+// structural schema.
+const namedVariableKindSchema = variableKindSchema.refine(
+  (variable) => typeof variable.spec.name === 'string' && variable.spec.name.trim().length > 0,
+  { message: 'Variable spec.name is required and must be non-empty', path: ['spec', 'name'] }
+);
+
+const dataQueryKindSchema = z.object({
+  kind: z.literal('DataQuery').optional().default('DataQuery'),
+  group: z.string().describe('Datasource type (e.g., "prometheus", "loki", "mysql")'),
+  version: z.string().optional().default('v0'),
+  datasource: z
+    .object({
+      name: z.string().optional(),
+    })
+    .optional(),
+  spec: z.record(z.string(), z.unknown()).describe('Query-specific fields (e.g., expr for Prometheus, rawSql for SQL)'),
+});
+
+const emptyPayloadSchema = z.object({}).strict();
+
+// Layout building-block schemas (v2beta1)
+
+const elementReferenceSchema = z.object({
+  kind: z.literal('ElementReference').optional().default('ElementReference'),
+  name: z.string().describe('Element key in the dashboard elements map'),
+});
+
+const layoutPathSchema = z
+  .string()
+  .regex(/^\/([a-z]+\/\d+(\/[a-z]+\/\d+)*)?$/)
+  .describe(
+    'Path to a location in the layout tree, from GET_LAYOUT output. ' +
+      'Examples: "/" (root), "/rows/0" (first row), "/tabs/1/rows/0" (first row inside second tab).'
+  );
+
+const gridPositionSchema = z
+  .object({
+    x: z.number().optional().describe('Column position (0-23 in a 24-column grid)'),
+    y: z.number().optional().describe('Row position'),
+    width: z.number().optional().describe('Width in grid columns (1-24)'),
+    height: z.number().optional().describe('Height in grid units'),
+  })
+  .describe('Grid position (partial GridLayoutItemSpec). Keeps current values for omitted fields.');
+
+const rowRepeatOptionsSchema = z
+  .object({
+    mode: z.literal('variable'),
+    value: z.string().describe('Variable name to repeat by'),
+  })
+  .describe('Repeat options matching v2beta1 RowRepeatOptions');
+
+const tabRepeatOptionsSchema = z
+  .object({
+    mode: z.literal('variable'),
+    value: z.string().describe('Variable name to repeat by'),
+  })
+  .describe('Repeat options matching v2beta1 TabRepeatOptions');
+
+const repeatOptionsSchema = z
+  .object({
+    mode: z.literal('variable'),
+    value: z.string().describe('Variable name to repeat by'),
+    direction: z.enum(['h', 'v']).optional().describe('Repeat direction: horizontal or vertical'),
+    maxPerRow: z.number().optional().describe('Maximum panels per row when direction is "h"'),
+  })
+  .describe('Repeat options matching v2beta1 RepeatOptions');
+
+const conditionalRenderingVariableKindSchema = z.object({
+  kind: z.literal('ConditionalRenderingVariable'),
+  spec: z.object({
+    variable: z.string().describe('Name of the dashboard template variable'),
+    operator: z.enum(['equals', 'notEquals', 'matches', 'notMatches']),
+    value: z.string().describe('Value to compare against. For matches/notMatches this is a regex.'),
+  }),
+});
+
+const conditionalRenderingDataKindSchema = z.object({
+  kind: z.literal('ConditionalRenderingData'),
+  spec: z.object({
+    value: z.boolean().describe('true = "has data", false = "no data"'),
+  }),
+});
+
+const conditionalRenderingTimeRangeSizeKindSchema = z.object({
+  kind: z.literal('ConditionalRenderingTimeRangeSize'),
+  spec: z.object({
+    value: z.string().describe('Duration threshold (e.g. "5m", "1h", "7d", "6M", "1y")'),
+  }),
+});
+
+const conditionalRenderingGroupKindSchema = z.object({
+  kind: z.literal('ConditionalRenderingGroup').optional().default('ConditionalRenderingGroup'),
+  spec: z.object({
+    visibility: z.enum(['show', 'hide']).describe('Whether to show or hide the element when conditions match'),
+    condition: z.enum(['and', 'or']).describe('"and" = match all rules; "or" = match any rule'),
+    items: z
+      .array(
+        z.discriminatedUnion('kind', [
+          conditionalRenderingVariableKindSchema,
+          conditionalRenderingDataKindSchema,
+          conditionalRenderingTimeRangeSizeKindSchema,
+        ])
+      )
+      .describe('List of conditions. Pass an empty array to remove all rules.'),
+  }),
+});
+
+const rowsLayoutRowSpecSchema = z.object({
+  title: z.string().optional().describe('Row heading title'),
+  collapse: z.boolean().optional().default(false).describe('Whether the row starts collapsed'),
+  hideHeader: z.boolean().optional().default(false).describe('Hide the row header'),
+  fillScreen: z.boolean().optional().default(false).describe('Row fills viewport height'),
+  repeat: rowRepeatOptionsSchema.optional().describe('Repeat row for each value of a variable'),
+  conditionalRendering: conditionalRenderingGroupKindSchema.optional().describe('Show/hide rules for this row'),
+  variables: z.array(namedVariableKindSchema).optional().describe('Section-scoped variables for this row.'),
+});
+
+const partialRowSpecSchema = z
+  .object({
+    title: z.string().optional().describe('Row heading title'),
+    collapse: z.boolean().optional().describe('Whether the row is collapsed'),
+    hideHeader: z.boolean().optional().describe('Hide the row header'),
+    fillScreen: z.boolean().optional().describe('Row fills viewport height'),
+    repeat: rowRepeatOptionsSchema
+      .optional()
+      .describe('Repeat row for each value of a variable. Omit to leave unchanged.'),
+    conditionalRendering: conditionalRenderingGroupKindSchema
+      .optional()
+      .describe('Show/hide rules for this row. Omit to leave unchanged.'),
+    variables: z
+      .array(namedVariableKindSchema)
+      .optional()
+      .describe('Section-scoped variables for this row. Omit to leave unchanged. Pass [] to clear section variables.'),
+  })
+  .describe('Fields to update (partial RowsLayoutRowSpec)');
+
+const tabsLayoutTabSpecSchema = z.object({
+  title: z.string().optional().describe('Tab title'),
+  repeat: tabRepeatOptionsSchema.optional().describe('Repeat tab for each value of a variable'),
+  conditionalRendering: conditionalRenderingGroupKindSchema.optional().describe('Show/hide rules for this tab'),
+  variables: z.array(namedVariableKindSchema).optional().describe('Section-scoped variables for this tab.'),
+});
+
+const partialTabSpecSchema = z
+  .object({
+    title: z.string().optional().describe('Tab title'),
+    repeat: tabRepeatOptionsSchema
+      .optional()
+      .describe('Repeat tab for each value of a variable. Omit to leave unchanged.'),
+    conditionalRendering: conditionalRenderingGroupKindSchema
+      .optional()
+      .describe('Show/hide rules for this tab. Omit to leave unchanged.'),
+    variables: z
+      .array(namedVariableKindSchema)
+      .optional()
+      .describe('Section-scoped variables for this tab. Omit to leave unchanged. Pass [] to clear section variables.'),
+  })
+  .describe('Fields to update (partial TabsLayoutTabSpec)');
+
+// Annotation building-block schemas (v2beta1)
+
+const annotationEventFieldMappingSchema = z.object({
+  source: z.string().optional().describe('Source type for the field value (e.g., "field", "text")'),
+  value: z.string().optional().describe('Constant value to use when source is "text"'),
+  regex: z.string().optional().describe('Regular expression applied to the field value'),
+});
+
+const partialAnnotationPanelFilterSchema = z.object({
+  exclude: z
+    .boolean()
+    .optional()
+    .describe('When true, the listed panels are excluded; otherwise only those panels show the annotation'),
+  ids: z.array(z.number()).optional().describe('Panel IDs to include or exclude (replaces existing array)'),
+});
+
+const partialDataQueryKindSchema = z.object({
+  kind: z.literal('DataQuery').optional(),
+  group: z.string().optional().describe('Datasource type (e.g., "prometheus", "loki", "grafana")'),
+  version: z.string().optional(),
+  datasource: z
+    .object({
+      name: z.string().optional(),
+    })
+    .optional(),
+  spec: z
+    .record(z.string(), z.unknown())
+    .optional()
+    .describe('Query-specific fields. Deep-merged into the existing query spec.'),
+});
+
+const partialAnnotationQueryKindSchema = z.object({
+  kind: z.literal('AnnotationQuery').optional(),
+  spec: z
+    .object({
+      name: z.string().optional().describe('Rename the annotation. Must remain unique within the dashboard.'),
+      enable: z.boolean().optional(),
+      hide: z.boolean().optional(),
+      iconColor: z.string().optional(),
+      placement: z.literal('inControlsMenu').optional(),
+      filter: partialAnnotationPanelFilterSchema.optional(),
+      mappings: z.record(z.string(), annotationEventFieldMappingSchema).optional(),
+      legacyOptions: z.record(z.string(), z.unknown()).optional(),
+      query: partialDataQueryKindSchema.optional().describe('Partial query update; deep-merged into existing query.'),
+    })
+    .describe('Fields to update (partial AnnotationQuerySpec). Omitted fields are left unchanged.'),
+});
+
+// Payload schemas -- one per mutation command.
+// These compose the building-block schemas above into the exact shape
+// each command's `payload` field expects.
+
+const addVariablePayloadSchema = z.object({
+  variable: namedVariableKindSchema.describe('Variable definition (VariableKind)'),
+  position: z.number().optional().describe('Position in variables list (optional, appends if not set)'),
+  parentPath: layoutPathSchema
+    .optional()
+    .default('/')
+    .describe(
+      'Variable scope: "/" (default) = dashboard-level variables; "/rows/N" or "/tabs/N" (or nested) = section variables on that row or tab.'
+    ),
+});
+
+const updateVariablePayloadSchema = z.object({
+  name: z.string().describe('Variable name to update'),
+  variable: namedVariableKindSchema.describe('New variable definition (VariableKind)'),
+  parentPath: layoutPathSchema
+    .optional()
+    .describe(
+      'Variable scope: omit or "/" = dashboard-level. Pass a row/tab path (e.g. "/rows/0") to target section scope. ' +
+        'Runtime returns a friendly error if the variable exists only on a section and parentPath is omitted.'
+    ),
+});
+
+const removeVariablePayloadSchema = z.object({
+  name: z.string().describe('Variable name to remove'),
+  parentPath: layoutPathSchema
+    .optional()
+    .describe(
+      'Variable scope: omit or "/" = dashboard-level. Pass a row/tab path to target section scope. ' +
+        'Runtime returns a friendly error if the variable exists only on a section and parentPath is omitted.'
+    ),
+});
+
+const listVariablesPayloadSchema = z.object({
+  parentPath: layoutPathSchema
+    .optional()
+    .default('/')
+    .describe(
+      'Variable scope: "/" (default) = list dashboard-level variables; "/rows/N" or "/tabs/N" = list variables for that section only.'
+    ),
+});
+
+// Annotation payload schemas
+
+const addAnnotationPayloadSchema = z.object({
+  annotation: annotationQueryKindSchema.describe('Annotation definition (AnnotationQueryKind)'),
+  position: z.number().optional().describe('Position in annotations list (optional, appends if not set)'),
+});
+
+const updateAnnotationPayloadSchema = z.object({
+  name: z.string().describe('Annotation name to update'),
+  annotation: partialAnnotationQueryKindSchema.describe(
+    'Partial annotation update. Only provided fields are applied. Object fields are deep-merged. ' +
+      'Arrays (e.g. filter.ids) are replaced wholesale.'
+  ),
+});
+
+const removeAnnotationPayloadSchema = z.object({
+  name: z.string().describe('Annotation name to remove'),
+});
+
+// Layout payload schemas
+
+const getLayoutPayloadSchema = emptyPayloadSchema;
+
+const addRowPayloadSchema = z.object({
+  row: z.object({
+    kind: z.literal('RowsLayoutRow').optional().default('RowsLayoutRow'),
+    spec: rowsLayoutRowSpecSchema,
+  }),
+  parentPath: layoutPathSchema
+    .optional()
+    .default('/')
+    .describe('Path to the parent container. "/" for root, or e.g. "/tabs/0" to add inside a tab.'),
+  position: z.number().optional().describe('Zero-based index within the parent to insert at (appends if omitted)'),
+});
+
+const removeRowPayloadSchema = z.object({
+  path: layoutPathSchema.describe('Path to the row (e.g., "/rows/1", "/tabs/0/rows/2")'),
+  moveContentTo: layoutPathSchema
+    .optional()
+    .describe('Path to another group to move contained content to. Content is deleted if omitted.'),
+});
+
+const updateRowPayloadSchema = z.object({
+  path: layoutPathSchema.describe('Path to the row'),
+  spec: partialRowSpecSchema,
+});
+
+const moveRowPayloadSchema = z.object({
+  path: layoutPathSchema.describe('Current path to the row (e.g., "/rows/2", "/tabs/0/rows/1")'),
+  toParent: layoutPathSchema
+    .optional()
+    .describe('Path to the destination parent. Omit to reorder within the same parent.'),
+  toPosition: z.number().optional().describe('Zero-based index at the destination (appends if omitted)'),
+});
+
+const addTabPayloadSchema = z.object({
+  tab: z.object({
+    kind: z.literal('TabsLayoutTab').optional().default('TabsLayoutTab'),
+    spec: tabsLayoutTabSpecSchema,
+  }),
+  parentPath: layoutPathSchema
+    .optional()
+    .default('/')
+    .describe('Path to the parent container. "/" for root, or e.g. "/rows/0" to add inside a row.'),
+  position: z.number().optional().describe('Zero-based index within the parent to insert at (appends if omitted)'),
+});
+
+const removeTabPayloadSchema = z.object({
+  path: layoutPathSchema.describe('Path to the tab (e.g., "/tabs/1", "/rows/0/tabs/2")'),
+  moveContentTo: layoutPathSchema
+    .optional()
+    .describe('Path to another group to move contained content to. Content is deleted if omitted.'),
+});
+
+const updateTabPayloadSchema = z.object({
+  path: layoutPathSchema.describe('Path to the tab'),
+  spec: partialTabSpecSchema,
+});
+
+const moveTabPayloadSchema = z.object({
+  path: layoutPathSchema.describe('Current path to the tab (e.g., "/tabs/2", "/rows/0/tabs/1")'),
+  toParent: layoutPathSchema
+    .optional()
+    .describe('Path to the destination parent. Omit to reorder within the same parent.'),
+  toPosition: z.number().optional().describe('Zero-based index at the destination (appends if omitted)'),
+});
+
+const layoutTypeSchema = z.enum(['RowsLayout', 'TabsLayout', 'GridLayout', 'AutoGridLayout']);
+
+export const autoGridOptionsSchema = z
+  .object({
+    maxColumnCount: z.number().optional().describe('Maximum number of columns'),
+    columnWidthMode: z
+      .enum(['narrow', 'standard', 'wide', 'custom'])
+      .optional()
+      .describe('Column width preset. Use "custom" with columnWidth for pixel values.'),
+    columnWidth: z
+      .number()
+      .optional()
+      .describe('Custom column width in pixels (only used when columnWidthMode is "custom")'),
+    rowHeightMode: z
+      .enum(['short', 'standard', 'tall', 'custom'])
+      .optional()
+      .describe('Row height preset. Use "custom" with rowHeight for pixel values.'),
+    rowHeight: z.number().optional().describe('Custom row height in pixels (only used when rowHeightMode is "custom")'),
+    fillScreen: z.boolean().optional().describe('Whether the grid fills the viewport height'),
+  })
+  .describe('Options for AutoGridLayout only. Rejected for other layout types.');
+
+// Panel building-block schemas (v2beta1)
+
+const dataLinkSchema = z.object({
+  title: z.string().describe('Link title'),
+  url: z.string().describe('Link URL'),
+  targetBlank: z.boolean().optional().describe('Open link in new tab'),
+});
+
+const panelQueryKindSchema = z
+  .object({
+    kind: z.literal('PanelQuery').optional().default('PanelQuery'),
+    spec: z.object({
+      query: dataQueryKindSchema.describe('The data query (DataQueryKind)'),
+      refId: z.string().describe('Unique query reference ID (e.g., "A", "B")'),
+      hidden: z.boolean().optional().default(false).describe('Whether this query is hidden from the panel'),
+    }),
+  })
+  .describe('A single panel query wrapping a DataQueryKind with refId and hidden flag');
+
+export type PanelQueryKind = z.infer<typeof panelQueryKindSchema>;
+
+const transformationKindSchema = z
+  .object({
+    kind: z.literal('Transformation').describe('Fixed literal "Transformation"'),
+    group: z.string().describe('Transformation ID (e.g., "organize", "sortBy", "filterByValue")'),
+    spec: z.object({
+      disabled: z.boolean().optional().describe('Disabled transformations are skipped'),
+      filter: z
+        .object({
+          id: z.string().describe('Matcher ID'),
+          options: z.unknown().optional().describe('Matcher options'),
+        })
+        .optional()
+        .describe('Optional frame matcher to scope the transformation'),
+      topic: z
+        .enum(['series', 'annotations', 'alertStates'])
+        .optional()
+        .describe('Data topic to pull frames from as input'),
+      options: z.record(z.string(), z.unknown()).optional().default({}).describe('Transformation-specific options'),
+    }),
+  })
+  .describe('A data transformation applied to query results');
+
+export type TransformationKind = z.infer<typeof transformationKindSchema>;
+
+const queryOptionsSpecSchema = z
+  .object({
+    timeFrom: z.string().optional().describe('Relative time override (e.g., "1h", "6h")'),
+    maxDataPoints: z.number().optional().describe('Maximum data points to return'),
+    timeShift: z.string().optional().describe('Time shift (e.g., "1h", "1d")'),
+    queryCachingTTL: z.number().optional().describe('Query caching TTL in milliseconds'),
+    interval: z.string().optional().describe('Min interval (e.g., "10s", "1m")'),
+    cacheTimeout: z.string().optional().describe('Cache timeout'),
+    hideTimeOverride: z.boolean().optional().describe('Hide time override info in panel header'),
+    timeCompare: z.string().optional().describe('Time comparison offset (e.g., "1d", "7d")'),
+  })
+  .describe('Query options for time range overrides and data point limits');
+
+const fieldConfigSchema = z
+  .object({
+    defaults: z
+      .record(z.string(), z.unknown())
+      .optional()
+      .default({})
+      .describe('Default field config applied to all fields'),
+    overrides: z
+      .array(
+        z.object({
+          matcher: z.object({
+            id: z
+              .enum(FieldMatcherID)
+              .describe('Field matcher ID (e.g., "byName", "byRegexp", "byType", "byFrameRefID", "byValue")'),
+            options: z.unknown().optional().describe('Matcher options'),
+          }),
+          properties: z.array(
+            z.object({
+              id: z.string().describe('Property ID'),
+              value: z.unknown().optional().describe('Property value'),
+            })
+          ),
+        })
+      )
+      .optional()
+      .default([])
+      .describe('Field config overrides for specific fields'),
+  })
+  .describe('Field configuration (defaults and overrides)');
+
+const vizConfigKindSchema = z
+  .object({
+    kind: z.literal('VizConfig').optional().default('VizConfig'),
+    group: z
+      .string()
+      .min(1)
+      .describe('Plugin ID (e.g., "timeseries", "stat", "gauge", "table", "barchart", "piechart")'),
+    version: z.string().optional().default(''),
+    spec: z
+      .object({
+        options: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .default({})
+          .describe('Panel-specific visualization options'),
+        fieldConfig: fieldConfigSchema
+          .optional()
+          .default({ defaults: {}, overrides: [] })
+          .describe('Field configuration'),
+      })
+      .optional()
+      .default({ options: {}, fieldConfig: { defaults: {}, overrides: [] } }),
+  })
+  .describe('Visualization configuration (plugin + options + field config)');
+
+const queryGroupKindSchema = z
+  .object({
+    kind: z.literal('QueryGroup').optional().default('QueryGroup'),
+    spec: z.object({
+      queries: z.array(panelQueryKindSchema).describe('Array of panel queries'),
+      transformations: z
+        .array(transformationKindSchema)
+        .optional()
+        .default([])
+        .describe('Data transformations to apply after queries'),
+      queryOptions: queryOptionsSpecSchema
+        .optional()
+        .default({})
+        .describe('Query options (time overrides, max data points)'),
+    }),
+  })
+  .describe('Query group containing queries, transformations, and query options');
+
+const panelKindSchema = z
+  .object({
+    kind: z.literal('Panel').optional().default('Panel'),
+    spec: z.object({
+      title: z.string().describe('Panel title'),
+      description: z.string().optional().default('').describe('Panel description'),
+      links: z.array(dataLinkSchema).optional().default([]).describe('Panel header links'),
+      data: queryGroupKindSchema.describe('Query group (queries, transformations, query options)'),
+      vizConfig: vizConfigKindSchema.describe('Visualization configuration (plugin type, options, field config)'),
+      transparent: z.boolean().optional().default(false).describe('Whether the panel background is transparent'),
+    }),
+  })
+  .describe('A dashboard panel element (v2beta1 PanelKind)');
+
+const partialPanelKindSchema = z
+  .object({
+    kind: z.literal('Panel').optional().default('Panel'),
+    spec: z.object({
+      title: z.string().optional().describe('Panel title'),
+      description: z.string().optional().describe('Panel description'),
+      links: z.array(dataLinkSchema).optional().describe('Panel header links (replaces existing)'),
+      data: z
+        .object({
+          kind: z.literal('QueryGroup').optional().default('QueryGroup'),
+          spec: z.object({
+            queries: z.array(panelQueryKindSchema).optional().describe('Replace all queries'),
+            transformations: z.array(transformationKindSchema).optional().describe('Replace all transformations'),
+            queryOptions: queryOptionsSpecSchema.optional().describe('Query options'),
+          }),
+        })
+        .optional()
+        .describe('Query group (partial). When provided, spec is required.'),
+      vizConfig: z
+        .object({
+          kind: z.literal('VizConfig').optional().default('VizConfig'),
+          group: z.string().optional().describe('Change plugin ID (e.g., "timeseries" to "stat")'),
+          version: z.string().optional(),
+          spec: z
+            .object({
+              options: z
+                .record(z.string(), z.unknown())
+                .optional()
+                .describe('Panel options (deep-merged into existing)'),
+              fieldConfig: fieldConfigSchema.optional().describe('Field config (deep-merged into existing)'),
+            })
+            .optional(),
+        })
+        .optional()
+        .describe('Visualization configuration (partial)'),
+      transparent: z.boolean().optional().describe('Whether the panel background is transparent'),
+    }),
+  })
+  .describe('Partial panel update (all fields optional, only provided fields are applied)');
+
+// Layout item schemas (v2beta1)
+// Canonical schemas match the generated v2beta1 types exactly (validated via `satisfies`).
+// The input schema (`layoutItemInputSchema`) is derived with relaxed constraints for callers.
+
+const gridLayoutItemKindSchema = z.object({
+  kind: z.literal('GridLayoutItem').optional().default('GridLayoutItem'),
+  spec: z.object({
+    x: z.number().describe('Column position (0-23 in a 24-column grid)'),
+    y: z.number().describe('Row position'),
+    width: z.number().describe('Width in grid columns (1-24)'),
+    height: z.number().describe('Height in grid units'),
+    element: elementReferenceSchema,
+    repeat: repeatOptionsSchema.optional().describe('Repeat for each value of a variable'),
+  }),
+}) satisfies z.ZodType<GridLayoutItemKind>;
+
+const layoutItemInputSchema = z
+  .object({
+    kind: z
+      .enum(['GridLayoutItem', 'AutoGridLayoutItem'])
+      .optional()
+      .describe(
+        'Layout item type hint. If omitted, automatically determined from the target layout. ' +
+          'A warning is emitted if the provided kind does not match the target layout.'
+      ),
+    spec: gridLayoutItemKindSchema.shape.spec
+      .omit({ element: true })
+      .extend({
+        conditionalRendering: conditionalRenderingGroupKindSchema
+          .optional()
+          .describe(
+            'Show/hide rules (Auto grid layout only). ' +
+              'On ADD_PANEL, ignored with a warning if the target is not Auto grid. ' +
+              'On UPDATE_PANEL, returns an error.'
+          ),
+      })
+      .partial()
+      .optional()
+      .default({}),
+  })
+  .describe(
+    'Layout item with optional sizing hints. The kind is optional and auto-detected from the target layout. ' +
+      'For GridLayout targets, provide x/y/width/height in spec. For AutoGridLayout targets, position is auto-arranged.'
+  );
+
+const updateLayoutPayloadSchema = z.object({
+  path: layoutPathSchema.describe('Path to the layout node (e.g. "/", "/rows/0", "/tabs/0")'),
+  layoutType: layoutTypeSchema
+    .optional()
+    .describe(
+      'Target layout type. If omitted, keeps current type and just applies options. ' +
+        'Group conversions: RowsLayout <-> TabsLayout. Grid conversions: GridLayout <-> AutoGridLayout.'
+    ),
+  options: autoGridOptionsSchema.optional().describe('AutoGridLayout properties. Rejected for other layout types.'),
+});
+
+// Panel payload schemas
+
+const addPanelPayloadSchema = z.object({
+  panel: panelKindSchema.describe('Panel to add (v2beta1 PanelKind). The id field is ignored and auto-assigned.'),
+  parentPath: layoutPathSchema
+    .optional()
+    .default('/')
+    .describe('Path to the parent container. "/" for root, or e.g. "/rows/0", "/tabs/1" to add inside a group.'),
+  layoutItem: layoutItemInputSchema
+    .optional()
+    .describe(
+      'Layout item with sizing hints. The kind is adapted to match the target layout (warning emitted if converted). ' +
+        'If omitted, defaults are used.'
+    ),
+});
+
+const updatePanelPayloadSchema = z
+  .object({
+    element: elementReferenceSchema.describe('Panel to update, identified by element name'),
+    panel: partialPanelKindSchema
+      .optional()
+      .describe(
+        'Partial panel update. Only provided fields are applied. Options and fieldConfig are deep-merged. ' +
+          'Can be omitted when only setting conditionalRendering.'
+      ),
+    conditionalRendering: conditionalRenderingGroupKindSchema
+      .optional()
+      .describe('Show/hide rules for this panel (Auto grid layout only). Omit to leave unchanged.'),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.panel && data.conditionalRendering === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        message: 'At least one of panel or conditionalRendering must be provided.',
+      });
+    }
+  });
+
+const removePanelPayloadSchema = z.object({
+  elements: z.array(elementReferenceSchema).max(10).describe('Panels to remove, identified by element name'),
+});
+
+const listPanelsPayloadSchema = z.object({
+  elements: z
+    .array(z.string())
+    .optional()
+    .describe('Element names to return (e.g. ["panel-1", "panel-5"]). Omit to return all.'),
+  evaluateVariables: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe('When true, include evaluatedQueries with template variables resolved to current values'),
+  includeStatus: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      'When true, include per-panel runtime status: loadingState, hasError, hasNoData, a structured errors array (source query/plugin/notice, message, refId/type), and info/warning notices'
+    ),
+  includeSchema: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      'When true, include per-panel dataSchema: the fields each result frame produced ({ name, type, labels }), for targeting field names in transformations or byName overrides'
+    ),
+});
+
+const movePanelPayloadSchema = z.object({
+  element: elementReferenceSchema.describe('Element to move, identified by name'),
+  toParent: layoutPathSchema
+    .optional()
+    .describe('Path to the destination group (e.g., "/rows/1", "/tabs/0/rows/2"). Stays in current group if omitted.'),
+  layoutItem: layoutItemInputSchema
+    .optional()
+    .describe(
+      'Layout item with sizing hints. The kind is adapted to match the target layout (warning emitted if converted). ' +
+        'If omitted, preserves current dimensions.'
+    ),
+  /** @deprecated Use layoutItem instead */
+  position: gridPositionSchema.optional().describe('DEPRECATED: Use layoutItem instead.'),
+});
+
+const dashboardLinkSchema = z.object({
+  title: z.string().describe('Link label shown in the dashboard top bar'),
+  url: z.string().optional().describe('Link target URL (required when type is "link")'),
+  type: z
+    .enum(['link', 'dashboards'])
+    .optional()
+    .default('link')
+    .describe('Link type: "link" (single URL) or "dashboards" (by tags)'),
+  tooltip: z.string().optional().describe('Hover tooltip'),
+  icon: z.string().optional().describe('Icon name, e.g. "external link"'),
+  targetBlank: z.boolean().optional().describe('Open in a new tab'),
+  asDropdown: z.boolean().optional().describe('Render tag-based links as a dropdown'),
+  includeVars: z.boolean().optional().describe('Append current template variable values to the link'),
+  keepTime: z.boolean().optional().describe('Append the current time range to the link'),
+  tags: z.array(z.string()).optional().describe('Tags used when type is "dashboards"'),
+  placement: z
+    .literal('inControlsMenu')
+    .optional()
+    .describe('Render the link in the dashboard controls dropdown menu instead of above the panels'),
+});
+
+const timeSettingsSchema = z
+  .object({
+    from: z.string().optional().describe('Start of time range (e.g. "now-6h")'),
+    to: z.string().optional().describe('End of time range (e.g. "now")'),
+    autoRefresh: z
+      .string()
+      .optional()
+      .describe('Auto-refresh interval (e.g. "5s", "1m", "5m", "15m", "30m", "1h", "2h", "1d", "" to disable)'),
+    timezone: z.string().optional().describe('Timezone ("browser", "utc", or IANA timezone)'),
+  })
+  .describe('Dashboard time settings. Partial update: only the provided fields change.');
+
+const updateDashboardSettingsPayloadSchema = z.object({
+  title: z.string().optional().describe('Dashboard title'),
+  description: z.string().optional().describe('Dashboard description'),
+  tags: z.array(z.string()).optional().describe('Dashboard tags'),
+  editable: z.boolean().optional().describe('Whether the dashboard is editable'),
+  cursorSync: z
+    .enum(['Off', 'Crosshair', 'Tooltip'])
+    .optional()
+    .describe('Shared crosshair/tooltip behavior across panels'),
+  links: z
+    .array(dashboardLinkSchema)
+    .optional()
+    .describe('Replaces the full dashboard links list. Pass [] to clear all links.'),
+  timeSettings: timeSettingsSchema.optional(),
+  liveNow: z.boolean().optional().describe('Continuously redraw panels to keep live data moving left'),
+  preload: z.boolean().optional().describe('Load all panels when the dashboard loads'),
+});
+
+/**
+ * Per-command payload schemas, accessible via DashboardMutationAPI.getPayloadSchema().
+ *
+ * Each value is a Zod schema with a `.describe()` annotation that serves
+ * as the command description (flows into JSON Schema for LLM consumers).
+ */
+export const payloads = {
+  addVariable: addVariablePayloadSchema.describe('Add a new template variable'),
+  removeVariable: removeVariablePayloadSchema.describe('Remove a template variable'),
+  updateVariable: updateVariablePayloadSchema.describe('Update an existing template variable'),
+  addAnnotation: addAnnotationPayloadSchema.describe('Add a new dashboard annotation layer'),
+  updateAnnotation: updateAnnotationPayloadSchema.describe(
+    'Update an existing dashboard annotation layer by name (partial update, deep-merge)'
+  ),
+  removeAnnotation: removeAnnotationPayloadSchema.describe('Remove a dashboard annotation layer by name'),
+  listAnnotations: emptyPayloadSchema.describe('List all annotation layers on the dashboard'),
+  listVariables: listVariablesPayloadSchema.describe('List template variables for a scope (dashboard or section)'),
+  enterEditMode: emptyPayloadSchema.describe('Enter dashboard edit mode'),
+  getLayout: getLayoutPayloadSchema.describe('Get the dashboard layout tree and trimmed elements map'),
+  addRow: addRowPayloadSchema.describe('Add a new row to the dashboard layout'),
+  removeRow: removeRowPayloadSchema.describe('Remove a row from the dashboard layout'),
+  updateRow: updateRowPayloadSchema.describe('Update a row in the dashboard layout'),
+  moveRow: moveRowPayloadSchema.describe('Move or reorder a row in the dashboard layout'),
+  addTab: addTabPayloadSchema.describe('Add a new tab to the dashboard layout'),
+  removeTab: removeTabPayloadSchema.describe('Remove a tab from the dashboard layout'),
+  updateTab: updateTabPayloadSchema.describe('Update a tab in the dashboard layout'),
+  moveTab: moveTabPayloadSchema.describe('Move or reorder a tab in the dashboard layout'),
+  updateLayout: updateLayoutPayloadSchema.describe('Update the layout type and/or properties at a given path'),
+  addPanel: addPanelPayloadSchema.describe('Add a new panel to the dashboard'),
+  updatePanel: updatePanelPayloadSchema.describe(
+    'Update an existing panel (partial update, deep-merge for options/fieldConfig)'
+  ),
+  removePanel: removePanelPayloadSchema.describe('Remove one or more panels from the dashboard'),
+  listPanels: listPanelsPayloadSchema.describe('List all panels on the dashboard with their layout items'),
+  movePanel: movePanelPayloadSchema.describe(
+    'Move a panel to a different group or reposition within the current group'
+  ),
+  getDashboardInfo: emptyPayloadSchema.describe(
+    'Get dashboard identity/folder metadata plus all settings (title, description, tags, editable, cursorSync, links, timeSettings, liveNow, preload)'
+  ),
+  updateDashboardSettings: updateDashboardSettingsPayloadSchema.describe(
+    'Update dashboard settings (title, description, tags, editable, cursorSync, links, timeSettings, liveNow, preload)'
+  ),
+};

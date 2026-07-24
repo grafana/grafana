@@ -1,0 +1,542 @@
+import { dateTime } from '../datetime/moment_wrapper';
+import { LoadingState, type TimeSeries, type TableData } from '../types/data';
+import { FieldType, type DataFrameDTO } from '../types/dataFrame';
+import { type PanelData } from '../types/panel';
+
+import { ArrayDataFrame } from './ArrayDataFrame';
+import * as guessFieldTypeModule from './guessFieldType';
+import {
+  isDataFrame,
+  isTableData,
+  reverseDataFrame,
+  sortDataFrame,
+  toDataFrame,
+  toLegacyResponseData,
+  getProcessedDataFrames,
+  preProcessPanelData,
+} from './processDataFrame';
+
+describe('toDataFrame', () => {
+  it('converts timeseries to series', () => {
+    const input1 = {
+      target: 'Field Name',
+      datapoints: [
+        [100, 1],
+        [200, 2],
+      ],
+    };
+    let series = toDataFrame(input1);
+    expect(series.name).toBe(input1.target);
+    expect(series.fields[1].name).toBe('Value');
+
+    const v0 = series.fields[0].values;
+    const v1 = series.fields[1].values;
+    expect(v0.length).toEqual(2);
+    expect(v0[0]).toEqual(1);
+    expect(v0[1]).toEqual(2);
+
+    expect(v1.length).toEqual(2);
+    expect(v1[0]).toEqual(100);
+    expect(v1[1]).toEqual(200);
+
+    // Should fill a default name if target is empty
+    const input2 = {
+      // without target
+      target: '',
+      datapoints: [
+        [100, 1],
+        [200, 2],
+      ],
+    };
+    series = toDataFrame(input2);
+    expect(series.fields[1].name).toEqual('Value');
+  });
+
+  it('assumes TimeSeries values are numbers', () => {
+    const input1 = {
+      target: 'time',
+      datapoints: [
+        [100, 1],
+        [200, 2],
+      ],
+    };
+    const data = toDataFrame(input1);
+    expect(data.fields[0].type).toBe(FieldType.time);
+    expect(data.fields[1].type).toBe(FieldType.number);
+  });
+
+  it('keeps dataFrame unchanged', () => {
+    const input = toDataFrame({
+      datapoints: [
+        [100, 1],
+        [200, 2],
+      ],
+    });
+    expect(input.length).toEqual(2);
+
+    // If the object is already a DataFrame, it should not change
+    const again = toDataFrame(input);
+    expect(again).toBe(input);
+  });
+
+  it('Make sure ArrayDataFrame is used as a DataFrame without modification', () => {
+    const orig = [
+      { a: 1, b: 2 },
+      { a: 3, b: 4 },
+    ];
+    const array = new ArrayDataFrame(orig); // will return a simple DataFrame
+    const frame = toDataFrame(array);
+    expect(frame).toEqual(array);
+    expect(frame.length).toEqual(orig.length);
+    expect(frame.fields.map((f) => f.name)).toEqual(['a', 'b']);
+  });
+
+  it('throws when table rows is not array', () => {
+    expect(() =>
+      toDataFrame({
+        columns: [],
+        rows: {},
+      })
+    ).toThrowError('Expected table rows to be array, got object.');
+  });
+
+  it('converts JSON document data to series', () => {
+    const input1 = {
+      datapoints: [
+        {
+          _id: 'W5rvjW0BKe0cA-E1aHvr',
+          _type: '_doc',
+          _index: 'logs-2019.10.02',
+          '@message': 'Deployed website',
+          '@timestamp': [1570044340458],
+          tags: ['deploy', 'website-01'],
+          description: 'Torkel deployed website',
+          coordinates: { latitude: 12, longitude: 121, level: { depth: 3, coolness: 'very' } },
+          'unescaped-content': 'breaking <br /> the <br /> row',
+        },
+      ],
+      filterable: true,
+      target: 'docs',
+      total: 206,
+      type: 'docs',
+    };
+    const dataFrame = toDataFrame(input1);
+    expect(dataFrame.fields[0].name).toBe(input1.target);
+
+    const v0 = dataFrame.fields[0].values;
+    expect(v0.length).toEqual(1);
+    expect(v0[0]).toEqual(input1.datapoints[0]);
+  });
+
+  it('converts JSON response to dataframes', () => {
+    const msg = {
+      schema: {
+        fields: [
+          {
+            name: 'First',
+            type: 'string',
+          },
+          {
+            name: 'Second',
+            type: 'number',
+          },
+        ],
+      },
+      data: {
+        values: [
+          ['2019-02-15', '2019-03-15', '2019-04-15'],
+          [3, 9, 16],
+        ],
+      },
+    };
+    const dataFrame = toDataFrame(msg);
+    expect(dataFrame.fields.map((f) => ({ [f.name]: f.values }))).toMatchInlineSnapshot(`
+      [
+        {
+          "First": [
+            "2019-02-15",
+            "2019-03-15",
+            "2019-04-15",
+          ],
+        },
+        {
+          "Second": [
+            3,
+            9,
+            16,
+          ],
+        },
+      ]
+    `);
+  });
+});
+
+describe('SeriesData backwards compatibility', () => {
+  it('can convert TimeSeries to series and back again', () => {
+    const timeseries = {
+      target: 'Field Name',
+      datapoints: [
+        [100, 1],
+        [200, 2],
+      ],
+    };
+    const series = toDataFrame(timeseries);
+    expect(isDataFrame(timeseries)).toBeFalsy();
+    expect(isDataFrame(series)).toBeTruthy();
+
+    const roundtrip = toLegacyResponseData(series) as TimeSeries;
+    expect(isDataFrame(roundtrip)).toBeFalsy();
+    expect(roundtrip.target).toBe(timeseries.target);
+  });
+
+  it('can convert TimeSeries to series and back again with tags should render name with tags', () => {
+    const timeseries = {
+      target: 'Series A',
+      tags: { server: 'ServerA', job: 'app' },
+      datapoints: [
+        [100, 1],
+        [200, 2],
+      ],
+    };
+    const series = toDataFrame(timeseries);
+    expect(isDataFrame(timeseries)).toBeFalsy();
+    expect(isDataFrame(series)).toBeTruthy();
+
+    const roundtrip = toLegacyResponseData(series) as TimeSeries;
+    expect(isDataFrame(roundtrip)).toBeFalsy();
+    expect(roundtrip.target).toBe('{job="app", server="ServerA"}');
+  });
+
+  it('can convert empty table to DataFrame then back to legacy', () => {
+    const table = {
+      columns: [],
+      rows: [],
+      type: 'table',
+    };
+
+    const series = toDataFrame(table);
+    const roundtrip = toLegacyResponseData(series) as TableData;
+    expect(roundtrip.columns.length).toBe(0);
+    expect(roundtrip.type).toBe('table');
+  });
+
+  it('converts TableData to series and back again', () => {
+    const table = {
+      columns: [
+        { text: 'a', unit: 'ms' },
+        { text: 'b', unit: 'zz' },
+        { text: 'c', unit: 'yy' },
+      ],
+      rows: [
+        [100, 1, 'a'],
+        [200, 2, 'a'],
+      ],
+    };
+    const series = toDataFrame(table);
+    expect(isTableData(table)).toBeTruthy();
+    expect(isDataFrame(series)).toBeTruthy();
+    expect(series.fields[0].config.unit).toEqual('ms');
+
+    const roundtrip = toLegacyResponseData(series) as TimeSeries;
+    expect(isTableData(roundtrip)).toBeTruthy();
+    expect(roundtrip).toMatchObject(table);
+  });
+
+  it('can convert empty TableData to DataFrame', () => {
+    const table = {
+      columns: [],
+      rows: [],
+    };
+
+    const series = toDataFrame(table);
+    expect(series.fields.length).toBe(0);
+  });
+
+  it('can convert DataFrame to TableData to series and back again', () => {
+    const json: DataFrameDTO = {
+      refId: 'Z',
+      meta: {
+        custom: {
+          something: 8,
+        },
+      },
+      fields: [
+        { name: 'T', type: FieldType.time, values: [1, 2, 3] },
+        { name: 'N', type: FieldType.number, config: { filterable: true }, values: [100, 200, 300] },
+        { name: 'S', type: FieldType.string, config: { filterable: true }, values: ['1', '2', '3'] },
+      ],
+    };
+    const series = toDataFrame(json);
+    const table = toLegacyResponseData(series) as TableData;
+    expect(table.refId).toBe(series.refId);
+    expect(table.meta).toEqual(series.meta);
+
+    const names = table.columns.map((c) => c.text);
+    expect(names).toEqual(['T', 'N', 'S']);
+  });
+
+  it('can convert TimeSeries to JSON document and back again', () => {
+    const timeseries = {
+      datapoints: [
+        {
+          _id: 'W5rvjW0BKe0cA-E1aHvr',
+          _type: '_doc',
+          _index: 'logs-2019.10.02',
+          '@message': 'Deployed website',
+          '@timestamp': [1570044340458],
+          tags: ['deploy', 'website-01'],
+          description: 'Torkel deployed website',
+          coordinates: { latitude: 12, longitude: 121, level: { depth: 3, coolness: 'very' } },
+          'unescaped-content': 'breaking <br /> the <br /> row',
+        },
+      ],
+      filterable: true,
+      target: 'docs',
+      total: 206,
+      type: 'docs',
+    };
+    const series = toDataFrame(timeseries);
+    expect(isDataFrame(timeseries)).toBeFalsy();
+    expect(isDataFrame(series)).toBeTruthy();
+
+    const roundtrip = toLegacyResponseData(series);
+    expect(isDataFrame(roundtrip)).toBeFalsy();
+    expect('type' in roundtrip && roundtrip.type).toBe('docs');
+    expect('target' in roundtrip && roundtrip.target).toBe('docs');
+    expect('filterable' in roundtrip && roundtrip.filterable).toBeTruthy();
+  });
+});
+
+describe('sorted DataFrame', () => {
+  const frame = toDataFrame({
+    fields: [
+      { name: 'fist', type: FieldType.time, values: [1, 2, 3] },
+      { name: 'second', type: FieldType.string, values: ['a', 'b', 'c'] },
+      { name: 'third', type: FieldType.number, values: [2000, 3000, 1000] },
+      { name: 'fourth', type: FieldType.time, values: [1, 2, 3], nanos: [10, 20, 30] },
+    ],
+  });
+
+  it('Should sort numbers', () => {
+    const sorted = sortDataFrame(frame, 0, true);
+    expect(sorted.length).toEqual(3);
+    expect(sorted.fields[0].values).toEqual([3, 2, 1]);
+    expect(sorted.fields[0].nanos).toBeUndefined();
+    expect(sorted.fields[1].values).toEqual(['c', 'b', 'a']);
+    expect(sorted.fields[1].nanos).toBeUndefined();
+    expect(sorted.fields[3].values).toEqual([3, 2, 1]);
+    expect(sorted.fields[3].nanos).toEqual([30, 20, 10]);
+  });
+
+  it('Should sort strings', () => {
+    const sorted = sortDataFrame(frame, 1, true);
+    expect(sorted.length).toEqual(3);
+    expect(sorted.fields[0].values).toEqual([3, 2, 1]);
+    expect(sorted.fields[0].nanos).toBeUndefined();
+    expect(sorted.fields[1].values).toEqual(['c', 'b', 'a']);
+    expect(sorted.fields[1].nanos).toBeUndefined();
+    expect(sorted.fields[3].values).toEqual([3, 2, 1]);
+    expect(sorted.fields[3].nanos).toEqual([30, 20, 10]);
+  });
+
+  it('Should handle arrays with empty values correctly', () => {
+    // Create a sparse array with empty slots (undefined values)
+    const values = ['502', '502', , '500', '500', '200', '404']; // Note the empty slot at index 2
+    const frame = toDataFrame({
+      fields: [{ name: 'status', type: FieldType.string, values }],
+    });
+    const sorted = sortDataFrame(frame, 0, false);
+
+    expect(sorted.fields[0].values).toEqual(['200', '404', '500', '500', '502', '502', undefined]);
+  });
+});
+
+describe('sorted DataFrame by nanos', () => {
+  it('Should sort nanos with numeric timestamp', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'first', type: FieldType.time, values: [1, 1, 2, 2, 3, 3], nanos: [100, 102, 1, 2, 1000, 999] },
+        { name: 'second', type: FieldType.string, values: ['a', 'b', 'c', 'd', 'e', 'f'] },
+      ],
+    });
+
+    const sorted = sortDataFrame(frame, 0, true);
+    expect(sorted.length).toEqual(6);
+    expect(sorted.fields[0].values).toEqual([3, 3, 2, 2, 1, 1]);
+    expect(sorted.fields[1].values).toEqual(['e', 'f', 'd', 'c', 'b', 'a']);
+  });
+
+  it('Should sort by nanos with dateTime timestamp', () => {
+    const frame = toDataFrame({
+      fields: [
+        {
+          name: 'first',
+          type: FieldType.time,
+          values: [dateTime(50), dateTime(50), dateTime(100)],
+          nanos: [1, 0, 100],
+        },
+        { name: 'second', type: FieldType.string, values: ['a', 'b', 'c'] },
+      ],
+    });
+
+    const sorted = sortDataFrame(frame, 0);
+    expect(sorted.length).toEqual(3);
+    expect(sorted.fields[0].values).toEqual([dateTime(50), dateTime(50), dateTime(100)]);
+    expect(sorted.fields[1].values).toEqual(['b', 'a', 'c']);
+  });
+
+  // Not sure if we expect nanos to exist on any field type besides time fields, but the schema allows it.
+  // Keep in mind if sorting by a non time field, the nanos is expected to present on the field that is being sorted
+  it('Should sort by nanos with string timestamp', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'fist', type: FieldType.time, values: [1, 2, 3, 3] },
+        { name: 'second', type: FieldType.string, values: ['a', 'b', 'b', 'c'], nanos: [100, 0, 1, 0] },
+        { name: 'third', type: FieldType.number, values: [2000, 3000, 1000] },
+      ],
+    });
+
+    const sorted = sortDataFrame(frame, 1, true);
+    expect(sorted.length).toEqual(4);
+    expect(sorted.fields[0].values).toEqual([3, 2, 3, 1]);
+    expect(sorted.fields[0].nanos).toBeUndefined();
+    expect(sorted.fields[1].values).toEqual(['c', 'b', 'b', 'a']);
+  });
+});
+
+describe('reverse DataFrame', () => {
+  const frame = toDataFrame({
+    fields: [
+      { name: 'fist', type: FieldType.time, values: [1, 2, 3], nanos: [10, 20, 30] },
+      { name: 'third', type: FieldType.string, values: ['a', 'b', 'c'] },
+    ],
+  });
+  it('should reverse dataframe', () => {
+    const rev = reverseDataFrame(frame);
+    expect(rev.length).toEqual(3);
+    expect(rev.fields[0].values).toEqual([3, 2, 1]);
+    expect(rev.fields[0].nanos).toEqual([30, 20, 10]);
+    expect(rev.fields[1].values).toEqual(['c', 'b', 'a']);
+    expect(rev.fields[1].nanos).toBeUndefined();
+  });
+});
+
+describe('getProcessedDataFrames', () => {
+  it('returns empty array when results is undefined', () => {
+    expect(getProcessedDataFrames(undefined)).toEqual([]);
+  });
+
+  it('returns empty array when results is not an array', () => {
+    expect(getProcessedDataFrames({} as unknown as unknown[])).toEqual([]);
+  });
+
+  it('returns empty array for empty input', () => {
+    expect(getProcessedDataFrames([])).toEqual([]);
+  });
+
+  it('calls guessFieldTypes once per frame to infer field types', () => {
+    const spy = jest.spyOn(guessFieldTypeModule, 'guessFieldTypes');
+    const frames = [
+      { fields: [{ name: 'value', values: [1, 2] }] },
+      { fields: [{ name: 'label', values: ['a', 'b'] }] },
+    ] as unknown as DataFrameDTO[];
+    getProcessedDataFrames(frames);
+    expect(spy).toHaveBeenCalledTimes(frames.length);
+    spy.mockRestore();
+  });
+
+  it('infers untyped fields via guessFieldTypes (time from timestamps, number from numeric values)', () => {
+    const raw = {
+      fields: [
+        { name: 'time', values: [1000, 2000] },
+        { name: 'value', values: [1, 2] },
+      ],
+    } as unknown as DataFrameDTO;
+    const [frame] = getProcessedDataFrames([raw]);
+    expect(frame.fields[0].type).toBe(FieldType.time);
+    expect(frame.fields[1].type).toBe(FieldType.number);
+  });
+
+  it('clears cached field state on processed frames', () => {
+    const raw = {
+      fields: [{ name: 'value', type: FieldType.number, values: [1], state: { calcs: { sum: 1 } } }],
+    };
+    const result = getProcessedDataFrames([raw]);
+    expect(result[0].fields[0].state).toBeNull();
+  });
+
+  it('processes multiple frames', () => {
+    const frames = [
+      { fields: [{ name: 'a', type: FieldType.number, values: [1] }] },
+      { fields: [{ name: 'b', type: FieldType.string, values: ['x'] }] },
+    ];
+    const result = getProcessedDataFrames(frames);
+    expect(result).toHaveLength(2);
+  });
+});
+
+describe('preProcessPanelData', () => {
+  const baseData = {
+    state: LoadingState.Done,
+    series: [
+      toDataFrame({
+        fields: [{ name: 'time', type: FieldType.time, values: [1000, 2000] }],
+      }),
+    ],
+    timeRange: { from: dateTime(0), to: dateTime(1000), raw: { from: dateTime(0), to: dateTime(1000) } },
+  };
+
+  it('clears field state on each series frame, proving getProcessedDataFrame ran', () => {
+    const frameWithState = toDataFrame({
+      fields: [{ name: 'value', type: FieldType.number, values: [1], state: { calcs: { sum: 1 } } }],
+    });
+    const data = { ...baseData, series: [frameWithState] };
+    const result = preProcessPanelData(data);
+    expect(result.series[0].fields[0].state).toBeNull();
+  });
+
+  it('reuses the previous series while loading with no data, to avoid a no-data flicker', () => {
+    const loadingData = {
+      state: LoadingState.Loading,
+      series: [],
+      timeRange: baseData.timeRange,
+    };
+    const lastResult = {
+      ...baseData,
+      state: LoadingState.Done,
+    };
+    const result = preProcessPanelData(loadingData, lastResult);
+    expect(result.state).toBe(LoadingState.Loading);
+    // the previous (non-empty) series is carried over rather than the incoming empty one
+    expect(result.series).toBe(lastResult.series);
+    expect(result.series).toHaveLength(1);
+  });
+
+  it('keeps its own empty series while loading when there is no previous result to fall back to', () => {
+    const loadingData = {
+      state: LoadingState.Loading,
+      series: [],
+      timeRange: baseData.timeRange,
+    };
+    const result = preProcessPanelData(loadingData, undefined);
+    expect(result.state).toBe(LoadingState.Loading);
+    // with no lastResult, there is nothing to carry over, so the empty series is preserved
+    expect(result.series).toBe(loadingData.series);
+    expect(result.series).toHaveLength(0);
+  });
+
+  it('includes timings in processed result', () => {
+    const result = preProcessPanelData(baseData);
+    expect(result.timings).toBeDefined();
+    expect(result.timings!.dataProcessingTime).toBeGreaterThanOrEqual(0);
+  });
+
+  it('processes annotations when present', () => {
+    const dataWithAnnotations = {
+      ...baseData,
+      annotations: [{ fields: [{ name: 'time', type: FieldType.time, values: [500] }] }],
+    };
+    const result = preProcessPanelData(dataWithAnnotations as unknown as PanelData);
+    expect(result.annotations).toHaveLength(1);
+  });
+});

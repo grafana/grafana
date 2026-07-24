@@ -1,0 +1,749 @@
+package api
+
+import (
+	"context"
+	"errors"
+	"net/http"
+	"strconv"
+	"strings"
+
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	annotationapp "github.com/grafana/grafana/pkg/registry/apps/annotation"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/annotations"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
+)
+
+const defaultAnnotationsLimit = 100
+
+// swagger:route GET /annotations annotations getAnnotations
+//
+// Find Annotations.
+//
+// Starting in Grafana v6.4 regions annotations are now returned in one entity that now includes the timeEnd property.
+//
+// Responses:
+// 200: getAnnotationsResponse
+// 401: unauthorisedError
+// 500: internalServerError
+func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Response {
+	query := &annotations.ItemQuery{
+		From:         c.QueryInt64("from"),
+		To:           c.QueryInt64("to"),
+		OrgID:        c.GetOrgID(),
+		UserID:       c.QueryInt64("userId"),
+		UserUID:      c.Query("userUID"),
+		AlertID:      c.QueryInt64("alertId"),
+		AlertUID:     c.Query("alertUID"),
+		DashboardID:  c.QueryInt64("dashboardId"),
+		DashboardUID: c.Query("dashboardUID"),
+		PanelID:      c.QueryInt64("panelId"),
+		Limit:        c.QueryInt64("limit"),
+		Tags:         c.QueryStrings("tags"),
+		Type:         c.Query("type"),
+		MatchAny:     c.QueryBool("matchAny"),
+		SignedInUser: c.SignedInUser,
+	}
+	if query.Limit == 0 {
+		query.Limit = defaultAnnotationsLimit
+	}
+
+	// When dashboard ID exists without UID, find the UID from dashboards api
+	if query.DashboardID != 0 && query.DashboardUID == "" { // nolint:staticcheck
+		dq := dashboards.GetDashboardQuery{ID: query.DashboardID, OrgID: c.GetOrgID()} // nolint:staticcheck
+		dqResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &dq)
+		if err != nil {
+			return response.Error(http.StatusBadRequest, "Invalid dashboard ID in annotation request", err)
+		}
+		query.DashboardUID = dqResult.UID
+	}
+
+	items, err := hs.annotationsRepo.Find(c.Req.Context(), query)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to get annotations", err)
+	}
+
+	for _, item := range items {
+		if item.Email != "" {
+			item.AvatarURL = dtos.GetGravatarUrl(hs.Cfg, item.Email)
+		}
+	}
+
+	return response.JSON(http.StatusOK, items)
+}
+
+type AnnotationError struct {
+	message string
+}
+
+func (e *AnnotationError) Error() string {
+	return e.message
+}
+
+// swagger:route POST /annotations annotations postAnnotation
+//
+// Create Annotation.
+//
+// Creates an annotation in the Grafana database. The dashboardId and panelId fields are optional. If they are not specified then an organization annotation is created and can be queried in any dashboard that adds the Grafana annotations data source. When creating a region annotation include the timeEnd property.
+// The format for `time` and `timeEnd` should be epoch numbers in millisecond resolution.
+// The response for this HTTP request is slightly different in versions prior to v6.4. In prior versions you would also get an endId if you where creating a region. But in 6.4 regions are represented using a single event with time and timeEnd properties.
+//
+// Responses:
+// 200: postAnnotationResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Response {
+	cmd := dtos.PostAnnotationsCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	// overwrite dashboardId when dashboardUID is not empty
+	if cmd.DashboardUID != "" {
+		query := dashboards.GetDashboardQuery{OrgID: c.GetOrgID(), UID: cmd.DashboardUID}
+		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
+		if err == nil {
+			cmd.DashboardId = queryResult.ID
+		}
+	}
+
+	// get dashboard uid if not provided
+	if cmd.DashboardId != 0 && cmd.DashboardUID == "" {
+		query := dashboards.GetDashboardQuery{OrgID: c.GetOrgID(), ID: cmd.DashboardId}
+		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
+		if err != nil {
+			return response.Error(http.StatusBadRequest, "Invalid dashboard ID in annotation request", err)
+		}
+		cmd.DashboardUID = queryResult.UID
+	}
+
+	if canSave, err := hs.canCreateAnnotation(c, cmd.DashboardUID); err != nil || !canSave {
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Error while checking annotation permissions", err)
+		} else {
+			return response.Error(http.StatusForbidden, "Access denied to save the annotation", nil)
+		}
+	}
+
+	if cmd.Text == "" {
+		err := &AnnotationError{"text field should not be empty"}
+		return response.Error(http.StatusBadRequest, "Failed to save annotation", err)
+	}
+
+	userID, _ := identity.UserIdentifier(c.GetID())
+	item := annotations.Item{
+		OrgID:        c.GetOrgID(),
+		UserID:       userID,
+		DashboardID:  cmd.DashboardId,
+		DashboardUID: cmd.DashboardUID,
+		PanelID:      cmd.PanelId,
+		Epoch:        cmd.Time,
+		EpochEnd:     cmd.TimeEnd,
+		Text:         cmd.Text,
+		Data:         cmd.Data,
+		Tags:         cmd.Tags,
+	}
+
+	if err := hs.annotationsRepo.Save(c.Req.Context(), &item); err != nil {
+		if errors.Is(err, annotations.ErrTimerangeMissing) {
+			return response.Error(http.StatusBadRequest, "Failed to save annotation", err)
+		}
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to save annotation", err)
+	}
+
+	return response.JSON(http.StatusOK, util.DynMap{
+		"message": "Annotation added",
+		"id":      item.ID,
+	})
+}
+
+// swagger:route POST /annotations/graphite annotations postGraphiteAnnotation
+//
+// Create Annotation in Graphite format.
+//
+// Creates an annotation by using Graphite-compatible event format. The `when` and `data` fields are optional. If `when` is not specified then the current time will be used as annotation’s timestamp. The `tags` field can also be in prior to Graphite `0.10.0` format (string with multiple tags being separated by a space).
+//
+// Responses:
+// 200: postAnnotationResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) PostGraphiteAnnotation(c *contextmodel.ReqContext) response.Response {
+	cmd := annotationapp.PostGraphiteAnnotationsCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	tagsArray, err := cmd.Validate()
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Failed to save Graphite annotation", err)
+	}
+
+	text := annotationapp.FormatGraphiteText(cmd.What, cmd.Data)
+	userID, _ := identity.UserIdentifier(c.GetID())
+	item := annotations.Item{
+		OrgID:  c.GetOrgID(),
+		UserID: userID,
+		Epoch:  cmd.When * 1000,
+		Text:   text,
+		Tags:   tagsArray,
+	}
+
+	if err := hs.annotationsRepo.Save(c.Req.Context(), &item); err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to save Graphite annotation", err)
+	}
+
+	return response.JSON(http.StatusOK, util.DynMap{
+		"message": "Graphite annotation added",
+		"id":      item.ID,
+	})
+}
+
+// swagger:route PUT /annotations/{annotation_id} annotations updateAnnotation
+//
+// Update Annotation.
+//
+// Updates all properties of an annotation that matches the specified id. To only update certain property, consider using the Patch Annotation operation.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) UpdateAnnotation(c *contextmodel.ReqContext) response.Response {
+	cmd := dtos.UpdateAnnotationsCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	annotationID, err := strconv.ParseInt(web.Params(c.Req)[":annotationId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
+	}
+
+	userID, _ := identity.UserIdentifier(c.GetID())
+
+	if _, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser); resp != nil {
+		return resp
+	}
+
+	item := annotations.Item{
+		OrgID:    c.GetOrgID(),
+		UserID:   userID,
+		ID:       annotationID,
+		Epoch:    cmd.Time,
+		EpochEnd: cmd.TimeEnd,
+		Text:     cmd.Text,
+		Tags:     cmd.Tags,
+	}
+	// Data is omitted unless supplied; the repository preserves the stored value.
+	if cmd.Data != nil {
+		item.Data = cmd.Data
+	}
+
+	if err := hs.annotationsRepo.Update(c.Req.Context(), &item); err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update annotation", err)
+	}
+
+	return response.Success("Annotation updated")
+}
+
+// swagger:route PATCH /annotations/{annotation_id} annotations patchAnnotation
+//
+// Patch Annotation.
+//
+// Updates one or more properties of an annotation that matches the specified ID.
+// This operation currently supports updating of the `text`, `tags`, `time` and `timeEnd` properties.
+// This is available in Grafana 6.0.0-beta2 and above.
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Response {
+	cmd := dtos.PatchAnnotationsCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	annotationID, err := strconv.ParseInt(web.Params(c.Req)[":annotationId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
+	}
+
+	userID, _ := identity.UserIdentifier(c.GetID())
+
+	annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
+	if resp != nil {
+		return resp
+	}
+
+	// Start from the stored annotation, then apply the supplied fields.
+	existing := annotations.Item{
+		OrgID:    c.GetOrgID(),
+		UserID:   userID,
+		ID:       annotationID,
+		Epoch:    annotation.Time,
+		EpochEnd: annotation.TimeEnd,
+		Text:     annotation.Text,
+		Tags:     annotation.Tags,
+		PanelID:  annotation.PanelID,
+	}
+	if annotation.DashboardUID != nil {
+		existing.DashboardUID = *annotation.DashboardUID
+	}
+
+	if cmd.Tags != nil {
+		existing.Tags = cmd.Tags
+	}
+	if cmd.Text != "" {
+		existing.Text = cmd.Text
+	}
+	if cmd.Time > 0 {
+		existing.Epoch = cmd.Time
+	}
+	if cmd.TimeEnd > 0 {
+		existing.EpochEnd = cmd.TimeEnd
+	}
+	if cmd.Data != nil {
+		existing.Data = cmd.Data
+	}
+
+	if err := hs.annotationsRepo.Update(c.Req.Context(), &existing); err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to patch annotation", err)
+	}
+
+	return response.Success("Annotation patched")
+}
+
+// swagger:route POST /annotations/mass-delete annotations massDeleteAnnotations
+//
+// Delete multiple annotations.
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 500: internalServerError
+func (hs *HTTPServer) MassDeleteAnnotations(c *contextmodel.ReqContext) response.Response {
+	cmd := dtos.MassDeleteAnnotationsCmd{}
+	err := web.Bind(c.Req, &cmd)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	if cmd.DashboardUID != "" {
+		query := dashboards.GetDashboardQuery{OrgID: c.GetOrgID(), UID: cmd.DashboardUID}
+		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
+		if err == nil {
+			cmd.DashboardId = queryResult.ID
+		}
+	}
+
+	if cmd.DashboardId != 0 && cmd.DashboardUID == "" {
+		query := dashboards.GetDashboardQuery{OrgID: c.GetOrgID(), ID: cmd.DashboardId}
+		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
+		if err != nil {
+			return response.Error(http.StatusBadRequest, "Invalid dashboard ID in annotation request", err)
+		}
+		cmd.DashboardUID = queryResult.UID
+	}
+
+	if (cmd.DashboardId != 0 && cmd.PanelId == 0) || (cmd.PanelId != 0 && cmd.DashboardId == 0) {
+		err := &AnnotationError{message: "DashboardId and PanelId are both required for mass delete"}
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	var deleteParams *annotations.DeleteParams
+
+	// validations only for RBAC. A user can mass delete all annotations in a (dashboard + panel) or a specific annotation
+	// if has access to that dashboard.
+	var dashboardUID string
+
+	if cmd.AnnotationId != 0 {
+		annotation, respErr := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, cmd.AnnotationId, c.SignedInUser)
+		if respErr != nil {
+			return respErr
+		}
+		dashboardUID = *annotation.DashboardUID
+		deleteParams = &annotations.DeleteParams{
+			OrgID: c.GetOrgID(),
+			ID:    cmd.AnnotationId,
+		}
+	} else {
+		dashboardUID = cmd.DashboardUID
+		deleteParams = &annotations.DeleteParams{
+			OrgID:        c.GetOrgID(),
+			DashboardID:  cmd.DashboardId,
+			DashboardUID: cmd.DashboardUID,
+			PanelID:      cmd.PanelId,
+		}
+	}
+
+	canSave, err := hs.canMassDeleteAnnotations(c, dashboardUID)
+	if err != nil || !canSave {
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Error while checking annotation permissions", err)
+		} else {
+			return response.Error(http.StatusForbidden, "Access denied to mass delete annotations", nil)
+		}
+	}
+
+	err = hs.annotationsRepo.Delete(c.Req.Context(), deleteParams)
+
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to delete annotations", err)
+	}
+
+	return response.Success("Annotations deleted")
+}
+
+// swagger:route GET /annotations/{annotation_id} annotations getAnnotationByID
+//
+// Get Annotation by ID.
+//
+// Responses:
+// 200: getAnnotationByIDResponse
+// 401: unauthorisedError
+// 500: internalServerError
+func (hs *HTTPServer) GetAnnotationByID(c *contextmodel.ReqContext) response.Response {
+	annotationID, err := strconv.ParseInt(web.Params(c.Req)[":annotationId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
+	}
+
+	annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
+	if resp != nil {
+		return resp
+	}
+
+	if annotation.Email != "" {
+		annotation.AvatarURL = dtos.GetGravatarUrl(hs.Cfg, annotation.Email)
+	}
+
+	return response.JSON(http.StatusOK, annotation)
+}
+
+// swagger:route DELETE /annotations/{annotation_id} annotations deleteAnnotationByID
+//
+// Delete Annotation By ID.
+//
+// Deletes the annotation that matches the specified ID.
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) DeleteAnnotationByID(c *contextmodel.ReqContext) response.Response {
+	annotationID, err := strconv.ParseInt(web.Params(c.Req)[":annotationId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
+	}
+
+	err = hs.annotationsRepo.Delete(c.Req.Context(), &annotations.DeleteParams{
+		OrgID: c.GetOrgID(),
+		ID:    annotationID,
+	})
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to delete annotation", err)
+	}
+
+	return response.Success("Annotation deleted")
+}
+
+func findAnnotationByID(ctx context.Context, repo annotations.Repository, annotationID int64, user identity.Requester) (*annotations.ItemDTO, response.Response) {
+	query := &annotations.ItemQuery{
+		AnnotationID: annotationID,
+		OrgID:        user.GetOrgID(),
+		SignedInUser: user,
+	}
+	items, err := repo.Find(ctx, query)
+
+	if err != nil {
+		return nil, response.Error(http.StatusInternalServerError, "Failed to find annotation", err)
+	}
+
+	if len(items) == 0 {
+		return nil, response.Error(http.StatusNotFound, "Annotation not found", nil)
+	}
+
+	return items[0], nil
+}
+
+// swagger:route GET /annotations/tags annotations getAnnotationTags
+//
+// Find Annotations Tags.
+//
+// Find all the event tags created in the annotations.
+//
+// Responses:
+// 200: getAnnotationTagsResponse
+// 401: unauthorisedError
+// 500: internalServerError
+func (hs *HTTPServer) GetAnnotationTags(c *contextmodel.ReqContext) response.Response {
+	query := &annotations.TagsQuery{
+		OrgID: c.GetOrgID(),
+		Tag:   c.Query("tag"),
+		Limit: c.QueryInt64("limit"),
+	}
+
+	result, err := hs.annotationsRepo.FindTags(c.Req.Context(), query)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to find annotation tags", err)
+	}
+
+	return response.JSON(http.StatusOK, annotations.GetAnnotationTagsResponse{Result: result})
+}
+
+// AnnotationTypeScopeResolver provides an ScopeAttributeResolver able to
+// resolve annotation types. Scope "annotations:id:<id>" will be translated to "annotations:type:<type>,
+// where <type> is the type of annotation with id <id>.
+// Dashboard annotation scope will be resolved to the corresponding
+// dashboard and folder scopes (eg, "dashboards:uid:<annotation_dashboard_uid>", "folders:uid:<parent_folder_uid>" etc).
+func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, features featuremgmt.FeatureToggles, dashSvc dashboards.DashboardService, folderSvc folder.Service) (string, accesscontrol.ScopeAttributeResolver) {
+	prefix := accesscontrol.ScopeAnnotationsProvider.GetResourceScope("")
+	return prefix, accesscontrol.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, initialScope string) ([]string, error) {
+		scopeParts := strings.Split(initialScope, ":")
+		if scopeParts[0] != accesscontrol.ScopeAnnotationsRoot || len(scopeParts) != 3 {
+			return nil, accesscontrol.ErrInvalidScope
+		}
+
+		annotationIdStr := scopeParts[2]
+		annotationId, err := strconv.Atoi(annotationIdStr)
+		if err != nil {
+			return nil, accesscontrol.ErrInvalidScope
+		}
+
+		// tempUser is used to resolve annotation type.
+		// The annotation doesn't get returned to the real user, so real user's permissions don't matter here.
+		tmpCtx, tempUser := identity.WithServiceIdentity(ctx, orgID)
+
+		annotation, resp := findAnnotationByID(tmpCtx, annotationsRepo, int64(annotationId), tempUser)
+		if resp != nil {
+			return nil, errors.New("could not resolve annotation type")
+		}
+
+		if annotation.DashboardUID == nil || *annotation.DashboardUID == "" {
+			return []string{accesscontrol.ScopeAnnotationsTypeOrganization}, nil
+		} else {
+			return identity.WithServiceIdentityFn(ctx, orgID, func(ctx context.Context) ([]string, error) {
+				dashboard, err := dashSvc.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: *annotation.DashboardUID, OrgID: orgID})
+				if err != nil {
+					return nil, err
+				}
+				scopes := []string{dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashboard.UID)}
+				// Append dashboard parent scopes if dashboard is in a folder or the general scope if dashboard is not in a folder
+				if dashboard.FolderUID != "" {
+					scopes = append(scopes, folder.ScopeFoldersProvider.GetResourceScopeUID(dashboard.FolderUID))
+					inheritedScopes, err := folder.GetInheritedScopes(ctx, orgID, dashboard.FolderUID, folderSvc)
+					if err != nil {
+						return nil, err
+					}
+					scopes = append(scopes, inheritedScopes...)
+				} else {
+					scopes = append(scopes, folder.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
+				}
+				return scopes, nil
+			})
+		}
+	})
+}
+
+func (hs *HTTPServer) canCreateAnnotation(c *contextmodel.ReqContext, dashboardUID string) (bool, error) {
+	if dashboardUID != "" {
+		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashboardUID))
+		return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
+	} else { // organization annotations
+		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, accesscontrol.ScopeAnnotationsTypeOrganization)
+		return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
+	}
+}
+
+func (hs *HTTPServer) canMassDeleteAnnotations(c *contextmodel.ReqContext, dashboardUID string) (bool, error) {
+	if dashboardUID == "" {
+		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsDelete, accesscontrol.ScopeAnnotationsTypeOrganization)
+		return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
+	}
+
+	evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsDelete, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashboardUID))
+	return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
+}
+
+// swagger:parameters getAnnotationByID
+type GetAnnotationByIDParams struct {
+	// in:path
+	// required:true
+	AnnotationID string `json:"annotation_id"`
+}
+
+// swagger:parameters deleteAnnotationByID
+type DeleteAnnotationByIDParams struct {
+	// in:path
+	// required:true
+	AnnotationID string `json:"annotation_id"`
+}
+
+// swagger:parameters getAnnotations
+type GetAnnotationsParams struct {
+	// Find annotations created after specific epoch datetime in milliseconds.
+	// in:query
+	// required:false
+	From int64 `json:"from"`
+	// Find annotations created before specific epoch datetime in milliseconds.
+	// in:query
+	// required:false
+	To int64 `json:"to"`
+	// Limit response to annotations created by specific user.
+	// in:query
+	// required:false
+	UserID int64 `json:"userId"`
+	// Limit response to annotations created by a specific user, identified by UID.
+	// in:query
+	// required:false
+	UserUID string `json:"userUID"`
+	// Find annotations for a specified alert rule by its ID.
+	// deprecated: AlertID is deprecated and will be removed in future versions. Please use AlertUID instead.
+	// in:query
+	// required:false
+	AlertID int64 `json:"alertId"`
+	// Find annotations for a specified alert rule by its UID.
+	// in:query
+	// required:false
+	AlertUID string `json:"alertUID"`
+	// Find annotations that are scoped to a specific dashboard
+	// in:query
+	// required:false
+	DashboardID int64 `json:"dashboardId"`
+	// Find annotations that are scoped to a specific dashboard
+	// in:query
+	// required:false
+	DashboardUID string `json:"dashboardUID"`
+	// Find annotations that are scoped to a specific panel
+	// in:query
+	// required:false
+	PanelID int64 `json:"panelId"`
+	// Max limit for results returned.
+	// in:query
+	// required:false
+	Limit int64 `json:"limit"`
+	// Use this to filter organization annotations. Organization annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. You can filter by multiple tags.
+	// in:query
+	// required:false
+	// type: array
+	// collectionFormat: multi
+	Tags []string `json:"tags"`
+	// Return alerts or user created annotations
+	// in:query
+	// required:false
+	// Description:
+	// * `alert`
+	// * `annotation`
+	// enum: alert,annotation
+	Type string `json:"type"`
+	// Match any or all tags
+	// in:query
+	// required:false
+	MatchAny bool `json:"matchAny"`
+}
+
+// swagger:parameters getAnnotationTags
+type GetAnnotationTagsParams struct {
+	// Tag is a string that you can use to filter tags.
+	// in:query
+	// required:false
+	Tag string `json:"tag"`
+	// Max limit for results returned.
+	// in:query
+	// required:false
+	// default: 100
+	Limit string `json:"limit"`
+}
+
+// swagger:parameters massDeleteAnnotations
+type MassDeleteAnnotationsParams struct {
+	// in:body
+	// required:true
+	Body dtos.MassDeleteAnnotationsCmd `json:"body"`
+}
+
+// swagger:parameters postAnnotation
+type PostAnnotationParams struct {
+	// in:body
+	// required:true
+	Body dtos.PostAnnotationsCmd `json:"body"`
+}
+
+// swagger:parameters postGraphiteAnnotation
+type PostGraphiteAnnotationParams struct {
+	// in:body
+	// required:true
+	Body annotationapp.PostGraphiteAnnotationsCmd `json:"body"`
+}
+
+// swagger:parameters updateAnnotation
+type UpdateAnnotationParams struct {
+	// in:path
+	// required:true
+	AnnotationID string `json:"annotation_id"`
+	// in:body
+	// required:true
+	Body dtos.UpdateAnnotationsCmd `json:"body"`
+}
+
+// swagger:parameters patchAnnotation
+type PatchAnnotationParams struct {
+	// in:path
+	// required:true
+	AnnotationID string `json:"annotation_id"`
+	// in:body
+	// required:true
+	Body dtos.PatchAnnotationsCmd `json:"body"`
+}
+
+// swagger:response getAnnotationsResponse
+type GetAnnotationsResponse struct {
+	// The response message
+	// in: body
+	Body []*annotations.ItemDTO `json:"body"`
+}
+
+// swagger:response getAnnotationByIDResponse
+type GetAnnotationByIDResponse struct {
+	// The response message
+	// in: body
+	Body *annotations.ItemDTO `json:"body"`
+}
+
+// swagger:response postAnnotationResponse
+type PostAnnotationResponse struct {
+	// The response message
+	// in: body
+	Body struct {
+		// ID Identifier of the created annotation.
+		// required: true
+		// example: 65
+		ID int64 `json:"id"`
+
+		// Message Message of the created annotation.
+		// required: true
+		Message string `json:"message"`
+	} `json:"body"`
+}
+
+// swagger:response getAnnotationTagsResponse
+type GetAnnotationTagsResponse struct {
+	// The response message
+	// in: body
+	Body annotations.GetAnnotationTagsResponse `json:"body"`
+}

@@ -1,0 +1,94 @@
+package server
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"time"
+
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"go.opentelemetry.io/otel/codes"
+
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+)
+
+func (s *Server) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "server.Read")
+	defer span.End()
+
+	defer func(t time.Time) {
+		s.metrics.requestDurationSeconds.WithLabelValues("Read").Observe(time.Since(t).Seconds())
+	}(time.Now())
+
+	res, err := s.read(ctx, req)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		s.logger.Error("failed to perform read request", "error", err, "namespace", req.GetNamespace())
+		return nil, errors.New("failed to perform read request")
+	}
+
+	return res, nil
+}
+
+func (s *Server) read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
+	if err := authorize(ctx, req.GetNamespace(), s.cfg); err != nil {
+		return nil, err
+	}
+
+	storeInf, err := s.getStoreInfo(ctx, req.Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get openfga store: %w", err)
+	}
+
+	readReq := &openfgav1.ReadRequest{
+		StoreId:           storeInf.ID,
+		PageSize:          req.GetPageSize(),
+		ContinuationToken: req.GetContinuationToken(),
+	}
+
+	if req.TupleKey != nil {
+		readReq.TupleKey = &openfgav1.ReadRequestTupleKey{
+			User:     req.GetTupleKey().GetUser(),
+			Relation: req.GetTupleKey().GetRelation(),
+			Object:   req.GetTupleKey().GetObject(),
+		}
+	}
+
+	res, err := s.openFGAClient.Read(ctx, readReq)
+	if err != nil {
+		s.logger.Error("failed to perform openfga Read request", "error", errors.Unwrap(err))
+		return nil, err
+	}
+
+	tuples := make([]*authzextv1.Tuple, 0)
+	for _, t := range res.GetTuples() {
+		tuples = append(tuples, &authzextv1.Tuple{
+			Key:       common.ToAuthzExtTupleKey(t.GetKey()),
+			Timestamp: t.GetTimestamp(),
+		})
+	}
+
+	return &authzextv1.ReadResponse{
+		Tuples:            tuples,
+		ContinuationToken: res.GetContinuationToken(),
+	}, nil
+}
+
+// ReadTuples reads tuples from the provided store, skipping the public-API
+// authorization check that Server.Read performs. Intended for internal callers
+// (such as the mt-reconciler) that already have a resolved StoreInfo and run
+// under a background context without end-user claims.
+func (s *Server) ReadTuples(ctx context.Context, store *zanzana.StoreInfo, req *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "server.ReadTuples")
+	defer span.End()
+
+	defer func(t time.Time) {
+		s.metrics.requestDurationSeconds.WithLabelValues("ReadTuples").Observe(time.Since(t).Seconds())
+	}(time.Now())
+
+	req.StoreId = store.ID
+	return s.openFGAClient.Read(ctx, req)
+}

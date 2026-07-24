@@ -1,0 +1,5 @@
+apiVersion: 1
+
+datasources:
+  - name: My datasource name
+    type: type

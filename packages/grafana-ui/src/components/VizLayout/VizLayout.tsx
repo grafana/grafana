@@ -1,0 +1,154 @@
+import { css } from '@emotion/css';
+import { type FC, type CSSProperties, type ComponentType } from 'react';
+import * as React from 'react';
+import { useMeasure } from 'react-use';
+
+import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { type LegendPlacement } from '@grafana/schema';
+
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { getFocusStyles } from '../../themes/mixins';
+import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
+
+/**
+ * @beta
+ */
+export interface VizLayoutProps {
+  width: number;
+  height: number;
+  legend?: React.ReactElement<VizLayoutLegendProps> | null;
+  children: (width: number, height: number) => React.ReactNode;
+}
+
+/**
+ * @beta
+ */
+export interface VizLayoutComponentType extends FC<VizLayoutProps> {
+  Legend: ComponentType<VizLayoutLegendProps>;
+}
+
+/**
+ * @beta
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-vizlayout--docs
+ */
+export const VizLayout: VizLayoutComponentType = ({ width, height, legend, children }) => {
+  const theme = useTheme2();
+  const styles = useStyles2(getVizStyles);
+  const containerStyle: CSSProperties = {
+    display: 'flex',
+    width: `${width}px`,
+    height: `${height}px`,
+  };
+  const [legendRef, legendMeasure] = useMeasure<HTMLDivElement>();
+
+  if (!legend) {
+    return (
+      <>
+        <div style={containerStyle} className={styles.viz} data-testid={selectors.components.VizLayout.container}>
+          {children(width, height)}
+        </div>
+      </>
+    );
+  }
+
+  let { placement, maxHeight = '35%', maxWidth = '60%' } = legend.props;
+
+  if (document.body.clientWidth < theme.breakpoints.values.lg) {
+    placement = 'bottom';
+  }
+
+  let size: VizSize | null = null;
+
+  const legendStyle: CSSProperties = {};
+
+  switch (placement) {
+    case 'bottom':
+      containerStyle.flexDirection = 'column';
+      legendStyle.maxHeight = maxHeight;
+
+      if (legendMeasure.height) {
+        size = { width, height: height - legendMeasure.height };
+      }
+      break;
+    case 'right':
+      containerStyle.flexDirection = 'row';
+
+      if (legendMeasure.width) {
+        size = { width: width - legendMeasure.width, height };
+      }
+
+      if (typeof legend.props.width === 'string') {
+        legendStyle.width = legend.props.width;
+        break;
+      }
+
+      legendStyle.maxWidth = maxWidth;
+
+      if (legend.props.width != null) {
+        legendStyle.width = legend.props.width;
+        size = { width: width - legend.props.width, height };
+      }
+      break;
+  }
+
+  // This happens when position is switched from bottom to right
+  // Then we preserve old with for one render cycle until legend is measured in it's new position
+  if (size?.width === 0) {
+    size.width = width;
+  }
+
+  if (size?.height === 0) {
+    size.height = height;
+  }
+
+  return (
+    <div style={containerStyle} data-testid={selectors.components.VizLayout.container}>
+      <div className={styles.viz}>{size && children(size.width, size.height)}</div>
+      <div style={legendStyle} ref={legendRef} data-testid={selectors.components.VizLayout.legend}>
+        {/* a right-placed legend spans the full panel height, but the scroll container
+            sizes to its content by default, so percentage heights inside the legend
+            (e.g. a vertical color scale) would not resolve without an explicit height */}
+        <ScrollContainer height={placement === 'right' ? '100%' : undefined}>{legend}</ScrollContainer>
+      </div>
+    </div>
+  );
+};
+
+const getVizStyles = (theme: GrafanaTheme2) => {
+  return {
+    viz: css({
+      flexGrow: 2,
+      // without this, minWidth becomes `min-content`, which means the canvas will
+      // never collapse down below its initial size. this means that the legend can never scale up in size
+      minWidth: 0,
+      borderRadius: theme.shape.radius.default,
+      '&:focus-visible': getFocusStyles(theme),
+    }),
+  };
+};
+interface VizSize {
+  width: number;
+  height: number;
+}
+
+/**
+ * @beta
+ */
+export interface VizLayoutLegendProps {
+  placement: LegendPlacement;
+  children: React.ReactNode;
+  maxHeight?: string;
+  maxWidth?: string;
+  width?: number | string;
+}
+
+/**
+ * @beta
+ */
+export const VizLayoutLegend: FC<VizLayoutLegendProps> = ({ children }) => {
+  return <>{children}</>;
+};
+
+VizLayout.Legend = VizLayoutLegend;

@@ -1,0 +1,218 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
+//  }
+//  Name: ingress
+//  Dimensions: 2 Fields by 1 Rows
+//  +-------------------------------+---------------------------------+
+//  | Name: Time                    | Name: file_size                 |
+//  | Labels:                       | Labels: dead=true, train=350117 |
+//  | Type: []*time.Time            | Type: []*int64                  |
+//  +-------------------------------+---------------------------------+
+//  | 2020-11-09 17:27:00 +0000 UTC | 3339                            |
+//  +-------------------------------+---------------------------------+
+//  
+//  
+//  
+//  Frame[1] 
+//  Name: ingress
+//  Dimensions: 2 Fields by 1 Rows
+//  +-------------------------------+---------------------------------+
+//  | Name: Time                    | Name: file_size                 |
+//  | Labels:                       | Labels: dead=true, train=350125 |
+//  | Type: []*time.Time            | Type: []*int64                  |
+//  +-------------------------------+---------------------------------+
+//  | 2020-11-10 12:29:00 +0000 UTC | 3666                            |
+//  +-------------------------------+---------------------------------+
+//  
+//  
+//  
+//  Frame[2] 
+//  Name: ingress
+//  Dimensions: 2 Fields by 1 Rows
+//  +-------------------------------+---------------------------------+
+//  | Name: Time                    | Name: file_size                 |
+//  | Labels:                       | Labels: dead=true, train=350236 |
+//  | Type: []*time.Time            | Type: []*int64                  |
+//  +-------------------------------+---------------------------------+
+//  | 2020-11-09 19:01:00 +0000 UTC | 3570                            |
+//  +-------------------------------+---------------------------------+
+//  
+//  
+//  
+//  Frame[3] 
+//  Name: ingress
+//  Dimensions: 2 Fields by 1 Rows
+//  +-------------------------------+---------------------------------+
+//  | Name: Time                    | Name: file_size                 |
+//  | Labels:                       | Labels: dead=true, train=350410 |
+//  | Type: []*time.Time            | Type: []*int64                  |
+//  +-------------------------------+---------------------------------+
+//  | 2020-11-09 07:13:00 +0000 UTC | 2772                            |
+//  +-------------------------------+---------------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "ingress",
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ]
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time",
+              "nullable": true
+            }
+          },
+          {
+            "name": "file_size",
+            "type": "number",
+            "typeInfo": {
+              "frame": "int64",
+              "nullable": true
+            },
+            "labels": {
+              "dead": "true",
+              "train": "350117"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1604942820000
+          ],
+          [
+            3339
+          ]
+        ]
+      }
+    },
+    {
+      "schema": {
+        "name": "ingress",
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time",
+              "nullable": true
+            }
+          },
+          {
+            "name": "file_size",
+            "type": "number",
+            "typeInfo": {
+              "frame": "int64",
+              "nullable": true
+            },
+            "labels": {
+              "dead": "true",
+              "train": "350125"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1605011340000
+          ],
+          [
+            3666
+          ]
+        ]
+      }
+    },
+    {
+      "schema": {
+        "name": "ingress",
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time",
+              "nullable": true
+            }
+          },
+          {
+            "name": "file_size",
+            "type": "number",
+            "typeInfo": {
+              "frame": "int64",
+              "nullable": true
+            },
+            "labels": {
+              "dead": "true",
+              "train": "350236"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1604948460000
+          ],
+          [
+            3570
+          ]
+        ]
+      }
+    },
+    {
+      "schema": {
+        "name": "ingress",
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time",
+              "nullable": true
+            }
+          },
+          {
+            "name": "file_size",
+            "type": "number",
+            "typeInfo": {
+              "frame": "int64",
+              "nullable": true
+            },
+            "labels": {
+              "dead": "true",
+              "train": "350410"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1604905980000
+          ],
+          [
+            2772
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,217 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
+import { useState } from 'react';
+import { useLocation } from 'react-router-dom-v5-compat';
+
+import { locationUtil } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
+import { Button, Drawer, Dropdown, Icon, Menu, useTheme2 } from '@grafana/ui';
+import { type OwnerReference } from 'app/api/clients/folder/v1beta1';
+import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
+import { DASHBOARD_GROUP_COLOR_NAME, ITEM_ICONS } from 'app/core/components/AppChrome/QuickAdd/utils';
+import { useAppNotification } from 'app/core/copy/appNotification';
+import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
+import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
+import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
+import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import { type RepoType } from 'app/features/provisioning/Wizard/types';
+import { NewProvisionedFolderForm } from 'app/features/provisioning/components/Folders/NewProvisionedFolderForm';
+import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
+import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
+import {
+  getImportPhrase,
+  getNewDashboardPhrase,
+  getNewFolderPhrase,
+  getNewPhrase,
+  getNewTemplateDashboardPhrase,
+} from 'app/features/search/tempI18nPhrases';
+import { type FolderDTO } from 'app/types/folders';
+
+import { NewFolderForm } from './NewFolderForm';
+
+interface Props {
+  parentFolder?: FolderDTO;
+  canCreateFolder: boolean;
+  canCreateDashboard: boolean;
+  isReadOnlyRepo: boolean;
+  repoType?: RepoType;
+}
+
+export default function CreateNewButton({
+  parentFolder,
+  canCreateDashboard,
+  canCreateFolder,
+  isReadOnlyRepo,
+  repoType,
+}: Props) {
+  const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
+  const [newFolder] = useCreateFolder();
+  const [showNewFolderDrawer, setShowNewFolderDrawer] = useState(false);
+  const notifyApp = useAppNotification();
+  const isProvisionedInstance = useIsProvisionedInstance();
+  const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
+  const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
+  const { isAvailable: renderPreBuiltDashboardAction } = useTemplateDashboardsAvailability();
+
+  const theme = useTheme2();
+
+  const handleVisibleChange = () => {
+    if (!isOpen) {
+      reportInteraction('grafana_create_new_button_menu_opened', {
+        from: location.pathname,
+      });
+    }
+    setIsOpen(!isOpen);
+  };
+
+  const onCreateFolder = async (folderName: string, teamOwnerRefs?: OwnerReference[]) => {
+    try {
+      const folder = await newFolder({
+        title: folderName,
+        parentUid: parentFolder?.uid,
+        teamOwnerReferences: teamOwnerRefs,
+      });
+
+      const depth = parentFolder ? (parentFolder.parents?.length || 0) + 1 : 0;
+      reportInteraction('grafana_manage_dashboards_folder_created', {
+        is_subfolder: Boolean(parentFolder?.uid),
+        folder_depth: depth,
+      });
+
+      if (!folder.error) {
+        notifyApp.success('Folder created');
+      } else {
+        notifyApp.error('Failed to create folder');
+      }
+
+      if (folder.data) {
+        locationService.push(locationUtil.stripBaseFromUrl(folder.data.url));
+      }
+    } finally {
+      setShowNewFolderDrawer(false);
+    }
+  };
+
+  const dashboardIconColor = theme.visualization.getColorByName(DASHBOARD_GROUP_COLOR_NAME);
+
+  const newMenu = (
+    <Menu>
+      {canCreateDashboard && (
+        <Menu.Group label={t('browse-dashboards.create-new.dashboard-group', 'Dashboard')}>
+          <Menu.Item
+            label={getNewDashboardPhrase()}
+            icon={ITEM_ICONS['dashboards/new']}
+            iconColor={dashboardIconColor}
+            onClick={() =>
+              reportInteraction('grafana_menu_item_clicked', {
+                url: buildUrl('/dashboard/new', parentFolder?.uid),
+                from: location.pathname,
+              })
+            }
+            url={buildUrl('/dashboard/new', parentFolder?.uid)}
+          />
+          <Menu.Item
+            label={getImportPhrase()}
+            icon={ITEM_ICONS['dashboards/import']}
+            iconColor={dashboardIconColor}
+            onClick={() =>
+              reportInteraction('grafana_menu_item_clicked', {
+                url: buildUrl('/dashboard/import', parentFolder?.uid),
+                from: location.pathname,
+              })
+            }
+            url={buildUrl('/dashboard/import', parentFolder?.uid)}
+          />
+          {renderPreBuiltDashboardAction && (
+            <Menu.Item
+              label={getNewTemplateDashboardPhrase()}
+              icon={ITEM_ICONS['browse-template-dashboard']}
+              iconColor={dashboardIconColor}
+              onClick={() =>
+                isAnalyticsFrameworkEnabled
+                  ? NewDashboardLibraryInteractions.entryPointClicked({
+                      entryPoint: SOURCE_ENTRY_POINTS.BROWSE_DASHBOARDS_PAGE,
+                      contentKind: isCustomDashboardTemplatesEnabled ? undefined : CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                      contentKinds: isCustomDashboardTemplatesEnabled
+                        ? [CONTENT_KINDS.CUSTOM_DASHBOARD_TEMPLATE, CONTENT_KINDS.TEMPLATE_DASHBOARD]
+                        : [CONTENT_KINDS.TEMPLATE_DASHBOARD],
+                    })
+                  : DashboardLibraryInteractions.entryPointClicked({
+                      entryPoint: SOURCE_ENTRY_POINTS.BROWSE_DASHBOARDS_PAGE,
+                      contentKind: isCustomDashboardTemplatesEnabled ? undefined : CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                      contentKinds: isCustomDashboardTemplatesEnabled
+                        ? [CONTENT_KINDS.CUSTOM_DASHBOARD_TEMPLATE, CONTENT_KINDS.TEMPLATE_DASHBOARD]
+                        : [CONTENT_KINDS.TEMPLATE_DASHBOARD],
+                    })
+              }
+              url={buildUrl('/dashboards?templateDashboards=true&source=createNewButton', parentFolder?.uid)}
+            />
+          )}
+        </Menu.Group>
+      )}
+      {canCreateFolder && (
+        <>
+          {canCreateDashboard && <Menu.Divider />}
+          <Menu.Item
+            onClick={() => {
+              reportInteraction('grafana_browse_dashboards_new_folder_drawer_opened', {
+                from: location.pathname,
+              });
+              setShowNewFolderDrawer(true);
+            }}
+            label={getNewFolderPhrase()}
+            icon={ITEM_ICONS['folder']}
+            // folder action use default grey, so no need to set icon color
+          />
+        </>
+      )}
+    </Menu>
+  );
+
+  return (
+    <>
+      <Dropdown overlay={newMenu} placement="bottom-end" onVisibleChange={handleVisibleChange}>
+        <Button
+          disabled={isReadOnlyRepo}
+          tooltip={isReadOnlyRepo ? getReadOnlyTooltipText({ isLocal: repoType === 'local' }) : undefined}
+          variant="secondary"
+        >
+          {getNewPhrase()}
+          <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
+        </Button>
+      </Dropdown>
+      {showNewFolderDrawer && (
+        <Drawer
+          title={getNewFolderPhrase()}
+          subtitle={parentFolder?.title ? `Location: ${parentFolder.title}` : undefined}
+          onClose={() => setShowNewFolderDrawer(false)}
+          size="sm"
+        >
+          {isItemManagedByRepository(parentFolder) || isProvisionedInstance ? (
+            <NewProvisionedFolderForm onDismiss={() => setShowNewFolderDrawer(false)} parentFolder={parentFolder} />
+          ) : (
+            <NewFolderForm
+              onConfirm={onCreateFolder}
+              onCancel={() => setShowNewFolderDrawer(false)}
+              parentFolder={parentFolder}
+            />
+          )}
+        </Drawer>
+      )}
+    </>
+  );
+}
+
+/**
+ *
+ * @param url without any parameters
+ * @param folderUid  folder id
+ * @returns url with paramter if folder is present
+ */
+function buildUrl(url: string, folderUid: string | undefined) {
+  const baseUrl = folderUid ? url + '?folderUid=' + folderUid : url;
+  return config.appSubUrl ? config.appSubUrl + baseUrl : baseUrl;
+}

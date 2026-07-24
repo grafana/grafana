@@ -1,0 +1,50 @@
+import { createContext, useCallback, useContext } from 'react';
+
+import { type LocationService, locationService, type BackendSrv, type GrafanaBootConfig } from '@grafana/runtime';
+
+import { type AppChromeService } from '../components/AppChrome/AppChromeService';
+import { type NewFrontendAssetsChecker } from '../services/NewFrontendAssetsChecker';
+import { type KeybindingSrv } from '../services/keybindingSrv';
+
+export interface GrafanaContextType {
+  backend: BackendSrv;
+  location: LocationService;
+  config: GrafanaBootConfig;
+  chrome: AppChromeService;
+  keybindings: KeybindingSrv;
+  newAssetsChecker: NewFrontendAssetsChecker;
+}
+
+export const GrafanaContext = createContext<GrafanaContextType | undefined>(undefined);
+
+export function useGrafana(): GrafanaContextType {
+  const context = useContext(GrafanaContext);
+  if (!context) {
+    throw new Error('No GrafanaContext found');
+  }
+  return context;
+}
+
+// Implementation of useReturnToPrevious that's made available through
+// @grafana/runtime
+export function useReturnToPreviousInternal() {
+  const { chrome } = useGrafana();
+  return useCallback(
+    (title: string, href?: string) => {
+      const { pathname, search } = locationService.getLocation();
+      chrome.setReturnToPrevious({
+        title: title,
+        href: href ?? pathname + search,
+      });
+    },
+    [chrome]
+  );
+}
+
+// Implementation of useMegaMenuOpen that's made available through
+// @grafana/runtime
+export function useMegaMenuOpenInternal() {
+  const { chrome } = useGrafana();
+  const state = chrome.useState();
+  return [state.megaMenuOpen, chrome.setMegaMenuOpen] as const;
+}

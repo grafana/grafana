@@ -1,0 +1,100 @@
+{
+  "author": "Grafana Labs",
+  "license": "Apache-2.0",
+  "name": "@grafana/flamegraph",
+  "version": "13.2.0-pre",
+  "description": "Grafana flamegraph visualization component",
+  "keywords": [
+    "grafana",
+    "flamegraph",
+    "profiling",
+    "pyroscope"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/grafana/grafana.git",
+    "directory": "packages/grafana-flamegraph"
+  },
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/esm/index.mjs",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@grafana-app/source": "./src/index.ts",
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/cjs/index.cjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "./dist",
+    "./README.md",
+    "./CHANGELOG.md",
+    "./LICENSE_APACHE2"
+  ],
+  "scripts": {
+    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
+    "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
+    "clean": "rimraf ./dist ./compiled ./package.tgz",
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
+    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
+    "postpack": "mv package.json.bak package.json",
+    "storybook": "storybook dev -p 6006"
+  },
+  "browserslist": [
+    "defaults",
+    "not IE 11"
+  ],
+  "dependencies": {
+    "@emotion/css": "^11.13.5",
+    "@grafana/data": "13.2.0-pre",
+    "@grafana/ui": "13.2.0-pre",
+    "@leeoniya/ufuzzy": "^1.0.19",
+    "d3-scale": "^4.0.2",
+    "lodash": "^4.17.23",
+    "react": "^18.3.1",
+    "react-use": "^17.6.1",
+    "react-virtualized-auto-sizer": "^1.0.26",
+    "tinycolor2": "^1.6.0"
+  },
+  "devDependencies": {
+    "@grafana/test-utils": "workspace:*",
+    "@rollup/plugin-node-resolve": "16.0.1",
+    "@storybook/addon-webpack5-compiler-swc": "^4.0.2",
+    "@storybook/preset-scss": "1.0.3",
+    "@storybook/react": "10.3.6",
+    "@storybook/react-webpack5": "10.3.6",
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/jest-dom": "^6.1.2",
+    "@testing-library/react": "16.3.0",
+    "@testing-library/user-event": "14.6.1",
+    "@types/d3-scale": "^4",
+    "@types/fs-extra": "^11",
+    "@types/jest": "^29.5.4",
+    "@types/lodash": "4.17.20",
+    "@types/node": "24.10.1",
+    "@types/react": "18.3.18",
+    "@types/react-table": "^7.7.20",
+    "@types/tinycolor2": "1.4.6",
+    "esbuild": "0.28.1",
+    "fs-extra": "^11.3.2",
+    "jest": "^29.6.4",
+    "jest-canvas-mock": "2.5.2",
+    "rollup": "^4.60.1",
+    "rollup-plugin-esbuild": "6.2.1",
+    "rollup-plugin-node-externals": "^8.0.0",
+    "storybook": "10.3.6",
+    "typescript": "6.0.2"
+  },
+  "peerDependencies": {
+    "@grafana/assistant": "^0.1.1",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "react-table": "^7.8.0"
+  }
+}

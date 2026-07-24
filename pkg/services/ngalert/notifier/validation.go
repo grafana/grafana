@@ -1,0 +1,209 @@
+package notifier
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"sync"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+)
+
+type ErrorReferenceInvalid struct {
+	Reference string
+}
+
+type ErrorReceiverDoesNotExist struct {
+	ErrorReferenceInvalid
+}
+type ErrorTimeIntervalDoesNotExist struct {
+	ErrorReferenceInvalid
+}
+type ErrorRouteDoesNotExist struct {
+	ErrorReferenceInvalid
+}
+
+func (e ErrorReceiverDoesNotExist) Error() string {
+	return fmt.Sprintf("receiver %s does not exist", e.Reference)
+}
+
+func (e ErrorTimeIntervalDoesNotExist) Error() string {
+	return fmt.Sprintf("time interval %s does not exist", e.Reference)
+}
+
+func (e ErrorRouteDoesNotExist) Error() string {
+	return fmt.Sprintf("notification policy %s does not exist", e.Reference)
+}
+
+// ContactPointRoutingValidator validates ContactPointRouting against the current Alertmanager configuration
+type ContactPointRoutingValidator interface {
+	Validate(s models.ContactPointRouting) error
+}
+
+// NotificationSettingsValidator validates NotificationSettings against the current Alertmanager configuration
+type NotificationSettingsValidator interface {
+	Validate(s models.NotificationSettings) error
+}
+
+// staticNotificationSettingsValidator is a NotificationSettingsValidator that uses static pre-fetched values to validate
+// models.NotificationSettings.
+type staticNotificationSettingsValidator struct {
+	*staticContactPointValidator
+	availableRoutes map[string]struct{}
+}
+
+// staticContactPointValidator is a ContactPointRoutingValidator that uses static pre-fetched values to validate
+// models.ContactPointRouting.
+type staticContactPointValidator struct {
+	availableReceivers     map[string]struct{}
+	availableTimeIntervals map[string]struct{}
+}
+
+func newStaticContactPointValidator(am *v1.PostableApiAlertingConfig) staticContactPointValidator {
+	availableReceivers := make(map[string]struct{})
+	for _, receiver := range am.GetReceivers() {
+		availableReceivers[receiver.GetName()] = struct{}{}
+	}
+
+	availableTimeIntervals := make(map[string]struct{})
+	for _, interval := range am.GetMuteTimeIntervals() {
+		availableTimeIntervals[interval.Name] = struct{}{}
+	}
+	for _, interval := range am.GetTimeIntervals() {
+		availableTimeIntervals[interval.Name] = struct{}{}
+	}
+
+	return staticContactPointValidator{
+		availableReceivers:     availableReceivers,
+		availableTimeIntervals: availableTimeIntervals,
+	}
+}
+
+// NewContactPointRoutingValidator creates a new NotificationSettingsValidator from the given apiAlertingConfig that
+// only validates ContactPointRouting.
+func NewContactPointRoutingValidator(am *v1.PostableApiAlertingConfig) ContactPointRoutingValidator {
+	return newStaticContactPointValidator(am)
+}
+
+// NewNotificationSettingsValidator creates a new NotificationSettingsValidator from the given apiAlertingConfig.
+func NewNotificationSettingsValidator(cfg *v1.AMConfigV1) NotificationSettingsValidator {
+	validator := newStaticContactPointValidator(&cfg.AlertmanagerConfig)
+
+	availableRoutes := make(map[string]struct{}, len(cfg.ManagedRoutes)+1)
+	for routeName := range cfg.ManagedRoutes {
+		availableRoutes[routeName] = struct{}{}
+	}
+	availableRoutes[models.DefaultRoutingTreeName] = struct{}{}
+	availableRoutes[models.DefaultRoutingTreeNameAlias] = struct{}{}
+	if len(cfg.ExtraConfigs) > 0 {
+		availableRoutes[cfg.ExtraConfigs[0].Identifier] = struct{}{}
+	}
+
+	return staticNotificationSettingsValidator{
+		staticContactPointValidator: &validator,
+		availableRoutes:             availableRoutes,
+	}
+}
+
+// Validate checks that models.ContactPointRouting is valid and that references exist.
+func (n staticContactPointValidator) Validate(settings models.ContactPointRouting) error {
+	if err := settings.Validate(); err != nil {
+		return err
+	}
+	var errs []error
+	if _, ok := n.availableReceivers[settings.Receiver]; !ok {
+		errs = append(errs, ErrorReceiverDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: settings.Receiver}})
+	}
+	for _, interval := range settings.MuteTimeIntervals {
+		if _, ok := n.availableTimeIntervals[interval]; !ok {
+			errs = append(errs, ErrorTimeIntervalDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: interval}})
+		}
+	}
+	for _, interval := range settings.ActiveTimeIntervals {
+		if _, ok := n.availableTimeIntervals[interval]; !ok {
+			errs = append(errs, ErrorTimeIntervalDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: interval}})
+		}
+	}
+	return errors.Join(errs...)
+}
+
+// Validate checks that models.NotificationSettings is valid and that references exist.
+func (n staticNotificationSettingsValidator) Validate(settings models.NotificationSettings) error {
+	if err := settings.Validate(); err != nil {
+		return err
+	}
+
+	if settings.ContactPointRouting != nil {
+		return n.staticContactPointValidator.Validate(*settings.ContactPointRouting)
+	}
+	if settings.PolicyRouting != nil {
+		if _, ok := n.availableRoutes[settings.PolicyRouting.Policy]; !ok {
+			return ErrorRouteDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: settings.PolicyRouting.Policy}}
+		}
+	}
+	return nil
+}
+
+// NotificationSettingsValidatorProvider provides a NotificationSettingsValidator for a given orgID.
+type NotificationSettingsValidatorProvider interface {
+	Validator(ctx context.Context, orgID int64) (NotificationSettingsValidator, error)
+}
+
+// notificationSettingsValidationService provides a new NotificationSettingsValidator for a given orgID by loading the latest Alertmanager configuration.
+type notificationSettingsValidationService struct {
+	store store.AlertingStore
+}
+
+func NewNotificationSettingsValidationService(store store.AlertingStore) NotificationSettingsValidatorProvider {
+	return &notificationSettingsValidationService{
+		store: store,
+	}
+}
+
+// Validator returns a NotificationSettingsValidator using the alertmanager configuration from the given orgID.
+func (v *notificationSettingsValidationService) Validator(ctx context.Context, orgID int64) (NotificationSettingsValidator, error) {
+	rawCfg, err := v.store.GetLatestAlertmanagerConfiguration(ctx, orgID)
+	if err != nil {
+		return staticNotificationSettingsValidator{}, err
+	}
+	cfg, err := Load([]byte(rawCfg.AlertmanagerConfiguration))
+	if err != nil {
+		return staticNotificationSettingsValidator{}, err
+	}
+	log.New("ngalert.notifier.validator").FromContext(ctx).Debug("Create validator from Alertmanager configuration", "hash", rawCfg.ConfigurationHash)
+	return NewNotificationSettingsValidator(cfg), nil
+}
+
+type cachedNotificationSettingsValidationService struct {
+	srv        NotificationSettingsValidatorProvider
+	mtx        sync.Mutex
+	validators map[int64]NotificationSettingsValidator
+}
+
+func NewCachedNotificationSettingsValidationService(store store.AlertingStore) NotificationSettingsValidatorProvider {
+	return &cachedNotificationSettingsValidationService{
+		srv:        NewNotificationSettingsValidationService(store),
+		mtx:        sync.Mutex{},
+		validators: map[int64]NotificationSettingsValidator{},
+	}
+}
+
+// Validator returns a NotificationSettingsValidator using the alertmanager configuration from the given orgID.
+func (v *cachedNotificationSettingsValidationService) Validator(ctx context.Context, orgID int64) (NotificationSettingsValidator, error) {
+	v.mtx.Lock()
+	defer v.mtx.Unlock()
+
+	result, ok := v.validators[orgID]
+	if !ok {
+		vd, err := v.srv.Validator(ctx, orgID)
+		if err != nil {
+			return nil, err
+		}
+		v.validators[orgID] = vd
+		result = vd
+	}
+	return result, nil
+}

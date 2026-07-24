@@ -1,0 +1,1847 @@
+package receivers
+
+import (
+	"context"
+	"embed"
+	"encoding/json"
+	"fmt"
+	"maps"
+	"net/http"
+	"path"
+	"slices"
+	"strings"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/grafana/alerting/notify/notifytest"
+	"github.com/grafana/alerting/receivers/line"
+	"github.com/grafana/alerting/receivers/schema"
+	"github.com/grafana/grafana-app-sdk/resource"
+
+	"github.com/grafana/alerting/notify"
+
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/ngalert/api"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/tests/api/alerting"
+	"github.com/grafana/grafana/pkg/tests/apis"
+	test_common "github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
+	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
+)
+
+//go:embed test-data/*.*
+var testData embed.FS
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
+func getTestHelper(t *testing.T) *apis.K8sTestHelper {
+	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
+}
+
+func TestIntegrationResourceIdentifier(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+	client, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+	newResource := &v1beta1.Receiver{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+		},
+		Spec: v1beta1.ReceiverSpec{
+			Title:        "Test-Receiver",
+			Integrations: []v1beta1.ReceiverIntegration{},
+		},
+	}
+
+	t.Run("create should fail if object name is specified", func(t *testing.T) {
+		receiver := newResource.Copy().(*v1beta1.Receiver)
+		receiver.Name = "new-receiver"
+		_, err := client.Create(ctx, receiver, resource.CreateOptions{})
+		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest but got %s", err)
+	})
+
+	var resourceID resource.Identifier
+	t.Run("create should succeed and provide resource name", func(t *testing.T) {
+		actual, err := client.Create(ctx, newResource, resource.CreateOptions{})
+		require.NoError(t, err)
+		require.NotEmptyf(t, actual.Name, "Resource name should not be empty")
+		require.NotEmptyf(t, actual.UID, "Resource UID should not be empty")
+		resourceID = actual.GetStaticMetadata().Identifier()
+	})
+
+	t.Run("resource should be available by the identifier", func(t *testing.T) {
+		actual, err := client.Get(ctx, resourceID)
+		require.NoError(t, err)
+		require.NotEmptyf(t, actual.Name, "Resource name should not be empty")
+		require.Equal(t, newResource.Spec, actual.Spec)
+	})
+
+	t.Run("update should rename receiver if name in the specification changes", func(t *testing.T) {
+		existing, err := client.Get(ctx, resourceID)
+		require.NoError(t, err)
+
+		updated := existing.Copy().(*v1beta1.Receiver)
+		updated.Spec.Title = "another-newReceiver"
+
+		actual, err := client.Update(ctx, updated, resource.UpdateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, updated.Spec, actual.Spec)
+		require.NotEqualf(t, updated.Name, actual.Name, "Update should change the resource name but it didn't")
+		require.NotEqualf(t, updated.ResourceVersion, actual.ResourceVersion, "Update should change the resource version but it didn't")
+
+		resource, err := client.Get(ctx, actual.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		require.Equal(t, actual.Spec, resource.Spec)
+		require.Equal(t, actual.Name, resource.Name)
+		require.Equal(t, actual.ResourceVersion, resource.ResourceVersion)
+	})
+}
+
+// TestIntegrationResourcePermissions focuses on testing resource permissions for the alerting receiver resource. It
+// verifies that access is correctly set when creating resources and assigning permissions to users, teams, and roles.
+func TestIntegrationResourcePermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	org1 := helper.Org1
+	noneUser := org1.None
+
+	creator := helper.CreateUser("creator", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(
+			accesscontrol.ActionAlertingReceiversCreate,
+		),
+	})
+
+	admin := org1.Admin
+	viewer := org1.Viewer
+	editor := org1.Editor
+	adminClient, err := v1beta1.NewReceiverClientFromGenerator(admin.GetClientRegistry())
+	require.NoError(t, err)
+
+	writeACMetadata := []string{"canWrite", "canDelete", "canTest"}
+	allACMetadata := []string{"canWrite", "canDelete", "canReadSecrets", "canAdmin", "canModifyProtected", "canTest"}
+
+	mustID := func(user apis.User) int64 {
+		id, err := user.Identity.GetInternalID()
+		require.NoError(t, err)
+		return id
+	}
+
+	for _, tc := range []struct {
+		name          string
+		creatingUser  apis.User
+		testUser      apis.User
+		assignments   []accesscontrol.SetResourcePermissionCommand
+		expACMetadata []string
+		expRead       bool
+	}{
+		// Basic access.
+		{
+			name:          "Admin creates and has all metadata and access",
+			creatingUser:  admin,
+			testUser:      admin,
+			assignments:   nil,
+			expACMetadata: allACMetadata,
+			expRead:       true,
+		},
+		{
+			name:          "Creator creates and has all metadata and access",
+			creatingUser:  creator,
+			testUser:      creator,
+			assignments:   nil,
+			expACMetadata: allACMetadata,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, noneUser has no metadata and no access",
+			creatingUser:  admin,
+			testUser:      noneUser,
+			assignments:   nil,
+			expACMetadata: nil,
+			expRead:       false,
+		},
+		{
+			name:          "Admin creates, viewer has no metadata but has access",
+			creatingUser:  admin,
+			testUser:      viewer,
+			expACMetadata: nil,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, editor has write metadata and access",
+			creatingUser:  admin,
+			testUser:      editor,
+			expACMetadata: writeACMetadata,
+			expRead:       true,
+		},
+		// User-based assignments.
+		{
+			name:          "Admin creates, assigns read, noneUser has no metadata but has access",
+			creatingUser:  admin,
+			testUser:      noneUser,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(ngmodels.PermissionView)}},
+			expACMetadata: nil,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, assigns write, noneUser has write metadata and access",
+			creatingUser:  admin,
+			testUser:      noneUser,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(ngmodels.PermissionEdit)}},
+			expACMetadata: writeACMetadata,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, assigns admin, noneUser has all metadata and access",
+			creatingUser:  admin,
+			testUser:      noneUser,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(ngmodels.PermissionAdmin)}},
+			expACMetadata: allACMetadata,
+			expRead:       true,
+		},
+		// Other users don't get assignments.
+		{
+			name:          "Admin creates, assigns read to noneUser, creator has no metadata and no access",
+			creatingUser:  admin,
+			testUser:      creator,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(ngmodels.PermissionView)}},
+			expACMetadata: nil,
+			expRead:       false,
+		},
+		{
+			name:          "Admin creates, assigns write to noneUser, creator has no metadata and no access",
+			creatingUser:  admin,
+			testUser:      creator,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(ngmodels.PermissionEdit)}},
+			expACMetadata: nil,
+			expRead:       false,
+		},
+		{
+			name:          "Admin creates, assigns admin to noneUser, creator has no metadata and no access",
+			creatingUser:  admin,
+			testUser:      creator,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(ngmodels.PermissionAdmin)}},
+			expACMetadata: nil,
+			expRead:       false,
+		},
+		// Role-based access.
+		{
+			name:          "Admin creates, assigns editor, viewer has write metadata and access",
+			creatingUser:  admin,
+			testUser:      viewer,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(viewer), Permission: string(ngmodels.PermissionEdit)}},
+			expACMetadata: writeACMetadata,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, assigns admin, viewer has all metadata and access",
+			creatingUser:  admin,
+			testUser:      viewer,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(viewer), Permission: string(ngmodels.PermissionAdmin)}},
+			expACMetadata: allACMetadata,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, assigns admin, editor has all metadata and access",
+			creatingUser:  admin,
+			testUser:      editor,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(editor), Permission: string(ngmodels.PermissionAdmin)}},
+			expACMetadata: allACMetadata,
+			expRead:       true,
+		},
+		// Team-based access. Staff team has editor+admin but not viewer in it.
+		{
+			name:          "Admin creates, assigns admin to staff, viewer has no metadata and access",
+			creatingUser:  admin,
+			testUser:      viewer,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{TeamID: org1.Staff.ID, Permission: string(ngmodels.PermissionAdmin)}},
+			expACMetadata: nil,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, assigns admin to staff, editor has all metadata and access",
+			creatingUser:  admin,
+			testUser:      editor,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{TeamID: org1.Staff.ID, Permission: string(ngmodels.PermissionAdmin)}},
+			expACMetadata: allACMetadata,
+			expRead:       true,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			createClient, err := v1beta1.NewReceiverClientFromGenerator(tc.creatingUser.GetClientRegistry())
+			require.NoError(t, err)
+			client, err := v1beta1.NewReceiverClientFromGenerator(tc.testUser.GetClientRegistry())
+			require.NoError(t, err)
+
+			var created = &v1beta1.Receiver{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: v1beta1.ReceiverSpec{
+					Title:        "receiver-1",
+					Integrations: []v1beta1.ReceiverIntegration{},
+				},
+			}
+			d, err := json.Marshal(created)
+			require.NoError(t, err)
+
+			// Create receiver with creatingUser
+			created, err = createClient.Create(ctx, created, resource.CreateOptions{})
+			require.NoErrorf(t, err, "Payload %s", string(d))
+			require.NotNil(t, created)
+
+			defer func() {
+				_ = adminClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			}()
+
+			// Assign resource permissions
+			cliCfg := helper.Org1.Admin.NewRestConfig()
+			alertingApi := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+			for _, permission := range tc.assignments {
+				status, body := alertingApi.AssignReceiverPermission(t, created.Name, permission)
+				require.Equalf(t, http.StatusOK, status, "Expected status 200 but got %d: %s", status, body)
+			}
+
+			// Test read
+			if tc.expRead {
+				// Helper methods.
+				extractReceiverFromList := func(list *v1beta1.ReceiverList, name string) *v1beta1.Receiver {
+					for i := range list.Items {
+						if list.Items[i].Name == name {
+							return list.Items[i].Copy().(*v1beta1.Receiver)
+						}
+					}
+					return nil
+				}
+
+				// Obtain expected responses using admin client as source of truth.
+				expectedGetWithMetadata, expectedListWithMetadata := func() (*v1beta1.Receiver, *v1beta1.Receiver) {
+					expectedGet, err := adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
+					require.NoError(t, err)
+					require.NotNil(t, expectedGet)
+
+					// Set expected metadata.
+					expectedGetWithMetadata := expectedGet.Copy().(*v1beta1.Receiver)
+					// Clear any existing access control metadata.
+					for _, k := range allACMetadata {
+						delete(expectedGetWithMetadata.Annotations, v1beta1.AccessControlAnnotation(k))
+					}
+					for _, ac := range tc.expACMetadata {
+						expectedGetWithMetadata.SetAccessControl(ac)
+					}
+
+					expectedList, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
+					require.NoError(t, err)
+					expectedListWithMetadata := extractReceiverFromList(expectedList, created.Name)
+					require.NotNil(t, expectedListWithMetadata)
+					expectedListWithMetadata = expectedListWithMetadata.Copy().(*v1beta1.Receiver)
+					// Clear any existing access control metadata.
+					for _, k := range allACMetadata {
+						delete(expectedListWithMetadata.Annotations, v1beta1.AccessControlAnnotation(k))
+					}
+					for _, ac := range tc.expACMetadata {
+						expectedListWithMetadata.SetAccessControl(ac)
+					}
+					return expectedGetWithMetadata, expectedListWithMetadata
+				}()
+
+				t.Run("should be able to list receivers", func(t *testing.T) {
+					list, err := client.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
+					require.NoError(t, err)
+					listedReceiver := extractReceiverFromList(list, created.Name)
+					assert.Equalf(t, expectedListWithMetadata, listedReceiver, "Expected %v but got %v", expectedListWithMetadata, listedReceiver)
+				})
+
+				t.Run("should be able to read receiver by resource identifier", func(t *testing.T) {
+					got, err := client.Get(ctx, expectedGetWithMetadata.GetStaticMetadata().Identifier())
+					require.NoError(t, err)
+					assert.Equalf(t, expectedGetWithMetadata, got, "Expected %v but got %v", expectedGetWithMetadata, got)
+				})
+			} else {
+				t.Run("list receivers should be empty", func(t *testing.T) {
+					list, err := client.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
+					require.NoError(t, err)
+					require.Emptyf(t, list.Items, "Expected no receivers but got %v", list.Items)
+				})
+
+				t.Run("should be forbidden to read receiver by name", func(t *testing.T) {
+					_, err := client.Get(ctx, created.GetStaticMetadata().Identifier())
+					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+				})
+			}
+		})
+	}
+}
+
+func TestIntegrationAccessControl(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	org1 := helper.Org1
+
+	type testCase struct {
+		user               apis.User
+		canRead            bool
+		canUpdate          bool
+		canUpdateProtected bool
+		canCreate          bool
+		canDelete          bool
+		canReadSecrets     bool
+		canAdmin           bool
+		canTest            bool
+	}
+	// region users
+	unauthorized := helper.CreateUser("unauthorized", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{})
+
+	reader := helper.CreateUser("reader", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(accesscontrol.ActionAlertingReceiversRead),
+	})
+	secretsReader := helper.CreateUser("secretsReader", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(accesscontrol.ActionAlertingReceiversReadSecrets),
+	})
+	creator := helper.CreateUser("creator", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(
+			accesscontrol.ActionAlertingReceiversRead,
+			accesscontrol.ActionAlertingReceiversCreate,
+		),
+	})
+	updater := helper.CreateUser("updater", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(
+			accesscontrol.ActionAlertingReceiversRead,
+			accesscontrol.ActionAlertingReceiversUpdate,
+		),
+	})
+	updaterAndTester := helper.CreateUser("updaterAndTester", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(
+			accesscontrol.ActionAlertingReceiversRead,
+			accesscontrol.ActionAlertingReceiversUpdate,
+			accesscontrol.ActionAlertingReceiversTest,
+		),
+	})
+	deleter := helper.CreateUser("deleter", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(
+			accesscontrol.ActionAlertingReceiversRead,
+			accesscontrol.ActionAlertingReceiversDelete,
+		),
+	})
+	legacyReader := helper.CreateUser("legacyReader", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{
+				accesscontrol.ActionAlertingNotificationsRead,
+			},
+		},
+	})
+	legacyWriter := helper.CreateUser("legacyWriter", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{
+				accesscontrol.ActionAlertingNotificationsRead,
+				accesscontrol.ActionAlertingNotificationsWrite,
+			},
+		},
+	})
+	adminLikeUser := helper.CreateUser("adminLikeUser", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(append(
+			[]string{accesscontrol.ActionAlertingReceiversCreate},
+			ossaccesscontrol.ReceiversAdminActions...,
+		)...),
+	})
+
+	// Test receivers with uids longer than 40 characters. User name is used in receiver name.
+	adminLikeUserLongName := helper.CreateUser("adminLikeUserCreatingAReallyLongReceiverName", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(append(
+			[]string{accesscontrol.ActionAlertingReceiversCreate},
+			ossaccesscontrol.ReceiversAdminActions...,
+		)...),
+	})
+
+	// endregion
+
+	testCases := []testCase{
+		{
+			user:               unauthorized,
+			canRead:            false,
+			canUpdate:          false,
+			canUpdateProtected: false,
+			canCreate:          false,
+			canDelete:          false,
+		},
+		{
+			user:               org1.Admin,
+			canRead:            true,
+			canCreate:          true,
+			canUpdate:          true,
+			canUpdateProtected: true,
+			canDelete:          true,
+			canAdmin:           true,
+			canReadSecrets:     true,
+			canTest:            true,
+		},
+		{
+			user:      org1.Editor,
+			canRead:   true,
+			canUpdate: true,
+			canCreate: true,
+			canDelete: true,
+			canTest:   true,
+		},
+		{
+			user:    org1.Viewer,
+			canRead: true,
+		},
+		{
+			user:    reader,
+			canRead: true,
+		},
+		{
+			user:           secretsReader,
+			canRead:        true,
+			canReadSecrets: true,
+		},
+		{
+			user:      creator,
+			canRead:   true,
+			canCreate: true,
+		},
+		{
+			user:      updater,
+			canRead:   true,
+			canUpdate: true,
+		},
+		{
+			user:      updaterAndTester,
+			canRead:   true,
+			canUpdate: true,
+			canTest:   true,
+		},
+		{
+			user:      deleter,
+			canRead:   true,
+			canDelete: true,
+		},
+		{
+			user:    legacyReader,
+			canRead: true,
+		},
+		{
+			user:      legacyWriter,
+			canRead:   true,
+			canCreate: true,
+			canUpdate: true,
+			canDelete: true,
+			canTest:   true,
+		},
+		{
+			user:               adminLikeUser,
+			canRead:            true,
+			canCreate:          true,
+			canUpdate:          true,
+			canUpdateProtected: true,
+			canDelete:          true,
+			canAdmin:           true,
+			canReadSecrets:     true,
+			canTest:            true,
+		},
+		{
+			user:               adminLikeUserLongName,
+			canRead:            true,
+			canCreate:          true,
+			canUpdate:          true,
+			canUpdateProtected: true,
+			canDelete:          true,
+			canAdmin:           true,
+			canReadSecrets:     true,
+			canTest:            true,
+		},
+	}
+
+	adminClient, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("user '%s'", tc.user.Identity.GetLogin()), func(t *testing.T) {
+			client, err := v1beta1.NewReceiverClientFromGenerator(tc.user.GetClientRegistry())
+			require.NoError(t, err)
+
+			var expected = &v1beta1.Receiver{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: v1beta1.ReceiverSpec{
+					Title:        fmt.Sprintf("receiver-1-%s", tc.user.Identity.GetLogin()),
+					Integrations: []v1beta1.ReceiverIntegration{},
+				},
+			}
+			d, err := json.Marshal(expected)
+			require.NoError(t, err)
+
+			newReceiver := expected.Copy().(*v1beta1.Receiver)
+			newReceiver.Spec.Title = fmt.Sprintf("receiver-2-%s", tc.user.Identity.GetLogin())
+			if tc.canCreate {
+				t.Run("should be able to create receiver", func(t *testing.T) {
+					actual, err := client.Create(ctx, newReceiver, resource.CreateOptions{})
+					require.NoErrorf(t, err, "Payload %s", string(d))
+
+					require.Equal(t, newReceiver.Spec, actual.Spec)
+
+					t.Run("should fail if already exists", func(t *testing.T) {
+						_, err := client.Create(ctx, newReceiver, resource.CreateOptions{})
+						require.Truef(t, errors.IsConflict(err), "expected  bad request but got %s", err)
+					})
+
+					// Cleanup.
+					require.NoError(t, adminClient.Delete(ctx, actual.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+				})
+			} else {
+				t.Run("should be forbidden to create", func(t *testing.T) {
+					_, err := client.Create(ctx, newReceiver, resource.CreateOptions{})
+					require.Truef(t, errors.IsForbidden(err), "Payload %s", string(d))
+				})
+			}
+
+			// create resource to proceed with other tests. We don't use the one created above because the user will always
+			// have admin permissions on it.
+			expected, err = adminClient.Create(ctx, expected, resource.CreateOptions{})
+			require.NoErrorf(t, err, "Payload %s", string(d))
+			require.NotNil(t, expected)
+
+			if tc.canRead {
+				// Set expected metadata.
+				expectedWithMetadata := expected.Copy().(*v1beta1.Receiver)
+				expectedWithMetadata.SetInUse(0, nil)
+				expectedWithMetadata.SetCanUse(true)
+				if tc.canUpdate {
+					expectedWithMetadata.SetAccessControl("canWrite")
+				}
+				if tc.canTest {
+					expectedWithMetadata.SetAccessControl("canTest")
+				}
+				if tc.canUpdateProtected {
+					expectedWithMetadata.SetAccessControl("canModifyProtected")
+				}
+				if tc.canDelete {
+					expectedWithMetadata.SetAccessControl("canDelete")
+				}
+				if tc.canReadSecrets {
+					expectedWithMetadata.SetAccessControl("canReadSecrets")
+				}
+				if tc.canAdmin {
+					expectedWithMetadata.SetAccessControl("canAdmin")
+				}
+				t.Run("should be able to list receivers", func(t *testing.T) {
+					list, err := client.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
+					require.NoError(t, err)
+					require.Len(t, list.Items, 2) // default + created
+				})
+
+				t.Run("should be able to read receiver by resource identifier", func(t *testing.T) {
+					got, err := client.Get(ctx, expected.GetStaticMetadata().Identifier())
+					require.NoError(t, err)
+					require.Equal(t, expectedWithMetadata, got)
+
+					t.Run("should get NotFound if resource does not exist", func(t *testing.T) {
+						_, err := client.Get(ctx, resource.Identifier{Namespace: apis.DefaultNamespace, Name: "Notfound"})
+						require.Truef(t, errors.IsNotFound(err), "Should get NotFound error but got: %s", err)
+					})
+				})
+			} else {
+				t.Run("list receivers should be empty", func(t *testing.T) {
+					list, err := client.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
+					require.NoError(t, err)
+					require.Emptyf(t, list.Items, "Expected no receivers but got %v", list.Items)
+				})
+
+				t.Run("should be forbidden to read receiver by name", func(t *testing.T) {
+					_, err := client.Get(ctx, expected.GetStaticMetadata().Identifier())
+					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+
+					t.Run("should get forbidden even if name does not exist", func(t *testing.T) {
+						_, err := client.Get(ctx, resource.Identifier{Namespace: apis.DefaultNamespace, Name: "Notfound"})
+						require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+					})
+				})
+			}
+
+			updatedExpected := expected.Copy().(*v1beta1.Receiver)
+			updatedExpected.Spec.Integrations = append(updatedExpected.Spec.Integrations, createIntegration(t, "email"))
+
+			d, err = json.Marshal(updatedExpected)
+			require.NoError(t, err)
+
+			if tc.canUpdate {
+				t.Run("should be able to update receiver", func(t *testing.T) {
+					updated, err := client.Update(ctx, updatedExpected, resource.UpdateOptions{})
+					require.NoErrorf(t, err, "Payload %s", string(d))
+
+					expected = updated
+
+					t.Run("should get NotFound if name does not exist", func(t *testing.T) {
+						up := updatedExpected.Copy().(*v1beta1.Receiver)
+						up.Name = "notFound"
+						_, err := client.Update(ctx, up, resource.UpdateOptions{})
+						require.Truef(t, errors.IsNotFound(err), "Should get NotFound error but got: %s", err)
+					})
+				})
+
+				updatedExpected = expected.Copy().(*v1beta1.Receiver)
+				updatedExpected.Spec.Integrations = []v1beta1.ReceiverIntegration{
+					createIntegration(t, "webhook"),
+				}
+
+				expected, err = adminClient.Update(ctx, updatedExpected, resource.UpdateOptions{})
+				require.NoErrorf(t, err, "Payload %s", string(d))
+				require.NotNil(t, expected)
+
+				updatedProtected := expected.Copy().(*v1beta1.Receiver)
+				updatedProtected.Spec.Integrations[0].Settings["url"] = "http://localhost:8080/webhook"
+
+				if tc.canUpdateProtected {
+					t.Run("should be able to update protected fields of the receiver", func(t *testing.T) {
+						updated, err := client.Update(ctx, updatedProtected, resource.UpdateOptions{})
+						require.NoErrorf(t, err, "Payload %s", string(d))
+						require.NotNil(t, updated)
+						expected = updated
+					})
+				} else {
+					t.Run("should be forbidden to edit protected fields of the receiver", func(t *testing.T) {
+						_, err := client.Update(ctx, updatedProtected, resource.UpdateOptions{})
+						require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+					})
+				}
+			} else {
+				t.Run("should be forbidden to update receiver", func(t *testing.T) {
+					_, err := client.Update(ctx, updatedExpected, resource.UpdateOptions{})
+					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+
+					t.Run("should get forbidden even if resource does not exist", func(t *testing.T) {
+						up := updatedExpected.Copy().(*v1beta1.Receiver)
+						up.Name = "notFound"
+						_, err := client.Update(ctx, up, resource.UpdateOptions{
+							ResourceVersion: up.ResourceVersion,
+						})
+						require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+					})
+				})
+				require.Falsef(t, tc.canUpdateProtected, "Invalid combination of assertions. CanUpdateProtected should be false")
+			}
+
+			deleteOptions := resource.DeleteOptions{Preconditions: resource.DeleteOptionsPreconditions{ResourceVersion: expected.ResourceVersion}}
+
+			if tc.canDelete {
+				t.Run("should be able to delete receiver", func(t *testing.T) {
+					err := client.Delete(ctx, expected.GetStaticMetadata().Identifier(), deleteOptions)
+					require.NoError(t, err)
+
+					t.Run("should get NotFound if name does not exist", func(t *testing.T) {
+						err := client.Delete(ctx, resource.Identifier{Namespace: apis.DefaultNamespace, Name: "notfound"}, resource.DeleteOptions{})
+						require.Truef(t, errors.IsNotFound(err), "Should get NotFound error but got: %s", err)
+					})
+				})
+			} else {
+				t.Run("should be forbidden to delete receiver", func(t *testing.T) {
+					err := client.Delete(ctx, expected.GetStaticMetadata().Identifier(), deleteOptions)
+					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+
+					t.Run("should be forbidden even if resource does not exist", func(t *testing.T) {
+						err := client.Delete(ctx, resource.Identifier{Namespace: apis.DefaultNamespace, Name: "notfound"}, resource.DeleteOptions{})
+						require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+					})
+				})
+				require.NoError(t, adminClient.Delete(ctx, expected.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+			}
+
+			if tc.canRead {
+				t.Run("should get empty list if no receivers", func(t *testing.T) {
+					list, err := client.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
+					require.NoError(t, err)
+					require.Len(t, list.Items, 1)
+				})
+			}
+		})
+	}
+}
+
+func TestIntegrationInUseMetadata(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	cliCfg := helper.Org1.Admin.NewRestConfig()
+	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+
+	adminClient, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+	// Prepare environment and create notification policy and rule that use receiver
+	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
+	require.NoError(t, err)
+	var amConfig definitions.PostableUserConfig
+	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
+
+	// Add more references to the receiver in other routes.
+	route1 := *amConfig.AlertmanagerConfig.Route.Routes[0]
+	route1.Routes = nil
+	route2 := route1
+	parentRoute := *amConfig.AlertmanagerConfig.Route.Routes[0]
+	parentRoute.Routes = []*definitions.Route{&route1, &route2}
+	amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, &parentRoute)
+
+	persistInitialConfig(t, amConfig, helper.Org1.Admin)
+
+	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1.json"))
+	require.NoError(t, err)
+	var ruleGroup definitions.PostableRuleGroupConfig
+	require.NoError(t, json.Unmarshal(postGroupRaw, &ruleGroup))
+
+	// Add more references to the receiver by creating adding same rule with a different title.
+	ruleGen := func() definitions.PostableGrafanaRule { return *ruleGroup.Rules[0].GrafanaManagedAlert }
+	rule2 := ruleGen()
+	rule2.Title = "Rule2"
+	rule2.NotificationSettings = &definitions.AlertRuleNotificationSettings{Receiver: "empty"}
+	rule3 := ruleGen()
+	rule3.Title = "Rule3"
+	ruleGroup.Rules = append(ruleGroup.Rules,
+		definitions.PostableExtendedRuleNode{
+			ApiRuleNode:         ruleGroup.Rules[0].ApiRuleNode,
+			GrafanaManagedAlert: &rule2,
+		},
+		definitions.PostableExtendedRuleNode{
+			ApiRuleNode:         ruleGroup.Rules[0].ApiRuleNode,
+			GrafanaManagedAlert: &rule3,
+		},
+	)
+
+	folderUID := "test-folder"
+	legacyCli.CreateFolder(t, folderUID, "TEST")
+	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup, false)
+	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
+
+	requestReceivers := func(t *testing.T, title string) (v1beta1.Receiver, v1beta1.Receiver) {
+		t.Helper()
+		receivers, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
+		require.NoError(t, err)
+		require.Len(t, receivers.Items, 2)
+		idx := slices.IndexFunc(receivers.Items, func(interval v1beta1.Receiver) bool {
+			return interval.Spec.Title == title
+		})
+		receiverListed := receivers.Items[idx]
+
+		receiverGet, err := adminClient.Get(ctx, receiverListed.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+
+		return receiverListed, *receiverGet
+	}
+
+	checkInUse := func(t *testing.T, receiverList, receiverGet v1beta1.Receiver, routes, rules int) {
+		t.Helper()
+		assert.Equalf(t, fmt.Sprintf("%d", routes), receiverList.Annotations[v1beta1.InUseAnnotation("routes")], "LIST: Expected %s used by %d routes", receiverList.Spec.Title, routes)
+		assert.Equalf(t, fmt.Sprintf("%d", rules), receiverList.Annotations[v1beta1.InUseAnnotation("rules")], "LIST: Expected %s used by %d rules", receiverList.Spec.Title, rules)
+		assert.Equalf(t, fmt.Sprintf("%d", routes), receiverGet.Annotations[v1beta1.InUseAnnotation("routes")], "GET: Expected %s used by %d routes", receiverGet.Spec.Title, routes)
+		assert.Equalf(t, fmt.Sprintf("%d", rules), receiverGet.Annotations[v1beta1.InUseAnnotation("rules")], "GET: Expected %s used by %d rules", receiverGet.Spec.Title, rules)
+	}
+
+	receiverListed, receiverGet := requestReceivers(t, "user-defined")
+	checkInUse(t, receiverListed, receiverGet, 4, 2)
+
+	// Verify the default.
+	receiverListed, receiverGet = requestReceivers(t, "empty")
+	checkInUse(t, receiverListed, receiverGet, 1, 1)
+
+	// Removing the new extra route should leave only 1.
+	amConfig.AlertmanagerConfig.Route.Routes = amConfig.AlertmanagerConfig.Route.Routes[:1]
+	test_common.UpdateDefaultRoute(t, helper.Org1.Admin, amConfig.AlertmanagerConfig.Route)
+
+	receiverListed, receiverGet = requestReceivers(t, "user-defined")
+	checkInUse(t, receiverListed, receiverGet, 1, 2)
+
+	// Remove the extra rules.
+	ruleGroup.Rules = ruleGroup.Rules[:1]
+	_, status, data = legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup, false)
+	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
+
+	receiverListed, receiverGet = requestReceivers(t, "user-defined")
+	checkInUse(t, receiverListed, receiverGet, 1, 1)
+
+	receiverListed, receiverGet = requestReceivers(t, "empty")
+	checkInUse(t, receiverListed, receiverGet, 1, 0)
+
+	// Remove the remaining routes.
+	amConfig.AlertmanagerConfig.Route.Routes = nil
+	test_common.UpdateDefaultRoute(t, helper.Org1.Admin, amConfig.AlertmanagerConfig.Route)
+
+	// Remove the remaining rules.
+	ruleGroup.Rules = nil
+	_, status, data = legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup, false)
+	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
+
+	receiverListed, receiverGet = requestReceivers(t, "user-defined")
+	checkInUse(t, receiverListed, receiverGet, 0, 0)
+
+	receiverListed, receiverGet = requestReceivers(t, "empty")
+	checkInUse(t, receiverListed, receiverGet, 1, 0)
+}
+
+func TestIntegrationProvisioning(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	// writer has resource write actions but NO provenance set-status permission.
+	writer := helper.CreateUser("ReceiversWriter", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(
+			accesscontrol.ActionAlertingReceiversCreate,
+			accesscontrol.ActionAlertingReceiversRead,
+			accesscontrol.ActionAlertingReceiversUpdate,
+			accesscontrol.ActionAlertingReceiversDelete,
+		),
+	})
+	writerClient, err := v1beta1.NewReceiverClientFromGenerator(writer.GetClientRegistry())
+	require.NoError(t, err)
+
+	// provisioner has the same write actions PLUS provenance set-status permission.
+	provisioner := helper.CreateUser("ReceiversProvisioner", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(
+			accesscontrol.ActionAlertingReceiversCreate,
+			accesscontrol.ActionAlertingReceiversRead,
+			accesscontrol.ActionAlertingReceiversUpdate,
+			accesscontrol.ActionAlertingReceiversDelete,
+			accesscontrol.ActionAlertingProvisioningSetStatus,
+		),
+	})
+	provisionerClient, err := v1beta1.NewReceiverClientFromGenerator(provisioner.GetClientRegistry())
+	require.NoError(t, err)
+
+	newReceiver := func(title string) *v1beta1.Receiver {
+		return &v1beta1.Receiver{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+			},
+			Spec: v1beta1.ReceiverSpec{
+				Title: title,
+				Integrations: []v1beta1.ReceiverIntegration{
+					createIntegration(t, "email"),
+				},
+			},
+		}
+	}
+
+	t.Run("create", func(t *testing.T) {
+		t.Run("writer can create without provenance", func(t *testing.T) {
+			created, err := writerClient.Create(ctx, newReceiver("writer-create-no-prov"), resource.CreateOptions{})
+			require.NoError(t, err)
+			require.Empty(t, created.GetProvenanceStatus())
+			require.NoError(t, writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+		})
+
+		t.Run("writer cannot create with provenance set", func(t *testing.T) {
+			recv := newReceiver("writer-create-with-prov")
+			recv.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			_, err := writerClient.Create(ctx, recv, resource.CreateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can create with provenance", func(t *testing.T) {
+			recv := newReceiver("provisioner-create-with-prov")
+			recv.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			created, err := provisionerClient.Create(ctx, recv, resource.CreateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, string(ngmodels.ProvenanceAPI), created.GetProvenanceStatus())
+			require.NoError(t, provisionerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+		})
+	})
+
+	t.Run("update", func(t *testing.T) {
+		// Setup: one unprovisioned and one provisioned resource.
+		unprov, err := writerClient.Create(ctx, newReceiver("update-unprov"), resource.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = provisionerClient.Delete(ctx, unprov.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		})
+
+		provRecv := newReceiver("update-prov")
+		provRecv.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+		prov, err := provisionerClient.Create(ctx, provRecv, resource.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = provisionerClient.Delete(ctx, prov.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		})
+
+		t.Run("writer can update resource without provenance", func(t *testing.T) {
+			current, err := writerClient.Get(ctx, unprov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.Receiver)
+			updated.Spec.Integrations = append(updated.Spec.Integrations, createIntegration(t, "email"))
+			_, err = writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
+
+		t.Run("writer cannot set provenance on existing resource", func(t *testing.T) {
+			current, err := writerClient.Get(ctx, unprov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.Receiver)
+			updated.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			_, err = writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("writer cannot update provisioned resource", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, prov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.Receiver)
+			updated.Spec.Integrations = append(updated.Spec.Integrations, createIntegration(t, "email"))
+			_, err = writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can set provenance on existing resource", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, unprov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.Receiver)
+			updated.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			got, err := provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, string(ngmodels.ProvenanceAPI), got.GetProvenanceStatus())
+			// Reset provenance for subsequent subtests.
+			got.SetProvenanceStatus("")
+			_, err = provisionerClient.Update(ctx, got, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
+
+		t.Run("provisioner can update provisioned resource", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, prov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.Receiver)
+			updated.Spec.Integrations = append(updated.Spec.Integrations, createIntegration(t, "email"))
+			_, err = provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
+	})
+
+	t.Run("delete", func(t *testing.T) {
+		t.Run("writer can delete resource without provenance", func(t *testing.T) {
+			created, err := writerClient.Create(ctx, newReceiver("delete-unprov"), resource.CreateOptions{})
+			require.NoError(t, err)
+			err = writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			require.NoError(t, err)
+		})
+
+		t.Run("writer cannot delete provisioned resource", func(t *testing.T) {
+			recv := newReceiver("delete-prov-forbidden")
+			recv.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			created, err := provisionerClient.Create(ctx, recv, resource.CreateOptions{})
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_ = provisionerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			})
+			err = writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can delete provisioned resource", func(t *testing.T) {
+			recv := newReceiver("delete-prov-ok")
+			recv.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			created, err := provisionerClient.Create(ctx, recv, resource.CreateOptions{})
+			require.NoError(t, err)
+			err = provisionerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			require.NoError(t, err)
+		})
+	})
+}
+
+func TestIntegrationOptimisticConcurrency(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	adminClient, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+	oldClient := test_common.NewReceiverClient(t, helper.Org1.Admin) // TODO replace with regular client once Delete works
+
+	receiver := v1beta1.Receiver{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+		},
+		Spec: v1beta1.ReceiverSpec{
+			Title:        "receiver-1",
+			Integrations: []v1beta1.ReceiverIntegration{},
+		},
+	}
+
+	created, err := adminClient.Create(ctx, &receiver, resource.CreateOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, created)
+	require.NotEmpty(t, created.ResourceVersion)
+
+	t.Run("should conflict if version does not match", func(t *testing.T) {
+		updated := created.Copy().(*v1beta1.Receiver)
+		_, err := adminClient.Update(ctx, updated, resource.UpdateOptions{
+			ResourceVersion: "test",
+		})
+		require.Truef(t, errors.IsConflict(err), "should get Forbidden error but got %s", err)
+	})
+	t.Run("should update if version matches", func(t *testing.T) {
+		updated := created.Copy().(*v1beta1.Receiver)
+		updated.Spec.Integrations = append(updated.Spec.Integrations, createIntegration(t, "email"))
+		actualUpdated, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
+		require.NoError(t, err)
+		for i, integration := range actualUpdated.Spec.Integrations {
+			updated.Spec.Integrations[i].Uid = integration.Uid
+		}
+		require.EqualValues(t, updated.Spec, actualUpdated.Spec)
+		require.NotEqual(t, updated.ResourceVersion, actualUpdated.ResourceVersion)
+	})
+	t.Run("should fail to update if version is empty", func(t *testing.T) {
+		updated := created.Copy().(*v1beta1.Receiver)
+		updated.ResourceVersion = ""
+		updated.Spec.Integrations = append(updated.Spec.Integrations, createIntegration(t, "webhook"))
+		_, err := oldClient.Update(ctx, updated, v1.UpdateOptions{})
+		require.Truef(t, errors.IsConflict(err), "should get Forbidden error but got %s", err) // TODO Change that? K8s returns 400 instead.
+	})
+	t.Run("should fail to delete if version does not match", func(t *testing.T) {
+		actual, err := adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+
+		err = oldClient.Delete(ctx, actual.Name, v1.DeleteOptions{
+			Preconditions: &v1.Preconditions{
+				ResourceVersion: new("something"),
+			},
+		})
+		require.Truef(t, errors.IsConflict(err), "should get conflict error but got %s", err)
+	})
+	t.Run("should succeed if version matches", func(t *testing.T) {
+		actual, err := adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+
+		err = oldClient.Delete(ctx, actual.Name, v1.DeleteOptions{
+			Preconditions: &v1.Preconditions{
+				ResourceVersion: new(actual.ResourceVersion),
+			},
+		})
+		require.NoError(t, err)
+	})
+	t.Run("should succeed if version is empty", func(t *testing.T) {
+		actual, err := adminClient.Create(ctx, &receiver, resource.CreateOptions{})
+		require.NoError(t, err)
+
+		err = oldClient.Delete(ctx, actual.Name, v1.DeleteOptions{
+			Preconditions: &v1.Preconditions{
+				ResourceVersion: new(actual.ResourceVersion),
+			},
+		})
+		require.NoError(t, err)
+	})
+}
+
+func TestIntegrationPatch(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	adminClient, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+	receiver := v1beta1.Receiver{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+		},
+		Spec: v1beta1.ReceiverSpec{
+			Title: "receiver",
+			Integrations: []v1beta1.ReceiverIntegration{
+				createIntegration(t, "email"),
+				createIntegration(t, "webhook"),
+				createIntegration(t, "sns"),
+			},
+		},
+	}
+
+	current, err := adminClient.Create(ctx, &receiver, resource.CreateOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, current)
+
+	t.Run("should patch with json patch", func(t *testing.T) {
+		current, err := adminClient.Get(ctx, current.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+
+		index := slices.IndexFunc(current.Spec.Integrations, func(t v1beta1.ReceiverIntegration) bool {
+			return t.Type == "webhook"
+		})
+
+		patch := []resource.PatchOperation{
+			{
+				Operation: "remove",
+				Path:      fmt.Sprintf("/spec/integrations/%d/settings/username", index),
+			},
+			{
+				Operation: "remove",
+				Path:      fmt.Sprintf("/spec/integrations/%d/secureFields/password", index),
+			},
+			{
+				Operation: "replace",
+				Path:      fmt.Sprintf("/spec/integrations/%d/settings/authorization_scheme", index),
+				Value:     "bearer",
+			},
+			{
+				Operation: "add",
+				Path:      fmt.Sprintf("/spec/integrations/%d/settings/authorization_credentials", index),
+				Value:     "authz-token",
+			},
+			{
+				Operation: "remove",
+				Path:      fmt.Sprintf("/spec/integrations/%d/secureFields/authorization_credentials", index),
+			},
+		}
+
+		expected := current.Spec.Integrations[index]
+		delete(expected.Settings, "username")
+		delete(expected.Settings, "password")
+		expected.Settings["authorization_scheme"] = "bearer"
+		delete(expected.SecureFields, "password")
+		expected.SecureFields["authorization_credentials"] = true
+
+		result, err := adminClient.Patch(ctx, current.GetStaticMetadata().Identifier(), resource.PatchRequest{Operations: patch}, resource.PatchOptions{})
+		require.NoError(t, err)
+
+		require.EqualValues(t, expected, result.Spec.Integrations[index])
+
+		// Use export endpoint because it's the only way to get decrypted secrets fast.
+		cliCfg := helper.Org1.Admin.NewRestConfig()
+		legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+
+		export := legacyCli.ExportReceiverTyped(t, current.Spec.Title, true)
+		// we need special unmarshaler to parse settings
+		cp, err := api.ContactPointFromContactPointExport(export)
+		require.NoError(t, err)
+
+		assert.Len(t, cp.Sns, 1)
+		assert.Len(t, cp.Email, 1)
+		require.Len(t, cp.Webhook, 1)
+
+		settings := cp.Webhook[0]
+		assert.EqualValues(t, "authz-token", *settings.AuthorizationCredentials)
+		assert.EqualValues(t, "bearer", *settings.AuthorizationScheme)
+		assert.Nil(t, settings.Password)
+		assert.Nil(t, settings.User)
+	})
+}
+
+func TestIntegrationReferentialIntegrity(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+	env := helper.GetEnv()
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
+	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
+	require.NoError(t, err)
+	orgID := helper.Org1.Admin.Identity.GetOrgID()
+
+	cliCfg := helper.Org1.Admin.NewRestConfig()
+	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+
+	adminClient, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+	// Prepare environment and create notification policy and rule that use time receiver
+	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
+	require.NoError(t, err)
+	var amConfig definitions.PostableUserConfig
+	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
+
+	persistInitialConfig(t, amConfig, helper.Org1.Admin)
+
+	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1.json"))
+	require.NoError(t, err)
+	var ruleGroup definitions.PostableRuleGroupConfig
+	require.NoError(t, json.Unmarshal(postGroupRaw, &ruleGroup))
+
+	folderUID := "test-folder"
+	legacyCli.CreateFolder(t, folderUID, "TEST")
+	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup, false)
+	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
+
+	receivers, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
+	require.NoError(t, err)
+	require.Len(t, receivers.Items, 2)
+	idx := slices.IndexFunc(receivers.Items, func(interval v1beta1.Receiver) bool {
+		return interval.Spec.Title == "user-defined"
+	})
+	receiver := receivers.Items[idx]
+
+	currentRoute := legacyCli.GetRoute(t)
+	currentRuleGroup, status := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+	require.Equal(t, http.StatusAccepted, status)
+
+	t.Run("Update", func(t *testing.T) {
+		t.Run("should rename all references if name changes", func(t *testing.T) {
+			renamed := receiver.Copy().(*v1beta1.Receiver)
+			expectedTitle := renamed.Spec.Title + "-new"
+			renamed.Spec.Title = expectedTitle
+
+			actual, err := adminClient.Update(ctx, renamed, resource.UpdateOptions{})
+			require.NoError(t, err)
+
+			updatedRuleGroup, status := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+			require.Equal(t, http.StatusAccepted, status)
+			for idx, rule := range updatedRuleGroup.Rules {
+				assert.Equalf(t, expectedTitle, rule.GrafanaManagedAlert.NotificationSettings.Receiver, "receiver in rule %d should have been renamed but it did not", idx)
+			}
+
+			updatedRoute := legacyCli.GetRoute(t)
+			for _, route := range updatedRoute.Routes {
+				assert.Equalf(t, expectedTitle, route.Receiver, "time receiver in routes should have been renamed but it did not")
+			}
+
+			actual, err = adminClient.Get(ctx, actual.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+
+			receiver = *actual
+		})
+
+		t.Run("should fail if at least one resource is provisioned", func(t *testing.T) {
+			require.NoError(t, err)
+			renamed := receiver.Copy().(*v1beta1.Receiver)
+			renamed.Spec.Title += util.GenerateShortUID()
+
+			t.Run("provisioned route", func(t *testing.T) {
+				require.NoError(t, db.SetProvenance(ctx, &currentRoute, orgID, "API"))
+				t.Cleanup(func() {
+					require.NoError(t, db.DeleteProvenance(ctx, &currentRoute, orgID))
+				})
+				actual, err := adminClient.Update(ctx, renamed, resource.UpdateOptions{})
+				require.Errorf(t, err, "Expected error but got successful result: %v", actual)
+				require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
+			})
+
+			t.Run("provisioned rules", func(t *testing.T) {
+				ruleUid := currentRuleGroup.Rules[0].GrafanaManagedAlert.UID
+				rule := &ngmodels.AlertRule{UID: ruleUid}
+				require.NoError(t, db.SetProvenance(ctx, rule, orgID, "API"))
+				t.Cleanup(func() {
+					require.NoError(t, db.DeleteProvenance(ctx, rule, orgID))
+				})
+
+				actual, err := adminClient.Update(ctx, renamed, resource.UpdateOptions{})
+				require.Errorf(t, err, "Expected error but got successful result: %v", actual)
+				require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
+			})
+		})
+	})
+
+	t.Run("Delete", func(t *testing.T) {
+		t.Run("should fail to delete if receiver is used in rule and routes", func(t *testing.T) {
+			err := adminClient.Delete(ctx, receiver.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
+		})
+
+		t.Run("should fail to delete if receiver is used in only rule", func(t *testing.T) {
+			route := legacyCli.GetRoute(t)
+			route.Routes[0].Receiver = ""
+			legacyCli.UpdateRoute(t, route, true)
+
+			err = adminClient.Delete(ctx, receiver.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
+		})
+	})
+}
+
+func TestIntegrationCRUD(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	adminClient, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+	var defaultReceiver *v1beta1.Receiver
+	t.Run("should list the default receiver", func(t *testing.T) {
+		items, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
+		require.NoError(t, err)
+		assert.Len(t, items.Items, 1)
+		defaultReceiver = &items.Items[0]
+		assert.Equal(t, "empty", defaultReceiver.Spec.Title)
+		assert.NotEmpty(t, defaultReceiver.UID)
+		assert.NotEmpty(t, defaultReceiver.Name)
+		assert.NotEmpty(t, defaultReceiver.ResourceVersion)
+
+		defaultReceiver, err = adminClient.Get(ctx, defaultReceiver.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		assert.NotEmpty(t, defaultReceiver.UID)
+		assert.NotEmpty(t, defaultReceiver.Name)
+		assert.NotEmpty(t, defaultReceiver.ResourceVersion)
+		assert.Len(t, defaultReceiver.Spec.Integrations, 0)
+	})
+
+	t.Run("should be able to update default receiver", func(t *testing.T) {
+		require.NotNil(t, defaultReceiver)
+		newDefault := defaultReceiver.Copy().(*v1beta1.Receiver)
+		newDefault.Spec.Integrations = append(newDefault.Spec.Integrations, createIntegration(t, line.Type))
+
+		updatedReceiver, err := adminClient.Update(ctx, newDefault, resource.UpdateOptions{})
+		require.NoError(t, err)
+
+		expected := newDefault.Copy().(*v1beta1.Receiver)
+		lineIntegration := expected.Spec.Integrations[0]
+		lineIntegration.SecureFields = map[string]bool{
+			"token": true,
+		}
+		delete(lineIntegration.Settings, "token")
+		assert.Equal(t, "LINE", updatedReceiver.Spec.Integrations[0].Type) // this type is in the schema but not in backend
+		lineIntegration.Type = "LINE"
+		lineIntegration.Uid = updatedReceiver.Spec.Integrations[0].Uid
+		expected.Spec.Integrations[0] = lineIntegration
+
+		assert.Equal(t, expected.Spec, updatedReceiver.Spec)
+	})
+
+	t.Run("should fail to create receiver with the existing name", func(t *testing.T) {
+		newReceiver := &v1beta1.Receiver{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+			},
+			Spec: v1beta1.ReceiverSpec{
+				Title:        defaultReceiver.Spec.Title,
+				Integrations: []v1beta1.ReceiverIntegration{},
+			},
+		}
+		_, err := adminClient.Create(ctx, newReceiver, resource.CreateOptions{})
+		require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
+	})
+
+	t.Run("should not let delete default receiver", func(t *testing.T) {
+		err := adminClient.Delete(ctx, defaultReceiver.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
+	})
+
+	var receiver *v1beta1.Receiver
+	t.Run("should correctly persist all known integrations", func(t *testing.T) {
+		integrations := make([]v1beta1.ReceiverIntegration, 0, len(notifytest.AllKnownV1ConfigsForTesting))
+		keysIter := maps.Keys(notifytest.AllKnownV1ConfigsForTesting)
+		keys := slices.Collect(keysIter)
+		slices.Sort(keys)
+		for _, key := range keys {
+			integrations = append(integrations, createIntegration(t, key))
+		}
+		var err error
+		receiver, err = adminClient.Create(ctx, &v1beta1.Receiver{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+			},
+			Spec: v1beta1.ReceiverSpec{
+				Title:        "all-receivers",
+				Integrations: integrations,
+			},
+		}, resource.CreateOptions{})
+		require.NoError(t, err)
+		require.Len(t, receiver.Spec.Integrations, len(integrations))
+
+		// Set expected metadata
+		receiver.SetAccessControl("canWrite")
+		receiver.SetAccessControl("canDelete")
+		receiver.SetAccessControl("canReadSecrets")
+		receiver.SetAccessControl("canAdmin")
+		receiver.SetAccessControl("canModifyProtected")
+		receiver.SetAccessControl("canTest")
+		receiver.SetInUse(0, nil)
+		receiver.SetCanUse(true)
+
+		// Use export endpoint because it's the only way to get decrypted secrets fast.
+		cliCfg := helper.Org1.Admin.NewRestConfig()
+		legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+
+		export := legacyCli.ExportReceiverTyped(t, receiver.Spec.Title, true)
+		for _, integration := range export.Receivers {
+			expected := notifytest.AllKnownV1ConfigsForTesting[schema.IntegrationType(integration.Type)]
+			assert.JSONEqf(t, expected.Config, string(integration.Settings), "integration %s", integration.Type)
+		}
+	})
+
+	t.Run("should be able read what it is created", func(t *testing.T) {
+		get, err := adminClient.Get(ctx, receiver.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		require.Equal(t, receiver, get)
+		t.Run("should return secrets in secureFields but not settings", func(t *testing.T) {
+			for _, integration := range get.Spec.Integrations {
+				integrationType := schema.IntegrationType(integration.Type)
+				t.Run(integration.Type, func(t *testing.T) {
+					expected := notifytest.AllKnownV1ConfigsForTesting[schema.IntegrationType(integration.Type)]
+					var fields map[string]any
+					require.NoError(t, json.Unmarshal([]byte(expected.Config), &fields))
+					typeSchema, ok := notify.GetSchemaVersionForIntegration(integrationType, schema.V1)
+					require.True(t, ok)
+					secretFields := typeSchema.GetSecretFieldsPaths()
+					for _, fieldPath := range secretFields {
+						field := fieldPath.String()
+						if _, ok := fields[field]; !ok { // skip field that is not in the original setting
+							continue
+						}
+						assert.Contains(t, integration.SecureFields, field)
+						assert.Truef(t, integration.SecureFields[field], "secure field should be always true")
+
+						value, ok, err := unstructured.NestedString(integration.Settings, strings.Split(field, ".")...)
+						assert.NoErrorf(t, err, "failed to read field %s from settings", field)
+						assert.Falsef(t, ok, "secret field %s should not be in settings, value [%s]", field, value)
+					}
+				})
+			}
+		})
+	})
+
+	t.Run("should fail to persist receiver with invalid config", func(t *testing.T) {
+		keysIter := maps.Keys(notifytest.AllKnownV1ConfigsForTesting)
+		keys := slices.Collect(keysIter)
+		slices.Sort(keys)
+		for _, key := range keys {
+			t.Run(string(key), func(t *testing.T) {
+				integration := createIntegration(t, key)
+				// Make the integration invalid, so it fails to create. This is usually done by sending empty settings.
+				clear(integration.Settings)
+				if key == "webex" {
+					// Webex integration is special case and passes validation without any settings so we instead set an invalid URL.
+					integration.Settings["api_url"] = "(*^$*^%!@#$*()"
+				}
+
+				receiver, err := adminClient.Create(ctx, &v1beta1.Receiver{
+					ObjectMeta: v1.ObjectMeta{
+						Namespace: "default",
+					},
+					Spec: v1beta1.ReceiverSpec{
+						Title:        fmt.Sprintf("invalid-%s", key),
+						Integrations: []v1beta1.ReceiverIntegration{integration},
+					},
+				}, resource.CreateOptions{})
+				require.Errorf(t, err, "Expected error but got successful result: %v", receiver)
+				require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest, got: %s", err)
+			})
+		}
+	})
+}
+
+func TestIntegrationReceiverListSelector(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	adminClient, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+	recv1 := &v1beta1.Receiver{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+		},
+		Spec: v1beta1.ReceiverSpec{
+			Title: "test-receiver-1",
+			Integrations: []v1beta1.ReceiverIntegration{
+				createIntegration(t, "email"),
+			},
+		},
+	}
+	recv1, err = adminClient.Create(ctx, recv1, resource.CreateOptions{})
+	require.NoError(t, err)
+
+	recv2 := &v1beta1.Receiver{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+		},
+		Spec: v1beta1.ReceiverSpec{
+			Title: "test-receiver-2",
+			Integrations: []v1beta1.ReceiverIntegration{
+				createIntegration(t, "email"),
+			},
+		},
+	}
+	recv2, err = adminClient.Create(ctx, recv2, resource.CreateOptions{})
+	require.NoError(t, err)
+
+	env := helper.GetEnv()
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
+	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
+	require.NoError(t, err)
+	require.NoError(t, db.SetProvenance(ctx, &definitions.EmbeddedContactPoint{
+		UID: *recv2.Spec.Integrations[0].Uid,
+	}, helper.Org1.Admin.Identity.GetOrgID(), "API"))
+	recv2, err = adminClient.Get(ctx, recv2.GetStaticMetadata().Identifier())
+
+	require.NoError(t, err)
+
+	receivers, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
+	require.NoError(t, err)
+	require.Len(t, receivers.Items, 3) // Includes default.
+
+	t.Run("should filter by receiver name", func(t *testing.T) {
+		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
+		list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{
+			FieldSelectors: []string{
+				"spec.title=" + recv1.Spec.Title,
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, recv1.Name, list.Items[0].Name)
+	})
+
+	t.Run("should filter by metadata name", func(t *testing.T) {
+		list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{
+			FieldSelectors: []string{
+				"metadata.name=" + recv2.Name,
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, recv2.Name, list.Items[0].Name)
+	})
+
+	t.Run("should filter by multiple filters", func(t *testing.T) {
+		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
+		list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{
+			FieldSelectors: []string{
+				fmt.Sprintf("metadata.name=%s,spec.title=%s", recv2.Name, recv2.Spec.Title),
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, recv2.Name, list.Items[0].Name)
+	})
+
+	t.Run("should be empty when filter does not match", func(t *testing.T) {
+		list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{
+			FieldSelectors: []string{
+				fmt.Sprintf("metadata.name=%s", "unknown"),
+			},
+		})
+		require.NoError(t, err)
+		require.Empty(t, list.Items)
+	})
+}
+
+// persistInitialConfig helps create an initial config with new receivers using legacy json. Config API blocks receiver
+// modifications, so we need to use k8s API to create new receivers before posting the config.
+func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig, user apis.User) {
+	ctx := context.Background()
+
+	receiverClient, err := v1beta1.NewReceiverClientFromGenerator(user.GetClientRegistry())
+	require.NoError(t, err)
+	for _, receiver := range amConfig.AlertmanagerConfig.Receivers {
+		if receiver.Name == "empty" {
+			continue
+		}
+
+		toCreate := v1beta1.Receiver{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+			},
+			Spec: v1beta1.ReceiverSpec{
+				Title:        receiver.Name,
+				Integrations: []v1beta1.ReceiverIntegration{},
+			},
+		}
+
+		for _, integration := range receiver.GrafanaManagedReceivers {
+			settings := common.Unstructured{}
+			require.NoError(t, settings.UnmarshalJSON(integration.Settings))
+			toCreate.Spec.Integrations = append(toCreate.Spec.Integrations, v1beta1.ReceiverIntegration{
+				Settings:              settings.Object,
+				Type:                  integration.Type,
+				DisableResolveMessage: new(false),
+			})
+		}
+
+		created, err := receiverClient.Create(ctx, &toCreate, resource.CreateOptions{})
+		require.NoError(t, err)
+
+		for i, integration := range created.Spec.Integrations {
+			receiver.GrafanaManagedReceivers[i].UID = *integration.Uid
+		}
+	}
+
+	test_common.UpdateDefaultRoute(t, user, amConfig.AlertmanagerConfig.Route)
+}
+
+func TestIntegrationAllowedIntegrations(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		UnifiedAlertingAllowedIntegrations: []string{"slack"},
+	})
+	client, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+
+	newReceiver := func(title string, integrationType schema.IntegrationType) *v1beta1.Receiver {
+		return &v1beta1.Receiver{
+			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Spec: v1beta1.ReceiverSpec{
+				Title:        title,
+				Integrations: []v1beta1.ReceiverIntegration{createIntegration(t, integrationType)},
+			},
+		}
+	}
+
+	t.Run("create with disallowed integration type is rejected", func(t *testing.T) {
+		_, err := client.Create(ctx, newReceiver("disallowed-email", schema.EmailType), resource.CreateOptions{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "integration type email is not allowed")
+	})
+
+	t.Run("create with allowed integration type succeeds", func(t *testing.T) {
+		created, err := client.Create(ctx, newReceiver("allowed-slack", schema.SlackType), resource.CreateOptions{})
+		require.NoError(t, err)
+		require.NotEmpty(t, created.Name)
+		require.NoError(t, client.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+	})
+
+	t.Run("create with mixed integrations is rejected and names the disallowed one", func(t *testing.T) {
+		mixed := &v1beta1.Receiver{
+			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Spec: v1beta1.ReceiverSpec{
+				Title: "mixed-slack-and-email",
+				Integrations: []v1beta1.ReceiverIntegration{
+					createIntegration(t, schema.SlackType),
+					createIntegration(t, schema.EmailType),
+				},
+			},
+		}
+		_, err := client.Create(ctx, mixed, resource.CreateOptions{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "integration type email is not allowed")
+	})
+}
+
+func TestIntegrationEmailValidation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		UnifiedAlertingEmailsToOrgOnly: true,
+	})
+
+	adminClient, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+
+	const emailAddress = "orgmember@example.com"
+
+	emailIntegration := createIntegrationWithSettings(t, schema.EmailType, schema.V1, `{"addresses":"`+emailAddress+`"}`)
+
+	newReceiver := func(title string) *v1beta1.Receiver {
+		return &v1beta1.Receiver{
+			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Spec: v1beta1.ReceiverSpec{
+				Title:        title,
+				Integrations: []v1beta1.ReceiverIntegration{emailIntegration},
+			},
+		}
+	}
+
+	t.Run("create with email not in org is rejected", func(t *testing.T) {
+		_, err := adminClient.Create(ctx, newReceiver("email-not-in-org"), resource.CreateOptions{})
+		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got: %v", err)
+	})
+
+	helper.CreateUser("orgmember", apis.Org1, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{})
+
+	t.Run("create with email belonging to an org member succeeds", func(t *testing.T) {
+		created, err := adminClient.Create(ctx, newReceiver("email-in-org"), resource.CreateOptions{})
+		require.NoError(t, err)
+
+		t.Run("update with email not in org is rejected", func(t *testing.T) {
+			updated := created.Copy().(*v1beta1.Receiver)
+			unknownEmail := createIntegrationWithSettings(t, schema.EmailType, schema.V1, `{"addresses":"unknown@example.com"}`)
+			updated.Spec.Integrations = []v1beta1.ReceiverIntegration{unknownEmail}
+			_, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.Truef(t, errors.IsBadRequest(err), "expected bad request but got: %v", err)
+		})
+
+		t.Run("update with email belonging to an org member succeeds", func(t *testing.T) {
+			existing, err := adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			_, err = adminClient.Update(ctx, existing, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
+	})
+
+	t.Run("create with email belonging to a user in a different org is rejected", func(t *testing.T) {
+		otherOrgUser := helper.CreateUser("otherorguser", apis.Org2, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{})
+		otherOrgEmail := otherOrgUser.Identity.GetEmail()
+		require.NotEmpty(t, otherOrgEmail, "expected Org2 user to have a non-empty email")
+
+		otherOrgIntegration := createIntegrationWithSettings(t, schema.EmailType, schema.V1, `{"addresses":"`+otherOrgEmail+`"}`)
+		receiver := &v1beta1.Receiver{
+			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Spec: v1beta1.ReceiverSpec{
+				Title:        "email-in-other-org",
+				Integrations: []v1beta1.ReceiverIntegration{otherOrgIntegration},
+			},
+		}
+		_, err := adminClient.Create(ctx, receiver, resource.CreateOptions{})
+		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got: %v", err)
+	})
+
+	t.Run("create with email belonging to a user who is a member of both orgs succeeds", func(t *testing.T) {
+		multiOrgUser := helper.CreateUser("multiorguser", apis.Org2, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{})
+		helper.AddUserToOrg(multiOrgUser, apis.Org1, org.RoleViewer)
+		multiOrgEmail := multiOrgUser.Identity.GetEmail()
+		require.NotEmpty(t, multiOrgEmail, "expected multi-org user to have a non-empty email")
+
+		multiOrgIntegration := createIntegrationWithSettings(t, schema.EmailType, schema.V1, `{"addresses":"`+multiOrgEmail+`"}`)
+		receiver := &v1beta1.Receiver{
+			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Spec: v1beta1.ReceiverSpec{
+				Title:        "email-in-both-orgs",
+				Integrations: []v1beta1.ReceiverIntegration{multiOrgIntegration},
+			},
+		}
+		_, err := adminClient.Create(ctx, receiver, resource.CreateOptions{})
+		require.NoError(t, err, "expected Org1 admin to be able to use the email of a user who is a member of Org1 (even if Org2 is their default org)")
+	})
+}
+
+func createIntegration(t *testing.T, integrationType schema.IntegrationType) v1beta1.ReceiverIntegration {
+	cfg, ok := notifytest.AllKnownV1ConfigsForTesting[integrationType]
+	require.Truef(t, ok, "no known config for integration type %s", integrationType)
+	return createIntegrationWithSettings(t, integrationType, schema.V1, cfg.Config)
+}
+func createIntegrationWithSettings(t *testing.T, integrationType schema.IntegrationType, integrationVersion schema.Version, settingsJson string) v1beta1.ReceiverIntegration {
+	settings := common.Unstructured{}
+	require.NoError(t, settings.UnmarshalJSON([]byte(settingsJson)))
+	return v1beta1.ReceiverIntegration{
+		Settings:              settings.Object,
+		Type:                  string(integrationType),
+		Version:               string(integrationVersion),
+		DisableResolveMessage: new(false),
+	}
+}
+
+func createWildcardPermission(actions ...string) resourcepermissions.SetResourcePermissionCommand {
+	return resourcepermissions.SetResourcePermissionCommand{
+		Actions:           actions,
+		Resource:          "receivers",
+		ResourceAttribute: "uid",
+		ResourceID:        "*",
+	}
+}

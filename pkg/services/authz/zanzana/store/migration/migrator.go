@@ -1,0 +1,284 @@
+package migration
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"fmt"
+	"strings"
+
+	openfgaconfig "github.com/openfga/openfga/pkg/server/config"
+	"github.com/openfga/openfga/pkg/storage/migrate"
+	"github.com/pressly/goose/v3"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/xorm"
+)
+
+var (
+	openFGATables = []string{"tuple", "authorization_model", "store", "assertion", "changelog", "goose_db_version"}
+)
+
+func Run(cfg *setting.Cfg, dbType string, grafanaDBConfig *sqlstore.DatabaseConfig, logger log.Logger) error {
+	connStr := grafanaDBConfig.ConnectionString
+	// running grafana migrations
+	engine, err := xorm.NewEngine(dbType, connStr)
+	if err != nil {
+		return fmt.Errorf("failed to create db engine: %w", err)
+	}
+
+	m := migrator.NewMigrator(engine, cfg)
+	m.AddCreateMigration()
+
+	if err := RunWithMigrator(m, cfg); err != nil {
+		return err
+	}
+
+	// running openfga migrations
+	switch dbType {
+	case migrator.SQLite:
+		// openfga expects sqlite but grafana uses sqlite3
+		dbType = "sqlite"
+	case migrator.Postgres:
+		// Parse and transform the connection string to the format OpenFGA expects
+		connStr = constructPostgresConnStrForOpenFGA(grafanaDBConfig)
+	}
+
+	migrationConfig := migrate.MigrationConfig{
+		URI:    connStr,
+		Engine: dbType,
+	}
+
+	if err := runOpenFGAMigrationsLocked(engine, m.Dialect, cfg, migrationConfig, logger); err != nil {
+		return fmt.Errorf("failed to run openfga migrations: %w", err)
+	}
+
+	if err := engine.Close(); err != nil {
+		logger.Warn("failed to close db engine", "error", err)
+	}
+
+	return nil
+}
+
+// runOpenFGAMigrationsLocked acquires the same advisory lock that Grafana's
+// main migrator uses for this database and runs the openfga migrations under
+// it. openfga's goose migrator has no cross-process locking of its own, so
+// without this wrapper concurrent pod startups race on schema creation.
+//
+// The lock is server-wide (MySQL GET_LOCK / Postgres pg_advisory_lock), so it
+// serializes correctly even though the openfga goose driver opens its own
+// database connection. For SQLite Dialect.Lock is a no-op, which is fine
+// because SQLite deployments are single-process.
+func runOpenFGAMigrationsLocked(
+	engine *xorm.Engine,
+	dialect migrator.Dialect,
+	cfg *setting.Cfg,
+	migrationConfig migrate.MigrationConfig,
+	logger log.Logger,
+) error {
+	sec := cfg.Raw.Section("database")
+	if !sec.Key("migration_locking").MustBool(true) {
+		return runOpenFGAMigrations(migrationConfig, logger)
+	}
+
+	dbName, err := dialect.GetDBName(engine.DataSourceName())
+	if err != nil {
+		return fmt.Errorf("failed to derive db name for advisory lock: %w", err)
+	}
+	// Reuse the same key as Grafana's main migrator (no additional name) so
+	// openfga and Grafana migrations are mutually exclusive per database.
+	key, err := migrator.GenerateAdvisoryLockID(dbName)
+	if err != nil {
+		return fmt.Errorf("failed to generate advisory lock id: %w", err)
+	}
+
+	lockCfg := migrator.LockCfg{
+		Session: engine.NewSession(),
+		Key:     key,
+		Timeout: sec.Key("locking_attempt_timeout_sec").MustInt(30),
+	}
+	defer lockCfg.Session.Close()
+
+	logger.Info("Locking database for openfga migrations", "key", key)
+	if err := dialect.Lock(lockCfg); err != nil {
+		return fmt.Errorf("failed to acquire openfga migration lock: %w", err)
+	}
+	defer func() {
+		logger.Info("Unlocking database after openfga migrations")
+		if err := dialect.Unlock(lockCfg); err != nil {
+			logger.Warn("failed to release openfga migration lock", "error", err)
+		}
+	}()
+
+	return runOpenFGAMigrations(migrationConfig, logger)
+}
+
+func runOpenFGAMigrations(migrationConfig migrate.MigrationConfig, logger log.Logger) error {
+	migrationConfig = withPingDefaults(migrationConfig)
+
+	err := migrate.RunMigrations(migrationConfig)
+	if err == nil {
+		return nil
+	}
+
+	// if an error occurs during migrations, it means that the goose schema is inconsistent with the openfga schema.
+	// since zanzana is a derived state, we can reset the schema state and retry.
+	logger.Warn("openfga migrations failed due to inconsistent goose schema/version state; resetting and retrying migrations", "error", err)
+
+	if resetErr := resetOpenFGASchema(migrationConfig.Engine, migrationConfig.URI); resetErr != nil {
+		return fmt.Errorf("schema reset failed: %w", errors.Join(err, resetErr))
+	}
+
+	if retryErr := migrate.RunMigrations(migrationConfig); retryErr != nil {
+		return retryErr
+	}
+
+	return nil
+}
+
+// withPingDefaults fills in openfga's datastore ping timeouts when they are
+// unset. openfga v1.18+ pings the datastore in a backoff.Retry loop before
+// running migrations. With the zero values, PingTimeout produces an
+// already-expired context (so every ping fails instantly) and Timeout maps to
+// backoff MaxElapsedTime=0, which retries forever and hangs. openfga normally
+// applies these defaults via its own config helpers, but we build the
+// MigrationConfig directly, so we apply them here for every caller.
+func withPingDefaults(cfg migrate.MigrationConfig) migrate.MigrationConfig {
+	if cfg.PingTimeout == 0 {
+		cfg.PingTimeout = openfgaconfig.DefaultDatastorePingTimeout
+	}
+	if cfg.Timeout == 0 {
+		cfg.Timeout = openfgaconfig.DefaultDatastorePingRetryMaxElapsedTime
+	}
+	return cfg
+}
+
+// resetOpenFGASchema drops the openfga tables to ensure migrations will run from a clean state.
+// openfga tables are derived state and state will be rebuilt from reconciliation.
+func resetOpenFGASchema(engine, uri string) (retErr error) {
+	db, err := openDB(engine, uri)
+	if err != nil {
+		return fmt.Errorf("failed to open db for openfga schema reset: %w", err)
+	}
+	defer func() {
+		if err := db.Close(); err != nil && retErr == nil {
+			retErr = fmt.Errorf("failed to close db: %w", err)
+		}
+	}()
+
+	for _, table := range openFGATables {
+		// strings are hard-coded, so this is safe.
+		// #nosec G201 nosemgrep: gosec.G201
+		if _, err := db.ExecContext(context.Background(), fmt.Sprintf("DROP TABLE IF EXISTS %s", table)); err != nil {
+			return fmt.Errorf("failed to drop openfga table %s: %w", table, err)
+		}
+	}
+
+	return nil
+}
+
+func RunWithMigrator(m *migrator.Migrator, cfg *setting.Cfg) error {
+	for _, table := range openFGATables {
+		m.AddMigration(fmt.Sprintf("Drop existing openfga table %s", table), migrator.NewDropTableMigration(table))
+	}
+
+	sec := cfg.Raw.Section("database")
+
+	return m.Start(
+		sec.Key("migration_locking").MustBool(true),
+		sec.Key("locking_attempt_timeout_sec").MustInt(30),
+	)
+}
+
+func openDB(engine, uri string) (*sql.DB, error) {
+	db, err := goose.OpenDBWithDriver(engine, uri)
+	if err == nil {
+		return db, nil
+	}
+	if engine == "sqlite" {
+		return goose.OpenDBWithDriver("sqlite3", uri)
+	}
+	return nil, err
+}
+
+// constructPostgresConnStrForOpenFGA parses a PostgreSQL connection string into a map of key-value pairs
+// parses into a format like
+// postgresql://grafana:password@127.0.0.1:5432/grafana?sslmode=disable&lock_timeout=2s&statement_timeout=10s
+func constructPostgresConnStrForOpenFGA(grafanaDBCfg *sqlstore.DatabaseConfig) string {
+	var host, port, user, password, dbname, sslmode string
+
+	// If individual fields are populated, use them directly
+	if grafanaDBCfg.Host != "" && grafanaDBCfg.User != "" && grafanaDBCfg.Name != "" {
+		// Parse host and port from the Host field (which might contain both)
+		addr, err := util.SplitHostPortDefault(grafanaDBCfg.Host, "127.0.0.1", "5432")
+		if err != nil {
+			// If parsing fails, use the host as-is and assume default port
+			addr = util.NetworkAddress{Host: grafanaDBCfg.Host, Port: "5432"}
+		}
+		host = addr.Host
+		port = addr.Port
+		user = grafanaDBCfg.User
+		password = grafanaDBCfg.Pwd
+		dbname = grafanaDBCfg.Name
+		sslmode = grafanaDBCfg.SslMode
+	} else {
+		// Parse from connection string (test environment case)
+		// Connection string format: "user=grafanatest password=grafanatest host=127.0.0.1 port=5432 dbname=grafanatest sslmode=disable"
+		connStr := grafanaDBCfg.ConnectionString
+		parts := strings.Fields(connStr)
+
+		// Set defaults
+		host = "127.0.0.1"
+		port = "5432"
+		sslmode = "disable"
+
+		for _, part := range parts {
+			if strings.Contains(part, "=") {
+				kv := strings.SplitN(part, "=", 2)
+				if len(kv) == 2 {
+					key, value := kv[0], kv[1]
+					switch key {
+					case "host":
+						host = value
+					case "port":
+						port = value
+					case "user":
+						user = value
+					case "password":
+						password = value
+					case "dbname":
+						dbname = value
+					case "sslmode":
+						sslmode = value
+					}
+				}
+			}
+		}
+	}
+
+	// Construct the connection string with proper host:port format
+	connectionStr := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s",
+		user, password, host, port, dbname)
+
+	// Build query parameters - always include sslmode and timeouts
+	queryParams := fmt.Sprintf("sslmode=%s&lock_timeout=2s&statement_timeout=10s", sslmode)
+
+	// Only add SSL certificate parameters if they are not empty
+	if grafanaDBCfg.ClientCertPath != "" {
+		queryParams += fmt.Sprintf("&sslcert=%s", grafanaDBCfg.ClientCertPath)
+	}
+	if grafanaDBCfg.ClientKeyPath != "" {
+		queryParams += fmt.Sprintf("&sslkey=%s", grafanaDBCfg.ClientKeyPath)
+	}
+	if grafanaDBCfg.CaCertPath != "" {
+		queryParams += fmt.Sprintf("&sslrootcert=%s", grafanaDBCfg.CaCertPath)
+	}
+
+	finalConnStr := connectionStr + "?" + queryParams
+
+	return finalConnStr
+}

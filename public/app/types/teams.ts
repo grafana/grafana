@@ -1,0 +1,23 @@
+import { type TeamDto as TeamDtoLegacy } from 'app/api/clients/legacy';
+
+import { type Role } from './accessControl';
+
+export interface TeamDTO {
+  /**
+   * Email of the team.
+   */
+  email?: string;
+  /**
+   * Name of the team.
+   */
+  name: string;
+}
+
+export type Team = TeamDtoLegacy;
+
+export interface TeamWithRoles extends Team {
+  /**
+   * RBAC roles assigned to the team.
+   */
+  roles?: Role[];
+}

@@ -1,0 +1,48 @@
+import { memo } from 'react';
+import { connect, type ConnectedProps } from 'react-redux';
+
+import { t } from '@grafana/i18n';
+import { Button, ClipboardButton } from '@grafana/ui';
+import { type Invitee } from 'app/types/user';
+
+import { revokeInvite } from './state/actions';
+
+const mapDispatchToProps = {
+  revokeInvite,
+};
+
+const connector = connect(null, mapDispatchToProps);
+
+interface OwnProps {
+  invitee: Invitee;
+}
+
+type Props = OwnProps & ConnectedProps<typeof connector>;
+
+const InviteeRow = memo<Props>(({ invitee, revokeInvite }) => {
+  return (
+    <tr>
+      <td>{invitee.email}</td>
+      <td>{invitee.name}</td>
+      <td className="text-right">
+        <ClipboardButton icon="copy" variant="secondary" size="sm" getText={() => invitee.url}>
+          Copy Invite
+        </ClipboardButton>
+        &nbsp;
+      </td>
+      <td>
+        <Button
+          variant="destructive"
+          size="sm"
+          icon="times"
+          onClick={() => revokeInvite(invitee.code)}
+          aria-label={t('invites.invitee-row.aria-label-revoke-invite', 'Revoke invite')}
+        />
+      </td>
+    </tr>
+  );
+});
+
+InviteeRow.displayName = 'InviteeRow';
+
+export default connector(InviteeRow);

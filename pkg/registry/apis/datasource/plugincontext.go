@@ -1,0 +1,224 @@
+package datasource
+
+import (
+	"context"
+	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry/apis/datasource/converter"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/setting"
+)
+
+// This provides access to settings saved in the database.
+// Authorization checks will happen within each function, and the user in ctx will
+// limit which namespace/tenant/org we are talking to
+type PluginDatasourceProvider interface {
+	// Get a single data source (any type)
+	GetDataSource(ctx context.Context, uid string) (*datasourceV0.DataSource, error)
+
+	// List all datasources (any type)
+	ListDataSources(ctx context.Context) (*datasourceV0.DataSourceList, error)
+
+	// Create a data source
+	CreateDataSource(ctx context.Context, ds *datasourceV0.DataSource) (*datasourceV0.DataSource, error)
+
+	// Update a data source
+	UpdateDataSource(ctx context.Context, ds *datasourceV0.DataSource) (*datasourceV0.DataSource, error)
+
+	// Delete a data source (any type)
+	DeleteDataSource(ctx context.Context, uid string) error
+
+	// Return settings (decrypted!) for a specific plugin
+	// This will require "query" permission for the user in context
+	GetInstanceSettings(ctx context.Context, uid string) (*backend.DataSourceInstanceSettings, error)
+}
+
+type ScopedPluginDatasourceProvider interface {
+	GetDatasourceProvider(pluginJson plugins.JSONData) PluginDatasourceProvider
+}
+
+// PluginContext requires adding system settings (feature flags, etc) to the datasource config
+type PluginContextWrapper interface {
+	PluginContextForDataSource(ctx context.Context, datasourceSettings *backend.DataSourceInstanceSettings) (backend.PluginContext, error)
+}
+
+func ProvideDefaultPluginConfigs(
+	dsService datasources.DataSourceService,
+	dsCache datasources.CacheService,
+	contextProvider *plugincontext.Provider,
+	cfg *setting.Cfg,
+) ScopedPluginDatasourceProvider {
+	return &cachingDatasourceProvider{
+		dsService:       dsService,
+		dsCache:         dsCache,
+		contextProvider: contextProvider,
+		converter:       converter.NewConverter(request.GetNamespaceMapper(cfg), "", "", nil),
+	}
+}
+
+type cachingDatasourceProvider struct {
+	dsService       datasources.DataSourceService
+	dsCache         datasources.CacheService
+	contextProvider *plugincontext.Provider
+	converter       *converter.Converter
+}
+
+func (q *cachingDatasourceProvider) GetDatasourceProvider(pluginJson plugins.JSONData) PluginDatasourceProvider {
+	return &scopedDatasourceProvider{
+		plugin:          pluginJson,
+		dsService:       q.dsService,
+		dsCache:         q.dsCache,
+		contextProvider: q.contextProvider,
+		converter:       converter.NewConverter(q.converter.Mapper(), pluginJson.ID, pluginJson.ID, pluginJson.AliasIDs),
+	}
+}
+
+type scopedDatasourceProvider struct {
+	plugin          plugins.JSONData
+	dsService       datasources.DataSourceService
+	dsCache         datasources.CacheService
+	contextProvider *plugincontext.Provider
+	converter       *converter.Converter
+}
+
+var (
+	_ PluginDatasourceProvider       = (*scopedDatasourceProvider)(nil)
+	_ ScopedPluginDatasourceProvider = (*cachingDatasourceProvider)(nil)
+)
+
+func (q *scopedDatasourceProvider) GetInstanceSettings(ctx context.Context, uid string) (*backend.DataSourceInstanceSettings, error) {
+	if q.contextProvider == nil {
+		return nil, fmt.Errorf("missing contextProvider")
+	}
+	return q.contextProvider.GetDataSourceInstanceSettings(ctx, uid)
+}
+
+// CreateDataSource implements PluginDatasourceProvider.
+func (q *scopedDatasourceProvider) CreateDataSource(ctx context.Context, ds *datasourceV0.DataSource) (*datasourceV0.DataSource, error) {
+	cmd, err := q.converter.ToAddCommand(ds)
+	if err != nil {
+		return nil, err
+	}
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	userID, err := strconv.ParseInt(strings.TrimPrefix(user.GetID(), "user:"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	cmd.UserID = userID
+	out, err := q.dsService.AddDataSource(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+	return q.converter.AsDataSource(out)
+}
+
+// UpdateDataSource implements PluginDatasourceProvider.
+func (q *scopedDatasourceProvider) UpdateDataSource(ctx context.Context, ds *datasourceV0.DataSource) (*datasourceV0.DataSource, error) {
+	cmd, err := q.converter.ToUpdateCommand(ds)
+	if err != nil {
+		return nil, err
+	}
+	out, err := q.dsService.UpdateDataSource(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	// Don't return secret references in the response if the update just
+	// told us to remove them.
+	for k, v := range ds.Secure {
+		if v.Remove {
+			delete(out.SecureJsonData, k)
+		}
+	}
+
+	return q.converter.AsDataSource(out)
+}
+
+// Delete implements PluginDatasourceProvider.
+func (q *scopedDatasourceProvider) DeleteDataSource(ctx context.Context, uid string) error {
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return err
+	}
+	ds, err := q.dsCache.GetDatasourceByUID(ctx, uid, user, true)
+	if err != nil {
+		return err
+	}
+	if ds == nil {
+		return fmt.Errorf("not found")
+	}
+	return q.dsService.DeleteDataSource(ctx, &datasources.DeleteDataSourceCommand{
+		ID:    ds.ID,
+		UID:   ds.UID,
+		OrgID: ds.OrgID,
+		Name:  ds.Name,
+	})
+}
+
+// GetDataSource implements PluginDatasourceProvider.
+func (q *scopedDatasourceProvider) GetDataSource(ctx context.Context, uid string) (*datasourceV0.DataSource, error) {
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ds, err := q.dsCache.GetDatasourceByUID(ctx, uid, user, true)
+	if err != nil {
+		return nil, err
+	}
+
+	// The old api skips returning secrets with empty values.
+	// See pkg/api/datasources.go
+	secrets, err := q.dsService.DecryptedValues(ctx, ds)
+	if err != nil {
+		return nil, err
+	}
+	for k, v := range secrets {
+		if len(v) == 0 {
+			delete(ds.SecureJsonData, k)
+		}
+	}
+
+	// Add the decrypted secrets to the context if they were requested
+	pluginsettings.WithDecryptedValues(ctx, func(ctx context.Context) (map[string]string, error) {
+		return secrets, nil
+	})
+
+	return q.converter.AsDataSource(ds)
+}
+
+// ListDataSource implements PluginDatasourceProvider.
+func (q *scopedDatasourceProvider) ListDataSources(ctx context.Context) (*datasourceV0.DataSourceList, error) {
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	dss, err := q.dsService.GetDataSourcesByType(ctx, &datasources.GetDataSourcesByTypeQuery{
+		OrgID:    info.OrgID,
+		Type:     q.plugin.ID,
+		AliasIDs: q.plugin.AliasIDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := &datasourceV0.DataSourceList{
+		Items: []datasourceV0.DataSource{},
+	}
+	for _, ds := range dss {
+		v, _ := q.converter.AsDataSource(ds)
+		result.Items = append(result.Items, *v)
+	}
+	return result, nil
+}

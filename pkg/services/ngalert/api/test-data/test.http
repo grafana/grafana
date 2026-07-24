@@ -1,0 +1,132 @@
+@grafanaRecipient = grafana
+@lokiDatasourceUID = 9w8X2zlMz
+@prometheusDatasourceUID = 7DEsN5_Mk
+
+POST http://admin:admin@localhost:3000/api/v1/rule/test/{{grafanaRecipient}}
+content-type: application/json
+
+{
+  "grafana_condition": {
+    "condition": "A",
+    "data": [
+        {
+            "refId": "A",
+            "relativeTimeRange": {
+                "from": 18000,
+                "to": 10800
+            },
+            "datasourceUid": "__expr__",
+            "model": {
+                "type":"math",
+                "expression":"1 < 2"
+            }
+        }
+    ]
+  }
+}
+
+###
+
+POST http://admin:admin@localhost:3000/api/v1/eval
+content-type: application/json
+
+{
+"data": [
+  {
+    "refId": "A",
+    "queryType": "",
+    "relativeTimeRange": {
+      "from": 18000,
+      "to": 10800
+    },
+    "datasourceUid": "000000004",
+    "model": {
+      "intervalMs": 1000,
+      "maxDataPoints": 100,
+      "orgId": 0,
+      "refId": "A",
+      "scenarioId": "csv_metric_values",
+      "stringInput": "1,20,90,30,5,0"
+    }
+  },
+  {
+    "refId": "B",
+    "queryType": "",
+    "relativeTimeRange": {
+      "from": 18000,
+      "to": 10800
+    },
+    "datasourceUid": "__expr__",
+    "model": {
+      "expression": "$A",
+      "intervalMs": 2000,
+      "maxDataPoints": 200,
+      "orgId": 0,
+      "reducer": "mean",
+      "refId": "B",
+      "type": "reduce"
+    }
+  }
+],
+"now": "2021-04-11T14:38:14Z"
+}
+
+###
+POST http://admin:admin@localhost:3000/api/v1/rule/test/{{lokiDatasourceUID}}
+content-type: application/json
+
+{
+  "expr": "rate({cluster=\"us-central1\", job=\"loki-prod/loki-canary\"}[1m]) > 0"
+}
+
+###
+POST http://admin:admin@localhost:3000/api/v1/rule/test/{{prometheusDatasourceUID}}
+content-type: application/json
+
+{
+  "expr": "http_request_duration_microseconds > 1"
+}
+
+### loki recipient - empty payload
+POST http://admin:admin@localhost:3000/api/v1/rule/test/{{lokiDatasourceUID}}
+content-type: application/json
+
+{}
+
+### grafana recipient - empty payload
+POST http://admin:admin@localhost:3000/api/v1/rule/test/{{grafanaRecipient}}
+content-type: application/json
+
+{}
+
+### loki recipient - grafana payload
+POST http://admin:admin@localhost:3000/api/v1/rule/test/{{lokiDatasourceUID}}
+content-type: application/json
+
+{
+  "grafana_condition": {
+    "condition": "A",
+    "data": [
+        {
+            "refId": "A",
+            "relativeTimeRange": {
+                "from": 18000,
+                "to": 10800
+            },
+            "datasourceUid": "__expr__",
+            "model": {
+                "type":"math",
+                "expression":"1 < 2"
+            }
+        }
+    ]
+  }
+}
+
+### grafana recipient - lotex payload
+POST http://admin:admin@localhost:3000/api/v1/rule/test/{{grafanaRecipient}}
+content-type: application/json
+
+{
+  "expr": "rate({cluster=\"us-central1\", job=\"loki-prod/loki-canary\"}[1m]) > 0"
+}

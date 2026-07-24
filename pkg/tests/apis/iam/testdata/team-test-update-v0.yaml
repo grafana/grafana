@@ -1,0 +1,7 @@
+apiVersion: iam.grafana.app/v0alpha1
+kind: Team
+metadata:
+  name: testteam1
+spec:
+  title: "Test Team 2"
+  email: testteam2@example123.com

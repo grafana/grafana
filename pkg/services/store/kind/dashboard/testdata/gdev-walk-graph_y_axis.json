@@ -1,0 +1,184 @@
+{
+  "name": "Panel Tests - Graph - Y axis ticks",
+  "labels": {
+    "gdev": "",
+    "panel-tests": ""
+  },
+  "fields": {
+    "schemaVersion": "0"
+  },
+  "nested": [
+    {
+      "UID": "graph_y_axis.json#0",
+      "kind": "panel",
+      "name": "Data from 0 - 1B (unit bytes)",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph_y_axis.json#0",
+      "kind": "panel",
+      "name": "Data from 0 - 10K (unit short)",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph_y_axis.json#0",
+      "kind": "panel",
+      "name": "Data from 0.0002 - 0.001 (unit short)",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph_y_axis.json#0",
+      "kind": "panel",
+      "name": "Data from 0 - 10K (unit bytes IEC)",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph_y_axis.json#0",
+      "kind": "panel",
+      "name": "Data from 0 - 10K (unit bytes metric)",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph_y_axis.json#0",
+      "kind": "panel",
+      "name": "Data from 12000 - 30000 (unit ms)",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph_y_axis.json#0",
+      "kind": "panel",
+      "name": "Data from 0 - 10K (unit short)",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph_y_axis.json#0",
+      "kind": "panel",
+      "name": "Data from 12000 - 30000 (unit ms)",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph_y_axis.json#0",
+      "kind": "panel",
+      "name": "Data from 0 - 1B (unit short)",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "family": "ds"
+    },
+    {
+      "family": "plugin",
+      "type": "panel",
+      "identifier": "timeseries"
+    }
+  ]
+}

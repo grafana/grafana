@@ -1,0 +1,68 @@
+import { set, get as lodashGet } from 'lodash';
+
+import {
+  type NestedValueAccess,
+  type PanelOptionsSupplier,
+  type StandardEditorContext,
+  type TransformerUIProps,
+  PanelOptionsEditorBuilder,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
+import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
+
+export function getTransformerOptionPane<T = any>(
+  props: TransformerUIProps<T>,
+  supplier: PanelOptionsSupplier<T>
+): OptionsPaneCategoryDescriptor {
+  const context: StandardEditorContext<unknown, unknown> = {
+    data: props.input,
+    options: props.options,
+  };
+
+  const root = new OptionsPaneCategoryDescriptor({
+    id: 'root',
+    title: t('transformers.get-transformer-option-pane.root.title.root', 'root'),
+  });
+  const getOptionsPaneCategory = (categoryNames?: string[]): OptionsPaneCategoryDescriptor => {
+    if (categoryNames?.length) {
+      const key = categoryNames[0];
+      let sub = root.categories.find((v) => v.props.id === key);
+      if (!sub) {
+        sub = new OptionsPaneCategoryDescriptor({ id: key, title: key });
+        root.categories.push(sub);
+      }
+      return sub;
+    }
+    return root;
+  };
+
+  const access: NestedValueAccess = {
+    getValue: (path) => lodashGet(props.options, path),
+    onChange: (path, value) => {
+      props.onChange(setOptionImmutably<any>(props.options, path, value));
+    },
+  };
+
+  // Use the panel options loader
+  fillOptionsPaneItems('spatial-transformer', supplier, access, getOptionsPaneCategory, context);
+  return root;
+}
+
+export function getDefaultOptions<T = any>(supplier: PanelOptionsSupplier<T>): T {
+  const context: StandardEditorContext<T, unknown> = {
+    data: [],
+    options: {} as T,
+  };
+
+  const results = {};
+  const builder = new PanelOptionsEditorBuilder<T>();
+  supplier(builder, context);
+  for (const item of builder.getItems()) {
+    if (item.defaultValue != null) {
+      set(results, item.path, item.defaultValue);
+    }
+  }
+  return results as T;
+}

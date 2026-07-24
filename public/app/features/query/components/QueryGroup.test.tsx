@@ -1,0 +1,167 @@
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
+import { selectors } from '@grafana/e2e-selectors';
+import config from 'app/core/config';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
+
+import { PanelQueryRunner } from '../state/PanelQueryRunner';
+
+import { type Props, QueryGroup } from './QueryGroup';
+
+const mockDS = mockDataSource({
+  name: 'CloudManager',
+  type: DataSourceType.Alertmanager,
+});
+
+const mockVariable = mockDataSource({
+  name: '${dsVariable}',
+  type: 'datasource',
+});
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    get: () => Promise.resolve({ ...mockDS, getRef: () => {} }),
+    getList: ({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS]),
+    getInstanceSettings: () => ({
+      ...mockDS,
+      meta: {
+        ...mockDS.meta,
+        alerting: true,
+        mixed: true,
+      },
+    }),
+  }),
+}));
+
+describe('QueryGroup', () => {
+  // QueryGroup relies on this being present
+  Object.defineProperty(HTMLElement.prototype, 'scrollTo', { value: jest.fn() });
+
+  beforeEach(() => {
+    config.expressionsEnabled = true;
+  });
+
+  it('Should add expression on click', async () => {
+    renderScenario({});
+
+    const addExpressionButton = await screen.findByTestId('query-tab-add-expression');
+    const queryRowsContainer = await screen.findByTestId('query-editor-rows');
+    expect(queryRowsContainer.children.length).toBe(2);
+
+    await userEvent.click(addExpressionButton);
+    await waitFor(() => {
+      expect(queryRowsContainer.children.length).toBe(3);
+    });
+  });
+
+  it('Should add query on click', async () => {
+    renderScenario({});
+
+    const addQueryButton = await screen.findByRole('button', { name: /Add query/i });
+    const queryRowsContainer = await screen.findByTestId('query-editor-rows');
+    expect(queryRowsContainer.children.length).toBe(2);
+
+    await userEvent.click(addQueryButton);
+
+    await waitFor(() => {
+      expect(queryRowsContainer.children.length).toBe(3);
+    });
+  });
+
+  it('New expression should be expanded', async () => {
+    renderScenario({});
+
+    const addExpressionButton = await screen.findByTestId('query-tab-add-expression');
+    const queryRowsContainer = await screen.findByTestId('query-editor-rows');
+    await userEvent.click(addExpressionButton);
+
+    const lastQueryEditorRow = (await screen.findAllByTestId(selectors.components.QueryEditorRows.rows)).at(-1);
+    const lastEditorToggleRow = (await screen.findAllByLabelText('Collapse query row')).at(-1);
+
+    expect(lastEditorToggleRow?.getAttribute('aria-expanded')).toBe('true');
+    expect(lastQueryEditorRow?.firstElementChild?.children.length).toBe(2);
+    await waitFor(() => {
+      expect(queryRowsContainer.children.length).toBe(3);
+    });
+  });
+
+  it('New query should be expanded', async () => {
+    renderScenario({});
+
+    const addQueryButton = await screen.findByRole('button', { name: /Add query/i });
+    const queryRowsContainer = await screen.findByTestId('query-editor-rows');
+    await userEvent.click(addQueryButton);
+
+    const lastQueryEditorRow = (await screen.findAllByTestId(selectors.components.QueryEditorRows.rows)).at(-1);
+    const lastEditorToggleRow = (await screen.findAllByLabelText('Collapse query row')).at(-1);
+
+    expect(lastEditorToggleRow?.getAttribute('aria-expanded')).toBe('true');
+    expect(lastQueryEditorRow?.firstElementChild?.children.length).toBe(2);
+    await waitFor(() => {
+      expect(queryRowsContainer.children.length).toBe(3);
+    });
+  });
+
+  it('Should open data source help modal', async () => {
+    renderScenario({});
+
+    const openHelpButton = await screen.findByTestId('query-tab-help-button');
+    await userEvent.click(openHelpButton);
+
+    const helpModal = await screen.findByRole('dialog');
+    expect(helpModal).toBeInTheDocument();
+  });
+
+  it('Should not show add expression button when expressions are disabled', async () => {
+    config.expressionsEnabled = false;
+    renderScenario({});
+    await screen.findByRole('button', { name: /Add query/i });
+    const addExpressionButton = screen.queryByTestId('query-tab-add-expression');
+    expect(addExpressionButton).not.toBeInTheDocument();
+  });
+
+  it('correctly renders query options', async () => {
+    renderScenario({});
+    expect(await screen.findByText('MD = 100')).toBeInTheDocument();
+    expect(await screen.findByText('Interval = 1m')).toBeInTheDocument();
+  });
+});
+
+function renderScenario(overrides: Partial<Props>) {
+  const props: Props = {
+    onOptionsChange: jest.fn(),
+    queryRunner: new PanelQueryRunner({
+      getDataSupport: jest.fn(),
+      getFieldOverrideOptions: jest.fn(),
+      getTransformations: jest.fn(),
+    }),
+    options: {
+      maxDataPoints: 100,
+      minInterval: '1m',
+      queries: [
+        {
+          datasource: mockDS,
+          refId: 'A',
+        },
+        {
+          datasource: mockDS,
+          refId: 'B',
+        },
+      ],
+      dataSource: mockDS,
+    },
+    onRunQueries: function (): void {
+      throw new Error('Function not implemented.');
+    },
+  };
+
+  Object.assign(props, overrides);
+
+  return {
+    props,
+    renderResult: render(<QueryGroup {...props} />),
+  };
+}

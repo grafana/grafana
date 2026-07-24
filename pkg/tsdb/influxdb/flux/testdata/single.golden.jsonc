@@ -1,0 +1,55 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
+//  }
+//  Name: 
+//  Dimensions: 1 Fields by 1 Rows
+//  +--------------------------------------+
+//  | Name: _value                         |
+//  | Labels: _field=summary_serial_number |
+//  | Type: []*int64                       |
+//  +--------------------------------------+
+//  | 6                                    |
+//  +--------------------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ]
+        },
+        "fields": [
+          {
+            "name": "_value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "int64",
+              "nullable": true
+            },
+            "labels": {
+              "_field": "summary_serial_number"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            6
+          ]
+        ]
+      }
+    }
+  ]
+}

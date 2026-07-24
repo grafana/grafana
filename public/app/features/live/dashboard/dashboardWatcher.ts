@@ -1,0 +1,190 @@
+import { type Unsubscribable } from 'rxjs';
+
+import {
+  AppEvents,
+  isLiveChannelMessageEvent,
+  isLiveChannelStatusEvent,
+  type LiveChannelAddress,
+  LiveChannelConnectionState,
+  type LiveChannelEvent,
+  LiveChannelScope,
+  generateUUID,
+} from '@grafana/data';
+import { getGrafanaLiveSrv, locationService } from '@grafana/runtime';
+import { appEvents } from 'app/core/app_events';
+import { contextSrv } from 'app/core/services/context_srv';
+
+import { ShowModalReactEvent } from '../../../types/events';
+import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
+
+import { DashboardChangedModal } from './DashboardChangedModal';
+import { type DashboardEvent, DashboardEventAction } from './types';
+
+// sessionId is not a security-sensitive value.
+// It is used for filtering out dashboard edit events from the same browsing session
+const sessionId = generateUUID();
+
+class DashboardWatcher {
+  private static readonly IGNORE_SAVE_WINDOW_MS = 5000;
+
+  channel?: LiveChannelAddress; // path to the channel
+  uid?: string;
+  ignoreSave = 0; // save any events until this time passes
+  editing = false;
+  lastEditing?: DashboardEvent;
+  subscription?: Unsubscribable;
+  hasSeenNotice?: boolean;
+
+  setEditingState(state: boolean) {
+    const changed = (this.editing = state);
+    this.editing = state;
+    this.hasSeenNotice = false;
+
+    if (changed && contextSrv.isEditor) {
+      this.sendEditingState();
+    }
+  }
+
+  private sendEditingState() {
+    const { channel, uid } = this;
+    if (channel && uid) {
+      getGrafanaLiveSrv().publish(channel, {
+        sessionId,
+        uid,
+        action: this.editing ? DashboardEventAction.EditingStarted : DashboardEventAction.EditingCanceled,
+        timestamp: Date.now(),
+      });
+    }
+  }
+
+  watch(uid: string) {
+    const live = getGrafanaLiveSrv();
+    if (!live) {
+      return;
+    }
+
+    // Check for changes
+    if (uid !== this.uid) {
+      this.channel = {
+        scope: LiveChannelScope.Grafana,
+        stream: 'dashboard',
+        path: `uid/${uid}`,
+      };
+      this.leave();
+      if (uid) {
+        this.subscription = live.getStream<DashboardEvent>(this.channel).subscribe(this.observer);
+      }
+      this.uid = uid;
+    }
+  }
+
+  leave() {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+    this.subscription = undefined;
+    this.uid = undefined;
+  }
+
+  // ignore the next 5 seconds of save events
+  ignoreNextSave() {
+    this.ignoreSave = Date.now() + DashboardWatcher.IGNORE_SAVE_WINDOW_MS;
+  }
+
+  // Suppress save events indefinitely until clearIgnoreSave() is called.
+  // Used by provisioned saves where Git operations can exceed the 5s window.
+  ignoreSaveIndefinitely() {
+    this.ignoreSave = Infinity;
+  }
+
+  clearIgnoreSave() {
+    this.ignoreSave = 0;
+  }
+
+  getRecentEditingEvent() {
+    if (this.lastEditing && this.lastEditing.timestamp) {
+      const elapsed = Date.now() - this.lastEditing.timestamp;
+      if (elapsed > 5000) {
+        this.lastEditing = undefined;
+      }
+    }
+    return this.lastEditing;
+  }
+
+  observer = {
+    next: (event: LiveChannelEvent<DashboardEvent>) => {
+      // Send the editing state when connection starts
+      if (isLiveChannelStatusEvent(event) && this.editing && event.state === LiveChannelConnectionState.Connected) {
+        this.sendEditingState();
+      }
+
+      if (isLiveChannelMessageEvent(event)) {
+        if (event.message.sessionId === sessionId) {
+          return; // skip internal messages
+        }
+
+        const { action, message } = event.message;
+        switch (action) {
+          case DashboardEventAction.EditingStarted:
+          case DashboardEventAction.Saved: {
+            if (this.ignoreSave) {
+              if (this.ignoreSave < Date.now()) {
+                this.ignoreSave = 0; // process the event
+              } else {
+                return;
+              }
+            }
+
+            const dash = getDashboardSrv().getCurrent();
+            if (dash?.uid !== event.message.uid) {
+              console.log('dashboard event for different dashboard?', event, dash);
+              return;
+            }
+
+            let showPopup = this.editing || dash.hasUnsavedChanges();
+
+            // Dashboard could have unsaved changes but if user has already restored from a version
+            // the reloadPage should be called below
+            if (message?.includes('Restored from version')) {
+              showPopup = false;
+            }
+
+            if (action === DashboardEventAction.Saved) {
+              if (showPopup) {
+                appEvents.publish(
+                  new ShowModalReactEvent({
+                    component: DashboardChangedModal,
+                    props: { event },
+                  })
+                );
+              } else {
+                appEvents.emit(AppEvents.alertSuccess, ['Dashboard updated']);
+                this.reloadPage();
+              }
+            } else if (showPopup) {
+              if (action === DashboardEventAction.EditingStarted && !this.hasSeenNotice) {
+                const editingEvent = event.message;
+                const recent = this.getRecentEditingEvent();
+                if (!recent || recent.message !== editingEvent.message) {
+                  this.hasSeenNotice = true;
+                  appEvents.emit(AppEvents.alertWarning, [
+                    'Another session is editing this dashboard',
+                    editingEvent.message,
+                  ]);
+                }
+                this.lastEditing = editingEvent;
+              }
+            }
+            return;
+          }
+        }
+      }
+    },
+  };
+
+  reloadPage() {
+    locationService.reload();
+  }
+}
+
+export const dashboardWatcher = new DashboardWatcher();

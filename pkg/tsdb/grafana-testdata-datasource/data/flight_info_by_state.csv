@@ -1,0 +1,18 @@
+State, Lat,Lng,DestLocation,Count,Price
+Alaska, 61.3850,-152.2683,bdg,5,500
+Alabama, 32.7990,-86.8073,djf,3,300
+Arizona, 33.7712,-111.3877,9w0,10,150
+California, 36.1700,-119.7462,9q6,12,250
+Colorado, 39.0646,-105.3272,9wv,1,600
+Florida, 27.8333,-81.7170,dhv,5,500
+Iowa, 42.0046,-93.2140,9zm,7,700
+Illinois, 40.3363,-89.0022,dp0,1,400
+Indiana, 39.8647,-86.2604,dp4,5,540
+Kentucky, 37.6690,-84.6514,dne,6,630
+Massachusetts, 42.2373,-71.5314,drt,11,460
+Michigan, 43.3504,-84.5603,dpe,2,250
+North Carolina, 35.6411,-79.8431,dnr,5,500
+New Jersey, 40.3140,-74.5089,dr5,12,400
+New Mexico, 34.8375,-106.2371,9wh,15,800
+Ohio, 40.3736,-82.7755,dpj,9,930
+Oregon, 44.5672,-122.1269,9rc,3,360
