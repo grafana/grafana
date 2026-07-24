@@ -10,7 +10,7 @@ import config from 'app/core/config';
 import { defaultCodeOptions, defaultOptions, type Options, TextMode } from '../../schemas/textng/panelcfg.gen';
 
 import { TextNGCodeView } from './TextNGCodeView';
-import { getInterpolateFormat, transformContent } from './textContent';
+import { getInterpolateFormat, transformContent } from './utils';
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
 

@@ -8,7 +8,7 @@ import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
 import { type CodeLanguage } from '../../schemas/textng/panelcfg.gen';
 
-import { getCodeMirrorLanguage } from './codeLanguages';
+import { getCodeMirrorLanguage } from './utils';
 
 export interface TextNGCodeViewProps {
   content: string;

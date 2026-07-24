@@ -11,8 +11,7 @@ import config from 'app/core/config';
 
 import { CodeLanguage, TextMode } from '../../../schemas/textng/panelcfg.gen';
 import { TextNGCodeView } from '../TextNGCodeView';
-import { getCodeMirrorLanguage } from '../codeLanguages';
-import { getInterpolateFormat, transformContent } from '../textContent';
+import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '../utils';
 
 type ViewMode = 'write' | 'split' | 'preview';
 
