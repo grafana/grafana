@@ -421,7 +421,7 @@ jobs:
       - name: Install yarn dependencies
         uses: ./.github/actions/yarn-install
       - name: Extract and publish metrics
-        run: ./scripts/ci-frontend-metrics.sh | node --experimental-strip-types .github/workflows/scripts/publish-frontend-metrics.mts
+        run: ./scripts/ci-frontend-metrics.sh | node .github/workflows/scripts/publish-frontend-metrics.mts
         env:
           GRAFANA_MISC_STATS_API_KEY: ${{ fromJSON(steps.vault-secrets.outputs.secrets).GRAFANA_MISC_STATS_API_KEY }}
 
