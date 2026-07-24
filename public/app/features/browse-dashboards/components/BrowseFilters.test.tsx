@@ -9,17 +9,16 @@ import { SearchLayout, type SearchState } from 'app/features/search/types';
 import { BrowseFilters } from './BrowseFilters';
 
 const mockUseSearchStateManager = jest.fn();
-const mockGetSortOptions = jest.fn().mockResolvedValue([]);
 
 jest.mock('app/features/search/state/SearchStateManager', () => ({
   useSearchStateManager: () => mockUseSearchStateManager(),
 }));
 
-jest.mock('app/features/search/service/searcher', () => ({
-  getGrafanaSearcher: () => ({
-    getSortOptions: mockGetSortOptions,
-    sortPlaceholder: 'Sort',
-  }),
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    hasPermission: jest.fn(() => true),
+    user: { uid: 1, orgId: 1 },
+  },
 }));
 
 setBackendSrv(backendSrv);

@@ -10,6 +10,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 
+	"github.com/grafana/authlib/types"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
@@ -18,12 +20,11 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// AnnoAuthor and AnnoAuthorEmail carry the display name and email of the user
-// that triggered the job. They are set by the server at creation time and are
-// immutable.
 const (
-	AnnoAuthor      = "provisioning.grafana.app/author"
-	AnnoAuthorEmail = "provisioning.grafana.app/authorEmail"
+	AnnoAuthor       = "provisioning.grafana.app/author"
+	AnnoAuthorEmail  = "provisioning.grafana.app/authorEmail"
+	AnnoAuthorID     = "provisioning.grafana.app/authorId"
+	AnnoAuthorOrigin = "provisioning.grafana.app/authorOrigin"
 )
 
 // ValidateJob performs validation on the Job specification and returns an error if validation fails.
@@ -410,32 +411,55 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 func validateAuthor(ctx context.Context, a admission.Attributes, job *provisioning.Job) error {
 	name := job.Annotations[AnnoAuthor]
 	email := job.Annotations[AnnoAuthorEmail]
+	id := job.Annotations[AnnoAuthorID]
+	origin := job.Annotations[AnnoAuthorOrigin]
 
 	switch a.GetOperation() {
 	case admission.Create:
-		if (name == "" && email == "") || identity.IsServiceIdentity(ctx) {
+		if info, ok := types.AuthInfoFrom(ctx); ok && identity.IsProvisioningServiceIdentity(info) {
+			if email != "" {
+				return apierrors.NewBadRequest(fmt.Sprintf("annotation %s may not be set by the provisioning service", AnnoAuthorEmail))
+			}
 			return nil
 		}
-		id, err := identity.GetRequester(ctx)
-		if err != nil {
-			return apierrors.NewBadRequest("job author annotations must match the requesting user")
+		if requester, err := identity.GetRequester(ctx); err == nil && requester.IsIdentityType(types.TypeUser) {
+			if name == "" && email == "" && id == "" && origin == "" {
+				return nil
+			}
+			if name != requester.GetName() {
+				return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthor))
+			}
+			if email != requester.GetEmail() {
+				return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthorEmail))
+			}
+			if id != requester.GetUID() {
+				return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthorID))
+			}
+			if origin != "Grafana" {
+				return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must be Grafana for user-created jobs", AnnoAuthorOrigin))
+			}
+			return nil
 		}
-		if name != "" && name != id.GetName() {
-			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthor))
+		if name != "" || email != "" || id != "" {
+			return apierrors.NewBadRequest("job author annotations may only be set by a user or the provisioning service")
 		}
-		if email != "" && email != id.GetEmail() {
-			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthorEmail))
+		if origin != "" && origin != "Unknown" {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must be Unknown when no user or provisioning service is involved", AnnoAuthorOrigin))
 		}
 	case admission.Update:
 		old, ok := a.GetOldObject().(*provisioning.Job)
 		if !ok {
 			return nil
 		}
-		if old.Annotations[AnnoAuthor] != name {
-			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", AnnoAuthor))
-		}
-		if old.Annotations[AnnoAuthorEmail] != email {
-			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", AnnoAuthorEmail))
+		for anno, value := range map[string]string{
+			AnnoAuthor:       name,
+			AnnoAuthorEmail:  email,
+			AnnoAuthorID:     id,
+			AnnoAuthorOrigin: origin,
+		} {
+			if old.Annotations[anno] != value {
+				return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", anno))
+			}
 		}
 	case admission.Delete, admission.Connect:
 	}
