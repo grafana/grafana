@@ -228,7 +228,7 @@ func TestStartupIndexStatsCountLimit(t *testing.T) {
 				Backend:      &mockSearchBackend{snapshotThreshold: tc.snapshotThreshold},
 				Resources:    &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"group": "resource"}},
 				InitMinCount: tc.initMinCount,
-			}, storage, nil, nil, nil, nil, nil, nil, nil)
+			}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 			require.NoError(t, err)
 
 			_, err = server.startupIndexStats(t.Context())
