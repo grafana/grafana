@@ -74,6 +74,7 @@ import (
 	querycachingmigrator "github.com/grafana/grafana/pkg/registry/apps/querycaching/migrator"
 	shorturlmigration "github.com/grafana/grafana/pkg/registry/apps/shorturl"
 	shorturlmigrator "github.com/grafana/grafana/pkg/registry/apps/shorturl/migrator"
+	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
@@ -599,6 +600,12 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 	wire.Build(wireExtsStandaloneAPIServerSet)
 	return &standalone.NoOpAPIServerFactory{}, nil // Wire will replace this with a real interface
+}
+
+// Initialize the standalone router factory
+func InitializeRouterFactory() (router.RouterFactory, error) {
+	wire.Build(wireExtsRouterFactorySet)
+	return &router.NoOpRouterFactory{}, nil // Wire will replace this with a real interface
 }
 
 // InitializeSearchSupport builds the document builders together with the
