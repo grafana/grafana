@@ -26,6 +26,7 @@ type eventNotifier interface {
 type notifierConfig struct {
 	isHA            bool
 	pollingInterval time.Duration
+	pollingMaxBackoff time.Duration
 	watchBufferSize int
 	log             logging.Logger
 	bulkLock        *bulkLock
@@ -41,6 +42,7 @@ func newNotifier(cfg *notifierConfig) (eventNotifier, error) {
 		cfg.log.Info("Using polling notifier")
 		notifier, err := newPollingNotifier(&pollingNotifierConfig{
 			pollingInterval: cfg.pollingInterval,
+			pollingMaxBackoff: cfg.pollingMaxBackoff,
 			watchBufferSize: cfg.watchBufferSize,
 			log:             cfg.log,
 			bulkLock:        cfg.bulkLock,
