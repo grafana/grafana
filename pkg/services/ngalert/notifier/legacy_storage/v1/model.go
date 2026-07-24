@@ -449,7 +449,7 @@ func (r *Route) Validate() error {
 }
 
 func (r *Route) ValidateReceivers(receivers map[string]struct{}) error {
-	if _, exists := receivers[r.Receiver]; !exists {
+	if _, exists := receivers[r.Receiver]; r.Receiver != "" && !exists {
 		return fmt.Errorf("receiver '%s' does not exist", r.Receiver)
 	}
 	for _, children := range r.Routes {
