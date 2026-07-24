@@ -63,7 +63,7 @@ func createDatabase(t testing.TB, adminDSN, quotedName string) {
 	// escapes the identifier per PostgreSQL rules. Parameterized queries ($1) cannot
 	// be used for DDL identifiers, so pre-sanitized identifier interpolation is the
 	// correct and safe approach here.
-	_, err = admin.Exec(ctx, fmt.Sprintf("CREATE DATABASE %s", quotedName))
+	_, err = admin.Exec(ctx, fmt.Sprintf("CREATE DATABASE %s", quotedName)) // nosemgrep: pgx-sqli
 	require.NoError(t, err, "create test database %q", quotedName)
 }
 
@@ -81,7 +81,7 @@ func dropDatabase(t testing.TB, adminDSN, quotedName string) {
 	// WITH (FORCE) terminates any lingering connections (Postgres 13+).
 	// quotedName is sanitized via pgx.Identifier.Sanitize(); DDL identifiers cannot
 	// use parameterized queries, so pre-sanitized identifier interpolation is safe here.
-	if _, err := admin.Exec(ctx, fmt.Sprintf("DROP DATABASE IF EXISTS %s WITH (FORCE)", quotedName)); err != nil {
+	if _, err := admin.Exec(ctx, fmt.Sprintf("DROP DATABASE IF EXISTS %s WITH (FORCE)", quotedName)); err != nil { // nosemgrep: pgx-sqli
 		t.Logf("pgtest: drop test database %q: %v", quotedName, err)
 	}
 }
