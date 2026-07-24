@@ -77,6 +77,7 @@ export function TableFlat(props: TableNGProps) {
     initialRowIndex,
     sortBy,
     sortByBehavior = 'initial',
+    contentAwareWidthsEnabled = false,
   } = props;
 
   const theme = useTheme2();
@@ -177,11 +178,17 @@ export function TableFlat(props: TableNGProps) {
 
   prevConfiguredWidthCount.current = configuredWidthCount;
 
+  const contentAwareWidths = useMemo(
+    () => (contentAwareWidthsEnabled ? { typographyCtx, showTypeIcons: showTypeIcons ?? false } : undefined),
+    [contentAwareWidthsEnabled, typographyCtx, showTypeIcons]
+  );
+
   const [widths, numFrozenColsFullyInView] = useColWidths(
     visibleFields,
     availableWidth,
     frozenColumns,
-    widthConfigResetKey
+    widthConfigResetKey,
+    contentAwareWidths
   );
 
   const headerHeight = useHeaderHeight({
