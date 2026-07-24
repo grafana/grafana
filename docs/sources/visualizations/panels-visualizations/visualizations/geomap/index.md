@@ -239,7 +239,7 @@ Geomap has nine data layer types and five basemap layer types.
 - [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
 - [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
-- [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre/Mapbox style URL.
+- [MapLibre layer](#maplibre-layer) adds a map from a MapLibre/Mapbox style URL.
 
 There are also two experimental, alpha layer types.
 
@@ -535,9 +535,9 @@ The XYZ Tile layer is a map from a generic tile layer.
 - [Tiled Web Map Wikipedia](https://en.wikipedia.org/wiki/Tiled_web_map)
 - [List of OpenStreetMap Tile Servers](https://wiki.openstreetmap.org/wiki/Tile_servers)
 
-#### MapLibre Style layer
+#### MapLibre layer
 
-The MapLibre Style Layer is a map defined using a MapLibre/Mapbox `style.json` URL. The style contains the URL to the tiles, layer definitions, and more. Typically, they're based on vector tiles as opposed to raster tiles.
+The MapLibre layer is a map defined using a MapLibre/Mapbox `style.json` URL. The style contains the URL to the tiles, layer definitions, and more. Typically, they're based on vector tiles as opposed to raster tiles.
 
 - **URL template** - Set a valid style URL. For example: `https://demotiles.maplibre.org/style.json`
 - **Public access token** - An API token for mapbox maps. Only works for `mapbox://` URLs. Refer to [mapbox access tokens documentation](https://docs.mapbox.com/help/dive-deeper/access-tokens/) for more information. In other cases, you might have to include the token in the URL. For example: `https://example.com/map/style.json?key=XXX`.
@@ -555,7 +555,7 @@ There are five basemap layer types to choose from in a geomap.
 - [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
 - [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
-- [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre/Mapbox style URL.
+- [MapLibre layer](#maplibre-layer) adds a map from a MapLibre/Mapbox style URL.
 
 The default basemap layer uses the CARTO map. You can define custom default base layers in the `.ini` configuration file.
 
@@ -716,8 +716,8 @@ Get the spherical area of a geometry. This area is calculated assuming that poly
 - **Square Kilometers (km²)**
 - **Square Feet (ft²)**
 - **Square Miles (mi²)**
-- **Acres (acre)**
-- **Hectare (ha)**
+- **Acres**
+- **Hectare**
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-area-9-1-0.png" max-width="550px" alt="Geomap panel measure area" >}}
 
@@ -732,8 +732,8 @@ Displays debug information in the upper right corner. This can be useful for deb
 
 #### Tooltip
 
-Tooltips are supported for the **Markers**, **Heatmap**, **Photos** layers.
-For these layer types, choose from the following tooltip options:
+Tooltips are supported for all data layers (not the basemap). Each layer has a **Display tooltip** switch that controls whether it shows a tooltip.
+For layers with tooltips enabled, choose from the following tooltip options:
 
 - **None** displays tooltips only when a data point is clicked.
 - **Details** displays tooltips when a mouse pointer hovers over a data point.

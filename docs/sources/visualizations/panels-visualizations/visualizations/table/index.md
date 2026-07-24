@@ -494,17 +494,11 @@ It has the following options:
 
 #### Actions
 
-Actions add a button to a cell that triggers a basic, unauthenticated API call when clicked. Configure actions from **Data links and actions** or with field overrides.
+Actions add a button to a cell that triggers a basic, unauthenticated API call when clicked. Configure actions in the **Data links and actions** section, or with field overrides. For the list of available action options, refer to [Data links and actions](#data-links-and-actions).
 
 <!-- prettier-ignore-start -->
 | Option             | Description  |
 | ------------------ | ------------ |
-| Endpoint           | Enter the endpoint URL. |
-| Method             | Choose from **GET**, **POST**, and **PUT**. |
-| Content-Type       | Select an option in the drop-down list. Choose from: JSON, Text, JavaScript, HTML, XML, and x-www-form-urlencoded. |
-| Query parameters   | Enter as many **Key**, **Value** pairs as you need. |
-| Header parameters  | Enter as many **Key**, **Value** pairs as you need. |
-| Payload            | Enter the body of the API call. |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
 <!-- prettier-ignore-end -->
 
