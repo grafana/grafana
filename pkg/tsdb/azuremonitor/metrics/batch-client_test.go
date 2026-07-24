@@ -229,7 +229,7 @@ func TestExecuteBatchRequest(t *testing.T) {
 		batch := makeBatch("westus2", "sub-123", "Microsoft.Compute/virtualMachines", "Percentage CPU",
 			"PT1M", "Average", "", from, to, []string{"/sub/rg/vm1"}, nil)
 
-		resp, err := executeBatchRequest(context.Background(), batch, redirectToServer(srv))
+		resp, _, err := executeBatchRequest(context.Background(), batch, redirectToServer(srv))
 		require.NoError(t, err)
 		require.Len(t, resp.Values, 1)
 		assert.Equal(t, "/sub/rg/vm1", resp.Values[0].ResourceID)
@@ -245,7 +245,7 @@ func TestExecuteBatchRequest(t *testing.T) {
 		batch := makeBatch("westus2", "sub-123", "Microsoft.Compute/virtualMachines", "Percentage CPU",
 			"PT1M", "Average", "", from, to, []string{"/sub/rg/vm1"}, nil)
 
-		_, err := executeBatchRequest(context.Background(), batch, redirectToServer(srv))
+		_, _, err := executeBatchRequest(context.Background(), batch, redirectToServer(srv))
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "403")
 	})
@@ -259,7 +259,7 @@ func TestExecuteBatchRequest(t *testing.T) {
 		batch := makeBatch("westus2", "sub-123", "Microsoft.Compute/virtualMachines", "Percentage CPU",
 			"PT1M", "Average", "", from, to, []string{"/sub/rg/vm1"}, nil)
 
-		_, err := executeBatchRequest(context.Background(), batch, redirectToServer(srv))
+		_, _, err := executeBatchRequest(context.Background(), batch, redirectToServer(srv))
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to unmarshal")
 	})
