@@ -74,5 +74,17 @@ export function usePlaylistItems(playlistItems?: PlaylistItemUI[]) {
     [items]
   );
 
-  return { items, addByUID, addByTag, deleteItem, moveItem };
+  const updateItemInterval = useCallback((index: number, interval: string) => {
+    setItems((prev) => {
+      if (!prev[index]) {
+        return prev;
+      }
+      const copy = prev.slice();
+      // Empty means "no per-item interval" so playback falls back to the global interval.
+      copy[index] = { ...copy[index], interval: interval || undefined };
+      return copy;
+    });
+  }, []);
+
+  return { items, addByUID, addByTag, deleteItem, moveItem, updateItemInterval };
 }
