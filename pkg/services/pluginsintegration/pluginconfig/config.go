@@ -50,8 +50,8 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 
 // externalOverridesFromIni builds the active external override list by scanning plugin ini settings.
 // For each known override, both keys must be set for a Migrating override to be fully active:
-//   - [plugin.<CorePluginID>] as_external = true  — tells the AsExternal pipeline step to skip loading the core bundle
-//   - [plugin.<ExternalPluginID>] alias_ids = <CorePluginID,...>  — injects the alias and activates the override
+//   - [plugin.<CorePluginID>] as_external = true  — activates the override, populating ActiveExternalOverrides which the AsExternal pipeline step reads
+//   - [plugin.<ExternalPluginID>] alias_ids = <CorePluginID,...>  — injects the alias into the external plugin at decoration time
 //
 // Partial configuration is logged as an error (as_external without alias_ids) or warning (alias_ids without as_external).
 // OverrideStagePermanent overrides are always active regardless of ini config.
