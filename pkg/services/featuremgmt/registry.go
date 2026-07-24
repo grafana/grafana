@@ -669,14 +669,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "dashboardAssistantPopover",
-			Description: "Enables the assistant prompt popover on panel click in dashboard view mode",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "dashboardUndoRedo",
 			Description: "Enables undo/redo in dynamic dashboards",
 			Stage:       FeatureStageExperimental,
