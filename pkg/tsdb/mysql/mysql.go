@@ -96,12 +96,24 @@ func NewInstanceSettings(logger log.Logger) datasource.InstanceFactoryFunc {
 			}
 		}
 
-		cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC&allowNativePasswords=true",
+		// Extract custom collation from JSONData, fallback to utf8mb4_unicode_ci for backward compatibility
+		var customSettings struct {
+			Collation string `json:"collation"`
+		}
+		_ = json.Unmarshal(settings.JSONData, &customSettings)
+
+		collation := "utf8mb4_unicode_ci"
+		if customSettings.Collation != "" {
+			collation = customSettings.Collation
+		}
+
+		cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=%s&parseTime=true&loc=UTC&allowNativePasswords=true",
 			characterEscape(dsInfo.User, ":"),
 			dsInfo.DecryptedSecureJSONData["password"],
 			protocol,
 			characterEscape(dsInfo.URL, ")"),
 			characterEscape(dsInfo.Database, "?"),
+			collation,
 		)
 
 		if dsInfo.JsonData.AllowCleartextPasswords {
