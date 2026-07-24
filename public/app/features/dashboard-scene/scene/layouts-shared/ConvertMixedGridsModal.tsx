@@ -1,7 +1,7 @@
 import { t, Trans } from '@grafana/i18n';
 import { Modal, Button } from '@grafana/ui';
 
-import { layoutRegistry } from '../layouts-shared/layoutRegistry';
+import { layoutRegistry } from './layoutRegistry';
 
 interface ConvertMixedGridsModalProps {
   availableIds: Set<string>;

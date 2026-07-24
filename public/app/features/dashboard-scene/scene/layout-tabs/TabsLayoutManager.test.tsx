@@ -1,4 +1,6 @@
-import { SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { ConstantVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { appEvents } from 'app/core/app_events';
+import { ShowConfirmModalEvent, ShowModalReactEvent } from 'app/types/events';
 
 import { dashboardEditActions } from '../../sidebar/shared';
 import { getLegacySlugForRowOrTab } from '../../utils/utils';
@@ -8,6 +10,7 @@ import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
+import { GridLayoutType } from '../layouts-shared/utils';
 
 import { TabItem } from './TabItem';
 import { getTabsLayoutUrlKeysToTry, TabsLayoutManager } from './TabsLayoutManager';
@@ -514,6 +517,232 @@ describe('TabsLayoutManager', () => {
       expect(tabsManager.state.tabs).toHaveLength(2);
       expect(tabsManager.state.tabs[0].state.title).toBe('New row');
       expect(tabsManager.state.tabs[1].state.title).toBe('New tab');
+    });
+  });
+
+  describe('hoistNestedGroups', () => {
+    it('should hoist nested rows to the top level when hoisting to rows', () => {
+      const row1 = new RowItem({ title: 'Row 1' });
+      const row2 = new RowItem({ title: 'Row 2' });
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({ title: 'Tab 1', layout: new RowsLayoutManager({ rows: [row1, row2] }) }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.hoistNestedGroups('rows');
+
+      const newLayout = scene.state.body;
+      expect(newLayout).toBeInstanceOf(RowsLayoutManager);
+      const rows = (newLayout as RowsLayoutManager).state.rows;
+      expect(rows).toHaveLength(2);
+      expect(rows[0]).toBe(row1);
+      expect(rows[1]).toBe(row2);
+    });
+
+    it('should convert grid tabs and nested tabs into rows when hoisting to rows', () => {
+      const row1 = new RowItem({ title: 'Row 1' });
+      const gridLayout = AutoGridLayoutManager.createEmpty();
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({ title: 'Rows tab', layout: new RowsLayoutManager({ rows: [row1] }) }),
+        new TabItem({
+          title: 'Tabs tab',
+          layout: new TabsLayoutManager({ tabs: [new TabItem({ title: 'Inner tab' })] }),
+        }),
+        new TabItem({ title: 'Grid tab', layout: gridLayout }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.hoistNestedGroups('rows');
+
+      const newLayout = scene.state.body;
+      expect(newLayout).toBeInstanceOf(RowsLayoutManager);
+      const rows = (newLayout as RowsLayoutManager).state.rows;
+      expect(rows.map((row) => row.state.title)).toEqual(['Row 1', 'Inner tab', 'Grid tab']);
+      expect(rows[0]).toBe(row1);
+      expect(rows[2].state.layout).toBe(gridLayout);
+    });
+
+    it('should move section variables of dissolved tabs up to the dashboard', () => {
+      const variable = new ConstantVariable({ name: 'env', value: 'prod' });
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({
+          title: 'Rows tab',
+          layout: new RowsLayoutManager({ rows: [new RowItem({ title: 'Row 1' })] }),
+          $variables: new SceneVariableSet({ variables: [variable] }),
+        }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.hoistNestedGroups('rows');
+
+      expect(scene.state.$variables?.state.variables).toContain(variable);
+    });
+
+    it('should hoist nested tabs into this layout and convert nested rows into tabs when hoisting to tabs', () => {
+      const innerTab1 = new TabItem({ title: 'Inner 1' });
+      const innerTab2 = new TabItem({ title: 'Inner 2' });
+      const gridTab = new TabItem({ title: 'Grid tab' });
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({ title: 'Outer', layout: new TabsLayoutManager({ tabs: [innerTab1, innerTab2] }) }),
+        new TabItem({
+          title: 'Rows tab',
+          layout: new RowsLayoutManager({ rows: [new RowItem({ title: 'Inner row' })] }),
+        }),
+        gridTab,
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.hoistNestedGroups('tabs');
+
+      expect(scene.state.body).toBe(tabsLayoutManager);
+      expect(tabsLayoutManager.state.tabs.map((tab) => tab.state.title)).toEqual([
+        'Inner 1',
+        'Inner 2',
+        'Inner row',
+        'Grid tab',
+      ]);
+      expect(tabsLayoutManager.state.tabs[0]).toBe(innerTab1);
+      expect(tabsLayoutManager.state.tabs[1]).toBe(innerTab2);
+      expect(tabsLayoutManager.state.tabs[3]).toBe(gridTab);
+    });
+  });
+
+  describe('ungroup', () => {
+    it('should merge grids into a single grid when no tab contains a nested group', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({
+          title: 'Tab 1',
+          layout: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-1' })]),
+        }),
+        new TabItem({
+          title: 'Tab 2',
+          layout: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-2' })]),
+        }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.ungroup(GridLayoutType.GridLayout);
+
+      const newLayout = scene.state.body;
+      expect(newLayout).toBeInstanceOf(DefaultGridLayoutManager);
+      expect(newLayout.getVizPanels()).toHaveLength(2);
+    });
+
+    it('should move section variables of merged tabs up to the dashboard', () => {
+      const variable = new ConstantVariable({ name: 'env', value: 'prod' });
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({
+          title: 'Tab 1',
+          layout: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-1' })]),
+          $variables: new SceneVariableSet({ variables: [variable] }),
+        }),
+        new TabItem({
+          title: 'Tab 2',
+          layout: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-2' })]),
+        }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.ungroup(GridLayoutType.GridLayout);
+
+      expect(scene.state.$variables?.state.variables).toContain(variable);
+    });
+
+    it('should flatten nested groups recursively into a single grid', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({
+          title: 'Tab 1',
+          layout: new RowsLayoutManager({
+            rows: [
+              new RowItem({
+                title: 'Row 1',
+                layout: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-1' })]),
+              }),
+            ],
+          }),
+        }),
+        new TabItem({
+          title: 'Tab 2',
+          layout: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-2' })]),
+        }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.ungroup(GridLayoutType.GridLayout);
+
+      const newLayout = scene.state.body;
+      expect(newLayout).toBeInstanceOf(DefaultGridLayoutManager);
+      expect(newLayout.getVizPanels()).toHaveLength(2);
+    });
+  });
+
+  describe('ungroupTabs', () => {
+    let publishSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      publishSpy = jest.spyOn(appEvents, 'publish').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      publishSpy.mockRestore();
+    });
+
+    it('should hoist directly without any modal when only one nested group type exists', () => {
+      const row1 = new RowItem({ title: 'Row 1' });
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({ title: 'Tab 1', layout: new RowsLayoutManager({ rows: [row1] }) }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.ungroupTabs();
+
+      expect(publishSpy).not.toHaveBeenCalled();
+      expect(scene.state.body).toBeInstanceOf(RowsLayoutManager);
+    });
+
+    it('should show the ungroup groups modal when nested groups are mixed', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({ title: 'Rows tab', layout: new RowsLayoutManager({ rows: [new RowItem({})] }) }),
+        new TabItem({ title: 'Tabs tab', layout: new TabsLayoutManager({ tabs: [new TabItem({})] }) }),
+      ]);
+
+      tabsLayoutManager.ungroupTabs();
+
+      expect(publishSpy).toHaveBeenCalledTimes(1);
+      expect(publishSpy.mock.calls[0][0]).toBeInstanceOf(ShowModalReactEvent);
+    });
+
+    it('should ask for confirmation when hoisting would lose repeat options', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({
+          title: 'Rows tab',
+          repeatByVariable: 'server',
+          layout: new RowsLayoutManager({ rows: [new RowItem({})] }),
+        }),
+      ]);
+
+      tabsLayoutManager.ungroupTabs();
+
+      expect(publishSpy).toHaveBeenCalledTimes(1);
+      expect(publishSpy.mock.calls[0][0]).toBeInstanceOf(ShowConfirmModalEvent);
+    });
+
+    it('should hoist directly without confirmation when dissolved tabs only have section variables', () => {
+      const variable = new ConstantVariable({ name: 'env', value: 'prod' });
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({
+          title: 'Rows tab',
+          layout: new RowsLayoutManager({ rows: [new RowItem({})] }),
+          $variables: new SceneVariableSet({ variables: [variable] }),
+        }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.ungroupTabs();
+
+      expect(publishSpy).not.toHaveBeenCalled();
+      expect(scene.state.body).toBeInstanceOf(RowsLayoutManager);
+      expect(scene.state.$variables?.state.variables).toContain(variable);
     });
   });
 
