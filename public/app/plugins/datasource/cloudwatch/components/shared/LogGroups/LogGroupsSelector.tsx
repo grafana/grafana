@@ -155,7 +155,7 @@ export const LogGroupsSelector = ({
   };
 
   const handleCancel = () => {
-    setSelectedLogGroups(selectedLogGroups);
+    setSelectedLogGroups(props.selectedLogGroups ?? []);
     toggleModal();
   };
 
