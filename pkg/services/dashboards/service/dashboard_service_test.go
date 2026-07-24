@@ -1864,6 +1864,21 @@ func TestLegacySaveCommandToUnstructured(t *testing.T) {
 		assert.Equal(t, result.GetAnnotations(), map[string]string{utils.AnnoKeyFolder: "folder-uid", utils.AnnoKeyMessage: "saving this dashboard"})
 	})
 
+	t.Run("preserves API version and folder metadata", func(t *testing.T) {
+		cmd := &dashboards.SaveDashboardCommand{
+			APIVersion: "dashboard.grafana.app/v2",
+			FolderUID:  "folder-uid",
+			Dashboard:  simplejson.NewFromAny(map[string]any{"title": "testing slugify", "uid": "test-uid"}),
+		}
+
+		result, err := LegacySaveCommandToUnstructured(cmd, namespace)
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, "dashboard.grafana.app/v2", result.GetAPIVersion())
+		assert.Equal(t, "test-uid", result.GetName())
+		assert.Equal(t, "folder-uid", result.GetAnnotations()[utils.AnnoKeyFolder])
+	})
+
 	t.Run("should increase version when called", func(t *testing.T) {
 		cmd := &dashboards.SaveDashboardCommand{
 			Dashboard: simplejson.NewFromAny(map[string]any{"test": "test", "title": "testing slugify", "uid": "test-uid", "version": int64(1)}),
