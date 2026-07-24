@@ -47,7 +47,11 @@ describe('AddTab', () => {
   });
 
   it('shows "Group into tabs" label when layout is not tabs', () => {
-    mockedUseNestingRestrictions.mockReturnValue({ disableGrouping: false, disableTabs: false });
+    mockedUseNestingRestrictions.mockReturnValue({
+      disableGrouping: false,
+      disableTabs: false,
+      disableTabsReason: undefined,
+    });
     const layout = AutoGridLayoutManager.createEmpty();
     const dashboardScene = { getLayout: () => layout } as never;
 
@@ -57,7 +61,11 @@ describe('AddTab', () => {
   });
 
   it('shows "Add tab" label when layout is tabs', () => {
-    mockedUseNestingRestrictions.mockReturnValue({ disableGrouping: false, disableTabs: false });
+    mockedUseNestingRestrictions.mockReturnValue({
+      disableGrouping: false,
+      disableTabs: false,
+      disableTabsReason: undefined,
+    });
     const layout = TabsLayoutManager.createEmpty();
     const dashboardScene = { getLayout: () => layout } as never;
 
@@ -67,7 +75,11 @@ describe('AddTab', () => {
   });
 
   it('shows nested-tabs tooltip when disabled by tab nesting', () => {
-    mockedUseNestingRestrictions.mockReturnValue({ disableGrouping: false, disableTabs: true });
+    mockedUseNestingRestrictions.mockReturnValue({
+      disableGrouping: false,
+      disableTabs: true,
+      disableTabsReason: 'nested-tabs',
+    });
     const layout = AutoGridLayoutManager.createEmpty();
     const dashboardScene = { getLayout: () => layout } as never;
 
@@ -79,7 +91,28 @@ describe('AddTab', () => {
   });
 
   it('shows grouping-limit tooltip when disabled by max depth', () => {
-    mockedUseNestingRestrictions.mockReturnValue({ disableGrouping: true, disableTabs: true });
+    mockedUseNestingRestrictions.mockReturnValue({
+      disableGrouping: true,
+      disableTabs: true,
+      disableTabsReason: 'max-depth',
+    });
+    const layout = AutoGridLayoutManager.createEmpty();
+    const dashboardScene = { getLayout: () => layout } as never;
+
+    render(<AddTab dashboardScene={dashboardScene} selectedElement={undefined} />);
+
+    const button = screen.getByRole('button', { name: 'Group into tabs' });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute('data-tooltip', 'Grouping is limited to 4 levels');
+  });
+
+  it('shows grouping-limit tooltip when disabled by max depth even though grouping stays enabled', () => {
+    // A rows subtree can hit the depth limit for tabs while "group into rows" remains allowed
+    mockedUseNestingRestrictions.mockReturnValue({
+      disableGrouping: false,
+      disableTabs: true,
+      disableTabsReason: 'max-depth',
+    });
     const layout = AutoGridLayoutManager.createEmpty();
     const dashboardScene = { getLayout: () => layout } as never;
 
@@ -91,7 +124,11 @@ describe('AddTab', () => {
   });
 
   it('adds a tab when enabled', async () => {
-    mockedUseNestingRestrictions.mockReturnValue({ disableGrouping: false, disableTabs: false });
+    mockedUseNestingRestrictions.mockReturnValue({
+      disableGrouping: false,
+      disableTabs: false,
+      disableTabsReason: undefined,
+    });
     const layout = AutoGridLayoutManager.createEmpty();
     const dashboardScene = { getLayout: () => layout } as never;
     const user = userEvent.setup();
@@ -105,7 +142,11 @@ describe('AddTab', () => {
   });
 
   it('targets selected row layout when a row is selected', async () => {
-    mockedUseNestingRestrictions.mockReturnValue({ disableGrouping: false, disableTabs: false });
+    mockedUseNestingRestrictions.mockReturnValue({
+      disableGrouping: false,
+      disableTabs: false,
+      disableTabsReason: undefined,
+    });
     const rootLayout = AutoGridLayoutManager.createEmpty();
     const rowInnerLayout = AutoGridLayoutManager.createEmpty();
     const selectedRow = new RowItem({ layout: rowInnerLayout });

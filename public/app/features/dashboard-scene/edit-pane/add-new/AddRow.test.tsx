@@ -48,7 +48,11 @@ describe('AddRow', () => {
   });
 
   it('shows "Group into rows" label when layout is not rows', () => {
-    mockedUseNestingRestrictions.mockReturnValue({ disableGrouping: false, disableTabs: false });
+    mockedUseNestingRestrictions.mockReturnValue({
+      disableGrouping: false,
+      disableTabs: false,
+      disableTabsReason: undefined,
+    });
     const layout = AutoGridLayoutManager.createEmpty();
     const dashboardScene = { getLayout: () => layout } as never;
 
@@ -58,7 +62,11 @@ describe('AddRow', () => {
   });
 
   it('shows "Add row" label when layout is rows', () => {
-    mockedUseNestingRestrictions.mockReturnValue({ disableGrouping: false, disableTabs: false });
+    mockedUseNestingRestrictions.mockReturnValue({
+      disableGrouping: false,
+      disableTabs: false,
+      disableTabsReason: undefined,
+    });
     const layout = RowsLayoutManager.createEmpty();
     const dashboardScene = { getLayout: () => layout } as never;
 
@@ -68,7 +76,11 @@ describe('AddRow', () => {
   });
 
   it('disables row action at max nesting depth and shows tooltip', () => {
-    mockedUseNestingRestrictions.mockReturnValue({ disableGrouping: true, disableTabs: true });
+    mockedUseNestingRestrictions.mockReturnValue({
+      disableGrouping: true,
+      disableTabs: true,
+      disableTabsReason: 'max-depth',
+    });
     const layout = AutoGridLayoutManager.createEmpty();
     const dashboardScene = { getLayout: () => layout } as never;
 
@@ -80,7 +92,11 @@ describe('AddRow', () => {
   });
 
   it('adds a row when enabled', async () => {
-    mockedUseNestingRestrictions.mockReturnValue({ disableGrouping: false, disableTabs: false });
+    mockedUseNestingRestrictions.mockReturnValue({
+      disableGrouping: false,
+      disableTabs: false,
+      disableTabsReason: undefined,
+    });
     const layout = AutoGridLayoutManager.createEmpty();
     const dashboardScene = { getLayout: () => layout } as never;
     const user = userEvent.setup();
@@ -94,7 +110,11 @@ describe('AddRow', () => {
   });
 
   it('targets selected row layout when a row is selected', async () => {
-    mockedUseNestingRestrictions.mockReturnValue({ disableGrouping: false, disableTabs: false });
+    mockedUseNestingRestrictions.mockReturnValue({
+      disableGrouping: false,
+      disableTabs: false,
+      disableTabsReason: undefined,
+    });
     const rootLayout = AutoGridLayoutManager.createEmpty();
     const rowInnerLayout = AutoGridLayoutManager.createEmpty();
     const selectedRow = new RowItem({ layout: rowInnerLayout });
@@ -110,7 +130,11 @@ describe('AddRow', () => {
   });
 
   it('targets selected tab layout when a tab is selected', async () => {
-    mockedUseNestingRestrictions.mockReturnValue({ disableGrouping: false, disableTabs: false });
+    mockedUseNestingRestrictions.mockReturnValue({
+      disableGrouping: false,
+      disableTabs: false,
+      disableTabsReason: undefined,
+    });
     const rootLayout = AutoGridLayoutManager.createEmpty();
     const tabInnerLayout = AutoGridLayoutManager.createEmpty();
     const selectedTab = new TabItem({ layout: tabInnerLayout });
