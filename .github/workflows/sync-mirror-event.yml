@@ -14,6 +14,8 @@ permissions: {}
 # This is run after the pull request has been merged, so we'll run against the target branch
 jobs:
   dispatch-job:
+    # Only dispatch from `grafana/grafana` — this workflow is also mirrored, but must not run there
+    if: github.repository == 'grafana/grafana'
     runs-on: ubuntu-arm64-small
     permissions:
       id-token: write
@@ -32,7 +34,6 @@ jobs:
           permission_set: ${{ github.ref_name == 'main' && 'main' || 'release' }} # different branches require different permission sets
 
       - uses: actions/github-script@v8
-        if: github.repository == 'grafana/grafana'
         with:
           github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
