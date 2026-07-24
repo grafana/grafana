@@ -1214,8 +1214,9 @@ describe('TableNG utils', () => {
       expect(narrow).toBeGreaterThan(wide);
     });
 
-    it('does not under-estimate the precise measurer (so a row is never sized too short)', () => {
-      // matched width models: precise uses len*5 per pill, estimator uses avgCharWidth 5.
+    it('does not under-estimate the precise measurer for equal-width pills', () => {
+      // matched width models: precise uses len*5 per pill, estimator uses avgCharWidth 5. With every
+      // pill the same width the uniform-average model is exact, so the estimate is never too short.
       const estimate = getPillCellHeightEstimator(5);
       const precise = getPillCellHeightMeasurer((s) => s.length * 5);
       const value = 'aaaa,aaaa,aaaa,aaaa,aaaa,aaaa';
@@ -1224,6 +1225,22 @@ describe('TableNG utils', () => {
           precise(value, width, {} as Field, 0, 20)
         );
       }
+    });
+
+    it('can under-estimate the precise measurer when glyph widths vary', () => {
+      // The estimator approximates each pill's width as charCount * avgCharWidth. Real glyphs deviate:
+      // wide characters (capitals, W, M) measure wider than the average, so a wide pill wraps sooner
+      // than the uniform-average model predicts. Here 'WWWWWWWW' measures far wider than
+      // 8 * avgCharWidth, so the estimator sees one line where the precise measurer finds two. This is
+      // why getRowHeight must not rank columns by this estimate alone — it precisely measures every
+      // cell that might wrap.
+      const avgCharWidth = 5;
+      const measureWideGlyphs = (s: string) => [...s].reduce((w, c) => w + (c === 'W' ? 11 : avgCharWidth), 0);
+      const estimate = getPillCellHeightEstimator(avgCharWidth);
+      const precise = getPillCellHeightMeasurer(measureWideGlyphs);
+      const value = 'WWWWWWWW,i,i,i,i';
+      const width = 156;
+      expect(estimate(value, width, {} as Field, 0, 20)).toBeLessThan(precise(value, width, {} as Field, 0, 20));
     });
   });
 
@@ -1523,11 +1540,16 @@ describe('TableNG utils', () => {
         ];
       });
 
-      // 2 lines @ 20px (123,456), 10px vertical padding. when we did this before, 'longer one here' would win, making it 70px.
-      // the `estimate` function is picking `123456` as the longer one now (6 lines), then the `measure` function is used
-      // to calculate the height (2 lines). this is a very forced case, but we just want to prove that it actually works.
-      it('uses the estimate value rather than the precise value to select the row height', () => {
-        expect(getRowHeight(fields, rows[3], [30, 30], 36, measurers, 20, 10)).toBe(50);
+      // Regression: getRowHeight must not rank columns by their cheap `estimate` and re-measure only
+      // the single highest-estimate column. Here field1's estimate (6 * 20 = 120) beats field0's exact
+      // height (3 words * 20 = 60), but field1 precisely measures to just 2 lines (40). The old code
+      // returned 50 — it dropped field0's real 60px and sized the row to field1. We now precisely
+      // measure every column that might wrap and take the true max, so field0 (60) correctly wins:
+      // 60 + 10px vertical padding = 70.
+      it('precisely measures every wrap candidate so the genuinely-tallest column wins', () => {
+        expect(getRowHeight(fields, rows[3], [30, 30], 36, measurers, 20, 10)).toBe(70);
+        // the estimated column still gets a precise measurement because its estimate cleared the threshold
+        expect(measurers[1].measure).toHaveBeenCalledWith(123456, 30, fields[1], 3, 20);
       });
 
       it('returns doesnt bother getting the precise count if the estimates are all below the threshold', () => {

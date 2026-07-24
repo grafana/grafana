@@ -489,17 +489,15 @@ export function getRowHeight(
   }
 
   let maxHeight = -1;
-  let maxValue: unknown = '';
-  let maxWidth = 0;
-  let maxField: Field | undefined;
-  let preciseMeasurer: MeasureCellHeight | undefined;
 
   for (const { estimate, measure, fieldIdxs } of measurers) {
-    // for some of the cell height measurers, getting the precise height is expensive. those entries set
-    // both "estimate" and "measure" functions. if the cell we find to be the max was estimated, we will
-    // get the "true" value right before calculating the row height by keeping a reference to the measure fn.
-    const measurer = (estimate ?? measure) satisfies MeasureCellHeight;
+    // For some cell types the precise height is expensive to compute, so those entries also supply a
+    // cheap `estimate`. The estimate is only trusted to short-circuit single-line cells: any cell it
+    // thinks might wrap is measured precisely below. Ranking columns by estimate alone mis-sizes rows
+    // whose pills vary in width — the pill estimator assumes uniform pill widths, so it can under-rank
+    // the genuinely-tallest column and pick a shorter one, clipping the wrapped content.
     const isEstimating = estimate !== undefined;
+    const measurer = (estimate ?? measure) satisfies MeasureCellHeight;
 
     for (const fieldIdx of fieldIdxs) {
       const field = fields[fieldIdx];
@@ -515,28 +513,21 @@ export function getRowHeight(
             ? formattedValueToString(field.display(cellValueRaw))
             : cellValueRaw;
         const colWidth = columnWidths[fieldIdx];
-        const estimatedHeight = measurer(cellValueForMeasuring, colWidth, field, row.__index, lineHeight);
-        if (estimatedHeight > maxHeight) {
-          maxHeight = estimatedHeight;
-          maxValue = cellValueForMeasuring;
-          maxWidth = colWidth;
-          maxField = field;
-          preciseMeasurer = isEstimating ? measure : undefined;
+        let height = measurer(cellValueForMeasuring, colWidth, field, row.__index, lineHeight);
+        // the estimate only tells us whether the cell might wrap; if it might, get the true height.
+        if (isEstimating && height >= SINGLE_LINE_ESTIMATE_THRESHOLD) {
+          height = measure(cellValueForMeasuring, colWidth, field, row.__index, lineHeight);
+        }
+        if (height > maxHeight) {
+          maxHeight = height;
         }
       }
     }
   }
 
-  // if the value is -1 or the estimate for the max cell was less than the SINGLE_LINE_ESTIMATE_THRESHOLD, we trust
-  // that the estimator correctly identified that no text wrapping is needed for this row, skipping the preciseMeasurer.
-  if (maxField === undefined || maxHeight < SINGLE_LINE_ESTIMATE_THRESHOLD) {
+  // if the tallest cell is below the single-line threshold, nothing wrapped: use the default height.
+  if (maxHeight < SINGLE_LINE_ESTIMATE_THRESHOLD) {
     return defaultHeight;
-  }
-
-  // if we finished this row height loop with an estimate, we need to call
-  // the `preciseMeasurer` method to get the exact line count.
-  if (preciseMeasurer !== undefined) {
-    maxHeight = preciseMeasurer(maxValue, maxWidth, maxField, row.__index, lineHeight);
   }
 
   // adjust for vertical padding, and clamp to a minimum default height
