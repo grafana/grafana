@@ -280,7 +280,7 @@ export function sceneVariablesSetToVariables(
       // Not persisted. Snapshot variables are read-only frozen values; the scene graph
       // interpolates them directly, so there is nothing to serialize here.
     } else {
-      throw new Error('Unsupported variable type');
+      throw new Error('Unsupported variable type: ' + variable.state.type);
     }
   }
 
