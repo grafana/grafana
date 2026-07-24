@@ -162,6 +162,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
   wrapper: css({
     display: 'flex',
     alignItems: 'center',
+    color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
     width: '100%',
     height: '100%',
     // The pin control shows on hover/focus (both the legacy bookmark and, outside edit mode, the
@@ -183,6 +184,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     borderRadius: theme.shape.radius.default,
     '&:hover, &:focus-within': {
       backgroundColor: theme.colors.action.hover,
+      color: theme.colors.text.primary,
     },
   }),
   // Fixed control columns (pin, hide) so each control type lines up vertically across rows.
@@ -223,7 +225,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
   }),
   container: css({
     alignItems: 'center',
-    color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
+    color: 'inherit',
     height: '100%',
     position: 'relative',
     flex: 1,

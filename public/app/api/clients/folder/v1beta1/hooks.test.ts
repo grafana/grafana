@@ -256,6 +256,7 @@ describe('useMoveMultipleFoldersMutationFacade', () => {
     jest.clearAllMocks();
     (useMoveFoldersMutationLegacy as jest.Mock).mockReturnValue([mockMoveFolders]);
     patchSpy.mockReset();
+    dispatchMockFn.mockReturnValue({ data: null });
   });
   afterEach(() => {
     folderAPIVersionResolver.reset();

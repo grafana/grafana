@@ -32,7 +32,7 @@ func TestSubscribeStream(t *testing.T) {
 				URL:  "http://localhost:3100",
 			},
 		},
-		Path: "tail/test",
+		Path: "tail/dsId/test/stacks-1",
 		Data: []byte(`{"expr": "test"}`),
 	}
 
@@ -47,12 +47,13 @@ func TestSubscribeStream(t *testing.T) {
 		require.Equal(t, backend.SubscribeStreamStatusPermissionDenied, resp.Status)
 	})
 
-	t.Run("when feature toggle is enabled", func(t *testing.T) {
+	t.Run("when feature toggle is enabled and namespace matches", func(t *testing.T) {
 		// Create a context with the feature toggle enabled
 		cfg := config.NewGrafanaCfg(map[string]string{
 			featuretoggles.EnabledFeatures: flagLokiExperimentalStreaming,
 		})
 		ctx := config.WithGrafanaConfig(context.Background(), cfg)
+		ctx = backend.WithPluginContext(ctx, backend.PluginContext{Namespace: "stacks-1"})
 
 		resp, err := service.SubscribeStream(ctx, req)
 
@@ -60,11 +61,39 @@ func TestSubscribeStream(t *testing.T) {
 		require.Equal(t, backend.SubscribeStreamStatusOK, resp.Status)
 	})
 
+	t.Run("when namespace does not match the request path", func(t *testing.T) {
+		cfg := config.NewGrafanaCfg(map[string]string{
+			featuretoggles.EnabledFeatures: flagLokiExperimentalStreaming,
+		})
+		ctx := config.WithGrafanaConfig(context.Background(), cfg)
+		ctx = backend.WithPluginContext(ctx, backend.PluginContext{Namespace: "stacks-2"})
+
+		resp, err := service.SubscribeStream(ctx, req)
+
+		require.Error(t, err)
+		require.Equal(t, "invalid namespace supplied in request", err.Error())
+		require.Equal(t, backend.SubscribeStreamStatusPermissionDenied, resp.Status)
+	})
+
+	t.Run("when namespace is missing from the plugin context", func(t *testing.T) {
+		cfg := config.NewGrafanaCfg(map[string]string{
+			featuretoggles.EnabledFeatures: flagLokiExperimentalStreaming,
+		})
+		ctx := config.WithGrafanaConfig(context.Background(), cfg)
+
+		resp, err := service.SubscribeStream(ctx, req)
+
+		require.Error(t, err)
+		require.Equal(t, "invalid namespace supplied in request", err.Error())
+		require.Equal(t, backend.SubscribeStreamStatusPermissionDenied, resp.Status)
+	})
+
 	t.Run("grafana sql payload is rejected when streaming is enabled", func(t *testing.T) {
 		cfg := config.NewGrafanaCfg(map[string]string{
 			featuretoggles.EnabledFeatures: flagLokiExperimentalStreaming,
 		})
 		ctx := config.WithGrafanaConfig(context.Background(), cfg)
+		ctx = backend.WithPluginContext(ctx, backend.PluginContext{Namespace: "stacks-123"})
 
 		grafanaSQLReq := &backend.SubscribeStreamRequest{
 			PluginContext: backend.PluginContext{
@@ -74,8 +103,9 @@ func TestSubscribeStream(t *testing.T) {
 					Type: "loki",
 					URL:  "http://localhost:3100",
 				},
+				Namespace: "stacks-123",
 			},
-			Path: "tail/test",
+			Path: "tail/dsId/test/stacks-123",
 			Data: []byte(`{"grafanaSql":true,"table":"svc","refId":"A"}`),
 		}
 
