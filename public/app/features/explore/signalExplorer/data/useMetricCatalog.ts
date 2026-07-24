@@ -18,7 +18,16 @@ export function useMetricCatalog(
   // Depend on primitive keys, not `dsRef`/`timeRange` object identity: callers construct these
   // objects fresh on every render, so depending on the objects directly would refetch on every
   // render instead of only when the datasource or range actually changes.
-  const uid = dsRef.uid;
+  //
+  // `dsRef.uid` is optional: a type-only ref (e.g. `{ type: 'prometheus' }`, meaning "the
+  // default datasource of this type") is valid and must be distinguishable from another
+  // type-only ref. Fall back to `type` the same way `metricResourceClient`'s `dsKey()` does, so
+  // this hook's refetch trigger stays consistent with what the client treats as a distinct
+  // datasource.
+  const dsKey = dsRef.uid ?? dsRef.type ?? '';
+  // A refresh that keeps the same relative range string (e.g. `now-1h`/`now`) intentionally does
+  // not refetch here: the client already serves that unchanged key from its own cache, so a
+  // second effect run would be a redundant no-op.
   const fromTo = `${timeRange.raw?.from ?? ''}:${timeRange.raw?.to ?? ''}`;
 
   useEffect(() => {
@@ -46,7 +55,7 @@ export function useMetricCatalog(
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uid, fromTo]);
+  }, [dsKey, fromTo]);
 
   const metrics = useMemo(() => {
     const q = (opts?.searchText ?? '').toLowerCase();

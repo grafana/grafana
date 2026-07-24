@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 
 import type { TimeRange } from '@grafana/data';
 
@@ -12,6 +12,14 @@ const rows: MetricRow[] = [
   { name: 'http_requests_total', type: 'counter', help: 'h' },
   { name: 'node_load1', type: 'gauge', help: 'l' },
 ];
+
+function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
+  let resolve: (value: T) => void = () => {};
+  const promise = new Promise<T>((res) => {
+    resolve = res;
+  });
+  return { promise, resolve };
+}
 
 describe('useMetricCatalog', () => {
   afterEach(() => jest.restoreAllMocks());
@@ -62,23 +70,59 @@ describe('useMetricCatalog', () => {
     expect(spy).toHaveBeenLastCalledWith({ uid: 'p2' }, range);
   });
 
-  it('does not update state after unmount', async () => {
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    let resolveFetch: (rows: MetricRow[]) => void = () => {};
-    jest.spyOn(client, 'fetchCatalog').mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          resolveFetch = resolve;
-        })
-    );
+  it('refetches when a type-only ref changes type, even though `uid` is undefined both times', async () => {
+    const spy = jest.spyOn(client, 'fetchCatalog').mockResolvedValue(rows);
+    const { result, rerender } = renderHook(({ dsRef }) => useMetricCatalog(dsRef, range), {
+      initialProps: { dsRef: { type: 'prometheus' } },
+    });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenLastCalledWith({ type: 'prometheus' }, range);
+
+    rerender({ dsRef: { type: 'loki' } });
+    await waitFor(() => expect(spy).toHaveBeenCalledTimes(2));
+    expect(spy).toHaveBeenLastCalledWith({ type: 'loki' }, range);
+  });
+
+  it('does not let a superseded response overwrite a newer one (stale-response ordering)', async () => {
+    const first = deferred<MetricRow[]>();
+    const second = deferred<MetricRow[]>();
+    const spy = jest
+      .spyOn(client, 'fetchCatalog')
+      .mockImplementationOnce(() => first.promise)
+      .mockImplementationOnce(() => second.promise);
+
+    const { result, rerender } = renderHook(({ dsRef }) => useMetricCatalog(dsRef, range), {
+      initialProps: { dsRef: { uid: 'p1' } },
+    });
+    rerender({ dsRef: { uid: 'p2' } });
+    await waitFor(() => expect(spy).toHaveBeenCalledTimes(2));
+
+    // Resolve the newer (p2) request first, then the older (p1) one arrives late. Both
+    // resolutions are wrapped in `act` so the resulting state updates (or lack thereof, if the
+    // `cancelled` guard drops the stale one) are flushed before the assertion below runs.
+    await act(async () => {
+      second.resolve([{ name: 'p2_metric', type: 'counter', help: 'from p2' }]);
+      await second.promise;
+    });
+    await act(async () => {
+      first.resolve([{ name: 'p1_metric', type: 'gauge', help: 'from p1' }]);
+      await first.promise;
+    });
+
+    expect(result.current.metrics.map((m) => m.name)).toEqual(['p2_metric']);
+  });
+
+  it('does not throw when unmounting mid-flight', async () => {
+    const { promise, resolve } = deferred<MetricRow[]>();
+    jest.spyOn(client, 'fetchCatalog').mockImplementation(() => promise);
     const { unmount } = renderHook(() => useMetricCatalog({ uid: 'p1' }, range));
     unmount();
-    resolveFetch(rows);
-    // Flush microtasks; if the hook ignores the `cancelled` guard this would trigger a
-    // React "state update on unmounted component" warning captured by the console.error spy.
-    await Promise.resolve();
-    await Promise.resolve();
-    expect(errorSpy).not.toHaveBeenCalled();
-    errorSpy.mockRestore();
+    await act(async () => {
+      resolve(rows);
+      await promise;
+    });
+    // No assertion beyond "the above didn't throw" — this is a smoke check only, not proof the
+    // `cancelled` guard works (see the stale-response ordering test above for that).
   });
 });
