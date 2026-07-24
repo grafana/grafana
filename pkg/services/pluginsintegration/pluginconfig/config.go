@@ -49,23 +49,36 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 }
 
 // externalOverridesFromIni builds the active external override list by scanning plugin ini settings.
-// For each known override, activation is determined by two operator-set ini keys:
+// For each known override, both keys must be set for a Migrating override to be fully active:
 //   - [plugin.<CorePluginID>] as_external = true  — tells the AsExternal pipeline step to skip loading the core bundle
 //   - [plugin.<ExternalPluginID>] alias_ids = <CorePluginID,...>  — injects the alias and activates the override
 //
-// Both keys must be set for a Migrating override to be fully active. OverrideStagePermanent overrides
-// are always active regardless of ini config, for backwards compatibility after the core plugin is deleted.
-// A misconfiguration warning is logged if an override is active but the external plugin is not in the preinstall list.
+// Partial configuration is logged as an error (as_external without alias_ids) or warning (alias_ids without as_external).
+// OverrideStagePermanent overrides are always active regardless of ini config.
 func externalOverridesFromIni(cfg *setting.Cfg, pluginSettings config.PluginSettings) []config.ExternalOverride {
-	preinstalled := make(map[string]bool, len(cfg.PreinstallPluginsAsync))
+	preinstalled := make(map[string]bool, len(cfg.PreinstallPluginsAsync)+len(cfg.PreinstallPluginsSync))
 	for _, p := range cfg.PreinstallPluginsAsync {
+		preinstalled[p.ID] = true
+	}
+	for _, p := range cfg.PreinstallPluginsSync {
 		preinstalled[p.ID] = true
 	}
 
 	var activeOverrides []config.ExternalOverride
 	for _, o := range externaloverrides.Overrides {
-		active := o.Stage == externaloverrides.OverrideStagePermanent || isAliasConfigured(pluginSettings, o)
-		if active {
+		if o.Stage == externaloverrides.OverrideStagePermanent {
+			activeOverrides = append(activeOverrides, config.ExternalOverride{
+				CorePluginID:     o.CorePluginID,
+				ExternalPluginID: o.ExternalPluginID,
+			})
+			continue
+		}
+
+		asExternal := pluginSettings[o.CorePluginID]["as_external"] == "true"
+		aliasConfigured := isAliasConfigured(pluginSettings, o)
+
+		switch {
+		case asExternal && aliasConfigured:
 			if !preinstalled[o.ExternalPluginID] {
 				logger.Warn("External plugin override is active but plugin is not in the preinstall list — it must be installed manually",
 					"corePluginID", o.CorePluginID,
@@ -76,6 +89,20 @@ func externalOverridesFromIni(cfg *setting.Cfg, pluginSettings config.PluginSett
 				CorePluginID:     o.CorePluginID,
 				ExternalPluginID: o.ExternalPluginID,
 			})
+		case asExternal && !aliasConfigured:
+			logger.Error(
+				"Core plugin suppressed but external plugin alias is not configured — panels using this plugin will fail to render. "+
+					"Set alias_ids on the external plugin's ini section or remove as_external from the core plugin's section.",
+				"corePluginID", o.CorePluginID,
+				"externalPluginID", o.ExternalPluginID,
+			)
+		case !asExternal && aliasConfigured:
+			logger.Warn(
+				"External plugin alias is configured but core plugin is not suppressed — both will attempt to load under the same ID. "+
+					"Set as_external = true on the core plugin's ini section.",
+				"corePluginID", o.CorePluginID,
+				"externalPluginID", o.ExternalPluginID,
+			)
 		}
 	}
 	return activeOverrides
