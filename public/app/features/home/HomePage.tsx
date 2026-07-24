@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { Suspense } from 'react';
+import { Suspense, useCallback, useEffect, useRef } from 'react';
 
 import { PageLayoutType, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
@@ -11,13 +11,16 @@ import { Page } from 'app/core/components/Page/Page';
 import { ASSISTANT_PLUGIN_ID, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
-import { FiringAlertsCard, canViewFiringAlerts } from './AlertsIncidents/FiringAlertsCard';
+import { AlertIncidentTabs } from './AlertsIncidents/AlertIncidentTabs';
+import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
 import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
+import { canViewFiringAlerts } from './AlertsIncidents/useFiringAlerts';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import { HomePageSkeleton } from './HomePageSkeleton';
 import { HomeSection } from './HomeSection';
 import { Recommendations } from './Recommendations/Recommendations';
+import { homepageViewed } from './analytics/main';
 import useHomeGreeting from './useHomeGreeting';
 
 const getEdition = () => {
@@ -31,6 +34,18 @@ const getEdition = () => {
 
   return t('home.home-page.edition.open-source', 'Grafana');
 };
+
+/**
+ * Renders nothing; reports a view on mount. Inside a Suspense boundary, React defers
+ * the effect until the content is revealed.
+ */
+function HomepageViewTracker({ onView }: { onView: () => void }) {
+  useEffect(() => {
+    onView();
+  }, [onView]);
+
+  return null;
+}
 
 export default function HomePage() {
   const styles = useStyles2(getStyles);
@@ -52,6 +67,19 @@ export default function HomePage() {
 
   const isWaitingForTabs = !redesignEnabled && isLoadingTabs;
   const isLoadingExtensions = isLoadingAssistant || isLoadingExtra || isWaitingForTabs;
+
+  // The impression counts a rendered homepage, never a skeleton: the tracker mounts inside
+  // the Suspense boundary below, so a suspended lazy extension defers it until reveal. The
+  // ref keeps it once per mount (extension loading can flip and remount the boundary's
+  // children; StrictMode replays effects). HomeRoute only mounts HomePage when the unified
+  // homepage actually renders (redirect / home-dashboard branches never reach here).
+  const hasTrackedView = useRef(false);
+  const trackView = useCallback(() => {
+    if (!hasTrackedView.current) {
+      hasTrackedView.current = true;
+      homepageViewed();
+    }
+  }, []);
 
   // SetupGuide injects assorted sections for Cloud users. Computed once so showExtra matches
   // what actually renders below.
@@ -89,6 +117,7 @@ export default function HomePage() {
           skeleton
         ) : (
           <Suspense fallback={skeleton}>
+            <HomepageViewTracker onView={trackView} />
             <Stack direction="column" gap={2}>
               {redesignEnabled ? (
                 <>
@@ -109,8 +138,7 @@ export default function HomePage() {
                   <Grid gap={2} columns={{ xs: 1, md: 2 }}>
                     {/* Skip the HomepageTabs extension point for the redesign UI */}
                     <DashboardTabs extensionComponents={[]} />
-                    {/* TODO: Alerts and incidents will combine into one card */}
-                    <FiringAlertsCard />
+                    <AlertIncidentTabs />
                   </Grid>
                 </>
               ) : (

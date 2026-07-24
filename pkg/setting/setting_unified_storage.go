@@ -186,6 +186,11 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.SearchPostRankAuthzMaxWindow = section.Key("search_post_rank_authz_max_window").MustInt(0)
 	cfg.SearchPostRankAuthzMaxCandidates = section.Key("search_post_rank_authz_max_candidates").MustInt(0)
 	cfg.EnableVectorBackend = section.Key("vector_backend").MustBool(false)
+	cfg.VectorAllowedInternalCollections = section.Key("vector_allowed_internal_collections").Strings(",")
+	if len(cfg.VectorAllowedInternalCollections) == 0 {
+		cfg.VectorAllowedInternalCollections = []string{"dashboard.grafana.app/dashboards"}
+	}
+	cfg.VectorAllowedExternalCollections = section.Key("vector_allowed_external_collections").Strings(",")
 	cfg.VectorIndexingEnabled = section.Key("vector_indexing_enabled").MustBool(false)
 	cfg.VectorReconcilerInterval = section.Key("vector_reconciler_interval").MustDuration(time.Minute)
 	cfg.applyMigrationEnforcements()
@@ -232,6 +237,12 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.TenantWatcherCAFile = section.Key("tenant_watcher_ca_file").String()
 	cfg.TenantWatcherUsePolling = section.Key("tenant_watcher_use_polling").MustBool(false)
 	cfg.TenantWatcherPollInterval = section.Key("tenant_watcher_poll_interval").MustDuration(1 * time.Hour)
+
+	// search manifest watcher
+	cfg.ManifestApiServerAddress = section.Key("manifest_api_server_address").String()
+	cfg.ManifestWatcherAllowInsecureTLS = section.Key("manifest_watcher_allow_insecure_tls").MustBool(false)
+	cfg.ManifestWatcherCAFile = section.Key("manifest_watcher_ca_file").String()
+	cfg.ManifestWatcherPollInterval = section.Key("manifest_watcher_poll_interval").MustDuration(1 * time.Hour)
 
 	// tenant deleter
 	cfg.EnableTenantDeleter = section.Key("tenant_deleter_enabled").MustBool(false)

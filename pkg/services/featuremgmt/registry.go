@@ -226,15 +226,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:            "datasourceAPIServers",
-			Description:     "Expose some datasources as apiservers.",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true, // changes the API routing
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:            "grafanaAPIServerWithExperimentalAPIs",
 			Description:     "Register experimental APIs with the k8s API server, including all datasources",
 			Stage:           FeatureStageExperimental,
@@ -408,13 +399,12 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:            "kubernetesLibraryPanels",
-			Description:     "Routes library panel requests from /api to the /apis endpoint",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true, // changes the API routing
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Name:        "libraryelements.kubernetesLibraryPanels",
+			Description: "Routes library panel requests from /api to the /apis endpoint",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
 		},
 		{
 			Name:         "kubernetesFolderCascadeDelete",
@@ -805,11 +795,11 @@ var (
 		{
 			Name:            "auditLoggingAppPlatform",
 			Description:     "Enable audit logging with Kubernetes under app platform",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStagePublicPreview,
 			Owner:           grafanaOperatorExperienceSquad,
 			HideFromDocs:    true,
 			RequiresRestart: true,
-			Expression:      "false",
+			Expression:      "true",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
@@ -881,7 +871,7 @@ var (
 			Name:        "sqlExpressionsColumnAutoComplete",
 			Description: "Enables column autocomplete for SQL Expressions",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
 		},
@@ -965,6 +955,14 @@ var (
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
 			Expression:   "true",
+		},
+		{
+			Name:        "grafana.filterablePanels",
+			Description: "Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
 		},
 		{
 			Name:        "cloudWatchNewLabelParsing",
@@ -2041,6 +2039,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.newTextPanel",
+			Description: "Enables the new text panel",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDatavizSquad,
+			Generate:    Generate{React: true},
+			Expression:  "false",
+		},
+		{
 			Name:        "interactiveLearning",
 			Description: "Enables the interactive learning app",
 			Stage:       FeatureStagePublicPreview,
@@ -3028,7 +3034,6 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
-
 			Name:        "cujTracking",
 			Description: "Enables Critical User Journey (CUJ) tracking",
 			Stage:       FeatureStageExperimental,
@@ -3104,6 +3109,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},
+		},
+		{
+			Name:        "grafana.exploreMetricsSidebar",
+			Description: "Enables the sidebar in Explore metrics (Metrics Drilldown)",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
