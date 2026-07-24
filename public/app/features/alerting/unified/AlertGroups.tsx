@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useEffect, useRef } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, LoadingPlaceholder, Text } from '@grafana/ui';
@@ -6,6 +6,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { AlertState, AlertmanagerChoice } from '../../../plugins/datasource/alertmanager/types';
 
+import { trackAlertGroupsLoaded } from './Analytics';
 import { type AlertGroupsFilter, alertmanagerApi } from './api/alertmanagerApi';
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { InhibitionRulesAlert } from './components/InhibitionRulesAlert';
@@ -68,6 +69,16 @@ const AlertGroups = () => {
       pollingInterval: NOTIFICATIONS_POLL_INTERVAL_MS,
     }
   );
+
+  // CUJ signal (home_to_alert_insight): emit once when the alert groups query settles; polling doesn't re-fire.
+  const loadedTracked = useRef(false);
+  useEffect(() => {
+    if (isLoading || loadedTracked.current) {
+      return;
+    }
+    loadedTracked.current = true;
+    trackAlertGroupsLoaded({ status: isError ? 'error' : 'success' });
+  }, [isLoading, isError]);
 
   // Client-side re-grouping by custom groupBy label keys (cannot be done server-side).
   // When multiple receivers are selected, also filter groups to matching receivers here.

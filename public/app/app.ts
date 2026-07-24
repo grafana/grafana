@@ -210,6 +210,7 @@ export class GrafanaApp {
           import('./core/journeys/panelEdit'),
           import('./core/journeys/datasourceConfigure'),
           import('./core/journeys/exploreToDashboard'),
+          import('./core/journeys/homeToAlertInsight'),
         ]);
 
         // Warn about registry entries that have no start trigger wired up

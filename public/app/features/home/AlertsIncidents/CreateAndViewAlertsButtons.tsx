@@ -1,23 +1,27 @@
+import { type MouseEvent } from 'react';
+
 import { Trans } from '@grafana/i18n';
 
 import { FooterAction, FooterActions } from '../FooterActions';
-import { ctaClicked } from '../analytics/main';
+import { type CtaClicked } from '../analytics/types';
 
 interface Props {
   hasAlerts: boolean;
   canCreate: boolean;
   newRuleHref: string;
   viewAllHref: string;
+  /** Emits the cta_clicked event; comes from useFiringAlerts so clicks carry the dwell and new-tab attributes. */
+  track: (e: MouseEvent, props: Pick<CtaClicked, 'action' | 'placement' | 'severity'>) => void;
 }
 
-export const CreateAndViewAlertsButtons = ({ hasAlerts, canCreate, newRuleHref, viewAllHref }: Props) => {
+export const CreateAndViewAlertsButtons = ({ hasAlerts, canCreate, newRuleHref, viewAllHref, track }: Props) => {
   return (
     <FooterActions>
       {hasAlerts && canCreate && (
         <FooterAction
           icon="plus"
           href={newRuleHref}
-          onClick={() => ctaClicked({ surface: 'alerts_card', action: 'create_rule', placement: 'footer' })}
+          onClick={(e) => track(e, { action: 'create_rule', placement: 'footer' })}
         >
           <Trans i18nKey="home.firing-alerts-card.create">Create an alert rule</Trans>
         </FooterAction>
@@ -25,9 +29,8 @@ export const CreateAndViewAlertsButtons = ({ hasAlerts, canCreate, newRuleHref, 
 
       <FooterAction
         href={viewAllHref}
-        onClick={() =>
-          ctaClicked({
-            surface: 'alerts_card',
+        onClick={(e) =>
+          track(e, {
             action: hasAlerts ? 'view_all_alerts' : 'view_all_rules',
             placement: 'footer',
           })

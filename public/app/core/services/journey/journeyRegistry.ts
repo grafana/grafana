@@ -45,4 +45,11 @@ export const JOURNEY_REGISTRY: JourneyMeta[] = [
     owner: 'grafana-dashboards',
     timeoutMs: 60_000,
   },
+  {
+    type: 'home_to_alert_insight',
+    description:
+      'User clicks the homepage Firing alerts card and reaches the destination value moment (alert detail, alert list, or new-rule editor)',
+    owner: 'grafana-frontend-navigation',
+    timeoutMs: 60_000,
+  },
 ];

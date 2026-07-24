@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import type { ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 
 import type { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Text, Stack, Link } from '@grafana/ui';
@@ -14,7 +14,7 @@ interface ListRowProps {
   // oneRow is used to make the row only one row (subtitle will be inline with title)
   oneRow?: boolean;
   href?: string;
-  onClick?: () => void;
+  onClick?: (e: MouseEvent<HTMLAnchorElement>) => void;
   // Row divider + padding chrome. Set false for a flush row that matches the
   // pre-redesign homepage cards. Defaults to true.
   showDivider?: boolean;
