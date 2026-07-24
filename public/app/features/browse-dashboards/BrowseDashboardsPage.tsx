@@ -135,15 +135,10 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
         title: newValue,
       });
       if ('error' in result) {
-        reportInteraction('grafana_browse_dashboards_page_edit_folder_name', {
-          status: 'failed_with_error',
-        });
         throw result.error;
       } else {
-        reportInteraction('grafana_browse_dashboards_page_edit_folder_name', { status: 'success' });
       }
     } else {
-      reportInteraction('grafana_browse_dashboards_page_edit_folder_name', { status: 'failed_no_folderDTO' });
     }
   };
 

@@ -76,10 +76,6 @@ export default function CreateNewButton({
       });
 
       const depth = parentFolder ? (parentFolder.parents?.length || 0) + 1 : 0;
-      reportInteraction('grafana_manage_dashboards_folder_created', {
-        is_subfolder: Boolean(parentFolder?.uid),
-        folder_depth: depth,
-      });
 
       if (!folder.error) {
         notifyApp.success('Folder created');

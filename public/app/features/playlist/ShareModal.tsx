@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { type SelectableValue, type UrlQueryMap, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+
 import { Checkbox, ClipboardButton, Field, FieldSet, Input, Modal, RadioButtonGroup } from '@grafana/ui';
 import { buildBaseUrl } from 'app/features/dashboard/components/ShareModal/utils';
 
@@ -59,10 +59,6 @@ export const ShareModal = ({ playlistUid, onDismiss }: Props) => {
                 variant="primary"
                 getText={() => shareUrl}
                 onClipboardCopy={() => {
-                  reportInteraction('grafana_kiosk_mode', {
-                    action: 'share_playlist',
-                    mode: mode,
-                  });
                 }}
               >
                 <Trans i18nKey="share-playlist.copy-link-button">Copy</Trans>

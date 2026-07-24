@@ -3,7 +3,7 @@ import { type MouseEvent } from 'react';
 
 import { type GrafanaTheme2, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+
 import { Text, useStyles2 } from '@grafana/ui';
 
 import { type TutorialCardType } from '../types';
@@ -46,7 +46,6 @@ const handleTutorialClick = (event: MouseEvent<HTMLAnchorElement>, card: Tutoria
   if (!isSet) {
     store.set(card.key, true);
   }
-  reportInteraction('grafana_getting_started_tutorial', { title: card.title });
 };
 
 const getStyles = (theme: GrafanaTheme2, complete: boolean) => {
