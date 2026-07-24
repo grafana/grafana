@@ -16,7 +16,7 @@ const off = 'inactive' as const;
 describe('selectRecommendations', () => {
   // All 12 reachable combinations (kubernetes ⇒ metrics removes 4 of 16).
   it.each<[SolutionState, RecommendedCardId[], BaseRow]>([
-    [state(off, off, off, off), [], 'empty'],
+    [state(off, off, off, off), ['connect-metrics', 'enable-logs', 'hosted-traces'], 'empty'],
     [state(off, off, on, off), [], 'partial_telemetry'],
     [state(off, on, off, off), [], 'logs_only'],
     [state(off, on, on, off), [], 'partial_telemetry'],

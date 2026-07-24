@@ -1,5 +1,6 @@
 import { type DataSourceInstanceListItem } from '@grafana/data';
-import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { DataSourceWithBackend } from '@grafana/runtime';
+import { getDataSourceInstance, getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 /** Cap the probe fan-out: only the first N candidates (in priority order) are probed per page load. */
 export const MAX_PROBED_DATASOURCES = 10;
@@ -23,6 +24,12 @@ const CLOUD_UTILITY_DATASOURCE_NAMES: Record<string, true> = {
 };
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/** Backend-capable datasource instance for `uid`, or null when it cannot serve resource calls. */
+export async function resolveBackendInstance(uid: string): Promise<DataSourceWithBackend | null> {
+  const instance = await getDataSourceInstance({ uid });
+  return instance instanceof DataSourceWithBackend ? instance : null;
+}
 
 export async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
   for (let attempt = 0; ; attempt++) {

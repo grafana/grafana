@@ -1,6 +1,8 @@
 import { render, screen } from 'test/test-utils';
 
 import { createDataFrame, FieldType, type DataSourceInstanceListItem, type PluginMeta } from '@grafana/data';
+import { type AppPluginConfig } from '@grafana/runtime';
+import { useAppPluginMetas } from '@grafana/runtime/internal';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 
@@ -16,6 +18,9 @@ import {
   type KubernetesInventory,
 } from './kubernetesData';
 import { readSeries } from './promQuery';
+import { useSolutionState } from './solutionState';
+import { type SolutionState } from './solutionsMatrix';
+import { fetchLogsStats, fetchLogsVolumeSeries, fetchTracesActivity, fetchTracesServices } from './telemetryData';
 
 jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
   ...jest.requireActual('app/features/alerting/unified/hooks/usePluginBridge'),
@@ -34,11 +39,34 @@ jest.mock('../analytics/main', () => ({
   ctaClicked: jest.fn(),
 }));
 
+jest.mock('./solutionState', () => ({
+  useSolutionState: jest.fn(),
+}));
+
+jest.mock('./telemetryData', () => ({
+  ...jest.requireActual('./telemetryData'),
+  fetchLogsStats: jest.fn(),
+  fetchLogsVolumeSeries: jest.fn(),
+  fetchTracesActivity: jest.fn(),
+  fetchTracesServices: jest.fn(),
+}));
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  useAppPluginMetas: jest.fn(),
+}));
+
 const mockUsePluginBridge = jest.mocked(usePluginBridge);
 const mockResolveDatasource = jest.mocked(resolveKubernetesDatasource);
 const mockFetchInventory = jest.mocked(fetchKubernetesInventory);
 const mockFetchHealth = jest.mocked(fetchKubernetesHealth);
 const mockFetchCpuSeries = jest.mocked(fetchClusterCpuSeries);
+const mockUseSolutionState = jest.mocked(useSolutionState);
+const mockUseAppPluginMetas = jest.mocked(useAppPluginMetas);
+const mockFetchLogsStats = jest.mocked(fetchLogsStats);
+const mockFetchLogsVolumeSeries = jest.mocked(fetchLogsVolumeSeries);
+const mockFetchTracesActivity = jest.mocked(fetchTracesActivity);
+const mockFetchTracesServices = jest.mocked(fetchTracesServices);
 
 const compactFormatter = new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 });
 
@@ -51,6 +79,50 @@ const datasource: DataSourceInstanceListItem = {
   readOnly: false,
   isDefault: false,
 };
+
+const lokiDatasource: DataSourceInstanceListItem = {
+  uid: 'loki-uid',
+  name: 'grafanacloud-logs',
+  type: 'loki',
+  meta: { id: 'loki' } as DataSourceInstanceListItem['meta'],
+  readOnly: false,
+  isDefault: false,
+};
+
+const tempoDatasource: DataSourceInstanceListItem = {
+  uid: 'tempo-uid',
+  name: 'grafanacloud-traces',
+  type: 'tempo',
+  meta: { id: 'tempo' } as DataSourceInstanceListItem['meta'],
+  readOnly: false,
+  isDefault: false,
+};
+
+function setSolutionState(
+  overrides: Partial<SolutionState>,
+  ds: { loki?: DataSourceInstanceListItem; tempo?: DataSourceInstanceListItem } = {}
+) {
+  mockUseSolutionState.mockReturnValue({
+    value: {
+      state: { metrics: 'inactive', logs: 'inactive', traces: 'inactive', kubernetes: 'inactive', ...overrides },
+      lokiDatasource: ds.loki ?? null,
+      tempoDatasource: ds.tempo ?? null,
+    },
+    loading: false,
+  });
+}
+
+function mockActiveLogs() {
+  setSolutionState({ metrics: 'active', logs: 'active' }, { loki: lokiDatasource });
+  mockFetchLogsStats.mockResolvedValue({ bytes: 47_000_000_000, sources: 8 });
+  mockFetchLogsVolumeSeries.mockResolvedValue(null);
+}
+
+function mockActiveTraces() {
+  setSolutionState({ metrics: 'active', logs: 'active', traces: 'active' }, { tempo: tempoDatasource });
+  mockFetchTracesActivity.mockResolvedValue({ spans: 4_800_000, series: null });
+  mockFetchTracesServices.mockResolvedValue(34);
+}
 
 const healthyInventory: KubernetesInventory = { clusters: 3, pods: 247 };
 const healthyHealth: KubernetesHealth = {
@@ -78,20 +150,115 @@ beforeEach(() => {
   mockFetchHealth.mockClear();
   mockFetchCpuSeries.mockClear();
   jest.mocked(ctaClicked).mockClear();
+  mockUseSolutionState.mockReset();
+  setSolutionState({});
+  mockUseAppPluginMetas.mockReturnValue({ loading: false, error: undefined, value: [] });
+  mockFetchLogsStats.mockReset();
+  mockFetchLogsStats.mockResolvedValue({ bytes: null, sources: null });
+  mockFetchLogsVolumeSeries.mockReset();
+  mockFetchLogsVolumeSeries.mockResolvedValue(null);
+  mockFetchTracesActivity.mockReset();
+  mockFetchTracesActivity.mockResolvedValue({ spans: null, series: null });
+  mockFetchTracesServices.mockReset();
+  mockFetchTracesServices.mockResolvedValue(null);
 });
 
 afterEach(() => jest.restoreAllMocks());
 
 describe('RecommendationExisting', () => {
   it('opens the dropdown and switches the selected solution', async () => {
+    mockActiveLogs();
     const { user } = render(<RecommendationExisting />);
 
     expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Switch solution/i }));
-    await user.click(screen.getByRole('menuitem', { name: 'Hosted Metrics' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Hosted Logs' }));
 
-    expect(screen.getByRole('heading', { name: 'Hosted Metrics' })).toBeInTheDocument();
-    expect(screen.getByText('4.2M series')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Hosted Logs' })).toBeInTheDocument();
+    expect(await screen.findByText('47 GB')).toBeInTheDocument();
+    expect(screen.getByText('ingested · 7d · 8 sources')).toBeInTheDocument();
+  });
+
+  it('lists live solutions in registry order with no stub entries', async () => {
+    mockActiveLogs();
+    mockFetchTracesActivity.mockResolvedValue({ spans: 4_800_000, series: null });
+    mockFetchTracesServices.mockResolvedValue(34);
+    setSolutionState(
+      { metrics: 'active', logs: 'active', traces: 'active' },
+      { loki: lokiDatasource, tempo: tempoDatasource }
+    );
+
+    const { user } = render(<RecommendationExisting />);
+
+    expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Switch solution/i }));
+
+    const items = screen.getAllByRole('menuitem').map((item) => item.textContent?.trim());
+    expect(items).toEqual(['Kubernetes Monitoring', 'Hosted Logs', 'Hosted Traces']);
+  });
+
+  it('shows traces stats and the drilldown href when the app is available', async () => {
+    mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
+    mockActiveTraces();
+    mockUseAppPluginMetas.mockReturnValue({
+      loading: false,
+      error: undefined,
+      value: [{ id: 'grafana-exploretraces-app' } as AppPluginConfig],
+    });
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByRole('heading', { name: 'Hosted Traces' })).toBeInTheDocument();
+    expect(screen.getByText('via grafanacloud-traces')).toBeInTheDocument();
+    expect(await screen.findByText('4.8M spans')).toBeInTheDocument();
+    expect(screen.getByText('traced · 24h · 34 services')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Open Traces Drilldown/ })).toHaveAttribute(
+      'href',
+      '/a/grafana-exploretraces-app'
+    );
+  });
+
+  it('falls back to Explore while the app lookup is pending or the app is absent', async () => {
+    mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
+    mockActiveLogs();
+    mockUseAppPluginMetas.mockReturnValue({ loading: true, error: undefined, value: undefined });
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByRole('heading', { name: 'Hosted Logs' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Open Explore \(Logs\)/ })).toHaveAttribute('href', '/explore');
+  });
+
+  it('links the logs entry into Logs Drilldown when the app is available', async () => {
+    mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
+    mockActiveLogs();
+    mockUseAppPluginMetas.mockReturnValue({
+      loading: false,
+      error: undefined,
+      value: [{ id: 'grafana-lokiexplore-app' } as AppPluginConfig],
+    });
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByRole('heading', { name: 'Hosted Logs' })).toBeInTheDocument();
+    expect(screen.getByText('via grafanacloud-logs')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Open Explore \(Logs\)/ })).toHaveAttribute(
+      'href',
+      '/a/grafana-lokiexplore-app'
+    );
+  });
+
+  it('never invents an entry for an unknown signal', async () => {
+    mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
+    setSolutionState({ logs: 'unknown', traces: 'unknown' }, { loki: lokiDatasource, tempo: tempoDatasource });
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByRole('heading', { name: 'No data flowing yet' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Hosted Logs' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Hosted Traces' })).not.toBeInTheDocument();
+    expect(mockFetchLogsStats).not.toHaveBeenCalled();
+    expect(mockFetchTracesActivity).not.toHaveBeenCalled();
   });
 
   it('shows a full-card skeleton while settings are pending', async () => {
@@ -159,7 +326,7 @@ describe('RecommendationExisting', () => {
 
     expect(await screen.findByRole('heading', { name: 'No data flowing yet' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Hosted Metrics' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Hosted Logs' })).not.toBeInTheDocument();
   });
 
   it('shows the no-data card when resolution rejects without flashing the Kubernetes title', async () => {
@@ -223,7 +390,7 @@ describe('RecommendationExisting', () => {
     expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
     expect(screen.getByText('via k8s-prom')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open K8s app' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Hosted Metrics' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Hosted Logs' })).not.toBeInTheDocument();
     expect(screen.queryByTestId('kubernetes-stats-skeleton')).not.toBeInTheDocument();
   });
 
@@ -265,7 +432,8 @@ describe('RecommendationExisting', () => {
     expect(await screen.findByText(`${expectedPods} pods`)).toBeInTheDocument();
   });
 
-  it('shows stub stats without skeletons when switching away while Kubernetes data is pending', async () => {
+  it('shows live logs stats without Kubernetes skeletons when switching away mid-fetch', async () => {
+    mockActiveLogs();
     mockFetchInventory.mockImplementation(() => new Promise(() => {}));
     mockFetchCpuSeries.mockImplementation(() => new Promise(() => {}));
 
@@ -273,9 +441,9 @@ describe('RecommendationExisting', () => {
 
     expect(await screen.findByTestId('kubernetes-stats-skeleton')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Switch solution/i }));
-    await user.click(screen.getByRole('menuitem', { name: 'Hosted Metrics' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Hosted Logs' }));
 
-    expect(screen.getByText('4.2M series')).toBeInTheDocument();
+    expect(await screen.findByText('47 GB')).toBeInTheDocument();
     expect(screen.queryByTestId('kubernetes-stats-skeleton')).not.toBeInTheDocument();
     expect(screen.queryByTestId('kubernetes-sparkline-skeleton')).not.toBeInTheDocument();
   });
@@ -323,14 +491,15 @@ describe('RecommendationExisting', () => {
     expect(await screen.findByText('via k8s-prom')).toBeInTheDocument();
   });
 
-  it('omits the datasource subtitle on stub solutions', async () => {
+  it('names the winning datasource on telemetry solutions', async () => {
+    mockActiveLogs();
     const { user } = render(<RecommendationExisting />);
 
     expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Switch solution/i }));
-    await user.click(screen.getByRole('menuitem', { name: 'Hosted Metrics' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Hosted Logs' }));
 
-    expect(screen.queryByText(/^via /)).not.toBeInTheDocument();
+    expect(screen.getByText('via grafanacloud-logs')).toBeInTheDocument();
   });
 
   describe('analytics', () => {
@@ -378,36 +547,36 @@ describe('RecommendationExisting', () => {
       });
     });
 
-    it('tracks stub solutions with their own id', async () => {
-      // Stubs are only reachable behind a live solution now; without one the card
-      // renders the no-data state instead, so switch to the stub first.
+    it('tracks telemetry solutions with their own id', async () => {
+      mockActiveLogs();
       const { user } = render(<RecommendationExisting />);
 
       expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
       await user.click(screen.getByRole('button', { name: /Switch solution/i }));
-      await user.click(screen.getByRole('menuitem', { name: 'Hosted Metrics' }));
-      await user.click(await screen.findByRole('link', { name: /Open infrastructure/ }));
+      await user.click(screen.getByRole('menuitem', { name: 'Hosted Logs' }));
+      await user.click(await screen.findByRole('link', { name: /Open Explore \(Logs\)/ }));
 
       expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
         surface: 'existing_solution',
         action: 'open_solution',
         placement: 'card',
-        solution: 'hosted-metrics',
+        solution: 'logs',
       });
     });
 
     it('tracks switch_solution with the picked solution id', async () => {
+      mockActiveLogs();
       const { user } = render(<RecommendationExisting />);
 
       expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
       await user.click(screen.getByRole('button', { name: /Switch solution/i }));
-      await user.click(screen.getByRole('menuitem', { name: 'Hosted Metrics' }));
+      await user.click(screen.getByRole('menuitem', { name: 'Hosted Logs' }));
 
       expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
         surface: 'existing_solution',
         action: 'switch_solution',
         placement: 'card',
-        solution: 'hosted-metrics',
+        solution: 'logs',
       });
     });
 

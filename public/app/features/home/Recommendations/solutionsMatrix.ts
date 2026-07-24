@@ -12,7 +12,12 @@ export interface SolutionState {
   kubernetes: SignalStatus;
 }
 
-export type RecommendedCardId = 'enable-logs' | 'enable-logs-k8s' | 'hosted-traces' | 'kubernetes-monitoring';
+export type RecommendedCardId =
+  | 'connect-metrics'
+  | 'enable-logs'
+  | 'enable-logs-k8s'
+  | 'hosted-traces'
+  | 'kubernetes-monitoring';
 
 /**
  * Matrix row that drove the selection — a selection driver id for analytics
@@ -50,11 +55,12 @@ export function selectRecommendations(state: SolutionState): RecommendationSelec
   }
 
   if (metrics === 'inactive') {
-    // Without the metrics foundation nothing in scope is recommendable: the "Logs-only" row
-    // recommends Metrics (separate workstream) and gates Traces on confirmed metrics.
+    // Empty orgs still get a full onboarding carousel: the three telemetry pillars.
     if (logs === 'inactive' && traces === 'inactive') {
-      return { cards: [], baseRow: 'empty' };
+      return { cards: ['connect-metrics', 'enable-logs', 'hosted-traces'], baseRow: 'empty' };
     }
+    // Partial telemetry without metrics matches no matrix row; the "Logs-only" row
+    // recommends Metrics-first funnels owned by the separate metrics workstream.
     if (logs === 'active' && traces === 'inactive') {
       return { cards: [], baseRow: 'logs_only' };
     }

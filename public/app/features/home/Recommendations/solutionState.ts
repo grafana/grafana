@@ -1,11 +1,16 @@
 import { useAsync } from 'react-use';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
-import { DataSourceWithBackend } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
 
 import { resolveKubernetesDatasource } from './kubernetesData';
-import { createTtlCachedPromise, PROBE_TIMEOUT_MS, PROBE_TTL_MS, withRetry, withTimeout } from './probeUtils';
+import {
+  createTtlCachedPromise,
+  PROBE_TIMEOUT_MS,
+  PROBE_TTL_MS,
+  resolveBackendInstance,
+  withRetry,
+  withTimeout,
+} from './probeUtils';
 import { DATA_LOOKBACK_HOURS, probeFound, tempoHasTraces } from './solutionDataProbes';
 import { type SignalStatus, type SolutionState } from './solutionsMatrix';
 
@@ -46,15 +51,10 @@ async function resolveSignal(probe: () => Promise<DataSourceInstanceListItem | n
   }
 }
 
-async function getBackendInstance(uid: string): Promise<DataSourceWithBackend | null> {
-  const instance = await getDataSourceInstance({ uid });
-  return instance instanceof DataSourceWithBackend ? instance : null;
-}
-
 // Recent-activity checks ride each datasource's label metadata endpoint: cheap, index-only,
 // and an empty label set within the lookback is a definitive "no data".
 async function prometheusHasRecentLabels(ds: DataSourceInstanceListItem): Promise<boolean> {
-  const instance = await getBackendInstance(ds.uid);
+  const instance = await resolveBackendInstance(ds.uid);
   if (!instance) {
     return false;
   }
@@ -67,7 +67,7 @@ async function prometheusHasRecentLabels(ds: DataSourceInstanceListItem): Promis
 }
 
 async function lokiHasRecentLabels(ds: DataSourceInstanceListItem): Promise<boolean> {
-  const instance = await getBackendInstance(ds.uid);
+  const instance = await resolveBackendInstance(ds.uid);
   if (!instance) {
     return false;
   }
