@@ -104,6 +104,119 @@ func (s *Store) ReadDailyForObject(ctx context.Context, o objectRef) (map[string
 	return out, nil
 }
 
+// ObjectDaily is one object's complete set of daily buckets.
+type ObjectDaily struct {
+	Ref   objectRef
+	Daily map[string]map[string]uint64
+}
+
+// StreamNamespaces yields each namespace that has daily buckets for a group/resource.
+func (s *Store) StreamNamespaces(ctx context.Context, group, resource string) iter.Seq2[string, error] {
+	return func(yield func(string, error) bool) {
+		prefix := groupResourcePrefix(group, resource)
+		end := kv.PrefixRangeEnd(prefix)
+		start := prefix
+		for {
+			var (
+				first string
+				found bool
+				err   error
+			)
+			for key, keyErr := range s.kv.Keys(ctx, dailySection, kv.ListOptions{StartKey: start, EndKey: end, Limit: 1}) {
+				first, err, found = key, keyErr, true
+				break
+			}
+			if err != nil {
+				yield("", err)
+				return
+			}
+			if !found {
+				return
+			}
+			pk, err := parseDailyKey(first)
+			if err != nil {
+				yield("", err)
+				return
+			}
+			if !yield(pk.Namespace, nil) {
+				return
+			}
+			start = kv.PrefixRangeEnd(namespacePrefix(group, resource, pk.Namespace))
+		}
+	}
+}
+
+// StreamObjectDailies streams each object in a namespace together with its
+// daily buckets, in a single pass over the namespace's daily keys.
+func (s *Store) StreamObjectDailies(ctx context.Context, group, resource, namespace string) iter.Seq2[ObjectDaily, error] {
+	return func(yield func(ObjectDaily, error) bool) {
+		prefix := namespacePrefix(group, resource, namespace)
+		var (
+			curRef  objectRef
+			curKeys []string
+			haveObj bool
+		)
+		emit := func() bool {
+			daily, err := s.readDailyKeys(ctx, curKeys)
+			if err != nil {
+				yield(ObjectDaily{}, err)
+				return false
+			}
+			return yield(ObjectDaily{Ref: curRef, Daily: daily}, nil)
+		}
+		for key, err := range s.kv.Keys(ctx, dailySection, kv.ListOptions{StartKey: prefix, EndKey: kv.PrefixRangeEnd(prefix)}) {
+			if err != nil {
+				yield(ObjectDaily{}, err)
+				return
+			}
+			pk, err := parseDailyKey(key)
+			if err != nil {
+				yield(ObjectDaily{}, err)
+				return
+			}
+			if haveObj && pk.objectRef != curRef {
+				if !emit() {
+					return
+				}
+				curKeys = curKeys[:0]
+			}
+			curRef = pk.objectRef
+			haveObj = true
+			curKeys = append(curKeys, key)
+		}
+		if haveObj {
+			emit()
+		}
+	}
+}
+
+// readDailyKeys fetches the given daily keys (all belonging to one object) and
+// returns day -> metric -> value, batching the value reads.
+func (s *Store) readDailyKeys(ctx context.Context, keys []string) (map[string]map[string]uint64, error) {
+	out := map[string]map[string]uint64{}
+	for start := 0; start < len(keys); start += dailyReadBatchSize {
+		end := min(start+dailyReadBatchSize, len(keys))
+		for item, err := range s.kv.BatchGet(ctx, dailySection, keys[start:end]) {
+			if err != nil {
+				return nil, err
+			}
+			pk, err := parseDailyKey(item.Key)
+			if err != nil {
+				return nil, err
+			}
+			v, err := readUint64(item.Value)
+			if err != nil {
+				return nil, err
+			}
+			if out[pk.Day] == nil {
+				out[pk.Day] = map[string]uint64{}
+			}
+			out[pk.Day][pk.Metric] = v
+		}
+	}
+	return out, nil
+}
+
 // ReadDailyRange streams an object's per-day buckets in ascending
 // chronological order, restricted to the inclusive [fromDay, toDay] window.
 // Empty bounds mean unbounded on that side. The overflow bucket is always
@@ -271,29 +384,6 @@ func (s *Store) ScanAggregates(ctx context.Context, group, resource, namespace s
 			out[pk.Name] = map[string]uint64{}
 		}
 		out[pk.Name][pk.Field] = v
-	}
-	return out, nil
-}
-
-// listObjects returns the distinct objects that have daily buckets within a
-// namespace.
-func (s *Store) listObjects(ctx context.Context, group, resource, namespace string) ([]objectRef, error) {
-	prefix := namespacePrefix(group, resource, namespace)
-	seen := map[objectRef]struct{}{}
-	var out []objectRef
-	for key, err := range s.kv.Keys(ctx, dailySection, kv.ListOptions{StartKey: prefix, EndKey: kv.PrefixRangeEnd(prefix)}) {
-		if err != nil {
-			return nil, err
-		}
-		pk, err := parseDailyKey(key)
-		if err != nil {
-			return nil, err
-		}
-		if _, ok := seen[pk.objectRef]; ok {
-			continue
-		}
-		seen[pk.objectRef] = struct{}{}
-		out = append(out, pk.objectRef)
 	}
 	return out, nil
 }

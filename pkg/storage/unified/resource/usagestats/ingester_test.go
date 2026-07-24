@@ -411,3 +411,31 @@ func metricsFor(days []*resourcepb.DailyStat, day string) map[string]uint64 {
 	}
 	return nil
 }
+
+func TestAggregateDeltas(t *testing.T) {
+	decl, ok := DefaultDeclarations().lookup(dashboardsGroup, dashboardsResource)
+	require.True(t, ok)
+
+	got := aggregateDeltas(decl, map[string]uint64{
+		"views":   3,
+		"queries": 0, // no-op deltas don't produce fields
+		"retired": 5, // metric dropped from the declaration since it was buffered
+	})
+
+	require.Equal(t, map[string]uint64{
+		"views_total":        3,
+		"views_last_1_days":  3,
+		"views_last_7_days":  3,
+		"views_last_30_days": 3,
+	}, got)
+}
+
+func BenchmarkAggregateDeltas(b *testing.B) {
+	decl, _ := DefaultDeclarations().lookup(dashboardsGroup, dashboardsResource)
+	deltas := map[string]uint64{"views": 4, "queries": 2, "errors": 1}
+
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_ = aggregateDeltas(decl, deltas)
+	}
+}

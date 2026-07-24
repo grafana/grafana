@@ -194,6 +194,7 @@ func withMaxPageSizeBytes(opts *ServerOptions, resourceOpts *resource.ResourceSe
 func withUsageStats(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
 	resourceOpts.UsageStatsEnabled = unifiedStorageCfg.Key("usage_stats_enabled").MustBool(false)
+	resourceOpts.UsageStatsReconcileInterval = unifiedStorageCfg.Key("usage_stats_reconcile_interval").MustDuration(0)
 	return nil
 }
 

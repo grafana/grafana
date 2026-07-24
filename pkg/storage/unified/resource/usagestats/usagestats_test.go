@@ -68,17 +68,26 @@ func newTestObject(name string) objectRef {
 func TestDeclarations(t *testing.T) {
 	decls := DefaultDeclarations()
 
-	decl, ok := decls.Lookup(dashboardsGroup, dashboardsResource)
+	decl, ok := decls.lookup(dashboardsGroup, dashboardsResource)
 	require.True(t, ok)
 	require.Equal(t, "dashboard.grafana.app/dashboards", decl.GroupResource())
 	require.Equal(t, []int{1, 7, 30}, decl.Windows)
 
-	require.True(t, decl.HasMetric("views"))
-	require.True(t, decl.HasMetric("queries"))
-	require.True(t, decl.HasMetric("errors"))
-	require.False(t, decl.HasMetric("bogus"))
+	require.True(t, decl.hasMetric("views"))
+	require.True(t, decl.hasMetric("queries"))
+	require.True(t, decl.hasMetric("errors"))
+	require.False(t, decl.hasMetric("bogus"))
 
-	_, ok = decls.Lookup("other.grafana.app", "things")
+	// Field names are derived once at registration, indexed by metric position.
+	i, ok := decl.index("queries")
+	require.True(t, ok)
+	require.Equal(t, "queries_total", decl.fields.totals[i])
+	require.Equal(t, []string{"queries_last_1_days", "queries_last_7_days", "queries_last_30_days"}, decl.fields.windows[i])
+
+	_, ok = decl.index("bogus")
+	require.False(t, ok)
+
+	_, ok = decls.lookup("other.grafana.app", "things")
 	require.False(t, ok)
 }
 
@@ -91,9 +100,28 @@ func TestDeclarationsValidate(t *testing.T) {
 	for i := range tooMany {
 		tooMany[i] = fmt.Sprintf("metric-%d", i)
 	}
-	decls := &Declarations{byGR: map[string]StatsDeclaration{}}
+	decls := newDeclarations()
 	decls.add(StatsDeclaration{Group: "g.grafana.app", Resource: "things", Metrics: tooMany, Windows: []int{1}})
 	require.ErrorContains(t, decls.Validate(), "exceeding the max batch size")
+
+	// Only the last MaxWindow days are kept as dated buckets, so a longer window
+	// could never be computed: reject it instead of silently under-reporting.
+	for _, window := range []int{0, -1, MaxWindow + 1} {
+		decls := newDeclarations()
+		decls.add(StatsDeclaration{
+			Group: "g.grafana.app", Resource: "things",
+			Metrics: []string{"views"}, Windows: []int{window},
+		})
+		require.ErrorContains(t, decls.Validate(), "outside the supported range",
+			"window %d should be rejected", window)
+	}
+
+	okDecls := newDeclarations()
+	okDecls.add(StatsDeclaration{
+		Group: "g.grafana.app", Resource: "things",
+		Metrics: []string{"views"}, Windows: []int{1, MaxWindow},
+	})
+	require.NoError(t, okDecls.Validate())
 }
 
 func TestDeclarationFieldNames(t *testing.T) {
@@ -396,25 +424,122 @@ func TestStoreWriteAggregatesChunking(t *testing.T) {
 	})
 }
 
-func TestStoreListObjects(t *testing.T) {
+func TestStoreStreamNamespaces(t *testing.T) {
+	forEachBackend(t, func(t *testing.T, store *Store) {
+		ctx := context.Background()
+		mk := func(ns, name string) objectRef {
+			return objectRef{Group: dashboardsGroup, Resource: dashboardsResource, Namespace: ns, Name: name}
+		}
+		// Several objects and days per namespace: each namespace must still be
+		// yielded exactly once, so the reconciler takes its lease once.
+		require.NoError(t, store.IncrementDaily(ctx, mk("ns-a", "dash-a"), "2026-06-22", map[string]uint64{"views": 1}))
+		require.NoError(t, store.IncrementDaily(ctx, mk("ns-a", "dash-a"), "2026-06-23", map[string]uint64{"views": 1}))
+		require.NoError(t, store.IncrementDaily(ctx, mk("ns-a", "dash-b"), "2026-06-23", map[string]uint64{"views": 2}))
+		require.NoError(t, store.IncrementDaily(ctx, mk("ns-b", "dash-c"), "2026-06-23", map[string]uint64{"views": 3}))
+		// A different resource must not leak into the stream.
+		require.NoError(t, store.IncrementDaily(ctx,
+			objectRef{Group: dashboardsGroup, Resource: "folders", Namespace: "ns-z", Name: "f"},
+			"2026-06-23", map[string]uint64{"views": 1}))
+
+		var got []string
+		for ns, err := range store.StreamNamespaces(ctx, dashboardsGroup, dashboardsResource) {
+			require.NoError(t, err)
+			got = append(got, ns)
+		}
+		// Namespaces come out in lexicographical order, each exactly once.
+		require.Equal(t, []string{"ns-a", "ns-b"}, got)
+
+		var empty []string
+		for ns, err := range store.StreamNamespaces(ctx, dashboardsGroup, "nothing-here") {
+			require.NoError(t, err)
+			empty = append(empty, ns)
+		}
+		require.Empty(t, empty)
+	})
+}
+
+// Seeking past "stacks-1/" lands on "stacks-10", which is also the prefix of
+// namespace stacks-10: prefix-extending namespaces must not be skipped.
+func TestStoreStreamNamespacesPrefixOverlap(t *testing.T) {
+	forEachBackend(t, func(t *testing.T, store *Store) {
+		ctx := context.Background()
+		for _, ns := range []string{"stacks-1", "stacks-10", "stacks-100", "stacks-2"} {
+			o := objectRef{Group: dashboardsGroup, Resource: dashboardsResource, Namespace: ns, Name: "dash"}
+			require.NoError(t, store.IncrementDaily(ctx, o, "2026-06-23", map[string]uint64{"views": 1}))
+		}
+
+		var got []string
+		for ns, err := range store.StreamNamespaces(ctx, dashboardsGroup, dashboardsResource) {
+			require.NoError(t, err)
+			got = append(got, ns)
+		}
+		require.Equal(t, []string{"stacks-1", "stacks-10", "stacks-100", "stacks-2"}, got)
+	})
+}
+
+func TestStoreStreamObjectDailies(t *testing.T) {
 	forEachBackend(t, func(t *testing.T, store *Store) {
 		ctx := context.Background()
 		a := newTestObject("dash-a")
 		b := newTestObject("dash-b")
 
+		// dash-a spans multiple days/metrics plus overflow; dash-b is a single day.
 		require.NoError(t, store.IncrementDaily(ctx, a, "2026-06-22", map[string]uint64{"views": 1}))
-		require.NoError(t, store.IncrementDaily(ctx, a, "2026-06-23", map[string]uint64{"views": 1}))
+		require.NoError(t, store.IncrementDaily(ctx, a, "2026-06-23", map[string]uint64{"views": 2, "queries": 5}))
+		require.NoError(t, store.IncrementDaily(ctx, a, overflowBucket, map[string]uint64{"views": 100}))
 		require.NoError(t, store.IncrementDaily(ctx, b, "2026-06-23", map[string]uint64{"queries": 1}))
 
-		objs, err := store.listObjects(ctx, dashboardsGroup, dashboardsResource, "default")
-		require.NoError(t, err)
-		require.Len(t, objs, 2)
-
-		names := map[string]bool{}
-		for _, o := range objs {
-			names[o.Name] = true
+		got := map[string]map[string]map[string]uint64{}
+		for od, err := range store.StreamObjectDailies(ctx, dashboardsGroup, dashboardsResource, "default") {
+			require.NoError(t, err)
+			// Each object is emitted exactly once.
+			_, dup := got[od.Ref.Name]
+			require.False(t, dup, "object %s emitted more than once", od.Ref.Name)
+			got[od.Ref.Name] = od.Daily
 		}
-		require.True(t, names["dash-a"])
-		require.True(t, names["dash-b"])
+
+		require.Len(t, got, 2)
+		require.Equal(t, uint64(1), got["dash-a"]["2026-06-22"]["views"])
+		require.Equal(t, uint64(2), got["dash-a"]["2026-06-23"]["views"])
+		require.Equal(t, uint64(5), got["dash-a"]["2026-06-23"]["queries"])
+		require.Equal(t, uint64(100), got["dash-a"][overflowBucket]["views"])
+		require.Equal(t, uint64(1), got["dash-b"]["2026-06-23"]["queries"])
+
+		// Empty namespace yields nothing.
+		var count int
+		for range store.StreamObjectDailies(ctx, dashboardsGroup, dashboardsResource, "empty") {
+			count++
+		}
+		require.Zero(t, count)
+	})
+}
+
+func TestStoreStreamObjectDailiesManyObjects(t *testing.T) {
+	forEachBackend(t, func(t *testing.T, store *Store) {
+		ctx := context.Background()
+
+		// More than one object, each with enough daily keys to straddle a
+		// readDailyKeys batch boundary, to exercise grouping + chunked reads.
+		const objects = 5
+		const days = 60
+		for n := 0; n < objects; n++ {
+			o := newTestObject(fmt.Sprintf("dash-%02d", n))
+			for d := 0; d < days; d++ {
+				day := fmt.Sprintf("2026-06-%02d", d+1)
+				require.NoError(t, store.IncrementDaily(ctx, o, day, map[string]uint64{"views": uint64(d + 1)}))
+			}
+		}
+
+		seen := map[string]int{}
+		for od, err := range store.StreamObjectDailies(ctx, dashboardsGroup, dashboardsResource, "default") {
+			require.NoError(t, err)
+			seen[od.Ref.Name] = len(od.Daily)
+			require.Equal(t, uint64(1), od.Daily["2026-06-01"]["views"])
+			require.Equal(t, uint64(days), od.Daily[fmt.Sprintf("2026-06-%02d", days)]["views"])
+		}
+		require.Len(t, seen, objects)
+		for name, n := range seen {
+			require.Equal(t, days, n, "object %s should carry all its days", name)
+		}
 	})
 }

@@ -45,6 +45,10 @@ func namespacePrefix(group, resource, namespace string) string {
 	return strings.Join([]string{group, resource, namespace}, "/") + "/"
 }
 
+func groupResourcePrefix(group, resource string) string {
+	return strings.Join([]string{group, resource}, "/") + "/"
+}
+
 type parsedDailyKey struct {
 	objectRef
 	Day    string

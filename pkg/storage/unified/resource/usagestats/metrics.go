@@ -56,3 +56,37 @@ func (m *metrics) dropEvents(reason string, n int) {
 	}
 	m.droppedEvents.WithLabelValues(reason).Add(float64(n))
 }
+
+type reconcilerMetrics struct {
+	reconcileDuration prometheus.Histogram
+	namespaceFailures prometheus.Counter
+	lastSuccess       prometheus.Gauge
+	leasesLost        prometheus.Counter
+}
+
+func newReconcilerMetrics(reg prometheus.Registerer) *reconcilerMetrics {
+	factory := promauto.With(reg)
+	return &reconcilerMetrics{
+		namespaceFailures: factory.NewCounter(prometheus.CounterOpts{
+			Name: "unified_storage_stats_reconcile_namespace_failures_total",
+			Help: "Number of namespaces that failed to reconcile.",
+		}),
+		lastSuccess: factory.NewGauge(prometheus.GaugeOpts{
+			Name: "unified_storage_stats_reconcile_last_success_timestamp_seconds",
+			Help: "Unix timestamp of the last usage stats reconcile cycle that ran to completion.",
+		}),
+		leasesLost: factory.NewCounter(prometheus.CounterOpts{
+			Name: "unified_storage_stats_reconcile_leases_lost_total",
+			Help: "Number of times a usage stats reconcile lost its lease mid-namespace and skipped the rest.",
+		}),
+		reconcileDuration: factory.NewHistogram(prometheus.HistogramOpts{
+			Name: "unified_storage_stats_reconcile_duration_seconds",
+			Help: "Duration of a usage stats reconcile cycle.",
+			// Native histogram only (no classic Buckets): reconcile duration spans
+			// a wide, hard-to-predict range, and this avoids per-bucket series.
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  100,
+			NativeHistogramMinResetDuration: time.Hour,
+		}),
+	}
+}

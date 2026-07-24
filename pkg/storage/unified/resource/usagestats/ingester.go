@@ -124,7 +124,7 @@ func objectRefFromKey(key *resourcepb.ResourceKey) objectRef {
 }
 
 func (i *Ingester) RecordEvent(_ context.Context, key *resourcepb.ResourceKey, events []*resourcepb.ResourceEvent) error {
-	decl, ok := i.decls.Lookup(key.Group, key.Resource)
+	decl, ok := i.decls.lookup(key.Group, key.Resource)
 	if !ok {
 		i.metrics.dropEvents(reasonUntrackedResource, len(events))
 		return nil
@@ -137,7 +137,7 @@ func (i *Ingester) RecordEvent(_ context.Context, key *resourcepb.ResourceKey, e
 	// request doesn't record some events and reject others.
 	deltas := make(map[string]uint64, len(events))
 	for _, e := range events {
-		if !decl.HasMetric(e.Metric) {
+		if !decl.hasMetric(e.Metric) {
 			i.metrics.dropEvents(reasonUnknownMetric, len(events))
 			return ErrInvalidEvent
 		}
@@ -253,7 +253,7 @@ func (i *Ingester) flush(ctx context.Context) error {
 }
 
 func (i *Ingester) flushNamespace(ctx context.Context, scope groupResourceNamespaceRef, day string, objs []objectRef, drained map[objectRef]map[string]uint64) error {
-	decl, ok := i.decls.Lookup(scope.Group, scope.Resource)
+	decl, ok := i.decls.lookup(scope.Group, scope.Resource)
 	if !ok {
 		// Declaration disappeared; nothing valid to write.
 		return nil
@@ -270,6 +270,12 @@ func (i *Ingester) flushNamespace(ctx context.Context, scope groupResourceNamesp
 	l, err := i.leases.Acquire(ctx, scope.leaseName(), lease.WithTTL(flushLeaseTTL), lease.WithAutoRenew())
 	if err != nil {
 		rebufferFrom(0)
+		if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
+			i.log.Debug("usage stats flush lease held elsewhere; deltas stay buffered",
+				"group", scope.Group, "resource", scope.Resource, "namespace", scope.Namespace,
+				"objects", len(objs))
+			return nil
+		}
 		return err
 	}
 	defer func() {
@@ -312,16 +318,21 @@ func (i *Ingester) flushNamespace(ctx context.Context, scope groupResourceNamesp
 	return nil
 }
 
-func aggregateDeltas(decl StatsDeclaration, deltas map[string]uint64) map[string]uint64 {
+func aggregateDeltas(decl declaration, deltas map[string]uint64) map[string]uint64 {
 	out := make(map[string]uint64, len(deltas)*(len(decl.Windows)+1))
 	for metric, v := range deltas {
 		if v == 0 {
 			continue
 		}
-		for _, w := range decl.Windows {
-			out[aggregateField(metric, w)] += v
+		i, ok := decl.index(metric)
+		if !ok {
+			// Metric dropped from the declaration since the event was buffered.
+			continue
 		}
-		out[totalField(metric)] += v
+		for j := range decl.Windows {
+			out[decl.fields.windows[i][j]] += v
+		}
+		out[decl.fields.totals[i]] += v
 	}
 	return out
 }
@@ -333,7 +344,7 @@ func (i *Ingester) Flush(ctx context.Context) error {
 
 func (i *Ingester) GetResourceDailyStats(ctx context.Context, key *resourcepb.ResourceKey, fromDay, toDay string) iter.Seq2[*resourcepb.DailyStat, error] {
 	return func(yield func(*resourcepb.DailyStat, error) bool) {
-		if _, ok := i.decls.Lookup(key.Group, key.Resource); !ok {
+		if _, ok := i.decls.lookup(key.Group, key.Resource); !ok {
 			return
 		}
 		o := objectRefFromKey(key)
