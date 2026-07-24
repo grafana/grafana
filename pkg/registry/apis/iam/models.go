@@ -27,6 +27,7 @@ import (
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	satoken "github.com/grafana/grafana/pkg/storage/serviceaccount/token"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -55,6 +56,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	externalGroupReconciler    legacy.ExternalGroupReconciler
 	teamBindingLegacyStore     *teambinding.LegacyBindingStore
 	ssoLegacyStore             *sso.LegacyStore
+	tokenStore                 satoken.Storage
 	ssoUseMTSettings           bool
 	roleApiInstaller           RoleApiInstaller
 	globalRoleApiInstaller     GlobalRoleApiInstaller

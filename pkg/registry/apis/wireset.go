@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/userstorage"
 	"github.com/grafana/grafana/pkg/services/folder/cleaner"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	satoken "github.com/grafana/grafana/pkg/storage/serviceaccount/token"
 )
 
 // WireSetExts is a set of providers that can be overridden by enterprise implementations.
@@ -70,6 +71,8 @@ var WireSet = wire.NewSet(
 
 	// Secrets
 	secret.RegisterDependencies,
+	// Service account tokens
+	satoken.RegisterDependencies,
 	// Provisioning
 	provisioning.RegisterDependencies,
 	provisioningExtras,

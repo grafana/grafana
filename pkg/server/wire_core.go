@@ -182,6 +182,10 @@ import (
 	secretencryption "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	secretmetadata "github.com/grafana/grafana/pkg/storage/secret/metadata"
 	secretmigrator "github.com/grafana/grafana/pkg/storage/secret/migrator"
+	satoken "github.com/grafana/grafana/pkg/storage/serviceaccount/token"
+	satokencontracts "github.com/grafana/grafana/pkg/storage/serviceaccount/token/contracts"
+	satokendatabase "github.com/grafana/grafana/pkg/storage/serviceaccount/token/database"
+	satokenmigrator "github.com/grafana/grafana/pkg/storage/serviceaccount/token/migrator"
 	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -462,6 +466,12 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(secretcontracts.Clock), new(*secretclock.Clock)),
 	encryptionManager.ProvideEncryptionManager,
 	cipher.ProvideAESGCMCipherService,
+	// Service account tokens
+	satokenmigrator.NewWithEngine,
+	satokendatabase.ProvideDatabase,
+	wire.Bind(new(satokencontracts.Database), new(*satokendatabase.Database)),
+	satoken.ProvideStorage,
+	satoken.ProvideValidator,
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,

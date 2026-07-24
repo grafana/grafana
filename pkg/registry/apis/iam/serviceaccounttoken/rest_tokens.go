@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	satoken "github.com/grafana/grafana/pkg/storage/serviceaccount/token"
 )
 
 const (
@@ -58,10 +59,12 @@ var (
 // NewTokensREST creates the /tokens subresource handler on ServiceAccount.
 //   - saGetter: the registered storage for ServiceAccount (DualWriter or UniStore).
 //   - legacyStore: reads/writes tokens in the legacy api_key table.
-func NewTokensREST(saGetter rest.Getter, legacyStore legacy.LegacyIdentityStore, tracer trace.Tracer) *TokensREST {
+//   - tokenStore: reads/writes tokens in the dedicated serviceaccount_token table when configured.
+func NewTokensREST(saGetter rest.Getter, legacyStore legacy.LegacyIdentityStore, tokenStore satoken.Storage, tracer trace.Tracer) *TokensREST {
 	return &TokensREST{
 		saGetter:    saGetter,
 		legacyStore: legacyStore,
+		tokenStore:  tokenStore,
 		logger:      log.New("grafana-apiserver.serviceaccounttokens.api"),
 		tracer:      tracer,
 	}
@@ -72,6 +75,7 @@ type TokensREST struct {
 	tracer      trace.Tracer
 	saGetter    rest.Getter                // reads ServiceAccount from DualWriter / UniStore
 	legacyStore legacy.LegacyIdentityStore // reads/writes tokens in legacy api_key
+	tokenStore  satoken.Storage
 }
 
 func (s *TokensREST) New() runtime.Object {
@@ -159,6 +163,32 @@ func (s *TokensREST) handleGet(ctx context.Context, ns claims.NamespaceInfo, saN
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
+	if s.tokenStore != nil {
+		token, err := s.tokenStore.GetByName(ctx, &satoken.GetByNameQuery{
+			Namespace:          ns.Value,
+			ServiceAccountName: saName,
+			Name:               tokenName,
+		})
+		if errors.Is(err, satoken.ErrTokenNotFound) {
+			responder.Error(apierrors.NewNotFound(saTokenGroupResource, tokenName))
+			return
+		}
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, "failed to get token")
+			ctxLogger.Error("failed to get service account token", "error", err, "tokenName", tokenName, "serviceAccount", saName)
+			responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to get token: %w", err)))
+			return
+		}
+		resp := &iamv0alpha1.GetServiceAccountTokenResponse{
+			GetServiceAccountTokenBody: iamv0alpha1.GetServiceAccountTokenBody{
+				Body: mapNewGetToken(token),
+			},
+		}
+		responder.Object(http.StatusOK, resp)
+		return
+	}
+
 	token, err := s.legacyStore.GetServiceAccountToken(ctx, ns, legacy.GetServiceAccountTokenQuery{
 		Name:              tokenName,
 		ServiceAccountUID: saName,
@@ -189,9 +219,33 @@ func (s *TokensREST) handleList(ctx context.Context, ns claims.NamespaceInfo, sa
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
+	pagination := common.PaginationFromListQuery(r.URL.Query())
+	if s.tokenStore != nil {
+		res, err := s.tokenStore.ListByServiceAccount(ctx, ns.Value, saName, pagination.Limit, pagination.Continue)
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, "failed to list tokens")
+			ctxLogger.Error("failed to list service account tokens", "error", err, "serviceAccount", saName)
+			responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to list tokens: %w", err)))
+			return
+		}
+		items := make([]iamv0alpha1.ListServiceAccountTokensToken, 0, len(res.Items))
+		for _, token := range res.Items {
+			items = append(items, mapNewListToken(token))
+		}
+		resp := &iamv0alpha1.ListServiceAccountTokensResponse{
+			ListServiceAccountTokensBody: iamv0alpha1.ListServiceAccountTokensBody{
+				Items:    items,
+				Continue: common.OptionalFormatInt(res.Continue),
+			},
+		}
+		responder.Object(http.StatusOK, resp)
+		return
+	}
+
 	res, err := s.legacyStore.ListServiceAccountTokens(ctx, ns, legacy.ListServiceAccountTokenQuery{
 		UID:        saName,
-		Pagination: common.PaginationFromListQuery(r.URL.Query()),
+		Pagination: pagination,
 	})
 	if err != nil {
 		span.RecordError(err)
@@ -202,8 +256,8 @@ func (s *TokensREST) handleList(ctx context.Context, ns claims.NamespaceInfo, sa
 	}
 
 	items := make([]iamv0alpha1.ListServiceAccountTokensToken, 0, len(res.Items))
-	for _, t := range res.Items {
-		items = append(items, mapListToken(t))
+	for _, token := range res.Items {
+		items = append(items, mapListToken(token))
 	}
 
 	resp := &iamv0alpha1.ListServiceAccountTokensResponse{
@@ -289,7 +343,18 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 		return
 	}
 
-	// TODO: Write to custom token store when configured (Mode5 / MT).
+	if s.tokenStore != nil {
+		_, err := s.tokenStore.Add(ctx, &satoken.AddTokenCommand{
+			Namespace:          ns.Value,
+			Name:               req.TokenName,
+			Key:                keyResult.HashedKey,
+			ServiceAccountName: saName,
+			SecondsToLive:      req.ExpiresInSeconds,
+		})
+		if err != nil {
+			ctxLogger.Error("failed to write service account token to dedicated store", "error", err, "tokenName", req.TokenName, "serviceAccount", saName)
+		}
+	}
 
 	resp := &iamv0alpha1.CreateServiceAccountTokenResponse{
 		CreateServiceAccountTokenBody: iamv0alpha1.CreateServiceAccountTokenBody{
@@ -346,7 +411,11 @@ func (s *TokensREST) handleDelete(ctx context.Context, ns claims.NamespaceInfo, 
 		return
 	}
 
-	// TODO: Delete from custom token store when configured (Mode5 / MT).
+	if s.tokenStore != nil {
+		if err := s.tokenStore.Delete(ctx, ns.Value, saName, tokenName); err != nil {
+			ctxLogger.Error("failed to delete service account token from dedicated store", "error", err, "tokenName", tokenName, "serviceAccount", saName)
+		}
+	}
 
 	resp := &iamv0alpha1.DeleteServiceAccountTokenResponse{
 		DeleteServiceAccountTokenBody: iamv0alpha1.DeleteServiceAccountTokenBody{
@@ -374,6 +443,28 @@ func mapListToken(t legacy.ServiceAccountToken) iamv0alpha1.ListServiceAccountTo
 
 func mapGetToken(t legacy.ServiceAccountToken) iamv0alpha1.GetServiceAccountTokenToken {
 	return iamv0alpha1.GetServiceAccountTokenToken(mapListToken(t))
+}
+
+func mapNewListToken(t *satoken.Token) iamv0alpha1.ListServiceAccountTokensToken {
+	item := iamv0alpha1.ListServiceAccountTokensToken{
+		Title:   t.Name,
+		Created: t.Created.Unix(),
+		Updated: t.Updated.Unix(),
+	}
+	if t.IsRevoked != nil {
+		item.Revoked = *t.IsRevoked
+	}
+	if t.Expires != nil {
+		item.Expires = *t.Expires
+	}
+	if t.LastUsedAt != nil {
+		item.LastUsed = t.LastUsedAt.Unix()
+	}
+	return item
+}
+
+func mapNewGetToken(t *satoken.Token) iamv0alpha1.GetServiceAccountTokenToken {
+	return iamv0alpha1.GetServiceAccountTokenToken(mapNewListToken(t))
 }
 
 // PostProcessOpenAPI patches the OpenAPI spec for the /tokens subresource paths:

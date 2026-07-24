@@ -245,6 +245,9 @@ import (
 	"github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
+	"github.com/grafana/grafana/pkg/storage/serviceaccount/token"
+	database4 "github.com/grafana/grafana/pkg/storage/serviceaccount/token/database"
+	migrator8 "github.com/grafana/grafana/pkg/storage/serviceaccount/token/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	migrations2 "github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -935,7 +938,17 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	noopSearchREST := externalgroupmapping.ProvideNoopSearchREST()
 	externalGroupReconciler := _wireNoopExternalGroupReconcilerValue
 	mappersRegistry := resourcepermission.ProvideMappersRegistry()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, configProvider, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, tracingService, roleBindingApiInstaller, teamGroupsHandlerProvider, noopSearchREST, externalGroupReconciler, dualwriteService, resourceClient, orgService, userimplService, teamimplService, eventualRestConfigProvider, mappersRegistry)
+	database5 := database4.ProvideDatabase(sqlStore, tracer)
+	storage, err := token.ProvideStorage(database5, tracer)
+	if err != nil {
+		return nil, err
+	}
+	tokenDBMigrator := migrator8.NewWithEngine(sqlStore)
+	tokenDependencyRegisterer, err := token.RegisterDependencies(cfg, tokenDBMigrator)
+	if err != nil {
+		return nil, err
+	}
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, configProvider, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, tracingService, roleBindingApiInstaller, teamGroupsHandlerProvider, noopSearchREST, externalGroupReconciler, dualwriteService, resourceClient, orgService, userimplService, teamimplService, eventualRestConfigProvider, mappersRegistry, storage, tokenDependencyRegisterer)
 	if err != nil {
 		return nil, err
 	}
@@ -1686,7 +1699,17 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	noopSearchREST := externalgroupmapping.ProvideNoopSearchREST()
 	externalGroupReconciler := _wireNoopExternalGroupReconcilerValue
 	mappersRegistry := resourcepermission.ProvideMappersRegistry()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, configProvider, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, tracingService, roleBindingApiInstaller, teamGroupsHandlerProvider, noopSearchREST, externalGroupReconciler, dualwriteService, resourceClient, orgService, userimplService, teamimplService, eventualRestConfigProvider, mappersRegistry)
+	database5 := database4.ProvideDatabase(sqlStore, tracer)
+	storage, err := token.ProvideStorage(database5, tracer)
+	if err != nil {
+		return nil, err
+	}
+	tokenDBMigrator := migrator8.NewWithEngine(sqlStore)
+	tokenDependencyRegisterer, err := token.RegisterDependencies(cfg, tokenDBMigrator)
+	if err != nil {
+		return nil, err
+	}
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, configProvider, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, tracingService, roleBindingApiInstaller, teamGroupsHandlerProvider, noopSearchREST, externalGroupReconciler, dualwriteService, resourceClient, orgService, userimplService, teamimplService, eventualRestConfigProvider, mappersRegistry, storage, tokenDependencyRegisterer)
 	if err != nil {
 		return nil, err
 	}
