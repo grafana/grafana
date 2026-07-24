@@ -25,6 +25,8 @@ concurrency:
 
 jobs:
   check:
+    # Run on `grafana/grafana` pushes, or on pull requests, to prevent double-running on mirrors
+    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Check .policy.yml is valid
     runs-on: ubuntu-latest
     permissions:
