@@ -63,18 +63,14 @@ export function createTtlCachedPromise<T>(fn: () => Promise<T>, ttlMs: number): 
   };
 }
 
-interface ListProbeCandidatesOptions {
-  /** Cap on the returned list; pass Infinity when the caller reorders before capping itself. */
-  cap?: number;
-}
-
 /**
  * Candidate datasources of `type` for a data-existence probe: cloud utility datasources are
  * skipped (unless they are all there is), the default datasource leads, capped for fan-out.
+ * Pass an Infinity `cap` when the caller reorders before capping itself.
  */
 export async function listProbeCandidates(
   type: string,
-  { cap = MAX_PROBED_DATASOURCES }: ListProbeCandidatesOptions = {}
+  cap = MAX_PROBED_DATASOURCES
 ): Promise<DataSourceInstanceListItem[]> {
   const list = await withRetry(() =>
     getDataSourceInstanceList({

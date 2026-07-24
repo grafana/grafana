@@ -18,23 +18,16 @@ export function RecommendationsSkeleton() {
 
       <div className={styles.cards}>
         <Grid gap={0} columns={{ xs: 1, md: 2 }}>
-          <div className={styles.card}>
-            <Stack direction="column" gap={2}>
-              <Skeleton width={160} height={22} />
-              <Skeleton width={240} height={30} />
-              <Skeleton height={20} />
-              <Skeleton width={170} height={32} />
-            </Stack>
-          </div>
-
-          <div className={styles.card}>
-            <Stack direction="column" gap={2}>
-              <Skeleton width={120} height={22} />
-              <Skeleton width={240} height={30} />
-              <Skeleton height={20} />
-              <Skeleton width={170} height={32} />
-            </Stack>
-          </div>
+          {[160, 120].map((contextWidth) => (
+            <div key={contextWidth} className={styles.card}>
+              <Stack direction="column" gap={2}>
+                <Skeleton width={contextWidth} height={22} />
+                <Skeleton width={240} height={30} />
+                <Skeleton height={20} />
+                <Skeleton width={170} height={32} />
+              </Stack>
+            </div>
+          ))}
         </Grid>
       </div>
     </div>

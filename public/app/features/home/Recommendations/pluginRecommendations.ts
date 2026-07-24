@@ -5,6 +5,12 @@ import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 
+import {
+  APP_OBSERVABILITY_APP_ID,
+  FRONTEND_OBSERVABILITY_APP_ID,
+  HOSTED_TRACES_APP_ID,
+  SYNTHETIC_MONITORING_APP_ID,
+} from './appPluginIds';
 import { type RecommendationItem } from './types';
 
 export interface PluginRecommendationItem extends RecommendationItem {
@@ -19,7 +25,7 @@ export function getRecommendations(): PluginRecommendationItem[] {
   const recommendationDefinitions: Array<Omit<PluginRecommendationItem, 'href' | 'appHref'>> = [
     {
       id: 'hosted-traces',
-      pluginId: 'grafana-exploretraces-app',
+      pluginId: HOSTED_TRACES_APP_ID,
       icon: 'gf-traces',
       color: (theme) => theme.visualization.getColorByName('orange'),
       title: t('home.recommendations.hosted-traces.title', 'Trace requests across services'),
@@ -33,7 +39,7 @@ export function getRecommendations(): PluginRecommendationItem[] {
     },
     {
       id: 'synthetic-monitoring',
-      pluginId: 'grafana-synthetic-monitoring-app',
+      pluginId: SYNTHETIC_MONITORING_APP_ID,
       icon: 'globe',
       color: (theme) => theme.visualization.getColorByName('purple'),
       title: t('home.recommendations.synthetic-monitoring.title', 'Watch your cluster from outside'),
@@ -47,7 +53,7 @@ export function getRecommendations(): PluginRecommendationItem[] {
     },
     {
       id: 'application-observability',
-      pluginId: 'grafana-app-observability-app',
+      pluginId: APP_OBSERVABILITY_APP_ID,
       icon: 'application-observability',
       color: (theme) => theme.visualization.getColorByName('green'),
       title: t('home.recommendations.application-observability.title', 'Explore your service map'),
@@ -61,7 +67,7 @@ export function getRecommendations(): PluginRecommendationItem[] {
     },
     {
       id: 'frontend-observability',
-      pluginId: 'grafana-kowalski-app',
+      pluginId: FRONTEND_OBSERVABILITY_APP_ID,
       icon: 'frontend-observability',
       color: (theme) => theme.visualization.getColorByName('blue'),
       title: t('home.recommendations.frontend-observability.title', 'Measure real user experience'),

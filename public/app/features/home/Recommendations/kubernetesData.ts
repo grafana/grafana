@@ -72,7 +72,7 @@ const K8S_APP_STORAGE_KEY = 'grafana.k8s-app.navigation.storage';
 async function orderedCandidates(): Promise<DataSourceInstanceListItem[]> {
   // Uncapped: the stored preference must be honored even when it sits past the fan-out cap;
   // resolveKubernetesPrometheus applies the cap after this reorder.
-  const ordered = await listProbeCandidates('prometheus', { cap: Number.POSITIVE_INFINITY });
+  const ordered = await listProbeCandidates('prometheus', Number.POSITIVE_INFINITY);
   let promName: string | undefined;
   try {
     // store.getObject absorbs missing/corrupt values; the try guards localStorage access itself throwing.
