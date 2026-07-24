@@ -498,6 +498,25 @@ module.exports = [
     },
   },
   {
+    // Design/interaction prototype (dev-only route, mock data). Not user-facing
+    // production UI, so the i18n and design-token lint rules don't apply.
+    name: 'grafana/coauthor-prototype-overrides',
+    files: [
+      'public/app/features/coauthor-prototype/**/*.{ts,tsx}',
+      'public/app/features/coauthor-keyboard-prototype/**/*.{ts,tsx}',
+    ],
+    rules: {
+      '@grafana/i18n/no-untranslated-strings': 'off',
+      '@grafana/no-border-radius-literal': 'off',
+      '@grafana/no-unreduced-motion': 'off',
+      // Chip flow is a mouse-driven selection surface (drag-to-highlight).
+      'jsx-a11y/no-static-element-interactions': 'off',
+      'jsx-a11y/label-has-associated-control': 'off',
+      // The coauthor popover autofocuses its prompt so it's always typable.
+      'jsx-a11y/no-autofocus': 'off',
+    },
+  },
+  {
     name: 'grafana/decoupled-plugins-overrides',
     files: [
       'public/app/plugins/datasource/azuremonitor/**/*.{ts,tsx}',

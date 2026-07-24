@@ -94,6 +94,28 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      // Design/interaction prototype: coauthor mode inside the panel editor (mock data only)
+      path: '/coauthor-prototype',
+      chromeless: true,
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "CoauthorPrototypePage" */ 'app/features/coauthor-prototype/CoauthorPrototypePage'
+          )
+      ),
+    },
+    {
+      // Design/interaction prototype: keyboard-driven coauthor popover (mock data only)
+      path: '/coauthor-keyboard',
+      chromeless: true,
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "CoauthorKeyboardPage" */ 'app/features/coauthor-keyboard-prototype/CoauthorKeyboardPage'
+          )
+      ),
+    },
+    {
       // We currently have no core usage of the embedded dashboard so is to have a page for e2e to test
       path: '/dashboards/embedding-test',
       component: SafeDynamicImport(
