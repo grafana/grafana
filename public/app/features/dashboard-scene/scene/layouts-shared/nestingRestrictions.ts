@@ -8,6 +8,8 @@ import { type DashboardLayoutManager, isDashboardLayoutManager } from '../types/
 
 export const MAX_NESTING_DEPTH = 4;
 
+export type DisableTabsReason = 'nested-tabs' | 'max-depth';
+
 /**
  * Returns the maximum group-nesting depth of a layout subtree.
  * A grid layout has depth 0, rows-of-grids has depth 1, rows > tabs > grid has depth 2, etc.
@@ -63,12 +65,16 @@ export function useNestingRestrictions(layoutManager: DashboardLayoutManager) {
     // Adding a tab: tabs layouts just get a new tab (no new layer); anything
     // else gets wrapped (with its whole subtree) in a new tabs layer, which is
     // also rejected when it would sit directly inside another tabs layout.
-    const disableTabs =
-      layoutManager instanceof TabsLayoutManager
-        ? false
-        : nearestGroupIsTabs || ancestorGroups + 1 + getGroupDepth(layoutManager) > MAX_NESTING_DEPTH;
+    let disableTabsReason: DisableTabsReason | undefined;
+    if (!(layoutManager instanceof TabsLayoutManager)) {
+      if (nearestGroupIsTabs) {
+        disableTabsReason = 'nested-tabs';
+      } else if (ancestorGroups + 1 + getGroupDepth(layoutManager) > MAX_NESTING_DEPTH) {
+        disableTabsReason = 'max-depth';
+      }
+    }
 
-    return { disableGrouping, disableTabs };
+    return { disableGrouping, disableTabs: disableTabsReason !== undefined, disableTabsReason };
   }, [layoutManager]);
 }
 
@@ -76,4 +82,15 @@ export function getNestingRestrictionMessage(): string {
   return t('dashboard.canvas-actions.disabled-nested-grouping', 'Grouping is limited to {{maxDepth}} levels', {
     maxDepth: MAX_NESTING_DEPTH,
   });
+}
+
+export function getDisableTabsMessage(reason: DisableTabsReason | undefined): string | undefined {
+  switch (reason) {
+    case 'nested-tabs':
+      return t('dashboard.canvas-actions.disabled-nested-tabs', 'Tabs cannot be nested inside other tabs');
+    case 'max-depth':
+      return getNestingRestrictionMessage();
+    default:
+      return undefined;
+  }
 }

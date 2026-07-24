@@ -5,7 +5,7 @@ import { type SceneObject } from '@grafana/scenes';
 
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { addNewTabTo } from '../../scene/layouts-shared/addNew';
-import { getNestingRestrictionMessage, useNestingRestrictions } from '../../scene/layouts-shared/nestingRestrictions';
+import { getDisableTabsMessage, useNestingRestrictions } from '../../scene/layouts-shared/nestingRestrictions';
 import { isLayoutParent } from '../../scene/types/LayoutParent';
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
 
@@ -24,7 +24,7 @@ export function AddTab({ dashboardScene, selectedElement }: AddTabProps) {
     return dashboardScene.getLayout();
   }, [dashboardScene, selectedElement]);
 
-  const { disableGrouping, disableTabs } = useNestingRestrictions(layout);
+  const { disableTabs, disableTabsReason } = useNestingRestrictions(layout);
 
   const label = useMemo(() => {
     if (layout instanceof TabsLayoutManager) {
@@ -34,17 +34,7 @@ export function AddTab({ dashboardScene, selectedElement }: AddTabProps) {
     return t('dashboard-scene.add-tab.group-label', 'Group into tabs');
   }, [layout]);
 
-  const disabledTooltip = useMemo(() => {
-    if (!disableTabs) {
-      return undefined;
-    }
-
-    if (disableGrouping) {
-      return getNestingRestrictionMessage();
-    }
-
-    return t('dashboard.canvas-actions.disabled-nested-tabs', 'Tabs cannot be nested inside other tabs');
-  }, [disableGrouping, disableTabs]);
+  const disabledTooltip = useMemo(() => getDisableTabsMessage(disableTabsReason), [disableTabsReason]);
 
   const onAddTabClick = useCallback(() => {
     addNewTabTo(layout);

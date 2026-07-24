@@ -63,7 +63,7 @@ describe('useNestingRestrictions', () => {
 
     const { result } = renderHook(() => useNestingRestrictions(innerLayout));
 
-    expect(result.current).toEqual({ disableGrouping: false, disableTabs: true });
+    expect(result.current).toEqual({ disableGrouping: false, disableTabs: true, disableTabsReason: 'nested-tabs' });
   });
 
   it('should allow both grouping and tabs when nested two levels deep (rows > rows)', () => {
@@ -114,7 +114,7 @@ describe('useNestingRestrictions', () => {
 
     const { result } = renderHook(() => useNestingRestrictions(innerLayout));
 
-    expect(result.current).toEqual({ disableGrouping: false, disableTabs: true });
+    expect(result.current).toEqual({ disableGrouping: false, disableTabs: true, disableTabsReason: 'nested-tabs' });
   });
 
   it('should allow both grouping and tabs when nested three levels deep (rows > rows > rows)', () => {
@@ -160,11 +160,10 @@ describe('useNestingRestrictions', () => {
 
     const { result } = renderHook(() => useNestingRestrictions(innerLayout));
 
-    expect(result.current).toEqual({ disableGrouping: false, disableTabs: true });
+    expect(result.current).toEqual({ disableGrouping: false, disableTabs: true, disableTabsReason: 'nested-tabs' });
   });
 
-  it('should disable tabs when wrapping a group subtree would exceed the maximum depth (tabs > rows > rows > rows)', () => {
-    // Wrapping the level-2 rows group in tabs would push its subtree to 5 layers
+  it('should disable tabs when the layout sits directly inside tabs, even with a deep subtree (tabs > rows > rows > rows)', () => {
     const level2Rows = new RowsLayoutManager({
       rows: [
         new RowItem({
@@ -183,7 +182,38 @@ describe('useNestingRestrictions', () => {
     const { result } = renderHook(() => useNestingRestrictions(level2Rows));
 
     // Adding a row just appends to the rows group, so grouping stays enabled
-    expect(result.current).toEqual({ disableGrouping: false, disableTabs: true });
+    expect(result.current).toEqual({ disableGrouping: false, disableTabs: true, disableTabsReason: 'nested-tabs' });
+  });
+
+  it('should disable tabs with a max-depth reason when wrapping a rows subtree would exceed the maximum depth (rows > rows > rows > rows)', () => {
+    // Wrapping the top-level rows group (subtree depth 4) in tabs would create a 5th layer,
+    // even though no tabs are involved anywhere in the tree
+    const topLevelRows = new RowsLayoutManager({
+      rows: [
+        new RowItem({
+          layout: new RowsLayoutManager({
+            rows: [
+              new RowItem({
+                layout: new RowsLayoutManager({
+                  rows: [
+                    new RowItem({
+                      layout: new RowsLayoutManager({
+                        rows: [new RowItem({ layout: AutoGridLayoutManager.createEmpty() })],
+                      }),
+                    }),
+                  ],
+                }),
+              }),
+            ],
+          }),
+        }),
+      ],
+    });
+    buildTestScene(topLevelRows);
+
+    const { result } = renderHook(() => useNestingRestrictions(topLevelRows));
+
+    expect(result.current).toEqual({ disableGrouping: false, disableTabs: true, disableTabsReason: 'max-depth' });
   });
 
   it('should allow tabs when wrapping a group subtree still fits within the maximum depth (rows > rows)', () => {
@@ -250,6 +280,6 @@ describe('useNestingRestrictions', () => {
 
     const { result } = renderHook(() => useNestingRestrictions(innerLayout));
 
-    expect(result.current).toEqual({ disableGrouping: true, disableTabs: true });
+    expect(result.current).toEqual({ disableGrouping: true, disableTabs: true, disableTabsReason: 'max-depth' });
   });
 });

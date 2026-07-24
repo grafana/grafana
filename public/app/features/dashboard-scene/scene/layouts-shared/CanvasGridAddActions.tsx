@@ -11,7 +11,7 @@ import { getDefaultVizPanel } from '../../utils/utils';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { addNewRowTo, addNewTabTo } from './addNew';
-import { getNestingRestrictionMessage, useNestingRestrictions } from './nestingRestrictions';
+import { getDisableTabsMessage, getNestingRestrictionMessage, useNestingRestrictions } from './nestingRestrictions';
 import { getLayoutControlsStyles } from './styles';
 import { useClipboardState } from './useClipboardState';
 
@@ -24,7 +24,7 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
   const localStyles = useStyles2(getStyles);
   const { hasCopiedPanel } = useClipboardState();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { disableGrouping, disableTabs } = useNestingRestrictions(layoutManager);
+  const { disableGrouping, disableTabs, disableTabsReason } = useNestingRestrictions(layoutManager);
 
   return (
     <div
@@ -69,11 +69,7 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
               label={t('dashboard.canvas-actions.group-into-tab', 'Group into tab')}
               disabled={disableTabs}
               className={disableTabs ? localStyles.disabledMenuItem : undefined}
-              description={
-                disableTabs
-                  ? t('dashboard.canvas-actions.disabled-nested-tabs', 'Tabs cannot be nested inside other tabs')
-                  : undefined
-              }
+              description={getDisableTabsMessage(disableTabsReason)}
               onClick={() => {
                 addNewTabTo(layoutManager);
                 DashboardInteractions.trackGroupTabClick();
