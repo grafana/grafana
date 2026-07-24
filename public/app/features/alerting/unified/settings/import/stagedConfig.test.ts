@@ -1,6 +1,9 @@
 import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
 
+import { parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
+
 import {
+  encodeRouteMatchersQuery,
   getReceiverIntegrationTypes,
   parseStagedAlertmanagerConfig,
   summarizeMatchRecord,
@@ -69,6 +72,29 @@ describe('summarizeRouteMatchers', () => {
 
   it('returns an empty string when there are no matchers', () => {
     expect(summarizeRouteMatchers({})).toBe('');
+  });
+});
+
+describe('encodeRouteMatchersQuery', () => {
+  it('quotes values so the routes filter parses them back correctly', () => {
+    const query = encodeRouteMatchersQuery({ object_matchers: [['team', MatcherOperator.equal, 'platform']] });
+    expect(query).toBe('team="platform"');
+    expect(parsePromQLStyleMatcherLooseSafe(query)).toEqual([
+      { name: 'team', value: 'platform', isRegex: false, isEqual: true },
+    ]);
+  });
+
+  it('keeps values containing commas intact through the filter parser', () => {
+    // Unquoted, the filter would split on the comma and drop the matcher; quoting keeps it as one value.
+    const query = encodeRouteMatchersQuery({ object_matchers: [['region', MatcherOperator.equal, 'us-east,us-west']] });
+    expect(query).toBe('region="us-east,us-west"');
+    expect(parsePromQLStyleMatcherLooseSafe(query)).toEqual([
+      { name: 'region', value: 'us-east,us-west', isRegex: false, isEqual: true },
+    ]);
+  });
+
+  it('returns an empty string when there are no matchers', () => {
+    expect(encodeRouteMatchersQuery({})).toBe('');
   });
 });
 

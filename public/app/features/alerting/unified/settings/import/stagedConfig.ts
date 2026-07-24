@@ -2,7 +2,7 @@ import { load } from 'js-yaml';
 
 import { type MuteTimeInterval, type Receiver, type Route } from 'app/plugins/datasource/alertmanager/types';
 
-import { normalizeMatchers } from '../../utils/matchers';
+import { encodeMatcher, normalizeMatchers } from '../../utils/matchers';
 
 /**
  * The single staged Alertmanager configuration, as carried on `AlertManagerCortexConfig.extra_config[]`.
@@ -150,6 +150,21 @@ export function summarizeRouteMatchers(route: Route): string {
     return normalizeMatchers(route)
       .map(([name, operator, value]) => `${name}${operator}${value}`)
       .join(', ');
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Route matchers encoded as a PromQL-style string safe for the notification-policies `queryString` filter.
+ * Unlike {@link summarizeRouteMatchers} (which produces a readable label), values are quoted so matchers
+ * containing commas or other reserved characters survive the filter's comma-splitting parser.
+ */
+export function encodeRouteMatchersQuery(route: Route): string {
+  try {
+    return normalizeMatchers(route)
+      .map(([name, operator, value]) => encodeMatcher({ name, operator, value }))
+      .join(',');
   } catch {
     return '';
   }

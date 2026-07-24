@@ -12,6 +12,7 @@ import { createRelativeUrl } from '../../utils/url';
 
 import {
   type StagedExtraConfig,
+  encodeRouteMatchersQuery,
   getReceiverIntegrationTypes,
   parseStagedAlertmanagerConfig,
   summarizeMatchRecord,
@@ -40,7 +41,7 @@ function makeViewTemplatesLink(): string {
 
 /** Filter the notification policies tree to a policy by its matchers; unfiltered when there are none. */
 function makeViewPolicyLink(matchers: string): string {
-  return createRelativeUrl('/alerting/routes', matchers ? { queryString: matchers } : {});
+  return createRelativeUrl('/alerting/routes', matchers ? { ...GRAFANA_AM, queryString: matchers } : GRAFANA_AM);
 }
 
 interface AccordionSection {
@@ -118,7 +119,7 @@ export function StagedConfiguration({ stagedConfig }: Props) {
                 key={`${matchers}|${route.receiver ?? ''}|${index}`}
                 label={matchers || t('alerting.settings.import.no-matchers', '(no matchers)')}
                 meta={route.receiver ? `→ ${route.receiver}` : undefined}
-                href={makeViewPolicyLink(matchers)}
+                href={makeViewPolicyLink(encodeRouteMatchersQuery(route))}
               />
             );
           })}

@@ -101,8 +101,15 @@ describe('StagedConfiguration', () => {
     expect(hrefs.some((href) => href?.includes('/alerting/notifications/templates') && !href.includes('/edit'))).toBe(
       true
     );
-    // Notification policies filter the routes tree by matcher query string.
-    expect(hrefs.some((href) => href?.includes('/alerting/routes') && href?.includes('team'))).toBe(true);
+    // Notification policies filter the routes tree by matcher query string, pinned to the Grafana
+    // Alertmanager so the link always opens the staged config (not whichever AM is in localStorage).
+    const routeHrefs = hrefs.filter((href) => href?.includes('/alerting/routes'));
+    expect(routeHrefs.length).toBeGreaterThan(0);
+    routeHrefs.forEach((href) => expect(href).toContain('alertmanager=grafana'));
+    // The child route's matcher value is quoted so the routes filter parses it back intact.
+    const childPolicyHref = routeHrefs.find((href) => href?.includes('queryString'));
+    const policyParams = new URLSearchParams(childPolicyHref?.split('?')[1]);
+    expect(policyParams.get('queryString')).toBe('team="platform"');
   });
 
   it('shows inhibition rule details inline (no link)', async () => {
