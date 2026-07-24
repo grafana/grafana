@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -114,23 +115,26 @@ type queryDataFrameSummary struct {
 }
 
 func marshalQueryDataArtifact(request json.RawMessage, resp *backend.QueryDataResponse) ([]byte, error) {
-	return marshalQueryDataArtifactWithLimit(request, resp, maxQueryDataArtifactBytes)
+	data, _, err := marshalQueryDataArtifactWithLimit(request, resp, maxQueryDataArtifactBytes)
+	return data, err
 }
 
-func marshalQueryDataArtifactWithLimit(request json.RawMessage, resp *backend.QueryDataResponse, maxBytes int) ([]byte, error) {
+// marshalQueryDataArtifactWithLimit returns the encoded querydata.json plus whether it had to drop
+// content to fit maxBytes, so callers don't have to re-parse the result to learn that.
+func marshalQueryDataArtifactWithLimit(request json.RawMessage, resp *backend.QueryDataResponse, maxBytes int) ([]byte, bool, error) {
 	artifact := queryDataArtifact{Version: queryDataArtifactVersion, Request: request}
 	if resp != nil {
 		// The SDK encoder returns a complete byte slice. The artifact/archive is bounded below, but
 		// serializing an oversized response can still temporarily allocate its full JSON size.
 		responseJSON, err := queryDataResponseWithoutCaptureFrames(resp).MarshalJSON()
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 		artifact.Response = responseJSON
 	}
 	full, err := json.MarshalIndent(artifact, "", "  ")
 	if err != nil || len(full) <= maxBytes {
-		return full, err
+		return full, false, err
 	}
 
 	truncated := queryDataArtifact{
@@ -144,23 +148,23 @@ func marshalQueryDataArtifactWithLimit(request json.RawMessage, resp *backend.Qu
 	}
 	out, err := json.MarshalIndent(truncated, "", "  ")
 	if err != nil {
-		return nil, err
+		return nil, true, err
 	}
 	if len(out) <= maxBytes {
-		return out, nil
+		return out, true, nil
 	}
 
 	truncated.Request = nil
 	truncated.RequestOmitted = len(request) > 0
 	out, err = json.MarshalIndent(truncated, "", "  ")
 	if err != nil {
-		return nil, err
+		return nil, true, err
 	}
 	if len(out) <= maxBytes {
-		return out, nil
+		return out, true, nil
 	}
 
-	return json.MarshalIndent(queryDataArtifact{
+	out, err = json.MarshalIndent(queryDataArtifact{
 		Version:         queryDataArtifactVersion,
 		Truncated:       true,
 		LimitBytes:      maxBytes,
@@ -168,6 +172,7 @@ func marshalQueryDataArtifactWithLimit(request json.RawMessage, resp *backend.Qu
 		RequestOmitted:  len(request) > 0,
 		ResponseOmitted: resp != nil,
 	}, "", "  ")
+	return out, true, err
 }
 
 func summarizeQueryDataResponse(resp *backend.QueryDataResponse) map[string]queryDataResponseSummary {
@@ -215,7 +220,13 @@ func truncateDiagnosticString(value string, maxBytes int) string {
 	if len(value) <= maxBytes {
 		return value
 	}
-	return value[:maxBytes] + "…"
+	// Back off to a rune boundary so a multi-byte name/refId/error isn't cut mid-rune and land in the
+	// summary with a mangled final character once JSON-encoded.
+	end := maxBytes
+	for end > 0 && !utf8.RuneStart(value[end]) {
+		end--
+	}
+	return value[:end] + "…"
 }
 
 // DashboardPanel is one panel's captured input for a whole-dashboard diagnostics archive. The
@@ -225,12 +236,15 @@ type DashboardPanel struct {
 	ID           int64
 	Title        string
 	PanelJSON    json.RawMessage
-	QueryRequest json.RawMessage            // MetricRequest submitted for this panel
-	Datasources  []string                   // datasource UIDs the panel references (for the manifest)
-	Resp         *backend.QueryDataResponse // query response, carries external plugins' __har__ frames
-	HARBuffer    *harcapture.Buffer         // in-process capture buffer for this panel's queries
-	QueryErr     error                      // top-level error running the panel's queries, if any
-	Skipped      string                     // non-empty => panel was not executed (e.g. non-data panel)
+	QueryRequest json.RawMessage // MetricRequest submitted for this panel
+	// QueryRequestErr records a failure to serialize this panel's MetricRequest. Kept separate so one
+	// unserializable request only costs this panel its request JSON, not the whole multi-panel bundle.
+	QueryRequestErr error
+	Datasources     []string                   // datasource UIDs the panel references (for the manifest)
+	Resp            *backend.QueryDataResponse // query response, carries external plugins' __har__ frames
+	HARBuffer       *harcapture.Buffer         // in-process capture buffer for this panel's queries
+	QueryErr        error                      // top-level error running the panel's queries, if any
+	Skipped         string                     // non-empty => panel was not executed (e.g. non-data panel)
 }
 
 // dashboardManifest is manifest.json: a machine-readable summary of what the whole-dashboard bundle
@@ -298,13 +312,16 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 		if len(panelJSON) > 0 {
 			files[dir+"/panel.json"] = indentJSON(panelJSON)
 		}
+		if p.QueryRequestErr != nil {
+			entry.QueryDataError = "serialize query request: " + p.QueryRequestErr.Error()
+		}
 		if p.Resp != nil || len(p.QueryRequest) > 0 {
 			queryDataLimit := min(maxQueryDataArtifactBytes, queryDataBytesRemaining)
 			if queryDataLimit < minQueryDataArtifactBytes {
 				entry.QueryDataTruncated = true
 				entry.QueryDataError = fmt.Sprintf("remaining dashboard query-data budget (%d bytes) below the %d-byte minimum artifact size", queryDataBytesRemaining, minQueryDataArtifactBytes)
 			} else {
-				queryData, err := marshalQueryDataArtifactWithLimit(p.QueryRequest, p.Resp, queryDataLimit)
+				queryData, truncated, err := marshalQueryDataArtifactWithLimit(p.QueryRequest, p.Resp, queryDataLimit)
 				if err != nil {
 					entry.QueryDataError = err.Error()
 				} else if len(queryData) > queryDataLimit {
@@ -314,12 +331,7 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 					files[dir+"/querydata.json"] = queryData
 					entry.QueryDataBytes = len(queryData)
 					queryDataBytesRemaining -= len(queryData)
-					var status struct {
-						Truncated bool `json:"truncated"`
-					}
-					if json.Unmarshal(queryData, &status) == nil {
-						entry.QueryDataTruncated = status.Truncated
-					}
+					entry.QueryDataTruncated = truncated
 				}
 			}
 		}

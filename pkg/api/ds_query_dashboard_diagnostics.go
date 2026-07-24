@@ -382,17 +382,20 @@ func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
-		queryRequestJSON, err := json.Marshal(p.MetricRequest)
-		if err != nil {
-			return nil, fmt.Errorf("marshal panel %d query request: %w", p.ID, err)
+		panel := diagnostics.DashboardPanel{
+			ID:          p.ID,
+			Title:       p.Title,
+			PanelJSON:   p.Panel,
+			Datasources: panelDatasourceUIDs(p.MetricRequest),
 		}
 
-		panel := diagnostics.DashboardPanel{
-			ID:           p.ID,
-			Title:        p.Title,
-			PanelJSON:    p.Panel,
-			QueryRequest: queryRequestJSON,
-			Datasources:  panelDatasourceUIDs(p.MetricRequest),
+		// A single panel's unserializable query request must not abort the whole archive: record it
+		// against this panel (surfaced in the manifest) and carry on, the same way query and capture
+		// failures are isolated below. The panel still runs, so its HAR and response are still captured.
+		if queryRequestJSON, err := json.Marshal(p.MetricRequest); err != nil {
+			panel.QueryRequestErr = err
+		} else {
+			panel.QueryRequest = queryRequestJSON
 		}
 
 		if len(p.Queries) == 0 {

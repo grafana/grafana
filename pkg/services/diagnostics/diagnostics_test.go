@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -682,6 +683,51 @@ func TestBuildDashboard_dirCollision(t *testing.T) {
 	var m dashboardManifest
 	require.NoError(t, json.Unmarshal(files["manifest.json"], &m))
 	require.Equal(t, 2, m.PanelsTotal)
+}
+
+// A panel whose MetricRequest can't be serialized must not abort the whole archive: the failure is
+// recorded against the panel and the other panels' artifacts survive.
+func TestBuildDashboard_recordsQueryRequestError(t *testing.T) {
+	panels := []DashboardPanel{
+		{ID: 1, Title: "Broken request", QueryRequestErr: errors.New("unsupported value: NaN")},
+		{ID: 2, Title: "CPU Usage", HARBuffer: bufferWithEntry(t, "http://ds/2")},
+	}
+	blob, err := NewBundler().BuildDashboard(nil, panels)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.Contains(t, files, "panels/2-cpu-usage/traffic.har", "the healthy panel's artifacts survive")
+
+	var m dashboardManifest
+	require.NoError(t, json.Unmarshal(files["manifest.json"], &m))
+	require.Contains(t, m.Panels[0].QueryDataError, "serialize query request")
+	require.Contains(t, m.Panels[0].QueryDataError, "unsupported value: NaN")
+}
+
+func TestTruncateDiagnosticString_runeBoundary(t *testing.T) {
+	// A single "世" is 3 bytes; a 4-byte limit lands mid-rune and must back off to the boundary.
+	got := truncateDiagnosticString("世界", 4)
+	require.True(t, utf8.ValidString(got), "truncation must not split a rune")
+	require.Equal(t, "世"+"…", got)
+
+	// ASCII within the limit is returned untouched.
+	require.Equal(t, "hello", truncateDiagnosticString("hello", 10))
+}
+
+func TestMarshalQueryDataArtifactWithLimit_reportsTruncation(t *testing.T) {
+	frame := data.NewFrame("logs", data.NewField("line", nil, []string{strings.Repeat("x", maxQueryDataArtifactBytes)}))
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
+
+	_, truncated, err := marshalQueryDataArtifactWithLimit(nil, resp, maxQueryDataArtifactBytes)
+	require.NoError(t, err)
+	require.True(t, truncated, "an oversized response must report truncated=true")
+
+	small := &backend.QueryDataResponse{Responses: backend.Responses{
+		"A": {Frames: data.Frames{data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))}},
+	}}
+	_, truncated, err = marshalQueryDataArtifactWithLimit(nil, small, maxQueryDataArtifactBytes)
+	require.NoError(t, err)
+	require.False(t, truncated, "a response that fits must report truncated=false")
 }
 
 func readTarGz(t *testing.T, data []byte) map[string][]byte {
