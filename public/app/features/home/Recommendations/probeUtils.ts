@@ -118,11 +118,10 @@ export async function findDatasourceWithData(
     return candidates[0];
   }
   const rest = candidates.slice(1);
-  const probes = rest.map((ds) => hasData(ds));
-  for (let i = 0; i < rest.length; i++) {
-    // Await in priority order: a slow probe delays — never changes — the outcome.
-    if (await probes[i]) {
-      return rest[i];
+  // Parallel probe for hasData while retaining priority of original list
+  for (const [index, probe] of rest.map(hasData).entries()) {
+    if (await probe) {
+      return rest[index];
     }
   }
   return null;
