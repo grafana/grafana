@@ -3702,14 +3702,17 @@
     {
       "metadata": {
         "name": "kubernetesLibraryPanels",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-06-25T22:21:56Z"
+        "resourceVersion": "1784652599954",
+        "creationTimestamp": "2025-06-25T22:21:56Z",
+        "deletionTimestamp": "2026-07-21T16:51:34Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-21 16:49:59.954584 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Routes library panel requests from /api to the /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresRestart": true,
         "expression": "false"
       }
     },
@@ -3896,6 +3899,33 @@
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "libpanels.kubernetesLibraryPanels",
+        "resourceVersion": "1784652694911",
+        "creationTimestamp": "2026-07-21T16:51:34Z",
+        "deletionTimestamp": "2026-07-21T16:54:06Z"
+      },
+      "spec": {
+        "description": "Routes library panel requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "libraryelements.kubernetesLibraryPanels",
+        "resourceVersion": "1784652846634",
+        "creationTimestamp": "2026-07-21T16:54:06Z"
+      },
+      "spec": {
+        "description": "Routes library panel requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
         "expression": "false"
       }
     },

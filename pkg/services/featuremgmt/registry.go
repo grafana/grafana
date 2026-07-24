@@ -399,13 +399,12 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:            "kubernetesLibraryPanels",
-			Description:     "Routes library panel requests from /api to the /apis endpoint",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true, // changes the API routing
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Name:        "libraryelements.kubernetesLibraryPanels",
+			Description: "Routes library panel requests from /api to the /apis endpoint",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
 		},
 		{
 			Name:         "kubernetesFolderCascadeDelete",
