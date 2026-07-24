@@ -33,8 +33,38 @@ alias_ids = canvas`))
 		require.Equal(t, "grafana-canvas-panel", pCfg.ActiveExternalOverrides[0].ExternalPluginID)
 	})
 
-	t.Run("has no active overrides when alias_ids is not configured", func(t *testing.T) {
+	t.Run("has no active overrides when neither key is configured", func(t *testing.T) {
 		raw, err := ini.Load([]byte(`[plugins]`))
+		require.NoError(t, err)
+		cfg := setting.NewCfg()
+		cfg.Raw = raw
+
+		pCfg, err := ProvidePluginManagementConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+		require.Empty(t, pCfg.ActiveExternalOverrides)
+	})
+
+	t.Run("has no active overrides when alias_ids is set but as_external is not", func(t *testing.T) {
+		raw, err := ini.Load([]byte(`
+[plugins]
+
+[plugin.grafana-canvas-panel]
+alias_ids = canvas`))
+		require.NoError(t, err)
+		cfg := setting.NewCfg()
+		cfg.Raw = raw
+
+		pCfg, err := ProvidePluginManagementConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+		require.Empty(t, pCfg.ActiveExternalOverrides)
+	})
+
+	t.Run("has no active overrides when as_external is set but alias_ids is not", func(t *testing.T) {
+		raw, err := ini.Load([]byte(`
+[plugins]
+
+[plugin.canvas]
+as_external = true`))
 		require.NoError(t, err)
 		cfg := setting.NewCfg()
 		cfg.Raw = raw
