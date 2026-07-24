@@ -23,7 +23,7 @@ export function isStagedExtraConfig(value: unknown): value is StagedExtraConfig 
  * An inhibition rule supporting both the legacy `*_match`/`*_match_re` maps and the modern
  * Prometheus-style `*_matchers` lists. Declared locally so we don't extend the shared `InhibitRule`.
  */
-export interface StagedInhibitRule {
+interface StagedInhibitRule {
   source_match?: Record<string, string>;
   source_match_re?: Record<string, string>;
   source_matchers?: string[];
