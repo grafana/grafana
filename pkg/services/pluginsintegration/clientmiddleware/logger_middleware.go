@@ -110,11 +110,26 @@ func (m *LoggerMiddleware) QueryChunkedData(ctx context.Context, req *backend.Qu
 		return m.BaseHandler.QueryChunkedData(ctx, req, w)
 	}
 
-	// The chunked response is streamed through the writer, so there are no aggregate
-	// per-refID responses to inspect; status is derived from the returned error alone.
+	// The chunked response is streamed through the writer rather than returned, so wrap
+	// it to observe per-refID errors reported via WriteError, mirroring how QueryData
+	// inspects and logs per-refID response errors.
+	cw := &errorRecordingChunkedWriter{ChunkedDataWriter: w}
 	return m.logRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
-		innerErr := m.BaseHandler.QueryChunkedData(ctx, req, w)
-		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
+		innerErr := m.BaseHandler.QueryChunkedData(ctx, req, cw)
+
+		if innerErr == nil {
+			ctxLogger := m.logger.FromContext(ctx)
+			for _, re := range cw.refErrors() {
+				ctxLogger.Error("Partial data response error",
+					"refID", re.refID,
+					"status", int(re.status),
+					"error", re.err,
+					"target", m.pluginTarget(ctx, req.PluginContext),
+				)
+			}
+		}
+
+		return cw.requestStatus(innerErr), innerErr
 	})
 }
 

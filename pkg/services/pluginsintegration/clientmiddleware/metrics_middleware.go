@@ -189,11 +189,13 @@ func (m *MetricsMiddleware) QueryChunkedData(ctx context.Context, req *backend.Q
 		return err
 	}
 
-	// The chunked response is streamed through the writer, so there is no aggregate
-	// response to inspect; status is derived from the returned error alone.
+	// The chunked response is streamed through the writer rather than returned, so wrap
+	// it to observe per-refID errors reported via WriteError. This lets the status
+	// reflect partial failures the same way QueryData inspects per-refID response errors.
+	cw := &errorRecordingChunkedWriter{ChunkedDataWriter: w}
 	return m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
-		innerErr := m.BaseHandler.QueryChunkedData(ctx, req, w)
-		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
+		innerErr := m.BaseHandler.QueryChunkedData(ctx, req, cw)
+		return cw.requestStatus(innerErr), innerErr
 	})
 }
 
