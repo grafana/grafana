@@ -106,8 +106,6 @@ export const InfiniteScroll = ({
         return;
       }
       if (loadingState === LoadingState.Error) {
-        // The request failed and returns no new rows: reset tracking and return to idle so the user
-        // can retry by scrolling again, rather than getting stuck on the loading indicator.
         settledRef.current = false;
         loadMoreCountRef.current = null;
         setInfiniteLoaderState('idle');
