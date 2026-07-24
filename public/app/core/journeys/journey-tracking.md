@@ -217,12 +217,12 @@ User searches for a resource via command palette and navigates to it.
 
 User clicks a control on the homepage "Firing alerts" card and reaches the destination value moment. Measures time-to-value (MTTV) from the homepage widget to the alerting page requested. Three of the four card controls start the journey (`view_all_rules` is excluded — see key behaviors); `action` selects which destination load event ends it.
 
-| Event                 | Trigger                                                                             | Action                                                     |
-| --------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Event                 | Trigger                                                                                            | Action                                                     |
+| --------------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
 | Start                 | `grafana_homepage_cta_clicked` (surface `alerts_card`: alert_detail, view_all_alerts, create_rule) | Journey starts; `action` selects the end leg               |
-| End (alert_detail)    | `grafana_alerting_rule_viewer_loaded`                                               | Rule detail settled — success, or error on not_found/error |
-| End (view_all_alerts) | `grafana_alerting_alert_groups_loaded`                                              | Alert groups query settled — success or error              |
-| End (create_rule)     | `grafana_alerting_rule_editor_loaded`                                               | Editor rendered — success, or error when permission denied |
+| End (alert_detail)    | `grafana_alerting_rule_viewer_loaded`                                                              | Rule detail settled — success, or error on not_found/error |
+| End (view_all_alerts) | `grafana_alerting_alert_groups_loaded`                                                             | Alert groups query settled — success or error              |
+| End (create_rule)     | `grafana_alerting_rule_editor_loaded`                                                              | Editor rendered — success, or error when permission denied |
 
 **Silent interactions added by this journey:** `grafana_alerting_rule_viewer_loaded`, `grafana_alerting_alert_groups_loaded`, `grafana_alerting_rule_editor_loaded` — emitted once per mount on RuleViewer, AlertGroups, and RuleEditor respectively.
 
