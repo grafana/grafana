@@ -7,35 +7,40 @@ import (
 	"testing"
 )
 
-// stubBackend is a Backend whose Handler writes a fixed name, so tests can
-// assert which group served a request.
-type stubBackend struct{ name string }
+// stubLoader satisfies RoutesLoader so NewGrafanaRouter's validation passes; the
+// routing tests seed the snapshot directly and never call Load/Notify.
+type stubLoader struct{}
 
-func (b stubBackend) Handler() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		_, _ = w.Write([]byte(b.name))
-	})
-}
-func (b stubBackend) OpenAPIV3Handler() http.Handler { return b.Handler() }
-func (b stubBackend) Ready(context.Context) error    { return nil }
+func (stubLoader) Load(context.Context) ([]Backend, error)         { return nil, nil }
+func (stubLoader) Notify(context.Context) (<-chan struct{}, error) { return make(chan struct{}), nil }
 
-// withGroups seeds the router's snapshot with the given group backends.
-func withGroups(groups ...string) *BasicRouter {
-	r := NewRouter(nil)
-	for _, g := range groups {
-		r.entries[g] = &handlerEntry{backend: stubBackend{name: g}, lastRV: "1"}
+// withGroups builds a router and seeds its snapshot with a handler per group
+// that writes the group name, so tests can assert which group served.
+func withGroups(groups ...string) *GrafanaRouter {
+	s, err := NewGrafanaRouter(stubLoader{})
+	if err != nil {
+		panic(err)
 	}
-	r.publish()
-	return r
+	for _, g := range groups {
+		g := g
+		s.entries[g] = &handlerEntry{
+			handler: http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				_, _ = w.Write([]byte(g))
+			}),
+			lastRV: "1",
+		}
+	}
+	s.publish()
+	return s
 }
 
-func TestHandlerRoutesByGroup(t *testing.T) {
-	r := withGroups("dashboard.grafana.app", "folder.grafana.app")
+func TestHandleFuncRoutesByGroup(t *testing.T) {
+	s := withGroups("dashboard.grafana.app", "folder.grafana.app")
 	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusTeapot) // sentinel for "fell through to next"
 	})
 	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		r.HandleFunc(w, req, next)
+		s.HandleFunc(w, req, next)
 	})
 
 	cases := []struct {
@@ -64,15 +69,15 @@ func TestHandlerRoutesByGroup(t *testing.T) {
 	}
 }
 
-// TestHandlerRootDiscoveryNotProxied pins that the /apis root is synthesized
+// TestHandleFuncRootDiscoveryNotProxied pins that the /apis root is synthesized
 // router-side (not dispatched to any group and not fallen through to next).
-func TestHandlerRootDiscoveryNotProxied(t *testing.T) {
-	r := withGroups("dashboard.grafana.app")
+func TestHandleFuncRootDiscoveryNotProxied(t *testing.T) {
+	s := withGroups("dashboard.grafana.app")
 	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusTeapot)
 	})
 	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		r.HandleFunc(w, req, next)
+		s.HandleFunc(w, req, next)
 	})
 
 	for _, path := range []string{"/apis", "/apis/"} {

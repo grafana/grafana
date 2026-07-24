@@ -109,6 +109,7 @@ import (
 	migrator3 "github.com/grafana/grafana/pkg/registry/apps/shorturl/migrator"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/registry/usagestatssvcs"
+	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	dualwrite2 "github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
@@ -1987,6 +1988,12 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 	apiServerFactory := standalone.ProvideAPIServerFactory()
 	return apiServerFactory, nil
+}
+
+// Initialize the standalone router factory
+func InitializeRouterFactory() (router.RouterFactory, error) {
+	routerFactory := router.ProvideRouterFactory()
+	return routerFactory, nil
 }
 
 // InitializeSearchSupport builds the document builders together with the

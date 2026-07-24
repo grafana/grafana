@@ -10,6 +10,7 @@ import (
 	gcli "github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
 	"github.com/grafana/grafana/pkg/cmd/grafana-server/commands"
 	_ "github.com/grafana/grafana/pkg/operators"
+	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 )
@@ -65,6 +66,19 @@ func MainApp() *cli.App {
 	f, err := server.InitializeAPIServerFactory()
 	if err == nil {
 		cmd := f.GetCLICommand(buildInfo)
+		if cmd != nil {
+			app.Commands = append(app.Commands, cmd)
+		}
+	}
+
+	// Add the enterprise command line to run the standalone cloud-apps router.
+	if rf, err := server.InitializeRouterFactory(); err == nil {
+		cmd := rf.GetCLICommand(router.BuildInfo{
+			Version:     version,
+			Commit:      commit,
+			BuildBranch: buildBranch,
+			BuildStamp:  buildstamp,
+		})
 		if cmd != nil {
 			app.Commands = append(app.Commands, cmd)
 		}

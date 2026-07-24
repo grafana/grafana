@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/advisor"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/registry/usagestatssvcs"
+	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -226,6 +227,10 @@ var wireExtsModuleServerSet = wire.NewSet(
 
 var wireExtsStandaloneAPIServerSet = wire.NewSet(
 	standalone.ProvideAPIServerFactory,
+)
+
+var wireExtsRouterFactorySet = wire.NewSet(
+	router.ProvideRouterFactory,
 )
 
 // wireExtsDashboardStatsSet provides the dashboard stats dependency for the

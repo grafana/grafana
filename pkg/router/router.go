@@ -37,7 +37,7 @@ type routerState struct {
 
 // there won't be a cloud apps router in enterprise
 // can be in OSS right now, RoutesLoader stays in enterprise in cloud
-type BasicRouter struct {
+type GrafanaRouter struct {
 	state atomic.Pointer[routerState]
 
 	loader RoutesLoader
@@ -51,8 +51,8 @@ type BasicRouter struct {
 	snapshot atomic.Pointer[map[string]http.Handler]
 }
 
-func NewRouter(loader RoutesLoader) *BasicRouter {
-	r := &BasicRouter{
+func NewGrafanaRouter(loader RoutesLoader) *GrafanaRouter {
+	r := &GrafanaRouter{
 		loader:  loader,
 		entries: map[string]*handlerEntry{},
 	}
@@ -69,7 +69,7 @@ func NewRouter(loader RoutesLoader) *BasicRouter {
 // NOTE: when implementing OpenAPIV3Handler(), we need to support
 // serverAddressByClientCIDRs in /apis to allow local in-network clients to
 // connect directly as desired.
-func (cr *BasicRouter) HandleFunc(w http.ResponseWriter, req *http.Request, next http.Handler) {
+func (cr *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, next http.Handler) {
 	path := req.URL.Path
 
 	// Not part of the /apis tree — not ours.
@@ -111,14 +111,14 @@ func groupFromPath(path string) string {
 
 // serveAPIGroupList synthesizes the /apis root (APIGroupList) from the current
 // group snapshot.
-func (cr *BasicRouter) serveAPIGroupList(w http.ResponseWriter, _ *http.Request) {
+func (cr *GrafanaRouter) serveAPIGroupList(w http.ResponseWriter, _ *http.Request) {
 	// TODO: build a real APIGroupList from the snapshot keys (each group's
 	// versions come from its Manifest / group discovery).
 	http.Error(w, "apis discovery not implemented", http.StatusNotImplemented)
 }
 
 // OpenAPIV3Handler serves the merged OpenAPI v3 document.
-func (cr *BasicRouter) OpenAPIV3Handler() http.Handler {
+func (cr *GrafanaRouter) OpenAPIV3Handler() http.Handler {
 	// TODO: merge local control-plane specs with proxied backends' specs.
 	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, "openapi v3 not implemented", http.StatusNotImplemented)
@@ -127,7 +127,7 @@ func (cr *BasicRouter) OpenAPIV3Handler() http.Handler {
 
 // Run does an initial load, then reconciles on every coalesced wake from the
 // loader until ctx is cancelled.
-func (r *BasicRouter) Run(ctx context.Context) error {
+func (r *GrafanaRouter) Run(ctx context.Context) error {
 	r.state.Store(&routerState{phase: starting})
 	dirty, err := r.loader.Notify(ctx)
 	if err != nil {
@@ -159,7 +159,7 @@ func (r *BasicRouter) Run(ctx context.Context) error {
 
 // Ready reports the router is initialized and serving. The snapshot is
 // populated on the first reconcile in Run.
-func (r *BasicRouter) Ready(context.Context) error {
+func (r *GrafanaRouter) Ready(context.Context) error {
 	s := r.state.Load()
 	switch {
 	case s == nil || s.phase == starting:
@@ -176,7 +176,7 @@ func (r *BasicRouter) Ready(context.Context) error {
 // Alive reports the router is not in a non-recoverable state. Only a crashed
 // reconcile loop (unexpected exit or panic) is unrecoverable; a restart fixes
 // it. starting/serving/stopped are all expected or transient.
-func (r *BasicRouter) Alive(context.Context) error {
+func (r *GrafanaRouter) Alive(context.Context) error {
 	if s := r.state.Load(); s != nil && s.phase == crashed {
 		return fmt.Errorf("router: reconcile loop crashed: %w", s.err)
 	}
@@ -187,7 +187,7 @@ func (r *BasicRouter) Alive(context.Context) error {
 // rebuild changed/new groups, leave unchanged ones (RV match) untouched, drop
 // groups that disappeared, then publish a fresh snapshot. Level-triggered, so
 // it is safe to run on any wake.
-func (r *BasicRouter) reconcile(ctx context.Context) error {
+func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 	backends, err := r.loader.Load(ctx)
 	if err != nil {
 		// Keep serving last-known-good; a later wake retries.
@@ -244,7 +244,7 @@ func (r *BasicRouter) reconcile(ctx context.Context) error {
 
 // publish builds a fresh immutable group -> Backend snapshot from entries and
 // stores it atomically for the serving path.
-func (r *BasicRouter) publish() {
+func (r *GrafanaRouter) publish() {
 	snap := make(map[string]http.Handler, len(r.entries))
 	for group, e := range r.entries {
 		snap[group] = e.handler

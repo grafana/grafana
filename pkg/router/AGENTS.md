@@ -10,9 +10,11 @@ over time.
 
 The generic router lives here in OSS; only the loader (which knows the cloud kinds) is enterprise.
 
-- **this package (`pkg/router`, OSS)** — the generic machinery: `BasicRouter` (reconcile +
-  group-keyed serving), `ProxyServer`, `forwardBackend` (the per-group `Backend`), and the
-  `RouteConfig` / `RoutesLoader` / `Router` / `Backend` contracts (`ifaces.go`).
+- **this package (`pkg/router`, OSS)** — the generic machinery: `GrafanaRouter` (`server.go`: one
+  `Run` driving both the reconcile loop and the HTTP listener, group-keyed serving),
+  `forwardBackend` (the per-group `Backend`), and the `RoutesLoader` / `Router` / `Backend`
+  contracts (`types.go`). `GrafanaRouter` owns the whole standalone process; it is a pure reverse
+  proxy to the backing API servers.
 - **`.../appmanifest/pkg/app/router` (enterprise)** — only `Loader` (`routes_loader.go`): the
   `RoutesLoader` implementation that produces `[]*RouteConfig` from the cloud control plane. How it
   sources and watches the underlying custom resources is its own concern (see that package's
@@ -22,6 +24,15 @@ The generic router lives here in OSS; only the loader (which knows the cloud kin
 This doc stays generic: it must not encode which custom resources the loader watches or how it
 triggers — the router only knows the `RoutesLoader` contract. File references below are in this
 package unless noted.
+
+## Rule: never delete interfaces in `types.go` without human sign-off
+
+The contracts in `types.go` (`Router`, `RoutesLoader`, `Backend`) are kept deliberately, including
+any that look currently unused. They mark seams for planned work — e.g. `Router.HandleFunc(w, r,
+next)` keeps the delegation seam so the router can later be mounted inside another handler chain,
+not only as the standalone `GrafanaRouter`. Do **not** remove or narrow an interface here as part of
+a refactor; if one seems dead, ask the human first. (This rule exists because an earlier refactor
+dropped `Router` while unifying the serving types — the interface was future-facing, not dead.)
 
 ## Scope (current)
 
@@ -34,13 +45,17 @@ package unless noted.
 - If Watch or upgrades are ever added, revisit: reverse proxy flushing, upgrade-aware handling,
   and per-request timeouts all change.
 
-## Standalone proxy server (`proxyserver.go`)
+## Standalone server (`server.go`)
 
 The router serves on **its own port**, deliberately **outside** the apiserver's kubernetes handler
-chain (no authn, authz, audit, or priority-and-fairness). `ProxyServer` owns the `http.Server`,
-mounts `Router.HandleFunc` at `/apis` and `Router.OpenAPIV3Handler()` at `/openapi/v3`, and does a
-bounded graceful shutdown (drain with a timeout, then `Close()` fallback for hijacked/streaming
-conns). `server.go` in the apiserver package constructs and runs it; it is **not** part of the App.
+chain (no authn, authz, audit, or priority-and-fairness). `GrafanaRouter` is one type with one
+`Run`: the reconcile loop and the `http.Server` run as two goroutines under a single errgroup (a
+non-nil return from either is fatal). Its `mux` mounts `HandleFunc` at `/apis` and
+`openAPIV3Handler()` at `/openapi/v3`, and it does a bounded graceful shutdown (drain with a
+timeout, then `Close()` fallback for hijacked/streaming conns). `HandleFunc(w, r, next)` keeps the
+`next` fallthrough seam (standalone passes `NotFound`); the reconcile loop and the listener were
+previously split into `BasicRouter` + `ProxyServer` so the routing logic could also be a delegate —
+that seam now lives on `HandleFunc` / the `Router` interface, so the split was collapsed.
 
 Because it sheds the k8s chain, **the caller owns this port's security** — provide TLS and/or keep
 the port reachable only behind an already-authenticated hop (mesh/aggregator).
@@ -58,8 +73,8 @@ recreate unrelated backends. Recreating a backend throws away its connection poo
 reconnect + TLS re-handshake; doing that for *every* backend on *any* GitOps change causes a
 latency blip across all traffic when only one route changed.
 
-Implementation: `BasicRouter.entries` is a persistent `map[group]*groupEntry`, keyed by group.
-Each entry holds a `Backend` plus `lastRV`, the RouteConfig fingerprint last applied. On reconcile,
+Implementation: `GrafanaRouter.entries` is a persistent `map[group]*handlerEntry`, keyed by group.
+Each entry holds a resolved `http.Handler` plus `lastRV`, the fingerprint last applied. On reconcile,
 groups whose `lastRV` is unchanged are left untouched, changed/new groups are rebuilt, and removed
 groups are dropped; then a fresh immutable `map[group]Backend` snapshot is published via one atomic
 store. **Connection-pool survival comes from the shared transport cache, not the Backend identity**
@@ -70,8 +85,8 @@ never touched.
 ## Routing table (group-keyed snapshot)
 
 The router serves by **group**, the natural key of the loaded config — not by flattened path
-prefixes. `BasicRouter.snapshot` is an `atomic.Pointer[map[group]Backend]`; reconcile rebuilds and
-stores it, serving loads it lock-free per request.
+prefixes. `GrafanaRouter.snapshot` is an `atomic.Pointer[map[group]http.Handler]`; reconcile
+rebuilds and stores it, serving loads it lock-free per request.
 
 **Why not a general path mux (e.g. a `PathRecorderMux` port).** A kube-aggregator-style mux flattens
 every route into an anonymous `map[prefix]handler` plus a longest-prefix linear scan. That erases
@@ -151,16 +166,29 @@ The signal and the state are split; do not conflate them.
 
 ## Lifecycle / ownership
 
-The App owns the whole proxy. In the App's `New()` (the only place k8s clients exist), both the
-`Router` (reconcile loop) and the `ProxyServer` (listener) are built and registered as app runnables
-via `AddRunnable`. The SDK's "app runners" post-start hook drives both `Run(ctx)` methods for the
-life of the process. One owner, one crash path: if either runnable returns an error, the app's
-MultiRunner cancels the rest and brings the process down — which is intended, since both must live
-for the app to be functional. `server.go` does not manage the proxy's lifecycle.
+The `GrafanaRouter` runs as its **own process**, the `grafana router` command. It is a pure reverse
+proxy: it sources RouteBackend/AppManifest from a **remote** apiserver over its own clients and does
+not live inside the appmanifest apiserver (an earlier experiment wired it there via the App/apiserver
+factory; that coupling was removed).
 
-The proxy listen address/TLS (`ProxyServerConfig`) flows in through the App's `SpecificConfig`; a
-non-empty `Addr` is the standalone signal that turns the proxy on (empty → grafana-server mode, no
-proxy).
+Wiring follows the standalone-apiserver factory pattern:
+
+- **OSS (`pkg/router`)** — `RouterFactory` interface + `NoOpRouterFactory` (`factory.go`).
+  `ProvideRouterFactory` returns the no-op, so the `router` command is hidden in OSS builds.
+- **enterprise (`pkg/extensions/router`)** — the real factory (`cli.go`): a urfave `router` command
+  whose flags drive runtime config. Its `run` builds one `rest.Config` for the whole apps group,
+  a `k8s.ClientRegistry`, the enterprise `Loader`, two informers (RouteBackend + AppManifest,
+  v1alpha2) wired to `loader.Watcher()` as change-detectors, and one `GrafanaRouter`, then runs
+  informers + router under a single errgroup.
+- **binding** — `server.InitializeRouterFactory()` (wire) returns the no-op in OSS
+  (`wire_gen.go`) and the enterprise factory in enterprise/pro (`enterprise_wire_gen.go`);
+  `cmd/grafana/main.go` appends the command when non-nil. Keep the wire source
+  (`wire.go` + `wireexts_{oss,enterprise}.go`, set `wireExtsRouterFactorySet`) in sync with the
+  generated files so `make gen-go` reproduces them.
+
+`GrafanaRouter` is one type with one `Run` (reconcile loop + listener, two goroutines, one
+errgroup). Listener address/TLS come from `GrafanaRouterConfig` (`config.go`), populated from CLI
+flags.
 
 ## Security
 
