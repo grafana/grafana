@@ -15,8 +15,9 @@ import "strings"
 // canonicalized to v1, before the schema migration drops __inputs and the constant
 // value is no longer recoverable.
 //
-// Only constant inputs are resolved: they are the only input type that carries its
-// value in the export. Datasource inputs have no default and are left untouched.
+// Only constant inputs are resolved: they map to a plain value substitution.
+// DS_* inputs carry no value to substitute, and __elements (library panels) would
+// need a library-element resource recreated (a side effect); both are out of scope.
 func resolveConstantExportInputs(dash map[string]interface{}) {
 	inputs, ok := dash["__inputs"].([]interface{})
 	if !ok || len(inputs) == 0 {
