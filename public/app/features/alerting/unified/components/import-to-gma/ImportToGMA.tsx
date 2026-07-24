@@ -35,7 +35,7 @@ import {
 } from '../../Analytics';
 import { fetchAlertManagerConfig } from '../../api/alertmanager';
 import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
-import { ALERTING_SETTINGS_URL } from '../../settings/navigation';
+import { ALERTING_IMPORT_SETTINGS_URL } from '../../settings/navigation';
 import { type Folder } from '../../types/rule-form';
 import { DOCS_URL_ALERTING_MIGRATION } from '../../utils/docs';
 import { stringifyErrorLike } from '../../utils/misc';
@@ -155,7 +155,7 @@ function AutoSyncActiveBlock() {
           Grafana is continuously syncing alert configuration from a data source, so the configuration is a read-only
           mirror and cannot be imported into. To import, disable auto-sync in Alerting settings first.
         </Trans>
-        <TextLink href={ALERTING_SETTINGS_URL} icon="cog">
+        <TextLink href={ALERTING_IMPORT_SETTINGS_URL} icon="cog">
           {t('alerting.import-to-gma.autosync-active-block.go-to-settings', 'Go to Alerting settings')}
         </TextLink>
       </Stack>

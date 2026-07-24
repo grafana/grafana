@@ -3288,8 +3288,23 @@
         "save-success": "Mimir Alertmanager auto-sync enabled",
         "title": "Auto-sync configuration"
       },
+      "import": {
+        "empty-body": "Import an Alertmanager configuration to stage it here as a safe, reversible copy. Review what it contains, then promote it into your live Grafana Alertmanager when you're ready.",
+        "empty-cta": "Import Alertmanager configuration",
+        "empty-learn-more": "Learn more about importing configurations",
+        "empty-title": "No configuration imported yet",
+        "error-body": "The request to the Alerting API failed. Check your connection and try again.",
+        "error-retry": "Retry",
+        "error-title": "Couldn't load imported configurations",
+        "loading": "Loading imported configurations…",
+        "no-permission-body": "Contact your administrator to request access to imported Alertmanager configurations.",
+        "no-permission-title": "You don't have permission to view imported configurations",
+        "staged-description": "A read-only, reversible copy of an imported Alertmanager config. Promote it to merge into your live config, or revert to remove it.",
+        "staged-title": "Staged configuration"
+      },
       "tabs": {
-        "alert-managers": "Alert managers"
+        "alert-managers": "Alert managers",
+        "import": "Import"
       }
     },
     "settings-content": {
