@@ -1250,4 +1250,62 @@ describe('ResponseTransformers', () => {
       expect(v2.spec.disabledValue).toBe(disabledValue);
     }
   }
+
+  describe('scripted dashboard with rows (old format)', () => {
+    it('should convert rows to panels for scripted dashboards', () => {
+      const scriptedDashboard: DashboardDTO = {
+        meta: {
+          canSave: false,
+          canEdit: false,
+          canDelete: false,
+          canShare: false,
+          canStar: false,
+          canAdmin: false,
+          url: '',
+          slug: '',
+          fromScript: true,
+        },
+        dashboard: {
+          uid: 'scripted-dash',
+          title: 'Scripted dash',
+          time: {
+            from: 'now-6h',
+            to: 'now',
+          },
+          rows: [
+            {
+              title: 'Chart',
+              height: '300px',
+              panels: [
+                {
+                  id: 1,
+                  title: 'Events',
+                  type: 'timeseries',
+                  span: 12,
+                  targets: [
+                    {
+                      scenarioId: 'random_walk',
+                      refId: 'A',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        } as any,
+      };
+
+      const result = ResponseTransformers.ensureV2Response(scriptedDashboard);
+
+      expect(result.kind).toBe('DashboardWithAccessInfo');
+      expect(result.spec.title).toBe('Scripted dash');
+      expect(Object.keys(result.spec.elements).length).toBe(1);
+
+      const panelElement = result.spec.elements['panel-1'] as PanelKind;
+      expect(panelElement).toBeDefined();
+      expect(panelElement.kind).toBe('Panel');
+      expect(panelElement.spec.title).toBe('Events');
+      expect(panelElement.spec.vizConfig.group).toBe('timeseries');
+    });
+  });
 });
