@@ -25,6 +25,13 @@ if [ "$1" = configure ]; then
 
   # Set user permissions on /var/log/grafana, /var/lib/grafana
   mkdir -p /var/log/grafana "$DATA_DIR"
+  # Bundled plugins must live under $DATA_DIR (writable by grafana) so the
+  # plugin auto-updater can replace them. Any copy already at the destination
+  # is stale and safe to clobber; mv alone would fail or nest into it.
+  if [ -d "$GRAFANA_HOME/data/plugins-bundled" ]; then
+    rm -rf "${DATA_DIR:?}/plugins-bundled"
+    mv "$GRAFANA_HOME/data/plugins-bundled" "$DATA_DIR"
+  fi
   chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" /var/log/grafana "$DATA_DIR"
   chmod 755 /var/log/grafana "$DATA_DIR"
 
