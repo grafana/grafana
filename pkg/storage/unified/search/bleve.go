@@ -1482,6 +1482,16 @@ func isPathWithinRoot(path, absoluteRoot string) bool {
 }
 
 // TotalDocs returns the total number of documents across all indices
+// SnapshotCountThreshold returns the snapshot MinDocCount, or 0 when no snapshot
+// store is configured (in which case BuildIndex never uses snapshots and the
+// count is not consumed by that decision).
+func (b *bleveBackend) SnapshotCountThreshold() int64 {
+	if b.opts.Snapshot.Store == nil {
+		return 0
+	}
+	return b.opts.Snapshot.MinDocCount
+}
+
 func (b *bleveBackend) TotalDocs() int64 {
 	var totalDocs int64
 	// We iterate over keys and call getCachedIndex for each index individually.

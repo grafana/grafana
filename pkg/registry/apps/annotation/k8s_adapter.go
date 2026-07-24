@@ -20,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/utils/ptr"
 
 	authtypes "github.com/grafana/authlib/types"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
@@ -360,6 +361,10 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 		return nil, false, goneError(name)
 	}
 
+	if err := validateUpdate(existing, resource); err != nil {
+		return nil, false, err
+	}
+
 	// Preserve legacy data when the caller omits it, mirroring the legacy API's behavior.
 	// An absent annotation keeps the stored value, while a present annotation overwrites or clears it.
 	if _, ok := GetLegacyData(resource); !ok {
@@ -513,6 +518,23 @@ func (s *k8sRESTAdapter) validateScopeCount(a *annotationV0.Annotation) error {
 	if len(a.Spec.Scopes) > s.maxScopeCount {
 		return apierrors.NewBadRequest(fmt.Sprintf(
 			"too many scopes: %d (max allowed %d)", len(a.Spec.Scopes), s.maxScopeCount))
+	}
+	return nil
+}
+
+// validateUpdate rejects updates that attempt to modify immutable fields
+func validateUpdate(existing, updated *annotationV0.Annotation) error {
+	if existing.Spec.Time != updated.Spec.Time {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: time is immutable", ErrInvalidInput))
+	}
+	if !ptr.Equal(existing.Spec.TimeEnd, updated.Spec.TimeEnd) {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: timeEnd is immutable", ErrInvalidInput))
+	}
+	if !ptr.Equal(existing.Spec.DashboardUID, updated.Spec.DashboardUID) {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: dashboardUID is immutable", ErrInvalidInput))
+	}
+	if !ptr.Equal(existing.Spec.PanelID, updated.Spec.PanelID) {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: panelID is immutable", ErrInvalidInput))
 	}
 	return nil
 }
