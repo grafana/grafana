@@ -12,8 +12,15 @@ import {
 } from '../../types/logAnalyticsMetadata';
 import { type AzureMonitorQuery } from '../../types/query';
 import { TablePlan } from '../../types/types';
+import { getSelectedLogTier, type SelectedLogTier } from '../LogsQueryEditor/utils';
 
 import { type BuildAndUpdateOptions, inputFieldSize } from './utils';
+
+export type TierAutoSwitchInfo = {
+  tableName: string;
+  fromTier: SelectedLogTier;
+  toTier: SelectedLogTier;
+};
 
 interface TableSectionProps {
   allColumns: AzureLogAnalyticsMetadataColumn[];
@@ -23,20 +30,61 @@ interface TableSectionProps {
   templateVariableOptions?: SelectableValue<string>;
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
   isLoadingSchema: boolean;
+  basicLogsEnabled?: boolean;
+  auxiliaryLogsEnabled?: boolean;
+  onTierAutoSwitch?: (info: TierAutoSwitchInfo) => void;
 }
 
 export const TableSection: React.FC<TableSectionProps> = (props) => {
-  const { allColumns, query, tables, buildAndUpdateQuery, templateVariableOptions, isLoadingSchema } = props;
+  const {
+    allColumns,
+    query,
+    tables,
+    buildAndUpdateQuery,
+    templateVariableOptions,
+    isLoadingSchema,
+    basicLogsEnabled,
+    auxiliaryLogsEnabled,
+    onTierAutoSwitch,
+  } = props;
   const ALL_COLUMNS_VALUE = '__all_columns__';
 
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const selectedColumns = query.azureLogAnalytics?.builderQuery?.columns?.columns || [];
 
-  const tableOptions: Array<SelectableValue<string>> = tables.map((t) => ({
-    label: t.name,
-    value: t.name,
-    description: t.plan === TablePlan.Basic ? 'Selecting this table will switch the query mode to Basic Logs' : '',
-  }));
+  const tableOptions: Array<SelectableValue<string>> = tables.map((t) => {
+    const isBasic = t.plan === TablePlan.Basic;
+    const isAux = t.plan === TablePlan.Auxiliary;
+    const disabled = (isBasic && !basicLogsEnabled) || (isAux && !auxiliaryLogsEnabled);
+    let description = '';
+    if (isBasic) {
+      description = disabled
+        ? t(
+            'components.logs-table-section.description-basic-disabled',
+            'This table is on the Basic Logs plan. Enable "Basic Logs" in the data source settings to query it.'
+          )
+        : t(
+            'components.logs-table-section.description-basic-enabled',
+            'Selecting this table will switch the query mode to Basic Logs'
+          );
+    } else if (isAux) {
+      description = disabled
+        ? t(
+            'components.logs-table-section.description-auxiliary-disabled',
+            'This table is on the Auxiliary Logs plan. Enable "Auxiliary Logs" in the data source settings to query it.'
+          )
+        : t(
+            'components.logs-table-section.description-auxiliary-enabled',
+            'Selecting this table will switch the query mode to Auxiliary Logs'
+          );
+    }
+    return {
+      label: t.name,
+      value: t.name,
+      description,
+      isDisabled: disabled,
+    };
+  });
 
   const columnOptions: Array<SelectableValue<string>> = allColumns.map((col) => ({
     label: col.name,
@@ -45,7 +93,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
   }));
 
   const selectAllOption: SelectableValue<string> = {
-    label: 'All Columns',
+    label: t('components.logs-table-section.label-all-columns', 'All Columns'),
     value: ALL_COLUMNS_VALUE,
   };
 
@@ -64,6 +112,18 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
     if (!selectedTable) {
       return;
     }
+    const isBasic = selectedTable.plan === TablePlan.Basic;
+    const isAux = selectedTable.plan === TablePlan.Auxiliary;
+    if ((isBasic && !basicLogsEnabled) || (isAux && !auxiliaryLogsEnabled)) {
+      return;
+    }
+    const logTier = isBasic ? 'Basic' : isAux ? 'Auxiliary' : undefined;
+
+    const fromTier = getSelectedLogTier(query);
+    const toTier: SelectedLogTier = logTier ?? 'Analytics';
+    if (fromTier !== toTier && onTierAutoSwitch) {
+      onTierAutoSwitch({ tableName: selectedTable.name, fromTier, toTier });
+    }
 
     buildAndUpdateQuery({
       from: {
@@ -79,7 +139,8 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
       groupBy: [],
       orderBy: [],
       columns: [],
-      basicLogsQuery: selectedTable.plan === TablePlan.Basic,
+      basicLogsQuery: logTier !== undefined,
+      logTier,
     });
   };
 

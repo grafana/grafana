@@ -15,6 +15,7 @@ import {
 } from '../../dataquery.gen';
 import { type AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
 import { type AzureMonitorQuery } from '../../types/query';
+import { type LogTier } from '../LogsQueryEditor/utils';
 
 const DYNAMIC_TYPE_ARRAY_DELIMITER = '["`indexer`"]';
 export const inputFieldSize = 20;
@@ -91,6 +92,7 @@ export interface BuildAndUpdateOptions {
   columns?: string[];
   from?: BuilderQueryEditorPropertyExpression;
   basicLogsQuery?: boolean;
+  logTier?: LogTier;
 }
 
 export const aggregateOptions = [

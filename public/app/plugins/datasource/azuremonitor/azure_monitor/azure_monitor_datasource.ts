@@ -51,6 +51,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
   locationsApiVersion = '2020-01-01';
   defaultSubscriptionId?: string;
   basicLogsEnabled?: boolean;
+  auxiliaryLogsEnabled?: boolean;
   resourcePath: string;
   declare resourceGroup: string;
   declare resourceName: string;
@@ -64,6 +65,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
 
     this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
     this.basicLogsEnabled = instanceSettings.jsonData.basicLogsEnabled;
+    this.auxiliaryLogsEnabled = instanceSettings.jsonData.auxiliaryLogsEnabled;
 
     this.resourcePath = routeNames.azureMonitor;
   }
