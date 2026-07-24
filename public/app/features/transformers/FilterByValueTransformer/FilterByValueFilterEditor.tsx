@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { type Field, type SelectableValue, valueMatchers } from '@grafana/data';
 import { type FilterByValueFilter } from '@grafana/data/internal';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, Select, InlineField, InlineFieldRow, Box } from '@grafana/ui';
 
@@ -12,6 +13,7 @@ interface Props {
   onChange: (filter: FilterByValueFilter) => void;
   filter: FilterByValueFilter;
   fieldsInfo: DataFrameFieldsInfo;
+  index: number;
 }
 
 export interface DataFrameFieldsInfo {
@@ -20,7 +22,7 @@ export interface DataFrameFieldsInfo {
 }
 
 export const FilterByValueFilterEditor = (props: Props) => {
-  const { onDelete, onChange, filter, fieldsInfo } = props;
+  const { onDelete, onChange, filter, fieldsInfo, index } = props;
   const { fieldsAsOptions, fieldByDisplayName } = fieldsInfo;
   const fieldName = getFieldName(filter, fieldsAsOptions) ?? '';
   const field = fieldByDisplayName[fieldName];
@@ -84,6 +86,7 @@ export const FilterByValueFilterEditor = (props: Props) => {
           options={fieldsAsOptions}
           value={filter.fieldName}
           onChange={onChangeField}
+          data-testid={selectors.components.Transforms.FilterByValue.fieldSelect(String(index))}
         />
       </InlineField>
       <InlineField label={t('transformers.filter-by-value-filter-editor.label-match', 'Match')}>
@@ -93,6 +96,7 @@ export const FilterByValueFilterEditor = (props: Props) => {
           options={matcherOptions}
           value={matcherId}
           onChange={onChangeMatcher}
+          data-testid={selectors.components.Transforms.FilterByValue.matchSelect(String(index))}
         />
       </InlineField>
       <InlineField label={t('transformers.filter-by-value-filter-editor.label-value', 'Value')} grow>
