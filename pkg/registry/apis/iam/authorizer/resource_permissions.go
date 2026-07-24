@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"strconv"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -15,8 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 )
-
-// TODO: Logs, Metrics, Traces?
 
 // ParentProvider interface for fetching parent information of resources
 type ParentProvider interface {
@@ -31,6 +32,7 @@ type ResourcePermissionsAuthorizer struct {
 	accessClient   types.AccessClient
 	parentProvider ParentProvider
 	logger         log.Logger
+	tracer         trace.Tracer
 }
 
 var _ storewrapper.ResourceStorageAuthorizer = (*ResourcePermissionsAuthorizer)(nil)
@@ -38,11 +40,13 @@ var _ storewrapper.ResourceStorageAuthorizer = (*ResourcePermissionsAuthorizer)(
 func NewResourcePermissionsAuthorizer(
 	accessClient types.AccessClient,
 	parentProvider ParentProvider,
+	tracer trace.Tracer,
 ) *ResourcePermissionsAuthorizer {
 	return &ResourcePermissionsAuthorizer{
 		accessClient:   accessClient,
 		parentProvider: parentProvider,
 		logger:         log.New("iam.authorizer.resource-permissions"),
+		tracer:         tracer,
 	}
 }
 
@@ -74,6 +78,10 @@ func (r *ResourcePermissionsAuthorizer) hasUsersPermissionsRead(ctx context.Cont
 // getTarget(i) supplies the resource identity for item i; when ok is false that item is excluded.
 // If the caller has users.permissions:read, returns all items without per-resource checks.
 func CanViewTargets[T any](r *ResourcePermissionsAuthorizer, ctx context.Context, authInfo types.AuthInfo, items []T, getTarget func(i int) (namespace, apiGroup, resource, name string, ok bool)) ([]T, error) {
+	ctx, span := r.tracer.Start(ctx, "resource-permissions.can-view-targets")
+	defer span.End()
+	span.SetAttributes(attribute.Int("items_count", len(items)))
+
 	if authInfo == nil {
 		return nil, storewrapper.ErrUnauthenticated
 	}
@@ -84,14 +92,19 @@ func CanViewTargets[T any](r *ResourcePermissionsAuthorizer, ctx context.Context
 	// if caller has users.permissions:read, allow all items
 	if ns, _, _, _, ok := getTarget(0); ok {
 		if allowAll, err := r.hasUsersPermissionsRead(ctx, authInfo, ns); err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, "error checking users.permissions:read")
 			return nil, err
 		} else if allowAll {
+			span.SetAttributes(attribute.Bool("has_users_permissions_read", true))
 			return items, nil
 		}
 	}
 	accessPolicy := isAccessPolicy(authInfo)
 
 	// build checks - use item index as correlation ID so results map back without a side table
+	parentCalls := 0
+	failedParentCalls := 0
 	checks := make([]types.BatchCheckItem, 0, n)
 	var namespace string
 	for i := range n {
@@ -110,8 +123,10 @@ func CanViewTargets[T any](r *ResourcePermissionsAuthorizer, ctx context.Context
 		// Access Policies have global scope, so no parent check needed
 		if !accessPolicy && r.parentProvider.HasParent(targetGR) {
 			var err error
+			parentCalls++
 			parent, err = r.parentProvider.GetParent(ctx, targetGR, ns, name)
 			if err != nil {
+				failedParentCalls++
 				r.logger.Debug("can view targets: error fetching parent, denying this item",
 					"error", fmt.Sprintf("%v", err), "namespace", ns, "group", apiGroup, "resource", resource, "name", name)
 				continue
@@ -126,6 +141,8 @@ func CanViewTargets[T any](r *ResourcePermissionsAuthorizer, ctx context.Context
 			Folder:        parent,
 		})
 	}
+	span.SetAttributes(attribute.Int("get_parent_calls", parentCalls))
+	span.SetAttributes(attribute.Int("failed_get_parent_calls", failedParentCalls))
 
 	allowed := make([]bool, n)
 	for start := 0; start < len(checks); start += types.MaxBatchCheckItems {
@@ -138,6 +155,8 @@ func CanViewTargets[T any](r *ResourcePermissionsAuthorizer, ctx context.Context
 			Checks:    checks[start:end],
 		})
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, "error batch checking permissions")
 			return nil, err
 		}
 		for id, result := range res.Results {
@@ -153,11 +172,16 @@ func CanViewTargets[T any](r *ResourcePermissionsAuthorizer, ctx context.Context
 			filtered = append(filtered, item)
 		}
 	}
+	span.SetAttributes(attribute.Int("filtered_items_count", len(filtered)))
 	return filtered, nil
 }
 
 // AfterGet implements ResourceStorageAuthorizer.
 func (r *ResourcePermissionsAuthorizer) AfterGet(ctx context.Context, obj runtime.Object) error {
+	// Annotate the surrounding storewrapper span rather than opening a child:
+	// this is a single-object path and error recording is handled by the wrapper.
+	span := trace.SpanFromContext(ctx)
+
 	authInfo, ok := types.AuthInfoFrom(ctx)
 	if !ok {
 		return storewrapper.ErrUnauthenticated
@@ -168,17 +192,20 @@ func (r *ResourcePermissionsAuthorizer) AfterGet(ctx context.Context, obj runtim
 		if ok, err := r.hasUsersPermissionsRead(ctx, authInfo, o.Namespace); err != nil {
 			return err
 		} else if ok {
+			span.SetAttributes(attribute.Bool("has_users_permissions_read", true))
 			return nil
 		}
 
 		target := o.Spec.Resource
 		targetGR := schema.GroupResource{Group: target.ApiGroup, Resource: target.Resource}
+		span.SetAttributes(attribute.String("target_resource", targetGR.String()))
 
 		parent := ""
 		// Fetch the parent of the resource
 		// Access Policies have global scope, so no parent check needed
 		if !isAccessPolicy(authInfo) && r.parentProvider.HasParent(targetGR) {
 			p, err := r.parentProvider.GetParent(ctx, targetGR, o.Namespace, target.Name)
+			span.SetAttributes(attribute.Int("get_parent_calls", 1))
 			if err != nil {
 				r.logger.Error("after get: error fetching parent", "error", err.Error(),
 					"namespace", o.Namespace,
@@ -202,6 +229,7 @@ func (r *ResourcePermissionsAuthorizer) AfterGet(ctx context.Context, obj runtim
 		if err != nil {
 			return err
 		}
+		span.SetAttributes(attribute.Bool("allowed", res.Allowed))
 		if !res.Allowed {
 			return k8serrors.NewNotFound(targetGR, target.Name)
 		}
@@ -212,6 +240,10 @@ func (r *ResourcePermissionsAuthorizer) AfterGet(ctx context.Context, obj runtim
 }
 
 func (r *ResourcePermissionsAuthorizer) beforeWrite(ctx context.Context, obj runtime.Object) error {
+	// Annotate the surrounding storewrapper span rather than opening a child:
+	// this is a single-object path and error recording is handled by the wrapper.
+	span := trace.SpanFromContext(ctx)
+
 	authInfo, ok := types.AuthInfoFrom(ctx)
 	if !ok {
 		return storewrapper.ErrUnauthenticated
@@ -220,12 +252,14 @@ func (r *ResourcePermissionsAuthorizer) beforeWrite(ctx context.Context, obj run
 	case *iamv0.ResourcePermission:
 		target := o.Spec.Resource
 		targetGR := schema.GroupResource{Group: target.ApiGroup, Resource: target.Resource}
+		span.SetAttributes(attribute.String("target_resource", targetGR.String()))
 
 		parent := ""
 		// Fetch the parent of the resource
 		// Access Policies have global scope, so no parent check needed
 		if !isAccessPolicy(authInfo) && r.parentProvider.HasParent(targetGR) {
 			p, err := r.parentProvider.GetParent(ctx, targetGR, o.Namespace, target.Name)
+			span.SetAttributes(attribute.Int("get_parent_calls", 1))
 			if err != nil {
 				r.logger.Error("before write: error fetching parent", "error", err.Error(),
 					"namespace", o.Namespace,
@@ -249,6 +283,7 @@ func (r *ResourcePermissionsAuthorizer) beforeWrite(ctx context.Context, obj run
 		if err != nil {
 			return err
 		}
+		span.SetAttributes(attribute.Bool("allowed", res.Allowed))
 		if !res.Allowed {
 			return k8serrors.NewForbidden(targetGR, target.Name, fmt.Errorf("user cannot set permissions on this resource"))
 		}
