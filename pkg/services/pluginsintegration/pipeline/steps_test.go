@@ -65,15 +65,12 @@ func TestAsExternal(t *testing.T) {
 		},
 	}
 
-	t.Run("should skip a core plugin when both as_external and ActiveExternalOverrides are set", func(t *testing.T) {
+	t.Run("should skip a core plugin", func(t *testing.T) {
 		cfg := &config.PluginManagementCfg{
 			PluginSettings: config.PluginSettings{
 				"plugin1": map[string]string{
 					"as_external": "true",
 				},
-			},
-			ActiveExternalOverrides: []config.ExternalOverride{
-				{CorePluginID: "plugin1", ExternalPluginID: "external-plugin1"},
 			},
 		}
 
@@ -82,21 +79,6 @@ func TestAsExternal(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, filtered, 1)
 		require.Equal(t, filtered[0].Primary.JSONData.ID, "plugin2")
-	})
-
-	t.Run("should not skip a core plugin when as_external is set but ActiveExternalOverrides is empty", func(t *testing.T) {
-		cfg := &config.PluginManagementCfg{
-			PluginSettings: config.PluginSettings{
-				"plugin1": map[string]string{
-					"as_external": "true",
-				},
-			},
-		}
-
-		s := NewAsExternalStep(cfg)
-		filtered, err := s.Filter(plugins.ClassCore, bundles)
-		require.NoError(t, err)
-		require.Len(t, filtered, 2)
 	})
 }
 
