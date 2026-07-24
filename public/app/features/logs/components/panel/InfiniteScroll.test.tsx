@@ -505,6 +505,33 @@ describe('InfiniteScroll consecutive loads (regression #129033)', () => {
     expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
     expect(screen.queryByText('End of the selected time range.')).not.toBeInTheDocument();
   });
+
+  test('re-running the query clears a stale out-of-bounds (Ascending)', async () => {
+    const loadMoreMock = jest.fn();
+    const { element, events } = getMockElement(50);
+
+    const page1 = createLogs(pageFrom, pageTo);
+    const { rerender } = render(ui(page1, element, loadMoreMock, LoadingState.Done));
+
+    expect(await screen.findByText('log line 1')).toBeInTheDocument();
+
+    // Reach out-of-bounds: a settled load-more returns no new rows.
+    scroll(element, events, 59, 1);
+    scroll(element, events, 60, 600);
+    act(() => {
+      rerender(ui(createLogs(pageFrom, pageTo), element, loadMoreMock, LoadingState.Loading));
+    });
+    act(() => {
+      rerender(ui(createLogs(pageFrom, pageTo), element, loadMoreMock, LoadingState.Done));
+    });
+    expect(await screen.findByText('End of the selected time range.')).toBeInTheDocument();
+
+    // Re-running the query replaces the logs (not a load-more); the stale out-of-bounds must clear.
+    act(() => {
+      rerender(ui(makeLogs(3), element, loadMoreMock, LoadingState.Done));
+    });
+    expect(screen.queryByText('End of the selected time range.')).not.toBeInTheDocument();
+  });
 });
 
 function createLogs(from: number, to: number) {

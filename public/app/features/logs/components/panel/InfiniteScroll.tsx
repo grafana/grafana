@@ -89,10 +89,14 @@ export const InfiniteScroll = ({
   const prevInFlight = usePrevious(requestInFlight);
 
   useEffect(() => {
-    // Fresh logs from a new query (not infinite scrolling): reset paging and scroll.
+    // Fresh logs from a new query (not infinite scrolling): reset paging, scroll, and clear a stale
+    // 'out-of-bounds' so re-running the query re-enables scrolling instead of latching end-of-range.
     if (prevLogs && prevLogs !== logs && infiniteLoaderState !== 'loading') {
       lastLogOfPage.current = [];
       setAutoScroll(true);
+      if (infiniteLoaderState !== 'idle') {
+        setInfiniteLoaderState('idle');
+      }
       return;
     }
     if (infiniteLoaderState === 'loading') {
