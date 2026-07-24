@@ -63,7 +63,7 @@ export const useGetSingle = (id: string, version?: string): CatalogPlugin | unde
 
 export const useGetPluginInsights = (id: string, version: string | undefined): CatalogPlugin | undefined => {
   useFetchPluginInsights(id, version);
-  return useSelector((state) => selectById(state, id));
+  return useSelector((state) => selectByIdOrAlias(state, id));
 };
 
 export const useGetSingleLocalWithoutDetails = (id: string): CatalogPlugin | undefined => {
@@ -170,7 +170,7 @@ export const useFetchDetails = (id: string) => {
 
 export const useFetchPluginInsights = (id: string, version: string | undefined) => {
   const dispatch = useDispatch();
-  const plugin = useSelector((state) => selectById(state, id));
+  const plugin = useSelector((state) => selectByIdOrAlias(state, id));
   const isNotFetching = !useSelector(selectIsRequestPending(fetchPluginInsights.typePrefix));
   const shouldFetch = isNotFetching && plugin && !plugin.insights && version;
 
