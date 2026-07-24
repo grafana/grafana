@@ -615,4 +615,23 @@ describe('useStateSync', () => {
       expect(panes.one?.queryLibraryRef).toBeUndefined();
     });
   });
+
+  it('seeds queryLibraryRef onto the first pane from the ?queryLibraryRef URL param at init', async () => {
+    const { store } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: {
+            datasource: 'loki-uid',
+            queries: [{ expr: 'test', refId: 'A' }],
+          },
+        }),
+        schemaVersion: 1,
+        queryLibraryRef: 'library-query-789',
+      },
+    });
+
+    await waitFor(() => {
+      expect(store.getState().explore.panes['one']?.queryLibraryRef).toBe('library-query-789');
+    });
+  });
 });

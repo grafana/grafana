@@ -36,6 +36,11 @@ export function initializeFromURL(
   // Seeded onto the first pane only so the "Adding a new saved query" banner shows; split-view URLs are unaffected.
   const addingSavedQuery = location.getSearch().get('createSavedQuery') === 'true';
 
+  // Saved query being edited via the "Edit in Explore" flow (/explore?queryLibraryRef=<uid>). Seeding it at
+  // init (rather than a post-navigation dispatch) is what lets the "Editing from saved queries" banner render
+  // on the first, cold Explore mount. First pane only, mirroring addingSavedQuery.
+  const queryLibraryRef = location.getSearch().get('queryLibraryRef') ?? undefined;
+
   Promise.all(
     Object.entries(urlState.panes).map(([exploreId, { datasource, queries, range, panelsState, compact }]) => {
       return getPaneDatasource(datasource, queries, orgId).then((paneDatasource) => {
@@ -85,6 +90,7 @@ export function initializeFromURL(
             eventBridge: new EventBusSrv(),
             compact: !!compact,
             addingSavedQuery: index === 0 ? addingSavedQuery : undefined,
+            queryLibraryRef: index === 0 ? queryLibraryRef : undefined,
           })
         ).unwrap();
       })
