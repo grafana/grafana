@@ -79,7 +79,8 @@ declare module "@openfeature/core" {
     | "grafana.growthHomepage"
     | "grafana.onDemandDiagnostics"
     | "grafana.multiTenantNavTree"
-    | "grafana.exploreMetricsSidebar";
+    | "grafana.exploreMetricsSidebar"
+    | "grafana.dynamicTraceToLogs";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

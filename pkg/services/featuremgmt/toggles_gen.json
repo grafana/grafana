@@ -2710,6 +2710,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.dynamicTraceToLogs",
+        "resourceVersion": "1784712177554",
+        "creationTimestamp": "2026-07-22T09:22:57Z"
+      },
+      "spec": {
+        "description": "Check for the existence of logs when linking from the Trace View",
+        "stage": "preview",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.enableScopesFirstMode",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
