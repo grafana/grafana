@@ -1,5 +1,5 @@
-import { http, HttpResponse } from 'msw';
-import { render, screen } from 'test/test-utils';
+import { delay, http, HttpResponse } from 'msw';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { config, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -13,6 +13,7 @@ import { ctaClicked } from '../analytics/main';
 
 import { FiringAlertsCard } from './FiringAlertsCard';
 import { HOME_CARD_MAX_ITEMS } from './constants';
+import { useFiringAlerts } from './useFiringAlerts';
 
 jest.mock('../analytics/main', () => ({
   ctaClicked: jest.fn(),
@@ -478,5 +479,34 @@ describe('FiringAlertsCard', () => {
         expect.objectContaining({ action: 'view_all_alerts', ms_since_load: 10 })
       );
     });
+  });
+});
+
+describe('useFiringAlerts loading settledness', () => {
+  it('never reports loading=false before the alerts fetch has settled', async () => {
+    // Teams respond instantly (beforeEach mockTeams([])). Delay ONLY the alerts response so the
+    // candidate window — the render where teamsLoading flips false and the query leaves skipToken —
+    // is observable. The dwell anchor latches on the first !loading render, so a loading bounce
+    // (false -> true) IS the premature-anchor bug where ms_since_load would include fetch time.
+    server.use(
+      http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', async () => {
+        await delay(150);
+        return HttpResponse.json([criticalAlert]);
+      })
+    );
+
+    const loadingHistory: boolean[] = [];
+    const Probe = () => {
+      const { loading } = useFiringAlerts();
+      loadingHistory.push(loading);
+      return <div data-testid="loading">{loading ? 'loading' : 'not-loading'}</div>;
+    };
+
+    render(<Probe />);
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('not-loading'));
+
+    const firstSettled = loadingHistory.indexOf(false);
+    expect(firstSettled).toBeGreaterThan(0);
+    expect(loadingHistory.slice(firstSettled)).not.toContain(true);
   });
 });
