@@ -262,8 +262,10 @@ const rrfK = 60
 // influences score, the rest are payload for RAG consumers.
 const maxChunksPerHybridResult = 10
 
-// maxRerankCandidates caps the scored pool (fused legs can reach 2x200) to one provider call
-const maxRerankCandidates = 200
+// maxRerankCandidates caps the scored pool (the fused legs can reach 2x the
+// per-leg depth) so reranking is always a single provider call: it tracks
+// maxVectorSearchLimit but can never exceed Vertex's 200-records/call cap.
+const maxRerankCandidates = min(maxVectorSearchLimit, 200)
 
 type lexicalHit struct {
 	uid    string
