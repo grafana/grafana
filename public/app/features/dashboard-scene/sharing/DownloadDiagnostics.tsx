@@ -18,6 +18,7 @@ import {
 import { type DataQuery } from '@grafana/schema';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 import { downloadDiagnosticsForQueries } from 'app/features/query/diagnostics/downloadDiagnostics';
+import { interpolateDiagnosticsQueries } from 'app/features/query/diagnostics/interpolateQueries';
 
 import { type SceneShareTabState, type ShareView } from './types';
 
@@ -86,18 +87,31 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
     // the normal /api/ds/query path nothing fills that in here. Copy the runner-level datasource
     // onto any query that lacks one so the diagnostics endpoint can still route them.
     const runnerDatasource = runner?.state.datasource;
-    const queries: DataQuery[] = (runner?.state.queries ?? []).map((query) =>
+    const rawQueries: DataQuery[] = (runner?.state.queries ?? []).map((query) =>
       query.datasource ? query : { ...query, datasource: runnerDatasource }
     );
-    // Known limitation (follow-up): template variables are sent un-interpolated, so captured
-    // traffic won't match a panel that uses $vars until per-datasource interpolation is applied.
-    if (queries.filter((query) => !query.hide).length === 0) {
+    if (rawQueries.filter((query) => !query.hide).length === 0) {
       throw new Error(t('dashboard.diagnostics.no-queries', 'This panel has no active queries to capture.'));
+    }
+    // Create the controller before interpolating: interpolation awaits datasource round trips, so a
+    // cancel or drawer unmount during that phase must abort here rather than no-op against a null ref
+    // and let the download start after the UI is gone.
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    // Interpolate template and scoped variables so the captured request matches the request the
+    // panel actually ran; scopedVars carries the panel so scene variables (including a repeated
+    // panel's clone-local value) resolve correctly.
+    const queries = await interpolateDiagnosticsQueries(
+      rawQueries,
+      { __sceneObject: { value: panel } },
+      runner?.state.data?.request?.filters
+    );
+    if (controller.signal.aborted) {
+      return;
     }
     const timeRange = sceneGraph.getTimeRange(panel).state.value;
 
-    const controller = new AbortController();
-    abortRef.current = controller;
     await downloadDiagnosticsForQueries(
       queries,
       String(timeRange.from.valueOf()),
