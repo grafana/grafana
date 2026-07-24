@@ -5,7 +5,6 @@ import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   type SceneObjectState,
   SceneObjectBase,
@@ -46,14 +45,7 @@ import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboard
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
 import { ShareDashboardButton } from './new-toolbar/actions/ShareDashboardButton';
 
-function getPanelEditVariables(
-  dashboard: DashboardScene,
-  sectionVariablesEnabled: boolean
-): SceneVariable[] | undefined {
-  if (!sectionVariablesEnabled) {
-    return undefined;
-  }
-
+function getPanelEditVariables(dashboard: DashboardScene): SceneVariable[] | undefined {
   const viewPanelKey = dashboard.state.viewPanel;
   const panel =
     dashboard.state.editPanel?.state.panelRef?.resolve() ??
@@ -185,13 +177,7 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
 
   public hasControls(): boolean {
     const dashboard = getDashboardSceneFor(this);
-    // OpenFeature is not initialized for anonymous users, so fall back to
-    // the static feature toggle to ensure section variables work without auth.
-    const sectionVariablesEnabled = getFeatureFlagClient().getBooleanValue(
-      FlagKeys.DashboardSectionVariables,
-      Boolean(config.featureToggles.dashboardSectionVariables)
-    );
-    const panelEditVariables = getPanelEditVariables(dashboard, sectionVariablesEnabled);
+    const panelEditVariables = getPanelEditVariables(dashboard);
     const variables = panelEditVariables ?? sceneGraph.getVariables(this)?.state.variables ?? [];
     const hasVariables = variables.some((v) => v.state.hide !== VariableHide.hideVariable);
     const hasAnnotations = sceneGraph.getDataLayers(this).some((d) => d.state.isEnabled && !d.state.isHidden);
@@ -222,13 +208,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const styles = useStyles2(getStyles, isQueryEditorNext);
   const showDebugger = window.location.search.includes('scene-debugger');
   const hasDashboardControls = useHasDashboardControls(dashboard);
-  // OpenFeature is not initialized for anonymous users, so fall back to
-  // the static feature toggle to ensure section variables work without auth.
-  const sectionVariablesEnabled = getFeatureFlagClient().getBooleanValue(
-    FlagKeys.DashboardSectionVariables,
-    Boolean(config.featureToggles.dashboardSectionVariables)
-  );
-  const panelEditVariables = getPanelEditVariables(dashboard, sectionVariablesEnabled);
+  const panelEditVariables = getPanelEditVariables(dashboard);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
 

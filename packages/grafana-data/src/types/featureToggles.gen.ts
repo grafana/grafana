@@ -119,11 +119,6 @@ export interface FeatureToggles {
   */
   mlExpressions?: boolean;
   /**
-  * Expose some datasources as apiservers.
-  * @default false
-  */
-  datasourceAPIServers?: boolean;
-  /**
   * Register experimental APIs with the k8s API server, including all datasources
   * @default false
   */
@@ -198,11 +193,6 @@ export interface FeatureToggles {
   * @default false
   */
   externalSnapshotsSupportLegacyAPI?: boolean;
-  /**
-  * Routes library panel requests from /api to the /apis endpoint
-  * @default false
-  */
-  kubernetesLibraryPanels?: boolean;
   /**
   * Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
   * @default true
@@ -390,7 +380,7 @@ export interface FeatureToggles {
   jitterAlertRulesWithinGroups?: boolean;
   /**
   * Enable audit logging with Kubernetes under app platform
-  * @default false
+  * @default true
   */
   auditLoggingAppPlatform?: boolean;
   /**

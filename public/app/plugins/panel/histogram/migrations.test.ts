@@ -59,4 +59,17 @@ describe('Histogram migrations', () => {
     expect(panel.fieldConfig.defaults.custom.stacking.mode).toBe(StackingMode.Normal);
     expect(panel.options.combine).toBe(false);
   });
+
+  it('returns empty options when migrating from a non-graph panel', () => {
+    const panel = {} as PanelModel;
+    const options = changeToHistogramPanelMigrationHandler(panel, 'timeseries', {}, prevFieldConfig);
+    expect(options).toEqual({});
+  });
+
+  it('returns empty options when migrating from graph with non-histogram xaxis mode', () => {
+    const panel = {} as PanelModel;
+    const old = { angular: { xaxis: { mode: 'time' } } };
+    const options = changeToHistogramPanelMigrationHandler(panel, 'graph', old, prevFieldConfig);
+    expect(options).toEqual({});
+  });
 });

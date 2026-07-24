@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -50,7 +51,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 		}
 		cfgProvider, err := configprovider.ProvideService(cfg)
 		require.NoError(t, err)
-		quotaService := quotaimpl.ProvideService(context.Background(), sqlStore, cfgProvider)
+		quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(sqlStore), cfgProvider)
 		orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
@@ -499,7 +500,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				sqlStore = db.InitTestDB(t)
 				cfgProvider, err := configprovider.ProvideService(cfg)
 				require.NoError(t, err)
-				quotaService := quotaimpl.ProvideService(context.Background(), sqlStore, cfgProvider)
+				quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(sqlStore), cfgProvider)
 				orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 				require.NoError(t, err)
 				userSvc, err := userimpl.ProvideService(
@@ -655,7 +656,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 
 		cfgProvider, err := configprovider.ProvideService(cfg)
 		require.NoError(t, err)
-		quotaService := quotaimpl.ProvideService(context.Background(), store, cfgProvider)
+		quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(store), cfgProvider)
 		orgSvc, err := orgimpl.ProvideService(store, cfg, quotaService)
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(

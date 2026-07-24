@@ -1468,7 +1468,7 @@ func TestIntegrationFolderDeletionBlockedByLibraryElements(t *testing.T) {
 		DisableAnonymous:     true,
 		APIServerStorageType: "unified",
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagKubernetesLibraryPanels,
+			featuremgmt.FlagLibraryelementsKubernetesLibraryPanels,
 		},
 	})
 
@@ -1534,7 +1534,7 @@ func TestIntegrationRootFolderDeletionBlockedByLibraryElementsInSubfolder(t *tes
 		DisableAnonymous:     true,
 		APIServerStorageType: "unified",
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagKubernetesLibraryPanels,
+			featuremgmt.FlagLibraryelementsKubernetesLibraryPanels,
 		},
 	})
 
