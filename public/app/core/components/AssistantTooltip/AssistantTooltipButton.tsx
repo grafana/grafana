@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { ASSISTANT_PLUGIN_ID, useAssistant } from '@grafana/assistant';
 import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, store } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { Trans } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
 import {
   getComponentMetaFromComponentId,
@@ -74,7 +74,7 @@ export function AssistantTooltipButton({
   return (
     <div className={styles.footerSection}>
       <Button icon="ai-sparkle" variant="secondary" size="sm" onClick={handleClick}>
-        {t('assistant-tooltip.add-to-assistant', 'Add to Assistant')}
+        <Trans i18nKey="assistant-tooltip.add-to-assistant">Add to Assistant</Trans>
       </Button>
     </div>
   );

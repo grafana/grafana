@@ -22,11 +22,13 @@ jest.mock('app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvid
   useExtensionSidebarContext: jest.fn(),
 }));
 
-const mockUseAssistant = useAssistant as jest.MockedFunction<typeof useAssistant>;
-const mockCreateContextItem = createAssistantContextItem as jest.MockedFunction<typeof createAssistantContextItem>;
-const mockUseExtensionSidebarContext = useExtensionSidebarContext as jest.MockedFunction<
-  typeof useExtensionSidebarContext
->;
+const POINT_1_MS = Date.UTC(2026, 6, 24, 12, 0, 0);
+const POINT_2_MS = Date.UTC(2026, 6, 24, 12, 1, 0);
+const POINT_2_ISO = new Date(POINT_2_MS).toISOString();
+
+const mockUseAssistant = jest.mocked(useAssistant);
+const mockCreateContextItem = jest.mocked(createAssistantContextItem);
+const mockUseExtensionSidebarContext = jest.mocked(useExtensionSidebarContext);
 
 function setSidebar(open: boolean, pluginId = 'grafana-assistant-app') {
   mockUseExtensionSidebarContext.mockReturnValue({
@@ -43,7 +45,7 @@ function makeSeries() {
   const frame = createDataFrame({
     refId: 'A',
     fields: [
-      { name: 'time', type: FieldType.time, values: [1000, 2000] },
+      { name: 'time', type: FieldType.time, values: [POINT_1_MS, POINT_2_MS] },
       {
         name: 'cpu',
         type: FieldType.number,
@@ -97,7 +99,7 @@ describe('AssistantTooltipButton', () => {
         dataIdxs={[1, 1]}
         replaceVariables={(s) => s}
         context={makeContext()}
-        xVal={2000}
+        xVal={POINT_2_MS}
       />
     );
 
@@ -120,7 +122,7 @@ describe('AssistantTooltipButton', () => {
         dataIdxs={[1, 1]}
         replaceVariables={(s) => s}
         context={makeContext()}
-        xVal={2000}
+        xVal={POINT_2_MS}
       />
     );
 
@@ -144,7 +146,7 @@ describe('AssistantTooltipButton', () => {
         dataIdxs={[1, 1]}
         replaceVariables={(s) => s}
         context={makeContext()}
-        xVal={2000}
+        xVal={POINT_2_MS}
       />
     );
 
@@ -156,7 +158,7 @@ describe('AssistantTooltipButton', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           kind: 'viz-datapoint',
-          point: expect.objectContaining({ value: 42, timestamp: '1970-01-01T00:00:02.000Z' }),
+          point: expect.objectContaining({ value: 42, timestamp: POINT_2_ISO }),
           series: expect.objectContaining({
             name: 'cpu host-a',
             refId: 'A',
@@ -197,7 +199,7 @@ describe('AssistantTooltipButton', () => {
         dataIdxs={[1, 1]}
         replaceVariables={(s) => s}
         context={makeContext()}
-        xVal={2000}
+        xVal={POINT_2_MS}
       />
     );
 
@@ -228,7 +230,7 @@ describe('AssistantTooltipButton', () => {
         dataIdxs={[1, 1]}
         replaceVariables={(s) => s}
         context={makeContext()}
-        xVal={2000}
+        xVal={POINT_2_MS}
       />
     );
 
@@ -261,7 +263,7 @@ describe('AssistantTooltipButton', () => {
         dataIdxs={[1, 1]}
         replaceVariables={(s) => s}
         context={makeContext()}
-        xVal={2000}
+        xVal={POINT_2_MS}
       />
     );
 
