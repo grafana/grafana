@@ -1,7 +1,6 @@
-import { type DataQuery, type DataSourceInstanceListItem, dateTime, type TimeRange } from '@grafana/data';
+import { type DataSourceInstanceListItem } from '@grafana/data';
 
-import { findDatasourceWithData, listProbeCandidates, PROBE_TIMEOUT_MS, withRetry } from './probeUtils';
-import { runDatasourceQueries } from './promQuery';
+import { findDatasourceWithData, listProbeCandidates, probeProxyGet } from './probeUtils';
 
 // "Seen recently" lookback shared by all data probes, tolerating scrape/ingest gaps.
 export const DATA_LOOKBACK_HOURS = 24;
@@ -37,21 +36,19 @@ export async function probeFound(
   return null;
 }
 
-interface TempoSearchQuery extends DataQuery {
-  query: string;
-  limit: number;
+interface TempoSearchResponse {
+  traces?: unknown[];
 }
 
-export async function tempoHasTraces(ds: DataSourceInstanceListItem): Promise<boolean> {
-  const toTime = dateTime();
-  const fromTime = dateTime().subtract(DATA_LOOKBACK_HOURS, 'h');
-  const range: TimeRange = {
-    from: fromTime,
-    to: toTime,
-    raw: { from: `now-${DATA_LOOKBACK_HOURS}h`, to: 'now' },
-  };
-  // Tempo search target: match-all TraceQL, one result is enough to prove data exists.
-  const target: TempoSearchQuery = { refId: 'traces', queryType: 'traceql', query: '{}', limit: 1 };
-  const frames = await withRetry(() => runDatasourceQueries([target], range, ds, PROBE_TIMEOUT_MS));
-  return frames.some((frame) => frame.length > 0);
+/**
+ * One matching trace in the lookback proves data exists. Probes Tempo's search HTTP API through
+ * the datasource proxy: the frontend query path reads streamed search responses as non-empty
+ * frames on empty stores (observed live with traceQLStreaming), and the resource router 404s
+ * Tempo API paths on cloud stacks.
+ */
+export async function tempoHasTraces(ds: Pick<DataSourceInstanceListItem, 'uid'>): Promise<boolean> {
+  const end = Math.floor(Date.now() / 1000);
+  const start = end - DATA_LOOKBACK_HOURS * 3600;
+  const res = await probeProxyGet<TempoSearchResponse>(ds.uid, 'api/search', { q: '{}', limit: 1, start, end });
+  return Array.isArray(res?.traces) && res.traces.length > 0;
 }

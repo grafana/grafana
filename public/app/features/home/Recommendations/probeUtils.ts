@@ -1,5 +1,5 @@
 import { type DataSourceInstanceListItem } from '@grafana/data';
-import { DataSourceWithBackend } from '@grafana/runtime';
+import { DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import { getDataSourceInstance, getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 /** Cap the probe fan-out: only the first N candidates (in priority order) are probed per page load. */
@@ -29,6 +29,18 @@ const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve,
 export async function resolveBackendInstance(uid: string): Promise<DataSourceWithBackend | null> {
   const instance = await getDataSourceInstance({ uid });
   return instance instanceof DataSourceWithBackend ? instance : null;
+}
+
+/**
+ * GET through the classic datasource proxy with the probe retry/timeout policy. Expected to
+ * fail on stacks without the endpoint; never toasts. Some datasource backends (e.g. Tempo)
+ * serve their HTTP API only here, not on the resource router.
+ */
+export async function probeProxyGet<T>(uid: string, path: string, params: Record<string, unknown>): Promise<T> {
+  const url = `/api/datasources/proxy/uid/${encodeURIComponent(uid)}/${path}`;
+  return withRetry(() =>
+    withTimeout(getBackendSrv().get<T>(url, params, undefined, { showErrorAlert: false }), PROBE_TIMEOUT_MS)
+  );
 }
 
 export async function withRetry<T>(fn: () => Promise<T>): Promise<T> {

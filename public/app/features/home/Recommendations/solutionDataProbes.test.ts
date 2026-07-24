@@ -1,21 +1,21 @@
-import { createDataFrame, type DataSourceInstanceListItem, FieldType } from '@grafana/data';
+import { type DataSourceInstanceListItem } from '@grafana/data';
+import { type BackendSrv, getBackendSrv } from '@grafana/runtime';
 import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
-import { runDatasourceQueries } from './promQuery';
 import { probeFound, tempoHasTraces } from './solutionDataProbes';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: jest.fn(),
+}));
 
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstanceList: jest.fn(),
 }));
 
-jest.mock('./promQuery', () => ({
-  ...jest.requireActual('./promQuery'),
-  runDatasourceQueries: jest.fn(),
-}));
-
 const mockList = jest.mocked(getDataSourceInstanceList);
-const mockQueries = jest.mocked(runDatasourceQueries);
+const mockProxyGet = jest.fn();
 
 function datasource(type: string, name = `${type}-ds`): DataSourceInstanceListItem {
   return {
@@ -29,8 +29,15 @@ function datasource(type: string, name = `${type}-ds`): DataSourceInstanceListIt
 }
 
 beforeEach(() => {
+  jest.useFakeTimers();
+  jest.setSystemTime(new Date('2026-07-24T12:00:00Z'));
   mockList.mockReset();
-  mockQueries.mockReset();
+  mockProxyGet.mockReset();
+  jest.mocked(getBackendSrv).mockReturnValue({ get: mockProxyGet } as unknown as BackendSrv);
+});
+
+afterEach(() => {
+  jest.useRealTimers();
 });
 
 describe('probeFound', () => {
@@ -82,24 +89,33 @@ describe('probeFound', () => {
 });
 
 describe('tempoHasTraces', () => {
-  it('reports data when a Tempo search returns a trace', async () => {
-    mockQueries.mockResolvedValue([
-      createDataFrame({ refId: 'traces', fields: [{ name: 'traceID', type: FieldType.string, values: ['abc'] }] }),
-    ]);
+  it('reports data when the Tempo search API returns a trace', async () => {
+    mockProxyGet.mockResolvedValue({ traces: [{ traceID: 'abc' }] });
 
     await expect(tempoHasTraces(datasource('tempo'))).resolves.toBe(true);
 
-    expect(mockQueries).toHaveBeenCalledWith(
-      [{ refId: 'traces', queryType: 'traceql', query: '{}', limit: 1 }],
-      expect.objectContaining({ raw: { from: 'now-24h', to: 'now' } }),
-      expect.objectContaining({ type: 'tempo' }),
-      expect.any(Number)
+    const end = Math.floor(Date.now() / 1000);
+    expect(mockProxyGet).toHaveBeenCalledWith(
+      '/api/datasources/proxy/uid/tempo-ds/api/search',
+      { q: '{}', limit: 1, start: end - 24 * 3600, end },
+      undefined,
+      { showErrorAlert: false }
     );
   });
 
   it('reports no data when the Tempo search is empty', async () => {
-    mockQueries.mockResolvedValue([]);
+    mockProxyGet.mockResolvedValue({ traces: [] });
 
     await expect(tempoHasTraces(datasource('tempo'))).resolves.toBe(false);
+  });
+
+  it('throws when the search endpoint keeps failing', async () => {
+    mockProxyGet.mockRejectedValue(new Error('HTTP 404'));
+
+    const promise = tempoHasTraces(datasource('tempo'));
+    // Sink the rejection before the retry sleeps run out, or Jest flags it as unhandled.
+    const outcome = expect(promise).rejects.toThrow('HTTP 404');
+    await jest.advanceTimersByTimeAsync(5_000);
+    await outcome;
   });
 });

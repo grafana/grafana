@@ -1,5 +1,5 @@
 import { createDataFrame, type DataSourceInstanceListItem, FieldType } from '@grafana/data';
-import { type DataSourceWithBackend } from '@grafana/runtime';
+import { type BackendSrv, type DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 
 import { resolveBackendInstance } from './probeUtils';
 import { runDatasourceQueries } from './promQuery';
@@ -21,8 +21,14 @@ jest.mock('./promQuery', () => ({
   runDatasourceQueries: jest.fn(),
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: jest.fn(),
+}));
+
 const mockResolveBackendInstance = jest.mocked(resolveBackendInstance);
 const mockRunDatasourceQueries = jest.mocked(runDatasourceQueries);
+const mockProxyGet = jest.fn();
 
 const DATA_LOOKBACK_HOURS = 24;
 const NS_IN_MS = 1e6;
@@ -39,6 +45,8 @@ beforeEach(() => {
   jest.setSystemTime(new Date('2026-07-24T12:00:00Z'));
   mockResolveBackendInstance.mockReset();
   mockRunDatasourceQueries.mockReset();
+  mockProxyGet.mockReset();
+  jest.mocked(getBackendSrv).mockReturnValue({ get: mockProxyGet } as unknown as BackendSrv);
 });
 
 afterEach(() => {
@@ -179,17 +187,18 @@ describe('fetchLogsVolumeSeries', () => {
 });
 
 describe('fetchTracesServices', () => {
-  it('counts tag values over the lookback in unix seconds', async () => {
-    const getResource = jest.fn(async () => ({ tagValues: [{ value: 'a' }, { value: 'b' }] }));
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+  it('counts tag values through the datasource proxy over the lookback in unix seconds', async () => {
+    mockProxyGet.mockResolvedValue({ tagValues: [{ value: 'a' }, { value: 'b' }] });
 
     await expect(fetchTracesServices(tempo)).resolves.toBe(2);
 
     const end = Math.floor(Date.now() / 1000);
-    expect(getResource).toHaveBeenCalledWith('api/v2/search/tag/resource.service.name/values', {
-      start: end - DATA_LOOKBACK_HOURS * 3600,
-      end,
-    });
+    expect(mockProxyGet).toHaveBeenCalledWith(
+      '/api/datasources/proxy/uid/tempo-uid/api/v2/search/tag/resource.service.name/values',
+      { start: end - DATA_LOOKBACK_HOURS * 3600, end },
+      undefined,
+      { showErrorAlert: false }
+    );
   });
 });
 

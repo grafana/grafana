@@ -10,7 +10,7 @@ import {
 } from '@grafana/data';
 import { type DataSourceWithBackend } from '@grafana/runtime';
 
-import { PROBE_TIMEOUT_MS, resolveBackendInstance, withRetry, withTimeout } from './probeUtils';
+import { probeProxyGet, PROBE_TIMEOUT_MS, resolveBackendInstance, withRetry, withTimeout } from './probeUtils';
 import { readSeries, runDatasourceQueries } from './promQuery';
 import { DATA_LOOKBACK_HOURS } from './solutionDataProbes';
 
@@ -123,15 +123,14 @@ export async function fetchLogsVolumeSeries(
   return { x, y: { ...y, state: { range: getMinMaxAndDelta(y) } } };
 }
 
-/** Distinct services seen by Tempo in the lookback, or null when the lookup fails. */
+/**
+ * Distinct services seen by Tempo in the lookback, or null when the lookup fails. Uses the
+ * datasource proxy: Tempo's resource router 404s these paths on cloud stacks.
+ */
 export async function fetchTracesServices(ds: Pick<DataSourceInstanceListItem, 'uid'>): Promise<number | null> {
-  const instance = await resolveBackendInstance(ds.uid);
-  if (!instance) {
-    return null;
-  }
   const end = Math.floor(Date.now() / 1000);
   const start = end - DATA_LOOKBACK_HOURS * 3600;
-  const res = await getResource<TempoTagValuesResponse>(instance, 'api/v2/search/tag/resource.service.name/values', {
+  const res = await probeProxyGet<TempoTagValuesResponse>(ds.uid, 'api/v2/search/tag/resource.service.name/values', {
     start,
     end,
   });
