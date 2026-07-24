@@ -120,9 +120,21 @@ jobs:
           set -euo pipefail
 
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
+          SHARD_SAFE="${SHARD//\//-}"
+          echo "SHARD_SAFE=$SHARD_SAFE" >> "$GITHUB_ENV"
           # This tee requires pipefail to be set, otherwise `go test`'s exit code is thrown away.
           # That means having no `-o pipefail` => failing tests => exit code 0, which is wrong.
-          CGO_ENABLED=0 go test -vet=off -short -timeout=30m "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -vet=off -short -timeout=30m \
+            -covermode=atomic -coverprofile="coverage-unit-${SHARD_SAFE}.out" \
+            "${PACKAGES[@]}"
+
+      - name: Upload unit coverage profile
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08  # v4.6.0
+        with:
+          name: coverage-unit-${{ env.SHARD_SAFE }}
+          path: coverage-unit-${{ env.SHARD_SAFE }}.out
+          retention-days: 14
 
   # This is the job that is actually required by rulesets.
   # We need to require EITHER the OSS or the Enterprise job to pass.

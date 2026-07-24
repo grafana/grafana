@@ -228,7 +228,19 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d -)"
-          go test -vet=off -tags=enterprise -timeout=16m -run '^TestIntegration' "${PACKAGES[@]}"
+          SHARD_SAFE="${SHARD//\//-}"
+          echo "SHARD_SAFE=$SHARD_SAFE" >> "$GITHUB_ENV"
+          go test -vet=off -tags=enterprise -timeout=16m -run '^TestIntegration' \
+            -covermode=atomic -coverprofile="coverage-integration-${SHARD_SAFE}.out" \
+            "${PACKAGES[@]}"
+
+      - name: Upload integration coverage profile
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08  # v4.6.0
+        with:
+          name: coverage-integration-${{ env.SHARD_SAFE }}
+          path: coverage-integration-${{ env.SHARD_SAFE }}.out
+          retention-days: 14
 
   mysql-enterprise:
     # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
