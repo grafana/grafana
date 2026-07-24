@@ -17,7 +17,7 @@ jest.mock('app/features/search/state/SearchStateManager', () => ({
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasPermission: jest.fn(() => true),
-    user: { uid: 1, orgId: 1 },
+    user: { uid: 1, orgId: 1, gravatarUrl: '' },
   },
 }));
 
