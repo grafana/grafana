@@ -35,11 +35,33 @@ func (PlaylistPlaylistItem) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistPlaylistItem"
 }
 
+// A named set of dashboard query parameters (variables and time range) applied during playlist playback
+// +k8s:openapi-gen=true
+type PlaylistPlaylistVariableSet struct {
+	// Optional display name for this variable set.
+	Name *string `json:"name,omitempty"`
+	// Query parameters to append when opening each playlist dashboard. Use var-<name> for dashboard variables and from/to for time range overrides.
+	QueryParams map[string]string `json:"queryParams"`
+}
+
+// NewPlaylistPlaylistVariableSet creates a new PlaylistPlaylistVariableSet object.
+func NewPlaylistPlaylistVariableSet() *PlaylistPlaylistVariableSet {
+	return &PlaylistPlaylistVariableSet{
+		QueryParams: map[string]string{},
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for PlaylistPlaylistVariableSet.
+func (PlaylistPlaylistVariableSet) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistPlaylistVariableSet"
+}
+
 // +k8s:openapi-gen=true
 type PlaylistSpec struct {
-	Title    string         `json:"title"`
-	Interval string         `json:"interval"`
-	Items    []PlaylistItem `json:"items"`
+	Title        string                        `json:"title"`
+	Interval     string                        `json:"interval"`
+	Items        []PlaylistItem                `json:"items"`
+	VariableSets []PlaylistPlaylistVariableSet `json:"variableSets,omitempty"`
 }
 
 // NewPlaylistSpec creates a new PlaylistSpec object.

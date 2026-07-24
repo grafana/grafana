@@ -12876,7 +12876,12 @@
       "table-delete": "Delete playlist item",
       "table-drag": "Reorder playlist item",
       "table-empty": "Playlist is empty. Add dashboards below.",
-      "table-heading": "Dashboards"
+      "table-heading": "Dashboards",
+      "variable-sets-array-required": "Variable sets must be a JSON array",
+      "variable-sets-description": "Optional JSON array. Each set is applied to every dashboard in the playlist. Use query parameters such as var-host for dashboard variables and from/to for time range overrides.",
+      "variable-sets-json-required": "Variable sets must be valid JSON",
+      "variable-sets-label": "Variable and time range sets",
+      "variable-sets-query-params-required": "Each variable set must include queryParams"
     },
     "sub-title": "A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.",
     "title": "Edit playlist"

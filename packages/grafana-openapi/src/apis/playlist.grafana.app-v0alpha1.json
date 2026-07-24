@@ -1098,6 +1098,25 @@
         },
         "additionalProperties": false
       },
+      "PlaylistPlaylistVariableSet": {
+        "description": "A named set of dashboard query parameters (variables and time range) applied during playlist playback",
+        "type": "object",
+        "required": ["queryParams"],
+        "properties": {
+          "name": {
+            "description": "Optional display name for this variable set.",
+            "type": "string"
+          },
+          "queryParams": {
+            "description": "Query parameters to append when opening each playlist dashboard. Use var-<name> for dashboard variables and from/to for time range overrides.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
       "PlaylistSpec": {
         "type": "object",
         "required": ["title", "interval", "items"],
@@ -1113,6 +1132,12 @@
           },
           "title": {
             "type": "string"
+          },
+          "variableSets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlaylistPlaylistVariableSet"
+            }
           }
         },
         "additionalProperties": false

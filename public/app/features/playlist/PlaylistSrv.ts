@@ -20,6 +20,14 @@ const queryParamsToPreserve: { [key: string]: boolean } = {
   '_dash.hidePlaylistNav': true,
 };
 
+function addQueryParams(url: string, params?: Record<string, string>) {
+  if (!params || Object.keys(params).length === 0) {
+    return url;
+  }
+
+  return urlUtil.renderUrl(url, params);
+}
+
 export interface PlaylistSrvState {
   isPlaying: boolean;
 }
@@ -44,13 +52,19 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
     const url = this.urls[this.index];
     const queryParams = locationService.getSearchObject();
     const filteredParams = pickBy(queryParams, (value: unknown, key: string) => queryParamsToPreserve[key]);
-    const nextDashboardUrl = locationUtil.stripBaseFromUrl(url);
+    // Dashboard URLs may carry their own query params (e.g. variable/time range sets applied
+    // during playback), so split them off and merge them with the preserved runtime params.
+    const [nextDashboardUrl, nextDashboardQuery] = locationUtil.stripBaseFromUrl(url).split('?');
+    const dashboardParams = urlUtil.toUrlParams({
+      ...urlUtil.parseKeyValue(nextDashboardQuery ?? ''),
+      ...filteredParams,
+    });
 
     this.index++;
     this.validPlaylistUrl = nextDashboardUrl;
     this.nextTimeoutId = setTimeout(() => this.next(), this.interval);
 
-    const urlWithParams = nextDashboardUrl + '?' + urlUtil.toUrlParams(filteredParams);
+    const urlWithParams = dashboardParams ? `${nextDashboardUrl}?${dashboardParams}` : nextDashboardUrl;
 
     // When starting the playlist from the PlaylistStartPage component using the playlist URL, we want to replace the
     // history entry to support the back button
@@ -113,10 +127,18 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
     this.interval = rangeUtil.intervalToMs(playlist.spec?.interval);
 
     const items = await loadDashboards(playlist.spec?.items);
+    const variableSets = playlist.spec.variableSets?.filter((set) => Object.keys(set.queryParams).length > 0);
     for (const item of items) {
       if (item.dashboards) {
         for (const dash of item.dashboards) {
-          urls.push(dash.url);
+          if (variableSets?.length) {
+            // Show each dashboard once per configured variable/time range set
+            for (const variableSet of variableSets) {
+              urls.push(addQueryParams(dash.url, variableSet.queryParams));
+            }
+          } else {
+            urls.push(dash.url);
+          }
         }
       }
     }

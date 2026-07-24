@@ -1172,6 +1172,27 @@
         },
         "additionalProperties": false
       },
+      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistPlaylistVariableSet": {
+        "description": "A named set of dashboard query parameters (variables and time range) applied during playlist playback",
+        "type": "object",
+        "required": [
+          "queryParams"
+        ],
+        "properties": {
+          "name": {
+            "description": "Optional display name for this variable set.",
+            "type": "string"
+          },
+          "queryParams": {
+            "description": "Query parameters to append when opening each playlist dashboard. Use var-\u003cname\u003e for dashboard variables and from/to for time range overrides.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
       "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistSpec": {
         "type": "object",
         "required": [
@@ -1191,6 +1212,12 @@
           },
           "title": {
             "type": "string"
+          },
+          "variableSets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistPlaylistVariableSet"
+            }
           }
         },
         "additionalProperties": false
