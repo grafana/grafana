@@ -29,7 +29,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
         'timeseries.legend.description-faceted-filter',
         'Enable filter to display series based on labels or names'
       ),
-      defaultValue: false,
       showIf: (c) => c.legend.showLegend,
     });
 
