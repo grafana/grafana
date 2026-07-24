@@ -1,4 +1,4 @@
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { type BackendSrv, type BackendSrvRequest, type FetchResponse } from 'src/services';
 
 import {
@@ -69,6 +69,16 @@ jest.mock('../services', () => ({
     };
   },
 }));
+const mockGetDataSourceInstanceSettings = jest.fn<{ type: string; uid: string } | undefined, [DataSourceRef?]>(
+  (ref) => ({
+    type: ref?.type ?? '<mocktype>',
+    uid: ref?.uid ?? '<mockuid>',
+  })
+);
+jest.mock('./../unstable', () => ({
+  ...jest.requireActual('./../unstable'),
+  getDataSourceInstanceSettings: (ref?: DataSourceRef) => mockGetDataSourceInstanceSettings(ref),
+}));
 jest.mock('./publicDashboardQueryHandler');
 
 const mockIsQueryServiceCompatible = jest.fn().mockReturnValue(false);
@@ -97,18 +107,20 @@ describe('DataSourceWithBackend', () => {
     jest.useRealTimers();
   });
 
-  test('check the executed queries', () => {
+  test('check the executed queries', async () => {
     const { mock, ds } = createMockDatasource();
-    ds.query({
-      maxDataPoints: 10,
-      intervalMs: 5000,
-      targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
-      dashboardUID: 'dashA',
-      panelId: 123,
-      filters: [{ key: 'key1', operator: '=', value: 'val1' }],
-      range: getDefaultTimeRange(),
-      queryGroupId: 'abc',
-    } as DataQueryRequest);
+    await firstValueFrom(
+      ds.query({
+        maxDataPoints: 10,
+        intervalMs: 5000,
+        targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
+        dashboardUID: 'dashA',
+        panelId: 123,
+        filters: [{ key: 'key1', operator: '=', value: 'val1' }],
+        range: getDefaultTimeRange(),
+        queryGroupId: 'abc',
+      } as DataQueryRequest)
+    );
 
     const args = mock.calls[0][0];
 
@@ -166,27 +178,46 @@ describe('DataSourceWithBackend', () => {
     `);
   });
 
-  test('correctly passes datasource headers', () => {
+  test('surfaces an error when a query targets an unknown datasource', async () => {
+    const { ds } = createMockDatasource();
+    // the async settings lookup returning undefined means the datasource does not exist
+    mockGetDataSourceInstanceSettings.mockReturnValueOnce(undefined);
+
+    await expect(
+      firstValueFrom(
+        ds.query({
+          maxDataPoints: 10,
+          intervalMs: 5000,
+          targets: [{ refId: 'A', datasource: { type: 'unknown', uid: 'does-not-exist' } }],
+          range: getDefaultTimeRange(),
+        } as DataQueryRequest)
+      )
+    ).rejects.toThrow('Unknown Datasource');
+  });
+
+  test('correctly passes datasource headers', async () => {
     const { mock, ds } = createMockDatasource();
-    ds.query({
-      maxDataPoints: 10,
-      intervalMs: 5000,
-      targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
-      dashboardUID: 'dashA',
-      panelId: 123,
-      filters: [{ key: 'key1', operator: '=', value: 'val1' }],
-      range: getDefaultTimeRange(),
-      queryGroupId: 'abc',
-      interval: '5s',
-      scopedVars: {},
-      timezone: '',
-      requestId: 'request-123',
-      startTime: 0,
-      app: '',
-      headers: {
-        'X-Test-Header': 'test',
-      },
-    });
+    await firstValueFrom(
+      ds.query({
+        maxDataPoints: 10,
+        intervalMs: 5000,
+        targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
+        dashboardUID: 'dashA',
+        panelId: 123,
+        filters: [{ key: 'key1', operator: '=', value: 'val1' }],
+        range: getDefaultTimeRange(),
+        queryGroupId: 'abc',
+        interval: '5s',
+        scopedVars: {},
+        timezone: '',
+        requestId: 'request-123',
+        startTime: 0,
+        app: '',
+        headers: {
+          'X-Test-Header': 'test',
+        },
+      })
+    );
 
     const args = mock.calls[0][0];
 
@@ -245,18 +276,20 @@ describe('DataSourceWithBackend', () => {
     `);
   });
 
-  test('correctly passes dashboard and panel headers', () => {
+  test('correctly passes dashboard and panel headers', async () => {
     const { mock, ds } = createMockDatasource();
-    ds.query({
-      maxDataPoints: 10,
-      intervalMs: 5000,
-      targets: [{ refId: 'A' }],
-      dashboardUID: 'dashA',
-      dashboardTitle: 'My Test Dashboard',
-      panelId: 123,
-      panelName: 'CPU Usage Panel',
-      range: getDefaultTimeRange(),
-    } as DataQueryRequest);
+    await firstValueFrom(
+      ds.query({
+        maxDataPoints: 10,
+        intervalMs: 5000,
+        targets: [{ refId: 'A' }],
+        dashboardUID: 'dashA',
+        dashboardTitle: 'My Test Dashboard',
+        panelId: 123,
+        panelName: 'CPU Usage Panel',
+        range: getDefaultTimeRange(),
+      } as DataQueryRequest)
+    );
 
     const args = mock.calls[0][0];
 
@@ -298,17 +331,19 @@ describe('DataSourceWithBackend', () => {
     `);
   });
 
-  test('correctly creates expression queries', () => {
+  test('correctly creates expression queries', async () => {
     const { mock, ds } = createMockDatasource();
-    ds.query({
-      maxDataPoints: 10,
-      intervalMs: 5000,
-      targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: '__expr__' } }],
-      dashboardUID: 'dashA',
-      panelId: 123,
-      range: getDefaultTimeRange(),
-      queryGroupId: 'abc',
-    } as DataQueryRequest);
+    await firstValueFrom(
+      ds.query({
+        maxDataPoints: 10,
+        intervalMs: 5000,
+        targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: '__expr__' } }],
+        dashboardUID: 'dashA',
+        panelId: 123,
+        range: getDefaultTimeRange(),
+        queryGroupId: 'abc',
+      } as DataQueryRequest)
+    );
 
     const args = mock.calls[0][0];
 
@@ -358,31 +393,35 @@ describe('DataSourceWithBackend', () => {
     `);
   });
 
-  test('should apply template variables only for the current data source', () => {
+  test('should apply template variables only for the current data source', async () => {
     const { mock, ds } = createMockDatasource();
     ds.applyTemplateVariables = jest.fn();
-    ds.query({
-      maxDataPoints: 10,
-      intervalMs: 5000,
-      range: getDefaultTimeRange(),
-      targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
-    } as DataQueryRequest);
+    await firstValueFrom(
+      ds.query({
+        maxDataPoints: 10,
+        intervalMs: 5000,
+        range: getDefaultTimeRange(),
+        targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
+      } as DataQueryRequest)
+    );
 
     expect(mock.calls.length).toBe(1);
     expect(ds.applyTemplateVariables).toHaveBeenCalledTimes(1);
   });
 
-  test('check that the executed queries is hidden from inspector', () => {
+  test('check that the executed queries is hidden from inspector', async () => {
     const { mock, ds } = createMockDatasource();
-    ds.query({
-      maxDataPoints: 10,
-      intervalMs: 5000,
-      targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
-      hideFromInspector: true,
-      dashboardUID: 'dashA',
-      range: getDefaultTimeRange(),
-      panelId: 123,
-    } as DataQueryRequest);
+    await firstValueFrom(
+      ds.query({
+        maxDataPoints: 10,
+        intervalMs: 5000,
+        targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
+        hideFromInspector: true,
+        dashboardUID: 'dashA',
+        range: getDefaultTimeRange(),
+        panelId: 123,
+      } as DataQueryRequest)
+    );
 
     const args = mock.calls[0][0];
 
@@ -635,23 +674,25 @@ describe('DataSourceWithBackend', () => {
     });
   });
 
-  test('check that queries can skip the query cache', () => {
+  test('check that queries can skip the query cache', async () => {
     const { mock, ds } = createMockDatasource();
-    ds.query({
-      maxDataPoints: 10,
-      intervalMs: 5000,
-      targets: [{ refId: 'A' }],
-      dashboardUID: 'dashA',
-      panelId: 123,
-      range: getDefaultTimeRange(),
-      skipQueryCache: true,
-      requestId: 'request-123',
-      interval: '5s',
-      scopedVars: {},
-      timezone: '',
-      app: '',
-      startTime: 0,
-    });
+    await firstValueFrom(
+      ds.query({
+        maxDataPoints: 10,
+        intervalMs: 5000,
+        targets: [{ refId: 'A' }],
+        dashboardUID: 'dashA',
+        panelId: 123,
+        range: getDefaultTimeRange(),
+        skipQueryCache: true,
+        requestId: 'request-123',
+        interval: '5s',
+        scopedVars: {},
+        timezone: '',
+        app: '',
+        startTime: 0,
+      })
+    );
 
     const args = mock.calls[0][0];
 
@@ -818,15 +859,17 @@ describe('DataSourceWithBackend', () => {
         [{ refId: 'A' }, { refId: 'B', datasource: loki }],
         ['dummy', 'loki'],
       ],
-    ])('%s', (_, targets, expectedTypes) => {
+    ])('%s', async (_, targets, expectedTypes) => {
       const { ds } = createMockDatasource();
 
-      ds.query({
-        maxDataPoints: 10,
-        intervalMs: 5000,
-        targets,
-        range: getDefaultTimeRange(),
-      } as DataQueryRequest);
+      await firstValueFrom(
+        ds.query({
+          maxDataPoints: 10,
+          intervalMs: 5000,
+          targets,
+          range: getDefaultTimeRange(),
+        } as DataQueryRequest)
+      );
 
       const { calls } = mockIsQueryServiceCompatible.mock;
       expect(calls).toHaveLength(1);
