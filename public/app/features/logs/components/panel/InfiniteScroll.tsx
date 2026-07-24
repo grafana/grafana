@@ -114,7 +114,6 @@ export const InfiniteScroll = ({
       // New logs have been returned from the load-more request.
       if (prevLogs !== logs) {
         const startCount = loadMoreCountRef.current;
-        // Reset tracking so the next scroll can start a fresh load-more.
         settledRef.current = false;
         loadMoreCountRef.current = null;
         const outOfBounds = startCount !== null && logs.length === startCount && infiniteScrollMode === 'interval';
