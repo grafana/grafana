@@ -50,7 +50,6 @@ jobs:
               - '!public/openapi3.json'
               # decoupled plugins are deployed via backend
               - '!public/app/plugins/datasource/azuremonitor/**'
-              - '!public/app/plugins/datasource/grafana-postgresql-datasource/**'
               - '!public/app/plugins/datasource/grafana-testdata-datasource/**'
               - '!public/app/plugins/datasource/graphite/**'
               - '!public/app/plugins/datasource/influxdb/**'
@@ -74,7 +73,6 @@ jobs:
               - '!pkg/services/featuremgmt/toggles_gen.json'
               # decoupled plugins are deployed via backend
               - 'public/app/plugins/datasource/azuremonitor/**'
-              - 'public/app/plugins/datasource/grafana-postgresql-datasource/**'
               - 'public/app/plugins/datasource/grafana-testdata-datasource/**'
               - 'public/app/plugins/datasource/graphite/**'
               - 'public/app/plugins/datasource/influxdb/**'

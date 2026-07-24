@@ -32,11 +32,11 @@ test.describe(
       const controls = new Controls({ page, dashboardPage, selectors, components });
       const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
-      const variable: Variable = {
+      const variable: Variable & { label: string } = {
         type: 'query',
         name: 'VariableUnderTest',
-        value: 'default',
         label: 'VariableUnderTest',
+        value: '',
       };
 
       await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
@@ -49,7 +49,7 @@ test.describe(
       await sidebar.variableOptions.query.runQuery();
 
       // Assert that at least 1 option is visible
-      const previewOptions = sidebar.variableOptions.getPreviewOptions();
+      const previewOptions = sidebar.variableOptions.query.getPreviewOfValues();
       await expect(previewOptions.first()).toBeVisible({ timeout: 15_000 });
 
       // Go to the "Static options" tab
@@ -81,7 +81,7 @@ test.describe(
       await sidebar.variableOptions.query.clickApplyButton();
 
       // Verify that the variable has the static options
-      await controls.variables.openDropdown(variable.label!);
+      await controls.variables.openDropdown(variable.label);
       await expect(controls.variables.getOption('Custom value one')).toBeVisible();
       await expect(controls.variables.getOption('Custom value two')).toBeVisible();
 

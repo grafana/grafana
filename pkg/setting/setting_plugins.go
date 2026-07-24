@@ -34,19 +34,20 @@ func extractPluginSettings(sections []*ini.Section) config.PluginSettings {
 var (
 	defaultPreinstallPlugins = map[string]InstallPlugin{
 		// Default preinstalled plugins
-		"grafana-lokiexplore-app":      {ID: "grafana-lokiexplore-app"},
-		"grafana-pyroscope-app":        {ID: "grafana-pyroscope-app"},
-		"grafana-exploretraces-app":    {ID: "grafana-exploretraces-app"},
-		"grafana-metricsdrilldown-app": {ID: "grafana-metricsdrilldown-app"},
-		"elasticsearch":                {ID: "elasticsearch"},
-		"tempo":                        {ID: "tempo"},
-		"zipkin":                       {ID: "zipkin"},
-		"opentsdb":                     {ID: "opentsdb"},
-		"stackdriver":                  {ID: "stackdriver"},
-		"mssql":                        {ID: "mssql"},
-		"jaeger":                       {ID: "jaeger"},
-		"grafana-advisor-app":          {ID: "grafana-advisor-app"},
-		"grafana-pyroscope-datasource": {ID: "grafana-pyroscope-datasource"},
+		"grafana-lokiexplore-app":       {ID: "grafana-lokiexplore-app"},
+		"grafana-pyroscope-app":         {ID: "grafana-pyroscope-app"},
+		"grafana-exploretraces-app":     {ID: "grafana-exploretraces-app"},
+		"grafana-metricsdrilldown-app":  {ID: "grafana-metricsdrilldown-app"},
+		"elasticsearch":                 {ID: "elasticsearch"},
+		"tempo":                         {ID: "tempo"},
+		"zipkin":                        {ID: "zipkin"},
+		"opentsdb":                      {ID: "opentsdb"},
+		"stackdriver":                   {ID: "stackdriver"},
+		"mssql":                         {ID: "mssql"},
+		"jaeger":                        {ID: "jaeger"},
+		"grafana-advisor-app":           {ID: "grafana-advisor-app"},
+		"grafana-postgresql-datasource": {ID: "grafana-postgresql-datasource"},
+		"grafana-pyroscope-datasource":  {ID: "grafana-pyroscope-datasource"},
 	}
 )
 

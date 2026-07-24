@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import KeyValuesTable, { LinkValue, type KeyValuesTableProps } from './KeyValuesTable';
 
@@ -39,8 +40,22 @@ describe('LinkValue', () => {
     };
     const childrenText = 'childrenTextValue';
     render(<LinkValue link={link}>{childrenText}</LinkValue>);
-    expect(screen.getByRole('link', { name: 'titleValue' })).toBeInTheDocument();
+    const linkEl = screen.getByRole('link', { name: 'titleValue' });
+    expect(linkEl).toBeInTheDocument();
     expect(screen.getByText(/^childrenTextValue$/)).toBeInTheDocument();
+    expect(linkEl.querySelector('svg')).toBeInTheDocument();
+    expect(linkEl.firstChild).toBe(linkEl.querySelector('svg'));
+  });
+
+  it('renders a custom icon to the left of the value', () => {
+    const link = {
+      title: 'titleValue',
+      path: 'hrefValue',
+      icon: 'asserts' as const,
+    };
+    render(<LinkValue link={link}>childrenTextValue</LinkValue>);
+    const linkEl = screen.getByRole('link', { name: 'titleValue' });
+    expect(linkEl.firstChild).toBe(linkEl.querySelector('svg'));
   });
 });
 
@@ -73,12 +88,77 @@ describe('KeyValuesTable tests', () => {
               {
                 path: `http://example.com/?kind=${encodeURIComponent(array[i].value)}`,
                 title: `More info about ${array[i].value}`,
+                icon: 'asserts',
               },
             ]
           : [],
     } as KeyValuesTableProps);
 
+    const link = screen.getByRole('link', { name: 'More info about client' });
+    expect(link).toBeInTheDocument();
+    expect(link.firstChild).toBe(link.querySelector('svg'));
     expect(screen.getByRole('row', { name: 'span.kind More info about client' })).toBeInTheDocument();
+  });
+
+  it('renders a dropdown menu when multiple links are available', async () => {
+    const user = userEvent.setup();
+    setup({
+      linksGetter: (array, i) =>
+        array[i].key === 'span.kind'
+          ? [
+              {
+                path: 'http://example.com/docs',
+                title: 'Docs',
+                description: 'Documentation',
+                icon: 'book',
+              },
+              {
+                path: 'http://example.com/dashboard',
+                title: 'Dashboard',
+                description: 'Service dashboard',
+                icon: 'apps',
+              },
+            ]
+          : [],
+    } as KeyValuesTableProps);
+
+    expect(screen.queryByRole('link', { name: 'Documentation' })).not.toBeInTheDocument();
+    expect(screen.getByRole('row', { name: /span\.kind.*"client"/ })).toBeInTheDocument();
+
+    // Accessible name comes from the associated value label, not a generic aria-label
+    await user.click(screen.getByRole('button', { name: /"client"/ }));
+
+    expect(await screen.findByText('OPEN VALUE IN')).toBeInTheDocument();
+    expect(await screen.findByRole('menuitem', { name: 'Documentation' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Service dashboard' })).toBeInTheDocument();
+    expect(screen.getByTitle('Docs')).toBeInTheDocument();
+    expect(screen.getByTitle('Dashboard')).toBeInTheDocument();
+  });
+
+  it('opens the dropdown when clicking the attribute value text', async () => {
+    const user = userEvent.setup();
+    setup({
+      linksGetter: (array, i) =>
+        array[i].key === 'span.kind'
+          ? [
+              {
+                path: 'http://example.com/docs',
+                title: 'Docs',
+                description: 'Documentation',
+              },
+              {
+                path: 'http://example.com/dashboard',
+                title: 'Dashboard',
+                description: 'Service dashboard',
+              },
+            ]
+          : [],
+    } as KeyValuesTableProps);
+
+    await user.click(screen.getByText(/"client"/));
+
+    expect(await screen.findByRole('menuitem', { name: 'Documentation' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Service dashboard' })).toBeInTheDocument();
   });
 
   it('renders a <CopyIcon /> for each data element', () => {
