@@ -455,10 +455,6 @@ const (
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
 	FlagAzureMonitorDisableLogLimit = "azureMonitorDisableLogLimit"
 
-	// FlagPlaylistsReconciler
-	// Enables experimental reconciler for playlists
-	FlagPlaylistsReconciler = "playlistsReconciler"
-
 	// FlagEnableExtensionsAdminPage
 	// Enables the extension admin page regardless of development mode
 	FlagEnableExtensionsAdminPage = "enableExtensionsAdminPage"

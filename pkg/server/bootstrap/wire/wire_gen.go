@@ -802,7 +802,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	v8 := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
-	appInstaller, err := playlist2.RegisterAppInstaller(featureToggles, acimplService, accessControl)
+	appInstaller, err := playlist2.RegisterAppInstaller(cfg, featureToggles, acimplService, accessControl)
 	if err != nil {
 		return nil, err
 	}
@@ -1553,7 +1553,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	v8 := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
-	appInstaller, err := playlist2.RegisterAppInstaller(featureToggles, acimplService, accessControl)
+	appInstaller, err := playlist2.RegisterAppInstaller(cfg, featureToggles, acimplService, accessControl)
 	if err != nil {
 		return nil, err
 	}

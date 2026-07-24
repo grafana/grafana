@@ -309,11 +309,6 @@ export interface FeatureToggles {
   */
   dashboardDefaultLayoutSelector?: boolean;
   /**
-  * Enables the assistant prompt popover on panel click in dashboard view mode
-  * @default false
-  */
-  dashboardAssistantPopover?: boolean;
-  /**
   * Enables undo/redo in dynamic dashboards
   * @default false
   */
@@ -684,11 +679,6 @@ export interface FeatureToggles {
   * @default false
   */
   azureMonitorDisableLogLimit?: boolean;
-  /**
-  * Enables experimental reconciler for playlists
-  * @default false
-  */
-  playlistsReconciler?: boolean;
   /**
   * Adds support for quotes and special characters in label values for Prometheus queries
   * @default false
