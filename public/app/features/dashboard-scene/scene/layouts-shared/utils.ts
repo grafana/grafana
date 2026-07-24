@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-import { contextSrv } from 'app/core/services/context_srv';
+import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
 
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
@@ -63,8 +63,12 @@ export function ungroupLayout(layout: DashboardLayoutManager, innerLayout: Dashb
 }
 
 export function getIsLazy(preload: boolean | undefined): boolean {
-  // We don't want to lazy load panels in the case of image renderer
-  return !(preload || (contextSrv.user && contextSrv.user.authenticatedBy === 'render'));
+  // Never lazy load panels when the page is being captured by the image renderer.
+  // Detection relies on the chromedp binding (ground truth) with `authenticatedBy === 'render'`
+  // as legacy fallback — the latter alone is not reliably populated on render tokens, which
+  // left lazy loading active during PDF capture and produced reports with blank
+  // below-the-fold panels. Normal browser views (including /embedded/) are unaffected.
+  return !(preload || isRenderTarget());
 }
 
 export enum GridLayoutType {
