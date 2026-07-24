@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"mime"
 	"net/http"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -27,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -807,7 +807,14 @@ func grafanaNamespacesToPrometheus(groups []models.AlertRuleGroupWithFolderFullp
 		// we need to use only the last folder in the full path.
 		// For example, if the current working folder is "general" and the full path is "grafana/some folder/general/production",
 		// we should use the "production" folder.
-		folder := filepath.Base(group.FolderFullpath)
+
+		// SplitFullpath (not filepath.Base) is used because the full path escapes separators
+		// within titles and is OS-independent, whereas filepath.Base treats "\" as a separator
+		// on Windows and would not unescape titles that contain a slash.
+		folder := group.FolderFullpath
+		if titles := folderimpl.SplitFullpath(group.FolderFullpath); len(titles) > 0 {
+			folder = titles[len(titles)-1]
+		}
 
 		promGroup, err := grafanaRuleGroupToPrometheus(group.Title, group.Rules)
 		if err != nil {

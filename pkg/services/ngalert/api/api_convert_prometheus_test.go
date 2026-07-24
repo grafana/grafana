@@ -2625,3 +2625,54 @@ func TestRouteConvertPrometheusPromoteAlertmanagerConfig(t *testing.T) {
 		require.Equal(t, http.StatusNotImplemented, response.Status())
 	})
 }
+
+func TestGrafanaNamespacesToPrometheus(t *testing.T) {
+	// mimirtool does not support nested folders, so the exported namespace is the
+	// leaf folder title parsed from the (escaped) folder fullpath. Escaped separators
+	// within a title must be unescaped and must not be treated as path separators
+	// (filepath.Base would mishandle these, especially on Windows where "\" splits).
+	tests := []struct {
+		name           string
+		folderFullpath string
+		wantNamespace  string
+	}{
+		{
+			name:           "single folder",
+			folderFullpath: "production",
+			wantNamespace:  "production",
+		},
+		{
+			name:           "nested folder uses the leaf title",
+			folderFullpath: "grafana/some folder/production",
+			wantNamespace:  "production",
+		},
+		{
+			// leaf folder titled "team/prod" (slash escaped as "\/" in the fullpath)
+			name:           "leaf title containing a slash is preserved",
+			folderFullpath: `grafana/team\/prod`,
+			wantNamespace:  "team/prod",
+		},
+		{
+			// leaf folder titled "team\ops" (backslash escaped as "\\" in the fullpath)
+			name:           "leaf title containing a backslash is preserved",
+			folderFullpath: `grafana/team\\ops`,
+			wantNamespace:  `team\ops`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			groups := []models.AlertRuleGroupWithFolderFullpath{
+				{
+					AlertRuleGroup: &models.AlertRuleGroup{Title: "group-1"},
+					FolderFullpath: tt.folderFullpath,
+				},
+			}
+
+			result, err := grafanaNamespacesToPrometheus(groups)
+			require.NoError(t, err)
+			require.Len(t, result, 1)
+			require.Contains(t, result, tt.wantNamespace)
+		})
+	}
+}

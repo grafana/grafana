@@ -683,17 +683,22 @@ func computeFullPath(parents []*folder.Folder) (string, string) {
 	fullpath := make([]string, len(parents))
 	fullpathUIDs := make([]string, len(parents))
 	for i, p := range parents {
-		fullpath[i] = p.Title
+		fullpath[i] = escapeSlashes(p.Title)
 		fullpathUIDs[i] = p.UID
 	}
 	return strings.Join(fullpath, "/"), strings.Join(fullpathUIDs, "/")
+}
+
+func escapeSlashes(title string) string {
+	title = strings.ReplaceAll(title, "\\", "\\\\")
+	return strings.ReplaceAll(title, "/", "\\/")
 }
 
 func buildFolderFullPaths(f *folder.Folder, relations map[string]string, folderMap map[string]*folder.Folder) error {
 	titles := make([]string, 0)
 	uids := make([]string, 0)
 
-	titles = append(titles, f.Title)
+	titles = append(titles, escapeSlashes(f.Title))
 	uids = append(uids, f.UID)
 
 	seen := make(map[string]bool)
@@ -716,7 +721,7 @@ func buildFolderFullPaths(f *folder.Folder, relations map[string]string, folderM
 		if !exists {
 			break
 		}
-		titles = append(titles, parentFolder.Title)
+		titles = append(titles, escapeSlashes(parentFolder.Title))
 		uids = append(uids, parentFolder.UID)
 		currentUID = parentFolder.UID
 	}
