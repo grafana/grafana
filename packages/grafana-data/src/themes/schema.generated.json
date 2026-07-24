@@ -37,22 +37,37 @@
             "main": {
               "type": "string"
             },
-            "shade": {
+            "mainEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
+              "type": "string"
+            },
+            "background": {
+              "type": "string"
+            },
+            "backgroundEmphasis": {
               "type": "string"
             },
             "text": {
               "type": "string"
             },
+            "textEmphasis": {
+              "type": "string"
+            },
             "border": {
+              "type": "string"
+            },
+            "borderEmphasis": {
+              "type": "string"
+            },
+            "shade": {
               "type": "string"
             },
             "transparent": {
               "type": "string"
             },
             "borderTransparent": {
-              "type": "string"
-            },
-            "contrastText": {
               "type": "string"
             }
           },
@@ -77,22 +92,37 @@
             "main": {
               "type": "string"
             },
-            "shade": {
+            "mainEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
+              "type": "string"
+            },
+            "background": {
+              "type": "string"
+            },
+            "backgroundEmphasis": {
               "type": "string"
             },
             "text": {
               "type": "string"
             },
+            "textEmphasis": {
+              "type": "string"
+            },
             "border": {
+              "type": "string"
+            },
+            "borderEmphasis": {
+              "type": "string"
+            },
+            "shade": {
               "type": "string"
             },
             "transparent": {
               "type": "string"
             },
             "borderTransparent": {
-              "type": "string"
-            },
-            "contrastText": {
               "type": "string"
             }
           },
@@ -117,22 +147,37 @@
             "main": {
               "type": "string"
             },
-            "shade": {
+            "mainEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
+              "type": "string"
+            },
+            "background": {
+              "type": "string"
+            },
+            "backgroundEmphasis": {
               "type": "string"
             },
             "text": {
               "type": "string"
             },
+            "textEmphasis": {
+              "type": "string"
+            },
             "border": {
+              "type": "string"
+            },
+            "borderEmphasis": {
+              "type": "string"
+            },
+            "shade": {
               "type": "string"
             },
             "transparent": {
               "type": "string"
             },
             "borderTransparent": {
-              "type": "string"
-            },
-            "contrastText": {
               "type": "string"
             }
           },
@@ -157,22 +202,37 @@
             "main": {
               "type": "string"
             },
-            "shade": {
+            "mainEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
+              "type": "string"
+            },
+            "background": {
+              "type": "string"
+            },
+            "backgroundEmphasis": {
               "type": "string"
             },
             "text": {
               "type": "string"
             },
+            "textEmphasis": {
+              "type": "string"
+            },
             "border": {
+              "type": "string"
+            },
+            "borderEmphasis": {
+              "type": "string"
+            },
+            "shade": {
               "type": "string"
             },
             "transparent": {
               "type": "string"
             },
             "borderTransparent": {
-              "type": "string"
-            },
-            "contrastText": {
               "type": "string"
             }
           },
@@ -197,22 +257,37 @@
             "main": {
               "type": "string"
             },
-            "shade": {
+            "mainEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
+              "type": "string"
+            },
+            "background": {
+              "type": "string"
+            },
+            "backgroundEmphasis": {
               "type": "string"
             },
             "text": {
               "type": "string"
             },
+            "textEmphasis": {
+              "type": "string"
+            },
             "border": {
+              "type": "string"
+            },
+            "borderEmphasis": {
+              "type": "string"
+            },
+            "shade": {
               "type": "string"
             },
             "transparent": {
               "type": "string"
             },
             "borderTransparent": {
-              "type": "string"
-            },
-            "contrastText": {
               "type": "string"
             }
           },
@@ -237,22 +312,37 @@
             "main": {
               "type": "string"
             },
-            "shade": {
+            "mainEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
+              "type": "string"
+            },
+            "background": {
+              "type": "string"
+            },
+            "backgroundEmphasis": {
               "type": "string"
             },
             "text": {
               "type": "string"
             },
+            "textEmphasis": {
+              "type": "string"
+            },
             "border": {
+              "type": "string"
+            },
+            "borderEmphasis": {
+              "type": "string"
+            },
+            "shade": {
               "type": "string"
             },
             "transparent": {
               "type": "string"
             },
             "borderTransparent": {
-              "type": "string"
-            },
-            "contrastText": {
               "type": "string"
             }
           },
@@ -277,22 +367,37 @@
             "main": {
               "type": "string"
             },
-            "shade": {
+            "mainEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
+              "type": "string"
+            },
+            "background": {
+              "type": "string"
+            },
+            "backgroundEmphasis": {
               "type": "string"
             },
             "text": {
               "type": "string"
             },
+            "textEmphasis": {
+              "type": "string"
+            },
             "border": {
+              "type": "string"
+            },
+            "borderEmphasis": {
+              "type": "string"
+            },
+            "shade": {
               "type": "string"
             },
             "transparent": {
               "type": "string"
             },
             "borderTransparent": {
-              "type": "string"
-            },
-            "contrastText": {
               "type": "string"
             }
           },
@@ -317,22 +422,37 @@
             "main": {
               "type": "string"
             },
-            "shade": {
+            "mainEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
+              "type": "string"
+            },
+            "background": {
+              "type": "string"
+            },
+            "backgroundEmphasis": {
               "type": "string"
             },
             "text": {
               "type": "string"
             },
+            "textEmphasis": {
+              "type": "string"
+            },
             "border": {
+              "type": "string"
+            },
+            "borderEmphasis": {
+              "type": "string"
+            },
+            "shade": {
               "type": "string"
             },
             "transparent": {
               "type": "string"
             },
             "borderTransparent": {
-              "type": "string"
-            },
-            "contrastText": {
               "type": "string"
             }
           },

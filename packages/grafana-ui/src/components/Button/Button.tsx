@@ -321,8 +321,9 @@ export function getActiveButtonStyles(color: ThemeRichColor, fill: ButtonFill) {
 }
 
 function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill) {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   let outlineBorderColor = color.border;
-  let borderColor = 'transparent';
+  let borderColor = visualRefreshEnabled ? color.border : 'transparent';
   let hoverBorderColor = 'transparent';
 
   // Secondary button has some special rules as we lack the color token to
@@ -340,9 +341,9 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       border: `1px solid ${outlineBorderColor}`,
 
       '&:hover, &:focus': {
-        background: color.transparent,
-        borderColor: theme.colors.emphasize(outlineBorderColor, 0.25),
-        color: color.text,
+        background: visualRefreshEnabled ? color.background : color.transparent,
+        borderColor: visualRefreshEnabled ? color.borderEmphasis : theme.colors.emphasize(outlineBorderColor, 0.25),
+        color: visualRefreshEnabled ? color.textEmphasis : color.text,
       },
 
       '&:active': {
@@ -358,7 +359,8 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       border: '1px solid transparent',
 
       '&:hover, &:focus': {
-        background: color.transparent,
+        background: visualRefreshEnabled ? color.background : color.transparent,
+        color: visualRefreshEnabled ? color.textEmphasis : color.text,
         textDecoration: 'none',
         outline: 'none',
       },
@@ -369,21 +371,40 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
     };
   }
 
+  let backgroundColor = color.main;
+  let hoverBackgroundColor = color.shade;
+  let textColor = visualRefreshEnabled ? color.text : color.contrastText;
+  let hoverTextColor = visualRefreshEnabled ? color.textEmphasis : color.contrastText;
+
+  if (visualRefreshEnabled) {
+    backgroundColor = color.background;
+    hoverBackgroundColor = color.backgroundEmphasis;
+
+    if (color.name === 'primary' && fill === 'solid') {
+      backgroundColor = color.main;
+      borderColor = 'transparent';
+      hoverBorderColor = 'transparent';
+      hoverBackgroundColor = color.mainEmphasis;
+      textColor = color.contrastText;
+      hoverTextColor = color.contrastText;
+    }
+  }
+
   return {
-    background: color.main,
-    color: color.contrastText,
+    background: backgroundColor,
+    color: textColor,
     border: `1px solid ${borderColor}`,
 
     '&:hover': {
-      background: color.shade,
-      color: color.contrastText,
+      background: hoverBackgroundColor,
+      color: hoverTextColor,
       boxShadow: theme.shadows.z1,
       borderColor: hoverBorderColor,
     },
 
     '&:focus': {
-      background: color.shade,
-      color: color.contrastText,
+      background: hoverBackgroundColor,
+      color: hoverTextColor,
     },
 
     '&:active': {

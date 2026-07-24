@@ -11,37 +11,65 @@
       "elevated": "palette.white"
     },
     "primary": {
-      "main": "palette.neutral950"
+      "main": "palette.neutral950",
+      "background": "palette.neutral300",
+      "border": "palette.neutral950"
     },
     "secondary": {
       "main": "palette.neutral200",
+      "background": "palette.neutral200",
       "border": "palette.neutral300",
       "text": "palette.neutral800",
       "contrastText": "palette.neutral800"
     },
     "tertiary": {
-      "main": "palette.violet700"
+      "main": "palette.violet600",
+      "text": "palette.violet600",
+      "textEmphasis": "palette.violet700",
+      "background": "palette.violet100",
+      "backgroundEmphasis": "palette.violet200",
+      "border": "palette.violet200"
     },
     "accent": {
       "main": "palette.orange600",
       "text": "palette.orange700",
+      "textEmphasis": "palette.orange700",
+      "background": "palette.orange100",
+      "backgroundEmphasis": "palette.orange200",
+      "border": "palette.orange200",
       "contrastText": "palette.white"
     },
     "error": {
-      "main": "palette.coral600",
-      "border": "palette.coral100"
+      "main": "palette.red1000",
+      "text": "palette.red1000",
+      "textEmphasis": "palette.red1100",
+      "background": "palette.red300",
+      "backgroundEmphasis": "palette.red400",
+      "border": "palette.red400"
     },
     "warning": {
       "main": "palette.amber600",
-      "border": "palette.amber100"
+      "text": "palette.amber700",
+      "textEmphasis": "palette.amber700",
+      "background": "palette.amber100",
+      "backgroundEmphasis": "palette.amber200",
+      "border": "palette.amber200"
     },
     "success": {
       "main": "palette.sage600",
-      "border": "palette.sage100"
+      "text": "palette.sage600",
+      "textEmphasis": "palette.sage700",
+      "background": "palette.sage100",
+      "backgroundEmphasis": "palette.sage200",
+      "border": "palette.sage200"
     },
     "info": {
       "main": "palette.blue600",
-      "border": "palette.blue100"
+      "text": "palette.blue600",
+      "textEmphasis": "palette.blue700",
+      "background": "palette.blue100",
+      "backgroundEmphasis": "palette.blue200",
+      "border": "palette.blue200"
     },
     "text": {
       "primary": "palette.neutral800",

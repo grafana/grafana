@@ -340,20 +340,40 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
     if (!color.main) {
       color.main = base[name].main;
     }
+    if (!color.mainEmphasis) {
+      color.mainEmphasis = emphasize(color.main, tonalOffset);
+    }
+    if (!color.contrastText) {
+      color.contrastText = getContrastText(color.main);
+    }
+
+    if (!color.background) {
+      color.background = alpha(color.main, 0.15);
+    }
+    if (!color.backgroundEmphasis) {
+      color.backgroundEmphasis = emphasize(color.background, tonalOffset);
+    }
+
     if (!color.text) {
       color.text = color.main;
     }
+    if (!color.textEmphasis) {
+      color.textEmphasis = base.mode === 'light' ? darken(color.text, tonalOffset) : lighten(color.text, tonalOffset);
+    }
+
     if (!color.border) {
       color.border = color.text;
     }
+    if (!color.borderEmphasis) {
+      color.borderEmphasis = emphasize(color.border, tonalOffset);
+    }
+
+    // deprecated properties, we should remove these in the future
     if (!color.shade) {
       color.shade = base.mode === 'light' ? darken(color.main, tonalOffset) : lighten(color.main, tonalOffset);
     }
     if (!color.transparent) {
       color.transparent = alpha(color.main, 0.15);
-    }
-    if (!color.contrastText) {
-      color.contrastText = getContrastText(color.main);
     }
     if (!color.borderTransparent) {
       color.borderTransparent = alpha(color.border, 0.25);
