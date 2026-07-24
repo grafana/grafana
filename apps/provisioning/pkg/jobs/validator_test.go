@@ -418,6 +418,34 @@ func TestValidateJob(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "valid migrate job with valid branch",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMigrate,
+					Repository: "test-repo",
+					Migrate:    &provisioning.MigrateJobOptions{Branch: "feature-x"},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "migrate job with invalid branch name",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMigrate,
+					Repository: "test-repo",
+					Migrate:    &provisioning.MigrateJobOptions{Branch: "feature..branch"}, // Invalid: consecutive dots
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.migrate.branch")
+				require.Contains(t, err.Error(), "invalid git branch name")
+			},
+		},
+		{
 			name: "migrate action with resource missing name",
 			job: &provisioning.Job{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
@@ -1207,7 +1235,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v := NewAdmissionValidator(nil, tt.perfEnabled)
+			v := NewAdmissionValidator(nil, func(context.Context) bool { return tt.perfEnabled })
 
 			var obj runtime.Object
 			if tt.obj != nil {

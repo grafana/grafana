@@ -503,16 +503,17 @@ test.describe(
     // bypassing CSP to ensure the Save button is correctly updated
     test.use({ contextOptions: { bypassCSP: true } });
 
-    test.skip('moves repeated rows', async ({ dashboardPage, selectors, page }) => {
+    test('moves repeated rows', async ({ dashboardPage, selectors, page }) => {
       // collapse rows so it's easier to move them without simulating scrolling
-      const dashboardWithCollapsedRows = V2DashWithRowRepeats;
+      // clone to avoid mutating V2DashWithRowRepeats, which is shared with the other tests in this file
+      const dashboardWithCollapsedRows = structuredClone(V2DashWithRowRepeats);
       dashboardWithCollapsedRows.spec.layout.spec.rows[0].spec.collapse = true;
 
       await importTestDashboard(
         page,
         selectors,
         'Row layout repeats - move repeated rows',
-        JSON.stringify(V2DashWithRowRepeats),
+        JSON.stringify(dashboardWithCollapsedRows),
         // there are no panels to show, since all rows are collapsed
         { checkPanelsVisible: false }
       );

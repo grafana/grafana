@@ -4,12 +4,57 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
+// isAPISourcedManager reports whether a manager kind pushes state into Grafana
+// through the API (Terraform, kubectl, and the classic shims for API and
+// Prometheus-converted provisioning) as opposed to being backed by an external
+// source of truth that Grafana mirrors (file provisioning, git repo sync).
+//
+// Only API-sourced managers may relinquish management back to Grafana: their
+// authoritative state already lives in Grafana, so resetting to unmanaged does
+// not orphan anything. File- and repo-backed resources are owned by an external
+// system (a provisioning file, a git repository); letting an in-Grafana write
+// silently reset them to unmanaged would diverge Grafana from that source of
+// truth, so it is not allowed.
+func isAPISourcedManager(k utils.ManagerKind) bool {
+	// classic shim kinds are intentionally handled here
+	switch k { //nolint:staticcheck
+	case utils.ManagerKindClassicAPI, utils.ManagerKindClassicConvertedPrometheus, utils.ManagerKindTerraform, utils.ManagerKindKubectl: //nolint:staticcheck
+		return true
+	default:
+		// ManagerKindClassicFP and ManagerKindRepo are backed by an external
+		// source of truth and must not be reset to unmanaged from within Grafana.
+		return false
+	}
+}
+
+// CanUpdateManagerInRuleGroup checks if a manager can be updated for a rule group and its alerts.
+// Preserves the same transition semantics as CanUpdateProvenanceInRuleGroup:
+//   - same kind is always allowed
+//   - unmanaged (unknown kind) stored → allow any incoming manager
+//   - resetting to unmanaged → only allowed from API-sourced managers (see isAPISourcedManager)
+func CanUpdateManagerInRuleGroup(stored, incoming utils.ManagerProperties) bool {
+	if stored.Kind == incoming.Kind {
+		return true
+	}
+	if stored.Kind == utils.ManagerKindUnknown {
+		return true
+	}
+	if incoming.Kind == utils.ManagerKindUnknown {
+		return isAPISourcedManager(stored.Kind)
+	}
+	return false
+}
+
 // CanUpdateProvenanceInRuleGroup checks if a provenance can be updated for a rule group and its alerts.
 // ReplaceRuleGroup function intends to replace an entire rule group: inserting, updating, and removing rules.
+//
+// Deprecated: use CanUpdateManagerInRuleGroup for new code. This function remains for non-rule resources
+// (receivers, templates, mute timings, routes) that have not yet migrated to ManagerProperties.
 func CanUpdateProvenanceInRuleGroup(storedProvenance, provenance models.Provenance) bool {
 	// Same provenance is always allowed
 	if storedProvenance == provenance {

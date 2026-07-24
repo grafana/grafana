@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"math/rand/v2"
+	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/authlib/types"
@@ -39,11 +41,24 @@ func NewTenantDeleterConfig(cfg *setting.Cfg) *TenantDeleterConfig {
 		interval = 1 * time.Hour
 	}
 
+	var gcomClient gcom.Service
+	token := strings.TrimSpace(cfg.GrafanaComSSOAPIToken)
+	apiURL := strings.TrimSpace(cfg.GrafanaComAPIURL)
+	if token != "" && apiURL != "" {
+		gcomClient = gcom.New(gcom.Config{ApiURL: apiURL, Token: token}, &http.Client{Timeout: 30 * time.Second})
+	}
+
 	return &TenantDeleterConfig{
 		DryRun:   cfg.TenantDeleterDryRun,
 		Interval: interval,
 		Log:      log.New("tenant-deleter"),
+		Gcom:     gcomClient,
 	}
+}
+
+// EmbeddingDeleter removes all vector embeddings for a namespace.
+type EmbeddingDeleter interface {
+	DeleteNamespace(ctx context.Context, namespace string) (int64, error)
 }
 
 // TenantDeleter periodically checks the pending-delete store and removes
@@ -54,17 +69,20 @@ type TenantDeleter struct {
 	dataStore          *dataStore
 	cfg                TenantDeleterConfig
 	gcom               gcom.Service
-	stopCh             chan struct{}
+	// embeddingDeleter is nil when the vector backend is disabled.
+	embeddingDeleter EmbeddingDeleter
+	stopCh           chan struct{}
 }
 
 // NewTenantDeleter creates a new TenantDeleter. It does NOT start the background goroutine.
-func NewTenantDeleter(ds *dataStore, pds *PendingDeleteStore, cfg TenantDeleterConfig) *TenantDeleter {
+func NewTenantDeleter(ds *dataStore, pds *PendingDeleteStore, cfg TenantDeleterConfig, embeddingDeleter EmbeddingDeleter) *TenantDeleter {
 	return &TenantDeleter{
 		log:                cfg.Log,
 		pendingDeleteStore: pds,
 		dataStore:          ds,
 		cfg:                cfg,
 		gcom:               cfg.Gcom,
+		embeddingDeleter:   embeddingDeleter,
 		stopCh:             make(chan struct{}),
 	}
 }
@@ -267,6 +285,20 @@ func (td *TenantDeleter) deleteTenant(ctx context.Context, tenantName string, gr
 			"duration_ms", time.Since(grStart).Milliseconds(),
 		)
 		totalKeys += len(keys)
+	}
+
+	// Remove the tenant's embeddings from the (separate) vector store.
+	if td.embeddingDeleter != nil && !td.cfg.DryRun {
+		deleted, err := td.embeddingDeleter.DeleteNamespace(ctx, tenantName)
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, "deleting tenant embeddings failed")
+			return fmt.Errorf("deleting tenant embeddings: %w", err)
+		}
+		span.SetAttributes(attribute.Int64("embeddings_deleted", deleted))
+		td.log.Info("deleted tenant embeddings", "tenant", tenantName, "embeddings_deleted", deleted)
+	} else if td.embeddingDeleter != nil && td.cfg.DryRun {
+		td.log.Info("dry run: would delete tenant embeddings", "tenant", tenantName)
 	}
 
 	span.SetAttributes(

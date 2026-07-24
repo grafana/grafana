@@ -29,17 +29,18 @@ const defaultProgressUpdates = 10
 // worker registered is a no-op in normal deployments (mirroring the export
 // worker's runtime gating).
 type Worker struct {
-	enabled bool
+	enabled func(ctx context.Context) bool
 }
 
-// NewWorker creates a performance-testing worker. When enabled is false the
+// NewWorker creates a performance-testing worker. enabled is evaluated per job so
+// the feature flag is honored dynamically; when it reports false (or is nil) the
 // worker never claims a job.
-func NewWorker(enabled bool) *Worker {
+func NewWorker(enabled func(ctx context.Context) bool) *Worker {
 	return &Worker{enabled: enabled}
 }
 
-func (w *Worker) IsSupported(_ context.Context, job provisioning.Job) bool {
-	return w.enabled && job.Spec.Action == provisioning.JobActionTest
+func (w *Worker) IsSupported(ctx context.Context, job provisioning.Job) bool {
+	return job.Spec.Action == provisioning.JobActionTest && w.enabled != nil && w.enabled(ctx)
 }
 
 func (w *Worker) Process(ctx context.Context, _ repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) (processErr error) {
