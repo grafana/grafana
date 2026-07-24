@@ -82,7 +82,7 @@ export const ConfigEditor = (props: Props) => {
         </InlineField>
         {options.jsonData.handleGrafanaManagedAlerts && (
           <Text variant="bodySmall" color="secondary">
-            Make sure to enable the alert forwarding on the <Link to="/alerting/admin">settings page</Link>.
+            Make sure to enable the alert forwarding on the <Link to={'/alerting/admin'}>settings page</Link>.
           </Text>
         )}
       </Box>
