@@ -64,7 +64,7 @@ The data section contains tabs where you enter queries, transform your data, and
   - **+ Add from saved queries** - Add an additional query by reusing a saved query.
 
   {{< admonition type="note" >}}
-  [Saved queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
+  [Saved queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) is only available on Grafana Enterprise and Grafana Cloud.
   {{< /admonition >}}
 
 - **Transformations** - Apply data transformations. For more information, refer to [Transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/transform-data/).
