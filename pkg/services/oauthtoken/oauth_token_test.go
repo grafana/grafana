@@ -2,6 +2,7 @@ package oauthtoken
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -744,6 +745,19 @@ func TestOAuthTokenSync_needTokenRefresh(t *testing.T) {
 			assert.Equal(t, tt.expectedTokenRefreshFlag, needsTokenRefresh)
 		})
 	}
+}
+
+func TestTokenRefreshSuccessLabel(t *testing.T) {
+	assert.Equal(t, "true", tokenRefreshSuccessLabel(nil))
+	assert.Equal(t, "false", tokenRefreshSuccessLabel(errors.New("refresh failed")))
+}
+
+func TestTokenRefreshDurationMetricReusesRegisteredCollector(t *testing.T) {
+	registry := prometheus.NewRegistry()
+	first := newTokenRefreshDurationMetric(registry)
+	second := newTokenRefreshDurationMetric(registry)
+
+	assert.Same(t, first, second)
 }
 
 func TestIntegration_GetCurrentOAuthToken(t *testing.T) {
