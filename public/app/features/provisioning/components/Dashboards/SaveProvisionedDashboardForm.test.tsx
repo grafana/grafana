@@ -1004,6 +1004,41 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
   });
 
+  it('should enable save when the target branch is changed even if the dashboard is not dirty', async () => {
+    const notDirtyDashboard = {
+      state: {
+        meta: { folderUid: 'folder-uid', slug: 'test-dashboard', k8s: { name: 'test-dashboard' } },
+        title: 'Test Dashboard',
+        description: 'Test Description',
+        isDirty: false,
+      },
+      useState: () => ({
+        meta: { folderUid: 'folder-uid', slug: 'test-dashboard', k8s: { name: 'test-dashboard' } },
+        title: 'Test Dashboard',
+        description: 'Test Description',
+        isDirty: false,
+      }),
+      setState: jest.fn(),
+      closeModal: jest.fn(),
+      getSaveModel: jest.fn().mockReturnValue({}),
+      saveCompleted: jest.fn(),
+      getSaveAsModel: jest.fn().mockReturnValue({}),
+      setManager: jest.fn(),
+      getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
+    } as unknown as DashboardScene;
+
+    const { user } = setup({ dashboard: notDirtyDashboard });
+
+    // Baseline: nothing changed yet, so Save is disabled.
+    expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
+
+    // Enter a new branch name (retargeting is a committable change on its own).
+    const branchCombobox = screen.getByRole('combobox', { name: /branch/i });
+    await user.type(branchCombobox, 'brand-new-branch{Enter}');
+
+    expect(await screen.findByRole('button', { name: /save/i })).toBeEnabled();
+  });
+
   it('should properly handle read-only state for a repository without workflows', () => {
     setup({
       isNew: false,
