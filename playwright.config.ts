@@ -120,14 +120,6 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(pluginDirRoot, '/influxdb'),
     }),
     withAuth({
-      name: 'jaeger',
-      testDir: path.join(pluginDirRoot, '/jaeger'),
-    }),
-    withAuth({
-      name: 'grafana-postgresql-datasource',
-      testDir: path.join(pluginDirRoot, '/grafana-postgresql-datasource'),
-    }),
-    withAuth({
       name: 'canvas',
       testDir: path.join(testDirRoot, '/canvas'),
     }),
@@ -188,8 +180,31 @@ export default defineConfig<PluginOptions>({
       dependencies: ['dashboard-cujs'],
     }),
     withAuth({
+      name: 'journey-tracking',
+      testDir: path.join(testDirRoot, '/journey-tracking'),
+      use: {
+        featureToggles: {
+          cujTracking: true,
+        },
+      },
+    }),
+    withAuth({
       name: 'grafana-e2etest-panel',
       testDir: path.join(testDirRoot, '/test-plugins/grafana-test-panel'),
+    }),
+    // Install/uninstall real catalog plugins; longer timeout since installs download the package.
+    withAuth({
+      name: 'plugin-catalog',
+      testDir: path.join(testDirRoot, '/plugin-catalog-suite/tests'),
+      testIgnore: /useMTPlugins/,
+      timeout: 60_000,
+    }),
+    withAuth({
+      name: 'plugin-catalog-mt',
+      testDir: path.join(testDirRoot, '/plugin-catalog-suite/tests/useMTPlugins'),
+      timeout: 60_000,
+      // Runs only after plugin-catalog finishes, so the two never install/uninstall at the same time.
+      dependencies: ['plugin-catalog'],
     }),
   ],
 });

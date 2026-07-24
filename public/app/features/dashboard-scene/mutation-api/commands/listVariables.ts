@@ -12,7 +12,7 @@ import { sceneVariablesSetToSchemaV2Variables } from '../../serialization/sceneV
 
 import { payloads } from './schemas';
 import { readOnly, type MutationCommand } from './types';
-import { getEffectiveVariableParentPath, resolveVariableScope } from './variableScope';
+import { resolveVariableScope } from './variableScope';
 
 const listVariablesPayloadSchema = payloads.listVariables;
 
@@ -30,7 +30,7 @@ export const listVariablesCommand: MutationCommand<ListVariablesPayload> = {
     const { scene } = context;
 
     try {
-      const effectiveParentPath = getEffectiveVariableParentPath(payload.parentPath);
+      const effectiveParentPath = payload.parentPath ?? '/';
       const { scopeOwner } = resolveVariableScope(scene, effectiveParentPath);
 
       const varSet = scopeOwner.state.$variables;

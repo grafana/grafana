@@ -8,7 +8,7 @@
       "page": "palette.ink900",
       "primary": "palette.ink850",
       "secondary": "palette.ink800",
-      "elevated": "palette.ink700"
+      "elevated": "palette.ink750"
     },
     "primary": {
       "main": "palette.ink100"
@@ -23,8 +23,7 @@
       "main": "palette.violet400"
     },
     "accent": {
-      "main": "palette.orange400",
-      "text": "palette.orange400"
+      "main": "palette.orange500"
     },
     "error": {
       "main": "palette.coral400",
@@ -43,10 +42,10 @@
       "border": "palette.blue900"
     },
     "text": {
-      "primary": "palette.ink100",
-      "secondary": "palette.ink200",
-      "disabled": "palette.ink300",
-      "link": "palette.orange400"
+      "primary": "palette.ink150",
+      "secondary": "palette.ink300",
+      "disabled": "palette.ink400",
+      "link": "palette.orange500"
     },
     "border": {
       "weak": "palette.ink700",
@@ -59,9 +58,10 @@
     },
     "contrastThreshold": 4.5,
     "action": {
-      "selected": "palette.ink700",
-      "hover": "palette.ink600",
-      "focus": "palette.ink600"
+      "selected": "hsl(from palette.ink100 h s l / 0.12)",
+      "hover": "hsl(from palette.ink100 h s l / 0.09)",
+      "focus": "hsl(from palette.ink100 h s l / 0.09)",
+      "selectedBorder": "palette.orange500"
     }
   },
   "shape": {

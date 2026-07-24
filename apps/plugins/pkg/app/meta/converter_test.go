@@ -572,7 +572,7 @@ func TestGrafanaComChildPluginVersionToMetaSpec(t *testing.T) {
 			CDNURL:              "https://cdn.grafana.com",
 			CreatePluginVersion: "2023-01-01",
 			Manifest: grafanaComPluginManifest{
-				Files: map[string]string{"child-plugin/module.js": "hash123"},
+				Files: map[string]string{"child-plugin/module.js": "deadbeef"},
 			},
 		}
 
@@ -604,7 +604,7 @@ func TestGrafanaComPluginVersionMetaToMetaSpec(t *testing.T) {
 			CDNURL:              "https://cdn.grafana.com/plugins/test-plugin/1.0.0",
 			CreatePluginVersion: "2023-01-01",
 			Manifest: grafanaComPluginManifest{
-				Files: map[string]string{"test-plugin/module.js": "hash123"},
+				Files: map[string]string{"test-plugin/module.js": "deadbeef"},
 			},
 			Children: []grafanaComChildPluginVersion{
 				{Slug: "child1"},
@@ -620,7 +620,8 @@ func TestGrafanaComPluginVersionMetaToMetaSpec(t *testing.T) {
 		assert.Equal(t, pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeGrafana, *meta.Signature.Type)
 		assert.Equal(t, "grafana", *meta.Signature.Org)
 		assert.Equal(t, "https://cdn.grafana.com/plugins/test-plugin/1.0.0/module.js", meta.Module.Path)
-		assert.Equal(t, "hash123", *meta.Module.Hash)
+		// The manifest stores a raw hex hash; the meta exposes it in SRI format.
+		assert.Equal(t, "sha256-3q2+7w==", *meta.Module.Hash)
 		assert.Equal(t, "https://cdn.grafana.com/plugins/test-plugin/1.0.0", meta.BaseURL)
 		assert.Equal(t, []string{"child1", "child2"}, meta.Children)
 	})
@@ -693,7 +694,7 @@ func TestGrafanaComPluginVersionMetaToMetaSpec(t *testing.T) {
 					CDNURL:              "https://cdn.grafana.com",
 					CreatePluginVersion: "2023-01-01",
 					Manifest: grafanaComPluginManifest{
-						Files: map[string]string{"test-plugin/module.js": "hash123"},
+						Files: map[string]string{"test-plugin/module.js": "deadbeef"},
 					},
 				}
 
@@ -723,6 +724,43 @@ func TestGrafanaComPluginVersionMetaToMetaSpec(t *testing.T) {
 		assert.Nil(t, meta.Module.Hash)
 	})
 
+	t.Run("converts hex module hash from manifest to SRI format", func(t *testing.T) {
+		gcomMeta := grafanaComPluginVersionMeta{
+			PluginSlug:          "test-plugin",
+			Version:             "1.0.0",
+			JSON:                grafanaComPluginVersionMetaJSON{MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: "test-plugin"}},
+			CDNURL:              "https://cdn.grafana.com",
+			CreatePluginVersion: "2023-01-01",
+			Manifest: grafanaComPluginManifest{
+				// Real hex SHA-256 as stored in a plugin MANIFEST.txt.
+				Files: map[string]string{"test-plugin/module.js": "ebe64ea0588179f2affdcb0f7dcb63e323b3852a920d3582bf0f1f070fb75678"},
+			},
+		}
+
+		meta, err := grafanaComPluginVersionMetaToMetaSpec(&logging.NoOpLogger{}, gcomMeta, "test-plugin")
+		require.NoError(t, err)
+		require.NotNil(t, meta.Module.Hash)
+		assert.Equal(t, "sha256-6+ZOoFiBefKv/csPfctj4yOzhSqSDTWCvw8fBw+3Vng=", *meta.Module.Hash)
+	})
+
+	t.Run("handles a non-hex module hash gracefully", func(t *testing.T) {
+		gcomMeta := grafanaComPluginVersionMeta{
+			PluginSlug:          "test-plugin",
+			Version:             "1.0.0",
+			JSON:                grafanaComPluginVersionMetaJSON{MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: "test-plugin"}},
+			CDNURL:              "https://cdn.grafana.com",
+			CreatePluginVersion: "2023-01-01",
+			Manifest: grafanaComPluginManifest{
+				Files: map[string]string{"test-plugin/module.js": "not-a-hex-hash"},
+			},
+		}
+
+		meta, err := grafanaComPluginVersionMetaToMetaSpec(&logging.NoOpLogger{}, gcomMeta, "test-plugin")
+		require.NoError(t, err)
+		require.NotNil(t, meta.Module)
+		assert.Nil(t, meta.Module.Hash)
+	})
+
 	t.Run("extracts aliasIDs from JSON field", func(t *testing.T) {
 		gcomMeta := grafanaComPluginVersionMeta{
 			PluginSlug: "grafana-postgresql-datasource",
@@ -739,7 +777,7 @@ func TestGrafanaComPluginVersionMetaToMetaSpec(t *testing.T) {
 			CDNURL:              "https://cdn.grafana.com/plugins/grafana-postgresql-datasource/5.0.0",
 			CreatePluginVersion: "2023-01-01",
 			Manifest: grafanaComPluginManifest{
-				Files: map[string]string{"module.js": "hash123"},
+				Files: map[string]string{"module.js": "deadbeef"},
 			},
 		}
 
@@ -760,7 +798,7 @@ func TestGrafanaComPluginVersionMetaToMetaSpec(t *testing.T) {
 			CDNURL:              "https://cdn.grafana.com",
 			CreatePluginVersion: "2023-01-01",
 			Manifest: grafanaComPluginManifest{
-				Files: map[string]string{"module.js": "hash123"},
+				Files: map[string]string{"module.js": "deadbeef"},
 			},
 		}
 

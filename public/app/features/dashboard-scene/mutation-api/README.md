@@ -143,7 +143,7 @@ Add a row to the layout. If the target is not a RowsLayout, the existing content
 }
 ```
 
-Row `spec` may include optional **`variables`**: an array of v2 `VariableKind` objects for section-scoped template variables on that row. Behavior matches dashboard deserialization (requires the **`dashboardSectionVariables`** feature toggle; when off, `variables` in the payload are ignored).
+Row `spec` may include optional **`variables`**: an array of v2 `VariableKind` objects for section-scoped template variables on that row. Behavior matches dashboard deserialization.
 
 **Response:**
 
@@ -310,7 +310,7 @@ Add a tab to the layout. If the target is not a TabsLayout, the existing content
 }
 ```
 
-Tab `spec` may include optional **`variables`** for section-scoped template variables on that tab (same rules as row `variables` and the **`dashboardSectionVariables`** toggle).
+Tab `spec` may include optional **`variables`** for section-scoped template variables on that tab (same rules as row `variables`).
 
 **Response:**
 
@@ -763,7 +763,7 @@ Same `{ element, layoutItem }` shape as ADD_PANEL and UPDATE_PANEL. When moving 
 
 ## Variables
 
-Variable commands accept optional **`parentPath`** (layout path from `GET_LAYOUT`). Default **`"/"`** targets **dashboard-level** variables. Paths ending at a **row** or **tab** (for example `"/rows/0"` or `"/tabs/1/rows/0"`) target that section’s variable set **only when `dashboardSectionVariables` is enabled**. When the toggle is off, `parentPath` is ignored and commands behave as dashboard-scope (`"/"`). **`UPDATE_VARIABLE`** and **`REMOVE_VARIABLE`** require an explicit **`parentPath`** when the name does not exist on the dashboard but exists on a section (with section variables enabled).
+Variable commands accept optional **`parentPath`** (layout path from `GET_LAYOUT`). Default **`"/"`** targets **dashboard-level** variables. Paths ending at a **row** or **tab** (for example `"/rows/0"` or `"/tabs/1/rows/0"`) target that section’s variable set. **`UPDATE_VARIABLE`** and **`REMOVE_VARIABLE`** require an explicit **`parentPath`** when the name does not exist on the dashboard but exists on a section.
 
 ### `ADD_VARIABLE`
 
@@ -814,7 +814,7 @@ Variable commands accept optional **`parentPath`** (layout path from `GET_LAYOUT
 }
 ```
 
-For section scope, `changes[0].path` is prefixed (for example `"/rows/0/variables/region"`). With `dashboardSectionVariables` disabled, `changes[0].path` remains dashboard-scoped (for example `"/variables/env"`).
+For section scope, `changes[0].path` is prefixed (for example `"/rows/0/variables/region"`).
 
 ### `UPDATE_VARIABLE`
 
