@@ -712,7 +712,7 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
 
 // How long to wait after the last width change before recomputing the width-driven layout. Tuned so
 // a continuous drag coalesces into a single recompute at rest rather than one per intermediate pause.
-const RESIZE_WIDTH_DEBOUNCE_MS = 200;
+const RESIZE_WIDTH_DEBOUNCE_MS = 100;
 
 /**
  * Trailing-debounces a numeric value. Used to throttle the expensive width-driven recompute chain
