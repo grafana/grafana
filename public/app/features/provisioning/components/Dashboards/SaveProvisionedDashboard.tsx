@@ -43,20 +43,27 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
     }
   }, [repository, isDeadEnd, isNewDashboard]);
 
-  // Restore the git-flow meta so database-form folder picks (folderUid and manager annotations)
-  // don't leak back into the provisioned form. Skip it when a save moved the uid on: that meta stands.
-  const restoreGitMeta = useCallback(() => {
+  // Consumes a pending switch, returning the meta to undo it with. Yields nothing once a save has
+  // moved the uid on, since that dashboard's own meta must stand.
+  const takeGitMeta = useCallback(() => {
     const { active, gitMeta, savedUid } = dbSwitchRef.current;
-    if (active && gitMeta && dashboard.state.meta.uid === savedUid) {
-      dashboard.setState({ meta: gitMeta });
-    }
     dbSwitchRef.current.active = false;
+    return active && gitMeta && dashboard.state.meta.uid === savedUid ? gitMeta : undefined;
   }, [dashboard]);
 
-  // Cancel in the database form bypasses drawer.onClose, so restore on unmount too
+  // Cancel in the database form bypasses drawer.onClose, so undo the switch on unmount too. New
+  // dashboards go back to their initial meta like onClose does, otherwise closing via the drawer's
+  // X would put the provisioned fields it just cleared straight back.
   useEffect(() => {
-    return () => restoreGitMeta();
-  }, [restoreGitMeta]);
+    return () => {
+      const gitMeta = takeGitMeta();
+      if (!gitMeta) {
+        return;
+      }
+      const initialMeta = dashboard.getInitialState()?.meta;
+      dashboard.setState({ meta: changeInfo.isNew && initialMeta ? initialMeta : gitMeta });
+    };
+  }, [takeGitMeta, dashboard, changeInfo.isNew]);
 
   const handleSwitchToDatabase = () => {
     const meta = dashboard.state.meta;
@@ -77,7 +84,10 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
   };
 
   const handleSwitchToGit = () => {
-    restoreGitMeta();
+    const gitMeta = takeGitMeta();
+    if (gitMeta) {
+      dashboard.setState({ meta: gitMeta });
+    }
     setSaveToDatabase(false);
   };
 

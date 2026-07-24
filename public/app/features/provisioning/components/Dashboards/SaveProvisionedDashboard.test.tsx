@@ -1,5 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
+import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from 'app/features/dashboard-scene/saving/shared';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
@@ -28,10 +29,12 @@ function createDashboard({
   folderUid,
   uid,
   k8s,
-}: { folderUid?: string; uid?: string; k8s?: DashboardMeta['k8s'] } = {}) {
+  initialMeta = {},
+}: { folderUid?: string; uid?: string; k8s?: DashboardMeta['k8s']; initialMeta?: DashboardMeta } = {}) {
   return {
     state: { meta: { folderUid, uid, k8s } },
     setState: jest.fn(),
+    getInitialState: () => ({ meta: initialMeta }),
   } as unknown as DashboardScene;
 }
 
@@ -159,7 +162,9 @@ describe('SaveProvisionedDashboard', () => {
   it('drops repo manager annotations when switching to the database form', async () => {
     const dashboard = createDashboard({
       folderUid: 'provisioned-folder',
-      k8s: { annotations: { 'grafana.app/managerKind': 'repo', 'grafana.app/managerId': 'test-repo' } },
+      k8s: {
+        annotations: { [AnnoKeyManagerKind]: ManagerKind.Repo, [AnnoKeyManagerIdentity]: 'test-repo' },
+      },
     });
     const { user } = setup({}, { dashboard });
 
@@ -285,7 +290,7 @@ describe('SaveProvisionedDashboard', () => {
     expect(dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: 'repo-folder' } });
   });
 
-  it('restores the git-flow folder when the database form is cancelled via closeModal', async () => {
+  it('resets a new dashboard to its initial meta when the database form is cancelled', async () => {
     const dashboard = createDashboard({ folderUid: 'git-folder-uid' });
     const { user, unmount } = setup({}, { dashboard });
 
@@ -295,7 +300,9 @@ describe('SaveProvisionedDashboard', () => {
     dashboard.state.meta.folderUid = 'db-folder-uid';
     unmount();
 
-    expect(dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: 'git-folder-uid' } });
+    // Matches drawer.onClose, so closing with the X isn't undone by putting the git-flow meta back
+    expect(dashboard.setState).toHaveBeenCalledWith({ meta: {} });
+    expect(dashboard.setState).not.toHaveBeenCalledWith({ meta: { folderUid: 'git-folder-uid' } });
   });
 
   it('does not restore the folder when unmounting after a completed database save', async () => {
@@ -316,7 +323,10 @@ describe('SaveProvisionedDashboard', () => {
 
   it('restores the git-flow folder on cancel even for a save-as-copy of an existing dashboard', async () => {
     const dashboard = createDashboard({ folderUid: 'git-folder-uid', uid: 'existing-uid' });
-    const { user, unmount } = setup({ isNew: false }, { dashboard, saveAsCopy: true });
+    const { user, unmount } = setup(
+      { isNew: false },
+      { dashboard, saveAsCopy: true, changeInfo: { isNew: false } as unknown as DashboardChangeInfo }
+    );
 
     await user.click(screen.getByRole('button', { name: /grafana database/i }));
 
