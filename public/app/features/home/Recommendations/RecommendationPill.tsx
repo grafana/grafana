@@ -3,9 +3,15 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 
-import type { RecommendationItem } from './Recommendations';
+import { ctaClicked } from '../analytics/main';
 
-export default function RecommendationPill({ recommendation }: { recommendation: RecommendationItem }) {
+import type { RecommendationItem } from './types';
+
+interface RecommendationPillProps {
+  recommendation: RecommendationItem;
+}
+
+export function RecommendationPill({ recommendation }: RecommendationPillProps) {
   const styles = useStyles2(getStyles, recommendation.color);
 
   return (
@@ -15,6 +21,14 @@ export default function RecommendationPill({ recommendation }: { recommendation:
       fill="solid"
       icon={recommendation.icon}
       href={recommendation.href}
+      onClick={() =>
+        ctaClicked({
+          surface: 'recommendations',
+          action: 'enable',
+          placement: 'pill',
+          recommendation_id: recommendation.id,
+        })
+      }
       className={styles.pill}
     >
       {recommendation.action}

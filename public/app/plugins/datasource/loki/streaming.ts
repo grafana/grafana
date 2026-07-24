@@ -1,4 +1,4 @@
-import { map, type Observable, defer, mergeMap } from 'rxjs';
+import { defer, map, mergeMap, type Observable } from 'rxjs';
 
 import {
   type DataFrameJSON,
@@ -9,7 +9,7 @@ import {
   LoadingState,
   StreamingDataFrame,
 } from '@grafana/data';
-import { getGrafanaLiveSrv, config } from '@grafana/runtime';
+import { config, getGrafanaLiveSrv } from '@grafana/runtime';
 
 import { type LokiDatasource } from './datasource';
 import { type LokiQuery } from './types';
@@ -25,7 +25,7 @@ async function getLiveStreamKey(query: LokiQuery): Promise<string> {
   const msgUint8 = new TextEncoder().encode(str); // encode as (utf-8) Uint8Array
   const hashBuffer = await crypto.subtle.digest('SHA-1', msgUint8); // hash the message
   const hashArray = Array.from(new Uint8Array(hashBuffer.slice(0, 8))); // first 8 bytes
-  return `${query.datasource?.uid}/${hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')}/${config.bootData.user.orgId}`;
+  return `${query.datasource?.uid}/${hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')}/${config.bootData.settings.namespace}`;
 }
 
 // This will get both v1 and v2 result formats

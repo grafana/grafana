@@ -10,6 +10,8 @@ permissions: {}
 
 jobs:
   detect-changes:
+    # Run on `grafana/grafana` pushes, or on pull requests, to prevent double-running on mirrors
+    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Detect whether code changed
     runs-on: ubuntu-arm64-small
     permissions:
@@ -233,8 +235,8 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+    # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
+    if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     name: Verify API clients (enterprise)
     runs-on: ubuntu-x64
     steps:
@@ -414,4 +416,13 @@ jobs:
       if: failure() && steps.yarn-dedupe.outcome == 'failure'
       run: |
         echo "::error::yarn.lock contains duplicate dependencies. Run 'yarn dedupe' locally, commit the updated yarn.lock, and push again."
+        exit 1
+
+    - name: Check yarn constraints
+      id: yarn-constraints
+      run: yarn constraints
+    - name: Report yarn constraints failure
+      if: failure() && steps.yarn-constraints.outcome == 'failure'
+      run: |
+        echo "::error::Yarn constraints check failed. Run 'yarn constraints --fix' locally, commit the changes, and push again."
         exit 1

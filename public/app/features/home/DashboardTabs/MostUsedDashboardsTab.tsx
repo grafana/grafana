@@ -14,9 +14,10 @@ interface Props {
   error: Error | undefined;
   retry: () => void;
   foldersByUid: Record<string, LocationInfo>;
+  density?: 'default' | 'compact';
 }
 
-export function MostUsedDashboardsTab({ dashboards, loading, error, retry, foldersByUid }: Props) {
+export function MostUsedDashboardsTab({ dashboards, loading, error, retry, foldersByUid, density }: Props) {
   const styles = useStyles2(getStyles);
 
   if (loading) {
@@ -60,6 +61,7 @@ export function MostUsedDashboardsTab({ dashboards, loading, error, retry, folde
             locationInfo={foldersByUid[dash.location]}
             layoutMode="list"
             source="homepage_mostUsedTab"
+            density={density}
           />
         </li>
       ))}

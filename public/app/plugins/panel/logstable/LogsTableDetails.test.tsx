@@ -374,6 +374,61 @@ describe('LogsTableDetails', () => {
     });
   });
 
+  test('does not re-apply the previous search filter after reopening details', async () => {
+    const log = createLogLine({
+      logLevel: LogLevel.error,
+      timeEpochMs: 1546297200000,
+      datasourceUid: lokiDS.uid,
+      labels: { svc: 'api' },
+    });
+
+    const renderDetails = (currentLog: LogListModel | undefined) => (
+      <PanelContextProvider value={{ eventsScope: 'test', eventBus: new EventBusSrv(), app: CoreApp.Dashboard }}>
+        <LogDetailsContext.Provider
+          value={{
+            ...emptyContextData,
+            enableLogDetails: true,
+            logs: [log],
+            showDetails: currentLog ? [log] : [],
+            currentLog,
+            closeDetails: jest.fn(),
+            setCurrentLog: jest.fn(),
+            toggleDetails: jest.fn(),
+          }}
+        >
+          <LogsTableDetails
+            containerElement={null}
+            options={baseOptions}
+            onOptionsChange={jest.fn()}
+            timeRange={timeRange}
+            timeZone="UTC"
+          />
+        </LogDetailsContext.Provider>
+      </PanelContextProvider>
+    );
+
+    const { rerender } = render(renderDetails(log));
+
+    await waitFor(() => {
+      expect(screen.getByText('Log line')).toBeInTheDocument();
+    });
+
+    await userEvent.type(screen.getByPlaceholderText('Search field names and values'), 'api');
+    expect(screen.getByLabelText('Clear')).toBeInTheDocument();
+
+    // Close (which resets the search), then reopen the same log.
+    await userEvent.click(screen.getByLabelText('Close log details sidebar'));
+    rerender(renderDetails(undefined));
+    rerender(renderDetails(log));
+
+    await waitFor(() => {
+      expect(screen.getByText('Log line')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByLabelText('Clear')).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText<HTMLInputElement>('Search field names and values')).toHaveValue('');
+  });
+
   test('applies logDetailsWidth from panel options on the resizable container', async () => {
     setup(undefined, { logDetailsWidth: 428 });
 

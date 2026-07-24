@@ -66,11 +66,12 @@ func NewModule(opts Options,
 	license licensing.Licensing,
 	moduleRegisterer ModuleRegisterer,
 	storageBackend resource.StorageBackend, // Ensures unified storage backend is initialized
+	experimentalKV *resource.ExperimentalKVOptions, // Optional alternative KV for flagged use-cases; nil in OSS
 	hooksService *hooks.HooksService,
 	storeProvider zStore.StoreProvider,
 	reconcileCRDs []schema.GroupVersionResource,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, vectorMetrics, reg, promGatherer, tracer, license, moduleRegisterer, storageBackend, hooksService, storeProvider, reconcileCRDs)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, vectorMetrics, reg, promGatherer, tracer, license, moduleRegisterer, storageBackend, experimentalKV, hooksService, storeProvider, reconcileCRDs)
 	if err != nil {
 		return nil, err
 	}
@@ -95,6 +96,7 @@ func newModuleServer(opts Options,
 	license licensing.Licensing,
 	moduleRegisterer ModuleRegisterer,
 	storageBackend resource.StorageBackend,
+	experimentalKV *resource.ExperimentalKVOptions,
 	hooksService *hooks.HooksService,
 	storeProvider zStore.StoreProvider,
 	reconcileCRDs []schema.GroupVersionResource,
@@ -129,6 +131,7 @@ func newModuleServer(opts Options,
 		license:          license,
 		moduleRegisterer: moduleRegisterer,
 		storageBackend:   storageBackend,
+		experimentalKV:   experimentalKV,
 		hooksService:     hooksService,
 		searchClient:     searchClient,
 		healthNotifier:   NewHealthNotifier(),
@@ -156,6 +159,7 @@ type ModuleServer struct {
 	isInitialized    bool
 	mtx              sync.Mutex
 	storageBackend   resource.StorageBackend
+	experimentalKV   *resource.ExperimentalKVOptions
 	natsPublisher    nats.Publisher
 	natsSubscriber   nats.Subscriber
 	vectorBackend    vector.VectorBackend
@@ -328,9 +332,10 @@ func (s *ModuleServer) initNATSModule() (services.Service, error) {
 	publisher := nats.ProvidePublisher(natsCfg, s.registerer)
 	s.natsPublisher = publisher
 
-	// Off by default: only the publisher runs. The shadow (testing) also needs a
-	// subscriber, so run both under a manager to drain both on shutdown.
-	if !s.cfg.NATS.NotifierShadow {
+	// Off by default: only the publisher runs. Both the direct notifier and the
+	// shadow (testing) consume from the bus, so either one requires a subscriber;
+	// run it under a manager with the publisher to drain both on shutdown.
+	if !s.cfg.NATS.NotifierShadow && !s.cfg.NATS.Notifier {
 		return publisher, nil
 	}
 	subscriber := nats.ProvideSubscriber(natsCfg, s.registerer)
@@ -359,12 +364,14 @@ func (s *ModuleServer) initUnifiedBackendModule(storageServerEnabled bool) func(
 			if err != nil {
 				return nil, err
 			}
-			opts := []sql.StorageBackendOption{sql.WithEventPublisher(s.natsPublisher)}
-			if s.cfg.NATS.NotifierShadow && s.natsSubscriber != nil {
-				opts = append(opts, sql.WithNatsNotifierShadow(natsEventSubscriber{s.natsSubscriber}))
-			}
+			opts := []sql.StorageBackendOption{sql.WithEventPublisher(s.natsPublisher), sql.WithVectorBackend(s.vectorBackend)}
 			if s.cfg.NATS.Notifier && s.natsSubscriber != nil {
 				opts = append(opts, sql.WithNatsNotifier(natsEventSubscriber{s.natsSubscriber}))
+			} else if s.cfg.NATS.NotifierShadow && s.natsSubscriber != nil {
+				opts = append(opts, sql.WithNatsNotifierShadow(natsEventSubscriber{s.natsSubscriber}))
+			}
+			if s.experimentalKV != nil {
+				opts = append(opts, sql.WithExperimentalKV(s.experimentalKV))
 			}
 			s.storageBackend, err = sql.NewStorageBackend(s.cfg, eDB, s.registerer, s.storageMetrics, disableStorageServices, kvStore, nil, opts...)
 			if err != nil {
@@ -422,6 +429,7 @@ func (s *ModuleServer) initStorageServerModule() (services.Service, error) {
 		return true, nil
 	}),
 		resourcepb.ResourceStore_ServiceDesc.ServiceName,
+		resourcepb.ResourceStats_ServiceDesc.ServiceName,
 		resourcepb.ResourceIndex_ServiceDesc.ServiceName,
 		resourcepb.ManagedObjectIndex_ServiceDesc.ServiceName,
 		resourcepb.BlobStore_ServiceDesc.ServiceName,

@@ -214,7 +214,7 @@ To export the notification policy tree from the Grafana UI, complete the followi
 
 4. Click **Copy Code** or **Download**.
 
-When the [`alertingMultiplePolicies` feature flag is enabled](ref:multi-notification-policies), you can export individual named routing trees.
+You can also export individual [named routing trees](ref:multi-notification-policies).
 
 1. Click **Alerts & IRM** -> **Notification policies**.
 1. Find the routing tree you want to export in the list.

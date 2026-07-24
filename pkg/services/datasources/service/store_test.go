@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -108,6 +109,100 @@ func TestIntegrationDataAccess(t *testing.T) {
 			cmd.UID = "test/uid"
 			_, err := ss.AddDataSource(context.Background(), &cmd)
 			require.ErrorContains(t, err, "invalid format of UID")
+		})
+	})
+
+	t.Run("BeforeSave", func(t *testing.T) {
+		for _, tc := range []struct {
+			name string
+			uid  string
+		}{
+			{name: "generated uid", uid: ""},
+			{name: "client-provided uid", uid: "client-uid"},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				db := db.InitTestDB(t)
+				ss := SqlStore{db: db}
+				var gotUID string
+				cmd := defaultAddDatasourceCommand
+				cmd.UID = tc.uid
+				cmd.JsonData = simplejson.New()
+				cmd.BeforeSave = func(ctx context.Context, uid string, jsonData *simplejson.Json) {
+					gotUID = uid
+					jsonData.Set("grafanaExternalId", "stack-"+uid)
+				}
+
+				ds, err := ss.AddDataSource(context.Background(), &cmd)
+				require.NoError(t, err)
+				if tc.uid != "" {
+					require.Equal(t, tc.uid, gotUID)
+				} else {
+					require.NotEmpty(t, gotUID)
+				}
+				require.Equal(t, gotUID, ds.UID)
+				require.Equal(t, "stack-"+gotUID, ds.JsonData.Get("grafanaExternalId").MustString())
+			})
+		}
+
+		t.Run("uses uid generated after collision retry", func(t *testing.T) {
+			db := db.InitTestDB(t)
+			ss := SqlStore{db: db}
+			cmd := defaultAddDatasourceCommand
+			cmd.UID = "taken-uid"
+			_, err := ss.AddDataSource(context.Background(), &cmd)
+			require.NoError(t, err)
+
+			orig := generateNewUid
+			t.Cleanup(func() { generateNewUid = orig })
+			calls := 0
+			generateNewUid = func() string {
+				calls++
+				if calls == 1 {
+					return "taken-uid"
+				}
+				return "free-uid"
+			}
+
+			var gotUID string
+			cmd2 := defaultAddDatasourceCommand
+			cmd2.Name = "other"
+			cmd2.UID = ""
+			cmd2.JsonData = simplejson.New()
+			cmd2.BeforeSave = func(ctx context.Context, uid string, jsonData *simplejson.Json) {
+				gotUID = uid
+				jsonData.Set("grafanaExternalId", "stack-"+uid)
+			}
+
+			ds, err := ss.AddDataSource(context.Background(), &cmd2)
+			require.NoError(t, err)
+			require.Equal(t, "free-uid", gotUID)
+			require.Equal(t, "free-uid", ds.UID)
+			require.Equal(t, "stack-free-uid", ds.JsonData.Get("grafanaExternalId").MustString())
+			require.GreaterOrEqual(t, calls, 2)
+		})
+
+		t.Run("runs on update before persist", func(t *testing.T) {
+			db := db.InitTestDB(t)
+			ss := SqlStore{db: db}
+			ds := initDatasource(db)
+
+			cmd := defaultUpdateDatasourceCommand
+			cmd.ID = ds.ID
+			cmd.UID = ds.UID
+			cmd.OrgID = ds.OrgID
+			cmd.Version = ds.Version
+			cmd.JsonData = simplejson.New()
+			called := false
+			cmd.BeforeSave = func(ctx context.Context, uid string, jsonData *simplejson.Json) {
+				called = true
+				require.Equal(t, ds.UID, uid)
+				jsonData.Set("grafanaExternalId", "stack-"+uid)
+			}
+
+			updated, err := ss.UpdateDataSource(context.Background(), &cmd)
+			require.NoError(t, err)
+			require.True(t, called)
+			require.Equal(t, "stack-"+ds.UID, updated.JsonData.Get("grafanaExternalId").MustString())
 		})
 	})
 
@@ -294,6 +389,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		require.Equal(t, ds.OrgID, deleted.OrgID)
 		require.Equal(t, ds.Name, deleted.Name)
 		require.Equal(t, ds.UID, deleted.UID)
+		require.Equal(t, ds.Type, deleted.Type)
 	})
 
 	t.Run("does not fire an event when the datasource is not deleted", func(t *testing.T) {

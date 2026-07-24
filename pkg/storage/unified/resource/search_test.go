@@ -37,6 +37,11 @@ type MockResourceIndex struct {
 
 	buildInfo IndexBuildInfo
 	docCount  int64
+
+	// Optional configured results for the managed-object RPCs. When nil the
+	// methods return an error, matching the default "not expected" behaviour.
+	managedObjects *resourcepb.ListManagedObjectsResponse
+	managedCounts  []*resourcepb.CountManagedObjectsResponse_ResourceCount
 }
 
 func (m *MockResourceIndex) BuildInfo() (IndexBuildInfo, error) {
@@ -52,6 +57,9 @@ func (m *MockResourceIndex) Search(_ context.Context, _ types.AccessClient, _ *r
 }
 
 func (m *MockResourceIndex) CountManagedObjects(_ context.Context, _ *SearchStats) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error) {
+	if m.managedCounts != nil {
+		return m.managedCounts, nil
+	}
 	return nil, fmt.Errorf("not expected")
 }
 
@@ -60,6 +68,9 @@ func (m *MockResourceIndex) DocCount(_ context.Context, _ string, _ *SearchStats
 }
 
 func (m *MockResourceIndex) ListManagedObjects(_ context.Context, _ *resourcepb.ListManagedObjectsRequest, _ *SearchStats) (*resourcepb.ListManagedObjectsResponse, error) {
+	if m.managedObjects != nil {
+		return m.managedObjects, nil
+	}
 	return nil, fmt.Errorf("not expected")
 }
 
@@ -85,6 +96,9 @@ type mockStorageBackend struct {
 	resourceStats   []ResourceStats
 	lastImportTimes []ResourceLastImportTime
 	statsCalls      atomic.Int32
+	listStoredCalls atomic.Int32
+	listStoredErr   error
+	lastCountLimit  atomic.Int64
 }
 
 func (m *mockStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error) {
@@ -97,6 +111,38 @@ func (m *mockStorageBackend) GetResourceStats(ctx context.Context, nsr Namespace
 		}
 	}
 	return result, nil
+}
+
+// ListStoredResources reports the distinct group/resource identities in the
+// namespace, derived from the configured resourceStats. It is the discovery
+// primitive the search server uses instead of counting via GetResourceStats.
+func (m *mockStorageBackend) ListStoredResources(_ context.Context, filter NamespacedResource) ([]NamespacedResource, error) {
+	m.listStoredCalls.Add(1)
+	if m.listStoredErr != nil {
+		return nil, m.listStoredErr
+	}
+	if filter.Namespace == "" {
+		return nil, fmt.Errorf("namespace is required")
+	}
+	var result []NamespacedResource
+	for _, stat := range m.resourceStats {
+		if stat.Namespace != filter.Namespace {
+			continue
+		}
+		if filter.Group != "" && stat.Group != filter.Group {
+			continue
+		}
+		if filter.Resource != "" && stat.Resource != filter.Resource {
+			continue
+		}
+		result = append(result, stat.NamespacedResource)
+	}
+	return result, nil
+}
+
+func (m *mockStorageBackend) GetResourceStatsWithLimit(ctx context.Context, nsr NamespacedResource, minCount, countLimit int) ([]ResourceStats, error) {
+	m.lastCountLimit.Store(int64(countLimit))
+	return m.GetResourceStats(ctx, nsr, minCount)
 }
 
 func (m *mockStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
@@ -141,10 +187,15 @@ func (m *mockStorageBackend) GetResourceLastImportTimes(ctx context.Context) ite
 type mockSearchBackend struct {
 	openIndexes []NamespacedResource
 
-	mu              sync.Mutex
-	buildIndexCalls []buildIndexCall
-	cache           map[NamespacedResource]ResourceIndex
-	stopCalls       atomic.Int32
+	mu                sync.Mutex
+	buildIndexCalls   []buildIndexCall
+	cache             map[NamespacedResource]ResourceIndex
+	stopCalls         atomic.Int32
+	snapshotThreshold int64
+}
+
+func (m *mockSearchBackend) SnapshotCountThreshold() int64 {
+	return m.snapshotThreshold
 }
 
 type buildIndexCall struct {
@@ -154,6 +205,37 @@ type buildIndexCall struct {
 
 func (m *mockSearchBackend) LoadOpenIndexStats(_ time.Time, _ time.Duration) ([]ResourceStats, error) {
 	return nil, nil
+}
+
+// TestStartupIndexStatsCountLimit checks the cap the startup prebuild passes to
+// the backend: init min size + 1, raised to the snapshot threshold + 1 when
+// snapshots are enabled.
+func TestStartupIndexStatsCountLimit(t *testing.T) {
+	cases := []struct {
+		name              string
+		initMinCount      int
+		snapshotThreshold int64 // 0 means no active snapshot store
+		wantLimit         int64
+	}{
+		{"no snapshot store", 5, 0, 6},
+		{"snapshot threshold higher", 5, 100, 101},
+		{"init min higher", 50, 10, 51},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			storage := &mockStorageBackend{}
+			server, err := newSearchServer(SearchOptions{
+				Backend:      &mockSearchBackend{snapshotThreshold: tc.snapshotThreshold},
+				Resources:    &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"group": "resource"}},
+				InitMinCount: tc.initMinCount,
+			}, storage, nil, nil, nil, nil, nil, nil, nil)
+			require.NoError(t, err)
+
+			_, err = server.startupIndexStats(t.Context())
+			require.NoError(t, err)
+			require.Equal(t, tc.wantLimit, storage.lastCountLimit.Load())
+		})
+	}
 }
 
 func (m *mockSearchBackend) WriteOpenIndexStats(_ time.Time) error {

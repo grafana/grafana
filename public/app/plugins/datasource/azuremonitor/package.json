@@ -54,5 +54,5 @@
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --maxWorkers 4"
   },
-  "packageManager": "yarn@4.15.0"
+  "packageManager": "yarn@4.17.1"
 }

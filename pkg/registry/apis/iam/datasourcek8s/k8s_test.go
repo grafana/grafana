@@ -12,7 +12,7 @@ func TestK8sDatasourceAPIGroup(t *testing.T) {
 }
 
 func TestLegacyUIDScopeToK8s(t *testing.T) {
-	assert.Equal(t, "loki.datasource.grafana.app/datasources:abc", LegacyUIDScopeToK8s("loki", "abc"))
+	assert.Equal(t, "loki.datasource.grafana.app/datasources:uid:abc", LegacyUIDScopeToK8s("loki", "abc"))
 	assert.Equal(t, "*.datasource.grafana.app/datasources:*", LegacyUIDScopeToK8s("*", "*"))
 }
 
@@ -36,7 +36,7 @@ func TestLegacyDatasourceScopeAndActionToK8s(t *testing.T) {
 	assert.Equal(t, "datasources:read", action)
 
 	scope, action = LegacyDatasourceScopeAndActionToK8s("loki", "datasources:uid:abc", "datasources:read")
-	assert.Equal(t, "loki.datasource.grafana.app/datasources:abc", scope)
+	assert.Equal(t, "loki.datasource.grafana.app/datasources:uid:abc", scope)
 	assert.Equal(t, "loki.datasource.grafana.app/datasources:get", action)
 
 	scope, action = LegacyDatasourceScopeAndActionToK8s("*", "datasources:*", "datasources.permissions:write")

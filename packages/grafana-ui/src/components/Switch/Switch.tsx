@@ -124,135 +124,139 @@ export const InlineSwitch = forwardRef<HTMLInputElement, InlineSwitchProps>(
 
 InlineSwitch.displayName = 'Switch';
 
-const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
-  switch: css({
-    width: theme.spacing(4),
-    height: theme.spacing(2),
-    position: 'relative',
-    lineHeight: 1,
+const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
 
-    input: {
-      height: '100%',
-      width: '100% !important',
-      opacity: 0,
-      zIndex: -1000,
-      position: 'absolute',
+  return {
+    switch: css({
+      width: theme.spacing(4),
+      height: theme.spacing(2),
+      position: 'relative',
+      lineHeight: 1,
 
-      '&:checked': {
-        '~ label': {
-          background: theme.colors.accent.main,
-          borderColor: theme.colors.accent.main,
+      input: {
+        height: '100%',
+        width: '100% !important',
+        opacity: 0,
+        zIndex: -1000,
+        position: 'absolute',
 
-          '&:hover': {
-            background: theme.colors.accent.shade,
+        '&:checked': {
+          '~ label': {
+            background: theme.colors.accent.main,
+            borderColor: theme.colors.accent.main,
+
+            '&:hover': {
+              background: theme.colors.accent.shade,
+            },
+          },
+
+          '~ svg': {
+            transform: `translate3d(${theme.spacing(2.25)}, -50%, 0)`,
+            background: theme.colors.accent.contrastText,
+            color: theme.colors.accent.main,
           },
         },
 
-        '~ svg': {
-          transform: `translate3d(${theme.spacing(2.25)}, -50%, 0)`,
-          background: theme.colors.accent.contrastText,
-          color: theme.colors.accent.main,
+        '&:disabled': {
+          '~ label': {
+            background: theme.colors.action.disabledBackground,
+            borderColor: theme.colors.border.weak,
+            cursor: 'not-allowed',
+          },
+
+          '~ svg': {
+            background: theme.colors.text.disabled,
+          },
         },
+
+        '&:disabled:checked': {
+          '~ label': {
+            background: theme.colors.accent.transparent,
+          },
+
+          '~ svg': {
+            color: theme.colors.accent.contrastText,
+          },
+        },
+
+        '&:focus ~ label, &:focus-visible ~ label': getFocusStyles(theme),
+
+        '&:focus:not(:focus-visible) ~ label': getMouseFocusStyles(theme),
       },
 
-      '&:disabled': {
-        '~ label': {
-          background: theme.colors.action.disabledBackground,
-          borderColor: theme.colors.border.weak,
-          cursor: 'not-allowed',
+      label: {
+        width: '100%',
+        height: '100%',
+        cursor: 'pointer',
+        borderRadius: theme.shape.radius.pill,
+        background: visualRefreshEnabled ? theme.colors.border.medium : theme.components.input.background,
+        border: `1px solid ${theme.components.input.borderColor}`,
+        [theme.transitions.handleMotion('no-preference')]: {
+          transition: 'all 0.3s ease',
         },
 
-        '~ svg': {
-          background: theme.colors.text.disabled,
-        },
-      },
-
-      '&:disabled:checked': {
-        '~ label': {
-          background: theme.colors.accent.transparent,
-        },
-
-        '~ svg': {
-          color: theme.colors.accent.contrastText,
+        '&:hover': {
+          borderColor: theme.components.input.borderHover,
         },
       },
+      svg: {
+        position: 'absolute',
+        display: 'block',
+        color: 'transparent',
+        width: theme.spacing(1.5),
+        height: theme.spacing(1.5),
+        borderRadius: theme.shape.radius.circle,
+        background: visualRefreshEnabled ? theme.colors.accent.contrastText : theme.colors.text.secondary,
+        boxShadow: theme.shadows.z1,
+        left: 0,
+        pointerEvents: 'none',
+        top: '50%',
+        transform: `translate3d(${theme.spacing(0.25)}, -50%, 0)`,
+        [theme.transitions.handleMotion('no-preference')]: {
+          transition: 'transform 0.2s cubic-bezier(0.19, 1, 0.22, 1)',
+        },
 
-      '&:focus ~ label, &:focus-visible ~ label': getFocusStyles(theme),
-
-      '&:focus:not(:focus-visible) ~ label': getMouseFocusStyles(theme),
-    },
-
-    label: {
-      width: '100%',
-      height: '100%',
-      cursor: 'pointer',
-      borderRadius: theme.shape.radius.pill,
-      background: theme.components.input.background,
-      border: `1px solid ${theme.components.input.borderColor}`,
-      [theme.transitions.handleMotion('no-preference')]: {
-        transition: 'all 0.3s ease',
+        '@media (forced-colors: active)': {
+          border: `1px solid ${theme.colors.accent.contrastText}`,
+        },
       },
+    }),
+    inlineContainer: css({
+      padding: theme.spacing(0, 1),
+      height: theme.spacing(theme.components.height.md),
+      display: 'inline-flex',
+      alignItems: 'center',
+      background: transparent ? 'transparent' : theme.components.input.background,
+      border: `1px solid ${transparent ? 'transparent' : theme.components.input.borderColor}`,
+      borderRadius: theme.shape.radius.default,
 
       '&:hover': {
-        borderColor: theme.components.input.borderHover,
-      },
-    },
-    svg: {
-      position: 'absolute',
-      display: 'block',
-      color: 'transparent',
-      width: theme.spacing(1.5),
-      height: theme.spacing(1.5),
-      borderRadius: theme.shape.radius.circle,
-      background: theme.colors.text.secondary,
-      boxShadow: theme.shadows.z1,
-      left: 0,
-      pointerEvents: 'none',
-      top: '50%',
-      transform: `translate3d(${theme.spacing(0.25)}, -50%, 0)`,
-      [theme.transitions.handleMotion('no-preference')]: {
-        transition: 'transform 0.2s cubic-bezier(0.19, 1, 0.22, 1)',
-      },
+        border: `1px solid ${transparent ? 'transparent' : theme.components.input.borderHover}`,
 
-      '@media (forced-colors: active)': {
-        border: `1px solid ${theme.colors.accent.contrastText}`,
+        '.inline-switch-label': {
+          color: theme.colors.text.primary,
+        },
       },
-    },
-  }),
-  inlineContainer: css({
-    padding: theme.spacing(0, 1),
-    height: theme.spacing(theme.components.height.md),
-    display: 'inline-flex',
-    alignItems: 'center',
-    background: transparent ? 'transparent' : theme.components.input.background,
-    border: `1px solid ${transparent ? 'transparent' : theme.components.input.borderColor}`,
-    borderRadius: theme.shape.radius.default,
-
-    '&:hover': {
-      border: `1px solid ${transparent ? 'transparent' : theme.components.input.borderHover}`,
-
-      '.inline-switch-label': {
-        color: theme.colors.text.primary,
+    }),
+    disabled: css({
+      backgroundColor: transparent ? 'transparent' : 'rgba(204, 204, 220, 0.04)',
+      color: 'rgba(204, 204, 220, 0.6)',
+      border: `1px solid ${transparent ? 'transparent' : 'rgba(204, 204, 220, 0.04)'}`,
+    }),
+    inlineLabel: css({
+      cursor: 'pointer',
+      paddingRight: theme.spacing(1),
+      color: theme.colors.text.secondary,
+      whiteSpace: 'nowrap',
+    }),
+    inlineLabelEnabled: css({
+      color: theme.colors.text.primary,
+    }),
+    invalid: css({
+      'input ~ label, input:checked ~ label, input:hover ~ label': {
+        border: `1px solid ${theme.colors.error.border}`,
       },
-    },
-  }),
-  disabled: css({
-    backgroundColor: transparent ? 'transparent' : 'rgba(204, 204, 220, 0.04)',
-    color: 'rgba(204, 204, 220, 0.6)',
-    border: `1px solid ${transparent ? 'transparent' : 'rgba(204, 204, 220, 0.04)'}`,
-  }),
-  inlineLabel: css({
-    cursor: 'pointer',
-    paddingRight: theme.spacing(1),
-    color: theme.colors.text.secondary,
-    whiteSpace: 'nowrap',
-  }),
-  inlineLabelEnabled: css({
-    color: theme.colors.text.primary,
-  }),
-  invalid: css({
-    'input ~ label, input:checked ~ label, input:hover ~ label': {
-      border: `1px solid ${theme.colors.error.border}`,
-    },
-  }),
-});
+    }),
+  };
+};

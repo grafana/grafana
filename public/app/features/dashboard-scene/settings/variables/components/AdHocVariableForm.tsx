@@ -187,10 +187,10 @@ export function AdHocVariableForm({
 
       {datasourceSupported && onAllowCustomValueChange && (
         <Field
-          label={t('dashboard-scene.ad-hoc-variable-form.name-allow-custom-values', 'Allow custom values')}
+          label={t('dashboard.edit-pane.variable.selection-options.allow-custom-values', 'Allow custom values')}
           description={t(
-            'dashboard-scene.ad-hoc-variable-form.description-enables-users-custom-values',
-            'Enables users to add custom values to the list'
+            'dashboard.edit-pane.variable.selection-options.allow-custom-values-description',
+            'Enables users to enter values'
           )}
           noMargin
         >

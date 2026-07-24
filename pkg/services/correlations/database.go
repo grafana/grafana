@@ -232,6 +232,17 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			return ErrCorrelationNotFound
 		}
 
+		// there is no great way to ensure the target UID is deleted with the update above, so we do it in a small separate update
+		if cmd.Type != nil && *cmd.Type == external {
+			_, err = session.
+				Where("uid = ? AND source_uid = ?", correlation.UID, correlation.SourceUID).
+				Table("correlation").
+				Update(map[string]interface{}{"target_uid": nil})
+			if err != nil {
+				return err
+			}
+		}
+
 		return nil
 	})
 
@@ -332,10 +343,12 @@ func (s CorrelationsService) getCorrelationsBySourceUID(ctx context.Context, cmd
 }
 
 func (s CorrelationsService) getCorrelations(ctx context.Context, cmd GetCorrelationsQuery) (GetCorrelationsResponseBody, error) {
+	// doesContinue is only relevant for app platform responses, which use pointer pagination
 	result := GetCorrelationsResponseBody{
 		Correlations: make([]Correlation, 0),
 		Page:         cmd.Page,
 		Limit:        cmd.Limit,
+		DoesContinue: nil,
 	}
 
 	err := s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {

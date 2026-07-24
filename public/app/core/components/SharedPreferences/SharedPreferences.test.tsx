@@ -22,9 +22,12 @@ setBackendSrv(backendSrv);
 setupMockServer();
 
 const getPrefsUpdateRequest = async (requests: Request[]) => {
-  const prefsUpdate = requests.find((r) => r.url.match('/preferences') && r.method === 'PUT');
+  const prefsUpdate = requests.find(
+    (r) =>
+      r.url.match('/apis/preferences.grafana.app/v1alpha1/namespaces/default/preferences/user') && r.method === 'PATCH'
+  );
 
-  return prefsUpdate!.clone().json();
+  return prefsUpdate?.clone().json();
 };
 
 const [_, { dashbdD, dashbdE }] = getFolderFixtures();
@@ -140,16 +143,18 @@ describe('SharedPreferences', () => {
     const newPreferences = await getPrefsUpdateRequest(requests);
 
     expect(newPreferences).toEqual({
-      timezone: 'Australia/Sydney',
-      weekStart: 'saturday',
-      theme: 'dark',
-      homeDashboardUID: dashboardToSelect.uid,
-      queryHistory: {
-        homeTab: '',
-      },
-      language: 'fr-FR',
-      navbar: {
-        bookmarkUrls: [],
+      spec: {
+        timezone: 'Australia/Sydney',
+        weekStart: 'saturday',
+        theme: 'dark',
+        homeDashboardUID: dashboardToSelect.uid,
+        queryHistory: {
+          homeTab: '',
+        },
+        language: 'fr-FR',
+        navbar: {
+          bookmarkUrls: [],
+        },
       },
     });
   });
@@ -174,16 +179,18 @@ describe('SharedPreferences', () => {
     const requests = await capture;
     const newPreferences = await getPrefsUpdateRequest(requests);
     expect(newPreferences).toEqual({
-      timezone: '',
-      weekStart: '',
-      theme: '',
-      homeDashboardUID: '',
-      queryHistory: {
-        homeTab: '',
-      },
-      language: '',
-      navbar: {
-        bookmarkUrls: [],
+      spec: {
+        timezone: '',
+        weekStart: '',
+        theme: '',
+        homeDashboardUID: '',
+        queryHistory: {
+          homeTab: '',
+        },
+        language: '',
+        navbar: {
+          bookmarkUrls: [],
+        },
       },
     });
   });

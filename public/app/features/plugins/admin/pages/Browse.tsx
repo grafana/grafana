@@ -14,7 +14,6 @@ import { useSelector } from 'app/types/store';
 
 import { HorizontalGroup } from '../components/HorizontalGroup';
 import { PluginList } from '../components/PluginList';
-import { RoadmapLinks } from '../components/RoadmapLinks';
 import { SearchField } from '../components/SearchField';
 import UpdateAllButton from '../components/UpdateAllButton';
 import { UpdateAllModal } from '../components/UpdateAllModal';
@@ -151,7 +150,6 @@ export default function Browse() {
         <div className={styles.listWrap}>
           <PluginList plugins={plugins} isLoading={isLoading} />
         </div>
-        <RoadmapLinks />
         <UpdateAllModal
           isOpen={showUpdateModal}
           isLoading={areUpdatesLoading}

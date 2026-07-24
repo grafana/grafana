@@ -318,14 +318,17 @@ function bulkUpdateAdHocFiltersVariable(filterVar: AdHocFiltersVariable, newFilt
   let hasChanges = false;
 
   for (const newFilter of newFilters) {
-    const filterToReplaceIndex = updatedFilters.findIndex(
-      (filter) =>
-        filter.key === newFilter.key && filter.value === newFilter.value && filter.operator !== newFilter.operator
+    const existingFilterIndex = updatedFilters.findIndex(
+      (filter) => filter.key === newFilter.key && filter.value === newFilter.value
     );
 
-    if (filterToReplaceIndex >= 0) {
-      updatedFilters.splice(filterToReplaceIndex, 1, newFilter);
-      hasChanges = true;
+    if (existingFilterIndex >= 0) {
+      // An identical filter is already applied, adding it again would duplicate it in the filter bar.
+      // Update is only required when the operator changed (key1 = value1 -> key1 != value1).
+      if (updatedFilters[existingFilterIndex].operator !== newFilter.operator) {
+        updatedFilters.splice(existingFilterIndex, 1, newFilter);
+        hasChanges = true;
+      }
       continue;
     }
 

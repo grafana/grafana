@@ -6,9 +6,9 @@
     "background": {
       "canvas": "palette.white",
       "page": "palette.neutral50",
-      "primary": "palette.neutral150",
-      "secondary": "palette.white",
-      "elevated": "palette.neutral50"
+      "primary": "palette.white",
+      "secondary": "palette.neutral150",
+      "elevated": "palette.white"
     },
     "primary": {
       "main": "palette.neutral950"
@@ -24,7 +24,8 @@
     },
     "accent": {
       "main": "palette.orange600",
-      "text": "palette.orange700"
+      "text": "palette.orange700",
+      "contrastText": "palette.white"
     },
     "error": {
       "main": "palette.coral600",
@@ -43,15 +44,15 @@
       "border": "palette.blue100"
     },
     "text": {
-      "primary": "palette.neutral900",
-      "secondary": "palette.neutral800",
-      "disabled": "palette.neutral700",
+      "primary": "palette.neutral800",
+      "secondary": "palette.neutral600",
+      "disabled": "palette.neutral500",
       "link": "palette.orange700"
     },
     "border": {
-      "weak": "palette.neutral300",
-      "medium": "palette.neutral400",
-      "strong": "palette.neutral500"
+      "weak": "palette.neutral200",
+      "medium": "palette.neutral300",
+      "strong": "palette.neutral400"
     },
     "gradients": {
       "brandHorizontal": "linear-gradient(270deg, palette.orange400 0%, palette.orange500 100%)",
@@ -59,9 +60,10 @@
     },
     "contrastThreshold": 4.5,
     "action": {
-      "selected": "palette.neutral200",
-      "hover": "palette.neutral300",
-      "focus": "palette.neutral300"
+      "selected": "hsl(from palette.neutral900 h s l / 0.12)",
+      "hover": "hsl(from palette.neutral900 h s l / 0.09)",
+      "focus": "hsl(from palette.neutral900 h s l / 0.09)",
+      "selectedBorder": "palette.orange600"
     }
   },
   "components": {
@@ -90,6 +92,9 @@
         { "background": "palette.lavender200", "text": "palette.lavender800" },
         { "background": "palette.rose200", "text": "palette.rose800" }
       ]
+    },
+    "input": {
+      "background": "palette.white"
     }
   },
   "shape": {

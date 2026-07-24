@@ -4,54 +4,62 @@ This documentation describes the Critical User Journey tracking framework in Gra
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Configuration](#configuration)
-- [Architecture](#architecture)
-  - [Components](#components)
-  - [Data Flow](#data-flow)
-- [Journeys](#journeys)
-  - [search_to_resource](#search_to_resource)
-  - [browse_to_resource](#browse_to_resource)
-  - [dashboard_edit](#dashboard_edit)
-  - [panel_edit](#panel_edit)
-  - [datasource_configure](#datasource_configure)
-  - [explore_to_dashboard](#explore_to_dashboard)
-- [Adding a New Journey](#adding-a-new-journey)
-  - [Step 0: Decide whether you need a journey](#step-0-decide-whether-you-need-a-journey)
-  - [Step 1: Plan the journey shape](#step-1-plan-the-journey-shape)
-  - [Step 2: Identify or add interactions](#step-2-identify-or-add-the-interactions-youll-listen-on)
-  - [Step 3: Register metadata](#step-3-register-metadata)
-  - [Step 4: Create the wiring file](#step-4-create-the-wiring-file)
-  - [Step 5: Import at bootstrap](#step-5-import-at-bootstrap)
-  - [Step 6: Write tests](#step-6-write-tests)
-  - [Step 7: Verify locally](#step-7-verify-locally)
-  - [Worked example: alert_rule_save](#worked-example-alert_rule_save)
-  - [Lazy-Loaded Journeys](#lazy-loaded-journeys)
-  - [Pre-merge checklist](#pre-merge-checklist)
-- [API Reference](#api-reference)
-  - [JourneyTracker](#journeytracker)
-  - [JourneyHandle](#journeyhandle)
-  - [StepHandle](#stephandle)
-  - [JourneyRegistry](#journeyregistry)
-- [Journey Patterns](#journey-patterns)
-  - [Duration-Based Steps](#duration-based-steps)
-  - [Late Attribute Enrichment](#late-attribute-enrichment)
-  - [Concurrent Journeys](#concurrent-journeys)
-  - [Parent Journeys](#parent-journeys)
-  - [Discard vs Cancel vs Timeout](#discard-vs-cancel-vs-timeout)
-- [Telemetry Output](#telemetry-output)
-  - [OTel Traces (Tempo)](#otel-traces-tempo)
-  - [Faro Measurements (Loki)](#faro-measurements-loki)
-- [Debugging and Development](#debugging-and-development)
-  - [Enable Debug Logging](#enable-debug-logging)
-  - [Console Output Examples](#console-output-examples)
-  - [Smoke runner: scripts/cuj-smoke.ts](#smoke-runner-scriptscuj-smokets)
-- [Implementation Details](#implementation-details)
-  - [Noop Tracker](#noop-tracker)
-  - [Handle Lifecycle](#handle-lifecycle)
-  - [Tab Visibility and Unload](#tab-visibility-and-unload)
-  - [Registry Validation](#registry-validation)
-  - [Handle Buffering](#handle-buffering)
+- [Critical User Journey (CUJ) Tracking](#critical-user-journey-cuj-tracking)
+  - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
+  - [Configuration](#configuration)
+  - [Architecture](#architecture)
+    - [Components](#components)
+    - [Data Flow](#data-flow)
+  - [Journeys](#journeys)
+  - [Phase 1 Journeys](#phase-1-journeys)
+    - [search_to_resource](#search_to_resource)
+    - [browse_to_resource](#browse_to_resource)
+    - [dashboard_edit](#dashboard_edit)
+    - [panel_edit](#panel_edit)
+    - [datasource_configure](#datasource_configure)
+    - [explore_to_dashboard](#explore_to_dashboard)
+  - [Adding a New Journey](#adding-a-new-journey)
+    - [Step 0: Decide whether you need a journey](#step-0-decide-whether-you-need-a-journey)
+    - [Step 1: Plan the journey shape](#step-1-plan-the-journey-shape)
+    - [Step 2: Identify or add the interactions you'll listen on](#step-2-identify-or-add-the-interactions-youll-listen-on)
+    - [Step 3: Register metadata](#step-3-register-metadata)
+    - [Step 4: Create the wiring file](#step-4-create-the-wiring-file)
+    - [Step 5: Import at bootstrap](#step-5-import-at-bootstrap)
+    - [Step 6: Write tests](#step-6-write-tests)
+    - [Step 7: Verify locally](#step-7-verify-locally)
+    - [Worked example: alert_rule_save](#worked-example-alert_rule_save)
+    - [Lazy-Loaded Journeys](#lazy-loaded-journeys)
+    - [Pre-merge checklist](#pre-merge-checklist)
+  - [API Reference](#api-reference)
+    - [JourneyTracker](#journeytracker)
+    - [JourneyHandle](#journeyhandle)
+    - [StepHandle](#stephandle)
+    - [JourneyRegistry](#journeyregistry)
+  - [Journey Patterns](#journey-patterns)
+    - [Duration-Based Steps](#duration-based-steps)
+    - [Late Attribute Enrichment](#late-attribute-enrichment)
+    - [Concurrent Journeys](#concurrent-journeys)
+    - [Parent Journeys](#parent-journeys)
+    - [Discard vs Cancel vs Timeout](#discard-vs-cancel-vs-timeout)
+  - [Silent Interactions](#silent-interactions)
+  - [Telemetry Output](#telemetry-output)
+    - [OTel Traces (Tempo)](#otel-traces-tempo)
+    - [Faro Measurements (Loki)](#faro-measurements-loki)
+  - [Debugging and Development](#debugging-and-development)
+    - [Enable Debug Logging](#enable-debug-logging)
+    - [Console Output Examples](#console-output-examples)
+      - [Journey Lifecycle](#journey-lifecycle)
+      - [Steps with Duration](#steps-with-duration)
+      - [Registry Logs](#registry-logs)
+      - [Discarded Journey](#discarded-journey)
+    - [Smoke runner: `scripts/cuj-smoke.ts`](#smoke-runner-scriptscuj-smokets)
+  - [Implementation Details](#implementation-details)
+    - [Noop Tracker](#noop-tracker)
+    - [Handle Lifecycle](#handle-lifecycle)
+    - [Tab Visibility and Unload](#tab-visibility-and-unload)
+    - [Registry Validation](#registry-validation)
+    - [Handle Buffering](#handle-buffering)
 
 ## Overview
 
@@ -176,7 +184,9 @@ handle.end('success', { dashboardUid })
 
 ## Journeys
 
-> **Status:** only `search_to_resource` ships in this PR. The other five entries below are forward-looking specs for the squads that will own them — wirings land in a follow-up PR.
+> # **Status:** only `search_to_resource` ships in this PR. The other five entries below are forward-looking specs for the squads that will own them — wirings land in a follow-up PR.
+
+## Phase 1 Journeys
 
 ### search_to_resource
 
@@ -206,15 +216,18 @@ User searches for a resource via command palette and navigates to it.
 
 User navigates the browse dashboards page, drills into folders, and opens a resource.
 
-| Event         | Trigger                                                       | Action                                      |
-| ------------- | ------------------------------------------------------------- | ------------------------------------------- |
-| Start         | `grafana_browse_dashboards_page_view` (first)                 | Journey starts                              |
-| Step          | `grafana_browse_dashboards_page_click_list_item` (folder)     | `navigate_folder` step starts               |
-| Step end      | `grafana_browse_dashboards_page_view` (subsequent)            | `navigate_folder` step ends (folder loaded) |
-| Step          | `grafana_browse_dashboards_page_click_list_item` (non-folder) | `select_resource` step starts               |
-| End (success) | `dashboards_init_dashboard_completed`                         | `select_resource` step ends, journey ends   |
+| Event           | Trigger                                                              | Action                                                                       |
+| --------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Start           | `grafana_browse_dashboards_page_view` (first)                        | Journey starts                                                               |
+| Step            | `grafana_browse_dashboards_page_click_list_item` (folder)            | `navigate_folder` step starts                                                |
+| Step end        | `grafana_browse_dashboards_page_view` (subsequent)                   | `navigate_folder` step ends (folder loaded)                                  |
+| Step            | `grafana_browse_dashboards_page_click_list_item` (non-folder)        | `select_resource` step starts                                                |
+| Step            | `grafana_browse_dashboards_new_folder_drawer_opened`                 | `create_folder` step starts (user opens the new-folder drawer)               |
+| Step end        | `grafana_manage_dashboards_folder_created`                           | `create_folder` step ends (`outcome: success`, `isSubfolder`, `folderDepth`) |
+| End (success)   | `dashboards_init_dashboard_completed`                                | `select_resource` step ends, journey ends                                    |
+| End (abandoned) | SPA route change to a path outside `/dashboards`/`/dashboard/`/`/d/` | Journey ends with `abandoned` and `abandonedAt: <pathname>`                  |
 
-**Key behavior:** Steps have real duration. `navigate_folder` measures click-to-folder-render. `select_resource` measures click-to-dashboard-load. Subsequent `page_view` events after the first are folder navigation steps, not new journey starts.
+**Key behavior:** Steps have real duration. `navigate_folder` measures click-to-folder-render. `select_resource` measures click-to-dashboard-load. `create_folder` measures drawer-open-to-folder-created — captures user effort filling the form, not just API latency. Subsequent `page_view` events after the first are folder navigation steps, not new journey starts. After a successful folder creation the post-create page reload re-fires `page_view` and updates the journey's `folderUID` attribute, so the user can keep browsing after creating a folder. If the user dismisses the new-folder drawer without creating, the framework backstop closes the step as `unended` at journey end.
 
 **Concurrent with search:** If the user opens the command palette mid-browse, both `browse_to_resource` and `search_to_resource` run concurrently. Both end on `dashboards_init_dashboard_completed`. The concurrent journey attributes and OTel span links capture the relationship.
 
@@ -224,13 +237,15 @@ User navigates the browse dashboards page, drills into folders, and opens a reso
 
 User enters dashboard edit mode, makes changes, and saves or discards.
 
-| Event           | Trigger                                                  | Action         |
-| --------------- | -------------------------------------------------------- | -------------- |
-| Start           | `dashboards_edit_button_clicked`                         | Journey starts |
-| End (success)   | `grafana_dashboard_saved` or `grafana_dashboard_created` | Journey ends   |
-| End (discarded) | `dashboards_edit_discarded`                              | Journey ends   |
+| Event           | Trigger                                                                  | Action                                                      |
+| --------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------- |
+| Start           | `dashboards_edit_button_clicked` (existing dashboard)                    | Journey starts with `source: edit_button`                   |
+| Start           | `dashboards_new_dashboard_init` (auto edit mode for `/dashboard/new`)    | Journey starts with `source: new_dashboard`                 |
+| End (success)   | `grafana_dashboard_saved` or `grafana_dashboard_created`                 | Journey ends                                                |
+| End (discarded) | `dashboards_edit_discarded`                                              | Journey ends                                                |
+| End (abandoned) | SPA route change to a different pathname (`/explore`, another dashboard) | Journey ends with `abandoned` and `abandonedAt: <pathname>` |
 
-**Key behavior:** Handles both `_saved` (existing dashboard) and `_created` (new dashboard) end triggers. Timeout is 30 minutes (long editing sessions are expected).
+**Key behavior:** Handles both `_saved` (existing dashboard) and `_created` (new dashboard) end triggers. Timeout is 30 minutes (long editing sessions are expected). The pathname captured at journey start is the in-scope path; navigating away (e.g. `/explore`) abandons the journey. Transitions onto `/d/<uid>` are allowed after save — both `/dashboard/new` → `/d/<new-uid>` and Save As `/d/<uid>` → `/d/<new-uid>` — because the `_created` / `_saved` interaction is reported asynchronously and can race with the route change. Two start triggers because `/dashboard/new` auto-enters edit mode and bypasses the Edit button — the `dashboards_new_dashboard_init` silent interaction is emitted from `DashboardScene`'s activation handler in that case.
 
 ### panel_edit
 
@@ -238,15 +253,16 @@ User enters dashboard edit mode, makes changes, and saves or discards.
 
 User opens a panel in edit mode and configures queries, transformations, or visualization.
 
-| Event           | Trigger                                                                       | Action                              |
-| --------------- | ----------------------------------------------------------------------------- | ----------------------------------- |
-| Start           | `dashboards_panel_action_clicked` (with `item: 'edit'` or `'configure'`)      | Journey starts                      |
-| Step            | `grafana_panel_edit_next_interaction` (action=`add_query`)                    | `add_query` step                    |
-| Step            | `grafana_panel_edit_next_interaction` (action=`add_transformation_initiated`) | `add_transformation` step           |
-| Step            | `grafana_panel_edit_next_interaction` (action=`change_sidebar_view`)          | `change_view` step                  |
-| Step            | `grafana_panel_edit_next_interaction` (any other action)                      | step named after the action         |
-| End (success)   | `panel_edit_closed` (no prior discard)                                        | Editor deactivated via save / close |
-| End (discarded) | `panel_edit_closed` (after `panel_edit_discarded`)                            | User hit Discard                    |
+| Event           | Trigger                                                                       | Action                                                      |
+| --------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Start           | `dashboards_panel_action_clicked` (with `item: 'edit'` or `'configure'`)      | Journey starts                                              |
+| Step            | `grafana_panel_edit_next_interaction` (action=`add_query`)                    | `add_query` step                                            |
+| Step            | `grafana_panel_edit_next_interaction` (action=`add_transformation_initiated`) | `add_transformation` step                                   |
+| Step            | `grafana_panel_edit_next_interaction` (action=`change_sidebar_view`)          | `change_view` step                                          |
+| Step            | `grafana_panel_edit_next_interaction` (any other action)                      | step named after the action                                 |
+| End (success)   | `panel_edit_closed` (no prior discard)                                        | Editor deactivated via save / close                         |
+| End (discarded) | `panel_edit_closed` (after `panel_edit_discarded`)                            | User hit Discard                                            |
+| End (abandoned) | SPA route change to a different pathname                                      | Journey ends with `abandoned` and `abandonedAt: <pathname>` |
 
 **Silent interactions added by this journey:** `panel_edit_closed` (emitted when the PanelEditor scene deactivates), `panel_edit_discarded` (emitted when the user hits Discard).
 
@@ -266,22 +282,23 @@ User opens a panel in edit mode and configures queries, transformations, or visu
 
 User adds and configures a new datasource until a successful connection test.
 
-| Event           | Trigger                                                      | Action                                          |
-| --------------- | ------------------------------------------------------------ | ----------------------------------------------- |
-| Start           | `connections_datasource_list_add_datasource_clicked`         | Journey starts (from list page)                 |
-| Start           | `connections_new_datasource_page_view` (no active journey)   | Journey starts (direct nav)                     |
-| Start           | `grafana_ds_add_datasource_clicked` (no active journey)      | Journey starts (catalog pick)                   |
-| Step            | `grafana_ds_add_datasource_clicked` (journey already active) | `select_type` step                              |
-| Step            | `connections_datasources_ds_configured`                      | `save_config` step                              |
-| Step            | `grafana_ds_test_datasource_clicked` (success=false)         | `test_failed` step (repeatable)                 |
-| End (success)   | `grafana_ds_test_datasource_clicked` (success=true)          | Test passed                                     |
-| End (discarded) | `connections_new_datasource_cancelled`                       | User clicked Cancel                             |
-| End (discarded) | `connections_datasource_deleted`                             | User deleted datasource before completing setup |
-| End (abandoned) | `connections_datasource_config_page_left`                    | User navigated away without testing             |
+| Event           | Trigger                                                       | Action                                          |
+| --------------- | ------------------------------------------------------------- | ----------------------------------------------- |
+| Start           | `connections_datasource_list_add_datasource_clicked`          | Journey starts (from list page)                 |
+| Start           | `connections_new_datasource_page_view` (no active journey)    | Journey starts (direct nav)                     |
+| Start           | `grafana_ds_add_datasource_clicked` (no active journey)       | Journey starts (catalog pick)                   |
+| Step            | `grafana_ds_add_datasource_clicked` (journey already active)  | `select_type` step                              |
+| Step            | `connections_datasources_ds_configured`                       | `save_config` step                              |
+| Step            | `grafana_ds_test_datasource_clicked` (success=false)          | `test_failed` step (repeatable)                 |
+| End (success)   | `grafana_ds_test_datasource_clicked` (success=true)           | Test passed                                     |
+| End (discarded) | `connections_new_datasource_cancelled`                        | User clicked Cancel                             |
+| End (discarded) | `connections_datasource_deleted`                              | User deleted datasource before completing setup |
+| End (abandoned) | `connections_datasource_config_page_left`                     | User navigated away without testing             |
+| End (abandoned) | `connections_new_datasource_page_left` (no type selected yet) | User left the catalog without picking a plugin  |
 
-**Silent interactions added by this journey:** `connections_new_datasource_cancelled`, `connections_datasource_deleted`, `connections_datasource_config_page_left`, `connections_new_datasource_page_view`.
+**Silent interactions added by this journey:** `connections_datasource_list_add_datasource_clicked`, `connections_new_datasource_cancelled`, `connections_datasource_deleted`, `connections_datasource_config_page_left`, `connections_new_datasource_page_view`, `connections_new_datasource_page_left`.
 
-**Key behavior:** The same event (`grafana_ds_test_datasource_clicked`) is either a `test_failed` step or a `success` end depending on the `success` property - this is the classic "dual-meaning event" case that drove the hybrid design choice. 1-hour timeout tolerates reading docs mid-setup.
+**Key behavior:** The same event (`grafana_ds_test_datasource_clicked`) is either a `test_failed` step or a `success` end depending on the `success` property - this is the classic "dual-meaning event" case that drove the hybrid design choice. `connections_new_datasource_page_left` is ignored after a plugin is selected, because choosing a type unmounts the catalog while navigating to the config page. 1-hour timeout tolerates reading docs mid-setup.
 
 ### explore_to_dashboard
 
@@ -346,7 +363,7 @@ Journey wiring only listens to interactions; it never adds DOM event listeners o
 
 ### Step 3: Register metadata
 
-Add an entry to `public/app/core/services/journeyRegistry.ts`:
+Add an entry to `public/app/core/services/journey/journeyRegistry.ts`:
 
 ```typescript
 export const JOURNEY_REGISTRY: JourneyMeta[] = [

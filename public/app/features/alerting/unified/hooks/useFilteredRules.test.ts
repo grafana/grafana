@@ -1,3 +1,4 @@
+import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '@grafana/alerting';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 
 import { PromAlertingRuleState } from '../../../../types/unified-alerting-dto';
@@ -353,4 +354,30 @@ describe('legacy queryString URL param parsing', () => {
       { name: 'severity', operator: '=', value: 'critical' },
     ]);
   });
+});
+
+describe('filterRules — default policy recognition', () => {
+  it.each([USER_DEFINED_TREE_NAME, DEFAULT_ROUTING_TREE_NAME_ALIAS])(
+    'matches a Grafana rule on the default policy when filtering by "%s"',
+    (policy) => {
+      const defaultPolicyRule = mockCombinedRule({
+        name: 'Default policy rule',
+        rulerRule: mockRulerGrafanaRule({}, { notification_settings: undefined }),
+      });
+      const namedPolicyRule = mockCombinedRule({
+        name: 'Named policy rule',
+        rulerRule: mockRulerGrafanaRule({}, { notification_settings: { policy: 'team-a-policy' } }),
+      });
+
+      const ns = mockCombinedRuleNamespace({
+        groups: [mockCombinedRuleGroup('g', [defaultPolicyRule, namedPolicyRule])],
+      });
+
+      const filtered = filterRules([ns], getFilter({ policy }));
+      const names = filtered[0]?.groups[0]?.rules.map((r) => r.name) ?? [];
+
+      expect(names).toContain('Default policy rule');
+      expect(names).not.toContain('Named policy rule');
+    }
+  );
 });

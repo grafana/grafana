@@ -54,14 +54,14 @@ Alternatively, on-prem file provisioning in Grafana lets you include resources, 
 
 Select any of these options to proceed:
 
-- [GitHub](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-github)
+- [GitHub (including GitHub Enterprise)](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-github)
 - [GitLab](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-gitlab)
 - [Bitbucket](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-bitbucket)
 - [Pure Git](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-pure-git)
 
 ### Configure with GitHub
 
-If you want to configure Git Sync for public cloud GitHub, you can connect using a **Personal Access Token** or with **GitHub App**.
+If you want to configure Git Sync for public cloud GitHub, GitHub Enterprise Cloud, or GitHub Enterprise Server, you can connect using a **Personal Access Token** or with **GitHub App**.
 
 {{< admonition type="note" >}}
 
@@ -115,6 +115,9 @@ If you want to configure Git Sync for GitHub and authenticate with GitHub App:
      - The ID of the GitHub App you want to use
      - The GitHub Installation ID
      - The Private Key
+  1. Additionally, for GitHub Enterprise, add the URL of your GitHub Enterprise instance
+     - For GitHub Enterprise Cloud, it looks like `https://<enterprise-slug>.ghe.com`
+     - For GitHub Enterprise Server, your custom URL
   1. Click on **Configure repository** to proceed.
   1. Paste the **Repository URL** for your GitHub repository into the text box.
 
@@ -157,6 +160,16 @@ Return to Grafana and fill in the following fields:
 
 1. Paste the token into the **API Token** text box.
 1. Paste the **Repository URL** for your Bitbucket repository into the text box.
+
+   Use the Git clone URL for the repository, not the URL that appears in your browser's address bar when you view the repository. To find it, select **Clone** in Bitbucket and copy the HTTPS URL. The clone URL ends in `.git`, and its format depends on your Bitbucket deployment:
+   - Bitbucket Cloud: `https://bitbucket.org/<workspace>/<repository>.git`
+   - Bitbucket Data Center and Server: `https://<bitbucket-host>/scm/<PROJECT>/<repository>.git`
+
+   {{< admonition type="tip" >}}
+
+   If Grafana returns an `ls-refs` error when it connects to the repository, check that you entered the clone URL and not the browser URL.
+
+   {{< /admonition >}}
 
 Select **Configure repository** to set up your provisioning folder.
 
@@ -233,6 +246,12 @@ After deciding on these options, you can chose to configure **Webhooks** or a ve
 In the **Webhook options** menu, you can type in an URL to override the auto-detected URL used to register webhooks.
 
 You can also check the **Disable webhook integration**. When checked, Grafana doesn't register or receive webhook events, and polls the repository on an interval instead. Use this when your Grafana instance is not reachable from the public internet.
+
+{{< admonition type="note" >}}
+
+GitHub limits each repository to 20 webhooks per event type (for example, `push` and `pull_request`). Because Git Sync registers webhooks per repository connection, syncing the same repository from many Grafana instances can exceed this limit and cause GitHub to reject new webhooks with an `HTTP 422` error. Disable webhook integration for connections that don't need real-time sync to stay under the limit.
+
+{{< /admonition >}}
 
 ### Signed commit option
 

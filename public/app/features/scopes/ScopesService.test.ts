@@ -12,15 +12,6 @@ jest.mock('./selector/ScopesSelectorService');
 jest.mock('./dashboards/ScopesDashboardsService');
 jest.mock('./ScopesApiClient');
 
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  getFeatureFlagClient: jest.fn(),
-}));
-
-const { getFeatureFlagClient } = jest.requireMock('@grafana/runtime/internal') as {
-  getFeatureFlagClient: jest.Mock;
-};
-
 describe('ScopesService', () => {
   let service: ScopesService;
   let selectorService: jest.Mocked<ScopesSelectorService>;
@@ -135,10 +126,6 @@ describe('ScopesService', () => {
     apiClient = {
       fetchDefaultScope: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<ScopesApiClient>;
-
-    getFeatureFlagClient.mockReturnValue({
-      getBooleanValue: jest.fn().mockReturnValue(false),
-    });
   });
 
   describe('URL initialization', () => {
@@ -1096,20 +1083,13 @@ describe('ScopesService', () => {
     });
 
     describe('default scope on first mount', () => {
-      const turnOnScopesFirstMode = () =>
-        getFeatureFlagClient.mockReturnValue({
-          getBooleanValue: (flagKey: string, defaultValue: boolean) =>
-            flagKey === 'grafana.enableScopesFirstMode' ? true : defaultValue,
-        });
-
       beforeEach(() => {
         // The ScopesService constructor calls selectorService.changeScopes during URL init.
         // Clear those calls so the assertions below only see the default-scope flow.
         jest.clearAllMocks();
       });
 
-      it('fetches the default scope and applies it when no scope is selected and ScopesFirstMode is on', async () => {
-        turnOnScopesFirstMode();
+      it('fetches the default scope and applies it when no scope is selected', async () => {
         selectorService.state.appliedScopes = [];
         apiClient.fetchDefaultScope = jest.fn().mockResolvedValue('gdev-shoe-org');
 
@@ -1118,22 +1098,11 @@ describe('ScopesService', () => {
 
         expect(apiClient.fetchDefaultScope).toHaveBeenCalled();
         // redirectOnApply=true so the user lands on the scope's redirectPath
-        // or first scope navigation, matching manual selection behavior.
+        // when one is configured, matching manual selection behavior.
         expect(selectorService.changeScopes).toHaveBeenCalledWith(['gdev-shoe-org'], undefined, undefined, true);
       });
 
-      it('does not fetch when ScopesFirstMode is off', () => {
-        getFeatureFlagClient.mockReturnValue({ getBooleanValue: jest.fn().mockReturnValue(false) });
-        selectorService.state.appliedScopes = [];
-        apiClient.fetchDefaultScope = jest.fn();
-
-        service.setEnabled(true);
-
-        expect(apiClient.fetchDefaultScope).not.toHaveBeenCalled();
-      });
-
       it('does not fetch when a scope is already selected', () => {
-        turnOnScopesFirstMode();
         selectorService.state.appliedScopes = [{ scopeId: 'scope1' }];
         selectorService.state.scopes = {
           scope1: { metadata: { name: 'scope1' }, spec: { title: 'Scope 1', filters: [] } },
@@ -1146,7 +1115,6 @@ describe('ScopesService', () => {
       });
 
       it('does not apply when fetchDefaultScope resolves to undefined (endpoint flag off or no default)', async () => {
-        turnOnScopesFirstMode();
         selectorService.state.appliedScopes = [];
         apiClient.fetchDefaultScope = jest.fn().mockResolvedValue(undefined);
 
@@ -1158,7 +1126,6 @@ describe('ScopesService', () => {
       });
 
       it('does not apply if scopes is disabled before the fetch resolves', async () => {
-        turnOnScopesFirstMode();
         selectorService.state.appliedScopes = [];
         apiClient.fetchDefaultScope = jest.fn().mockResolvedValue('gdev-shoe-org');
 
@@ -1172,7 +1139,6 @@ describe('ScopesService', () => {
       });
 
       it('does not apply if the user has picked a scope but not yet applied before the fetch resolves', async () => {
-        turnOnScopesFirstMode();
         selectorService.state.appliedScopes = [];
         selectorService.state.selectedScopes = [];
         apiClient.fetchDefaultScope = jest.fn().mockImplementation(async () => {
@@ -1191,8 +1157,24 @@ describe('ScopesService', () => {
         expect(selectorService.changeScopes).not.toHaveBeenCalled();
       });
 
+      it('logs and does not throw when the apply promise rejects', async () => {
+        selectorService.state.appliedScopes = [];
+        selectorService.state.selectedScopes = [];
+        apiClient.fetchDefaultScope = jest.fn().mockResolvedValue('gdev-shoe-org');
+        selectorService.changeScopes = jest.fn().mockRejectedValue(new Error('apply failed'));
+        const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+        service.setEnabled(true);
+        // Wait long enough for the fetch to resolve, then the changeScopes
+        // rejection to propagate through the .catch() handler.
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(errorSpy).toHaveBeenCalledWith('Failed to apply default scope:', expect.any(Error));
+        errorSpy.mockRestore();
+      });
+
       it('does not fetch twice when setEnabled(true) is called twice in a row', async () => {
-        turnOnScopesFirstMode();
         selectorService.state.appliedScopes = [];
         apiClient.fetchDefaultScope = jest.fn().mockResolvedValue(undefined);
 

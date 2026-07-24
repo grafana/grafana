@@ -4,6 +4,8 @@ react19:
     disabled: false
   defaultRule:
     variation: enabled
+  metadata:
+    public: "true"
 
 reportRenderBinding:
   variations:
@@ -11,6 +13,8 @@ reportRenderBinding:
     disabled: false
   defaultRule:
     variation: enabled
+  metadata:
+    public: "true"
 
 compiledBootScript:
   variations:
@@ -18,6 +22,8 @@ compiledBootScript:
     disabled: false
   defaultRule:
     variation: disabled
+  metadata:
+    public: "true"
 
 grafana.assetSriChecks:
   variations:
@@ -25,6 +31,8 @@ grafana.assetSriChecks:
     disabled: false
   defaultRule:
     variation: disabled
+  metadata:
+    public: "true"
 
 grafana.meticulousAIMode:
   variations:
@@ -33,6 +41,8 @@ grafana.meticulousAIMode:
     on-dev-env: 'on-dev-env'
   defaultRule:
     variation: off
+  metadata:
+    public: "true"
 
 frontendService.reducedBootDataAPI:
   variations:
@@ -40,6 +50,8 @@ frontendService.reducedBootDataAPI:
     disabled: false
   defaultRule:
     variation: disabled
+  metadata:
+    public: "true"
 
 grafana.frontendLegacyAPIHandling:
   variations:
@@ -48,3 +60,5 @@ grafana.frontendLegacyAPIHandling:
     block: 'block'
   defaultRule:
     variation: off
+  metadata:
+    public: "true"
