@@ -194,8 +194,13 @@ func preserveGrafanaExternalID(uid, stackExternalID string, existing, updated *s
 	modeSet, modeOn := usePerDatasourceExternalID(updated)
 
 	// Leaving Grafana Assume Role: drop the ID when minting is FT-enabled (otherwise leave it).
+	// Clear both namespaces so a partial/malformed payload that omits auth type but still
+	// carries a prefixed (or native) ID cannot leave a stale external ID behind.
 	if allowGenerate && !updatedIsGAR {
 		updated.Del(idKey)
+		if existingIdKey != idKey {
+			updated.Del(existingIdKey)
+		}
 		return
 	}
 

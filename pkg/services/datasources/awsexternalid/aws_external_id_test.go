@@ -303,4 +303,19 @@ func TestPreserveGrafanaExternalID_SigV4(t *testing.T) {
 		assert.Empty(t, updated.Get(sigV4GrafanaExternalIDJSONKey).MustString())
 		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
 	})
+
+	t.Run("leaving GAR with auth type omitted still clears prefixed ID from payload", func(t *testing.T) {
+		// Cloud/API/Terraform can send a partial jsonData blob that drops sigV4AuthType
+		// while still including a previously minted prefixed ID.
+		existing := simplejson.NewFromAny(map[string]any{
+			sigV4AuthTypeJSONKey:          grafanaAssumeRoleAuthType,
+			sigV4GrafanaExternalIDJSONKey: wantID,
+		})
+		updated := simplejson.NewFromAny(map[string]any{
+			sigV4GrafanaExternalIDJSONKey: wantID,
+		})
+		preserveGrafanaExternalID(uid, stack, existing, updated, true)
+		assert.Empty(t, updated.Get(sigV4GrafanaExternalIDJSONKey).MustString())
+		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
+	})
 }
