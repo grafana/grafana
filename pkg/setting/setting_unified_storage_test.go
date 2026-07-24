@@ -2,6 +2,7 @@ package setting
 
 import (
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/stretchr/testify/assert"
@@ -270,6 +271,7 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 			cfg.setUnifiedStorageConfig()
 			assert.Equal(t, 50, cfg.BedrockBatchSize)
 			assert.Equal(t, 5, cfg.BedrockMaxAttempts)
+			assert.Equal(t, 3*time.Minute, cfg.BedrockCallTimeout)
 		})
 
 		t.Run("reads configured values independent of vertex_batch_size", func(t *testing.T) {
@@ -279,10 +281,12 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 			setSectionKey(cfg, "vertex_batch_size", "33")
 			setSectionKey(cfg, "bedrock_batch_size", "7")
 			setSectionKey(cfg, "bedrock_max_attempts", "15")
+			setSectionKey(cfg, "bedrock_call_timeout", "90s")
 			cfg.setUnifiedStorageConfig()
 			// Guards a regression where bedrock used vertex_batch_size.
 			assert.Equal(t, 7, cfg.BedrockBatchSize)
 			assert.Equal(t, 15, cfg.BedrockMaxAttempts)
+			assert.Equal(t, 90*time.Second, cfg.BedrockCallTimeout)
 		})
 	})
 
