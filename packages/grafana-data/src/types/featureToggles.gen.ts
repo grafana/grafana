@@ -685,6 +685,11 @@ export interface FeatureToggles {
   */
   azureMonitorDisableLogLimit?: boolean;
   /**
+  * Enables server-side ARM pagination for Azure Monitor subscription and workspace listing on the passthrough resource endpoints.
+  * @default false
+  */
+  azureMonitorServerSidePagination?: boolean;
+  /**
   * Enables experimental reconciler for playlists
   * @default false
   */

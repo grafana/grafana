@@ -1350,6 +1350,14 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:        "azureMonitorServerSidePagination",
+			Description: "Enables server-side ARM pagination for Azure Monitor subscription and workspace listing on the passthrough resource endpoints.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDataSourcesPlugins,
+			Expression:  "false",
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
 			Name:            "playlistsReconciler",
 			Description:     "Enables experimental reconciler for playlists",
 			Stage:           FeatureStageExperimental,

@@ -2,6 +2,7 @@ package azuremonitor
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
@@ -123,6 +125,7 @@ func (s *Service) getDataSourceFromHTTPReq(req *http.Request) (types.DatasourceI
 }
 
 func writeErrorResponse(rw http.ResponseWriter, code int, msg string) {
+	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(code)
 	errorBody := map[string]string{
 		"error": msg,
@@ -141,6 +144,12 @@ func (s *Service) handleResourceReq(subDataSource string) func(rw http.ResponseW
 		newPath, err := getTarget(req.URL.Path)
 		if err != nil {
 			writeErrorResponse(rw, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		if subDataSource == azureMonitor && req.Method == http.MethodGet && isArmListPath(newPath) &&
+			config.GrafanaConfigFromContext(req.Context()).FeatureToggles().IsEnabled("azureMonitorServerSidePagination") {
+			s.listArmResourceProxy(rw, req, azureMonitor, newPath)
 			return
 		}
 
@@ -167,6 +176,63 @@ func (s *Service) handleResourceReq(subDataSource string) func(rw http.ResponseW
 			s.logger.Error("error in resource request", "error", err)
 			return
 		}
+	}
+}
+
+var workspacesListRe = regexp.MustCompile(`^/subscriptions/[^/]+/providers/Microsoft\.OperationalInsights/workspaces$`)
+
+func isArmListPath(p string) bool {
+	return p == "/subscriptions" || workspacesListRe.MatchString(p)
+}
+
+func (s *Service) listArmResourceProxy(rw http.ResponseWriter, req *http.Request, serviceName, strippedPath string) {
+	q := req.URL.Query()
+	q.Del("listAll")
+	q.Del("nextToken")
+	armPath := strippedPath
+	if enc := q.Encode(); enc != "" {
+		armPath += "?" + enc
+	}
+	s.listArmResource(rw, req, serviceName, armPath, q)
+}
+
+func (s *Service) listArmResource(rw http.ResponseWriter, req *http.Request, serviceName, armPath string, linkParams url.Values) {
+	dsInfo, err := s.getDataSourceFromHTTPReq(req)
+	if err != nil {
+		writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
+		return
+	}
+
+	service, ok := dsInfo.Services[serviceName]
+	if !ok {
+		writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("%s service not configured", serviceName))
+		return
+	}
+
+	query := req.URL.Query()
+	listAll := query.Get("listAll") == "true"
+
+	requestURL := service.URL + armPath
+	if token := query.Get("nextToken"); token != "" {
+		requestURL = appendSkipToken(requestURL, token)
+	}
+
+	value, nextToken, truncated, err := fetchArmPages(req.Context(), service.HTTPClient, requestURL, listAll, MaxArmPages)
+	if err != nil {
+		status := http.StatusInternalServerError
+		var armErr *armHTTPError
+		if errors.As(err, &armErr) {
+			status = armErr.status
+		}
+		writeErrorResponse(rw, status, err.Error())
+		return
+	}
+	if truncated {
+		s.logger.Warn("Azure Monitor ARM listing stopped at page cap; some results may be omitted", "maxPages", MaxArmPages, "path", armPath)
+	}
+
+	if err := writePaginatedResponse(rw, value, nextToken, truncated, listAll, linkParams); err != nil {
+		s.logger.Error("failed to write paginated response", "error", err)
 	}
 }
 
