@@ -101,6 +101,7 @@ func TestIntegrationHAEvaluation_APIConsistency(t *testing.T) {
 // node (position 0) stops, the new primary correctly warms its cache from the database
 // and preserves alert state without unnecessary Pending->Firing transitions.
 func TestIntegrationHAEvaluation_StatePreservedOnFailover(t *testing.T) {
+	t.Skip("flaky: https://github.com/grafana/grafana/actions/runs/28645525645/job/84953000305")
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	if db.IsTestDbSQLite() {
