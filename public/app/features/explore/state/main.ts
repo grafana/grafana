@@ -12,6 +12,7 @@ import { createAsyncThunk, type ThunkResult } from 'app/types/store';
 
 import { type RichHistoryResults } from '../../../core/history/RichHistoryStorage';
 import { type RichHistorySearchFilters, type RichHistorySettings } from '../../../core/utils/richHistoryTypes';
+import { signalExplorerReducer } from '../signalExplorer/state/signalExplorerSlice';
 import { withUniqueRefIds } from '../utils/queries';
 
 import { DEFAULT_RANGE } from './constants';
@@ -335,4 +336,5 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
 
 export default {
   explore: exploreReducer,
+  signalExplorer: signalExplorerReducer,
 };
