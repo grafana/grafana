@@ -8,6 +8,7 @@ import {
   getComponentMetaFromComponentId,
   useExtensionSidebarContext,
 } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
+import { useFullscreenWorkspace } from 'app/core/components/AppChrome/FullscreenWorkspace/useFullscreenWorkspace';
 
 import { type AssistantTooltipContext, buildDatapointAssistantContext } from './buildAssistantContext';
 
@@ -38,15 +39,18 @@ export function AssistantTooltipButton({
 }: AssistantTooltipButtonProps) {
   const { isAvailable, openAssistant } = useAssistant();
   const { isOpen, dockedComponentId } = useExtensionSidebarContext();
+  const { fullscreenWorkspaceActive } = useFullscreenWorkspace();
   const styles = useStyles2(getStyles);
 
   if (!isAvailable || !openAssistant) {
     return null;
   }
 
-  // Continue the open chat only if the assistant sidebar is open
+  // Reuse the open chat when the assistant is visible: docked in the sidebar or in fullscreen
+  // workspace (where the sidebar is closed but the chat stays active).
   const isAssistantSidebarOpen =
     isOpen && getComponentMetaFromComponentId(dockedComponentId ?? '')?.pluginId === ASSISTANT_PLUGIN_ID;
+  const isAssistantOpen = isAssistantSidebarOpen || fullscreenWorkspaceActive;
 
   const handleClick = () => {
     const items = buildDatapointAssistantContext({
@@ -67,7 +71,7 @@ export function AssistantTooltipButton({
       context: items,
       autoSend: false,
       appendContext: true,
-      chatId: isAssistantSidebarOpen ? getActiveAssistantChatId() : undefined,
+      chatId: isAssistantOpen ? getActiveAssistantChatId() : undefined,
     });
   };
 

@@ -7,6 +7,7 @@ import {
   getComponentIdFromComponentMeta,
   useExtensionSidebarContext,
 } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
+import { useFullscreenWorkspace } from 'app/core/components/AppChrome/FullscreenWorkspace/useFullscreenWorkspace';
 
 import { AssistantTooltipButton } from './AssistantTooltipButton';
 import { type AssistantTooltipContext } from './buildAssistantContext';
@@ -22,6 +23,10 @@ jest.mock('app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvid
   useExtensionSidebarContext: jest.fn(),
 }));
 
+jest.mock('app/core/components/AppChrome/FullscreenWorkspace/useFullscreenWorkspace', () => ({
+  useFullscreenWorkspace: jest.fn(),
+}));
+
 const POINT_1_MS = Date.UTC(2026, 6, 24, 12, 0, 0);
 const POINT_2_MS = Date.UTC(2026, 6, 24, 12, 1, 0);
 const POINT_2_ISO = new Date(POINT_2_MS).toISOString();
@@ -29,6 +34,7 @@ const POINT_2_ISO = new Date(POINT_2_MS).toISOString();
 const mockUseAssistant = jest.mocked(useAssistant);
 const mockCreateContextItem = jest.mocked(createAssistantContextItem);
 const mockUseExtensionSidebarContext = jest.mocked(useExtensionSidebarContext);
+const mockUseFullscreenWorkspace = jest.mocked(useFullscreenWorkspace);
 
 function setSidebar(open: boolean, pluginId = 'grafana-assistant-app') {
   mockUseExtensionSidebarContext.mockReturnValue({
@@ -38,6 +44,13 @@ function setSidebar(open: boolean, pluginId = 'grafana-assistant-app') {
     availableComponents: new Map(),
     extensionSidebarWidth: 300,
     setExtensionSidebarWidth: jest.fn(),
+  });
+}
+
+function setFullscreenWorkspace(active: boolean) {
+  mockUseFullscreenWorkspace.mockReturnValue({
+    fullscreenWorkspaceFeatureFlagEnabled: active,
+    fullscreenWorkspaceActive: active,
   });
 }
 
@@ -81,6 +94,7 @@ describe('AssistantTooltipButton', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     setSidebar(false);
+    setFullscreenWorkspace(false);
   });
 
   it('renders nothing when the assistant is unavailable', () => {
@@ -238,6 +252,40 @@ describe('AssistantTooltipButton', () => {
 
     expect(openAssistant).toHaveBeenCalledWith(
       expect.objectContaining({ appendContext: true, chatId: 'open-chat-id' })
+    );
+
+    store.delete('grafana-assistant-active-chat-id');
+  });
+
+  it('appends to the open chat when the fullscreen workspace is active and the sidebar is closed', async () => {
+    store.set('grafana-assistant-active-chat-id', 'workspace-chat-id');
+    setSidebar(false);
+    setFullscreenWorkspace(true);
+
+    const openAssistant = jest.fn();
+    mockUseAssistant.mockReturnValue({
+      isLoading: false,
+      isAvailable: true,
+      openAssistant,
+      closeAssistant: jest.fn(),
+      toggleAssistant: jest.fn(),
+    });
+
+    render(
+      <AssistantTooltipButton
+        series={makeSeries()}
+        seriesIdx={1}
+        dataIdxs={[1, 1]}
+        replaceVariables={(s) => s}
+        context={makeContext()}
+        xVal={POINT_2_MS}
+      />
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /add to assistant/i }));
+
+    expect(openAssistant).toHaveBeenCalledWith(
+      expect.objectContaining({ appendContext: true, chatId: 'workspace-chat-id' })
     );
 
     store.delete('grafana-assistant-active-chat-id');

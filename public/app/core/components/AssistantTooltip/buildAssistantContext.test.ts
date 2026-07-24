@@ -211,6 +211,31 @@ describe('buildDatapointAssistantContext', () => {
     ]);
   });
 
+  it('anchors annotation matching on xVal, not the raw aligned value (time-comparison series)', () => {
+    const alignedFrame = makeAlignedFrame();
+    // Time-comparison series: point drawn at POINT_2_MS, but xVal is shifted an hour earlier.
+    const shiftedMs = POINT_2_MS - 60 * 60 * 1000;
+    const annotationFrame = createDataFrame({
+      name: 'annotations',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [shiftedMs, POINT_2_MS] },
+        { name: 'title', type: FieldType.string, values: ['At shifted time', 'At overlay time'] },
+      ],
+    });
+
+    const data = getData(
+      buildDatapointAssistantContext({
+        ...baseArgs(alignedFrame),
+        annotations: [annotationFrame],
+        xVal: shiftedMs,
+      })
+    );
+
+    expect(data.point.timestamp).toBe(new Date(shiftedMs).toISOString());
+    // Matched on xVal, so the overlay-time annotation is out of window.
+    expect(data.point.annotations).toEqual([expect.objectContaining({ title: 'At shifted time' })]);
+  });
+
   it('omits annotations when none fall near the hovered point', () => {
     const alignedFrame = makeAlignedFrame();
     const annotationFrame = createDataFrame({

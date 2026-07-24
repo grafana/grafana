@@ -158,8 +158,10 @@ export function buildDatapointAssistantContext({
   const refId = sourceFrame?.refId ?? alignedFrame.refId;
   const query = sourceFrame?.meta?.executedQueryString ?? alignedFrame.meta?.executedQueryString;
 
+  // Match on xVal, not the raw aligned value: they differ for time-comparison series, and xVal is
+  // the timestamp shown to the user.
   const windowMs = isTime ? getStepMs(xField.values, xIdx) : 0;
-  const matchedAnnotations = isTime ? matchAnnotations(annotations, xField.values[xIdx], windowMs) : [];
+  const matchedAnnotations = isTime ? matchAnnotations(annotations, xVal, windowMs) : [];
 
   const stats = reduceField({ field, reducers: SERIES_REDUCERS });
 
