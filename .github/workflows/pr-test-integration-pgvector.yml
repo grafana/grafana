@@ -31,6 +31,8 @@ permissions: {}
 
 jobs:
   pgvector:
+    # Run on `grafana/grafana` pushes, or on pull requests, to prevent double-running on mirrors
+    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: pgvector
     runs-on: ubuntu-x64-large-io
     permissions:
