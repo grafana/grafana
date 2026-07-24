@@ -747,6 +747,11 @@ const getStyles = (theme: GrafanaTheme2, controlsExpanded: boolean) => {
       borderLeft: `solid 1px ${theme.colors.border.medium}`,
       minWidth: theme.spacing(4),
       backgroundColor: theme.colors.background.primary,
+      // On small screens / small logs visualizations the controls can be taller than the
+      // available space, hiding options. Allow the toolbar to scroll vertically so every
+      // option stays reachable.
+      overflowY: 'auto',
+      overflowX: 'hidden',
     }),
     scrollToTopButton: css({
       margin: 0,
