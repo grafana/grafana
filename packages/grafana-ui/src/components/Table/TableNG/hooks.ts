@@ -9,6 +9,7 @@ import {
   type CSSProperties,
   useEffect,
 } from 'react';
+import { useDebounce } from 'react-use';
 
 import {
   createDataFrame,
@@ -722,16 +723,9 @@ const RESIZE_WIDTH_DEBOUNCE_MS = 100;
  */
 export function useDebouncedNumber(value: number, wait = RESIZE_WIDTH_DEBOUNCE_MS): number {
   const [debounced, setDebounced] = useState(value);
-
-  const setDebouncedValue = useMemo(() => debounce(setDebounced, wait), [wait]);
-
-  useEffect(() => {
-    setDebouncedValue(value);
-  }, [value, setDebouncedValue]);
-
-  // flush pending work on unmount
-  useEffect(() => () => setDebouncedValue.cancel(), [setDebouncedValue]);
-
+  // react-use's useDebounce handles the timer lifecycle (reset on change, clear on unmount); we wrap
+  // it in state so this returns the debounced value rather than exposing the callback plumbing.
+  useDebounce(() => setDebounced(value), wait, [value]);
   return debounced;
 }
 
