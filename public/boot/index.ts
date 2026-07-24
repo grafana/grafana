@@ -206,10 +206,13 @@ function loadBootData(): Promise<{ redirect: string } | BootApiResponse> {
 }
 
 async function fetchUser(): Promise<Display | undefined> {
+  // Without a namespace we can't target the endpoint, so treat as anonymous
+  // and let the app render its unauthenticated flow.
   const namespace = window.grafanaBootData?.settings?.namespace;
   if (!namespace) {
-    throw new Error('Cannot fetch current user: namespace missing from bootData settings');
+    return undefined;
   }
+
   const resp = await fetch(`/apis/iam.grafana.app/v0alpha1/namespaces/${namespace}/users/~`);
   if (resp.status === 401) {
     return undefined;
