@@ -1,5 +1,5 @@
 import { Trans, t } from '@grafana/i18n';
-import { Modal, type ModalProps } from '@grafana/ui';
+import { Button, Modal, type ModalProps } from '@grafana/ui';
 
 import { stringifyErrorLike } from '../utils/misc';
 
@@ -24,6 +24,11 @@ export const ErrorModal = ({ isOpen, onDismiss, error }: ErrorModalProps) => {
       <pre>
         <code>{stringifyErrorLike(error)}</code>
       </pre>
+      <Modal.ButtonRow>
+        <Button type="button" variant="secondary" onClick={onDismiss}>
+          {t('alerting.common.close', 'Close')}
+        </Button>
+      </Modal.ButtonRow>
     </Modal>
   );
 };

@@ -26,8 +26,7 @@ const renderWithProvider = (alertManagerSource = GRAFANA_RULES_SOURCE_NAME) => {
   return render(
     <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={alertManagerSource}>
       <TimeIntervalsTable />
-    </AlertmanagerProvider>,
-    { withModalRoot: true }
+    </AlertmanagerProvider>
   );
 };
 
@@ -149,11 +148,13 @@ describe('MuteTimingsTable', () => {
         })
       );
       const { user } = renderWithProvider();
+      const deleteButton = (await screen.findAllByText(/delete/i))[0];
 
-      await user.click((await screen.findAllByText(/delete/i))[0]);
+      await user.click(deleteButton);
       await user.click(await screen.findByRole('button', { name: /delete/i }));
       await waitFor(() => expect(resolveDelete).toBeDefined());
 
+      expect(deleteButton.closest('a')).toHaveAttribute('aria-disabled', 'true');
       expect(screen.getByRole('button', { name: /deleting/i })).toBeDisabled();
       expect(screen.getByRole('button', { name: /cancel/i })).toBeDisabled();
       expect(screen.getByRole('dialog', { name: /delete mute timing/i })).toBeInTheDocument();
