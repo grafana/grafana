@@ -115,7 +115,8 @@ Use these settings to refine your visualization:
 | Enable logs highlighting | Use a predefined syntax coloring grammar to highlight relevant parts of the log lines. |
 | Enable log details | Toggle the switch on to see an extendable area with log details including labels and detected fields. Each field or label has a stats icon to display free-form statistics in relation to all displayed logs. The default setting is on. |
 | Log Details panel mode | Choose to display the log details in a sidebar panel or inline, below the log line. |
-| Enable infinite scrolling | Request more results by scrolling to the bottom of the logs list. |
+| Enable field selector | Experimental. Show a component to manage the displayed fields from the logs. |
+| Enable infinite scrolling | Experimental. Request more results by scrolling to the bottom of the logs list. |
 | Show controls | Display controls to jump to the last or first log line and filter by log level. |
 | Display download control | Display a control to download log lines when **Show controls** is enabled. |
 | Font size | Select between the default font size and small font size. |
