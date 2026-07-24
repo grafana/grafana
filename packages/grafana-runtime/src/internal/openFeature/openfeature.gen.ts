@@ -25,6 +25,8 @@ export const FlagKeys = {
   AssistantFullscreenWorkspace: "assistant.fullscreenWorkspace",
   /** Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID. */
   AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
+  /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
+  AzureMonitorBatchAPI: "azureMonitorBatchAPI",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
@@ -217,6 +219,17 @@ export const useFlagAssistantFullscreenWorkspace = (options?: ReactFlagEvaluatio
  */
 export const useFlagAwsAssumeRolePerDatasourceExternalId = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("awsAssumeRolePerDatasourceExternalId", false, options).value;
+};
+
+/**
+ * Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
+ *
+ * **Details:**
+ * - flag key: `azureMonitorBatchAPI`
+ * - default value: `false`
+ */
+export const useFlagAzureMonitorBatchAPI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("azureMonitorBatchAPI", false, options).value;
 };
 
 /**

@@ -1692,6 +1692,14 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:        "azureMonitorBatchAPI",
+			Description: "Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request",
+			Generate:    Generate{Go: true, React: true, LegacyFrontend: true},
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDataSourcesPlugins,
+			Expression:  "false",
+		},
+		{
 			Name:         "alertingRulePermanentlyDelete",
 			Description:  "Enables UI functionality to permanently delete alert rules",
 			Generate:     Generate{LegacyFrontend: true},

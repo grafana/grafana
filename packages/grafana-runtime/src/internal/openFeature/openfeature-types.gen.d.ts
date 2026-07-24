@@ -34,6 +34,7 @@ declare module "@openfeature/core" {
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
     | "alerting.ruleQuality"
+    | "azureMonitorBatchAPI"
     | "recentlyViewedDashboards"
     | "experimentRecentlyViewedDashboards"
     | "otelLogsFormatting"
