@@ -712,7 +712,7 @@ export function LegacyTableNG(props: TableNGProps) {
 
         // this fires first
         const renderCellRoot = (key: Key, props: CellRendererProps<TableRow, TableSummaryRow>): ReactNode => {
-          const rowIdx = props.row.__index;
+          const rowIdx = props.row.__parentIndex ?? props.row.__index;
 
           // meh, this should be cached by the renderRow() call?
           if (rowIdx !== lastRowIdx) {

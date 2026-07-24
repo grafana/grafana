@@ -328,7 +328,9 @@ function buildColumnsFromFields(
       key: Key,
       props: CellRendererProps<TableRow, TableSummaryRow>
     ): ReactNode => {
-      const rowIdx = props.row.__index;
+      // Nested rows carry __parentIndex (set when compiling nested frame records). Use it
+      // for apply-to-row background so nested rows inherit the expanded parent's color.
+      const rowIdx = props.row.__parentIndex ?? props.row.__index;
 
       // meh, this should be cached by the renderRow() call?
       if (rowIdx !== lastRowIdx) {
