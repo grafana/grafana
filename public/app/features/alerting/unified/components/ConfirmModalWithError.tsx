@@ -19,7 +19,7 @@ export interface ConfirmModalWithErrorProps {
   onDismiss: () => void;
 }
 
-export const ConfirmModalWithError = ({
+const ConfirmModalWithError = ({
   isOpen,
   title,
   body,
