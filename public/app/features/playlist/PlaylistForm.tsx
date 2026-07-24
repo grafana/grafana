@@ -16,6 +16,9 @@ import { getGrafanaSearcher } from '../search/service/searcher';
 
 import { PlaylistTable } from './PlaylistTable';
 import { usePlaylistItems } from './usePlaylistItems';
+import { isValidInterval } from './utils';
+
+const DEFAULT_INTERVAL = '5m';
 
 interface Props {
   onSubmit: (playlist: Playlist) => void | Promise<void>;
@@ -51,7 +54,7 @@ export const PlaylistForm = ({
     return () => getGrafanaSearcher().tags({ kind: ['dashboard'] });
   }, []);
 
-  const { items, addByUID, addByTag, deleteItem, moveItem } = usePlaylistItems(propItems);
+  const { items, addByUID, addByTag, deleteItem, moveItem, updateItemInterval } = usePlaylistItems(propItems);
 
   // When the selector is locked the repository can't be changed, so derive the value from the
   // playlist (its managing repository, or "no repository" when unmanaged). Otherwise it's controlled.
@@ -63,7 +66,8 @@ export const PlaylistForm = ({
 
   const doSubmit = async (specUpdates: Playlist['spec']) => {
     setSaving(true);
-    // Strip UI-only properties (dashboards) from items before submission
+    // Strip UI-only properties (dashboards) from items before submission. Per-item intervals are
+    // kept as-is: blank rows are stored as undefined by the hook and fall back to the global interval.
     const apiItems = items.map(({ dashboards, ...item }) => item);
     try {
       // The direct-save path navigates away; the provisioned path returns after opening the drawer,
@@ -72,7 +76,7 @@ export const PlaylistForm = ({
         ...playlist,
         spec: {
           ...specUpdates,
-          interval: specUpdates?.interval ?? '5m',
+          interval: specUpdates?.interval ?? DEFAULT_INTERVAL,
           title: specUpdates?.title ?? '',
           items: apiItems,
         },
@@ -85,7 +89,9 @@ export const PlaylistForm = ({
   return (
     <Form<PlaylistSpec> onSubmit={doSubmit} validateOn={'onBlur'}>
       {({ register, errors }) => {
-        const isDisabled = items.length === 0 || Object.keys(errors).length > 0;
+        // Block saving on any unparseable per-item interval (the input isn't part of the RHF form).
+        const hasInvalidItemInterval = items.some((item) => item.interval && !isValidInterval(item.interval));
+        const isDisabled = items.length === 0 || Object.keys(errors).length > 0 || hasInvalidItemInterval;
         return (
           <>
             <Field
@@ -113,7 +119,7 @@ export const PlaylistForm = ({
                   required: t('playlist-edit.form.interval-required', 'Interval is required'),
                 })}
                 placeholder={t('playlist-edit.form.interval-placeholder', '5m')}
-                defaultValue={interval ?? '5m'}
+                defaultValue={interval ?? DEFAULT_INTERVAL}
                 data-testid={selectors.pages.PlaylistForm.interval}
                 id={playlistIntervalId}
               />
@@ -133,7 +139,13 @@ export const PlaylistForm = ({
               </Box>
             )}
 
-            <PlaylistTable items={items} deleteItem={deleteItem} moveItem={moveItem} />
+            <PlaylistTable
+              items={items}
+              deleteItem={deleteItem}
+              moveItem={moveItem}
+              intervalPlaceholder={interval ?? DEFAULT_INTERVAL}
+              updateItemInterval={updateItemInterval}
+            />
 
             <FieldSet label={t('playlist-edit.form.heading', 'Add dashboards')}>
               <Field label={t('playlist-edit.form.add-title-label', 'Add by title')}>

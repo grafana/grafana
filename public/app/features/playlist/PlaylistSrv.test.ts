@@ -11,6 +11,7 @@ import { PlaylistSrv } from './PlaylistSrv';
 import { type PlaylistItemUI } from './types';
 
 jest.mock('./utils', () => ({
+  ...jest.requireActual('./utils'),
   loadDashboards: (items: PlaylistItemUI[]) => {
     return Promise.resolve(
       items.map((v) => ({
@@ -145,6 +146,74 @@ describe('PlaylistSrv', () => {
     // eslint-disable-next-line
     expect((srv as any).validPlaylistUrl).toBe('/url/to/bbb');
     expect(srv.state.isPlaying).toBe(true);
+  });
+
+  it('uses each item own interval and falls back to the global interval', async () => {
+    const getValidUrl = () => (srv as any).validPlaylistUrl; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    const playlist: Playlist = {
+      ...mockPlaylist,
+      spec: {
+        interval: '1s',
+        title: 'The display',
+        items: [
+          { type: 'dashboard_by_uid', value: 'aaa', interval: '10s' },
+          { type: 'dashboard_by_uid', value: 'bbb' }, // no interval -> global fallback (1s)
+        ],
+      },
+    };
+
+    jest.useFakeTimers();
+    try {
+      await srv.start(playlist);
+      expect(getValidUrl()).toBe('/url/to/aaa');
+
+      // aaa has its own 10s interval, so 1s (the global) must not advance it.
+      jest.advanceTimersByTime(1000);
+      expect(getValidUrl()).toBe('/url/to/aaa');
+
+      // After a total of 10s it advances to bbb.
+      jest.advanceTimersByTime(9000);
+      expect(getValidUrl()).toBe('/url/to/bbb');
+
+      // bbb has no interval, so it falls back to the global 1s and loops back to aaa.
+      jest.advanceTimersByTime(1000);
+      expect(getValidUrl()).toBe('/url/to/aaa');
+    } finally {
+      srv.stop();
+      jest.useRealTimers();
+    }
+  });
+
+  it('does not crash on an invalid per-item interval and falls back to the global one', async () => {
+    const getValidUrl = () => (srv as any).validPlaylistUrl; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    const playlist: Playlist = {
+      ...mockPlaylist,
+      spec: {
+        interval: '1s',
+        title: 'The display',
+        items: [
+          { type: 'dashboard_by_uid', value: 'aaa', interval: 'not-an-interval' },
+          { type: 'dashboard_by_uid', value: 'bbb' },
+        ],
+      },
+    };
+
+    jest.useFakeTimers();
+    try {
+      await srv.start(playlist);
+      // start() must complete cleanly rather than throwing mid-way and leaving a half-playing state.
+      expect(srv.state.isPlaying).toBe(true);
+      expect(getValidUrl()).toBe('/url/to/aaa');
+
+      // The invalid interval falls back to the global 1s.
+      jest.advanceTimersByTime(1000);
+      expect(getValidUrl()).toBe('/url/to/bbb');
+    } finally {
+      srv.stop();
+      jest.useRealTimers();
+    }
   });
 
   it('should replace playlist start page in history when starting playlist', async () => {
