@@ -1030,6 +1030,22 @@ func TestNewState(t *testing.T) {
 			assert.Equal(t, expected, state.Annotations["rule-"+key])
 		}
 	})
+	t.Run("rule labels should be available in $labels when expanding annotations", func(t *testing.T) {
+		rule := generateRule()
+		rule.Annotations["summary"] = "{{ $labels.environment }}: {{ $labels.severity }}"
+		rule.Labels = data.Labels{
+			"environment": "production",
+			"severity":    "critical",
+		}
+
+		extraLabels := ngmodels.GenerateAlertLabels(1, "extra-")
+		result := eval.Result{
+			Instance: ngmodels.GenerateAlertLabels(1, "result-"),
+		}
+
+		state := newState(context.Background(), l, rule, result, extraLabels, url)
+		assert.Equal(t, "production: critical", state.Annotations["summary"])
+	})
 	t.Run("when result labels collide with system labels from LabelsUserCannotSpecify", func(t *testing.T) {
 		result := eval.Result{
 			Instance: ngmodels.GenerateAlertLabels(5, "result-"),
