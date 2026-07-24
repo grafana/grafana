@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { CoreApp, type GrafanaTheme2, type PanelProps, type InterpolateFunction } from '@grafana/data';
@@ -17,7 +17,6 @@ const TextNGEditor = lazy(() => import('./TextNGEditor').then((m) => ({ default:
 export interface Props extends PanelProps<Options> {}
 
 export function TextNGPanel(props: Props) {
-  const styles = useStyles2(getStyles);
   const { app } = usePanelContext();
   const { options, onOptionsChange, replaceVariables } = props;
   const isEditing = app === CoreApp.PanelEditor;
@@ -61,7 +60,9 @@ export function TextNGPanel(props: Props) {
 
   if (isEditing) {
     return (
-      <Suspense fallback={null}>
+      // Show the rendered content while the editor chunk loads; the editor
+      // opens in Preview view, so the content stays in place.
+      <Suspense fallback={<EditorLoadingFallback options={options} replaceVariables={replaceVariables} />}>
         <TextNGEditor
           content={content}
           mode={options.mode}
@@ -74,14 +75,26 @@ export function TextNGPanel(props: Props) {
     );
   }
 
-  if (processed.mode === TextMode.Code) {
-    const code = options.code ?? defaultCodeOptions;
+  return <TextNGView mode={processed.mode} content={processed.content} code={options.code} />;
+}
+
+interface TextNGViewProps {
+  mode: TextMode;
+  content: string;
+  code: Options['code'];
+}
+
+function TextNGView({ mode, content, code }: TextNGViewProps) {
+  const styles = useStyles2(getStyles);
+
+  if (mode === TextMode.Code) {
+    const codeOptions = code ?? defaultCodeOptions;
     return (
       <div className={styles.codeContainer} data-testid="TextNGPanel-code">
         <TextNGCodeView
-          content={processed.content}
-          language={code.language}
-          showLineNumbers={code.showLineNumbers ?? false}
+          content={content}
+          language={codeOptions.language}
+          showLineNumbers={codeOptions.showLineNumbers ?? false}
         />
       </div>
     );
@@ -92,13 +105,30 @@ export function TextNGPanel(props: Props) {
       <ScrollContainer minHeight="100%">
         <DangerouslySetHtmlContent
           allowRerender
-          html={processed.content}
+          html={content}
           className={cx('markdown-html', styles.markdownHtml)}
           data-testid="TextNGPanel-converted-content"
         />
       </ScrollContainer>
     </div>
   );
+}
+
+// Only mounted while the lazy editor chunk loads, so the extra processing runs
+// at most once per edit session.
+function EditorLoadingFallback({
+  options,
+  replaceVariables,
+}: {
+  options: Options;
+  replaceVariables: InterpolateFunction;
+}) {
+  const content = useMemo(
+    () => transformContent(options.mode, interpolateContent(options, replaceVariables), config.disableSanitizeHtml),
+    [options, replaceVariables]
+  );
+
+  return <TextNGView mode={options.mode} content={content} code={options.code} />;
 }
 
 function interpolateContent(options: Options, interpolate: InterpolateFunction): string {

@@ -217,6 +217,26 @@ describe('TextNGPanel', () => {
   });
 
   describe('edit mode', () => {
+    // Must be the first edit-mode render in this file: once the lazy editor
+    // module is loaded, later mounts no longer suspend and the fallback
+    // never shows.
+    it('shows the rendered content while the editor is loading', async () => {
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      const props = Object.assign({}, defaultProps, {
+        options: { content: '# Hello', mode: TextMode.Markdown },
+      });
+
+      setup(props, CoreApp.PanelEditor);
+
+      // The lazy editor chunk has not resolved yet: the fallback must show the
+      // rendered panel content instead of a blank body.
+      expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML).toContain('Hello');
+
+      expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
+      expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
+      replaceVariablesMock.mockReset();
+    });
+
     it('renders the inline editor in the panel area when the panel is being edited', async () => {
       const props = Object.assign({}, defaultProps, {
         options: { content: '# Hello', mode: TextMode.Markdown },
