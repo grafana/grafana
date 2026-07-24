@@ -105,6 +105,15 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `splashScreen`                    | Enables the splash screen modal for introducing new Grafana features on first session          |
 | `grafana.dynamicTraceToLogs`      | Check for the existence of logs when linking from the Trace View                               |
 
+## Deprecated feature toggles
+
+When features are slated for removal, they will be marked as Deprecated first.
+
+| Feature toggle name               | Description                                                                                                                                                                 |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `prometheusAzureOverrideAudience` | Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future. |
+| `prometheusTypeMigration`         | Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources                      |
+
 ## Development feature toggles
 
 The following toggles require explicitly setting Grafana's [app mode](../#app_mode) to 'development' before you can enable this feature toggle. These features tend to be experimental.

@@ -428,6 +428,12 @@ func generateCSV(lookup map[string]featuretoggleapi.Feature) string {
 
 func generateDocsMD() string {
 	hasDeprecatedFlags := false
+	for _, flag := range standardFeatureFlags {
+		if flag.Stage == FeatureStageDeprecated && !flag.HideFromDocs {
+			hasDeprecatedFlags = true
+			break
+		}
+	}
 
 	buf := `---
 aliases:
@@ -472,7 +478,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 
 When features are slated for removal, they will be marked as Deprecated first.
 
-	` + writeToggleDocsTable(func(flag FeatureFlag) bool {
+` + writeToggleDocsTable(func(flag FeatureFlag) bool {
 			return flag.Stage == FeatureStageDeprecated
 		}, false)
 	}
