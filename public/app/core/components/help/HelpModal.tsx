@@ -249,8 +249,9 @@ interface KeyProps {
 
 const Key = ({ children }: KeyProps) => {
   const styles = useStyles2(getStyles);
-  const displayText = useMemo(() => replaceCustomKeyNames(children), [children]);
-  const displayElement = <span dangerouslySetInnerHTML={{ __html: displayText }}></span>;
+  // FIX: Security improvement - replace dangerouslySetInnerHTML with safe React component
+  // Prevents potential XSS vulnerabilities by using JSX elements instead of HTML strings
+  const displayElement = useMemo(() => renderKeyDisplay(children), [children]);
   return (
     <kbd className={styles.shortcutTableKey}>
       <Text variant="code">{displayElement}</Text>
@@ -258,24 +259,37 @@ const Key = ({ children }: KeyProps) => {
   );
 };
 
-function replaceCustomKeyNames(key: string) {
-  let displayName;
-  let srName;
-
+/**
+ * SECURITY FIX: Safely render keyboard shortcut key names by using React components
+ * instead of dangerouslySetInnerHTML with string interpolation.
+ * This prevents XSS vulnerabilities while maintaining accessibility features.
+ * 
+ * @param key - The keyboard shortcut key to display (e.g., 'ctrl', 'esc', 'cmd + k')
+ * @returns JSX elements safe for rendering
+ */
+function renderKeyDisplay(key: string): JSX.Element | string {
+  // Handle 'ctrl' key - display as 'ctrl' with hidden accessibility text
   if (key.includes('ctrl')) {
-    displayName = 'ctrl';
-    srName = 'Control';
-  } else if (key.includes('esc')) {
-    displayName = 'esc';
-    srName = 'Escape';
-  } else {
-    return key;
+    return (
+      <>
+        <span className="sr-only">Control</span>
+        <span aria-hidden="true" role="none">ctrl</span>
+      </>
+    );
   }
-
-  return key.replace(
-    displayName,
-    `<span class="sr-only">${srName}</span><span aria-hidden="true" role="none">${displayName}</span>`
-  );
+  
+  // Handle 'esc' key - display as 'esc' with hidden accessibility text
+  if (key.includes('esc')) {
+    return (
+      <>
+        <span className="sr-only">Escape</span>
+        <span aria-hidden="true" role="none">esc</span>
+      </>
+    );
+  }
+  
+  // For all other keys, return the key as-is (safe - no HTML parsing)
+  return key;
 }
 
 function getStyles(theme: GrafanaTheme2) {
