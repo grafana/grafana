@@ -65,7 +65,7 @@ func TestAsExternal(t *testing.T) {
 		},
 	}
 
-	t.Run("should skip a core plugin", func(t *testing.T) {
+	t.Run("should skip a non-registry core plugin with as_external set", func(t *testing.T) {
 		cfg := &config.PluginManagementCfg{
 			PluginSettings: config.PluginSettings{
 				"plugin1": map[string]string{
@@ -79,6 +79,44 @@ func TestAsExternal(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, filtered, 1)
 		require.Equal(t, filtered[0].Primary.JSONData.ID, "plugin2")
+	})
+
+	t.Run("should skip a registry core plugin only when override is fully active", func(t *testing.T) {
+		canvasBundles := []*plugins.FoundBundle{
+			{Primary: plugins.FoundPlugin{JSONData: plugins.JSONData{ID: "canvas"}}},
+			{Primary: plugins.FoundPlugin{JSONData: plugins.JSONData{ID: "plugin2"}}},
+		}
+		cfg := &config.PluginManagementCfg{
+			PluginSettings: config.PluginSettings{
+				"canvas": map[string]string{"as_external": "true"},
+			},
+			ActiveExternalOverrides: []config.ExternalOverride{
+				{CorePluginID: "canvas", ExternalPluginID: "grafana-canvas-panel"},
+			},
+		}
+
+		s := NewAsExternalStep(cfg)
+		filtered, err := s.Filter(plugins.ClassCore, canvasBundles)
+		require.NoError(t, err)
+		require.Len(t, filtered, 1)
+		require.Equal(t, "plugin2", filtered[0].Primary.JSONData.ID)
+	})
+
+	t.Run("should not skip a registry core plugin when as_external is set but override is not active", func(t *testing.T) {
+		canvasBundles := []*plugins.FoundBundle{
+			{Primary: plugins.FoundPlugin{JSONData: plugins.JSONData{ID: "canvas"}}},
+			{Primary: plugins.FoundPlugin{JSONData: plugins.JSONData{ID: "plugin2"}}},
+		}
+		cfg := &config.PluginManagementCfg{
+			PluginSettings: config.PluginSettings{
+				"canvas": map[string]string{"as_external": "true"},
+			},
+		}
+
+		s := NewAsExternalStep(cfg)
+		filtered, err := s.Filter(plugins.ClassCore, canvasBundles)
+		require.NoError(t, err)
+		require.Len(t, filtered, 2)
 	})
 }
 
@@ -175,4 +213,36 @@ func TestDuplicatePluginIDValidation(t *testing.T) {
 			require.Equal(t, tc.out, res)
 		})
 	}
+}
+
+func TestExternalPluginOverridesDecorateFunc(t *testing.T) {
+	override := config.ExternalOverride{
+		CorePluginID:     "canvas",
+		ExternalPluginID: "grafana-canvas-panel",
+	}
+
+	newCanvasPanel := func() *plugins.Plugin {
+		return &plugins.Plugin{JSONData: plugins.JSONData{ID: "grafana-canvas-panel"}}
+	}
+	newOtherPanel := func() *plugins.Plugin {
+		return &plugins.Plugin{JSONData: plugins.JSONData{ID: "other-panel"}}
+	}
+
+	t.Run("injects core alias when override is active", func(t *testing.T) {
+		p, err := ExternalPluginOverridesDecorateFunc([]config.ExternalOverride{override})(context.Background(), newCanvasPanel())
+		require.NoError(t, err)
+		require.Contains(t, p.AliasIDs, "canvas")
+	})
+
+	t.Run("does not inject alias when no overrides are active", func(t *testing.T) {
+		p, err := ExternalPluginOverridesDecorateFunc(nil)(context.Background(), newCanvasPanel())
+		require.NoError(t, err)
+		require.NotContains(t, p.AliasIDs, "canvas")
+	})
+
+	t.Run("does not inject alias on non-matching plugins", func(t *testing.T) {
+		p, err := ExternalPluginOverridesDecorateFunc([]config.ExternalOverride{override})(context.Background(), newOtherPanel())
+		require.NoError(t, err)
+		require.NotContains(t, p.AliasIDs, "canvas")
+	})
 }

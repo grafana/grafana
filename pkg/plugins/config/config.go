@@ -22,6 +22,18 @@ type PluginManagementCfg struct {
 	GrafanaAppURL string
 
 	Features Features
+
+	// ActiveExternalOverrides is the set of external plugin overrides that are currently active,
+	// either because the operator has configured alias_ids in the ini file or because the stage
+	// is OverrideStagePermanent. It is the single source of truth for the pipeline and bootstrap
+	// stages, avoiding re-derivation from PluginSettings.
+	ActiveExternalOverrides []ExternalOverride
+}
+
+// ExternalOverride carries the IDs needed at pipeline time for an active external plugin override.
+type ExternalOverride struct {
+	CorePluginID     string
+	ExternalPluginID string
 }
 
 // Features contains the feature toggles used for the plugin management system.

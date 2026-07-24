@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/externaloverrides"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 )
@@ -286,13 +287,30 @@ func NewAsExternalStep(cfg *config.PluginManagementCfg) *AsExternal {
 // Filter will filter out any plugins that are marked to be disabled.
 func (c *AsExternal) Filter(cl plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
 	if cl == plugins.ClassCore {
+		// Build a set of core plugin IDs that are in the override registry.
+		// For registry plugins, suppression requires the override to be fully active
+		// (both as_external and alias_ids configured) to prevent the dangerous partial-config
+		// state where the core plugin is suppressed with no external replacement registered.
+		// For non-registry plugins, as_external = true alone continues to work as before.
+		registryIDs := make(map[string]bool, len(externaloverrides.Overrides))
+		for _, o := range externaloverrides.Overrides {
+			registryIDs[o.CorePluginID] = true
+		}
+		activeOverrideIDs := make(map[string]bool, len(c.cfg.ActiveExternalOverrides))
+		for _, o := range c.cfg.ActiveExternalOverrides {
+			activeOverrideIDs[o.CorePluginID] = true
+		}
+
 		res := []*plugins.FoundBundle{}
 		for _, bundle := range bundles {
-			pluginCfg := c.cfg.PluginSettings[bundle.Primary.JSONData.ID]
-			// Skip core plugins if the feature flag is enabled and the plugin is in the skip list.
-			// It could be loaded later as an external plugin.
-			if pluginCfg["as_external"] == "true" {
-				c.log.Debug("Skipping the core plugin load", "pluginID", bundle.Primary.JSONData.ID)
+			pluginID := bundle.Primary.JSONData.ID
+			pluginCfg := c.cfg.PluginSettings[pluginID]
+			asExternal := pluginCfg["as_external"] == "true"
+			// For registry plugins: require full activation to prevent partial-config suppression.
+			// For non-registry plugins: as_external alone is sufficient (existing behaviour preserved).
+			shouldSuppress := asExternal && (!registryIDs[pluginID] || activeOverrideIDs[pluginID])
+			if shouldSuppress {
+				c.log.Info("Core plugin replaced by external plugin", "pluginID", pluginID)
 			} else {
 				res = append(res, bundle)
 			}
@@ -300,6 +318,21 @@ func (c *AsExternal) Filter(cl plugins.Class, bundles []*plugins.FoundBundle) ([
 		return res, nil
 	}
 	return bundles, nil
+}
+
+// ExternalPluginOverridesDecorateFunc returns a DecorateFunc that injects core plugin IDs as aliases
+// into their external replacement plugins, based on the active external overrides. This ensures that
+// existing dashboards and data sources continue to work without migration when a core plugin is
+// replaced by an external one.
+func ExternalPluginOverridesDecorateFunc(activeOverrides []config.ExternalOverride) func(context.Context, *plugins.Plugin) (*plugins.Plugin, error) {
+	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+		for _, o := range activeOverrides {
+			if p.ID == o.ExternalPluginID {
+				p.AliasIDs = append(p.AliasIDs, o.CorePluginID)
+			}
+		}
+		return p, nil
+	}
 }
 
 // DuplicatePluginIDValidation is a filter step that will filter out any plugins that are already registered with the same
