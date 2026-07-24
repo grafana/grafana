@@ -20,6 +20,9 @@ service ResourceIndex {
 
   // Semantic search
   rpc VectorSearch(VectorSearchRequest) returns (VectorSearchResponse);
+
+  // Hybrid search: RRF fuse lexical and vector
+  rpc HybridSearch(HybridSearchRequest) returns (HybridSearchResponse);
 }
 
 // Get statistics across multiple resources
@@ -276,5 +279,69 @@ message VectorSearchResult {
 
   // Structured metadata as raw JSON; caller unmarshals as needed.
   bytes metadata = 7;
+}
+
+message HybridSearchRequest {
+  // Resource type to search (namespace + group + resource).
+  ResourceKey key = 1;
+
+  // Required. Feeds the lexical leg verbatim; also embedded for the
+  // semantic leg unless semantic_query is set. Max 1000 bytes.
+  string query = 2;
+
+  // Optional richer phrasing embedded for the semantic leg instead of
+  // query. Max 1000 bytes.
+  string semantic_query = 3;
+
+  // Top-k: maximum results. Defaults to 50 when zero, capped at 200.
+  int64 limit = 4;
+
+  // Exact-match filters, IN semantics for multiple values, each key at
+  // most once. Supported keys: "uid" and "folder" (all kinds),
+  // "datasource_uid" and "language" (dashboards; language values:
+  // promql, logql, traceql, sql). Every key is enforced natively by
+  // BOTH legs. Any other key or language fails the request.
+  repeated Requirement filters = 5;
+}
+
+message HybridSearchResponse {
+  // Top-k fused results, descending score, one row per resource.
+  // Request failures are gRPC status errors (e.g. INVALID_ARGUMENT for
+  // bad filters), never payload-embedded errors.
+  repeated HybridSearchResult results = 1;
+}
+
+message HybridSearchResult {
+  // Full identity (namespace, group, resource, name).
+  ResourceKey key = 1;
+
+  // Display title, from the lexical index when available.
+  string title = 2;
+
+  // Folder UID.
+  string folder = 3;
+
+  // Relevance: higher = better; scale is backend-defined (RRF today,
+  // possibly a reranking stage later). Opaque ordering signal; NOT
+  // comparable to VectorSearchResult.score (raw cosine distance).
+  double score = 4;
+
+  // Matching embedded chunks, best first, capped at 10 per result.
+  // One entry with subresource "" for resources embedded whole. For
+  // lexical-only hits the server synthesizes a single chunk with
+  // content = title and no metadata so rerankers always have text.
+  // Only the best chunk influences score.
+  repeated HybridSearchChunk chunks = 5;
+}
+
+message HybridSearchChunk {
+  // Chunk id within the resource (e.g. "panel/5"); "" = whole resource.
+  string subresource = 1;
+
+  // The text that was embedded (or the title for synthesized chunks).
+  string content = 2;
+
+  // Structured chunk metadata as raw JSON; empty for synthesized chunks.
+  bytes metadata = 3;
 }
 
