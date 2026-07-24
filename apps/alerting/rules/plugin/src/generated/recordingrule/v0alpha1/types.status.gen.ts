@@ -1,5 +1,16 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
+export enum RecordingRuleHealth {
+	Unknown = "Unknown",
+	Recording = "Recording",
+	Paused = "Paused",
+	Error = "Error",
+	NoData = "NoData",
+	NotScheduled = "NotScheduled",
+}
+
+export const defaultRecordingRuleHealth = (): RecordingRuleHealth => (RecordingRuleHealth.Unknown);
+
 export interface OperatorState {
 	// lastEvaluation is the ResourceVersion last evaluated
 	lastEvaluation: string;
@@ -18,9 +29,13 @@ export const defaultOperatorState = (): OperatorState => ({
 });
 
 export interface Status {
+	health?: RecordingRuleHealth;
+	lastEvaluationTime?: string;
+	evaluationTime?: number;
 	// operatorStates is a map of operator ID to operator state evaluations.
 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
 	operatorStates?: Record<string, OperatorState>;
+	lastError?: string;
 	// additionalFields is reserved for future use
 	additionalFields?: Record<string, any>;
 }

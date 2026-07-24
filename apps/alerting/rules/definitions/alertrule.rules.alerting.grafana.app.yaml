@@ -166,6 +166,22 @@ spec:
                 description: additionalFields is reserved for future use
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
+              evaluationDuration:
+                type: number
+              health:
+                enum:
+                - Unknown
+                - OK
+                - Paused
+                - Error
+                - NoData
+                - NotScheduled
+                type: string
+              lastError:
+                type: string
+              lastEvaluationTime:
+                format: date-time
+                type: string
               operatorStates:
                 additionalProperties:
                   properties:
@@ -198,6 +214,14 @@ spec:
                   operatorStates is a map of operator ID to operator state evaluations.
                   Any operator which consumes this kind SHOULD add its state evaluation information to this field.
                 type: object
+              state:
+                enum:
+                - Inactive
+                - Normal
+                - Firing
+                - Pending
+                - Recovering
+                type: string
             type: object
         required:
         - spec

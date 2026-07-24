@@ -2960,6 +2960,27 @@
           }
         ]
       },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleAlertRuleHealth": {
+        "type": "string",
+        "enum": [
+          "Unknown",
+          "OK",
+          "Paused",
+          "Error",
+          "NoData",
+          "NotScheduled"
+        ]
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleAlertRuleState": {
+        "type": "string",
+        "enum": [
+          "Inactive",
+          "Normal",
+          "Firing",
+          "Pending",
+          "Recovering"
+        ]
+      },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleDatasourceUID": {
         "type": "string",
         "pattern": "^[a-zA-Z0-9_-]+$"
@@ -3291,12 +3312,28 @@
             "type": "object",
             "additionalProperties": true
           },
+          "evaluationDuration": {
+            "type": "number"
+          },
+          "health": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleAlertRuleHealth"
+          },
+          "lastError": {
+            "type": "string"
+          },
+          "lastEvaluationTime": {
+            "type": "string",
+            "format": "date-time"
+          },
           "operatorStates": {
             "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
             "type": "object",
             "additionalProperties": {
               "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleOperatorState"
             }
+          },
+          "state": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleAlertRuleState"
           }
         },
         "additionalProperties": false
@@ -3765,6 +3802,17 @@
         "type": "string",
         "pattern": "^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$"
       },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleRecordingRuleHealth": {
+        "type": "string",
+        "enum": [
+          "Unknown",
+          "Recording",
+          "Paused",
+          "Error",
+          "NoData",
+          "NotScheduled"
+        ]
+      },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleRelativeTimeRange": {
         "type": "object",
         "required": [
@@ -3825,6 +3873,19 @@
             "description": "additionalFields is reserved for future use",
             "type": "object",
             "additionalProperties": true
+          },
+          "evaluationTime": {
+            "type": "number"
+          },
+          "health": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleRecordingRuleHealth"
+          },
+          "lastError": {
+            "type": "string"
+          },
+          "lastEvaluationTime": {
+            "type": "string",
+            "format": "date-time"
           },
           "operatorStates": {
             "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",

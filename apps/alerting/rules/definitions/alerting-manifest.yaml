@@ -31,6 +31,23 @@ spec:
               $ref: '#/components/schemas/status'
           required:
           - spec
+        AlertRuleHealth:
+          enum:
+          - Unknown
+          - OK
+          - Paused
+          - Error
+          - NoData
+          - NotScheduled
+          type: string
+        AlertRuleState:
+          enum:
+          - Inactive
+          - Normal
+          - Firing
+          - Pending
+          - Recovering
+          type: string
         DatasourceUID:
           pattern: ^[a-zA-Z0-9_-]+$
           type: string
@@ -249,6 +266,15 @@ spec:
               additionalProperties: true
               description: additionalFields is reserved for future use
               type: object
+            evaluationDuration:
+              type: number
+            health:
+              $ref: '#/components/schemas/AlertRuleHealth'
+            lastError:
+              type: string
+            lastEvaluationTime:
+              format: date-time
+              type: string
             operatorStates:
               additionalProperties:
                 $ref: '#/components/schemas/OperatorState'
@@ -256,6 +282,8 @@ spec:
                 operatorStates is a map of operator ID to operator state evaluations.
                 Any operator which consumes this kind SHOULD add its state evaluation information to this field.
               type: object
+            state:
+              $ref: '#/components/schemas/AlertRuleState'
           type: object
       scope: Namespaced
       searchFields:
@@ -456,6 +484,15 @@ spec:
               $ref: '#/components/schemas/status'
           required:
           - spec
+        RecordingRuleHealth:
+          enum:
+          - Unknown
+          - Recording
+          - Paused
+          - Error
+          - NoData
+          - NotScheduled
+          type: string
         RelativeTimeRange:
           additionalProperties: false
           properties:
@@ -502,6 +539,15 @@ spec:
               additionalProperties: true
               description: additionalFields is reserved for future use
               type: object
+            evaluationTime:
+              type: number
+            health:
+              $ref: '#/components/schemas/RecordingRuleHealth'
+            lastError:
+              type: string
+            lastEvaluationTime:
+              format: date-time
+              type: string
             operatorStates:
               additionalProperties:
                 $ref: '#/components/schemas/OperatorState'
