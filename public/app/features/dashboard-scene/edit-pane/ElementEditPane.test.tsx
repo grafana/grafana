@@ -9,7 +9,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { type DashboardEditPane } from './DashboardEditPane';
+import { type DashboardEditPaneLike } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -29,7 +29,7 @@ setPluginImportUtils({
 });
 
 // Mirrors DashboardEditPaneRenderer: renders the current openPane keyed by its scene key
-function PaneHost({ editPane }: { editPane: DashboardEditPane }) {
+function PaneHost({ editPane }: { editPane: DashboardEditPaneLike }) {
   const { openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   return openPane ? <openPane.Component key={openPane.state.key} model={openPane} /> : null;
 }
