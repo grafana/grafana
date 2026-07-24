@@ -594,5 +594,25 @@ describe('<DataSourceTestingStatus />', () => {
       expect(screen.getByLabelText('Create a dashboard')).toBeInTheDocument();
       expect(screen.getByLabelText('Explore data')).toBeInTheDocument();
     });
+
+    it('should render custom followUpMessage instead of default links when provided', () => {
+      render(
+        <MemoryRouter>
+          <DataSourceTestingStatus
+            {...successWithDetails({
+              testingStatus: {
+                status: 'success',
+                message: 'Data source is working',
+                details: { message: 'All good', followUpMessage: 'Check our docs for next steps.' },
+              },
+            })}
+          />
+        </MemoryRouter>
+      );
+
+      expect(screen.getByText('Check our docs for next steps.')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Create a dashboard')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Explore data')).not.toBeInTheDocument();
+    });
   });
 });
