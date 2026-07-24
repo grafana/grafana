@@ -119,10 +119,10 @@ describe('alignTimeRangeCompareData', () => {
       ],
     });
 
-    alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+    const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
 
-    expect(frame.fields[0].values).toEqual([ONE_DAY_MS + 1000, ONE_DAY_MS + 2000, ONE_DAY_MS + 3000]);
-    expect(frame.fields[1].values).toEqual([10, 20, 30]); // non-time fields unchanged
+    expect(result.fields[0].values).toEqual([ONE_DAY_MS + 1000, ONE_DAY_MS + 2000, ONE_DAY_MS + 3000]);
+    expect(result.fields[1].values).toEqual([10, 20, 30]); // non-time fields unchanged
   });
 
   it('should align time field values with negative diff (1 week)', () => {
@@ -133,10 +133,10 @@ describe('alignTimeRangeCompareData', () => {
       ],
     });
 
-    alignTimeRangeCompareData(frame, -ONE_WEEK_MS, createTheme());
+    const result = alignTimeRangeCompareData(frame, -ONE_WEEK_MS, createTheme());
 
     // When diff is negative, function does v - diff, so v - (-ONE_WEEK_MS) = v + ONE_WEEK_MS
-    expect(frame.fields[0].values).toEqual([ONE_WEEK_MS + 1000, ONE_WEEK_MS + 2000, ONE_WEEK_MS + 3000]);
+    expect(result.fields[0].values).toEqual([ONE_WEEK_MS + 1000, ONE_WEEK_MS + 2000, ONE_WEEK_MS + 3000]);
   });
 
   it('should apply timeCompare config', () => {
@@ -147,9 +147,9 @@ describe('alignTimeRangeCompareData', () => {
       ],
     });
 
-    alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+    const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
 
-    frame.fields.forEach((field) => {
+    result.fields.forEach((field) => {
       expect(field.config.custom?.timeCompare).toEqual({
         diffMs: ONE_DAY_MS,
         isTimeShiftQuery: true,
@@ -172,11 +172,54 @@ describe('alignTimeRangeCompareData', () => {
       ],
     });
 
-    alignTimeRangeCompareData(frame, ONE_WEEK_MS, createTheme());
+    const result = alignTimeRangeCompareData(frame, ONE_WEEK_MS, createTheme());
 
-    expect(frame.fields[0].config.displayName).toBe('My Display Name');
-    expect(frame.fields[0].config.custom?.existingProperty).toBe('existingValue');
-    expect(frame.fields[0].config.custom?.timeCompare?.diffMs).toBe(ONE_WEEK_MS);
+    expect(result.fields[0].config.displayName).toBe('My Display Name');
+    expect(result.fields[0].config.custom?.existingProperty).toBe('existingValue');
+    expect(result.fields[0].config.custom?.timeCompare?.diffMs).toBe(ONE_WEEK_MS);
+  });
+
+  it('should not mutate the input frame, its fields, or their value arrays', () => {
+    // Callers on streaming/split-chunk query paths may not own the frame - e.g. it can be held by a
+    // datasource's response accumulator and re-processed on every chunk. Mutating it in place would
+    // corrupt that shared state, so this must return copies at every level it touches.
+    const timeValues = [1000, 2000, 3000];
+    const numberValues = [10, 20, 30];
+    const frame = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: timeValues },
+        { name: 'value', type: FieldType.number, values: numberValues },
+      ],
+    });
+    const originalFields = frame.fields;
+
+    const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+
+    expect(result).not.toBe(frame);
+    expect(frame.fields).toBe(originalFields);
+    expect(frame.fields[0].values).toEqual(timeValues);
+    expect(frame.fields[0].config).toEqual({});
+    expect(frame.fields[1].values).toEqual(numberValues);
+    expect(frame.fields[1].config).toEqual({});
+  });
+
+  it('should produce identical output when re-run against the same shared input frame', () => {
+    // Simulates the split-query accumulator pattern: the same frame object gets passed through
+    // repeatedly (e.g. once per streamed chunk). Non-mutating means every pass sees the same,
+    // unmodified input and produces an equivalent, non-accumulating result.
+    const frame = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'value', type: FieldType.number, values: [10, 20] },
+      ],
+    });
+
+    const first = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+    const second = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+
+    expect(second.fields[0].values).toEqual(first.fields[0].values);
+    expect(second.fields[0].config).toEqual(first.fields[0].config);
+    expect(second.fields).toHaveLength(2);
   });
 });
 

@@ -13,12 +13,14 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   type ExtraQueryDescriptor,
+  getCompareSeriesRefId,
   type SceneComponentProps,
   type SceneDataQuery,
   sceneGraph,
   type SceneTimeRangeLike,
   type SceneTimeRangeState,
   SceneTimeRangeTransformerBase,
+  timeShiftAlignmentProcessor,
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
@@ -28,7 +30,7 @@ import { type TimeOverrideResult } from 'app/features/dashboard/utils/panel';
 import { getDashboardSceneFor } from '../../utils/utils';
 
 import { getCompareOptions, PanelTimeRangeDrawer, type PanelTimeRangeZoomBehavior } from './PanelTimeRangeDrawer';
-import { getCompareSeriesRefId, getCompareTimeRange, timeShiftAlignmentProcessor } from './utils';
+import { getCompareTimeRange } from './utils';
 
 export interface PanelTimeRangeState extends SceneTimeRangeState {
   enabled?: boolean;

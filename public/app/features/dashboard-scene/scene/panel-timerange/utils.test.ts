@@ -1,9 +1,13 @@
 import { lastValueFrom } from 'rxjs';
 
 import { dateTime, FieldType, toDataFrame, type DataFrame, type PanelData, type TimeRange } from '@grafana/data';
+import { getCompareSeriesRefId, timeShiftAlignmentProcessor } from '@grafana/scenes';
 import { LoadingState } from '@grafana/schema';
 
-import { getCompareSeriesRefId, getCompareTimeRange, timeShiftAlignmentProcessor } from './utils';
+// The processor now lives in @grafana/scenes (core's private fork was deleted); these tests stay
+// as contract tests guarding the dependency against a regression to the old mutate-in-place behavior.
+
+import { getCompareTimeRange } from './utils';
 
 function makeTimeRange(fromIso: string, toIso: string): TimeRange {
   const from = dateTime(fromIso);
@@ -104,14 +108,37 @@ describe('panel-timerange/utils', () => {
     // Secondary is 1 day before primary, so (secondary.from - primary.from) is negative.
     const expectedDiffMs = -MILLISECONDS_PER_DAY;
 
-    it('should emit the secondary PanelData', async () => {
-      // The processor mutates secondary in place and re-emits the same reference; downstream code relies on that.
-      const secondary = makePanelData(secondaryRange, [toDataFrame({ refId: 'A', fields: [] })]);
+    it('should not mutate the secondary PanelData, its series, or their frame objects', async () => {
+      // The frames here may be owned by a datasource's streaming/split-chunk response accumulator and
+      // re-processed on every chunk - mutating them in place caused duplicate compare series to
+      // accumulate instead of being replaced. The processor must return new objects instead.
+      const frame = toDataFrame({ refId: 'A', fields: [] });
+      const secondary = makePanelData(secondaryRange, [frame]);
       const primary = makePanelData(primaryRange);
 
       const result = await lastValueFrom(timeShiftAlignmentProcessor(primary, secondary));
 
-      expect(result).toBe(secondary);
+      expect(result).not.toBe(secondary);
+      expect(secondary.series).toEqual([frame]);
+      expect(frame.refId).toBe('A');
+      expect(frame.meta).toBeUndefined();
+    });
+
+    it('should not accumulate duplicate compare series when re-processing the same shared input frame', async () => {
+      // Simulates the split-query accumulator pattern: the same frame object is passed through the
+      // processor repeatedly (e.g. once per streamed chunk). Each pass must produce exactly one
+      // compare series, never more.
+      const sharedFrame = toDataFrame({ refId: 'A', fields: [] });
+      const secondary = makePanelData(secondaryRange, [sharedFrame]);
+      const primary = makePanelData(primaryRange);
+
+      await lastValueFrom(timeShiftAlignmentProcessor(primary, secondary));
+      await lastValueFrom(timeShiftAlignmentProcessor(primary, secondary));
+      const result = await lastValueFrom(timeShiftAlignmentProcessor(primary, secondary));
+
+      expect(sharedFrame.refId).toBe('A');
+      expect(result.series).toHaveLength(1);
+      expect(result.series[0].refId).toBe('A-compare');
     });
 
     it('should append -compare to each series refId', async () => {
