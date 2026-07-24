@@ -525,7 +525,10 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 			s.EndsAt = evaluatedAt
 
 			// By setting 'ResolvedAt' we trigger the scheduler to send a 'resolved' alert to the Alertmanager.
-			if s.ShouldBeResolved(oldState) {
+			// A series which was already resolved still needs a fresh timestamp here:
+			// MissingSeries is a distinct resolution event and must not be suppressed
+			// because the previous resolution was sent recently.
+			if s.ShouldBeResolved(oldState) || s.ResolvedAt != nil {
 				s.ResolvedAt = &evaluatedAt
 				s.Image = takeImageFn("stale state") // Potentially nil
 			}
