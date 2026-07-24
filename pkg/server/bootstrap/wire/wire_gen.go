@@ -851,7 +851,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	historianAppInstaller, err := historian.RegisterAppInstaller(cfg, alertNG)
+	historianAppInstaller, err := historian.RegisterAppInstaller(cfg, alertNG, accessClient)
 	if err != nil {
 		return nil, err
 	}
@@ -1602,7 +1602,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	historianAppInstaller, err := historian.RegisterAppInstaller(cfg, alertNG)
+	historianAppInstaller, err := historian.RegisterAppInstaller(cfg, alertNG, accessClient)
 	if err != nil {
 		return nil, err
 	}

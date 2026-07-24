@@ -93,7 +93,7 @@ const ATTRIBUTE_CATEGORY_CONFIG: AttributeCategoryConfig[] = [
     labelKey: 'explore.span-detail.attribute-category.frontend',
     defaultLabel: 'Frontend',
     icon: 'frontend-observability',
-    prefixes: ['browser', 'device', 'session'],
+    prefixes: ['browser', 'device', 'session', 'gf.feo11y'],
   },
   {
     id: 'telemetry-sdk',
@@ -210,9 +210,11 @@ function orderAttributeCategories(
   return [...priorityCategories, ...remainingCategories];
 }
 
+export const OTHER_CATEGORY_ID = 'other' as const;
+
 function getOtherCategory(): AttributeCategoryDefinition {
   return {
-    id: 'other',
+    id: OTHER_CATEGORY_ID,
     label: t('explore.span-detail.attribute-category.other', 'Other'),
     icon: 'tag-alt',
     match: () => true,
