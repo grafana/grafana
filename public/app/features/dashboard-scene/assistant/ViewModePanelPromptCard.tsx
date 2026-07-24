@@ -1,6 +1,6 @@
 import { css, keyframes } from '@emotion/css';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { AssistantPromptCard, createAssistantContextItem } from '@grafana/assistant';
@@ -122,36 +122,25 @@ export function ViewModePanelPromptCard({ targets, onClose }: ViewModePanelPromp
       ? t('dashboard.panel-assistant.prompt-card.placeholder-multi', 'Ask Assistant about these panels...')
       : t('dashboard.panel-assistant.prompt-card.placeholder', 'Ask Assistant about this panel...');
 
-  const closedExplicitlyRef = useRef(false);
   const targetKeys = useMemo(() => targets.map((t) => t.panel.state.key).join(','), [targets]);
 
   useEffect(() => {
     if (visible) {
-      closedExplicitlyRef.current = false;
       reportInteraction('dashboards_assistant_popover_displayed', {
         panelCount: targets.length,
         pluginIds: targets.map((t) => t.panel.state.pluginId),
       });
-
-      return () => {
-        if (!closedExplicitlyRef.current) {
-          reportInteraction('dashboards_assistant_popover_closed', { action: 'click_outside' });
-        }
-      };
     }
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, targetKeys]);
 
   const handleClose = useCallback(() => {
-    closedExplicitlyRef.current = true;
-    reportInteraction('dashboards_assistant_popover_closed', { action: 'escape' });
     onClose();
   }, [onClose]);
 
   const handleSubmit = useCallback(
     (prompt: string) => {
-      closedExplicitlyRef.current = true;
       reportInteraction('dashboards_assistant_popover_prompt_submitted', {
         panelCount: targets.length,
         promptLength: prompt.length,

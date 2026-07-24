@@ -102,13 +102,6 @@ function NewEmptyTransformationsMessage(props: EmptyTransformationsProps) {
     props.onAddTransformation?.(transformationId);
   };
 
-  const handleShowMoreClick = () => {
-    reportInteraction('grafana_panel_transformations_show_more_clicked', {
-      context: 'empty_transformations_placeholder',
-    });
-    props.onShowPicker();
-  };
-
   // Show the SQL Expression card if any datasource in the query set is a backend datasource.
   const showSqlCard =
     hasGoToQueries &&
@@ -167,7 +160,7 @@ function NewEmptyTransformationsMessage(props: EmptyTransformationsProps) {
           icon="plus"
           variant="primary"
           size="md"
-          onClick={handleShowMoreClick}
+          onClick={props.onShowPicker}
           data-testid={selectors.components.Transforms.addTransformationButton}
         >
           <Trans i18nKey="dashboard-scene.empty-transformations-message.show-more">Show more</Trans>

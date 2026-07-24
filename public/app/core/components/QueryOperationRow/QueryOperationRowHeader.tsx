@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { type DraggableProvided } from '@hello-pangea/dnd';
-import { type MouseEventHandler } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -17,7 +16,6 @@ export interface QueryOperationRowHeaderProps {
   headerElement?: React.ReactNode;
   isContentVisible: boolean;
   onRowToggle: () => void;
-  reportDragMousePosition: MouseEventHandler<HTMLDivElement>;
   title?: string;
   id: string;
   expanderMessages?: ExpanderMessages;
@@ -37,7 +35,6 @@ export const QueryOperationRowHeader = ({
   headerElement,
   isContentVisible,
   onRowToggle,
-  reportDragMousePosition,
   title,
   id,
   expanderMessages,
@@ -83,7 +80,7 @@ export const QueryOperationRowHeader = ({
       <Stack gap={1} alignItems="center">
         {actionsElement}
         {draggable && (
-          <div onMouseMove={reportDragMousePosition} className={styles.dragHandle} {...dragHandleProps}>
+          <div className={styles.dragHandle} {...dragHandleProps}>
             <Icon title={dragAndDropLabel} name="draggabledots" size="lg" className={styles.dragIcon} />
           </div>
         )}

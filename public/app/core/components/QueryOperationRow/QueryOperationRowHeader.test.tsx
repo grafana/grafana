@@ -9,7 +9,6 @@ const setup = (propOverrides?: Partial<QueryOperationRowHeaderProps>) => {
     isContentVisible: true,
     id: 'test-id',
     onRowToggle: jest.fn(),
-    reportDragMousePosition: jest.fn(),
     ...propOverrides,
   };
   return render(<QueryOperationRowHeader {...props}></QueryOperationRowHeader>);

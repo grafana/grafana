@@ -313,10 +313,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     if (onQueryToggled) {
       onQueryToggled(query.hide);
     }
-
-    reportInteraction('query_editor_row_hide_query_clicked', {
-      hide: !query.hide,
-    });
   };
 
   onToggleHelp = () => {
