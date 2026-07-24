@@ -71,6 +71,20 @@ interface LogLineContextProps {
 export const PAGE_SIZE = 100;
 export const DEFAULT_TIME_WINDOW = 7200000;
 
+// Merge the above/below context request states into one for InfiniteScroll, preserving Streaming/Error.
+export function combineLoadingStates(...states: LoadingState[]): LoadingState {
+  if (states.includes(LoadingState.Streaming)) {
+    return LoadingState.Streaming;
+  }
+  if (states.includes(LoadingState.Loading)) {
+    return LoadingState.Loading;
+  }
+  if (states.includes(LoadingState.Error)) {
+    return LoadingState.Error;
+  }
+  return LoadingState.Done;
+}
+
 export const LogLineContext = memo(
   ({
     log,
@@ -454,7 +468,7 @@ export const LogLineContext = memo(
                 logLineMenuCustomItems={logLineMenuCustomItems}
                 logOptionsStorageKey={logOptionsStorageKey}
                 logs={allLogs}
-                loading={aboveState === LoadingState.Loading || belowState === LoadingState.Loading}
+                loadingState={combineLoadingStates(aboveState, belowState)}
                 permalinkedLogId={log.uid}
                 onPermalinkClick={onPermalinkClick}
                 onLogOptionsChange={onLogOptionsChange}

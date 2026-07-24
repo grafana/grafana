@@ -173,7 +173,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
   const [contextRow, setContextRow] = useState<LogRowModel | null>(null);
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null);
   const [displayedFields, setDisplayedFields] = useState<string[]>(options.displayedFields ?? []);
-  const [infiniteScrolling, setInfiniteScrolling] = useState(false);
+  const [loadMoreState, setLoadMoreState] = useState<LoadingState>(LoadingState.Done);
   const loadingRef = useRef(false);
   const [panelData, setPanelData] = useState(data);
   const dataSourcesMap = useDatasourcesFromTargets(panelData.request?.targets);
@@ -403,11 +403,12 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
       }
 
       loadingRef.current = true;
-      setInfiniteScrolling(true);
+      setLoadMoreState(LoadingState.Loading);
 
       const onNewLogsReceivedCallback = isOnNewLogsReceivedType(onNewLogsReceived) ? onNewLogsReceived : undefined;
 
       let newSeries: DataFrame[] = [];
+      let errored = false;
       try {
         newSeries = await requestMoreLogs(dataSourcesMap, panelData, scrollRange, timeZone, onNewLogsReceivedCallback);
         const panel = getDashboardSrv().getCurrent()?.getPanelById(id);
@@ -415,9 +416,10 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
           newSeries = await lastValueFrom(transformDataFrame(panel?.transformations, newSeries));
         }
       } catch (e) {
+        errored = true;
         console.error(e);
       } finally {
-        setInfiniteScrolling(false);
+        setLoadMoreState(errored ? LoadingState.Error : LoadingState.Done);
         loadingRef.current = false;
       }
 
@@ -508,7 +510,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
             grammar={isGrammar(grammar) ? grammar : undefined}
             isLabelFilterActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
             initialScrollPosition={initialScrollPosition}
-            loading={infiniteScrolling}
+            loadingState={loadMoreState}
             logLineMenuCustomItems={
               isLogLineMenuCustomItems(logLineMenuCustomItems) ? logLineMenuCustomItems : undefined
             }
