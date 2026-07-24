@@ -152,10 +152,6 @@ class SharedPreferences extends PureComponent<Props, State> {
   onLanguageChanged = (language: string) => {
     this.setState({ language });
 
-    reportInteraction('grafana_preferences_language_changed', {
-      toLanguage: language,
-      preferenceType: this.props.preferenceType,
-    });
   };
 
   render() {
