@@ -286,20 +286,12 @@ func NewAsExternalStep(cfg *config.PluginManagementCfg) *AsExternal {
 // Filter will filter out any plugins that are marked to be disabled.
 func (c *AsExternal) Filter(cl plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
 	if cl == plugins.ClassCore {
-		activeOverrideIDs := make(map[string]bool, len(c.cfg.ActiveExternalOverrides))
-		for _, o := range c.cfg.ActiveExternalOverrides {
-			activeOverrideIDs[o.CorePluginID] = true
-		}
-
 		res := []*plugins.FoundBundle{}
 		for _, bundle := range bundles {
-			pluginID := bundle.Primary.JSONData.ID
-			pluginCfg := c.cfg.PluginSettings[pluginID]
-			// Only suppress the core plugin when as_external is set AND the override is fully active
-			// (i.e. both as_external and alias_ids are configured). This prevents the dangerous
-			// partial-config state where the core plugin is suppressed with no external replacement.
-			if pluginCfg["as_external"] == "true" && activeOverrideIDs[pluginID] {
-				c.log.Info("Core plugin replaced by external plugin", "pluginID", pluginID)
+			pluginCfg := c.cfg.PluginSettings[bundle.Primary.JSONData.ID]
+			// Skip core plugins configured with as_external = true; they will be loaded as external plugins instead.
+			if pluginCfg["as_external"] == "true" {
+				c.log.Info("Core plugin replaced by external plugin", "pluginID", bundle.Primary.JSONData.ID)
 			} else {
 				res = append(res, bundle)
 			}
