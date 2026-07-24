@@ -258,37 +258,57 @@ const PILLS_FONT_SIZE = 12;
 const PILLS_SPACING = 12; // 6px horizontal padding on each side
 const PILLS_GAP = 4; // gap between pills
 
+const PILL_LINE_CACHE_MAX = 2048;
+
 export function getPillCellHeightMeasurer(measureWidth: (value: string) => number): MeasureCellHeight {
   const widthCache: Record<string, number> = {};
+  // The number of wrapped lines for a cell depends only on its value and the column width, but
+  // react-data-grid measures every row in the frame (not just the viewport) on each resize, so the
+  // same values get laid out repeatedly. Cache the line count per (width, value) to skip the wrap
+  // loop on repeats. Line height is applied after the lookup so it isn't part of the key. Bounded
+  // FIFO; the whole measurer closure is rebuilt when fields/typography/maxHeight change, so cached
+  // counts never outlive a layout-affecting change.
+  const lineCountCache = new Map<string, number>();
 
   return (value, width, _field, _rowIdx, lineHeight) => {
     if (value == null) {
       return 0;
     }
 
-    const pillValues = inferPills(String(value));
-    if (pillValues.length === 0) {
-      return 0;
-    }
+    const cacheKey = `${width} ${value}`;
+    let lines = lineCountCache.get(cacheKey);
 
-    let lines = 0;
-    let currentLineUse = width;
-
-    for (const pillValue of pillValues) {
-      const strPill = String(pillValue);
-      let rawWidth = widthCache[strPill];
-      if (rawWidth === undefined) {
-        rawWidth = measureWidth(strPill);
-        widthCache[strPill] = rawWidth;
+    if (lines === undefined) {
+      const pillValues = inferPills(String(value));
+      if (pillValues.length === 0) {
+        return 0;
       }
-      const pillWidth = rawWidth + PILLS_SPACING;
 
-      if (currentLineUse + pillWidth + PILLS_GAP > width) {
-        lines++;
-        currentLineUse = pillWidth;
-      } else {
-        currentLineUse += pillWidth + PILLS_GAP;
+      lines = 0;
+      let currentLineUse = width;
+
+      for (const pillValue of pillValues) {
+        const strPill = String(pillValue);
+        let rawWidth = widthCache[strPill];
+        if (rawWidth === undefined) {
+          rawWidth = measureWidth(strPill);
+          widthCache[strPill] = rawWidth;
+        }
+        const pillWidth = rawWidth + PILLS_SPACING;
+
+        if (currentLineUse + pillWidth + PILLS_GAP > width) {
+          lines++;
+          currentLineUse = pillWidth;
+        } else {
+          currentLineUse += pillWidth + PILLS_GAP;
+        }
       }
+
+      if (lineCountCache.size >= PILL_LINE_CACHE_MAX) {
+        // evict the oldest entry (Map preserves insertion order)
+        lineCountCache.delete(lineCountCache.keys().next().value!);
+      }
+      lineCountCache.set(cacheKey, lines);
     }
 
     // default line height happens to be the height of a pill, but maybe we need a custom

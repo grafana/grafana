@@ -1148,6 +1148,30 @@ describe('TableNG utils', () => {
       measurer('tag2,tag3,tag2,tag4,tag4,tag2,tag5', 300, {} as Field, 0, 20);
       expect(widthMeasurement).toHaveBeenCalledTimes(6); // Should only call for unique values
     });
+
+    it('returns a consistent line count when the same value and width are measured repeatedly', () => {
+      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const first = measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20);
+      // repeated measurement (react-data-grid re-measures every row) must return the cached result
+      expect(measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20)).toBe(first);
+    });
+
+    it('keys the cache by width, so a narrower column wraps to more lines', () => {
+      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const wide = measurer('tag1,tag2,tag3,tag4,tag5,tag6', 400, {} as Field, 0, 20);
+      const narrow = measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20);
+      expect(narrow).toBeGreaterThan(wide);
+    });
+
+    it('applies the caller line height to a cached line count rather than caching pixels', () => {
+      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const value = 'tag1,tag2,tag3,tag4,tag5,tag6';
+      // this value wraps to 3 lines at width 100 (see above: 3*20 + 2*4 = 68).
+      expect(measurer(value, 100, {} as Field, 0, 20)).toBe(68);
+      // re-measuring at a different line height must recompute the height from the cached line
+      // count (3), not return a stale pixel value: 3*30 + 2*4 = 98.
+      expect(measurer(value, 100, {} as Field, 0, 30)).toBe(98);
+    });
   });
 
   describe('buildHeaderHeightMeasurers', () => {
