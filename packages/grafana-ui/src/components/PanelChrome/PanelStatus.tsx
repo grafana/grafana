@@ -8,6 +8,7 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { type IconName } from '../../types/icon';
 import { Button } from '../Button/Button';
+import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -47,11 +48,12 @@ export function PanelStatus({ message, items, onClick, ariaLabel = 'status' }: P
   }
 
   return (
-    <Button
-      onClick={onClick}
+    <ClipboardButton
       variant={'destructive'}
       icon="exclamation-triangle"
       size="sm"
+      getText={() => message || ''}
+      onClick={onClick}
       tooltip={message || ''}
       aria-label={ariaLabel}
       data-testid={selectors.components.Panels.Panel.status('error')}

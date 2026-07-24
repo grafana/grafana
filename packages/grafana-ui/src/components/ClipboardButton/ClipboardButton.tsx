@@ -33,9 +33,12 @@ export function ClipboardButton({
   getText,
   icon,
   variant,
+  size = 'md',
+  fill = 'solid',
+  onClick,
   ...buttonProps
 }: Props) {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, fill);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
 
   useEffect(() => {
@@ -53,17 +56,21 @@ export function ClipboardButton({
   }, [showCopySuccess]);
 
   const buttonRef = useRef<null | HTMLButtonElement>(null);
-  const copyTextCallback = useCallback(async () => {
-    const textToCopy = getText();
+  const copyTextCallback = useCallback(
+    async (event: React.MouseEvent<HTMLButtonElement>) => {
+      onClick?.(event);
+      const textToCopy = getText();
 
-    try {
-      await copyText(textToCopy, buttonRef);
-      setShowCopySuccess(true);
-      onClipboardCopy?.(textToCopy);
-    } catch (e) {
-      onClipboardError?.(textToCopy, e);
-    }
-  }, [getText, onClipboardCopy, onClipboardError]);
+      try {
+        await copyText(textToCopy, buttonRef);
+        setShowCopySuccess(true);
+        onClipboardCopy?.(textToCopy);
+      } catch (e) {
+        onClipboardError?.(textToCopy, e);
+      }
+    },
+    [getText, onClipboardCopy, onClipboardError, onClick]
+  );
 
   const copiedText = t('clipboard-button.inline-toast.success', 'Copied');
   return (
@@ -74,22 +81,26 @@ export function ClipboardButton({
         </InlineToast>
       )}
 
-      <Button
-        onClick={copyTextCallback}
-        icon={icon}
-        variant={showCopySuccess ? 'success' : variant}
-        {...buttonProps}
-        className={cx(styles.button, showCopySuccess && styles.successButton, buttonProps.className)}
-        ref={buttonRef}
-      >
-        {children}
+      <span className={cx(styles.wrapper, buttonProps.fullWidth && styles.wrapperFullWidth)}>
+        <Button
+          onClick={copyTextCallback}
+          icon={icon}
+          variant={showCopySuccess ? 'success' : variant}
+          size={size}
+          fill={fill}
+          {...buttonProps}
+          className={cx(styles.button, showCopySuccess && styles.successButton, buttonProps.className)}
+          ref={buttonRef}
+        >
+          {children}
+        </Button>
 
         {showCopySuccess && (
-          <div className={styles.successOverlay}>
+          <span className={styles.successOverlay}>
             <Icon name="check" />
-          </div>
+          </span>
         )}
-      </Button>
+      </span>
     </>
   );
 }
@@ -114,7 +125,7 @@ const copyText = async (text: string, buttonRef: React.MutableRefObject<HTMLButt
   }
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, fill: ButtonProps['fill']) => {
   return {
     button: css({
       position: 'relative',
@@ -126,11 +137,31 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     successOverlay: css({
       position: 'absolute',
-      top: 0,
-      bottom: 0,
-      right: 0,
-      left: 0,
-      visibility: 'visible', // re-visible the overlay
+      inset: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      pointerEvents: 'none',
+      color: fill === 'solid' ? theme.colors.success.contrastText : theme.colors.success.text,
+    }),
+    wrapper: css({
+      position: 'relative',
+      display: 'inline-flex',
+      verticalAlign: 'middle',
+      borderRadius: theme.shape.radius.default,
+
+      '&:focus-within': {
+        zIndex: 2,
+      },
+
+      '> button, > a': {
+        // Propagate the wrapper radius to the inner button so it still works as an input addon
+        // eslint-disable-next-line @grafana/no-border-radius-literal
+        borderRadius: 'inherit',
+      },
+    }),
+    wrapperFullWidth: css({
+      flexGrow: 1,
     }),
   };
 };
