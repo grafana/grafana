@@ -89,6 +89,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     initialRowIndex,
     sortBy,
     sortByBehavior = 'initial',
+    contentAwareWidthsEnabled = false,
   } = props;
 
   const uniqueId = useId();
@@ -227,7 +228,12 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
 
   prevConfiguredWidthCount.current = configuredWidthCount;
 
-  const [widths] = useColWidths(visibleFields, availableWidth, frozenColumns, widthConfigResetKey);
+  const contentAwareWidths = useMemo(
+    () => (contentAwareWidthsEnabled ? { typographyCtx, showTypeIcons: showTypeIcons ?? false } : undefined),
+    [contentAwareWidthsEnabled, typographyCtx, showTypeIcons]
+  );
+
+  const [widths] = useColWidths(visibleFields, availableWidth, frozenColumns, widthConfigResetKey, contentAwareWidths);
 
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
@@ -247,6 +253,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     nestedVisibleFields,
     availableWidth,
     structureRev,
+    contentAware: contentAwareWidths,
   });
 
   const hasNestedHeaders = useMemo(() => firstRowNestedData?.meta?.custom?.noHeader !== true, [firstRowNestedData]);

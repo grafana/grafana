@@ -48,6 +48,7 @@ import {
   getColumnTypes,
   getRowHeight,
   computeColWidths,
+  computeContentAwareColWidths,
   buildNestedColumnWidthsMap,
   buildHeaderHeightMeasurers,
   buildCellHeightMeasurers,
@@ -710,10 +711,24 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
   return scrollbarWidth;
 }
 
+/**
+ * When present, columns without a configured width are sized to fit their content
+ * ({@link computeContentAwareColWidths}) rather than sharing the leftover space evenly. Gated by
+ * the `table.autoColumnWidths` feature toggle and threaded down as a prop.
+ */
+export interface ContentAwareWidths {
+  typographyCtx: TypographyCtx;
+  showTypeIcons?: boolean;
+}
+
+const pickColWidths = (fields: Field[], availWidth: number, contentAware?: ContentAwareWidths): number[] =>
+  contentAware ? computeContentAwareColWidths(fields, availWidth, contentAware) : computeColWidths(fields, availWidth);
+
 interface UseNestedColWidthsOptions {
   nestedVisibleFields: Field[];
   availableWidth: number;
   structureRev?: number;
+  contentAware?: ContentAwareWidths;
 }
 
 interface UseNestedColWidthsResult {
@@ -729,18 +744,19 @@ export function useNestedColWidths({
   nestedVisibleFields,
   availableWidth,
   structureRev,
+  contentAware,
 }: UseNestedColWidthsOptions): UseNestedColWidthsResult {
   // before we do anything, figure out what the widths are based on the panel configuration.
   const configuredWidths = useMemo(
-    () => computeColWidths(nestedVisibleFields, availableWidth),
-    [nestedVisibleFields, availableWidth]
+    () => pickColWidths(nestedVisibleFields, availableWidth, contentAware),
+    [nestedVisibleFields, availableWidth, contentAware]
   );
 
   const [nestedFieldWidths, setNestedFieldWidths] = useState(() => configuredWidths);
 
   // on structureRev change, sync the widths from config and check whether we ought to dispatch an update.
   useEffect(() => {
-    const newWidths = computeColWidths(nestedVisibleFields, availableWidth);
+    const newWidths = pickColWidths(nestedVisibleFields, availableWidth, contentAware);
     let hasChanges = false;
     if (nestedFieldWidths.length !== newWidths.length) {
       // if we have fewer columns than the new widths, we have changes
@@ -784,13 +800,14 @@ export function useColWidths(
   visibleFields: Field[],
   availableWidth: number,
   frozenColumns?: number,
-  resetKey?: Symbol
+  resetKey?: Symbol,
+  contentAware?: ContentAwareWidths
 ): [number[], number] {
   const widths = useMemo(
-    () => computeColWidths(visibleFields, availableWidth),
+    () => pickColWidths(visibleFields, availableWidth, contentAware),
     // Width override removals can mutate width config onto existing field objects.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [visibleFields, availableWidth, resetKey]
+    [visibleFields, availableWidth, resetKey, contentAware]
   );
 
   // this is to avoid buggy situations where all visible columns are frozen

@@ -10,7 +10,7 @@ import {
   type InterpolateFunction,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useFlagTableRefactorNested } from '@grafana/runtime/internal';
+import { useFlagTableAutoColumnWidths, useFlagTableRefactorNested } from '@grafana/runtime/internal';
 import { type TableOptions } from '@grafana/schema';
 import { usePanelContext } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
@@ -75,6 +75,7 @@ type CommonTableOptions = Pick<
  */
 export function useCommonTableProps(options: CommonTableOptions, fieldConfig: FieldConfigSource) {
   const nestedRefactorEnabled = useFlagTableRefactorNested();
+  const contentAwareWidthsEnabled = useFlagTableAutoColumnWidths();
 
   return useMemo(
     () => ({
@@ -90,6 +91,7 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       disableKeyboardEvents: options.disableKeyboardEvents,
       disableSanitizeHtml: getConfig().disableSanitizeHtml,
       nestedRefactorEnabled,
+      contentAwareWidthsEnabled,
     }),
     [
       options.showHeader,
@@ -102,6 +104,7 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       options.disableKeyboardEvents,
       fieldConfig.defaults.noValue,
       nestedRefactorEnabled,
+      contentAwareWidthsEnabled,
     ]
   );
 }

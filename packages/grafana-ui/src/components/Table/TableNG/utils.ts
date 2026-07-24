@@ -1084,6 +1084,173 @@ export function computeColWidths(fields: Field[], availWidth: number) {
   );
 }
 
+// Horizontal chrome around a cell's content: padding on each side plus the right border.
+const CELL_CHROME = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
+const HEADER_ICON_SPACE = 16 + 4; // ICON_WIDTH + ICON_GAP, matches useHeaderHeight
+
+// Bounds the amount of work content-aware sizing does. We sample at most MAX_SAMPLE rows per
+// column and shrink the per-column sample as the column count grows so a very wide frame doesn't
+// blow up the measurement budget. Sampling the first N rows is sufficient — width is
+// order-independent, so there's no need to scan sorted/filtered rows.
+const TARGET_MEASUREMENTS = 2000;
+const MIN_SAMPLE = 20;
+const MAX_SAMPLE = 100;
+// Precisely measuring only the few longest-by-length strings keeps measureText calls to O(1) per
+// column while still catching proportional-font width (e.g. "WWW" is wider than "iiiiii").
+const MEASURE_CANDIDATES = 3;
+
+// Cell types that don't render free text (gauges need bar room, sparklines/images/geo are
+// graphical). We give these a sensible default instead of measuring their content.
+const NON_TEXT_DEFAULT_WIDTHS: Partial<Record<TableCellDisplayMode, number>> = {
+  [TableCellDisplayMode.Sparkline]: COLUMN.DEFAULT_WIDTH,
+  [TableCellDisplayMode.Gauge]: COLUMN.DEFAULT_WIDTH,
+  [TableCellDisplayMode.BasicGauge]: COLUMN.DEFAULT_WIDTH,
+  [TableCellDisplayMode.GradientGauge]: COLUMN.DEFAULT_WIDTH,
+  [TableCellDisplayMode.LcdGauge]: COLUMN.DEFAULT_WIDTH,
+  [TableCellDisplayMode.Image]: COLUMN.DEFAULT_WIDTH,
+  [TableCellDisplayMode.Geo]: COLUMN.DEFAULT_WIDTH,
+};
+
+export interface ContentAwareColWidthsOptions {
+  typographyCtx: TypographyCtx;
+  showTypeIcons?: boolean;
+  /** overridable for testing; otherwise derived from the auto-column count */
+  sampleSize?: number;
+}
+
+/** Formats a raw cell value the way it renders, so we measure what the user actually sees. */
+function formatCellValue(field: Field, value: unknown): string {
+  if (value == null) {
+    return '';
+  }
+  if (field.type !== FieldType.string && field.display != null) {
+    return formattedValueToString(field.display(value));
+  }
+  return String(value);
+}
+
+/**
+ * Measures the pixel width of the longest content in a field. To keep this cheap we first pick the
+ * `MEASURE_CANDIDATES` longest strings by character length, then run the (more expensive)
+ * canvas `measureText` only on those.
+ */
+function measureLongestContentWidth(field: Field, sampleSize: number, ctx: TypographyCtx): number {
+  const len = Math.min(sampleSize, field.values.length);
+  const candidates: string[] = [];
+  let shortestCandidateLen = 0;
+
+  for (let i = 0; i < len; i++) {
+    const str = formatCellValue(field, field.values[i]);
+    if (str.length === 0) {
+      continue;
+    }
+    if (candidates.length < MEASURE_CANDIDATES) {
+      candidates.push(str);
+      shortestCandidateLen = Math.min(...candidates.map((c) => c.length));
+    } else if (str.length > shortestCandidateLen) {
+      // replace the shortest current candidate
+      const shortestIdx = candidates.findIndex((c) => c.length === shortestCandidateLen);
+      candidates[shortestIdx] = str;
+      shortestCandidateLen = Math.min(...candidates.map((c) => c.length));
+    }
+  }
+
+  let maxWidth = 0;
+  for (const candidate of candidates) {
+    maxWidth = Math.max(maxWidth, ctx.ctx.measureText(candidate).width);
+  }
+  return maxWidth;
+}
+
+/** Width the header label needs, including its filter/type-icon affordances. */
+function measureHeaderWidth(field: Field, ctx: TypographyCtx, showTypeIcons: boolean): number {
+  const textWidth = ctx.ctx.measureText(getDisplayName(field)).width;
+  let iconSpace = 0;
+  if (field.config?.custom?.filterable) {
+    iconSpace += HEADER_ICON_SPACE;
+  }
+  if (showTypeIcons) {
+    iconSpace += HEADER_ICON_SPACE;
+  }
+  return textWidth + iconSpace + CELL_CHROME;
+}
+
+/**
+ * @internal
+ * Content-aware variant of {@link computeColWidths}. Columns with a configured `custom.width` keep
+ * that exact width. Every other ("auto") column is sized to fit its content:
+ *   1. its cell content (a sampled, display-formatted, measured max) or a per-type default for
+ *      graphical cells, whichever applies, unioned with its header label width;
+ *   2. clamped to `[max(MIN_WIDTH, custom.minWidth), MAX_AUTO_WIDTH]`;
+ *   3. then, if the auto columns don't fill the available width, grown proportionally to their
+ *      content width so the table fills the panel (numeric/short columns stay comparatively tight).
+ * When content overflows the available width the content widths are kept and the grid scrolls.
+ */
+export function computeContentAwareColWidths(
+  fields: Field[],
+  availWidth: number,
+  { typographyCtx, showTypeIcons = false, sampleSize }: ContentAwareColWidthsOptions
+): number[] {
+  const autoIdxs: number[] = [];
+  let definedWidth = 0;
+
+  const widths = fields.map((field, i) => {
+    const configured = field.config.custom?.width ?? 0;
+    if (configured) {
+      definedWidth += configured;
+      return configured;
+    }
+    autoIdxs.push(i);
+    return 0;
+  });
+
+  if (autoIdxs.length === 0) {
+    return widths;
+  }
+
+  const effectiveSampleSize =
+    sampleSize ?? Math.min(MAX_SAMPLE, Math.max(MIN_SAMPLE, Math.floor(TARGET_MEASUREMENTS / autoIdxs.length)));
+
+  // content width per auto column, clamped to [floor, cap]
+  const contentWidths = new Map<number, number>();
+  let contentTotal = 0;
+
+  for (const i of autoIdxs) {
+    const field = fields[i];
+    const cellType = getCellOptions(field).type;
+    const headerWidth = measureHeaderWidth(field, typographyCtx, showTypeIcons);
+
+    let cellWidth: number;
+    const defaultWidth = NON_TEXT_DEFAULT_WIDTHS[cellType];
+    if (defaultWidth != null) {
+      cellWidth = defaultWidth;
+    } else if (shouldTextWrap(field)) {
+      // wrapped columns grow in height, not width; don't size to the full unwrapped content.
+      cellWidth = headerWidth;
+    } else {
+      cellWidth = measureLongestContentWidth(field, effectiveSampleSize, typographyCtx) + CELL_CHROME;
+    }
+
+    const floor = Math.max(COLUMN.MIN_WIDTH, field.config.custom?.minWidth ?? 0);
+    const cap = Math.max(COLUMN.MAX_AUTO_WIDTH, floor);
+    const clamped = Math.min(Math.max(Math.max(cellWidth, headerWidth), floor), cap);
+
+    contentWidths.set(i, clamped);
+    contentTotal += clamped;
+  }
+
+  // grow proportionally to fill leftover space; on overflow keep content widths (grid scrolls).
+  const leftover = availWidth - definedWidth - contentTotal;
+  for (const i of autoIdxs) {
+    const contentWidth = contentWidths.get(i)!;
+    const grown =
+      leftover > 0 && contentTotal > 0 ? contentWidth + leftover * (contentWidth / contentTotal) : contentWidth;
+    widths[i] = Math.round(grown);
+  }
+
+  return widths;
+}
+
 export function buildNestedColumnWidthsMap(fields: Field[], widths: number[]): ColumnWidths {
   return new Map<string, ColumnWidth>(
     fields.map((field, idx) => [getDisplayName(field), { type: 'resized', width: widths[idx] }])

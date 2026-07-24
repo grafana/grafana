@@ -32,6 +32,7 @@ import {
   calculateFooterHeight,
   compileFrameToRecords,
   computeColWidths,
+  computeContentAwareColWidths,
   createTypographyContext,
   displayJsonValue,
   extractPixelValue,
@@ -1578,6 +1579,146 @@ describe('TableNG utils', () => {
           COLUMN.DEFAULT_WIDTH
         )
       ).toEqual([COLUMN.DEFAULT_WIDTH, COLUMN.DEFAULT_WIDTH]);
+    });
+  });
+
+  describe('computeContentAwareColWidths', () => {
+    // Deterministic text measurement: every glyph is CHAR_W px wide, so a string of length L
+    // measures L * CHAR_W. jsdom's real canvas measureText returns 0, which would make width
+    // assertions meaningless. CELL_CHROME = 2 * CELL_PADDING + BORDER_RIGHT = 13.
+    const CHAR_W = 8;
+    const CELL_CHROME = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
+
+    const makeTypographyCtx = () => {
+      const typographyCtx = createTypographyContext(14, 'sans-serif', 0.15);
+      jest
+        .spyOn(typographyCtx.ctx, 'measureText')
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        .mockImplementation(((text: string) => ({
+          width: String(text).length * CHAR_W,
+        })) as typeof typographyCtx.ctx.measureText);
+      return typographyCtx;
+    };
+
+    const compute = (fields: Field[], availWidth: number, showTypeIcons = false) =>
+      computeContentAwareColWidths(fields, availWidth, { typographyCtx: makeTypographyCtx(), showTypeIcons });
+
+    afterEach(() => jest.restoreAllMocks());
+
+    it('sizes a numeric column to its content, well under the 150px even-split default (#634)', () => {
+      // header "Value" (5) => 5*8+13 = 53; content "999" (3) => 3*8+13 = 37; so 53 wins.
+      // availWidth == content total, so there is no leftover to grow into.
+      const fields: Field[] = [{ name: 'Value', type: FieldType.number, values: [1, 42, 999], config: {} }];
+
+      const [width] = compute(fields, 53);
+
+      expect(width).toBe(53);
+      expect(width).toBeLessThan(COLUMN.DEFAULT_WIDTH);
+    });
+
+    it('keeps a configured width verbatim and grows the auto column into the leftover space', () => {
+      const fields: Field[] = [
+        { name: 'A', type: FieldType.string, values: ['x'], config: { custom: { width: 100 } } },
+        { name: 'B', type: FieldType.string, values: ['hi'], config: {} },
+      ];
+      // B content "hi" (2) => 29, header "B" (1) => 21 => floored to MIN_WIDTH 50.
+      // leftover = 300 - 100 - 50 = 150, one auto column, so it absorbs all of it: 50 + 150 = 200.
+      expect(compute(fields, 300)).toEqual([100, 200]);
+    });
+
+    it('grows text columns more than short numeric columns when filling the panel', () => {
+      const fields: Field[] = [
+        { name: 'N', type: FieldType.number, values: [999], config: {} }, // 21 => floor 50
+        { name: 'AAAA', type: FieldType.string, values: ['hello world'], config: {} }, // 11 => 101
+        { name: 'B', type: FieldType.string, values: ['x'], config: {} }, // 21 => floor 50
+      ];
+      // content widths [50, 101, 50] total 201; availWidth 401 => leftover 200 distributed
+      // proportionally to content width.
+      const result = compute(fields, 401);
+
+      expect(result).toEqual([100, 201, 100]);
+      // the text column grew more than either short column
+      expect(result[1] - 101).toBeGreaterThan(result[0] - 50);
+      expect(result[0]).toBe(result[2]); // symmetric short columns grow equally
+    });
+
+    it('honors a configured minWidth as the floor for an auto column', () => {
+      const fields: Field[] = [
+        { name: 'x', type: FieldType.string, values: ['a'], config: { custom: { minWidth: 120 } } },
+      ];
+      // content is tiny but minWidth floors it; availWidth == floor so no growth.
+      expect(compute(fields, 120)).toEqual([120]);
+    });
+
+    it('caps a very long value at MAX_AUTO_WIDTH and keeps it (grid scrolls) when it overflows', () => {
+      const longValue = 'x'.repeat(100); // 100*8+13 = 813, well over the 400 cap
+      const fields: Field[] = [{ name: 's', type: FieldType.string, values: [longValue], config: {} }];
+      // availWidth < cap, so leftover is negative: width stays at the cap and the grid scrolls.
+      expect(compute(fields, 100)).toEqual([COLUMN.MAX_AUTO_WIDTH]);
+    });
+
+    it('measures the display-formatted string, not the raw value', () => {
+      const fields: Field[] = [
+        {
+          name: 'S',
+          type: FieldType.number,
+          values: [1],
+          config: {},
+          // formats 1 -> "1 MiB" (length 5); the raw "1" would only be length 1.
+          display: (v) => ({ text: `${v} MiB`, numeric: Number(v) }),
+        },
+      ];
+      // "1 MiB" (5) => 5*8+13 = 53, which beats header "S" (1) => 21.
+      expect(compute(fields, 53)).toEqual([53]);
+    });
+
+    it('uses a fixed default width for graphical (non-text) cells regardless of content', () => {
+      const fields: Field[] = [
+        {
+          name: 'spark',
+          type: FieldType.number,
+          values: [999999999999],
+          config: { custom: { cellOptions: { type: TableCellDisplayMode.Sparkline } } },
+        },
+      ];
+      expect(compute(fields, COLUMN.DEFAULT_WIDTH)).toEqual([COLUMN.DEFAULT_WIDTH]);
+    });
+
+    it('sizes a wrapped column to its header, not its (wrapping) content', () => {
+      const fields: Field[] = [
+        {
+          name: 'Desc',
+          type: FieldType.string,
+          values: ['a very long value that would wrap across multiple lines'],
+          config: { custom: { wrapText: true } },
+        },
+      ];
+      const headerWidth = 'Desc'.length * CHAR_W + CELL_CHROME; // 4*8+13 = 45 => floored to 50
+      expect(compute(fields, 50)).toEqual([Math.max(headerWidth, COLUMN.MIN_WIDTH)]);
+    });
+
+    it('reserves header icon space so the label is not truncated by the type icon', () => {
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      // header "Name" (4) => 4*8 = 32, + type-icon space 20 + chrome 13 = 65.
+      expect(compute(fields, 65, /* showTypeIcons */ true)).toEqual([65]);
+    });
+
+    it('only samples the first N rows (bounded work) rather than scanning every value', () => {
+      const display = jest.fn((v) => ({ text: String(v), numeric: Number(v) }));
+      const fields: Field[] = [
+        {
+          name: 'big',
+          type: FieldType.number,
+          values: Array.from({ length: 100_000 }, (_, i) => i),
+          config: {},
+          display,
+        },
+      ];
+
+      compute(fields, 1000);
+
+      // one auto column => sample size clamps to the MAX_SAMPLE of 100.
+      expect(display).toHaveBeenCalledTimes(100);
     });
   });
 
