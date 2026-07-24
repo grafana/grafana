@@ -318,6 +318,42 @@ export function getPillCellHeightMeasurer(measureWidth: (value: string) => numbe
 }
 
 /**
+ * @internal
+ * Cheap O(1) line-count estimate for a pill cell. Unlike {@link getPillCellHeightMeasurer} it does
+ * not parse the value into pills or lay them out one by one; it counts separators to approximate the
+ * pill count and assumes uniform (average) pill widths to estimate how many fit per line. getRowHeight
+ * uses this only to pick the tallest column (and short-circuit single-line rows); the precise measurer
+ * then runs once on the winner. Avoiding the per-pill wrap loop on every column of every row is the
+ * point — that loop dominated resize CPU on large pill tables.
+ */
+export function getPillCellHeightEstimator(avgCharWidth: number): MeasureCellHeight {
+  return (value, width, _field, _rowIdx, lineHeight) => {
+    if (value == null) {
+      return 0;
+    }
+    const str = String(value);
+    if (str.length === 0) {
+      return 0;
+    }
+
+    // approximate pill count from separators without allocating (inferPills splits on commas)
+    let pillCount = 1;
+    for (let i = 0; i < str.length; i++) {
+      if (str.charCodeAt(i) === 44 /* comma */) {
+        pillCount++;
+      }
+    }
+
+    // model atomic pills of roughly average width packing into the available width
+    const avgPillWidth = (str.length / pillCount) * avgCharWidth + PILLS_SPACING;
+    const pillsPerLine = Math.max(1, Math.floor((width + PILLS_GAP) / (avgPillWidth + PILLS_GAP)));
+    const lines = Math.ceil(pillCount / pillsPerLine);
+
+    return lines * lineHeight + (lines - 1) * PILLS_GAP;
+  };
+}
+
+/**
  * @internal return a text measurer for every field which has wrapHeaderText enabled.
  */
 export function buildHeaderHeightMeasurers(
@@ -370,7 +406,7 @@ export function buildCellHeightMeasurers(
       );
       return [
         getPillCellHeightMeasurer((value) => pillTypographyCtx.ctx.measureText(value).width),
-        getPillCellHeightMeasurer((value) => value.length * pillTypographyCtx.avgCharWidth),
+        getPillCellHeightEstimator(pillTypographyCtx.avgCharWidth),
       ];
     },
   } as const;
