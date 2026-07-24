@@ -53,9 +53,9 @@ func TestMTSettingsStrategies_IsMatch(t *testing.T) {
 		provider.UsingFlags(t, toggleFlags(false))
 
 		adapters := []ssosettings.FallbackStrategy{
-			NewMTSettingsOAuthStrategy(nil),
-			NewMTSettingsLDAPStrategy(nil),
-			NewMTSettingsSAMLStrategy(nil),
+			NewMTSettingsOAuthStrategy(nil, true),
+			NewMTSettingsLDAPStrategy(nil, true),
+			NewMTSettingsSAMLStrategy(nil, true),
 		}
 		providers := append([]string{}, ssosettings.AllOAuthProviders...)
 		providers = append(providers, social.LDAPProviderName, social.SAMLProviderName)
@@ -70,9 +70,9 @@ func TestMTSettingsStrategies_IsMatch(t *testing.T) {
 	t.Run("each adapter matches exactly its own family when the toggle is enabled", func(t *testing.T) {
 		provider.UsingFlags(t, toggleFlags(true))
 
-		oauth := NewMTSettingsOAuthStrategy(nil)
-		ldap := NewMTSettingsLDAPStrategy(nil)
-		saml := NewMTSettingsSAMLStrategy(nil)
+		oauth := NewMTSettingsOAuthStrategy(nil, true)
+		ldap := NewMTSettingsLDAPStrategy(nil, true)
+		saml := NewMTSettingsSAMLStrategy(nil, true)
 
 		for _, p := range ssosettings.AllOAuthProviders {
 			require.True(t, oauth.IsMatch(t.Context(), p))
@@ -88,9 +88,27 @@ func TestMTSettingsStrategies_IsMatch(t *testing.T) {
 	t.Run("the LDAP adapter matches nothing until its representation is decided", func(t *testing.T) {
 		provider.UsingFlags(t, toggleFlags(true))
 
-		ldap := NewMTSettingsLDAPStrategy(nil)
+		ldap := NewMTSettingsLDAPStrategy(nil, true)
 
 		require.False(t, ldap.IsMatch(t.Context(), social.LDAPProviderName))
+	})
+
+	t.Run("no adapter matches below the storage read-flip even when the toggle is enabled", func(t *testing.T) {
+		provider.UsingFlags(t, toggleFlags(true))
+
+		adapters := []ssosettings.FallbackStrategy{
+			NewMTSettingsOAuthStrategy(nil, false),
+			NewMTSettingsLDAPStrategy(nil, false),
+			NewMTSettingsSAMLStrategy(nil, false),
+		}
+		providers := append([]string{}, ssosettings.AllOAuthProviders...)
+		providers = append(providers, social.LDAPProviderName, social.SAMLProviderName)
+
+		for _, adapter := range adapters {
+			for _, p := range providers {
+				require.False(t, adapter.IsMatch(t.Context(), p))
+			}
+		}
 	})
 }
 
@@ -102,7 +120,7 @@ func TestMTSettingsStrategies_GetProviderConfig(t *testing.T) {
 			{Section: "auth.generic_oauth", Key: "auth_url", Value: "http://localhost:8087/auth"},
 		}}
 
-		config, err := NewMTSettingsOAuthStrategy(lister).GetProviderConfig(context.Background(), social.GenericOAuthProviderName)
+		config, err := NewMTSettingsOAuthStrategy(lister, true).GetProviderConfig(context.Background(), social.GenericOAuthProviderName)
 
 		require.NoError(t, err)
 		require.Equal(t, map[string]any{
@@ -116,7 +134,7 @@ func TestMTSettingsStrategies_GetProviderConfig(t *testing.T) {
 	t.Run("an absent section yields an empty map", func(t *testing.T) {
 		lister := &fakeSettingsLister{}
 
-		config, err := NewMTSettingsSAMLStrategy(lister).GetProviderConfig(context.Background(), social.SAMLProviderName)
+		config, err := NewMTSettingsSAMLStrategy(lister, true).GetProviderConfig(context.Background(), social.SAMLProviderName)
 
 		require.NoError(t, err)
 		require.Empty(t, config)
@@ -130,7 +148,7 @@ func TestMTSettingsStrategies_GetProviderConfig(t *testing.T) {
 			{Section: "auth.generic_oauth", Key: "enabled", Value: "true"},
 		}}
 
-		config, err := NewMTSettingsOAuthStrategy(lister).GetProviderConfig(context.Background(), social.GenericOAuthProviderName)
+		config, err := NewMTSettingsOAuthStrategy(lister, true).GetProviderConfig(context.Background(), social.GenericOAuthProviderName)
 
 		require.NoError(t, err)
 		require.Equal(t, map[string]any{"enabled": "true"}, config)
@@ -140,14 +158,14 @@ func TestMTSettingsStrategies_GetProviderConfig(t *testing.T) {
 		listErr := errors.New("settings service unavailable")
 		lister := &fakeSettingsLister{err: listErr}
 
-		config, err := NewMTSettingsOAuthStrategy(lister).GetProviderConfig(context.Background(), social.GitHubProviderName)
+		config, err := NewMTSettingsOAuthStrategy(lister, true).GetProviderConfig(context.Background(), social.GitHubProviderName)
 
 		require.Nil(t, config)
 		require.ErrorIs(t, err, listErr)
 	})
 
 	t.Run("a missing client fails loudly", func(t *testing.T) {
-		config, err := NewMTSettingsOAuthStrategy(nil).GetProviderConfig(context.Background(), social.GenericOAuthProviderName)
+		config, err := NewMTSettingsOAuthStrategy(nil, true).GetProviderConfig(context.Background(), social.GenericOAuthProviderName)
 
 		require.Nil(t, config)
 		require.ErrorIs(t, err, ssosettings.ErrMTSettingsClientNotConfigured)
@@ -158,7 +176,7 @@ func TestMTSettingsStrategies_GetProviderConfig(t *testing.T) {
 			{Section: "auth.ldap", Key: "enabled", Value: "true"},
 		}}
 
-		config, err := NewMTSettingsLDAPStrategy(lister).GetProviderConfig(context.Background(), social.LDAPProviderName)
+		config, err := NewMTSettingsLDAPStrategy(lister, true).GetProviderConfig(context.Background(), social.LDAPProviderName)
 
 		require.Nil(t, config)
 		require.ErrorIs(t, err, ssosettings.ErrMTSettingsNotImplemented)

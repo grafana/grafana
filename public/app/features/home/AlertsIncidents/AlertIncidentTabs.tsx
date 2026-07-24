@@ -1,8 +1,7 @@
-import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { t, Trans } from '@grafana/i18n';
-import { Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, Text, useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
 import { ACTIVE_INCIDENTS_QUERY_LIMIT } from 'app/features/alerting/unified/api/incidentsApi';
 import { useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
@@ -43,7 +42,6 @@ function AlertIncidentTabsInner({
 }) {
   // Default to alerts tab if alerts are available, otherwise default to incidents tab
   const [activeTab, setActiveTab] = useState(canViewAlerts ? ALERTS_TAB_ID : INCIDENTS_TAB_ID);
-  const styles = useStyles2(getStyles);
   const alertsData = useFiringAlerts();
   const incidentsData = useIncidents();
   const { count, hasAlerts, loading, canCreate, newRuleHref, viewAllHref, error } = alertsData;
@@ -59,6 +57,13 @@ function AlertIncidentTabsInner({
   const isAlertActionsVisible = canViewAlerts && !loading && !error && activeTab === ALERTS_TAB_ID;
   const isIncidentsActionsVisible =
     canViewIncidents && !incidentsLoading && !incidentsError && activeTab === INCIDENTS_TAB_ID;
+
+  const title =
+    canViewAlerts && canViewIncidents
+      ? t('home.alerts-incidents.title', 'Alerts & incidents')
+      : canViewIncidents
+        ? t('home.alerts-incidents.title-incidents', 'Incidents')
+        : t('home.alerts-incidents.title-alerts', 'Alerts');
 
   const tabs = [
     ...(canViewAlerts
@@ -89,7 +94,7 @@ function AlertIncidentTabsInner({
     <Stack direction="column" gap={2} minWidth={0}>
       <Stack justifyContent="space-between" alignItems="center">
         <Text element="h2" variant="h5">
-          <Trans i18nKey="home.alerts-incidents.title">Alerts & incidents</Trans>
+          {title}
         </Text>
         {/* TODO: team dropdown */}
       </Stack>
@@ -110,7 +115,7 @@ function AlertIncidentTabsInner({
             />
           ))}
         </TabsBar>
-        <TabContent className={styles.redesignedTabContent}>
+        <TabContent>
           <ScrollContainer
             showScrollIndicators
             maxHeight={`${DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN}px`}
@@ -120,7 +125,7 @@ function AlertIncidentTabsInner({
             {activeTab === INCIDENTS_TAB_ID && <IncidentsCardView data={incidentsData} hideFooterActions />}
           </ScrollContainer>
 
-          <Box paddingTop={1.5}>
+          <Box padding={1} paddingTop={1.5}>
             {/* Alerts tab footer */}
             {isAlertActionsVisible && (
               <CreateAndViewAlertsButtons
@@ -146,9 +151,3 @@ function AlertIncidentTabsInner({
     </Stack>
   );
 }
-
-const getStyles = () => ({
-  redesignedTabContent: css({
-    padding: 0,
-  }),
-});
