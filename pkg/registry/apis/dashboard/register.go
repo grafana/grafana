@@ -619,7 +619,7 @@ func (b *DashboardsAPIBuilder) validateVariableCreate(ctx context.Context, a adm
 		return apierrors.NewBadRequest(err.Error())
 	}
 
-	if err := b.validateVariableMutationPermissions(ctx, a, folderUID); err != nil {
+	if err := b.validateVariableMutationPermissions(ctx, folderUID, false); err != nil {
 		return err
 	}
 
@@ -670,7 +670,8 @@ func (b *DashboardsAPIBuilder) validateVariableUpdate(ctx context.Context, a adm
 		return apierrors.NewBadRequest("folder scope cannot be changed; delete the variable and create a new one")
 	}
 
-	return b.validateVariableMutationPermissions(ctx, a, oldAccessor.GetFolder())
+	// allowMissingFolder: Editors/Admins can still update variables whose folder was deleted.
+	return b.validateVariableMutationPermissions(ctx, oldAccessor.GetFolder(), true)
 }
 
 func (b *DashboardsAPIBuilder) validateVariableDelete(ctx context.Context, a admission.Attributes) error {
@@ -688,13 +689,17 @@ func (b *DashboardsAPIBuilder) validateVariableDelete(ctx context.Context, a adm
 		return fmt.Errorf("error getting variable meta accessor: %w", err)
 	}
 
-	return b.validateVariableMutationPermissions(ctx, a, accessor.GetFolder())
+	// allowMissingFolder: Editors/Admins can still delete variables whose folder was deleted.
+	return b.validateVariableMutationPermissions(ctx, accessor.GetFolder(), true)
 }
 
 // validateVariableMutationPermissions authorizes variable create/update/delete.
 // Global variables (no folder) require org Editor or Admin. Folder-scoped
-// variables require edit access on that folder, regardless of org role.
-func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.Context, a admission.Attributes, folderUID string) error {
+// variables require edit access on that folder, including on dry-run (Variables
+// have no user RBAC authorizer; admission is the authz gate).
+// When allowMissingFolder is true (update/delete), org Editors/Admins may still
+// mutate if the folder no longer exists so orphaned variables can be cleaned up.
+func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.Context, folderUID string, allowMissingFolder bool) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("variable mutation requires editor or admin role"))
@@ -708,11 +713,19 @@ func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.C
 		return nil
 	}
 
-	if a.IsDryRun() {
+	err = b.verifyFolderAccessPermissions(ctx, requester, folderUID)
+	if err == nil {
 		return nil
 	}
 
-	return b.verifyFolderAccessPermissions(ctx, requester, folderUID)
+	if allowMissingFolder && apierrors.IsNotFound(err) {
+		role := requester.GetOrgRole()
+		if role == identity.RoleEditor || role == identity.RoleAdmin {
+			return nil
+		}
+	}
+
+	return err
 }
 
 // validateFolderExists checks if a folder exists

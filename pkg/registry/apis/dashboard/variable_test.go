@@ -339,6 +339,110 @@ func TestVariableMutationPermissionsFolderScoped(t *testing.T) {
 	}
 }
 
+func TestVariableMutationPermissionsFolderScopedDryRun(t *testing.T) {
+	folderUID := "folder-a"
+	v := newCustomVariable("region", "region--folder-a")
+	v.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
+
+	t.Run("dry-run still checks folder edit access", func(t *testing.T) {
+		folderHandler := &variableFolderAccessHandler{forbiddenAccessSubresource: true}
+		builder := &DashboardsAPIBuilder{
+			folderClientProvider: &staticHandlerProvider{handler: folderHandler},
+		}
+		ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+		ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgRole: identity.RoleViewer, OrgID: 1})
+
+		err := builder.Validate(ctx, admission.NewAttributesRecord(
+			v,
+			nil,
+			dashv2beta1.VariableResourceInfo.GroupVersionKind(),
+			"stacks-1",
+			v.GetName(),
+			dashv2beta1.VariableResourceInfo.GroupVersionResource(),
+			"",
+			admission.Create,
+			&metav1.CreateOptions{},
+			true, // dry-run
+			nil,
+		), nil)
+
+		require.Error(t, err)
+		require.True(t, apierrors.IsForbidden(err))
+		require.True(t, folderHandler.accessSubresourceChecked)
+	})
+
+	t.Run("dry-run allows viewer with folder edit", func(t *testing.T) {
+		folderHandler := &variableFolderAccessHandler{}
+		builder := &DashboardsAPIBuilder{
+			folderClientProvider: &staticHandlerProvider{handler: folderHandler},
+		}
+		ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+		ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgRole: identity.RoleViewer, OrgID: 1})
+
+		err := builder.Validate(ctx, admission.NewAttributesRecord(
+			v,
+			nil,
+			dashv2beta1.VariableResourceInfo.GroupVersionKind(),
+			"stacks-1",
+			v.GetName(),
+			dashv2beta1.VariableResourceInfo.GroupVersionResource(),
+			"",
+			admission.Create,
+			&metav1.CreateOptions{},
+			true, // dry-run
+			nil,
+		), nil)
+
+		require.NoError(t, err)
+		require.True(t, folderHandler.accessSubresourceChecked)
+	})
+}
+
+func TestVariableMutationPermissionsMissingFolder(t *testing.T) {
+	folderUID := "missing-folder"
+	oldVariable := newCustomVariable("region", "region--missing-folder")
+	oldVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
+	newVariable := newCustomVariable("region", "region--missing-folder")
+	newVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
+
+	tests := []struct {
+		name     string
+		role     identity.RoleType
+		op       admission.Operation
+		expected bool
+	}{
+		{name: "editor can delete orphaned folder variable", role: identity.RoleEditor, op: admission.Delete, expected: true},
+		{name: "admin can update orphaned folder variable", role: identity.RoleAdmin, op: admission.Update, expected: true},
+		{name: "viewer cannot delete orphaned folder variable", role: identity.RoleViewer, op: admission.Delete, expected: false},
+		{name: "editor cannot create into missing folder", role: identity.RoleEditor, op: admission.Create, expected: false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			folderHandler := &variableFolderAccessHandler{notFoundAccessSubresource: true}
+			builder := &DashboardsAPIBuilder{
+				folderClientProvider: &staticHandlerProvider{handler: folderHandler},
+			}
+
+			ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+			ctx = identity.WithRequester(ctx, &identity.StaticRequester{
+				OrgRole: tc.role,
+				OrgID:   1,
+			})
+			attrs := buildVariableAttributesForOp(tc.op, newVariable, oldVariable)
+
+			err := builder.Validate(ctx, attrs, nil)
+			if tc.expected {
+				require.NoError(t, err)
+				return
+			}
+
+			require.Error(t, err)
+			require.True(t, apierrors.IsNotFound(err) || apierrors.IsForbidden(err))
+		})
+	}
+}
+
 func newCustomVariable(variableName, metadataName string) *dashv2beta1.Variable {
 	customVariable := dashv2beta1.NewDashboardCustomVariableKind()
 	customVariable.Spec.Name = variableName
@@ -449,11 +553,15 @@ func (p *staticHandlerProvider) GetOrCreateHandler(namespace string) client.K8sH
 type variableFolderAccessHandler struct {
 	accessSubresourceChecked   bool
 	forbiddenAccessSubresource bool
+	notFoundAccessSubresource  bool
 }
 
 func (h *variableFolderAccessHandler) Get(_ context.Context, name string, _ int64, _ metav1.GetOptions, subresource ...string) (*unstructured.Unstructured, error) {
 	if len(subresource) > 0 && subresource[0] == "access" {
 		h.accessSubresourceChecked = true
+		if h.notFoundAccessSubresource {
+			return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+		}
 		if h.forbiddenAccessSubresource {
 			return nil, apierrors.NewForbidden(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name, nil)
 		}
@@ -463,6 +571,10 @@ func (h *variableFolderAccessHandler) Get(_ context.Context, name string, _ int6
 				"canEdit": true,
 			},
 		}, nil
+	}
+
+	if h.notFoundAccessSubresource {
+		return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
 	}
 
 	return &unstructured.Unstructured{
