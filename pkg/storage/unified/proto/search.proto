@@ -198,6 +198,13 @@ message RebuildIndexesRequest {
 
   // List of ResourceKeys (Namespace + Group + Resource)
   repeated ResourceKey keys = 2;
+
+  // force rebuilds the requested indexes unconditionally (bypassing the
+  // staleness heuristics) and from scratch (ignoring remote snapshots). Use it
+  // to purge a stale document left behind for an already-deleted resource,
+  // which the default snapshot-preferring rebuild does not clear. Default false
+  // preserves the conditional behaviour used by routine callers.
+  bool force = 3;
 }
 
 message RebuildIndexesResponse {

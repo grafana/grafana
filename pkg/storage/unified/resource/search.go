@@ -360,6 +360,10 @@ func combineRebuildRequests(a, b rebuildRequest) (c rebuildRequest, ok bool) {
 		ret.expectedSearchFieldsHash = a.expectedSearchFieldsHash
 	}
 
+	// A forced rebuild is the stricter condition: if either request is an
+	// explicit operator rebuild, the combined request must also force.
+	ret.force = a.force || b.force
+
 	// Combine complete channels
 	ret.completeChannels = append(a.completeChannels, b.completeChannels...)
 
@@ -1131,7 +1135,13 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 		}, nil
 	}
 
-	completeChs := s.findIndexesToRebuild(importTimes, filterKeys, time.Now(), false)
+	// When req.Force is set, rebuild the requested keys unconditionally and from
+	// scratch (bypassing the staleness heuristics and the remote-snapshot fast
+	// path). This is the reliable remedy for a stale ("phantom") document left
+	// behind for an already-deleted resource, which the snapshot-preferring
+	// conditional rebuild does not clear. Without it, routine callers keep the
+	// existing conditional behaviour.
+	completeChs := s.findIndexesToRebuild(importTimes, filterKeys, time.Now(), false, req.Force)
 	rebuildCount := len(completeChs)
 	for _, ch := range completeChs {
 		select {
@@ -1216,7 +1226,7 @@ func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 
 			s.log.Debug("building index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
 			reason := "init"
-			_, err := s.build(ctx, info.NamespacedResource, info.Count, reason, false, time.Time{})
+			_, err := s.build(ctx, info.NamespacedResource, info.Count, reason, false, false, time.Time{})
 			return err
 		})
 	}
@@ -1306,7 +1316,7 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 			if err != nil {
 				s.log.Error("failed to get import times", "error", err)
 			}
-			s.findIndexesToRebuild(importTimes, nil, time.Now(), true)
+			s.findIndexesToRebuild(importTimes, nil, time.Now(), true, false)
 		}
 	}
 }
@@ -1363,7 +1373,15 @@ func jitterForKey(key NamespacedResource, maxAge time.Duration) time.Duration {
 	return time.Duration(h.Sum64() % jitterRange)
 }
 
-func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, filterKeys []NamespacedResource, now time.Time, applyJitter bool) []chan struct{} {
+// findIndexesToRebuild enqueues rebuilds for indexes that need one and returns
+// a completion channel per enqueued rebuild.
+//
+// When force is true (explicit operator-triggered RebuildIndexes), every index
+// among filterKeys is enqueued regardless of the staleness heuristics, and each
+// request is marked force so it rebuilds from scratch and ignores remote
+// snapshots. Periodic callers pass force=false and only rebuild stale indexes
+// via shouldRebuildIndex.
+func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, filterKeys []NamespacedResource, now time.Time, applyJitter bool, force bool) []chan struct{} {
 	// Check all open indexes and see if any of them need to be rebuilt.
 	// This is done periodically to make sure that the indexes are up to date.
 
@@ -1404,10 +1422,10 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 		sfKey := NewLowerGroupResource(key.Group, key.Resource)
 		sfields, expectedSearchFieldsHash, _ := s.searchFields.For(sfKey)
 
-		if shouldRebuildIndex(bi, s.minBuildVersion, s.buildVersion, minBuildTime, lastImportTime, sfields, expectedSearchFieldsHash, nil) {
+		if force || shouldRebuildIndex(bi, s.minBuildVersion, s.buildVersion, minBuildTime, lastImportTime, sfields, expectedSearchFieldsHash, nil) {
 			completeCh := make(chan struct{})
 			completeChs = append(completeChs, completeCh)
-			rebuildReq := newRebuildRequest(key, minBuildTime, lastImportTime, s.minBuildVersion, sfields, expectedSearchFieldsHash, completeCh)
+			rebuildReq := newRebuildRequest(key, minBuildTime, lastImportTime, s.minBuildVersion, sfields, expectedSearchFieldsHash, force, completeCh)
 			s.rebuildQueue.Add(rebuildReq)
 
 			if s.indexMetrics != nil {
@@ -1475,8 +1493,9 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		l.Error("failed to get build info for index to rebuild", "error", err)
 	}
 
-	rebuild := shouldRebuildIndex(bi, req.minBuildVersion, s.buildVersion, req.minBuildTime, req.lastImportTime, req.selectableFields, req.expectedSearchFieldsHash, l)
-	if !rebuild {
+	// A forced (operator-triggered) rebuild always proceeds; the staleness
+	// heuristics only gate periodic rebuilds.
+	if !req.force && !shouldRebuildIndex(bi, req.minBuildVersion, s.buildVersion, req.minBuildTime, req.lastImportTime, req.selectableFields, req.expectedSearchFieldsHash, l) {
 		span.AddEvent("index not rebuilt")
 		l.Info("index doesn't need to be rebuilt")
 		return
@@ -1541,7 +1560,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	}
 
 	// Pass rebuild=true to force rebuild of any existing file-based index.
-	_, err = s.build(ctx, req.NamespacedResource, size, "rebuild", true, time.Time{})
+	_, err = s.build(ctx, req.NamespacedResource, size, "rebuild", true, req.force, time.Time{})
 	if err != nil {
 		span.RecordError(err)
 		l.Error("failed to rebuild index", "error", err)
@@ -1645,10 +1664,17 @@ type rebuildRequest struct {
 	selectableFields         []string        // rebuild index which is missing some of these selectable fields.
 	expectedSearchFieldsHash string          // if non-empty, rebuild index whose stored SearchFieldsHash differs from this value.
 
+	// force marks an explicit operator-triggered rebuild (RebuildIndexes).
+	// It rebuilds regardless of the staleness heuristics above and forces a
+	// from-scratch rebuild that ignores remote snapshots, so a stale snapshot
+	// (which can carry a document for an already-deleted resource) cannot be
+	// re-adopted. Periodic rebuilds leave this false and keep the snapshot fast path.
+	force bool
+
 	completeChannels []chan<- struct{} // signal rebuild index is complete
 }
 
-func newRebuildRequest(key NamespacedResource, minBuildTime, lastImportTime time.Time, minBuildVersion *semver.Version, selectableFields []string, expectedSearchFieldsHash string, completeCh chan<- struct{}) rebuildRequest {
+func newRebuildRequest(key NamespacedResource, minBuildTime, lastImportTime time.Time, minBuildVersion *semver.Version, selectableFields []string, expectedSearchFieldsHash string, force bool, completeCh chan<- struct{}) rebuildRequest {
 	var completeChannels []chan<- struct{} // setup a list as requests can be combined
 	if completeCh != nil {
 		completeChannels = []chan<- struct{}{completeCh}
@@ -1660,6 +1686,7 @@ func newRebuildRequest(key NamespacedResource, minBuildTime, lastImportTime time
 		lastImportTime:           lastImportTime,
 		selectableFields:         selectableFields,
 		expectedSearchFieldsHash: expectedSearchFieldsHash,
+		force:                    force,
 		completeChannels:         completeChannels,
 	}
 }
@@ -1705,7 +1732,7 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 				lastImportTime = importTimes[key]
 			}
 
-			idx, err = s.build(ctx, key, unknownBuildSize, reason, false, lastImportTime)
+			idx, err = s.build(ctx, key, unknownBuildSize, reason, false, false, lastImportTime)
 			if err != nil {
 				return nil, fmt.Errorf("error building search index, %w", err)
 			}
@@ -1745,8 +1772,14 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 	return idx, nil
 }
 
+// build (re)builds the index for a resource. When forceFromScratch is set the
+// remote-snapshot fast path is disabled so the index is rebuilt from the store,
+// guaranteeing documents for deleted resources are dropped rather than
+// re-adopted from a stale snapshot. It is only set for explicit operator-triggered
+// rebuilds (see rebuildRequest.force).
+//
 //nolint:gocyclo
-func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size int64, indexBuildReason string, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
+func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size int64, indexBuildReason string, rebuild bool, forceFromScratch bool, lastImportTime time.Time) (ResourceIndex, error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.build")
 	defer span.End()
 
@@ -1967,7 +2000,14 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 	// On the rebuild path, prefer downloading a fresh same-version remote
 	// snapshot over rebuilding from scratch when one exists with BuildTime
 	// within ~10% of the per-resource rebuild interval.
+	//
+	// forceFromScratch disables this fast path (age 0): an explicit operator
+	// rebuild must reconcile against the store rather than risk re-adopting a
+	// stale snapshot that still carries a deleted resource's document.
 	maxFreshSnapshotAge := s.getIndexMaxAge(nsr) / 10
+	if forceFromScratch {
+		maxFreshSnapshotAge = 0
+	}
 
 	index, err := s.search.BuildIndex(ctx, nsr, size, indexBuildReason, builderFn, updaterFn, rebuild, lastImportTime, maxFreshSnapshotAge)
 

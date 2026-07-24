@@ -188,8 +188,10 @@ type mockSearchBackend struct {
 }
 
 type buildIndexCall struct {
-	key  NamespacedResource
-	size int64
+	key                 NamespacedResource
+	size                int64
+	rebuild             bool
+	maxFreshSnapshotAge time.Duration
 }
 
 func (m *mockSearchBackend) LoadOpenIndexStats(_ time.Time, _ time.Duration) ([]ResourceStats, error) {
@@ -206,7 +208,7 @@ func (m *mockSearchBackend) GetIndex(key NamespacedResource) ResourceIndex {
 	return m.cache[key]
 }
 
-func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, _ time.Duration) (ResourceIndex, error) {
+func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, maxFreshSnapshotAge time.Duration) (ResourceIndex, error) {
 	index := &MockResourceIndex{}
 
 	// Call the builder function (required by the contract)
@@ -226,8 +228,10 @@ func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResour
 	// Determine if this is an empty index based on size
 	// Empty indexes are characterized by size == 0
 	m.buildIndexCalls = append(m.buildIndexCalls, buildIndexCall{
-		key:  key,
-		size: size,
+		key:                 key,
+		size:                size,
+		rebuild:             rebuild,
+		maxFreshSnapshotAge: maxFreshSnapshotAge,
 	})
 
 	return index, nil
@@ -854,14 +858,14 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		{Namespace: "resource-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: lastImportTime,
 	}
 
-	support.findIndexesToRebuild(importTimes, nil, now, false)
+	support.findIndexesToRebuild(importTimes, nil, now, false, false)
 	require.Equal(t, 8, support.rebuildQueue.Len())
 
 	now5m := now.Add(5 * time.Minute)
 
 	// Running findIndexesToRebuild again should not add any new indexes to the rebuild queue, and all existing
 	// ones should be "combined" with new ones (this will "bump" minBuildTime)
-	support.findIndexesToRebuild(importTimes, nil, now5m, false)
+	support.findIndexesToRebuild(importTimes, nil, now5m, false, false)
 	require.Equal(t, 8, support.rebuildQueue.Len())
 
 	// Values that we expect to find in rebuild requests.
@@ -905,6 +909,12 @@ func TestRebuildIndexes(t *testing.T) {
 			},
 
 			{Namespace: "idx3", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: &MockResourceIndex{},
+
+			// Fresh, current index that no staleness heuristic would rebuild;
+			// used by the "force" subtest.
+			{Namespace: "idx-force", Group: "group", Resource: "res"}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now, BuildVersion: semver.MustParse("6.0.0")},
+			},
 		},
 	}
 
@@ -917,6 +927,10 @@ func TestRebuildIndexes(t *testing.T) {
 	opts := SearchOptions{
 		Backend:   search,
 		Resources: supplier,
+
+		// Non-zero so a non-forced rebuild would use maxFreshSnapshotAge>0; the
+		// force subtest asserts a forced rebuild drives it to 0.
+		MaxIndexAge: 5 * time.Hour,
 	}
 
 	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
@@ -958,6 +972,29 @@ func TestRebuildIndexes(t *testing.T) {
 			NamespacedResource: NamespacedResource{Namespace: "unknown", Group: "group", Resource: "res"},
 			minBuildTime:       now.Add(-5 * time.Hour),
 		}, false, true)
+	})
+
+	t.Run("Force rebuilds a non-stale index from scratch (ignores snapshots)", func(t *testing.T) {
+		key := NamespacedResource{Namespace: "idx-force", Group: "group", Resource: "res"}
+
+		idxBefore := support.search.GetIndex(key)
+		require.NotNil(t, idxBefore)
+		callsBefore := len(search.buildIndexCalls)
+
+		// minBuildTime=now would not rebuild a now-built index; force bypasses
+		// the staleness heuristics entirely.
+		support.rebuildIndex(context.Background(), rebuildRequest{
+			NamespacedResource: key,
+			minBuildTime:       now,
+			force:              true,
+		})
+
+		require.NotSame(t, idxBefore, support.search.GetIndex(key), "forced rebuild must replace the index")
+		require.Len(t, search.buildIndexCalls, callsBefore+1)
+		last := search.buildIndexCalls[len(search.buildIndexCalls)-1]
+		require.True(t, last.rebuild)
+		require.Equal(t, time.Duration(0), last.maxFreshSnapshotAge,
+			"forced rebuild must disable the remote-snapshot fast path even though MaxIndexAge>0")
 	})
 
 	t.Run("Rebuild dashboard index (it has no build info), verify that builders cache was emptied.", func(t *testing.T) {
@@ -1162,6 +1199,21 @@ func TestRebuildIndexesForResource(t *testing.T) {
 	require.Equal(t, int64(0), rsp.RebuildCount)
 	require.Equal(t, 0, support.rebuildQueue.Len())
 
+	// Force rebuilds the same non-stale index regardless of the staleness
+	// heuristics (this is what clears a phantom document for a deleted resource).
+	rebuildReq.Force = true
+	rsp, err = support.RebuildIndexes(t.Context(), rebuildReq)
+	require.NoError(t, err)
+	require.Equal(t, int64(1), rsp.RebuildCount)
+	require.Equal(t, 0, support.rebuildQueue.Len())
+	rebuildReq.Force = false
+
+	// Restore a cached index for the subsequent conditional-rebuild assertion
+	// (the forced rebuild above replaced it with a fresh, build-info-less index).
+	search.cache[key] = &MockResourceIndex{
+		buildInfo: IndexBuildInfo{BuildVersion: semver.MustParse("5.0.0"), BuildTime: time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC)},
+	}
+
 	// recent import time gets added to rebuild queue and processed
 	storage.lastImportTimes = []ResourceLastImportTime{{
 		NamespacedResource: key,
@@ -1321,7 +1373,7 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 	importTimes := map[NamespacedResource]time.Time{}
 
 	// Without jitter: all indexes are stale and should be queued.
-	chsNoJitter := support.findIndexesToRebuild(importTimes, nil, now, false)
+	chsNoJitter := support.findIndexesToRebuild(importTimes, nil, now, false, false)
 	require.Equal(t, numIndexes, len(chsNoJitter))
 
 	// Create a second server with the same config to get a fresh rebuild queue.
@@ -1329,7 +1381,7 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 	require.NoError(t, err)
 
 	// With jitter: some indexes get extra tolerance, so fewer should be queued.
-	chsWithJitter := support2.findIndexesToRebuild(importTimes, nil, now, true)
+	chsWithJitter := support2.findIndexesToRebuild(importTimes, nil, now, true, false)
 	require.Less(t, len(chsWithJitter), numIndexes, "jitter should cause some indexes to not be queued yet")
 	require.Greater(t, len(chsWithJitter), 0, "at least some indexes should still be queued")
 }
