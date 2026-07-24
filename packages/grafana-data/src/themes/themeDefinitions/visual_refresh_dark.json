@@ -89,6 +89,12 @@
     "borderRadiusLg": 12
   },
   "components": {
+    "checkbox": {
+      "backgroundHover": "palette.orange400"
+    },
+    "switch": {
+      "backgroundHover": "palette.orange400"
+    },
     "input": {
       "background": "palette.ink850"
     },

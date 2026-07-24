@@ -68,6 +68,14 @@ export const ThemeComponentsInputSchema = z
       borderHover: z.string().optional(),
       text: z.string().optional(),
     }),
+    checkbox: z.object({
+      background: z.string().optional(),
+      backgroundHover: z.string().optional(),
+    }),
+    switch: z.object({
+      background: z.string().optional(),
+      backgroundHover: z.string().optional(),
+    }),
     tooltip: z.object({
       text: z.string().optional(),
       background: z.string().optional(),
@@ -142,6 +150,14 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
       borderHover: colors.border.strong,
       text: colors.text.primary,
       background: colors.mode === 'dark' ? colors.background.canvas : colors.background.primary,
+    },
+    checkbox: {
+      background: colors.accent.main,
+      backgroundHover: colors.accent.shade,
+    },
+    switch: {
+      background: colors.accent.main,
+      backgroundHover: colors.accent.shade,
     },
     panel: {
       padding: 1,

@@ -804,6 +804,30 @@
           },
           "additionalProperties": false
         },
+        "checkbox": {
+          "type": "object",
+          "properties": {
+            "background": {
+              "type": "string"
+            },
+            "backgroundHover": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "switch": {
+          "type": "object",
+          "properties": {
+            "background": {
+              "type": "string"
+            },
+            "backgroundHover": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
         "tooltip": {
           "type": "object",
           "properties": {
