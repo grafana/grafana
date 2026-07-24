@@ -122,6 +122,26 @@ describe('Recommendations', () => {
     expect(await screen.findByTestId('recommendations-skeleton')).toBeInTheDocument();
   });
 
+  it('fills the carousel with the three telemetry pillars for an empty stack', async () => {
+    setSolutionState({});
+
+    render(<Recommendations />);
+
+    const region = await carouselRegion();
+    const titles = within(region)
+      .getAllByRole('heading', { level: 3, hidden: true })
+      .map((heading) => heading.textContent?.trim());
+    expect(titles).toEqual([
+      'Start with metrics',
+      'See the story behind your metrics',
+      'Trace requests across services',
+    ]);
+    expect(within(region).getByRole('link', { name: /Connect metrics/ })).toHaveAttribute(
+      'href',
+      '/connections/add-new-connection'
+    );
+  });
+
   it('holds the skeleton while a selected plugin card waits on the plugin list', async () => {
     mockGet.mockImplementation(() => new Promise(() => {}));
 

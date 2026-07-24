@@ -44,6 +44,20 @@ function pluginCard(
 export function getRecommendationCards(): Record<RecommendedCardId, RecommendationCardDefinition> {
   const connectionHref = locationUtil.assureBaseUrl(CONNECTIONS_ROUTES.AddNewConnection);
   return {
+    'connect-metrics': {
+      kind: 'connection',
+      id: 'connect-metrics',
+      icon: 'chart-line',
+      color: (theme) => theme.visualization.getColorByName('purple'),
+      title: t('home.recommendations.connect-metrics.title', 'Start with metrics'),
+      context: t('home.recommendations.connect-metrics.context', 'The foundation of your observability stack'),
+      description: t(
+        'home.recommendations.connect-metrics.description',
+        'Connect a Prometheus-compatible data source or ship metrics with a collector to light up dashboards and alerting.'
+      ),
+      action: t('home.recommendations.connect-metrics.action', 'Connect metrics'),
+      href: connectionHref,
+    },
     'hosted-traces': pluginCard({
       id: 'hosted-traces',
       pluginId: HOSTED_TRACES_APP_ID,
