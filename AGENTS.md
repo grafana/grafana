@@ -11,6 +11,11 @@ This file provides guidance to AI agents when working with code in the Grafana r
 - `pkg/storage/unified/AGENTS.md` — Unified storage/search compatibility rules (for work under `pkg/storage/unified/`)
 - `public/app/core/journeys/AGENTS.md` — Critical User Journey instrumentation
 
+**Project skills (invoke with the Skill tool) exist for common tasks:**
+
+- `.claude/skills/panel-testing-strategy/SKILL.md` — How the DataViz squad wants panel/viz unit + E2E tests written (assert real behavior, canvas draw-call snapshot harness, anti-flake rules)
+- `.claude/skills/add-e2e-selectors/SKILL.md` — Add versioned `@grafana/e2e-selectors` and wire `data-testid` into JSX
+
 ## Project Overview
 
 Grafana is a monitoring and observability platform. Go backend, TypeScript/React frontend, monorepo with Yarn workspaces (frontend) and Go workspaces (backend).
