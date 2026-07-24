@@ -12,6 +12,7 @@ export const FOLDER_ID = 'manage-folder';
 export const getDashboardsTabID = (folderUID: string) => `folder-dashboards-${folderUID}`;
 export const getLibraryPanelsTabID = (folderUID: string) => `folder-library-panels-${folderUID}`;
 export const getAlertingTabID = (folderUID: string) => `folder-alerting-${folderUID}`;
+export const getVariablesTabID = (folderUID: string) => `folder-variables-${folderUID}`;
 
 export function buildNavModel(
   folder: FolderDTO | FolderParent,
@@ -67,6 +68,16 @@ export function buildNavModel(
       text: t('browse-dashboards.manage-folder-nav.alert-rules', 'Alert rules'),
       url: `${folder.url}/alerting`,
       tabCounter: counts ? counts.rules : undefined,
+    });
+  }
+
+  if (!isProvisioned && config.featureToggles.globalDashboardVariables) {
+    model.children!.push({
+      active: false,
+      icon: 'brackets-curly',
+      id: getVariablesTabID(folder.uid),
+      text: t('browse-dashboards.manage-folder-nav.variables', 'Variables'),
+      url: `${folder.url}/variables`,
     });
   }
 

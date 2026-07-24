@@ -19,12 +19,17 @@ import {
   type QueryVariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
-import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
+import {
+  AnnoKeyDashboardSnapshotOriginalUrl,
+  AnnoKeyIgnorePredefinedVariables,
+  DENY_ALL_PREDEFINED,
+} from 'app/features/apiserver/types';
 import { type SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { serializeIgnorePredefinedVariables } from '../utils/predefinedVariableDenyList';
 import { getTestDashboardSceneFromSaveModel } from '../utils/test-utils';
 import { findVizPanelByKey } from '../utils/utils';
 
@@ -105,6 +110,30 @@ describe('DashboardSceneSerializer', () => {
       expect(result.hasChanges).toBe(true);
       expect(result.diffCount).toBe(0); // Diff count is 0 because the diff contemplate only the model
       expect(result.hasFolderChanges).toBe(true);
+    });
+
+    it('Can detect predefined variables allowlist change', () => {
+      const dashboard = setup();
+      dashboard.onEnterEditMode();
+
+      const annotation = serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]);
+      dashboard.setState({
+        meta: {
+          ...dashboard.state.meta,
+          k8s: {
+            ...dashboard.state.meta.k8s,
+            annotations: {
+              ...dashboard.state.meta.k8s?.annotations,
+              [AnnoKeyIgnorePredefinedVariables]: annotation,
+            },
+          },
+        },
+      });
+
+      const result = dashboard.getDashboardChanges(false);
+      expect(result.hasChanges).toBe(true);
+      expect(result.diffCount).toBe(0);
+      expect(result.hasPredefinedVariablesChanges).toBe(true);
     });
 
     it('Can detect refresh changed', () => {
@@ -524,6 +553,30 @@ describe('DashboardSceneSerializer', () => {
       expect(result.hasChanges).toBe(true);
       expect(result.diffCount).toBe(0); // Diff count is 0 because the diff contemplate only the model
       expect(result.hasFolderChanges).toBe(true);
+    });
+
+    it('Can detect predefined variables allowlist change', () => {
+      const dashboard = setupV2();
+      dashboard.onEnterEditMode();
+
+      const annotation = serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]);
+      dashboard.setState({
+        meta: {
+          ...dashboard.state.meta,
+          k8s: {
+            ...dashboard.state.meta.k8s,
+            annotations: {
+              ...dashboard.state.meta.k8s?.annotations,
+              [AnnoKeyIgnorePredefinedVariables]: annotation,
+            },
+          },
+        },
+      });
+
+      const result = dashboard.getDashboardChanges(false);
+      expect(result.hasChanges).toBe(true);
+      expect(result.diffCount).toBe(0);
+      expect(result.hasPredefinedVariablesChanges).toBe(true);
     });
 
     it('Can detect refresh changed', () => {

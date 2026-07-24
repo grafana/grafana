@@ -4340,6 +4340,9 @@
       "title-folder-not-found": "Folder not found",
       "title-ruler-namespace-error": "Cannot load rules"
     },
+    "browse-folder-variables-page": {
+      "title-folder-not-found": "Folder not found"
+    },
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
     },
@@ -4458,10 +4461,16 @@
       "team-folders-error-title": "Error loading team folders",
       "unknown-error": "Unknown error"
     },
+    "folder-variables": {
+      "empty": "No folder-scoped variables in this folder yet.",
+      "list-heading": "Folder variables",
+      "new": "New folder variable"
+    },
     "manage-folder-nav": {
       "alert-rules": "Alert rules",
       "dashboards": "Dashboards",
-      "panels": "Panels"
+      "panels": "Panels",
+      "variables": "Variables"
     },
     "my-team-folders": "My team folders",
     "name-cell": {
@@ -6096,6 +6105,9 @@
     "panel-not-supported": {
       "go-back-to-queries": "Go back to Queries"
     },
+    "predefined-variables-pane": {
+      "title": "Predefined variables"
+    },
     "public-dashboard-not-available": {
       "does-not-exist": "The dashboard you are trying to access does not exist",
       "paused": "This dashboard has been paused by the administrator",
@@ -6198,7 +6210,8 @@
       "full-json-diff": "Full JSON diff",
       "no-changes-in-the-dashboard-json": "No changes in the dashboard JSON",
       "title-because-dashboard-migrated-grafana-format": "The diff is hard to read because the dashboard has been migrated to the new Grafana dashboard format",
-      "title-folder": "folder"
+      "title-folder": "folder",
+      "title-predefined-variables": "predefined variables"
     },
     "save-dashboard-drawer": {
       "label-changes": "Changes",
@@ -6263,6 +6276,10 @@
       "outline": {
         "title": "Outline",
         "tooltip": "Content outline"
+      },
+      "predefined-variables": {
+        "title": "Predefined variables",
+        "tooltip": "Choose which global and folder variables this dashboard receives"
       },
       "redo": "Redo",
       "snapshot": {
@@ -7359,6 +7376,14 @@
         }
       },
       "title-close": "Close"
+    },
+    "predefined-variables-options": {
+      "all": "All",
+      "description": "This dashboard receives global and folder-scoped variables by default. Choose which ones to keep.",
+      "folder": "Folder",
+      "global": "Global",
+      "label": "Predefined variables",
+      "none": "None"
     },
     "provisioned-controls-section": {
       "label": "Provisioned by data source",

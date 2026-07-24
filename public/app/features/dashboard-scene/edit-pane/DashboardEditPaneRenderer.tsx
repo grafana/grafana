@@ -21,6 +21,7 @@ import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 import { DashboardCodePane } from './DashboardCodePane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { AddNewEditPane } from './add-new/AddNewEditPane';
+import { DashboardPredefinedVariablesPane } from './dashboard/DashboardPredefinedVariablesPane';
 import { ToggleViewPanePaneEvent } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardEditPaneLike, type DashboardSidebarPane } from './types';
@@ -117,6 +118,18 @@ export function DashboardEditPaneRenderer({ dashboard }: Props) {
               onClick={() => editPane.openPane(new DashboardCodePane({}))}
               active={openPane instanceof DashboardCodePane}
             />
+            {config.featureToggles.globalDashboardVariables && (
+              <Sidebar.Button
+                icon="dollar-alt"
+                onClick={() => editPane.openPane(new DashboardPredefinedVariablesPane({}))}
+                title={t('dashboard.sidebar.predefined-variables.title', 'Predefined variables')}
+                tooltip={t(
+                  'dashboard.sidebar.predefined-variables.tooltip',
+                  'Choose which global and folder variables this dashboard receives'
+                )}
+                active={openPane?.getId() === 'predefined-variables'}
+              />
+            )}
             {config.featureToggles.dashboardUndoRedo && (
               <>
                 <Sidebar.Divider />

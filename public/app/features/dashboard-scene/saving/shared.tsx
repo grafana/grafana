@@ -18,6 +18,7 @@ export interface DashboardChangeInfo {
   hasRefreshChange: boolean;
   isNew?: boolean;
   hasFolderChanges?: boolean;
+  hasPredefinedVariablesChanges?: boolean;
   hasMigratedToV2?: boolean;
 }
 

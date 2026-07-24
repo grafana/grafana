@@ -1,11 +1,16 @@
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase, type SceneObjectState, type SceneObjectRef } from '@grafana/scenes';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
+import { AnnoKeyIgnorePredefinedVariables } from 'app/features/apiserver/types';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 import { SaveProvisionedDashboard } from 'app/features/provisioning/components/Dashboards/SaveProvisionedDashboard';
 import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
 
 import { type DashboardScene } from '../scene/DashboardScene';
+import {
+  formatPredefinedVariablesAnnotationLabel,
+  getPredefinedVariablesAnnotation,
+} from '../utils/predefinedVariablesMetadata';
 
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
 import { SaveDashboardForm } from './SaveDashboardForm';
@@ -65,8 +70,16 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
 
   const changeInfo = model.state.dashboardRef.resolve().getDashboardChanges(saveTimeRange, saveVariables, saveRefresh);
 
-  const { changedSaveModel, initialSaveModel, diffs, diffCount, hasFolderChanges, hasMigratedToV2 } = changeInfo;
-  const changesCount = diffCount + (hasFolderChanges ? 1 : 0);
+  const {
+    changedSaveModel,
+    initialSaveModel,
+    diffs,
+    diffCount,
+    hasFolderChanges,
+    hasPredefinedVariablesChanges,
+    hasMigratedToV2,
+  } = changeInfo;
+  const changesCount = diffCount + (hasFolderChanges ? 1 : 0) + (hasPredefinedVariablesChanges ? 1 : 0);
   const dashboard = model.state.dashboardRef.resolve();
   const { meta } = dashboard.useState();
   const { provisioned: isProvisioned, folderTitle } = meta;
@@ -104,15 +117,22 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
 
   const renderBody = () => {
     if (showDiff) {
+      const initialAnnotation = dashboard.getInitialState()?.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
+      const currentAnnotation = getPredefinedVariablesAnnotation(dashboard);
       return (
         <SaveDashboardDiff
           diff={diffs}
           oldValue={initialSaveModel}
           newValue={changedSaveModel}
           hasFolderChanges={hasFolderChanges}
+          hasPredefinedVariablesChanges={hasPredefinedVariablesChanges}
           hasMigratedToV2={hasMigratedToV2}
           oldFolder={dashboard.getInitialState()?.meta.folderTitle}
           newFolder={folderTitle}
+          oldPredefinedVariables={formatPredefinedVariablesAnnotationLabel(
+            typeof initialAnnotation === 'string' ? initialAnnotation : undefined
+          )}
+          newPredefinedVariables={formatPredefinedVariablesAnnotationLabel(currentAnnotation)}
         />
       );
     }

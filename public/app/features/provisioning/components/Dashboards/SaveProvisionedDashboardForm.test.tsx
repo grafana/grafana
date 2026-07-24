@@ -655,6 +655,8 @@ describe('SaveProvisionedDashboardForm', () => {
         }),
         setState: jest.fn(),
         closeModal: jest.fn(),
+        getSaveModel: jest.fn().mockReturnValue({}),
+        saveCompleted: jest.fn(),
         getSaveResource: jest.fn().mockReturnValue(updatedDashboard),
         getSaveResourceFromSpec: jest.fn().mockReturnValue(updatedDashboard),
         setManager: jest.fn(),
