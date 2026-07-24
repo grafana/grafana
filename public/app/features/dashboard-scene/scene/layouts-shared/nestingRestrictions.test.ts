@@ -163,6 +163,67 @@ describe('useNestingRestrictions', () => {
     expect(result.current).toEqual({ disableGrouping: false, disableTabs: true });
   });
 
+  it('should disable tabs when wrapping a group subtree would exceed the maximum depth (tabs > rows > rows > rows)', () => {
+    // Wrapping the level-2 rows group in tabs would push its subtree to 5 layers
+    const level2Rows = new RowsLayoutManager({
+      rows: [
+        new RowItem({
+          layout: new RowsLayoutManager({
+            rows: [new RowItem({ layout: AutoGridLayoutManager.createEmpty() })],
+          }),
+        }),
+      ],
+    });
+    buildTestScene(
+      new TabsLayoutManager({
+        tabs: [new TabItem({ layout: level2Rows })],
+      })
+    );
+
+    const { result } = renderHook(() => useNestingRestrictions(level2Rows));
+
+    // Adding a row just appends to the rows group, so grouping stays enabled
+    expect(result.current).toEqual({ disableGrouping: false, disableTabs: true });
+  });
+
+  it('should allow tabs when wrapping a group subtree still fits within the maximum depth (rows > rows)', () => {
+    const innerRows = new RowsLayoutManager({
+      rows: [new RowItem({ layout: AutoGridLayoutManager.createEmpty() })],
+    });
+    buildTestScene(new RowsLayoutManager({ rows: [new RowItem({ layout: innerRows })] }));
+
+    const { result } = renderHook(() => useNestingRestrictions(innerRows));
+
+    expect(result.current).toEqual({ disableGrouping: false, disableTabs: false });
+  });
+
+  it('should allow adding a tab to a tabs layout at maximum depth but disable adding rows inside it (rows > rows > rows > tabs)', () => {
+    const deepTabs = new TabsLayoutManager({
+      tabs: [new TabItem({ layout: AutoGridLayoutManager.createEmpty() })],
+    });
+    buildTestScene(
+      new RowsLayoutManager({
+        rows: [
+          new RowItem({
+            layout: new RowsLayoutManager({
+              rows: [
+                new RowItem({
+                  layout: new RowsLayoutManager({ rows: [new RowItem({ layout: deepTabs })] }),
+                }),
+              ],
+            }),
+          }),
+        ],
+      })
+    );
+
+    const { result } = renderHook(() => useNestingRestrictions(deepTabs));
+
+    // Adding a tab appends to the existing tabs group (no new layer), but adding
+    // a row would wrap the current tab's grid in a 5th group layer
+    expect(result.current).toEqual({ disableGrouping: true, disableTabs: false });
+  });
+
   it('should disable both grouping and tabs when nested four levels deep', () => {
     const innerLayout = AutoGridLayoutManager.createEmpty();
     buildTestScene(

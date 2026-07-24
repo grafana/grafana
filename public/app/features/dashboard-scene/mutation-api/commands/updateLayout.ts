@@ -14,6 +14,7 @@ import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayo
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
+import { hasDirectTabsChild } from '../../scene/layouts-shared/hasDirectTabsChild';
 import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { isLayoutParent } from '../../scene/types/LayoutParent';
 
@@ -57,16 +58,6 @@ function sameCategory(a: LayoutType, b: LayoutType): boolean {
   return (GROUP_TYPES.has(a) && GROUP_TYPES.has(b)) || (GRID_TYPES.has(a) && GRID_TYPES.has(b));
 }
 
-function pathSegmentType(layoutType: LayoutType): 'rows' | 'tabs' | null {
-  if (layoutType === 'RowsLayout') {
-    return 'rows';
-  }
-  if (layoutType === 'TabsLayout') {
-    return 'tabs';
-  }
-  return null;
-}
-
 function applyAutoGridOptions(
   layout: DashboardLayoutManager,
   path: string,
@@ -101,42 +92,23 @@ function applyAutoGridOptions(
 }
 
 function validateGroupNesting(path: string, layoutType: LayoutType, currentLayout: DashboardLayoutManager): void {
-  const targetSegmentType = pathSegmentType(layoutType);
-  if (!targetSegmentType) {
-    throw new Error(`Unexpected group layout type: ${layoutType}`);
+  // Rows can be nested inside both rows and tabs, and a group->group
+  // conversion doesn't change the nesting depth, so only tabs conversions
+  // need validation: tabs cannot end up directly inside tabs.
+  if (layoutType !== 'TabsLayout') {
+    return;
   }
 
   const pathParts = path === '/' ? [] : path.slice(1).split('/');
-  for (let i = 0; i < pathParts.length; i += 2) {
-    if (pathParts[i] === targetSegmentType) {
-      throw new Error(
-        `Cannot convert to ${layoutType} at "${path}": would create same-type nesting (${targetSegmentType} inside ${targetSegmentType}).`
-      );
-    }
+  const parentSegmentType = pathParts.length >= 2 ? pathParts[pathParts.length - 2] : undefined;
+  if (parentSegmentType === 'tabs') {
+    throw new Error(`Cannot convert to TabsLayout at "${path}": tabs cannot be nested directly inside tabs.`);
   }
 
-  if (currentLayout instanceof RowsLayoutManager) {
-    for (const row of currentLayout.state.rows) {
-      if (
-        (layoutType === 'RowsLayout' && row.state.layout instanceof RowsLayoutManager) ||
-        (layoutType === 'TabsLayout' && row.state.layout instanceof TabsLayoutManager)
-      ) {
-        throw new Error(
-          `Cannot convert to ${layoutType}: a child's inner layout is already ${layoutType}, which would create same-type nesting.`
-        );
-      }
-    }
-  } else if (currentLayout instanceof TabsLayoutManager) {
-    for (const tab of currentLayout.state.tabs) {
-      if (
-        (layoutType === 'RowsLayout' && tab.state.layout instanceof RowsLayoutManager) ||
-        (layoutType === 'TabsLayout' && tab.state.layout instanceof TabsLayoutManager)
-      ) {
-        throw new Error(
-          `Cannot convert to ${layoutType}: a child's inner layout is already ${layoutType}, which would create same-type nesting.`
-        );
-      }
-    }
+  if (hasDirectTabsChild(currentLayout)) {
+    throw new Error(
+      `Cannot convert to TabsLayout: a child's inner layout is already tabs, which would put tabs directly inside tabs.`
+    );
   }
 }
 
