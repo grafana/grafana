@@ -91,7 +91,7 @@
 /pkg/tests/apis/provisioning @grafana/grafana-app-platform-squad
 # Git Sync frontend owned by frontend team as a whole.
 
-/apps/alerting/ @grafana/alerting-backend
+/apps/alerting/ @grafana/alerting-squad
 /apps/quotas/ @grafana/grafana-search-and-storage
 /apps/live/ @grafana/grafana-app-platform-squad
 /apps/dashboard/ @grafana/grafana-app-platform-squad @grafana/dashboards-squad
@@ -132,7 +132,7 @@
 /pkg/components/apikeygen/ @grafana/identity-squad
 /pkg/components/satokengen/ @grafana/identity-squad
 /pkg/components/dashdiffs/ @grafana/grafana-app-platform-squad
-/pkg/components/imguploader/ @grafana/alerting-backend
+/pkg/components/imguploader/ @grafana/alerting-squad
 /pkg/components/loki/ @grafana/grafana-backend-group
 /pkg/components/simplejson/ @grafana/grafana-backend-group
 /pkg/configprovider/ @grafana/grafana-backend-services-squad
@@ -186,7 +186,7 @@
 /pkg/services/org/ @grafana/grafana-backend-group
 /pkg/services/preference/ @grafana/grafana-backend-group
 /pkg/services/provisioning/ @grafana/grafana-search-and-storage
-/pkg/services/provisioning/alerting/ @grafana/alerting-backend
+/pkg/services/provisioning/alerting/ @grafana/alerting-squad
 /pkg/services/query/ @grafana/grafana-datasources-core-services
 /pkg/services/queryhistory/ @grafana/datapro
 /pkg/services/quota/ @grafana/grafana-search-and-storage
@@ -209,7 +209,7 @@
 /pkg/setting/ @grafana/grafana-backend-services-squad
 /pkg/tests/ @grafana/grafana-backend-services-squad
 /pkg/tests/apis/ @grafana/grafana-app-platform-squad
-/pkg/tests/apis/alerting @grafana/alerting-backend
+/pkg/tests/apis/alerting @grafana/alerting-squad
 /pkg/tests/apis/features @grafana/grafana-backend-services-squad
 /pkg/tests/apis/folder @grafana/grafana-search-and-storage
 /pkg/tests/apis/iam @grafana/identity-access-team
@@ -235,7 +235,7 @@
 /devenv/bulk-dashboards/ @grafana/dashboards-squad
 /devenv/bulk-folders/ @grafana/grafana-frontend-platform
 /devenv/create_docker_compose.sh @grafana/grafana-backend-services-squad
-/devenv/alert_rules.yaml @grafana/alerting-backend
+/devenv/alert_rules.yaml @grafana/alerting-squad
 /devenv/dashboards.yaml @grafana/dashboards-squad
 /devenv/datasources.yaml @grafana/data-sources
 /devenv/datasources_docker.yaml @grafana/data-sources
@@ -289,9 +289,9 @@
 /devenv/dev-dashboards/panel-polystat @grafana/dataviz-squad
 /devenv/dev-dashboards/extensions/ @grafana/grafana-frontend-platform
 
-/devenv/docker/blocks/alert_webhook_listener/ @grafana/alerting-backend
-/devenv/docker/blocks/stateful_webhook/ @grafana/alerting-backend
-/devenv/docker/blocks/caddy_tls/ @grafana/alerting-backend
+/devenv/docker/blocks/alert_webhook_listener/ @grafana/alerting-squad
+/devenv/docker/blocks/stateful_webhook/ @grafana/alerting-squad
+/devenv/docker/blocks/caddy_tls/ @grafana/alerting-squad
 /devenv/docker/blocks/clickhouse/ @grafana/data-sources-plugins
 /devenv/docker/blocks/collectd/ @grafana/observability-metrics
 /devenv/docker/blocks/etcd @grafana/grafana-app-platform-squad
@@ -304,8 +304,8 @@
 /devenv/docker/blocks/maildev/ @grafana/alerting-squad
 /devenv/docker/blocks/mariadb/ @grafana/data-sources-plugins
 /devenv/docker/blocks/memcached/ @grafana/grafana-backend-group
-/devenv/docker/blocks/mimir_backend/ @grafana/alerting-backend
-/devenv/docker/blocks/mqtt/ @grafana/alerting-backend
+/devenv/docker/blocks/mimir_backend/ @grafana/alerting-squad
+/devenv/docker/blocks/mqtt/ @grafana/alerting-squad
 /devenv/docker/blocks/mysql/ @grafana/data-sources-plugins
 /devenv/docker/blocks/mysql_exporter/ @grafana/data-sources-plugins
 /devenv/docker/blocks/mysql_opendata/ @grafana/data-sources-plugins
@@ -321,12 +321,12 @@
 /devenv/docker/blocks/slow_proxy/ @bergquist
 /devenv/docker/blocks/smtp/ @bergquist
 /devenv/docker/blocks/traefik/ @mckn
-/devenv/docker/blocks/webdav/ @grafana/alerting-backend
+/devenv/docker/blocks/webdav/ @grafana/alerting-squad
 /devenv/docker/buildcontainer/ @bergquist
 /devenv/docker/compose_header.yml @grafana/grafana-backend-services-squad
 /devenv/docker/compose_volume_section.yml @grafana/grafana-backend-services-squad
 /devenv/docker/debtest/ @bergquist
-/devenv/docker/ha-test-unified-alerting/ @grafana/alerting-backend
+/devenv/docker/ha-test-unified-alerting/ @grafana/alerting-squad
 /devenv/docker/ha_test/ @grafana/grafana-backend-services-squad
 /devenv/docker/loadtest/ @grafana/grafana-backend-services-squad
 /devenv/docker/rpmtest/ @grafana/grafana-backend-services-squad
@@ -383,9 +383,9 @@
 /pkg/generated @grafana/grafana-app-platform-squad
 
 # Alerting
-/pkg/services/ngalert/ @grafana/alerting-backend
-/pkg/services/sqlstore/migrations/ualert/ @grafana/alerting-backend
-/pkg/tests/api/alerting/ @grafana/alerting-backend
+/pkg/services/ngalert/ @grafana/alerting-squad
+/pkg/services/sqlstore/migrations/ualert/ @grafana/alerting-squad
+/pkg/tests/api/alerting/ @grafana/alerting-squad
 /public/app/features/alerting/ @grafana/alerting-squad
 /public/app/features/gops/ @grafana/alerting-squad
 
@@ -1248,7 +1248,7 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/apis/dashboard/search.go @grafana/grafana-search-and-storage
 /pkg/registry/apis/dashboard/search_test.go @grafana/grafana-search-and-storage
 /pkg/registry/apps/advisor @grafana/grafana-catalog
-/pkg/registry/apps/alerting @grafana/alerting-backend
+/pkg/registry/apps/alerting @grafana/alerting-squad
 /pkg/registry/apps/plugins @grafana/grafana-catalog
 /pkg/registry/apps/dashvalidator @grafana/sharing-squad
 /pkg/codegen/ @grafana/grafana-as-code
@@ -1285,8 +1285,8 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/actionlint.yml @grafana/grafana-backend-services-squad
 /.github/workflows/add-to-whats-new.yml @grafana/docs-tooling
 /.github/workflows/auto-triager/ @grafana/grafana-catalog
-/.github/workflows/alerting-swagger-gen.yml @grafana/alerting-backend
-/.github/workflows/alerting-update-module.yml @grafana/alerting-backend
+/.github/workflows/alerting-swagger-gen.yml @grafana/alerting-squad
+/.github/workflows/alerting-update-module.yml @grafana/alerting-squad
 /.github/workflows/auto-milestone.yml @grafana/grafana-backend-services-squad
 /.github/workflows/backend-code-checks.yml @grafana/grafana-backend-group
 /.github/workflows/backend-unit-tests.yml @grafana/grafana-backend-group
@@ -1398,7 +1398,7 @@ embed.go @grafana/grafana-as-code
 /conf/ldap.toml @grafana/identity-squad
 /conf/ldap_multiple.toml @grafana/identity-squad
 /conf/provisioning/access-control/ @grafana/access-squad
-/conf/provisioning/alerting/ @grafana/alerting-backend
+/conf/provisioning/alerting/ @grafana/alerting-squad
 /conf/provisioning/dashboards/ @grafana/dashboards-squad
 /conf/provisioning/datasources/ @grafana/grafana-catalog
 /conf/provisioning/plugins/ @grafana/grafana-catalog
