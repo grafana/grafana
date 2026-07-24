@@ -249,14 +249,17 @@ func (ng *AlertNG) init() error {
 		}
 
 		cfg := remote.AlertmanagerConfig{
-			BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
-			DefaultConfig:     ng.Cfg.UnifiedAlerting.DefaultConfiguration,
-			TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
-			URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
-			ExternalURL:       ng.Cfg.AppURL,
-			SmtpConfig:        smtpCfg,
-			Timeout:           ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Timeout,
-			RuntimeConfig:     runtimeConfig,
+			BasicAuthPassword:       ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
+			DefaultConfig:           ng.Cfg.UnifiedAlerting.DefaultConfiguration,
+			TenantID:                ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
+			URL:                     ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
+			ExternalURL:             ng.Cfg.AppURL,
+			SmtpConfig:              smtpCfg,
+			Timeout:                 ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Timeout,
+			RuntimeConfig:           runtimeConfig,
+			SenderQueueCapacity:     ng.Cfg.UnifiedAlerting.SenderQueueCapacity,
+			SenderBatchSize:         ng.Cfg.UnifiedAlerting.SenderBatchSize,
+			SenderDispatcherWorkers: ng.Cfg.UnifiedAlerting.SenderDispatcherWorkers,
 		}
 
 		// This function will be used by the MOA to create new Alertmanagers.
@@ -364,7 +367,7 @@ func (ng *AlertNG) init() error {
 
 	alertsRouter := sender.NewAlertsRouter(ng.MultiOrgAlertmanager, ng.store, clk, appUrl, ng.Cfg.UnifiedAlerting.DisabledOrgs,
 		ng.Cfg.UnifiedAlerting.AdminConfigPollInterval, ng.DataSourceService, ng.SecretsService, ng.FeatureToggles,
-		ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation, ng.Metrics.GetSenderMetrics())
+		ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation, ng.Metrics.GetSenderMetrics(), ng.Cfg.UnifiedAlerting)
 
 	// Make sure we sync at least once as Grafana starts to get the router up and running before we start sending any alerts.
 	if err := alertsRouter.SyncAndApplyConfigFromDatabase(initCtx); err != nil {

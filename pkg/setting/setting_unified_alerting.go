@@ -170,6 +170,11 @@ type UnifiedAlertingSettings struct {
 	// Configured via the [unified_alerting] ini key "external_alertmanager_uid" or the
 	// GF_UNIFIED_ALERTING_EXTERNAL_ALERTMANAGER_UID environment variable.
 	ExternalAlertmanagerUID string
+	
+	SenderQueueCapacity     int
+	SenderBatchSize         int
+	SenderTimeout           time.Duration
+	SenderDispatcherWorkers int
 }
 
 type RecordingRuleSettings struct {
@@ -629,6 +634,23 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	uaCfg.LimitEmailToOrgMembers = ua.Key("limit_email_to_org_members").MustBool(false)
 	uaCfg.ExternalAlertmanagerUID = ua.Key("external_alertmanager_uid").MustString("")
+
+	uaCfg.SenderQueueCapacity = ua.Key("sender_queue_capacity").MustInt(50000)
+	if uaCfg.SenderQueueCapacity <= 0 {
+		uaCfg.SenderQueueCapacity = 50000
+	}
+	uaCfg.SenderBatchSize = ua.Key("sender_batch_size").MustInt(1024)
+	if uaCfg.SenderBatchSize <= 0 {
+		uaCfg.SenderBatchSize = 1024
+	}
+	uaCfg.SenderTimeout = ua.Key("sender_timeout").MustDuration(30 * time.Second)
+	if uaCfg.SenderTimeout <= 0 {
+		uaCfg.SenderTimeout = 30 * time.Second
+	}
+	uaCfg.SenderDispatcherWorkers = ua.Key("sender_dispatcher_workers").MustInt(4)
+	if uaCfg.SenderDispatcherWorkers <= 0 {
+		uaCfg.SenderDispatcherWorkers = 4
+	}
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil
