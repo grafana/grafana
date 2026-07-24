@@ -38,11 +38,15 @@ func FoldersDashboardsMigration(migrator migrator.FoldersDashboardsMigrator) mig
 		Validators: []migrations.ValidatorFactory{
 			migrations.CountValidation(folderGR, migrations.CountValidationOptions{
 				Table: "dashboard",
-				Where: "org_id = ? AND is_folder = true AND deleted IS NULL",
+				// Provisioned rows are excluded from the migration query (query_dashboards.sql),
+				// so they must also be excluded here or the counts would never match.
+				Where: "org_id = ? AND is_folder = true AND deleted IS NULL AND NOT EXISTS (SELECT 1 FROM dashboard_provisioning WHERE dashboard_provisioning.dashboard_id = dashboard.id)",
 			}),
 			migrations.CountValidation(dashboardGR, migrations.CountValidationOptions{
 				Table: "dashboard",
-				Where: "org_id = ? AND is_folder = false AND deleted IS NULL",
+				// Provisioned rows are excluded from the migration query (query_dashboards.sql),
+				// so they must also be excluded here or the counts would never match.
+				Where: "org_id = ? AND is_folder = false AND deleted IS NULL AND NOT EXISTS (SELECT 1 FROM dashboard_provisioning WHERE dashboard_provisioning.dashboard_id = dashboard.id)",
 			}),
 			migrations.FolderTreeValidation(folderGR),
 		},
