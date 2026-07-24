@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
@@ -89,6 +90,18 @@ type StorageBackendOption func(*resource.KVBackendOptions)
 // message bus (NATS) via the given publisher. Applies only to the KV backend.
 func WithEventPublisher(p resource.EventPublisher) StorageBackendOption {
 	return func(o *resource.KVBackendOptions) { o.EventPublisher = p }
+}
+
+// WithVectorBackend lets the KV backend's tenant deleter remove a deleted
+// tenant's embeddings from the vector store. A nil vb (vector backend disabled)
+// leaves embedding cleanup off.
+func WithVectorBackend(vb vector.VectorBackend) StorageBackendOption {
+	return func(o *resource.KVBackendOptions) {
+		if vb == nil {
+			return
+		}
+		o.EmbeddingDeleter = vb
+	}
 }
 
 // WithNatsNotifierShadow runs a NATS-backed notifier in shadow mode beside the

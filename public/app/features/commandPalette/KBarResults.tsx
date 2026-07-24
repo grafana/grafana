@@ -23,9 +23,10 @@ interface KBarResultsProps {
   scrollRef?: React.MutableRefObject<HTMLDivElement | null>;
   /**
    * Called when an item is selected (click or keyboard Enter, which dispatches a
-   * click on the row). Receives the raw index into `items`, for analytics.
+   * click on the row). Receives the raw index into `items` and, for navigation
+   * items, the resolved destination url (same value as the row's href), for analytics.
    */
-  onItemSelected?: (item: ActionImpl, index: number) => void;
+  onItemSelected?: (item: ActionImpl, index: number, url?: string) => void;
   /**
    * Use the legacy (pre-deep-search) keyboard model: this component owns
    * arrow/Enter navigation over the single list and auto-selects the first item.
@@ -251,7 +252,7 @@ export const KBarResults = (props: KBarResultsProps) => {
             onPointerDown: () => query.setActiveIndex(virtualRow.index),
             onClick: (ev: React.MouseEvent) => {
               // Report before perform, since perform may close the palette / navigate away
-              props.onItemSelected?.(item, virtualRow.index);
+              props.onItemSelected?.(item, virtualRow.index, typeof url === 'function' ? url(search) : url);
               execute(ev, item);
             },
           };

@@ -3,8 +3,6 @@
  * (dashboard vs row/tab section scope).
  */
 
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
@@ -43,18 +41,6 @@ export function resolveVariableScope(scene: DashboardScene, parentPath?: string)
   }
 
   return { scopeOwner: item, layoutPathPrefix: path };
-}
-
-export function isSectionVariablesFeatureEnabled(): boolean {
-  return getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardSectionVariables, false);
-}
-
-export function getEffectiveVariableParentPath(parentPath?: string): string {
-  if (!isSectionVariablesFeatureEnabled()) {
-    return '/';
-  }
-
-  return parentPath ?? '/';
 }
 
 export function buildVariableChangePath(layoutPathPrefix: string, variableName: string): string {
