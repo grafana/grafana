@@ -125,13 +125,13 @@ function useHasLogs(spanLinkModel: SpanLinkModel): LogsPresence {
   }, [queryKey, timeRangeKey]);
 
   useEffect(() => {
-    if (presence === 'loading') {
+    if (presence === 'loading' || !dynamicTraceToLogsEnabled) {
       return;
     }
     reportInteraction('grafana_traces_trace_view_span_logs_checked', {
       logs: presence === 'present',
     });
-  }, [presence]);
+  }, [dynamicTraceToLogsEnabled, presence]);
 
   return presence;
 }
