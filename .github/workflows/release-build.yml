@@ -936,31 +936,6 @@ jobs:
             GF_AUTH_ANONYMOUS_ENABLED=true
             GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
 
-  dispatch-npm-canaries:
-    if: github.repository == 'grafana/grafana' && github.ref_name == 'main'
-    name: Dispatch publish NPM canaries
-    permissions:
-      actions: write
-      contents: read
-    runs-on: ubuntu-x64-small
-    needs:
-      - setup
-    steps:
-      - name: Dispatch action
-        env:
-          GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
-          VERSION: ${{ needs.setup.outputs.version }}
-          BUILD_ID: ${{ github.run_id }}
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh workflow run release-npm.yml \
-            --repo grafana/grafana \
-            --ref main \
-            --field grafana_commit="$GRAFANA_COMMIT" \
-            --field version="$VERSION" \
-            --field build_id="$BUILD_ID"\
-            --field version_type="canary"
-
   notify-pr:
     # Only run in grafana/grafana itself. In the security mirror (a private repo) this job would
     # both leak that a build is happening and fail (nothing depends on it, but it fails the run).
