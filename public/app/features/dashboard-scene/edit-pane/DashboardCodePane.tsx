@@ -9,7 +9,7 @@ import { Alert, Button, ClipboardButton, IconButton, Modal, Sidebar, Stack, Tool
 import { getDashboardSceneFor } from '../utils/utils';
 import { DashboardSchemaEditor, type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
 
-import { applyJsonToDashboard, getDashboardJsonText, getDashboardResourceText } from './codePaneUtils';
+import { applyJsonToDashboard, getDashboardResourceText } from './codePaneUtils';
 
 export class DashboardCodePane extends SceneObjectBase {
   public static Component = DashboardCodePaneRenderer;
@@ -26,7 +26,7 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
 
   const [hasValidationErrors, setHasValidationErrors] = useState(true);
   const [applyError, setApplyError] = useState<string | null>(null);
-  const [jsonText, setJsonText] = useState(() => getDashboardJsonText(dashboard));
+  const [jsonText, setJsonText] = useState(() => getDashboardResourceText(dashboard, 'json'));
   const [isExpanded, setIsExpanded] = useState(false);
   const [editorFormat, setEditorFormat] = useState<SchemaEditorFormat>('json');
 
@@ -86,6 +86,7 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
       severity="error"
       topSpacing={0}
       bottomSpacing={0}
+      className={styles.errorAlert}
     >
       {applyError}
     </Alert>
@@ -167,6 +168,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     minHeight: 0,
     padding: theme.spacing(1),
     gap: theme.spacing(1),
+  }),
+  errorAlert: css({
+    flex: '0 0 auto',
   }),
   editorContainer: css({
     flex: 1,

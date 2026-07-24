@@ -6243,6 +6243,10 @@
       "apply-button-disabled-tooltip": "Fix validation errors before applying changes",
       "apply-button-disabled-tooltip-yaml": "Document has validation errors. Switch to JSON to see inline error details.",
       "apply-error-title": "Failed to apply changes",
+      "identifier-change-unsupported": "Unable to change identifier from JSON editor",
+      "invalid-api-version": "Invalid apiVersion: {{apiVersion}}. Expected '{{expectedAPIVersion}}'.",
+      "invalid-kind": "Invalid kind: {{kind}}. Expected 'Dashboard'.",
+      "metadata-edit-unsupported": "Editing dashboard metadata is not yet supported ({{keys}})",
       "undo-title": "Schema edit"
     },
     "search-panel": {
@@ -7207,6 +7211,7 @@
         "title-someone-else-has-updated-this-dashboard": "Someone else has updated this dashboard",
         "would-still-dashboard": "Would you still like to save this dashboard?"
       },
+      "resource-validation-error-title": "Unable to save changes",
       "save-and-overwrite": "Save and overwrite"
     },
     "legacy": {
