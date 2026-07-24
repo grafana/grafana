@@ -124,6 +124,46 @@ func TestValidUpdate(t *testing.T) {
 	storagetesting.RunTestValidUpdate(ctx, t, store)
 }
 
+// TestGuaranteedUpdateConditionalOnDeletedReturnsConflict verifies that a conditional
+// (optimistic-concurrency) update — one whose object carries a resourceVersion — against a
+// key that no longer exists returns Conflict, rather than resurrecting the object or failing
+// with the opaque "resourceVersion should not be set on objects to be created" create error.
+// This is the deleted-in-window race a read-then-write caller hits when the object is deleted
+// between its read and its update.
+func TestGuaranteedUpdateConditionalOnDeletedReturnsConflict(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	require.NoError(t, err)
+
+	key := storagetesting.KeyFunc("test-ns", "gone")
+	tryUpdate := func(_ runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
+		return &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "gone", Namespace: "test-ns", ResourceVersion: "12345"}}, nil, nil
+	}
+
+	err = store.GuaranteedUpdate(ctx, key, &example.Pod{}, true /* ignoreNotFound */, nil, tryUpdate, nil)
+	require.Error(t, err)
+	assert.True(t, apierrors.IsConflict(err), "expected a Conflict error, got: %v", err)
+}
+
+// TestGuaranteedUpdateUnconditionalUpsertOnMissingCreates verifies that an unconditional
+// write (no resourceVersion) against a missing key still upserts — create-on-update is only
+// suppressed for conditional updates.
+func TestGuaranteedUpdateUnconditionalUpsertOnMissingCreates(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	require.NoError(t, err)
+
+	key := storagetesting.KeyFunc("test-ns", "fresh")
+	tryUpdate := func(_ runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
+		return &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "fresh", Namespace: "test-ns"}}, nil, nil
+	}
+
+	out := &example.Pod{}
+	err = store.GuaranteedUpdate(ctx, key, out, true /* ignoreNotFound */, nil, tryUpdate, nil)
+	require.NoError(t, err)
+	assert.Equal(t, "fresh", out.Name)
+}
+
 func TestGet(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
