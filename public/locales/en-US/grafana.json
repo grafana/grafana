@@ -6084,15 +6084,6 @@
         "title": "Panel time settings"
       }
     },
-    "panel-assistant": {
-      "hint": {
-        "aria-label": "Open assistant for this panel"
-      },
-      "prompt-card": {
-        "placeholder": "Ask Assistant about this panel...",
-        "placeholder-multi": "Ask Assistant about these panels..."
-      }
-    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Dashboard must be saved before alerts can be added.",
@@ -8895,11 +8886,20 @@
       "summary-label": "(summary)"
     },
     "span-detail-link-buttons": {
-      "logs-for-this-span": "Logs for this span",
-      "logs-for-this-trace": "Logs for this trace",
+      "logs-for-this-span": {
+        "button": "Logs for this span",
+        "no-logs-tooltip": "No logs found for this span using the trace data source configuration.",
+        "tooltip": "See logs related to this span using the trace data source configuration."
+      },
+      "logs-for-this-trace": {
+        "button": "Logs for this trace",
+        "no-logs-tooltip": "No logs found for this trace using the trace data source configuration.",
+        "tooltip": "See logs related to this trace using the trace data source configuration."
+      },
       "open-in-profiles-drilldown": "Open in Profiles Drilldown",
       "profiles-for-this-span": "Profiles for this span",
       "related-logs": "Related logs",
+      "related-logs-tooltip": "View related logs using the trace data source configuration.",
       "session-for-this-span": "Session for this span"
     },
     "span-flame-graph": {
@@ -10893,7 +10893,9 @@
     "alerts-incidents": {
       "alert-tab-label": "Firing alerts",
       "incident-tab-label": "Incidents",
-      "title": "Alerts & incidents"
+      "title": "Alerts & incidents",
+      "title-alerts": "Alerts",
+      "title-incidents": "Incidents"
     },
     "dashboard-tabs": {
       "most-used": "Most used",

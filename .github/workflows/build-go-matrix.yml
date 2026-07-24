@@ -35,6 +35,8 @@ permissions: {}
 
 jobs:
   build-go:
+    # Run on `grafana/grafana` pushes, or on pull requests, to prevent double-running on mirrors
+    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: ${{ matrix.name }}
     runs-on: ubuntu-x64-large-io
     permissions:
@@ -84,7 +86,8 @@ jobs:
         run: make build-go
 
   build-go-enterprise:
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+    # Run on pushes to `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
+    if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     name: ${{ matrix.name }} (enterprise)
     runs-on: ubuntu-x64-large-io
     permissions:
@@ -145,6 +148,8 @@ jobs:
 
   # TODO: Build rpm in another workflow
   verify-rpm-stig:
+    # Run on `grafana/grafana` pushes, or on pull requests, to prevent double-running on mirrors
+    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: verify rpm stig (linux/amd64)
     runs-on: ubuntu-x64-large
     permissions:
