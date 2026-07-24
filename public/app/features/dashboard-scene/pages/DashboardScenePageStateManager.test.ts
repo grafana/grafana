@@ -820,14 +820,12 @@ describe('DashboardScenePageStateManager v2', () => {
     });
 
     describe('predefined variables', () => {
-      const originalGlobalDashboardVariables = config.featureToggles.globalDashboardVariables;
-
       beforeEach(() => {
-        config.featureToggles.globalDashboardVariables = true;
+        setTestFlags({ globalDashboardVariables: true });
       });
 
       afterEach(() => {
-        config.featureToggles.globalDashboardVariables = originalGlobalDashboardVariables;
+        setTestFlags({});
       });
 
       const predefinedVariable = {

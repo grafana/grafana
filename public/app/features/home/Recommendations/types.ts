@@ -14,6 +14,7 @@ export interface RecommendationItem {
 }
 
 export interface ExistingItem {
+  id: string; // stable telemetry id (solution)
   title: string;
   icon: IconName;
   subtitle?: string;
@@ -29,4 +30,14 @@ export interface ExistingItem {
   };
   action: string;
   href: string;
+}
+
+/**
+ * Result contract for a solution provider hook in the useExistingSolutions registry.
+ * Providers fail closed: a probe error reports as `item: null` (rendered as no data),
+ * never as a user-visible error.
+ */
+export interface ExistingSolutionProviderResult {
+  loading: boolean;
+  item: ExistingItem | null;
 }
