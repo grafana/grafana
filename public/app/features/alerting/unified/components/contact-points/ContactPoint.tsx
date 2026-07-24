@@ -223,13 +223,17 @@ const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: Conta
       <Stack direction="row" gap={1}>
         {/* this is shown when the last delivery failed – we don't show any additional metadata */}
         {failedToSend ? (
-          <MetaText color="error" icon="exclamation-circle">
-            <Tooltip content={diagnostics.lastNotifyAttemptError!}>
+          <Stack direction="column" gap={0.5}>
+            <MetaText color="error" icon="exclamation-circle">
               <span>
                 <Trans i18nKey="alerting.contact-points.last-delivery-failed">Last delivery attempt failed</Trans>
               </span>
-            </Tooltip>
-          </MetaText>
+            </MetaText>
+            {/* TS Fix: Conditional render. UX Fix: Parse JSON and style as a code block */}
+            {diagnostics.lastNotifyAttemptError && (
+              <div className={styles.errorBlock}>{parseWebhookError(diagnostics.lastNotifyAttemptError)}</div>
+            )}
+          </Stack>
         ) : (
           <>
             {/* this is shown when we have a last delivery attempt */}
@@ -271,6 +275,26 @@ const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: Conta
   );
 };
 
+function parseWebhookError(error: string): string {
+  try {
+    const jsonStart = error.indexOf('{');
+    if (jsonStart !== -1) {
+      const prefix = error.substring(0, jsonStart).trim();
+      const jsonStr = error.substring(jsonStart);
+      const parsed = JSON.parse(jsonStr);
+
+      // Look for common error fields from various webhook providers
+      const description = parsed.errorDescription || parsed.message || parsed.error;
+      if (description) {
+        return `${prefix} - ${description}`;
+      }
+    }
+  } catch (e) {
+    // If it's not valid JSON, just return the raw string
+  }
+  return error;
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
   contactPointWrapper: css({
     borderRadius: theme.shape.radius.lg,
@@ -290,5 +314,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
   noIntegrationsContainer: css({
     paddingTop: `${theme.spacing(1.5)}`,
     paddingLeft: `${theme.spacing(1.5)}`,
+  }),
+  errorBlock: css({
+    backgroundColor: theme.colors.background.secondary,
+    padding: theme.spacing(1),
+    borderRadius: theme.shape.radius.default,
+    fontFamily: theme.typography.fontFamilyMonospace,
+    fontSize: theme.typography.size.sm,
+    color: theme.colors.text.secondary,
+    wordBreak: 'break-all',
+    marginTop: theme.spacing(0.5),
   }),
 });
