@@ -236,9 +236,6 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	// Record job processing error on span
 	if err != nil {
 		span.RecordError(err)
-		logger.Error("job failed", "duration", duration, "error", err)
-	} else {
-		logger.Info("job complete", "duration", duration)
 	}
 
 	// Complete the job
@@ -248,6 +245,36 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 		d.currentJob = nil
 		d.mu.Unlock()
 	}()
+
+	// Log completion keyed off the final job state so that per-file errors that
+	// promoted the job to an error/warning state (without a top-level err) are
+	// still visible. The per-file breakdown stays at Debug to avoid noise at Info.
+	status := d.currentJob.Status
+	logFields := []any{
+		"duration", duration,
+		"state", status.State,
+		"errorCount", len(status.Errors),
+		"warningCount", len(status.Warnings),
+		"message", status.Message,
+	}
+	switch {
+	case err != nil:
+		logger.Error("job failed", append(logFields, "error", err)...)
+	case status.State == provisioning.JobStateError:
+		logger.Error("job completed with errors", logFields...)
+	case status.State == provisioning.JobStateWarning:
+		logger.Warn("job completed with warnings", logFields...)
+	default:
+		logger.Info("job complete", logFields...)
+	}
+
+	if len(status.Errors) > 0 || len(status.Warnings) > 0 {
+		logger.Debug("job completion details",
+			"errors", status.Errors,
+			"warnings", status.Warnings,
+			"reasons", recorder.ResultReasons(),
+		)
+	}
 
 	// Save the finished job
 	if err = d.historicJobs.WriteJob(ctx, d.currentJob.DeepCopy()); err != nil {
