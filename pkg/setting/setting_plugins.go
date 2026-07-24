@@ -45,6 +45,7 @@ var (
 		"stackdriver":                   {ID: "stackdriver"},
 		"mssql":                         {ID: "mssql"},
 		"jaeger":                        {ID: "jaeger"},
+		"loki":                          {ID: "loki"},
 		"grafana-advisor-app":           {ID: "grafana-advisor-app"},
 		"grafana-postgresql-datasource": {ID: "grafana-postgresql-datasource"},
 		"grafana-pyroscope-datasource":  {ID: "grafana-pyroscope-datasource"},
