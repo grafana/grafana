@@ -83,6 +83,11 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
    */
   const canBeDeleted = isGranted(deleteAbility) && (usingK8sApi || (!regularPolicyReferences.length && !numberOfRules));
 
+  // TOOD: Tidy up/consolidate logic for working out id for contact point. This requires some unravelling of
+  // existing types so its clearer where the ID has come from
+
+  const urlId = id || name;
+
   const menuActions: JSX.Element[] = [];
   if (showManagePermissions) {
     menuActions.push(
@@ -105,7 +110,13 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
           ariaLabel={t('alerting.contact-point-header.export-ariaLabel-export', 'Export')}
           disabled={!exportAbility.granted}
           data-testid="export"
-          onClick={() => openExportDrawer(name)}
+          childItems={[<ExportMenuItem key="export-with-modifications" urlId={urlId} />]}
+          onClick={() => {
+            if (!exportAbility.granted) {
+              return;
+            }
+            openExportDrawer(name);
+          }}
         />
         <Menu.Divider />
       </Fragment>
@@ -188,10 +199,6 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
     defaultValue_one: 'Used by {{count}} alert rules',
     defaultValue_other: 'Used by {{count}} alert rules',
   });
-
-  // TOOD: Tidy up/consolidate logic for working out id for contact point. This requires some unravelling of
-  // existing types so its clearer where the ID has come from
-  const urlId = id || name;
 
   return (
     <div className={styles.headerWrapper}>
@@ -288,6 +295,21 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
         />
       )}
     </div>
+  );
+};
+
+interface ExportMenuItemProps {
+  urlId: string;
+}
+
+const ExportMenuItem = ({ urlId }: ExportMenuItemProps) => {
+  const url = `/alerting/notifications/receivers/${encodeURIComponent(urlId)}/modify-export`;
+  return (
+    <Menu.Item
+      label={t('alerting.alert-menu.with-modifications', 'With modifications')}
+      icon="file-edit-alt"
+      url={url}
+    />
   );
 };
 
