@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	authnlib "github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -36,23 +37,33 @@ func TestNewAnnotationAPIClient_TokenExchange(t *testing.T) {
 		stackID       string
 		requester     *identity.StaticRequester
 		wantNamespace string
+		wantSubject   *authnlib.TokenExchangeSubject
 		wantErr       bool
 	}{
 		{
-			name:          "scopes to stack namespace when stackID is set",
+			name:          "scopes to stack namespace and asserts the user on behalf of",
 			stackID:       "123",
-			requester:     &identity.StaticRequester{OrgID: 1},
+			requester:     &identity.StaticRequester{Type: claims.TypeUser, UserID: 42, UserUID: "user-uid", OrgID: 1},
 			wantNamespace: "stacks-123",
+			wantSubject:   &authnlib.TokenExchangeSubject{Sub: "user:42", Identifier: "user-uid", Type: "user", Namespace: "stacks-123"},
 		},
 		{
 			name:          "scopes to the default namespace when stackID is not set and orgID is 1",
-			requester:     &identity.StaticRequester{OrgID: 1},
+			requester:     &identity.StaticRequester{Type: claims.TypeUser, UserID: 42, UserUID: "user-uid", OrgID: 1},
 			wantNamespace: "default",
+			wantSubject:   &authnlib.TokenExchangeSubject{Sub: "user:42", Identifier: "user-uid", Type: "user", Namespace: "default"},
 		},
 		{
 			name:          "scopes to the org namespace when stackID is not set and orgID is not 1",
-			requester:     &identity.StaticRequester{OrgID: 7},
+			requester:     &identity.StaticRequester{Type: claims.TypeServiceAccount, UserID: 7, UserUID: "sa-uid", OrgID: 7},
 			wantNamespace: "org-7",
+			wantSubject:   &authnlib.TokenExchangeSubject{Sub: "service-account:7", Identifier: "sa-uid", Type: "service-account", Namespace: "org-7"},
+		},
+		{
+			name:          "access policy has no on-behalf-of subject",
+			requester:     &identity.StaticRequester{Type: claims.TypeAccessPolicy, UserID: 3, UserUID: "ap-uid", OrgID: 1},
+			wantNamespace: "default",
+			wantSubject:   nil,
 		},
 		{
 			name:    "fails when the requester is missing",
@@ -96,6 +107,7 @@ func TestNewAnnotationAPIClient_TokenExchange(t *testing.T) {
 
 			assert.Equal(t, tt.wantNamespace, exchanger.gotRequest.Namespace)
 			assert.Equal(t, []string{annotationServerAudience}, exchanger.gotRequest.Audiences)
+			assert.Equal(t, tt.wantSubject, exchanger.gotRequest.Subject)
 			assert.Equal(t, "signed-token", next.gotToken)
 		})
 	}
