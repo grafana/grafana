@@ -7,11 +7,12 @@ import { type DataSourceInstanceSettings, type GrafanaTheme2, type SelectableVal
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { LogMessages, logInfo, trackAlertRuleFilterEvent } from '../../../Analytics';
+import { isGranted } from '../../../hooks/abilities/abilityUtils';
+import { useGlobalContactPointAbility } from '../../../hooks/abilities/alertmanager/useContactPointAbility';
+import { ContactPointAction } from '../../../hooks/abilities/types';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
 import { type RulesFilterProps as RulesFilterV2Props } from '../../../rule-list/filter/RulesFilter.v2';
@@ -34,8 +35,6 @@ const RuleHealthOptions: SelectableValue[] = [
   { label: 'Error', value: RuleHealth.Error },
 ];
 
-const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
-
 const RuleStateOptions = Object.entries(PromAlertingRuleState)
   .filter(([key, value]) => value !== PromAlertingRuleState.Unknown) // Exclude Unknown state from filter options
   .map(([key, value]) => ({
@@ -47,6 +46,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
   const styles = useStyles2(getStyles);
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
   const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
+  const canRenderContactPointSelector = isGranted(useGlobalContactPointAbility(ContactPointAction.View));
 
   // This key is used to force a rerender on the inputs when the filters are cleared
   const [filterKey, setFilterKey] = useState<number>(Math.floor(Math.random() * 100));
@@ -115,6 +115,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
     <Stack direction="column" gap={0}>
       <Stack direction="row" gap={1} wrap="wrap">
         <Field
+          noMargin
           className={styles.dsPickerContainer}
           label={
             <Label htmlFor="data-source-picker">
@@ -166,6 +167,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
         </Field>
 
         <Field
+          noMargin
           className={styles.dashboardPickerContainer}
           label={
             <Label htmlFor="filters-dashboard-picker">
@@ -218,6 +220,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
         {canRenderContactPointSelector && (
           <Stack direction="column" gap={0}>
             <Field
+              noMargin
               label={
                 <Label htmlFor="contactPointFilter">
                   <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
@@ -272,6 +275,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
             })}
           >
             <Field
+              noMargin
               label={
                 <Label htmlFor="rulesSearchInput">
                   <Stack gap={0.5} alignItems="center">
@@ -329,14 +333,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     dsPickerContainer: css({
       width: theme.spacing(60),
       flexGrow: 0,
-      margin: 0,
     }),
     dashboardPickerContainer: css({
       minWidth: theme.spacing(50),
     }),
     searchInput: css({
       flex: 1,
-      margin: 0,
     }),
   };
 };
