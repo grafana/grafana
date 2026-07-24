@@ -13,8 +13,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -967,16 +969,83 @@ func TestDeleteDashboard(t *testing.T) {
 }
 
 func TestDeleteAllDashboards(t *testing.T) {
-	service := &DashboardServiceImpl{
-		cfg: setting.NewCfg(),
-	}
+	t.Run("DeleteCollection succeeds", func(t *testing.T) {
+		service := &DashboardServiceImpl{cfg: setting.NewCfg(), log: log.New("test")}
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		k8sCliMock.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
-	ctx, k8sCliMock := setupK8sDashboardTests(service)
-	k8sCliMock.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		err := service.DeleteAllDashboards(ctx, 1)
+		require.NoError(t, err)
+		k8sCliMock.AssertExpectations(t)
+	})
 
-	err := service.DeleteAllDashboards(ctx, 1)
-	require.NoError(t, err)
-	k8sCliMock.AssertExpectations(t)
+	t.Run("DeleteCollection returns 405, falls back to individual deletes for empty org", func(t *testing.T) {
+		service := &DashboardServiceImpl{cfg: setting.NewCfg(), log: log.New("test")}
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+
+		methodNotSupported := apierrors.NewMethodNotSupported(schema.GroupResource{Resource: "dashboards"}, "delete collection")
+		k8sCliMock.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything).Return(methodNotSupported).Once()
+		k8sCliMock.On("List", mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.UnstructuredList{}, nil).Once()
+
+		err := service.DeleteAllDashboards(ctx, 1)
+		require.NoError(t, err)
+		k8sCliMock.AssertExpectations(t)
+	})
+
+	t.Run("DeleteCollection returns 405, falls back and deletes each dashboard", func(t *testing.T) {
+		service := &DashboardServiceImpl{cfg: setting.NewCfg(), log: log.New("test")}
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+
+		methodNotSupported := apierrors.NewMethodNotSupported(schema.GroupResource{Resource: "dashboards"}, "delete collection")
+		k8sCliMock.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything).Return(methodNotSupported).Once()
+
+		list := &unstructured.UnstructuredList{
+			Items: []unstructured.Unstructured{
+				{Object: map[string]any{"metadata": map[string]any{"name": "dash-1"}}},
+				{Object: map[string]any{"metadata": map[string]any{"name": "dash-2"}}},
+			},
+		}
+		k8sCliMock.On("List", mock.Anything, mock.Anything, mock.Anything).Return(list, nil).Once()
+		k8sCliMock.On("Delete", mock.Anything, "dash-1", mock.Anything, mock.Anything).Return(nil).Once()
+		k8sCliMock.On("Delete", mock.Anything, "dash-2", mock.Anything, mock.Anything).Return(nil).Once()
+
+		err := service.DeleteAllDashboards(ctx, 1)
+		require.NoError(t, err)
+		k8sCliMock.AssertExpectations(t)
+	})
+
+	t.Run("DeleteCollection returns 405, individual delete ignores not-found errors", func(t *testing.T) {
+		service := &DashboardServiceImpl{cfg: setting.NewCfg(), log: log.New("test")}
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+
+		methodNotSupported := apierrors.NewMethodNotSupported(schema.GroupResource{Resource: "dashboards"}, "delete collection")
+		k8sCliMock.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything).Return(methodNotSupported).Once()
+
+		list := &unstructured.UnstructuredList{
+			Items: []unstructured.Unstructured{
+				{Object: map[string]any{"metadata": map[string]any{"name": "dash-1"}}},
+			},
+		}
+		k8sCliMock.On("List", mock.Anything, mock.Anything, mock.Anything).Return(list, nil).Once()
+		notFound := apierrors.NewNotFound(schema.GroupResource{Resource: "dashboards"}, "dash-1")
+		k8sCliMock.On("Delete", mock.Anything, "dash-1", mock.Anything, mock.Anything).Return(notFound).Once()
+
+		err := service.DeleteAllDashboards(ctx, 1)
+		require.NoError(t, err)
+		k8sCliMock.AssertExpectations(t)
+	})
+
+	t.Run("DeleteCollection returns non-405 error, propagates error", func(t *testing.T) {
+		service := &DashboardServiceImpl{cfg: setting.NewCfg(), log: log.New("test")}
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+
+		internalErr := apierrors.NewInternalError(fmt.Errorf("storage failure"))
+		k8sCliMock.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything).Return(internalErr).Once()
+
+		err := service.DeleteAllDashboards(ctx, 1)
+		require.Error(t, err)
+		k8sCliMock.AssertExpectations(t)
+	})
 }
 
 func TestSearchDashboards(t *testing.T) {

@@ -60,7 +60,18 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const isDraggable = !isClone && isEditing;
 
   if (isHidden) {
-    return null;
+    // Keep the Draggable registered with its correct index to avoid gaps in the
+    // @hello-pangea/dnd index sequence. A gap (e.g. indices 0, 2) causes the
+    // Droppable to reserve visual space for the "missing" slot. Rendering an
+    // invisible, zero-height Draggable preserves contiguous indices without
+    // adding any visible space.
+    return (
+      <Draggable key={key!} draggableId={key!} index={myIndex} isDragDisabled={true}>
+        {(dragProvided) => (
+          <div ref={dragProvided.innerRef} {...dragProvided.draggableProps} style={{ display: 'none' }} />
+        )}
+      </Draggable>
+    );
   }
 
   if (soloPanelContext) {
