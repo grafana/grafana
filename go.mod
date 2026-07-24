@@ -154,7 +154,7 @@ require (
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7 // @grafana/grafana-backend-group
 	github.com/openai/openai-go/v3 v3.16.0 // @grafana/grafana-search-and-storage
 	github.com/openfga/api/proto v0.0.0-20260319214821-f153694bfc20 // @grafana/identity-access-team
-	github.com/openfga/language/pkg/go v0.2.1 // @grafana/identity-access-team
+	github.com/openfga/language/pkg/go v0.3.1 // @grafana/identity-access-team
 	github.com/openfga/openfga v1.18.1 // @grafana/identity-access-team
 	github.com/patrickmn/go-cache v2.1.0+incompatible // @grafana/alerting-backend
 	github.com/pgvector/pgvector-go v0.3.0 // @grafana/grafana-search-and-storage

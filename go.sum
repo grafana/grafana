@@ -2149,8 +2149,8 @@ github.com/opencontainers/image-spec v1.1.1 h1:y0fUlFfIZhPF1W537XOLg0/fcx6zcHCJw
 github.com/opencontainers/image-spec v1.1.1/go.mod h1:qpqAh3Dmcf36wStyyWU+kCeDgrGnAve2nCC8+7h8Q0M=
 github.com/openfga/api/proto v0.0.0-20260319214821-f153694bfc20 h1:xdVG0EDz9Z9Uhd7YZ5OMN1F8tkAz/Dpgdjxd0cuTBJo=
 github.com/openfga/api/proto v0.0.0-20260319214821-f153694bfc20/go.mod h1:XDX4qYNBUM2Rsa2AbKPh+oocZc2zgme+EF2fFC6amVU=
-github.com/openfga/language/pkg/go v0.2.1 h1:nmVJTPfjvaJC2EWGcy8HrUyL15KkIfjjnmB3VFVeCts=
-github.com/openfga/language/pkg/go v0.2.1/go.mod h1:wg+EuPmYIaM855F2uPygT1hJoWcoUxAoecgYC5akXsw=
+github.com/openfga/language/pkg/go v0.3.1 h1:o+m3s0aHyjjLH27wqu6/7vL6VWOL8sBqyrNXV87t/e8=
+github.com/openfga/language/pkg/go v0.3.1/go.mod h1:YVuB65nNynhIA5IT8AcBxuRGZYA/Wr8lI2PFyU+jMwA=
 github.com/openfga/openfga v1.18.1 h1:scfXscw1co45EJxPHSWQ9OXso+MnmkkGEdQ3+Y2P4mo=
 github.com/openfga/openfga v1.18.1/go.mod h1:se83OqKfGcb9Ddw/Bk85d2WE7PisFmDv/CeZQh3ZyIM=
 github.com/opentracing-contrib/go-grpc v0.1.2 h1:MP16Ozc59kqqwn1v18aQxpeGZhsBanJ2iurZYaQSZ+g=
