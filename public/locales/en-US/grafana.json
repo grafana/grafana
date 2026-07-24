@@ -10969,6 +10969,7 @@
         "action": "Enable Application Observability",
         "context": "Built automatically from your telemetry",
         "description": "Turn OpenTelemetry data into RED metrics, service maps, and correlated traces automatically.",
+        "setup-action": "Set up Application Observability",
         "title": "Explore your service map"
       },
       "carousel-label": "Recommended apps",
@@ -10978,6 +10979,7 @@
         "action": "Enable Frontend Observability",
         "context": "Connect the browser to your backend traces",
         "description": "Capture Core Web Vitals and errors from the browser and tie them back to backend traces.",
+        "setup-action": "Set up Frontend Observability",
         "title": "Measure real user experience"
       },
       "go-to": "Go to recommendation {{index}}",
@@ -10994,6 +10996,7 @@
         "action": "Enable Hosted Traces",
         "context": "Complete the picture with distributed tracing",
         "description": "Add distributed tracing to see how requests flow between services and where they slow down.",
+        "setup-action": "Set up Hosted Traces",
         "title": "Trace requests across services"
       },
       "kubernetes": {
@@ -11031,6 +11034,7 @@
         "action": "Add Synthetic Monitoring",
         "context": "Catch outages before your users do",
         "description": "Probe your endpoints from 20+ global locations before your users notice.",
+        "setup-action": "Set up Synthetic Monitoring",
         "title": "Watch your cluster from outside"
       },
       "title": "Recommendations for your stack"

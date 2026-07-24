@@ -181,6 +181,7 @@ export enum AccessControlAction {
 
   PluginsInstall = 'plugins:install',
   PluginsWrite = 'plugins:write',
+  PluginsAppAccess = 'plugins.app:access',
 
   // Settings
   SettingsRead = 'settings:read',
