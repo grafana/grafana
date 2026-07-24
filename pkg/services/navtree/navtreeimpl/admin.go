@@ -52,9 +52,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/admin/migrate-to-cloud",
 		})
 	}
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if c.HasRole(identity.RoleAdmin) &&
-		s.features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+	if c.HasRole(identity.RoleAdmin) {
 		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 			Text:     "Provisioning",
 			Id:       "provisioning",
