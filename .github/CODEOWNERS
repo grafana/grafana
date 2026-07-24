@@ -486,6 +486,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/panels-suite/panelEdit_transforms.spec.ts @grafana/datapro
 /e2e-playwright/panels-suite/logstable.spec.ts @grafana/observability-logs
 /e2e-playwright/plugin-e2e/ @grafana/data-sources-plugins
+/e2e-playwright/plugin-catalog-suite/ @grafana/grafana-frontend-platform
 /e2e-playwright/plugin-e2e/plugin-e2e-api-tests/ @grafana/grafana-catalog
 /e2e-playwright/smoke-tests-suite/ @grafana/grafana-frontend-platform
 /e2e-playwright/start-server @grafana/grafana-frontend-platform
