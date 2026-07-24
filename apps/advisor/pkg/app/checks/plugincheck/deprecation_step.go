@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/translations"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 )
@@ -22,16 +23,15 @@ type deprecationStep struct {
 }
 
 func (s *deprecationStep) Title() string {
-	return "Deprecation check"
+	return translations.StepTitle(CheckID, DeprecationStepID)
 }
 
 func (s *deprecationStep) Description() string {
-	return "Check if any installed plugins are deprecated."
+	return translations.StepDescription(CheckID, DeprecationStepID)
 }
 
 func (s *deprecationStep) Resolution() string {
-	return "Check the <a href='https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do'" +
-		"target=_blank>documentation</a> for recommended steps or delete the plugin."
+	return translations.StepResolution(CheckID, DeprecationStepID)
 }
 
 func (s *deprecationStep) ID() string {
@@ -66,7 +66,7 @@ func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *adviso
 			p.ID,
 			[]advisor.CheckErrorLink{
 				{
-					Message: "View plugin",
+					Message: translations.LinkMessage("view-plugin"),
 					Url:     fmt.Sprintf("/plugins/%s", p.ID),
 				},
 			},

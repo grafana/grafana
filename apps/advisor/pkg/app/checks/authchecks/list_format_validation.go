@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/translations"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/util"
@@ -37,15 +38,15 @@ func (s *listFormatValidation) ID() string {
 }
 
 func (s *listFormatValidation) Title() string {
-	return "SSO List Setting Format Validation"
+	return translations.StepTitle(CheckID, ListFormatValidationStepID)
 }
 
 func (s *listFormatValidation) Description() string {
-	return "Checks if list configs in SSO settings are in a valid list format (space-separated, comma-separated or JSON array)."
+	return translations.StepDescription(CheckID, ListFormatValidationStepID)
 }
 
 func (s *listFormatValidation) Resolution() string {
-	return "Configure the relevant SSO setting using a valid format, like space-separated (\"opt1 opt2\"), comma-separated values (\"opt1, opt2\") or JSON array format ([\"opt1\", \"opt2\"])."
+	return translations.StepResolution(CheckID, ListFormatValidationStepID)
 }
 
 func (s *listFormatValidation) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, objToCheck any) ([]advisor.CheckReportFailure, error) {
@@ -97,11 +98,11 @@ func (s *listFormatValidation) generateLinks(provider string) []advisor.CheckErr
 	return []advisor.CheckErrorLink{
 		{
 			Url:     fmt.Sprintf("https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/%s", strings.ReplaceAll(provider, "_", "-")),
-			Message: "Check the documentation",
+			Message: translations.LinkMessage("check-the-documentation"),
 		},
 		{
 			Url:     fmt.Sprintf("/admin/authentication/%s", provider),
-			Message: "Configure provider",
+			Message: translations.LinkMessage("configure-provider"),
 		},
 	}
 }

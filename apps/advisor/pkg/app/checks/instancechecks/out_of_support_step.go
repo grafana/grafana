@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/translations"
 )
 
 var _ checks.Step = &outOfSupportVersionStep{}
@@ -26,18 +27,15 @@ type outOfSupportVersionStep struct {
 }
 
 func (s *outOfSupportVersionStep) Title() string {
-	return "Grafana version check"
+	return translations.StepTitle(CheckID, outOfSupportVersion)
 }
 
 func (s *outOfSupportVersionStep) Description() string {
-	return "Check if the current Grafana version is out of support."
+	return translations.StepDescription(CheckID, outOfSupportVersion)
 }
 
 func (s *outOfSupportVersionStep) Resolution() string {
-	return "Out of support versions will not receive security updates or bug fixes. " +
-		"Upgrade to a more recent version. " +
-		"<a href='https://grafana.com/docs/grafana/latest/upgrade-guide/when-to-upgrade/#what-to-know-about-version-support' target='_blank'>" +
-		"Learn more about version support</a>."
+	return translations.StepResolution(CheckID, outOfSupportVersion)
 }
 
 func (s *outOfSupportVersionStep) ID() string {
