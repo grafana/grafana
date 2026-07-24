@@ -124,20 +124,12 @@ describe('FolderReadmePanel', () => {
   describe('documentation tabs', () => {
     it('renders a tab per recognized convention doc, GitHub-style', () => {
       setDocs({
-        docs: [
-          readmeDoc,
-          doc('code-of-conduct', 'CODE_OF_CONDUCT.md'),
-          doc('contributing', 'CONTRIBUTING.md'),
-          doc('license', 'LICENSE'),
-          doc('security', 'SECURITY.md'),
-        ],
+        docs: [readmeDoc, doc('contributing', 'CONTRIBUTING.md'), doc('security', 'SECURITY.md')],
       });
       setup();
 
       expect(screen.getByRole('tab', { name: 'README' })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: 'Code of conduct' })).toBeInTheDocument();
       expect(screen.getByRole('tab', { name: 'Contributing' })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: 'License' })).toBeInTheDocument();
       expect(screen.getByRole('tab', { name: 'Security' })).toBeInTheDocument();
     });
 

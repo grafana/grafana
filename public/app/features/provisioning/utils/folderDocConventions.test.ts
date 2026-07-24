@@ -23,10 +23,10 @@ describe('findFolderDocs', () => {
   });
 
   it('recognizes alternative file names for a convention', () => {
-    // A plain LICENSE file (no extension) still maps to the License tab.
-    const docs = findFolderDocs(['dashboards/team-a/LICENSE'], 'dashboards/team-a');
+    // A README without the .md extension still maps to the README tab.
+    const docs = findFolderDocs(['dashboards/team-a/README'], 'dashboards/team-a');
     expect(docs).toHaveLength(1);
-    expect(docs[0].convention.key).toBe('license');
+    expect(docs[0].convention.key).toBe('readme');
   });
 
   it('ignores docs in sub-folders or parent folders', () => {
@@ -60,9 +60,7 @@ describe('findFolderDocs', () => {
 
 describe('getFolderDocLabel', () => {
   it('returns the GitHub tab label for every convention', () => {
-    const labels = (['readme', 'code-of-conduct', 'contributing', 'license', 'security'] as const).map(
-      getFolderDocLabel
-    );
-    expect(labels).toEqual(['README', 'Code of conduct', 'Contributing', 'License', 'Security']);
+    const labels = (['readme', 'contributing', 'security'] as const).map(getFolderDocLabel);
+    expect(labels).toEqual(['README', 'Contributing', 'Security']);
   });
 });

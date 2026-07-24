@@ -4499,9 +4499,7 @@
       "load-error-title": "Couldn't load README",
       "panel-label": "Folder documentation",
       "parse-error": "Unable to display README content.",
-      "tab-code-of-conduct": "Code of conduct",
       "tab-contributing": "Contributing",
-      "tab-license": "License",
       "tab-readme": "README",
       "tab-security": "Security"
     },

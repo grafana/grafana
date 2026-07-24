@@ -2,11 +2,11 @@ import { t } from '@grafana/i18n';
 
 /**
  * Folder documentation conventions, ordered the way GitHub surfaces them as
- * tabs above a repository's README: README, Code of conduct, Contributing,
- * License, Security. Grafana recognizes the same community-health filenames
- * inside a provisioned folder and promotes each present file into a tab.
+ * tabs above a repository's README: README, Contributing, Security. Grafana
+ * recognizes the same community-health filenames inside a provisioned folder
+ * and promotes each present file into a tab.
  */
-export type FolderDocKey = 'readme' | 'code-of-conduct' | 'contributing' | 'license' | 'security';
+export type FolderDocKey = 'readme' | 'contributing' | 'security';
 
 export interface FolderDocConvention {
   key: FolderDocKey;
@@ -18,9 +18,7 @@ export interface FolderDocConvention {
 
 export const FOLDER_DOC_CONVENTIONS: FolderDocConvention[] = [
   { key: 'readme', fileName: 'README.md', matches: ['README.md', 'README.markdown', 'README'] },
-  { key: 'code-of-conduct', fileName: 'CODE_OF_CONDUCT.md', matches: ['CODE_OF_CONDUCT.md'] },
   { key: 'contributing', fileName: 'CONTRIBUTING.md', matches: ['CONTRIBUTING.md'] },
-  { key: 'license', fileName: 'LICENSE', matches: ['LICENSE', 'LICENSE.md', 'LICENSE.txt', 'COPYING'] },
   { key: 'security', fileName: 'SECURITY.md', matches: ['SECURITY.md'] },
 ];
 
@@ -35,12 +33,8 @@ export function getFolderDocLabel(key: FolderDocKey): string {
   switch (key) {
     case 'readme':
       return t('browse-dashboards.readme.tab-readme', 'README');
-    case 'code-of-conduct':
-      return t('browse-dashboards.readme.tab-code-of-conduct', 'Code of conduct');
     case 'contributing':
       return t('browse-dashboards.readme.tab-contributing', 'Contributing');
-    case 'license':
-      return t('browse-dashboards.readme.tab-license', 'License');
     case 'security':
       return t('browse-dashboards.readme.tab-security', 'Security');
   }
