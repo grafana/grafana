@@ -9,12 +9,18 @@ import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import { useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import HomePage from './HomePage';
 import { homepageViewed } from './analytics/main';
 
+jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
+  ...jest.requireActual('app/features/alerting/unified/hooks/usePluginBridge'),
+  useIrmPlugin: jest.fn(),
+}));
 jest.mock('./analytics/main', () => ({
   ctaClicked: jest.fn(),
   tabChanged: jest.fn(),
@@ -25,9 +31,12 @@ jest.mock('./analytics/main', () => ({
 setBackendSrv(backendSrv);
 setupMockServer();
 
+const mockUseIrmPlugin = jest.mocked(useIrmPlugin);
+
 beforeEach(() => {
   jest.clearAllMocks();
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
+  mockUseIrmPlugin.mockReturnValue({ pluginId: SupportedPlugin.Incident, installed: false, loading: false });
 
   // Deny alerting permission so the FiringAlertsCard renders null
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
@@ -175,6 +184,16 @@ describe('HomePage', () => {
 
   it('renders a skeleton instead of the page content while extensions are loading', async () => {
     setPluginComponentsHook(() => ({ components: [], isLoading: true }));
+
+    render(<HomePage />);
+
+    expect(await screen.findByTestId('home-page-skeleton')).toBeInTheDocument();
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
+  });
+
+  it('renders a skeleton instead of the page content while incidents plugin is loading', async () => {
+    mockUseIrmPlugin.mockReturnValue({ pluginId: SupportedPlugin.Incident, installed: undefined, loading: true });
 
     render(<HomePage />);
 
