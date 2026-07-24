@@ -5,6 +5,7 @@ import { render } from 'test/test-utils';
 import { type ScopedVars } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import {
@@ -136,6 +137,32 @@ describe('DownloadDashboardDiagnostics', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
 
     expect(onDismiss).toHaveBeenCalledTimes(1);
+    expect(downloadDashboardDiagnostics).not.toHaveBeenCalled();
+  });
+
+  it('does not start a job when cancelled while panel queries are still being interpolated', async () => {
+    // Park the flow inside the interpolation phase: collectDashboardPanels awaits the datasource
+    // lookup, so holding this promise keeps execution before any job is started.
+    let resolveLookup!: () => void;
+    const pendingLookup = new Promise((resolve) => {
+      resolveLookup = () => resolve({ interpolateVariablesInQueries });
+    });
+    jest.mocked(getDataSourceInstance).mockReturnValueOnce(pendingLookup as ReturnType<typeof getDataSourceInstance>);
+    const onDismiss = jest.fn();
+    const { tab } = setupScenario({ onDismiss });
+
+    render(<tab.Component model={tab} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+    // Cancel while interpolation is still in flight; the abort controller now exists (created before
+    // collectDashboardPanels), so this must abort it rather than no-op against a null ref.
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+
+    // Let interpolation finish: the aborted controller must stop the flow before it starts a job.
+    resolveLookup();
+    await screen.findByRole('button', { name: 'Download diagnostics' });
+
+    expect(startDashboardDiagnostics).not.toHaveBeenCalled();
     expect(downloadDashboardDiagnostics).not.toHaveBeenCalled();
   });
 

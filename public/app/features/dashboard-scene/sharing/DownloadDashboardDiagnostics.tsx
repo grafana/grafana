@@ -168,13 +168,20 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
     if (!dashboard) {
       return;
     }
+    // Create the controller before collecting panels: interpolation awaits datasource round trips,
+    // so a cancel or drawer unmount during that phase must abort here rather than no-op against a
+    // null ref and let backend generation start after the UI is gone.
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     const panels = await collectDashboardPanels(dashboard);
+    if (controller.signal.aborted) {
+      return;
+    }
     if (panels.length === 0) {
       throw new Error(t('dashboard.diagnostics.no-panels', 'This dashboard has no panels with active queries.'));
     }
 
-    const controller = new AbortController();
-    abortRef.current = controller;
     setProgress({ done: 0, total: panels.length });
 
     const uid = await startDashboardDiagnostics(panels, dashboard.getSaveModel(), controller.signal);
