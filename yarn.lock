@@ -2177,7 +2177,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/assistant@npm:0.1.26, @grafana/assistant@npm:^0.1.24":
+"@grafana/assistant@npm:0.1.26":
   version: 0.1.26
   resolution: "@grafana/assistant@npm:0.1.26"
   peerDependencies:
@@ -2189,6 +2189,23 @@ __metadata:
     react: ">=18.0.0"
     rxjs: ">=7.0.0"
   checksum: 10/b30da25718610bef2a801618534a5f06c58be5bfd5e7544ce824740e2b08b7fb2c672e3a9f37dd87762ef4347ab3acc2af75668e9830c5f71d1b6e75324dae2a
+  languageName: node
+  linkType: hard
+
+"@grafana/assistant@npm:^0.1.24":
+  version: 0.1.29
+  resolution: "@grafana/assistant@npm:0.1.29"
+  dependencies:
+    json-schema-to-ts: "npm:^3.1.1"
+  peerDependencies:
+    "@emotion/css": ">=11.0.0"
+    "@grafana/data": ">=12.1.0"
+    "@grafana/runtime": ">=12.1.0"
+    "@grafana/schema": ">=12.1.0"
+    "@grafana/ui": ">=12.1.0"
+    react: ">=18.0.0"
+    rxjs: ">=7.0.0"
+  checksum: 10/a5cd4d6394c6dc12f7b0ea1b88fb3bf11859bc3546f02c42619ee3932299e611609f311c40e11441cdabbd6e47980713504a342a686fc0a6b85bb9eb5fa1f515
   languageName: node
   linkType: hard
 
@@ -21963,6 +21980,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"json-schema-to-ts@npm:^3.1.1":
+  version: 3.1.1
+  resolution: "json-schema-to-ts@npm:3.1.1"
+  dependencies:
+    "@babel/runtime": "npm:^7.18.3"
+    ts-algebra: "npm:^2.0.0"
+  checksum: 10/9fd0490279d36ff8b4604cc10632df05e4e5f5ee1d0a77841c927623fc1e636c47eb4ace488018c4e9a2e7e5dde5520d0870e06dfc84b930d9c98c6eacd0f041
+  languageName: node
+  linkType: hard
+
 "json-schema-to-typescript@npm:15.0.4":
   version: 15.0.4
   resolution: "json-schema-to-typescript@npm:15.0.4"
@@ -31497,6 +31524,13 @@ __metadata:
   version: 2.2.0
   resolution: "trough@npm:2.2.0"
   checksum: 10/999c1cb3db6ec63e1663f911146a90125065da37f66ba342b031d53edb22a62f56c1f934bbc61a55b2b29dd74207544cfd78875b414665c1ffadcd9a9a009eeb
+  languageName: node
+  linkType: hard
+
+"ts-algebra@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "ts-algebra@npm:2.0.0"
+  checksum: 10/b970eef64ca9594a77337e03b9c1732c1b7a0d2c4d316638b654e921a47b40c4cc42f41821445e9e54408d5dfdf4ecca27ffa59554373033b9c92dee8b52066d
   languageName: node
   linkType: hard
 
