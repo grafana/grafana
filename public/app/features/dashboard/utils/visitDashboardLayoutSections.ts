@@ -2,7 +2,7 @@ import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema
 
 export type DashboardLayout = DashboardV2Spec['layout'];
 
-export interface SectionVariablesContext {
+interface SectionVariablesContext {
   path: string;
   /** Human-readable breadcrumb, e.g. `Row: Servers` or `Tab: Overview › Row: Metrics`. */
   scopeLabel: string;
