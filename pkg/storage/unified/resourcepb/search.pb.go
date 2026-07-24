@@ -1029,10 +1029,10 @@ type HybridSearchResult struct {
 	Title string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	// Folder UID.
 	Folder string `protobuf:"bytes,3,opt,name=folder,proto3" json:"folder,omitempty"`
-	// Relevance: higher = better; scale is backend-defined. With a reranker
-	// configured this is the calibrated cross-encoder relevance (roughly
-	// 0-1); otherwise it is the RRF fusion score. Opaque ordering signal;
-	// NOT comparable to VectorSearchResult.score (raw cosine distance).
+	// Relevance: higher = higher quality/score threshold. High thresholds may return far less results. `low` is a recommended starting point.
+	// With a reranker configured this is the calibrated cross-encoder relevance (roughly
+	// 0-1); otherwise it is the RRF fusion score.
+	// This is NOT comparable to VectorSearchResult.score (raw cosine distance).
 	Score float64 `protobuf:"fixed64,4,opt,name=score,proto3" json:"score,omitempty"`
 	// Matching embedded chunks, best first, capped at 10 per result.
 	// One entry with subresource "" for resources embedded whole. For
