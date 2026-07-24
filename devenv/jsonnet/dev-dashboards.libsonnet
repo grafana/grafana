@@ -72,8 +72,6 @@
     "live-publish": (import '../dev-dashboards/live/live-publish.json'),
     "live-streams": (import '../dev-dashboards/live/live-streams.json'),
     "logs-table": (import '../dev-dashboards/panel-logstable/logs-table.json'),
-    "loki_fakedata": (import '../dev-dashboards/datasource-loki/loki_fakedata.json'),
-    "loki_query_splitting": (import '../dev-dashboards/datasource-loki/loki_query_splitting.json'),
     "migrations": (import '../dev-dashboards/migrations/migrations.json'),
     "mostly-blank-dashboard": (import '../dev-dashboards/scenarios/mostly-blank-dashboard.json'),
     "multi-lane-annotations": (import '../dev-dashboards/annotations/multi-lane-annotations.json'),
