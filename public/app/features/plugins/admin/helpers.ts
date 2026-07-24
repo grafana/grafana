@@ -66,8 +66,8 @@ export function mergeLocalsAndRemotes({
   // add remote
   remote.forEach((remotePlugin) => {
     const localCounterpart = localMap.get(remotePlugin.slug);
-    const error = errorByPluginId[remotePlugin.slug];
     const canonicalId = localCounterpart?.id ?? remotePlugin.slug;
+    const error = errorByPluginId[canonicalId] ?? errorByPluginId[remotePlugin.slug];
     const shouldSkip =
       (remotePlugin.status === RemotePluginStatus.Deprecated && !localCounterpart) || // We are only listing deprecated plugins in case they are installed.
       emittedCanonicalIds.has(canonicalId);
