@@ -68,6 +68,9 @@ export class KeybindingSrv {
       // 'change pseudo locale'
       this.bind('c p l', () => togglePseudoLocale());
     }
+    this.bind('g k', () => {
+      this.chromeService.onToggleKioskMode();
+    });
   }
 
   bindGlobalEsc() {
@@ -396,10 +399,6 @@ export class KeybindingSrv {
 
     this.bind('d s', () => {
       this.showDashEditView();
-    });
-
-    this.bind('d k', () => {
-      this.chromeService.onToggleKioskMode();
     });
 
     //Autofit panels
