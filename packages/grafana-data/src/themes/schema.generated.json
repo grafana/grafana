@@ -22,27 +22,52 @@
           "type": "object",
           "properties": {
             "name": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "primary",
+                "secondary",
+                "tertiary",
+                "accent",
+                "info",
+                "success",
+                "error",
+                "warning"
+              ]
             },
             "main": {
               "type": "string"
             },
-            "shade": {
+            "mainEmphasis": {
+              "type": "string"
+            },
+            "background": {
+              "type": "string"
+            },
+            "backgroundEmphasis": {
               "type": "string"
             },
             "text": {
               "type": "string"
             },
+            "textEmphasis": {
+              "type": "string"
+            },
             "border": {
+              "type": "string"
+            },
+            "borderEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
+              "type": "string"
+            },
+            "shade": {
               "type": "string"
             },
             "transparent": {
               "type": "string"
             },
             "borderTransparent": {
-              "type": "string"
-            },
-            "contrastText": {
               "type": "string"
             }
           },
@@ -52,27 +77,52 @@
           "type": "object",
           "properties": {
             "name": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "primary",
+                "secondary",
+                "tertiary",
+                "accent",
+                "info",
+                "success",
+                "error",
+                "warning"
+              ]
             },
             "main": {
               "type": "string"
             },
-            "shade": {
+            "mainEmphasis": {
+              "type": "string"
+            },
+            "background": {
+              "type": "string"
+            },
+            "backgroundEmphasis": {
               "type": "string"
             },
             "text": {
               "type": "string"
             },
+            "textEmphasis": {
+              "type": "string"
+            },
             "border": {
+              "type": "string"
+            },
+            "borderEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
+              "type": "string"
+            },
+            "shade": {
               "type": "string"
             },
             "transparent": {
               "type": "string"
             },
             "borderTransparent": {
-              "type": "string"
-            },
-            "contrastText": {
               "type": "string"
             }
           },
@@ -82,27 +132,52 @@
           "type": "object",
           "properties": {
             "name": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "primary",
+                "secondary",
+                "tertiary",
+                "accent",
+                "info",
+                "success",
+                "error",
+                "warning"
+              ]
             },
             "main": {
               "type": "string"
             },
-            "shade": {
+            "mainEmphasis": {
+              "type": "string"
+            },
+            "background": {
+              "type": "string"
+            },
+            "backgroundEmphasis": {
               "type": "string"
             },
             "text": {
               "type": "string"
             },
+            "textEmphasis": {
+              "type": "string"
+            },
             "border": {
+              "type": "string"
+            },
+            "borderEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
+              "type": "string"
+            },
+            "shade": {
               "type": "string"
             },
             "transparent": {
               "type": "string"
             },
             "borderTransparent": {
-              "type": "string"
-            },
-            "contrastText": {
               "type": "string"
             }
           },
@@ -112,27 +187,52 @@
           "type": "object",
           "properties": {
             "name": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "primary",
+                "secondary",
+                "tertiary",
+                "accent",
+                "info",
+                "success",
+                "error",
+                "warning"
+              ]
             },
             "main": {
               "type": "string"
             },
-            "shade": {
+            "mainEmphasis": {
+              "type": "string"
+            },
+            "background": {
+              "type": "string"
+            },
+            "backgroundEmphasis": {
               "type": "string"
             },
             "text": {
               "type": "string"
             },
+            "textEmphasis": {
+              "type": "string"
+            },
             "border": {
+              "type": "string"
+            },
+            "borderEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
+              "type": "string"
+            },
+            "shade": {
               "type": "string"
             },
             "transparent": {
               "type": "string"
             },
             "borderTransparent": {
-              "type": "string"
-            },
-            "contrastText": {
               "type": "string"
             }
           },
@@ -142,27 +242,52 @@
           "type": "object",
           "properties": {
             "name": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "primary",
+                "secondary",
+                "tertiary",
+                "accent",
+                "info",
+                "success",
+                "error",
+                "warning"
+              ]
             },
             "main": {
               "type": "string"
             },
-            "shade": {
+            "mainEmphasis": {
+              "type": "string"
+            },
+            "background": {
+              "type": "string"
+            },
+            "backgroundEmphasis": {
               "type": "string"
             },
             "text": {
               "type": "string"
             },
+            "textEmphasis": {
+              "type": "string"
+            },
             "border": {
+              "type": "string"
+            },
+            "borderEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
+              "type": "string"
+            },
+            "shade": {
               "type": "string"
             },
             "transparent": {
               "type": "string"
             },
             "borderTransparent": {
-              "type": "string"
-            },
-            "contrastText": {
               "type": "string"
             }
           },
@@ -172,27 +297,52 @@
           "type": "object",
           "properties": {
             "name": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "primary",
+                "secondary",
+                "tertiary",
+                "accent",
+                "info",
+                "success",
+                "error",
+                "warning"
+              ]
             },
             "main": {
               "type": "string"
             },
-            "shade": {
+            "mainEmphasis": {
+              "type": "string"
+            },
+            "background": {
+              "type": "string"
+            },
+            "backgroundEmphasis": {
               "type": "string"
             },
             "text": {
               "type": "string"
             },
+            "textEmphasis": {
+              "type": "string"
+            },
             "border": {
+              "type": "string"
+            },
+            "borderEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
+              "type": "string"
+            },
+            "shade": {
               "type": "string"
             },
             "transparent": {
               "type": "string"
             },
             "borderTransparent": {
-              "type": "string"
-            },
-            "contrastText": {
               "type": "string"
             }
           },
@@ -202,27 +352,52 @@
           "type": "object",
           "properties": {
             "name": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "primary",
+                "secondary",
+                "tertiary",
+                "accent",
+                "info",
+                "success",
+                "error",
+                "warning"
+              ]
             },
             "main": {
               "type": "string"
             },
-            "shade": {
+            "mainEmphasis": {
+              "type": "string"
+            },
+            "background": {
+              "type": "string"
+            },
+            "backgroundEmphasis": {
               "type": "string"
             },
             "text": {
               "type": "string"
             },
+            "textEmphasis": {
+              "type": "string"
+            },
             "border": {
+              "type": "string"
+            },
+            "borderEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
+              "type": "string"
+            },
+            "shade": {
               "type": "string"
             },
             "transparent": {
               "type": "string"
             },
             "borderTransparent": {
-              "type": "string"
-            },
-            "contrastText": {
               "type": "string"
             }
           },
@@ -232,27 +407,52 @@
           "type": "object",
           "properties": {
             "name": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "primary",
+                "secondary",
+                "tertiary",
+                "accent",
+                "info",
+                "success",
+                "error",
+                "warning"
+              ]
             },
             "main": {
               "type": "string"
             },
-            "shade": {
+            "mainEmphasis": {
+              "type": "string"
+            },
+            "background": {
+              "type": "string"
+            },
+            "backgroundEmphasis": {
               "type": "string"
             },
             "text": {
               "type": "string"
             },
+            "textEmphasis": {
+              "type": "string"
+            },
             "border": {
+              "type": "string"
+            },
+            "borderEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
+              "type": "string"
+            },
+            "shade": {
               "type": "string"
             },
             "transparent": {
               "type": "string"
             },
             "borderTransparent": {
-              "type": "string"
-            },
-            "contrastText": {
               "type": "string"
             }
           },
@@ -799,6 +999,30 @@
               "type": "string"
             },
             "text": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "checkbox": {
+          "type": "object",
+          "properties": {
+            "activeBackground": {
+              "type": "string"
+            },
+            "activeBackgroundHover": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "switch": {
+          "type": "object",
+          "properties": {
+            "activeBackground": {
+              "type": "string"
+            },
+            "activeBackgroundHover": {
               "type": "string"
             }
           },

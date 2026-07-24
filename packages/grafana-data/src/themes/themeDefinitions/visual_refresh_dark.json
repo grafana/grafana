@@ -11,34 +11,63 @@
       "elevated": "palette.ink750"
     },
     "primary": {
-      "main": "palette.ink100"
+      "main": "palette.ink100",
+      "background": "palette.ink600",
+      "border": "palette.ink100"
     },
     "secondary": {
       "main": "palette.ink700",
+      "background": "palette.ink700",
       "border": "palette.ink600",
       "text": "palette.ink200",
       "contrastText": "palette.ink200"
     },
     "tertiary": {
-      "main": "palette.violet400"
+      "main": "palette.violet400",
+      "text": "palette.violet400",
+      "textEmphasis": "palette.violet300",
+      "background": "palette.violet950",
+      "backgroundEmphasis": "palette.violet900",
+      "border": "palette.violet900"
     },
     "accent": {
-      "main": "palette.orange500"
+      "main": "palette.orange500",
+      "text": "palette.orange500",
+      "textEmphasis": "palette.orange400",
+      "background": "palette.orange950",
+      "backgroundEmphasis": "palette.orange900",
+      "border": "palette.orange900"
     },
     "error": {
-      "main": "palette.coral400",
-      "border": "palette.coral900"
+      "main": "palette.red400",
+      "text": "palette.red400",
+      "textEmphasis": "palette.red300",
+      "background": "palette.red950",
+      "backgroundEmphasis": "palette.red800",
+      "border": "palette.red800"
     },
     "warning": {
       "main": "palette.amber400",
+      "text": "palette.amber400",
+      "textEmphasis": "palette.amber300",
+      "background": "palette.amber950",
+      "backgroundEmphasis": "palette.amber900",
       "border": "palette.amber900"
     },
     "success": {
       "main": "palette.sage400",
+      "text": "palette.sage400",
+      "textEmphasis": "palette.sage300",
+      "background": "palette.sage950",
+      "backgroundEmphasis": "palette.sage900",
       "border": "palette.sage900"
     },
     "info": {
       "main": "palette.blue400",
+      "text": "palette.blue400",
+      "textEmphasis": "palette.blue300",
+      "background": "palette.blue950",
+      "backgroundEmphasis": "palette.blue900",
       "border": "palette.blue900"
     },
     "text": {
@@ -70,6 +99,12 @@
     "borderRadiusLg": 12
   },
   "components": {
+    "checkbox": {
+      "activeBackgroundHover": "palette.orange400"
+    },
+    "switch": {
+      "activeBackgroundHover": "palette.orange400"
+    },
     "input": {
       "background": "palette.ink850"
     },
