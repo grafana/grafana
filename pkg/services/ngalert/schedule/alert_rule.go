@@ -386,7 +386,9 @@ func (a *alertRule) Run() error {
 				// Clean up the state and send resolved notifications for firing alerts only if the reason for stopping
 				// the evaluation loop is that the rule was deleted.
 				stateTransitions := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key.AlertRuleKey), a.key, ngmodels.StateReasonRuleDeleted)
-				a.expireAndSend(grafanaCtx, stateTransitions)
+				// Use the cleanup context: grafanaCtx is already done here, and sending
+				// resolved notifications with a cancelled context drops them silently.
+				a.expireAndSend(ctx, stateTransitions)
 				return nil
 			}
 			// Otherwise, just clean up the cache.
