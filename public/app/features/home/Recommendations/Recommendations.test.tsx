@@ -182,7 +182,7 @@ describe('Recommendations', () => {
     render(<Recommendations />);
 
     const setupLink = await screen.findByRole('link', { name: /Set up Synthetic Monitoring/, hidden: true });
-    expect(setupLink).toHaveAttribute('href', '/a/grafana-synthetic-monitoring-app');
+    expect(setupLink).toHaveAttribute('href', '/a/grafana-synthetic-monitoring-app/home');
     expect(screen.queryByRole('link', { name: /Enable Hosted Traces/, hidden: true })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Add Synthetic Monitoring/, hidden: true })).not.toBeInTheDocument();
   });
