@@ -138,7 +138,7 @@ await expect(titleInput).toHaveValue(newTitle);
 
 ## Migration Status
 
-**18 of 30 specs migrated.** Non-migrated specs are listed by descending selectors usage count (a rough proxy for migration effort). "Selectors usage count" is the number of times the spec accesses the `selectors` object (`selectors.components...`, `selectors.pages...`, etc.).
+**19 of 30 specs migrated.** Non-migrated specs are listed by descending selectors usage count (a rough proxy for migration effort). "Selectors usage count" is the number of times the spec accesses the `selectors` object (`selectors.components...`, `selectors.pages...`, etc.).
 
 | Spec                                                  | Status      | Lines of code | Selectors usage count |
 | ----------------------------------------------------- | ----------- | ------------- | --------------------- |
@@ -162,7 +162,7 @@ await expect(titleInput).toHaveValue(newTitle);
 | `dashboards-edit-variables.spec.ts`                   | Migrated    | —             | —                     |
 | `dashboard-tabs-scroll.spec.ts`                       | Not started | 150           | 12                    |
 | `dashboards-repeats-snapshots.spec.ts`                | Not started | 117           | 11                    |
-| `dashboards-move-panel.spec.ts`                       | Not started | 120           | 9                     |
+| `dashboards-move-panel.spec.ts`                       | Migrated    | —             | —                     |
 | `dashboard-conditional-rendering-load-change.spec.ts` | Not started | 459           | 8                     |
 | `dashboards-edit-custom-variables.spec.ts`            | Migrated    | —             | —                     |
 | `dashboards-edit-query-variables.spec.ts`             | Migrated    | —             | —                     |
