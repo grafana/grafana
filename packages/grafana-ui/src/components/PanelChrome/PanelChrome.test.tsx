@@ -167,6 +167,16 @@ it('renders streaming indicator in the panel header if loadingState is streaming
   setup({ loadingState: LoadingState.Streaming });
 
   expect(screen.getByTestId('panel-streaming')).toBeInTheDocument();
+  expect(screen.getByRole('status', { name: 'Streaming data' })).toBeInTheDocument();
+});
+
+it('renders streaming indicator as stop button if cancel callback is provided', async () => {
+  const onCancelQuery = jest.fn();
+  const { user } = setup({ loadingState: LoadingState.Streaming, onCancelQuery });
+
+  await user.click(screen.getByRole('button', { name: 'Stop streaming' }));
+
+  expect(onCancelQuery).toHaveBeenCalledTimes(1);
 });
 
 it('collapses the controlled panel when user clicks on the chevron or the title', async () => {
