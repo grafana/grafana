@@ -100,7 +100,7 @@ describe('homeToAlertInsight journey wiring', () => {
   it('does not start a journey for view_all_rules (no data-settled signal on the rule list)', () => {
     loadWiring();
 
-    simulateInteraction(CARD_CLICKED, { action: 'view_all_rules', placement: 'footer' });
+    simulateInteraction(CARD_CLICKED, { surface: 'alerts_card', action: 'view_all_rules', placement: 'footer' });
 
     expect(mockTracker.startJourney).not.toHaveBeenCalled();
   });
@@ -108,7 +108,12 @@ describe('homeToAlertInsight journey wiring', () => {
   it('does not start a journey for a new-tab (Cmd/Ctrl) click', () => {
     loadWiring();
 
-    simulateInteraction(CARD_CLICKED, { action: 'alert_detail', placement: 'list', new_tab: true });
+    simulateInteraction(CARD_CLICKED, {
+      surface: 'alerts_card',
+      action: 'alert_detail',
+      placement: 'list',
+      new_tab: true,
+    });
 
     expect(mockTracker.startJourney).not.toHaveBeenCalled();
   });
@@ -185,7 +190,6 @@ describe('homeToAlertInsight journey wiring', () => {
 
     expect(mockHandle.end).not.toHaveBeenCalled();
   });
-
 
   it('starts a fresh journey on a second qualifying click (cancelOnRestart is tracker-side)', () => {
     loadWiring();

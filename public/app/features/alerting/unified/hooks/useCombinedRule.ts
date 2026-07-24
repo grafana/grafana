@@ -112,9 +112,11 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
     result: ruleLocation,
   } = useRuleLocation(ruleIdentifier);
 
+  const skipPromRuleNs = !ruleLocation || isLoadingRuleLocation;
   const {
     currentData: promRuleNs = [],
     isLoading: isLoadingPromRules,
+    isUninitialized: isUninitializedPromRules,
     error: promRuleNsError,
   } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery(
     {
@@ -125,7 +127,7 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
       limitAlerts,
     },
     {
-      skip: !ruleLocation || isLoadingRuleLocation,
+      skip: skipPromRuleNs,
       refetchOnMountOrArgChange: true,
     }
   );
@@ -144,7 +146,12 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
 
   const [
     fetchRulerRuleGroup,
-    { currentData: rulerRuleGroup, isLoading: isLoadingRulerGroup, error: rulerRuleGroupError },
+    {
+      currentData: rulerRuleGroup,
+      isLoading: isLoadingRulerGroup,
+      isUninitialized: isUninitializedRulerGroup,
+      error: rulerRuleGroupError,
+    },
   ] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
 
   useEffect(() => {
@@ -179,8 +186,22 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
     return matchingRule;
   }, [ruleIdentifier, ruleSourceName, promRuleNs, rulerRuleGroup, ruleSource, ruleLocation, namespaceName]);
 
+  // RTK reports isLoading=false while a query is uninitialized. The prom query starts only after
+  // the skip lifts, and the ruler group query is triggered from an effect — both leave a render
+  // where nothing is "loading" yet nothing has settled. Count those expected-but-not-started
+  // windows as loading so consumers (RuleViewer's one-shot CUJ signal) never latch a premature
+  // not_found/success.
+  const isPromRuleNsPending = !skipPromRuleNs && isUninitializedPromRules;
+  const isRulerGroupPending = Boolean(dsFeatures?.rulerConfig && ruleLocation) && isUninitializedRulerGroup;
+
   return {
-    loading: isLoadingRuleLocation || isLoadingDsFeatures || isLoadingPromRules || isLoadingRulerGroup,
+    loading:
+      isLoadingRuleLocation ||
+      isLoadingDsFeatures ||
+      isLoadingPromRules ||
+      isLoadingRulerGroup ||
+      isPromRuleNsPending ||
+      isRulerGroupPending,
     error: ruleLocationError ?? promRuleNsError ?? rulerRuleGroupError,
     result: rule,
   };

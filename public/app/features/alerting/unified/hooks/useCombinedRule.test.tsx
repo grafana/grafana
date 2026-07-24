@@ -1,4 +1,4 @@
-import { HttpResponse, http } from 'msw';
+import { HttpResponse, delay, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
@@ -189,6 +189,66 @@ describe('useCombinedRule', () => {
       expect(screen.getByTestId('result')).toHaveTextContent('has-result');
       expect(screen.getByTestId('prom')).toHaveTextContent('no-prom');
       expect(screen.getByTestId('namespace')).toHaveTextContent('my\\/folder');
+    });
+  });
+
+  describe('loading settledness', () => {
+    it('never reports loading=false before the ruler group fetch has started when caches are warm', async () => {
+      server.use(http.get('/api/ruler/grafana/api/v1/rule/:uid', () => HttpResponse.json(grafanaRulerRule)));
+      server.use(
+        http.get('/api/folders/:uid', () =>
+          HttpResponse.json({ uid: grafanaRulerNamespace.uid, title: grafanaRulerNamespace.name })
+        )
+      );
+      server.use(
+        http.get('/api/prometheus/grafana/api/v1/rules', () =>
+          HttpResponse.json({ status: 'success', data: { groups: [] } })
+        )
+      );
+      // Warm-up mount: cache the rule location, ds features and prom response, but leave the
+      // ruler group UNcached (404) — the state a user carries when navigating in from a list view.
+      server.use(
+        http.get('/api/ruler/grafana/api/v1/rules/:namespace/:group', () =>
+          HttpResponse.json({ error: 'rule group does not exist' }, { status: 404 })
+        )
+      );
+
+      // Stable reference, as real consumers provide (an inline literal would re-trigger
+      // useRuleLocation's memo and the ruler fetch effect on every render).
+      const ruleIdentifier: GrafanaRuleIdentifier = {
+        ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
+        uid: grafanaRulerRule.grafana_alert.uid,
+      };
+
+      const loadingHistory: boolean[] = [];
+      const Probe = () => {
+        const { loading } = useCombinedRule({ ruleIdentifier });
+        loadingHistory.push(loading);
+        return <div data-testid="loading">{loading ? 'loading' : 'not-loading'}</div>;
+      };
+
+      const { rerender } = render(<Probe key="warmup" />);
+      await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('not-loading'));
+
+      // Remount against the warm caches. The ruler group (now available, but slow) is the LAST
+      // fetch to start — triggered from an effect — so the first render sees location/prom settled
+      // from cache while the lazy ruler query is still uninitialized.
+      server.use(
+        http.get('/api/ruler/grafana/api/v1/rules/:namespace/:group', async () => {
+          await delay(100);
+          return HttpResponse.json(grafanaRulerGroup);
+        })
+      );
+      loadingHistory.length = 0;
+      rerender(<Probe key="remount" />);
+      await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('not-loading'));
+
+      // The remounted hook must report loading=true until the ruler group fetch settles. An early
+      // false (or a false -> true bounce) is the premature-settle window that RuleViewer's
+      // one-shot CUJ signal latches on.
+      const firstSettled = loadingHistory.indexOf(false);
+      expect(firstSettled).toBeGreaterThan(0);
+      expect(loadingHistory.slice(firstSettled)).not.toContain(true);
     });
   });
 });
