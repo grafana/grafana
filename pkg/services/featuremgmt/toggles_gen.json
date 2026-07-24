@@ -1042,16 +1042,19 @@
     {
       "metadata": {
         "name": "auditLoggingAppPlatform",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-12-29T15:28:29Z"
+        "resourceVersion": "1784025329122",
+        "creationTimestamp": "2025-12-29T15:28:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-14 10:35:29.122409 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable audit logging with Kubernetes under app platform",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "requiresRestart": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -1135,6 +1138,19 @@
         "stage": "GA",
         "codeowner": "@grafana/data-sources-plugins",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "azureMonitorBatchAPI",
+        "resourceVersion": "1782267315125",
+        "creationTimestamp": "2026-06-24T02:15:15Z"
+      },
+      "spec": {
+        "description": "Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "expression": "false"
       }
     },
     {
@@ -1552,7 +1568,8 @@
       "metadata": {
         "name": "dashboardAssistantPopover",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-23T18:07:04Z"
       },
       "spec": {
         "description": "Enables the assistant prompt popover on panel click in dashboard view mode",
@@ -1771,6 +1788,21 @@
     },
     {
       "metadata": {
+        "name": "dashboards.filterablePanels",
+        "resourceVersion": "1784277442129",
+        "creationTimestamp": "2026-07-17T08:37:22Z",
+        "deletionTimestamp": "2026-07-22T08:31:47Z"
+      },
+      "spec": {
+        "description": "Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashgpt",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2023-08-30T20:22:05Z",
@@ -1801,7 +1833,8 @@
       "metadata": {
         "name": "datasourceAPIServers",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-09-19T08:28:27Z"
+        "creationTimestamp": "2024-09-19T08:28:27Z",
+        "deletionTimestamp": "2026-07-21T07:41:20Z"
       },
       "spec": {
         "description": "Expose some datasources as apiservers.",
@@ -2089,7 +2122,8 @@
       "metadata": {
         "name": "elasticsearchCrossClusterSearch",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-12-12T22:20:04Z"
+        "creationTimestamp": "2024-12-12T22:20:04Z",
+        "deletionTimestamp": "2026-07-10T20:51:17Z"
       },
       "spec": {
         "description": "Enables cross cluster search in the Elasticsearch data source",
@@ -2436,6 +2470,20 @@
     },
     {
       "metadata": {
+        "name": "features.bulkFlagEvalFiltering",
+        "resourceVersion": "1784293594749",
+        "creationTimestamp": "2026-07-17T13:06:34Z"
+      },
+      "spec": {
+        "description": "Filters bulk OFREP flag evaluations to public-metadata flags only",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "feedbackButton",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-12-02T17:08:15Z",
@@ -2663,6 +2711,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.dynamicTraceToLogs",
+        "resourceVersion": "1784712177554",
+        "creationTimestamp": "2026-07-22T09:22:57Z"
+      },
+      "spec": {
+        "description": "Check for the existence of logs when linking from the Trace View",
+        "stage": "preview",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.enableScopesFirstMode",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -2673,6 +2735,34 @@
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.exploreMetricsSidebar",
+        "resourceVersion": "1784553980624",
+        "creationTimestamp": "2026-07-20T13:26:20Z"
+      },
+      "spec": {
+        "description": "Enables the sidebar in Explore metrics (Metrics Drilldown)",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.filterablePanels",
+        "resourceVersion": "1784637166683",
+        "creationTimestamp": "2026-07-21T12:32:46Z"
+      },
+      "spec": {
+        "description": "Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -2820,6 +2910,23 @@
         "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.newTextPanel",
+        "resourceVersion": "1784552406696",
+        "creationTimestamp": "2026-07-17T19:10:43Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-20 13:00:06.696376 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the new text panel",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
@@ -2974,11 +3081,14 @@
     {
       "metadata": {
         "name": "grafana.useDefaultScopesEndpoint",
-        "resourceVersion": "1783088074749",
-        "creationTimestamp": "2026-07-03T14:14:34Z"
+        "resourceVersion": "1784292490130",
+        "creationTimestamp": "2026-07-03T14:14:34Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-17 12:48:10.130812 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Use the find default scope endpoint to seed the initial scope selection when none is set and grafana.enableScopesFirstMode is enabled.",
+        "description": "Use the find default scope endpoint to seed the initial scope selection when none is set.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
@@ -3620,14 +3730,17 @@
     {
       "metadata": {
         "name": "kubernetesLibraryPanels",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-06-25T22:21:56Z"
+        "resourceVersion": "1784652599954",
+        "creationTimestamp": "2025-06-25T22:21:56Z",
+        "deletionTimestamp": "2026-07-21T16:51:34Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-21 16:49:59.954584 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Routes library panel requests from /api to the /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresRestart": true,
         "expression": "false"
       }
     },
@@ -3814,6 +3927,33 @@
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "libpanels.kubernetesLibraryPanels",
+        "resourceVersion": "1784652694911",
+        "creationTimestamp": "2026-07-21T16:51:34Z",
+        "deletionTimestamp": "2026-07-21T16:54:06Z"
+      },
+      "spec": {
+        "description": "Routes library panel requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "libraryelements.kubernetesLibraryPanels",
+        "resourceVersion": "1784652846634",
+        "creationTimestamp": "2026-07-21T16:54:06Z"
+      },
+      "spec": {
+        "description": "Routes library panel requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
         "expression": "false"
       }
     },
@@ -4208,6 +4348,24 @@
     },
     {
       "metadata": {
+        "name": "ofrep.bulkFlagEvalFiltering",
+        "resourceVersion": "1783006061209",
+        "creationTimestamp": "2026-07-02T15:25:13Z",
+        "deletionTimestamp": "2026-07-17T13:06:34Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-02 15:27:41.20966 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Filters bulk OFREP flag evaluations to public-metadata flags only",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "onlyStoreActionSets",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-10-20T15:02:56Z"
@@ -4411,7 +4569,8 @@
       "metadata": {
         "name": "playlistsReconciler",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-12-20T03:09:31Z"
+        "creationTimestamp": "2024-12-20T03:09:31Z",
+        "deletionTimestamp": "2026-07-16T15:23:31Z"
       },
       "spec": {
         "description": "Enables experimental reconciler for playlists",
@@ -4735,14 +4894,16 @@
     {
       "metadata": {
         "name": "provisioning.performance",
-        "resourceVersion": "1784190107345",
-        "creationTimestamp": "2026-07-16T08:21:47Z"
+        "resourceVersion": "1784287498952",
+        "creationTimestamp": "2026-07-16T08:21:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-17 11:24:58.952225 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresRestart": true,
         "expression": "false"
       }
     },

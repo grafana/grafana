@@ -296,7 +296,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			},
 		},
 		Query:  searchQuery,
-		Fields: []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole, fieldDisabled, resource.SEARCH_FIELD_CREATED, legacyIDField},
+		Fields: []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole, fieldDisabled, fieldExternalAuthModules, resource.SEARCH_FIELD_CREATED, legacyIDField},
 		// The query is a wildcard (*...*), so only Name is used from each
 		// QueryField to specify which fields to search in (Type and Boost
 		// are ignored for wildcard queries).
@@ -497,6 +497,12 @@ func parseUserHit(row *resourcepb.ResourceTableRow, colIdx map[string]int) iamv0
 	if b := cell(builders.USER_LAST_SEEN_AT); len(b) == 8 {
 		hit.LastSeenAt = int64(binary.BigEndian.Uint64(b))
 		hit.LastSeenAtAge = util.GetAgeString(time.Unix(hit.LastSeenAt, 0))
+	}
+	if b := cell(builders.USER_EXTERNAL_AUTH_MODULES); len(b) > 0 {
+		var modules []string
+		if err := json.Unmarshal(b, &modules); err == nil {
+			hit.ExternalAuthModules = modules
+		}
 	}
 
 	return hit

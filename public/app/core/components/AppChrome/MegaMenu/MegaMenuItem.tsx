@@ -165,12 +165,11 @@ export function MegaMenuItem({
   }
 
   // Whether to render the bookmark/pin control. With customisation off it's the legacy behaviour:
-  // every item shows it (gating lives in MegaMenuItemText). With it on: non-top-level items are
-  // pinnable, and a top-level section is pinnable when it has no children of its own (a leaf section
-  // like Explore) or is Starred (a special case) — but not a parent section (you pin its children).
+  // every item shows it (gating lives in MegaMenuItemText). With it on, any nav item is pinnable
+  // except Home and the dynamic starred sub-items (`starred/<uid>`) — including top-level sections,
+  // parents and leaves alike. (Bookmarks is already dropped from the tree when customising.)
   const isPinnableItem = link.id !== 'home' && !link.id?.startsWith(ID_PREFIX);
-  const isPinnableTopLevel = level > 0 || link.id === 'starred' || !linkHasChildren(link);
-  const showPin = !canCustomise || (isPinnableTopLevel && isPinnableItem);
+  const showPin = !canCustomise || isPinnableItem;
 
   return (
     <li ref={setItemRef} className={styles.listItem} {...draggableProvided?.draggableProps}>

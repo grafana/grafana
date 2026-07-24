@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 
 import {
   CoreApp,
-  type DataSourceInstanceSettings,
   type GrafanaTheme2,
   type IconName,
   type LinkModel,
@@ -13,16 +12,19 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getTraceToLogsOptions, type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
+import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
-import { type DataSourceJsonData, type DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 import { Button, DataLinkButton, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 export const RelatedProfilesTitle = 'Related profiles';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
-import { type SpanLinkDef, type SpanLinkFunc, SpanLinkType } from '../../types/links';
+import { type SpanLinkDef, type SpanLinkFunc, type SpanLinkModel, SpanLinkType } from '../../types/links';
 import { type TraceSpan } from '../../types/trace';
+
+import { getLogsButtonCTA, LogsLinkButton, LogsLinkMenuItem } from './LogsLink';
+import { ShareSpanButton } from './ShareSpanButton';
 
 export type ProfilesButtonContext = {
   serviceName: string;
@@ -41,7 +43,7 @@ export type Props = {
   timeRange: TimeRange;
   createSpanLink?: SpanLinkFunc;
   app: CoreApp;
-  shareButton?: React.ReactNode;
+  focusSpanLink: LinkModel;
 };
 
 /**
@@ -64,10 +66,16 @@ const MAX_LINKS = 3;
 
 const ABSOLUTE_LINK_PATTERN = /^https?:\/\//i;
 
-export const SpanDetailLinkButtons = (props: Props) => {
-  const { span, createSpanLink, traceToProfilesOptions, timeRange, datasourceType, datasourceUid, app, shareButton } =
-    props;
-
+export const SpanDetailLinkButtons = ({
+  span,
+  createSpanLink,
+  traceToProfilesOptions,
+  timeRange,
+  datasourceType,
+  datasourceUid,
+  app,
+  focusSpanLink,
+}: Props) => {
   // Hooks must run unconditionally on every render, so fetch the plugin links up front.
   // The context only depends on props, and the fetched links are only consumed below when
   // a profiles link exists and we're in Explore.
@@ -78,17 +86,28 @@ export const SpanDetailLinkButtons = (props: Props) => {
     limitPerPlugin: 1,
   });
 
-  const { settings } = useDataSourceInstanceSettings(datasourceUid);
+  const { settings, isLoading } = useDataSourceInstanceSettings(datasourceUid);
 
   const links = useMemo(() => {
     let linkToProfiles: SpanLinkDef | undefined;
+
+    if (isLoading) {
+      return [];
+    }
 
     const links = (createSpanLink?.(span) || [])
       // Linked spans are shown in a separate section
       .filter((link) => link.type !== SpanLinkType.Traces)
       .map((link) => {
         if (link.type === SpanLinkType.Logs) {
-          return createLinkModel(link, SpanLinkType.Logs, getLogsButtonCTA(settings), 'gf-logs', datasourceType);
+          return createLinkModel(
+            link,
+            SpanLinkType.Logs,
+            getLogsButtonCTA(settings),
+            'gf-logs',
+            datasourceType,
+            datasourceUid
+          );
         }
         if (link.type === SpanLinkType.Profiles && link.title === RelatedProfilesTitle) {
           linkToProfiles = link;
@@ -142,20 +161,22 @@ export const SpanDetailLinkButtons = (props: Props) => {
     });
 
     return links;
-  }, [app, createSpanLink, datasourceType, pluginLinks, settings, span]);
-
-  if (!links.length && !shareButton) {
-    return null;
-  }
+  }, [app, createSpanLink, datasourceType, datasourceUid, isLoading, pluginLinks, settings, span]);
 
   return (
     <span className={styles.linksContainer}>
       {links.length > MAX_LINKS ? (
         <DropDownMenu links={links}></DropDownMenu>
       ) : (
-        links.map((spanLinkModel, index) => <SingleLinkButton spanLinkModel={spanLinkModel} key={index} />)
+        links.map((spanLinkModel, index) =>
+          spanLinkModel.type === SpanLinkType.Logs ? (
+            <LogsLinkButton spanLinkModel={spanLinkModel} key={index} />
+          ) : (
+            <SingleLinkButton spanLinkModel={spanLinkModel} key={index} />
+          )
+        )
       )}
-      {shareButton}
+      <ShareSpanButton focusSpanLink={focusSpanLink} />
     </span>
   );
 };
@@ -170,25 +191,6 @@ const styles = {
     gap: '5px',
   }),
 };
-
-function getLogsButtonCTA(settings: DataSourceInstanceSettings<DataSourceJsonData> | undefined) {
-  const defaultCTA = t('explore.span-detail-link-buttons.related-logs', 'Related logs');
-  if (!settings) {
-    return defaultCTA;
-  }
-
-  // The trace-to-logs config lives on jsonData; getTraceToLogsOptions also
-  // migrates the legacy `tracesToLogs` shape to the v2 shape.
-  const options = getTraceToLogsOptions(settings.jsonData);
-  if (options?.filterBySpanID) {
-    return t('explore.span-detail-link-buttons.logs-for-this-span', 'Logs for this span');
-  }
-  if (options?.filterByTraceID) {
-    return t('explore.span-detail-link-buttons.logs-for-this-trace', 'Logs for this trace');
-  }
-
-  return defaultCTA;
-}
 
 function getResponsibleButtonStyles(theme: GrafanaTheme2) {
   return css({
@@ -212,16 +214,23 @@ const DropDownMenu = ({ links }: { links: SpanLinkModel[] }) => {
   const [_, setIsOpen] = React.useState(false);
   const styles = useStyles2(getResponsibleButtonStyles);
 
-  const menu = (
-    <Menu>
-      {links.map(({ linkModel }, index) => (
-        <Menu.Item
-          key={index}
-          label={linkModel.title}
-          onClick={(event: React.MouseEvent) => linkModel.onClick?.(event)}
-        />
-      ))}
-    </Menu>
+  const menu = useMemo(
+    () => (
+      <Menu>
+        {links.map((spanLinkModel, index) =>
+          spanLinkModel.type === SpanLinkType.Logs ? (
+            <LogsLinkMenuItem spanLinkModel={spanLinkModel} key={index} />
+          ) : (
+            <Menu.Item
+              key={index}
+              label={spanLinkModel.linkModel.title}
+              onClick={(event: React.MouseEvent) => spanLinkModel.linkModel.onClick?.(event)}
+            />
+          )
+        )}
+      </Menu>
+    ),
+    [links]
   );
 
   return (
@@ -259,24 +268,16 @@ export const getProfileLinkButtonsContext = (
   return context;
 };
 
-type SpanLinkModel = {
-  linkModel: LinkModel;
-  icon: IconName;
-  className?: string;
-  type: SpanLinkType;
-};
-
 const createLinkModel = (
   link: SpanLinkDef,
   type: SpanLinkType,
   title: string,
   icon: IconName,
   datasourceType: string,
-  className?: string
+  traceDatasourceUid?: string
 ): SpanLinkModel => {
   return {
     icon,
-    className,
     type,
     linkModel: {
       ...link.linkModel,
@@ -317,5 +318,6 @@ const createLinkModel = (
         }
       },
     },
+    traceDatasourceUid,
   };
 };

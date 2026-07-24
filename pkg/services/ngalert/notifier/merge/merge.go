@@ -101,7 +101,7 @@ func (m MergeResult) LogContext() []any {
 //  1. Resource Deduplication:
 //     When resources (receivers or time intervals) with identical names exist in both configurations,
 //     resources from the extra configuration are renamed according to these rules:
-//     - First, the extra configuration's Identifier is appended to the name
+//     - First, "_" + the extra configuration's Identifier is appended to the name
 //     - If the name is still not unique, a numbered suffix is added (e.g., "_01", "_02")
 //     - All references to renamed resources are automatically updated throughout the configuration
 //
@@ -193,30 +193,32 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (v1.AMConfigV1, Mer
 		}, nil
 }
 
-// DeduplicateResources merges existing and incoming resources (receivers and time intervals) and ensures unique names by applying suffixes. Returns renamed resources for tracking adjustments made.
-func DeduplicateResources(a, b v1.PostableApiAlertingConfig, suffix string) RenameResources {
-	_, renamedReceivers, _ := Receivers(a.Receivers, b.Receivers, suffix)
+// DeduplicateResources merges existing and incoming resources (receivers and time intervals) and ensures unique names by
+// appending a suffix derived from identifier. Returns renamed resources for tracking adjustments made.
+func DeduplicateResources(a, b v1.PostableApiAlertingConfig, identifier string) RenameResources {
+	_, renamedReceivers, _ := Receivers(a.Receivers, b.Receivers, identifier)
 	_, renamedTimeIntervals, _ := TimeIntervals(
 		a.MuteTimeIntervals,
 		a.TimeIntervals,
 		b.MuteTimeIntervals,
 		b.TimeIntervals,
-		suffix,
+		identifier,
 	)
 	return RenameResources{Receivers: renamedReceivers, TimeIntervals: renamedTimeIntervals}
 }
 
-// TimeIntervals merges existing and incoming time intervals and mute intervals, ensuring unique names by applying suffixes.
-// It returns a merged list of time intervals, a map of renamed interval names for tracking adjustments made, and the final
-// names of the incoming intervals (post-rename) in their original order (mute intervals first, then time intervals).
-// Mute time intervals are converted to time intervals.
+// TimeIntervals merges existing and incoming time intervals and mute intervals, ensuring unique names by appending a
+// suffix derived from identifier. It returns a merged list of time intervals, a map of renamed interval names for
+// tracking adjustments made, and the final names of the incoming intervals (post-rename) in their original order
+// (mute intervals first, then time intervals). Mute time intervals are converted to time intervals.
 func TimeIntervals(
 	existingMuteIntervals []v1.MuteTimeInterval,
 	existingTimeIntervals []v1.TimeInterval,
 	incomingMuteIntervals []v1.MuteTimeInterval,
 	incomingTimeIntervals []v1.TimeInterval,
-	suffix string,
+	identifier string,
 ) ([]v1.TimeInterval, map[string]string, []string) {
+	dedupSuffix := getDedupSuffix(identifier)
 	// combine all incoming intervals into a single list
 	incomingAll := make([]v1.TimeInterval, 0, len(incomingTimeIntervals)+len(incomingMuteIntervals))
 	for _, interval := range incomingMuteIntervals {
@@ -235,7 +237,7 @@ func TimeIntervals(
 	for idx, interval := range incomingAll {
 		curName := interval.Name
 		if i, ok := usedNames[curName]; ok && i != idx { // if the name is already used by another interval, append a suffix.
-			newName := getUniqueName(curName, suffix, usedNames)
+			newName := getUniqueName(curName, dedupSuffix, usedNames)
 			renames[curName] = newName
 			usedNames[newName] = idx
 			interval.Name = newName
@@ -292,12 +294,13 @@ func RenameResourceUsagesInRoutes(routes []*v1.Route, renames RenameResources) {
 	}
 }
 
-// Receivers merges two lists of PostableApiReceiver objects, ensuring unique names by appending a suffix if necessary.
-// It returns the combined list of receivers, a map of renamed original names to their new unique names, and the incoming
-// receivers in their original order after any renames have been applied.
+// Receivers merges two lists of PostableApiReceiver objects, ensuring unique names by appending a suffix derived from
+// identifier if necessary. It returns the combined list of receivers, a map of renamed original names to their new
+// unique names, and the incoming receivers in their original order after any renames have been applied.
 // The items of the existing list are added to the result list as is whereas the items of incoming list are copied (shallow copy)
 // and renamed if necessary.
-func Receivers(existing, incoming []*v1.PostableApiReceiver, suffix string) ([]*v1.PostableApiReceiver, map[string]string, []string) {
+func Receivers(existing, incoming []*v1.PostableApiReceiver, identifier string) ([]*v1.PostableApiReceiver, map[string]string, []string) {
+	dedupSuffix := getDedupSuffix(identifier)
 	result := make([]*v1.PostableApiReceiver, 0, len(existing)+len(incoming))
 	result = append(result, existing...)
 	usedNames := createIndexReceivers(existing, incoming)
@@ -309,7 +312,7 @@ func Receivers(existing, incoming []*v1.PostableApiReceiver, suffix string) ([]*
 		}
 		cpy := *r
 		if i, ok := usedNames[cpy.Name]; ok && i != idx {
-			newName := getUniqueName(cpy.Name, suffix, usedNames)
+			newName := getUniqueName(cpy.Name, dedupSuffix, usedNames)
 			renames[cpy.Name] = newName
 			cpy.Name = newName
 			usedNames[cpy.Name] = i
@@ -369,12 +372,13 @@ func MergeInhibitionRules(existing map[v1.ResourceUID]v1.InhibitionRule, incomin
 
 // MergeTemplates merges the incoming templates with the existing ones, renaming conflicts.
 // When an incoming Mimir template name collides with an existing Mimir template name, the
-// incoming template is renamed by appending identifier as a suffix (same semantics as Receivers).
+// incoming template is renamed by appending a suffix derived from identifier (same semantics as Receivers).
 // UIDs are derived from a stable hash of (finalName, content, identifier); collisions fall back
 // to a short random UID.
 // Returns the merged map, a rename map (original→final name), the UIDs of added templates,
 // and an error.
 func MergeTemplates(existing map[v1.ResourceUID]v1.TemplateGroup, incoming map[string]string, identifier string) (templates map[v1.ResourceUID]v1.TemplateGroup, renames map[string]string, added []v1.ResourceUID, err error) {
+	dedupSuffix := getDedupSuffix(identifier)
 	// Index existing Mimir template names to detect conflicts.
 	usedNames := make(map[string]struct{}, len(existing))
 	for _, tmpl := range existing {
@@ -392,7 +396,7 @@ func MergeTemplates(existing map[v1.ResourceUID]v1.TemplateGroup, incoming map[s
 		content := incoming[name]
 		finalName := name
 		if _, exists := usedNames[name]; exists {
-			finalName = getUniqueName(name, identifier, usedNames)
+			finalName = getUniqueName(name, dedupSuffix, usedNames)
 			renames[name] = finalName
 		}
 		usedNames[finalName] = struct{}{}
@@ -441,4 +445,8 @@ func getUniqueName[T any](name string, suffix string, usedNames map[string]T) st
 		panic(fmt.Sprintf("unable to find unique name for %s", name))
 	}
 	return result
+}
+
+func getDedupSuffix(identifier string) string {
+	return fmt.Sprintf("_%s", identifier)
 }

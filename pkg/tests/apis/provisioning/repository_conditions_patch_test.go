@@ -48,13 +48,11 @@ func TestIntegrationProvisioning_ConditionsPatch_AppendDoesNotClobber(t *testing
 		t.Skip("skipping integration test")
 	}
 	helper := sharedHelper(t)
-	ctx := t.Context()
 
 	const repoName = "cond-patch-append"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repoName,
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:     repoName,
+		SkipSync: true,
 	})
 
 	// Wait for the controller to populate Ready and NamespaceQuota so we have
@@ -86,14 +84,14 @@ func TestIntegrationProvisioning_ConditionsPatch_AppendDoesNotClobber(t *testing
 	// Idempotent apply-and-verify: if the narrow empty-cache race does
 	// clobber our append, the next iteration re-adds PullStatus and re-checks.
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		cur, err := readRepositoryConditions(ctx, helper, repoName)
+		cur, err := readRepositoryConditions(t.Context(), helper, repoName)
 		if !assert.NoError(c, err) {
 			return
 		}
 		curTypes := conditionTypeSet(cur)
 
 		if _, has := curTypes[provisioning.ConditionTypePullStatus]; !has {
-			_, err := helper.Repositories.Resource.Patch(ctx, repoName, types.JSONPatchType, addPullStatus, metav1.PatchOptions{}, "status")
+			_, err := helper.Repositories.Resource.Patch(t.Context(), repoName, types.JSONPatchType, addPullStatus, metav1.PatchOptions{}, "status")
 			assert.NoError(c, err, "add /status/conditions/- should succeed against status subresource")
 			return
 		}
@@ -116,13 +114,11 @@ func TestIntegrationProvisioning_ConditionsPatch_ReplaceByIndex(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	helper := sharedHelper(t)
-	ctx := t.Context()
 
 	const repoName = "cond-patch-replace"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repoName,
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:     repoName,
+		SkipSync: true,
 	})
 
 	// Wait for the controller to populate Ready and NamespaceQuota so we have
@@ -160,14 +156,14 @@ func TestIntegrationProvisioning_ConditionsPatch_ReplaceByIndex(t *testing.T) {
 	// Everything is re-read fresh from the apiserver each iteration so a
 	// shift in the array between reads is self-healing.
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		cur, err := readRepositoryConditions(ctx, helper, repoName)
+		cur, err := readRepositoryConditions(t.Context(), helper, repoName)
 		if !assert.NoError(c, err) {
 			return
 		}
 
 		idx := indexOfConditionType(cur, provisioning.ConditionTypePullStatus)
 		if idx < 0 {
-			_, err := helper.Repositories.Resource.Patch(ctx, repoName, types.JSONPatchType, seedPullStatus, metav1.PatchOptions{}, "status")
+			_, err := helper.Repositories.Resource.Patch(t.Context(), repoName, types.JSONPatchType, seedPullStatus, metav1.PatchOptions{}, "status")
 			assert.NoError(c, err, "seeding PullStatus should succeed")
 			return
 		}
@@ -182,12 +178,12 @@ func TestIntegrationProvisioning_ConditionsPatch_ReplaceByIndex(t *testing.T) {
 		if !assert.NoError(c, err) {
 			return
 		}
-		_, err = helper.Repositories.Resource.Patch(ctx, repoName, types.JSONPatchType, replacePatch, metav1.PatchOptions{}, "status")
+		_, err = helper.Repositories.Resource.Patch(t.Context(), repoName, types.JSONPatchType, replacePatch, metav1.PatchOptions{}, "status")
 		if !assert.NoError(c, err, "replace /status/conditions/%d should succeed", idx) {
 			return
 		}
 
-		after, err := readRepositoryConditions(ctx, helper, repoName)
+		after, err := readRepositoryConditions(t.Context(), helper, repoName)
 		if !assert.NoError(c, err) {
 			return
 		}
@@ -225,13 +221,11 @@ func TestIntegrationProvisioning_ConditionsPatch_ConcurrentAdds(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	helper := sharedHelper(t)
-	ctx := t.Context()
 
 	const repoName = "cond-patch-concurrent"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repoName,
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:     repoName,
+		SkipSync: true,
 	})
 
 	// Wait for the controller to populate Ready and NamespaceQuota so we have
@@ -279,12 +273,12 @@ func TestIntegrationProvisioning_ConditionsPatch_ConcurrentAdds(t *testing.T) {
 	ensurePresent := func(patch []byte, conditionType string) {
 		defer wg.Done()
 		for time.Now().Before(deadline) {
-			cur, err := readRepositoryConditions(ctx, helper, repoName)
+			cur, err := readRepositoryConditions(t.Context(), helper, repoName)
 			if err == nil && indexOfConditionType(cur, conditionType) >= 0 {
 				errs <- nil
 				return
 			}
-			if _, perr := helper.Repositories.Resource.Patch(ctx, repoName, types.JSONPatchType, patch, metav1.PatchOptions{}, "status"); perr != nil {
+			if _, perr := helper.Repositories.Resource.Patch(t.Context(), repoName, types.JSONPatchType, patch, metav1.PatchOptions{}, "status"); perr != nil {
 				// Retry on conflict / transient errors; fall through to sleep.
 				_ = perr
 			}
@@ -304,7 +298,7 @@ func TestIntegrationProvisioning_ConditionsPatch_ConcurrentAdds(t *testing.T) {
 	// Final steady-state check: both neutral conditions must be present
 	// simultaneously (not just individually-eventually).
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		cur, err := readRepositoryConditions(ctx, helper, repoName)
+		cur, err := readRepositoryConditions(t.Context(), helper, repoName)
 		if !assert.NoError(c, err) {
 			return
 		}

@@ -763,17 +763,21 @@ type Cfg struct {
 	SearchPostRankAuthzMaxCandidates   int
 
 	// Vector storage
-	EnableVectorBackend      bool
-	VectorDBHost             string
-	VectorDBPort             string
-	VectorDBName             string
-	VectorDBUser             string
-	VectorDBPassword         string
-	VectorDBSSLMode          string
-	VectorIndexingEnabled    bool          // run the embedding backfiller and reconciler
-	VectorReconcilerInterval time.Duration // reconciler tick interval; default 60s
-	VectorPromotionThreshold int           // row count per tenant to trigger promotion
-	VectorPromoterInterval   time.Duration // promoter tick interval; 0 disables
+	EnableVectorBackend bool
+	// Vector API collection allowlists: "group/resource" entries. Internal
+	// defaults to dashboards; external defaults to none.
+	VectorAllowedInternalCollections []string
+	VectorAllowedExternalCollections []string
+	VectorDBHost                     string
+	VectorDBPort                     string
+	VectorDBName                     string
+	VectorDBUser                     string
+	VectorDBPassword                 string
+	VectorDBSSLMode                  string
+	VectorIndexingEnabled            bool          // run the embedding backfiller and reconciler
+	VectorReconcilerInterval         time.Duration // reconciler tick interval; default 60s
+	VectorPromotionThreshold         int           // row count per tenant to trigger promotion
+	VectorPromoterInterval           time.Duration // promoter tick interval; 0 disables
 
 	// VectorSearch per-tenant query-embedding cache (DB-backed, FIFO).
 	VectorQueryCacheEnabled      bool
@@ -850,6 +854,11 @@ type Cfg struct {
 	TenantDeleterDryRun           bool
 	TenantDeleterInterval         time.Duration
 
+	ManifestApiServerAddress        string
+	ManifestWatcherAllowInsecureTLS bool
+	ManifestWatcherCAFile           string
+	ManifestWatcherPollInterval     time.Duration
+
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
 
@@ -859,6 +868,9 @@ type Cfg struct {
 
 	// Enable CAP token based authentication in grafana's embedded kube-aggregator
 	EnableKubernetesAggregatorCapTokenAuth bool
+
+	// Enable playlist reconciler
+	EnablePlaylistsReconciler bool
 }
 
 type UnifiedStorageConfig struct {
@@ -1125,7 +1137,7 @@ func (cfg *Cfg) readAnnotationSettings() error {
 	section := cfg.Raw.Section("annotations")
 	cfg.AnnotationCleanupJobBatchSize = section.Key("cleanupjob_batchsize").MustInt64(100)
 	cfg.AnnotationMaximumTagsLength = section.Key("tags_length").MustInt64(500)
-	annotationAppPlatformSettings, err := loadAnnotationAppPlatformSettings(cfg.Raw)
+	annotationAppPlatformSettings, err := loadAnnotationAppPlatformSettings(cfg)
 	if err != nil {
 		return err
 	}
@@ -1819,6 +1831,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	// unified storage config
 	cfg.setUnifiedStorageConfig()
 
+	cfg.readStartupParams(iniFile)
 	return nil
 }
 
@@ -1909,6 +1922,12 @@ func (cfg *Cfg) initLogging(file *ini.File) error {
 	return log.ReadLoggingConfig(logModes, cfg.LogsPath, file)
 }
 
+func (cfg *Cfg) readStartupParams(iniFile *ini.File) {
+	cfg.EnablePlaylistsReconciler = iniFile.Section("playlists").Key("enable_playlists_reconciler").MustBool(false)
+
+	cfg.EnableKubernetesAggregator = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_enabled").MustBool(false)
+	cfg.EnableKubernetesAggregatorCapTokenAuth = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_cap_token_auth_enabled").MustBool(false)
+}
 func (cfg *Cfg) LogConfigSources() {
 	var text bytes.Buffer
 
@@ -2534,8 +2553,6 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	if !cfg.DisableControllers {
 		cfg.DisableControllers = iniFile.Section("grafana-apiserver").Key("disable_controllers").MustBool(false)
 	}
-	cfg.EnableKubernetesAggregator = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_enabled").MustBool(false)
-	cfg.EnableKubernetesAggregatorCapTokenAuth = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_cap_token_auth_enabled").MustBool(false)
 	cfg.ProvisioningAllowedTargets = iniFile.Section("provisioning").Key("allowed_targets").Strings("|")
 	if len(cfg.ProvisioningAllowedTargets) == 0 {
 		cfg.ProvisioningAllowedTargets = []string{"folder", "folderless"}

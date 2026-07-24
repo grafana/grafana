@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
+import SVG from 'react-inlinesvg';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -7,10 +8,12 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type SceneComponentProps, sceneGraph, SceneObjectBase } from '@grafana/scenes';
 import { ScrollContainer, Sidebar, useStyles2 } from '@grafana/ui';
+import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 import addPanelSvg from 'img/dashboards/add-panel.svg';
 
 import { useClipboardState } from '../../scene/layouts-shared/useClipboardState';
 import { getDashboardSceneLike } from '../../scene/types/dashboard';
+import { DashboardInteractions } from '../../utils/interactions';
 import { DashboardEditPane } from '../DashboardEditPane';
 
 import { AddAnnotationQuery } from './AddAnnotationQuery';
@@ -40,6 +43,11 @@ function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEditPane>) 
   const onStartDragging = (result: { draggableId: string }) => {
     const mode = result.draggableId === 'paste-panel-drag' ? 'paste' : 'newPanel';
     orchestrator.startDraggingNewPanel(mode);
+  };
+
+  const pastePanel = () => {
+    editPane.pastePanel(selectedObj);
+    DashboardInteractions.trackPastePanelClick('sidebar', getLayoutType(selectedObj), 'click');
   };
 
   return (
@@ -74,11 +82,8 @@ function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEditPane>) 
                           }}
                           aria-label={t('dashboard.add.new-panel.title', 'Panel')}
                         >
-                          <img
-                            alt={t('dashboard.add.new-panel.button', 'Add new panel button')}
-                            src={addPanelSvg}
-                            draggable={false}
-                          />
+                          {/* @ts-expect-error react-inlinesvg@4.3.0 return type includes bigint, which isn't in @types/react@18's ReactNode. Remove when we update @types/react. */}
+                          <SVG title={t('dashboard.add.new-panel.button', 'Add new panel button')} src={addPanelSvg} />
                         </div>
                       );
                     }}
@@ -100,11 +105,11 @@ function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEditPane>) 
                             className={styles.pasteButton}
                             icon="clipboard-alt"
                             tabIndex={0}
-                            onClick={() => editPane.pastePanel(selectedObj)}
+                            onClick={() => pastePanel()}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault();
-                                editPane.pastePanel(selectedObj);
+                                pastePanel();
                               }
                             }}
                             aria-label={t('dashboard.canvas-actions.add.paste.title', 'Paste panel')}
@@ -161,7 +166,8 @@ function getStyles(theme: GrafanaTheme2) {
       '&:hover': {
         opacity: 1,
       },
-      img: {
+      svg: {
+        color: theme.colors.accent.main,
         display: 'block',
         width: 'auto',
         maxWidth: '100%',

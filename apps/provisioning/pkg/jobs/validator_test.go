@@ -418,6 +418,34 @@ func TestValidateJob(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "valid migrate job with valid branch",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMigrate,
+					Repository: "test-repo",
+					Migrate:    &provisioning.MigrateJobOptions{Branch: "feature-x"},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "migrate job with invalid branch name",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMigrate,
+					Repository: "test-repo",
+					Migrate:    &provisioning.MigrateJobOptions{Branch: "feature..branch"}, // Invalid: consecutive dots
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.migrate.branch")
+				require.Contains(t, err.Error(), "invalid git branch name")
+			},
+		},
+		{
 			name: "migrate action with resource missing name",
 			job: &provisioning.Job{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
@@ -1207,7 +1235,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v := NewAdmissionValidator(nil, tt.perfEnabled)
+			v := NewAdmissionValidator(nil, func(context.Context) bool { return tt.perfEnabled })
 
 			var obj runtime.Object
 			if tt.obj != nil {
@@ -1372,6 +1400,16 @@ func newHistoricJobAdmissionTestAttributes(obj runtime.Object, op admission.Oper
 	)
 }
 
+// fakeProvisioningAuthInfo embeds StaticRequester to satisfy the Requester
+// interface while overriding the audience, so the token-audience branch of
+// IsProvisioningServiceIdentity can be exercised.
+type fakeProvisioningAuthInfo struct {
+	*identity.StaticRequester
+	audience []string
+}
+
+func (f fakeProvisioningAuthInfo) GetAudience() []string { return f.audience }
+
 func TestValidateAuthor(t *testing.T) {
 	requester := &identity.StaticRequester{
 		Type:    authlib.TypeUser,
@@ -1382,10 +1420,16 @@ func TestValidateAuthor(t *testing.T) {
 	userCtx := identity.WithRequester(t.Context(), requester)
 	serviceCtx, _, err := identity.WithProvisioningIdentity(t.Context(), "default")
 	require.NoError(t, err)
+	audienceCtx := identity.WithRequester(t.Context(), fakeProvisioningAuthInfo{
+		StaticRequester: &identity.StaticRequester{Type: authlib.TypeAccessPolicy, UserUID: "42"},
+		audience:        []string{"provisioning.grafana.app"},
+	})
 
 	annotations := map[string]string{
-		AnnoAuthor:      requester.GetName(),
-		AnnoAuthorEmail: requester.GetEmail(),
+		AnnoAuthor:       requester.GetName(),
+		AnnoAuthorEmail:  requester.GetEmail(),
+		AnnoAuthorID:     requester.GetUID(),
+		AnnoAuthorOrigin: "Grafana",
 	}
 
 	tests := []struct {
@@ -1418,22 +1462,79 @@ func TestValidateAuthor(t *testing.T) {
 			name:            "create with mismatched name",
 			ctx:             userCtx,
 			operation:       admission.Create,
-			annotations:     map[string]string{AnnoAuthor: "someone else"},
+			annotations:     map[string]string{AnnoAuthor: "someone else", AnnoAuthorEmail: requester.GetEmail(), AnnoAuthorID: requester.GetUID()},
 			wantErrContains: AnnoAuthor + " must match",
 		},
 		{
 			name:            "create with mismatched email",
 			ctx:             userCtx,
 			operation:       admission.Create,
-			annotations:     map[string]string{AnnoAuthorEmail: "other@example.com"},
+			annotations:     map[string]string{AnnoAuthor: requester.GetName(), AnnoAuthorEmail: "other@example.com", AnnoAuthorID: requester.GetUID()},
 			wantErrContains: AnnoAuthorEmail + " must match",
+		},
+		{
+			name:            "create with a missing author field",
+			ctx:             userCtx,
+			operation:       admission.Create,
+			annotations:     map[string]string{AnnoAuthor: requester.GetName()},
+			wantErrContains: AnnoAuthorEmail + " must match",
+		},
+		{
+			name:            "create by the provisioning identity with an email",
+			ctx:             serviceCtx,
+			operation:       admission.Create,
+			annotations:     map[string]string{AnnoAuthor: "grot", AnnoAuthorEmail: "grot@example.com"},
+			wantErrContains: AnnoAuthorEmail + " may not be set by the provisioning service",
+		},
+		{
+			name:        "create by audience-based provisioning identity",
+			ctx:         audienceCtx,
+			operation:   admission.Create,
+			annotations: map[string]string{AnnoAuthor: "grot", AnnoAuthorID: "123", AnnoAuthorOrigin: "github"},
+		},
+		{
+			name:            "create with mismatched id",
+			ctx:             userCtx,
+			operation:       admission.Create,
+			annotations:     map[string]string{AnnoAuthor: requester.GetName(), AnnoAuthorEmail: requester.GetEmail(), AnnoAuthorID: "user:someone-else"},
+			wantErrContains: AnnoAuthorID + " must match",
 		},
 		{
 			name:            "create without requester",
 			ctx:             t.Context(),
 			operation:       admission.Create,
 			annotations:     map[string]string{AnnoAuthor: "Test User"},
-			wantErrContains: "job author annotations must match the requesting user",
+			wantErrContains: "may only be set by a user or the provisioning service",
+		},
+		{
+			name: "create by another service identity",
+			ctx: identity.WithRequester(t.Context(), &identity.StaticRequester{
+				Type:    authlib.TypeAccessPolicy,
+				UserUID: "search",
+			}),
+			operation:       admission.Create,
+			annotations:     map[string]string{AnnoAuthor: "grot"},
+			wantErrContains: "may only be set by a user or the provisioning service",
+		},
+		{
+			name:            "create by a user with only an origin",
+			ctx:             userCtx,
+			operation:       admission.Create,
+			annotations:     map[string]string{AnnoAuthorOrigin: "github"},
+			wantErrContains: AnnoAuthor + " must match",
+		},
+		{
+			name:            "create with a spoofed origin and no requester",
+			ctx:             t.Context(),
+			operation:       admission.Create,
+			annotations:     map[string]string{AnnoAuthorOrigin: "github"},
+			wantErrContains: AnnoAuthorOrigin + " must be Unknown",
+		},
+		{
+			name:        "create with only an origin and no requester is allowed",
+			ctx:         t.Context(),
+			operation:   admission.Create,
+			annotations: map[string]string{AnnoAuthorOrigin: "Unknown"},
 		},
 		{
 			name:           "update with unchanged annotations",
@@ -1446,7 +1547,7 @@ func TestValidateAuthor(t *testing.T) {
 			name:            "update changing name",
 			ctx:             userCtx,
 			operation:       admission.Update,
-			annotations:     map[string]string{AnnoAuthor: "someone else"},
+			annotations:     map[string]string{AnnoAuthor: "someone else", AnnoAuthorEmail: requester.GetEmail(), AnnoAuthorID: requester.GetUID(), AnnoAuthorOrigin: "Grafana"},
 			oldAnnotations:  annotations,
 			wantErrContains: AnnoAuthor + " is immutable",
 		},
@@ -1454,7 +1555,7 @@ func TestValidateAuthor(t *testing.T) {
 			name:            "update changing email",
 			ctx:             userCtx,
 			operation:       admission.Update,
-			annotations:     map[string]string{AnnoAuthor: requester.GetName(), AnnoAuthorEmail: "other@example.com"},
+			annotations:     map[string]string{AnnoAuthor: requester.GetName(), AnnoAuthorEmail: "other@example.com", AnnoAuthorID: requester.GetUID(), AnnoAuthorOrigin: "Grafana"},
 			oldAnnotations:  annotations,
 			wantErrContains: AnnoAuthorEmail + " is immutable",
 		},
@@ -1462,9 +1563,25 @@ func TestValidateAuthor(t *testing.T) {
 			name:            "update removing email",
 			ctx:             userCtx,
 			operation:       admission.Update,
-			annotations:     map[string]string{AnnoAuthor: requester.GetName()},
+			annotations:     map[string]string{AnnoAuthor: requester.GetName(), AnnoAuthorID: requester.GetUID(), AnnoAuthorOrigin: "Grafana"},
 			oldAnnotations:  annotations,
 			wantErrContains: AnnoAuthorEmail + " is immutable",
+		},
+		{
+			name:            "update changing id",
+			ctx:             userCtx,
+			operation:       admission.Update,
+			annotations:     map[string]string{AnnoAuthor: requester.GetName(), AnnoAuthorEmail: requester.GetEmail(), AnnoAuthorID: "user:someone-else", AnnoAuthorOrigin: "Grafana"},
+			oldAnnotations:  annotations,
+			wantErrContains: AnnoAuthorID + " is immutable",
+		},
+		{
+			name:            "update changing origin",
+			ctx:             userCtx,
+			operation:       admission.Update,
+			annotations:     map[string]string{AnnoAuthor: requester.GetName(), AnnoAuthorEmail: requester.GetEmail(), AnnoAuthorID: requester.GetUID(), AnnoAuthorOrigin: "GitHub"},
+			oldAnnotations:  annotations,
+			wantErrContains: AnnoAuthorOrigin + " is immutable",
 		},
 		{
 			name:        "delete is ignored",

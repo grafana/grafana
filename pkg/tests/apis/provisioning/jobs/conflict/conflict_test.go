@@ -1,7 +1,6 @@
 package conflict
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -16,7 +15,6 @@ import (
 // job they received before the other updated it, that one will fail. This is critical for concurrent jobs.
 func TestIntegrationProvisioning_JobConflict(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	obj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -35,12 +33,12 @@ func TestIntegrationProvisioning_JobConflict(t *testing.T) {
 			},
 		},
 	}
-	createdJob, err := helper.Jobs.Resource.Create(ctx, obj, metav1.CreateOptions{})
+	createdJob, err := helper.Jobs.Resource.Create(t.Context(), obj, metav1.CreateOptions{})
 	require.NoError(t, err)
 
-	job, err := helper.Jobs.Resource.Get(ctx, createdJob.GetName(), metav1.GetOptions{})
+	job, err := helper.Jobs.Resource.Get(t.Context(), createdJob.GetName(), metav1.GetOptions{})
 	require.NoError(t, err)
-	job2, err := helper.Jobs.Resource.Get(ctx, createdJob.GetName(), metav1.GetOptions{})
+	job2, err := helper.Jobs.Resource.Get(t.Context(), createdJob.GetName(), metav1.GetOptions{})
 	require.NoError(t, err)
 
 	client1Update := job.DeepCopy()
@@ -50,7 +48,7 @@ func TestIntegrationProvisioning_JobConflict(t *testing.T) {
 	labels := client1Update.GetLabels()
 	labels["provisioning.grafana.app/claim"] = "client1-claim"
 	client1Update.SetLabels(labels)
-	updatedJob, err := helper.Jobs.Resource.Update(ctx, client1Update, metav1.UpdateOptions{})
+	updatedJob, err := helper.Jobs.Resource.Update(t.Context(), client1Update, metav1.UpdateOptions{})
 	require.NoError(t, err)
 	require.NotEqual(t, job.GetResourceVersion(), updatedJob.GetResourceVersion())
 
@@ -61,10 +59,10 @@ func TestIntegrationProvisioning_JobConflict(t *testing.T) {
 	labels2 := client2Update.GetLabels()
 	labels2["provisioning.grafana.app/claim"] = "client2-claim"
 	client2Update.SetLabels(labels2)
-	_, err = helper.Jobs.Resource.Update(ctx, client2Update, metav1.UpdateOptions{})
+	_, err = helper.Jobs.Resource.Update(t.Context(), client2Update, metav1.UpdateOptions{})
 	require.Error(t, err)
 	require.True(t, apierrors.IsConflict(err), "should get conflict error when updating with stale resource version")
 
-	err = helper.Jobs.Resource.Delete(ctx, createdJob.GetName(), metav1.DeleteOptions{})
+	err = helper.Jobs.Resource.Delete(t.Context(), createdJob.GetName(), metav1.DeleteOptions{})
 	require.NoError(t, err)
 }

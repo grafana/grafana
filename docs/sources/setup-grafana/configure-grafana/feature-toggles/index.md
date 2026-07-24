@@ -55,7 +55,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingUIOptimizeReducer`                  | Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query                                                      | Yes                |
 | `azureMonitorEnableUserAuth`                 | Enables user auth for Azure Monitor datasource only                                                                                                           | Yes                |
 | `alertingNotificationsStepMode`              | Enables simplified step mode in the notifications section                                                                                                     | Yes                |
-| `elasticsearchCrossClusterSearch`            | Enables cross cluster search in the Elasticsearch data source                                                                                                 |                    |
 | `lokiLabelNamesQueryApi`                     | Defaults to using the Loki `/labels` API instead of `/series`                                                                                                 | Yes                |
 | `improvedExternalSessionHandlingSAML`        | Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly. | Yes                |
 | `alertingMigrationUI`                        | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                                              | Yes                |
@@ -104,6 +103,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `queryEditorNext`                 | Enables next generation query editor experience                                                |
 | `flameGraphWithCallTree`          | Enables the new Flame Graph UI containing the Call Tree view                                   |
 | `splashScreen`                    | Enables the splash screen modal for introducing new Grafana features on first session          |
+| `grafana.dynamicTraceToLogs`      | Check for the existence of logs when linking from the Trace View                               |
 
 ## Development feature toggles
 

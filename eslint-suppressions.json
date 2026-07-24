@@ -843,11 +843,6 @@
       "count": 1
     }
   },
-  "public/app/core/components/PanelTypeFilter/PanelTypeFilter.tsx": {
-    "@grafana/no-locale-compare": {
-      "count": 1
-    }
-  },
   "public/app/core/components/PluginHelp/PluginHelp.tsx": {
     "react-hooks/exhaustive-deps": {
       "count": 1
@@ -1829,9 +1824,6 @@
     }
   },
   "public/app/features/datasources/state/selectors.ts": {
-    "@grafana/no-locale-compare": {
-      "count": 2
-    },
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
     }
@@ -2257,14 +2249,6 @@
       "count": 1
     }
   },
-  "public/app/features/support-bundles/SupportBundlesCreate.tsx": {
-    "@grafana/no-locale-compare": {
-      "count": 1
-    },
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
   "public/app/features/templating/fieldAccessorCache.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -2560,11 +2544,6 @@
       "count": 2
     }
   },
-  "public/app/plugins/datasource/azuremonitor/components/ConfigEditor/BasicLogsToggle.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/azuremonitor/components/ConfigEditor/CurrentUserFallbackCredentials.tsx": {
     "@grafana/require-no-margin": {
       "count": 2
@@ -2854,11 +2833,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/jaeger/datasource.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/loki/components/LokiContextUi.tsx": {
     "@grafana/no-direct-local-storage-access": {
       "count": 7
@@ -2948,11 +2922,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/canvas/editor/element/ParamsEditor.tsx": {
-    "@grafana/no-locale-compare": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/canvas/editor/element/PlacementEditor.tsx": {
     "@grafana/require-no-margin": {
       "count": 2
@@ -2983,14 +2952,6 @@
   },
   "public/app/plugins/panel/geomap/GeomapPanel.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/geomap/components/MarkersLegend.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
-    },
-    "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
   },

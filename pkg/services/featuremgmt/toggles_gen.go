@@ -75,10 +75,6 @@ const (
 	// Enable support for Machine Learning in server-side expressions
 	FlagMlExpressions = "mlExpressions"
 
-	// FlagDatasourceAPIServers
-	// Expose some datasources as apiservers.
-	FlagDatasourceAPIServers = "datasourceAPIServers"
-
 	// FlagGrafanaAPIServerWithExperimentalAPIs
 	// Register experimental APIs with the k8s API server, including all datasources
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
@@ -147,9 +143,9 @@ const (
 	// On a SnapshotPublicMode instance with kubernetesSnapshots enabled, keep accepting anonymous /api/snapshots pushes by routing them through CreateDashboardSnapshotPublic instead of the authenticated k8s create endpoint. Default off: the migrated end state rejects anonymous legacy pushes. Turn on as a temporary backward-compat lever while senders migrate to the authenticated k8s API push, then turn off once migration completes. Not compatible with snapshot dual-write Mode5 (k8s-only storage), where the k8s create API is mandatory.
 	FlagExternalSnapshotsSupportLegacyAPI = "externalSnapshotsSupportLegacyAPI"
 
-	// FlagKubernetesLibraryPanels
+	// FlagLibraryelementsKubernetesLibraryPanels
 	// Routes library panel requests from /api to the /apis endpoint
-	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
+	FlagLibraryelementsKubernetesLibraryPanels = "libraryelements.kubernetesLibraryPanels"
 
 	// FlagKubernetesFolderCascadeDelete
 	// Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned
@@ -459,10 +455,6 @@ const (
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
 	FlagAzureMonitorDisableLogLimit = "azureMonitorDisableLogLimit"
 
-	// FlagPlaylistsReconciler
-	// Enables experimental reconciler for playlists
-	FlagPlaylistsReconciler = "playlistsReconciler"
-
 	// FlagEnableExtensionsAdminPage
 	// Enables the extension admin page regardless of development mode
 	FlagEnableExtensionsAdminPage = "enableExtensionsAdminPage"
@@ -506,10 +498,6 @@ const (
 	// FlagAlertingRuleQuality
 	// Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.
 	FlagAlertingRuleQuality = "alerting.ruleQuality"
-
-	// FlagElasticsearchCrossClusterSearch
-	// Enables cross cluster search in the Elasticsearch data source
-	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
 
 	// FlagLokiLabelNamesQueryApi
 	// Defaults to using the Loki `/labels` API instead of `/series`
@@ -573,6 +561,10 @@ const (
 	// FlagAzureMonitorLogsBuilderEditor
 	// Enables the logs builder mode for the Azure Monitor data source
 	FlagAzureMonitorLogsBuilderEditor = "azureMonitorLogsBuilderEditor"
+
+	// FlagAzureMonitorBatchAPI
+	// Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
+	FlagAzureMonitorBatchAPI = "azureMonitorBatchAPI"
 
 	// FlagAlertingRuleRecoverDeleted
 	// Enables the UI functionality to recover and view deleted alert rules
@@ -977,4 +969,8 @@ const (
 	// FlagGrafanaFrontendLegacyAPIHandling
 	// Controls whether the frontend blocks calls to legacy /api/ endpoints
 	FlagGrafanaFrontendLegacyAPIHandling = "grafana.frontendLegacyAPIHandling"
+
+	// FlagFeaturesBulkFlagEvalFiltering
+	// Filters bulk OFREP flag evaluations to public-metadata flags only
+	FlagFeaturesBulkFlagEvalFiltering = "features.bulkFlagEvalFiltering"
 )

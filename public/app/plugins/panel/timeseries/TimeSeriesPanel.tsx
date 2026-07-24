@@ -19,9 +19,10 @@ import {
   usePanelContext,
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
-import { FILTER_OUT_OPERATOR, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { getAssistantTooltipContext } from 'app/core/components/AssistantTooltip/buildAssistantContext';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
+import { getFilterByGroupedLabels } from 'app/features/panel/filters/adhoc';
 
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { type Options } from './panelcfg.gen';
@@ -30,7 +31,7 @@ import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from './plugins/utils';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
-import { getGroupedFilters, getTimezones, prepareGraphableFields } from './utils';
+import { getTimezones, prepareGraphableFields } from './utils';
 
 interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
@@ -118,6 +119,14 @@ export const TimeSeriesPanel = ({
     [onOptionsChange, options]
   );
 
+  const getFilterByGroupedLabelsModel = useCallback(
+    (frame: DataFrame, seriesIdx: number | null | undefined) =>
+      getFilterByGroupedLabels(frame, seriesIdx, getFiltersBasedOnGrouping, onAddAdHocFilters, {
+        checkFilterablePanelsFlag: false,
+      }),
+    [getFiltersBasedOnGrouping, onAddAdHocFilters]
+  );
+
   if (!frames || suggestions) {
     return (
       <PanelDataErrorView
@@ -183,13 +192,6 @@ export const TimeSeriesPanel = ({
                     dismiss();
                   };
 
-                  const groupingFilters =
-                    seriesIdx !== null &&
-                    config.featureToggles.dashboardUnifiedDrilldownControls &&
-                    getFiltersBasedOnGrouping
-                      ? getGroupedFilters(alignedFrame, seriesIdx, getFiltersBasedOnGrouping)
-                      : [];
-
                   return (
                     // not sure it header time here works for annotations, since it's taken from nearest datapoint index
                     <TimeSeriesTooltip
@@ -204,22 +206,7 @@ export const TimeSeriesPanel = ({
                       maxHeight={options.tooltip.maxHeight}
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
-                      filterByGroupedLabels={
-                        config.featureToggles.dashboardUnifiedDrilldownControls &&
-                        groupingFilters.length &&
-                        onAddAdHocFilters
-                          ? {
-                              onFilterForGroupedLabels: () => {
-                                onAddAdHocFilters(groupingFilters);
-                              },
-                              onFilterOutGroupedLabels: () => {
-                                onAddAdHocFilters(
-                                  groupingFilters.map((item) => ({ ...item, operator: FILTER_OUT_OPERATOR }))
-                                );
-                              },
-                            }
-                          : undefined
-                      }
+                      filterByGroupedLabels={getFilterByGroupedLabelsModel(alignedFrame, seriesIdx)}
                       canExecuteActions={userCanExecuteActions}
                       compareDiffMs={compareDiffMs}
                       assistantContext={getAssistantTooltipContext({ id, title, timeRange, data }, frames)}

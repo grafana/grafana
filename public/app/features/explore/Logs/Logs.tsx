@@ -791,6 +791,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           getRowContext={(row, options) => getRowContext(row, contextRow, options)}
           getRowContextQuery={getRowContextQuery}
           getLogRowContextUi={getLogRowContextUi}
+          getFieldLinks={getFieldLinks}
           logOptionsStorageKey={SETTING_KEY_ROOT}
           timeZone={timeZone}
           displayedFields={displayedFields}

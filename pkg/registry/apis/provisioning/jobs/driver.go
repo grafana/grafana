@@ -370,13 +370,15 @@ func (d *jobDriver) processJobWithLeaseCheck(ctx context.Context, recorder JobPr
 }
 
 // withJobAuthorSignature carries the job's recorded author into ctx as the git
-// commit signature when present. The author annotations are set at creation time
-// by the job admission mutator, which is where the user-attribution feature flag
-// is enforced; the driver simply applies whatever was recorded on the job.
+// commit signature. The author annotations are set at creation time by the job
+// admission mutator, which is where the user-attribution feature flag is
+// enforced; the driver simply applies whatever was recorded on the job. An
+// email is required: webhook attribution carries none, so webhook-created jobs
+// keep the default Grafana commit identity.
 func withJobAuthorSignature(ctx context.Context, job *provisioning.Job) context.Context {
 	name := job.Annotations[appjobs.AnnoAuthor]
 	email := job.Annotations[appjobs.AnnoAuthorEmail]
-	if name == "" && email == "" {
+	if email == "" {
 		return ctx
 	}
 	return repository.WithAuthorSignature(ctx, repository.CommitSignature{Name: name, Email: email})
