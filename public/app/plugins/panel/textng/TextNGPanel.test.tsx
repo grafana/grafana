@@ -1,59 +1,78 @@
 import { render, screen } from '@testing-library/react';
 
-import { type DataFrame, toDataFrame } from '@grafana/data';
-
-import { getPanelProps } from '../test-utils';
+import { CoreApp, type PanelProps } from '@grafana/data';
+import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 
 import { TextNGPanel } from './TextNGPanel';
+import { defaultOptions, type Options, TextMode } from './panelcfg.gen';
 
-function buildProps(series?: DataFrame[]) {
-  const props = getPanelProps(undefined);
-  if (series) {
-    props.data = { ...props.data, series };
-  }
-  return props;
-}
+// Stub the heavy lazy CodeMirror bundle used by the inline editor.
+jest.mock('@grafana/ui/unstable', () => ({
+  __esModule: true,
+  CodeMirrorEditor: ({ value, 'aria-label': ariaLabel }: { value: string; 'aria-label'?: string }) => (
+    <textarea aria-label={ariaLabel} value={value} readOnly />
+  ),
+}));
 
-function renderTextNGPanel(series?: DataFrame[]) {
-  return render(<TextNGPanel {...buildProps(series)} />);
-}
+const defaultProps = {
+  options: defaultOptions as Options,
+  onOptionsChange: jest.fn(),
+} as unknown as PanelProps<Options>;
+
+const setup = (options: Partial<Options>, app?: CoreApp) => {
+  const merged = { ...defaultOptions, ...options } as Options;
+  const ui = <TextNGPanel {...defaultProps} options={merged} />;
+  render(app ? <PanelContextProvider value={{ app } as PanelContext}>{ui}</PanelContextProvider> : ui);
+};
 
 describe('TextNGPanel', () => {
-  it('renders the panel container', () => {
-    renderTextNGPanel();
+  describe('view mode', () => {
+    it('renders without content', () => {
+      expect(() => setup({ content: '', mode: TextMode.Markdown })).not.toThrow();
+    });
 
-    expect(screen.getByTestId('TextNGPanel')).toBeInTheDocument();
+    it('sanitizes content in html mode', () => {
+      const content = '<form><p>Form tags are sanitized.</p></form>\n<script>Script tags are sanitized.</script>';
+
+      setup({ content, mode: TextMode.HTML });
+
+      expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML).toEqual(
+        '&lt;form&gt;<p>Form tags are sanitized.</p>&lt;/form&gt;\n&lt;script&gt;Script tags are sanitized.&lt;/script&gt;'
+      );
+    });
+
+    it('converts content to markdown when in markdown mode', () => {
+      const content = 'We begin by a simple sentence.\n```code block```';
+
+      setup({ content, mode: TextMode.Markdown });
+
+      expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML).toEqual(
+        '<p>We begin by a simple sentence.\n<code>code block</code></p>\n'
+      );
+    });
+
+    it('renders code mode as a plain, unrendered block', () => {
+      const content = '{\n  "a": 1\n}';
+
+      setup({ content, mode: TextMode.Code });
+
+      expect(screen.getByTestId('TextNGPanel-code')).toHaveTextContent('{ "a": 1 }');
+    });
   });
 
-  it('renders the placeholder text', () => {
-    renderTextNGPanel();
+  describe('edit mode', () => {
+    it('renders the inline editor when the panel is being edited', () => {
+      setup({ content: '# Hello', mode: TextMode.Markdown }, CoreApp.PanelEditor);
 
-    expect(screen.getByText(/New text panel/)).toBeInTheDocument();
-  });
+      expect(screen.getByTestId('TextNGEditor')).toBeInTheDocument();
+      expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
+    });
 
-  it('shows a series count of 0 when there is no data', () => {
-    renderTextNGPanel([]);
+    it('does not render the inline editor in view mode', () => {
+      setup({ content: '# Hello', mode: TextMode.Markdown }, CoreApp.Dashboard);
 
-    expect(screen.getByTestId('TextNGPanel')).toHaveTextContent('New text panel (0)');
-  });
-
-  it('shows the number of series in the data', () => {
-    renderTextNGPanel([
-      toDataFrame({ fields: [{ name: 'A', values: [1] }] }),
-      toDataFrame({ fields: [{ name: 'B', values: [2] }] }),
-      toDataFrame({ fields: [{ name: 'C', values: [3] }] }),
-    ]);
-
-    expect(screen.getByTestId('TextNGPanel')).toHaveTextContent('New text panel (3)');
-  });
-
-  it('updates the series count when data changes', () => {
-    const { rerender } = renderTextNGPanel([toDataFrame({ fields: [] })]);
-
-    expect(screen.getByTestId('TextNGPanel')).toHaveTextContent('New text panel (1)');
-
-    rerender(<TextNGPanel {...buildProps([toDataFrame({ fields: [] }), toDataFrame({ fields: [] })])} />);
-
-    expect(screen.getByTestId('TextNGPanel')).toHaveTextContent('New text panel (2)');
+      expect(screen.queryByTestId('TextNGEditor')).not.toBeInTheDocument();
+      expect(screen.getByTestId('TextNGPanel-converted-content')).toBeInTheDocument();
+    });
   });
 });

@@ -15812,7 +15812,39 @@
     "name-show-mini-map": "Show mini map"
   },
   "textng": {
-    "placeholder": "New text panel"
+    "category-text": "Text",
+    "editor": {
+      "aria-label-content": "Text content",
+      "format-bold": "B",
+      "format-heading": "H",
+      "format-italic": "I",
+      "status-lines_one": "{{count}} line",
+      "status-lines_other": "{{count}} lines",
+      "status-wrap-off": "Word wrap off",
+      "status-wrap-on": "Word wrap on",
+      "tooltip-bold": "Bold",
+      "tooltip-bullet-list": "Bullet list",
+      "tooltip-checklist": "Checklist",
+      "tooltip-heading": "Heading",
+      "tooltip-insert-variable": "Insert variable",
+      "tooltip-italic": "Italic",
+      "tooltip-link": "Link",
+      "tooltip-mermaid": "Insert Mermaid diagram",
+      "tooltip-numbered-list": "Numbered list",
+      "tooltip-table": "Table",
+      "view-preview": "Preview",
+      "view-split": "Split",
+      "view-write": "Write"
+    },
+    "mode-options": {
+      "label-code": "Code",
+      "label-html": "HTML",
+      "label-markdown": "Markdown"
+    },
+    "name-language": "Language",
+    "name-mode": "Mode",
+    "name-show-line-numbers": "Show line numbers",
+    "name-word-wrap": "Word wrap"
   },
   "theme-playground": {
     "label-base-theme": "Base theme",

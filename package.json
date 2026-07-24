@@ -258,9 +258,12 @@
   "dependencies": {
     "@bsull/augurs": "^0.10.0",
     "@codemirror/autocomplete": "6.20.3",
+    "@codemirror/lang-html": "6.4.11",
+    "@codemirror/lang-markdown": "6.5.0",
     "@codemirror/lang-sql": "6.10.0",
     "@codemirror/language": "6.12.4",
     "@codemirror/state": "6.7.1",
+    "@codemirror/view": "6.41.0",
     "@emotion/css": "11.13.5",
     "@emotion/react": "11.14.0",
     "@fingerprintjs/fingerprintjs": "^3.4.2",
