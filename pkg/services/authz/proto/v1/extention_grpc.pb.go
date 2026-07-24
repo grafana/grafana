@@ -19,10 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthzExtentionService_Read_FullMethodName   = "/authz.extention.v1.AuthzExtentionService/Read"
-	AuthzExtentionService_Write_FullMethodName  = "/authz.extention.v1.AuthzExtentionService/Write"
-	AuthzExtentionService_Mutate_FullMethodName = "/authz.extention.v1.AuthzExtentionService/Mutate"
-	AuthzExtentionService_Query_FullMethodName  = "/authz.extention.v1.AuthzExtentionService/Query"
+	AuthzExtentionService_Read_FullMethodName            = "/authz.extention.v1.AuthzExtentionService/Read"
+	AuthzExtentionService_Write_FullMethodName           = "/authz.extention.v1.AuthzExtentionService/Write"
+	AuthzExtentionService_Mutate_FullMethodName          = "/authz.extention.v1.AuthzExtentionService/Mutate"
+	AuthzExtentionService_Query_FullMethodName           = "/authz.extention.v1.AuthzExtentionService/Query"
+	AuthzExtentionService_CheckPermission_FullMethodName = "/authz.extention.v1.AuthzExtentionService/CheckPermission"
 )
 
 // AuthzExtentionServiceClient is the client API for AuthzExtentionService service.
@@ -33,6 +34,7 @@ type AuthzExtentionServiceClient interface {
 	Write(ctx context.Context, in *WriteRequest, opts ...grpc.CallOption) (*WriteResponse, error)
 	Mutate(ctx context.Context, in *MutateRequest, opts ...grpc.CallOption) (*MutateResponse, error)
 	Query(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (*QueryResponse, error)
+	CheckPermission(ctx context.Context, in *CheckPermissionRequest, opts ...grpc.CallOption) (*CheckPermissionResponse, error)
 }
 
 type authzExtentionServiceClient struct {
@@ -83,6 +85,16 @@ func (c *authzExtentionServiceClient) Query(ctx context.Context, in *QueryReques
 	return out, nil
 }
 
+func (c *authzExtentionServiceClient) CheckPermission(ctx context.Context, in *CheckPermissionRequest, opts ...grpc.CallOption) (*CheckPermissionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CheckPermissionResponse)
+	err := c.cc.Invoke(ctx, AuthzExtentionService_CheckPermission_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthzExtentionServiceServer is the server API for AuthzExtentionService service.
 // All implementations should embed UnimplementedAuthzExtentionServiceServer
 // for forward compatibility.
@@ -91,6 +103,7 @@ type AuthzExtentionServiceServer interface {
 	Write(context.Context, *WriteRequest) (*WriteResponse, error)
 	Mutate(context.Context, *MutateRequest) (*MutateResponse, error)
 	Query(context.Context, *QueryRequest) (*QueryResponse, error)
+	CheckPermission(context.Context, *CheckPermissionRequest) (*CheckPermissionResponse, error)
 }
 
 // UnimplementedAuthzExtentionServiceServer should be embedded to have
@@ -111,6 +124,9 @@ func (UnimplementedAuthzExtentionServiceServer) Mutate(context.Context, *MutateR
 }
 func (UnimplementedAuthzExtentionServiceServer) Query(context.Context, *QueryRequest) (*QueryResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Query not implemented")
+}
+func (UnimplementedAuthzExtentionServiceServer) CheckPermission(context.Context, *CheckPermissionRequest) (*CheckPermissionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CheckPermission not implemented")
 }
 func (UnimplementedAuthzExtentionServiceServer) testEmbeddedByValue() {}
 
@@ -204,6 +220,24 @@ func _AuthzExtentionService_Query_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthzExtentionService_CheckPermission_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckPermissionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthzExtentionServiceServer).CheckPermission(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthzExtentionService_CheckPermission_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthzExtentionServiceServer).CheckPermission(ctx, req.(*CheckPermissionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthzExtentionService_ServiceDesc is the grpc.ServiceDesc for AuthzExtentionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -226,6 +260,10 @@ var AuthzExtentionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Query",
 			Handler:    _AuthzExtentionService_Query_Handler,
+		},
+		{
+			MethodName: "CheckPermission",
+			Handler:    _AuthzExtentionService_CheckPermission_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -6169,6 +6169,20 @@
         "hideFromDocs": true,
         "expression": "false"
       }
+    },
+    {
+      "metadata": {
+        "name": "zanzanaRBACFallbackChecks",
+        "resourceVersion": "1784593236857",
+        "creationTimestamp": "2026-07-21T00:20:36Z"
+      },
+      "spec": {
+        "description": "Evaluate generic legacy RBAC permissions through Zanzana.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
     }
   ]
 }

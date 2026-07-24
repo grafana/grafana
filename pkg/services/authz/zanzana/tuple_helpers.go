@@ -148,8 +148,26 @@ func TupleStringWithoutCondition(tuple *openfgav1.TupleKey) string {
 // RolePermission represents a permission that can be converted to a Zanzana tuple.
 type RolePermission struct {
 	Action     string
+	Scope      string
 	Kind       string
+	Attribute  string
 	Identifier string
+}
+
+func (p RolePermission) CanonicalScope() string {
+	if p.Scope != "" {
+		return p.Scope
+	}
+	if p.Kind == "" {
+		return ""
+	}
+	if p.Kind == scopeIdentifierWildcard && p.Identifier == scopeIdentifierWildcard {
+		return scopeIdentifierWildcard
+	}
+	if p.Attribute != "" {
+		return strings.Join([]string{p.Kind, p.Attribute, p.Identifier}, ":")
+	}
+	return strings.Join([]string{p.Kind, p.Identifier}, ":")
 }
 
 // ConvertRolePermissionsToTuples converts role permissions to Zanzana tuples with proper merging.
@@ -158,7 +176,7 @@ type RolePermission struct {
 // - Special handling for folder resource tuples (which need to be merged)
 // - Deduplication of tuples
 //
-// Returns a slice of tuples ready to be written to Zanzana, or nil if no valid tuples could be created.
+// Returns a slice of native tuples ready to be written to Zanzana, or nil if no valid tuples could be created.
 func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission) ([]*openfgav1.TupleKey, error) {
 	if len(permissions) == 0 {
 		return nil, nil
@@ -172,51 +190,36 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 	folderResourceTuples := make(map[string]*openfgav1.TupleKey) // key is tuple without condition
 
 	for _, perm := range permissions {
-		// Role-management actions (roles:read/write/delete) take a dedicated
-		// translation path — their scope kinds (permissions:type:delegate,
-		// roles:*) aren't in the standard resource translation table, so
-		// falling through to TranslateToResourceTuple would log a misleading
-		// "can't translate" message. Non-wildcard scopes on role-management
-		// actions are intentionally dropped (see RoleManagementToTuples).
 		if isRoleManagementAction(perm.Action) {
-			for _, t := range RoleManagementToTuples(subject, perm) {
-				tupleMap[t.String()] = t
+			for _, tuple := range RoleManagementToTuples(subject, perm) {
+				tupleMap[tuple.String()] = tuple
 			}
 			continue
 		}
 
-		// User-management actions map onto iam group_resources via a dedicated path,
-		// like the role-management actions above (see UserManagementToTuples).
 		if isUserManagementAction(perm.Action) {
-			for _, t := range UserManagementToTuples(subject, perm) {
-				tupleMap[t.String()] = t
+			for _, tuple := range UserManagementToTuples(subject, perm) {
+				tupleMap[tuple.String()] = tuple
 			}
 			continue
 		}
 
-		// Team-management actions map onto iam group_resources via a dedicated path,
-		// like the user-management actions above (see TeamManagementToTuples).
 		if isTeamManagementAction(perm.Action) {
-			for _, t := range TeamRoleBindingManagementToTuples(subject, perm) {
-				tupleMap[t.String()] = t
+			for _, tuple := range TeamRoleBindingManagementToTuples(subject, perm) {
+				tupleMap[tuple.String()] = tuple
 			}
 			continue
 		}
 
-		// Convert RBAC action/kind to Zanzana tuple
 		tuple, ok := TranslateToResourceTuple(subject, perm.Action, perm.Kind, perm.Identifier)
 		if !ok {
-			// Skip permissions that can't be translated
 			log.New("zanzana").Debug("skipping permission that can't be translated", "permission", perm)
 			continue
 		}
 
-		// Handle folder resource tuples specially - they need to be merged
 		if IsFolderResourceTuple(tuple) {
-			// Create a key without the condition for deduplication
 			key := TupleStringWithoutCondition(tuple)
 			if existing, exists := folderResourceTuples[key]; exists {
-				// Merge this tuple with the existing one
 				MergeFolderResourceTuples(existing, tuple)
 			} else {
 				folderResourceTuples[key] = tuple
@@ -224,7 +227,6 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 			continue
 		}
 
-		// For non-folder resource tuples, just add to the map
 		tupleMap[tuple.String()] = tuple
 	}
 
@@ -240,8 +242,50 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 	return tuples, nil
 }
 
+// ProjectRolePermissionsToTuples projects each permission to either its exact
+// native representation or the generic fallback model. MT reconciliation and
+// IAM mutation writers use this path; the deprecated legacy reconciler remains
+// native-only through ConvertRolePermissionsToTuples.
+func ProjectRolePermissionsToTuples(roleUID string, permissions []RolePermission) ([]*openfgav1.TupleKey, error) {
+	if len(permissions) == 0 {
+		return nil, nil
+	}
+
+	subject := NewTupleEntry(TypeRole, roleUID, RelationAssignee)
+	tupleMap := make(map[string]*openfgav1.TupleKey)
+	folderResourceTuples := make(map[string]*openfgav1.TupleKey)
+
+	for _, permission := range permissions {
+		translation, err := TranslatePermission(subject, permission)
+		if err != nil {
+			return nil, err
+		}
+		for _, tuple := range translation.Tuples {
+			if IsFolderResourceTuple(tuple) {
+				key := TupleStringWithoutCondition(tuple)
+				if existing, exists := folderResourceTuples[key]; exists {
+					MergeFolderResourceTuples(existing, tuple)
+				} else {
+					folderResourceTuples[key] = tuple
+				}
+				continue
+			}
+			tupleMap[tuple.String()] = tuple
+		}
+	}
+
+	tuples := make([]*openfgav1.TupleKey, 0, len(tupleMap)+len(folderResourceTuples))
+	for _, tuple := range tupleMap {
+		tuples = append(tuples, tuple)
+	}
+	for _, tuple := range folderResourceTuples {
+		tuples = append(tuples, tuple)
+	}
+	return tuples, nil
+}
+
 // RoleToTuples converts role and its permissions (action/scope) to v1 TupleKey format
-// using the shared ConvertRolePermissionsToTuples utility and common.ToAuthzExtTupleKeys
+// using the MT/incremental permission projector.
 func RoleToTuples(roleUID string, permissions []*authzextv1.RolePermission) ([]*openfgav1.TupleKey, error) {
 	// Convert to RolePermission
 	rolePerms := make([]RolePermission, 0, len(permissions))
@@ -250,13 +294,14 @@ func RoleToTuples(roleUID string, permissions []*authzextv1.RolePermission) ([]*
 		kind, _, identifier := splitScope(perm.Scope)
 		rolePerms = append(rolePerms, RolePermission{
 			Action:     perm.Action,
+			Scope:      perm.Scope,
 			Kind:       kind,
 			Identifier: identifier,
 		})
 	}
 
 	// Translate to Zanzana tuples
-	tuples, err := ConvertRolePermissionsToTuples(roleUID, rolePerms)
+	tuples, err := ProjectRolePermissionsToTuples(roleUID, rolePerms)
 	if err != nil {
 		return nil, err
 	}
@@ -278,7 +323,8 @@ func RoleToTuples(roleUID string, permissions []*authzextv1.RolePermission) ([]*
 // `iam.grafana.app` only exposes a `group_resource` type — there is no
 // per-role instance type — so a permission scoped to a specific role
 // (e.g. `roles:uid:<specific>`) cannot be expressed in Zanzana without
-// silently broadening the grant to all roles, and is therefore dropped.
+// silently broadening the grant to all roles, so this native translator declines
+// it and the shared projector uses the generic fallback model.
 //
 // Mapping (subject is `role:<roleUID>#assignee`, wildcard scope required):
 //
@@ -349,8 +395,10 @@ func isRolesWildcardScope(kind, identifier string) bool {
 
 // UserManagementToTuples translates a user-management permission into iam tuples.
 // Only "all" scopes translate (see isAllUsersScope); specific-instance scopes are
-// dropped, since the FGA users type is uid-based while the legacy scope is id-based
-// and rolebindings is wildcard-only. users:create is unscoped and always translates.
+// declined by this native translator, since the FGA users type is uid-based while
+// the legacy scope is id-based and rolebindings is wildcard-only. The shared
+// projector preserves those grants through the generic model. users:create is
+// unscoped and always translates natively.
 func UserManagementToTuples(subject string, permission RolePermission) []*openfgav1.TupleKey {
 	m, ok := userManagementMappings[permission.Action]
 	if !ok {
@@ -380,7 +428,7 @@ func isUserManagementAction(action string) bool {
 //   - users:* / global.users:*  → identifier="*" (users.permissions:*, users:delete, users.roles:read)
 //   - permissions:type:delegate → kind="permissions", identifier="delegate" (users.roles:add/remove)
 //
-// Specific instance scopes (e.g. users:id:5) match none of these and are dropped.
+// Specific instance scopes (e.g. users:id:5) match none of these natively.
 func isAllUsersScope(kind, identifier string) bool {
 	if identifier == scopeIdentifierWildcard {
 		return true
@@ -390,7 +438,7 @@ func isAllUsersScope(kind, identifier string) bool {
 
 // TeamRoleBindingManagementToTuples translates teams.roles:* actions into iam
 // group_resource tuples. Only wildcard scopes translate; specific-instance scopes
-// are dropped since rolebindings have no per-instance FGA type.
+// are declined natively since rolebindings have no per-instance FGA type.
 func TeamRoleBindingManagementToTuples(subject string, permission RolePermission) []*openfgav1.TupleKey {
 	m, ok := teamRoleBindingMappings[permission.Action]
 	if !ok {
@@ -420,7 +468,7 @@ func isTeamManagementAction(action string) bool {
 //   - teams:* / teams:id:*      → identifier="*" (teams:read/write/delete, teams.permissions:*, teams.roles:read)
 //   - permissions:type:delegate → kind="permissions", identifier="delegate" (teams.roles:add/remove)
 //
-// Specific instance scopes (e.g. teams:id:5) match none of these and are dropped.
+// Specific instance scopes (e.g. teams:id:5) match none of these natively.
 func isAllTeamsScope(kind, identifier string) bool {
 	if identifier == scopeIdentifierWildcard {
 		return true

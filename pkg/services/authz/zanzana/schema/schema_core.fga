@@ -28,6 +28,14 @@ type role
     define update: [user, service-account, team#member, role#assignee]
     define delete: [user, service-account, team#member, role#assignee]
 
+type rbac_action
+  relations
+    define granted: [user, service-account, anonymous, team#member, role#assignee]
+
+type rbac_permission
+  relations
+    define granted: [user, service-account, anonymous, team#member, role#assignee]
+
 type team
   relations
     define admin: [user, service-account]

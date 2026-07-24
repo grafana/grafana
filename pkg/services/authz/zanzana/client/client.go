@@ -123,3 +123,13 @@ func (c *Client) Query(ctx context.Context, req *authzextv1.QueryRequest) (*auth
 
 	return c.authzext.Query(ctx, req)
 }
+
+func (c *Client) CheckPermission(ctx context.Context, req *authzextv1.CheckPermissionRequest) (*authzextv1.CheckPermissionResponse, error) {
+	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.CheckPermission")
+	defer span.End()
+
+	timer := prometheus.NewTimer(c.metrics.requestDurationSeconds.WithLabelValues("CheckPermission"))
+	defer timer.ObserveDuration()
+
+	return c.authzext.CheckPermission(ctx, req)
+}

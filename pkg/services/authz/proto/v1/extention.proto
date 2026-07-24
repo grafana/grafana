@@ -14,6 +14,7 @@ service AuthzExtentionService {
 
   rpc Mutate(MutateRequest) returns (MutateResponse);
   rpc Query(QueryRequest) returns (QueryResponse);
+  rpc CheckPermission(CheckPermissionRequest) returns (CheckPermissionResponse);
 }
 
 message MutateRequest {
@@ -279,4 +280,16 @@ message GetFolderParentsQuery {
 message GetFolderParentsResult {
   // List of parent folder UIDs
   repeated string parent_uids = 1;
+}
+
+message CheckPermissionRequest {
+  string namespace = 1;
+  string subject = 2;
+  repeated string teams = 3;
+  string action = 4;
+  repeated string scopes = 5;
+}
+
+message CheckPermissionResponse {
+  bool allowed = 1;
 }

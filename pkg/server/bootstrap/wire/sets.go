@@ -402,7 +402,7 @@ var Basic = wire.NewSet(
 	wire.Bind(new(accesscontrol.ActionResolver), new(resourcepermissions.ActionSetService)),
 	wire.Bind(new(pluginaccesscontrol.ActionSetRegistry), new(resourcepermissions.ActionSetService)),
 	permreg.ProvidePermissionRegistry,
-	acimpl.ProvideAccessControl,
+	acimpl.ProvideAccessControlWithFallback,
 	accesscontrol.ProvideFixedRolesLoader,
 	accesscontrol.ProvideNoopIAMRolesSyncer,
 	accesscontrol.ProvideNoopGlobalRoleSeeder,
