@@ -6,8 +6,10 @@ import (
 
 	"k8s.io/apiserver/pkg/admission"
 
-	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
+	"github.com/grafana/authlib/types"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 // UserAttributionEnabledFunc reports whether user attribution is enabled for the
@@ -44,30 +46,50 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		return fmt.Errorf("expected job, got %T", a.GetObject())
 	}
 
-	// Never trust client-supplied author annotations: clear them first and set
-	// them only from the request identity below. This guarantees the recorded
-	// author always reflects who actually made the request.
-	delete(job.Annotations, AnnoAuthor)
-	delete(job.Annotations, AnnoAuthorEmail)
-
-	if m.userAttributionEnabled == nil || !m.userAttributionEnabled(ctx) {
-		return nil
-	}
-
-	author, ok := auth.GetAuthorFromRequester(ctx)
-	if !ok {
-		return nil
-	}
-
 	if job.Annotations == nil {
 		job.Annotations = map[string]string{}
 	}
-	if author.Name != "" {
-		job.Annotations[AnnoAuthor] = author.Name
+
+	enabled := m.userAttributionEnabled != nil && m.userAttributionEnabled(ctx)
+
+	// Never trust client-supplied author annotations: clear them and set them
+	// only from the request identity below. The provisioning service identity
+	// is exempt so the webhook dispatcher can attribute jobs to the webhook
+	// sender, but only for the fields a webhook carries: name, id, and origin.
+	delete(job.Annotations, AnnoAuthorEmail)
+	if info, ok := types.AuthInfoFrom(ctx); !enabled || !ok || !identity.IsProvisioningServiceIdentity(info) {
+		delete(job.Annotations, AnnoAuthor)
+		delete(job.Annotations, AnnoAuthorID)
+		delete(job.Annotations, AnnoAuthorOrigin)
 	}
-	if author.Email != "" {
-		job.Annotations[AnnoAuthorEmail] = author.Email
+
+	if !enabled {
+		return nil
 	}
+
+	if info, ok := types.AuthInfoFrom(ctx); ok && identity.IsProvisioningServiceIdentity(info) {
+		if job.Annotations[AnnoAuthorOrigin] == "" {
+			job.Annotations[AnnoAuthorOrigin] = "Grafana"
+		}
+		return nil
+	}
+
+	requester, err := identity.GetRequester(ctx)
+	if err != nil || !requester.IsIdentityType(types.TypeUser) {
+		job.Annotations[AnnoAuthorOrigin] = "Unknown"
+		return nil
+	}
+
+	if name := requester.GetName(); name != "" {
+		job.Annotations[AnnoAuthor] = name
+	}
+	if email := requester.GetEmail(); email != "" {
+		job.Annotations[AnnoAuthorEmail] = email
+	}
+	if uid := requester.GetUID(); uid != "" {
+		job.Annotations[AnnoAuthorID] = uid
+	}
+	job.Annotations[AnnoAuthorOrigin] = "Grafana"
 
 	return nil
 }
