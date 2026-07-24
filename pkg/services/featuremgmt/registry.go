@@ -226,15 +226,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:            "datasourceAPIServers",
-			Description:     "Expose some datasources as apiservers.",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true, // changes the API routing
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:            "grafanaAPIServerWithExperimentalAPIs",
 			Description:     "Register experimental APIs with the k8s API server, including all datasources",
 			Stage:           FeatureStageExperimental,
@@ -408,13 +399,12 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:            "kubernetesLibraryPanels",
-			Description:     "Routes library panel requests from /api to the /apis endpoint",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true, // changes the API routing
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Name:        "libraryelements.kubernetesLibraryPanels",
+			Description: "Routes library panel requests from /api to the /apis endpoint",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
 		},
 		{
 			Name:         "kubernetesFolderCascadeDelete",
@@ -813,11 +803,11 @@ var (
 		{
 			Name:            "auditLoggingAppPlatform",
 			Description:     "Enable audit logging with Kubernetes under app platform",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStagePublicPreview,
 			Owner:           grafanaOperatorExperienceSquad,
 			HideFromDocs:    true,
 			RequiresRestart: true,
-			Expression:      "false",
+			Expression:      "true",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
