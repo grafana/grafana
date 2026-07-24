@@ -230,6 +230,48 @@ describe('Graph Migrations', () => {
       expect(panel.options.legend.width).toBe(200);
     });
 
+    test('with sortBy and sortDesc', () => {
+      const old = {
+        angular: {
+          legend: {
+            alignAsTable: true,
+            show: true,
+            values: true,
+            avg: true,
+            max: true,
+            min: true,
+            sortBy: 'Mean',
+            sortDesc: true,
+          },
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel.options.legend.sortBy).toBe('Mean');
+      expect(panel.options.legend.sortDesc).toBe(true);
+    });
+
+    test('with sort field (avg)', () => {
+      const old = {
+        angular: {
+          legend: {
+            alignAsTable: true,
+            show: true,
+            values: true,
+            avg: true,
+            max: true,
+            min: true,
+            sort: 'avg',
+            sortDesc: true,
+          },
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel.options.legend.sortBy).toBe('Mean');
+      expect(panel.options.legend.sortDesc).toBe(true);
+    });
+
     test('hide allZeros', () => {
       const old = {
         angular: {
