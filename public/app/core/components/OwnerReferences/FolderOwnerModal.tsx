@@ -18,14 +18,14 @@ export const FolderOwnerModal = ({
 }) => {
   return (
     <Modal
-      title={t('manage-owner-references.manage-folder-owner', 'Manage folder owner')}
+      title={t('manage-owner-references.manage-folder-owner', 'Manage folder owners')}
       isOpen={isOpen}
       onDismiss={onDismiss}
     >
       <Stack gap={1} direction="column">
         <Text element="p">
           <Trans i18nKey="manage-owner-references.manage-folder-owner-alert-title">
-            Select a team to own this folder to help organise your resources.
+            Select one or more teams to own this folder to help organise your resources.
           </Trans>
         </Text>
         <Text element="p">

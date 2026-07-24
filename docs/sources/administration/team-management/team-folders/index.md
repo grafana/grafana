@@ -65,10 +65,10 @@ To create a new team folder, complete the following steps:
 1. Click **New** and select **New folder**.
 1. Enter a unique folder name.
 1. Select **Assign an owner to the folder**.
-1. In **Team** dropdown, select the team that should own the folder.
+1. In the **Teams** dropdown, select one or more teams that should own the folder.
 1. Click **Create**.
 
-Grafana creates a regular folder and stores the selected team as the folder owner.
+Grafana creates a regular folder and stores the selected teams as the folder owners.
 
 ![New folder drawer with Assign an owner to the folder enabled and a team selected in the Team field.](/media/whats-new/team-folders/3-New-Folder-for-Team.png)
 
@@ -78,11 +78,11 @@ To assign or change the owner of an existing folder, complete the following step
 
 1. Click **Dashboards** in the primary menu.
 1. Open the folder that you want to update.
-1. Click **Folder actions** and select **Manage folder owner**.
-1. Select a team, or clear the current value if you want to remove the owner.
-1. Click **Save owner**.
+1. Click **Folder actions** and select **Manage folder owners**.
+1. Select one or more teams, or clear the current values if you want to remove all owners.
+1. Click **Save owners**.
 
-If a folder has a team owner, Grafana displays an **Owned by** label in the folder header.
+If a folder has one or more team owners, Grafana displays an **Owned by** label in the folder header.
 
 ![Folder page header showing the Owned by label and the Manage folder owner modal open from Folder actions.](/media/whats-new/team-folders/4-Manage-Owner-Folder.png)
 
@@ -118,8 +118,7 @@ If team members need access to the folder, configure folder permissions for the 
 
 Team folders currently have the following limitations:
 
-- You can select only one team owner per folder.
-- You can't assign or change a team owner for repository-managed folders.
+- You can't assign or change team owners for repository-managed folders.
 
 ## Next steps
 

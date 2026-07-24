@@ -14,47 +14,35 @@ export const useGetOwnerReferences = ({ resourceId }: { resourceId: string }) =>
 };
 
 /**
- * Set the owner reference of a resource.
+ * Set the owner references of a resource to the given list.
+ *
+ * A folder can be owned by multiple teams, so the full desired set is written in a single
+ * patch. Passing an empty list removes all owner references.
  *
  * Only folders are supported at this time
  */
-export const useSetOwnerReference = ({ resourceId }: { resourceId: string }) => {
+export const useSetOwnerReferences = ({ resourceId }: { resourceId: string }) => {
   const [updateFolder, result] = useUpdateFolderMutation();
   return [
-    (ownerReference: OwnerReference) =>
+    (ownerReferences: OwnerReference[]) =>
       updateFolder({
         name: resourceId,
-        patch: [
-          {
-            op: 'replace',
-            path: '/metadata/ownerReferences',
-            value: [ownerReference],
-          },
-        ],
+        patch:
+          ownerReferences.length > 0
+            ? [
+                {
+                  op: 'replace',
+                  path: '/metadata/ownerReferences',
+                  value: ownerReferences,
+                },
+              ]
+            : [
+                {
+                  op: 'remove',
+                  path: '/metadata/ownerReferences',
+                },
+              ],
       }),
-    result,
-  ] as const;
-};
-
-/**
- * Remove owner references from a resource.
- *
- * Only folders are supported at this time
- */
-export const useRemoveOwnerReferences = ({ resourceId }: { resourceId: string }) => {
-  const [updateFolder, result] = useUpdateFolderMutation();
-  return [
-    () => {
-      return updateFolder({
-        name: resourceId,
-        patch: [
-          {
-            op: 'remove',
-            path: `/metadata/ownerReferences`,
-          },
-        ],
-      });
-    },
     result,
   ] as const;
 };

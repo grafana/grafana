@@ -141,7 +141,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   };
 
   const managePermissionsLabel = t('browse-dashboards.folder-actions-button.manage-permissions', 'Manage permissions');
-  const manageOwnersLabel = t('manage-owner-references.manage-folder-owner', 'Manage folder owner');
+  const manageOwnersLabel = t('manage-owner-references.manage-folder-owner', 'Manage folder owners');
   const moveLabel = t('browse-dashboards.folder-actions-button.move', 'Move this folder');
   const deleteLabel = t('browse-dashboards.folder-actions-button.delete', 'Delete this folder');
 

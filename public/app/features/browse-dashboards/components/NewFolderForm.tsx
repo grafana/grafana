@@ -34,14 +34,14 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
   } = useForm<FormModel>({ defaultValues: initialFormModel });
 
   const [createTeamFolder, setCreateTeamFolder] = useState(false);
-  const [selectedTeam, setSelectedTeam] = useState<OwnerReference | null>(null);
+  const [selectedTeams, setSelectedTeams] = useState<OwnerReference[]>([]);
 
   const handleTeamFolderToggle = () => {
     setCreateTeamFolder(!createTeamFolder);
   };
 
-  const handleTeamSelectorChange = (ownerRef: OwnerReference | null) => {
-    setSelectedTeam(ownerRef);
+  const handleTeamSelectorChange = (ownerRefs: OwnerReference[]) => {
+    setSelectedTeams(ownerRefs);
   };
 
   const translatedFolderNameRequiredPhrase = t(
@@ -56,11 +56,11 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
       name="addFolder"
       onSubmit={handleSubmit((form) => {
         reportInteraction('grafana_browse_dashboards_page_action_create_folder', {
-          teamFolder: !!selectedTeam,
-          teamUid: selectedTeam?.uid,
+          teamFolder: selectedTeams.length > 0,
+          teamCount: selectedTeams.length,
         });
 
-        onConfirm(form.folderName, createTeamFolder && selectedTeam ? [selectedTeam] : []);
+        onConfirm(form.folderName, createTeamFolder ? selectedTeams : []);
       })}
       data-testid={selectors.pages.BrowseDashboards.NewFolderForm.form}
     >
