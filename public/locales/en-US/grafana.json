@@ -2943,7 +2943,6 @@
           "stop-alerting-inside-range": "Stop alerting (or pending state) when inside range",
           "stop-alerting-less": "Stop alerting (or pending state) when less than",
           "stop-alerting-more": "Stop alerting (or pending state) when more than",
-          "stop-alerting-not-equal": "Stop alerting (or pending state) when not equal to",
           "stop-alerting-outside-range": "Stop alerting (or pending state) when outside range",
           "title": "Custom recovery threshold"
         }
