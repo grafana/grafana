@@ -22,7 +22,17 @@
           "type": "object",
           "properties": {
             "name": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "primary",
+                "secondary",
+                "tertiary",
+                "accent",
+                "info",
+                "success",
+                "error",
+                "warning"
+              ]
             },
             "main": {
               "type": "string"
@@ -52,7 +62,17 @@
           "type": "object",
           "properties": {
             "name": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "primary",
+                "secondary",
+                "tertiary",
+                "accent",
+                "info",
+                "success",
+                "error",
+                "warning"
+              ]
             },
             "main": {
               "type": "string"
@@ -82,7 +102,17 @@
           "type": "object",
           "properties": {
             "name": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "primary",
+                "secondary",
+                "tertiary",
+                "accent",
+                "info",
+                "success",
+                "error",
+                "warning"
+              ]
             },
             "main": {
               "type": "string"
@@ -112,7 +142,17 @@
           "type": "object",
           "properties": {
             "name": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "primary",
+                "secondary",
+                "tertiary",
+                "accent",
+                "info",
+                "success",
+                "error",
+                "warning"
+              ]
             },
             "main": {
               "type": "string"
@@ -142,7 +182,17 @@
           "type": "object",
           "properties": {
             "name": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "primary",
+                "secondary",
+                "tertiary",
+                "accent",
+                "info",
+                "success",
+                "error",
+                "warning"
+              ]
             },
             "main": {
               "type": "string"
@@ -172,7 +222,17 @@
           "type": "object",
           "properties": {
             "name": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "primary",
+                "secondary",
+                "tertiary",
+                "accent",
+                "info",
+                "success",
+                "error",
+                "warning"
+              ]
             },
             "main": {
               "type": "string"
@@ -202,7 +262,17 @@
           "type": "object",
           "properties": {
             "name": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "primary",
+                "secondary",
+                "tertiary",
+                "accent",
+                "info",
+                "success",
+                "error",
+                "warning"
+              ]
             },
             "main": {
               "type": "string"
@@ -232,7 +302,17 @@
           "type": "object",
           "properties": {
             "name": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "primary",
+                "secondary",
+                "tertiary",
+                "accent",
+                "info",
+                "success",
+                "error",
+                "warning"
+              ]
             },
             "main": {
               "type": "string"
@@ -799,6 +879,30 @@
               "type": "string"
             },
             "text": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "checkbox": {
+          "type": "object",
+          "properties": {
+            "activeBackground": {
+              "type": "string"
+            },
+            "activeBackgroundHover": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "switch": {
+          "type": "object",
+          "properties": {
+            "activeBackground": {
+              "type": "string"
+            },
+            "activeBackgroundHover": {
               "type": "string"
             }
           },

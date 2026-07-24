@@ -58,7 +58,23 @@ export const palette = {
   orange900: '#743218',
   orange950: '#4a200f',
 
-  // Warm red-orange. Status: error, critical
+  // Red. Status: error, critical
+  red100: '#FFF3F4',
+  red200: '#FFE5E6',
+  red300: '#FFD2D3',
+  red400: '#FFB2B3',
+  red500: '#FF888B',
+  red600: '#FF6467',
+  red700: '#FF3D41',
+  red800: '#E82024',
+  red900: '#CE171A',
+  red1000: '#B81215',
+  red1100: '#7F0A0C',
+  red1200: '#650709',
+  red1300: '#590708',
+  red1400: '#440506',
+
+  // Warm red-orange.
   coral50: '#fff1f0',
   coral100: '#ffdedb',
   coral200: '#ffc0ba',

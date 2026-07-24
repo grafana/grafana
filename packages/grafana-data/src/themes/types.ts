@@ -44,7 +44,7 @@ export interface GrafanaTheme2 {
 
 export const ThemeRichColorInputSchema = z.object({
   /** color intent (primary, secondary, info, error, etc) */
-  name: z.string().optional(),
+  name: z.enum(['primary', 'secondary', 'tertiary', 'accent', 'info', 'success', 'error', 'warning']).optional(),
   /** Main color */
   main: z.string().optional(),
   /** Used for hover */

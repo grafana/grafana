@@ -67,6 +67,12 @@
     }
   },
   "components": {
+    "checkbox": {
+      "activeBackgroundHover": "palette.orange700"
+    },
+    "switch": {
+      "activeBackgroundHover": "palette.orange700"
+    },
     "tag": {
       "colors": [
         { "background": "palette.coral300", "text": "palette.coral900" },
