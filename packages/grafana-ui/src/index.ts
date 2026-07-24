@@ -141,6 +141,7 @@ export {
 } from './components/BigValue/BigValueTypes';
 export { Sparkline } from './components/Sparkline/Sparkline';
 
+export { RadialGauge } from './components/RadialGauge/RadialGauge';
 export { BarGauge } from './components/BarGauge/BarGauge';
 export {
   VizTooltip,
