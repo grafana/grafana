@@ -125,4 +125,26 @@ describe('useMetricCatalog', () => {
     // No assertion beyond "the above didn't throw" — this is a smoke check only, not proof the
     // `cancelled` guard works (see the stale-response ordering test above for that).
   });
+
+  it('raises `loading` and clears stale `metrics` in the render that starts a fetch for a new datasource, before the promise resolves', async () => {
+    const pending = deferred<MetricRow[]>();
+    const spy = jest
+      .spyOn(client, 'fetchCatalog')
+      .mockResolvedValueOnce(rows)
+      .mockImplementationOnce(() => pending.promise);
+
+    const { result, rerender } = renderHook(({ dsRef }) => useMetricCatalog(dsRef, range), {
+      initialProps: { dsRef: { uid: 'p1' } },
+    });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.metrics).toHaveLength(2);
+
+    // Switch datasource. Assert on the state right after this render — before the second (never
+    // resolved here) promise settles — that `loading` is already `true` and the previous
+    // datasource's `metrics` are already gone, not lingering on screen until the fetch completes.
+    rerender({ dsRef: { uid: 'p2' } });
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(result.current.loading).toBe(true);
+    expect(result.current.metrics).toEqual([]);
+  });
 });

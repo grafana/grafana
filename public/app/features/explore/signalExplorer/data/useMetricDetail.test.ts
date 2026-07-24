@@ -102,4 +102,26 @@ describe('useMetricDetail', () => {
 
     expect(result.current.labelKeys).toEqual(['instance']);
   });
+
+  it('raises `loading` and clears stale `labelKeys` in the render that starts a new fetch, before the promise resolves', async () => {
+    const pending = deferred<string[]>();
+    const spy = jest
+      .spyOn(client, 'fetchLabelKeys')
+      .mockResolvedValueOnce(['job'])
+      .mockImplementationOnce(() => pending.promise);
+
+    const { result, rerender } = renderHook(({ metric }) => useMetricDetail({ uid: 'p1' }, range, metric, true), {
+      initialProps: { metric: 'up' },
+    });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.labelKeys).toEqual(['job']);
+
+    // Switch metric. Assert on the state right after this render — before the second (never
+    // resolved here) promise settles — that `loading` is already `true` and the previous
+    // metric's `labelKeys` are already gone, not lingering until the fetch completes.
+    rerender({ metric: 'node_load1' });
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(result.current.loading).toBe(true);
+    expect(result.current.labelKeys).toEqual([]);
+  });
 });

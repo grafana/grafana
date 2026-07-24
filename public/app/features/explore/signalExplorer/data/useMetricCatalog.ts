@@ -30,6 +30,21 @@ export function useMetricCatalog(
   // second effect run would be a redundant no-op.
   const fromTo = `${timeRange.raw?.from ?? ''}:${timeRange.raw?.to ?? ''}`;
 
+  const requestKey = `${dsKey}|${fromTo}`;
+  const [activeKey, setActiveKey] = useState<string | null>(null);
+  if (requestKey !== activeKey) {
+    // Adjust state during render, not only in the effect below: passive effects run after the
+    // browser paints, so raising `loading`/clearing stale `all` solely in the effect would let
+    // one real frame paint the *previous* datasource's metrics (with `loading: false`) while
+    // `dsRef`/`timeRange` already point at the new request. Doing it here means the very render
+    // that changes the request already reports the correct loading/empty state before anything
+    // is drawn. See https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes.
+    setActiveKey(requestKey);
+    setAll([]);
+    setError(undefined);
+    setLoading(true);
+  }
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);

@@ -29,6 +29,22 @@ export function useMetricDetail(
   // second effect run would be a redundant no-op.
   const fromTo = `${timeRange.raw?.from ?? ''}:${timeRange.raw?.to ?? ''}`;
 
+  // `null` while disabled: there's no request to key against, so nothing to adjust for.
+  const requestKey = enabled ? `${dsKey}|${fromTo}|${metric}` : null;
+  const [activeKey, setActiveKey] = useState<string | null>(null);
+  if (requestKey !== activeKey) {
+    // Adjust state during render, not only in the effect below: passive effects run after the
+    // browser paints, so raising `loading`/clearing stale `labelKeys` solely in the effect would
+    // let one real frame paint with the *previous* request's data (or an empty result) while
+    // `enabled`/`metric` already point at the new request. Doing it here means the very render
+    // that changes the request already reports the correct loading/empty state before anything
+    // is drawn. See https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes.
+    setActiveKey(requestKey);
+    setLabelKeys([]);
+    setError(undefined);
+    setLoading(requestKey !== null);
+  }
+
   useEffect(() => {
     // `enabled` gates the fetch entirely: a collapsed/off-screen row must fire zero requests, so
     // this effect is a no-op until the caller flips `enabled` to true.
