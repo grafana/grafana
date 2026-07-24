@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 const (
@@ -141,7 +142,9 @@ func GenerateDatasourcePermissions(b *testing.B, db db.DB, cfg *setting.Cfg, ac 
 }
 
 func generateTeamsAndUsers(b *testing.B, store db.DB, cfg *setting.Cfg, users int) ([]int64, []int64) {
-	teamSvc, err := teamimpl.ProvideService(store, cfg, tracing.InitializeTracerForTest(), nil)
+	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil)
+	require.NoError(b, err)
+	dbHelper, err := legacysql.NewDatabaseProvider(store)(context.Background())
 	require.NoError(b, err)
 	numberOfTeams := int(math.Ceil(float64(users) / UsersPerTeam))
 	globalUserId := 0
@@ -179,7 +182,7 @@ func generateTeamsAndUsers(b *testing.B, store db.DB, cfg *setting.Cfg, users in
 			userIds = append(userIds, userId)
 
 			err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
-				return teamimpl.AddOrUpdateTeamMemberHook(sess, userId, 1, teamId, false, 1)
+				return teamimpl.AddOrUpdateTeamMemberHook(dbHelper, sess, userId, 1, teamId, false, 1)
 			})
 			require.NoError(b, err)
 		}

@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -827,20 +828,20 @@ func TestIsActionSetEnabledResource_ServiceAccount(t *testing.T) {
 
 func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, team.Service) {
 	t.Helper()
-	service, userSvc, teamSvc, _ := setupTestEnvironmentWithCfg(t, ops, featuremgmt.WithFeatures())
+	service, userSvc, teamSvc, _, _ := setupTestEnvironmentWithCfg(t, ops, featuremgmt.WithFeatures())
 	return service, userSvc, teamSvc
 }
 
 // setupTestEnvironmentWithCfg is like setupTestEnvironment but lets the caller pass feature
 // toggles and returns the *setting.Cfg so tests can tweak it (e.g. the dual-writer mode).
-func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt.FeatureToggles) (*Service, user.Service, team.Service, *setting.Cfg) {
+func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt.FeatureToggles) (*Service, user.Service, team.Service, *setting.Cfg, db.DB) {
 	t.Helper()
 
 	sql := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	tracer := tracing.InitializeTracerForTest()
 
-	teamSvc, err := teamimpl.ProvideService(sql, cfg, tracer, nil)
+	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, tracer, nil)
 	require.NoError(t, err)
 
 	orgSvc, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
@@ -862,7 +863,7 @@ func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt
 	)
 	require.NoError(t, err)
 
-	return service, userSvc, teamSvc, cfg
+	return service, userSvc, teamSvc, cfg, sql
 }
 
 func TestMapPermission_Datasource(t *testing.T) {

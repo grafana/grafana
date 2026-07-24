@@ -8,11 +8,11 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 // At package level
@@ -24,8 +24,8 @@ type LegacyService struct {
 	tracer tracing.Tracer
 }
 
-func NewLegacyService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
-	store := &xormStore{db: db, cfg: cfg, deletes: []string{}}
+func NewLegacyService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
+	store := &xormStore{sql: sql, cfg: cfg, deletes: []string{}}
 
 	if err := store.teamMemberUidMigration(); err != nil {
 		return nil, err
