@@ -2,10 +2,13 @@ import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { type PluginMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { contextSrv } from 'app/core/services/context_srv';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
+
+import { ctaClicked } from '../analytics/main';
 
 import { Recommendations } from './Recommendations';
 import {
@@ -24,6 +27,10 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
   ...jest.requireActual('app/features/alerting/unified/hooks/usePluginBridge'),
   usePluginBridge: jest.fn(),
+}));
+
+jest.mock('../analytics/main', () => ({
+  ctaClicked: jest.fn(),
 }));
 
 // The RecommendationExisting child fetches its overview from Prometheus; resolve to no
@@ -58,6 +65,7 @@ const mockUsePluginBridge = jest.mocked(usePluginBridge);
 
 beforeEach(() => {
   window.localStorage.clear();
+  jest.mocked(ctaClicked).mockClear();
   mockUsePluginBridge.mockReset();
   mockUsePluginBridge.mockReturnValue({
     loading: false,
@@ -383,5 +391,46 @@ describe('Recommendations', () => {
 
     const region = await screen.findByRole('region', { name: 'Recommended apps' });
     expect(region).toHaveAttribute('aria-roledescription', 'carousel');
+  });
+
+  describe('analytics', () => {
+    // LinkButton renders a plain <a href>; clicking it would trigger a real jsdom
+    // navigation (console.error -> jest-fail-on-console). Route anchor clicks through
+    // the SPA history the way the app does so the onClick fires without navigating.
+    beforeEach(() => {
+      document.addEventListener('click', interceptLinkClicks);
+    });
+
+    afterEach(() => {
+      document.removeEventListener('click', interceptLinkClicks);
+    });
+
+    it('tracks enable from the active recommendation card', async () => {
+      const { user } = render(<Recommendations />);
+
+      await user.click(await screen.findByRole('link', { name: /Enable Hosted Traces/ }));
+
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'recommendations',
+        action: 'enable',
+        placement: 'card',
+        recommendation_id: 'hosted-traces',
+      });
+    });
+
+    it('tracks enable from a pill when the section is collapsed', async () => {
+      window.localStorage.setItem('grafana.home.recommendations.collapsed', 'true');
+
+      const { user } = render(<Recommendations />);
+
+      await user.click(await screen.findByRole('link', { name: /Enable Hosted Traces/ }));
+
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'recommendations',
+        action: 'enable',
+        placement: 'pill',
+        recommendation_id: 'hosted-traces',
+      });
+    });
   });
 });

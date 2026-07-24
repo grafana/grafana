@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
 import { type ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
@@ -6,7 +6,7 @@ import Skeleton from 'react-loading-skeleton';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
-import { Alert, Badge, Button, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, Badge, Button, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { HomeSection } from '../HomeSection';
 
@@ -96,7 +96,7 @@ export function SummaryCard<T>({
         {!loading && !error && items.length > 0 && (
           <ul className={redesignEnabled ? undefined : styles.list}>
             {items.map((item) => (
-              <li key={getItemKey(item)} className={cx(styles.row, !redesignEnabled && styles.rowPadding)}>
+              <li key={getItemKey(item)} className={!redesignEnabled ? styles.rowPadding : undefined}>
                 {renderItem(item)}
               </li>
             ))}
@@ -123,25 +123,10 @@ export function SummaryCard<T>({
   );
 }
 
-/** Item title: a plugin/detail link when `href` is set, otherwise plain truncated text. */
-export function SummaryCardTitle({
-  href,
-  onClick,
-  children,
-}: {
-  href?: string;
-  onClick?: () => void;
-  children: string;
-}) {
+/** Left-aligned fixed-width prefix cell so titles align across rows. */
+export function SummaryCardPrefix({ children }: { children: ReactNode }) {
   const styles = useStyles2(getStyles);
-  if (href) {
-    return (
-      <TextLink href={href} onClick={onClick} inline={false} color="primary" className={styles.title}>
-        {children}
-      </TextLink>
-    );
-  }
-  return <Text truncate>{children}</Text>;
+  return <span className={styles.prefix}>{children}</span>;
 }
 
 /** Right-aligned relative-time cell shared by both cards. */
@@ -171,24 +156,23 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginRight: theme.spacing(-2),
     paddingRight: theme.spacing(2),
   }),
-  // TODO: this should be safe to remove once incident card also moved to use ListRow component
-  row: css({
-    display: 'flex',
-    alignItems: 'center',
-    minWidth: 0,
-  }),
   rowPadding: css({
     gap: theme.spacing(1),
     padding: theme.spacing(0.5, 0),
   }),
-  // TODO: this should be safe to remove once incident card also moved to use ListRow component
-  title: css({
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  }),
   age: css({
     marginLeft: 'auto',
     flexShrink: 0,
+    minWidth: theme.spacing(10),
+    display: 'inline-flex',
+    justifyContent: 'flex-end',
+  }),
+  prefix: css({
+    display: 'inline-flex',
+    flexShrink: 0,
+    // Reserves a fixed column for the severity badge ("Critical" is the widest label)
+    // so titles align across rows.
+    minWidth: theme.spacing(8),
+    justifyContent: 'flex-start',
   }),
 });
