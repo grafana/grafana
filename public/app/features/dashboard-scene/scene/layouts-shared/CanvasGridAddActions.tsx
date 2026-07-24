@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -8,10 +8,10 @@ import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDefaultVizPanel } from '../../utils/utils';
-import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
-import { type DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { addNewRowTo, addNewTabTo } from './addNew';
+import { getNestingRestrictionMessage, useNestingRestrictions } from './nestingRestrictions';
 import { getLayoutControlsStyles } from './styles';
 import { useClipboardState } from './useClipboardState';
 
@@ -88,13 +88,7 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
           size="sm"
           data-testid={selectors.components.CanvasGridAddActions.groupPanels}
           disabled={disableGrouping}
-          tooltip={
-            disableGrouping
-              ? t('dashboard.canvas-actions.disabled-nested-grouping', 'Grouping is limited to {{maxDepth}} levels', {
-                  maxDepth: MAX_NESTING_DEPTH,
-                })
-              : undefined
-          }
+          tooltip={disableGrouping ? getNestingRestrictionMessage() : undefined}
         >
           <Trans i18nKey="dashboard.canvas-actions.group-panels">Group panels</Trans>
         </Button>
@@ -115,32 +109,6 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
       )}
     </div>
   );
-}
-
-const MAX_NESTING_DEPTH = 4;
-
-export function useNestingRestrictions(layoutManager: DashboardLayoutManager) {
-  return useMemo(() => {
-    const layouts: string[] = [];
-    let parent = layoutManager.parent;
-
-    while (parent) {
-      if (isDashboardLayoutManager(parent)) {
-        layouts.push(parent.descriptor.id);
-      }
-
-      if (layouts.length === MAX_NESTING_DEPTH) {
-        break;
-      }
-
-      parent = parent.parent;
-    }
-
-    const disableGrouping = layouts.length >= MAX_NESTING_DEPTH;
-    const disableTabs = disableGrouping || layouts[0] === TabsLayoutManager.descriptor.id;
-
-    return { disableGrouping, disableTabs };
-  }, [layoutManager]);
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

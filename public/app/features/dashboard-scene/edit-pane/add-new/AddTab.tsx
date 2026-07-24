@@ -4,8 +4,8 @@ import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
 
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
-import { useNestingRestrictions } from '../../scene/layouts-shared/CanvasGridAddActions';
 import { addNewTabTo } from '../../scene/layouts-shared/addNew';
+import { getNestingRestrictionMessage, useNestingRestrictions } from '../../scene/layouts-shared/nestingRestrictions';
 import { isLayoutParent } from '../../scene/types/LayoutParent';
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
 
@@ -40,7 +40,7 @@ export function AddTab({ dashboardScene, selectedElement }: AddTabProps) {
     }
 
     if (disableGrouping) {
-      return t('dashboard.canvas-actions.disabled-nested-grouping', 'Grouping is limited to 4 levels');
+      return getNestingRestrictionMessage();
     }
 
     return t('dashboard.canvas-actions.disabled-nested-tabs', 'Tabs cannot be nested inside other tabs');
