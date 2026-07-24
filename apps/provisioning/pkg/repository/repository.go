@@ -20,7 +20,25 @@ type Repository interface {
 
 	// Test checks if the connection information actually works.
 	Test(ctx context.Context) (*provisioning.TestResults, error)
+
+	// ValidatePermissions reports the permissions the repository backend is
+	// missing for provisioning to operate. A non-empty result (or a non-nil
+	// error) means the repository is not fully authorized, and callers should
+	// skip dependent work such as sync. Backends without a permission model
+	// return (nil, nil).
+	ValidatePermissions(ctx context.Context) ([]Permission, error)
 }
+
+// Permission identifies a capability the repository backend must be granted for
+// provisioning to operate. ValidatePermissions reports the subset that is missing.
+type Permission string
+
+const (
+	PermissionContents     Permission = "contents"
+	PermissionMetadata     Permission = "metadata"
+	PermissionPullRequests Permission = "pull_requests"
+	PermissionWebhooks     Permission = "webhooks"
+)
 
 // ErrFileNotFound indicates that a path could not be found in the repository.
 var ErrFileNotFound error = &apierrors.StatusError{ErrStatus: metav1.Status{

@@ -102,6 +102,14 @@ func (r *gitRepository) URL() string {
 	return r.gitConfig.URL
 }
 
+// ValidatePermissions implements repository.Repository. The generic git backend
+// has no permission model beyond the auth surfaced by Test, so it reports no
+// missing permissions. Providers embedding gitRepository (GitHub, GitLab,
+// Bitbucket) may override this.
+func (r *gitRepository) ValidatePermissions(ctx context.Context) ([]repository.Permission, error) {
+	return nil, nil
+}
+
 func (r *gitRepository) Branch() string {
 	return r.gitConfig.Branch
 }

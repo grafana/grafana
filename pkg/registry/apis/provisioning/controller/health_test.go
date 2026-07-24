@@ -919,6 +919,10 @@ type mockRepository struct {
 	testError  error
 }
 
+func (m *mockRepository) ValidatePermissions(ctx context.Context) ([]repository.Permission, error) {
+	return nil, nil
+}
+
 func (m *mockRepository) Config() *provisioning.Repository {
 	return m.config
 }

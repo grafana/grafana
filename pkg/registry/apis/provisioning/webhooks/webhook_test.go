@@ -28,6 +28,9 @@ type stubWebhookRepo struct {
 }
 
 func (s stubWebhookRepo) Config() *provisioning.Repository { return s.cfg }
+func (s stubWebhookRepo) ValidatePermissions(ctx context.Context) ([]repository.Permission, error) {
+	return nil, nil
+}
 func (s stubWebhookRepo) Test(context.Context) (*provisioning.TestResults, error) {
 	return nil, nil
 }
