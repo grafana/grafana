@@ -402,7 +402,7 @@ func TestCreateDashboardSnapshotPublicModeWithKubernetesSnapshots(t *testing.T) 
 					Return(&dashboardsnapshots.DashboardSnapshot{Key: "pub-key", DeleteKey: "pub-delete-key"}, nil)
 			}
 
-			flags := []any{featuremgmt.FlagKubernetesSnapshots}
+			flags := []any{}
 			if tt.supportLegacy {
 				flags = append(flags, featuremgmt.FlagExternalSnapshotsSupportLegacyAPI)
 			}
@@ -411,6 +411,7 @@ func TestCreateDashboardSnapshotPublicModeWithKubernetesSnapshots(t *testing.T) 
 				cfg := setting.NewCfg()
 				cfg.SnapshotEnabled = true
 				cfg.SnapshotPublicMode = true
+				cfg.KubernetesSnapshotsEnabled = true
 				hs.Cfg = cfg
 				hs.Features = featuremgmt.WithFeatures(flags...)
 				hs.dashboardsnapshotsService = dashSnapSvc

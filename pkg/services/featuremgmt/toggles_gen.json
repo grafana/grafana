@@ -3805,7 +3805,8 @@
       "metadata": {
         "name": "kubernetesSnapshots",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2023-12-05T22:31:49Z"
+        "creationTimestamp": "2023-12-05T22:31:49Z",
+        "deletionTimestamp": "2026-06-30T14:12:39Z"
       },
       "spec": {
         "description": "Routes snapshot requests from /api to the /apis endpoint",

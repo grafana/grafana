@@ -179,11 +179,6 @@ export interface FeatureToggles {
   */
   externalServiceAccounts?: boolean;
   /**
-  * Routes snapshot requests from /api to the /apis endpoint
-  * @default false
-  */
-  kubernetesSnapshots?: boolean;
-  /**
   * When kubernetesSnapshots is enabled, push/delete external snapshots via the K8s API. When off, the K8s snapshots handler falls back to the legacy /api/snapshots endpoint on the external instance.
   * @default false
   */
