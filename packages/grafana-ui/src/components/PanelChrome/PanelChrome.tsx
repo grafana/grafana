@@ -350,6 +350,7 @@ export function PanelChrome({
           </TitleItem>
         </Tooltip>
       )}
+
       {loadingState === LoadingState.Loading && onCancelQuery && (
         <DelayRender delay={2000}>
           <Tooltip content={t('grafana-ui.panel-chrome.tooltip-cancel', 'Cancel query')}>
@@ -363,8 +364,8 @@ export function PanelChrome({
           </Tooltip>
         </DelayRender>
       )}
-      {!hoverHeader && <div className={styles.flexGrow} />}
-      {actions && itemsRenderer(actions, (item) => item)}
+
+      {actions && <div className={styles.actions}>{itemsRenderer(actions, (item) => item)}</div>}
     </>
   );
 
@@ -673,6 +674,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     menuItem: css({
       label: 'panel-menu',
       border: 'none',
+      marginLeft: 'auto',
       background: theme.colors.secondary.main,
       '&:hover': {
         background: theme.colors.secondary.shade,
@@ -699,8 +701,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: 0,
       maxWidth: '100%',
     }),
-    flexGrow: css({
+    actions: css({
       flexGrow: 1,
+      display: 'flex',
+      gap: theme.spacing(1),
+      justifyContent: 'flex-end',
     }),
   };
 };
