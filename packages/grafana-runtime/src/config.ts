@@ -84,6 +84,7 @@ export class GrafanaBootConfig {
   publicDashboardAccessToken?: string;
   publicDashboardsEnabled = true;
   snapshotEnabled = true;
+  kubernetesSnapshotsEnabled = false;
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   /** @deprecated it will be removed in a future release, use isPanelPluginInstalled, getPanelPluginVersion or getListedPanelPluginIds instead */
   panels: { [key: string]: PanelPluginMeta } = {};
