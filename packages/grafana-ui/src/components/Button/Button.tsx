@@ -314,9 +314,9 @@ export const getButtonStyles = (props: StyleProps) => {
   };
 };
 
-export function getActiveButtonStyles(color: ThemeRichColor, fill: ButtonFill) {
+export function getActiveButtonStyles(color: ThemeRichColor, fill: ButtonFill, visualRefreshEnabled?: boolean) {
   return {
-    background: fill === 'solid' ? color.main : 'transparent',
+    background: fill === 'solid' ? (visualRefreshEnabled ? color.backgroundEmphasis : color.main) : 'transparent',
   };
 }
 
@@ -347,7 +347,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       },
 
       '&:active': {
-        ...getActiveButtonStyles(color, fill),
+        ...getActiveButtonStyles(color, fill, visualRefreshEnabled),
       },
     };
   }
@@ -366,7 +366,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       },
 
       '&:active': {
-        ...getActiveButtonStyles(color, fill),
+        ...getActiveButtonStyles(color, fill, visualRefreshEnabled),
       },
     };
   }
@@ -410,7 +410,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
     },
 
     '&:active': {
-      ...getActiveButtonStyles(color, fill),
+      ...getActiveButtonStyles(color, fill, visualRefreshEnabled),
     },
   };
 }

@@ -40,9 +40,6 @@
             "mainEmphasis": {
               "type": "string"
             },
-            "contrastText": {
-              "type": "string"
-            },
             "background": {
               "type": "string"
             },
@@ -59,6 +56,9 @@
               "type": "string"
             },
             "borderEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
               "type": "string"
             },
             "shade": {
@@ -95,9 +95,6 @@
             "mainEmphasis": {
               "type": "string"
             },
-            "contrastText": {
-              "type": "string"
-            },
             "background": {
               "type": "string"
             },
@@ -114,6 +111,9 @@
               "type": "string"
             },
             "borderEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
               "type": "string"
             },
             "shade": {
@@ -150,9 +150,6 @@
             "mainEmphasis": {
               "type": "string"
             },
-            "contrastText": {
-              "type": "string"
-            },
             "background": {
               "type": "string"
             },
@@ -169,6 +166,9 @@
               "type": "string"
             },
             "borderEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
               "type": "string"
             },
             "shade": {
@@ -205,9 +205,6 @@
             "mainEmphasis": {
               "type": "string"
             },
-            "contrastText": {
-              "type": "string"
-            },
             "background": {
               "type": "string"
             },
@@ -224,6 +221,9 @@
               "type": "string"
             },
             "borderEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
               "type": "string"
             },
             "shade": {
@@ -260,9 +260,6 @@
             "mainEmphasis": {
               "type": "string"
             },
-            "contrastText": {
-              "type": "string"
-            },
             "background": {
               "type": "string"
             },
@@ -279,6 +276,9 @@
               "type": "string"
             },
             "borderEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
               "type": "string"
             },
             "shade": {
@@ -315,9 +315,6 @@
             "mainEmphasis": {
               "type": "string"
             },
-            "contrastText": {
-              "type": "string"
-            },
             "background": {
               "type": "string"
             },
@@ -334,6 +331,9 @@
               "type": "string"
             },
             "borderEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
               "type": "string"
             },
             "shade": {
@@ -370,9 +370,6 @@
             "mainEmphasis": {
               "type": "string"
             },
-            "contrastText": {
-              "type": "string"
-            },
             "background": {
               "type": "string"
             },
@@ -389,6 +386,9 @@
               "type": "string"
             },
             "borderEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
               "type": "string"
             },
             "shade": {
@@ -425,9 +425,6 @@
             "mainEmphasis": {
               "type": "string"
             },
-            "contrastText": {
-              "type": "string"
-            },
             "background": {
               "type": "string"
             },
@@ -444,6 +441,9 @@
               "type": "string"
             },
             "borderEmphasis": {
+              "type": "string"
+            },
+            "contrastText": {
               "type": "string"
             },
             "shade": {
