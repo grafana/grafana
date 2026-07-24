@@ -176,21 +176,23 @@ export const fetchDetails = createAsyncThunk<Update<CatalogPlugin, string>, stri
   }
 );
 
-export const fetchPluginInsights = createAsyncThunk<Update<CatalogPlugin, string>, { id: string; version?: string }>(
-  `${STATE_PREFIX}/fetchPluginInsights`,
-  async ({ id, version }, thunkApi) => {
-    try {
-      const insights = await getPluginInsights(id, version);
+export const fetchPluginInsights = createAsyncThunk<
+  Update<CatalogPlugin, string>,
+  { id: string; version?: string },
+  { state: PluginCatalogStoreState }
+>(`${STATE_PREFIX}/fetchPluginInsights`, async ({ id, version }, thunkApi) => {
+  try {
+    const canonicalId = selectByIdOrAlias(thunkApi.getState(), id)?.id ?? id;
+    const insights = await getPluginInsights(canonicalId, version);
 
-      return {
-        id,
-        changes: { insights },
-      };
-    } catch (e) {
-      return thunkApi.rejectWithValue('Unknown error.');
-    }
+    return {
+      id: canonicalId,
+      changes: { insights },
+    };
+  } catch (e) {
+    return thunkApi.rejectWithValue('Unknown error.');
   }
-);
+});
 
 export const addPlugins = createAction<CatalogPlugin[]>(`${STATE_PREFIX}/addPlugins`);
 
