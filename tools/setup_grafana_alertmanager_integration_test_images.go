@@ -10,11 +10,11 @@ import (
 )
 
 func docker(args []string) {
-	cmd := exec.Command("docker", args...) // #nosec G204 -- build script invoking docker with hard-coded args from main
+	cmd := exec.Command("docker", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		fmt.Printf("docker pull failed: %v\n", err)
+		fmt.Printf("docker %v failed: %v\n", args[0], err)
 		os.Exit(1)
 	}
 }
@@ -22,7 +22,7 @@ func docker(args []string) {
 func main() {
 	var wg sync.WaitGroup
 
-	for _, cmd := range [][]string{
+	for _, c := range [][]string{
 		{"pull", amtests.GetGrafanaImage()},
 		{"pull", amtests.GetLokiImage()},
 		{"pull", amtests.GetPostgresImage()},
@@ -32,9 +32,8 @@ func main() {
 
 		go func(cmd []string) {
 			defer wg.Done()
-
 			docker(cmd)
-		}(cmd)
+		}(c)
 	}
 
 	wg.Wait()
