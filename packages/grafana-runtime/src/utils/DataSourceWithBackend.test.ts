@@ -69,12 +69,15 @@ jest.mock('../services', () => ({
     };
   },
 }));
-jest.mock('./../unstable', () => ({
-  ...jest.requireActual('./../unstable'),
-  getDataSourceInstanceSettings: (ref?: DataSourceRef) => ({
+const mockGetDataSourceInstanceSettings = jest.fn<{ type: string; uid: string } | undefined, [DataSourceRef?]>(
+  (ref) => ({
     type: ref?.type ?? '<mocktype>',
     uid: ref?.uid ?? '<mockuid>',
-  }),
+  })
+);
+jest.mock('./../unstable', () => ({
+  ...jest.requireActual('./../unstable'),
+  getDataSourceInstanceSettings: (ref?: DataSourceRef) => mockGetDataSourceInstanceSettings(ref),
 }));
 jest.mock('./publicDashboardQueryHandler');
 
@@ -173,6 +176,23 @@ describe('DataSourceWithBackend', () => {
         "url": "/api/ds/query?ds_type=dummy",
       }
     `);
+  });
+
+  test('surfaces an error when a query targets an unknown datasource', async () => {
+    const { ds } = createMockDatasource();
+    // the async settings lookup returning undefined means the datasource does not exist
+    mockGetDataSourceInstanceSettings.mockReturnValueOnce(undefined);
+
+    await expect(
+      firstValueFrom(
+        ds.query({
+          maxDataPoints: 10,
+          intervalMs: 5000,
+          targets: [{ refId: 'A', datasource: { type: 'unknown', uid: 'does-not-exist' } }],
+          range: getDefaultTimeRange(),
+        } as DataQueryRequest)
+      )
+    ).rejects.toThrow('Unknown Datasource');
   });
 
   test('correctly passes datasource headers', async () => {
@@ -842,12 +862,14 @@ describe('DataSourceWithBackend', () => {
     ])('%s', async (_, targets, expectedTypes) => {
       const { ds } = createMockDatasource();
 
-      await firstValueFrom(ds.query({
-        maxDataPoints: 10,
-        intervalMs: 5000,
-        targets,
-        range: getDefaultTimeRange(),
-      } as DataQueryRequest));
+      await firstValueFrom(
+        ds.query({
+          maxDataPoints: 10,
+          intervalMs: 5000,
+          targets,
+          range: getDefaultTimeRange(),
+        } as DataQueryRequest)
+      );
 
       const { calls } = mockIsQueryServiceCompatible.mock;
       expect(calls).toHaveLength(1);
