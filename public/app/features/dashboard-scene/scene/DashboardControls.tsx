@@ -25,7 +25,6 @@ import { Box, Button, ButtonGroup, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/ContextualNavigationPaneToggle';
 import { KioskMode } from 'app/types/dashboard';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
@@ -264,9 +263,6 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           </div>
         )}
       </div>
-      {config.featureToggles.scopeFilters && !editPanel && (
-        <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />
-      )}
       {!hideVariableControls && (
         <>
           <VariableControls dashboard={dashboard} variablesOverride={panelEditVariables} />
@@ -466,10 +462,6 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
     rightControlsWrap: css({
       flexWrap: 'wrap',
       marginLeft: 'auto',
-    }),
-    contextualNavToggle: css({
-      display: 'inline-flex',
-      margin: theme.spacing(0, 1, 1, 0),
     }),
   };
 }

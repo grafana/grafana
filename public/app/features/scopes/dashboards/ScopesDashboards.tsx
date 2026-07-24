@@ -5,15 +5,19 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { useObservable } from '@grafana/data/unstable';
 import { Trans, t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
-import { Button, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { Button, Divider, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { useScopesServices } from '../ScopesContextProvider';
 
 import { ScopesDashboardsTree } from './ScopesDashboardsTree';
 import { ScopesDashboardsTreeSearch } from './ScopesDashboardsTreeSearch';
 
-export function ScopesDashboards() {
-  const styles = useStyles2(getStyles);
+interface ScopesDashboardsProps {
+  inline?: boolean;
+}
+
+export function ScopesDashboards({ inline = false }: ScopesDashboardsProps = {}) {
+  const styles = useStyles2(getStyles, inline);
   const scopes = useScopes();
   const scopeServices = useScopesServices();
 
@@ -22,7 +26,11 @@ export function ScopesDashboards() {
     scopeServices?.scopesDashboardsService.state
   );
 
-  if (!scopeServices || !scopes || !scopes.state.enabled || !scopes.state.drawerOpened || scopes.state.readOnly) {
+  if (!scopeServices || !scopes || !scopes.state.enabled || scopes.state.readOnly) {
+    return null;
+  }
+
+  if (!inline && !scopes.state.drawerOpened) {
     return null;
   }
 
@@ -33,6 +41,9 @@ export function ScopesDashboards() {
 
   if (!loading) {
     if (forScopeNames.length === 0) {
+      if (inline) {
+        return null;
+      }
       return (
         <div className={styles.container} data-testid="scopes-dashboards-container">
           <ScopesDashboardsTreeSearch disabled={loading} query={searchQuery} onChange={changeSearchQuery} />
@@ -44,65 +55,71 @@ export function ScopesDashboards() {
       );
     } else if (dashboards.length === 0 && scopeNavigations.length === 0) {
       return (
-        <div className={styles.container} data-testid="scopes-dashboards-container">
-          <div className={styles.noResultsContainer} data-testid="scopes-dashboards-notFoundForScope">
-            <Trans i18nKey="scopes.dashboards.noResultsForScopes">
-              No dashboards or links found for the selected scopes
-            </Trans>
+        <>
+          {inline && <Divider spacing={1} />}
+          <div className={styles.container} data-testid="scopes-dashboards-container">
+            <div className={styles.noResultsContainer} data-testid="scopes-dashboards-notFoundForScope">
+              <Trans i18nKey="scopes.dashboards.noResultsForScopes">
+                No dashboards or links found for the selected scopes
+              </Trans>
+            </div>
           </div>
-        </div>
+        </>
       );
     }
   }
 
   return (
-    <div className={styles.container} data-testid="scopes-dashboards-container">
-      <ScopesDashboardsTreeSearch disabled={loading} query={searchQuery} onChange={changeSearchQuery} />
+    <>
+      {inline && <Divider spacing={1} />}
+      <div className={styles.container} data-testid="scopes-dashboards-container">
+        <ScopesDashboardsTreeSearch disabled={loading} query={searchQuery} onChange={changeSearchQuery} />
 
-      {loading ? (
-        <LoadingPlaceholder
-          className={styles.loadingIndicator}
-          text={t('scopes.dashboards.loading', 'Loading dashboards')}
-          data-testid="scopes-dashboards-loading"
-        />
-      ) : filteredFolders[''] ? (
-        <ScrollContainer>
-          <ScopesDashboardsTree
-            folders={filteredFolders}
-            folderPath={['']}
-            subScopePath={[]}
-            onFolderUpdate={updateFolder}
+        {loading ? (
+          <LoadingPlaceholder
+            className={styles.loadingIndicator}
+            text={t('scopes.dashboards.loading', 'Loading dashboards')}
+            data-testid="scopes-dashboards-loading"
           />
-        </ScrollContainer>
-      ) : (
-        <p className={styles.noResultsContainer} data-testid="scopes-dashboards-notFoundForFilter">
-          <Trans i18nKey="scopes.dashboards.noResultsForFilter">No results found for your query</Trans>
+        ) : filteredFolders[''] ? (
+          <ScrollContainer>
+            <ScopesDashboardsTree
+              folders={filteredFolders}
+              folderPath={['']}
+              subScopePath={[]}
+              onFolderUpdate={updateFolder}
+            />
+          </ScrollContainer>
+        ) : (
+          <p className={styles.noResultsContainer} data-testid="scopes-dashboards-notFoundForFilter">
+            <Trans i18nKey="scopes.dashboards.noResultsForFilter">No results found for your query</Trans>
 
-          <Button
-            variant="secondary"
-            onClick={clearSearchQuery}
-            data-testid="scopes-dashboards-notFoundForFilter-clear"
-          >
-            <Trans i18nKey="scopes.dashboards.noResultsForFilterClear">Clear search</Trans>
-          </Button>
-        </p>
-      )}
-    </div>
+            <Button
+              variant="secondary"
+              onClick={clearSearchQuery}
+              data-testid="scopes-dashboards-notFoundForFilter-clear"
+            >
+              <Trans i18nKey="scopes.dashboards.noResultsForFilterClear">Clear search</Trans>
+            </Button>
+          </p>
+        )}
+      </div>
+    </>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, inline: boolean) => {
   return {
     container: css({
-      backgroundColor: theme.colors.background.canvas,
-      borderRight: `1px solid ${theme.colors.border.weak}`,
+      backgroundColor: inline ? 'transparent' : theme.colors.background.canvas,
+      borderRight: inline ? undefined : `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
       flexDirection: 'column',
-      height: '100%',
+      height: inline ? undefined : '100%',
       gap: theme.spacing(1),
-      padding: theme.spacing(0, 2),
-      margin: theme.spacing(2, 0),
-      width: theme.spacing(37.5),
+      padding: inline ? theme.spacing(0, 1) : theme.spacing(0, 2),
+      margin: inline ? theme.spacing(1, 0) : theme.spacing(2, 0),
+      width: inline ? undefined : theme.spacing(37.5),
     }),
     noResultsContainer: css({
       alignItems: 'center',
