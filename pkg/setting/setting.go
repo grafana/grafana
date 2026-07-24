@@ -901,6 +901,12 @@ func (cfg *Cfg) AddChangePasswordLink() bool {
 	return !cfg.DisableLoginForm && !cfg.DisableLogin
 }
 
+// IsDevEnv reports whether Grafana is running in a non-production environment.
+// Some experimental startup params should only honoured when this condition is true.
+func (cfg *Cfg) IsDevEnv() bool {
+	return cfg.Env != Prod
+}
+
 type CommandLineArgs struct {
 	Config   string
 	HomePath string
