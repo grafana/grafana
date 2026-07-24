@@ -1,5 +1,4 @@
 import { of } from 'rxjs';
-import { type BackendSrv, type BackendSrvRequest, type FetchResponse } from 'src/services';
 
 import {
   type DataQuery,
@@ -15,6 +14,7 @@ import {
 } from '@grafana/data';
 
 import { config } from '../config';
+import { type BackendSrv, type BackendSrvRequest, type FetchResponse } from '../services';
 
 import {
   DataSourceWithBackend,

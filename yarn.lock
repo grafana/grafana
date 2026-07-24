@@ -2123,6 +2123,7 @@ __metadata:
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
     "@types/tinycolor2": "npm:^1"
+    "@typescript/native": "npm:typescript@^7.0.2"
     fishery: "npm:^2.3.1"
     i18next-cli: "npm:^1.48.0"
     lodash: "npm:^4.17.21"
@@ -2135,7 +2136,7 @@ __metadata:
     rollup-plugin-node-externals: "npm:^8.0.0"
     tinycolor2: "npm:^1.6.0"
     type-fest: "npm:^4.40.0"
-    typescript: "npm:6.0.2"
+    typescript: "npm:@typescript/typescript6@^6.0.2"
   peerDependencies:
     "@grafana/data": ">=11.6 <= 12.x"
     "@grafana/runtime": ">=11.6 <= 12.x"
@@ -2151,10 +2152,11 @@ __metadata:
   resolution: "@grafana/api-clients@workspace:packages/grafana-api-clients"
   dependencies:
     "@rtk-query/codegen-openapi": "npm:^2.0.0"
+    "@typescript/native": "npm:typescript@^7.0.2"
     enquirer: "npm:^2.4.1"
     openapi-types: "npm:^12.1.3"
     rollup: "npm:^4.60.1"
-    typescript: "npm:6.0.2"
+    typescript: "npm:@typescript/typescript6@^6.0.2"
   peerDependencies:
     "@grafana/runtime": ">=11.6 <= 12.x"
     "@reduxjs/toolkit": ^2.10.0
@@ -2243,6 +2245,7 @@ __metadata:
     "@types/string-hash": "npm:^1.1.3"
     "@types/systemjs": "npm:^6.15.3"
     "@types/tinycolor2": "npm:1.4.6"
+    "@typescript/native": "npm:typescript@^7.0.2"
     d3-interpolate: "npm:^3.0.1"
     d3-scale-chromatic: "npm:^3.1.0"
     date-fns: "npm:^4.1.0"
@@ -2269,7 +2272,7 @@ __metadata:
     string-hash: "npm:^1.1.3"
     tinycolor2: "npm:^1.6.0"
     tsx: "npm:^4.21.0"
-    typescript: "npm:6.0.2"
+    typescript: "npm:@typescript/typescript6@^6.0.2"
     uplot: "npm:^1.6.32"
     xss: "npm:^1.0.14"
     zod: "npm:^4.3.0"
@@ -2286,13 +2289,14 @@ __metadata:
     "@rollup/plugin-node-resolve": "npm:16.0.1"
     "@types/node": "npm:24.10.1"
     "@types/semver": "npm:7.7.1"
+    "@typescript/native": "npm:typescript@^7.0.2"
     esbuild: "npm:0.25.8"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.60.1"
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     semver: "npm:^7.7.0"
-    typescript: "npm:^6.0.2"
+    typescript: "npm:@typescript/typescript6@^6.0.2"
   languageName: unknown
   linkType: soft
 
@@ -2409,6 +2413,7 @@ __metadata:
     "@types/react": "npm:18.3.18"
     "@types/react-table": "npm:^7.7.20"
     "@types/tinycolor2": "npm:1.4.6"
+    "@typescript/native": "npm:typescript@^7.0.2"
     d3-scale: "npm:^4.0.2"
     esbuild: "npm:0.28.1"
     fs-extra: "npm:^11.3.2"
@@ -2423,7 +2428,7 @@ __metadata:
     rollup-plugin-node-externals: "npm:^8.0.0"
     storybook: "npm:10.3.6"
     tinycolor2: "npm:^1.6.0"
-    typescript: "npm:6.0.2"
+    typescript: "npm:@typescript/typescript6@^6.0.2"
   peerDependencies:
     "@grafana/assistant": ^0.1.1
     react: ^18.0.0
@@ -2439,6 +2444,7 @@ __metadata:
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@types/react": "npm:18.3.18"
     "@typescript-eslint/utils": "npm:^8.33.1"
+    "@typescript/native": "npm:typescript@^7.0.2"
     fast-deep-equal: "npm:^3.1.3"
     i18next: "npm:^26.3.6"
     i18next-browser-languagedetector: "npm:^8.0.0"
@@ -2446,7 +2452,7 @@ __metadata:
     micro-memoize: "npm:^4.1.2"
     react-i18next: "npm:^17.0.9"
     rollup: "npm:^4.60.1"
-    typescript: "npm:6.0.2"
+    typescript: "npm:@typescript/typescript6@^6.0.2"
   peerDependencies:
     react: ">=18"
   languageName: unknown
@@ -2542,12 +2548,13 @@ __metadata:
     "@types/node": "npm:24.10.1"
     "@types/react": "npm:18.3.18"
     "@types/systemjs": "npm:6.15.3"
+    "@typescript/native": "npm:typescript@^7.0.2"
     jest: "npm:^29.6.4"
     react: "npm:18.3.1"
     react-use: "npm:^17.6.1"
     rollup: "npm:^4.60.1"
     rxjs: "npm:^7.8.2"
-    typescript: "npm:6.0.2"
+    typescript: "npm:@typescript/typescript6@^6.0.2"
   peerDependencies:
     react: ^18.0.0
     react-dom: ^18.0.0
@@ -2805,6 +2812,7 @@ __metadata:
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
     "@types/systemjs": "npm:^6.15.3"
+    "@typescript/native": "npm:typescript@^7.0.2"
     esbuild: "npm:0.25.8"
     fast-json-patch: "npm:^3.1.1"
     history: "npm:^4.10.1"
@@ -2820,7 +2828,7 @@ __metadata:
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     rxjs: "npm:^7.8.2"
-    typescript: "npm:6.0.2"
+    typescript: "npm:@typescript/typescript6@^6.0.2"
   peerDependencies:
     react: ^18.0.0
     react-dom: ^18.0.0
@@ -2887,13 +2895,14 @@ __metadata:
   resolution: "@grafana/schema@workspace:packages/grafana-schema"
   dependencies:
     "@rollup/plugin-node-resolve": "npm:16.0.1"
+    "@typescript/native": "npm:typescript@^7.0.2"
     esbuild: "npm:0.25.8"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.60.1"
     rollup-plugin-copy: "npm:3.5.0"
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
-    typescript: "npm:6.0.2"
+    typescript: "npm:@typescript/typescript6@^6.0.2"
   languageName: unknown
   linkType: soft
 
@@ -2922,6 +2931,7 @@ __metadata:
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
     "@types/systemjs": "npm:6.15.3"
+    "@typescript/native": "npm:typescript@^7.0.2"
     i18next-cli: "npm:^1.48.0"
     jest: "npm:^29.6.4"
     lodash: "npm:^4.18.1"
@@ -2930,7 +2940,7 @@ __metadata:
     rollup: "npm:^4.60.1"
     rxjs: "npm:^7.8.2"
     sql-formatter-plus: "npm:^1.3.6"
-    typescript: "npm:6.0.2"
+    typescript: "npm:@typescript/typescript6@^6.0.2"
   peerDependencies:
     "@grafana/data": ">=10.4.0"
     "@grafana/runtime": ">=10.4.0"
@@ -2953,6 +2963,7 @@ __metadata:
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.20"
     "@types/node": "npm:24.10.1"
+    "@typescript/native": "npm:typescript@^7.0.2"
     chance: "npm:^1.1.13"
     jest: "npm:29.7.0"
     jest-canvas-mock: "npm:2.5.2"
@@ -2962,7 +2973,7 @@ __metadata:
     lodash: "npm:^4.17.23"
     msw: "npm:2.10.4"
     rxjs: "npm:7.8.2"
-    typescript: "npm:6.0.2"
+    typescript: "npm:@typescript/typescript6@^6.0.2"
   languageName: unknown
   linkType: soft
 
@@ -3039,6 +3050,7 @@ __metadata:
     "@types/slate-plain-serializer": "npm:0.7.5"
     "@types/slate-react": "npm:0.22.9"
     "@types/tinycolor2": "npm:1.4.6"
+    "@typescript/native": "npm:typescript@^7.0.2"
     "@uiw/react-codemirror": "npm:^4.25.9"
     calculate-size: "npm:^1.1.1"
     chance: "npm:^1.1.13"
@@ -3096,7 +3108,7 @@ __metadata:
     storybook: "npm:10.3.6"
     style-loader: "npm:4.0.0"
     tinycolor2: "npm:^1.6.0"
-    typescript: "npm:6.0.2"
+    typescript: "npm:@typescript/typescript6@^6.0.2"
     uplot: "npm:^1.6.32"
     uwrap: "npm:^0.1.2"
     webpack: "npm:^5.105.0"
@@ -10918,84 +10930,224 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript/native-preview-darwin-arm64@npm:7.0.0-dev.20260421.2":
-  version: 7.0.0-dev.20260421.2
-  resolution: "@typescript/native-preview-darwin-arm64@npm:7.0.0-dev.20260421.2"
+"@typescript/native@npm:typescript@^7.0.2":
+  version: 7.0.2
+  resolution: "typescript@npm:7.0.2"
+  dependencies:
+    "@typescript/typescript-aix-ppc64": "npm:7.0.2"
+    "@typescript/typescript-darwin-arm64": "npm:7.0.2"
+    "@typescript/typescript-darwin-x64": "npm:7.0.2"
+    "@typescript/typescript-freebsd-arm64": "npm:7.0.2"
+    "@typescript/typescript-freebsd-x64": "npm:7.0.2"
+    "@typescript/typescript-linux-arm": "npm:7.0.2"
+    "@typescript/typescript-linux-arm64": "npm:7.0.2"
+    "@typescript/typescript-linux-loong64": "npm:7.0.2"
+    "@typescript/typescript-linux-mips64el": "npm:7.0.2"
+    "@typescript/typescript-linux-ppc64": "npm:7.0.2"
+    "@typescript/typescript-linux-riscv64": "npm:7.0.2"
+    "@typescript/typescript-linux-s390x": "npm:7.0.2"
+    "@typescript/typescript-linux-x64": "npm:7.0.2"
+    "@typescript/typescript-netbsd-arm64": "npm:7.0.2"
+    "@typescript/typescript-netbsd-x64": "npm:7.0.2"
+    "@typescript/typescript-openbsd-arm64": "npm:7.0.2"
+    "@typescript/typescript-openbsd-x64": "npm:7.0.2"
+    "@typescript/typescript-sunos-x64": "npm:7.0.2"
+    "@typescript/typescript-win32-arm64": "npm:7.0.2"
+    "@typescript/typescript-win32-x64": "npm:7.0.2"
+  dependenciesMeta:
+    "@typescript/typescript-aix-ppc64":
+      optional: true
+    "@typescript/typescript-darwin-arm64":
+      optional: true
+    "@typescript/typescript-darwin-x64":
+      optional: true
+    "@typescript/typescript-freebsd-arm64":
+      optional: true
+    "@typescript/typescript-freebsd-x64":
+      optional: true
+    "@typescript/typescript-linux-arm":
+      optional: true
+    "@typescript/typescript-linux-arm64":
+      optional: true
+    "@typescript/typescript-linux-loong64":
+      optional: true
+    "@typescript/typescript-linux-mips64el":
+      optional: true
+    "@typescript/typescript-linux-ppc64":
+      optional: true
+    "@typescript/typescript-linux-riscv64":
+      optional: true
+    "@typescript/typescript-linux-s390x":
+      optional: true
+    "@typescript/typescript-linux-x64":
+      optional: true
+    "@typescript/typescript-netbsd-arm64":
+      optional: true
+    "@typescript/typescript-netbsd-x64":
+      optional: true
+    "@typescript/typescript-openbsd-arm64":
+      optional: true
+    "@typescript/typescript-openbsd-x64":
+      optional: true
+    "@typescript/typescript-sunos-x64":
+      optional: true
+    "@typescript/typescript-win32-arm64":
+      optional: true
+    "@typescript/typescript-win32-x64":
+      optional: true
+  bin:
+    tsc: bin/tsc
+  checksum: 10/b0179005349b43dc1febb35c4e79162cdf89b84eae60f6deac142429109041e07582e69a6aacf5a897e085869686d4512ea444a10acf5b5aa2b60910f82a19ca
+  languageName: node
+  linkType: hard
+
+"@typescript/old@npm:typescript@^6":
+  version: 6.0.3
+  resolution: "typescript@npm:6.0.3"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 10/0ef2357a4cffd916b52b683a021cdab0f81eea4e9aa35f2d254581c9a5106da02224e3392e1b0ed42b7a48f80c966e5f52b8e1a27941fa0523c1705a9c2e0330
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-aix-ppc64@npm:7.0.2":
+  version: 7.0.2
+  resolution: "@typescript/typescript-aix-ppc64@npm:7.0.2"
+  conditions: os=aix & cpu=ppc64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-darwin-arm64@npm:7.0.2":
+  version: 7.0.2
+  resolution: "@typescript/typescript-darwin-arm64@npm:7.0.2"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@typescript/native-preview-darwin-x64@npm:7.0.0-dev.20260421.2":
-  version: 7.0.0-dev.20260421.2
-  resolution: "@typescript/native-preview-darwin-x64@npm:7.0.0-dev.20260421.2"
+"@typescript/typescript-darwin-x64@npm:7.0.2":
+  version: 7.0.2
+  resolution: "@typescript/typescript-darwin-x64@npm:7.0.2"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@typescript/native-preview-linux-arm64@npm:7.0.0-dev.20260421.2":
-  version: 7.0.0-dev.20260421.2
-  resolution: "@typescript/native-preview-linux-arm64@npm:7.0.0-dev.20260421.2"
+"@typescript/typescript-freebsd-arm64@npm:7.0.2":
+  version: 7.0.2
+  resolution: "@typescript/typescript-freebsd-arm64@npm:7.0.2"
+  conditions: os=freebsd & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-freebsd-x64@npm:7.0.2":
+  version: 7.0.2
+  resolution: "@typescript/typescript-freebsd-x64@npm:7.0.2"
+  conditions: os=freebsd & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-linux-arm64@npm:7.0.2":
+  version: 7.0.2
+  resolution: "@typescript/typescript-linux-arm64@npm:7.0.2"
   conditions: os=linux & cpu=arm64
   languageName: node
   linkType: hard
 
-"@typescript/native-preview-linux-arm@npm:7.0.0-dev.20260421.2":
-  version: 7.0.0-dev.20260421.2
-  resolution: "@typescript/native-preview-linux-arm@npm:7.0.0-dev.20260421.2"
+"@typescript/typescript-linux-arm@npm:7.0.2":
+  version: 7.0.2
+  resolution: "@typescript/typescript-linux-arm@npm:7.0.2"
   conditions: os=linux & cpu=arm
   languageName: node
   linkType: hard
 
-"@typescript/native-preview-linux-x64@npm:7.0.0-dev.20260421.2":
-  version: 7.0.0-dev.20260421.2
-  resolution: "@typescript/native-preview-linux-x64@npm:7.0.0-dev.20260421.2"
+"@typescript/typescript-linux-loong64@npm:7.0.2":
+  version: 7.0.2
+  resolution: "@typescript/typescript-linux-loong64@npm:7.0.2"
+  conditions: os=linux & cpu=loong64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-linux-mips64el@npm:7.0.2":
+  version: 7.0.2
+  resolution: "@typescript/typescript-linux-mips64el@npm:7.0.2"
+  conditions: os=linux & cpu=mips64el
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-linux-ppc64@npm:7.0.2":
+  version: 7.0.2
+  resolution: "@typescript/typescript-linux-ppc64@npm:7.0.2"
+  conditions: os=linux & cpu=ppc64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-linux-riscv64@npm:7.0.2":
+  version: 7.0.2
+  resolution: "@typescript/typescript-linux-riscv64@npm:7.0.2"
+  conditions: os=linux & cpu=riscv64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-linux-s390x@npm:7.0.2":
+  version: 7.0.2
+  resolution: "@typescript/typescript-linux-s390x@npm:7.0.2"
+  conditions: os=linux & cpu=s390x
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-linux-x64@npm:7.0.2":
+  version: 7.0.2
+  resolution: "@typescript/typescript-linux-x64@npm:7.0.2"
   conditions: os=linux & cpu=x64
   languageName: node
   linkType: hard
 
-"@typescript/native-preview-win32-arm64@npm:7.0.0-dev.20260421.2":
-  version: 7.0.0-dev.20260421.2
-  resolution: "@typescript/native-preview-win32-arm64@npm:7.0.0-dev.20260421.2"
+"@typescript/typescript-netbsd-arm64@npm:7.0.2":
+  version: 7.0.2
+  resolution: "@typescript/typescript-netbsd-arm64@npm:7.0.2"
+  conditions: os=netbsd & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-netbsd-x64@npm:7.0.2":
+  version: 7.0.2
+  resolution: "@typescript/typescript-netbsd-x64@npm:7.0.2"
+  conditions: os=netbsd & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-openbsd-arm64@npm:7.0.2":
+  version: 7.0.2
+  resolution: "@typescript/typescript-openbsd-arm64@npm:7.0.2"
+  conditions: os=openbsd & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-openbsd-x64@npm:7.0.2":
+  version: 7.0.2
+  resolution: "@typescript/typescript-openbsd-x64@npm:7.0.2"
+  conditions: os=openbsd & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-sunos-x64@npm:7.0.2":
+  version: 7.0.2
+  resolution: "@typescript/typescript-sunos-x64@npm:7.0.2"
+  conditions: os=sunos & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@typescript/typescript-win32-arm64@npm:7.0.2":
+  version: 7.0.2
+  resolution: "@typescript/typescript-win32-arm64@npm:7.0.2"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@typescript/native-preview-win32-x64@npm:7.0.0-dev.20260421.2":
-  version: 7.0.0-dev.20260421.2
-  resolution: "@typescript/native-preview-win32-x64@npm:7.0.0-dev.20260421.2"
+"@typescript/typescript-win32-x64@npm:7.0.2":
+  version: 7.0.2
+  resolution: "@typescript/typescript-win32-x64@npm:7.0.2"
   conditions: os=win32 & cpu=x64
-  languageName: node
-  linkType: hard
-
-"@typescript/native-preview@npm:7.0.0-dev.20260421.2":
-  version: 7.0.0-dev.20260421.2
-  resolution: "@typescript/native-preview@npm:7.0.0-dev.20260421.2"
-  dependencies:
-    "@typescript/native-preview-darwin-arm64": "npm:7.0.0-dev.20260421.2"
-    "@typescript/native-preview-darwin-x64": "npm:7.0.0-dev.20260421.2"
-    "@typescript/native-preview-linux-arm": "npm:7.0.0-dev.20260421.2"
-    "@typescript/native-preview-linux-arm64": "npm:7.0.0-dev.20260421.2"
-    "@typescript/native-preview-linux-x64": "npm:7.0.0-dev.20260421.2"
-    "@typescript/native-preview-win32-arm64": "npm:7.0.0-dev.20260421.2"
-    "@typescript/native-preview-win32-x64": "npm:7.0.0-dev.20260421.2"
-  dependenciesMeta:
-    "@typescript/native-preview-darwin-arm64":
-      optional: true
-    "@typescript/native-preview-darwin-x64":
-      optional: true
-    "@typescript/native-preview-linux-arm":
-      optional: true
-    "@typescript/native-preview-linux-arm64":
-      optional: true
-    "@typescript/native-preview-linux-x64":
-      optional: true
-    "@typescript/native-preview-win32-arm64":
-      optional: true
-    "@typescript/native-preview-win32-x64":
-      optional: true
-  bin:
-    tsgo: bin/tsgo.js
-  checksum: 10/3b205eb08ac5a7e7d5c18c277e1595b2cc150975d550403d6a7714c728a7f1c6057a14731c3da291feddbbbeef8e93c81d782d7935a06f1e268261b1c6236bf3
   languageName: node
   linkType: hard
 
@@ -18594,7 +18746,7 @@ __metadata:
     "@types/yargs": "npm:17.0.33"
     "@typescript-eslint/eslint-plugin": "npm:8.56.0"
     "@typescript-eslint/parser": "npm:8.56.0"
-    "@typescript/native-preview": "npm:7.0.0-dev.20260421.2"
+    "@typescript/native": "npm:typescript@^7.0.2"
     "@visx/event": "npm:3.12.0"
     "@visx/gradient": "npm:3.12.0"
     "@visx/group": "npm:3.12.0"
@@ -18777,7 +18929,7 @@ __metadata:
     tslib: "npm:2.8.1"
     tween-functions: "npm:^1.2.0"
     type-fest: "npm:^4.18.2"
-    typescript: "npm:6.0.2"
+    typescript: "npm:@typescript/typescript6@^6.0.2"
     uplot: "npm:1.6.32"
     vis-data: "npm:^8.0.0"
     vis-network: "npm:10.0.2"
@@ -31928,13 +32080,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:6.0.2, typescript@npm:^6.0.2":
+"typescript@npm:6.0.2":
   version: 6.0.2
   resolution: "typescript@npm:6.0.2"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 10/b9fc2fcee7ee8e5ca6f5138181964550531e18e2d20ecb71b802d4d495881e3444e0ef94cbb6e84eb2ba41e913f6feae3ca33cc722b32e6e6dfadb32d23b80e6
+  languageName: node
+  linkType: hard
+
+"typescript@npm:@typescript/typescript6@^6.0.2":
+  version: 6.0.2
+  resolution: "@typescript/typescript6@npm:6.0.2"
+  dependencies:
+    "@typescript/old": "npm:typescript@^6"
+  bin:
+    tsc6: bin/tsc6
+  checksum: 10/e214aa9b2783ac924498ebbb42a4419e1d8681acc10d26daa145e938d6da0ecde46ad36690fc4e9083a4b47cf73cdc83f2c2054f32e07f10920768956c2b00a1
   languageName: node
   linkType: hard
 
@@ -31958,13 +32121,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A6.0.2#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^6.0.2#optional!builtin<compat/typescript>":
+"typescript@patch:typescript@npm%3A6.0.2#optional!builtin<compat/typescript>":
   version: 6.0.2
   resolution: "typescript@patch:typescript@npm%3A6.0.2#optional!builtin<compat/typescript>::version=6.0.2&hash=5786d5"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 10/e5501dfcf8c5b6b9a61f6fa53decc40187cebe3a2b7b2bd51c615007ad4cf6d58298461fef63294f6be9d5f2f33019b2a2e2bf02d9cb7d7f6ec94372bf24ffa2
+  languageName: node
+  linkType: hard
+
+"typescript@patch:typescript@npm%3A@typescript/typescript6@^6.0.2#optional!builtin<compat/typescript>":
+  version: 6.0.2
+  resolution: "typescript@patch:@typescript/typescript6@npm%3A6.0.2#optional!builtin<compat/typescript>::version=6.0.2&hash=5786d5"
+  dependencies:
+    "@typescript/old": "npm:typescript@^6"
+  bin:
+    tsc6: bin/tsc6
+  checksum: 10/b190ec6b713b0fa95c059ff8019b740c17591ea83a3b60e6fe592d51d56d73c360b86abce48f616d25c39697cc5f4bb9efe8e2a231096f493758457cb175e11c
   languageName: node
   linkType: hard
 

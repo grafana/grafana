@@ -163,6 +163,7 @@
     "@types/slate-plain-serializer": "0.7.5",
     "@types/slate-react": "0.22.9",
     "@types/tinycolor2": "1.4.6",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "chance": "^1.1.13",
     "common-tags": "1.8.2",
     "css-loader": "7.1.2",
@@ -186,7 +187,7 @@
     "sass-loader": "16.0.5",
     "storybook": "10.3.6",
     "style-loader": "4.0.0",
-    "typescript": "6.0.2",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
     "webpack": "^5.105.0"
   },
   "peerDependencies": {

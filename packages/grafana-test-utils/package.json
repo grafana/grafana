@@ -73,10 +73,11 @@
     "@types/jest": "29.5.14",
     "@types/lodash": "4.17.20",
     "@types/node": "24.10.1",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "jest": "29.7.0",
     "jest-canvas-mock": "2.5.2",
     "jest-canvas-mock-compare": "0.1.0",
     "jest-snapshot": "^30.3.0",
-    "typescript": "6.0.2"
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
   }
 }
