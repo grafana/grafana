@@ -12,7 +12,8 @@ export const flows = {
     page: Page,
     dashboardPage: DashboardPage,
     selectors: E2ESelectorGroups,
-    variable: Variable
+    variable: Variable,
+    skipEnterEditMode = false
   ) {
     // Keep the flows signature unchanged for unmigrated callers: build the
     // `components` fixture equivalent from the page context
@@ -20,7 +21,9 @@ export const flows = {
     const controls = new Controls({ page, dashboardPage, selectors, components });
     const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
-    await controls.enterEditMode();
+    if (!skipEnterEditMode) {
+      await controls.enterEditMode();
+    }
 
     await sidebar.toolbar.clickButton('Add');
     await sidebar.addOptions.clickNewVariableButton();
