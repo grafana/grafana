@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { store } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { RecommendationsSkeleton } from './RecommendationsSkeleton';
@@ -43,8 +44,14 @@ function toSetupItem(recommendation: PluginRecommendationItem): RecommendationIt
   return { ...recommendation, action: recommendation.setupAction, href: recommendation.appHref, cta: 'setup' };
 }
 
+function mapPluginsById(plugins: LocalPlugin[] = []) {
+  return new Map(plugins.map((plugin) => [plugin.id, plugin]));
+}
+
 function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
   const { value: installedPlugins, loading: pluginsLoading } = useAsync(fetchInstalledPlugins, []);
+  // Memoized so the probe callback below can depend on it without re-running every render.
+  const pluginsById = useMemo(() => mapPluginsById(installedPlugins), [installedPlugins]);
 
   // Enabled alone does not mean used: probe each enabled recommended solution for live data,
   // and keep recommending the silent ones (preprovisioned cloud stacks enable apps by default).
@@ -52,19 +59,17 @@ function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
     if (!installedPlugins) {
       return undefined;
     }
-    const pluginsById = new Map(installedPlugins.map((plugin) => [plugin.id, plugin]));
     const enabled = getRecommendations().filter((r) => pluginsById.get(r.pluginId)?.enabled);
     const entries = await Promise.all(
       enabled.map(async (r) => [r.pluginId, await hasSolutionData(r.pluginId)] as const)
     );
     return new Set(entries.filter(([, hasData]) => hasData).map(([pluginId]) => pluginId));
-  }, [installedPlugins]);
+  }, [installedPlugins, pluginsById]);
 
   // An unavailable plugin list fails closed. /api/plugins always lists at least the core plugins,
   // so an empty response means the list is unreliable and also fails closed.
   const listReady = !pluginsLoading && !!installedPlugins && installedPlugins.length > 0;
 
-  const pluginsById = new Map((installedPlugins ?? []).map((plugin) => [plugin.id, plugin]));
   const recommendations = !listReady
     ? []
     : getRecommendations().flatMap((recommendation): RecommendationItem[] => {
