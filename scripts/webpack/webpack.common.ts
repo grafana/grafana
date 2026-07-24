@@ -20,7 +20,6 @@ export default (env: Env = {}): Configuration => ({
   target: 'web',
   entry: {
     app: './public/app/index.ts',
-    swagger: './public/swagger/index.tsx',
     boot: {
       import: './public/boot/index.ts',
       runtime: false,
