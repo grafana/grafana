@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"errors"
 	"net/url"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -213,4 +214,60 @@ func TestBuildConnectionStringPostgres(t *testing.T) {
 			assert.Equal(t, tc.expectedConnStr, tc.dbCfg.ConnectionString)
 		})
 	}
+}
+
+func TestSQLiteWALDefault(t *testing.T) {
+	t.Run("WAL is enabled by default when not explicitly configured", func(t *testing.T) {
+		// nolint:staticcheck
+		cfg := setting.NewCfgWithFeatures(featuremgmt.WithFeatures().IsEnabledGlobally)
+		sec, err := cfg.Raw.NewSection("database")
+		require.NoError(t, err)
+		_, err = sec.NewKey("type", migrator.SQLite)
+		require.NoError(t, err)
+
+		dbCfg := &DatabaseConfig{}
+		require.NoError(t, dbCfg.readConfig(cfg))
+
+		assert.True(t, dbCfg.WALEnabled, "WAL should be enabled by default for SQLite")
+	})
+
+	t.Run("WAL can be explicitly disabled", func(t *testing.T) {
+		// nolint:staticcheck
+		cfg := setting.NewCfgWithFeatures(featuremgmt.WithFeatures().IsEnabledGlobally)
+		sec, err := cfg.Raw.NewSection("database")
+		require.NoError(t, err)
+		_, err = sec.NewKey("type", migrator.SQLite)
+		require.NoError(t, err)
+		_, err = sec.NewKey("wal", "false")
+		require.NoError(t, err)
+
+		dbCfg := &DatabaseConfig{}
+		require.NoError(t, dbCfg.readConfig(cfg))
+
+		assert.False(t, dbCfg.WALEnabled, "WAL should be disabled when explicitly set to false")
+	})
+
+	t.Run("WAL enabled adds journal_mode to SQLite connection string", func(t *testing.T) {
+		dbCfg := &DatabaseConfig{
+			Type:       migrator.SQLite,
+			Path:       filepath.Join(t.TempDir(), "grafana_test.db"),
+			WALEnabled: true,
+			CacheMode:  "private",
+		}
+		cfg := &setting.Cfg{}
+		require.NoError(t, dbCfg.buildConnectionString(cfg, nil))
+		assert.Contains(t, dbCfg.ConnectionString, "_journal_mode=WAL")
+	})
+
+	t.Run("WAL disabled omits journal_mode from SQLite connection string", func(t *testing.T) {
+		dbCfg := &DatabaseConfig{
+			Type:       migrator.SQLite,
+			Path:       filepath.Join(t.TempDir(), "grafana_test.db"),
+			WALEnabled: false,
+			CacheMode:  "private",
+		}
+		cfg := &setting.Cfg{}
+		require.NoError(t, dbCfg.buildConnectionString(cfg, nil))
+		assert.NotContains(t, dbCfg.ConnectionString, "_journal_mode=WAL")
+	})
 }
