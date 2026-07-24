@@ -311,13 +311,7 @@ describe('InfiniteScroll', () => {
   );
 });
 
-// Regression tests for https://github.com/grafana/grafana/issues/129033: in interval mode the loader
-// loaded more logs only once and then got stuck or wrongly showed "End of the selected time range".
-// The loader resolves a load-more when its request settles (loadingState leaves Loading/Streaming);
-// on Done it waits for the settled rows to propagate (the `logs` prop lags loadingState by a render,
-// since LogList turns it into processedLogs via an effect) and compares against the row count captured
-// when the load-more started (Loki query splitting streams partial pages, growing rows across renders);
-// on Error it returns to idle so the user can retry.
+// Regression tests for https://github.com/grafana/grafana/issues/129033 (infinite scroll stopping early).
 describe('InfiniteScroll consecutive loads (regression #129033)', () => {
   // Page 1 sits early in the range so canScrollBottom returns a valid next window.
   const pageFrom = absoluteRange.from + 2 * SCROLLING_THRESHOLD;
@@ -393,15 +387,13 @@ describe('InfiniteScroll consecutive loads (regression #129033)', () => {
     scroll(element, events, 60, 600);
     expect(loadMoreMock).toHaveBeenCalledTimes(1);
 
-    // In flight: an intermediate emission re-emits the previous rows (same length, new array). The
-    // loader must not latch 'out-of-bounds' here.
+    // In flight: an intermediate same-length emission must not latch 'out-of-bounds'.
     act(() => {
       rerender(ui(createLogs(pageFrom, pageTo), element, loadMoreMock, LoadingState.Loading));
     });
     expect(screen.queryByText('End of the selected time range.')).not.toBeInTheDocument();
 
-    // The larger page arrives and the request settles (Loading -> Done). New rows were returned, so
-    // the loader returns to idle rather than end-of-range.
+    // Settles with new rows -> idle, not end-of-range.
     const grown = [...page1, createLogLine({ entry: 'log line 3', uid: 'log-3', timeEpochMs: pageTo })];
     act(() => {
       rerender(ui(grown, element, loadMoreMock, LoadingState.Done));
@@ -422,8 +414,7 @@ describe('InfiniteScroll consecutive loads (regression #129033)', () => {
     scroll(element, events, 60, 600);
     expect(loadMoreMock).toHaveBeenCalledTimes(1);
 
-    // Settles (Loading -> Done) with the same number of rows → genuine end of range. Each emission is
-    // a fresh array (new reference, same content), as redux/decorate/memoization always produce.
+    // Settles with the same row count -> genuine end of range (fresh array each emission).
     act(() => {
       rerender(ui(createLogs(pageFrom, pageTo), element, loadMoreMock, LoadingState.Loading));
     });
@@ -445,16 +436,14 @@ describe('InfiniteScroll consecutive loads (regression #129033)', () => {
     scroll(element, events, 60, 600);
     expect(loadMoreMock).toHaveBeenCalledTimes(1);
 
-    // Query splitting streams partial pages across several in-flight (Loading) emissions, growing the
-    // rows before the request finishes...
+    // Query splitting grows the rows across in-flight emissions...
     act(() => {
       rerender(ui(makeLogs(4), element, loadMoreMock, LoadingState.Loading));
     });
     act(() => {
       rerender(ui(makeLogs(6), element, loadMoreMock, LoadingState.Loading));
     });
-    // ...and the final Done carries the same fully-merged rows as the last Loading emission. Comparing
-    // against the start count (2 -> 6) correctly returns to idle; comparing against prevLogs would not.
+    // ...and Done carries the same rows as the last emission; comparing against the start count (2 -> 6) -> idle.
     act(() => {
       rerender(ui(makeLogs(6), element, loadMoreMock, LoadingState.Done));
     });
@@ -475,8 +464,7 @@ describe('InfiniteScroll consecutive loads (regression #129033)', () => {
     scroll(element, events, 60, 600);
     expect(loadMoreMock).toHaveBeenCalledTimes(1);
 
-    // Loki query splitting streams partial pages as `Streaming` (not `Loading`). These must count as
-    // in flight — the loader must not settle or flag end-of-range mid-stream.
+    // Streaming emissions must count as in flight — no settle or end-of-range mid-stream.
     act(() => {
       rerender(ui(createLogs(pageFrom, pageTo), element, loadMoreMock, LoadingState.Streaming));
     });
@@ -510,8 +498,7 @@ describe('InfiniteScroll consecutive loads (regression #129033)', () => {
     });
     expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
 
-    // The request errors (no new rows). The loader must leave 'loading' — returning to idle so the
-    // user can retry — rather than getting stuck on the spinner or latching end-of-range.
+    // Errors (no new rows) must return to idle, not stick on the spinner or latch end-of-range.
     act(() => {
       rerender(ui(page1, element, loadMoreMock, LoadingState.Error));
     });

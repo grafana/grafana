@@ -96,9 +96,7 @@ export const InfiniteScroll = ({
       return;
     }
     if (infiniteLoaderState === 'loading') {
-      // Only act once we've observed the request go in flight and then settle (Loading/Streaming ->
-      // not). Requiring that transition ignores the stale/settled states seen right after the
-      // load-more starts (cancelQueries flips the response to Done before the new request begins).
+      // Only resolve after the in-flight -> settled transition, ignoring the transient Done cancelQueries sets at the start.
       if (prevInFlight && !requestInFlight) {
         settledRef.current = true;
       }
@@ -155,8 +153,7 @@ export const InfiniteScroll = ({
         scrollToLogLineRef.current = logs[0];
         lastLogOfPage.current.push(logs[0].uid);
       }
-      // Remember how many logs we had so the completion effect can tell whether the
-      // load-more actually returned new rows (vs. reaching the range boundary).
+      // Snapshot the row count so the completion effect can tell whether new rows arrived.
       loadMoreCountRef.current = logs.length;
       setInfiniteLoaderState('loading');
       loadMore?.(newRange ?? getVisibleRange(logs), scrollDirection);
