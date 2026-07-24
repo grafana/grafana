@@ -2,12 +2,12 @@ import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils
 import { byRole } from 'testing-library-selector';
 
 import { type NavModelItem, OrgRole } from '@grafana/data';
-import { type AlertManagerDataSourceJsonData, AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, grantUserRole, mockDataSource } from '../mocks';
-import { setupAdminConfigGet } from '../mocks/server/configure/admin_config';
+import { setupAutoSyncConfig } from '../mocks/server/handlers/k8s/config.k8s';
 import { setupDataSources } from '../testSetup/datasources';
 import { ALERTMANAGER_NAME_QUERY_KEY } from '../utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
@@ -245,16 +245,14 @@ describe('AlertmanagerPageWrapper', () => {
           AccessControlAction.AlertingNotificationsRead,
           AccessControlAction.AlertingNotificationsExternalRead,
           AccessControlAction.AlertingNotificationsWrite,
+          AccessControlAction.ActionAlertingNotificationsConfigRead,
         ]);
-        setupAdminConfigGet(server, {
-          alertmanagersChoice: AlertmanagerChoice.Internal,
-          external_alertmanager_uid: 'mimir-uid',
-        });
+        setupAutoSyncConfig(server, { specUid: 'mimir-uid' });
 
         renderWithSelectedAlertmanager(externalAm.name);
 
         expect(await screen.findByText('Test content')).toBeInTheDocument();
-        // The banner renders before the admin_config query resolves, then hides once auto-sync
+        // The banner renders before the Config query resolves, then hides once auto-sync
         // is known to be active, so wait for it to be removed.
         await waitFor(() => {
           expect(importBanner.query()).not.toBeInTheDocument();
