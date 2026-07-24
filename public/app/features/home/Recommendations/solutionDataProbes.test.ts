@@ -96,6 +96,31 @@ describe('hasSolutionData', () => {
       expect(mockList).toHaveBeenCalledTimes(1);
       expect(mockInstant).toHaveBeenCalledTimes(1);
     });
+
+    it('fails toward hiding the recommendation when every datasource probe errors', async () => {
+      mockList.mockResolvedValue([datasource('prometheus', 'prom-a'), datasource('prometheus', 'prom-b')]);
+      mockInstant.mockRejectedValue(new Error('query timeout'));
+
+      await expect(hasSolutionData('grafana-synthetic-monitoring-app')).resolves.toBe(true);
+    }, 15_000);
+
+    it('reports data when one datasource errors but another has the metric', async () => {
+      mockList.mockResolvedValue([datasource('prometheus', 'prom-a'), datasource('prometheus', 'prom-b')]);
+      mockInstant.mockImplementation(async (_queries, ds) =>
+        ds.uid === 'prom-a-uid' ? Promise.reject(new Error('403')) : [scalarFrame('probe', 7)]
+      );
+
+      await expect(hasSolutionData('grafana-synthetic-monitoring-app')).resolves.toBe(true);
+    }, 15_000);
+
+    it('settles no-data when one datasource errors and the rest probe clean and empty', async () => {
+      mockList.mockResolvedValue([datasource('prometheus', 'prom-a'), datasource('prometheus', 'prom-b')]);
+      mockInstant.mockImplementation(async (_queries, ds) =>
+        ds.uid === 'prom-a-uid' ? Promise.reject(new Error('403')) : []
+      );
+
+      await expect(hasSolutionData('grafana-synthetic-monitoring-app')).resolves.toBe(false);
+    }, 15_000);
   });
 
   describe('Hosted Traces', () => {
@@ -124,15 +149,23 @@ describe('hasSolutionData', () => {
   });
 
   describe('Frontend Observability', () => {
-    it('reports data when the Faro registry has a configured app', async () => {
-      mockGet.mockResolvedValue({ items: [{ metadata: { name: 'my-app' } }] });
+    it('reports data when the Faro app lists a configured app through its proxy route', async () => {
+      mockGet.mockResolvedValue([{ name: 'my-app' }]);
 
       await expect(hasSolutionData('grafana-kowalski-app')).resolves.toBe(true);
-      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining('/faroapps'));
+      expect(mockGet).toHaveBeenCalledWith(
+        expect.stringContaining('/api/plugin-proxy/grafana-kowalski-app/api-proxy/api/v1/app')
+      );
     });
 
-    it('reports no data when the Faro registry is empty', async () => {
-      mockGet.mockResolvedValue({ items: [] });
+    it('reports no data when the Faro app list is empty', async () => {
+      mockGet.mockResolvedValue([]);
+
+      await expect(hasSolutionData('grafana-kowalski-app')).resolves.toBe(false);
+    });
+
+    it('treats a non-array response as no data so the setup card still shows', async () => {
+      mockGet.mockResolvedValue({ items: [{ name: 'my-app' }] });
 
       await expect(hasSolutionData('grafana-kowalski-app')).resolves.toBe(false);
     });

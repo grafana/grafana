@@ -37,6 +37,21 @@ export async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
   }
 }
 
+/** Rejects when `promise` outlasts `ms`; the underlying request keeps running but stops gating the caller. */
+export async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`Probe timed out after ${ms}ms`)), ms);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** Owns the cached promise + timestamp in a closure so no module-level binding is mutated. */
 export function createTtlCachedPromise<T>(fn: () => Promise<T>, ttlMs: number): { get(): Promise<T>; reset(): void } {
   let cached: Promise<T> | undefined;
