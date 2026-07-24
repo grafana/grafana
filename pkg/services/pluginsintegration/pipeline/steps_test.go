@@ -65,7 +65,7 @@ func TestAsExternal(t *testing.T) {
 		},
 	}
 
-	t.Run("should skip a core plugin", func(t *testing.T) {
+	t.Run("should skip a non-registry core plugin with as_external set", func(t *testing.T) {
 		cfg := &config.PluginManagementCfg{
 			PluginSettings: config.PluginSettings{
 				"plugin1": map[string]string{
@@ -79,6 +79,44 @@ func TestAsExternal(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, filtered, 1)
 		require.Equal(t, filtered[0].Primary.JSONData.ID, "plugin2")
+	})
+
+	t.Run("should skip a registry core plugin only when override is fully active", func(t *testing.T) {
+		canvasBundles := []*plugins.FoundBundle{
+			{Primary: plugins.FoundPlugin{JSONData: plugins.JSONData{ID: "canvas"}}},
+			{Primary: plugins.FoundPlugin{JSONData: plugins.JSONData{ID: "plugin2"}}},
+		}
+		cfg := &config.PluginManagementCfg{
+			PluginSettings: config.PluginSettings{
+				"canvas": map[string]string{"as_external": "true"},
+			},
+			ActiveExternalOverrides: []config.ExternalOverride{
+				{CorePluginID: "canvas", ExternalPluginID: "grafana-canvas-panel"},
+			},
+		}
+
+		s := NewAsExternalStep(cfg)
+		filtered, err := s.Filter(plugins.ClassCore, canvasBundles)
+		require.NoError(t, err)
+		require.Len(t, filtered, 1)
+		require.Equal(t, "plugin2", filtered[0].Primary.JSONData.ID)
+	})
+
+	t.Run("should not skip a registry core plugin when as_external is set but override is not active", func(t *testing.T) {
+		canvasBundles := []*plugins.FoundBundle{
+			{Primary: plugins.FoundPlugin{JSONData: plugins.JSONData{ID: "canvas"}}},
+			{Primary: plugins.FoundPlugin{JSONData: plugins.JSONData{ID: "plugin2"}}},
+		}
+		cfg := &config.PluginManagementCfg{
+			PluginSettings: config.PluginSettings{
+				"canvas": map[string]string{"as_external": "true"},
+			},
+		}
+
+		s := NewAsExternalStep(cfg)
+		filtered, err := s.Filter(plugins.ClassCore, canvasBundles)
+		require.NoError(t, err)
+		require.Len(t, filtered, 2)
 	})
 }
 
