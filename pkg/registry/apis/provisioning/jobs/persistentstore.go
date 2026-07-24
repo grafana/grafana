@@ -40,10 +40,6 @@ const (
 	LabelRepository = "provisioning.grafana.app/repository"
 	// LabelJobOriginalUID contains the Job's original uid as a label. This allows for label selectors to find the archived version of a job.
 	LabelJobOriginalUID = "provisioning.grafana.app/original-uid"
-	// AnnotationJobOriginalResourceVersion preserves the Job's resource version at the time it was
-	// archived. The historic job is a new object with its own resource version, so the original is
-	// kept here as an annotation for traceability.
-	AnnotationJobOriginalResourceVersion = "provisioning.grafana.app/original-resource-version"
 )
 
 // ErrLeaseLost indicates the job's claim in the store is no longer the one we placed:

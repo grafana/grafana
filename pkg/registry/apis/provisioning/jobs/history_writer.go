@@ -47,15 +47,6 @@ func (w *apiClientHistoryWriter) WriteJob(ctx context.Context, job *provisioning
 	meta.Labels[LabelRepository] = job.Spec.Repository
 	meta.Labels[LabelJobOriginalUID] = string(job.UID)
 
-	// Preserve the original resource version before we reset it below, since the historic job
-	// is a distinct object and gets its own resource version.
-	if job.ResourceVersion != "" {
-		if meta.Annotations == nil {
-			meta.Annotations = make(map[string]string)
-		}
-		meta.Annotations[AnnotationJobOriginalResourceVersion] = job.ResourceVersion
-	}
-
 	// Generate a new name based on the input job
 	meta.GenerateName = job.Name + "-"
 	meta.Name = ""

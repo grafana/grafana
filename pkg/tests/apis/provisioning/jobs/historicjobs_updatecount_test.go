@@ -8,14 +8,13 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-func TestIntegrationProvisioning_HistoricJobsPreserveResourceVersion(t *testing.T) {
+func TestIntegrationProvisioning_HistoricJobsRecordUpdateCount(t *testing.T) {
 	helper := sharedHelper(t)
 
-	const repo = "historicjobs-resourceversion-test"
+	const repo = "historicjobs-updatecount-test"
 	testRepo := common.TestRepo{
 		Name:       repo,
 		SyncTarget: "folder",
@@ -48,10 +47,10 @@ func TestIntegrationProvisioning_HistoricJobsPreserveResourceVersion(t *testing.
 
 	historicJob := helper.AwaitJob(t, job)
 
-	// The historic job is a distinct object with its own resource version, so the original job's
-	// resource version is preserved on it as an annotation.
-	originalRV := historicJob.GetAnnotations()[jobs.AnnotationJobOriginalResourceVersion]
-	require.NotEmpty(t, originalRV, "historic job should preserve the original job's resource version as an annotation")
-	require.NotEqual(t, historicJob.GetResourceVersion(), originalRV,
-		"preserved resource version should be the original job's, not the historic job's own")
+	// The job status is updated as it is processed, and the running total of those updates is
+	// carried over to the historic job so it stays observable after completion.
+	updateCount, found, err := unstructured.NestedInt64(historicJob.Object, "status", "updateCount")
+	require.NoError(t, err)
+	require.True(t, found, "historic job status should record the update count")
+	require.Positive(t, updateCount, "a processed job should have been updated at least once")
 }

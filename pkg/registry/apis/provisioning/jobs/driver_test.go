@@ -41,6 +41,33 @@ func makeTestJob(rv string) *provisioning.Job {
 	}
 }
 
+// TestOnProgress_IncrementsUpdateCount verifies that each successful progress
+// update bumps the job's UpdateCount, and that the running total is carried
+// forward across the status overwrite that happens on every call.
+func TestOnProgress_IncrementsUpdateCount(t *testing.T) {
+	store := &MockStore{}
+	driver := &jobDriver{store: store}
+	driver.currentJob = makeTestJob("1")
+
+	// Echo the job back so the driver's local copy keeps the persisted count.
+	store.EXPECT().Update(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, job *provisioning.Job) (*provisioning.Job, error) {
+			return job.DeepCopy(), nil
+		})
+
+	progressFn := driver.onProgress()
+	status := provisioning.JobStatus{State: provisioning.JobStateWorking, Message: "test"}
+
+	require.NoError(t, progressFn(context.Background(), status))
+	assert.Equal(t, int64(1), driver.currentJob.Status.UpdateCount)
+
+	require.NoError(t, progressFn(context.Background(), status))
+	assert.Equal(t, int64(2), driver.currentJob.Status.UpdateCount)
+
+	require.NoError(t, progressFn(context.Background(), status))
+	assert.Equal(t, int64(3), driver.currentJob.Status.UpdateCount)
+}
+
 // TestOnProgress_DeadlockOnConflict verifies that the onProgress callback
 // does not deadlock when Store.Update returns a conflict error.
 //

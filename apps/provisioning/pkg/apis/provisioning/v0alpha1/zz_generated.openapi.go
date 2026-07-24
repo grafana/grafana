@@ -1848,6 +1848,13 @@ func schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref common.ReferenceCallbac
 							Format:      "double",
 						},
 					},
+					"updateCount": {
+						SchemaProps: spec.SchemaProps{
+							Description: "UpdateCount is the number of times the job's status has been written while it was processed. It is carried over to the historic job so the total number of updates a job went through remains observable after completion.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
 					"summary": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Summary of processed actions",
