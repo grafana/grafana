@@ -807,6 +807,110 @@ describe('dashboard exporter v2', () => {
     expect(panel.spec.data.spec.queries[0].spec.query.group).toBe('prometheus');
   });
 
+  it.each(['RowsLayout', 'TabsLayout'] as const)(
+    'should template datasource refs in %s section variables when sharing externally',
+    async (layoutKind) => {
+      const schemaCopy = JSON.parse(JSON.stringify(handyTestingSchema));
+      const sectionVariable = schemaCopy.variables[0];
+
+      schemaCopy.variables = [];
+      schemaCopy.layout =
+        layoutKind === 'RowsLayout'
+          ? {
+              kind: 'RowsLayout',
+              spec: {
+                rows: [
+                  {
+                    kind: 'RowsLayoutRow',
+                    spec: {
+                      title: 'Section row',
+                      collapse: false,
+                      layout: { kind: 'GridLayout', spec: { items: [] } },
+                      variables: [sectionVariable],
+                    },
+                  },
+                ],
+              },
+            }
+          : {
+              kind: 'TabsLayout',
+              spec: {
+                tabs: [
+                  {
+                    kind: 'TabsLayoutTab',
+                    spec: {
+                      title: 'Section tab',
+                      layout: { kind: 'GridLayout', spec: { items: [] } },
+                      variables: [sectionVariable],
+                    },
+                  },
+                ],
+              },
+            };
+
+      const dashboard = await makeExportableV2(schemaCopy, true);
+      if (typeof dashboard === 'object' && 'error' in dashboard) {
+        throw dashboard.error;
+      }
+
+      const sectionVariableResult =
+        layoutKind === 'RowsLayout'
+          ? dashboard.layout.kind === 'RowsLayout' && dashboard.layout.spec.rows[0].spec.variables?.[0]
+          : dashboard.layout.kind === 'TabsLayout' && dashboard.layout.spec.tabs[0].spec.variables?.[0];
+
+      if (!sectionVariableResult || sectionVariableResult.kind !== 'QueryVariable') {
+        throw new Error('Expected a query variable to be exported from the section');
+      }
+
+      expect(sectionVariableResult.spec.query.datasource).toBeUndefined();
+      expect(sectionVariableResult.spec.query.labels?.[ExportLabel]).toBeDefined();
+    }
+  );
+
+  it('should still template row section variables when the nested row layout is missing', async () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const schemaCopy = JSON.parse(JSON.stringify(handyTestingSchema));
+    const sectionVariable = schemaCopy.variables[0];
+
+    schemaCopy.variables = [];
+    schemaCopy.layout = {
+      kind: 'RowsLayout',
+      spec: {
+        rows: [
+          {
+            kind: 'RowsLayoutRow',
+            spec: {
+              title: 'Broken section row',
+              collapse: false,
+              variables: [sectionVariable],
+              layout: null,
+            },
+          },
+        ],
+      },
+    };
+
+    const dashboard = await makeExportableV2(schemaCopy, true);
+    if (typeof dashboard === 'object' && 'error' in dashboard) {
+      throw dashboard.error;
+    }
+
+    const rowVariable =
+      dashboard.layout.kind === 'RowsLayout' ? dashboard.layout.spec.rows[0].spec.variables?.[0] : undefined;
+
+    if (!rowVariable || rowVariable.kind !== 'QueryVariable') {
+      throw new Error('Expected a query variable to remain exportable from the row');
+    }
+
+    expect(rowVariable.spec.query.datasource).toBeUndefined();
+    expect(rowVariable.spec.query.labels?.[ExportLabel]).toBeDefined();
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Export skipped a row section variable layout because its nested layout was missing or invalid.'
+    );
+
+    consoleSpy.mockRestore();
+  });
+
   it('should convert library panels to inline panels when sharing externally', async () => {
     const setupWithLibraryPanel = async (isSharingExternally: boolean) => {
       const schemaCopy = JSON.parse(JSON.stringify(handyTestingSchema));
