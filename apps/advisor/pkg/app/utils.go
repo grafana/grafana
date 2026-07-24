@@ -125,11 +125,7 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 	} else {
 		log.Debug("Item to retry found", "check", obj.GetName(), "item", itemToRetry)
 	}
-	// The admission request that triggered this may be a dry-run: grafana-app-sdk's
-	// AdmissionRequest carries no dryRun flag, so it can't be checked directly. Wait for the
-	// retry annotation to actually land in storage before doing any work or patches below,
-	// since a dry-run's hypothetical annotation change is never persisted and this will time
-	// out instead, avoiding side effects for a change that never really happened.
+	// Wait for the retry annotation to be persisted before processing the object
 	if err := waitForRetryAnnotation(ctx, log, client, obj, itemToRetry); err != nil {
 		return err
 	}
