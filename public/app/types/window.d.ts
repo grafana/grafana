@@ -1,3 +1,5 @@
+import { type RecorderMiddleware } from '@alwaysmeticulous/sdk-bundles-api';
+
 import { type BootData } from '@grafana/data';
 export declare global {
   interface Window {
@@ -37,6 +39,26 @@ export declare global {
      * The image renderer can check this to decide whether to use this mechanism or a fallback.
      */
     __grafanaRenderBindingSupported?: boolean;
+
+    /**
+     * Public API of the Meticulous.ai session recorder, set by the recorder
+     * snippet loaded in index.html when the grafana.meticulousAIMode feature
+     * toggle is enabled. Presence indicates the recorder is active.
+     */
+    Meticulous?: unknown;
+
+    /**
+     * Internal API of the Meticulous.ai session recorder.
+     */
+    __meticulous?: {
+      stopRecording: () => void;
+    };
+
+    /**
+     * Middleware applied by the Meticulous recorder to session payloads before
+     * they are uploaded. Read lazily by the recorder on each upload.
+     */
+    METICULOUS_RECORDER_MIDDLEWARE_V1?: RecorderMiddleware[];
   }
 
   // Augment DOMParser to accept TrustedType sanitised content

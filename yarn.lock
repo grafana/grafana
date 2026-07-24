@@ -62,6 +62,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@alwaysmeticulous/api@npm:2.307.0":
+  version: 2.307.0
+  resolution: "@alwaysmeticulous/api@npm:2.307.0"
+  checksum: 10/131038bd337fa7b0585200d8489ff924bd5d4241cf9c6ffce5def38fb6123d6a5fcb453accbbc0dc04403add399e2889e927acfc3eed8274802cc9f797e8c346
+  languageName: node
+  linkType: hard
+
+"@alwaysmeticulous/redaction@npm:2.283.1":
+  version: 2.283.1
+  resolution: "@alwaysmeticulous/redaction@npm:2.283.1"
+  checksum: 10/d9621d9b3d36ea296ae4bd7ed17398d86d57ea6816fd3937a61f9fce787487793c09ca641a7606d73c144fcc0dcad00c9ce7a67bfd31575c91167a1e035e4449
+  languageName: node
+  linkType: hard
+
+"@alwaysmeticulous/sdk-bundles-api@npm:2.307.0":
+  version: 2.307.0
+  resolution: "@alwaysmeticulous/sdk-bundles-api@npm:2.307.0"
+  dependencies:
+    "@alwaysmeticulous/api": "npm:2.307.0"
+  checksum: 10/9cc22da896559ae275c72392f1b95e87d1df503cb1084a63e2ffb48456d3075776af61ae5fb52d43905c2695c4bf26c27c9ddf3695b1f3df13dc0ef8c86d71b6
+  languageName: node
+  linkType: hard
+
 "@andrewbranch/untar.js@npm:^1.0.3":
   version: 1.0.3
   resolution: "@andrewbranch/untar.js@npm:1.0.3"
@@ -18468,6 +18491,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "grafana@workspace:."
   dependencies:
+    "@alwaysmeticulous/redaction": "npm:2.283.1"
+    "@alwaysmeticulous/sdk-bundles-api": "npm:2.307.0"
     "@arethetypeswrong/cli": "npm:^0.18.2"
     "@axe-core/playwright": "npm:^4.11.1"
     "@bsull/augurs": "npm:^0.10.0"
