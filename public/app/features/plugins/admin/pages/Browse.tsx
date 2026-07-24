@@ -165,6 +165,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
   pageContainer: css({
     height: '100vh',
     overflow: 'hidden',
+    '[class*="page-inner"]': {
+      minHeight: 0,
+      paddingBottom: 0,
+    },
+    '[class*="page-content"]': {
+      minHeight: 0,
+      display: 'flex',
+      flexDirection: 'column',
+    },
   }),
   searchContainer: css({
     paddingTop: theme.spacing(0.5),
@@ -173,8 +182,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginBottom: theme.spacing(3),
   }),
   listWrap: css({
-    height: 'calc(100vh - 350px)',
+    flex: 1,
+    minHeight: 0,
     overflowY: 'auto',
+    // page-inner bottom padding is removed above so the list clips at the page
+    // edge; keep breathing room at the end of the scroll instead
+    paddingBottom: theme.spacing(2),
+    [theme.breakpoints.up('md')]: {
+      paddingBottom: theme.spacing(4),
+    },
   }),
   actionBar: css({
     [theme.breakpoints.up('xl')]: {
