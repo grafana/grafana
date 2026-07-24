@@ -87,8 +87,10 @@ Each team also provides a migrator interface in a `migrator/` subpackage (e.g., 
    - Streams resources to unified storage via BulkProcess API
    - Rebuilds search indexes (with exponential backoff retry)
    - Runs validators to verify data integrity
-5. Renames legacy tables with `_legacy` suffix (if `RenameTables` is configured)
+5. Renames legacy tables with `_legacy` suffix (if `RenameTables` is configured **and** all validators passed)
 6. Records migration result in `unifiedstorage_migration_log` table
+
+Validator failures after a successful write are **soft** (see #129089): they are logged as errors but do **not** fail the migration run. A success row is still written so the next restart does not wipe and re-migrate. Legacy table rename is skipped when any validator failed, so a real mismatch does not drop the legacy source tables. (False-positive count mismatches on PostgreSQL are also addressed separately in #128985.)
 
 ### Per-organization execution
 
@@ -130,6 +132,10 @@ If a crash occurs before migration log is inserted, some tables might not have b
 - On the next startup `RecoverRenamedTables()` (called before the migration runs) restores any `_legacy` tables back to their original names, so the migration can re-run cleanly.
 
 ## Validators
+
+Validators run after the bulk write and index rebuild. Failures are logged but do
+**not** fail the migration run or prevent the success checkpoint (#129089). When any
+validator fails, legacy table rename is skipped.
 
 ### CountValidator
 

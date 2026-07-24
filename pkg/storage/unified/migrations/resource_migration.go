@@ -151,18 +151,30 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 		}
 	}()
 
-	if err := r.migrateAllOrgs(ctx, sess, mg, orgs, opts); err != nil {
+	validationFailed, err := r.migrateAllOrgs(ctx, sess, mg, orgs, opts)
+	if err != nil {
 		if opts.DriverName != migrator.SQLite {
 			return err
 		}
 		r.log.Warn("SQLite migration failed, retrying with parquet buffer", "error", err)
 		ctx = resource.ContextWithParquetBuffer(ctx)
-		if err := r.migrateAllOrgs(ctx, sess, mg, orgs, opts); err != nil {
+		validationFailed, err = r.migrateAllOrgs(ctx, sess, mg, orgs, opts)
+		if err != nil {
 			return err
 		}
 	}
 
-	if !r.cfg.DisableLegacyTableRename {
+	// Soft-failed validators must not block the success checkpoint (see #129089):
+	// without a success log row every restart wipe+re-migrates. Skip rename when
+	// validation failed so we do not drop legacy tables on a real mismatch.
+	if validationFailed {
+		r.log.Error("Migration validation failed for one or more organizations; "+
+			"unified storage data was written and a success checkpoint will still be recorded "+
+			"so the migration is not re-run on restart. Legacy table rename was skipped. "+
+			"Investigate validator errors above.",
+			"org_count", len(orgs),
+			"resources", r.resources)
+	} else if !r.cfg.DisableLegacyTableRename {
 		if err := r.tableRenamer.RenameTables(ctx, r.definition.RenameTables, unlockTables); err != nil {
 			return err
 		}
@@ -173,22 +185,28 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 	return nil
 }
 
-func (r *MigrationRunner) migrateAllOrgs(ctx context.Context, sess *xorm.Session, mg *migrator.Migrator, orgs []orgInfo, opts RunOptions) error {
+func (r *MigrationRunner) migrateAllOrgs(ctx context.Context, sess *xorm.Session, mg *migrator.Migrator, orgs []orgInfo, opts RunOptions) (validationFailed bool, err error) {
 	for _, org := range orgs {
 		info, err := types.ParseNamespace(types.OrgNamespaceFormatter(org.ID))
 		if err != nil {
 			r.log.Error("Failed to parse organization namespace", "org_id", org.ID, "error", err)
-			return fmt.Errorf("failed to parse namespace for org %d: %w", org.ID, err)
+			return false, fmt.Errorf("failed to parse namespace for org %d: %w", org.ID, err)
 		}
-		if err = r.MigrateOrg(ctx, sess, mg.DBEngine, info, opts); err != nil {
-			return err
+		failed, err := r.MigrateOrg(ctx, sess, mg.DBEngine, info, opts)
+		if err != nil {
+			return false, err
+		}
+		if failed {
+			validationFailed = true
 		}
 	}
-	return nil
+	return validationFailed, nil
 }
 
 // MigrateOrg handles migration for a single organization.
-func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, engine *xorm.Engine, info types.NamespaceInfo, opts RunOptions) error {
+// validationFailed is true when Migrate and RebuildIndexes succeeded but one or
+// more validators failed (soft-fail; see #129089).
+func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, engine *xorm.Engine, info types.NamespaceInfo, opts RunOptions) (validationFailed bool, err error) {
 	r.log.Info("Migrating organization", "org_id", info.OrgID, "namespace", info.Value)
 
 	// Create a service identity context for this namespace to authenticate with unified storage
@@ -209,11 +227,11 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, en
 	response, err := r.unifiedMigrator.Migrate(ctx, migrateOpts)
 	if err != nil {
 		r.log.Error("Migration failed", "org_id", info.OrgID, "error", err, "duration", time.Since(startTime))
-		return fmt.Errorf("migration failed for org %d (%s): %w", info.OrgID, info.Value, err)
+		return false, fmt.Errorf("migration failed for org %d (%s): %w", info.OrgID, info.Value, err)
 	}
 	if response.Error != nil {
 		r.log.Error("Migration reported error", "org_id", info.OrgID, "error", response.Error.String(), "duration", time.Since(startTime))
-		return fmt.Errorf("migration failed for org %d (%s): %w", info.OrgID, info.Value, fmt.Errorf("migration error: %s", response.Error.Message))
+		return false, fmt.Errorf("migration failed for org %d (%s): %w", info.OrgID, info.Value, fmt.Errorf("migration error: %s", response.Error.Message))
 	}
 
 	migrationFinishedAt := time.Now()
@@ -226,7 +244,7 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, en
 	})
 	if err != nil {
 		r.log.Error("Rebuilding indexes failed", "org_id", info.OrgID, "error", err, "duration", time.Since(startTime))
-		return fmt.Errorf("rebuilding indexes failed for org %d (%s): %w", info.OrgID, info.Value, err)
+		return false, fmt.Errorf("rebuilding indexes failed for org %d (%s): %w", info.OrgID, info.Value, err)
 	}
 
 	// On MySQL with rename, use a separate session so validator SELECTs don't hold
@@ -236,9 +254,9 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, en
 		validationSess = engine.NewSession()
 		defer validationSess.Close()
 	}
-	if err := r.validateMigration(ctx, validationSess, response, r.validators); err != nil {
-		r.log.Error("Migration validation failed", "org_id", info.OrgID, "error", err, "duration", time.Since(startTime))
-		return fmt.Errorf("migration validation failed for org %d (%s): %w", info.OrgID, info.Value, err)
+	if !r.validateMigration(ctx, validationSess, response, r.validators) {
+		r.log.Error("Migration validation failed", "org_id", info.OrgID, "duration", time.Since(startTime))
+		validationFailed = true
 	}
 
 	r.log.Info("Migration completed for organization",
@@ -246,27 +264,35 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, en
 		"duration", time.Since(startTime),
 		"processed", response.Processed,
 		"summaries", len(response.Summary),
-		"rejected", len(response.Rejected))
+		"rejected", len(response.Rejected),
+		"validation_failed", validationFailed)
 
-	return nil
+	return validationFailed, nil
 }
 
 // validateMigration runs all validators in sequence.
-func (r *MigrationRunner) validateMigration(ctx context.Context, sess *xorm.Session, response *resourcepb.BulkResponse, validators []Validator) error {
+// Returns true when all validators pass. Validator failures are soft: they are
+// logged and return false so the success checkpoint can still be recorded (#129089).
+func (r *MigrationRunner) validateMigration(ctx context.Context, sess *xorm.Session, response *resourcepb.BulkResponse, validators []Validator) bool {
 	if len(validators) == 0 {
 		r.log.Debug("No validators provided, skipping validation")
-		return nil
+		return true
 	}
 
+	ok := true
 	for _, validator := range validators {
 		r.log.Debug("Running validator", "name", validator.Name(), "total", len(validators))
 		if err := validator.Validate(ctx, sess, response, r.log); err != nil {
-			return fmt.Errorf("validator %s failed: %w", validator.Name(), err)
+			r.log.Error("validator failed", "name", validator.Name(), "error", err)
+			ok = false
+			// Continue remaining validators so operators see the full set of failures.
 		}
 	}
 
-	r.log.Debug("All validators passed", "count", len(validators))
-	return nil
+	if ok {
+		r.log.Debug("All validators passed", "count", len(validators))
+	}
+	return ok
 }
 
 // getAllOrgs retrieves all organizations from the database.
