@@ -2127,6 +2127,17 @@ func (s *server) VectorSearch(ctx context.Context, req *resourcepb.VectorSearchR
 	return s.search.VectorSearch(ctx, req)
 }
 
+// HybridSearch delegates to the embedded searchServer, where both the
+// search backend and the vector backend live.
+func (s *server) HybridSearch(ctx context.Context, req *resourcepb.HybridSearchRequest) (*resourcepb.HybridSearchResponse, error) {
+	// Unimplemented (not a bare error) so API-layer callers can map a
+	// search-disabled server to 501, same as an unconfigured vector store.
+	if s.search == nil {
+		return nil, status.Error(codes.Unimplemented, "hybrid search is not configured")
+	}
+	return s.search.HybridSearch(ctx, req)
+}
+
 // StatsGetter provides resource statistics (via search index or backend).
 type StatsGetter interface {
 	GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error)

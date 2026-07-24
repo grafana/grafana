@@ -161,6 +161,137 @@ func TestVectorSearch(t *testing.T) {
 	})
 }
 
+func TestHybridSearch(t *testing.T) {
+	newHandler := func(client *MockClient) SearchHandler {
+		return SearchHandler{
+			log:      log.New("test", "test"),
+			client:   client,
+			tracer:   tracing.NewNoopTracerService(),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagDashboardVectorSearch),
+		}
+	}
+
+	doRequest := func(handler SearchHandler, rawQuery string) *httptest.ResponseRecorder {
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search/hybrid?"+rawQuery, nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+		handler.DoHybridSearch(rr, req)
+		return rr
+	}
+
+	t.Run("calls HybridSearch and maps fused results to hits", func(t *testing.T) {
+		mockClient := &MockClient{
+			HybridSearchResponse: &resourcepb.HybridSearchResponse{
+				Results: []*resourcepb.HybridSearchResult{
+					{
+						Key:    &resourcepb.ResourceKey{Namespace: "test", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "d1"},
+						Title:  "CPU usage",
+						Folder: "f1",
+						Score:  0.032,
+						Chunks: []*resourcepb.HybridSearchChunk{
+							{Subresource: "panel/3", Content: "CPU usage by host"},
+							{Subresource: "panel/7", Content: "CPU saturation"},
+						},
+					},
+					{
+						Key:    &resourcepb.ResourceKey{Namespace: "test", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "d2"},
+						Title:  "Memory usage",
+						Folder: "f2",
+						Score:  0.016,
+						Chunks: []*resourcepb.HybridSearchChunk{
+							{Subresource: "", Content: "Memory usage"}, // lexical-only: synthesized title chunk
+						},
+					},
+				},
+			},
+		}
+		handler := newHandler(mockClient)
+
+		rr := doRequest(handler, "query=cpu&semanticQuery=cpu+usage+by+host&folder=f1&limit=10")
+
+		require.NotNil(t, mockClient.LastHybridSearchRequest)
+		assert.Equal(t, 1, mockClient.HybridSearchCallCount)
+		assert.Equal(t, 0, mockClient.CallCount, "lexical search endpoint must not be called")
+		assert.Equal(t, 0, mockClient.VectorSearchCallCount, "vector search must not be called")
+		assert.Equal(t, "cpu", mockClient.LastHybridSearchRequest.Query)
+		assert.Equal(t, "cpu usage by host", mockClient.LastHybridSearchRequest.SemanticQuery)
+		assert.Equal(t, int64(10), mockClient.LastHybridSearchRequest.Limit)
+		require.Len(t, mockClient.LastHybridSearchRequest.Filters, 1)
+		assert.Equal(t, "folder", mockClient.LastHybridSearchRequest.Filters[0].Key)
+		assert.Equal(t, []string{"f1"}, mockClient.LastHybridSearchRequest.Filters[0].Values)
+
+		resp := rr.Result()
+		defer func() { require.NoError(t, resp.Body.Close()) }()
+		p := &v0alpha1.SearchResults{}
+		require.NoError(t, json.NewDecoder(resp.Body).Decode(p))
+		require.Len(t, p.Hits, 2)
+		assert.Equal(t, int64(2), p.TotalHits)
+		assert.Equal(t, 0.032, p.MaxScore)
+
+		assert.Equal(t, "d1", p.Hits[0].Name)
+		assert.Equal(t, "CPU usage", p.Hits[0].Title)
+		assert.Equal(t, "f1", p.Hits[0].Folder)
+		assert.Equal(t, "dashboards", p.Hits[0].Resource)
+		assert.Equal(t, 0.032, p.Hits[0].Score)
+
+		require.NotNil(t, p.Hits[0].Field)
+		assert.Equal(t, "panel/3", p.Hits[0].Field.Object["subresource"])
+		assert.Equal(t, "CPU usage by host", p.Hits[0].Field.Object["snippet"])
+		chunks, ok := p.Hits[0].Field.Object["chunks"].([]any)
+		require.True(t, ok)
+		require.Len(t, chunks, 2)
+
+		// lexical-only hit still carries its synthesized title chunk
+		assert.Equal(t, "Memory usage", p.Hits[1].Field.Object["snippet"])
+	})
+
+	t.Run("returns 501 and does not fall back when hybrid search is unimplemented", func(t *testing.T) {
+		mockClient := &MockClient{
+			HybridSearchErr: status.Error(codes.Unimplemented, "hybrid search not configured"),
+		}
+		handler := newHandler(mockClient)
+
+		rr := doRequest(handler, "query=cpu")
+
+		assert.Equal(t, 1, mockClient.HybridSearchCallCount)
+		assert.Equal(t, 0, mockClient.CallCount, "must not fall back to lexical search")
+		assert.Equal(t, http.StatusNotImplemented, rr.Result().StatusCode)
+	})
+
+	t.Run("normalizes the general root folder to the legacy empty UID", func(t *testing.T) {
+		mockClient := &MockClient{HybridSearchResponse: &resourcepb.HybridSearchResponse{}}
+		doRequest(newHandler(mockClient), "query=cpu&folder="+folder.GeneralFolderUID)
+
+		require.NotNil(t, mockClient.LastHybridSearchRequest)
+		require.Len(t, mockClient.LastHybridSearchRequest.Filters, 1)
+		assert.Equal(t, "folder", mockClient.LastHybridSearchRequest.Filters[0].Key)
+		assert.Equal(t, []string{""}, mockClient.LastHybridSearchRequest.Filters[0].Values)
+	})
+
+	t.Run("maps InvalidArgument validation errors to 400", func(t *testing.T) {
+		mockClient := &MockClient{
+			HybridSearchErr: status.Error(codes.InvalidArgument, "query must not be empty"),
+		}
+		rr := doRequest(newHandler(mockClient), "query=")
+		assert.Equal(t, http.StatusBadRequest, rr.Result().StatusCode)
+	})
+
+	t.Run("route is registered only when the feature toggle is enabled", func(t *testing.T) {
+		hasHybridRoute := func(features featuremgmt.FeatureToggles) bool {
+			h := SearchHandler{features: features}
+			for _, route := range h.GetAPIRoutes(nil).Namespace {
+				if route.Path == "search/hybrid" {
+					return true
+				}
+			}
+			return false
+		}
+
+		assert.False(t, hasHybridRoute(featuremgmt.WithFeatures()), "route should be absent when toggle off")
+		assert.True(t, hasHybridRoute(featuremgmt.WithFeatures(featuremgmt.FlagDashboardVectorSearch)), "route should be present when toggle on")
+	})
+}
+
 func TestSearchHandler(t *testing.T) {
 	t.Run("Sort - default sort by resource", func(t *testing.T) {
 		rows := make([]*resourcepb.ResourceTableRow, len(mockResults))
@@ -1305,12 +1436,23 @@ type MockClient struct {
 	VectorSearchResponse    *resourcepb.VectorSearchResponse
 	VectorSearchErr         error
 	VectorSearchCallCount   int
+
+	LastHybridSearchRequest *resourcepb.HybridSearchRequest
+	HybridSearchResponse    *resourcepb.HybridSearchResponse
+	HybridSearchErr         error
+	HybridSearchCallCount   int
 }
 
 func (m *MockClient) VectorSearch(ctx context.Context, in *resourcepb.VectorSearchRequest, opts ...grpc.CallOption) (*resourcepb.VectorSearchResponse, error) {
 	m.LastVectorSearchRequest = in
 	m.VectorSearchCallCount++
 	return m.VectorSearchResponse, m.VectorSearchErr
+}
+
+func (m *MockClient) HybridSearch(ctx context.Context, in *resourcepb.HybridSearchRequest, opts ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
+	m.LastHybridSearchRequest = in
+	m.HybridSearchCallCount++
+	return m.HybridSearchResponse, m.HybridSearchErr
 }
 
 type MockResult struct {

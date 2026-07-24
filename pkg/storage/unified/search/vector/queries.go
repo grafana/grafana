@@ -294,9 +294,10 @@ type sqlVectorCollectionSearchResponse struct {
 	Metadata    json.RawMessage
 }
 
-// MetadataFilterEntry is a pre-built JSONB containment filter.
-type MetadataFilterEntry struct {
-	JSON string // e.g. `{"datasource_uids":["ds1"]}`
+// MetadataFilterGroup is one filter rendered as OR-ed JSONB containments:
+// ( metadata @> j1 OR metadata @> j2 ... ) — IN semantics across values.
+type MetadataFilterGroup struct {
+	JSONs []string // e.g. `{"datasource_uids":["ds1"]}`
 }
 
 type sqlVectorCollectionSearchRequest struct {
@@ -309,9 +310,9 @@ type sqlVectorCollectionSearchRequest struct {
 	Response       *sqlVectorCollectionSearchResponse
 
 	// nil/empty means no filter on that field.
-	UIDValues       []string
-	FolderValues    []string
-	MetadataFilters []MetadataFilterEntry
+	UIDValues            []string
+	FolderValues         []string
+	MetadataFilterGroups []MetadataFilterGroup
 }
 
 func (r *sqlVectorCollectionSearchRequest) Validate() error {

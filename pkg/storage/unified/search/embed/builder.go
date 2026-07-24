@@ -13,7 +13,7 @@ type Item struct {
 	Title       string          // human-readable title for search results
 	Subresource string          // unique within the resource ("" for whole-resource, "panel/5" for sub-parts)
 	Content     string          // text to embed
-	Metadata    json.RawMessage // structured filter fields (datasource_uids, query_languages, ...)
+	Metadata    json.RawMessage // structured filter fields (datasourceUid, language, ...) — see embed/dashboard/extractor.go
 	Folder      string          // folder UID for authz filtering
 }
 

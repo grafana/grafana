@@ -290,9 +290,11 @@ func TestVectorQueries(t *testing.T) {
 						Limit:          5,
 						UIDValues:      []string{"dash-1"},
 						FolderValues:   []string{"folder-a", "folder-b"},
-						MetadataFilters: []MetadataFilterEntry{
-							{JSON: `{"datasource_uids":["ds-uid-1"]}`},
-							{JSON: `{"query_languages":["promql"]}`},
+						// Two groups: OR within a group, AND across groups. JSON
+						// pairs mirror pgvector.Search's scalar+array shapes.
+						MetadataFilterGroups: []MetadataFilterGroup{
+							{JSONs: []string{`{"datasourceUid":"ds1"}`, `{"datasourceUid":["ds1"]}`, `{"datasourceUid":"ds2"}`, `{"datasourceUid":["ds2"]}`}},
+							{JSONs: []string{`{"language":"promql"}`, `{"language":["promql"]}`}},
 						},
 						Response: &sqlVectorCollectionSearchResponse{},
 					},

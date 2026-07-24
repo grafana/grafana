@@ -101,26 +101,28 @@ func cleanIntegrationState(t *testing.T, engine *xorm.Engine) {
 func TestIntegrationVectorUpsertAndSearch(t *testing.T) {
 	backend, _, ctx := setupIntegrationTest(t)
 
+	// Metadata mirrors the dashboard embed extractor's real schema:
+	// scalar datasourceUid/language keys (embed/dashboard/extractor.go).
 	vectors := []Vector{
 		{
 			Namespace: "integration-test", Resource: testResource, UID: "dash-1", Title: "CPU Dashboard", Subresource: "panel/1",
 			ResourceVersion: 10, Folder: "folder-a",
 			Content:   "CPU usage over time for production servers",
-			Metadata:  json.RawMessage(`{"datasource_uids":["prom-1"],"query_languages":["promql"]}`),
+			Metadata:  json.RawMessage(`{"datasourceUid":"prom-1","language":"promql"}`),
 			Embedding: makeEmbedding(0.9, 0.1), Model: testModel,
 		},
 		{
 			Namespace: "integration-test", Resource: testResource, UID: "dash-1", Title: "CPU Dashboard", Subresource: "panel/2",
 			ResourceVersion: 10, Folder: "folder-a",
 			Content:   "Memory usage alerts dashboard",
-			Metadata:  json.RawMessage(`{"datasource_uids":["prom-1"],"query_languages":["promql"]}`),
+			Metadata:  json.RawMessage(`{"datasourceUid":"prom-1","language":"promql"}`),
 			Embedding: makeEmbedding(0.1, 0.9), Model: testModel,
 		},
 		{
 			Namespace: "integration-test", Resource: testResource, UID: "dash-2", Title: "Logs Dashboard", Subresource: "panel/1",
 			ResourceVersion: 20, Folder: "folder-b",
 			Content:   "Log volume by service",
-			Metadata:  json.RawMessage(`{"datasource_uids":["loki-1"],"query_languages":["logql"]}`),
+			Metadata:  json.RawMessage(`{"datasourceUid":"loki-1","language":"logql"}`),
 			Embedding: makeEmbedding(0.5, 0.5), Model: testModel,
 		},
 	}
@@ -146,10 +148,87 @@ func TestIntegrationVectorUpsertAndSearch(t *testing.T) {
 	require.Len(t, results, 2)
 
 	results, err = backend.Search(ctx, "integration-test", testModel, testResource, makeEmbedding(0.5, 0.5), 10,
-		SearchFilter{Field: "query_languages", Values: []string{"logql"}})
+		SearchFilter{Field: "language", Values: []string{"logql"}})
 	require.NoError(t, err)
 	require.Len(t, results, 1)
 	assert.Equal(t, "dash-2", results[0].UID)
+}
+
+// Metadata containment must match regardless of how the writer shaped the
+// value: the dashboard embed extractor stores scalars while external
+// collections store arrays, and both live in the same column.
+func TestIntegrationMetadataFilterShapes(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	vectors := []Vector{
+		{
+			Namespace: "integration-test-shapes", Resource: testResource, UID: "scalar-dash", Title: "Scalar", Subresource: "panel/1",
+			ResourceVersion: 1, Folder: "f",
+			Content:   "scalar-shaped metadata like the embed extractor writes",
+			Metadata:  json.RawMessage(`{"datasourceUid":"prom-1","language":"promql"}`),
+			Embedding: makeEmbedding(0.9, 0.1), Model: testModel,
+		},
+		{
+			Namespace: "integration-test-shapes", Resource: testResource, UID: "array-dash", Title: "Array", Subresource: "chunk/1",
+			ResourceVersion: 1, Folder: "f",
+			Content:   "array-shaped metadata like external collections write",
+			Metadata:  json.RawMessage(`{"datasourceUid":["prom-1","prom-2"],"language":["promql"]}`),
+			Embedding: makeEmbedding(0.8, 0.2), Model: testModel,
+		},
+		{
+			Namespace: "integration-test-shapes", Resource: testResource, UID: "other-dash", Title: "Other", Subresource: "panel/1",
+			ResourceVersion: 1, Folder: "f",
+			Content:   "different datasource entirely",
+			Metadata:  json.RawMessage(`{"datasourceUid":"loki-1","language":"logql"}`),
+			Embedding: makeEmbedding(0.7, 0.3), Model: testModel,
+		},
+	}
+	require.NoError(t, backend.Upsert(ctx, vectors))
+
+	uids := func(rs []VectorSearchResult) []string {
+		out := make([]string, 0, len(rs))
+		for _, r := range rs {
+			out = append(out, r.UID)
+		}
+		return out
+	}
+
+	// one value matches both storage shapes
+	results, err := backend.Search(ctx, "integration-test-shapes", testModel, testResource, makeEmbedding(0.5, 0.5), 10,
+		SearchFilter{Field: "datasourceUid", Values: []string{"prom-1"}})
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []string{"scalar-dash", "array-dash"}, uids(results))
+
+	// scalar-only match
+	results, err = backend.Search(ctx, "integration-test-shapes", testModel, testResource, makeEmbedding(0.5, 0.5), 10,
+		SearchFilter{Field: "language", Values: []string{"logql"}})
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []string{"other-dash"}, uids(results))
+
+	// array element beyond the first still matches
+	results, err = backend.Search(ctx, "integration-test-shapes", testModel, testResource, makeEmbedding(0.5, 0.5), 10,
+		SearchFilter{Field: "datasourceUid", Values: []string{"prom-2"}})
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []string{"array-dash"}, uids(results))
+
+	// multiple values are IN semantics (any-of), across shapes
+	results, err = backend.Search(ctx, "integration-test-shapes", testModel, testResource, makeEmbedding(0.5, 0.5), 10,
+		SearchFilter{Field: "datasourceUid", Values: []string{"prom-1", "loki-1"}})
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []string{"scalar-dash", "array-dash", "other-dash"}, uids(results))
+
+	// two filters AND together
+	results, err = backend.Search(ctx, "integration-test-shapes", testModel, testResource, makeEmbedding(0.5, 0.5), 10,
+		SearchFilter{Field: "datasourceUid", Values: []string{"prom-1"}},
+		SearchFilter{Field: "language", Values: []string{"promql"}})
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []string{"scalar-dash", "array-dash"}, uids(results))
+
+	// empty-values filter is skipped, not rendered as invalid SQL
+	results, err = backend.Search(ctx, "integration-test-shapes", testModel, testResource, makeEmbedding(0.5, 0.5), 10,
+		SearchFilter{Field: "datasourceUid", Values: []string{}})
+	require.NoError(t, err)
+	assert.Len(t, results, 3)
 }
 
 func TestIntegrationVectorDeleteSubresources(t *testing.T) {
