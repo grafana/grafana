@@ -462,6 +462,35 @@ describe('InfiniteScroll consecutive loads (regression #129033)', () => {
     expect(screen.queryByText('End of the selected time range.')).not.toBeInTheDocument();
   });
 
+  test('treats Streaming emissions as in flight, settling only on Done (Ascending)', async () => {
+    const loadMoreMock = jest.fn();
+    const { element, events } = getMockElement(50);
+
+    const page1 = createLogs(pageFrom, pageTo);
+    const { rerender } = render(ui(page1, element, loadMoreMock, LoadingState.Done));
+
+    expect(await screen.findByText('log line 1')).toBeInTheDocument();
+
+    scroll(element, events, 59, 1);
+    scroll(element, events, 60, 600);
+    expect(loadMoreMock).toHaveBeenCalledTimes(1);
+
+    // Loki query splitting streams partial pages as `Streaming` (not `Loading`). These must count as
+    // in flight — the loader must not settle or flag end-of-range mid-stream.
+    act(() => {
+      rerender(ui(createLogs(pageFrom, pageTo), element, loadMoreMock, LoadingState.Streaming));
+    });
+    expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
+    expect(screen.queryByText('End of the selected time range.')).not.toBeInTheDocument();
+
+    // Settles on Done with new rows -> idle.
+    const grown = [...page1, createLogLine({ entry: 'log line 3', uid: 'log-3', timeEpochMs: pageTo })];
+    act(() => {
+      rerender(ui(grown, element, loadMoreMock, LoadingState.Done));
+    });
+    expect(screen.queryByText('End of the selected time range.')).not.toBeInTheDocument();
+  });
+
   test('recovers to idle (not stuck) when a load-more errors (Ascending)', async () => {
     const loadMoreMock = jest.fn();
     const { element, events } = getMockElement(50);
