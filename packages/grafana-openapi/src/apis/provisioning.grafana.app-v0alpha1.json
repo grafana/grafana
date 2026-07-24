@@ -4836,6 +4836,11 @@
             "type": "number",
             "format": "double"
           },
+          "progressUpdates": {
+            "description": "ProgressUpdates is the number of times the job's status has been written while it was processed. It is carried over to the historic job so the total number of progress updates a job went through remains observable after completion.",
+            "type": "integer",
+            "format": "int64"
+          },
           "started": {
             "type": "integer",
             "format": "int64"

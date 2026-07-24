@@ -500,8 +500,11 @@ func (d *jobDriver) onProgress() ProgressFn {
 			}
 
 			job := d.currentJob
-			// Update status on the current job
+			// The incoming status replaces the whole status object, so carry the
+			// progress-update count forward and bump it for this write.
+			progressUpdates := job.Status.ProgressUpdates
 			job.Status = status
+			job.Status.ProgressUpdates = progressUpdates + 1
 			updated, err := d.store.Update(ctx, job)
 			if err != nil {
 				if apierrors.IsConflict(err) && attempt < maxRetries-1 {
