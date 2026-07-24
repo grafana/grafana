@@ -2866,7 +2866,7 @@ Maximum number of repositories allowed. Default is `10`. Set to `0` for unlimite
 
 #### `max_resources_per_repository`
 
-Maximum number of resources (dashboards, folders, etc.) allowed per repository. Default is `1000`. Set to `0` for unlimited resources.
+Maximum number of resources (dashboards, folders, etc.) allowed per repository. Default is `0`, which means unlimited.
 
 #### `public_root_url`
 
