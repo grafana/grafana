@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -20,9 +21,25 @@ type handlerEntry struct {
 	lastRV  string
 }
 
+type phase int
+
+const (
+	starting phase = iota // Run launched, first reconcile not done
+	serving               // first reconcile done, loop running
+	stopped               // clean exit (Run ctx cancelled)
+	crashed               // loop exited/panicked unexpectedly
+)
+
+type routerState struct {
+	phase phase
+	err   error // last reconcile error while serving, or the panic on crash
+}
+
 // there won't be a cloud apps router in enterprise
 // can be in OSS right now, RoutesLoader stays in enterprise in cloud
 type BasicRouter struct {
+	state atomic.Pointer[routerState]
+
 	loader RoutesLoader
 
 	// entries is the desired-state map, keyed by group. Owned by reconcile
@@ -30,10 +47,7 @@ type BasicRouter struct {
 	entries map[string]*handlerEntry
 
 	// snapshot is the immutable group -> Backend map used to serve requests.
-	// reconcile rebuilds and atomically stores it; serving loads it lock-free.
-	// Keeping the routing table keyed by group (not flattened path prefixes)
-	// keeps the config's shape visible at dispatch, so Handler can give primacy
-	// to the group when deciding own-vs-fallthrough.
+	// reconcile rebuilds and atomically stores it; serving loads it.
 	snapshot atomic.Pointer[map[string]http.Handler]
 }
 
@@ -112,50 +126,75 @@ func (cr *BasicRouter) OpenAPIV3Handler() http.Handler {
 }
 
 // Run does an initial load, then reconciles on every coalesced wake from the
-// loader until ctx is cancelled. A non-nil return is fatal by design.
+// loader until ctx is cancelled.
 func (r *BasicRouter) Run(ctx context.Context) error {
+	r.state.Store(&routerState{phase: starting})
 	dirty, err := r.loader.Notify(ctx)
 	if err != nil {
 		return fmt.Errorf("router: notify: %w", err)
 	}
 
-	// first reconcile happens asynchronously as it may take a bit
 	go func() {
-		r.reconcile(ctx) // initial populate, independent of watch replay
-	}()
+		defer func() {
+			if p := recover(); p != nil {
+				r.state.Store(&routerState{phase: crashed, err: fmt.Errorf("panic: %v", p)})
+			}
+		}()
 
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-dirty:
-			r.reconcile(ctx)
+		lastErr := r.reconcile(ctx)
+		r.state.Store(&routerState{phase: serving, err: lastErr})
+
+		for {
+			select {
+			case <-ctx.Done():
+				r.state.Store(&routerState{phase: stopped})
+				return
+			case <-dirty:
+				r.state.Store(&routerState{phase: serving, err: r.reconcile(ctx)})
+			}
 		}
-	}
+	}()
+	return nil
 }
 
 // Ready reports the router is initialized and serving. The snapshot is
 // populated on the first reconcile in Run.
 func (r *BasicRouter) Ready(context.Context) error {
-	// if reconcile hasn't been run yet, return err
-	return nil
+	s := r.state.Load()
+	switch {
+	case s == nil || s.phase == starting:
+		return fmt.Errorf("router: initial reconcile not complete")
+	case s.phase == serving && s.err != nil:
+		return fmt.Errorf("router: last reconcile failed: %w", s.err)
+	case s.phase == serving:
+		return nil
+	default: // stopped / crashed
+		return fmt.Errorf("router: not serving (phase %d)", s.phase)
+	}
 }
 
-// Alive reports the router is not in a non-recoverable state.
-func (r *BasicRouter) Alive(context.Context) error { return nil }
+// Alive reports the router is not in a non-recoverable state. Only a crashed
+// reconcile loop (unexpected exit or panic) is unrecoverable; a restart fixes
+// it. starting/serving/stopped are all expected or transient.
+func (r *BasicRouter) Alive(context.Context) error {
+	if s := r.state.Load(); s != nil && s.phase == crashed {
+		return fmt.Errorf("router: reconcile loop crashed: %w", s.err)
+	}
+	return nil
+}
 
 // reconcile re-reads the full desired route set and converges entries to it:
 // rebuild changed/new groups, leave unchanged ones (RV match) untouched, drop
 // groups that disappeared, then publish a fresh snapshot. Level-triggered, so
 // it is safe to run on any wake.
-func (r *BasicRouter) reconcile(ctx context.Context) {
+func (r *BasicRouter) reconcile(ctx context.Context) error {
 	backends, err := r.loader.Load(ctx)
 	if err != nil {
 		// Keep serving last-known-good; a later wake retries.
-		slog.Error("router: load failed, keeping current routes", "error", err)
-		return
+		return fmt.Errorf("router: load failed, keeping current routes: %w", err)
 	}
 
+	var errs []error
 	seen := make(map[string]struct{}, len(backends))
 	for _, b := range backends {
 		group := b.Group()
@@ -177,7 +216,7 @@ func (r *BasicRouter) reconcile(ctx context.Context) {
 			// Load failed: keep last-known-good for this group (leave the
 			// existing entry, if any, untouched) and don't publish a nil
 			// handler. lastRV is not advanced, so a later wake retries.
-			slog.Error("router: backend load failed, keeping current route", "group", group, "error", err)
+			errs = append(errs, fmt.Errorf("router: backend load failed for group %q, keeping current route: %w", group, err))
 			continue
 		}
 
@@ -200,6 +239,7 @@ func (r *BasicRouter) reconcile(ctx context.Context) {
 	}
 
 	r.publish()
+	return errors.Join(errs...)
 }
 
 // publish builds a fresh immutable group -> Backend snapshot from entries and
