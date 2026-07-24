@@ -82,6 +82,7 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
     title: panel.spec.title?.substring(0, 5000),
     description: panel.spec.description,
+    subtitle: panel.spec.subtitle,
     pluginId: panel.spec.vizConfig.group,
     options,
     fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),

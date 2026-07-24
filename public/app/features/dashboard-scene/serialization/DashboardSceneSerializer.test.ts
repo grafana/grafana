@@ -826,7 +826,6 @@ describe('DashboardSceneSerializer', () => {
                 transformations: [],
               },
             },
-            description: '',
             id: 1,
             links: [],
             title: 'Panel 1',

@@ -297,7 +297,8 @@ export function vizPanelToSchemaV2(
           ? djb2Hash(vizPanel.state.key)
           : getPanelIdForVizPanel(vizPanel),
       title: vizPanel.state.title,
-      description: vizPanel.state.description ?? '',
+      description: vizPanel.state.description,
+      subtitle: vizPanel.state.subtitle,
       links: getPanelLinks(vizPanel),
       transparent: vizPanel.state.displayMode === 'transparent' ? true : undefined,
       data: {

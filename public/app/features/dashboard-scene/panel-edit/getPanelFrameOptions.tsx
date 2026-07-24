@@ -2,9 +2,9 @@ import React from 'react';
 
 import { CoreApp, type FieldConfigSource, type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
-import { DataLinksInlineEditor, Input, TextArea, Switch } from '@grafana/ui';
+import { DataLinksInlineEditor, Input, TextArea, Switch, Stack, Label, Field } from '@grafana/ui';
 import { GenAIPanelDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIPanelDescriptionButton';
 import { GenAIPanelTitleButton } from 'app/features/dashboard/components/GenAI/GenAIPanelTitleButton';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -95,6 +95,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
         title: t('dashboard-scene.get-panel-frame-options.title.description', 'Description'),
         id: 'panel-frame-options-description',
         value: panel.state.description,
+        skipField: true,
         render: function renderDescription(descriptor) {
           return <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />;
         },
@@ -198,24 +199,82 @@ export function PanelFrameTitleInput({
 }
 
 export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: string }) {
-  const { description } = panel.useState();
-  const [prevDescription, setPrevDescription] = React.useState(panel.state.description);
+  const { description, subtitle } = panel.useState();
+  const [prevDescription, setPrevDescription] = React.useState(description ?? subtitle ?? '');
+  let propName: 'description' | 'subtitle' = description ? 'description' : 'subtitle';
+
+  const onCommitDescriptionChange = (evt: React.ChangeEvent<HTMLTextAreaElement>) => {
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.panel-description', 'panel description change'),
+      source: panel,
+      perform: () => panel.setState({ [propName]: description }),
+      undo: () => panel.setState({ [propName]: prevDescription }),
+    });
+  };
+
+  const onToggleSubtitle = (evt: React.ChangeEvent<HTMLInputElement>) => {
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.panel-description', 'panel description change'),
+      source: panel,
+      perform: () => {
+        if (propName === 'description') {
+          panel.setState({ subtitle: description });
+          panel.setState({ description: undefined });
+        } else {
+          panel.setState({ description: subtitle });
+          panel.setState({ subtitle: undefined });
+        }
+      },
+      undo: () => {
+        if (propName === 'description') {
+          panel.setState({ subtitle: undefined });
+          panel.setState({ description: description });
+        } else {
+          panel.setState({ subtitle: subtitle });
+          panel.setState({ description: undefined });
+        }
+      },
+    });
+  };
+
+  const label = (
+    <Stack direction="row" justifyContent="space-between">
+      <Label htmlFor={id}>
+        <Trans i18nKey="dashboard.viz-panel.options.description">Description</Trans>
+      </Label>
+      <Stack>
+        <Label
+          htmlFor="panel-subtitle-switch"
+          data-testid={selectors.components.PanelEditor.OptionsPane.fieldLabel('subtitle-switch')}
+        >
+          <Trans i18nKey="dashboard.viz-panel.options.description-as-subtitle">as subtitle</Trans>
+        </Label>
+        <Switch
+          value={!!subtitle}
+          id="panel-subtitle-switch"
+          onChange={onToggleSubtitle}
+          label={t('dashboard.viz-panel.options.description-as-subtitle', 'as subtitle')}
+        />
+      </Stack>
+    </Stack>
+  );
 
   return (
-    <TextArea
-      id={id}
-      value={description}
-      onChange={(evt) => panel.setState({ description: evt.currentTarget.value })}
-      onFocus={() => setPrevDescription(panel.state.description)}
-      onBlur={() => {
-        dashboardEditActions.edit({
-          description: t('dashboard.edit-actions.panel-description', 'Change panel description'),
-          source: panel,
-          perform: () => panel.setState({ description: description }),
-          undo: () => panel.setState({ description: prevDescription }),
-        });
-      }}
-    />
+    <>
+      {/* eslint-disable-next-line @grafana/require-no-margin */}
+      <Field
+        label={label}
+        data-testid={selectors.components.PanelEditor.OptionsPane.fieldLabel('Panel options Description')}
+      >
+        <TextArea
+          id={id}
+          value={subtitle ?? description}
+          onChange={(evt) => panel.setState({ description: evt.currentTarget.value })}
+          onFocus={() => setPrevDescription(subtitle ?? description ?? '')}
+          onBlur={onCommitDescriptionChange}
+        />
+      </Field>
+    </>
   );
 }
 
@@ -226,7 +285,7 @@ export function PanelBackgroundSwitch({ panel, id }: { panel: VizPanel; id?: str
     const newDisplayMode = displayMode === 'default' ? 'transparent' : 'default';
 
     dashboardEditActions.edit({
-      description: t('dashboard.edit-actions.panel-background', 'Change panel background'),
+      description: t('dashboard.edit-actions.panel-background', 'panel background change'),
       source: panel,
       perform: () => panel.setState({ displayMode: newDisplayMode }),
       undo: () => panel.setState({ displayMode: displayMode }),
@@ -246,7 +305,7 @@ export function editPanelTitleAction(panel: VizPanel, title: string, prevTitle: 
   }
 
   dashboardEditActions.edit({
-    description: t('dashboard.edit-actions.panel-title', 'Change panel title'),
+    description: t('dashboard.edit-actions.panel-title', 'panel title change'),
     source: panel,
     perform: () => updatePanelTitleState(panel, title),
     undo: () => updatePanelTitleState(panel, prevTitle),

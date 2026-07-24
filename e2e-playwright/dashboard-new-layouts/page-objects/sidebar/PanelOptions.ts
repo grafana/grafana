@@ -17,8 +17,14 @@ export class PanelOptions extends PageObject {
 
   getDescriptionTextarea() {
     return this.dashboardPage
-      .getByGrafanaSelector(this.selectors.components.PanelEditor.OptionsPane.fieldLabel('panel-options Description'))
+      .getByGrafanaSelector(this.selectors.components.PanelEditor.OptionsPane.fieldLabel('Panel options Description'))
       .locator('textarea');
+  }
+
+  getSubtitleSwitch() {
+    return this.dashboardPage.getByGrafanaSelector(
+      this.selectors.components.PanelEditor.OptionsPane.fieldLabel('subtitle-switch')
+    );
   }
 
   async toggleTransparentBackground() {
