@@ -2,12 +2,21 @@ package clientmiddleware
 
 import (
 	"context"
+	"errors"
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
 	"github.com/grafana/grafana/pkg/plugins/instrumentationutils"
 )
+
+// Ensure the wrapper forwards the RawChunkReceiver interface so the raw HTTP streaming
+// fast path (coreplugin type-asserts the writer to chunked.RawChunkReceiver) is preserved
+// through instrumentation. Without this the assertion fails, the raw writer is bypassed,
+// and frames are silently dropped.
+var _ chunked.RawChunkReceiver = (*errorRecordingChunkedWriter)(nil)
 
 // errorRecordingChunkedWriter wraps a backend.ChunkedDataWriter to record per-refID
 // errors streamed via WriteError. A chunked plugin can report partial failures
@@ -35,6 +44,28 @@ func (w *errorRecordingChunkedWriter) WriteError(ctx context.Context, refID stri
 		w.mu.Unlock()
 	}
 	return w.ChunkedDataWriter.WriteError(ctx, refID, status, err)
+}
+
+// OnChunk keeps the wrapper transparent to the raw HTTP streaming path: coreplugin
+// type-asserts the writer to chunked.RawChunkReceiver and, on success, streams raw
+// bytes straight to the HTTP response. In that path per-refID failures arrive as
+// chunks carrying an Error rather than via WriteError, so record those here too
+// before forwarding, mirroring WriteError.
+func (w *errorRecordingChunkedWriter) OnChunk(chunk *pluginv2.QueryChunkedDataResponse) error {
+	raw, ok := w.ChunkedDataWriter.(chunked.RawChunkReceiver)
+	if !ok {
+		return errors.New("chunked writer does not support raw chunks")
+	}
+	if chunk != nil && chunk.Error != "" {
+		w.mu.Lock()
+		w.errs = append(w.errs, chunkedRefError{
+			refID:  chunk.RefId,
+			status: backend.Status(chunk.Status),
+			err:    errors.New(chunk.Error),
+		})
+		w.mu.Unlock()
+	}
+	return raw.OnChunk(chunk)
 }
 
 // requestStatus derives the overall request status, mirroring
