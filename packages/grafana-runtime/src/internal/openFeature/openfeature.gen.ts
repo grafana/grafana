@@ -675,10 +675,10 @@ export const useFlagManagedPluginsV2 = (options?: ReactFlagEvaluationOptions): b
  *
  * **Details:**
  * - flag key: `newSavedQueriesExperience`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagNewSavedQueriesExperience = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("newSavedQueriesExperience", false, options).value;
+  return useFlag("newSavedQueriesExperience", true, options).value;
 };
 
 /**

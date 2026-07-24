@@ -490,7 +490,7 @@ export interface FeatureToggles {
   grafanaManagedRecordingRules?: boolean;
   /**
   * Enables Saved queries (query library) feature
-  * @default false
+  * @default true
   */
   queryLibrary?: boolean;
   /**
@@ -500,12 +500,12 @@ export interface FeatureToggles {
   playlistsRBAC?: boolean;
   /**
   * Enables Saved queries (query library) RBAC permissions
-  * @default false
+  * @default true
   */
   savedQueriesRBAC?: boolean;
   /**
   * Enables the new Saved queries (query library) modal experience
-  * @default false
+  * @default true
   */
   newSavedQueriesExperience?: boolean;
   /**
