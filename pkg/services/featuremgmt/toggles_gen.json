@@ -1552,7 +1552,8 @@
       "metadata": {
         "name": "dashboardAssistantPopover",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-23T18:07:04Z"
       },
       "spec": {
         "description": "Enables the assistant prompt popover on panel click in dashboard view mode",
