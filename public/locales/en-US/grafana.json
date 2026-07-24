@@ -6621,8 +6621,7 @@
         "last-update": "Last Update",
         "published-by": "Published By",
         "view-on-grafana-com": "View on Grafana.com"
-      },
-      "no-description": "No description available"
+      }
     },
     "grafana-dashboard-template-modal": {
       "no-results-found": "No template dashboards found"
