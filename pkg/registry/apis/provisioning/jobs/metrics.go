@@ -21,12 +21,30 @@ type JobMetrics struct {
 	syncDurationHist                 *prometheus.HistogramVec // total sync durations
 
 	resourceOpsTotal *prometheus.CounterVec // per-resource outcome counter
+	inFlight         *prometheus.GaugeVec   // jobs currently being processed, by driver + action
 }
 
 type QueueMetrics struct {
 	queueSize     *prometheus.GaugeVec
 	queueWaitTime *prometheus.HistogramVec
+	claimTotal    *prometheus.CounterVec
 }
+
+// Claim outcomes recorded on grafana_provisioning_jobs_claim_total. They describe
+// what a single claim attempt found, which is a LIST-free signal of queue demand:
+// mostly "empty" means workers are idle (scale down), while steady "claimed" under
+// high utilization means the queue is backing up (scale up).
+const (
+	ClaimOutcomeClaimed   = "claimed"   // a job was claimed
+	ClaimOutcomeEmpty     = "empty"     // no unclaimed jobs were available
+	ClaimOutcomeContended = "contended" // candidates existed but all were claimed by others first
+	ClaimOutcomeError     = "error"     // a claim attempt failed (list, identity, or update error)
+)
+
+// durationBucketUnknown is the resources_changed_bucket used when a job did not
+// succeed: the resource count is partial and not meaningful, so failed durations are
+// grouped here instead of a misleading count bucket.
+const durationBucketUnknown = "unknown"
 
 var (
 	queueOnce    sync.Once
@@ -57,9 +75,19 @@ func RegisterQueueMetrics(registry prometheus.Registerer) QueueMetrics {
 		)
 		registry.MustRegister(queueWaitTime)
 
+		claimTotal := prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "grafana_provisioning_jobs_claim_total",
+				Help: "Total job claim attempts by outcome (claimed, empty, contended, error)",
+			},
+			[]string{"outcome"},
+		)
+		registry.MustRegister(claimTotal)
+
 		queueMetrics = QueueMetrics{
 			queueSize:     queueSize,
 			queueWaitTime: queueWaitTime,
+			claimTotal:    claimTotal,
 		}
 	})
 	return queueMetrics
@@ -75,6 +103,16 @@ func (m *QueueMetrics) DecreaseQueueSize(action string) {
 
 func (m *QueueMetrics) RecordWaitTime(action string, waitSeconds float64) {
 	m.queueWaitTime.WithLabelValues(action).Observe(waitSeconds)
+}
+
+// RecordClaim increments the claim-outcome counter. Safe to call on a zero-value
+// QueueMetrics (nil counter) so stores built in tests without registered metrics do
+// not panic.
+func (m *QueueMetrics) RecordClaim(outcome string) {
+	if m.claimTotal == nil {
+		return
+	}
+	m.claimTotal.WithLabelValues(outcome).Inc()
 }
 
 func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
@@ -94,7 +132,7 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 				Help:    "Duration of job",
 				Buckets: []float64{5.0, 10.0, 30.0, 60.0, 120.0, 300.0},
 			},
-			[]string{"action", "resources_changed_bucket"},
+			[]string{"action", "resources_changed_bucket", "outcome"},
 		)
 		registry.MustRegister(durationHist)
 
@@ -137,6 +175,15 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 		)
 		registry.MustRegister(resourceOpsTotal)
 
+		inFlight := prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "grafana_provisioning_jobs_in_flight",
+				Help: "Number of jobs currently being processed (a busy worker slot), by driver and action",
+			},
+			[]string{"driver_id", "action"},
+		)
+		registry.MustRegister(inFlight)
+
 		jobMetrics = JobMetrics{
 			registry:                         registry,
 			processedTotal:                   processedTotal,
@@ -145,18 +192,41 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 			fullSyncPhaseDurationHist:        fullSyncPhaseDurationHist,
 			syncDurationHist:                 syncDurationHist,
 			resourceOpsTotal:                 resourceOpsTotal,
+			inFlight:                         inFlight,
 		}
 	})
 	return jobMetrics
 }
 
+// IncInFlight marks a worker slot busy: driverID started processing a job of action.
+// Nil-safe so drivers built in tests without registered metrics do not panic.
+func (m *JobMetrics) IncInFlight(driverID, action string) {
+	if m == nil || m.inFlight == nil {
+		return
+	}
+	m.inFlight.WithLabelValues(driverID, action).Inc()
+}
+
+// DecInFlight marks a worker slot free again once the job is done (any outcome).
+func (m *JobMetrics) DecInFlight(driverID, action string) {
+	if m == nil || m.inFlight == nil {
+		return
+	}
+	m.inFlight.WithLabelValues(driverID, action).Dec()
+}
+
 func (m *JobMetrics) RecordJob(jobAction string, outcome string, resourceCountChanged int, duration float64) {
 	m.processedTotal.WithLabelValues(jobAction, outcome).Inc()
 
-	// only record duration when the job was successful. otherwise resource count will be incorrect
-	if outcome == utils.SuccessOutcome {
-		m.durationHist.WithLabelValues(jobAction, utils.GetResourceCountBucket(resourceCountChanged)).Observe(duration)
+	// Record duration for every outcome so slow-but-failing jobs are visible (a job
+	// that runs to the timeout then errors is exactly what we want to catch). Only a
+	// failed job's resource count is unreliable (partial work), so bucket errors under
+	// a sentinel; success and warning keep their size bucket.
+	bucket := utils.GetResourceCountBucket(resourceCountChanged)
+	if outcome == utils.ErrorOutcome {
+		bucket = durationBucketUnknown
 	}
+	m.durationHist.WithLabelValues(jobAction, bucket, outcome).Observe(duration)
 }
 
 func (m *JobMetrics) RecordIncrementalSyncPhase(phase IncrementalSyncPhase, duration time.Duration) {

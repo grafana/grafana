@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"sync"
 	"time"
 
@@ -92,6 +93,7 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 				c.repoGetter,
 				c.historicJobs,
 				c.notifications,
+				strconv.Itoa(driverID),
 				c.metrics,
 				c.workers...,
 			)

@@ -135,10 +135,12 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 		Limit:         16,
 	})
 	if err != nil {
+		s.queueMetrics.RecordClaim(ClaimOutcomeError)
 		return nil, nil, apifmt.Errorf("failed to list jobs: %w", err)
 	}
 
 	if len(jobs.Items) == 0 {
+		s.queueMetrics.RecordClaim(ClaimOutcomeEmpty)
 		logger.Debug("no jobs available to claim")
 		return nil, nil, ErrNoJobs
 	}
@@ -151,12 +153,12 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 		}
 		job.Labels[LabelJobClaim] = strconv.FormatInt(s.clock().UnixMilli(), 10)
 		job.Labels[LabelJobClaimOwner] = util.GenerateShortUID()
-		s.queueMetrics.RecordWaitTime(string(job.Spec.Action), s.clock().Sub(job.CreationTimestamp.Time).Seconds())
 
 		// Set up the provisioning identity for this namespace
 		ctx, _, err = identity.WithProvisioningIdentity(ctx, job.GetNamespace())
 		if err != nil {
 			// This should never happen, as it is already a valid namespace from the job existing... but better be safe.
+			s.queueMetrics.RecordClaim(ClaimOutcomeError)
 			return nil, nil, apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
 		}
 
@@ -171,6 +173,7 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 			continue
 		}
 		if err != nil {
+			s.queueMetrics.RecordClaim(ClaimOutcomeError)
 			return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 		}
 
@@ -187,6 +190,12 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 			attribute.String("job.repository", updatedJob.Spec.Repository),
 			attribute.String("job.action", string(updatedJob.Spec.Action)),
 		)
+
+		// Record the wait only now that the claim succeeded: a candidate we lost to a
+		// conflicting worker (handled above with continue) must not count, or racing
+		// losers would each record a wait for a job they never claimed.
+		s.queueMetrics.RecordWaitTime(string(updatedJob.Spec.Action), s.clock().Sub(updatedJob.CreationTimestamp.Time).Seconds())
+		s.queueMetrics.RecordClaim(ClaimOutcomeClaimed)
 
 		return updatedJob.DeepCopy(), func() {
 			// Rolling back does not need to care about the parent's cancellation state.
@@ -234,6 +243,7 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 	}
 
 	// We failed to claim any jobs.
+	s.queueMetrics.RecordClaim(ClaimOutcomeContended)
 	logger.Debug("no jobs claimed - all already claimed by others")
 	return nil, nil, ErrNoJobs
 }

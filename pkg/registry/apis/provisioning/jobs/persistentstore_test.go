@@ -7,10 +7,13 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	k8stesting "k8s.io/client-go/testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	fakeclientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
@@ -238,6 +241,123 @@ func TestComplete_SucceedsForOwner(t *testing.T) {
 func newTestClientset() provisioningv0alpha1.ProvisioningV0alpha1Interface {
 	//nolint:staticcheck // NewSimpleClientset is needed; NewClientset requires schema registration not available for this type.
 	return fakeclientset.NewSimpleClientset().ProvisioningV0alpha1()
+}
+
+// TestClaim_RecordsClaimOutcome verifies Claim increments the claim-outcome counter:
+// "empty" when nothing is available, "claimed" when a job is taken. Uses a store with
+// its own fresh metrics so the assertions are not affected by other tests sharing the
+// process-global counter.
+func TestClaim_RecordsClaimOutcome(t *testing.T) {
+	fakeClient := newTestClientset()
+	store := &persistentStore{
+		client: fakeClient,
+		clock:  time.Now,
+		expiry: 30 * time.Second,
+		queueMetrics: QueueMetrics{
+			queueWaitTime: prometheus.NewHistogramVec(
+				prometheus.HistogramOpts{Name: "test_queue_wait"}, []string{"action"}),
+			claimTotal: prometheus.NewCounterVec(
+				prometheus.CounterOpts{Name: "test_claim_total"}, []string{"outcome"}),
+		},
+	}
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	// Empty store: nothing to claim -> "empty".
+	_, _, err = store.Claim(ctx)
+	require.ErrorIs(t, err, ErrNoJobs)
+	require.Equal(t, 1.0, testutil.ToFloat64(store.queueMetrics.claimTotal.WithLabelValues(ClaimOutcomeEmpty)))
+
+	// A job is available: claim succeeds -> "claimed".
+	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "job-1", Namespace: "stacks-123"},
+		Spec:       provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	claimed, rollback, err := store.Claim(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, claimed)
+	defer rollback()
+	require.Equal(t, 1.0, testutil.ToFloat64(store.queueMetrics.claimTotal.WithLabelValues(ClaimOutcomeClaimed)))
+}
+
+// newStoreWithFreshQueueMetrics builds a store whose queue metrics are their own
+// (unregistered) collectors, so assertions are isolated from the process-global
+// singletons other tests share.
+func newStoreWithFreshQueueMetrics(client provisioningv0alpha1.ProvisioningV0alpha1Interface) *persistentStore {
+	return &persistentStore{
+		client: client,
+		clock:  time.Now,
+		expiry: 30 * time.Second,
+		queueMetrics: QueueMetrics{
+			queueWaitTime: prometheus.NewHistogramVec(
+				prometheus.HistogramOpts{Name: "test_queue_wait"}, []string{"action"}),
+			claimTotal: prometheus.NewCounterVec(
+				prometheus.CounterOpts{Name: "test_claim_total"}, []string{"outcome"}),
+		},
+	}
+}
+
+// TestClaim_WaitRecordedOnlyOnSuccessfulClaim verifies queue-wait is recorded once —
+// for the job actually claimed — not for a candidate lost to a conflicting worker.
+func TestClaim_WaitRecordedOnlyOnSuccessfulClaim(t *testing.T) {
+	cs := fakeclientset.NewSimpleClientset()
+	var updates int
+	cs.PrependReactor("update", "jobs", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		updates++
+		if updates == 1 {
+			// First candidate loses the race to another worker.
+			return true, nil, apierrors.NewConflict(provisioning.JobResourceInfo.GroupResource(), "", errors.New("claimed by another worker"))
+		}
+		return false, nil, nil // let the tracker perform the real update for the next candidate
+	})
+	store := newStoreWithFreshQueueMetrics(cs.ProvisioningV0alpha1())
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	for _, name := range []string{"job-a", "job-b"} {
+		_, err := cs.ProvisioningV0alpha1().Jobs("stacks-123").Create(ctx, &provisioning.Job{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "stacks-123"},
+			Spec:       provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull},
+		}, metav1.CreateOptions{})
+		require.NoError(t, err)
+	}
+
+	claimed, rollback, err := store.Claim(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, claimed)
+	defer rollback()
+	require.Equal(t, 2, updates, "both candidates should have been attempted")
+
+	// Exactly one wait observation despite the first candidate conflicting.
+	require.Equal(t, uint64(1), histSampleCount(t, store.queueMetrics.queueWaitTime, "pull"))
+	require.Equal(t, 1.0, testutil.ToFloat64(store.queueMetrics.claimTotal.WithLabelValues(ClaimOutcomeClaimed)))
+}
+
+// TestClaim_RecordsErrorOnUpdateFailure verifies a non-conflict update failure is
+// recorded as a claim error, completing the claim_total outcome coverage.
+func TestClaim_RecordsErrorOnUpdateFailure(t *testing.T) {
+	cs := fakeclientset.NewSimpleClientset()
+	cs.PrependReactor("update", "jobs", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		return true, nil, apierrors.NewInternalError(errors.New("boom"))
+	})
+	store := newStoreWithFreshQueueMetrics(cs.ProvisioningV0alpha1())
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	_, err = cs.ProvisioningV0alpha1().Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "job-1", Namespace: "stacks-123"},
+		Spec:       provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	_, _, err = store.Claim(ctx)
+	require.Error(t, err)
+	require.Equal(t, 1.0, testutil.ToFloat64(store.queueMetrics.claimTotal.WithLabelValues(ClaimOutcomeError)))
 }
 
 // TestRenewLease_StaleResourceVersion verifies that after RenewLease, the

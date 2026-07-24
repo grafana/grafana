@@ -81,6 +81,10 @@ type jobDriver struct {
 	// notifications channel for job create events
 	notifications chan struct{}
 
+	// driverID identifies this worker within the pod, used as the driver_id label on
+	// the in-flight gauge so per-worker saturation can be observed.
+	driverID string
+
 	// metrics for recording job-level Prometheus metrics (warnings, operations, etc.)
 	metrics *JobMetrics
 
@@ -96,6 +100,7 @@ func NewJobDriver(
 	repoGetter RepoGetter,
 	historicJobs HistoryWriter,
 	notifications chan struct{},
+	driverID string,
 	metrics *JobMetrics,
 	workers ...Worker,
 ) (*jobDriver, error) {
@@ -108,6 +113,7 @@ func NewJobDriver(
 		historicJobs:         historicJobs,
 		workers:              workers,
 		notifications:        notifications,
+		driverID:             driverID,
 		metrics:              metrics,
 	}, nil
 }
@@ -181,6 +187,14 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	// The rollback function does not care about cancellations.
 	defer rollback()
 
+	// Mark this worker slot busy for the whole claim->complete duration. The Inc and
+	// the deferred Dec run on the same goroutine, so the gauge stays balanced across
+	// every return path (timeout, lease loss, shutdown, completion). Methods are
+	// nil-safe for drivers built without metrics in tests.
+	inFlightAction := string(claimedJob.Spec.Action)
+	d.metrics.IncInFlight(d.driverID, inFlightAction)
+	defer d.metrics.DecInFlight(d.driverID, inFlightAction)
+
 	namespace := claimedJob.GetNamespace()
 	logger = logger.With("job", claimedJob.GetName(), "namespace", namespace, "repository", claimedJob.Spec.Repository, "action", claimedJob.Spec.Action)
 	ctx = logging.Context(ctx, logger)
@@ -244,6 +258,19 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	// Complete the job
 	d.mu.Lock()
 	d.currentJob.Status = recorder.Complete(ctx, err)
+	// Record the job metric here, from the authoritative final status, rather than in
+	// each worker: this covers every action uniformly, uses the driver-measured
+	// duration (accurate even on timeout), and makes the `outcome` label reflect the
+	// job status (success/warning/error) — so a job that "completed with errors" is
+	// recorded as an error, not a success.
+	if d.metrics != nil {
+		d.metrics.RecordJob(
+			string(d.currentJob.Spec.Action),
+			string(d.currentJob.Status.State),
+			resourceChangeCount(d.currentJob.Spec.Action, d.currentJob.Status.Summary),
+			duration.Seconds(),
+		)
+	}
 	defer func() {
 		d.currentJob = nil
 		d.mu.Unlock()
@@ -464,6 +491,31 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 	err := apifmt.Errorf("no workers were registered to handle the job")
 	span.RecordError(err)
 	return err
+}
+
+// resourceChangeCount totals the resources a job changed, for the duration histogram
+// bucket. It is action-aware to match each worker's original counting: push counts
+// writes; delete counts deletes; move counts creates only (a rename is recorded as
+// both a create and a delete, so summing would double-count); everything else (pull,
+// migrate, ...) sums create+update+delete.
+func resourceChangeCount(action provisioning.JobAction, summaries []*provisioning.JobResourceSummary) int {
+	total := 0
+	for _, s := range summaries {
+		if s == nil {
+			continue
+		}
+		switch action {
+		case provisioning.JobActionPush:
+			total += int(s.Write)
+		case provisioning.JobActionDelete:
+			total += int(s.Delete)
+		case provisioning.JobActionMove:
+			total += int(s.Create)
+		default:
+			total += int(s.Create + s.Update + s.Delete)
+		}
+	}
+	return total
 }
 
 func (d *jobDriver) onProgress() ProgressFn {
