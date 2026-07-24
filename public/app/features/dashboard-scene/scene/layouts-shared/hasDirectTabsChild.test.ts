@@ -4,7 +4,7 @@ import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { TabItem } from '../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 
-import { hasDirectTabsChild } from './findAllGridTypes';
+import { hasDirectTabsChild } from './hasDirectTabsChild';
 
 describe('hasDirectTabsChild', () => {
   it('should return false when layout is a bare tabs layout', () => {

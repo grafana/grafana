@@ -90,7 +90,9 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
           disabled={disableGrouping}
           tooltip={
             disableGrouping
-              ? t('dashboard.canvas-actions.disabled-nested-grouping', 'Grouping is limited to 4 levels')
+              ? t('dashboard.canvas-actions.disabled-nested-grouping', 'Grouping is limited to {{maxDepth}} levels', {
+                  maxDepth: MAX_NESTING_DEPTH,
+                })
               : undefined
           }
         >
