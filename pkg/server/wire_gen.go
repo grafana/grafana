@@ -25,9 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
-	provider2 "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
-	provider3 "github.com/grafana/grafana/pkg/storage/unified/search/rerank/provider"
-	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/prometheus/client_golang/prometheus"
 )

@@ -80,6 +80,7 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	if !allowed {
 		return nil, status.Error(codes.NotFound, "collection not found")
 	}
+
 	// External collections have no lexical index, so the fused contract
 	// can't hold for them.
 	if coll.IsExternal {
@@ -174,6 +175,19 @@ func (s *searchServer) grpcStatusError(ctx context.Context, op string, err error
 	}
 }
 
+// grpcErrorFromErrorResult preserves embedded codes that carry retry
+// semantics; anything else is a server fault for a server-built request.
+func grpcErrorFromErrorResult(e *resourcepb.ErrorResult) error {
+	switch e.Code {
+	case http.StatusTooManyRequests:
+		return status.Error(codes.ResourceExhausted, e.Message)
+	case http.StatusServiceUnavailable:
+		return status.Error(codes.Unavailable, e.Message)
+	default:
+		return fmt.Errorf("%s (code %d)", e.Message, e.Code)
+	}
+}
+
 // rerankHybridResults cross-encoder re-scores, re-sorts, and threshold-drops the fused candidates; fail-open on provider errors (only caller cancellation propagates).
 func (s *searchServer) rerankHybridResults(ctx context.Context, query string, results []*resourcepb.HybridSearchResult, minRelevance string) ([]*resourcepb.HybridSearchResult, error) {
 	if s.reranker == nil || len(results) == 0 {
@@ -239,19 +253,6 @@ func (s *searchServer) rerankHybridResults(ctx context.Context, query string, re
 func (s *searchServer) rerankFallback(results []*resourcepb.HybridSearchResult, msg string, err error) []*resourcepb.HybridSearchResult {
 	s.log.Warn(msg+"; returning RRF-ordered results", "err", err, "model", s.reranker.Model)
 	return results
-}
-
-// grpcErrorFromErrorResult preserves embedded codes that carry retry
-// semantics; anything else is a server fault for a server-built request.
-func grpcErrorFromErrorResult(e *resourcepb.ErrorResult) error {
-	switch e.Code {
-	case http.StatusTooManyRequests:
-		return status.Error(codes.ResourceExhausted, e.Message)
-	case http.StatusServiceUnavailable:
-		return status.Error(codes.Unavailable, e.Message)
-	default:
-		return fmt.Errorf("%s (code %d)", e.Message, e.Code)
-	}
 }
 
 // rrfK is the standard Reciprocal Rank Fusion constant.
