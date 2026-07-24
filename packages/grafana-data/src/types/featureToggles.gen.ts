@@ -404,11 +404,6 @@ export interface FeatureToggles {
   */
   alertingSaveStatePeriodic?: boolean;
   /**
-  * Enables the compressed protobuf-based alert state storage. Default is enabled.
-  * @default true
-  */
-  alertingSaveStateCompressed?: boolean;
-  /**
   * In-development feature flag for the scope api using the app platform.
   * @default false
   */

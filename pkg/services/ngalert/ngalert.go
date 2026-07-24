@@ -428,7 +428,8 @@ func (ng *AlertNG) init() error {
 		return err
 	}
 
-	ng.InstanceStore, ng.StartupInstanceReader = initInstanceStore(ng.store.SQLStore, ng.Log, ng.FeatureToggles)
+	ng.InstanceStore = initInstanceStore(ng.store.SQLStore, ng.Log, ng.FeatureToggles)
+	ng.StartupInstanceReader = ng.InstanceStore
 
 	stateManagerCfg := state.ManagerCfg{
 		Metrics:                        ng.Metrics.GetStateMetrics(),
@@ -449,7 +450,7 @@ func (ng *AlertNG) init() error {
 
 		IgnorePendingForNoDataAndError: ng.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAlertingIgnorePendingForNoDataAndError),
 	}
-	statePersister := initStatePersister(ng.Cfg.UnifiedAlerting, stateManagerCfg, ng.FeatureToggles)
+	statePersister := initStatePersister(stateManagerCfg, ng.FeatureToggles)
 	ng.stateManager = state.NewManager(stateManagerCfg, statePersister)
 
 	var apiStateManager state.AlertInstanceManager
@@ -641,59 +642,27 @@ func (ng *AlertNG) init() error {
 	return ac.DeclareFixedRoles(ng.AccesscontrolService)
 }
 
-// initInstanceStore initializes the instance store based on the feature toggles.
-// It returns two vales: the instance store that should be used for writing alert instances,
-// and an alert instance reader that can be used to read alert instances on startup.
-func initInstanceStore(sqlStore db.DB, logger log.Logger, featureToggles featuremgmt.FeatureToggles) (state.InstanceStore, state.InstanceReader) {
-	var instanceStore state.InstanceStore
-
-	// We init both stores here, but only one will be used based on the feature toggles.
-	// Two stores are needed for the multi-instance reader to work correctly.
-	// It's used to read the state of alerts on startup, and allows switching the feature
-	// flags seamlessly without losing the state of alerts.
-	protoInstanceStore := store.ProtoInstanceDBStore{
+// initInstanceStore initializes the instance store used for writing and reading alert instances.
+func initInstanceStore(sqlStore db.DB, logger log.Logger, featureToggles featuremgmt.FeatureToggles) state.InstanceStore {
+	return store.ProtoInstanceDBStore{
 		SQLStore:       sqlStore,
 		Logger:         logger,
 		FeatureToggles: featureToggles,
 	}
-	simpleInstanceStore := store.InstanceDBStore{
-		SQLStore: sqlStore,
-		Logger:   logger,
-	}
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
-		logger.Info("Using protobuf-based alert instance store")
-		instanceStore = protoInstanceStore
-	} else {
-		logger.Info("Using simple database alert instance store")
-		instanceStore = simpleInstanceStore
-	}
-
-	return instanceStore, state.NewMultiInstanceReader(logger, protoInstanceStore, simpleInstanceStore)
 }
 
-func initStatePersister(uaCfg setting.UnifiedAlertingSettings, cfg state.ManagerCfg, featureToggles featuremgmt.FeatureToggles) state.StatePersister {
+func initStatePersister(cfg state.ManagerCfg, featureToggles featuremgmt.FeatureToggles) state.StatePersister {
 	logger := log.New("ngalert.state.manager.persist")
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	compressed := featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed)
-	//nolint:staticcheck // not yet migrated to OpenFeature
 	periodic := featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic)
 
-	switch {
-	case compressed && periodic:
-		logger.Info("Using async rule state persister (compressed + periodic)")
+	if periodic {
+		logger.Info("Using async rule state persister (periodic)")
 		return state.NewAsyncRuleStatePersister(logger, clock.New(), cfg.StatePeriodicSaveInterval, cfg)
-	case compressed:
-		logger.Info("Using sync rule state persister (compressed)")
-		return state.NewSyncRuleStatePersister(logger, cfg)
-	case periodic:
-		logger.Info("Using async state persister (periodic)")
-		return state.NewAsyncStatePersister(logger, clock.New(), uaCfg.StatePeriodicSaveInterval, cfg)
-	default:
-		logger.Info("Using sync state persister")
-		return state.NewSyncStatePersisiter(logger, cfg)
 	}
+	logger.Info("Using sync rule state persister")
+	return state.NewSyncRuleStatePersister(logger, cfg)
 }
 
 // BackfillFolderFullpaths populates folder_fullpath for all existing alert rules.

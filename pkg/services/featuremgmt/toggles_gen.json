@@ -762,7 +762,8 @@
       "metadata": {
         "name": "alertingSaveStateCompressed",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-01-27T17:47:33Z"
+        "creationTimestamp": "2025-01-27T17:47:33Z",
+        "deletionTimestamp": "2026-07-23T18:10:32Z"
       },
       "spec": {
         "description": "Enables the compressed protobuf-based alert state storage. Default is enabled.",
