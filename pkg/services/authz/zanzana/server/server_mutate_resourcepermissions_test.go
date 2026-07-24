@@ -21,7 +21,7 @@ const (
 
 func datasourcePermissionOperation(delete bool, kind, subject, verb, uid string) *v1.MutateOperation {
 	permission := &v1.Permission{
-		Kind: string(kind),
+		Kind: kind,
 		Name: subject,
 		Verb: verb,
 	}
