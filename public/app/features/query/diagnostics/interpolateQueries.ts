@@ -4,24 +4,19 @@ import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 
 /**
- * Interpolates template and scoped variables in a panel's queries before they are submitted to the
- * diagnostics endpoints.
+ * Interpolates template and scoped variables in a panel's queries before they hit the diagnostics
+ * endpoints. Those endpoints re-run raw queries server-side without the frontend
+ * `applyTemplateVariables` step that `/api/ds/query` applies, so without this a templated panel's
+ * bundle would capture literal `$var` queries instead of what actually ran.
  *
- * The diagnostics endpoints re-run raw queries server-side and, unlike the normal `/api/ds/query`
- * path, nothing applies the frontend `applyTemplateVariables` step first. Without this, a templated
- * panel's bundle would capture literal `$var` queries — a different request than the one that
- * actually misbehaved, which undermines every downstream comparison in the bundle.
+ * Each query is interpolated by its own datasource, so mixed-datasource panels resolve correctly.
+ * `scopedVars` must carry `__sceneObject` (e.g. `{ __sceneObject: { value: vizPanel } }`): it lets
+ * the core `TemplateSrv` delegate to the scene interpolator (resolving scene variables, including a
+ * repeated panel's clone-local value) and lets a datasource ref that is itself a variable (e.g.
+ * `$ds`) resolve to this panel's concrete instance.
  *
- * Each query is interpolated by its own datasource's `interpolateVariablesInQueries` (per-query, so
- * mixed-datasource panels resolve correctly). `scopedVars` must carry `__sceneObject` (e.g.
- * `{ __sceneObject: { value: vizPanel } }`) so the core `TemplateSrv` delegates to the scene
- * interpolator and resolves scene variables, including a repeated panel's clone-local value. It is
- * also passed to `getDataSourceInstance` so a datasource ref that is itself a template variable
- * (e.g. `$ds`) resolves to this panel's concrete instance rather than failing to resolve.
- *
- * Queries are never dropped or reordered, so the captured set matches what ran: expression
- * (`__expr__`) queries pass through unchanged (they execute server-side and reference other refIds),
- * and any query whose datasource cannot be resolved or interpolated falls back to its raw form.
+ * Queries are never dropped or reordered: expression (`__expr__`) queries pass through unchanged, and
+ * any query whose datasource can't be resolved or interpolated falls back to its raw form.
  */
 export async function interpolateDiagnosticsQueries(
   queries: DataQuery[],

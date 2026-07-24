@@ -85,45 +85,50 @@ function panelIdFrom(panel: VizPanel): number {
 // whole-dashboard request payload. Panels with no active queries (e.g. text panels) are omitted.
 async function collectDashboardPanels(dashboard: DashboardScene): Promise<DashboardDiagnosticsPanel[]> {
   const vizPanels = sceneGraph.findAllObjects(dashboard, (o) => o instanceof VizPanel);
-  const panels: DashboardDiagnosticsPanel[] = [];
 
-  for (const obj of vizPanels) {
-    const panel = obj instanceof VizPanel ? obj : undefined;
-    if (!panel) {
-      continue;
-    }
-    const runner = getQueryRunnerFor(panel);
-    const runnerDatasource = runner?.state.datasource;
-    const rawQueries: DataQuery[] = (runner?.state.queries ?? [])
-      .map((query) => (query.datasource ? query : { ...query, datasource: runnerDatasource }))
-      .filter((query) => !query.hide);
-    if (rawQueries.length === 0) {
-      continue;
-    }
-    // Interpolate so each captured panel matches what it ran; scopedVars carries this panel so a
-    // repeated panel's clone-local variable value resolves from its position in the scene graph.
-    const queries = await interpolateDiagnosticsQueries(
-      rawQueries,
-      { __sceneObject: { value: panel } },
-      runner?.state.data?.request?.filters
-    );
-    const timeRange = sceneGraph.getTimeRange(panel).state.value;
-    // Repeat-by-variable clones share their source panel's key (e.g. `panel-3-clone-1` and
-    // `panel-3-clone-2` both parse to id 3 in panelIdFrom), so multiple entries below can carry the
-    // same id -- that's intentional. dashboard.getSaveModel(), sent alongside this list in
-    // startDashboardDiagnostics, only serializes the source panel once (clones aren't separate
-    // save-model elements), so the id has to match that source panel for the backend to resolve its
-    // panel JSON. Each clone still gets its own array entry, so its captured queries aren't lost.
-    panels.push({
-      id: panelIdFrom(panel),
-      title: panel.state.title ?? '',
-      from: String(timeRange.from.valueOf()),
-      to: String(timeRange.to.valueOf()),
-      queries,
-    });
-  }
+  // Resolve every panel in parallel: each panel's interpolation makes its own datasource round
+  // trips, so serializing them would scale latency with the panel count on large dashboards.
+  // Promise.all preserves scene-graph order, and null entries (non-VizPanels, panels with no active
+  // queries such as text panels) are dropped afterwards.
+  const collected = await Promise.all(
+    vizPanels.map(async (obj): Promise<DashboardDiagnosticsPanel | null> => {
+      const panel = obj instanceof VizPanel ? obj : undefined;
+      if (!panel) {
+        return null;
+      }
+      const runner = getQueryRunnerFor(panel);
+      const runnerDatasource = runner?.state.datasource;
+      const rawQueries: DataQuery[] = (runner?.state.queries ?? [])
+        .map((query) => (query.datasource ? query : { ...query, datasource: runnerDatasource }))
+        .filter((query) => !query.hide);
+      if (rawQueries.length === 0) {
+        return null;
+      }
+      // Interpolate so each captured panel matches what it ran; scopedVars carries this panel so a
+      // repeated panel's clone-local variable value resolves from its position in the scene graph.
+      const queries = await interpolateDiagnosticsQueries(
+        rawQueries,
+        { __sceneObject: { value: panel } },
+        runner?.state.data?.request?.filters
+      );
+      const timeRange = sceneGraph.getTimeRange(panel).state.value;
+      // Repeat-by-variable clones share their source panel's key (e.g. `panel-3-clone-1` and
+      // `panel-3-clone-2` both parse to id 3 in panelIdFrom), so multiple entries below can carry the
+      // same id -- that's intentional. dashboard.getSaveModel(), sent alongside this list in
+      // startDashboardDiagnostics, only serializes the source panel once (clones aren't separate
+      // save-model elements), so the id has to match that source panel for the backend to resolve its
+      // panel JSON. Each clone still gets its own array entry, so its captured queries aren't lost.
+      return {
+        id: panelIdFrom(panel),
+        title: panel.state.title ?? '',
+        from: String(timeRange.from.valueOf()),
+        to: String(timeRange.to.valueOf()),
+        queries,
+      };
+    })
+  );
 
-  return panels;
+  return collected.filter((panel): panel is DashboardDiagnosticsPanel => panel !== null);
 }
 
 // The download uses blob/json fetches whose FetchError carries the detail in status/statusText, so
