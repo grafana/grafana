@@ -137,7 +137,7 @@ export function useNestingRestrictions(layoutManager: DashboardLayoutManager) {
     }
 
     const disableGrouping = layouts.length >= MAX_NESTING_DEPTH;
-    const disableTabs = disableGrouping || layoutManager.parent === TabsLayoutManager.descriptor.id;
+    const disableTabs = disableGrouping || layouts[0] === TabsLayoutManager.descriptor.id;
 
     return { disableGrouping, disableTabs };
   }, [layoutManager]);
