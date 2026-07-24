@@ -3542,6 +3542,18 @@ func RequireJobWarningContains(t *testing.T, jobObj *provisioning.Job, substr st
 	t.Errorf("expected at least one warning containing %q, got warnings: %v", substr, jobObj.Status.Warnings)
 }
 
+// RequireJobErrorContains asserts that at least one error in the job status
+// contains the given substring.
+func RequireJobErrorContains(t *testing.T, jobObj *provisioning.Job, substr string) {
+	t.Helper()
+	for _, w := range jobObj.Status.Errors {
+		if strings.Contains(w, substr) {
+			return
+		}
+	}
+	t.Errorf("expected at least one error containing %q, got errors: %v", substr, jobObj.Status.Errors)
+}
+
 // ── Export helpers ──────────────────────────────────────────────────────────
 
 // CreateExportGitRepo creates a git repository configured for export (push)
