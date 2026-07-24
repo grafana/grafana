@@ -77,7 +77,7 @@ export function SummaryCard<T>({
           </Stack>
         )}
 
-        {error && (
+        {!loading && error && (
           <Alert
             severity="warning"
             title={error.title}
