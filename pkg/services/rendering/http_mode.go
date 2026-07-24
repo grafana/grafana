@@ -13,6 +13,10 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/services/login"
 )
 
 const authTokenHeader = "X-Auth-Token" //#nosec G101 -- This is a false positive
@@ -26,6 +30,31 @@ var (
 
 // renderViaHTTP renders PNG or PDF via HTTP
 func (rs *RenderingService) renderViaHTTP(ctx context.Context, renderType RenderType, renderKey string, opts Opts) (*RenderResult, error) {
+	if authInfo, ok := claims.AuthInfoFrom(ctx); authInfo != nil && ok {
+		if len(opts.Headers) == 0 || opts.Headers == nil {
+			opts.Headers = make(map[string][]string, 0)
+		}
+
+		idToken := authInfo.GetIDToken()
+		idExists := idToken != ""
+		if idExists {
+			opts.Headers["X-Grafana-Id"] = []string{idToken}
+		}
+
+		accessToken := authInfo.GetAccessToken()
+		atExists := accessToken != ""
+		if atExists {
+			opts.Headers["X-Access-Token"] = []string{accessToken}
+		}
+
+		authenticatedByExtJwtModule := authInfo.GetAuthenticatedBy() == login.ExtendedJWTModule
+		if authenticatedByExtJwtModule && (idExists || atExists) {
+			renderKey = ""
+		}
+
+		logging.FromContext(ctx).Info("[CLIENT] RENDER AUTH WITH EXT JWT", "idExists", idExists, "atExists", atExists, "authenticatedBy", authInfo.GetAuthenticatedBy())
+	}
+
 	imageRendererURL, err := rs.generateImageRendererURL(renderType, opts, renderKey)
 	if err != nil {
 		return nil, err
@@ -70,7 +99,9 @@ func (rs *RenderingService) generateImageRendererURL(renderType RenderType, opts
 	queryParams := imageRendererURL.Query()
 	url := rs.getGrafanaCallbackURL(opts.Path)
 	queryParams.Add("url", url)
-	queryParams.Add("renderKey", renderKey)
+	if renderKey != "" {
+		queryParams.Add("renderKey", renderKey)
+	}
 	queryParams.Add("domain", rs.domain)
 	queryParams.Add("timezone", isoTimeOffsetToPosixTz(opts.Timezone))
 	queryParams.Add("encoding", string(renderType))

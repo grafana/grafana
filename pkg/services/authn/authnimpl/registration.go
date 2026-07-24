@@ -53,7 +53,12 @@ func ProvideRegistration(
 		return Registration{}, err
 	}
 
-	authnSvc.RegisterClient(clients.ProvideRender(renderService))
+	var extJwtAuth *clients.ExtendedJWT
+	if cfg.ExtJWTAuth.Enabled {
+		extJwtAuth = clients.ProvideExtendedJWT(cfg, tracer)
+	}
+
+	authnSvc.RegisterClient(clients.ProvideRender(renderService, extJwtAuth))
 	authnSvc.RegisterClient(clients.ProvideAPIKey(apikeyService, tracer))
 
 	if cfg.LoginCookieName != "" {
@@ -99,8 +104,8 @@ func ProvideRegistration(
 		authnSvc.RegisterClient(clients.ProvideJWT(jwtService, orgRoleMapper, cfg, tracer))
 	}
 
-	if cfg.ExtJWTAuth.Enabled {
-		authnSvc.RegisterClient(clients.ProvideExtendedJWT(cfg, tracer))
+	if extJwtAuth != nil {
+		authnSvc.RegisterClient(extJwtAuth)
 	}
 
 	for name := range socialService.GetOAuthProviders() {

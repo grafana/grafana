@@ -96,17 +96,17 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 			return nil, errExtJWTInvalid.Errorf("failed to verify id token: %w", err)
 		}
 
-		return s.authenticateAsUserViaIDToken(*idTokenClaims, *accessTokenClaims, jwtToken)
+		return s.authenticateAsUserViaIDToken(r, *idTokenClaims, *accessTokenClaims, jwtToken)
 	}
 
 	// Access token without ID token: may be service-only or OBO (on-behalf-of).
 	// IsOnBehalfOfUser traverses the full actor chain and returns true only when
 	// the innermost actor is a User or ServiceAccount — correctly handles multi-hop chains.
 	if accessTokenClaims.Rest.IsOnBehalfOfUser() {
-		return s.authenticateAsUserViaOBO(*accessTokenClaims, jwtToken)
+		return s.authenticateAsUserViaOBO(r, *accessTokenClaims, jwtToken)
 	}
 
-	return s.authenticateAsService(*accessTokenClaims, jwtToken)
+	return s.authenticateAsService(r, *accessTokenClaims, jwtToken)
 }
 
 func (s *ExtendedJWT) IsEnabled() bool {
@@ -114,6 +114,7 @@ func (s *ExtendedJWT) IsEnabled() bool {
 }
 
 func (s *ExtendedJWT) authenticateAsUserViaIDToken(
+	r *authn.Request,
 	idTokenClaims authlib.Claims[authlib.IDTokenClaims],
 	accessTokenClaims authlib.Claims[authlib.AccessTokenClaims],
 	accessTokenInPlainText string,
@@ -164,7 +165,7 @@ func (s *ExtendedJWT) authenticateAsUserViaIDToken(
 		AccessToken:       accessTokenInPlainText,
 		AccessTokenClaims: &accessTokenClaims,
 		IDTokenClaims:     &idTokenClaims,
-		AuthenticatedBy:   login.ExtendedJWTModule,
+		AuthenticatedBy:   s.authenticatedBy(r),
 		AuthID:            accessTokenClaims.Subject,
 		Namespace:         idTokenClaims.Rest.Namespace,
 		ClientParams: authn.ClientParams{
@@ -192,7 +193,7 @@ func (s *ExtendedJWT) authenticateAsUserViaIDToken(
 	return identity, nil
 }
 
-func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[authlib.AccessTokenClaims], accessTokenInPlainText string) (*authn.Identity, error) {
+func (s *ExtendedJWT) authenticateAsService(r *authn.Request, accessTokenClaims authlib.Claims[authlib.AccessTokenClaims], accessTokenInPlainText string) (*authn.Identity, error) {
 	// Allow access tokens with that has a wildcard namespace or a namespace matching this instance.
 	if allowedNamespace := s.namespaceMapper(s.cfg.DefaultOrgID()); !claims.NamespaceMatches(accessTokenClaims.Rest.Namespace, allowedNamespace) {
 		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
@@ -234,7 +235,7 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 		OrgID:             s.cfg.DefaultOrgID(),
 		AccessToken:       accessTokenInPlainText,
 		AccessTokenClaims: &accessTokenClaims,
-		AuthenticatedBy:   login.ExtendedJWTModule,
+		AuthenticatedBy:   s.authenticatedBy(r),
 		AuthID:            accessTokenClaims.Subject,
 		Namespace:         accessTokenClaims.Rest.Namespace,
 		ClientParams: authn.ClientParams{
@@ -251,6 +252,7 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 // IsOnBehalfOfUser (authlib). DelegatedPermissions restrict the user's permissions
 // the same way as when an explicit ID token is present.
 func (s *ExtendedJWT) authenticateAsUserViaOBO(
+	r *authn.Request,
 	accessTokenClaims authlib.Claims[authlib.AccessTokenClaims],
 	accessTokenInPlainText string,
 ) (*authn.Identity, error) {
@@ -300,7 +302,7 @@ func (s *ExtendedJWT) authenticateAsUserViaOBO(
 		OrgID:             s.cfg.DefaultOrgID(),
 		AccessToken:       accessTokenInPlainText,
 		AccessTokenClaims: &accessTokenClaims,
-		AuthenticatedBy:   login.ExtendedJWTModule,
+		AuthenticatedBy:   s.authenticatedBy(r),
 		AuthID:            accessTokenClaims.Subject,
 		Namespace:         accessTokenClaims.Rest.Namespace,
 		ClientParams: authn.ClientParams{
@@ -373,4 +375,11 @@ func (s *ExtendedJWT) retrieveAuthorizationToken(httpRequest *http.Request) stri
 
 	// Strip the 'Bearer' prefix if it exists.
 	return strings.TrimPrefix(jwtToken, "Bearer ")
+}
+
+func (s *ExtendedJWT) authenticatedBy(r *authn.Request) string {
+	if authenticatedBy := r.GetMeta(MetaAuthenticatedByOverride); authenticatedBy != "" {
+		return authenticatedBy
+	}
+	return login.ExtendedJWTModule
 }
