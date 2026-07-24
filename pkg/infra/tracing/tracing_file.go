@@ -1,0 +1,220 @@
+package tracing
+
+import (
+	"context"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"sync"
+	"time"
+
+	"go.opentelemetry.io/collector/pdata/ptrace"
+	coltracepb "go.opentelemetry.io/proto/otlp/collector/trace/v1"
+	tracepb "go.opentelemetry.io/proto/otlp/trace/v1"
+	"google.golang.org/protobuf/proto"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+)
+
+const (
+	// defaultTraceFileMaxSize bounds the capture file so an enabled-and-forgotten
+	// exporter can't fill the disk on a production box.
+	defaultTraceFileMaxSize = int64(100 * 1024 * 1024) // 100 MiB
+	// defaultTraceCaptureDuration stops the capture some time after startup so a
+	// reproduction window is bounded even if the operator walks away.
+	defaultTraceCaptureDuration = 10 * time.Minute
+)
+
+// fileClient is an otlptrace.Client that writes OTLP/JSON to a local file
+// instead of shipping spans to a collector. It lets an operator capture
+// Grafana's own traces for support without running any tracing backend: enable
+// it, reproduce the issue, then collect the file (e.g. upload to Grafana via
+// Explore → Import trace).
+//
+// otlptrace.New performs the ReadOnlySpan -> OTLP-proto transform before
+// calling UploadTraces, so this client only has to encode the proto spans as
+// OTLP/JSON and append them to a bounded file.
+type fileClient struct {
+	mu     sync.Mutex
+	writer *boundedFileWriter
+
+	protoUnmarshaler ptrace.ProtoUnmarshaler
+	jsonMarshaler    ptrace.JSONMarshaler
+}
+
+func newFileClient(cfg *TracingConfig, logger log.Logger) (*fileClient, error) {
+	w, err := newBoundedFileWriter(cfg.FilePath, cfg.FileMaxSize, cfg.FileCaptureDuration, logger)
+	if err != nil {
+		return nil, err
+	}
+	return &fileClient{writer: w}, nil
+}
+
+func (c *fileClient) Start(_ context.Context) error { return nil }
+
+func (c *fileClient) Stop(_ context.Context) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.writer.Close()
+}
+
+func (c *fileClient) UploadTraces(_ context.Context, protoSpans []*tracepb.ResourceSpans) error {
+	// Once the capture has ended (size/duration cap or shutdown), skip the
+	// proto/JSON conversions entirely: the tracer keeps exporting batches for
+	// the rest of the process lifetime, and encoding them just to discard the
+	// result would waste CPU and allocations on every batch.
+	c.mu.Lock()
+	done := c.writer.Done()
+	c.mu.Unlock()
+	if done {
+		return nil
+	}
+
+	// The OTLP/JSON spec requires hex-encoded trace/span IDs. Raw protojson
+	// would base64-encode them, so round-trip through pdata, whose JSON
+	// marshaler is spec-compliant.
+	protoBytes, err := proto.Marshal(&coltracepb.ExportTraceServiceRequest{ResourceSpans: protoSpans})
+	if err != nil {
+		return fmt.Errorf("marshaling OTLP proto: %w", err)
+	}
+	traces, err := c.protoUnmarshaler.UnmarshalTraces(protoBytes)
+	if err != nil {
+		return fmt.Errorf("decoding OTLP proto: %w", err)
+	}
+	jsonBytes, err := c.jsonMarshaler.MarshalTraces(traces)
+	if err != nil {
+		return fmt.Errorf("encoding OTLP/JSON: %w", err)
+	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.writer.WriteRecord(jsonBytes)
+}
+
+// boundedFileWriter appends newline-delimited OTLP/JSON records to a file until
+// either a byte budget or a wall-clock deadline is reached, whichever comes
+// first. It is not safe for concurrent use; fileClient serializes access.
+type boundedFileWriter struct {
+	log      log.Logger
+	f        captureFile
+	maxSize  int64
+	deadline time.Time
+
+	written int64
+	done    bool
+}
+
+// captureFile is the subset of *os.File the writer needs; it exists so tests
+// can exercise write-failure handling with a fake file.
+type captureFile interface {
+	io.WriteCloser
+	Truncate(size int64) error
+	Name() string
+}
+
+func newBoundedFileWriter(path string, maxSize int64, dur time.Duration, logger log.Logger) (*boundedFileWriter, error) {
+	if path == "" {
+		return nil, fmt.Errorf("tracing file exporter: path cannot be empty")
+	}
+	// A non-positive size would turn the disk guard off. Treat that as a
+	// configuration error so file capture is disabled instead.
+	if maxSize <= 0 {
+		return nil, fmt.Errorf("tracing file exporter: max_file_size_bytes must be greater than 0")
+	}
+	// A non-positive duration would make the capture window expire immediately
+	// and silently produce an empty file. Reject it like an invalid size.
+	if dur <= 0 {
+		return nil, fmt.Errorf("tracing file exporter: capture_duration must be greater than 0")
+	}
+	dir := filepath.Dir(path)
+	// Operators must explicitly provision the capture directory. Creating it
+	// here could accidentally place sensitive support artifacts in a broad path.
+	info, err := os.Stat(dir)
+	if err != nil {
+		return nil, fmt.Errorf("checking trace capture directory %q: %w", dir, err)
+	}
+	if !info.IsDir() {
+		return nil, fmt.Errorf("trace capture path parent %q is not a directory", dir)
+	}
+
+	// Trace captures can contain request paths, error messages, and attributes,
+	// so newly created files are owner-only instead of matching regular logs.
+	// The 0600 mode is only effective on Unix: on Windows, permission bits map
+	// to the read-only attribute and effective access is governed by the ACLs
+	// inherited from the capture directory — which is why the operator must
+	// provision that directory (with appropriate access) themselves.
+	//nolint:gosec // G304: the capture path is an explicit operator-provided config value (the capture destination)
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
+	if err != nil {
+		return nil, fmt.Errorf("creating trace capture file %q: %w", path, err)
+	}
+	if err := f.Chmod(0o600); err != nil {
+		_ = f.Close()
+		return nil, fmt.Errorf("setting trace capture file permissions %q: %w", path, err)
+	}
+	logger.Info("Trace capture started", "path", path, "max_file_size_bytes", maxSize, "capture_duration", dur)
+	return &boundedFileWriter{
+		log:      logger,
+		f:        f,
+		maxSize:  maxSize,
+		deadline: time.Now().Add(dur),
+	}, nil
+}
+
+func (w *boundedFileWriter) WriteRecord(record []byte) error {
+	if w.done {
+		return nil
+	}
+	if !w.deadline.IsZero() && time.Now().After(w.deadline) {
+		return w.finish("capture_duration reached")
+	}
+	// +1 accounts for the trailing newline.
+	if w.written+int64(len(record))+1 > w.maxSize {
+		return w.finish("max_file_size reached")
+	}
+
+	if err := w.appendRecord(record); err != nil {
+		// A partially written record would leave a malformed line that makes
+		// every subsequent record — and for strict consumers the whole file —
+		// unreadable. Roll back to the last committed offset and end the
+		// capture rather than appending to corrupt output.
+		if truncErr := w.f.Truncate(w.written); truncErr != nil {
+			w.log.Warn("Failed to roll back partially written trace record", "path", w.f.Name(), "err", truncErr)
+		}
+		_ = w.finish("write error")
+		return err
+	}
+	w.written += int64(len(record)) + 1
+	return nil
+}
+
+func (w *boundedFileWriter) appendRecord(record []byte) error {
+	if _, err := w.f.Write(record); err != nil {
+		return fmt.Errorf("writing trace record: %w", err)
+	}
+	if _, err := w.f.Write([]byte{'\n'}); err != nil {
+		return fmt.Errorf("writing trace record: %w", err)
+	}
+	return nil
+}
+
+// Done reports whether the capture has ended (cap reached or closed). Like the
+// other methods, it must be called with the owning fileClient's mutex held.
+func (w *boundedFileWriter) Done() bool {
+	return w.done
+}
+
+// Close flushes and closes the underlying file. Safe to call more than once.
+func (w *boundedFileWriter) Close() error {
+	return w.finish("shutdown")
+}
+
+func (w *boundedFileWriter) finish(reason string) error {
+	if w.done {
+		return nil
+	}
+	w.done = true
+	w.log.Info("Trace capture finished", "reason", reason, "path", w.f.Name(), "bytes_written", w.written)
+	return w.f.Close()
+}
