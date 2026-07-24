@@ -32,17 +32,17 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.32.29 // @grafana/grafana-search-and-storage
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.28 // @grafana/grafana-operator-experience-squad
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.30 // @grafana/grafana-operator-experience-squad
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.20.12 // @grafana/alerting-backend
-	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.50.5 // @grafana/grafana-search-and-storage
-	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.45.3 // @grafana/data-sources-plugins
-	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.73.0 // @grafana/data-sources-plugins
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.307.0 // @grafana/data-sources-plugins
-	github.com/aws/aws-sdk-go-v2/service/kms v1.49.1 // @grafana/grafana-operator-experience-squad
-	github.com/aws/aws-sdk-go-v2/service/licensemanager v1.37.14 // @grafana/grafana-operator-experience-squad
-	github.com/aws/aws-sdk-go-v2/service/oam v1.18.3 // @grafana/data-sources-plugins
-	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.26.6 // @grafana/data-sources-plugins
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.101.0 // @grafana/grafana-search-and-storage
-	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.40.2 // @grafana/grafana-operator-experience-squad
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.22.32 // @grafana/alerting-backend
+	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.55.0 // @grafana/grafana-search-and-storage
+	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.62.0 // @grafana/data-sources-plugins
+	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.79.0 // @grafana/data-sources-plugins
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.315.0 // @grafana/data-sources-plugins
+	github.com/aws/aws-sdk-go-v2/service/kms v1.54.0 // @grafana/grafana-operator-experience-squad
+	github.com/aws/aws-sdk-go-v2/service/licensemanager v1.39.0 // @grafana/grafana-operator-experience-squad
+	github.com/aws/aws-sdk-go-v2/service/oam v1.25.0 // @grafana/data-sources-plugins
+	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.34.0 // @grafana/data-sources-plugins
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.105.0 // @grafana/grafana-search-and-storage
+	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.43.0 // @grafana/grafana-operator-experience-squad
 	github.com/aws/aws-sdk-go-v2/service/sts v1.44.0 // @grafana/grafana-operator-experience-squad
 	github.com/aws/smithy-go v1.27.3 // @grafana/data-sources-plugins
 	github.com/beevik/etree v1.6.0 // @grafana/grafana-backend-group
@@ -356,14 +356,14 @@ require (
 	github.com/at-wat/mqtt-go v0.19.6 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aws/aws-sdk-go v1.55.8 // indirect
-	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.10 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.14 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.30 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.30 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.31 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.13 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.9.15 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.9.23 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.30 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.23 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.31 // indirect
 	github.com/aws/aws-sdk-go-v2/service/signin v1.4.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.32.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.37.0 // indirect
