@@ -1,10 +1,7 @@
-import { noop } from 'lodash';
 import { type ReactNode, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { Button, type ButtonProps, Modal } from '@grafana/ui';
-
-import { type AsyncState, isError, isLoading } from '../hooks/useAsync';
 
 import { ErrorModal } from './ErrorModal';
 
@@ -16,11 +13,10 @@ export interface ConfirmModalWithErrorProps {
   confirmingText?: string;
   cancelText?: string;
   confirmVariant?: ButtonProps['variant'];
-  state: AsyncState<unknown>;
-  onConfirm: () => Promise<unknown>;
+  isPending: boolean;
+  error: unknown | undefined;
+  onConfirm: () => void;
   onDismiss: () => void;
-  /** Called alongside `onDismiss` to clear the error state once the user acknowledges it. */
-  onReset: () => void;
 }
 
 export const ConfirmModalWithError = ({
@@ -31,26 +27,19 @@ export const ConfirmModalWithError = ({
   confirmingText = t('alerting.common.deleting', 'Deleting...'),
   cancelText = t('alerting.common.cancel', 'Cancel'),
   confirmVariant = 'destructive',
-  state,
+  isPending,
+  error,
   onConfirm,
   onDismiss,
-  onReset,
 }: ConfirmModalWithErrorProps) => {
-  const isRunning = isLoading(state);
-
-  const handleDismiss = isRunning ? noop : onDismiss;
-
-  const handleConfirm = async () => {
-    onConfirm().then(() => handleDismiss());
+  const handleDismiss = () => {
+    if (!isPending) {
+      onDismiss();
+    }
   };
 
-  const handleErrorDismiss = () => {
-    onReset();
-    onDismiss();
-  };
-
-  if (isError(state)) {
-    return <ErrorModal isOpen onDismiss={handleErrorDismiss} error={state.error} />;
+  if (error !== undefined) {
+    return <ErrorModal isOpen={isOpen} onDismiss={onDismiss} error={error} />;
   }
 
   return (
@@ -58,34 +47,73 @@ export const ConfirmModalWithError = ({
       isOpen={isOpen}
       title={title}
       onDismiss={handleDismiss}
-      closeOnBackdropClick={!isRunning}
-      closeOnEscape={!isRunning}
+      closeOnBackdropClick={!isPending}
+      closeOnEscape={!isPending}
     >
-      <p>{body}</p>
+      {body}
       <Modal.ButtonRow>
-        <Button type="button" variant="secondary" onClick={handleDismiss} disabled={isRunning}>
+        <Button type="button" variant="secondary" onClick={handleDismiss} disabled={isPending}>
           {cancelText}
         </Button>
-        <Button type="button" variant={confirmVariant} onClick={handleConfirm} disabled={isRunning}>
-          {isRunning ? (confirmingText ?? confirmText) : confirmText}
+        <Button type="button" variant={confirmVariant} onClick={onConfirm} disabled={isPending}>
+          {isPending ? confirmingText : confirmText}
         </Button>
       </Modal.ButtonRow>
     </Modal>
   );
 };
 
-export type UseConfirmModalWithErrorProps = Omit<ConfirmModalWithErrorProps, 'isOpen' | 'onDismiss'>;
+export type UseConfirmModalWithErrorProps = Omit<
+  ConfirmModalWithErrorProps,
+  'isOpen' | 'isPending' | 'error' | 'onConfirm' | 'onDismiss'
+> & {
+  onConfirm: () => Promise<unknown>;
+};
 
-/**
- * Owns the open/closed state for `ConfirmModalWithError` so callers don't have to.
- */
-export const useConfirmModalWithError = (props: UseConfirmModalWithErrorProps) => {
+export const useConfirmModalWithError = ({ onConfirm, ...props }: UseConfirmModalWithErrorProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<unknown>();
 
-  const showModal = () => setIsOpen(true);
-  const dismissModal = () => setIsOpen(false);
+  const closeModal = () => {
+    setError(undefined);
+    setIsOpen(false);
+  };
 
-  const modal = <ConfirmModalWithError {...props} isOpen={isOpen} onDismiss={dismissModal} />;
+  const dismissModal = () => {
+    if (!isPending) {
+      closeModal();
+    }
+  };
 
-  return [modal, showModal, props.state] as const;
+  const confirmModal = async () => {
+    setIsPending(true);
+
+    try {
+      await onConfirm();
+      closeModal();
+    } catch (error) {
+      setError(error);
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  const showModal = () => {
+    setError(undefined);
+    setIsOpen(true);
+  };
+
+  const modal = (
+    <ConfirmModalWithError
+      {...props}
+      isOpen={isOpen}
+      isPending={isPending}
+      error={error}
+      onConfirm={confirmModal}
+      onDismiss={dismissModal}
+    />
+  );
+
+  return [modal, showModal, isPending] as const;
 };

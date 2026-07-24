@@ -10,17 +10,19 @@ export interface UseDeleteMuteTimingModalOptions {
 }
 
 export const useDeleteMuteTimingModal = ({ muteTiming, alertManagerSourceName }: UseDeleteMuteTimingModalOptions) => {
-  const [deleteMuteTiming, deleteMuteTimingState] = useDeleteMuteTiming({ alertmanager: alertManagerSourceName });
+  const [deleteMuteTiming] = useDeleteMuteTiming({ alertmanager: alertManagerSourceName });
 
   return useConfirmModalWithError({
     title: t('alerting.mute-timing-actions-buttons.title-delete-mute-timing', 'Delete mute timing'),
-    body: t(
-      'alerting.mute-timing-actions-button.body-delete-mute-timing',
-      'Are you sure you would like to delete "{{muteTiming}}"?',
-      { muteTiming: muteTiming.name }
+    body: (
+      <p>
+        {t(
+          'alerting.mute-timing-actions-button.body-delete-mute-timing',
+          'Are you sure you would like to delete "{{muteTiming}}"?',
+          { muteTiming: muteTiming.name }
+        )}
+      </p>
     ),
-    state: deleteMuteTimingState,
     onConfirm: () => deleteMuteTiming.execute({ name: muteTiming?.metadata?.name ?? muteTiming.name }),
-    onReset: deleteMuteTiming.reset,
   });
 };

@@ -5,7 +5,6 @@ import { useExportMuteTimingsDrawer } from 'app/features/alerting/unified/compon
 import { isGranted, isProvisioned, isSupported } from '../../hooks/abilities/abilityUtils';
 import { useTimeIntervalAbility } from '../../hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { TimeIntervalAction } from '../../hooks/abilities/types';
-import { isLoading } from '../../hooks/useAsync';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
 import { isDisabled } from '../../utils/mute-timings';
@@ -20,7 +19,7 @@ interface MuteTimingActionsButtonsProps {
 
 export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }: MuteTimingActionsButtonsProps) => {
   const [ExportDrawer, showExportDrawer] = useExportMuteTimingsDrawer();
-  const [deleteModal, showDeleteModal, deleteMuteTimingState] = useDeleteMuteTimingModal({
+  const [deleteModal, showDeleteModal, isDeleting] = useDeleteMuteTimingModal({
     muteTiming,
     alertManagerSourceName,
   });
@@ -66,13 +65,7 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
         )}
 
         {!muteTiming.provisioned && isGranted(deleteAbility) && (
-          <LinkButton
-            icon="trash-alt"
-            variant="secondary"
-            size="sm"
-            disabled={isLoading(deleteMuteTimingState)}
-            onClick={showDeleteModal}
-          >
+          <LinkButton icon="trash-alt" variant="secondary" size="sm" disabled={isDeleting} onClick={showDeleteModal}>
             <Trans i18nKey="alerting.common.delete">Delete</Trans>
           </LinkButton>
         )}
