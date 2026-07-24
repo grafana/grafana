@@ -217,7 +217,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
       </TabsBar>
 
       {DEFAULT_TAB_IDS.includes(activeTab) && (
-        <TabContent className={redesignEnabled ? styles.redesignedTabContent : styles.tabContent}>
+        <TabContent className={redesignEnabled ? undefined : styles.tabContent}>
           <ScrollContainer
             showScrollIndicators
             maxHeight={`${redesignEnabled ? DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN : DASHBOARD_TABS_SCROLL_HEIGHT_DEFAULT}px`}
@@ -298,12 +298,8 @@ export function DashboardTabs({ extensionComponents }: Props) {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   tabContent: css({
-    padding: 0,
     background: theme.colors.background.primary,
     borderRadius: theme.shape.radius.default,
-  }),
-  redesignedTabContent: css({
-    padding: 0,
   }),
   linkTabsSpacer: css({
     flex: 1,
