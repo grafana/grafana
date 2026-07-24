@@ -27,7 +27,6 @@ export interface Props extends DOMAttributes {
 
 export const MegaMenu = memo(
   forwardRef<HTMLDivElement, Props>(({ onClose, ...restProps }, ref) => {
-    const styles = useStyles2(getStyles);
     const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
     const { chrome } = useGrafana();
     const state = chrome.useState();
@@ -54,6 +53,8 @@ export const MegaMenu = memo(
       onReorderSection,
       isSaving,
     } = useNavCustomization();
+
+    const styles = useStyles2(getStyles, canCustomise);
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
@@ -278,7 +279,7 @@ export const MegaMenu = memo(
 
 MegaMenu.displayName = 'MegaMenu';
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, canCustomise: boolean) => {
   return {
     content: css({
       display: 'flex',
@@ -297,9 +298,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       listStyleType: 'none',
       // Left padding is tuned so the nav row icons line up with the pinned box's content (which is
-      // inset by the box margin + its own padding). Extra right padding keeps the collapse chevrons
-      // clear of an always-visible OS scrollbar, which the ScrollContainer layers over this edge.
-      padding: theme.spacing(1, 2, 2, 1.5),
+      // inset by the box margin + its own padding). With customisation on, extra right padding keeps
+      // the collapse chevrons clear of an always-visible OS scrollbar (the ScrollContainer layers it
+      // over this edge); gated on the flag to leave the default menu's spacing untouched.
+      padding: canCustomise ? theme.spacing(1, 2, 2, 1.5) : theme.spacing(1, 1, 2, 1.5),
       [theme.breakpoints.up('md')]: {
         width: MENU_WIDTH,
       },
