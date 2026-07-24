@@ -1079,6 +1079,10 @@ Set to `true` to disable (hide) the login form, useful if you use OAuth 2.0. Def
 
 Set to `true` to disable the sign out link in the side menu. This is useful if you use `auth.proxy`. Default is `false`.
 
+#### `disable_forgot_password`
+
+Set to `true` to hide the "Forgot your password?" link on the login page. Useful when passwords are managed by an external provider, such as LDAP or an OAuth provider. Default is `false`.
+
 #### `signout_redirect_url`
 
 The URL the user is redirected to upon signing out. To support [OpenID Connect RP-Initiated Logout](https://openid.net/specs/openid-connect-rpinitiated-1_0.html), the user must add `post_logout_redirect_uri` to the `signout_redirect_url`.
