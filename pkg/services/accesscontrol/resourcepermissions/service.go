@@ -237,25 +237,16 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 		return nil, err
 	}
 
-	// teamsRedirectRemovedMember records that the K8s teams redirect below actually
-	// removed an existing member. In dual-write modes (Mode1-3) legacy is the primary
-	// target of that write, so the legacy write further down then finds the row
-	// already gone. A no-op redirect (the member wasn't there) leaves this false, so
-	// a genuinely-absent member still surfaces the legacy error.
-	teamsRedirectRemovedMember := false
-
 	// Teams-specific redirect: write the membership to Team.Spec.Members via the
 	// K8s API. The HTTP handler (api.setUserPermission) already does this, but
 	// callers that invoke the service directly (not through the handler) need the
 	// same redirect, so it lives here too. In unified-authoritative modes (Mode4/5)
 	// the legacy team_member table has no row to write, so we must not fall back to it.
+	redirectRemovedMember := false
 	if s.teamsMembershipRedirectEnabled(ctx) {
 		removed, k8sErr := setTeamMembership(s, ctx, orgID, resourceID, user.ID, permission)
 		if errors.Is(k8sErr, ErrExternalTeamMember) {
 			return nil, k8sErr
-		}
-		if k8sErr == nil {
-			teamsRedirectRemovedMember = removed
 		}
 		if s.unifiedTeamStorageIsAuthoritative() {
 			if k8sErr != nil {
@@ -266,6 +257,8 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 		}
 		if k8sErr != nil {
 			s.log.Warn("Failed to set team member via k8s API, falling back to legacy", "error", k8sErr, "resourceID", resourceID)
+		} else {
+			redirectRemovedMember = removed
 		}
 	}
 
@@ -276,6 +269,17 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 		}
 	}
 
+	// When the redirect already removed the member, it also removed the legacy
+	// team_member row (dual-write). Skip the legacy membership hook: re-running it
+	// would fail with ErrTeamMemberNotFound and roll back the RBAC permission write
+	// in the same transaction, leaving the user with stale permissions. Adds and
+	// no-op removals keep the hook, so a genuinely-absent member still surfaces the
+	// not-found error.
+	onSetUser := s.options.OnSetUser
+	if redirectRemovedMember {
+		onSetUser = nil
+	}
+
 	result, err := s.store.SetUserResourcePermission(ctx, orgID, user, SetResourcePermissionCommand{
 		Actions:           actions,
 		Permission:        permission,
@@ -283,15 +287,8 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 		ResourceID:        resourceID,
 		ResourceAttribute: s.options.ResourceAttribute,
 		DatasourceType:    datasourceType,
-	}, s.options.OnSetUser)
-
+	}, onSetUser)
 	if err != nil {
-		// The teams redirect above already removed the member (and, in dual-write
-		// modes, the legacy team_member row), so this legacy removal finds nothing.
-		if teamsRedirectRemovedMember && errors.Is(err, team.ErrTeamMemberNotFound) {
-			s.clearUserPermissionCache(orgID, user.ID)
-			return &accesscontrol.ResourcePermission{Actions: actions, UserID: user.ID}, nil
-		}
 		return nil, err
 	}
 
@@ -422,30 +419,17 @@ func (s *Service) SetPermissions(
 		})
 	}
 
-	// teamsRedirectRemovedMember mirrors SetUserPermission: the K8s teams redirect
-	// below removed at least one existing member, so in dual-write modes the legacy
-	// removals further down find the rows already gone.
-	teamsRedirectRemovedMember := false
-
-	// Teams-specific redirect: reconcile each membership through Team.Spec.Members
-	// via the K8s API (see SetUserPermission for the rationale). Team permissions
-	// only support user assignments (see Assignments in ProvideTeamPermissions), so
-	// only user commands are routed.
+	// Teams-specific redirect: reconcile the batch of memberships through
+	// Team.Spec.Members via the K8s API (see SetUserPermission for the rationale).
+	// Team permissions only support user assignments (see Assignments in
+	// ProvideTeamPermissions), so only user commands are routed. The batch is
+	// applied in a single Team update so it succeeds or fails atomically, matching
+	// the all-or-nothing semantics of the legacy SQL transaction below.
+	redirectRemovedMember := false
 	if s.teamsMembershipRedirectEnabled(ctx) {
-		var k8sErr error
-		for _, cmd := range commands {
-			if cmd.UserID == 0 {
-				continue
-			}
-			removed, err := setTeamMembership(s, ctx, orgID, resourceID, cmd.UserID, cmd.Permission)
-			if err != nil {
-				if errors.Is(err, ErrExternalTeamMember) {
-					return nil, err
-				}
-				k8sErr = err
-				continue
-			}
-			teamsRedirectRemovedMember = teamsRedirectRemovedMember || removed
+		removed, k8sErr := setTeamMemberships(s, ctx, orgID, resourceID, commands)
+		if errors.Is(k8sErr, ErrExternalTeamMember) {
+			return nil, k8sErr
 		}
 		if s.unifiedTeamStorageIsAuthoritative() {
 			if k8sErr != nil {
@@ -456,21 +440,25 @@ func (s *Service) SetPermissions(
 		}
 		if k8sErr != nil {
 			s.log.Warn("Failed to set team members via k8s API, falling back to legacy", "error", k8sErr, "resourceID", resourceID)
+		} else {
+			redirectRemovedMember = removed
 		}
 	}
 
+	// See SetUserPermission: when the redirect removed a member it also removed the
+	// legacy team_member row, so skip the membership hook to avoid rolling back the
+	// RBAC permission writes. Adds and no-op removals keep the hook.
+	userHook := s.options.OnSetUser
+	if redirectRemovedMember {
+		userHook = nil
+	}
+
 	result, err := s.store.SetResourcePermissions(ctx, orgID, dbCommands, ResourceHooks{
-		User:        s.options.OnSetUser,
+		User:        userHook,
 		Team:        s.options.OnSetTeam,
 		BuiltInRole: s.options.OnSetBuiltInRole,
 	})
 	if err != nil {
-		// The teams redirect above already removed the member (and, in dual-write
-		// modes, the legacy team_member row), so this legacy removal finds nothing.
-		if teamsRedirectRemovedMember && errors.Is(err, team.ErrTeamMemberNotFound) {
-			s.clearUserPermissionCaches(orgID, commands)
-			return []accesscontrol.ResourcePermission{}, nil
-		}
 		return nil, err
 	}
 
@@ -533,6 +521,32 @@ func (s *Service) setTeamMemberViaK8s(ctx context.Context, orgID int64, resource
 	}
 	namespace := request.GetNamespaceMapper(s.cfg)(orgID)
 	return s.setTeamMember(ctx, dynamicClient, orgID, namespace, resourceID, userID, permission)
+}
+
+// setTeamMemberships reconciles a batch of team memberships against
+// Team.Spec.Members via the K8s API. The whole batch is applied in a single Team
+// update so it commits or fails atomically. Only user commands are routed. The
+// bool reports whether any existing member was removed.
+//
+// Stubbable by tests.
+var setTeamMemberships = func(s *Service, ctx context.Context, orgID int64, resourceID string, commands []accesscontrol.SetResourcePermissionCommand) (bool, error) {
+	return s.setTeamMembersViaK8s(ctx, orgID, resourceID, commands)
+}
+
+// setTeamMembersViaK8s is the batch counterpart of setTeamMemberViaK8s: it applies
+// every user command in the batch to Team.Spec.Members in one read-modify-write.
+// The bool reports whether any existing member was removed.
+func (s *Service) setTeamMembersViaK8s(ctx context.Context, orgID int64, resourceID string, commands []accesscontrol.SetResourcePermissionCommand) (bool, error) {
+	reqCtx := contexthandler.FromContext(ctx)
+	if reqCtx == nil {
+		return false, ErrRestConfigNotAvailable
+	}
+	dynamicClient, err := newDynamicClient(s.options.RestConfigProvider, reqCtx)
+	if err != nil {
+		return false, err
+	}
+	namespace := request.GetNamespaceMapper(s.cfg)(orgID)
+	return s.setTeamMembers(ctx, dynamicClient, orgID, namespace, resourceID, commands)
 }
 
 func (s *Service) MapActions(permission accesscontrol.ResourcePermission) string {

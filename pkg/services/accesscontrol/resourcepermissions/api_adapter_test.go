@@ -1642,6 +1642,151 @@ func TestSetTeamMember(t *testing.T) {
 	}
 }
 
+// TestSetTeamMembers covers the batch counterpart of setTeamMember: the whole
+// batch must be applied in a single Team update (atomic), and any external member
+// must abort the batch before any write so no partial update is persisted.
+func TestSetTeamMembers(t *testing.T) {
+	testTeam := &team.TeamDTO{ID: 10, UID: "team-uid-1"}
+
+	makeTeamObj := func(t *testing.T, members ...iamv0.TeamTeamMember) *unstructured.Unstructured {
+		t.Helper()
+		teamObj := iamv0.Team{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: iamv0.TeamResourceInfo.GroupVersion().String(),
+				Kind:       iamv0.TeamResourceInfo.TypeMeta().Kind,
+			},
+			ObjectMeta: metav1.ObjectMeta{Name: "team-uid-1", Namespace: "stacks-123-org-1", ResourceVersion: "42"},
+			Spec:       iamv0.TeamSpec{Members: members},
+		}
+		obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&teamObj)
+		require.NoError(t, err)
+		return &unstructured.Unstructured{Object: obj}
+	}
+	decodeMembers := func(t *testing.T, obj *unstructured.Unstructured) []iamv0.TeamTeamMember {
+		t.Helper()
+		var decoded iamv0.Team
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &decoded))
+		return decoded.Spec.Members
+	}
+	// userSvc resolves userID N to UID "user-uid-N".
+	userSvc := func() *usertest.MockService {
+		svc := &usertest.MockService{}
+		svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(&user.User{ID: 1, UID: "user-uid-1"}, nil)
+		svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(2)}).Return(&user.User{ID: 2, UID: "user-uid-2"}, nil)
+		return svc
+	}
+
+	tests := []struct {
+		name            string
+		commands        []accesscontrol.SetResourcePermissionCommand
+		initialMembers  []iamv0.TeamTeamMember
+		expectedErrMsg  string
+		expectUpdate    bool
+		expectRemoved   bool
+		validateMembers func(t *testing.T, members []iamv0.TeamTeamMember)
+	}{
+		{
+			name: "applies the whole batch in a single update",
+			commands: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: "Member"},
+				{UserID: 2, Permission: "Admin"},
+			},
+			expectUpdate: true,
+			validateMembers: func(t *testing.T, members []iamv0.TeamTeamMember) {
+				require.Len(t, members, 2)
+				assert.Equal(t, "user-uid-1", members[0].Name)
+				assert.Equal(t, iamv0.TeamTeamPermissionMember, members[0].Permission)
+				assert.Equal(t, "user-uid-2", members[1].Name)
+				assert.Equal(t, iamv0.TeamTeamPermissionAdmin, members[1].Permission)
+			},
+		},
+		{
+			name: "removes and adds in one update",
+			commands: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: ""},
+				{UserID: 2, Permission: "Admin"},
+			},
+			initialMembers: []iamv0.TeamTeamMember{
+				{Kind: "User", Name: "user-uid-1", Permission: iamv0.TeamTeamPermissionMember},
+			},
+			expectUpdate:  true,
+			expectRemoved: true,
+			validateMembers: func(t *testing.T, members []iamv0.TeamTeamMember) {
+				require.Len(t, members, 1)
+				assert.Equal(t, "user-uid-2", members[0].Name)
+			},
+		},
+		{
+			name: "aborts the whole batch on an external member without updating",
+			commands: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: "Member"},
+				{UserID: 2, Permission: "Member"},
+			},
+			initialMembers: []iamv0.TeamTeamMember{
+				{Kind: "User", Name: "user-uid-2", Permission: iamv0.TeamTeamPermissionMember, External: true},
+			},
+			expectedErrMsg: "externally-synced",
+			expectUpdate:   false,
+		},
+		{
+			name: "no update when removing non-members",
+			commands: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: ""},
+			},
+			expectUpdate: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var (
+				lastUpdated *unstructured.Unstructured
+				updateCalls int
+			)
+			fr := &fakeResourceInterface{
+				getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+					return makeTeamObj(t, tt.initialMembers...), nil
+				},
+				updateFunc: func(_ context.Context, obj *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
+					updateCalls++
+					lastUpdated = obj
+					return obj, nil
+				},
+			}
+			fakeClient := &fakeDynamicClient{resourceInterface: fr}
+
+			svc := &Service{
+				store:       &mockResourcePermissionStore{},
+				teamService: teamtest.NewFakeServiceWithTeamDTO(testTeam),
+				userService: userSvc(),
+				options:     Options{Resource: "teams"},
+			}
+
+			removed, err := svc.setTeamMembers(context.Background(), fakeClient, 1, "stacks-123-org-1", "10", tt.commands)
+
+			if tt.expectedErrMsg != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedErrMsg)
+				assert.Zero(t, updateCalls, "no update should be persisted when the batch aborts")
+				assert.False(t, removed, "should not report a removal on error")
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectRemoved, removed, "removed return value")
+
+			if tt.expectUpdate {
+				assert.Equal(t, 1, updateCalls, "the batch must be applied in a single update")
+				require.NotNil(t, lastUpdated)
+				if tt.validateMembers != nil {
+					tt.validateMembers(t, decodeMembers(t, lastUpdated))
+				}
+			} else {
+				assert.Zero(t, updateCalls, "expected no update")
+			}
+		})
+	}
+}
+
 // TestTeamMemberWrappers_RestConfigNotAvailable tests that both wrappers return
 // ErrRestConfigNotAvailable when no rest config provider is set, so the caller (api.go)
 // can stop the operation and return the error.

@@ -757,15 +757,24 @@ func (a *api) setUserPermissionInTeamMembers(c *contextmodel.ReqContext, namespa
 }
 
 // setTeamMember reconciles a single team membership in Team.Spec.Members via the
-// K8s API. It's a service method (not an api method) so both the HTTP handlers and
-// direct in-process callers share one implementation; the deps it needs (team/user
-// services) live on the service. The bool reports whether an existing member was removed.
+// K8s API. It's a thin wrapper over setTeamMembers so the single-member HTTP
+// handler path and the batch path share one read-modify-write implementation. The
+// bool reports whether an existing member was removed.
 func (s *Service) setTeamMember(ctx context.Context, dynamicClient dynamic.Interface, orgID int64, namespace string, resourceID string, userID int64, permission string) (bool, error) {
-	userDetails, err := s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
-	if err != nil {
-		return false, fmt.Errorf("failed to get user details: %w", err)
-	}
+	return s.setTeamMembers(ctx, dynamicClient, orgID, namespace, resourceID, []accesscontrol.SetResourcePermissionCommand{
+		{UserID: userID, Permission: permission},
+	})
+}
 
+// setTeamMembers reconciles a batch of user membership changes in Team.Spec.Members
+// via the K8s API in a single read-modify-write, so the whole batch commits or fails
+// atomically. It's a service method (not an api method) so both the HTTP handlers and
+// direct in-process callers share one implementation; the deps it needs (team/user
+// services) live on the service. Only user commands are applied; non-user commands
+// are ignored. External members are owned by team-sync, so any command targeting one
+// aborts the batch with ErrExternalTeamMember without persisting a partial update.
+// The bool reports whether any existing member was removed.
+func (s *Service) setTeamMembers(ctx context.Context, dynamicClient dynamic.Interface, orgID int64, namespace string, resourceID string, commands []accesscontrol.SetResourcePermissionCommand) (bool, error) {
 	teamID, err := strconv.ParseInt(resourceID, 10, 64)
 	if err != nil {
 		return false, fmt.Errorf("invalid team resource ID: %w", err)
@@ -779,26 +788,50 @@ func (s *Service) setTeamMember(ctx context.Context, dynamicClient dynamic.Inter
 		return false, fmt.Errorf("failed to get team details: %w", err)
 	}
 
-	var memberPerm iamv0.TeamTeamPermission
-	if permission != "" {
-		mp, err := stringToTeamMemberPermission(permission)
-		if err != nil {
-			return false, err
-		}
-		memberPerm = mp
+	// Resolve each user command to its target member state once; neither the UID
+	// nor the permission changes across read-modify-write retries.
+	type memberChange struct {
+		uid        string
+		permission iamv0.TeamTeamPermission
+		remove     bool
 	}
+	changes := make([]memberChange, 0, len(commands))
+	for _, cmd := range commands {
+		if cmd.UserID == 0 {
+			continue
+		}
+		userDetails, err := s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: cmd.UserID})
+		if err != nil {
+			return false, fmt.Errorf("failed to get user details: %w", err)
+		}
+		mc := memberChange{uid: userDetails.UID, remove: cmd.Permission == ""}
+		if !mc.remove {
+			mp, err := stringToTeamMemberPermission(cmd.Permission)
+			if err != nil {
+				return false, err
+			}
+			mc.permission = mp
+		}
+		changes = append(changes, mc)
+	}
+
+	if len(changes) == 0 {
+		return false, nil
+	}
+
+	hasAdds := slices.ContainsFunc(changes, func(mc memberChange) bool { return !mc.remove })
 
 	teamResource := dynamicClient.Resource(iamv0.TeamResourceInfo.GroupVersionResource()).Namespace(namespace)
 
-	var removed bool
+	var removedAny bool
 	// Read-modify-write: spec.members is a slice on the Team object so a
 	// concurrent writer can lose updates if we don't refetch on conflict.
 	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		removed = false
+		removedAny = false
 		teamObj, err := teamResource.Get(ctx, teamDetails.UID, metav1.GetOptions{})
 		if err != nil {
-			// Removing a member from a team that no longer exists is a no-op.
-			if k8serrors.IsNotFound(err) && permission == "" {
+			// Removing members from a team that no longer exists is a no-op.
+			if k8serrors.IsNotFound(err) && !hasAdds {
 				return nil
 			}
 			return fmt.Errorf("failed to get team: %w", err)
@@ -809,36 +842,43 @@ func (s *Service) setTeamMember(ctx context.Context, dynamicClient dynamic.Inter
 			return fmt.Errorf("failed to decode team: %w", err)
 		}
 
-		idx := slices.IndexFunc(t.Spec.Members, func(m iamv0.TeamTeamMember) bool {
-			return m.Kind == subjectKindUser && m.Name == userDetails.UID
-		})
+		changed := false
+		for _, mc := range changes {
+			idx := slices.IndexFunc(t.Spec.Members, func(m iamv0.TeamTeamMember) bool {
+				return m.Kind == subjectKindUser && m.Name == mc.uid
+			})
 
-		// External members are owned by team-sync and must not be mutated through
-		// this path. Returning an error (rather than a silent no-op) prevents the
-		// dual-write caller from proceeding with the legacy SQL write, which would
-		// otherwise cause k8s and SQL to diverge until the next reconciliation.
-		if idx >= 0 && t.Spec.Members[idx].External {
-			return ErrExternalTeamMember.Errorf("user %q is externally-synced", userDetails.UID)
+			// External members are owned by team-sync and must not be mutated. Abort
+			// the whole batch (before any Update) rather than partially applying it.
+			if idx >= 0 && t.Spec.Members[idx].External {
+				return ErrExternalTeamMember.Errorf("user %q is externally-synced", mc.uid)
+			}
+
+			switch {
+			case mc.remove && idx < 0:
+				// Nothing to remove.
+			case mc.remove:
+				t.Spec.Members = slices.Delete(t.Spec.Members, idx, idx+1)
+				removedAny = true
+				changed = true
+			case idx >= 0:
+				if t.Spec.Members[idx].Permission != mc.permission {
+					t.Spec.Members[idx].Permission = mc.permission
+					changed = true
+				}
+			default:
+				t.Spec.Members = append(t.Spec.Members, iamv0.TeamTeamMember{
+					Kind:       subjectKindUser,
+					Name:       mc.uid,
+					Permission: mc.permission,
+					External:   false,
+				})
+				changed = true
+			}
 		}
 
-		switch {
-		case permission == "" && idx < 0:
+		if !changed {
 			return nil
-		case permission == "":
-			t.Spec.Members = slices.Delete(t.Spec.Members, idx, idx+1)
-			removed = true
-		case idx >= 0:
-			if t.Spec.Members[idx].Permission == memberPerm {
-				return nil
-			}
-			t.Spec.Members[idx].Permission = memberPerm
-		default:
-			t.Spec.Members = append(t.Spec.Members, iamv0.TeamTeamMember{
-				Kind:       subjectKindUser,
-				Name:       userDetails.UID,
-				Permission: memberPerm,
-				External:   false,
-			})
 		}
 
 		updatedObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&t)
@@ -851,7 +891,7 @@ func (s *Service) setTeamMember(ctx context.Context, dynamicClient dynamic.Inter
 		}
 		return nil
 	})
-	return removed, err
+	return removedAny, err
 }
 
 // teamMemberPermissionToString returns the lowercase schema value ("admin",
