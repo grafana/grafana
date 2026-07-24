@@ -167,6 +167,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
     '[class*="page-inner"]': {
       minHeight: 0,
+      paddingBottom: 0,
     },
     '[class*="page-content"]': {
       minHeight: 0,
@@ -184,12 +185,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: 1,
     minHeight: 0,
     overflowY: 'auto',
-    // bleed over the page-inner bottom padding so the list clips at the page edge
-    // instead of leaving a visible band below the cards
-    marginBottom: theme.spacing(-2),
+    // page-inner bottom padding is removed above so the list clips at the page
+    // edge; keep breathing room at the end of the scroll instead
     paddingBottom: theme.spacing(2),
     [theme.breakpoints.up('md')]: {
-      marginBottom: theme.spacing(-4),
       paddingBottom: theme.spacing(4),
     },
   }),

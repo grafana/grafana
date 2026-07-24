@@ -32,12 +32,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: 1,
     minHeight: 0,
     overflowY: 'auto',
-    // bleed over the page-inner bottom padding so the list clips at the page edge
-    // instead of leaving a visible band below the cards
-    marginBottom: theme.spacing(-2),
+    // page-inner bottom padding is removed by the hosting page so the list
+    // clips at the page edge; keep breathing room at the end of the scroll
     paddingBottom: theme.spacing(2),
     [theme.breakpoints.up('md')]: {
-      marginBottom: theme.spacing(-4),
       paddingBottom: theme.spacing(4),
     },
   }),
