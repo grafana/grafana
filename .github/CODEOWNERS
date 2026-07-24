@@ -1080,7 +1080,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/swagger/ @grafana/grafana-app-platform-squad
 
 /public/app/features/explore/Logs/ @grafana/observability-logs
-/public/app/features/explore/loki-helpers/ @grafana/observability-logs
 
 /public/app/features/explore/RawPrometheus/ @grafana/data-sources-plugins
 
