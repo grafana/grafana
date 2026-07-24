@@ -1,0 +1,25 @@
+<!-- integration-test-timings -->
+## Slowest integration tests
+
+**Total: {{.Total}}** across {{.Count}} tests{{.CmpSummary}}.
+
+Slowest first by average across databases; per-database columns show that database's run time.{{if .HasProfiles}} CPU and Alloc are per-test profile totals (averaged across databases).{{end}} Bars are colored by codeowner:
+
+{{.Badges}}
+
+```mermaid
+%%{init: {"themeVariables": {"xyChart": {"plotColorPalette": "{{.ColorsCSV}}"}}}}%%
+xychart-beta
+    title "Top {{len .Rows}} slowest integration tests (seconds)"
+    x-axis [{{.XAxis}}]
+    y-axis "seconds"
+{{- range .Bars}}
+    bar [{{.}}]
+{{- end}}
+```
+
+| # | Test | Package | Owner |{{range .DBs}} {{.}} |{{end}} Average |{{if .HasProfiles}} CPU | Alloc |{{end}}{{range .CmpLabels}} vs {{.}} |{{end}}
+|---|------|---------|-------|{{range .DBs}}--------:|{{end}}--------:|{{if .HasProfiles}}--------:|--------:|{{end}}{{range .CmpLabels}}--------:|{{end}}
+{{- range .Rows}}
+| {{.N}} | `{{.Test}}` | `{{.Pkg}}` | `{{.Owner}}` |{{range .DBTimes}} {{.}} |{{end}} {{.Avg}} |{{if $.HasProfiles}} {{.CPU}} | {{.Alloc}} |{{end}}{{range .Deltas}} {{.}} |{{end}}
+{{- end}}
