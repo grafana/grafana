@@ -1250,7 +1250,7 @@ describe('ResponseTransformers', () => {
       expect(v2.spec.disabledValue).toBe(disabledValue);
     }
   }
-  
+
   describe('scripted dashboard with rows (old format)', () => {
     it('should convert rows to panels for scripted dashboards', () => {
       const scriptedDashboard: DashboardDTO = {
@@ -1300,7 +1300,7 @@ describe('ResponseTransformers', () => {
       expect(result.kind).toBe('DashboardWithAccessInfo');
       expect(result.spec.title).toBe('Scripted dash');
       expect(Object.keys(result.spec.elements).length).toBe(1);
-      
+
       const panelElement = result.spec.elements['panel-1'] as PanelKind;
       expect(panelElement).toBeDefined();
       expect(panelElement.kind).toBe('Panel');

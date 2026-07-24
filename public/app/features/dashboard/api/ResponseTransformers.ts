@@ -176,7 +176,7 @@ export function ensureV2Response(
 
   const timeSettingsDefaults = defaultTimeSettingsSpec();
   const dashboardDefaults = defaultDashboardV2Spec();
-  
+
   // Handle old dashboard format with rows instead of panels (e.g., scripted dashboards)
   // Old format (pre-schema-version-16): { rows: [{ panels: [...] }] }
   // New format: { panels: [...] }
@@ -184,7 +184,7 @@ export function ensureV2Response(
   if (!panels && (dashboard as any).rows) {
     panels = migrateRowsToPanels((dashboard as any).rows);
   }
-  
+
   const [elements, layout] = getElementsFromPanels(panels || []);
   // @ts-expect-error - dashboard.templating.list is VariableModel[] and we need TypedVariableModel[] here
   // that would allow accessing unique properties for each variable type that the API returns
@@ -348,11 +348,11 @@ function migrateRowsToPanels(rows: any[]): Panel[] {
           h: panel.height || 8,
         },
       };
-      
+
       panels.push(panelWithGridPos);
     }
-    
-    yPos += Math.max(...row.panels.map((p: any) => (p.gridPos?.h || p.height || 8)), 8);
+
+    yPos += Math.max(...row.panels.map((p: any) => p.gridPos?.h || p.height || 8), 8);
   }
 
   return panels;
