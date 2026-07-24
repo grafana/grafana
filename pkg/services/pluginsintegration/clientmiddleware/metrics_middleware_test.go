@@ -60,6 +60,13 @@ func TestInstrumentationMiddleware(t *testing.T) {
 				shouldInstrumentRequestSize: true,
 			},
 			{
+				expEndpoint: backend.EndpointQueryChunkedData,
+				fn: func(cdt *handlertest.HandlerMiddlewareTest) error {
+					return cdt.MiddlewareHandler.QueryChunkedData(context.Background(), &backend.QueryChunkedDataRequest{PluginContext: pCtx}, nopChunkedWriter{})
+				},
+				shouldInstrumentRequestSize: true,
+			},
+			{
 				expEndpoint: backend.EndpointCollectMetrics,
 				fn: func(cdt *handlertest.HandlerMiddlewareTest) error {
 					_, err := cdt.MiddlewareHandler.CollectMetrics(context.Background(), &backend.CollectMetricsRequest{PluginContext: pCtx})
