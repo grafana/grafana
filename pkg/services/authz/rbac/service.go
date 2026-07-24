@@ -800,7 +800,7 @@ func (s *Service) getRendererPermissions(ctx context.Context, action string) (ma
 	_, span := s.tracer.Start(ctx, "authz_direct_db.service.getRendererPermissions")
 	defer span.End()
 
-	if action == "dashboards:read" || action == "folders:read" || action == "datasources:read" || action == "datasources:query" {
+	if action == "dashboards:read" || action == "folders:read" || action == "datasources:read" || action == "datasources:query" || action == "plugins.metas:read" {
 		return map[string]bool{"*": true}, nil
 	}
 	return map[string]bool{}, nil
