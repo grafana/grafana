@@ -89,6 +89,7 @@ elif [ $1 -ge 2 ] ; then
   # Replace the bundled plugins with the ones shipped in the new package.
   # See the matching move in the fresh-install branch above.
   if [ -d "$GRAFANA_HOME/data/plugins-bundled" ]; then
+    mkdir -p "$DATA_DIR"
     rm -rf "${DATA_DIR:?}/plugins-bundled"
     mv "$GRAFANA_HOME/data/plugins-bundled" "$DATA_DIR"
     chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" "$DATA_DIR/plugins-bundled"
