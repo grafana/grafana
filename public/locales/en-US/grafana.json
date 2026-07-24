@@ -8446,6 +8446,7 @@
       "open-in-new-tab": "Open in new tab"
     },
     "content-outline": {
+      "title-datasource-explorer": "Datasource explorer",
       "tooltip-collapse-outline": "Collapse outline",
       "tooltip-expand-outline": "Expand outline"
     },
@@ -8672,6 +8673,10 @@
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "No volume information available for the current queries and time range."
+    },
+    "metrics-explorer": {
+      "search-placeholder": "Search metrics",
+      "title-metrics": "Metrics"
     },
     "next-prev-result": {
       "aria-label-next": "Next result button",
