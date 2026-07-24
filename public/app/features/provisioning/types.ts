@@ -18,16 +18,26 @@ export type JobType = 'sync' | 'delete' | 'move' | 'fix' | 'releaseResources' | 
 // Repository type definition - extracted from API client
 export type RepoWorkflows = RepositorySpec['workflows'];
 
+/** Local ConfigMap repository config until OpenAPI client regen includes it. */
+export type ConfigMapRepositoryConfig = {
+  namespace?: string;
+  name?: string;
+  labelSelector?: string;
+  keyPrefix?: string;
+};
+
 // `branch` is omitted because the spec-level `branch` (BranchOptions: naming
 // template / enforcement) collides with the git config `branch` (the branch
 // name string). The branch name keeps the flat `branch` field below; the
 // BranchOptions live under `branchOptions`.
-export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | 'branch' | RepositorySpec['type']> &
+export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | 'branch' | 'type'> &
   BitbucketRepositoryConfig &
   GitRepositoryConfig &
   GitHubRepositoryConfig &
   GitLabRepositoryConfig &
   LocalRepositoryConfig & {
+    // 'configmap' is supported by the backend; generated client types lag until OpenAPI regen.
+    type: RepositorySpec['type'] | 'configmap';
     readOnly: boolean;
     prWorkflow: boolean;
     enablePushToConfiguredBranch: boolean;
@@ -38,6 +48,10 @@ export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | 'branch' | R
     smimeCertificate?: string;
     // GitHub App connection name (when using app-based auth instead of PAT)
     connectionName?: string;
+    // ConfigMap repository fields (flat form shape)
+    configMapName?: string;
+    configMapNamespace?: string;
+    configMapLabelSelector?: string;
     // Spec-level branch naming options (maps to RepositorySpec.branch)
     branchOptions?: BranchOptions;
   };

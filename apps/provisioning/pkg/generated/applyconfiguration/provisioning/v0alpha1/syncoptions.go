@@ -19,6 +19,9 @@ type SyncOptionsApplyConfiguration struct {
 	// The system defines a default value for this field, which will overwrite the
 	// user-defined one in case the latter is zero or lower than the system-defined one.
 	IntervalSeconds *int64 `json:"intervalSeconds,omitempty"`
+	// ConfigMapMirror optionally writes synced dashboards to Kubernetes ConfigMaps
+	// after a successful Grafana apply (sidecar compatibility). Off by default.
+	ConfigMapMirror *ConfigMapMirrorOptionsApplyConfiguration `json:"configMapMirror,omitempty"`
 }
 
 // SyncOptionsApplyConfiguration constructs a declarative configuration of the SyncOptions type for use with
@@ -48,5 +51,13 @@ func (b *SyncOptionsApplyConfiguration) WithTarget(value provisioningv0alpha1.Sy
 // If called multiple times, the IntervalSeconds field is set to the value of the last call.
 func (b *SyncOptionsApplyConfiguration) WithIntervalSeconds(value int64) *SyncOptionsApplyConfiguration {
 	b.IntervalSeconds = &value
+	return b
+}
+
+// WithConfigMapMirror sets the ConfigMapMirror field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ConfigMapMirror field is set to the value of the last call.
+func (b *SyncOptionsApplyConfiguration) WithConfigMapMirror(value *ConfigMapMirrorOptionsApplyConfiguration) *SyncOptionsApplyConfiguration {
+	b.ConfigMapMirror = value
 	return b
 }
