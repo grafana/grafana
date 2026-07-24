@@ -120,11 +120,10 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
   const activeButtonStyle = getActiveButtonStyles(theme.colors.secondary, 'text');
 
   let iconColor = theme.colors.primary.text;
-  let hoverColor = theme.colors.primary.transparent;
+  let hoverColor = theme.colors.action.hover;
 
   if (variant === 'secondary') {
     iconColor = theme.colors.secondary.text;
-    hoverColor = theme.colors.secondary.transparent;
   } else if (variant === 'destructive') {
     iconColor = theme.colors.error.text;
     hoverColor = theme.colors.error.transparent;
