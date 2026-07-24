@@ -54,7 +54,7 @@ export const ThemeRichColorInputSchema = z.object({
   background: z.string().optional(),
   /** Used for background hover/focus/active states */
   backgroundEmphasis: z.string().optional(),
-  /** Used for text */
+  /** Used for text. Can sit on top of the relevant ThemeRichColor background, or a standard background. */
   text: z.string().optional(),
   /** Used for text hover/focus/active states */
   textEmphasis: z.string().optional(),
