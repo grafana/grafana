@@ -17,6 +17,7 @@ import { SupportedPlugin } from '../alerting/unified/types/pluginBridges';
 import { AlertIncidentTabs } from './AlertsIncidents/AlertIncidentTabs';
 import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
 import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
+import { NewsCard } from './AlertsIncidents/NewsCard';
 import { canViewFiringAlerts } from './AlertsIncidents/useFiringAlerts';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
@@ -104,8 +105,14 @@ export default function HomePage() {
   });
   const showExtra = extraContent !== null;
   const showAlertsCard = canViewFiringAlerts();
+  const showIRMNewsCard = irm.loading || irm.installed || config.newsFeedEnabled;
   const skeleton = (
-    <HomePageSkeleton showAlertsCard={showAlertsCard} showExtra={showExtra} redesignEnabled={redesignEnabled} />
+    <HomePageSkeleton
+      showAlertsCard={showAlertsCard}
+      showIRMNewsCard={showIRMNewsCard}
+      showExtra={showExtra}
+      redesignEnabled={redesignEnabled}
+    />
   );
 
   return (
@@ -162,7 +169,7 @@ export default function HomePage() {
 
                   <Grid gap={2} columns={{ xs: 1, md: 2 }}>
                     <FiringAlertsCard />
-                    {irm.installed ? <IncidentsCard /> : null}
+                    {irm.installed ? <IncidentsCard /> : config.newsFeedEnabled && <NewsCard />}
                   </Grid>
                 </>
               )}

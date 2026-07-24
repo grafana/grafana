@@ -14,9 +14,10 @@ interface NewsItemProps {
   showImage?: boolean;
   index: number;
   data: DataFrameView<NewsItem>;
+  className?: string;
 }
 
-function NewsComponent({ width, showImage, data, index }: NewsItemProps) {
+function NewsComponent({ width, showImage, data, index, className }: NewsItemProps) {
   const titleId = useId();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const styles = useStyles2(getStyles, visualRefreshEnabled);
@@ -24,7 +25,7 @@ function NewsComponent({ width, showImage, data, index }: NewsItemProps) {
   const newsItem = data.get(index);
 
   return (
-    <article aria-labelledby={titleId} className={cx(styles.item, useWideLayout && styles.itemWide)}>
+    <article aria-labelledby={titleId} className={cx(styles.item, useWideLayout && styles.itemWide, className)}>
       {showImage && newsItem.ogImage && (
         <a
           tabIndex={-1}
