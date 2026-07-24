@@ -12,7 +12,11 @@ const pluginProxyUrl = (pluginId: string, path: string) => `/api/plugin-proxy/${
  */
 export async function fetchFaroApps(): Promise<unknown[]> {
   const response = await getBackendSrv().get<unknown>(
-    pluginProxyUrl(FRONTEND_OBSERVABILITY_APP_ID, '/api-proxy/api/v1/app')
+    pluginProxyUrl(FRONTEND_OBSERVABILITY_APP_ID, '/api-proxy/api/v1/app'),
+    undefined,
+    undefined,
+    // Probe failures are expected and handled by the caller; never toast them.
+    { showErrorAlert: false }
   );
   return Array.isArray(response) ? response : [];
 }

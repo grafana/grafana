@@ -237,6 +237,27 @@ describe('Recommendations', () => {
 
     expect(await screen.findByRole('link', { name: /Set up Hosted Traces/, hidden: true })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Set up Synthetic Monitoring/, hidden: true })).not.toBeInTheDocument();
+    // Inaccessible apps are excluded before probing: their probe could never produce a card.
+    expect(jest.mocked(hasSolutionData)).not.toHaveBeenCalledWith('grafana-synthetic-monitoring-app');
+  });
+
+  it('shows a settled setup card while another probe is still pending', async () => {
+    jest.mocked(hasSolutionData).mockImplementation((pluginId: string) => {
+      if (pluginId === 'grafana-synthetic-monitoring-app') {
+        return Promise.resolve(false);
+      }
+      if (pluginId === 'grafana-exploretraces-app') {
+        return new Promise(() => {}); // Never settles.
+      }
+      return Promise.resolve(true);
+    });
+    mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id, { enabled: true })));
+
+    render(<Recommendations />);
+
+    // The settled no-data probe renders its setup card without waiting for the hanging probe.
+    expect(await screen.findByRole('link', { name: /Set up Synthetic Monitoring/, hidden: true })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Set up Hosted Traces/, hidden: true })).not.toBeInTheDocument();
   });
 
   it('shows installed-but-disabled cards but hides not-installed cards for a write-only user', async () => {
