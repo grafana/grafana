@@ -34,7 +34,7 @@ test.describe(
 
       await expect(panel.getContainerByTitle(panelTitle)).toHaveCount(1);
 
-      await panel.clickMenuItem(panelTitle, ['More...', 'Duplicate']);
+      await panel.selectMenuItem(panelTitle, ['More...', 'Duplicate']);
 
       await expect(panel.getContainerByTitle(panelTitle)).toHaveCount(2);
 

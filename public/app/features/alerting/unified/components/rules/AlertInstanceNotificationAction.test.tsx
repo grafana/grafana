@@ -3,7 +3,7 @@ import { render, screen, waitFor } from 'test/test-utils';
 import { setupMswServer } from '../../mockApi';
 import { mockCombinedRule, mockGrafanaRulerRule, mockPromAlert } from '../../mocks';
 
-import { AlertInstanceNotificationAction } from './AlertInstanceNotificationAction';
+import { AlertInstanceNotificationAction, routingTreeNamesMatch } from './AlertInstanceNotificationAction';
 
 jest.mock('../../useRouteGroupsMatcher');
 
@@ -70,5 +70,29 @@ describe('AlertInstanceNotificationAction', () => {
     // Tests render the singular source default; runtime uses the _other plural form.
     expect(await screen.findByRole('button', { name: /2 contact point/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /view route/i })).toBeInTheDocument();
+  });
+});
+
+describe('routingTreeNamesMatch', () => {
+  it.each([
+    ['user-defined', 'default'],
+    ['default', 'user-defined'],
+    ['user-defined', 'user-defined'],
+    [undefined, 'user-defined'],
+    [undefined, undefined],
+  ])('treats default-tree names %p and %p as the same tree', (a, b) => {
+    expect(routingTreeNamesMatch(a, b)).toBe(true);
+  });
+
+  it('matches two identical named trees', () => {
+    expect(routingTreeNamesMatch('team-backend', 'team-backend')).toBe(true);
+  });
+
+  it('does not match two different named trees', () => {
+    expect(routingTreeNamesMatch('team-a', 'team-b')).toBe(false);
+  });
+
+  it('does not match a named tree against the default tree', () => {
+    expect(routingTreeNamesMatch('team-a', 'default')).toBe(false);
   });
 });

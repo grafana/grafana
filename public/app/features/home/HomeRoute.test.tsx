@@ -10,12 +10,20 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import HomeRoute from './HomeRoute';
+import { homepageViewed } from './analytics/main';
 
 // Rendering DashboardPageProxy pulls in DashboardScenePage and would force re-mocking
 // @grafana/runtime, defeating the MSW migration. HomePage is rendered for real.
 jest.mock('../dashboard/containers/DashboardPageProxy', () => ({
   __esModule: true,
   default: () => <div data-testid="dashboard-page-proxy-stub" />,
+}));
+
+jest.mock('./analytics/main', () => ({
+  ctaClicked: jest.fn(),
+  tabChanged: jest.fn(),
+  clearHistoryClicked: jest.fn(),
+  homepageViewed: jest.fn(),
 }));
 
 setBackendSrv(backendSrv);
@@ -34,6 +42,7 @@ describe('HomeRoute', () => {
   };
 
   beforeEach(() => {
+    jest.clearAllMocks();
     probeCallCount = 0;
     setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 
@@ -66,6 +75,7 @@ describe('HomeRoute', () => {
 
     expect(await screen.findByTestId('dashboard-page-proxy-stub')).toBeInTheDocument();
     expect(probeCallCount).toBe(0);
+    expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
   });
 
   it('flag on + homeDashboardUID empty → renders HomePage', async () => {
@@ -75,6 +85,7 @@ describe('HomeRoute', () => {
     render(<HomeRoute {...props} />);
 
     expect(await screen.findByText(/Welcome to Grafana/i)).toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).toHaveBeenCalledTimes(1);
   });
 
   it('flag on + homeDashboardUID absent → renders HomePage', async () => {
@@ -84,6 +95,7 @@ describe('HomeRoute', () => {
     render(<HomeRoute {...props} />);
 
     expect(await screen.findByText(/Welcome to Grafana/i)).toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).toHaveBeenCalledTimes(1);
   });
 
   it('flag on + homeDashboardUID present → renders dashboard proxy', async () => {
@@ -93,6 +105,7 @@ describe('HomeRoute', () => {
     render(<HomeRoute {...props} />);
 
     expect(await screen.findByTestId('dashboard-page-proxy-stub')).toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
   });
 
   it('flag on + homeDashboardUID: default-home-dashboard → renders dashboard proxy', async () => {
@@ -102,6 +115,7 @@ describe('HomeRoute', () => {
     render(<HomeRoute {...props} />);
 
     expect(await screen.findByTestId('dashboard-page-proxy-stub')).toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
   });
 
   it('flag on + merged endpoint returns 500 → renders dashboard proxy', async () => {
@@ -115,6 +129,7 @@ describe('HomeRoute', () => {
     render(<HomeRoute {...props} />);
 
     expect(await screen.findByTestId('dashboard-page-proxy-stub')).toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
   });
 
   it('flag on + homeURL present → calls locationService.replace', async () => {
@@ -128,6 +143,7 @@ describe('HomeRoute', () => {
     await waitFor(() => {
       expect(locationService.getLocation().pathname).toContain('/d/abc');
     });
+    expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
   });
 
   it('flag on + homeURL pointing at the setup guide → renders HomePage without redirecting', async () => {
@@ -138,6 +154,7 @@ describe('HomeRoute', () => {
 
     expect(await screen.findByText(/Welcome to Grafana/i)).toBeInTheDocument();
     expect(locationService.getLocation().pathname).not.toContain('grafana-setupguide-app');
+    expect(jest.mocked(homepageViewed)).toHaveBeenCalledTimes(1);
   });
 
   it('flag on + homeDashboardUID and homeURL both present → renders dashboard proxy without redirecting', async () => {
@@ -148,5 +165,6 @@ describe('HomeRoute', () => {
 
     expect(await screen.findByTestId('dashboard-page-proxy-stub')).toBeInTheDocument();
     expect(locationService.getLocation().pathname).not.toContain('/d/other');
+    expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
   });
 });

@@ -167,8 +167,8 @@ function getStyles(theme: GrafanaTheme2) {
         opacity: 1,
       },
       svg: {
-        display: 'block',
         color: theme.colors.accent.main,
+        display: 'block',
         width: 'auto',
         maxWidth: '100%',
         height: 'auto',

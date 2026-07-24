@@ -189,7 +189,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     current: css({
       label: 'currentVisualizationItem',
-      border: `1px solid ${theme.colors.accent.main}`,
+      border: `1px solid ${theme.colors.accent.border}`,
       background: theme.colors.action.selected,
     }),
     disabled: css({

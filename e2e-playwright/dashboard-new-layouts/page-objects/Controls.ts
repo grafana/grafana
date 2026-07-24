@@ -4,20 +4,43 @@ import { PageObject } from './PageObject';
 
 // Controls above the dashboard: timepicker, refresh button, edit button, save button
 export class Controls extends PageObject {
+  private getEditButton(label: RegExp): Locator {
+    return this.dashboardPage
+      .getByGrafanaSelector(this.selectors.components.NavToolbar.editDashboard.editButton)
+      .filter({ hasText: label });
+  }
+
   async enterEditMode() {
     await test.step('Enter edit mode', async () => {
+      await this.getEditButton(/^Edit$/).click();
+    });
+  }
+
+  async exitEditMode() {
+    await test.step('Exit edit mode', async () => {
+      await this.getEditButton(/^Exit edit$/).click();
+    });
+  }
+
+  async saveDashboard(title?: string) {
+    await test.step(title ? `Save dashboard with title "${title}"` : 'Save dashboard', async () => {
       await this.dashboardPage
-        .getByGrafanaSelector(this.selectors.components.NavToolbar.editDashboard.editButton)
+        .getByGrafanaSelector(this.selectors.components.NavToolbar.editDashboard.saveButton)
+        .click();
+
+      if (title) {
+        await this.page.getByTestId(this.selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput).fill(title);
+      }
+
+      await this.dashboardPage
+        .getByGrafanaSelector(this.selectors.components.Drawer.DashboardSaveDrawer.saveButton)
         .click();
     });
   }
 
-  // Same control as enterEditMode: while editing, the edit button acts as "Exit edit"
-  async exitEditMode() {
-    await test.step('Exit edit mode', async () => {
-      await this.dashboardPage
-        .getByGrafanaSelector(this.selectors.components.NavToolbar.editDashboard.editButton)
-        .click();
+  async openControlsMenu() {
+    await test.step('Open controls menu', async () => {
+      await this.dashboardPage.getByGrafanaSelector(this.selectors.pages.Dashboard.ControlsButton).click();
     });
   }
 
@@ -48,6 +71,10 @@ export class Controls extends PageObject {
         await this.page.getByRole('option', { name: new RegExp(`^${filter[1]} `) }).click();
         await this.page.getByRole('option', { name: filter[2], exact: true }).click();
       });
+    },
+    getInput: (variableLabel: string): Locator => {
+      // the input has no selector of its own: like the dropdown trigger, it lives in the label's next sibling
+      return this.variables.getLabel(variableLabel).locator('+ *').locator('input');
     },
   };
 }
