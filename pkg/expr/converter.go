@@ -357,11 +357,23 @@ func checkIfSeriesNeedToBeFixed(frames []*data.Frame, datasourceType string) fun
 		}
 		if good {
 			return func(series mathexp.Series, valueField *data.Field) {
+				name := selector(valueField)
 				series.SetLabels(data.Labels{
-					nameLabelName: selector(valueField),
+					nameLabelName: name,
 				})
+				setSyntheticNameDisplayName(series, name)
 			}
 		}
 	}
 	return nil
+}
+
+func setSyntheticNameDisplayName(series mathexp.Series, name string) {
+	field := series.AsDataFrame().Fields[1]
+	if field.Config == nil {
+		field.Config = &data.FieldConfig{}
+	}
+	if field.Config.DisplayName == "" && field.Config.DisplayNameFromDS == "" {
+		field.Config.DisplayNameFromDS = name
+	}
 }

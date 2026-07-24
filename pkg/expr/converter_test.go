@@ -28,6 +28,26 @@ func TestConvertDataFramesToResults(t *testing.T) {
 
 	t.Run("should add name label if no labels and specific data source", func(t *testing.T) {
 		supported := []string{datasources.DS_GRAPHITE, datasources.DS_TESTDATA}
+
+		t.Run("sets display name from synthetic name label", func(t *testing.T) {
+			frames := []*data.Frame{
+				data.NewFrame("",
+					data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+					data.NewField("A-series", nil, []*float64{new(2.0)})),
+			}
+
+			resultType, res, err := converter.Convert(context.Background(), datasources.DS_TESTDATA, frames)
+			require.NoError(t, err)
+			assert.Equal(t, "single frame series", resultType)
+			require.Len(t, res.Values, 1)
+
+			series, ok := res.Values[0].(mathexp.Series)
+			require.True(t, ok)
+			valueField := series.AsDataFrame().Fields[1]
+			require.Equal(t, data.Labels{nameLabelName: "A-series"}, valueField.Labels)
+			require.NotNil(t, valueField.Config)
+			require.Equal(t, "A-series", valueField.Config.DisplayNameFromDS)
+		})
 		t.Run("when only field name is specified", func(t *testing.T) {
 			t.Run("use value field names if one frame - many series", func(t *testing.T) {
 				supported := []string{datasources.DS_GRAPHITE, datasources.DS_TESTDATA}
