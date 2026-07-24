@@ -6,10 +6,10 @@ import { type SeverityLevel } from 'app/features/alerting/unified/triage/scene/f
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 
-import { alertsCardClicked } from '../analytics/main';
+import { ctaClicked } from '../analytics/main';
 
 import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
-import { SummaryCard, SummaryCardAge } from './SummaryCard';
+import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
 import { severityLevelColor } from './severity';
 import { canViewFiringAlerts, useFiringAlerts, type FiringAlertsData } from './useFiringAlerts';
 
@@ -147,12 +147,14 @@ export function FiringAlertsCardView({
                   </span>
                 </Tooltip>
               ) : (
-                <Badge text={severityLabel(level)} color={severityLevelColor(level)} />
+                <SummaryCardPrefix>
+                  <Badge text={severityLabel(level)} color={severityLevelColor(level)} />
+                </SummaryCardPrefix>
               )
             }
             trailing={<SummaryCardAge date={startedAt} />}
             href={detailHref}
-            onClick={() => alertsCardClicked({ action: 'alert_detail', placement: 'list', severity: level })}
+            onClick={() => ctaClicked({ surface: 'alerts_card', action: 'alert_detail', placement: 'list' })}
           />
         );
       }}
@@ -162,7 +164,7 @@ export function FiringAlertsCardView({
             variant="primary"
             icon="plus"
             href={newRuleHref}
-            onClick={() => alertsCardClicked({ action: 'create_rule', placement: 'empty_state' })}
+            onClick={() => ctaClicked({ surface: 'alerts_card', action: 'create_rule', placement: 'empty_state' })}
           >
             <Trans i18nKey="home.firing-alerts-card.create">Create an alert rule</Trans>
           </LinkButton>

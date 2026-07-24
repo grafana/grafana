@@ -8,9 +8,17 @@ import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 import { type Job, type Repository } from 'app/api/clients/provisioning/v0alpha1';
 import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 
+import {
+  AnnoKeyProvisioningAuthor,
+  AnnoKeyProvisioningAuthorEmail,
+  AnnoKeyProvisioningAuthorId,
+  AnnoKeyProvisioningAuthorOrigin,
+} from '../../apiserver/types';
 import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
+import { type RepoType } from '../Wizard/types';
 import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
 import { getStatusColor } from '../utils/repositoryStatus';
+import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
 import { formatTimestamp } from '../utils/time';
 
 import { JobAlerts } from './JobAlerts';
@@ -19,9 +27,6 @@ import { JobSummary } from './JobSummary';
 interface Props {
   repo: Repository;
 }
-
-const AnnoAuthor = 'provisioning.grafana.app/author';
-const AnnoAuthorEmail = 'provisioning.grafana.app/authorEmail';
 
 type JobCell = {
   row: {
@@ -69,12 +74,22 @@ const getJobColumns = (showAuthor: boolean) => [
   ...(showAuthor
     ? [
         {
-          id: 'triggeredBy',
-          header: t('provisioning.recent-jobs.column-triggered-by', 'Triggered by'),
+          id: 'author',
+          header: t('provisioning.recent-jobs.column-author', 'Author'),
           cell: ({ row: { original: job } }: JobCell) => {
             const annotations = job.metadata?.annotations;
-            const author = annotations?.[AnnoAuthor] || annotations?.[AnnoAuthorEmail];
-            return author || t('provisioning.recent-jobs.triggered-by-system', 'System');
+            return annotations?.[AnnoKeyProvisioningAuthor] || annotations?.[AnnoKeyProvisioningAuthorEmail];
+          },
+        },
+        {
+          id: 'origin',
+          header: t('provisioning.recent-jobs.column-origin', 'Origin'),
+          cell: ({ row: { original: job } }: JobCell) => {
+            const origin = job.metadata?.annotations?.[AnnoKeyProvisioningAuthorOrigin];
+            if (!origin) {
+              return t('provisioning.recent-jobs.origin-unknown', 'Unknown');
+            }
+            return originLabel(origin);
           },
         },
       ]
@@ -123,6 +138,18 @@ function ExpandedRow({ row }: ExpandedRowProps) {
       pull: spec.pull,
       push: spec.push,
     };
+    const annotations = row.metadata?.annotations;
+    for (const [key, anno] of [
+      ['author', AnnoKeyProvisioningAuthor],
+      ['authorEmail', AnnoKeyProvisioningAuthorEmail],
+      ['authorId', AnnoKeyProvisioningAuthorId],
+      ['authorOrigin', AnnoKeyProvisioningAuthorOrigin],
+    ]) {
+      const value = annotations?.[anno];
+      if (value) {
+        v.push({ key, value });
+      }
+    }
     const def = actionOptions[action];
     if (!def) {
       return v;
@@ -131,7 +158,7 @@ function ExpandedRow({ row }: ExpandedRowProps) {
       v.push({ key, value });
     }
     return v;
-  }, [row.spec]);
+  }, [row.spec, row.metadata?.annotations]);
 
   if (!hasSummary && !hasErrors && !hasWarnings && !hasSpec) {
     return null;
@@ -160,6 +187,13 @@ function ExpandedRow({ row }: ExpandedRowProps) {
       </Stack>
     </Box>
   );
+}
+
+const REPO_TYPES: RepoType[] = ['local', 'git', 'github', 'githubEnterprise', 'gitlab', 'bitbucket'];
+
+function originLabel(origin: string): string {
+  const repoType = REPO_TYPES.find((type) => type === origin);
+  return (repoType ? getRepositoryTypeConfig(repoType)?.label : undefined) ?? origin;
 }
 
 function EmptyState() {

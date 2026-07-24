@@ -195,7 +195,7 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
-		storageOpts := []sql.StorageBackendOption{sql.WithEventPublisher(eventPublisher)}
+		storageOpts := []sql.StorageBackendOption{sql.WithEventPublisher(eventPublisher), sql.WithVectorBackend(vectorBackend)}
 		if cfg.NATS.Notifier && eventSubscriber != nil {
 			storageOpts = append(storageOpts, sql.WithNatsNotifier(natsEventSubscriber{sub: eventSubscriber}))
 		} else if cfg.NATS.NotifierShadow && eventSubscriber != nil {
