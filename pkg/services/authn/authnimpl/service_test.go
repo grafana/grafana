@@ -280,12 +280,44 @@ func TestService_OrgID(t *testing.T) {
 			expectedOrgID: 1,
 		},
 		{
-			desc: "should set org id when present in url",
+			desc: "should set org id from ?targetOrgId (legacy api caller param)",
 			req: &authn.Request{HTTPRequest: &http.Request{
 				Header: map[string][]string{},
 				URL:    mustParseURL("http://localhost/?targetOrgId=2"),
 			}},
 			expectedOrgID: 2,
+		},
+		{
+			desc: "should set org id from ?orgId (frontend param)",
+			req: &authn.Request{HTTPRequest: &http.Request{
+				Header: map[string][]string{},
+				URL:    mustParseURL("http://localhost/?orgId=2"),
+			}},
+			expectedOrgID: 2,
+		},
+		{
+			desc: "should prefer ?orgId over ?targetOrgId when both are present",
+			req: &authn.Request{HTTPRequest: &http.Request{
+				Header: map[string][]string{},
+				URL:    mustParseURL("http://localhost/?orgId=3&targetOrgId=4"),
+			}},
+			expectedOrgID: 3,
+		},
+		{
+			desc: "should fall back to ?targetOrgId when ?orgId is malformed",
+			req: &authn.Request{HTTPRequest: &http.Request{
+				Header: map[string][]string{},
+				URL:    mustParseURL("http://localhost/?orgId=abc&targetOrgId=5"),
+			}},
+			expectedOrgID: 5,
+		},
+		{
+			desc: "should return 0 when ?orgId is malformed and ?targetOrgId is missing",
+			req: &authn.Request{HTTPRequest: &http.Request{
+				Header: map[string][]string{},
+				URL:    mustParseURL("http://localhost/?orgId=abc"),
+			}},
+			expectedOrgID: 0,
 		},
 		{
 			desc: "should prioritise org id from url when present in both header and url",
