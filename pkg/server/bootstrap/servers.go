@@ -63,7 +63,7 @@ func RunServer(ctx context.Context, cfg RunServerConfig) error {
 
 	defer recoverAndLog(logger)
 
-	SetBuildInfo(cfg.BuildInfo, cfg.Packaging)
+	SetBuildInfo(cfg.BuildInfo, cfg.Packaging, cfg.IsEnterprise)
 	checkPrivileges()
 
 	settingCfg, err := loadConfig(cfg.ConfigFile, cfg.HomePath, cfg.ConfigOverrides, cfg.ExtraArgs)
@@ -121,7 +121,7 @@ func RunTargetServer(ctx context.Context, cfg RunTargetServerConfig) error {
 
 	defer recoverAndLog(logger)
 
-	SetBuildInfo(cfg.BuildInfo, cfg.Packaging)
+	SetBuildInfo(cfg.BuildInfo, cfg.Packaging, cfg.IsEnterprise)
 	checkPrivileges()
 
 	settingCfg, err := loadConfig(cfg.ConfigFile, cfg.HomePath, cfg.ConfigOverrides, cfg.ExtraArgs)
@@ -159,7 +159,7 @@ func RunTargetServer(ctx context.Context, cfg RunTargetServerConfig) error {
 // the full dependency list. When withEnterpriseCommit is true and an enterprise
 // commit is present, it is included in the version line.
 func printVersion(opts BuildInfo, verbose bool, withEnterpriseCommit bool) {
-	if withEnterpriseCommit && opts.EnterpriseCommit != defaultEnterpriseCommit && opts.EnterpriseCommit != "" {
+	if withEnterpriseCommit && opts.EnterpriseCommit != DefaultCommitValue && opts.EnterpriseCommit != "" {
 		fmt.Printf("Version %s (commit: %s, branch: %s, enterprise-commit: %s)\n", opts.Version, opts.Commit, opts.BuildBranch, opts.EnterpriseCommit)
 	} else {
 		fmt.Printf("Version %s (commit: %s, branch: %s)\n", opts.Version, opts.Commit, opts.BuildBranch)
