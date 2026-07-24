@@ -10972,6 +10972,12 @@
     "recommendations": {
       "carousel-label": "Recommended apps",
       "carousel-roledescription": "carousel",
+      "connect-metrics": {
+        "action": "Connect metrics",
+        "context": "The foundation of your observability stack",
+        "description": "Connect a Prometheus-compatible data source or ship metrics with a collector to light up dashboards and alerting.",
+        "title": "Start with metrics"
+      },
       "enable-logs": {
         "action": "Add Logs",
         "context": "Correlate spikes with the logs that explain them",
@@ -11022,6 +11028,15 @@
         "setup-action": "Set up Kubernetes Monitoring",
         "title": "Monitor your Kubernetes fleet"
       },
+      "logs": {
+        "action": "Open Explore (Logs)",
+        "datasource": "via {{name}}",
+        "stats": "ingested · 7d",
+        "stats-sources_one": "ingested · 7d · {{count}} source",
+        "stats-sources_other": "ingested · 7d · {{count}} sources",
+        "title": "Hosted Logs",
+        "volume": "Ingest volume · last 24h"
+      },
       "next": "Next",
       "no-data": {
         "badge": "Getting started",
@@ -11040,7 +11055,18 @@
       "show": "Show",
       "switch": "Recommendations follow the selected solution",
       "switchSolution": "Switch solution",
-      "title": "Recommendations for your stack"
+      "title": "Recommendations for your stack",
+      "traces": {
+        "action": "Open Traces Drilldown",
+        "datasource": "via {{name}}",
+        "spans_one": "{{value}} span",
+        "spans_other": "{{value}} spans",
+        "stats": "traced · 24h",
+        "stats-services_one": "traced · 24h · {{count}} service",
+        "stats-services_other": "traced · 24h · {{count}} services",
+        "throughput": "Span throughput · last 24h",
+        "title": "Hosted Traces"
+      }
     },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",
