@@ -1038,9 +1038,11 @@ func TestIntegrationService_SetPermissionsForTeams_Redirect(t *testing.T) {
 
 // TestIntegrationService_SetUserPermissionForTeams_RedirectWrites covers the
 // outcomes of the K8s membership write itself (stubbed): in unified-authoritative
-// modes the K8s result is final and the legacy store is never touched, while in
-// dual-write modes the legacy write still runs — including the case where the
-// redirect already removed the member so the legacy removal finds nothing.
+// modes the K8s result is final and the legacy store is never touched; in
+// dual-write modes a redirect that actually removed the member skips the legacy
+// membership hook (the dual-write already removed team_member, so re-running the
+// hook would fail and roll back the RBAC write), while adds and no-op removals
+// keep the hook so a genuinely-absent member still surfaces the not-found error.
 func TestIntegrationService_SetUserPermissionForTeams_RedirectWrites(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -1082,12 +1084,12 @@ func TestIntegrationService_SetUserPermissionForTeams_RedirectWrites(t *testing.
 			expectHookCall: true,
 		},
 		{
-			name:           "Mode3 tolerates a member already removed by the redirect",
-			mode:           grafanarest.Mode3,
-			permission:     "",
-			k8sRemoved:     true,
-			hookErr:        team.ErrTeamMemberNotFound,
-			expectHookCall: true,
+			name:       "Mode3 skips the hook when the redirect removed the member",
+			mode:       grafanarest.Mode3,
+			permission: "",
+			k8sRemoved: true,
+			// hookErr would be returned if the hook ran; it must not, so no error surfaces.
+			hookErr: team.ErrTeamMemberNotFound,
 		},
 		{
 			name:           "Mode3 surfaces not-found when the redirect removed nothing",
@@ -1142,7 +1144,8 @@ func TestIntegrationService_SetUserPermissionForTeams_RedirectWrites(t *testing.
 
 // TestIntegrationService_SetPermissionsForTeams_RedirectWrites is the batch
 // counterpart of TestIntegrationService_SetUserPermissionForTeams_RedirectWrites:
-// every user command is reconciled through the K8s write individually.
+// the whole batch is reconciled through a single atomic K8s write, and the legacy
+// membership hook is skipped only when that write removed a member.
 func TestIntegrationService_SetPermissionsForTeams_RedirectWrites(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -1159,7 +1162,7 @@ func TestIntegrationService_SetPermissionsForTeams_RedirectWrites(t *testing.T) 
 		expectHookCall bool
 	}{
 		{
-			name:       "Mode5 reconciles each user command via k8s only",
+			name:       "Mode5 reconciles the batch via k8s only",
 			mode:       grafanarest.Mode5,
 			permission: "Member",
 		},
@@ -1171,24 +1174,30 @@ func TestIntegrationService_SetPermissionsForTeams_RedirectWrites(t *testing.T) 
 			expectErr:  ErrExternalTeamMember,
 		},
 		{
-			name:           "Mode3 falls back to legacy when k8s fails",
+			name:           "Mode3 falls back to legacy when the redirect fails",
 			mode:           grafanarest.Mode3,
 			permission:     "Member",
 			k8sErr:         errK8sUnavailable,
 			expectHookCall: true,
 		},
 		{
-			name:           "Mode3 tolerates members already removed by the redirect",
+			name:           "Mode3 runs the hook when the redirect only added",
 			mode:           grafanarest.Mode3,
-			permission:     "",
-			k8sRemoved:     true,
-			hookErr:        team.ErrTeamMemberNotFound,
+			permission:     "Member",
 			expectHookCall: true,
+		},
+		{
+			name:       "Mode3 skips the hook when the redirect removed members",
+			mode:       grafanarest.Mode3,
+			permission: "",
+			k8sRemoved: true,
+			// hookErr would be returned if the hook ran; it must not, so no error surfaces.
+			hookErr: team.ErrTeamMemberNotFound,
 		},
 	}
 
-	origSetTeamMembership := setTeamMembership
-	t.Cleanup(func() { setTeamMembership = origSetTeamMembership })
+	origSetTeamMemberships := setTeamMemberships
+	t.Cleanup(func() { setTeamMemberships = origSetTeamMemberships })
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1206,7 +1215,7 @@ func TestIntegrationService_SetPermissionsForTeams_RedirectWrites(t *testing.T) 
 			}
 
 			var k8sCalls int
-			setTeamMembership = func(_ *Service, _ context.Context, _ int64, _ string, _ int64, _ string) (bool, error) {
+			setTeamMemberships = func(_ *Service, _ context.Context, _ int64, _ string, _ []accesscontrol.SetResourcePermissionCommand) (bool, error) {
 				k8sCalls++
 				return tt.k8sRemoved, tt.k8sErr
 			}
@@ -1224,12 +1233,11 @@ func TestIntegrationService_SetPermissionsForTeams_RedirectWrites(t *testing.T) 
 			)
 			if tt.expectErr != nil {
 				require.ErrorIs(t, err, tt.expectErr)
-				// external members abort on the first command
-				assert.Equal(t, 1, k8sCalls)
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, 2, k8sCalls)
 			}
+			// The whole batch is reconciled in a single k8s call regardless of size.
+			assert.Equal(t, 1, k8sCalls)
 			assert.Equal(t, tt.expectHookCall, hookCalled)
 		})
 	}
