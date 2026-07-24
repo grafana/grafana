@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/google/go-github/v82/github"
@@ -94,6 +95,8 @@ func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *repos
 			Branch:       strings.TrimPrefix(event.GetRef(), "refs/heads/"),
 			DeletedPaths: deletedPaths,
 			TotalChanges: totalChanges,
+			Sender:       event.GetSender().GetLogin(),
+			SenderID:     senderID(event.GetSender()),
 		}, nil
 	case *github.PullRequestEvent:
 		if event.GetRepo() == nil {
@@ -112,6 +115,8 @@ func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *repos
 			PRURL:     pr.GetHTMLURL(),
 			SourceRef: pr.GetHead().GetRef(),
 			Hash:      pr.GetHead().GetSHA(),
+			Sender:    event.GetSender().GetLogin(),
+			SenderID:  senderID(event.GetSender()),
 		}, nil
 	case *github.PingEvent:
 		return repository.WebhookEvent{Type: repository.WebhookEventPing}, nil
@@ -146,6 +151,15 @@ func (r *githubWebhookRepository) CommentPullRequest(ctx context.Context, prNumb
 
 func (r *githubWebhookRepository) MergeBase(ctx context.Context, headRef string) (string, error) {
 	return r.Client().MergeBase(ctx, r.Config().Branch(), headRef)
+}
+
+// senderID formats the sender's numeric ID, or returns an empty string when
+// the payload carries no sender, so a missing identity is not recorded as "0".
+func senderID(sender *github.User) string {
+	if sender.GetID() == 0 {
+		return ""
+	}
+	return strconv.FormatInt(sender.GetID(), 10)
 }
 
 func normalizeGitHubAction(action string) repository.PullRequestAction {

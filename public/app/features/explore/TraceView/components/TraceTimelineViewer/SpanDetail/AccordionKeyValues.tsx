@@ -74,7 +74,7 @@ export type AccordionKeyValuesProps = {
   showCountBadge?: boolean;
   isOpen: boolean;
   label: string | React.ReactNode;
-  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[]) | TNil;
+  linksGetter?: (pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[];
   onToggle?: null | (() => void);
 };
 
