@@ -22,9 +22,17 @@ import (
 	metricutils "github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
+//go:generate mockery --name jobQueueCleaner --structname MockJobQueueCleaner --inpackage --filename job_queue_cleaner_mock.go --with-expecter
+type jobQueueCleaner interface {
+	// CleanupQueue deletes all queued jobs for the repository that are not
+	// currently being executed. Returns the number of jobs deleted.
+	CleanupQueue(ctx context.Context, namespace, repository string) (int, error)
+}
+
 type finalizer struct {
 	lister        resources.ResourceLister
 	clientFactory resources.ClientFactory
+	jobs          jobQueueCleaner
 	metrics       *finalizerMetrics
 	maxWorkers    int
 }
@@ -36,7 +44,10 @@ func (f *finalizer) process(ctx context.Context,
 	logger := logging.FromContext(ctx)
 	logger.Info("process finalizers", "finalizers", finalizers)
 
-	orderedFinalizers := [3]string{
+	// Clear the job queue first so no pending job gets picked up and starts
+	// running against the repository while the rest of the teardown proceeds.
+	orderedFinalizers := [4]string{
+		repository.RemovePendingJobsFinalizer,
 		repository.CleanFinalizer,
 		repository.ReleaseOrphanResourcesFinalizer,
 		repository.RemoveOrphanResourcesFinalizer}
@@ -52,6 +63,15 @@ func (f *finalizer) process(ctx context.Context,
 		outcome := metricutils.SuccessOutcome
 
 		switch finalizer {
+		case repository.RemovePendingJobsFinalizer:
+			logger.Info("clearing repository job queue")
+			cfg := repo.Config()
+			count, err = f.jobs.CleanupQueue(ctx, cfg.Namespace, cfg.Name)
+			if err != nil {
+				err = fmt.Errorf("clear job queue: %w", err)
+				outcome = metricutils.ErrorOutcome
+			}
+
 		case repository.CleanFinalizer:
 			// NOTE: the controller loop will never get run unless a finalizer is set
 			logger.Info("running cleanup finalizer")
