@@ -315,8 +315,16 @@ export const getButtonStyles = (props: StyleProps) => {
 };
 
 export function getActiveButtonStyles(color: ThemeRichColor, fill: ButtonFill, visualRefreshEnabled?: boolean) {
+  let backgroundColor = 'transparent';
+  if (fill === 'solid') {
+    backgroundColor = color.main;
+
+    if (visualRefreshEnabled) {
+      backgroundColor = color.name === 'primary' ? color.mainEmphasis : color.backgroundEmphasis;
+    }
+  }
   return {
-    background: fill === 'solid' ? (visualRefreshEnabled ? color.backgroundEmphasis : color.main) : 'transparent',
+    background: backgroundColor,
   };
 }
 
