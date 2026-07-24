@@ -307,6 +307,24 @@ describe('thresholdReducer', () => {
     expect(newState.conditions[0].unloadEvaluator?.type).toEqual(EvalFunction.IsEqual);
   });
 
+  it('reports a validation error when checking hysteresis on an "is equal to" threshold', () => {
+    const initialState: ThresholdExpressionQuery = {
+      type: ExpressionQueryType.threshold,
+      refId: 'A',
+      conditions: [
+        {
+          ...thresholdCondition,
+          evaluator: { type: EvalFunction.IsEqual, params: [20] },
+          unloadEvaluator: undefined,
+        },
+      ],
+    };
+
+    thresholdReducer(initialState, updateHysteresisChecked({ hysteresisChecked: true, onError }));
+
+    expect(onError).toHaveBeenCalledWith('Enter a different number than 20');
+  });
+
   it('sets the unloadEvaluator type to IsEqual when switching the threshold type to "is equal to" with hysteresis on', () => {
     const initialState: ThresholdExpressionQuery = {
       type: ExpressionQueryType.threshold,
@@ -314,10 +332,25 @@ describe('thresholdReducer', () => {
       conditions: [thresholdCondition],
     };
 
-    const newState = thresholdReducer(initialState, updateThresholdType({ evalFunction: EvalFunction.IsEqual, onError }));
+    const newState = thresholdReducer(
+      initialState,
+      updateThresholdType({ evalFunction: EvalFunction.IsEqual, onError })
+    );
 
     expect(newState.conditions[0].evaluator.type).toEqual(EvalFunction.IsEqual);
     expect(newState.conditions[0].unloadEvaluator?.type).toEqual(EvalFunction.IsEqual);
+  });
+
+  it('reports a validation error when switching to an "is equal to" threshold with hysteresis on', () => {
+    const initialState: ThresholdExpressionQuery = {
+      type: ExpressionQueryType.threshold,
+      refId: 'A',
+      conditions: [thresholdCondition],
+    };
+
+    thresholdReducer(initialState, updateThresholdType({ evalFunction: EvalFunction.IsEqual, onError }));
+
+    expect(onError).toHaveBeenCalledWith('Enter a different number than 10');
   });
 
   it('sets the unloadEvaluator type to IsEqual when checking hysteresis on an "is not equal to" threshold', () => {
