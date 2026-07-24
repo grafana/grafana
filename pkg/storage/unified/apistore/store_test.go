@@ -33,6 +33,7 @@ import (
 	storagetesting "github.com/grafana/grafana/pkg/apiserver/storage/testing"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func init() {
@@ -124,44 +125,78 @@ func TestValidUpdate(t *testing.T) {
 	storagetesting.RunTestValidUpdate(ctx, t, store)
 }
 
-// TestGuaranteedUpdateConditionalOnDeletedReturnsConflict verifies that a conditional
+// conditionalUpdateOnDeletedReturnsConflict asserts that a conditional
 // (optimistic-concurrency) update — one whose object carries a resourceVersion — against a
 // key that no longer exists returns Conflict, rather than resurrecting the object or failing
 // with the opaque "resourceVersion should not be set on objects to be created" create error.
 // This is the deleted-in-window race a read-then-write caller hits when the object is deleted
 // between its read and its update.
-func TestGuaranteedUpdateConditionalOnDeletedReturnsConflict(t *testing.T) {
-	ctx, store, destroyFunc, err := testSetup(t)
-	defer destroyFunc()
-	require.NoError(t, err)
-
+func conditionalUpdateOnDeletedReturnsConflict(ctx context.Context, t *testing.T, store storage.Interface) {
+	t.Helper()
 	key := storagetesting.KeyFunc("test-ns", "gone")
 	tryUpdate := func(_ runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
 		return &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "gone", Namespace: "test-ns", ResourceVersion: "12345"}}, nil, nil
 	}
 
-	err = store.GuaranteedUpdate(ctx, key, &example.Pod{}, true /* ignoreNotFound */, nil, tryUpdate, nil)
+	err := store.GuaranteedUpdate(ctx, key, &example.Pod{}, true /* ignoreNotFound */, nil, tryUpdate, nil)
 	require.Error(t, err)
 	assert.True(t, apierrors.IsConflict(err), "expected a Conflict error, got: %v", err)
 }
 
-// TestGuaranteedUpdateUnconditionalUpsertOnMissingCreates verifies that an unconditional
-// write (no resourceVersion) against a missing key still upserts — create-on-update is only
-// suppressed for conditional updates.
-func TestGuaranteedUpdateUnconditionalUpsertOnMissingCreates(t *testing.T) {
-	ctx, store, destroyFunc, err := testSetup(t)
-	defer destroyFunc()
-	require.NoError(t, err)
-
+// unconditionalUpsertOnMissingCreates asserts that an unconditional write (no
+// resourceVersion) against a missing key still upserts — create-on-update is only suppressed
+// for conditional updates.
+func unconditionalUpsertOnMissingCreates(ctx context.Context, t *testing.T, store storage.Interface) {
+	t.Helper()
 	key := storagetesting.KeyFunc("test-ns", "fresh")
 	tryUpdate := func(_ runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
 		return &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "fresh", Namespace: "test-ns"}}, nil, nil
 	}
 
 	out := &example.Pod{}
-	err = store.GuaranteedUpdate(ctx, key, out, true /* ignoreNotFound */, nil, tryUpdate, nil)
+	err := store.GuaranteedUpdate(ctx, key, out, true /* ignoreNotFound */, nil, tryUpdate, nil)
 	require.NoError(t, err)
 	assert.Equal(t, "fresh", out.Name)
+}
+
+func TestGuaranteedUpdateConditionalOnDeletedReturnsConflict(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	require.NoError(t, err)
+	conditionalUpdateOnDeletedReturnsConflict(ctx, t, store)
+}
+
+func TestGuaranteedUpdateUnconditionalUpsertOnMissingCreates(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	require.NoError(t, err)
+	unconditionalUpsertOnMissingCreates(ctx, t, store)
+}
+
+// TestIntegrationGuaranteedUpdateCreateOnUpdate exercises the create-on-update behavior
+// against every storage backend (including the real SQL-backed unified store), so the
+// Conflict-on-deleted semantics are verified end-to-end and not just against the in-memory
+// file backend.
+func TestIntegrationGuaranteedUpdateCreateOnUpdate(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
+		t.Run(string(s), func(t *testing.T) {
+			t.Run("conditional update on deleted returns conflict", func(t *testing.T) {
+				ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
+				defer destroyFunc()
+				require.NoError(t, err)
+				conditionalUpdateOnDeletedReturnsConflict(ctx, t, store)
+			})
+
+			t.Run("unconditional upsert on missing creates", func(t *testing.T) {
+				ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
+				defer destroyFunc()
+				require.NoError(t, err)
+				unconditionalUpsertOnMissingCreates(ctx, t, store)
+			})
+		})
+	}
 }
 
 func TestGet(t *testing.T) {
