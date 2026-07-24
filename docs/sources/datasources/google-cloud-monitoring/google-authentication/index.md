@@ -42,13 +42,13 @@ Before you configure authentication, ensure you have the following:
 
 The Google Cloud Monitoring data source supports the following authentication methods:
 
-| Method                             | Use case                                                                                                          |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| **Google JWT File**                | Use when Grafana runs outside of GCP, or when you need explicit control over credentials.                        |
-| **GCE Default Service Account**    | Use when Grafana runs on a Google Compute Engine VM with a configured service account.                           |
-| **Forward OAuth Identity**         | Use when you sign in to Grafana with Google and want each query to run as the signed-in user.                    |
-| **Workload Identity Federation**   | Use on Grafana Cloud to let users authenticate with an external OIDC identity provider instead of a service account key. |
-| **Service Account Impersonation**  | Use when you need Grafana to act as a different service account than the one it authenticates with.              |
+| Method                            | Use case                                                                                                                 |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **Google JWT File**               | Use when Grafana runs outside of GCP, or when you need explicit control over credentials.                                |
+| **GCE Default Service Account**   | Use when Grafana runs on a Google Compute Engine VM with a configured service account.                                   |
+| **Forward OAuth Identity**        | Use when you sign in to Grafana with Google and want each query to run as the signed-in user.                            |
+| **Workload Identity Federation**  | Use on Grafana Cloud to let users authenticate with an external OIDC identity provider instead of a service account key. |
+| **Service Account Impersonation** | Use when you need Grafana to act as a different service account than the one it authenticates with.                      |
 
 ## Use a Google service account key file
 
@@ -192,7 +192,7 @@ Configuring Workload Identity Federation involves three systems: Google Cloud, y
    `projects/<project-number>/locations/global/workloadIdentityPools/<pool-id>/providers/<provider-id>`
 
    {{< admonition type="note" >}}
-Use the **project number** (a numeric ID such as `123456789`), not the project ID (such as `my-project`). You can find the project number on the Google Cloud Console home page.
+   Use the **project number** (a numeric ID such as `123456789`), not the project ID (such as `my-project`). You can find the project number on the Google Cloud Console home page.
    {{< /admonition >}}
 
 1. If you set up service account impersonation, enter the service account email in the **Service account email** field. If you granted permissions directly to the WIF pool, leave this blank.
