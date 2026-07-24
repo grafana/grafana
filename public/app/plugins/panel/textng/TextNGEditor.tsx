@@ -13,7 +13,7 @@ import { CodeLanguage, TextMode } from '../../schemas/textng/panelcfg.gen';
 
 import { TextNGCodeView } from './TextNGCodeView';
 import { getCodeMirrorLanguage } from './codeLanguages';
-import { transformContent } from './textContent';
+import { getInterpolateFormat, transformContent } from './textContent';
 
 type ViewMode = 'write' | 'split' | 'preview';
 
@@ -65,7 +65,7 @@ export function TextNGEditor({
   commitDraftRef.current = commitDraft;
   useEffect(() => () => commitDraftRef.current(), []);
 
-  const format = mode === TextMode.Code && codeLanguage === CodeLanguage.Json ? 'json' : 'html';
+  const format = getInterpolateFormat(codeLanguage);
   const interpolatedContent = useMemo(
     () => (view === 'write' ? '' : replaceVariables(draft, {}, format)),
     [view, draft, format, replaceVariables]
@@ -121,7 +121,9 @@ export function TextNGEditor({
 
       <div className={cx(styles.body, view === 'split' && styles.splitBody)}>
         {showEditor && (
-          <div className={cx(styles.pane, styles.editorPane)}>
+          // Outside interactions (Save, Apply, Back) blur the editor on mousedown,
+          // so a pending draft is committed before anything reads the options.
+          <div className={cx(styles.pane, styles.editorPane)} onBlur={commitDraft}>
             <CodeMirrorEditor
               value={draft}
               onChange={setDraft}

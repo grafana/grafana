@@ -238,5 +238,33 @@ describe('TextNGPanel', () => {
       expect(screen.queryByTestId('TextNGEditor')).not.toBeInTheDocument();
       expect(screen.getByTestId('TextNGPanel-converted-content')).toBeInTheDocument();
     });
+
+    it('shows the edited content immediately after leaving edit mode', async () => {
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      const props = Object.assign({}, defaultProps, {
+        options: { content: '# Hello', mode: TextMode.Markdown },
+      });
+
+      const { rerender } = render(
+        <PanelContextProvider value={{ app: CoreApp.PanelEditor } as PanelContext}>
+          <TextNGPanel {...props} />
+        </PanelContextProvider>
+      );
+      expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
+
+      // Content was edited while the inline editor owned rendering; going back
+      // to the dashboard must show it right away, not after the debounce.
+      const edited = Object.assign({}, props, {
+        options: { content: '# Edited', mode: TextMode.Markdown },
+      });
+      rerender(
+        <PanelContextProvider value={{ app: CoreApp.Dashboard } as PanelContext}>
+          <TextNGPanel {...edited} />
+        </PanelContextProvider>
+      );
+
+      expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML).toContain('Edited');
+      replaceVariablesMock.mockReset();
+    });
   });
 });

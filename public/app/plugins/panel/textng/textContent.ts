@@ -1,13 +1,12 @@
 import { renderTextPanelMarkdown, textUtil } from '@grafana/data';
 
-import { TextMode } from '../../schemas/textng/panelcfg.gen';
+import { CodeLanguage, TextMode } from '../../schemas/textng/panelcfg.gen';
 
-/**
- * Converts already-interpolated panel content to the HTML the panel renders
- * (or leaves it untouched for code mode). Shared by the dashboard render path
- * (TextNGPanel) and the edit-time preview (TextNGEditor) so what the author
- * previews is exactly what the panel shows.
- */
+export function getInterpolateFormat(codeLanguage?: CodeLanguage): 'json' | 'html' {
+  return codeLanguage === CodeLanguage.Json ? 'json' : 'html';
+}
+
+/** Shared by the panel and the edit-time preview so they can't diverge. */
 export function transformContent(mode: TextMode, content: string, disableSanitizeHtml: boolean): string {
   if (!content) {
     return ' ';

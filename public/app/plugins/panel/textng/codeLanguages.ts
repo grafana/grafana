@@ -2,10 +2,7 @@ import { type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
 
 import { CodeLanguage } from '../../schemas/textng/panelcfg.gen';
 
-/**
- * Maps the panel's CodeLanguage option to the language names understood by
- * CodeMirrorEditor, which lazy-loads each language extension in its own chunk.
- */
+/** Maps the panel's CodeLanguage option to CodeMirrorEditor's lazy-loaded language names. */
 export function getCodeMirrorLanguage(codeLanguage?: CodeLanguage): CodeMirrorEditorLanguage | undefined {
   switch (codeLanguage) {
     case CodeLanguage.Go:

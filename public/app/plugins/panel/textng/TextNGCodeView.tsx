@@ -22,10 +22,6 @@ export interface TextNGCodeViewProps {
 export function TextNGCodeView({ content, language, showLineNumbers }: TextNGCodeViewProps) {
   const styles = useStyles2(getStyles);
 
-  // Only syntax highlighting and (optionally) line numbers: the editing-assist
-  // features make no sense read-only, and bracketMatching in particular
-  // decorates the bracket at the default cursor position (0) even when the
-  // view is unfocused, which reads as the first character being selected.
   const basicSetup = useMemo(
     () => ({
       lineNumbers: showLineNumbers,
@@ -62,8 +58,7 @@ export function TextNGCodeView({ content, language, showLineNumbers }: TextNGCod
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  // Mirrors the CodeMirror theme (font, line height, colors, content padding)
-  // so swapping in the loaded editor does not visibly shift the text.
+  // Mirrors the CodeMirror theme
   loadingFallback: css({
     margin: 0,
     padding: '4px 2px 4px 6px',

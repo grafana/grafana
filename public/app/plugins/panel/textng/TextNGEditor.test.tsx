@@ -195,6 +195,30 @@ describe('TextNGEditor', () => {
       // The commit is debounced so the dashboard is not re-rendered per keystroke.
       await waitFor(() => expect(onChange).toHaveBeenLastCalledWith('updated'));
     });
+
+    it('commits a pending draft when the editor loses focus', async () => {
+      const { onChange } = setup('initial', TextMode.Markdown);
+      await enterWriteMode();
+
+      const editor = screen.getByRole('textbox');
+      await userEvent.clear(editor);
+      await userEvent.type(editor, 'updated');
+
+      // Moving focus out (e.g. clicking Save/Apply) must persist the draft
+      // synchronously instead of waiting out the commit debounce.
+      await userEvent.tab();
+
+      expect(onChange).toHaveBeenLastCalledWith('updated');
+    });
+
+    it('interpolates with the json format when code language is json, regardless of mode', () => {
+      const replaceVariables = jest.fn((value: string) => value);
+      setup('# Hello', TextMode.Markdown, jest.fn(), false, CodeLanguage.Json, replaceVariables);
+
+      // Matches the panel render path, which keys the interpolation format off
+      // code.language alone.
+      expect(replaceVariables).toHaveBeenCalledWith('# Hello', {}, 'json');
+    });
   });
 
   describe('line numbers', () => {

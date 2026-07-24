@@ -10,7 +10,7 @@ import config from 'app/core/config';
 import { defaultCodeOptions, defaultOptions, type Options, TextMode } from '../../schemas/textng/panelcfg.gen';
 
 import { TextNGCodeView } from './TextNGCodeView';
-import { transformContent } from './textContent';
+import { getInterpolateFormat, transformContent } from './textContent';
 
 const TextNGEditor = lazy(() => import('./TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
 
@@ -29,6 +29,18 @@ export function TextNGPanel(props: Props) {
     mode: options.mode,
     content: transformContent(options.mode, interpolatedContent, config.disableSanitizeHtml),
   }));
+
+  // Recompute synchronously when leaving edit mode so pre-edit content never flashes.
+  const [wasEditing, setWasEditing] = useState(isEditing);
+  if (wasEditing !== isEditing) {
+    setWasEditing(isEditing);
+    if (!isEditing) {
+      setProcessed({
+        mode: options.mode,
+        content: transformContent(options.mode, interpolatedContent, config.disableSanitizeHtml),
+      });
+    }
+  }
 
   useDebounce(
     () => {
@@ -90,7 +102,7 @@ export function TextNGPanel(props: Props) {
 }
 
 function interpolateContent(options: Options, interpolate: InterpolateFunction): string {
-  return interpolate(options.content ?? '', {}, options.code?.language === 'json' ? 'json' : 'html');
+  return interpolate(options.content ?? '', {}, getInterpolateFormat(options.code?.language));
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
