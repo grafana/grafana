@@ -45,7 +45,6 @@ export const AnnotationTooltipCluster = ({
         timeZone,
         canEditAnnotations,
         canDeleteAnnotations,
-        // @ts-expect-error @todo https://github.com/grafana/grafana/issues/120097 - id is typed incorrectly as string but breaks annotation API
         onAnnotationDelete
       );
 
@@ -85,7 +84,6 @@ export const AnnotationTooltipCluster = ({
     timeZone,
     canEditAnnotations,
     canDeleteAnnotations,
-    // @ts-expect-error @todo https://github.com/grafana/grafana/issues/120097 - id is typed incorrectly as string but breaks annotation API
     onAnnotationDelete
   );
 

@@ -34,7 +34,8 @@ class LegacyAnnotationServer implements AnnotationServer {
   }
 
   update(annotation: AnnotationEvent) {
-    return getBackendSrv().put(`/api/annotations/${annotation.id}`, annotation);
+    const { id, ...rest } = annotation;
+    return getBackendSrv().put(`/api/annotations/${id}`, rest);
   }
 
   delete(annotation: AnnotationEvent) {
