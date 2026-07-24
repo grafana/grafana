@@ -23,7 +23,7 @@ func TestWriteJob_PreservesStatusAndLabels(t *testing.T) {
 			ResourceVersion: "42",
 		},
 		Spec:   provisioning.JobSpec{Repository: "my-repo"},
-		Status: provisioning.JobStatus{State: provisioning.JobStateSuccess, UpdateCount: 7},
+		Status: provisioning.JobStatus{State: provisioning.JobStateSuccess, ProgressUpdates: 7},
 	}
 
 	require.NoError(t, writer.WriteJob(context.Background(), job))
@@ -33,8 +33,8 @@ func TestWriteJob_PreservesStatusAndLabels(t *testing.T) {
 	require.Len(t, list.Items, 1)
 
 	historic := list.Items[0]
-	assert.Equal(t, int64(7), historic.Status.UpdateCount,
-		"historic job should preserve the number of updates the job went through")
+	assert.Equal(t, int64(7), historic.Status.ProgressUpdates,
+		"historic job should preserve the number of progress updates the job went through")
 	assert.Equal(t, provisioning.JobStateSuccess, historic.Status.State)
 	assert.Empty(t, historic.ResourceVersion, "historic job gets its own resource version")
 	assert.Equal(t, "my-repo", historic.Labels[LabelRepository])

@@ -11,10 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-func TestIntegrationProvisioning_HistoricJobsRecordUpdateCount(t *testing.T) {
+func TestIntegrationProvisioning_HistoricJobsRecordProgressUpdates(t *testing.T) {
 	helper := sharedHelper(t)
 
-	const repo = "historicjobs-updatecount-test"
+	const repo = "historicjobs-progressupdates-test"
 	testRepo := common.TestRepo{
 		Name:       repo,
 		SyncTarget: "folder",
@@ -49,8 +49,8 @@ func TestIntegrationProvisioning_HistoricJobsRecordUpdateCount(t *testing.T) {
 
 	// The job status is updated as it is processed, and the running total of those updates is
 	// carried over to the historic job so it stays observable after completion.
-	updateCount, found, err := unstructured.NestedInt64(historicJob.Object, "status", "updateCount")
+	progressUpdates, found, err := unstructured.NestedInt64(historicJob.Object, "status", "progressUpdates")
 	require.NoError(t, err)
-	require.True(t, found, "historic job status should record the update count")
-	require.Positive(t, updateCount, "a processed job should have been updated at least once")
+	require.True(t, found, "historic job status should record the number of progress updates")
+	require.Positive(t, progressUpdates, "a processed job should have been updated at least once")
 }
