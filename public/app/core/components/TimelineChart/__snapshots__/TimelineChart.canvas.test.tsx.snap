@@ -233,7 +233,7 @@ exports[`TimelineChart (canvas) Changes mode colors numeric series by thresholds
   {
     "props": {
       "maxWidth": null,
-      "text": "50+",
+      "text": "≥ 50",
       "x": 187,
       "y": 94,
     },
@@ -248,7 +248,7 @@ exports[`TimelineChart (canvas) Changes mode colors numeric series by thresholds
   {
     "props": {
       "maxWidth": null,
-      "text": "80+",
+      "text": "≥ 80",
       "x": 323,
       "y": 94,
     },
@@ -263,7 +263,7 @@ exports[`TimelineChart (canvas) Changes mode colors numeric series by thresholds
   {
     "props": {
       "maxWidth": null,
-      "text": "80+",
+      "text": "≥ 80",
       "x": 458,
       "y": 94,
     },
