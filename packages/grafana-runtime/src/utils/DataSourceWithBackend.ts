@@ -32,11 +32,11 @@ import {
   type StreamingFrameOptions,
 } from '../services';
 
+import { getDataSourceInstanceSettings } from './../unstable';
 import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
 import { isQueryServiceCompatible } from './qscheck';
 import { type BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 import { UserStorage } from './userStorage';
-import { getDataSourceInstanceSettings } from './../unstable'
 
 /**
  * @internal
@@ -170,57 +170,59 @@ class DataSourceWithBackend<
     const pluginIDs = new Set<string>();
     const dsUIDs = new Set<string>();
     const datasources: DataSourceInstanceSettings[] = [];
-    const queries: DataQuery[] = await Promise.all(targets.map(async (q) => {
-      let datasource = this.getRef();
-      let datasourceId = this.id;
-      let shouldApplyTemplateVariables = true;
+    const queries: DataQuery[] = await Promise.all(
+      targets.map(async (q) => {
+        let datasource = this.getRef();
+        let datasourceId = this.id;
+        let shouldApplyTemplateVariables = true;
 
-      if (isExpressionReference(q.datasource)) {
-        hasExpr = true;
+        if (isExpressionReference(q.datasource)) {
+          hasExpr = true;
+          return {
+            ...q,
+            datasource: ExpressionDatasourceRef,
+          };
+        }
+
+        if (q.datasource) {
+          const ds = await getDataSourceInstanceSettings(q.datasource, request.scopedVars);
+
+          if (!ds) {
+            throw new Error(`Unknown Datasource: ${JSON.stringify(q.datasource)}`);
+          }
+
+          datasources.push(ds);
+
+          const dsRef = ds.rawRef ?? getDataSourceRef(ds);
+          const dsId = ds.id;
+          if (dsRef.uid !== datasource.uid || datasourceId !== dsId) {
+            datasource = dsRef;
+            datasourceId = dsId;
+            // If the query is using a different datasource, we would need to retrieve the datasource
+            // instance (async) and apply the template variables but it seems it's not necessary for now.
+            shouldApplyTemplateVariables = false;
+          }
+        } else {
+          // if there is no per-query datasource, we use the implicit datasource
+          datasources.push(this.datasourceInstanceSettings);
+        }
+        if (datasource.type?.length) {
+          pluginIDs.add(datasource.type);
+        }
+        if (datasource.uid?.length) {
+          dsUIDs.add(datasource.uid);
+        }
+
         return {
-          ...q,
-          datasource: ExpressionDatasourceRef,
+          ...(shouldApplyTemplateVariables ? this.applyTemplateVariables(q, request.scopedVars, request.filters) : q),
+          datasource,
+          datasourceId, // deprecated!
+          intervalMs,
+          maxDataPoints,
+          queryCachingTTL,
         };
-      }
-
-      if (q.datasource) {
-        const ds = await getDataSourceInstanceSettings(q.datasource, request.scopedVars);
-
-        if (!ds) {
-          throw new Error(`Unknown Datasource: ${JSON.stringify(q.datasource)}`);
-        }
-
-        datasources.push(ds);
-
-        const dsRef = ds.rawRef ?? getDataSourceRef(ds);
-        const dsId = ds.id;
-        if (dsRef.uid !== datasource.uid || datasourceId !== dsId) {
-          datasource = dsRef;
-          datasourceId = dsId;
-          // If the query is using a different datasource, we would need to retrieve the datasource
-          // instance (async) and apply the template variables but it seems it's not necessary for now.
-          shouldApplyTemplateVariables = false;
-        }
-      } else {
-        // if there is no per-query datasource, we use the implicit datasource
-        datasources.push(this.datasourceInstanceSettings);
-      }
-      if (datasource.type?.length) {
-        pluginIDs.add(datasource.type);
-      }
-      if (datasource.uid?.length) {
-        dsUIDs.add(datasource.uid);
-      }
-
-      return {
-        ...(shouldApplyTemplateVariables ? this.applyTemplateVariables(q, request.scopedVars, request.filters) : q),
-        datasource,
-        datasourceId, // deprecated!
-        intervalMs,
-        maxDataPoints,
-        queryCachingTTL,
-      };
-    }));
+      })
+    );
 
     const body = {
       queries,
@@ -314,12 +316,15 @@ class DataSourceWithBackend<
                 return toStreamingDataResponse(rsp, request, this.streamOptionsProvider);
               }
               return of(rsp);
+            }),
+            // Only fetch responses are turned into a response object here. toDataQueryResponse cannot
+            // map a plain thrown Error (e.g. an unknown datasource from createBackendRequest) and would
+            // silently produce an empty success, so those errors must propagate to the caller instead.
+            catchError((err) => {
+              return of(toDataQueryResponse(err));
             })
           )
-      ),
-      catchError((err) => {
-        return of(toDataQueryResponse(err));
-      })
+      )
     );
   }
 
