@@ -30,7 +30,8 @@ import { useDispatch } from 'app/types/store';
 
 import { buildNavModel } from './state/navModel';
 
-const rolesEnabled =
+// Evaluated lazily so importing this module doesn't touch contextSrv before it's initialised.
+const rolesEnabled = () =>
   contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList);
 
 export const canUpdateRoles = () =>
@@ -60,11 +61,11 @@ export const useGetTeams = ({
   }, [legacyResponse.data?.teams]);
 
   const teamsRolesResponse = useListTeamsRolesQuery(
-    rolesEnabled && teamIds.length ? { rolesSearchQuery: { teamIds } } : skipToken
+    rolesEnabled() && teamIds.length ? { rolesSearchQuery: { teamIds } } : skipToken
   );
 
   const teamsWithRoles = useMemo(() => {
-    if (!rolesEnabled || (rolesEnabled && teamsRolesResponse.isLoading)) {
+    if (!rolesEnabled() || teamsRolesResponse.isLoading) {
       return legacyResponse.data?.teams || [];
     }
     return (legacyResponse.data?.teams || []).map((team) => {
@@ -79,7 +80,7 @@ export const useGetTeams = ({
 
   return {
     ...legacyResponse,
-    isLoading: legacyResponse.isLoading || (rolesEnabled ? teamsRolesResponse.isLoading : false),
+    isLoading: legacyResponse.isLoading || (rolesEnabled() ? teamsRolesResponse.isLoading : false),
     data: {
       teams: teamsWithRoles,
       totalCount: legacyResponse.data?.totalCount,
@@ -156,8 +157,8 @@ function teamDtoToTeam(dto: TeamDto): Team {
 /**
  * Transform legacy TeamDto[] to IAM search hit shape.
  */
-function legacySearchToIamSearchHits(teams: TeamDto[]): Array<{ title: string; name: string }> {
-  return teams.map((t) => ({ title: t.name, name: t.uid }));
+function legacySearchToIamSearchHits(teams: TeamDto[]): Array<{ title: string; name: string; email: string }> {
+  return teams.map((t) => ({ title: t.name, name: t.uid, email: t.email ?? '' }));
 }
 
 const appPlatformIamEnabled = () => Boolean(config.featureToggles.kubernetesTeamsApi);
@@ -224,13 +225,16 @@ export function useLazySearchTeamsQuery() {
   const [iamTrigger, iamResult] = useLazyGetSearchTeamsQueryIam();
   const [legacyTrigger, legacyResult] = useLazySearchTeamsQueryLegacy();
 
-  const legacyTriggerWrapped = (args: { query?: string }, preferCacheValue?: boolean) =>
-    legacyTrigger({ query: args.query }, preferCacheValue).then((result) => ({
-      ...result,
-      data: result.data
-        ? { hits: legacySearchToIamSearchHits(result.data.teams ?? []), totalHits: result.data.totalCount ?? 0 }
-        : undefined,
-    }));
+  const legacyTriggerWrapped = useCallback(
+    (args: { query?: string }, preferCacheValue?: boolean) =>
+      legacyTrigger({ query: args.query }, preferCacheValue).then((result) => ({
+        ...result,
+        data: result.data
+          ? { hits: legacySearchToIamSearchHits(result.data.teams ?? []), totalHits: result.data.totalCount ?? 0 }
+          : undefined,
+      })),
+    [legacyTrigger]
+  );
 
   if (enabled) {
     return [iamTrigger, iamResult] as const;
