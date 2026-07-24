@@ -275,7 +275,7 @@ export { getSeriesTimeStep, hasMsResolution } from './utils/series';
 export { BinaryOperationID, type BinaryOperation, binaryOperators } from './utils/binaryOperators';
 export { UnaryOperationID, type UnaryOperation, unaryOperators } from './utils/unaryOperators';
 export { NodeGraphDataFrameFieldNames } from './utils/nodeGraph';
-export { toOption } from './utils/selectUtils';
+export { toOption, toOptions, enumToOptions } from './utils/selectUtils';
 export * as arrayUtils from './utils/arrayUtils';
 export { store, Store } from './utils/store';
 export { LocalStorageValueProvider } from './utils/LocalStorageValueProvider';
