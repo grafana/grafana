@@ -88,7 +88,8 @@ content_security_policy = true
 # Set the Content Security Policy template that is used when the Content-Security-Policy header is added to your requests.
 # $NONCE in the template includes a random nonce.
 # $ROOT_PATH is server.root_url without the protocol.
-content_security_policy_template = """script-src 'self' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic' $NONCE;object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src * data:;base-uri 'self';connect-src 'self' grafana.com ws://$ROOT_PATH wss://$ROOT_PATH;manifest-src 'self';media-src 'none';form-action 'self';"""
+# Note: Only the secure WebSocket scheme (wss://) is used in connect-src; the insecure WebSocket scheme is intentionally omitted.
+content_security_policy_template = """script-src 'self' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic' $NONCE;object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src * data:;base-uri 'self';connect-src 'self' grafana.com wss://$ROOT_PATH;manifest-src 'self';media-src 'none';form-action 'self';"""
 ```
 
 ### Enable trusted types

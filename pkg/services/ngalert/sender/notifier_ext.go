@@ -255,81 +255,84 @@ func (n *Manager) sendAll(alerts ...*Alert) bool {
 			amAlerts = alerts
 		)
 
-		ams.mtx.RLock()
+		shouldReturn, returnVal := func() (bool, bool) {
+			ams.mtx.RLock()
+			defer ams.mtx.RUnlock()
 
-		if len(ams.ams) == 0 {
-			ams.mtx.RUnlock()
-			continue
-		}
-
-		if len(ams.cfg.AlertRelabelConfigs) > 0 {
-			amAlerts = relabelAlerts(ams.cfg.AlertRelabelConfigs, labels.Labels{}, alerts)
-			if len(amAlerts) == 0 {
-				ams.mtx.RUnlock()
-				continue
+			if len(ams.ams) == 0 {
+				return false, false
 			}
-			// We can't use the cached values from previous iteration.
-			cachedPayload = nil
-		}
 
-		switch ams.cfg.APIVersion {
-		case config.AlertmanagerAPIVersionV2:
-			{
-				if cachedPayload == nil {
-					openAPIAlerts := alertsToOpenAPIAlerts(amAlerts)
+			if len(ams.cfg.AlertRelabelConfigs) > 0 {
+				amAlerts = relabelAlerts(ams.cfg.AlertRelabelConfigs, labels.Labels{}, alerts)
+				if len(amAlerts) == 0 {
+					return false, false
+				}
+				// We can't use the cached values from previous iteration.
+				cachedPayload = nil
+			}
 
-					cachedPayload, err = json.Marshal(openAPIAlerts)
-					if err != nil {
-						n.logger.Error("Encoding alerts for Alertmanager API v2 failed", "err", err)
-						ams.mtx.RUnlock()
-						return false
+			switch ams.cfg.APIVersion {
+			case config.AlertmanagerAPIVersionV2:
+				{
+					if cachedPayload == nil {
+						openAPIAlerts := alertsToOpenAPIAlerts(amAlerts)
+
+						cachedPayload, err = json.Marshal(openAPIAlerts)
+						if err != nil {
+							n.logger.Error("Encoding alerts for Alertmanager API v2 failed", "err", err)
+							return true, false
+						}
 					}
+
+					payload = cachedPayload
 				}
-
-				payload = cachedPayload
-			}
-		default:
-			{
-				n.logger.Error(
-					fmt.Sprintf("Invalid Alertmanager API version '%v', expected one of '%v'", ams.cfg.APIVersion, config.SupportedAlertmanagerAPIVersions),
-					"err", err,
-				)
-				ams.mtx.RUnlock()
-				return false
-			}
-		}
-
-		if len(ams.cfg.AlertRelabelConfigs) > 0 {
-			// We can't use the cached values on the next iteration.
-			cachedPayload = nil
-		}
-
-		// Being here means len(ams.ams) > 0
-		amSetCovered.Store(k, false)
-		for _, am := range ams.ams {
-			wg.Add(1)
-
-			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(ams.cfg.Timeout))
-			defer cancel()
-
-			// Extension: added headers and dataSourceUID parameters/labels.
-			go func(ctx context.Context, k string, client *http.Client, url string, payload []byte, count int, headers http.Header, dsUID string) {
-				err := n.sendOne(ctx, client, url, payload, headers)
-				if err != nil {
-					n.logger.Error("Error sending alerts", "alertmanager", url, "data_source_uid", dsUID, "count", count, "err", err)
-					n.metrics.errors.WithLabelValues(url, dsUID).Add(float64(count))
-				} else {
-					amSetCovered.CompareAndSwap(k, false, true)
+			default:
+				{
+					n.logger.Error(
+						fmt.Sprintf("Invalid Alertmanager API version '%v', expected one of '%v'", ams.cfg.APIVersion, config.SupportedAlertmanagerAPIVersions),
+						"err", err,
+					)
+					return true, false
 				}
+			}
 
-				n.metrics.latency.WithLabelValues(url, dsUID).Observe(time.Since(begin).Seconds())
-				n.metrics.sent.WithLabelValues(url, dsUID).Add(float64(count))
+			if len(ams.cfg.AlertRelabelConfigs) > 0 {
+				// We can't use the cached values on the next iteration.
+				cachedPayload = nil
+			}
 
-				wg.Done()
-			}(ctx, k, ams.client, am.url().String(), payload, len(amAlerts), ams.headers, ams.dataSourceUID)
+			// Being here means len(ams.ams) > 0
+			amSetCovered.Store(k, false)
+			for _, am := range ams.ams {
+				wg.Add(1)
+
+				ctx, cancel := context.WithTimeout(context.Background(), time.Duration(ams.cfg.Timeout))
+				defer cancel()
+
+				// Extension: added headers and dataSourceUID parameters/labels.
+				go func(ctx context.Context, k string, client *http.Client, url string, payload []byte, count int, headers http.Header, dsUID string) {
+					err := n.sendOne(ctx, client, url, payload, headers)
+					if err != nil {
+						n.logger.Error("Error sending alerts", "alertmanager", url, "data_source_uid", dsUID, "count", count, "err", err)
+						n.metrics.errors.WithLabelValues(url, dsUID).Add(float64(count))
+					} else {
+						amSetCovered.CompareAndSwap(k, false, true)
+					}
+
+					n.metrics.latency.WithLabelValues(url, dsUID).Observe(time.Since(begin).Seconds())
+					n.metrics.sent.WithLabelValues(url, dsUID).Add(float64(count))
+
+					wg.Done()
+				}(ctx, k, ams.client, am.url().String(), payload, len(amAlerts), ams.headers, ams.dataSourceUID)
+			}
+
+			return false, false
+		}()
+
+		if shouldReturn {
+			return returnVal
 		}
-
-		ams.mtx.RUnlock()
 	}
 
 	wg.Wait()

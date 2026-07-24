@@ -37,7 +37,7 @@ async function runTestCoverageByCodeowner(codeownerName, noOpen = process.env.CI
   return new Promise((resolve, reject) => {
     const child = cp.spawn('jest', [`--config=${JEST_CONFIG_PATH}`], {
       stdio: 'inherit',
-      shell: true,
+      shell: false,
     });
 
     child.on('error', (error) => {

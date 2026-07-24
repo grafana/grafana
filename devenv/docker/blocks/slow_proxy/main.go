@@ -28,6 +28,16 @@ func main() {
 		log.Fatalf("failed to parse SLEEP_DURATION: %v", err)
 	}
 
+	tlsCertFile := os.Getenv("TLS_CERT_FILE")
+	if tlsCertFile == "" {
+		log.Fatalf("missing env-variable TLS_CERT_FILE")
+	}
+
+	tlsKeyFile := os.Getenv("TLS_KEY_FILE")
+	if tlsKeyFile == "" {
+		log.Fatalf("missing env-variable TLS_KEY_FILE")
+	}
+
 	originURL, _ := url.Parse(origin)
 	proxy := httputil.NewSingleHostReverseProxy(originURL)
 
@@ -47,5 +57,5 @@ func main() {
 		proxy.ServeHTTP(w, r)
 	})
 
-	log.Fatal(http.ListenAndServe(":3011", nil))
+	log.Fatal(http.ListenAndServeTLS(":3011", tlsCertFile, tlsKeyFile, nil))
 }

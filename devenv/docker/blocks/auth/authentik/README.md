@@ -90,7 +90,7 @@ You also need to setup Authentik SAML (above) for Grafana login to work for the 
 name = authentik
 enabled = true
 client_id = 43e8d2746fe2e508325a23cdf816d6ddd12e94f1
-client_secret = e50440f14a010fd69dfed85bc6c071653f22c73e2c6c8d7ba96a936937d92040936b7e5a4bcc1bf40d5cf1dc019b1db327a1a00e2183c53471fb7530d4a09d7e
+client_secret = <your-client-secret>
 scopes = openid email profile
 auth_url = http://localhost:9000/application/o/authorize/
 token_url = http://localhost:9000/application/o/token/

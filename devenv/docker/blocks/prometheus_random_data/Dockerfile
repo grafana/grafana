@@ -10,4 +10,5 @@ FROM scratch
 LABEL maintainer="The Prometheus Authors <prometheus-developers@googlegroups.com>"
 COPY --from=builder /go/bin/random .
 EXPOSE 8080
+USER 65534
 ENTRYPOINT ["/random"]

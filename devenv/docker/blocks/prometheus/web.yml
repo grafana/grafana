@@ -1,3 +1,4 @@
 basic_auth_users:
-  # username: admin, password: admin
-  admin: $2a$12$HvzPxejEHakuEIjxQ8uQrOaZ57GmFznB6M/w.85MpdEtSFFOOyDgW
+  # Generate a bcrypt hash for your chosen password and set it here before deploying.
+  # Example (do NOT use default/weak passwords): htpasswd -nBC 12 "" | tr -d ':\n'
+  # admin: <REPLACE_WITH_BCRYPT_HASH>

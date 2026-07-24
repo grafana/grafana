@@ -105,7 +105,7 @@ Accept: application/json
 Content-Type: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
-{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aGlzIjoiaXMiLCJub3QiOiJhIiwidmFsaWQiOiJsaWNlbnNlIn0.bxDzxIoJlYMwiEYKYT_l2s42z0Y30tY-6KKoyz9RuLE"}
+{"token":"<YOUR_LICENSE_JWT_TOKEN>"}
 ```
 
 **Example response:**

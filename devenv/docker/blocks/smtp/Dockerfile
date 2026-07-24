@@ -8,6 +8,12 @@ RUN \
 
 COPY bootstrap.sh /tmp/bootstrap.sh
 
+RUN useradd -r -s /sbin/nologin snmpuser && \
+    chown snmpuser:snmpuser /tmp/bootstrap.sh && \
+    chmod 550 /tmp/bootstrap.sh
+
 EXPOSE 161
+
+USER snmpuser
 
 ENTRYPOINT ["/tmp/bootstrap.sh"]

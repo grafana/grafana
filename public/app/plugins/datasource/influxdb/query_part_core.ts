@@ -63,7 +63,9 @@ export class QueryPart {
     if (strValue === '' && this.def.params[index].optional) {
       this.params.splice(index, 1);
     } else {
-      this.params[index] = strValue;
+      if (Number.isInteger(index) && index >= 0) {
+        this.params[index] = strValue;
+      }
     }
 
     this.part.params = this.params;

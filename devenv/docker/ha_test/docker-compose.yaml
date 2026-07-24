@@ -3,10 +3,13 @@ version: "2.1"
 services:
   nginx-proxy:
     image: jwilder/nginx-proxy
+    read_only: true
     ports:
       - "80:80"
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       db:
         condition: service_healthy
@@ -17,6 +20,8 @@ services:
 
   db:
     image: mysql:8.0.32
+    security_opt:
+      - no-new-privileges:true
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
       MYSQL_DATABASE: grafana
@@ -25,6 +30,11 @@ services:
     command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --innodb_monitor_enable=all, --max-connections=1001]
     ports:
       - "3306:3306"
+    read_only: true
+    tmpfs:
+      - /var/lib/mysql
+      - /tmp
+      - /var/run/mysqld
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
       timeout: 10s
@@ -32,6 +42,8 @@ services:
 
   mysqld-exporter:
     image: prom/mysqld-exporter
+    security_opt:
+      - no-new-privileges:true
     environment:
       - DATA_SOURCE_NAME=root:rootpass@(db:3306)/
     ports:

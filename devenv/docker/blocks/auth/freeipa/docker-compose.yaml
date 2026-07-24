@@ -7,6 +7,7 @@ services:
   freeipa:
     image: freeipa/freeipa-server:fedora-29
     container_name: freeipa
+    read_only: true
     stdin_open: true
     tty: true
     sysctls:
@@ -46,6 +47,8 @@ services:
       - "9443:9443"
       - "9444:9444"
       - "9445:9445"
+    security_opt:
+      - no-new-privileges:true
     tmpfs:
       - /run
       - /tmp

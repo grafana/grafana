@@ -3,10 +3,10 @@ package connection
 import (
 	"cmp"
 	"context"
+	"crypto/rand"
+	"encoding/binary"
 	"fmt"
-	"math/rand"
 	"sync"
-	"time"
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
@@ -77,8 +77,16 @@ var mtx sync.Mutex
 
 var node *snowflake.Node
 
-var uidrand = rand.New(rand.NewSource(time.Now().UnixNano()))
 var hexLetters = []rune("abcdef")
+
+// cryptoIntn returns a cryptographically secure random integer in [0, n).
+func cryptoIntn(n int) int {
+	var b [8]byte
+	if _, err := rand.Read(b[:]); err != nil {
+		panic("crypto/rand unavailable: " + err.Error())
+	}
+	return int(binary.BigEndian.Uint64(b[:]) % uint64(n))
+}
 
 // generateShortUID will generate a UUID that can also be a k8s name
 // it is guaranteed to have a character as the first letter
@@ -89,7 +97,7 @@ func generateShortUID() string {
 
 	if node == nil {
 		// ignoring the error happens when input outside 0-1023
-		node, _ = snowflake.NewNode(rand.Int63n(1024))
+		node, _ = snowflake.NewNode(int64(cryptoIntn(1024)))
 	}
 
 	// Use UUIDs if snowflake failed (should be never)
@@ -98,17 +106,17 @@ func generateShortUID() string {
 		if err != nil {
 			// This should never happen... but this seems better than a panic
 			for i := range uid {
-				uid[i] = byte(uidrand.Intn(255))
+				uid[i] = byte(cryptoIntn(255))
 			}
 		}
 		uuid := uid.String()
 		if rune(uuid[0]) < rune('a') {
-			uuid = string(hexLetters[uidrand.Intn(len(hexLetters))]) + uuid[1:]
+			uuid = string(hexLetters[cryptoIntn(len(hexLetters))]) + uuid[1:]
 		}
 		return uuid
 	}
 
-	return string(hexLetters[uidrand.Intn(len(hexLetters))]) + // start with a letter
+	return string(hexLetters[cryptoIntn(len(hexLetters))]) + // start with a letter
 		node.Generate().Base36() +
-		string(hexLetters[uidrand.Intn(len(hexLetters))]) // a bit more entropy
+		string(hexLetters[cryptoIntn(len(hexLetters))]) // a bit more entropy
 }

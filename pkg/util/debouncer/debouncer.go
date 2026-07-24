@@ -226,6 +226,7 @@ func (g *Group[T]) Stop() {
 
 func (g *Group[T]) processValue(key T) {
 	g.debouncersMu.Lock()
+	defer g.debouncersMu.Unlock()
 	deb, ok := g.debouncers[key]
 	if !ok {
 		deb = newDebouncer[T](g.minWait, g.maxWait, g.clock, key, func(v T) {
@@ -244,7 +245,6 @@ func (g *Group[T]) processValue(key T) {
 		}()
 		g.debouncers[key] = deb
 	}
-	g.debouncersMu.Unlock()
 
 	deb.reset()
 }

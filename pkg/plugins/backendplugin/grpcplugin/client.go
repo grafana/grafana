@@ -1,8 +1,11 @@
 package grpcplugin
 
 import (
+	"errors"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"regexp"
 	"runtime"
 
 	"github.com/hashicorp/go-hclog"
@@ -56,6 +59,23 @@ func newClientTracerProvider(tracer trace.Tracer) trace.TracerProvider {
 	return &clientTracerProvider{tracer: tracer}
 }
 
+// illegalArgChars matches shell metacharacters that should never appear in
+// plugin executable arguments. Because exec.Command does not invoke a shell,
+// these characters are not inherently dangerous at the OS level, but their
+// presence almost certainly indicates a misconfiguration or injection attempt.
+var illegalArgChars = regexp.MustCompile(`[;&|` + "`" + `$<>(){}]`)
+
+// validateExecArgs returns an error if any argument contains characters that
+// could be interpreted as shell metacharacters.
+func validateExecArgs(args []string) error {
+	for _, arg := range args {
+		if illegalArgChars.MatchString(arg) {
+			return errors.New("plugin executable argument contains invalid characters")
+		}
+	}
+	return nil
+}
+
 func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logger, tracer trace.Tracer) (*goplugin.ClientConfig, error) {
 	executablePath := descriptor.executablePath
 	skipHostEnvVars := descriptor.skipHostEnvVars
@@ -91,9 +111,20 @@ func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logge
 		logger.Debug("Using runner mode", "os", runtime.GOOS, "executablePath", executablePath)
 	} else {
 		logger.Debug("Using process mode", "os", runtime.GOOS, "executablePath", executablePath)
-		// We can ignore gosec G201 here, since the dynamic part of executablePath comes from the plugin definition
-		// nolint:gosec
-		cfg.Cmd = exec.Command(executablePath, descriptor.executableArgs...)
+		// filepath.Clean removes any path traversal sequences before the path is used in exec.Command.
+		// We additionally require the path to be absolute to prevent ambiguous or injected relative paths.
+		cleanPath := filepath.Clean(executablePath)
+		if !filepath.IsAbs(cleanPath) {
+			return nil, errors.New("plugin executable path must be an absolute path")
+		}
+		if err := validateExecArgs(descriptor.executableArgs); err != nil {
+			return nil, err
+		}
+		// executablePath has been cleaned and verified to be an absolute path above.
+		// executableArgs have been validated to contain no shell metacharacters.
+		// exec.Command does not invoke a shell, so arguments are passed directly
+		// to the OS without further interpretation, preventing command injection.
+		cfg.Cmd = exec.Command(cleanPath, descriptor.executableArgs...) //nolint:gosec // nosemgrep: dangerous-exec-command
 		cfg.Cmd.Env = env
 	}
 

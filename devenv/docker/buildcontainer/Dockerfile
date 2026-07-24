@@ -17,4 +17,9 @@ ENV PATH=/go/bin:$PATH
 
 WORKDIR /go/src/github.com/grafana/grafana
 
+RUN useradd -ms /bin/bash grafana && \
+    chown -R grafana:grafana /go/src/github.com/grafana/grafana
+
+USER grafana
+
 CMD ["go", "run", "build.go", "build"]

@@ -278,6 +278,8 @@ devenv/blocks/auth/signer/keys/ec_private_key.pem
 
 devenv/docker/blocks/auth/signer/keys/ec_private_key.pem
 
+devenv/docker/blocks/auth/authentik/key.pem
+
 # Spec-kit files shouldn't be committed without a major design process
 .specs
 .playwright-mcp/

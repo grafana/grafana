@@ -9,4 +9,6 @@ RUN go build -o /bin webhook-listener.go
 
 ENV PORT=8080
 
+USER nobody
+
 ENTRYPOINT [ "/bin/webhook-listener" ]

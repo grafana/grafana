@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -116,19 +117,22 @@ func (ah *NotificationHandler) GetNotifications(w http.ResponseWriter, _ *http.R
 	defer ah.m.Unlock()
 	w.Header().Set("Content-Type", "application/json")
 
-	res, err := json.MarshalIndent(map[string]any{"stats": ah.stats, "history": ah.hist}, "", "\t")
+	payload := map[string]any{"stats": ah.stats, "history": ah.hist}
+
+	// Pre-marshal only for logging; the encoder writes directly to the response.
+	res, err := json.MarshalIndent(payload, "", "\t")
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		//nolint:errcheck
-		w.Write([]byte(`{"error":"failed to marshal alerts"}`))
+		if encErr := json.NewEncoder(w).Encode(map[string]string{"error": "failed to marshal alerts"}); encErr != nil {
+			log.Printf("failed to write error response: %v\n", encErr)
+		}
 		log.Printf("failed to marshal alerts: %v\n", err)
 		return
 	}
 
 	log.Printf("requested current state\n%v\n", string(res))
 
-	_, err = w.Write(res)
-	if err != nil {
+	if err := json.NewEncoder(w).Encode(payload); err != nil {
 		log.Printf("failed to write response: %v\n", err)
 	}
 }
@@ -143,7 +147,16 @@ func main() {
 	http.HandleFunc("/notify", ah.Notify)
 	http.HandleFunc("/notifications", ah.GetNotifications)
 
+	certFile := os.Getenv("TLS_CERT_FILE")
+	keyFile := os.Getenv("TLS_KEY_FILE")
+	if certFile == "" {
+		certFile = "/etc/webhook/tls/server.crt"
+	}
+	if keyFile == "" {
+		keyFile = "/etc/webhook/tls/server.key"
+	}
+
 	log.Println("Listening")
 	//nolint:errcheck
-	http.ListenAndServe("0.0.0.0:8080", nil)
+	http.ListenAndServeTLS("0.0.0.0:8080", certFile, keyFile, nil)
 }

@@ -4,6 +4,8 @@ services:
   db:
     image: mysql:8.0.32
     platform: linux/x86_64
+    security_opt:
+      - no-new-privileges:true
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
       MYSQL_DATABASE: grafana
@@ -18,27 +20,36 @@ services:
       retries: 10
   mysqld-exporter:
     image: prom/mysqld-exporter
+    read_only: true
     environment:
       - DATA_SOURCE_NAME=root:rootpass@(db:3306)/
     ports:
       - 9104
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       db:
         condition: service_healthy
   prometheus:
     image: prom/prometheus:v2.4.2
+    read_only: true
     volumes:
       - ./prometheus/:/etc/prometheus/
     environment:
       - VIRTUAL_HOST=prometheus.loc
     ports:
       - 9090
+    security_opt:
+      - no-new-privileges:true
   nginx-proxy:
     image: jwilder/nginx-proxy
+    read_only: true
     ports:
       - "80:80"
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       db:
         condition: service_healthy
@@ -86,6 +97,7 @@ services:
         condition: service_healthy
   webhook:
     image: webhook-receiver
+    read_only: true
     build:
       context: .
       dockerfile: Dockerfile
@@ -93,3 +105,5 @@ services:
       - "18081:8080"
     volumes:
       - "./logs/webhook:/tmp/logs:rw"
+    security_opt:
+      - no-new-privileges:true

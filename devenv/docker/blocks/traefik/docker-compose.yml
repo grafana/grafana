@@ -3,6 +3,8 @@ version: '3'
 services:
   traefik:
     image: traefik:v2.1
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - './traefik.yml:/etc/traefik/traefik.yml'
       - './configs:/etc/traefik/configs'
@@ -14,6 +16,8 @@ services:
 
   grafana-subpath:
     image: grafana/grafana:latest
+    security_opt:
+      - no-new-privileges:true
     environment:
       - GF_SERVER_ROOT_URL=/grafana
       - GF_SERVER_SERVE_FROM_SUB_PATH=true

@@ -1,9 +1,10 @@
 package main
 
 import (
+	"crypto/rand"
 	"fmt"
 	"log"
-	"math/rand/v2"
+	"math/big"
 	"net/http"
 	"strconv"
 	"time"
@@ -23,9 +24,12 @@ func randomValues(max int) func() (string, bool) {
 
 func staticList(input []string) func() string {
 	return func() string {
-		i := rand.IntN(len(input))
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(input))))
+		if err != nil {
+			log.Fatalf("failed to generate random index: %v", err)
+		}
 
-		return input[i]
+		return input[n.Int64()]
 	}
 }
 
@@ -117,7 +121,7 @@ func main() {
 		}
 	}()
 
-	fmt.Printf("Server started at :9111\n")
+	fmt.Printf("Server started at :9111 (HTTPS)\n")
 
-	log.Fatal(http.ListenAndServe(":9111", nil))
+	log.Fatal(http.ListenAndServeTLS(":9111", "server.crt", "server.key", nil))
 }

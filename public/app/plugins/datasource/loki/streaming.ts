@@ -89,7 +89,7 @@ export function doLokiChannelStream(
 }
 
 export const convertToWebSocketUrl = (url: string) => {
-  const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+  const protocol = 'wss://';
   let backend = `${protocol}${window.location.host}${config.appSubUrl}`;
   if (backend.endsWith('/')) {
     backend = backend.slice(0, -1);

@@ -171,11 +171,7 @@ datasources:
       universeDomain: googleapis.com
     secureJsonData:
       privateKey: |
-        -----BEGIN PRIVATE KEY-----
-        POSEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCb1u1Srw8ICYHS
-        ...
-        yA+23427282348234=
-        -----END PRIVATE KEY-----
+        <your-private-key-contents-here>
 ```
 
 **Using the JWT (Service Account private key path) authentication type:**

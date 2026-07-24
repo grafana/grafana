@@ -1,4 +1,4 @@
-const http = require('http');
+const http = require('https');
 
 if (process.argv.length !== 3) {
   throw new Error('invalid command line: use node sendLogs.js ELASTIC_BASE_URL');

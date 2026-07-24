@@ -1,9 +1,10 @@
 package main
 
 import (
+	"crypto/rand"
 	"fmt"
 	"log"
-	"math/rand/v2"
+	"math/big"
 	"net/http"
 	"strconv"
 	"time"
@@ -24,9 +25,12 @@ func randomValues(max int) func() (string, bool) {
 
 func staticList(input []string) func() string {
 	return func() string {
-		i := rand.IntN(len(input))
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(input))))
+		if err != nil {
+			panic(err)
+		}
 
-		return input[i]
+		return input[n.Int64()]
 	}
 }
 
