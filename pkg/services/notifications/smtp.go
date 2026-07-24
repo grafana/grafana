@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/mail"
 	"net/textproto"
+	"runtime/debug"
 	"strconv"
 	"strings"
 
@@ -20,11 +21,14 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	gomail "gopkg.in/mail.v2"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/notifications")
+
+var smtpLogger = log.New("notifications.smtp")
 
 type SmtpClient struct {
 	cfg setting.SmtpSettings
@@ -143,18 +147,36 @@ func (sc *SmtpClient) setFiles(
 	}
 
 	for _, file := range msg.EmbeddedContents {
-		m.Embed(file.Name, gomail.SetCopyFunc(func(writer io.Writer) error {
-			_, err := writer.Write(file.Content)
-			return err
-		}))
+		m.Embed(file.Name, gomail.SetCopyFunc(copyContentFunc(file.Name, file.Content)))
 	}
 
 	for _, file := range msg.AttachedFiles {
-		file := file
-		m.Attach(file.Name, gomail.SetCopyFunc(func(writer io.Writer) error {
-			_, err := writer.Write(file.Content)
-			return err
-		}))
+		m.Attach(file.Name, gomail.SetCopyFunc(copyContentFunc(file.Name, file.Content)))
+	}
+}
+
+// copyContentFunc copies content to the writer supplied by mail.v2, turning
+// panics into errors. mail.v2's base64LineWriter does not nil-guard its
+// underlying writer and can panic mid-encoding; the copy runs on the caller's
+// notification goroutine, so an unrecovered panic there takes down the whole
+// process. Recovering keeps the failure local to this one message.
+func copyContentFunc(name string, content []byte) func(io.Writer) error {
+	return func(writer io.Writer) (err error) {
+		defer func() {
+			if r := recover(); r != nil {
+				smtpLogger.Error("Panic while writing email attachment", "file", name, "error", r, "stack", string(debug.Stack()))
+				switch theErr := r.(type) {
+				case error:
+					err = fmt.Errorf("panic while writing email attachment %q: %w", name, theErr)
+				case string:
+					err = fmt.Errorf("panic while writing email attachment %q: %s", name, theErr)
+				default:
+					err = fmt.Errorf("panic while writing email attachment %q: %v", name, r)
+				}
+			}
+		}()
+		_, err = writer.Write(content)
+		return err
 	}
 }
 
