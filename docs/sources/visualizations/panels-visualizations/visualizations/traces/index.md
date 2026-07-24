@@ -54,7 +54,7 @@ refs:
 {{< shared id="traces-viz" >}}
 
 Traces visualizations let you follow a request as it traverses the services in your infrastructure.
-The traces visualization displays traces data in a diagram that allows you to easily interpret it. Traces visualizations currently render one trace traversal based on the traceID used in TraceQL or using a variable.
+The traces visualization displays traces data in a diagram that allows you to easily interpret it. Traces visualizations currently render one trace traversal based on the trace ID used in TraceQL or using a variable.
 
 {{< /shared >}}
 
@@ -72,7 +72,7 @@ For more information about traces and how to use them, refer to the following do
 
 After you have tracing data available in your Grafana instance, you can add tracing panels to your Grafana dashboards.
 
-Using a dashboard variable, `traceID`, lets you create a query to show specific traces for a given trace ID.
+Using a dashboard variable, `traceId`, lets you create a query to show specific traces for a given trace ID.
 For more information about dashboard variables, refer to the [Variables documentation](ref:variables-documentation).
 
 ### Before you begin

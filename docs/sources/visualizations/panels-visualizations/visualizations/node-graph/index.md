@@ -73,10 +73,10 @@ Similar to the nodes dataset, the edges dataset needs one unique ID field for ea
 
 #### Example
 
-| id    | source | target | mainstat | seconddarystat | thickness | highlighted | color  |
-| ----- | ------ | ------ | -------- | -------------- | --------- | ----------- | ------ |
-| edge1 | node1  | node2  | TheMain  | TheSub         | 3         | true        | cyan   |
-| edge2 | node3  | node2  | Main2    | Sub2           | 1         | false       | orange |
+| id    | source | target | mainstat | secondarystat | thickness | highlighted | color  |
+| ----- | ------ | ------ | -------- | ------------- | --------- | ----------- | ------ |
+| edge1 | node1  | node2  | TheMain  | TheSub        | 3         | true        | cyan   |
+| edge2 | node3  | node2  | Main2    | Sub2          | 1         | false       | orange |
 
 If a node lacks edge connections, it’s displayed on its own outside of the network.
 
@@ -145,7 +145,7 @@ For more information about layouts, refer to [Layout algorithm](#layout-algorith
 
 ### Hidden nodes
 
-The number of nodes shown at a given time is limited to maintain a reasonable visualization performance. Nodes that are not currently visible are hidden behind clickable markers that show an approximate number of hidden nodes that are connected by a particular edge. You can click on the marker to expand the graph around that node.
+The number of nodes shown at a given time is limited to maintain a reasonable visualization performance. Nodes that are not currently visible are hidden behind clickable markers that show the number of hidden nodes connected by a particular edge. Grafana shows the exact count up to 100 hidden nodes, and then shows **>100 nodes**. You can click the marker to expand the graph around that node.
 
 ![Node graph exploration](/media/docs/grafana/panels-visualizations/node-graph-exploration-8.0-2.png 'Node graph exploration')
 

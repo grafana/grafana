@@ -80,6 +80,8 @@ Use the following options to refine your dashboard list visualization.
 
 <!-- prettier-ignore-end -->
 
+Enable at least one of **Starred**, **Recently viewed**, or **Search**. If all three options are off, Grafana shows **No dashboard groups configured**.
+
 #### Query
 
 Use this field to search by dashboard name. Query terms are case-insensitive and partial values are accepted.
