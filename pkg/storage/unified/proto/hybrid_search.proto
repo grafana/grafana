@@ -1,0 +1,98 @@
+syntax = "proto3";
+package resource;
+
+option go_package = "github.com/grafana/grafana/pkg/storage/unified/resourcepb";
+
+import "resource.proto";
+
+// DESIGN DRAFT — not wired into codegen. When finalized, the rpc moves
+// into the ResourceIndex service in search.proto and these messages move
+// with it.
+//
+// HybridSearch runs one query through both search legs — lexical (bleve
+// full-text index) and semantic (pgvector nearest-neighbor) — and fuses
+// the two rankings server-side (RRF). It replaces consumers' client-side
+// merge of Search + VectorSearch (e.g. grafana-assistant-app's dashboard
+// search tool).
+//
+// Top-k contract: no pagination, no sort options, no facets. Callers who
+// need table semantics use Search.
+//
+// OPEN QUESTIONS (pending grafana-assistant team input):
+//   - filter width: v1 is uid/folder only; do they need tags?
+//   - chunk granularity: is all-matching-chunks-per-result right?
+//   - lexical-only hits have no chunk content; their reranker scores
+//     content — title fallback on their side, or hydration on ours?
+//
+// service ResourceIndex {
+//   rpc HybridSearch(HybridSearchRequest) returns (HybridSearchResponse);
+// }
+
+message HybridSearchRequest {
+  // Resource type to search (namespace + group + resource).
+  ResourceKey key = 1;
+
+  // Required. Feeds the lexical leg verbatim; also embedded for the
+  // semantic leg unless semantic_query is set.
+  string query = 2;
+
+  // Optional richer phrasing to embed for the semantic leg instead of
+  // query. Callers that craft separate title terms and semantic
+  // rephrasings (the assistant's query/semanticQuery pattern) set both.
+  string semantic_query = 3;
+
+  // Top-k: maximum results. Defaults to 50 when zero, capped at 200.
+  int64 limit = 4;
+
+  // v1 accepts ONLY keys "uid" and "folder" (exact/in matching) — the
+  // filters both legs enforce natively, so filtering never degrades
+  // either leg's recall. Any other key returns InvalidArgument.
+  // Semantics may widen later without a contract change.
+  repeated Requirement filters = 5;
+}
+
+message HybridSearchResponse {
+  // Error details
+  ErrorResult error = 1;
+
+  // Top-k fused results, descending score, exactly one row per resource
+  // (chunks are deduplicated server-side).
+  repeated HybridSearchResult results = 2;
+}
+
+message HybridSearchResult {
+  // Full identity (namespace, group, resource, name) so results stay
+  // self-describing when detached from the request, and cross-resource
+  // search later needs no contract change.
+  ResourceKey key = 1;
+
+  // Display title, from the lexical index.
+  string title = 2;
+
+  // Folder UID.
+  string folder = 3;
+
+  // Relevance: higher = better; scale is backend-defined (RRF today,
+  // possibly a reranking stage later). Treat as an opaque ordering
+  // signal, not a distance or probability. NOT comparable to
+  // VectorSearchResult.score (raw cosine distance).
+  double score = 4;
+
+  // Matching embedded chunks, best first. N entries for chunked
+  // resources (dashboard panels), one entry with subresource "" for
+  // resources embedded whole, empty for lexical-only hits. The server
+  // may truncate to the top ~10 chunks per result; best-first ordering
+  // is guaranteed. Only the best chunk influences score.
+  repeated HybridSearchChunk chunks = 5;
+}
+
+message HybridSearchChunk {
+  // Chunk id within the resource (e.g. "panel/5"); "" = whole resource.
+  string subresource = 1;
+
+  // The text that was embedded — what RAG consumers and rerankers read.
+  string content = 2;
+
+  // Structured chunk metadata as raw JSON; caller unmarshals as needed.
+  bytes metadata = 3;
+}
