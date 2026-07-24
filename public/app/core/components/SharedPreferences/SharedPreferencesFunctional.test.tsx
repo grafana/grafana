@@ -244,6 +244,7 @@ describe('SharedPreferencesFunctional', () => {
   });
 
   it('fires home_dashboard_changed with action set when a new home dashboard is saved', async () => {
+    setTestFlags({ 'grafana.unifiedHomepage': false });
     const { user } = await setup();
 
     await selectComboboxOptionInTest(
@@ -291,6 +292,7 @@ describe('SharedPreferencesFunctional', () => {
   });
 
   it('fires home_dashboard_changed with action cleared when the dashboard is cleared', async () => {
+    setTestFlags({ 'grafana.unifiedHomepage': false });
     const { user } = await setup();
 
     const dashboardSelect = screen.getByTestId('User preferences home dashboard drop down');

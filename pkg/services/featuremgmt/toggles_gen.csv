@@ -332,7 +332,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,grafana.correlationsSkipLegacy,experimental,@grafana/datapro,false,false,false
 2026-05-22,grafana.meticulousAIMode,experimental,@grafana/dataviz-squad,false,false,false
 2026-05-22,datasources.useNewStackInfoToSettingsCache,GA,@grafana/grafana-datasources-core-services,false,false,false
-2026-05-22,grafana.unifiedHomepage,experimental,@grafana/grafana-frontend-navigation,false,false,true
+2026-05-22,grafana.unifiedHomepage,GA,@grafana/grafana-frontend-navigation,false,false,true
 2026-05-22,preferences.rerouteLegacyAPIs,GA,@grafana/grafana-frontend-platform,false,false,false
 2026-05-22,plugins.marketplaceLicensing,experimental,@grafana/grafana-catalog,false,true,false
 2026-05-22,alerting.syncExternalAlertmanager,experimental,@grafana/alerting-squad,false,true,false

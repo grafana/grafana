@@ -2862,10 +2862,10 @@ var (
 		{
 			Name:        "grafana.unifiedHomepage",
 			Description: "Replaces the bundled home dashboard with the unified homepage React page",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaFrontendNavigation,
 			Generate:    Generate{React: true},
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "preferences.rerouteLegacyAPIs",

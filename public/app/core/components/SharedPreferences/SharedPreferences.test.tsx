@@ -1,10 +1,10 @@
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
-import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 
@@ -70,6 +70,14 @@ afterAll(() => {
 beforeEach(() => {
   mockReload.mockClear();
   jest.mocked(homeDashboardChanged).mockClear();
+});
+
+afterEach(async () => {
+  // Wrap in act() because setTestFlags fires OpenFeature events that can trigger React state
+  // updates while the component is still mounted (RTL cleanup runs in a separate afterEach).
+  await act(async () => {
+    setTestFlags({});
+  });
 });
 
 describe('SharedPreferences', () => {
@@ -202,6 +210,7 @@ describe('SharedPreferences', () => {
   });
 
   it('fires home_dashboard_changed with action set when a new home dashboard is saved', async () => {
+    setTestFlags({ 'grafana.unifiedHomepage': false });
     const { user } = await setup();
 
     await selectComboboxOptionInTest(

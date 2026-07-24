@@ -58,7 +58,7 @@ describe('HomeRoute', () => {
   });
 
   afterEach(async () => {
-    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state
+    // Wrap in act() because setTestFlags fires OpenFeature events that can trigger React state
     // updates while the component is still mounted (RTL cleanup runs in a separate afterEach).
     await act(async () => {
       setTestFlags({});
@@ -69,6 +69,7 @@ describe('HomeRoute', () => {
   const props = {} as ComponentProps<typeof HomeRoute>;
 
   it('flag off → renders dashboard proxy without probing merged preferences', async () => {
+    setTestFlags({ 'grafana.unifiedHomepage': false });
     stubMergedPreferences({ homeDashboardUID: '' });
 
     render(<HomeRoute {...props} />);

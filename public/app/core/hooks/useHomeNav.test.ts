@@ -14,13 +14,16 @@ const renderUseHomeNav = (url: string) => {
 
 describe('useHomeNav', () => {
   afterEach(async () => {
-    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates
+    // Wrap in act() because setTestFlags fires OpenFeature events that can trigger React state
+    // updates while the component is still mounted (RTL cleanup runs in a separate afterEach).
     await act(async () => {
       setTestFlags({});
     });
   });
 
   it('flag off → returns the setup guide url unchanged', () => {
+    setTestFlags({ 'grafana.unifiedHomepage': false });
+
     const { result } = renderUseHomeNav(SETUP_GUIDE_HOME_URL);
 
     expect(result.current?.url).toBe(SETUP_GUIDE_HOME_URL);
