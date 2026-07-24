@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import { ConstantVariable, CustomVariable, SceneVariableSet } from '@grafana/scenes';
 import {
   type ConstantVariableKind,
@@ -163,5 +164,33 @@ describe('round-trip: serialize → deserialize', () => {
     expect(constantVar.state.label).toBe('Version');
     expect(constantVar.state.description).toBe('App version');
     expect((constantVar as ConstantVariable).state.value).toBe('2.0.0');
+  });
+});
+
+describe('dashboardVariablesBlockOnError feature toggle', () => {
+  const originalValue = config.featureToggles.dashboardVariablesBlockOnError;
+
+  afterEach(() => {
+    config.featureToggles.dashboardVariablesBlockOnError = originalValue;
+  });
+
+  it('should enable blockDependentsOnError on the section variable set when the toggle is on', () => {
+    config.featureToggles.dashboardVariablesBlockOnError = true;
+
+    const result = deserializeSectionVariables([makeCustomVariableKind()]);
+
+    expect(result).toBeDefined();
+    expect(result!.state.blockDependentsOnError).toBe(true);
+    expect(result!.state.treatEmptyAsError).toBe(true);
+  });
+
+  it('should not enable blockDependentsOnError on the section variable set when the toggle is off', () => {
+    config.featureToggles.dashboardVariablesBlockOnError = false;
+
+    const result = deserializeSectionVariables([makeCustomVariableKind()]);
+
+    expect(result).toBeDefined();
+    expect(result!.state.blockDependentsOnError).toBe(false);
+    expect(result!.state.treatEmptyAsError).toBe(false);
   });
 });

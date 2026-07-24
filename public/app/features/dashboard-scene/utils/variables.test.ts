@@ -31,7 +31,12 @@ import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 import { NEW_LINK } from '../settings/links/utils';
 
-import { createSceneVariableFromVariableModel, createVariablesForSnapshot, getUserDefinedVariables } from './variables';
+import {
+  createSceneVariableFromVariableModel,
+  createVariablesForDashboard,
+  createVariablesForSnapshot,
+  getUserDefinedVariables,
+} from './variables';
 
 // mock getDataSourceSrv.getInstanceSettings()
 jest.mock('@grafana/runtime', () => ({
@@ -1028,6 +1033,49 @@ describe('when creating snapshot variables from dashboard model', () => {
     expect(intervalSnapshot.state.value).toBe('10s');
     expect(intervalSnapshot.state.text).toBe('10s');
     expect(intervalSnapshot.state.isReadOnly).toBe(true);
+  });
+});
+
+describe('dashboardVariablesBlockOnError feature toggle', () => {
+  const customVariable = {
+    current: { selected: false, text: 'a', value: 'a' },
+    hide: 0,
+    includeAll: false,
+    multi: false,
+    name: 'custom0',
+    options: [],
+    query: 'a,b,c,d',
+    skipUrlSync: false,
+    type: 'custom' as VariableType,
+    rootStateKey: 'N4XLmH5Vz',
+  };
+
+  const originalValue = config.featureToggles.dashboardVariablesBlockOnError;
+
+  afterEach(() => {
+    config.featureToggles.dashboardVariablesBlockOnError = originalValue;
+  });
+
+  it('should enable blockDependentsOnError on the variable set when the toggle is on', () => {
+    config.featureToggles.dashboardVariablesBlockOnError = true;
+
+    const oldModel = new DashboardModel({ ...defaultDashboard, templating: { list: [customVariable] } });
+    const variables = createVariablesForDashboard(oldModel);
+
+    expect(variables).toBeInstanceOf(SceneVariableSet);
+    expect(variables.state.blockDependentsOnError).toBe(true);
+    expect(variables.state.treatEmptyAsError).toBe(true);
+  });
+
+  it('should not enable blockDependentsOnError on the variable set when the toggle is off', () => {
+    config.featureToggles.dashboardVariablesBlockOnError = false;
+
+    const oldModel = new DashboardModel({ ...defaultDashboard, templating: { list: [customVariable] } });
+    const variables = createVariablesForDashboard(oldModel);
+
+    expect(variables).toBeInstanceOf(SceneVariableSet);
+    expect(variables.state.blockDependentsOnError).toBe(false);
+    expect(variables.state.treatEmptyAsError).toBe(false);
   });
 });
 

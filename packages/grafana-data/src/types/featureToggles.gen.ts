@@ -1346,6 +1346,11 @@ export interface FeatureToggles {
   */
   analyticsFramework?: boolean;
   /**
+  * Prevents dependent variables and panels from refreshing when a template variable fails to update, avoiding unscoped backend queries
+  * @default false
+  */
+  dashboardVariablesBlockOnError?: boolean;
+  /**
   * Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.
   * @default false
   */

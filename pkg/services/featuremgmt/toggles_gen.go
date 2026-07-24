@@ -858,6 +858,10 @@ const (
 	// Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
 	FlagDatasourcesApiServerEnableHealthEndpoint = "datasourcesApiServerEnableHealthEndpoint"
 
+	// FlagDashboardVariablesBlockOnError
+	// Prevents dependent variables and panels from refreshing when a template variable fails to update, avoiding unscoped backend queries
+	FlagDashboardVariablesBlockOnError = "dashboardVariablesBlockOnError"
+
 	// FlagDatasourcesApiServerEnableHealthEndpointRedirect
 	// Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.
 	FlagDatasourcesApiServerEnableHealthEndpointRedirect = "datasourcesApiServerEnableHealthEndpointRedirect"

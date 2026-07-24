@@ -1760,6 +1760,20 @@
     },
     {
       "metadata": {
+        "name": "dashboardVariablesBlockOnError",
+        "resourceVersion": "1782232210390",
+        "creationTimestamp": "2026-06-23T16:26:20Z"
+      },
+      "spec": {
+        "description": "Prevents dependent variables and panels from refreshing when a template variable fails to update, avoiding unscoped backend queries",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardVectorSearch",
         "resourceVersion": "1781031335424",
         "creationTimestamp": "2026-06-09T18:55:35Z",

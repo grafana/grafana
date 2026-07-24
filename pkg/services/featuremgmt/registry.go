@@ -2619,6 +2619,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "dashboardVariablesBlockOnError",
+			Description:  "Prevents dependent variables and panels from refreshing when a template variable fails to update, avoiding unscoped backend queries",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
 			Name:            "datasourcesApiServerEnableHealthEndpointFrontend",
 			Description:     "Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.",
 			Stage:           FeatureStageExperimental,

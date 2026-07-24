@@ -24,5 +24,14 @@ export function deserializeSectionVariables(variables?: VariableKind[]): SceneVa
     return undefined;
   }
 
-  return new SceneVariableSet({ variables: sceneVariables });
+  const blockDependentsOnError = Boolean(config.featureToggles.dashboardVariablesBlockOnError);
+
+  return new SceneVariableSet({
+    variables: sceneVariables,
+    blockDependentsOnError,
+    // Most datasources (e.g. Prometheus label_values) swallow a failed request and resolve the
+    // variable to an empty value rather than an error, so empty must be treated as an error for
+    // the block-on-error behavior to cover the common failure case.
+    treatEmptyAsError: blockDependentsOnError,
+  });
 }
