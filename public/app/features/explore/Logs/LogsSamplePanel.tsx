@@ -15,7 +15,7 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+
 import { type DataQuery, LogsSortOrder, type TimeZone } from '@grafana/schema';
 import { Button, Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { LogList } from 'app/features/logs/components/panel/LogList';
@@ -46,10 +46,6 @@ export function LogsSamplePanel(props: Props) {
 
   const onToggleLogsSampleCollapse = (isOpen: boolean) => {
     setLogsSampleEnabled(isOpen);
-    reportInteraction('grafana_explore_logs_sample_toggle_clicked', {
-      datasourceType: datasourceInstance?.type ?? 'unknown',
-      type: isOpen ? 'open' : 'close',
-    });
   };
 
   const OpenInSplitViewButton = () => {
@@ -70,10 +66,6 @@ export function LogsSamplePanel(props: Props) {
 
     const onSplitOpen = () => {
       splitOpen({ queries: logSampleQueries, datasourceUid: datasourceInstance.uid });
-      reportInteraction('grafana_explore_logs_sample_split_button_clicked', {
-        datasourceType: datasourceInstance?.type ?? 'unknown',
-        queriesCount: logSampleQueries.length,
-      });
     };
 
     return (

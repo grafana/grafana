@@ -430,10 +430,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       };
       updatePanelState(payload);
 
-      reportInteraction('grafana_explore_logs_visualisation_changed', {
-        newVisualizationType: visualisation,
-        datasourceType: props.datasourceType ?? 'unknown',
-      });
     },
     [panelState?.logs, props.datasourceType, updatePanelState]
   );
@@ -441,10 +437,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const onToggleLogsVolumeCollapse = useCallback(
     (collapsed: boolean) => {
       props.onSetLogsVolumeEnabled(!collapsed);
-      reportInteraction('grafana_explore_logs_histogram_toggle_clicked', {
-        datasourceType: props.datasourceType,
-        type: !collapsed ? 'open' : 'close',
-      });
     },
     [props]
   );
@@ -454,10 +446,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       event.preventDefault();
       if (props.onStartScanning) {
         props.onStartScanning();
-        reportInteraction('grafana_explore_logs_scanning_button_clicked', {
-          type: 'start',
-          datasourceType: props.datasourceType,
-        });
       }
     },
     [props]
@@ -543,11 +531,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       const url = urlUtil.renderUrl(`${baseUrl}/explore`, { left: serializedState });
       await createAndCopyShortLink(url);
 
-      reportInteraction('grafana_explore_logs_permalink_clicked', {
-        datasourceType: row.datasourceType ?? 'unknown',
-        logRowUid: row.uid,
-        logRowLevel: row.logLevel,
-      });
     },
     [absoluteRange, displayedFields, exploreId, logRows, logsSortOrder, panelState, visualisationType]
   );

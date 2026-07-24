@@ -58,27 +58,18 @@ export const LogTableControls = ({
           label={t('logs.logs-controls.download-logs.txt', 'txt')}
           onClick={() => {
             downloadLogs(DownloadFormat.Text);
-            reportInteraction('logs_log_list_controls_downloaded_logs', {
-              format: DownloadFormat.Text,
-            });
           }}
         />
         <Menu.Item
           label={t('logs.logs-controls.download-logs.json', 'json')}
           onClick={() => {
             downloadLogs(DownloadFormat.Json);
-            reportInteraction('logs_log_list_controls_downloaded_logs', {
-              format: DownloadFormat.Json,
-            });
           }}
         />
         <Menu.Item
           label={t('logs.logs-controls.download-logs.csv', 'csv')}
           onClick={() => {
             downloadLogs(DownloadFormat.CSV);
-            reportInteraction('logs_log_list_controls_downloaded_logs', {
-              format: DownloadFormat.CSV,
-            });
           }}
         />
       </Menu>

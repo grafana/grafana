@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { type GrafanaTheme2, type LogRowModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+
 import { Menu, useStyles2 } from '@grafana/ui';
 
 import { copyText } from '../../logs/utils';
@@ -110,11 +110,6 @@ export const PopoverMenu = ({
 };
 
 function track(action: string, selectionLength: number, dataSourceType: string | undefined) {
-  reportInteraction(`grafana_explore_logs_popover_menu`, {
-    action,
-    selectionLength: selectionLength,
-    datasourceType: dataSourceType || 'unknown',
-  });
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
