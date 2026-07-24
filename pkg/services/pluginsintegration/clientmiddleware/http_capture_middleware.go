@@ -48,8 +48,32 @@ func (m *HTTPCaptureMiddleware) QueryData(ctx context.Context, req *backend.Quer
 	}
 	req.Headers[harCaptureHeader] = "true"
 
-	// Inject capturing RoundTripper for core (in-process) plugins.
-	captureMW := sdkhttpclient.NamedMiddlewareFunc("http-capture", func(_ sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
+	ctx = sdkhttpclient.WithContextualMiddleware(ctx, captureMiddleware(buf))
+
+	return m.BaseHandler.QueryData(ctx, req)
+}
+
+func (m *HTTPCaptureMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	buf := harcapture.FromContext(ctx)
+	if buf == nil {
+		return m.BaseHandler.QueryChunkedData(ctx, req, w)
+	}
+
+	// Signal external gRPC plugins via request header.
+	if req.Headers == nil {
+		req.Headers = map[string]string{}
+	}
+	req.Headers[harCaptureHeader] = "true"
+
+	ctx = sdkhttpclient.WithContextualMiddleware(ctx, captureMiddleware(buf))
+
+	return m.BaseHandler.QueryChunkedData(ctx, req, w)
+}
+
+// captureMiddleware returns an HTTP client middleware that records every outgoing
+// request/response into buf, for core (in-process) plugins.
+func captureMiddleware(buf *harcapture.Buffer) sdkhttpclient.Middleware {
+	return sdkhttpclient.NamedMiddlewareFunc("http-capture", func(_ sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
 		return sdkhttpclient.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
 			// Buffer the request body before it is consumed by the transport.
 			var bodyBytes []byte
@@ -79,7 +103,4 @@ func (m *HTTPCaptureMiddleware) QueryData(ctx context.Context, req *backend.Quer
 			return resp, err
 		})
 	})
-	ctx = sdkhttpclient.WithContextualMiddleware(ctx, captureMW)
-
-	return m.BaseHandler.QueryData(ctx, req)
 }

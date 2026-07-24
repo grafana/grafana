@@ -63,6 +63,41 @@ func Test_HostedGrafanaACHeaderMiddleware(t *testing.T) {
 		require.Len(t, cdt.CallResourceReq.Headers[GrafanaInternalRequest], 0)
 	})
 
+	t.Run("Should set Grafana request ID headers for QueryChunkedData if the data source URL is in the allow list", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		allowedURL := &url.URL{Scheme: "https", Host: "logs.grafana.net"}
+		cfg.IPRangeACAllowedURLs = []*url.URL{allowedURL}
+		cfg.IPRangeACSecretKey = "secret"
+		cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(NewHostedGrafanaACHeaderMiddleware(cfg)))
+
+		ctx := context.WithValue(context.Background(), ctxkey.Key{}, &contextmodel.ReqContext{
+			Context: &web.Context{Req: &http.Request{
+				Header: map[string][]string{"X-Real-Ip": {"1.2.3.4"}},
+			}},
+			SignedInUser: &user.SignedInUser{},
+		})
+
+		err := cdt.MiddlewareHandler.QueryChunkedData(ctx, &backend.QueryChunkedDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+					URL: "https://logs.grafana.net",
+				},
+			},
+		}, nopChunkedWriter{})
+		require.NoError(t, err)
+
+		requestID := cdt.QueryChunkedDataReq.GetHTTPHeader(GrafanaRequestID)
+		require.NotEmpty(t, requestID)
+
+		instance := hmac.New(sha256.New, []byte(cfg.IPRangeACSecretKey))
+		_, err = instance.Write([]byte(requestID))
+		require.NoError(t, err)
+		computed := hex.EncodeToString(instance.Sum(nil))
+
+		require.Equal(t, computed, cdt.QueryChunkedDataReq.GetHTTPHeader(GrafanaSignedRequestID))
+		require.Equal(t, "1.2.3.4", cdt.QueryChunkedDataReq.GetHTTPHeader(XRealIPHeader))
+	})
+
 	t.Run("Should not set Grafana request ID headers if the data source URL is not in the allow list", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		allowedURL := &url.URL{Scheme: "https", Host: "logs.grafana.net"}
