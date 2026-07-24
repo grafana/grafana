@@ -77,7 +77,7 @@
     "@grafana/e2e-selectors": "13.2.0-pre",
     "@grafana/faro-web-sdk": "^2.8.2",
     "@grafana/i18n": "13.2.0-pre",
-    "@grafana/react-data-grid": "7.0.0-beta.57",
+    "@grafana/react-data-grid": "7.0.0-beta.58",
     "@grafana/schema": "13.2.0-pre",
     "@hello-pangea/dnd": "^18.0.1",
     "@lezer/highlight": "^1.2.3",
