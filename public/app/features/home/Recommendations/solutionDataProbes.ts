@@ -19,16 +19,19 @@ import {
 import { readScalar, runDatasourceQueries, runInstantQueries } from './promQuery';
 
 // "Seen recently" lookback shared by all data probes, tolerating scrape/ingest gaps.
-const DATA_LOOKBACK_HOURS = 24;
+export const DATA_LOOKBACK_HOURS = 24;
 
-// True when any probed candidate datasource of `type` satisfies `hasData`. Throws when nothing
-// was found and any candidate errored: an errored datasource may hold the data, so absence is
-// only settled when every candidate probed clean.
-async function probeFound(
+/**
+ * The first probed candidate datasource of `type` where `hasData` confirms data, or null when
+ * every candidate probed clean-and-empty (or none exist). Throws when nothing was found and any
+ * candidate errored: an errored datasource may hold the data, so absence is not settled.
+ */
+export async function probeFound(
   type: string,
-  hasData: (ds: DataSourceInstanceListItem) => Promise<boolean>
-): Promise<boolean> {
-  const candidates = await listProbeCandidates(type);
+  hasData: (ds: DataSourceInstanceListItem) => Promise<boolean>,
+  excludeUids?: ReadonlySet<string>
+): Promise<DataSourceInstanceListItem | null> {
+  const candidates = await listProbeCandidates(type, undefined, excludeUids);
   let errored = 0;
   // findDatasourceWithData requires a non-throwing callback; count failures for the unknown check.
   const guardedHasData = async (ds: DataSourceInstanceListItem) => {
@@ -41,20 +44,21 @@ async function probeFound(
   };
   const found = await findDatasourceWithData(candidates, guardedHasData);
   if (found) {
-    return true;
+    return found;
   }
   if (errored > 0) {
     throw new Error(`${errored} ${type} datasource probe(s) failed with no data found elsewhere`);
   }
-  return false;
+  return null;
 }
 
 // Any series in the lookback means the solution produces data; which datasource holds it is irrelevant.
 async function prometheusHasMetric(expr: string): Promise<boolean> {
-  return probeFound('prometheus', async (ds) => {
+  const found = await probeFound('prometheus', async (ds) => {
     const frames = await withRetry(() => runInstantQueries({ probe: expr }, ds, PROBE_TIMEOUT_MS));
     return (readScalar(frames, 'probe') ?? 0) > 0;
   });
+  return found !== null;
 }
 
 interface TempoSearchQuery extends DataQuery {
@@ -62,7 +66,7 @@ interface TempoSearchQuery extends DataQuery {
   limit: number;
 }
 
-async function tempoHasTraces(ds: DataSourceInstanceListItem): Promise<boolean> {
+export async function tempoHasTraces(ds: DataSourceInstanceListItem): Promise<boolean> {
   const toTime = dateTime();
   const fromTime = dateTime().subtract(DATA_LOOKBACK_HOURS, 'h');
   const range: TimeRange = {
@@ -100,7 +104,10 @@ const probesBySolution: Record<string, { get(): Promise<boolean>; reset(): void 
       ),
     PROBE_TTL_MS
   ),
-  [HOSTED_TRACES_APP_ID]: createTtlCachedPromise(() => probeFound('tempo', tempoHasTraces), PROBE_TTL_MS),
+  [HOSTED_TRACES_APP_ID]: createTtlCachedPromise(
+    async () => (await probeFound('tempo', tempoHasTraces)) !== null,
+    PROBE_TTL_MS
+  ),
   [FRONTEND_OBSERVABILITY_APP_ID]: createTtlCachedPromise(hasFrontendObservabilityData, PROBE_TTL_MS),
 };
 
