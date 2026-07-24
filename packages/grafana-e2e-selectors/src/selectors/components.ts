@@ -204,6 +204,11 @@ export const versionedComponents = {
       '10.2.3': 'data-testid date-time-input',
     },
   },
+  AddToDashboard: {
+    confirmButton: {
+      '13.2.0': 'data-testid Add to dashboard confirm button',
+    },
+  },
   DataSource: {
     TestData: {
       QueryTab: {
