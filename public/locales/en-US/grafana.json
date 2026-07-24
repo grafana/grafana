@@ -8677,6 +8677,7 @@
       "services": "Services: {{services}}",
       "services-span-filter-matches": "Services: {{total}}/{{services}}"
     },
+    "no-data": "No data",
     "no-data-source-call-to-action": {
       "cta-element": {
         "add-data-source": "Add data source"
