@@ -837,6 +837,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/Animations/ @grafana/grafana-frontend-platform
 /public/app/core/components/AppNotifications/ @grafana/grafana-frontend-navigation
 /public/app/core/components/AppChrome/ @grafana/grafana-frontend-navigation
+/public/app/core/components/AssistantTooltip/ @grafana/dataviz-squad
 /public/app/core/components/Branding/ @grafana/grafana-frontend-platform
 /public/app/core/components/Breadcrumbs/ @grafana/grafana-frontend-navigation
 /public/app/core/components/CardButton.tsx @grafana/dashboards-squad

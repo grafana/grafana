@@ -20,6 +20,7 @@ import {
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
 import { type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { getAssistantTooltipContext } from 'app/core/components/AssistantTooltip/buildAssistantContext';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { getFilterByGroupedLabels } from 'app/features/panel/filters/adhoc';
 
@@ -46,6 +47,7 @@ export const TimeSeriesPanel = ({
   onOptionsChange,
   replaceVariables,
   id,
+  title,
 }: TimeSeriesPanelProps) => {
   const {
     sync,
@@ -207,6 +209,7 @@ export const TimeSeriesPanel = ({
                       filterByGroupedLabels={getFilterByGroupedLabelsModel(alignedFrame, seriesIdx)}
                       canExecuteActions={userCanExecuteActions}
                       compareDiffMs={compareDiffMs}
+                      assistantContext={getAssistantTooltipContext({ id, title, timeRange, data }, frames)}
                     />
                   );
                 }}

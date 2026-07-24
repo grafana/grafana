@@ -3967,6 +3967,9 @@
       "trace-id": "Trace ID: {{traceId}}"
     }
   },
+  "assistant-tooltip": {
+    "add-to-assistant": "Add to Assistant"
+  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "Auth settings"

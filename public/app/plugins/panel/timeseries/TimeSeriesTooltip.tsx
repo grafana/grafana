@@ -21,6 +21,8 @@ import {
   getFieldDisplayItems,
   isTooltipScrollable,
 } from '@grafana/ui';
+import { AssistantTooltipButton } from 'app/core/components/AssistantTooltip/AssistantTooltipButton';
+import { type AssistantTooltipContext } from 'app/core/components/AssistantTooltip/buildAssistantContext';
 
 import { getFieldActions } from '../status-history/utils';
 
@@ -53,6 +55,8 @@ export interface TimeSeriesTooltipProps {
   filterByGroupedLabels?: FilterByGroupedLabelsModel;
   canExecuteActions?: boolean;
   compareDiffMs?: number[];
+  /** When provided, renders an "Add to Assistant" button in the pinned tooltip footer. */
+  assistantContext?: AssistantTooltipContext;
 }
 
 export const TimeSeriesTooltip = ({
@@ -72,6 +76,7 @@ export const TimeSeriesTooltip = ({
   canExecuteActions,
   compareDiffMs,
   filterByGroupedLabels,
+  assistantContext,
 }: TimeSeriesTooltipProps) => {
   const pluginContext = usePluginContext();
 
@@ -116,6 +121,18 @@ export const TimeSeriesTooltip = ({
           annotate={annotate}
           adHocFilters={adHocFilters}
           filterByGroupedLabels={filterByGroupedLabels}
+          additionalContent={
+            isPinned && assistantContext != null ? (
+              <AssistantTooltipButton
+                series={series}
+                seriesIdx={seriesIdx}
+                dataIdxs={dataIdxs}
+                replaceVariables={replaceVariables}
+                context={assistantContext}
+                xVal={xVal}
+              />
+            ) : undefined
+          }
         />
       );
     }
