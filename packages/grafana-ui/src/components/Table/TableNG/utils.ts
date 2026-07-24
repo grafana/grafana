@@ -36,7 +36,6 @@ import { COLUMN, TABLE } from './constants';
 import { type TextAlign } from './styles';
 import {
   type TableRow,
-  type TableCellValue,
   type ColumnTypes,
   type FrameToRowsConverter,
   type Comparator,
@@ -51,7 +50,7 @@ import {
 /* ---------------------------- Pill inference ----------------------------- */
 const SPLIT_RE = /\s*,\s*/;
 
-function inferPillsImpl(rawValue: TableCellValue): unknown[] {
+function inferPillsImpl(rawValue: unknown): unknown[] {
   if (rawValue === '' || rawValue == null) {
     return [];
   }
@@ -115,7 +114,9 @@ function createBoundedCache<K, V>(maxSize: number) {
 const arrayPillCache = new WeakMap<object, unknown[]>();
 const primitivePillCache = createBoundedCache<string, unknown[]>(16384);
 
-export function inferPills(rawValue: TableCellValue): unknown[] {
+// Accepts an arbitrary raw cell value: pill columns hold string arrays (not in TableCellValue), and
+// values can be null, so this is deliberately typed `unknown` and narrowed at runtime.
+export function inferPills(rawValue: unknown): unknown[] {
   if (rawValue == null || rawValue === '') {
     return [];
   }
