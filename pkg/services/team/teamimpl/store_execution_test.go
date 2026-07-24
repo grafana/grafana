@@ -2,6 +2,7 @@ package teamimpl
 
 import (
 	"context"
+	"database/sql"
 	"regexp"
 	"sync"
 	"testing"
@@ -12,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/xorm"
@@ -49,6 +51,10 @@ func (d *sqlmockTeamDB) GetDBType() core.DbType {
 	return core.SQLITE
 }
 
+func (d *sqlmockTeamDB) GetDialect() migrator.Dialect {
+	return migrator.NewDialect(migrator.SQLite)
+}
+
 type providerContextKey struct{}
 
 // newProviderForTable returns a provider that asserts it is resolved with the
@@ -67,7 +73,7 @@ func newProviderForTable(t *testing.T, legacyDB db.DB, calls *int) legacysql.Leg
 	}
 }
 
-func newSQLMockTeamStore(t *testing.T) (*xormStore, sqlmock.Sqlmock, *int) {
+func newSQLMockTeamStore(t *testing.T, matchers ...sqlmock.QueryMatcher) (*xormStore, sqlmock.Sqlmock, *int) {
 	t.Helper()
 	registerTeamSQLMockXormDriverOnce.Do(func() {
 		if core.QueryDriver("sqlmock") == nil {
@@ -75,8 +81,17 @@ func newSQLMockTeamStore(t *testing.T) (*xormStore, sqlmock.Sqlmock, *int) {
 		}
 	})
 
-	dsn := "team-store"
-	mockDB, mock, err := sqlmock.NewWithDSN(dsn)
+	dsn := "team-store-" + t.Name()
+	var (
+		mockDB *sql.DB
+		mock   sqlmock.Sqlmock
+		err    error
+	)
+	if len(matchers) > 0 {
+		mockDB, mock, err = sqlmock.NewWithDSN(dsn, sqlmock.QueryMatcherOption(matchers[0]))
+	} else {
+		mockDB, mock, err = sqlmock.NewWithDSN(dsn)
+	}
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = mockDB.Close() })
 
@@ -152,4 +167,38 @@ WHERE org_id = ?
 	require.NoError(t, err)
 	require.Equal(t, 1, *calls)
 	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+// TestStoreUsesProviderTable_GetMemberships guards against the XORM join
+// regression: every provider-resolved join and subquery table must be quoted
+// and schema-qualified (in particular the reserved "user" table name).
+func TestStoreUsesProviderTable_GetMemberships(t *testing.T) {
+	var captured string
+	capture := sqlmock.QueryMatcherFunc(func(_, actualSQL string) error {
+		captured = actualSQL
+		return nil
+	})
+
+	store, mock, calls := newSQLMockTeamStore(t, capture)
+
+	mock.ExpectQuery(".*").
+		WillReturnRows(sqlmock.NewRows([]string{
+			"org_id", "team_id", "user_id", "uid", "email", "name",
+			"login", "user_uid", "external", "permission", "auth_module", "team_uid",
+		}))
+
+	members, err := store.GetMemberships(operationContext(), 1, 2, false)
+	require.NoError(t, err)
+	require.Empty(t, members)
+	require.Equal(t, 1, *calls)
+	require.NoError(t, mock.ExpectationsWereMet())
+
+	// The sqlite mock quotes identifiers with backticks. Every provider-resolved
+	// join and subquery table must be quoted and schema-qualified.
+	q := "`"
+	require.Contains(t, captured, "FROM "+q+"test_schema"+q+"."+q+"team_member"+q)
+	require.Contains(t, captured, "INNER JOIN "+q+"test_schema"+q+"."+q+"user"+q)
+	require.Contains(t, captured, "INNER JOIN "+q+"test_schema"+q+"."+q+"team"+q)
+	require.Contains(t, captured, "LEFT JOIN "+q+"test_schema"+q+"."+q+"user_auth"+q)
+	require.Contains(t, captured, "FROM "+q+"test_schema"+q+"."+q+"user_auth"+q)
 }

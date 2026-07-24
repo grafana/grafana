@@ -37,7 +37,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 
 	t.Run("Testing Team commands and queries", func(t *testing.T) {
 		sqlStore, cfg := db.InitTestDBWithCfg(t)
-		teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, tracing.InitializeTracerForTest(), nil)
+		teamSvc, err := ProvideService(context.Background(), legacysql.NewDatabaseProvider(sqlStore), cfg, tracing.InitializeTracerForTest(), nil)
 		require.NoError(t, err)
 		// dbHelper only supplies the dialect and identity table names to the
 		// membership hooks; both are stable across the sqlite test databases.
@@ -598,7 +598,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 	}
 
 	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
-	teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil)
+	teamSvc, err := ProvideService(context.Background(), legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(t, err)
 
 	// Seed 10 teams
@@ -639,7 +639,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 
 	// Seed 2 teams with 2 members
 	setup := func(store db.DB, cfg *setting.Cfg) {
-		teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil)
+		teamSvc, err := ProvideService(context.Background(), legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil)
 		require.NoError(t, err)
 		dbHelper, err := legacysql.NewDatabaseProvider(store)(context.Background())
 		require.NoError(t, err)
@@ -702,7 +702,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 
 	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
 	setup(store, cfg)
-	teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil)
+	teamSvc, err := ProvideService(context.Background(), legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(t, err)
 
 	type getTeamMembersTestCase struct {

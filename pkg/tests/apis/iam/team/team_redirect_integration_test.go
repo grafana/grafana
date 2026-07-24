@@ -462,7 +462,7 @@ func TestIntegrationServiceIdentityFallbackToLegacy(t *testing.T) {
 	})
 
 	env := helper.GetEnv()
-	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(env.SQLStore), env.Cfg, tracing.NewNoopTracerService(), nil)
+	teamSvc, err := teamimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(env.SQLStore), env.Cfg, tracing.NewNoopTracerService(), nil)
 	require.NoError(t, err)
 
 	setTeamK8sFeatureToggle(t, true)

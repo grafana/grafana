@@ -1,6 +1,8 @@
 package testutil
 
 import (
+	"context"
+
 	testifymock "github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -54,7 +56,7 @@ func ProvideFolderPermissions(
 	if err != nil {
 		return nil, err
 	}
-	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, tracing.InitializeTracerForTest(), nil)
+	teamSvc, err := teamimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(sqlStore), cfg, tracing.InitializeTracerForTest(), nil)
 	if err != nil {
 		return nil, err
 	}

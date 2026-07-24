@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"text/template"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -26,7 +28,7 @@ type store interface {
 	GetByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error)
 	GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, []string, error)
 	RemoveUsersMemberships(ctx context.Context, userID int64) error
-	IsMember(orgId int64, teamId int64, userId int64) (bool, error)
+	IsMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error)
 	GetMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*team.TeamMemberDTO, error)
 	GetMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error)
 	RegisterDelete(query string)
@@ -516,19 +518,18 @@ func (ss *xormStore) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByU
 	ids := make([]int64, 0)
 	uids := make([]string, 0)
 
-	req := teamIDsByUserQuery{
-		SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
-		TeamTable:       dbHelper.Table("team"),
-		TeamMemberTable: dbHelper.Table("team_member"),
-		UserID:          query.UserID,
-		OrgID:           query.OrgID,
-	}
-	sqlStr, err := sqltemplate.Execute(getTeamIDsByUserTemplate, req)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		req := teamIDsByUserQuery{
+			SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+			TeamTable:       dbHelper.Table("team"),
+			TeamMemberTable: dbHelper.Table("team_member"),
+			UserID:          query.UserID,
+			OrgID:           query.OrgID,
+		}
+		sqlStr, err := sqltemplate.Execute(getTeamIDsByUserTemplate, req)
+		if err != nil {
+			return err
+		}
 		rows, err := sess.QueryRows(sqlStr, req.GetArgs()...)
 		if err != nil {
 			return err
@@ -589,14 +590,14 @@ func getTeamMember(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, o
 	return member, nil
 }
 
-func (ss *xormStore) IsMember(orgId int64, teamId int64, userId int64) (bool, error) {
-	dbHelper, err := ss.sql(context.Background())
+func (ss *xormStore) IsMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error) {
+	dbHelper, err := ss.sql(ctx)
 	if err != nil {
 		return false, err
 	}
 
 	var isMember bool
-	err = dbHelper.DB.WithDbSession(context.Background(), func(sess *db.Session) error {
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
 		isMember, err = isTeamMember(dbHelper, sess, orgId, teamId, userId)
 		return err
@@ -750,18 +751,17 @@ func (ss *xormStore) RemoveUsersMemberships(ctx context.Context, userID int64) e
 		return err
 	}
 
-	query := removeUserMembershipsQuery{
-		SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
-		TeamMemberTable: dbHelper.Table("team_member"),
-		UserID:          userID,
-	}
-	sqlStr, err := sqltemplate.Execute(removeUserMembershipTemplate, query)
-	if err != nil {
-		return err
-	}
-
 	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Exec(append([]any{sqlStr}, query.GetArgs()...)...)
+		query := removeUserMembershipsQuery{
+			SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+			TeamMemberTable: dbHelper.Table("team_member"),
+			UserID:          userID,
+		}
+		sqlStr, err := sqltemplate.Execute(removeUserMembershipTemplate, query)
+		if err != nil {
+			return err
+		}
+		_, err = sess.Exec(append([]any{sqlStr}, query.GetArgs()...)...)
 		return err
 	})
 }
@@ -810,11 +810,19 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, dbHelper *legacysql.Leg
 	queryResult := make([]*team.TeamMemberDTO, 0)
 	err := dbHelper.DB.WithDbSession(ctx, func(dbSess *db.Session) error {
 		dialect := dbHelper.DB.GetDialect()
+
+		// XORM does not quote a join table or a raw subquery FROM, so qualified
+		// tables must be quoted here (e.g. the reserved "user" table name). The
+		// main table is passed unquoted because XORM quotes the FROM clause.
+		userTable := quoteQualifiedTable(dialect, dbHelper.Table("user"))
+		teamTable := quoteQualifiedTable(dialect, dbHelper.Table("team"))
+		userAuthTable := quoteQualifiedTable(dialect, dbHelper.Table("user_auth"))
+
 		sess := dbSess.Table(dbHelper.Table("team_member"))
-		sess.Join("INNER", dbHelper.Table("user"),
+		sess.Join("INNER", userTable,
 			fmt.Sprintf("team_member.user_id=%s.%s", dialect.Quote("user"), dialect.Quote("id")),
 		)
-		sess.Join("INNER", dbHelper.Table("team"), "team.id=team_member.team_id")
+		sess.Join("INNER", teamTable, "team.id=team_member.team_id")
 
 		// explicitly check for serviceaccounts
 		sess.Where(fmt.Sprintf("%s.is_service_account=?", dialect.Quote("user")), dialect.BooleanValue(false))
@@ -826,11 +834,11 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, dbHelper *legacysql.Leg
 		// Join with only most recent auth module
 		authJoinCondition := `user_auth.id=(
 			SELECT id
-			FROM ` + dbHelper.Table("user_auth") + `
+			FROM ` + userAuthTable + `
 			WHERE user_auth.user_id = team_member.user_id
 			ORDER BY user_auth.created DESC ` +
 			dialect.Limit(1) + ")"
-		sess.Join("LEFT", dbHelper.Table("user_auth"), authJoinCondition)
+		sess.Join("LEFT", userAuthTable, authJoinCondition)
 
 		if query.OrgID != 0 {
 			sess.Where("team_member.org_id=?", query.OrgID)
@@ -875,6 +883,16 @@ func (ss *xormStore) RegisterDelete(query string) {
 	ss.deletes = append(ss.deletes, query)
 }
 
+// quoteQualifiedTable quotes each component of a possibly schema-qualified
+// table name with the dialect, so "schema.table" becomes a valid identifier.
+func quoteQualifiedTable(dialect migrator.Dialect, qualified string) string {
+	parts := strings.Split(qualified, ".")
+	for i, part := range parts {
+		parts[i] = dialect.Quote(part)
+	}
+	return strings.Join(parts, ".")
+}
+
 type teamMemberUIDMigrationQuery struct {
 	sqltemplate.SQLTemplate
 	TeamMemberTable string
@@ -885,24 +903,22 @@ func (q teamMemberUIDMigrationQuery) Validate() error { return nil }
 // teamMemberUidMigration ensures that all team members have a valid uid.
 // To protect against upgrade / downgrade we need to run this for a couple of releases.
 // FIXME: Remove this migration around Q2 2026
-func (ss *xormStore) teamMemberUidMigration() error {
-	ctx := context.Background()
+func (ss *xormStore) teamMemberUidMigration(ctx context.Context) error {
 	dbHelper, err := ss.sql(ctx)
 	if err != nil {
 		return err
 	}
 
-	query := teamMemberUIDMigrationQuery{
-		SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
-		TeamMemberTable: dbHelper.Table("team_member"),
-	}
-	sqlStr, err := sqltemplate.Execute(teamMemberUIDMigrationTmpl, query)
-	if err != nil {
-		return err
-	}
-
 	return dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Exec(append([]any{sqlStr}, query.GetArgs()...)...)
+		query := teamMemberUIDMigrationQuery{
+			SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+			TeamMemberTable: dbHelper.Table("team_member"),
+		}
+		sqlStr, err := sqltemplate.Execute(teamMemberUIDMigrationTmpl, query)
+		if err != nil {
+			return err
+		}
+		_, err = sess.Exec(append([]any{sqlStr}, query.GetArgs()...)...)
 		return err
 	})
 }

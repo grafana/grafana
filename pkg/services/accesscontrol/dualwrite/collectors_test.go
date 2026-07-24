@@ -58,7 +58,7 @@ func setupTestEnv(t *testing.T) *testEnv {
 	cfg.AutoAssignOrgRole = "Viewer"
 	cfg.AutoAssignOrgId = 1
 
-	teamService, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, tracing.InitializeTracerForTest(), nil)
+	teamService, err := teamimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(sql), cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(t, err)
 
 	orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))

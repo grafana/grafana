@@ -33,8 +33,8 @@ func (s *Service) LegacySearchService() team.Service {
 	return s.legacyService
 }
 
-func ProvideService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider) (*Service, error) {
-	legacyService, err := NewLegacyService(sql, cfg, tracer)
+func ProvideService(ctx context.Context, sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider) (*Service, error) {
+	legacyService, err := NewLegacyService(ctx, sql, cfg, tracer)
 	if err != nil {
 		return nil, err
 	}

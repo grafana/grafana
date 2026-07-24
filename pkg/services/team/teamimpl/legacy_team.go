@@ -24,10 +24,10 @@ type LegacyService struct {
 	tracer tracing.Tracer
 }
 
-func NewLegacyService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
+func NewLegacyService(ctx context.Context, sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
 	store := &xormStore{sql: sql, cfg: cfg, deletes: []string{}}
 
-	if err := store.teamMemberUidMigration(); err != nil {
+	if err := store.teamMemberUidMigration(ctx); err != nil {
 		return nil, err
 	}
 
@@ -103,13 +103,13 @@ func (s *LegacyService) GetTeamIDsByUser(ctx context.Context, query *team.GetTea
 }
 
 func (s *LegacyService) IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error) {
-	_, span := s.tracer.Start(ctx, "team.IsTeamMember", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "team.IsTeamMember", trace.WithAttributes(
 		attribute.Int64("orgID", orgId),
 		attribute.Int64("teamID", teamId),
 		attribute.Int64("userID", userId),
 	))
 	defer span.End()
-	return s.store.IsMember(orgId, teamId, userId)
+	return s.store.IsMember(ctx, orgId, teamId, userId)
 }
 
 func (s *LegacyService) RemoveUsersMemberships(ctx context.Context, userID int64) error {

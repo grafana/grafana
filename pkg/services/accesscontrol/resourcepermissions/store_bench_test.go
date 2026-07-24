@@ -142,7 +142,7 @@ func GenerateDatasourcePermissions(b *testing.B, db db.DB, cfg *setting.Cfg, ac 
 }
 
 func generateTeamsAndUsers(b *testing.B, store db.DB, cfg *setting.Cfg, users int) ([]int64, []int64) {
-	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil)
+	teamSvc, err := teamimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(b, err)
 	dbHelper, err := legacysql.NewDatabaseProvider(store)(context.Background())
 	require.NoError(b, err)
