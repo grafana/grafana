@@ -22,10 +22,12 @@ export interface PluginRecommendationItem extends RecommendationItem {
 }
 
 export function getRecommendations(): PluginRecommendationItem[] {
-  const recommendationDefinitions: Array<Omit<PluginRecommendationItem, 'href' | 'appHref'>> = [
+  // appPath: in-app landing route for the setup CTA; empty when the app's root include is its real entry.
+  const recommendationDefinitions: Array<Omit<PluginRecommendationItem, 'href' | 'appHref'> & { appPath: string }> = [
     {
       id: 'hosted-traces',
       pluginId: HOSTED_TRACES_APP_ID,
+      appPath: '',
       icon: 'gf-traces',
       color: (theme) => theme.visualization.getColorByName('orange'),
       title: t('home.recommendations.hosted-traces.title', 'Trace requests across services'),
@@ -40,6 +42,7 @@ export function getRecommendations(): PluginRecommendationItem[] {
     {
       id: 'synthetic-monitoring',
       pluginId: SYNTHETIC_MONITORING_APP_ID,
+      appPath: '/home',
       icon: 'globe',
       color: (theme) => theme.visualization.getColorByName('purple'),
       title: t('home.recommendations.synthetic-monitoring.title', 'Watch your cluster from outside'),
@@ -54,6 +57,7 @@ export function getRecommendations(): PluginRecommendationItem[] {
     {
       id: 'application-observability',
       pluginId: APP_OBSERVABILITY_APP_ID,
+      appPath: '',
       icon: 'application-observability',
       color: (theme) => theme.visualization.getColorByName('green'),
       title: t('home.recommendations.application-observability.title', 'Explore your service map'),
@@ -68,6 +72,7 @@ export function getRecommendations(): PluginRecommendationItem[] {
     {
       id: 'frontend-observability',
       pluginId: FRONTEND_OBSERVABILITY_APP_ID,
+      appPath: '',
       icon: 'frontend-observability',
       color: (theme) => theme.visualization.getColorByName('blue'),
       title: t('home.recommendations.frontend-observability.title', 'Measure real user experience'),
@@ -81,10 +86,10 @@ export function getRecommendations(): PluginRecommendationItem[] {
     },
   ];
 
-  return recommendationDefinitions.map((recommendation) => ({
+  return recommendationDefinitions.map(({ appPath, ...recommendation }) => ({
     ...recommendation,
     href: locationUtil.assureBaseUrl(`/plugins/${recommendation.pluginId}/`),
-    appHref: locationUtil.assureBaseUrl(createBridgeURL(recommendation.pluginId, '')),
+    appHref: locationUtil.assureBaseUrl(createBridgeURL(recommendation.pluginId, appPath)),
   }));
 }
 
