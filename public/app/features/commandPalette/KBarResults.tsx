@@ -48,19 +48,35 @@ export const KBarResults = (props: KBarResultsProps) => {
   const itemsRef = React.useRef(props.items);
   itemsRef.current = props.items;
 
-  // A11y: Pre-compute the group label for each item so that option items can
-  // announce their section even when the section header has scrolled out of
-  // the virtual window and is no longer in the DOM.
-  const itemGroupLabels = React.useMemo(() => {
-    const labels: Array<string | null> = [];
+  // A11y: Pre-compute the group label and set position/size for each item so
+  // that option items can announce their section and "x of y" even when the
+  // virtualizer has removed the section header (or sibling options) from the DOM.
+  const itemGroupInfo = React.useMemo(() => {
+    const info: Array<{ label: string | null; posInSet: number; setSize: number }> = props.items.map(() => ({
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+      label: null,
+      posInSet: 0,
+      setSize: 0,
+    }));
     let currentGroup: string | null = null;
-    for (const item of props.items) {
-      if (typeof item === 'string') {
-        currentGroup = item;
+    let groupIndices: number[] = [];
+    const flushGroup = () => {
+      for (const [pos, itemIndex] of groupIndices.entries()) {
+        info[itemIndex] = { label: currentGroup, posInSet: pos + 1, setSize: groupIndices.length };
       }
-      labels.push(currentGroup);
+      groupIndices = [];
+    };
+    for (const [index, item] of props.items.entries()) {
+      if (typeof item === 'string') {
+        flushGroup();
+        currentGroup = item;
+        info[index].label = item;
+      } else {
+        groupIndices.push(index);
+      }
     }
-    return labels;
+    flushGroup();
+    return info;
   }, [props.items]);
 
   const rowVirtualizer = useVirtual({
@@ -228,7 +244,7 @@ export const KBarResults = (props: KBarResultsProps) => {
           // so our url property is secretly there, but completely untyped
           // Preferably this change is upstreamed and ActionImpl has this
           const { target, url } = item;
-          const groupLabel = itemGroupLabels[virtualRow.index];
+          const { label: groupLabel, posInSet, setSize } = itemGroupInfo[virtualRow.index];
 
           const handlers = !isStringItem && {
             onPointerMove: () =>
@@ -249,6 +265,8 @@ export const KBarResults = (props: KBarResultsProps) => {
                   id: getListboxItemId(virtualRow.index),
                   role: 'option',
                   'aria-selected': active,
+                  'aria-setsize': setSize,
+                  'aria-posinset': posInSet,
                 }),
             style: {
               position: 'absolute',
