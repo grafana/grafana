@@ -34,6 +34,11 @@ const (
 	minQueryDataArtifactBytes = 256
 )
 
+// grafanaSnapshotDatasourceRef mirrors the frontend's GRAFANA_DATASOURCE_REF: the built-in Grafana
+// datasource that serves baked snapshot frames offline. A snapshot panel points here so it renders
+// with no live datasource and no query re-run.
+var grafanaSnapshotDatasourceRef = map[string]any{"type": "grafana", "uid": "grafana", "name": "grafana"}
+
 // queryDataArtifactVersion is the schema version stamped into every querydata.json (including its
 // truncated fallbacks) so a reader can tell how to interpret the artifact.
 const queryDataArtifactVersion = 1
@@ -75,6 +80,13 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 	}
 	if queryDataErr != nil {
 		files["querydata-error.txt"] = []byte(queryDataErr.Error() + "\n")
+	}
+
+	// snapshot-backend.json: an importable, data-baked dashboard that renders the plugin's returned
+	// frames offline (no datasource). A convenience artifact -- on failure or when it would exceed the
+	// per-panel budget it is simply omitted; querydata.json remains the authoritative record.
+	if snapshot, err := marshalSnapshotBackendArtifact(panelJSON, resp); err == nil && len(snapshot) > 0 && len(snapshot) <= maxQueryDataArtifactBytes {
+		files["snapshot-backend.json"] = snapshot
 	}
 
 	har, err := collectHAR(resp, harBuffer)
@@ -320,12 +332,91 @@ type manifestPanelEntry struct {
 	QueryDataBytes     int      `json:"queryDataBytes,omitempty"`
 	QueryDataTruncated bool     `json:"queryDataTruncated,omitempty"`
 	QueryDataError     string   `json:"queryDataError,omitempty"`
+	SnapshotBytes      int      `json:"snapshotBytes,omitempty"`
+	SnapshotError      string   `json:"snapshotError,omitempty"`
 	Skipped            string   `json:"skipped,omitempty"`
 	Error              string   `json:"error,omitempty"`
 	// CaptureError records a failure to serialize this panel's captured traffic. It's kept separate
 	// from Error (a query failure) so one unserializable buffer only loses this panel's traffic.har,
 	// not the whole multi-panel bundle.
 	CaptureError string `json:"captureError,omitempty"`
+}
+
+// marshalSnapshotBackendArtifact builds an importable, data-baked dashboard from the backend
+// QueryDataResponse. It reuses Grafana's snapshot format -- each refID becomes a Grafana-datasource
+// target with queryType "snapshot" carrying the response frames verbatim (the same DataFrameJSON
+// querydata.json records) -- so the dashboard renders OFFLINE, with no live datasource and no query
+// re-run: the "what did the plugin return" view a support engineer can open and see. panelJSON, when
+// present, supplies the panel's visualization + field config so the render matches the real panel;
+// its own datasource/targets are replaced so the imported panel can never re-query.
+//
+// Returns nil (no artifact) when there is no response or no frames to bake.
+func marshalSnapshotBackendArtifact(panelJSON json.RawMessage, resp *backend.QueryDataResponse) ([]byte, error) {
+	if resp == nil {
+		return nil, nil
+	}
+	respJSON, err := queryDataResponseWithoutCaptureFrames(resp).MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	var parsed struct {
+		Results map[string]struct {
+			Frames []json.RawMessage `json:"frames"`
+		} `json:"results"`
+	}
+	if err := json.Unmarshal(respJSON, &parsed); err != nil {
+		return nil, err
+	}
+
+	// Deterministic refID order so the artifact (and its tests) are stable.
+	refIDs := make([]string, 0, len(parsed.Results))
+	for refID := range parsed.Results {
+		refIDs = append(refIDs, refID)
+	}
+	sort.Strings(refIDs)
+
+	targets := make([]map[string]any, 0, len(refIDs))
+	frameCount := 0
+	for _, refID := range refIDs {
+		frames := parsed.Results[refID].Frames
+		frameCount += len(frames)
+		targets = append(targets, map[string]any{
+			"refId":      refID,
+			"datasource": grafanaSnapshotDatasourceRef,
+			"queryType":  "snapshot",
+			"snapshot":   frames,
+		})
+	}
+	if frameCount == 0 {
+		return nil, nil
+	}
+
+	panel := map[string]any{}
+	if len(panelJSON) > 0 {
+		// A malformed panel model shouldn't lose the snapshot; fall back to a minimal panel.
+		if err := json.Unmarshal(panelJSON, &panel); err != nil {
+			panel = map[string]any{}
+		}
+	}
+	if _, ok := panel["type"]; !ok {
+		panel["type"] = "timeseries"
+	}
+	if _, ok := panel["title"]; !ok {
+		panel["title"] = "Diagnostics snapshot (backend / plugin output)"
+	}
+	panel["id"] = 1
+	panel["gridPos"] = map[string]any{"h": 12, "w": 24, "x": 0, "y": 0}
+	panel["datasource"] = grafanaSnapshotDatasourceRef
+	panel["targets"] = targets
+	delete(panel, "snapshotData")
+
+	dashboard := map[string]any{
+		"schemaVersion": 41,
+		"title":         "Diagnostics snapshot (backend / plugin output)",
+		"editable":      true,
+		"panels":        []any{panel},
+	}
+	return json.MarshalIndent(dashboard, "", "  ")
 }
 
 // BuildDashboard assembles a whole-dashboard .tar.gz: a shared dashboard.json and manifest.json plus
@@ -346,6 +437,7 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 
 	usedDirs := map[string]bool{}
 	queryDataBytesRemaining := maxDashboardQueryDataBytes
+	snapshotBytesRemaining := maxDashboardQueryDataBytes
 	panelJSONByID := indexPanelJSON(dashboardJSON)
 	for _, p := range panels {
 		entry := manifestPanelEntry{ID: p.ID, Title: p.Title, Datasources: p.Datasources}
@@ -404,6 +496,23 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 		// Joined with "; " rather than errors.Join's newline so the manifest keeps one readable line per
 		// panel instead of embedded \n escapes.
 		entry.QueryDataError = strings.Join(queryDataErrs, "; ")
+
+		// snapshot-backend.json: importable, data-baked view of this panel's returned frames (renders
+		// offline). Convenience artifact, bounded by a shared dashboard budget; omitted on failure or
+		// when it would exceed the remaining budget (querydata.json remains the authoritative record).
+		if p.Resp != nil {
+			if snapshot, err := marshalSnapshotBackendArtifact(panelJSON, p.Resp); err != nil {
+				entry.SnapshotError = err.Error()
+			} else if len(snapshot) > 0 {
+				if len(snapshot) <= min(maxQueryDataArtifactBytes, snapshotBytesRemaining) {
+					files[dir+"/snapshot-backend.json"] = snapshot
+					entry.SnapshotBytes = len(snapshot)
+					snapshotBytesRemaining -= len(snapshot)
+				} else {
+					entry.SnapshotError = "snapshot-backend artifact exceeded its assigned dashboard budget"
+				}
+			}
+		}
 
 		// A single panel's capture that fails to serialize must not sink the whole multi-panel bundle:
 		// record it against this panel in the manifest and keep everything else (dashboard.json, the

@@ -93,6 +93,70 @@ func TestBundler_Build_recordsQueryDataResponse(t *testing.T) {
 	require.Contains(t, string(files["querydata.json"]), `42`)
 }
 
+func TestBundler_Build_writesSnapshotBackend(t *testing.T) {
+	// The snapshot must render the returned frames OFFLINE: a Grafana-datasource snapshot query
+	// carrying the frame, with no reference to the original datasource.
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{
+		"A": {Frames: data.Frames{frame}},
+	}}
+
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.Contains(t, files, "snapshot-backend.json")
+
+	var dash struct {
+		Panels []struct {
+			Datasource struct {
+				UID string `json:"uid"`
+			} `json:"datasource"`
+			Targets []struct {
+				QueryType  string `json:"queryType"`
+				Datasource struct {
+					UID string `json:"uid"`
+				} `json:"datasource"`
+				Snapshot []json.RawMessage `json:"snapshot"`
+			} `json:"targets"`
+		} `json:"panels"`
+	}
+	require.NoError(t, json.Unmarshal(files["snapshot-backend.json"], &dash))
+	require.Len(t, dash.Panels, 1)
+	require.Equal(t, "grafana", dash.Panels[0].Datasource.UID, "panel points at the Grafana snapshot datasource")
+	require.Len(t, dash.Panels[0].Targets, 1)
+	require.Equal(t, "snapshot", dash.Panels[0].Targets[0].QueryType)
+	require.Equal(t, "grafana", dash.Panels[0].Targets[0].Datasource.UID)
+	require.NotEmpty(t, dash.Panels[0].Targets[0].Snapshot, "baked frames are present")
+	require.Contains(t, string(files["snapshot-backend.json"]), "42", "the baked value is carried")
+}
+
+func TestBundler_Build_snapshotKeepsPanelVizButOverridesDatasource(t *testing.T) {
+	// A supplied panel model contributes its viz/config, but its live datasource + targets are
+	// replaced so the imported snapshot can never re-query.
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{7}))
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
+	panelJSON := json.RawMessage(`{"type":"stat","title":"CPU","datasource":{"type":"prometheus","uid":"prom-x"},"targets":[{"refId":"A","expr":"up"}]}`)
+
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, panelJSON, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	snap := string(files["snapshot-backend.json"])
+	require.Contains(t, snap, `"stat"`, "keeps the panel viz type")
+	require.NotContains(t, snap, "prom-x", "the original datasource is replaced")
+	require.NotContains(t, snap, `"expr"`, "the live query is replaced by the snapshot query")
+}
+
+func TestBundler_Build_noSnapshotWithoutResponse(t *testing.T) {
+	// A request-only bundle (no response) has no frames to bake, so no snapshot is written.
+	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, json.RawMessage(`{"queries":[]}`), nil, nil)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.NotContains(t, files, "snapshot-backend.json")
+}
+
 func TestBundler_Build_recordsQueryDataRequest(t *testing.T) {
 	request := json.RawMessage(`{"from":"now-1h","to":"now","queries":[{"refId":"A","expr":"up"}]}`)
 
@@ -573,6 +637,30 @@ func TestBuildDashboard_recordsQueryDataPerPanel(t *testing.T) {
 	require.Contains(t, files, "panels/1-cpu-usage/querydata.json")
 	require.Contains(t, string(files["panels/1-cpu-usage/querydata.json"]), `"refId": "A"`)
 	require.Contains(t, string(files["panels/1-cpu-usage/querydata.json"]), `42`)
+}
+
+func TestBuildDashboard_writesSnapshotPerPanel(t *testing.T) {
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	panels := []DashboardPanel{{
+		ID:        1,
+		Title:     "CPU Usage",
+		PanelJSON: json.RawMessage(`{"id":1,"type":"timeseries"}`),
+		Resp:      &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}},
+	}}
+
+	blob, err := NewBundler().BuildDashboard(nil, panels)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.Contains(t, files, "panels/1-cpu-usage/snapshot-backend.json")
+	snap := string(files["panels/1-cpu-usage/snapshot-backend.json"])
+	require.Contains(t, snap, `"queryType": "snapshot"`)
+	require.Contains(t, snap, "42", "baked value present")
+
+	var m dashboardManifest
+	require.NoError(t, json.Unmarshal(files["manifest.json"], &m))
+	require.Len(t, m.Panels, 1)
+	require.Positive(t, m.Panels[0].SnapshotBytes, "manifest records the snapshot size")
 }
 
 func TestBuildDashboard_boundsAggregateQueryData(t *testing.T) {
