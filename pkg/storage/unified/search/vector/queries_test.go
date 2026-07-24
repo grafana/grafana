@@ -67,6 +67,42 @@ func TestVectorQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlVectorNamespaceDeleteEmbeddings: {
+				{
+					Name: "simple",
+					Data: &sqlVectorNamespaceDeleteRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "stacks-123",
+					},
+				},
+			},
+			sqlVectorNamespaceDeleteQueryCache: {
+				{
+					Name: "simple",
+					Data: &sqlVectorNamespaceDeleteRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "stacks-123",
+					},
+				},
+			},
+			sqlVectorNamespaceDeleteRateBuckets: {
+				{
+					Name: "simple",
+					Data: &sqlVectorNamespaceDeleteRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "stacks-123",
+					},
+				},
+			},
+			sqlVectorNamespaceDeletePromoted: {
+				{
+					Name: "simple",
+					Data: &sqlVectorNamespaceDeleteRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "stacks-123",
+					},
+				},
+			},
 			sqlVectorCollectionGetContent: {
 				{
 					Name: "simple",

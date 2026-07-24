@@ -1,7 +1,7 @@
 import { Trans } from '@grafana/i18n';
-import { LinkButton, Stack } from '@grafana/ui';
 
-import { alertsCardClicked } from '../analytics/main';
+import { FooterAction, FooterActions } from '../FooterActions';
+import { ctaClicked } from '../analytics/main';
 
 interface Props {
   hasAlerts: boolean;
@@ -12,27 +12,22 @@ interface Props {
 
 export const CreateAndViewAlertsButtons = ({ hasAlerts, canCreate, newRuleHref, viewAllHref }: Props) => {
   return (
-    <Stack justifyContent="flex-end" wrap="wrap">
+    <FooterActions>
       {hasAlerts && canCreate && (
-        <LinkButton
-          variant="secondary"
-          size="sm"
-          fill="text"
+        <FooterAction
           icon="plus"
           href={newRuleHref}
-          onClick={() => alertsCardClicked({ action: 'create_rule', placement: 'footer' })}
+          onClick={() => ctaClicked({ surface: 'alerts_card', action: 'create_rule', placement: 'footer' })}
         >
           <Trans i18nKey="home.firing-alerts-card.create">Create an alert rule</Trans>
-        </LinkButton>
+        </FooterAction>
       )}
 
-      <LinkButton
-        variant="secondary"
-        size="sm"
-        fill="text"
+      <FooterAction
         href={viewAllHref}
         onClick={() =>
-          alertsCardClicked({
+          ctaClicked({
+            surface: 'alerts_card',
             action: hasAlerts ? 'view_all_alerts' : 'view_all_rules',
             placement: 'footer',
           })
@@ -43,7 +38,7 @@ export const CreateAndViewAlertsButtons = ({ hasAlerts, canCreate, newRuleHref, 
         ) : (
           <Trans i18nKey="home.firing-alerts-card.view-rules">View all alert rules</Trans>
         )}
-      </LinkButton>
-    </Stack>
+      </FooterAction>
+    </FooterActions>
   );
 };

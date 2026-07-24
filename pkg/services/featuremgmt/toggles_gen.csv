@@ -44,7 +44,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-12-05,kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-19,externalSnapshotsK8SAPIPush,experimental,@grafana/sharing-squad,false,true,false
 2026-05-21,externalSnapshotsSupportLegacyAPI,experimental,@grafana/sharing-squad,false,true,false
-2025-06-25,kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,true,false
+2026-07-21,libraryelements.kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,false,false
 2026-05-22,kubernetesFolderCascadeDelete,experimental,@grafana/search-and-storage,false,false,false
 2026-05-22,grafana.kubernetesAnnotationsClient,experimental,@grafana/dashboards-squad,false,false,true
 2026-06-18,grafana.newPanelQueryErrorsUI,experimental,@grafana/dashboards-squad,false,false,true
@@ -91,7 +91,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-01-10,cloudRBACRoles,preview,@grafana/identity-access-team,false,true,false
 2024-01-10,alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
 2024-01-18,jitterAlertRulesWithinGroups,preview,@grafana/alerting-squad,false,true,false
-2025-12-29,auditLoggingAppPlatform,experimental,@grafana/grafana-operator-experience-squad,false,true,false
+2025-12-29,auditLoggingAppPlatform,preview,@grafana/grafana-operator-experience-squad,false,true,false
 2025-07-31,secretsManagementAppPlatformUI,preview,@grafana/grafana-operator-experience-squad,false,false,false
 2026-05-22,secretsKeeperUI,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2026-06-26,grafana.secretsReferenceValueUI,experimental,@grafana/grafana-operator-experience-squad,false,false,true
@@ -196,7 +196,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-05-21,alertingImportYAMLUI,GA,@grafana/alerting-squad,false,false,true
 2026-05-22,alertingMigrationWizardUI,experimental,@grafana/alerting-squad,false,false,true
 2025-04-02,azureMonitorLogsBuilderEditor,preview,@grafana/data-sources-plugins,false,false,false
-2026-06-01,azureMonitorBatchAPI,experimental,@grafana/data-sources-plugins,false,false,false
+2026-06-24,azureMonitorBatchAPI,experimental,@grafana/data-sources-plugins,false,false,false
 2025-04-03,alertingRulePermanentlyDelete,GA,@grafana/alerting-squad,false,false,true
 2025-03-27,alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,false
 2025-04-02,multiTenantTempCredentials,experimental,@grafana/data-sources-plugins,false,false,false

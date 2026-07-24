@@ -8,7 +8,7 @@ import { type DashboardQueryResult, type LocationInfo } from 'app/features/searc
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { emptyCtaClicked } from '../analytics/main';
+import { ctaClicked } from '../analytics/main';
 
 import { DashboardTabError } from './DashboardTabError';
 import { RecentDashboardsClearButton } from './RecentDashboardsClearButton';
@@ -53,7 +53,9 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
               <LinkButton
                 icon="plus"
                 href="/dashboard/new"
-                onClick={() => emptyCtaClicked({ cta_type: 'create_dashboard' })}
+                onClick={() =>
+                  ctaClicked({ surface: 'recent_tab', action: 'create_dashboard', placement: 'empty_state' })
+                }
               >
                 <Trans i18nKey="home.recent-dashboards-tab.create">Create your first dashboard</Trans>
               </LinkButton>
@@ -62,7 +64,9 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
                 icon="apps"
                 href="/dashboards"
                 variant="secondary"
-                onClick={() => emptyCtaClicked({ cta_type: 'browse_dashboards' })}
+                onClick={() =>
+                  ctaClicked({ surface: 'recent_tab', action: 'browse_dashboards', placement: 'empty_state' })
+                }
               >
                 <Trans i18nKey="home.recent-dashboards-tab.browse">Browse dashboards</Trans>
               </LinkButton>

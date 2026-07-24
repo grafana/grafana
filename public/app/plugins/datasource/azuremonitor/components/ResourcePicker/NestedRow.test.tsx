@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import NestedRow from './NestedRow';
-import { ResourceRowType } from './types';
+import { type ResourceRow, ResourceRowType } from './types';
 
 const defaultProps = {
   row: {
@@ -154,5 +155,57 @@ describe('NestedRow', () => {
 
     const rg = screen.queryByText('test-rg');
     expect(rg).not.toBeInTheDocument();
+  });
+
+  it('auto-opens for a saved selection but preserves a manual collapse across re-renders', async () => {
+    const user = userEvent.setup();
+    const child: ResourceRow = {
+      id: 'child',
+      uri: '/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm-1',
+      name: 'vm-1',
+      type: ResourceRowType.Resource,
+      typeLabel: 'vm',
+    };
+    const parent: ResourceRow = {
+      id: 'parent',
+      uri: '/subscriptions/sub/resourceGroups/rg',
+      name: 'rg-1',
+      type: ResourceRowType.ResourceGroup,
+      typeLabel: 'rg',
+      children: [child],
+    };
+    const props = {
+      ...defaultProps,
+      row: parent,
+      selectedRows: [child],
+      selectableEntryTypes: [ResourceRowType.Resource],
+    };
+
+    const { rerender } = render(
+      <table>
+        <tbody>
+          <NestedRow {...props} />
+        </tbody>
+      </table>
+    );
+
+    // The row auto-opens because it contains the selected resource.
+    expect(screen.getByText('vm-1')).toBeInTheDocument();
+
+    // The user manually collapses the row.
+    await user.click(screen.getByLabelText('Collapse rg-1'));
+    expect(screen.queryByText('vm-1')).not.toBeInTheDocument();
+
+    // A tree re-render gives this row a new object identity (same content) — e.g. when a
+    // sibling row is expanded. The manual collapse must be preserved: the auto-open effect
+    // should not re-fire and force the row back open.
+    rerender(
+      <table>
+        <tbody>
+          <NestedRow {...props} row={{ ...parent, children: [child] }} />
+        </tbody>
+      </table>
+    );
+    expect(screen.queryByText('vm-1')).not.toBeInTheDocument();
   });
 });
