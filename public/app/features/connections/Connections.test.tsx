@@ -1,8 +1,9 @@
 import { type RenderResult, screen } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
-import { render } from 'test/test-utils';
+import { render, userEvent } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
+import { locationUtil } from '@grafana/data';
+import { config, locationService } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import * as api from 'app/features/datasources/api';
 import { getMockDataSources } from 'app/features/datasources/mocks/dataSourcesMocks';
@@ -162,5 +163,60 @@ describe('Connections', () => {
     // We expect not to see the text that would be rendered by the core "Add new connection" page
     expect(screen.queryByText('Data sources')).not.toBeInTheDocument();
     expect(screen.queryByText('No results matching your query were found')).not.toBeInTheDocument();
+  });
+
+  describe('when Grafana is served from a sub-path', () => {
+    // Mirrors a sub-path deployment: the backend nav tree prefixes every URL with appSubUrl
+    const subPathStore = () =>
+      configureStore({
+        navIndex: {
+          ...navIndex,
+          connections: {
+            ...navIndex.connections,
+            children: [
+              {
+                id: 'connections-add-new-connection',
+                text: 'Add new connection',
+                url: '/grafana/connections/add-new-connection',
+              },
+              { id: 'connections-datasources', text: 'Data sources', url: '/grafana/connections/datasources' },
+            ],
+          },
+        },
+        plugins: getPluginsStateMock([]),
+      });
+
+    const initLocationUtil = (appSubUrl: string) =>
+      locationUtil.initialize({
+        config: { ...window.grafanaBootData.settings, appSubUrl },
+        getTimeRangeForUrl: jest.fn(),
+        getVariablesUrlParams: jest.fn(),
+      });
+
+    beforeEach(() => {
+      initLocationUtil('/grafana');
+    });
+
+    afterEach(() => {
+      initLocationUtil('');
+    });
+
+    test('applies card metadata even though nav URLs carry the sub-path prefix', async () => {
+      config.pluginAdminExternalManageEnabled = false;
+      renderPage(ROUTES.Base, subPathStore());
+
+      // OSS title/subtitle come from CardMetadata, whose keys have no sub-path prefix
+      expect(await screen.findByText('View configured data sources')).toBeVisible();
+      expect(await screen.findByText('Connect to a new data source')).toBeVisible();
+    });
+
+    test('does not duplicate the sub-path when navigating via a card', async () => {
+      config.pluginAdminExternalManageEnabled = false;
+      renderPage(ROUTES.Base, subPathStore());
+
+      await userEvent.click(await screen.findByText('View configured data sources'));
+
+      expect(locationService.getLocation().pathname).toBe('/connections/datasources');
+    });
   });
 });
