@@ -509,6 +509,14 @@ func (s *Service) ClearUserPermissionCache(user identity.Requester) {
 	s.cache.ExclusiveDelete(accesscontrol.GetZanzanaUserPermissionCacheKey(user))
 }
 
+func (s *Service) ClearBasicRolePermissionCache(role string, orgID int64) {
+	s.cache.ExclusiveDelete(accesscontrol.GetBasicRolePermissionCacheKey(role, orgID))
+}
+
+func (s *Service) ClearTeamPermissionCache(teamID, orgID int64) {
+	s.cache.ExclusiveDelete(accesscontrol.GetTeamPermissionCacheKey(teamID, orgID))
+}
+
 func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.DeleteUserPermissions")
 	defer span.End()

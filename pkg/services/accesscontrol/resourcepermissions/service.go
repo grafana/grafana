@@ -282,7 +282,7 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 		}
 	}
 
-	return s.store.SetTeamResourcePermission(ctx, orgID, teamID, SetResourcePermissionCommand{
+	result, err := s.store.SetTeamResourcePermission(ctx, orgID, teamID, SetResourcePermissionCommand{
 		Actions:           actions,
 		Permission:        permission,
 		Resource:          s.scopeResource(),
@@ -290,6 +290,12 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 		ResourceAttribute: s.options.ResourceAttribute,
 		DatasourceType:    datasourceType,
 	}, s.options.OnSetTeam)
+	if err != nil {
+		return nil, err
+	}
+
+	s.service.ClearTeamPermissionCache(teamID, orgID)
+	return result, nil
 }
 
 func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
@@ -316,7 +322,7 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 		}
 	}
 
-	return s.store.SetBuiltInResourcePermission(ctx, orgID, builtInRole, SetResourcePermissionCommand{
+	result, err := s.store.SetBuiltInResourcePermission(ctx, orgID, builtInRole, SetResourcePermissionCommand{
 		Actions:           actions,
 		Permission:        permission,
 		Resource:          s.scopeResource(),
@@ -324,6 +330,12 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 		ResourceAttribute: s.options.ResourceAttribute,
 		DatasourceType:    datasourceType,
 	}, s.options.OnSetBuiltInRole)
+	if err != nil {
+		return nil, err
+	}
+
+	s.service.ClearBasicRolePermissionCache(builtInRole, orgID)
+	return result, nil
 }
 
 func (s *Service) SetPermissions(
@@ -390,10 +402,18 @@ func (s *Service) SetPermissions(
 	}
 
 	clearedUsers := make(map[int64]bool)
+	clearedTeams := make(map[int64]bool)
+	clearedRoles := make(map[string]bool)
 	for _, cmd := range commands {
 		if cmd.UserID != 0 && !clearedUsers[cmd.UserID] {
 			s.clearUserPermissionCache(orgID, cmd.UserID)
 			clearedUsers[cmd.UserID] = true
+		} else if cmd.TeamID != 0 && !clearedTeams[cmd.TeamID] {
+			s.service.ClearTeamPermissionCache(cmd.TeamID, orgID)
+			clearedTeams[cmd.TeamID] = true
+		} else if cmd.BuiltinRole != "" && !clearedRoles[cmd.BuiltinRole] {
+			s.service.ClearBasicRolePermissionCache(cmd.BuiltinRole, orgID)
+			clearedRoles[cmd.BuiltinRole] = true
 		}
 	}
 

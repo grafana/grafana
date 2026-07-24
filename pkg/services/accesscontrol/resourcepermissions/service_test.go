@@ -11,12 +11,17 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
@@ -919,4 +924,211 @@ func TestIsActionSetEnabledResource_Datasource(t *testing.T) {
 	assert.True(t, isActionSetEnabledResource(datasources.ScopeRoot+":query"))
 	assert.True(t, isActionSetEnabledResource(datasources.ScopeRoot+":edit"))
 	assert.True(t, isActionSetEnabledResource(datasources.ScopeRoot+":admin"))
+}
+
+func TestIntegrationService_SetPermissions_ClearsBasicRoleAndTeamCaches(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	sql := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	tracer := tracing.InitializeTracerForTest()
+
+	teamSvc, err := teamimpl.ProvideService(sql, cfg, tracer, nil)
+	require.NoError(t, err)
+	orgSvc, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
+	require.NoError(t, err)
+	userSvc, err := userimpl.ProvideService(
+		sql, orgSvc, cfg, teamSvc, nil, tracer,
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
+	)
+	require.NoError(t, err)
+
+	usr, err := userSvc.Create(context.Background(), &user.CreateUserCommand{Login: "editor-cache", OrgID: 1})
+	require.NoError(t, err)
+	tm, err := teamSvc.CreateTeam(context.Background(), &team.CreateTeamCommand{
+		Name: "cache-team", Email: "cache@test.com", OrgID: 1,
+	})
+	require.NoError(t, err)
+
+	acMock := accesscontrolmock.New()
+	license := licensingtest.NewFakeLicensing()
+	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+
+	service, err := New(
+		cfg,
+		Options{
+			Resource: "folders",
+			ResourceAttribute: "uid",
+			Assignments: Assignments{
+				Users:        true,
+				Teams:        true,
+				BuiltInRoles: true,
+			},
+			PermissionsToActions: map[string][]string{
+				"Edit": {"folders:read", "folders:write"},
+			},
+		},
+		featuremgmt.WithFeatures(),
+		routing.NewRouteRegister(),
+		license,
+		ac,
+		acMock,
+		sql,
+		teamSvc,
+		userSvc,
+		NewActionSetService(),
+	)
+	require.NoError(t, err)
+
+	_, err = service.SetPermissions(context.Background(), 1, "folder-cache-uid",
+		accesscontrol.SetResourcePermissionCommand{UserID: usr.ID, Permission: "Edit"},
+		accesscontrol.SetResourcePermissionCommand{TeamID: tm.ID, Permission: "Edit"},
+		accesscontrol.SetResourcePermissionCommand{BuiltinRole: "Editor", Permission: "Edit"},
+	)
+	require.NoError(t, err)
+
+	require.Len(t, acMock.Calls.ClearUserPermissionCache, 2, "user + service-account cache keys")
+	require.Len(t, acMock.Calls.ClearTeamPermissionCache, 1)
+	require.Equal(t, tm.ID, acMock.Calls.ClearTeamPermissionCache[0].([]interface{})[0])
+	require.Len(t, acMock.Calls.ClearBasicRolePermissionCache, 1)
+	require.Equal(t, "Editor", acMock.Calls.ClearBasicRolePermissionCache[0].([]interface{})[0])
+}
+
+func TestIntegrationService_SetBuiltInRolePermission_ClearsBasicRoleCache(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	acMock := accesscontrolmock.New()
+	sql := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	tracer := tracing.InitializeTracerForTest()
+	teamSvc, err := teamimpl.ProvideService(sql, cfg, tracer, nil)
+	require.NoError(t, err)
+	orgSvc, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
+	require.NoError(t, err)
+	userSvc, err := userimpl.ProvideService(
+		sql, orgSvc, cfg, teamSvc, nil, tracer,
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
+	)
+	require.NoError(t, err)
+
+	license := licensingtest.NewFakeLicensing()
+	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+
+	service, err := New(
+		cfg,
+		Options{
+			Resource:             "folders",
+			ResourceAttribute:     "uid",
+			Assignments:          Assignments{BuiltInRoles: true},
+			PermissionsToActions: map[string][]string{"Edit": {"folders:read", "folders:write"}},
+		},
+		featuremgmt.WithFeatures(),
+		routing.NewRouteRegister(),
+		license,
+		ac,
+		acMock,
+		sql,
+		teamSvc,
+		userSvc,
+		NewActionSetService(),
+	)
+	require.NoError(t, err)
+
+	_, err = service.SetBuiltInRolePermission(context.Background(), 1, "Editor", "folder-x", "Edit")
+	require.NoError(t, err)
+	require.Len(t, acMock.Calls.ClearBasicRolePermissionCache, 1)
+	require.Equal(t, "Editor", acMock.Calls.ClearBasicRolePermissionCache[0].([]interface{})[0])
+	require.Equal(t, int64(1), acMock.Calls.ClearBasicRolePermissionCache[0].([]interface{})[1])
+}
+
+// TestIntegration_EditorFolderPermissionVisibleImmediately reproduces #129016:
+// after granting a folder to the Editor builtin role, a warmed basic-role cache
+// must be invalidated so the next GetUserPermissions call includes the new scope.
+func TestIntegration_EditorFolderPermissionVisibleImmediately(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	sql := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.RBAC.PermissionCache = true
+	cache := localcache.ProvideService()
+	tracer := tracing.InitializeTracerForTest()
+
+	acSvc := acimpl.ProvideOSSService(
+		cfg,
+		database.ProvideService(sql),
+		NewActionSetService(),
+		cache,
+		featuremgmt.WithFeatures(),
+		tracer,
+		sql,
+		permreg.ProvidePermissionRegistry(),
+		nil,
+	)
+
+	teamSvc, err := teamimpl.ProvideService(sql, cfg, tracer, nil)
+	require.NoError(t, err)
+	orgSvc, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
+	require.NoError(t, err)
+	userSvc, err := userimpl.ProvideService(
+		sql, orgSvc, cfg, teamSvc, nil, tracer,
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
+	)
+	require.NoError(t, err)
+
+	editorUser, err := userSvc.Create(context.Background(), &user.CreateUserCommand{
+		Login: "editor129016", OrgID: 1,
+	})
+	require.NoError(t, err)
+
+	license := licensingtest.NewFakeLicensing()
+	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+
+	permSvc, err := New(
+		cfg,
+		Options{
+			Resource:          "folders",
+			ResourceAttribute: "uid",
+			Assignments:       Assignments{BuiltInRoles: true},
+			PermissionsToActions: map[string][]string{
+				"Edit": {"folders:read", "folders:write"},
+			},
+		},
+		featuremgmt.WithFeatures(),
+		routing.NewRouteRegister(),
+		license,
+		ac,
+		acSvc,
+		sql,
+		teamSvc,
+		userSvc,
+		NewActionSetService(),
+	)
+	require.NoError(t, err)
+
+	siu := &user.SignedInUser{
+		UserID:  editorUser.ID,
+		OrgID:   1,
+		OrgRole: identity.RoleEditor,
+		Login:   editorUser.Login,
+	}
+
+	// Warm the basic-role cache before the folder grant exists.
+	_, err = acSvc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{})
+	require.NoError(t, err)
+
+	folderUID := "folder-129016"
+	_, err = permSvc.SetBuiltInRolePermission(context.Background(), 1, "Editor", folderUID, "Edit")
+	require.NoError(t, err)
+
+	// Without ReloadCache, scopes must still include the new folder (cache was cleared).
+	for i := 0; i < 10; i++ {
+		perms, err := acSvc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{})
+		require.NoError(t, err)
+		scopes := accesscontrol.GroupScopesByActionContext(context.Background(), perms)["folders:read"]
+		require.Contains(t, scopes, "folders:uid:"+folderUID,
+			"iteration %d: editor must see folder scope immediately after grant", i)
+	}
 }
