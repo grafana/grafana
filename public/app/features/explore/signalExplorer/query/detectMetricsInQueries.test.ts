@@ -28,4 +28,13 @@ describe('detectMetricsInQueries', () => {
   it('ignores queries without an expr', () => {
     expect(detectMetricsInQueries([{ refId: 'A' } as TestQuery], known)).toEqual({});
   });
+  it('does not match known name as substring of longer identifier', () => {
+    expect(detectMetricsInQueries([q('A', 'node_up_time')], known)).toEqual({});
+  });
+  it('does not match known name as prefix of longer identifier', () => {
+    expect(detectMetricsInQueries([q('A', 'http_requests_total_bucket')], known)).toEqual({});
+  });
+  it('matches known name when separated by boundary chars', () => {
+    expect(detectMetricsInQueries([q('A', 'sum(up) by (job)')], known)).toEqual({ A: ['up'] });
+  });
 });
