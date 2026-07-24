@@ -39,7 +39,22 @@ type backendType string
 const (
 	grafanaCloudPromType backendType = "grafanacloud-prom"
 	prometheusType       backendType = "prometheus"
+	amazonPrometheusType backendType = "amazon-prometheus"
 )
+
+const (
+	// amazonPrometheusRemoteWritePath is appended to an Amazon Managed Prometheus
+	// workspace URL to form the remote write endpoint.
+	amazonPrometheusRemoteWritePath = "/api/v1/remote_write"
+)
+
+// supportedRemoteWriteTypes is the set of data source types that recording rules
+// can write to. In addition to core Prometheus, the purpose-built Amazon Managed
+// Prometheus data source plugin is supported.
+var supportedRemoteWriteTypes = map[string]bool{
+	datasources.DS_PROMETHEUS:        true,
+	datasources.DS_AMAZON_PROMETHEUS: true,
+}
 
 type DatasourceWriterConfig struct {
 	// Timeout is the maximum time to wait for a remote write to succeed.
@@ -121,6 +136,14 @@ func getRemoteWriteURL(ds *datasources.DataSource) (*url.URL, error) {
 		return nil, err
 	}
 
+	// Amazon Managed Prometheus: the data source URL points at the workspace root
+	// (e.g. https://aps-workspaces.<region>.amazonaws.com/workspaces/<ws-id>), so the
+	// remote write path is appended directly. The generic Mimir/Cortex handling below
+	// would drop the /workspaces/<ws-id> prefix, so AMP must be handled explicitly.
+	if ds.Type == datasources.DS_AMAZON_PROMETHEUS {
+		return u.JoinPath(amazonPrometheusRemoteWritePath), nil
+	}
+
 	if getPrometheusType(ds) == "Prometheus" {
 		return u.JoinPath("/api/v1/write"), nil
 	}
@@ -176,8 +199,9 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 		return nil, err
 	}
 
-	if ds.Type != datasources.DS_PROMETHEUS {
-		return nil, errors.New("can only write to data sources of type prometheus")
+	if !supportedRemoteWriteTypes[ds.Type] {
+		return nil, fmt.Errorf("can only write to data sources of type prometheus "+
+			"or amazon managed prometheus, but got %q", ds.Type)
 	}
 
 	is, err := adapters.ModelToInstanceSettings(ds, w.decrypt)
@@ -227,9 +251,12 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 	}
 
 	var backend backendType
-	if dsUID == string(grafanaCloudPromType) {
+	switch {
+	case dsUID == string(grafanaCloudPromType):
 		backend = grafanaCloudPromType
-	} else {
+	case ds.Type == datasources.DS_AMAZON_PROMETHEUS:
+		backend = amazonPrometheusType
+	default:
 		backend = prometheusType
 	}
 
@@ -241,6 +268,13 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 			BasicAuth:    ho.BasicAuth,
 			Header:       headers,
 			ProxyOptions: ho.ProxyOptions,
+			// SigV4 is required for Amazon Managed Prometheus, which only accepts
+			// SigV4-signed remote_write requests. CustomOptions and Middlewares carry
+			// plugin-specific auth (e.g. the AMP data source plugin) that must
+			// reach the writer's HTTP client for signing to work.
+			SigV4:         ho.SigV4,
+			CustomOptions: ho.CustomOptions,
+			Middlewares:   ho.Middlewares,
 		},
 		Timeout:     w.cfg.Timeout,
 		BackendType: backend,
