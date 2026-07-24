@@ -44,6 +44,32 @@ describe('DownloadDashboardDiagnostics', () => {
     expect(screen.getByRole('button', { name: 'Download diagnostics' })).toBeInTheDocument();
   });
 
+  it('includes server logs by default', () => {
+    const { tab } = setupScenario();
+
+    render(<tab.Component model={tab} />);
+
+    expect(screen.getByLabelText('Include server logs')).toBeChecked();
+  });
+
+  it('can exclude server logs from the dashboard bundle', async () => {
+    jest.mocked(startDashboardDiagnostics).mockResolvedValue('job-1');
+    jest
+      .mocked(getDashboardDiagnosticsStatus)
+      .mockResolvedValue({ uid: 'job-1', state: 'complete', panelsDone: 2, panelsTotal: 2 });
+    const { tab } = setupScenario();
+
+    render(<tab.Component model={tab} />);
+    await userEvent.click(screen.getByLabelText('Include server logs'));
+    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+
+    expect(startDashboardDiagnostics).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.objectContaining({ includeLogs: false })
+    );
+  });
+
   it('collects every panel with active queries, starts a job, and downloads the completed bundle', async () => {
     jest.mocked(startDashboardDiagnostics).mockResolvedValue('job-1');
     jest

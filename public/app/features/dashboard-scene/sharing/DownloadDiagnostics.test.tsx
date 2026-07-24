@@ -36,6 +36,29 @@ describe('DownloadDiagnostics', () => {
     expect(screen.getByRole('button', { name: 'Download diagnostics' })).toBeInTheDocument();
   });
 
+  it('includes server logs by default', () => {
+    const { tab } = setupScenario();
+
+    render(<tab.Component model={tab} />);
+
+    expect(screen.getByLabelText('Include server logs')).toBeChecked();
+  });
+
+  it('can exclude server logs from the download', async () => {
+    const { tab } = setupScenario();
+
+    render(<tab.Component model={tab} />);
+    await userEvent.click(screen.getByLabelText('Include server logs'));
+    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+
+    expect(downloadDiagnosticsForQueries).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.any(String),
+      expect.any(String),
+      expect.objectContaining({ includeLogs: false })
+    );
+  });
+
   it('passes the panel visible queries and time range when downloading', async () => {
     const { tab } = setupScenario();
 

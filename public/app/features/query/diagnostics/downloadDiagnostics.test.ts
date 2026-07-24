@@ -50,7 +50,7 @@ describe('downloadDiagnosticsForQueries', () => {
         method: 'POST',
         responseType: 'blob',
         // Only the visible query is forwarded.
-        data: { from: '100', to: '200', queries: [{ refId: 'A' }] },
+        data: { from: '100', to: '200', queries: [{ refId: 'A' }], includeLogs: false },
       })
     );
     expect(saveAs).toHaveBeenCalledWith(blob, 'diagnostics-20260101-000000.tar.gz');
@@ -65,6 +65,16 @@ describe('downloadDiagnosticsForQueries', () => {
     expect(saveAs).toHaveBeenCalledTimes(1);
     const [, filename] = jest.mocked(saveAs).mock.calls[0];
     expect(filename).toMatch(/^diagnostics-\d{8}-\d{6}\.tar\.gz$/);
+  });
+
+  it('can exclude server logs', async () => {
+    const fetch = setupBackendSrv({ data: new Blob(['bundle']), headers: new Headers() });
+
+    await downloadDiagnosticsForQueries([{ refId: 'A' }], '1', '2', { includeLogs: false });
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { from: '1', to: '2', queries: [{ refId: 'A' }], includeLogs: false } })
+    );
   });
 });
 
@@ -85,7 +95,7 @@ describe('dashboard diagnostics', () => {
         url: '/api/ds/dashboard-diagnostics',
         method: 'POST',
         responseType: 'json',
-        data: { dashboard: undefined, panels },
+        data: { dashboard: undefined, panels, includeLogs: false },
       })
     );
   });
@@ -94,6 +104,17 @@ describe('dashboard diagnostics', () => {
     setupBackendSrv({ data: {} });
     await expect(startDashboardDiagnostics([{ id: 1, title: 'A', from: '1', to: '2', queries: [] }])).rejects.toThrow(
       'Diagnostics job was not created'
+    );
+  });
+
+  it('startDashboardDiagnostics can exclude server logs', async () => {
+    const fetch = setupBackendSrv({ data: { uid: 'job-123' } });
+    const panels = [{ id: 1, title: 'A', from: '1', to: '2', queries: [{ refId: 'A' }] }];
+
+    await startDashboardDiagnostics(panels, undefined, { includeLogs: false });
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { dashboard: undefined, panels, includeLogs: false } })
     );
   });
 

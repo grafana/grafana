@@ -8,6 +8,11 @@ import { type DataQuery } from '@grafana/schema';
 const DIAGNOSTICS_ENDPOINT = '/api/ds/diagnostics';
 const DASHBOARD_DIAGNOSTICS_ENDPOINT = '/api/ds/dashboard-diagnostics';
 
+export interface DiagnosticsRequestOptions {
+  includeLogs?: boolean;
+  signal?: AbortSignal;
+}
+
 /** Fallback bundle filename, e.g. `diagnostics-20260623-172901.tar.gz` (local time), used when the
  * response carries no Content-Disposition filename. */
 function fallbackFileName(prefix = 'diagnostics'): string {
@@ -35,7 +40,7 @@ export async function downloadDiagnosticsForQueries(
   queries: DataQuery[],
   from: string,
   to: string,
-  signal?: AbortSignal
+  options: DiagnosticsRequestOptions = {}
 ): Promise<void> {
   const visibleQueries = queries.filter((query) => !query.hide);
 
@@ -48,11 +53,11 @@ export async function downloadDiagnosticsForQueries(
       url: DIAGNOSTICS_ENDPOINT,
       method: 'POST',
       responseType: 'blob',
-      data: { from, to, queries: visibleQueries },
+      data: { from, to, queries: visibleQueries, includeLogs: options.includeLogs ?? false },
       // Surface failures in the drawer instead of a global toast.
       showErrorAlert: false,
       // Cancelling the drawer aborts the in-flight request.
-      abortSignal: signal,
+      abortSignal: options.signal,
     })
   );
 
@@ -91,16 +96,16 @@ export interface DashboardDiagnosticsStatus {
 export async function startDashboardDiagnostics(
   panels: DashboardDiagnosticsPanel[],
   dashboard?: unknown,
-  signal?: AbortSignal
+  options: DiagnosticsRequestOptions = {}
 ): Promise<string> {
   const response = await lastValueFrom(
     getBackendSrv().fetch<{ uid: string }>({
       url: DASHBOARD_DIAGNOSTICS_ENDPOINT,
       method: 'POST',
       responseType: 'json',
-      data: { dashboard, panels },
+      data: { dashboard, panels, includeLogs: options.includeLogs ?? false },
       showErrorAlert: false,
-      abortSignal: signal,
+      abortSignal: options.signal,
     })
   );
   const uid = response.data?.uid;

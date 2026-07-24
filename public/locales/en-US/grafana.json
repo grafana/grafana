@@ -5594,6 +5594,8 @@
       "error-title": "Failed to generate diagnostics",
       "generating-button": "Generating…",
       "generation-failed": "Diagnostics generation failed",
+      "include-server-logs": "Include server logs",
+      "include-server-logs-description": "Adds filtered query logs and a bounded unfiltered server-log window to the bundle.",
       "info-text-dashboard": "Generates a diagnostic bundle for the whole dashboard by re-running every panel's queries with HTTP capture active. This runs in the background and may take a while for large dashboards.",
       "info-text-panel": "Generates a diagnostic bundle for this panel by re-running its queries with HTTP capture active. The download may take a moment while the bundle is generated.",
       "job-not-created": "Diagnostics job was not created",

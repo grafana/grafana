@@ -1,22 +1,9 @@
-import { css } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { isFetchError } from '@grafana/runtime';
-import {
-  sceneGraph,
-  type SceneComponentProps,
-  SceneDataTransformer,
-  type SceneObject,
-  SceneObjectBase,
-  type SceneObjectRef,
-  SceneQueryRunner,
-  VizPanel,
-} from '@grafana/scenes';
+import { sceneGraph, type SceneComponentProps, SceneObjectBase, type SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
-import { Alert, Button, useStyles2 } from '@grafana/ui';
 import {
   type DashboardDiagnosticsPanel,
   downloadDashboardDiagnostics,
@@ -26,6 +13,8 @@ import {
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
+import { DiagnosticsDrawerContent } from './DiagnosticsDrawerContent';
+import { getQueryRunnerFor } from './diagnosticsUtils';
 import { type SceneShareTabState, type ShareView } from './types';
 
 // How long to wait between status polls, and the cap on attempts (~5 min, matching the backend's
@@ -55,23 +44,8 @@ export class DownloadDashboardDiagnostics
   }
 }
 
-// Inlined rather than imported from dashboard-scene/utils/utils: that module transitively reaches
-// DashboardScene, which imports ShareDrawer (which imports this view), creating an import cycle.
-function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQueryRunner | undefined {
-  if (!sceneObject) {
-    return undefined;
-  }
-  const dataProvider = sceneObject.state.$data ?? sceneObject.parent?.state.$data;
-  if (dataProvider instanceof SceneQueryRunner) {
-    return dataProvider;
-  }
-  if (dataProvider instanceof SceneDataTransformer) {
-    return getQueryRunnerFor(dataProvider);
-  }
-  return undefined;
-}
-
-// panel.state.key is "panel-<id>"; parse the numeric id without importing utils (import cycle, as above).
+// panel.state.key is "panel-<id>"; parse the numeric id without importing utils for the same
+// import-cycle reason documented in diagnosticsUtils.
 // Mirrors getPanelIdForVizPanel in dashboard-scene/utils/utils.ts, including its non-null assertion:
 // every VizPanel in the scene graph is keyed this way, so an undefined key indicates a real bug
 // upstream rather than something to paper over with a fallback id.
@@ -118,16 +92,6 @@ function collectDashboardPanels(dashboard: DashboardScene): DashboardDiagnostics
   return panels;
 }
 
-// The download uses blob/json fetches whose FetchError carries the detail in status/statusText, so
-// build the message from those rather than error.message (which would leave the alert body empty).
-function diagnosticsErrorMessage(error: Error): string {
-  if (isFetchError(error)) {
-    const parts = [error.status, error.statusText].filter(Boolean);
-    return parts.length ? parts.join(' ') : t('dashboard.diagnostics.request-failed', 'Request failed');
-  }
-  return error.message || t('dashboard.diagnostics.error-title', 'Failed to generate diagnostics');
-}
-
 const delay = (ms: number, signal: AbortSignal) =>
   new Promise<void>((resolve, reject) => {
     const id = setTimeout(resolve, ms);
@@ -143,48 +107,55 @@ const delay = (ms: number, signal: AbortSignal) =>
 
 function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDashboardDiagnostics>) {
   const { onDismiss, dashboardRef } = model.useState();
-  const styles = useStyles2(getStyles);
   const abortRef = useRef<AbortController | null>(null);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
 
   // Abort any in-flight request if the drawer unmounts.
   useEffect(() => () => abortRef.current?.abort(), []);
 
-  const [{ loading: isGenerating, error }, onDownload] = useAsyncFn(async () => {
-    const dashboard = dashboardRef?.resolve();
-    if (!dashboard) {
-      return;
-    }
-    const panels = collectDashboardPanels(dashboard);
-    // Known limitation (follow-up): template variables are sent un-interpolated, so captured traffic
-    // won't match panels that use $vars until per-datasource interpolation is applied.
-    if (panels.length === 0) {
-      throw new Error(t('dashboard.diagnostics.no-panels', 'This dashboard has no panels with active queries.'));
-    }
-
-    const controller = new AbortController();
-    abortRef.current = controller;
-    setProgress({ done: 0, total: panels.length });
-
-    const uid = await startDashboardDiagnostics(panels, dashboard.getSaveModel(), controller.signal);
-
-    for (let attempt = 0; ; attempt++) {
-      const status = await getDashboardDiagnosticsStatus(uid, controller.signal);
-      setProgress({ done: status.panelsDone, total: status.panelsTotal });
-      if (status.state === 'complete') {
-        break;
+  const [{ loading: isGenerating, error }, onDownload] = useAsyncFn(
+    async (includeLogs: boolean) => {
+      const dashboard = dashboardRef?.resolve();
+      if (!dashboard) {
+        return;
       }
-      if (status.state === 'error') {
-        throw new Error(status.error || t('dashboard.diagnostics.generation-failed', 'Diagnostics generation failed'));
+      const panels = collectDashboardPanels(dashboard);
+      // Known limitation (follow-up): template variables are sent un-interpolated, so captured traffic
+      // won't match panels that use $vars until per-datasource interpolation is applied.
+      if (panels.length === 0) {
+        throw new Error(t('dashboard.diagnostics.no-panels', 'This dashboard has no panels with active queries.'));
       }
-      if (attempt >= MAX_POLL_ATTEMPTS) {
-        throw new Error(t('dashboard.diagnostics.timed-out', 'Timed out waiting for diagnostics generation'));
-      }
-      await delay(POLL_INTERVAL_MS, controller.signal);
-    }
 
-    await downloadDashboardDiagnostics(uid, controller.signal);
-  }, [dashboardRef]);
+      const controller = new AbortController();
+      abortRef.current = controller;
+      setProgress({ done: 0, total: panels.length });
+
+      const uid = await startDashboardDiagnostics(panels, dashboard.getSaveModel(), {
+        includeLogs,
+        signal: controller.signal,
+      });
+
+      for (let attempt = 0; ; attempt++) {
+        const status = await getDashboardDiagnosticsStatus(uid, controller.signal);
+        setProgress({ done: status.panelsDone, total: status.panelsTotal });
+        if (status.state === 'complete') {
+          break;
+        }
+        if (status.state === 'error') {
+          throw new Error(
+            status.error || t('dashboard.diagnostics.generation-failed', 'Diagnostics generation failed')
+          );
+        }
+        if (attempt >= MAX_POLL_ATTEMPTS) {
+          throw new Error(t('dashboard.diagnostics.timed-out', 'Timed out waiting for diagnostics generation'));
+        }
+        await delay(POLL_INTERVAL_MS, controller.signal);
+      }
+
+      await downloadDashboardDiagnostics(uid, controller.signal);
+    },
+    [dashboardRef]
+  );
 
   const handleDismiss = () => {
     abortRef.current?.abort();
@@ -192,65 +163,24 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
   };
 
   return (
-    <div>
-      <p className={styles.info}>
+    <DiagnosticsDrawerContent
+      description={
         <Trans i18nKey="dashboard.diagnostics.info-text-dashboard">
           Generates a diagnostic bundle for the whole dashboard by re-running every panel&apos;s queries with HTTP
           capture active. This runs in the background and may take a while for large dashboards.
         </Trans>
-      </p>
-
-      <Alert
-        severity="warning"
-        title={t('dashboard.diagnostics.sensitive-warning-title', 'May contain sensitive data')}
-      >
-        <Trans i18nKey="dashboard.diagnostics.sensitive-warning-body">
-          The bundle can include request headers, query parameters, and server log lines. Review it before sharing
-          outside your organization.
-        </Trans>
-      </Alert>
-
-      {isGenerating && progress && (
-        <p className={styles.info}>
+      }
+      progress={
+        isGenerating && progress ? (
           <Trans i18nKey="dashboard.diagnostics.progress" values={{ done: progress.done, total: progress.total }}>
             Capturing panel {'{{done}}'} of {'{{total}}'}…
           </Trans>
-        </p>
-      )}
-
-      {error && (
-        <Alert severity="error" title={t('dashboard.diagnostics.error-title', 'Failed to generate diagnostics')}>
-          {diagnosticsErrorMessage(error)}
-        </Alert>
-      )}
-
-      <div
-        className={styles.buttonRow}
-        role="group"
-        aria-label={t('dashboard.diagnostics.actions', 'Diagnostics actions')}
-      >
-        <Button variant="primary" onClick={onDownload} disabled={isGenerating} icon="download-alt">
-          {isGenerating ? (
-            <Trans i18nKey="dashboard.diagnostics.generating-button">Generating…</Trans>
-          ) : (
-            <Trans i18nKey="dashboard.diagnostics.download-button">Download diagnostics</Trans>
-          )}
-        </Button>
-        <Button variant="secondary" onClick={handleDismiss} fill="outline">
-          <Trans i18nKey="dashboard.diagnostics.cancel-button">Cancel</Trans>
-        </Button>
-      </div>
-    </div>
+        ) : undefined
+      }
+      error={error}
+      isGenerating={isGenerating}
+      onDownload={onDownload}
+      onDismiss={handleDismiss}
+    />
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  info: css({
-    marginBottom: theme.spacing(2),
-  }),
-  buttonRow: css({
-    display: 'flex',
-    gap: theme.spacing(2),
-    marginTop: theme.spacing(2),
-  }),
-});
