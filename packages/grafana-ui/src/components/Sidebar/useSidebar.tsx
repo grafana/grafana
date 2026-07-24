@@ -71,6 +71,12 @@ export interface UseSideBarOptions {
    * persistenceKeys (e.g. dashboard view vs edit mode share a single hide preference).
    */
   hiddenPersistenceKey?: string;
+  /**
+   * Minimum width (in px) the open pane needs. When set, the pane is never rendered or
+   * resized below this width, and the resize ceiling is raised so the minimum is always
+   * reachable with room to drag. Typically sourced from the open pane's own `minWidth`.
+   */
+  minPaneWidth?: number;
 }
 
 export const SIDE_BAR_WIDTH_ICON_ONLY = 5;
@@ -91,11 +97,16 @@ export function useSidebar({
   canGoBack,
   defaultIsHidden = false,
   hiddenPersistenceKey,
+  minPaneWidth,
 }: UseSideBarOptions): SidebarContextValue {
   const theme = useTheme2();
   const [isDocked, setIsDocked] = useSidebarSavedState(persistenceKey, 'docked', defaultToDocked);
   const [compact, setCompact] = useSidebarSavedState(persistenceKey, 'compact', defaultToCompact);
   const [paneWidth, setPaneWidth] = useSidebarSavedState(persistenceKey, 'size', 240);
+  // The persisted width can be smaller than what the open pane needs (e.g. it was set while a
+  // narrower pane was open). Render at the larger of the two so a pane never appears below its
+  // minimum, without having to mutate (and persist) the stored width just to open the pane.
+  const effectivePaneWidth = minPaneWidth ? Math.max(paneWidth, minPaneWidth) : paneWidth;
   const [isHidden, setIsHidden] = useSidebarSavedState(
     hiddenPersistenceKey ?? persistenceKey,
     'hidden',
@@ -126,7 +137,7 @@ export function useSidebar({
       ? {}
       : {
           style: {
-            [prop]: effectiveIsDocked && hasOpenPane ? paneWidth + toolbarWidth : toolbarWidth,
+            [prop]: effectiveIsDocked && hasOpenPane ? effectivePaneWidth + toolbarWidth : toolbarWidth,
           },
         };
 
@@ -151,11 +162,19 @@ export function useSidebar({
           return prevWidth;
         }
 
-        const maxWidth = Math.max(window.innerWidth * 0.5, 500);
-        return clamp(prevWidth + diff, 100, maxWidth);
+        // Never resize below the open pane's minimum. Keep the ceiling at half the viewport,
+        // but raise it when a pane declares a large minimum so the minimum stays reachable and
+        // there is still room to drag (otherwise min and max collapse to the same value and the
+        // pane appears "stuck").
+        const minWidth = minPaneWidth ?? 100;
+        const maxWidth = Math.max(window.innerWidth * 0.5, minWidth + 300, 500);
+        // Resize from the currently displayed width (which is never below the minimum) so the
+        // first drag after opening a min-constrained pane responds immediately instead of first
+        // eating the gap between the persisted width and the minimum.
+        return clamp(Math.max(prevWidth, minWidth) + diff, minWidth, maxWidth);
       });
     },
-    [hasOpenPane, setCompact, setPaneWidth, compact]
+    [hasOpenPane, setCompact, setPaneWidth, compact, minPaneWidth]
   );
 
   const onToggleIsHidden = useCallback(() => setIsHidden((prev) => !prev), [setIsHidden]);
@@ -170,12 +189,12 @@ export function useSidebar({
     compact,
     hasOpenPane,
     tabsMode,
-    paneWidth,
     edgeMargin,
     bottomMargin,
     contentMargin,
     isHidden: effectiveIsHidden,
     isHiddenPreference: isHidden,
+    paneWidth: effectivePaneWidth,
     onClosePane,
     onGoBack,
     canGoBack,

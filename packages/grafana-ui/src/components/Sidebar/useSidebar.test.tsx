@@ -316,4 +316,42 @@ describe('useSidebar', () => {
       expect(style?.paddingRight).toBeLessThan(paneWidth);
     });
   });
+
+  describe('minPaneWidth', () => {
+    test('renders the open pane at minPaneWidth when the persisted width is smaller', () => {
+      // Persisted width defaults to 240, which is below the pane's minimum
+      const { result } = renderHook(() => useSidebar({ hasOpenPane: true, minPaneWidth: 700 }));
+      expect(result.current.paneWidth).toBe(700);
+    });
+
+    test('does not resize the pane below minPaneWidth', () => {
+      const { result } = renderHook(() => useSidebar({ hasOpenPane: true, minPaneWidth: 700 }));
+
+      act(() => {
+        result.current.onResize(-500);
+      });
+
+      expect(result.current.paneWidth).toBe(700);
+    });
+
+    test('allows resizing above minPaneWidth so there is a draggable range', () => {
+      const { result } = renderHook(() => useSidebar({ hasOpenPane: true, minPaneWidth: 700 }));
+
+      act(() => {
+        result.current.onResize(150);
+      });
+
+      expect(result.current.paneWidth).toBe(850);
+    });
+
+    test('keeps the default 100px floor when no minPaneWidth is set', () => {
+      const { result } = renderHook(() => useSidebar({ hasOpenPane: true }));
+
+      act(() => {
+        result.current.onResize(-1000);
+      });
+
+      expect(result.current.paneWidth).toBe(100);
+    });
+  });
 });
