@@ -2868,6 +2868,14 @@ Maximum number of repositories allowed. Default is `10`. Set to `0` for unlimite
 
 Maximum number of resources (dashboards, folders, etc.) allowed per repository. Default is `0`, which means unlimited.
 
+#### `max_queued_jobs_per_repository`
+
+Maximum number of queued jobs allowed for a single repository. When the limit is reached, new jobs for that repository are rejected with HTTP 429 (Too Many Requests). Default is `0`, which means unlimited.
+
+#### `max_queued_jobs_per_namespace`
+
+Maximum number of queued jobs allowed across all repositories in a namespace. When the limit is reached, new jobs in that namespace are rejected with HTTP 429 (Too Many Requests). Default is `0`, which means unlimited.
+
 #### `public_root_url`
 
 Public-facing root URL of this Grafana instance, used by provisioning to construct URLs that must be reachable from external systems. When empty, falls back to `[server] root_url`.

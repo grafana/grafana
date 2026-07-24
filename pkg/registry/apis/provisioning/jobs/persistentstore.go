@@ -89,11 +89,21 @@ type persistentStore struct {
 	// If a job is abandoned, it will have its claim cleaned up periodically.
 	expiry time.Duration
 
+	// maxQueuedJobsPerRepository caps the number of queued jobs for a single
+	// repository. 0 (or less) means unlimited.
+	maxQueuedJobsPerRepository int
+	// maxQueuedJobsPerNamespace caps the number of queued jobs across all
+	// repositories in a namespace. 0 (or less) means unlimited.
+	maxQueuedJobsPerNamespace int
+
 	queueMetrics QueueMetrics
 }
 
 // NewJobStore creates a new job queue implementation using the API client.
-func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry time.Duration, registry prometheus.Registerer) (*persistentStore, error) {
+//
+// maxQueuedJobsPerRepository and maxQueuedJobsPerNamespace cap the number of
+// queued jobs Insert will accept; 0 (or less) means unlimited.
+func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry time.Duration, registry prometheus.Registerer, maxQueuedJobsPerRepository, maxQueuedJobsPerNamespace int) (*persistentStore, error) {
 	if expiry <= 0 {
 		expiry = time.Second * 30
 	}
@@ -101,10 +111,12 @@ func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry
 	queueMetrics := RegisterQueueMetrics(registry)
 
 	return &persistentStore{
-		client:       provisioningClient,
-		clock:        time.Now,
-		expiry:       expiry,
-		queueMetrics: queueMetrics,
+		client:                     provisioningClient,
+		clock:                      time.Now,
+		expiry:                     expiry,
+		maxQueuedJobsPerRepository: maxQueuedJobsPerRepository,
+		maxQueuedJobsPerNamespace:  maxQueuedJobsPerNamespace,
+		queueMetrics:               queueMetrics,
 	}, nil
 }
 
@@ -558,6 +570,11 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 	logger = logger.With("job", job.GetName())
 	span.SetAttributes(attribute.String("job.name", job.GetName()))
 
+	if err := s.enforceQueueLimits(ctx, namespace, spec.Repository, job.GetName()); err != nil {
+		span.RecordError(err)
+		return nil, err
+	}
+
 	created, err := s.client.Jobs(namespace).Create(ctx, job, metav1.CreateOptions{})
 	if apierrors.IsAlreadyExists(err) {
 		span.RecordError(err)
@@ -572,6 +589,55 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 
 	logger.Info("insert job complete")
 	return created, nil
+}
+
+// enforceQueueLimits rejects an insert that would exceed the configured maximum
+// number of queued jobs for the repository or the namespace. jobName is the
+// deterministic name the job will be created under: a re-insert of a job that is
+// already queued does not grow the queue, so it is let through to Create (which
+// reports AlreadyExists) rather than being rejected by the limit.
+func (s *persistentStore) enforceQueueLimits(ctx context.Context, namespace, repository, jobName string) error {
+	if s.maxQueuedJobsPerRepository <= 0 && s.maxQueuedJobsPerNamespace <= 0 {
+		return nil
+	}
+
+	// Count queued jobs with the provisioning identity, matching the store's
+	// other read paths. This is an internal enforcement check that must not
+	// depend on the caller's list permissions.
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
+	if err != nil {
+		return apifmt.Errorf("failed to get provisioning identity for '%s': %w", namespace, err)
+	}
+
+	list, err := s.client.Jobs(namespace).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return apifmt.Errorf("failed to list jobs for queue limit check in '%s': %w", namespace, err)
+	}
+
+	namespaceCount := 0
+	repositoryCount := 0
+	for i := range list.Items {
+		job := &list.Items[i]
+		if job.GetName() == jobName {
+			// The job is already queued; re-inserting does not grow the queue.
+			return nil
+		}
+		namespaceCount++
+		if job.Labels[LabelRepository] == repository {
+			repositoryCount++
+		}
+	}
+
+	if limit := s.maxQueuedJobsPerNamespace; limit > 0 && namespaceCount >= limit {
+		return apierrors.NewTooManyRequests(
+			fmt.Sprintf("maximum number of queued jobs (%d) reached for namespace '%s'", limit, namespace), 0)
+	}
+	if limit := s.maxQueuedJobsPerRepository; limit > 0 && repositoryCount >= limit {
+		return apierrors.NewTooManyRequests(
+			fmt.Sprintf("maximum number of queued jobs (%d) reached for repository '%s'", limit, repository), 0)
+	}
+
+	return nil
 }
 
 // generateJobName creates and updates the job's name to one that fits it.

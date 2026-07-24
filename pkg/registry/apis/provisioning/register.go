@@ -169,6 +169,11 @@ type APIBuilder struct {
 	historyExpiration        time.Duration
 	jobPollInterval          time.Duration
 
+	// maxQueuedJobsPerRepository and maxQueuedJobsPerNamespace cap the number of
+	// queued jobs the job store will accept. 0 means unlimited.
+	maxQueuedJobsPerRepository int
+	maxQueuedJobsPerNamespace  int
+
 	// natsSubscriber feeds the controllers' event handlers when NATS is enabled.
 	// Instead of an apiserver-backed informer, each controller's handler is driven
 	// by a NATS-backed informer (see pkg/storage/unified/informer) that signals the
@@ -413,6 +418,8 @@ func RegisterAPIService(
 	builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
 	builder.historyExpiration = cfg.ProvisioningHistoryExpiration
 	builder.jobPollInterval = cfg.ProvisioningJobPollInterval
+	builder.maxQueuedJobsPerRepository = cfg.ProvisioningMaxQueuedJobsPerRepository
+	builder.maxQueuedJobsPerNamespace = cfg.ProvisioningMaxQueuedJobsPerNamespace
 	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(builder)
@@ -459,6 +466,8 @@ func RegisterAPIService(
 	v1beta1Builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
 	v1beta1Builder.historyExpiration = cfg.ProvisioningHistoryExpiration
 	v1beta1Builder.jobPollInterval = cfg.ProvisioningJobPollInterval
+	v1beta1Builder.maxQueuedJobsPerRepository = cfg.ProvisioningMaxQueuedJobsPerRepository
+	v1beta1Builder.maxQueuedJobsPerNamespace = cfg.ProvisioningMaxQueuedJobsPerNamespace
 	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	v1beta1Builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(v1beta1Builder)
@@ -986,7 +995,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.client = c.ProvisioningV0alpha1()
 
 			// Initialize the API client-based job store
-			b.jobs, err = jobs.NewJobStore(b.client, jobClaimExpiry, b.registry)
+			b.jobs, err = jobs.NewJobStore(b.client, jobClaimExpiry, b.registry, b.maxQueuedJobsPerRepository, b.maxQueuedJobsPerNamespace)
 			if err != nil {
 				return fmt.Errorf("create API client job store: %w", err)
 			}
