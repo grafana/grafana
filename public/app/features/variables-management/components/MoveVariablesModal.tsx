@@ -14,9 +14,12 @@ export interface MoveVariablesModalProps {
 }
 
 export function MoveVariablesModal({ count, isMoving, onConfirm, onDismiss }: MoveVariablesModalProps) {
-  // '' is the FolderPicker's uid for the root Dashboards folder (global scope).
-  const [targetFolderUid, setTargetFolderUid] = useState('');
   const allowGlobalScope = canManageGlobalVariables();
+  // '' is root/global. Non-editors hide root, so start empty (undefined) — NestedFolderPicker
+  // labels '' as "Dashboards" even when showRootFolder is false.
+  const [targetFolderUid, setTargetFolderUid] = useState<string | undefined>(() =>
+    canManageGlobalVariables() ? '' : undefined
+  );
   const canConfirm = allowGlobalScope || Boolean(targetFolderUid);
 
   return (
@@ -40,7 +43,7 @@ export function MoveVariablesModal({ count, isMoving, onConfirm, onDismiss }: Mo
         <FolderPicker
           showRootFolder={allowGlobalScope}
           value={targetFolderUid}
-          onChange={(uid) => setTargetFolderUid(uid ?? '')}
+          onChange={(uid) => setTargetFolderUid(allowGlobalScope ? (uid ?? '') : uid)}
           excludeUIDs={getVariableFolderPickerExcludeUIDs()}
         />
       </Field>

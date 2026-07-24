@@ -54,9 +54,16 @@ export interface VariableEditorViewProps {
 export function VariableEditorView({ source, existingNames = [], onBack }: VariableEditorViewProps) {
   const styles = useStyles2(getStyles);
   const isNew = !source;
-  // '' represents the root Dashboards folder (global scope), matching the
-  // FolderPicker's uid for its root item so it renders as selected.
-  const [folderUid, setFolderUid] = useState<string>(source ? (getVariableFolderUid(source) ?? '') : '');
+  const allowGlobalScope = canManageGlobalVariables();
+  // '' is the FolderPicker root/global uid. For non-editors root is hidden, so start
+  // with undefined (empty selection) — NestedFolderPicker labels '' as "Dashboards"
+  // even when showRootFolder is false.
+  const [folderUid, setFolderUid] = useState<string | undefined>(() => {
+    if (source) {
+      return getVariableFolderUid(source) ?? '';
+    }
+    return canManageGlobalVariables() ? '' : undefined;
+  });
   const [sceneVariable, setSceneVariable] = useState<SceneVariable>(() =>
     source
       ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -81,7 +88,6 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
     source?.metadata.name,
     hasNameError
   );
-  const allowGlobalScope = canManageGlobalVariables();
   // Non-editors may only save folder-scoped variables (root/global requires Editor/Admin).
   const hasValidFolderScope = allowGlobalScope || Boolean(folderUid);
   const canSave = !isBusy && !hasNameError && !collisionError && !isCheckingName && hasValidFolderScope;
@@ -203,7 +209,7 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
         <FolderPicker
           showRootFolder={allowGlobalScope}
           value={folderUid}
-          onChange={(uid) => setFolderUid(uid ?? '')}
+          onChange={(uid) => setFolderUid(allowGlobalScope ? (uid ?? '') : uid)}
           excludeUIDs={getVariableFolderPickerExcludeUIDs()}
         />
       </Field>

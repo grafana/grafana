@@ -42,7 +42,7 @@ export function evaluateVariableNameCollision(args: {
  */
 export function useVariableNameCollisionCheck(
   logicalName: string,
-  folderUid: string,
+  folderUid: string | undefined,
   /** metadata.name of the variable being edited; undefined when creating. */
   editingResourceName?: string,
   /** Skip while local format validation already failed (name may not be committed). */
