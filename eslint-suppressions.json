@@ -2838,57 +2838,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/loki/components/LokiContextUi.tsx": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 7
-    }
-  },
-  "public/app/plugins/datasource/loki/components/LokiLabelBrowser.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/loki/components/LokiQueryEditor.tsx": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 2
-    }
-  },
-  "public/app/plugins/datasource/loki/components/LokiQueryField.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 2
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/loki/configuration/DerivedField.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 4
-    },
-    "@grafana/require-no-margin": {
-      "count": 9
-    }
-  },
-  "public/app/plugins/datasource/loki/datasource.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
-    }
-  },
-  "public/app/plugins/datasource/loki/querybuilder/components/LokiQueryBuilder.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/loki/querybuilder/state.ts": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 2
-    }
-  },
-  "public/app/plugins/datasource/loki/shardQuerySplitting.ts": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 2
-    }
-  },
   "public/app/plugins/panel/annolist/AnnoListPanel.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1

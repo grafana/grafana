@@ -18,9 +18,9 @@ import {
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
-import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { configureStore } from 'app/store/configureStore';
 
+import { LokiQueryDirection } from '../../loki-helpers/types';
 import { initialExploreState } from '../state/main';
 import { makeExplorePaneState } from '../state/utils';
 

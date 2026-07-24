@@ -2038,44 +2038,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana-plugins/loki@workspace:public/app/plugins/datasource/loki":
-  version: 0.0.0-use.local
-  resolution: "@grafana-plugins/loki@workspace:public/app/plugins/datasource/loki"
-  dependencies:
-    "@emotion/css": "npm:11.13.5"
-    "@grafana/assistant": "npm:0.1.24"
-    "@grafana/data": "npm:13.2.0-pre"
-    "@grafana/e2e-selectors": "npm:13.2.0-pre"
-    "@grafana/lezer-logql": "npm:0.2.9"
-    "@grafana/monaco-logql": "npm:^0.0.8"
-    "@grafana/plugin-configs": "npm:13.2.0-pre"
-    "@grafana/runtime": "npm:13.2.0-pre"
-    "@grafana/schema": "npm:13.2.0-pre"
-    "@grafana/ui": "npm:13.2.0-pre"
-    "@testing-library/dom": "npm:10.4.1"
-    "@testing-library/jest-dom": "npm:6.6.4"
-    "@testing-library/react": "npm:16.3.0"
-    "@testing-library/user-event": "npm:14.6.1"
-    "@types/jest": "npm:29.5.14"
-    "@types/lodash": "npm:4.17.20"
-    "@types/node": "npm:24.10.1"
-    "@types/react": "npm:18.3.18"
-    "@types/react-dom": "npm:18.3.5"
-    jest: "npm:29.7.0"
-    lodash: "npm:^4.17.23"
-    lru-cache: "npm:11.2.2"
-    react: "npm:18.3.1"
-    react-dom: "npm:18.3.1"
-    react-use: "npm:17.6.1"
-    rxjs: "npm:7.8.2"
-    typescript: "npm:6.0.2"
-    uuid: "npm:14.0.0"
-    webpack: "npm:^5.105.0"
-  peerDependencies:
-    "@grafana/runtime": "*"
-  languageName: unknown
-  linkType: soft
-
 "@grafana-plugins/mysql@workspace:public/app/plugins/datasource/mysql":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/mysql@workspace:public/app/plugins/datasource/mysql"
@@ -2161,21 +2123,6 @@ __metadata:
     rxjs: ^7.8.2
   languageName: unknown
   linkType: soft
-
-"@grafana/assistant@npm:0.1.24":
-  version: 0.1.24
-  resolution: "@grafana/assistant@npm:0.1.24"
-  peerDependencies:
-    "@grafana/data": ">=12.1.0"
-    "@grafana/runtime": ">=12.1.0"
-    "@grafana/scenes": ">=5.41.0"
-    "@grafana/schema": ">=12.1.0"
-    "@grafana/ui": ">=12.1.0"
-    react: ">=18.0.0"
-    rxjs: ">=7.0.0"
-  checksum: 10/4bedf11eee2d311047442c1e2c4d192c1bdbed4485d76c0be22c0196d71dc40c615bee605de4092163af8d5254f6dde7f4b8b221c5d8f0161aa5c734b37b372f
-  languageName: node
-  linkType: hard
 
 "@grafana/assistant@npm:0.1.26, @grafana/assistant@npm:^0.1.24":
   version: 0.1.26
@@ -2476,15 +2423,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-logql@npm:0.2.9":
-  version: 0.2.9
-  resolution: "@grafana/lezer-logql@npm:0.2.9"
-  peerDependencies:
-    "@lezer/lr": ^1.0.0
-  checksum: 10/2ebc769f6e665b2a960416fc8416330f41aad183e185ce3f14fd4bfff24ed8ee6555c5e6731f3c6557a115c6514b1b87ed794d7962decee83ea68811dd44465b
-  languageName: node
-  linkType: hard
-
 "@grafana/lezer-logql@npm:0.4.0":
   version: 0.4.0
   resolution: "@grafana/lezer-logql@npm:0.4.0"
@@ -2509,15 +2447,6 @@ __metadata:
     react: ^18
     rxjs: ^7.8.2
   checksum: 10/69e4c42551c6102ae1169416581551dac21e6bf69ad7f93b8c59153a14426011148c5d98d60ef474b4feb29deda47ae96708a6400e2fd82588aebb0b979c435b
-  languageName: node
-  linkType: hard
-
-"@grafana/monaco-logql@npm:^0.0.8":
-  version: 0.0.8
-  resolution: "@grafana/monaco-logql@npm:0.0.8"
-  peerDependencies:
-    monaco-editor: ^0.32.1
-  checksum: 10/30443df2bab511e5b385cb8cd5b8ae54b09f794cd3e2b1ad9cdcd58c46d3384b90d3d738c36e63702c17d914d58ad765c93d89d1398e050fa7c9ab68d940386d
   languageName: node
   linkType: hard
 
@@ -22769,13 +22698,6 @@ __metadata:
     fault: "npm:^1.0.0"
     highlight.js: "npm:~10.7.0"
   checksum: 10/3294677be15bbc256556f097d9b675f23f14309aceeada7880473c57bdbdd7761f200d903fe26d8fa5e82259f70a39465d1d40754c4c049ad2bbd33d77e2c06f
-  languageName: node
-  linkType: hard
-
-"lru-cache@npm:11.2.2":
-  version: 11.2.2
-  resolution: "lru-cache@npm:11.2.2"
-  checksum: 10/fa7919fbf068a739f79a1ad461eb273514da7246cebb9dca68e3cd7ba19e3839e7e2aaecd9b72867e08038561eeb96941189e89b3d4091c75ced4f56c71c80db
   languageName: node
   linkType: hard
 

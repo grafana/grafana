@@ -93,8 +93,6 @@ linters:
             - '**/pkg/tsdb/mysql/**/*'
             - '**/pkg/tsdb/cloudwatch/*'
             - '**/pkg/tsdb/cloudwatch/**/*'
-            - '**/pkg/tsdb/loki/*'
-            - '**/pkg/tsdb/loki/**/*'
             - '**/pkg/tsdb/influxdb/*'
             - '**/pkg/tsdb/influxdb/**/*'
           deny:
