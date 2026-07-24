@@ -1,7 +1,10 @@
 import { render, screen } from 'test/test-utils';
 
 import { createDataFrame, FieldType, type DataSourceInstanceListItem, type PluginMeta } from '@grafana/data';
+import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
+
+import { ctaClicked } from '../analytics/main';
 
 import { RecommendationExisting } from './RecommendationExisting';
 import {
@@ -25,6 +28,10 @@ jest.mock('./kubernetesData', () => ({
   fetchKubernetesInventory: jest.fn(),
   fetchKubernetesHealth: jest.fn(),
   fetchClusterCpuSeries: jest.fn(),
+}));
+
+jest.mock('../analytics/main', () => ({
+  ctaClicked: jest.fn(),
 }));
 
 const mockUsePluginBridge = jest.mocked(usePluginBridge);
@@ -70,6 +77,7 @@ beforeEach(() => {
   mockFetchInventory.mockClear();
   mockFetchHealth.mockClear();
   mockFetchCpuSeries.mockClear();
+  jest.mocked(ctaClicked).mockClear();
 });
 
 afterEach(() => jest.restoreAllMocks());
@@ -98,45 +106,46 @@ describe('RecommendationExisting', () => {
     expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
   });
 
-  it('shows stubs immediately when settings are unavailable without awaiting resolution', async () => {
+  it('shows the no-data card immediately when settings are unavailable without awaiting resolution', async () => {
     mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
     mockResolveDatasource.mockImplementation(() => new Promise(() => {}));
 
     render(<RecommendationExisting />);
 
-    expect(await screen.findByRole('heading', { name: 'Hosted Metrics' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'No data flowing yet' })).toBeInTheDocument();
     expect(screen.queryByTestId('recommendation-existing-skeleton')).not.toBeInTheDocument();
     expect(mockResolveDatasource).not.toHaveBeenCalled();
   });
 
-  it('shows stubs and never queries Kubernetes when the app is installed but disabled', async () => {
+  it('shows the no-data card and never queries Kubernetes when the app is installed but disabled', async () => {
     mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings });
 
     render(<RecommendationExisting />);
 
-    expect(await screen.findByRole('heading', { name: 'Hosted Metrics' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'No data flowing yet' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
     expect(mockResolveDatasource).not.toHaveBeenCalled();
     expect(mockFetchInventory).not.toHaveBeenCalled();
   });
 
-  it('shows stubs when resolution returns null', async () => {
+  it('shows the no-data card when resolution returns null', async () => {
     mockResolveDatasource.mockResolvedValue(null);
     mockFetchInventory.mockRejectedValue(new Error('No Prometheus datasource with Kubernetes data'));
     mockFetchHealth.mockRejectedValue(new Error('No Prometheus datasource with Kubernetes data'));
 
     render(<RecommendationExisting />);
 
-    expect(await screen.findByRole('heading', { name: 'Hosted Metrics' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'No data flowing yet' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Hosted Metrics' })).not.toBeInTheDocument();
   });
 
-  it('shows stubs when resolution rejects without flashing the Kubernetes title', async () => {
+  it('shows the no-data card when resolution rejects without flashing the Kubernetes title', async () => {
     mockResolveDatasource.mockRejectedValue(new Error('probe failed'));
 
     render(<RecommendationExisting />);
 
-    expect(await screen.findByRole('heading', { name: 'Hosted Metrics' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'No data flowing yet' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
   });
 
@@ -300,5 +309,94 @@ describe('RecommendationExisting', () => {
     await user.click(screen.getByRole('menuitem', { name: 'Hosted Metrics' }));
 
     expect(screen.queryByText(/^via /)).not.toBeInTheDocument();
+  });
+
+  describe('analytics', () => {
+    // LinkButton renders a plain <a href>; clicking it would trigger a real jsdom
+    // navigation (console.error -> jest-fail-on-console). Route anchor clicks through
+    // the SPA history the way the app does so the onClick fires without navigating.
+    beforeEach(() => {
+      document.addEventListener('click', interceptLinkClicks);
+    });
+
+    afterEach(() => {
+      document.removeEventListener('click', interceptLinkClicks);
+    });
+
+    it('tracks open_solution when the main CTA is clicked', async () => {
+      const { user } = render(<RecommendationExisting />);
+
+      await user.click(await screen.findByRole('link', { name: /Open K8s app/ }));
+
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'existing_solution',
+        action: 'open_solution',
+        placement: 'card',
+        solution: 'kubernetes-monitoring',
+      });
+    });
+
+    it('tracks view_alerts when the alert-strip link is clicked', async () => {
+      mockFetchHealth.mockResolvedValue({
+        alertsFiring: 3,
+        unhealthyPods: 0,
+        restarts1h: 0,
+        notReadyNodes: 0,
+      });
+
+      const { user } = render(<RecommendationExisting />);
+
+      await user.click(await screen.findByRole('link', { name: 'View' }));
+
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'existing_solution',
+        action: 'view_alerts',
+        placement: 'card',
+        solution: 'kubernetes-monitoring',
+      });
+    });
+
+    it('tracks stub solutions with their own id', async () => {
+      // Stubs are only reachable behind a live solution now; without one the card
+      // renders the no-data state instead, so switch to the stub first.
+      const { user } = render(<RecommendationExisting />);
+
+      expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: /Switch solution/i }));
+      await user.click(screen.getByRole('menuitem', { name: 'Hosted Metrics' }));
+      await user.click(await screen.findByRole('link', { name: /Open infrastructure/ }));
+
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'existing_solution',
+        action: 'open_solution',
+        placement: 'card',
+        solution: 'hosted-metrics',
+      });
+    });
+
+    it('tracks switch_solution with the picked solution id', async () => {
+      const { user } = render(<RecommendationExisting />);
+
+      expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: /Switch solution/i }));
+      await user.click(screen.getByRole('menuitem', { name: 'Hosted Metrics' }));
+
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'existing_solution',
+        action: 'switch_solution',
+        placement: 'card',
+        solution: 'hosted-metrics',
+      });
+    });
+
+    it('does not track re-picking the already selected solution', async () => {
+      const { user } = render(<RecommendationExisting />);
+
+      expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: /Switch solution/i }));
+      await user.click(screen.getByRole('menuitem', { name: 'Kubernetes Monitoring' }));
+
+      expect(jest.mocked(ctaClicked)).not.toHaveBeenCalled();
+    });
   });
 });

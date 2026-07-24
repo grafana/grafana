@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"sync"
 	"testing"
@@ -16,6 +17,8 @@ import (
 	"google.golang.org/grpc/status"
 
 	authlib "github.com/grafana/authlib/types"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
@@ -459,6 +462,7 @@ func TestHybridSearch_SemanticQueryOverridesEmbedText(t *testing.T) {
 func TestHybridSearch_FiltersReachBothLegs(t *testing.T) {
 	backend := &fakeVectorBackend{}
 	s, idx, _ := newHybridTestServer(lexTableResponse(), backend)
+	s.collectionAllowlist = vector.NewCollectionAllowlist([]string{"g/dashboards"}, nil)
 
 	key := validKey()
 	key.Resource = "dashboards"
@@ -553,6 +557,30 @@ func TestHybridSearch_LexicalLegFailureFailsRequest(t *testing.T) {
 	assert.Equal(t, codes.Internal, status.Code(err))
 }
 
+func TestHybridSearch_LexicalEmbeddedErrorCodes(t *testing.T) {
+	// Embedded codes with retry semantics survive; anything else is a
+	// server fault for a server-built request.
+	cases := map[int32]codes.Code{
+		http.StatusServiceUnavailable:  codes.Unavailable,
+		http.StatusTooManyRequests:     codes.ResourceExhausted,
+		http.StatusBadRequest:          codes.Internal,
+		http.StatusInternalServerError: codes.Internal,
+	}
+	for embedded, want := range cases {
+		idx := &hybridFakeIndex{resp: &resourcepb.ResourceSearchResponse{
+			Error: &resourcepb.ErrorResult{Code: embedded, Message: "lexical failure"},
+		}}
+		s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), &fakeVectorBackend{})
+		s.search = &fakeSearchBackend{idx: idx}
+
+		_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+			Key: validKey(), Query: "q",
+		})
+		require.Error(t, err)
+		assert.Equal(t, want, status.Code(err), "embedded code %d", embedded)
+	}
+}
+
 // recordingRateLimiter satisfies vector.RateLimiter and records whether it
 // was consulted.
 type recordingRateLimiter struct {
@@ -566,6 +594,82 @@ func (r *recordingRateLimiter) Allow(context.Context, string, time.Duration, int
 
 func (r *recordingRateLimiter) SweepOlderThan(context.Context, time.Time) (int64, error) {
 	return 0, nil
+}
+
+func TestHybridSearch_CollectionResolution(t *testing.T) {
+	t.Run("unprovisioned collection is NotFound before embedding", func(t *testing.T) {
+		emb := &fakeTextEmbedder{dim: 4}
+		backend := &fakeVectorBackend{resolveNotFound: true}
+		s, _, _ := newHybridTestServer(lexTableResponse(), backend)
+		s.embedder = newTestEmbedder(emb)
+
+		_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+			Key: validKey(), Query: "q",
+		})
+		require.Error(t, err)
+		assert.Equal(t, codes.NotFound, status.Code(err))
+		assert.Empty(t, emb.gotIn.Texts, "must not spend an embedding on an unprovisioned collection")
+	})
+
+	t.Run("disallowed collection is NotFound, same as unprovisioned", func(t *testing.T) {
+		s, _, _ := newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
+		s.collectionAllowlist = vector.NewCollectionAllowlist(nil, nil)
+
+		_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+			Key: validKey(), Query: "q",
+		})
+		require.Error(t, err)
+		assert.Equal(t, codes.NotFound, status.Code(err))
+	})
+
+	t.Run("external collections are rejected", func(t *testing.T) {
+		backend := &fakeVectorBackend{
+			collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r", IsExternal: true},
+		}
+		s, _, _ := newHybridTestServer(lexTableResponse(), backend)
+
+		_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+			Key: validKey(), Query: "q",
+		})
+		require.Error(t, err)
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
+	t.Run("semantic leg searches the resolved partition key", func(t *testing.T) {
+		backend := &fakeVectorBackend{
+			collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "custom_partition"},
+		}
+		s, _, _ := newHybridTestServer(lexTableResponse(), backend)
+
+		_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+			Key: validKey(), Query: "q",
+		})
+		require.NoError(t, err)
+		assert.Equal(t, "custom_partition", backend.gotResource)
+	})
+}
+
+func TestHybridSearch_NamespaceMismatchIsForbidden(t *testing.T) {
+	// A caller authenticated for one namespace must not burn another
+	// tenant's rate budget or embed quota.
+	limiter := &recordingRateLimiter{}
+	emb := &fakeTextEmbedder{dim: 4}
+	s, _, _ := newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
+	s.embedder = newTestEmbedder(emb)
+	s.rateLimiter = limiter
+	s.rateLimitPerTenant = 100
+	s.rateLimitWindow = time.Minute
+
+	ctx := authlib.WithAuthInfo(context.Background(),
+		&identity.StaticRequester{UserID: 1, UserUID: "u", Namespace: "other-tenant", Type: authlib.TypeUser},
+	)
+	_, err := s.HybridSearch(ctx, &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.PermissionDenied, status.Code(err))
+	assert.False(t, limiter.called, "cross-tenant request must not consume rate budget")
+	assert.Empty(t, emb.gotIn.Texts, "cross-tenant request must not consume embed quota")
 }
 
 func TestHybridSearch_UnauthenticatedDoesNotConsumeRateBudget(t *testing.T) {

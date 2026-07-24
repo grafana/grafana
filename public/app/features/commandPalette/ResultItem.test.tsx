@@ -73,4 +73,29 @@ describe('ResultItem', () => {
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
     expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
   });
+
+  it('appends an ellipsis to a parent action that has children but no command or link', () => {
+    const parent = createActionImpl({ name: 'Preferences' });
+    parent.addChild(createActionImpl({ id: 'child-action', name: 'Theme' }));
+    render(<ResultItem action={parent} active={false} currentRootActionId="" />);
+    expect(screen.getByText('Preferences...')).toBeInTheDocument();
+  });
+
+  it('renders ancestor breadcrumbs when no root action is selected', () => {
+    const parent = createActionImpl({ id: 'set-theme', name: 'Set theme' });
+    const child = createActionImpl({ id: 'dark', name: 'Dark' });
+    parent.addChild(child);
+    render(<ResultItem action={child} active={false} currentRootActionId="" />);
+    expect(screen.getByText('Set theme')).toBeInTheDocument();
+    expect(screen.getByText('Dark')).toBeInTheDocument();
+  });
+
+  it('drops the current root action from the breadcrumbs', () => {
+    const parent = createActionImpl({ id: 'set-theme', name: 'Set theme' });
+    const child = createActionImpl({ id: 'dark', name: 'Dark' });
+    parent.addChild(child);
+    render(<ResultItem action={child} active={false} currentRootActionId="set-theme" />);
+    expect(screen.getByText('Dark')).toBeInTheDocument();
+    expect(screen.queryByText('Set theme')).not.toBeInTheDocument();
+  });
 });

@@ -13,7 +13,7 @@ import { pluginMeta } from 'app/features/alerting/unified/testSetup/plugins';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { configureStore } from 'app/store/configureStore';
 
-import { incidentsCardClicked } from '../analytics/main';
+import { ctaClicked } from '../analytics/main';
 
 import { IncidentsCard } from './IncidentsCard';
 
@@ -22,11 +22,10 @@ jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
   useIrmPlugin: jest.fn(),
 }));
 jest.mock('../analytics/main', () => ({
-  incidentsCardClicked: jest.fn(),
-  alertsCardClicked: jest.fn(),
+  ctaClicked: jest.fn(),
   tabChanged: jest.fn(),
   clearHistoryClicked: jest.fn(),
-  emptyCtaClicked: jest.fn(),
+  homepageViewed: jest.fn(),
 }));
 
 setBackendSrv(backendSrv);
@@ -296,10 +295,10 @@ describe('IncidentsCard', () => {
 
       await user.click(await screen.findByRole('link', { name: 'Database outage' }));
 
-      expect(jest.mocked(incidentsCardClicked)).toHaveBeenCalledWith({
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'incidents_card',
         action: 'incident_detail',
         placement: 'list',
-        severity: 'critical',
       });
     });
 
@@ -310,7 +309,8 @@ describe('IncidentsCard', () => {
 
       await user.click(await screen.findByRole('link', { name: /declare an incident/i }));
 
-      expect(jest.mocked(incidentsCardClicked)).toHaveBeenCalledWith({
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'incidents_card',
         action: 'declare_incident',
         placement: 'empty_state',
       });
@@ -323,7 +323,8 @@ describe('IncidentsCard', () => {
 
       await user.click(await screen.findByRole('link', { name: /declare an incident/i }));
 
-      expect(jest.mocked(incidentsCardClicked)).toHaveBeenCalledWith({
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'incidents_card',
         action: 'declare_incident',
         placement: 'footer',
       });
@@ -336,7 +337,8 @@ describe('IncidentsCard', () => {
 
       await user.click(await screen.findByRole('link', { name: /view all incidents/i }));
 
-      expect(jest.mocked(incidentsCardClicked)).toHaveBeenCalledWith({
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'incidents_card',
         action: 'view_all_incidents',
         placement: 'footer',
       });

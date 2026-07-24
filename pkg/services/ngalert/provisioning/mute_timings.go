@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"maps"
 	"slices"
 	"strings"
 	"unsafe"
@@ -305,7 +306,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 	if isTimeIntervalInUseInRoutes(existing.Name, revision.Config.AlertmanagerConfig.Route) {
 		ns, _ := svc.ruleNotificationsStore.ListContactPointRoutings(ctx, models.ListContactPointRoutingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
 		// ignore error here because it's not important
-		return svc.errTimeIntervalInUse(existing.Name, true, ns)
+		return MakeErrTimeIntervalInUse(existing.Name, true, slices.Collect(maps.Keys(ns)))
 	}
 
 	if err = svc.checkOptimisticConcurrency(existingInterval, models.Provenance(provenance), version, "delete"); err != nil {
@@ -319,7 +320,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 			return err
 		}
 		if len(keys) > 0 {
-			return svc.errTimeIntervalInUse(existing.Name, false, keys)
+			return MakeErrTimeIntervalInUse(existing.Name, false, slices.Collect(maps.Keys(keys)))
 		}
 
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
@@ -327,21 +328,6 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 		}
 		return svc.provenanceStore.DeleteProvenance(ctx, &existingInterval, orgID)
 	})
-}
-
-func (svc *MuteTimingService) errTimeIntervalInUse(name string, usedByRoutes bool, rules map[models.AlertRuleKey]models.ContactPointRouting) error {
-	ruleKeys := make([]models.AlertRuleKey, 0, len(rules))
-	uids := make([]string, 0, len(rules))
-	for key := range rules {
-		ruleKeys = append(ruleKeys, key)
-		uids = append(uids, key.UID)
-	}
-	msg := "Cannot delete time interval because it is used in rule's notification settings"
-	if usedByRoutes {
-		msg = "Cannot delete time interval because it is used by notification policies"
-	}
-	svc.log.Error(msg, "timeInterval", name, "rulesUid", strings.Join(uids, ","))
-	return MakeErrTimeIntervalInUse(usedByRoutes, ruleKeys)
 }
 
 func isTimeIntervalInUseInRoutes(name string, route *v1.Route) bool {

@@ -119,11 +119,6 @@ export interface FeatureToggles {
   */
   mlExpressions?: boolean;
   /**
-  * Expose some datasources as apiservers.
-  * @default false
-  */
-  datasourceAPIServers?: boolean;
-  /**
   * Register experimental APIs with the k8s API server, including all datasources
   * @default false
   */
@@ -390,7 +385,7 @@ export interface FeatureToggles {
   jitterAlertRulesWithinGroups?: boolean;
   /**
   * Enable audit logging with Kubernetes under app platform
-  * @default false
+  * @default true
   */
   auditLoggingAppPlatform?: boolean;
   /**

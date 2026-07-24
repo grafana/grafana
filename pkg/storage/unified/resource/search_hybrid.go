@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"sort"
 	"strings"
 
@@ -57,16 +58,32 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		attribute.Int("limit", limit),
 	)
 
-	// Reject unauthenticated requests before they consume a slot of the
-	// tenant's rate budget.
+	// Reject unauthenticated and cross-tenant requests before they consume
+	// a slot of the target namespace's rate budget or embed quota.
 	user, ok := types.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return nil, status.Error(codes.Unauthenticated, "no user in context")
+	}
+	if !types.NamespaceMatches(user.GetNamespace(), req.Key.Namespace) {
+		return nil, status.Error(codes.PermissionDenied, "namespace mismatch")
 	}
 	// Hybrid embeds a query, so it draws from the same per-tenant budget
 	// as VectorSearch.
 	if err := s.checkVectorSearchRateLimit(ctx, req.Key.Namespace); err != nil {
 		return nil, err
+	}
+
+	coll, allowed, err := s.resolveAllowedCollection(ctx, req.Key.Group, req.Key.Resource)
+	if err != nil {
+		return nil, s.grpcStatusError(ctx, "hybrid search: resolve collection", err)
+	}
+	if !allowed {
+		return nil, status.Error(codes.NotFound, "collection not found")
+	}
+	// External collections have no lexical index, so the fused contract
+	// can't hold for them.
+	if coll.IsExternal {
+		return nil, status.Error(codes.InvalidArgument, "hybrid search requires an indexed resource; use VectorSearch for external collections")
 	}
 
 	embedText := req.Query
@@ -83,7 +100,7 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 			return fmt.Errorf("lexical leg: %w", err)
 		}
 		if lexResp.Error != nil {
-			return fmt.Errorf("lexical leg: %s", lexResp.Error.Message)
+			return fmt.Errorf("lexical leg: %w", grpcErrorFromErrorResult(lexResp.Error))
 		}
 		lex = lexicalHitsFromResponse(lexResp)
 		return nil
@@ -96,7 +113,7 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 			return err
 		}
 		results, err := s.vectorBackend.Search(gctx,
-			req.Key.Namespace, s.embedder.Model, req.Key.Resource,
+			req.Key.Namespace, s.embedder.Model, coll.PartitionKey,
 			dense, depth, hybridVectorFilters(req.Filters)...)
 		if err != nil {
 			return fmt.Errorf("vector backend: %w", err)
@@ -130,6 +147,18 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		fused = fused[:limit]
 	}
 	return &resourcepb.HybridSearchResponse{Results: fused}, nil
+}
+
+// resolveAllowedCollection is the shared vector-entry guard for
+// VectorSearch and HybridSearch. Unprovisioned and config-disallowed
+// collections are deliberately indistinguishable (allowed=false for
+// both) so callers can't probe which collections exist.
+func (s *searchServer) resolveAllowedCollection(ctx context.Context, group, resource string) (vector.Collection, bool, error) {
+	coll, found, err := s.vectorBackend.ResolveCollection(ctx, group, resource)
+	if err != nil {
+		return vector.Collection{}, false, err
+	}
+	return coll, found && s.collectionAllowlist.Allows(coll), nil
 }
 
 func (s *searchServer) grpcStatusError(ctx context.Context, op string, err error) error {
@@ -210,6 +239,19 @@ func (s *searchServer) rerankHybridResults(ctx context.Context, query string, re
 func (s *searchServer) rerankFallback(results []*resourcepb.HybridSearchResult, msg string, err error) []*resourcepb.HybridSearchResult {
 	s.log.Warn(msg+"; returning RRF-ordered results", "err", err, "model", s.reranker.Model)
 	return results
+}
+
+// grpcErrorFromErrorResult preserves embedded codes that carry retry
+// semantics; anything else is a server fault for a server-built request.
+func grpcErrorFromErrorResult(e *resourcepb.ErrorResult) error {
+	switch e.Code {
+	case http.StatusTooManyRequests:
+		return status.Error(codes.ResourceExhausted, e.Message)
+	case http.StatusServiceUnavailable:
+		return status.Error(codes.Unavailable, e.Message)
+	default:
+		return fmt.Errorf("%s (code %d)", e.Message, e.Code)
+	}
 }
 
 // rrfK is the standard Reciprocal Rank Fusion constant.

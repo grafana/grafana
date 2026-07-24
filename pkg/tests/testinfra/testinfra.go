@@ -43,6 +43,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/util/testutil"
+
+	// Registers the OSS dependency-injection entrypoints (server.InitializeForTest etc.)
+	// via bootstrap/wire's init(); without this side-effect import they are nil.
+	_ "github.com/grafana/grafana/pkg/server/bootstrap/wire"
 )
 
 // findTestLicense returns the absolute path to the enterprise test license
@@ -1025,6 +1029,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		// and other startup components share the same pool.
 		maxConns = 5
 	}
+
+	// Adding default provisioning allowlist for integration tests
+	provisioningSect, err := getOrCreateSection("provisioning")
+	require.NoError(t, err)
+	_, err = provisioningSect.NewKey("allowed_git_urls", "localhost, 127.0.0.1, github.enterprise.example.com, ghes.example.com")
+	require.NoError(t, err)
 
 	_, err = dbSection.NewKey("max_open_conn", fmt.Sprintf("%d", maxConns))
 	require.NoError(t, err)

@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -1137,8 +1137,6 @@ func TestDeleteMuteTimings(t *testing.T) {
 
 	t.Run("returns ErrTimeIntervalInUse if mute timing is used by a route", func(t *testing.T) {
 		sut, store, prov := createMuteTimingSvcSut()
-		fakeLogger := &logtest.Fake{}
-		sut.log = fakeLogger
 		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
 			return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
 		}
@@ -1150,8 +1148,6 @@ func TestDeleteMuteTimings(t *testing.T) {
 		require.Equal(t, "Get", store.Calls[0].Method)
 		require.Equal(t, orgID, store.Calls[0].Args[1])
 		require.ErrorIs(t, err, ErrTimeIntervalInUse)
-		require.Equal(t, 1, fakeLogger.ErrorLogs.Calls)
-		require.Contains(t, fakeLogger.ErrorLogs.Ctx, usedMuteTiming)
 	})
 
 	t.Run("returns ErrTimeIntervalInUse if active timing is used by a route", func(t *testing.T) {
@@ -1171,8 +1167,6 @@ func TestDeleteMuteTimings(t *testing.T) {
 
 	t.Run("returns ErrTimeIntervalInUse if mute timing is used by rules", func(t *testing.T) {
 		sut, store, prov := createMuteTimingSvcSut()
-		fakeLogger := &logtest.Fake{}
-		sut.log = fakeLogger
 		ruleKey := models.GenerateRuleKey(orgID)
 		ruleNsStore := fakeAlertRuleNotificationStore{
 			ListContactPointRoutingsFn: func(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
@@ -1199,9 +1193,10 @@ func TestDeleteMuteTimings(t *testing.T) {
 		require.ErrorIs(t, err, ErrTimeIntervalInUse)
 		require.Len(t, ruleNsStore.Calls, 1)
 		require.Equal(t, "ListContactPointRoutings", ruleNsStore.Calls[0].Method)
-		require.Equal(t, 1, fakeLogger.ErrorLogs.Calls)
-		require.Contains(t, fakeLogger.ErrorLogs.Ctx, timingToDelete.Name)
-		require.Contains(t, fakeLogger.ErrorLogs.Ctx, ruleKey.UID)
+
+		var gfErr errutil.Error
+		require.ErrorAs(t, err, &gfErr)
+		require.Contains(t, gfErr.LogMessage, ruleKey.UID)
 	})
 
 	t.Run("returns ErrVersionConflict if provided version does not match", func(t *testing.T) {
