@@ -67,12 +67,15 @@ func isGrafanaAssumeRole(jsonData *simplejson.Json) bool {
 	return jsonData.Get(sigV4AuthTypeJSONKey).MustString() == grafanaAssumeRoleAuthType
 }
 
-// externalIDKeys selects the per-datasource ID / mode key pair to operate on, based on
-// whether jsonData is on the SigV4 auth path (sigV4AuthType == grafana_assume_role) or the
-// native AWS auth path. A nil or non-SigV4-GAR jsonData defaults to the native pair.
+// externalIDKeys selects the per-datasource ID / mode key pair to operate on.
+// Presence of sigV4AuthType (any value) means the SigV4 key namespace — datasources do not
+// switch between native and SigV4 auth on the same instance, so this stays stable when
+// leaving Grafana Assume Role (e.g. sigV4AuthType becomes "keys").
 func externalIDKeys(jsonData *simplejson.Json) (idKey, modeKey string) {
-	if jsonData != nil && jsonData.Get(sigV4AuthTypeJSONKey).MustString() == grafanaAssumeRoleAuthType {
-		return sigV4GrafanaExternalIDJSONKey, sigV4UsePerDatasourceExternalIDJSONKey
+	if jsonData != nil {
+		if _, exists := jsonData.CheckGet(sigV4AuthTypeJSONKey); exists {
+			return sigV4GrafanaExternalIDJSONKey, sigV4UsePerDatasourceExternalIDJSONKey
+		}
 	}
 	return grafanaExternalIDJSONKey, usePerDatasourceExternalIDJSONKey
 }
@@ -191,15 +194,8 @@ func preserveGrafanaExternalID(uid, stackExternalID string, existing, updated *s
 	modeSet, modeOn := usePerDatasourceExternalID(updated)
 
 	// Leaving Grafana Assume Role: drop the ID when minting is FT-enabled (otherwise leave it).
-	// Once updated's own authType/sigV4AuthType no longer says grafana_assume_role,
-	// externalIDKeys(updated) can no longer tell native from SigV4, so the key pair to clear
-	// is chosen from the prior (existing) auth path instead.
 	if allowGenerate && !updatedIsGAR {
-		delKey := idKey
-		if existingIsGAR {
-			delKey = existingIdKey
-		}
-		updated.Del(delKey)
+		updated.Del(idKey)
 		return
 	}
 
