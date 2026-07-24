@@ -211,7 +211,7 @@ require (
 	golang.org/x/text v0.40.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.15.0 // @grafana/grafana-backend-group
 	gonum.org/v1/gonum v0.17.0 // @grafana/data-sources-plugins
-	google.golang.org/api v0.287.1 // @grafana/grafana-backend-group
+	google.golang.org/api v0.288.0 // @grafana/grafana-backend-group
 	google.golang.org/genproto/googleapis/api v0.0.0-20260630182238-925bb5da69e7 // @grafana/identity-access-team
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260630182238-925bb5da69e7 // @grafana/identity-access-team
 	google.golang.org/grpc v1.82.1 // @grafana/grafana-catalog
