@@ -1445,4 +1445,9 @@ export interface FeatureToggles {
   * @default false
   */
   cujTracking?: boolean;
+  /**
+  * Enables the Theme Studio page for interactively building and previewing custom themes
+  * @default false
+  */
+  themeStudio?: boolean;
 }

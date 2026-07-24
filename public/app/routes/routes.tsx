@@ -389,6 +389,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/admin/upgrading',
       component: SafeDynamicImport(() => import('app/features/admin/UpgradePage')),
     },
+    config.featureToggles.themeStudio && {
+      path: '/admin/theme-studio',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ThemeStudioPage" */ 'app/features/theme-studio/ThemeStudioPage')
+      ),
+    },
     {
       path: '/admin/users',
       component: SafeDynamicImport(

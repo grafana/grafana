@@ -15249,7 +15249,8 @@
     "save": "Save preferences",
     "theme": {
       "default-label": "Default",
-      "experimental": "Experimental"
+      "experimental": "Experimental",
+      "open-studio": "Open Theme Studio"
     },
     "title": "Preferences"
   },
@@ -15816,6 +15817,111 @@
       "form-label": "Form label",
       "title": "Panel"
     }
+  },
+  "theme-studio": {
+    "colors": {
+      "action-focus": "Focus",
+      "action-hover": "Hover",
+      "action-selected": "Selected",
+      "bg-canvas": "Canvas",
+      "bg-elevated": "Elevated",
+      "bg-page": "Page",
+      "bg-primary": "Primary",
+      "bg-secondary": "Secondary",
+      "border": "Border",
+      "border-medium": "Medium",
+      "border-strong": "Strong",
+      "border-weak": "Weak",
+      "contrast-text": "Contrast text",
+      "contrast-threshold": "Contrast threshold",
+      "gradient-horizontal": "Brand horizontal",
+      "gradient-vertical": "Brand vertical",
+      "group-accent": "Accent",
+      "group-action": "Action",
+      "group-background": "Background",
+      "group-border": "Border",
+      "group-error": "Error",
+      "group-gradients": "Gradients",
+      "group-info": "Info",
+      "group-misc": "Miscellaneous",
+      "group-primary": "Primary",
+      "group-secondary": "Secondary",
+      "group-success": "Success",
+      "group-tertiary": "Tertiary",
+      "group-text": "Text",
+      "group-warning": "Warning",
+      "hint": "Only fields you change are written to the exported JSON, matching the built-in theme definitions.",
+      "main": "Main",
+      "mode": "Mode",
+      "text": "Text",
+      "text-disabled": "Disabled",
+      "text-link": "Link",
+      "text-primary": "Primary",
+      "text-secondary": "Secondary"
+    },
+    "components": {
+      "input-background": "Input background"
+    },
+    "export-tab": {
+      "copied": "Copied!",
+      "copy": "Copy JSON to clipboard",
+      "json-label": "Theme JSON",
+      "title": "Export"
+    },
+    "preview": {
+      "last-15m": "Last 15m",
+      "latency-overview": "Latency overview",
+      "no-data": "No data",
+      "no-data-state": "No data state",
+      "no-data-yet": "No data yet",
+      "series-api": "API latency",
+      "series-db": "DB latency",
+      "synthetic": "Synthetic workload · Sample data"
+    },
+    "shape": {
+      "border-radius": "Border radius",
+      "border-radius-lg": "Border radius (large)",
+      "border-radius-sm": "Border radius (small)"
+    },
+    "showcase": {
+      "actions": "Actions",
+      "alert-error": "Datasource unreachable",
+      "alert-info": "New version available",
+      "alert-success": "Rule saved",
+      "alert-warning": "High query latency",
+      "badge-error": "Down",
+      "badge-info": "Info",
+      "badge-ok": "Healthy",
+      "badge-warn": "Degraded",
+      "destructive": "Delete",
+      "disabled": "Disabled",
+      "form": "Form controls",
+      "link-button": "Docs",
+      "live": "Live updates",
+      "notifications": "Notifications",
+      "primary": "Primary",
+      "query-name": "Query name",
+      "query-placeholder": "requests_per_second",
+      "secondary": "Secondary",
+      "stacking": "Stacking",
+      "status": "Badges, tags & text",
+      "text-button": "Apply",
+      "text-disabled": "Disabled text.",
+      "text-link": "A themed link",
+      "text-primary": "Primary text on the panel surface.",
+      "text-secondary": "Secondary text for supporting details.",
+      "time-range": "Time range",
+      "view-mode": "View mode"
+    },
+    "sidebar": {
+      "base-theme": "Base theme",
+      "colors": "Colors",
+      "components": "Components",
+      "export": "Export",
+      "shape": "Shape"
+    },
+    "subtitle": "Load a theme, tweak it live, then copy the theme JSON.",
+    "title": "Theme Studio"
   },
   "time-period": {
     "1_day": "1 day",
