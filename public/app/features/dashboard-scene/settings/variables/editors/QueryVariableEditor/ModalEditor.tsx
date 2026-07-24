@@ -1,17 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import {
-  QueryVariable,
-  sceneGraph,
-  SceneTimeRange,
-  type VariableValueOption,
-  type VariableValueOptionProperties,
-} from '@grafana/scenes';
+import { type QueryVariable, type VariableValueOption, type VariableValueOptionProperties } from '@grafana/scenes';
 import { Alert, Button, Modal, Spinner, Stack, Tab, TabsBar, Text, useSplitter, useStyles2 } from '@grafana/ui';
 import { dashboardEditActions } from 'app/features/dashboard-scene/edit-pane/shared';
 import {
@@ -23,6 +17,7 @@ import { getPropertiesFromOptions, VariableValuesPreview } from '../../component
 
 import { Editor } from './QueryVariableEditor';
 import { VariableOptionsSpreadsheet } from './VariableOptionsSpreadsheet/VariableOptionsSpreadsheet';
+import { useDraftVariable } from './useDraftVariable';
 
 type ModalEditorProps = {
   variable: QueryVariable;
@@ -199,19 +194,6 @@ export function ModalEditor(props: ModalEditorProps) {
   );
 }
 
-function useDraftVariable(variable: QueryVariable) {
-  const draftVariableRef = useRef<QueryVariable>();
-  if (!draftVariableRef.current) {
-    const timeRange = sceneGraph.getTimeRange(variable);
-    draftVariableRef.current = new QueryVariable({
-      ...variable.state,
-      $timeRange: new SceneTimeRange(timeRange.state),
-    });
-  }
-  const initialStateRef = useRef({ ...variable.state });
-  return { draftVariable: draftVariableRef.current, initialState: initialStateRef.current };
-}
-
 function useModalEditor({ variable, onClose }: ModalEditorProps) {
   const { draftVariable, initialState } = useDraftVariable(variable);
   const { options, staticOptions = [], staticOptionsOrder } = draftVariable.useState();
@@ -232,12 +214,13 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
       // change and publishes SceneVariableValueChangedEvent, which notifies dependent
       // scene objects (e.g. panels with interpolated titles) to re-render.
       const {
-        value: _,
-        text: __,
-        options: ___,
-        loading: ____,
-        error: _____,
-        $timeRange: ______,
+        value: _value,
+        text: _text,
+        options: _options,
+        loading: _loading,
+        error: _error,
+        $timeRange: _tr,
+        $variables: _vars,
         ...configState
       } = stateUpdate;
       targetVariable.setState(configState);
