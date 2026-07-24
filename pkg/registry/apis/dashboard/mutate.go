@@ -78,6 +78,7 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 		}
 		// Strip BOMs from all string values in the dashboard spec
 		v.Spec.Object = util.StripBOMFromInterface(v.Spec.Object).(map[string]any)
+		resolveConstantExportInputs(v.Spec.Object)
 		resourceInfo = dashboardV0.DashboardResourceInfo
 
 	case *dashboardV1.Dashboard:
@@ -89,6 +90,8 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 		}
 		// Strip BOMs from all string values in the dashboard spec
 		v.Spec.Object = util.StripBOMFromInterface(v.Spec.Object).(map[string]any)
+		// Resolve export-template constants before Migrate drops __inputs
+		resolveConstantExportInputs(v.Spec.Object)
 		resourceInfo = dashboardV1.DashboardResourceInfo
 		migrationErr = migration.Migrate(ctx, v.Spec.Object, schemaversion.LATEST_VERSION)
 		if migrationErr != nil {
