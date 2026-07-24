@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { store } from '@grafana/data';
@@ -50,21 +50,41 @@ function mapPluginsById(plugins: LocalPlugin[] = []) {
 
 function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
   const { value: installedPlugins, loading: pluginsLoading } = useAsync(fetchInstalledPlugins, []);
-  // Memoized so the probe callback below can depend on it without re-running every render.
+  // Memoized so the probe effect below can depend on derived values without re-running every render.
   const pluginsById = useMemo(() => mapPluginsById(installedPlugins), [installedPlugins]);
 
   // Enabled alone does not mean used: probe each enabled recommended solution for live data,
   // and keep recommending the silent ones (preprovisioned cloud stacks enable apps by default).
-  const { value: solutionsWithData, loading: probesLoading } = useAsync(async () => {
-    if (!installedPlugins) {
-      return undefined;
+  // Only apps the user can open are worth probing — an inaccessible app can never show a setup
+  // card, and skipping it avoids doomed requests (e.g. a Faro proxy call that can only 403).
+  const probeCandidateIds = useMemo(
+    () =>
+      getRecommendations()
+        .filter((r) => {
+          const plugin = pluginsById.get(r.pluginId);
+          return !!plugin?.enabled && contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsAppAccess, plugin);
+        })
+        .map((r) => r.pluginId),
+    [pluginsById]
+  );
+
+  // One entry per probed plugin, landing as each probe settles, so a slow probe never suppresses
+  // an already-settled setup card. hasSolutionData never rejects.
+  const [probeResults, setProbeResults] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    let cancelled = false;
+    setProbeResults({});
+    for (const pluginId of probeCandidateIds) {
+      hasSolutionData(pluginId).then((hasData) => {
+        if (!cancelled) {
+          setProbeResults((prev) => ({ ...prev, [pluginId]: hasData }));
+        }
+      });
     }
-    const enabled = getRecommendations().filter((r) => pluginsById.get(r.pluginId)?.enabled);
-    const entries = await Promise.all(
-      enabled.map(async (r) => [r.pluginId, await hasSolutionData(r.pluginId)] as const)
-    );
-    return new Set(entries.filter(([, hasData]) => hasData).map(([pluginId]) => pluginId));
-  }, [installedPlugins, pluginsById]);
+    return () => {
+      cancelled = true;
+    };
+  }, [probeCandidateIds]);
 
   // An unavailable plugin list fails closed. /api/plugins always lists at least the core plugins,
   // so an empty response means the list is unreliable and also fails closed.
@@ -79,16 +99,10 @@ function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
           return canInstall ? [toEnableItem(recommendation)] : [];
         }
         if (plugin.enabled) {
-          // Pending probes exclude the card for this render instead of blocking the whole
-          // section: install/enable cards and the left no-data card mount immediately, and
-          // setup cards join once their probe settles.
-          if (probesLoading || !solutionsWithData || solutionsWithData.has(recommendation.pluginId)) {
-            return [];
-          }
-          // The setup CTA opens the app, so app access — not plugins:write — is the relevant permission.
-          return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsAppAccess, plugin)
-            ? [toSetupItem(recommendation)]
-            : [];
+          // Setup card only for a probe that settled on "no data" (probed apps are pre-filtered
+          // to ones the user can open). A pending or skipped probe excludes just this card for
+          // the render; enable cards and the left no-data card mount immediately.
+          return probeResults[recommendation.pluginId] === false ? [toSetupItem(recommendation)] : [];
         }
         // plugins:write is scoped to this plugin.
         return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin)
@@ -99,8 +113,9 @@ function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
   const visible = recommendations.length > 0;
   // Settled empty: everything resolved and there is genuinely nothing to show — as opposed
   // to a pending plugin list or pending probes that may still produce cards.
+  const allProbesSettled = probeCandidateIds.every((pluginId) => probeResults[pluginId] !== undefined);
   const settledEmpty = listReady
-    ? !visible && !probesLoading && !!solutionsWithData
+    ? !visible && allProbesSettled
     : !pluginsLoading && (!installedPlugins || installedPlugins.length === 0);
 
   useEffect(() => {

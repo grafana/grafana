@@ -21,15 +21,16 @@ import { readScalar, runDatasourceQueries, runInstantQueries } from './promQuery
 // "Seen recently" lookback shared by all data probes, tolerating scrape/ingest gaps.
 const DATA_LOOKBACK_HOURS = 24;
 
-// True when any probed candidate datasource of `type` satisfies `hasData`. Throws when every
-// candidate errored — no usable datasource means unknown, not settled no-data.
+// True when any probed candidate datasource of `type` satisfies `hasData`. Throws when nothing
+// was found and any candidate errored: an errored datasource may hold the data, so absence is
+// only settled when every candidate probed clean.
 async function probeFound(
   type: string,
   hasData: (ds: DataSourceInstanceListItem) => Promise<boolean>
 ): Promise<boolean> {
   const candidates = await listProbeCandidates(type);
   let errored = 0;
-  // findDatasourceWithData requires a non-throwing callback; count failures for the all-errored check.
+  // findDatasourceWithData requires a non-throwing callback; count failures for the unknown check.
   const guardedHasData = async (ds: DataSourceInstanceListItem) => {
     try {
       return await hasData(ds);
@@ -42,8 +43,8 @@ async function probeFound(
   if (found) {
     return true;
   }
-  if (candidates.length > 0 && errored === candidates.length) {
-    throw new Error(`Every ${type} datasource probe failed`);
+  if (errored > 0) {
+    throw new Error(`${errored} ${type} datasource probe(s) failed with no data found elsewhere`);
   }
   return false;
 }
@@ -90,9 +91,13 @@ const probesBySolution: Record<string, { get(): Promise<boolean>; reset(): void 
     () => prometheusHasMetric(`count(last_over_time(sm_check_info[${DATA_LOOKBACK_HOURS}h]))`),
     PROBE_TTL_MS
   ),
-  // Application Observability is powered by Tempo metrics-generator span metrics.
+  // Application Observability span metrics arrive under two supported naming schemes:
+  // the spanmetrics connector emits traces_spanmetrics_*, OTel/Alloy emits traces_span_metrics_*.
   [APP_OBSERVABILITY_APP_ID]: createTtlCachedPromise(
-    () => prometheusHasMetric(`count(last_over_time(traces_spanmetrics_calls_total[${DATA_LOOKBACK_HOURS}h]))`),
+    () =>
+      prometheusHasMetric(
+        `count(last_over_time(traces_spanmetrics_calls_total[${DATA_LOOKBACK_HOURS}h])) or count(last_over_time(traces_span_metrics_calls_total[${DATA_LOOKBACK_HOURS}h]))`
+      ),
     PROBE_TTL_MS
   ),
   [HOSTED_TRACES_APP_ID]: createTtlCachedPromise(() => probeFound('tempo', tempoHasTraces), PROBE_TTL_MS),
@@ -101,8 +106,8 @@ const probesBySolution: Record<string, { get(): Promise<boolean>; reset(): void 
 
 /**
  * True when the solution already receives data. An empty candidate list (or empty Faro registry)
- * is definitive no-data; an errored probe — including every candidate failing — reports true:
- * unknown fails toward hiding the recommendation.
+ * is definitive no-data; an errored probe — including any candidate failing while no data was
+ * found elsewhere — reports true: unknown fails toward hiding the recommendation.
  */
 export async function hasSolutionData(pluginId: string): Promise<boolean> {
   const probe = probesBySolution[pluginId];

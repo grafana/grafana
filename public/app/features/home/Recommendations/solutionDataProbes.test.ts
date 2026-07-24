@@ -113,14 +113,29 @@ describe('hasSolutionData', () => {
       await expect(hasSolutionData('grafana-synthetic-monitoring-app')).resolves.toBe(true);
     }, 15_000);
 
-    it('settles no-data when one datasource errors and the rest probe clean and empty', async () => {
+    it('fails toward hiding when one datasource errors even if the rest probe clean and empty', async () => {
+      // The errored datasource may hold the data, so absence is not established.
       mockList.mockResolvedValue([datasource('prometheus', 'prom-a'), datasource('prometheus', 'prom-b')]);
       mockInstant.mockImplementation(async (_queries, ds) =>
         ds.uid === 'prom-a-uid' ? Promise.reject(new Error('403')) : []
       );
 
-      await expect(hasSolutionData('grafana-synthetic-monitoring-app')).resolves.toBe(false);
+      await expect(hasSolutionData('grafana-synthetic-monitoring-app')).resolves.toBe(true);
     }, 15_000);
+
+    it('probes both span-metric naming schemes for Application Observability', async () => {
+      mockList.mockResolvedValue([datasource('prometheus')]);
+      mockInstant.mockResolvedValue([scalarFrame('probe', 3)]);
+
+      await expect(hasSolutionData('grafana-app-observability-app')).resolves.toBe(true);
+      expect(mockInstant).toHaveBeenCalledWith(
+        {
+          probe: expect.stringMatching(/traces_spanmetrics_calls_total.* or .*traces_span_metrics_calls_total/),
+        },
+        expect.objectContaining({ type: 'prometheus' }),
+        expect.any(Number)
+      );
+    });
   });
 
   describe('Hosted Traces', () => {
@@ -154,7 +169,11 @@ describe('hasSolutionData', () => {
 
       await expect(hasSolutionData('grafana-kowalski-app')).resolves.toBe(true);
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining('/api/plugin-proxy/grafana-kowalski-app/api-proxy/api/v1/app')
+        expect.stringContaining('/api/plugin-proxy/grafana-kowalski-app/api-proxy/api/v1/app'),
+        undefined,
+        undefined,
+        // Probe failures are expected; a toast per failed attempt would spam the homepage.
+        expect.objectContaining({ showErrorAlert: false })
       );
     });
 
