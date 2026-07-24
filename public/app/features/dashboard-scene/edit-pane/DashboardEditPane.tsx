@@ -16,6 +16,9 @@ import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '../utils/utils';
 
 import { ElementEditPane } from './ElementEditPane';
+import { runWithinEditAction } from './editActionGuard';
+// Dev-only: runtime-guard @grafana/scenes classes we can't annotate with @DashboardUI.
+import './guardExternalSceneClasses';
 import {
   ConditionalRenderingChangedEvent,
   DashboardEditActionEvent,
@@ -153,7 +156,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       return;
     }
 
-    action.undo();
+    runWithinEditAction(() => action.undo());
     action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
 
     if (action.addedObject) {
@@ -175,7 +178,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
    * Some edit actions also require clearing selection or selecting new objects
    */
   private performAction(action: DashboardEditActionEventPayload) {
-    action.perform();
+    runWithinEditAction(() => action.perform());
     action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
 
     if (action.addedObject) {
