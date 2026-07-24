@@ -73,16 +73,47 @@ function inferPillsImpl(rawValue: TableCellValue): unknown[] {
   return value.trim().split(SPLIT_RE);
 }
 
-// Row-height measurement re-parses the same pill values on every resize tick (once per frame for
-// the duration of a panel-width drag), which showed up as ~1.4s of self time in CPU traces.
-// inferPills is pure and its inputs are stable across ticks, so we cache results. The cache must be
-// O(1): a large table can hold tens of thousands of distinct pill values, so a linear-scan
-// memoizer (e.g. micro-memoize) spends all its time comparing keys and makes things worse, not
-// better. Object/array values are cached by reference in a WeakMap (unbounded-safe, auto-GC'd);
-// primitives use a small bounded FIFO Map. Callers only read the result, so sharing an array is safe.
+/**
+ * @internal
+ * A bounded cache with O(1) inserts and no per-insert eviction scan. It keeps two generations:
+ * writes go to `primary`; when `primary` fills, it becomes `secondary` (whatever was in the old
+ * `secondary` is dropped) and a fresh `primary` starts. Reads check both generations and promote a
+ * survivor back into `primary`, which approximates LRU. Total live entries stay within ~2x maxSize.
+ *
+ * This is deliberately not a delete-oldest FIFO: on a high-cardinality workload a FIFO evicts on
+ * every insert, and `map.keys().next()` allocates an iterator each time, which dominated CPU traces.
+ */
+function createBoundedCache<K, V>(maxSize: number) {
+  let primary = new Map<K, V>();
+  let secondary = new Map<K, V>();
+  return {
+    get(key: K): V | undefined {
+      const fromPrimary = primary.get(key);
+      if (fromPrimary !== undefined) {
+        return fromPrimary;
+      }
+      const fromSecondary = secondary.get(key);
+      if (fromSecondary !== undefined) {
+        primary.set(key, fromSecondary); // promote into the current generation
+      }
+      return fromSecondary;
+    },
+    set(key: K, value: V): void {
+      primary.set(key, value);
+      if (primary.size >= maxSize) {
+        secondary = primary;
+        primary = new Map<K, V>();
+      }
+    },
+  };
+}
+
+// inferPills is pure and its inputs are stable across resizes, so we cache results. Array/object
+// values are cached by reference in a WeakMap (unbounded-safe, auto-GC'd). Primitive (string) values
+// persist for the whole app lifetime across every table, so they use a generational bounded cache
+// (see createBoundedCache) sized generously enough that a large table mostly hits.
 const arrayPillCache = new WeakMap<object, unknown[]>();
-const primitivePillCache = new Map<string, unknown[]>();
-const PRIMITIVE_PILL_CACHE_MAX = 2048;
+const primitivePillCache = createBoundedCache<string, unknown[]>(16384);
 
 export function inferPills(rawValue: TableCellValue): unknown[] {
   if (rawValue == null || rawValue === '') {
@@ -102,10 +133,6 @@ export function inferPills(rawValue: TableCellValue): unknown[] {
   let cached = primitivePillCache.get(key);
   if (cached === undefined) {
     cached = inferPillsImpl(rawValue);
-    if (primitivePillCache.size >= PRIMITIVE_PILL_CACHE_MAX) {
-      // evict the oldest entry (Map preserves insertion order)
-      primitivePillCache.delete(primitivePillCache.keys().next().value!);
-    }
     primitivePillCache.set(key, cached);
   }
   return cached;
@@ -258,28 +285,16 @@ const PILLS_FONT_SIZE = 12;
 const PILLS_SPACING = 12; // 6px horizontal padding on each side
 const PILLS_GAP = 4; // gap between pills
 
-const PILL_LINE_CACHE_MAX = 2048;
-
 export function getPillCellHeightMeasurer(measureWidth: (value: string) => number): MeasureCellHeight {
   // Per-pill intrinsic width, keyed by the pill string — shared across values (e.g. an actor who
   // appears in many rows) and across column widths, so a resize never re-measures pill text.
   const pillWidthCache: Record<string, number> = {};
   // Per-value laid-out pill widths (intrinsic width + chip padding), keyed by the cell value and
   // therefore width-independent: on a resize we reuse these and skip both inferPills and text
-  // measurement, redoing only the cheap wrap arithmetic below.
-  const valuePillWidthsCache = new Map<string, number[]>();
-  // The wrapped line count depends on value AND width. react-data-grid measures every row in the
-  // frame (not just the viewport) on each resize, so cache the count per (width, value) to skip even
-  // the wrap arithmetic on exact repeats. Line height is applied after the lookup so it isn't part
-  // of the key. All caches are bounded FIFO; the closure is rebuilt when fields/typography/maxHeight
-  // change, so nothing outlives a layout-affecting change.
-  const lineCountCache = new Map<string, number>();
-
-  const evictOldest = (cache: Map<string, unknown>) => {
-    if (cache.size >= PILL_LINE_CACHE_MAX) {
-      cache.delete(cache.keys().next().value!);
-    }
-  };
+  // measurement, redoing only the cheap wrap arithmetic below. Neither cache needs eviction: the
+  // whole closure is rebuilt when fields/typography/maxHeight change, so they live only as long as
+  // the current table structure and are bounded by its distinct values.
+  const pillWidthsByValue = new Map<string, number[]>();
 
   return (value, width, _field, _rowIdx, lineHeight) => {
     if (value == null) {
@@ -287,42 +302,35 @@ export function getPillCellHeightMeasurer(measureWidth: (value: string) => numbe
     }
 
     const strValue = String(value);
-    const cacheKey = `${width}:${strValue}`;
-    let lines = lineCountCache.get(cacheKey);
-
-    if (lines === undefined) {
-      let pillWidths = valuePillWidthsCache.get(strValue);
-      if (pillWidths === undefined) {
-        pillWidths = inferPills(strValue).map((pill) => {
-          const strPill = String(pill);
-          let rawWidth = pillWidthCache[strPill];
-          if (rawWidth === undefined) {
-            rawWidth = measureWidth(strPill);
-            pillWidthCache[strPill] = rawWidth;
-          }
-          return rawWidth + PILLS_SPACING;
-        });
-        evictOldest(valuePillWidthsCache);
-        valuePillWidthsCache.set(strValue, pillWidths);
-      }
-
-      if (pillWidths.length === 0) {
-        return 0;
-      }
-
-      lines = 0;
-      let currentLineUse = width;
-      for (const pillWidth of pillWidths) {
-        if (currentLineUse + pillWidth + PILLS_GAP > width) {
-          lines++;
-          currentLineUse = pillWidth;
-        } else {
-          currentLineUse += pillWidth + PILLS_GAP;
+    let pillWidths = pillWidthsByValue.get(strValue);
+    if (pillWidths === undefined) {
+      pillWidths = inferPills(strValue).map((pill) => {
+        const strPill = String(pill);
+        let rawWidth = pillWidthCache[strPill];
+        if (rawWidth === undefined) {
+          rawWidth = measureWidth(strPill);
+          pillWidthCache[strPill] = rawWidth;
         }
-      }
+        return rawWidth + PILLS_SPACING;
+      });
+      pillWidthsByValue.set(strValue, pillWidths);
+    }
 
-      evictOldest(lineCountCache);
-      lineCountCache.set(cacheKey, lines);
+    if (pillWidths.length === 0) {
+      return 0;
+    }
+
+    // wrap arithmetic over the (cached) pill widths. This is cheap enough to run per cell; the
+    // expensive parts — parsing and text measurement — are what the caches above eliminate.
+    let lines = 0;
+    let currentLineUse = width;
+    for (const pillWidth of pillWidths) {
+      if (currentLineUse + pillWidth + PILLS_GAP > width) {
+        lines++;
+        currentLineUse = pillWidth;
+      } else {
+        currentLineUse += pillWidth + PILLS_GAP;
+      }
     }
 
     // default line height happens to be the height of a pill, but maybe we need a custom
