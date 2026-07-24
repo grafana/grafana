@@ -1,3 +1,5 @@
+import { type ReactNode } from 'react';
+
 import { type LineStyle } from '@grafana/schema';
 
 /** @alpha */
@@ -39,7 +41,7 @@ export interface VizTooltipItem {
   /** Display label for this row. */
   label: string;
   /** Formatted display value for this row. */
-  value: string;
+  value: string | ReactNode;
   /** CSS color string used for the color indicator. */
   color?: string;
   /** Shape of the color indicator. Defaults to `VizTooltipColorIndicator.series`. */
