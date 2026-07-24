@@ -193,7 +193,10 @@ type AlertNG struct {
 	clientGenerator resource.ClientGenerator
 
 	evaluationCoordinator EvaluationCoordinator
-	schedCfg              schedule.SchedulerCfg
+	// storeStateReader serves API rule statuses from a cached DB snapshot in
+	// ha_single_node_evaluation mode; started in Run when set.
+	storeStateReader *state.StoreStateReader
+	schedCfg         schedule.SchedulerCfg
 }
 
 // newRuleSequenceStore returns a RuleSequenceStore backed by the k8s API if a
@@ -467,7 +470,9 @@ func (ng *AlertNG) init() error {
 
 		// Use StoreStateReader to serve rule statuses / alert instances from the database,
 		// because non-primary nodes have no in-memory state
-		storeStateReader := state.NewStoreStateReader(ng.InstanceStore, ng.Log)
+		// Refreshed in the background every base interval to bound staleness.
+		storeStateReader := state.NewStoreStateReader(ng.InstanceStore, ng.Log, ng.Cfg.UnifiedAlerting.BaseInterval, ng.Metrics.GetStateMetrics())
+		ng.storeStateReader = storeStateReader
 		apiStateManager = storeStateReader
 		ruleMutator = apiprometheus.NewDBRuleMutator(storeStateReader)
 	} else {
@@ -764,6 +769,12 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		}
 		return nil
 	})
+
+	if ng.storeStateReader != nil {
+		children.Go(func() error {
+			return ng.storeStateReader.Run(subCtx)
+		})
+	}
 
 	children.Go(func() error {
 		return ng.MultiOrgAlertmanager.Run(subCtx)
