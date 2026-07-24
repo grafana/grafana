@@ -125,10 +125,12 @@ export function MegaMenuItemText({
     >
       <LinkComponent
         data-testid={selectors.components.NavMenu.item}
-        className={styles.container}
+        className={cx(styles.container, editMode && styles.containerEditMode)}
         href={url}
         target={target}
-        onClick={onClick}
+        // While customising, the row is for pin/hide/reorder only — its link must not navigate.
+        onClick={editMode ? (event) => event.preventDefault() : onClick}
+        tabIndex={editMode ? -1 : undefined}
         {...(isActive && { 'aria-current': 'page' })}
       >
         {linkContent}
@@ -241,6 +243,11 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
       outline: `2px solid ${theme.colors.accent.main}`,
       outlineOffset: '-2px',
     },
+  }),
+  // While customising, the label is not a navigation target — drop the pointer affordances.
+  containerEditMode: css({
+    cursor: 'default',
+    pointerEvents: 'none',
   }),
   linkContent: css({
     alignItems: 'center',
