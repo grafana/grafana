@@ -2557,3 +2557,11 @@ func resourceVersionTime(rv int64) time.Time {
 	}
 	return time.UnixMicro(rv)
 }
+
+// ResourceVersionTime exposes resourceVersionTime to other packages so
+// consumer-side latency metrics (e.g. the provisioning informer) derive an
+// event's issue time exactly as the storage layer does — one shared definition
+// of "when was this resource version issued".
+func ResourceVersionTime(rv int64) time.Time {
+	return resourceVersionTime(rv)
+}

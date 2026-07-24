@@ -168,7 +168,7 @@ func subject() string {
 func start(t *testing.T, sub *fakeSubscriber, seed []runtime.Object, newObject ObjectFunc, handler cache.ResourceEventHandler) (*Informer, func()) {
 	t.Helper()
 	list := func(context.Context) ([]runtime.Object, error) { return seed, nil }
-	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObject, list)
+	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObject, list, nil)
 	_, err := n.AddEventHandler(handler)
 	require.NoError(t, err)
 
@@ -274,12 +274,12 @@ func TestInformer_RelistDiffEmitsDeletes(t *testing.T) {
 		}
 		return []runtime.Object{obj("a")}, nil
 	}
-	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list)
+	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list, nil)
 	_, err := n.AddEventHandler(handler)
 	require.NoError(t, err)
 
-	require.NoError(t, n.relist(context.Background(), true))  // initial: adds a, b; no deletes
-	require.NoError(t, n.relist(context.Background(), false)) // resync: b is gone -> delete
+	require.NoError(t, n.relist(context.Background(), TriggerInitial)) // initial: adds a, b; no deletes
+	require.NoError(t, n.relist(context.Background(), TriggerResync))  // resync: b is gone -> delete
 
 	assert.ElementsMatch(t, []string{"a", "b"}, handler.addedNames())
 	assert.Equal(t, []string{"b"}, handler.deletedNames(), "vanished object must be delivered as a delete")
@@ -301,12 +301,12 @@ func TestInformer_RelistEmitsAddForNewKeys(t *testing.T) {
 		}
 		return []runtime.Object{obj("a"), obj("b")}, nil
 	}
-	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list)
+	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list, nil)
 	_, err := n.AddEventHandler(handler)
 	require.NoError(t, err)
 
-	require.NoError(t, n.relist(context.Background(), true))  // initial: a added
-	require.NoError(t, n.relist(context.Background(), false)) // resync: b new -> add, a -> update
+	require.NoError(t, n.relist(context.Background(), TriggerInitial)) // initial: a added
+	require.NoError(t, n.relist(context.Background(), TriggerResync))  // resync: b new -> add, a -> update
 
 	assert.ElementsMatch(t, []string{"a", "b"}, handler.addedNames(), "b must be an add, not an update")
 	assert.Equal(t, []string{"a"}, handler.updatedNames(), "the already-known object is an update")
@@ -314,7 +314,7 @@ func TestInformer_RelistEmitsAddForNewKeys(t *testing.T) {
 }
 
 func TestInformer_AddEventHandlerRejectsNil(t *testing.T) {
-	n := NewInformer(newFakeSubscriber(), testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, nil)
+	n := NewInformer(newFakeSubscriber(), testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, nil, nil)
 	_, err := n.AddEventHandler(nil)
 	require.Error(t, err)
 }
@@ -333,7 +333,7 @@ func TestInformer_ReconnectTriggersRelist(t *testing.T) {
 			calls.Add(1)
 			return []runtime.Object{obj("a")}, nil
 		}
-		n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
+		n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list, nil)
 		_, err := n.AddEventHandler(handler)
 		require.NoError(t, err)
 
@@ -369,7 +369,7 @@ func TestInformer_RetriesSubscribeUntilAvailable(t *testing.T) {
 
 		list := func(context.Context) ([]runtime.Object, error) { return []runtime.Object{obj("a")}, nil }
 		// Production retryInterval — the fake clock makes the retry cadence free.
-		n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
+		n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list, nil)
 		_, err := n.AddEventHandler(handler)
 		require.NoError(t, err)
 		stopCh := make(chan struct{})
@@ -414,7 +414,7 @@ func TestInformer_SubscribesBeforeListingOnce(t *testing.T) {
 			return []runtime.Object{obj("a")}, nil
 		}
 		// A one-hour resync guarantees no extra list fires on its own at startup.
-		n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
+		n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list, nil)
 		_, err := n.AddEventHandler(handler)
 		require.NoError(t, err)
 		stopCh := make(chan struct{})
@@ -450,7 +450,7 @@ func TestInformer_DoesNotSyncUntilInitialListSucceeds(t *testing.T) {
 			return []runtime.Object{obj("a")}, nil
 		}
 		// Production retryInterval — the initial-list retry cadence runs on fake time.
-		n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
+		n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list, nil)
 		_, err := n.AddEventHandler(handler)
 		require.NoError(t, err)
 
@@ -479,7 +479,7 @@ func TestInformer_DoesNotSyncUntilInitialListSucceeds(t *testing.T) {
 // so a burst of reconnects while the run loop is busy cannot deadlock the client's
 // reconnect goroutine.
 func TestInformer_SignalReconnectDoesNotBlock(t *testing.T) {
-	n := NewInformer(newFakeSubscriber(), testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, nil)
+	n := NewInformer(newFakeSubscriber(), testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, nil, nil)
 	// The run loop is not started, so nothing drains the channel; every call must
 	// still return immediately.
 	for i := 0; i < 100; i++ {

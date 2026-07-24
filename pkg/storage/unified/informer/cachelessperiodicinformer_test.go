@@ -16,7 +16,7 @@ func TestCachelessPeriodicInformer_DeliversListedObjects(t *testing.T) {
 		return []runtime.Object{obj("a"), obj("b")}, nil
 	}
 
-	src := NewCachelessPeriodicInformer("things", time.Hour, list)
+	src := NewCachelessPeriodicInformer("things", time.Hour, list, nil)
 	h := &recordingHandler{}
 	_, err := src.AddEventHandler(h)
 	require.NoError(t, err)
@@ -41,7 +41,7 @@ func TestCachelessPeriodicInformer_RetriesInitialListUntilItSucceeds(t *testing.
 		return []runtime.Object{obj("a")}, nil
 	}
 
-	src := NewCachelessPeriodicInformer("things", time.Hour, list)
+	src := NewCachelessPeriodicInformer("things", time.Hour, list, nil)
 	// Shorten the retry so the test does not wait the default interval.
 	src.retryInterval = 10 * time.Millisecond
 	h := &recordingHandler{}

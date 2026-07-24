@@ -3,11 +3,13 @@ package informer
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"google.golang.org/protobuf/proto"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/cache"
@@ -17,6 +19,63 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
 )
+
+// Metrics is an optional hook the informer calls to record event-delivery
+// signals. It is deliberately transport-shaped rather than Prometheus-shaped so
+// the storage layer carries no provisioning-specific metric names: the caller
+// supplies an implementation that bakes in its own source label and turns a
+// resource version into a latency. All methods must be safe to call from the
+// informer's goroutines; a nil Metrics disables recording.
+//
+//   - ObserveLiveEvent   — a live notification arrived off the bus.
+//   - ObserveRelistEvent — the periodic re-list reconciled an add/delete the live
+//     stream did not deliver (initial reports the first list, whose "latency"
+//     is object age, not delivery delay).
+//   - ObserveReconnect   — the bus reconnected, a window in which live events may
+//     have been missed (and are recovered on the following re-list).
+//   - ObserveDrop        — a live notification was received but could not be
+//     dispatched (reason: unmarshal_error, unknown_type).
+//   - ObserveRelist      — a re-list completed successfully (trigger: initial,
+//     resync, reconnect, periodic); count is how many objects it returned. Marks
+//     the last-success time for staleness and records the re-list size.
+//   - ObserveRelistError — a re-list failed, so missed events are not yet healed.
+type Metrics interface {
+	ObserveLiveEvent(resource, verb string, rv int64)
+	ObserveRelistEvent(resource, verb string, rv int64, initial bool)
+	ObserveReconnect(resource string)
+	ObserveDrop(resource, reason string)
+	ObserveRelist(resource, trigger string, count int)
+	ObserveRelistError(resource string)
+}
+
+// Re-list triggers, used as the trigger label on relist metrics.
+const (
+	TriggerInitial   = "initial"
+	TriggerResync    = "resync"
+	TriggerReconnect = "reconnect"
+	TriggerPeriodic  = "periodic"
+)
+
+// Drop reasons, used as the reason label on dropped-notification metrics.
+const (
+	DropUnmarshalError = "unmarshal_error"
+	DropUnknownType    = "unknown_type"
+)
+
+// objectRV reads the resource version off an object's metadata as the int64 the
+// latency helpers expect, returning 0 (which callers treat as "unknown, skip
+// latency") when it is absent or unparseable.
+func objectRV(obj runtime.Object) int64 {
+	m, err := meta.Accessor(obj)
+	if err != nil {
+		return 0
+	}
+	rv, err := strconv.ParseInt(m.GetResourceVersion(), 10, 64)
+	if err != nil {
+		return 0
+	}
+	return rv
+}
 
 // ObjectFunc builds a minimal typed object carrying just the identity from a
 // notification (namespace + name). The controllers treat a change notification
@@ -76,6 +135,9 @@ type Informer struct {
 	list       ListFunc
 	log        log.Logger
 
+	// metrics records event-delivery signals; nil disables recording.
+	metrics Metrics
+
 	store Store
 
 	// retryInterval is how often Run retries opening the live subscription while it
@@ -111,7 +173,9 @@ type Informer struct {
 // store is the snapshot the informer refreshes on each re-list. Pass the same
 // Store to a reader (e.g. a getter serving a quota count) to share it; the
 // informer never reads it, so an unshared informer can be given its own.
-func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, namespace string, resync time.Duration, queueGroup string, store Store, newObject ObjectFunc, list ListFunc) *Informer {
+//
+// metrics records event-delivery signals for dashboards; pass nil to disable.
+func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, namespace string, resync time.Duration, queueGroup string, store Store, newObject ObjectFunc, list ListFunc, metrics Metrics) *Informer {
 	if resync <= 0 {
 		resync = defaultResync
 	}
@@ -128,6 +192,7 @@ func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, na
 		newObject:     newObject,
 		list:          list,
 		log:           log.New("provisioning.informer.nats"),
+		metrics:       metrics,
 		store:         store,
 		retryInterval: defaultSubscribeRetry,
 		syncedCh:      make(chan struct{}),
@@ -221,7 +286,7 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 			s, err := n.subscriber.Subscribe(ctx, subject, n.onNotification(), opts...)
 			if err == nil {
 				sub = s
-				n.log.Debug("opened nats informer", "subject", subject, "gvr", n.gvr.String())
+				n.log.Info("opened nats informer", "subject", subject, "gvr", n.gvr.String())
 				break
 			}
 			n.log.Warn("nats informer: subscribe failed, will retry", "subject", subject, "error", err)
@@ -240,7 +305,7 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 	// the next successful resync. A transient API error must therefore hold
 	// HasSynced false and retry, mirroring a reflector's initial ListAndWatch.
 	for {
-		if err := n.relist(ctx, true); err == nil {
+		if err := n.relist(ctx, TriggerInitial); err == nil {
 			break
 		}
 		select {
@@ -260,10 +325,10 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 			return
 		case <-resync.C:
 			// Error already logged in relist; the next tick retries.
-			_ = n.relist(ctx, false)
+			_ = n.relist(ctx, TriggerResync)
 		case <-n.reconnect:
-			n.log.Debug("nats reconnected; re-listing", "gvr", n.gvr.String())
-			_ = n.relist(ctx, false)
+			n.log.Info("nats reconnected; re-listing", "gvr", n.gvr.String())
+			_ = n.relist(ctx, TriggerReconnect)
 		}
 	}
 }
@@ -272,9 +337,26 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 // the WithOnReconnect callback, so it must not block: the send is non-blocking
 // and a pending signal coalesces additional reconnects into the next re-list.
 func (n *Informer) signalReconnect() {
+	if n.metrics != nil {
+		n.metrics.ObserveReconnect(n.gvr.Resource)
+	}
 	select {
 	case n.reconnect <- struct{}{}:
 	default:
+	}
+}
+
+// notificationVerb maps a wire notification type onto the metric verb label.
+func notificationVerb(t resourcepb.WatchNotification_Type) string {
+	switch t {
+	case resourcepb.WatchNotification_ADDED:
+		return "add"
+	case resourcepb.WatchNotification_MODIFIED:
+		return "update"
+	case resourcepb.WatchNotification_DELETED:
+		return "delete"
+	default:
+		return "unknown"
 	}
 }
 
@@ -288,6 +370,9 @@ func (n *Informer) onNotification() nats.MessageHandler {
 		var evt resourcepb.WatchNotification
 		if err := proto.Unmarshal(data, &evt); err != nil {
 			n.log.Warn("dropping malformed nats notification", "subject", subject, "error", err)
+			if n.metrics != nil {
+				n.metrics.ObserveDrop(n.gvr.Resource, DropUnmarshalError)
+			}
 			return
 		}
 
@@ -295,10 +380,17 @@ func (n *Informer) onNotification() nats.MessageHandler {
 		case resourcepb.WatchNotification_ADDED, resourcepb.WatchNotification_MODIFIED, resourcepb.WatchNotification_DELETED:
 		default:
 			n.log.Warn("dropping nats notification with unknown type", "subject", subject, "type", evt.Type)
+			if n.metrics != nil {
+				n.metrics.ObserveDrop(n.gvr.Resource, DropUnknownType)
+			}
 			return
 		}
 
 		n.log.Debug("nats notification received", "subject", subject, "type", evt.Type, "namespace", evt.Namespace, "name", evt.Name, "rv", evt.ResourceVersion)
+
+		if n.metrics != nil {
+			n.metrics.ObserveLiveEvent(n.gvr.Resource, notificationVerb(evt.Type), evt.ResourceVersion)
+		}
 
 		obj := n.newObject(evt.Namespace, evt.Name)
 		// ADDED becomes OnAdd; everything else (MODIFIED, or a DELETED whose object
@@ -325,18 +417,23 @@ func (n *Informer) onNotification() nats.MessageHandler {
 //     live notification reliably reaches under round-robin delivery) is caught.
 //
 // On the initial list the store starts empty, so every object is an add (with
-// isInInitialList=true) and there is nothing to delete.
-func (n *Informer) relist(ctx context.Context, initial bool) error {
+// isInInitialList=true) and there is nothing to delete. trigger labels what
+// caused the re-list (initial, resync, reconnect) on the relist metrics.
+func (n *Informer) relist(ctx context.Context, trigger string) error {
+	initial := trigger == TriggerInitial
 	objs, err := n.list(ctx)
 	if err != nil {
 		n.log.Warn("nats informer: list failed", "gvr", n.gvr.String(), "error", err)
+		if n.metrics != nil {
+			n.metrics.ObserveRelistError(n.gvr.Resource)
+		}
 		return err
 	}
 
 	// Swap the snapshot for the fresh set; added/removed are the keys that appeared
 	// and vanished since the previous re-list.
 	added, removed := n.store.Replace(objs)
-	n.log.Debug("nats informer re-listed", "gvr", n.gvr.String(), "initial", initial,
+	n.log.Info("nats informer re-listed", "gvr", n.gvr.String(), "trigger", trigger,
 		"count", len(objs), "added", len(added), "removed", len(removed))
 	addedKeys := make(map[string]struct{}, len(added))
 	for _, obj := range added {
@@ -349,6 +446,13 @@ func (n *Informer) relist(ctx context.Context, initial bool) error {
 		o := obj
 		key, _ := cache.MetaNamespaceKeyFunc(o)
 		if _, isNew := addedKeys[key]; isNew {
+			// An add the re-list surfaced that the live stream did not deliver
+			// (routed elsewhere under round-robin, or a hard-missed event); the
+			// unchanged updates are periodic re-delivery, not events, so only the
+			// reconciled add/delete set is recorded.
+			if n.metrics != nil {
+				n.metrics.ObserveRelistEvent(n.gvr.Resource, "add", objectRV(o), initial)
+			}
 			n.dispatch(func(h cache.ResourceEventHandler) { h.OnAdd(o, initial) })
 		} else {
 			n.dispatch(func(h cache.ResourceEventHandler) { h.OnUpdate(o, o) })
@@ -357,7 +461,13 @@ func (n *Informer) relist(ctx context.Context, initial bool) error {
 
 	for _, obj := range removed {
 		o := obj
+		if n.metrics != nil {
+			n.metrics.ObserveRelistEvent(n.gvr.Resource, "delete", objectRV(o), initial)
+		}
 		n.dispatch(func(h cache.ResourceEventHandler) { h.OnDelete(o) })
+	}
+	if n.metrics != nil {
+		n.metrics.ObserveRelist(n.gvr.Resource, trigger, len(objs))
 	}
 	return nil
 }

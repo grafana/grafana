@@ -85,8 +85,12 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 		return fmt.Errorf("failed to get clients: %w", err)
 	}
 
+	// Expose the controller's named workqueue metrics (depth, adds, retries,
+	// queue/work duration). Must be set before the controller builds its queue.
+	registerWorkqueueMetrics(deps.Registerer)
+
 	// The repository delta source and the getter it backs.
-	repoSource, repoGetter := informer.NewRepositoryDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
+	repoSource, repoGetter := informer.NewRepositoryDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval(), informer.RegisterMetrics(deps.Registerer))
 	controller := controller.NewRepositoryController(
 		provisioningClient.ProvisioningV0alpha1(),
 		repoGetter,
