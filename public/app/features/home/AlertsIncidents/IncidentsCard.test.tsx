@@ -50,8 +50,12 @@ const activeIncidents: IncidentPreview[] = [
   },
 ];
 
-function mockIncidents(incidents: IncidentPreview[]) {
-  server.use(http.post(QUERY_PREVIEWS_PATH, () => HttpResponse.json({ incidentPreviews: incidents })));
+function mockIncidents(incidents: IncidentPreview[], { hasMore = false } = {}) {
+  server.use(
+    http.post(QUERY_PREVIEWS_PATH, () =>
+      HttpResponse.json({ incidentPreviews: incidents, cursor: { hasMore, nextValue: hasMore ? 'next' : '' } })
+    )
+  );
 }
 
 beforeEach(() => {
@@ -165,18 +169,33 @@ describe('IncidentsCard', () => {
     expect(screen.queryByRole('link', { name: /view all incidents/i })).not.toBeInTheDocument();
   });
 
-  it("count badge reads '50+' when active incidents hit the query limit", async () => {
+  it("count badge reads '50+' when the server reports more incidents beyond the query limit", async () => {
     const many: IncidentPreview[] = Array.from({ length: ACTIVE_INCIDENTS_QUERY_LIMIT }, (_, i) => ({
       incidentID: String(i),
       title: `Incident ${i}`,
       severityLabel: 'Critical',
       createdTime: '2024-01-02T10:00:00Z',
     }));
-    mockIncidents(many);
+    mockIncidents(many, { hasMore: true });
 
     render(<IncidentsCard />);
 
     expect(await screen.findByText(`${ACTIVE_INCIDENTS_QUERY_LIMIT}+`)).toBeInTheDocument();
+  });
+
+  it('count badge reads the exact count when a full page has nothing beyond it', async () => {
+    const many: IncidentPreview[] = Array.from({ length: ACTIVE_INCIDENTS_QUERY_LIMIT }, (_, i) => ({
+      incidentID: String(i),
+      title: `Incident ${i}`,
+      severityLabel: 'Critical',
+      createdTime: '2024-01-02T10:00:00Z',
+    }));
+    mockIncidents(many, { hasMore: false });
+
+    render(<IncidentsCard />);
+
+    expect(await screen.findByText(String(ACTIVE_INCIDENTS_QUERY_LIMIT))).toBeInTheDocument();
+    expect(screen.queryByText(`${ACTIVE_INCIDENTS_QUERY_LIMIT}+`)).not.toBeInTheDocument();
   });
 
   it('renders more than five active incidents (display cap raised to 50)', async () => {

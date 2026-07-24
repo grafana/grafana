@@ -1,32 +1,6 @@
-// Processor function for use with time shifted comparison series.
-// This aligns the secondary series with the primary and adds custom
-// metadata and config to the secondary series' fields so that it is
-
-import { of } from 'rxjs';
-
 import { dateTime, type DateTime, rangeUtil, type TimeRange } from '@grafana/data';
-import { type ExtraQueryDataProcessor } from '@grafana/scenes';
 
 import type { PanelTimeRangeState } from './PanelTimeRange';
-
-// rendered appropriately.
-export const timeShiftAlignmentProcessor: ExtraQueryDataProcessor = (primary, secondary) => {
-  const diff = secondary.timeRange.from.diff(primary.timeRange.from);
-  secondary.series.forEach((series) => {
-    series.refId = getCompareSeriesRefId(series.refId || '');
-    series.meta = {
-      ...series.meta,
-      // @ts-ignore Remove when https://github.com/grafana/grafana/pull/71129 is released
-      timeCompare: {
-        diffMs: diff,
-        isTimeShiftQuery: true,
-      },
-    };
-  });
-  return of(secondary);
-};
-
-export const getCompareSeriesRefId = (refId: string) => (refId.endsWith('-compare') ? refId : `${refId}-compare`);
 
 /**
  * Whether a panel should use a hover header, used when there's
