@@ -23,6 +23,22 @@ var ownerRefsPatch = []byte(`[{
 	}]
 }]`)
 
+var multiOwnerRefsPatch = []byte(`[{
+	"op": "add",
+	"path": "/metadata/ownerReferences",
+	"value": [{
+		"apiVersion": "iam.grafana.app/v0alpha1",
+		"kind": "Team",
+		"name": "test-team",
+		"uid": "00000000-0000-0000-0000-000000000001"
+	}, {
+		"apiVersion": "iam.grafana.app/v0alpha1",
+		"kind": "Team",
+		"name": "test-team-2",
+		"uid": "00000000-0000-0000-0000-000000000002"
+	}]
+}]`)
+
 func TestIntegrationFolderOwnerRefs_ProvisionedFolders(t *testing.T) {
 	helper := sharedHelper(t)
 	helper.CreateLocalRepo(t, common.TestRepo{
@@ -110,5 +126,36 @@ func TestIntegrationFolderOwnerRefs_UnprovisionedFolders(t *testing.T) {
 		require.Len(t, updated.GetOwnerReferences(), 1, "ownerReferences should be persisted")
 		require.Equal(t, "Team", updated.GetOwnerReferences()[0].Kind)
 		require.Equal(t, "test-team", updated.GetOwnerReferences()[0].Name)
+	})
+
+	t.Run("should set multiple team ownerReferences on unmanaged folder", func(t *testing.T) {
+		unmanagedFolder := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"metadata": map[string]interface{}{
+					"generateName": "test-folder-",
+				},
+				"spec": map[string]interface{}{
+					"title": "Multi-owner Folder",
+				},
+			},
+		}
+		createdFolder, err := helper.Folders.Resource.Create(t.Context(), unmanagedFolder, metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, createdFolder)
+
+		_, err = helper.Folders.Resource.Patch(t.Context(), createdFolder.GetName(), types.JSONPatchType, multiOwnerRefsPatch, metav1.PatchOptions{})
+		require.NoError(t, err, "should set multiple ownerReferences on unmanaged folder")
+
+		updated, err := helper.Folders.Resource.Get(t.Context(), createdFolder.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		ownerRefs := updated.GetOwnerReferences()
+		require.Len(t, ownerRefs, 2, "all ownerReferences should be persisted")
+		for _, ref := range ownerRefs {
+			require.Equal(t, "Team", ref.Kind)
+		}
+		names := []string{ownerRefs[0].Name, ownerRefs[1].Name}
+		require.ElementsMatch(t, []string{"test-team", "test-team-2"}, names)
 	})
 }
