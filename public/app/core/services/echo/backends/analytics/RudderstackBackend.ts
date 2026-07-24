@@ -96,7 +96,7 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
     });
 
     if (options.user) {
-      const { identifier, intercomIdentifier } = options.user.analytics;
+      const { identifier, intercomIdentifier, stackId, stackSlug } = options.user.analytics;
       const apiOptions: RudderstackAPIOptions = {};
 
       if (intercomIdentifier) {
@@ -113,6 +113,8 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
           language: options.user.language,
           version: options.buildInfo.version,
           edition: options.buildInfo.edition,
+          ...(stackId ? { stackId } : {}),
+          ...(stackSlug ? { stackSlug } : {}),
         },
         apiOptions
       );
