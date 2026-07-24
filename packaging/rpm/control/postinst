@@ -19,6 +19,8 @@ stopGrafana() {
 if [ $1 -eq 1 ] ; then
   [ -z "$GRAFANA_USER" ] && GRAFANA_USER="grafana"
   [ -z "$GRAFANA_GROUP" ] && GRAFANA_GROUP="grafana"
+  [ -z "$GRAFANA_HOME" ] && GRAFANA_HOME="/usr/share/grafana"
+  [ -z "$DATA_DIR" ] && DATA_DIR="/var/lib/grafana"
   if ! getent group "$GRAFANA_GROUP" > /dev/null 2>&1 ; then
     groupadd -r "$GRAFANA_GROUP"
   fi
@@ -28,11 +30,16 @@ if [ $1 -eq 1 ] ; then
   fi
 
   # Set user permissions on /var/log/grafana, /var/lib/grafana
-  mkdir -p /var/log/grafana /var/lib/grafana
-  # Move plugins-bundled into place - see https://github.com/grafana/grafana/issues/123110
-  mv $GRAFANA_HOME/data/plugins-bundled $DATA_DIR
-  chown -R $GRAFANA_USER:$GRAFANA_GROUP /var/log/grafana /var/lib/grafana
-  chmod 755 /var/log/grafana /var/lib/grafana
+  mkdir -p /var/log/grafana "$DATA_DIR"
+  # Bundled plugins must live under $DATA_DIR (writable by grafana) so the
+  # plugin auto-updater can replace them. Any copy already at the destination
+  # is stale and safe to clobber; mv alone would fail or nest into it.
+  if [ -d "$GRAFANA_HOME/data/plugins-bundled" ]; then
+    rm -rf "${DATA_DIR:?}/plugins-bundled"
+    mv "$GRAFANA_HOME/data/plugins-bundled" "$DATA_DIR"
+  fi
+  chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" /var/log/grafana "$DATA_DIR"
+  chmod 755 /var/log/grafana "$DATA_DIR"
 
   # copy user config files
   if [ ! -f $CONF_FILE ]; then
@@ -74,6 +81,20 @@ if [ $1 -eq 1 ] ; then
   echo " sudo /bin/systemctl start grafana-server.service"
 
 elif [ $1 -ge 2 ] ; then
+  [ -z "$GRAFANA_USER" ] && GRAFANA_USER="grafana"
+  [ -z "$GRAFANA_GROUP" ] && GRAFANA_GROUP="grafana"
+  [ -z "$GRAFANA_HOME" ] && GRAFANA_HOME="/usr/share/grafana"
+  [ -z "$DATA_DIR" ] && DATA_DIR="/var/lib/grafana"
+
+  # Replace the bundled plugins with the ones shipped in the new package.
+  # See the matching move in the fresh-install branch above.
+  if [ -d "$GRAFANA_HOME/data/plugins-bundled" ]; then
+    mkdir -p "$DATA_DIR"
+    rm -rf "${DATA_DIR:?}/plugins-bundled"
+    mv "$GRAFANA_HOME/data/plugins-bundled" "$DATA_DIR"
+    chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" "$DATA_DIR/plugins-bundled"
+  fi
+
   if [ "$RESTART_ON_UPGRADE" == "true" ]; then
     stopGrafana
     startGrafana
