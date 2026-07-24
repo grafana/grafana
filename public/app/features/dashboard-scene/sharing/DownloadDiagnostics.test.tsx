@@ -82,6 +82,24 @@ describe('DownloadDiagnostics', () => {
     expect(panelModel).toBe(panelElement);
   });
 
+  it('still downloads (without panel/dashboard JSON) when getSaveModel throws', async () => {
+    // getSaveModel() can throw (e.g. a v2 CUE validation failure). The panel/dashboard JSON is optional
+    // context, so its failure must not abort a download whose queries and time range are already valid.
+    const { tab, dashboard } = setupScenario();
+    jest.spyOn(dashboard, 'getSaveModel').mockImplementation(() => {
+      throw new Error('v2 validation failed');
+    });
+
+    render(<tab.Component model={tab} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+
+    expect(downloadDiagnosticsForQueries).toHaveBeenCalledTimes(1);
+    const [, , , , panelModel, dashboardModel] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
+    expect(panelModel).toBeUndefined();
+    expect(dashboardModel).toBeUndefined();
+    expect(screen.queryByText('Failed to generate diagnostics')).not.toBeInTheDocument();
+  });
+
   it('fills the runner-level datasource onto queries that lack one', async () => {
     const runner = new SceneQueryRunner({
       datasource: { uid: 'runner-ds', type: 'prometheus' },

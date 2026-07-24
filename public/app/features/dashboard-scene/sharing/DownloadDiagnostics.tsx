@@ -160,9 +160,19 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
     // import cycle this view already works around); undefined models are simply not sent.
     // getSaveModel() must run before findPanelSaveModel — it populates the v2 element mapping the
     // lookup relies on (see findPanelSaveModel).
+    // getSaveModel() can throw (e.g. a v2 CUE validation failure). This JSON is optional context, so a
+    // failure to build it must not abort a download whose queries and time range are already valid:
+    // fall back to sending no panel/dashboard JSON rather than letting the whole request fail.
     const dashboard = dashboardRef?.resolve();
-    const dashboardModel = dashboard?.getSaveModel();
-    const panelModel = dashboard ? findPanelSaveModel(dashboardModel, panel, dashboard) : undefined;
+    let dashboardModel: unknown;
+    let panelModel: unknown;
+    try {
+      dashboardModel = dashboard?.getSaveModel();
+      panelModel = dashboard ? findPanelSaveModel(dashboardModel, panel, dashboard) : undefined;
+    } catch {
+      dashboardModel = undefined;
+      panelModel = undefined;
+    }
 
     const controller = new AbortController();
     abortRef.current = controller;
