@@ -345,6 +345,27 @@ func Test_handleOnSubscribe_IDTokenExpiration(t *testing.T) {
 	})
 }
 
+func Test_DisabledWhenMaxConnectionsIsZero(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.LiveMaxConnections = 0
+
+	g, err := setupLiveService(cfg, t)
+	require.NoError(t, err)
+
+	testPaths := []string{
+		"/api/live/ws",
+		"/api/live/push/:streamId",
+		"/api/live/pipeline/push/*",
+	}
+
+	// Because we skipped registering these endpoints they should not exist 
+	// on the router registry. Grafana's engine will natively 404 on them.
+	for _, path := range testPaths {
+		require.False(t, g.RouteRegister.HasRoute(path), 
+			"Path %s should not be registered when live is disabled", path,
+	}
+}
+
 func setupLiveService(cfg *setting.Cfg, t *testing.T) (*GrafanaLive, error) {
 	if cfg == nil {
 		cfg = setting.NewCfg()
