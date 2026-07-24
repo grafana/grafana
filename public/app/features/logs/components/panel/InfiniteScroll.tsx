@@ -112,7 +112,6 @@ export const InfiniteScroll = ({
         return;
       }
       // New logs have been returned from the load-more request.
-      // Reset tracking so the next scroll can start a fresh load-more.
       if (prevLogs !== logs) {
         const startCount = loadMoreCountRef.current;
         // Reset tracking so the next scroll can start a fresh load-more.
