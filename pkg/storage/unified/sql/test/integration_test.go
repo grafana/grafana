@@ -171,8 +171,7 @@ func newTestResourceServerWithSearch(t *testing.T, backend resource.StorageBacke
 	}
 
 	// Create search options
-	features := featuremgmt.WithFeatures()
-	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil, nil)
+	searchOpts, err := search.NewSearchOptions(cfg, docBuilders, nil, nil, nil)
 	require.NoError(t, err)
 
 	// Create ResourceServer with search enabled

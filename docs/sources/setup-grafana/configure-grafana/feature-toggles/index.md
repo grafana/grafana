@@ -102,6 +102,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `queryEditorNext`                 | Enables next generation query editor experience                                                |
 | `flameGraphWithCallTree`          | Enables the new Flame Graph UI containing the Call Tree view                                   |
 | `splashScreen`                    | Enables the splash screen modal for introducing new Grafana features on first session          |
+| `grafana.dynamicTraceToLogs`      | Check for the existence of logs when linking from the Trace View                               |
 
 ## Development feature toggles
 

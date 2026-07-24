@@ -2262,24 +2262,15 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		searchrequest.From = 0
 	}
 
-	// Everything is combined within an AND query: label/field filters plus the
-	// optional free-text clause.
-	queries, errResult := b.filterQueries(req)
+	// Label/field filters are constraints, not relevance signals, so they go into
+	// the boolean Filter clause (scored "none" by bleve) while the free-text query
+	// scores in Must. This keeps ranking driven by text relevance alone.
+	filters, errResult := b.filterQueries(req)
 	if errResult != nil {
 		return nil, errResult
 	}
-	if q := b.buildTextQuery(searchrequest, req); q != nil {
-		queries = append(queries, q)
-	}
-
-	switch len(queries) {
-	case 0:
-		searchrequest.Query = bleve.NewMatchAllQuery()
-	case 1:
-		searchrequest.Query = queries[0]
-	default:
-		searchrequest.Query = bleve.NewConjunctionQuery(queries...) // AND
-	}
+	textQuery := b.buildTextQuery(searchrequest, req)
+	searchrequest.Query = combineFilterAndTextQueries(filters, textQuery)
 
 	// postFilter applies authorization after ranking in runPostFilterAuthz, so
 	// skip the in-searcher wrapper here and let bleve return unfiltered ranked hits.
@@ -2330,6 +2321,41 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	return searchrequest, nil
+}
+
+// combineFilterAndTextQueries assembles the final bleve query from the filter
+// clauses and the optional free-text query.
+//
+// Filters are non-scoring only when there is a free-text query to rank by: they
+// go in the boolean Filter slot so text relevance alone drives the score, and the
+// text query drives iteration. Without a free-text query the results are ordered
+// by the sort fields (not score), so the filters go straight into the query,
+// which keeps bleve iterating their posting lists instead of scanning every
+// document (a filter-only boolean query wraps a match-all searcher).
+func combineFilterAndTextQueries(filters []query.Query, textQuery query.Query) query.Query {
+	if textQuery == nil {
+		switch len(filters) {
+		case 0:
+			return bleve.NewMatchAllQuery()
+		case 1:
+			return filters[0]
+		default:
+			return bleve.NewConjunctionQuery(filters...)
+		}
+	}
+
+	if len(filters) == 0 {
+		return textQuery
+	}
+
+	bq := bleve.NewBooleanQuery()
+	bq.AddMust(textQuery)
+	if len(filters) == 1 {
+		bq.AddFilter(filters[0])
+	} else {
+		bq.AddFilter(bleve.NewConjunctionQuery(filters...))
+	}
+	return bq
 }
 
 // resolveFieldName maps a public field name to its physical index name. Clients
