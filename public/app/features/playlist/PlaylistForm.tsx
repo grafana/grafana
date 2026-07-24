@@ -3,7 +3,7 @@ import { useId, useMemo, useState } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Box, Button, Field, FieldSet, Input, LinkButton, Stack } from '@grafana/ui';
+import { Box, Button, Field, FieldSet, Input, LinkButton, Stack, TextArea } from '@grafana/ui';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { Form } from 'app/core/components/Form/Form';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
@@ -16,6 +16,25 @@ import { getGrafanaSearcher } from '../search/service/searcher';
 
 import { PlaylistTable } from './PlaylistTable';
 import { usePlaylistItems } from './usePlaylistItems';
+
+function formatVariableSets(variableSets: PlaylistSpec['variableSets']) {
+  return variableSets?.length ? JSON.stringify(variableSets, null, 2) : '';
+}
+
+function parseVariableSets(value: string): PlaylistSpec['variableSets'] {
+  const trimmedValue = value.trim();
+  if (!trimmedValue) {
+    return undefined;
+  }
+
+  return JSON.parse(trimmedValue);
+}
+
+// PoC: variable sets are edited as raw JSON for now. A proper repeatable key/value editor
+// should replace this before this leaves the PoC stage.
+type PlaylistFormValues = Omit<PlaylistSpec, 'variableSets'> & {
+  variableSets?: string;
+};
 
 interface Props {
   onSubmit: (playlist: Playlist) => void | Promise<void>;
@@ -46,7 +65,8 @@ export const PlaylistForm = ({
   const [saving, setSaving] = useState(false);
   const playlistNameId = useId();
   const playlistIntervalId = useId();
-  const { title: name, interval, items: propItems } = playlist.spec || {};
+  const playlistVariableSetsId = useId();
+  const { title: name, interval, items: propItems, variableSets } = playlist.spec || {};
   const tagOptions = useMemo(() => {
     return () => getGrafanaSearcher().tags({ kind: ['dashboard'] });
   }, []);
@@ -61,7 +81,7 @@ export const PlaylistForm = ({
       : ''
     : selectedRepository; // undefined leaves nothing selected (placeholder)
 
-  const doSubmit = async (specUpdates: Playlist['spec']) => {
+  const doSubmit = async (specUpdates: PlaylistFormValues) => {
     setSaving(true);
     // Strip UI-only properties (dashboards) from items before submission
     const apiItems = items.map(({ dashboards, ...item }) => item);
@@ -75,6 +95,7 @@ export const PlaylistForm = ({
           interval: specUpdates?.interval ?? '5m',
           title: specUpdates?.title ?? '',
           items: apiItems,
+          variableSets: parseVariableSets(specUpdates?.variableSets ?? ''),
         },
       });
     } finally {
@@ -83,7 +104,7 @@ export const PlaylistForm = ({
   };
 
   return (
-    <Form<PlaylistSpec> onSubmit={doSubmit} validateOn={'onBlur'}>
+    <Form<PlaylistFormValues> onSubmit={doSubmit} validateOn={'onBlur'}>
       {({ register, errors }) => {
         const isDisabled = items.length === 0 || Object.keys(errors).length > 0;
         return (
@@ -118,6 +139,63 @@ export const PlaylistForm = ({
                 id={playlistIntervalId}
               />
             </Field>
+
+            {/* noMargin + Box to match the surrounding fields without adding to the suppressed
+                require-no-margin violations in this file (same pattern as RepositorySelect below) */}
+            <Box marginBottom={2}>
+              <Field
+                noMargin
+                label={t('playlist-edit.form.variable-sets-label', 'Variable and time range sets')}
+                description={t(
+                  'playlist-edit.form.variable-sets-description',
+                  'Optional JSON array. Each set is applied to every dashboard in the playlist. Use query parameters such as var-host for dashboard variables and from/to for time range overrides.'
+                )}
+                invalid={!!errors.variableSets}
+                error={errors?.variableSets?.message}
+              >
+                <TextArea
+                  rows={6}
+                  {...register('variableSets', {
+                    validate: (value) => {
+                      try {
+                        const parsedValue = parseVariableSets(String(value ?? ''));
+                        if (parsedValue === undefined) {
+                          return true;
+                        }
+                        if (!Array.isArray(parsedValue)) {
+                          return t(
+                            'playlist-edit.form.variable-sets-array-required',
+                            'Variable sets must be a JSON array'
+                          );
+                        }
+                        for (const variableSet of parsedValue) {
+                          if (
+                            !variableSet ||
+                            typeof variableSet.queryParams !== 'object' ||
+                            variableSet.queryParams === null ||
+                            Array.isArray(variableSet.queryParams)
+                          ) {
+                            return t(
+                              'playlist-edit.form.variable-sets-query-params-required',
+                              'Each variable set must include queryParams'
+                            );
+                          }
+                        }
+                        return true;
+                      } catch {
+                        return t('playlist-edit.form.variable-sets-json-required', 'Variable sets must be valid JSON');
+                      }
+                    },
+                  })}
+                  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings -- JSON example, not translatable prose
+                  placeholder={
+                    '[{ "name": "Host 1 - 6h", "queryParams": { "var-host": "host1", "from": "now-6h", "to": "now" } }]'
+                  }
+                  defaultValue={formatVariableSets(variableSets)}
+                  id={playlistVariableSetsId}
+                />
+              </Field>
+            </Box>
 
             {showRepositorySelect && (
               // RepositorySelect uses noMargin (shared component); add bottom spacing to match the

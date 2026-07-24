@@ -492,10 +492,19 @@ export type PlaylistPlaylistItem = {
      - dashboard_by_uid: The value is the dashboard UID */
   value: string;
 };
+export type PlaylistPlaylistVariableSet = {
+  /** Optional display name for this variable set. */
+  name?: string;
+  /** Query parameters to append when opening each playlist dashboard. Use var-<name> for dashboard variables and from/to for time range overrides. */
+  queryParams: {
+    [key: string]: string;
+  };
+};
 export type PlaylistSpec = {
   interval: string;
   items: PlaylistPlaylistItem[];
   title: string;
+  variableSets?: PlaylistPlaylistVariableSet[];
 };
 export type PlaylistOperatorState = {
   /** descriptiveState is an optional more descriptive state field which has no requirements on format */

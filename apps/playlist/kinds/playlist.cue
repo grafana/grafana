@@ -1,5 +1,13 @@
 package playlist
 
+// A named set of dashboard query parameters (variables and time range) applied during playlist playback
+#PlaylistVariableSet: {
+	// Optional display name for this variable set.
+	name?: string
+	// Query parameters to append when opening each playlist dashboard. Use var-<name> for dashboard variables and from/to for time range overrides.
+	queryParams: [string]: string
+}
+
 // Shared item definition for all versions
 #PlaylistItem: {
 	// type of the item.
@@ -37,6 +45,7 @@ playlistv1: {
 			title:    string
 			interval: string
 			items: [...#Item]
+			variableSets?: [...#PlaylistVariableSet]
 		}
 	}
 }

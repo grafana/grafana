@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { setBackendSrv } from '@grafana/runtime';
@@ -81,6 +81,20 @@ describe('PlaylistForm', () => {
       expect(screen.getByRole('textbox', { name: /interval/i })).toHaveValue('10m');
     });
 
+    it('then variable sets field should have correct value', () => {
+      getTestContext({
+        ...mockPlaylist,
+        spec: {
+          ...mockPlaylist.spec!,
+          variableSets: [{ name: 'Host 1', queryParams: { 'var-HOST': 'Host1', from: 'now-6h', to: 'now' } }],
+        },
+      });
+
+      expect(screen.getByRole('textbox', { name: /variable and time range sets/i })).toHaveValue(
+        '[\n  {\n    "name": "Host 1",\n    "queryParams": {\n      "var-HOST": "Host1",\n      "from": "now-6h",\n      "to": "now"\n    }\n  }\n]'
+      );
+    });
+
     it('then items row count should be correct', () => {
       getTestContext();
 
@@ -132,6 +146,53 @@ describe('PlaylistForm', () => {
           name: 'foo',
         },
         status: {},
+      });
+    });
+
+    it('then variable sets should be submitted', async () => {
+      const { onSubmitMock } = getTestContext();
+
+      fireEvent.change(screen.getByRole('textbox', { name: /variable and time range sets/i }), {
+        target: {
+          value: JSON.stringify([{ name: 'Host 1', queryParams: { 'var-HOST': 'Host1', from: 'now-6h', to: 'now' } }]),
+        },
+      });
+      await userEvent.click(screen.getByRole('button', { name: /save/i }));
+
+      expect(onSubmitMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          spec: expect.objectContaining({
+            variableSets: [{ name: 'Host 1', queryParams: { 'var-HOST': 'Host1', from: 'now-6h', to: 'now' } }],
+          }),
+        })
+      );
+    });
+
+    describe('and variable sets are invalid JSON', () => {
+      it('then an alert should appear and nothing should be submitted', async () => {
+        const { onSubmitMock } = getTestContext();
+
+        fireEvent.change(screen.getByRole('textbox', { name: /variable and time range sets/i }), {
+          target: { value: 'not json' },
+        });
+        await userEvent.click(screen.getByRole('button', { name: /save/i }));
+
+        expect(await screen.findAllByRole('alert')).toHaveLength(1);
+        expect(onSubmitMock).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('and a variable set is missing queryParams', () => {
+      it('then an alert should appear and nothing should be submitted', async () => {
+        const { onSubmitMock } = getTestContext();
+
+        fireEvent.change(screen.getByRole('textbox', { name: /variable and time range sets/i }), {
+          target: { value: '[{ "name": "no params" }]' },
+        });
+        await userEvent.click(screen.getByRole('button', { name: /save/i }));
+
+        expect(await screen.findAllByRole('alert')).toHaveLength(1);
+        expect(onSubmitMock).not.toHaveBeenCalled();
       });
     });
 

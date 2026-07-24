@@ -147,6 +147,62 @@ describe('PlaylistSrv', () => {
     expect(srv.state.isPlaying).toBe(true);
   });
 
+  it('applies variable and time range sets to every dashboard URL', async () => {
+    await srv.start({
+      ...mockPlaylist,
+      spec: {
+        ...mockPlaylist.spec!,
+        variableSets: [
+          { name: 'Host 1 - 6h', queryParams: { 'var-HOST': 'Host1', from: 'now-6h', to: 'now' } },
+          { name: 'Host 2 - 24h', queryParams: { 'var-HOST': 'Host2', from: 'now-24h', to: 'now' } },
+        ],
+      },
+    });
+
+    expect(locationService.getLocation().pathname).toBe('/url/to/aaa');
+    expect(locationService.getSearchObject()).toMatchObject({ 'var-HOST': 'Host1', from: 'now-6h', to: 'now' });
+
+    srv.next();
+    expect(locationService.getLocation().pathname).toBe('/url/to/aaa');
+    expect(locationService.getSearchObject()).toMatchObject({ 'var-HOST': 'Host2', from: 'now-24h', to: 'now' });
+
+    srv.next();
+    expect(locationService.getLocation().pathname).toBe('/url/to/bbb');
+    expect(locationService.getSearchObject()).toMatchObject({ 'var-HOST': 'Host1', from: 'now-6h', to: 'now' });
+
+    expect(srv.state.isPlaying).toBe(true);
+  });
+
+  it('preserves playlist runtime params like kiosk when applying variable sets', async () => {
+    locationService.push('/playlists/foo?kiosk');
+
+    await srv.start({
+      ...mockPlaylist,
+      spec: {
+        ...mockPlaylist.spec!,
+        variableSets: [{ queryParams: { 'var-HOST': 'Host1' } }],
+      },
+    });
+
+    expect(locationService.getLocation().pathname).toBe('/url/to/aaa');
+    expect(locationService.getSearchObject()).toMatchObject({ kiosk: true, 'var-HOST': 'Host1' });
+  });
+
+  it('ignores variable sets with empty query params', async () => {
+    await srv.start({
+      ...mockPlaylist,
+      spec: {
+        ...mockPlaylist.spec!,
+        variableSets: [{ queryParams: {} }],
+      },
+    });
+
+    expect(locationService.getLocation().pathname).toBe('/url/to/aaa');
+
+    srv.next();
+    expect(locationService.getLocation().pathname).toBe('/url/to/bbb');
+  });
+
   it('should replace playlist start page in history when starting playlist', async () => {
     // Start at playlists page
     locationService.push('/playlists');
