@@ -1314,6 +1314,8 @@ github.com/gorilla/mux v1.8.0/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB7
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/grafana/alerting v0.0.0-20260330161147-03db0b961b17/go.mod h1:06F4s5KJ6LpL7od+rcusjKnsst+vRhdFqev9GdVNz4c=
 github.com/grafana/alerting v0.0.0-20260521151554-b942723acbb2/go.mod h1:06F4s5KJ6LpL7od+rcusjKnsst+vRhdFqev9GdVNz4c=
+github.com/grafana/alerting/apps/historian v0.0.0-20260723102039-6b4af415aaa0 h1:BL4dLBv3oPgRhXpJ0zHf5trB1V+3PjhMxKyMtzeIuw4=
+github.com/grafana/alerting/apps/historian v0.0.0-20260723102039-6b4af415aaa0/go.mod h1:CmluoPi8Co0zvVSogDTffbOMMS1tbOLKbnsLtthBAu8=
 github.com/grafana/authlib v0.0.0-20260414201248-d766c8627a66/go.mod h1:AWryAuOp+dICuspMD555qPikxDraraypjMU8/C+yHx0=
 github.com/grafana/authlib v0.0.0-20260511070317-cdec9a89f585/go.mod h1:AWryAuOp+dICuspMD555qPikxDraraypjMU8/C+yHx0=
 github.com/grafana/authlib v0.0.0-20260621220415-f6aaf60e82b2/go.mod h1:jlv0zQBdgsu/kmcq7tfO3KDjNiBB2ToiM5amsP0PjG0=

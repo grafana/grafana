@@ -66,11 +66,12 @@ func NewModule(opts Options,
 	license licensing.Licensing,
 	moduleRegisterer ModuleRegisterer,
 	storageBackend resource.StorageBackend, // Ensures unified storage backend is initialized
+	experimentalKV *resource.ExperimentalKVOptions, // Optional alternative KV for flagged use-cases; nil in OSS
 	hooksService *hooks.HooksService,
 	storeProvider zStore.StoreProvider,
 	reconcileCRDs []schema.GroupVersionResource,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, vectorMetrics, reg, promGatherer, tracer, license, moduleRegisterer, storageBackend, hooksService, storeProvider, reconcileCRDs)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, vectorMetrics, reg, promGatherer, tracer, license, moduleRegisterer, storageBackend, experimentalKV, hooksService, storeProvider, reconcileCRDs)
 	if err != nil {
 		return nil, err
 	}
@@ -95,6 +96,7 @@ func newModuleServer(opts Options,
 	license licensing.Licensing,
 	moduleRegisterer ModuleRegisterer,
 	storageBackend resource.StorageBackend,
+	experimentalKV *resource.ExperimentalKVOptions,
 	hooksService *hooks.HooksService,
 	storeProvider zStore.StoreProvider,
 	reconcileCRDs []schema.GroupVersionResource,
@@ -129,6 +131,7 @@ func newModuleServer(opts Options,
 		license:          license,
 		moduleRegisterer: moduleRegisterer,
 		storageBackend:   storageBackend,
+		experimentalKV:   experimentalKV,
 		hooksService:     hooksService,
 		searchClient:     searchClient,
 		healthNotifier:   NewHealthNotifier(),
@@ -156,6 +159,7 @@ type ModuleServer struct {
 	isInitialized    bool
 	mtx              sync.Mutex
 	storageBackend   resource.StorageBackend
+	experimentalKV   *resource.ExperimentalKVOptions
 	natsPublisher    nats.Publisher
 	natsSubscriber   nats.Subscriber
 	vectorBackend    vector.VectorBackend
@@ -365,6 +369,9 @@ func (s *ModuleServer) initUnifiedBackendModule(storageServerEnabled bool) func(
 				opts = append(opts, sql.WithNatsNotifier(natsEventSubscriber{s.natsSubscriber}))
 			} else if s.cfg.NATS.NotifierShadow && s.natsSubscriber != nil {
 				opts = append(opts, sql.WithNatsNotifierShadow(natsEventSubscriber{s.natsSubscriber}))
+			}
+			if s.experimentalKV != nil {
+				opts = append(opts, sql.WithExperimentalKV(s.experimentalKV))
 			}
 			s.storageBackend, err = sql.NewStorageBackend(s.cfg, eDB, s.registerer, s.storageMetrics, disableStorageServices, kvStore, nil, opts...)
 			if err != nil {
