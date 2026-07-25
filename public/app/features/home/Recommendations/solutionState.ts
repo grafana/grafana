@@ -8,19 +8,16 @@ import {
   PROBE_TIMEOUT_MS,
   PROBE_TTL_MS,
   resolveBackendInstance,
-  withRetry,
   withTimeout,
 } from './probeUtils';
 import { readScalar, runInstantQueries } from './promQuery';
 import { DATA_LOOKBACK_HOURS, probeFound, tempoHasTraces } from './solutionDataProbes';
 import { type SignalStatus, type SolutionState } from './solutionsMatrix';
 
-// Span metrics prove Application Observability is in use: the spanmetrics connector emits
-// traces_spanmetrics_*, OTel/Alloy emits traces_span_metrics_*.
+// Span metrics prove App O11y is in use; both emitter namings (spanmetrics connector, OTel/Alloy).
 const SPAN_METRICS_PROBE = `count(last_over_time(traces_spanmetrics_calls_total[${DATA_LOOKBACK_HOURS}h])) or count(last_over_time(traces_span_metrics_calls_total[${DATA_LOOKBACK_HOURS}h]))`;
 
-// Cloud utility datasources hold platform telemetry, never the org's product data: excluded
-// from the activity probes unconditionally.
+// Platform telemetry, never the org's product data: excluded unconditionally.
 const CLOUD_UTILITY_PROM_DATASOURCE_UIDS: ReadonlySet<string> = new Set([
   'grafanacloud-usage',
   'grafanacloud-ml-metrics',
@@ -30,7 +27,8 @@ const CLOUD_UTILITY_LOKI_DATASOURCE_UIDS: ReadonlySet<string> = new Set([
   'grafanacloud-alert-state-history',
 ]);
 
-// Hard ceiling per signal; the homepage never waits longer than this on one signal.
+// Hard ceiling per signal. Candidates are single-attempt (leader + fan-out ≤ 2x10s), so no
+// request outlives an unknown; transient failures self-heal on the next TTL cycle.
 const SIGNAL_BUDGET_MS = 30_000;
 
 export interface SolutionStateResolution {
@@ -56,8 +54,8 @@ async function resolveSignal(probe: () => Promise<DataSourceInstanceListItem | n
   }
 }
 
-// Recent-activity checks ride each datasource's label metadata endpoint: cheap, index-only,
-// and an empty label set within the lookback is a definitive "no data".
+// Label metadata is a cheap, index-only recency check; empty within the lookback is definitive
+// "no data". Failures are expected (dead datasources, 403s) — never toast.
 async function prometheusHasRecentLabels(ds: DataSourceInstanceListItem): Promise<boolean> {
   const instance = await resolveBackendInstance(ds.uid);
   if (!instance) {
@@ -65,8 +63,9 @@ async function prometheusHasRecentLabels(ds: DataSourceInstanceListItem): Promis
   }
   const end = Math.floor(Date.now() / 1000);
   const start = end - DATA_LOOKBACK_HOURS * 3600;
-  const res = await withRetry(() =>
-    withTimeout(instance.getResource<{ data?: unknown }>('api/v1/labels', { start, end }), PROBE_TIMEOUT_MS)
+  const res = await withTimeout(
+    instance.getResource<{ data?: unknown }>('api/v1/labels', { start, end }, { showErrorAlert: false }),
+    PROBE_TIMEOUT_MS
   );
   return Array.isArray(res?.data) && res.data.length > 0;
 }
@@ -79,19 +78,19 @@ async function lokiHasRecentLabels(ds: DataSourceInstanceListItem): Promise<bool
   // Loki takes nanoseconds; ms * 1e6 mirrors LokiDatasource.getTimeRangeParams (precision loss accepted).
   const end = Date.now() * 1e6;
   const start = end - DATA_LOOKBACK_HOURS * 3600 * 1e9;
-  const res = await withRetry(() =>
-    withTimeout(instance.getResource<{ data?: unknown }>('labels', { start, end }), PROBE_TIMEOUT_MS)
+  const res = await withTimeout(
+    instance.getResource<{ data?: unknown }>('labels', { start, end }, { showErrorAlert: false }),
+    PROBE_TIMEOUT_MS
   );
   // Loki responds data: null when empty.
   return Array.isArray(res?.data) && res.data.length > 0;
 }
 
-// A broken candidate counts as no span metrics (unlike the core-signal probes): one dead
-// datasource must not hide the App Observability card behind an unknown — matches the
-// kubernetes probe's failure direction.
+// A broken candidate counts as no span metrics: one dead datasource must not hide the App O11y
+// card behind an unknown (the kubernetes probe's failure direction; core signals stay strict).
 async function prometheusHasSpanMetrics(ds: DataSourceInstanceListItem): Promise<boolean> {
   try {
-    const frames = await withRetry(() => runInstantQueries({ probe: SPAN_METRICS_PROBE }, ds, PROBE_TIMEOUT_MS));
+    const frames = await runInstantQueries({ probe: SPAN_METRICS_PROBE }, ds, PROBE_TIMEOUT_MS);
     return (readScalar(frames, 'probe') ?? 0) > 0;
   } catch {
     return false;

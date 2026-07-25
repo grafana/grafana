@@ -322,14 +322,17 @@ describe('resolveSolutionState', () => {
     await resolveSolutionState();
 
     const nowMs = Date.now();
-    expect(promResource).toHaveBeenCalledWith('api/v1/labels', {
-      start: Math.floor(nowMs / 1000) - DATA_LOOKBACK_HOURS * 3600,
-      end: Math.floor(nowMs / 1000),
-    });
-    expect(lokiResource).toHaveBeenCalledWith('labels', {
-      start: nowMs * 1e6 - DATA_LOOKBACK_HOURS * 3600 * 1e9,
-      end: nowMs * 1e6,
-    });
+    const silent = { showErrorAlert: false };
+    expect(promResource).toHaveBeenCalledWith(
+      'api/v1/labels',
+      { start: Math.floor(nowMs / 1000) - DATA_LOOKBACK_HOURS * 3600, end: Math.floor(nowMs / 1000) },
+      silent
+    );
+    expect(lokiResource).toHaveBeenCalledWith(
+      'labels',
+      { start: nowMs * 1e6 - DATA_LOOKBACK_HOURS * 3600 * 1e9, end: nowMs * 1e6 },
+      silent
+    );
   });
 
   it('fans out once for concurrent callers and re-resolves after a reset', async () => {

@@ -93,20 +93,26 @@ describe('fetchLogsActivity', () => {
 
     const end = Date.now() * NS_IN_MS;
     const statsStart = end - LOGS_STATS_LOOKBACK_DAYS * 24 * 3600 * 1e9;
-    expect(getResource).toHaveBeenCalledWith('labels', { start: statsStart, end });
-    expect(getResource).toHaveBeenCalledWith('index/volume', {
-      query: '{service_name=~".+"}',
-      start: statsStart,
-      end,
-      limit: 1000,
-    });
-    expect(getResource).toHaveBeenCalledWith('label/service_name/values', { start: statsStart, end });
-    expect(getResource).toHaveBeenCalledWith('index/volume_range', {
-      query: '{service_name=~".+"}',
-      start: end - DATA_LOOKBACK_HOURS * 3600 * 1e9,
-      end,
-      step: '30m',
-    });
+    const silent = { showErrorAlert: false };
+    expect(getResource).toHaveBeenCalledWith('labels', { start: statsStart, end }, silent);
+    expect(getResource).toHaveBeenCalledWith(
+      'index/volume',
+      { query: '{service_name=~".+"}', start: statsStart, end, aggregateBy: 'labels', targetLabels: 'service_name' },
+      silent
+    );
+    expect(getResource).toHaveBeenCalledWith('label/service_name/values', { start: statsStart, end }, silent);
+    expect(getResource).toHaveBeenCalledWith(
+      'index/volume_range',
+      {
+        query: '{service_name=~".+"}',
+        start: end - DATA_LOOKBACK_HOURS * 3600 * 1e9,
+        end,
+        step: '30m',
+        aggregateBy: 'labels',
+        targetLabels: 'service_name',
+      },
+      silent
+    );
   });
 
   it('falls back to job when service_name is absent', async () => {
@@ -125,7 +131,7 @@ describe('fetchLogsActivity', () => {
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
 
     await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: 0, sources: 1, series: null });
-    expect(getResource).toHaveBeenCalledWith('label/job/values', expect.anything());
+    expect(getResource).toHaveBeenCalledWith('label/job/values', expect.anything(), expect.anything());
   });
 
   it('keeps the other fields when one endpoint is unavailable', async () => {
