@@ -17,13 +17,17 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
 // HybridSearch implements ResourceIndexServer. Runs the lexical and
 // semantic legs concurrently, each filtered and authz-checked, then
-// fuses the rankings with RRF. Both legs fetch 2x the requested limit
-// so near-miss overlaps can still fuse into the top results.
+// fuses the rankings with RRF. When a reranker is configured, the fused
+// pool (top maxRerankCandidates) is re-scored by a cross-encoder and
+// results below the requested min_relevance threshold are dropped. Both
+// legs fetch 2x the requested limit so near-miss overlaps can still fuse
+// into the top results.
 //
 // Returns Unimplemented when no embedding provider or vector backend is
 // configured.
@@ -76,6 +80,7 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	if !allowed {
 		return nil, status.Error(codes.NotFound, "collection not found")
 	}
+
 	// External collections have no lexical index, so the fused contract
 	// can't hold for them.
 	if coll.IsExternal {
@@ -132,6 +137,13 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	}
 
 	fused := fuseRRF(req.Key, lex, sem)
+	if !req.SkipRerank {
+		var err error
+		fused, err = s.rerankHybridResults(ctx, embedText, fused, req.MinRelevance)
+		if err != nil {
+			return nil, err
+		}
+	}
 	if len(fused) > limit {
 		fused = fused[:limit]
 	}
@@ -176,12 +188,84 @@ func grpcErrorFromErrorResult(e *resourcepb.ErrorResult) error {
 	}
 }
 
+// rerankHybridResults cross-encoder re-scores, re-sorts, and threshold-drops the fused candidates; fail-open on provider errors (only caller cancellation propagates).
+func (s *searchServer) rerankHybridResults(ctx context.Context, query string, results []*resourcepb.HybridSearchResult, minRelevance string) ([]*resourcepb.HybridSearchResult, error) {
+	if s.reranker == nil || len(results) == 0 {
+		return results, nil
+	}
+	if len(results) > maxRerankCandidates {
+		results = results[:maxRerankCandidates]
+	}
+	// Chunks[0] is the best text per resource: closest embedded chunk, whole-resource text for unchunked kinds, or the synthesized title chunk for lexical-only hits.
+	texts := make([]string, len(results))
+	for i, r := range results {
+		texts[i] = r.Chunks[0].Content
+		// One empty document (titleless lexical-only hit) would 400 the whole provider call.
+		if texts[i] == "" {
+			texts[i] = r.Key.Name
+		}
+	}
+
+	scores, err := s.reranker.Score(ctx, query, texts)
+	if err != nil {
+		if ctx.Err() != nil {
+			return nil, status.FromContextError(ctx.Err()).Err()
+		}
+		return s.rerankFallback(results, "hybrid rerank failed", err), nil
+	}
+	if len(scores) != len(results) {
+		return s.rerankFallback(results, "hybrid rerank returned wrong score count",
+			fmt.Errorf("%d scores for %d results", len(scores), len(results))), nil
+	}
+
+	if s.vectorMetrics != nil {
+		s.vectorMetrics.RerankCandidatesTotal.
+			WithLabelValues(s.reranker.Model).Add(float64(len(results)))
+	}
+	for i, r := range results {
+		r.Score = scores[i]
+	}
+	sort.SliceStable(results, func(i, j int) bool {
+		if results[i].Score != results[j].Score {
+			return results[i].Score > results[j].Score
+		}
+		return results[i].Key.Name < results[j].Key.Name
+	})
+
+	if threshold := s.reranker.Thresholds.Resolve(rerank.Relevance(minRelevance)); threshold > 0 {
+		kept := results[:0]
+		for _, r := range results {
+			if r.Score >= threshold {
+				kept = append(kept, r)
+			}
+		}
+		if dropped := len(results) - len(kept); dropped > 0 && s.vectorMetrics != nil {
+			s.vectorMetrics.RerankDroppedResultsTotal.
+				WithLabelValues(s.reranker.Model, minRelevance).Add(float64(dropped))
+		}
+		results = kept
+	}
+	return results, nil
+}
+
+// rerankFallback logs and returns the RRF-ordered input. Failed provider
+// calls are visible in the rerank duration histogram's error/timeout series.
+func (s *searchServer) rerankFallback(results []*resourcepb.HybridSearchResult, msg string, err error) []*resourcepb.HybridSearchResult {
+	s.log.Warn(msg+"; returning RRF-ordered results", "err", err, "model", s.reranker.Model)
+	return results
+}
+
 // rrfK is the standard Reciprocal Rank Fusion constant.
 const rrfK = 60
 
 // maxChunksPerHybridResult bounds response size; only the best chunk
 // influences score, the rest are payload for RAG consumers.
 const maxChunksPerHybridResult = 10
+
+// maxRerankCandidates caps the scored pool (the fused legs can reach 2x the
+// per-leg depth) so reranking is always a single provider call: it tracks
+// maxVectorSearchLimit but can never exceed Vertex's 200-records/call cap.
+const maxRerankCandidates = min(maxVectorSearchLimit, 200)
 
 type lexicalHit struct {
 	uid    string
@@ -363,6 +447,16 @@ func validateHybridSearchRequest(req *resourcepb.HybridSearchRequest) error {
 	}
 	if req.SemanticQuery != "" && strings.TrimSpace(req.SemanticQuery) == "" {
 		return reqErr("semantic_query must not be whitespace")
+	}
+	if req.MinRelevance != "" {
+		if _, err := rerank.ParseRelevance(req.MinRelevance); err != nil {
+			return reqErr(fmt.Sprintf("unsupported min_relevance %q (expected lowest, low, medium, high, or highest)", req.MinRelevance))
+		}
+		// A threshold without reranking is meaningless — reject rather than
+		// silently ignore one of the two.
+		if req.SkipRerank {
+			return reqErr("min_relevance cannot be combined with skip_rerank")
+		}
 	}
 	// Duplicate keys would diverge between legs: the lexical leg ANDs
 	// repeated requirements while the vector backend keeps the last one.

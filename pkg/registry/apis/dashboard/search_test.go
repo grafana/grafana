@@ -207,7 +207,7 @@ func TestHybridSearch(t *testing.T) {
 		}
 		handler := newHandler(mockClient)
 
-		rr := doRequest(handler, "query=cpu&semanticQuery=cpu+usage+by+host&folder=f1&limit=10")
+		rr := doRequest(handler, "query=cpu&semanticQuery=cpu+usage+by+host&folder=f1&limit=10&minRelevance=low")
 
 		require.NotNil(t, mockClient.LastHybridSearchRequest)
 		assert.Equal(t, 1, mockClient.HybridSearchCallCount)
@@ -216,6 +216,8 @@ func TestHybridSearch(t *testing.T) {
 		assert.Equal(t, "cpu", mockClient.LastHybridSearchRequest.Query)
 		assert.Equal(t, "cpu usage by host", mockClient.LastHybridSearchRequest.SemanticQuery)
 		assert.Equal(t, int64(10), mockClient.LastHybridSearchRequest.Limit)
+		assert.Equal(t, "low", mockClient.LastHybridSearchRequest.MinRelevance)
+		assert.False(t, mockClient.LastHybridSearchRequest.SkipRerank)
 		require.Len(t, mockClient.LastHybridSearchRequest.Filters, 1)
 		assert.Equal(t, "folder", mockClient.LastHybridSearchRequest.Filters[0].Key)
 		assert.Equal(t, []string{"f1"}, mockClient.LastHybridSearchRequest.Filters[0].Values)
@@ -266,6 +268,16 @@ func TestHybridSearch(t *testing.T) {
 		require.Len(t, mockClient.LastHybridSearchRequest.Filters, 1)
 		assert.Equal(t, "folder", mockClient.LastHybridSearchRequest.Filters[0].Key)
 		assert.Equal(t, []string{""}, mockClient.LastHybridSearchRequest.Filters[0].Values)
+		// Omitted minRelevance stays empty = server keeps every result.
+		assert.Equal(t, "", mockClient.LastHybridSearchRequest.MinRelevance)
+	})
+
+	t.Run("passes skipRerank through to the RPC", func(t *testing.T) {
+		mockClient := &MockClient{HybridSearchResponse: &resourcepb.HybridSearchResponse{}}
+		doRequest(newHandler(mockClient), "query=cpu&skipRerank=true")
+
+		require.NotNil(t, mockClient.LastHybridSearchRequest)
+		assert.True(t, mockClient.LastHybridSearchRequest.SkipRerank)
 	})
 
 	t.Run("maps InvalidArgument validation errors to 400", func(t *testing.T) {
