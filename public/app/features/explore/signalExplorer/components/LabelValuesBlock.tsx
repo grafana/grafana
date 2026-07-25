@@ -32,11 +32,18 @@ export function LabelValuesBlock({ dsRef, timeRange, metric, labelKey }: LabelVa
   const [ascending, setAscending] = useState(true);
   const { visibleCount, showMore } = useVisibleBatch(filter);
 
+  // Sort first and filter the sorted list, not the other way round: filtering preserves relative
+  // order, so the result is identical either way, but this way a keystroke only re-runs the linear
+  // filter instead of re-sorting thousands of values.
+  const sorted = useMemo(
+    () => [...values].sort((a, b) => (ascending ? valueCollator.compare(a, b) : valueCollator.compare(b, a))),
+    [values, ascending]
+  );
+
   const ordered = useMemo(() => {
     const needle = filter.trim().toLowerCase();
-    const matching = needle ? values.filter((value) => value.toLowerCase().includes(needle)) : values;
-    return [...matching].sort((a, b) => (ascending ? valueCollator.compare(a, b) : valueCollator.compare(b, a)));
-  }, [values, filter, ascending]);
+    return needle ? sorted.filter((value) => value.toLowerCase().includes(needle)) : sorted;
+  }, [sorted, filter]);
 
   const visible = ordered.slice(0, visibleCount);
 
