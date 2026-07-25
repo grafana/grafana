@@ -1,5 +1,6 @@
 import { type FieldSparkline, formattedValueToString, getValueFormat, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { constructDataSourceExploreUrl } from 'app/features/datasources/utils';
 
 import { HOSTED_TRACES_APP_ID, LOGS_DRILLDOWN_APP_ID } from './appPluginIds';
 import { type ExistingItem } from './types';
@@ -18,6 +19,7 @@ export interface LogsItemParts {
 /** Build the Hosted Logs entry from live Loki data; the caller guarantees something to show. */
 export function buildLogsItem(parts: LogsItemParts): ExistingItem {
   const { bytes, sources } = parts;
+  const drilldown = parts.drilldownAvailable;
   return {
     id: 'logs',
     title: t('home.recommendations.logs.title', 'Hosted Logs'),
@@ -43,8 +45,12 @@ export function buildLogsItem(parts: LogsItemParts): ExistingItem {
           caption: t('home.recommendations.logs.volume', 'Ingest volume · last 24h'),
         }
       : undefined,
-    action: t('home.recommendations.logs.action', 'Open Explore (Logs)'),
-    href: locationUtil.assureBaseUrl(parts.drilldownAvailable ? `/a/${LOGS_DRILLDOWN_APP_ID}` : '/explore'),
+    action: drilldown
+      ? t('home.recommendations.logs.action', 'Open Explore (Logs)')
+      : t('home.recommendations.logs.action-explore', 'Open in Explore'),
+    href: drilldown
+      ? locationUtil.assureBaseUrl(`/a/${LOGS_DRILLDOWN_APP_ID}`)
+      : constructDataSourceExploreUrl({ name: parts.datasourceName }),
   };
 }
 
@@ -59,6 +65,7 @@ export interface TracesItemParts {
 /** Build the Hosted Traces entry from live Tempo data; the caller guarantees something to show. */
 export function buildTracesItem(parts: TracesItemParts): ExistingItem {
   const { spans, services } = parts;
+  const drilldown = parts.drilldownAvailable;
   return {
     id: 'traces',
     title: t('home.recommendations.traces.title', 'Hosted Traces'),
@@ -89,7 +96,11 @@ export function buildTracesItem(parts: TracesItemParts): ExistingItem {
           caption: t('home.recommendations.traces.throughput', 'Span throughput · last 24h'),
         }
       : undefined,
-    action: t('home.recommendations.traces.action', 'Open Traces Drilldown'),
-    href: locationUtil.assureBaseUrl(parts.drilldownAvailable ? `/a/${HOSTED_TRACES_APP_ID}` : '/explore'),
+    action: drilldown
+      ? t('home.recommendations.traces.action', 'Open Traces Drilldown')
+      : t('home.recommendations.traces.action-explore', 'Open in Explore'),
+    href: drilldown
+      ? locationUtil.assureBaseUrl(`/a/${HOSTED_TRACES_APP_ID}`)
+      : constructDataSourceExploreUrl({ name: parts.datasourceName }),
   };
 }
