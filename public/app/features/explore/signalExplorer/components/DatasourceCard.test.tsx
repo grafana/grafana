@@ -43,7 +43,7 @@ function renderCard(props: Partial<ComponentProps<typeof DatasourceCard>> = {}, 
         isPrometheus
         isActive
         timeRange={timeRange}
-        paneQueries={[]}
+        matchQueries={[]}
         {...props}
       />
     </Provider>
@@ -73,14 +73,14 @@ describe('DatasourceCard', () => {
 
     it('hands the tree the queries whose refIds may badge its metrics', () => {
       const tree = jest.mocked(MetricTreeModule.MetricTree);
-      const paneQueries = [
+      const matchQueries = [
         { refId: 'A', expr: 'sum(up)' } as DataQuery,
         { refId: 'B', expr: 'up{job="x"}' } as DataQuery,
       ];
 
-      renderCard({ paneQueries });
+      renderCard({ matchQueries });
 
-      expect(tree.mock.calls[0][0].matchQueries).toBe(paneQueries);
+      expect(tree.mock.calls[0][0].matchQueries).toBe(matchQueries);
     });
 
     it('renders a placeholder and no tree for a non-Prometheus datasource', () => {

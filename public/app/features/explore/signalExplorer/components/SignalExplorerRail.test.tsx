@@ -273,13 +273,16 @@ describe('SignalExplorerRail', () => {
       expect(within(lokiCard).queryByTestId('signal-explorer-metric-row')).not.toBeInTheDocument();
     });
 
-    it('badges a metric with every refId in the pane that references it, not just its own card', () => {
+    it('badges a metric with the refIds of this datasource’s queries, and only those', () => {
+      // C is a second query on the *same* Prometheus datasource as A, so its refId belongs on the
+      // card. B is Loki: its LogQL mentions `up`, but `up` is not a Loki metric — a token that
+      // happens to look like a Prometheus name must not badge a Loki refId onto this card.
       renderRail({
-        queries: twoQueries,
+        queries: [...twoQueries, { refId: 'C', datasource: { uid: 'p1' }, expr: 'up' } as DataQuery],
         signalExplorer: { left: { typeFilter: null, searchText: '', activeRefId: 'A' } },
       });
 
-      expect(badgesFor('up')).toEqual(['A', 'B']);
+      expect(badgesFor('up')).toEqual(['A', 'C']);
       expect(badgesFor('node_load1')).toEqual(['A']);
     });
 

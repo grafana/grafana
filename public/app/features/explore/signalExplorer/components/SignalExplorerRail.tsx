@@ -64,7 +64,7 @@ export function SignalExplorerRail({ exploreId }: SignalExplorerRailProps) {
             isPrometheus={card.isPrometheus}
             isActive={card.refId === activeRefId}
             timeRange={range}
-            paneQueries={queries}
+            matchQueries={card.matchQueries}
           />
         ))}
       </div>

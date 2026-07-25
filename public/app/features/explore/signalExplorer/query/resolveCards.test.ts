@@ -109,6 +109,47 @@ describe('resolveCards', () => {
     expect(cards[0].isPrometheus).toBe(false);
   });
 
+  describe('matchQueries', () => {
+    it('gives each card only the queries that run against its own datasource', () => {
+      mockDatasources(PROM, LOKI);
+      const queries = [
+        { refId: 'A', datasource: { uid: 'p1' } },
+        { refId: 'B', datasource: { uid: 'l1' } },
+        { refId: 'C', datasource: { uid: 'p1' } },
+      ];
+
+      const cards = resolveCards(queries, undefined);
+
+      expect(cards.map((card) => card.matchQueries.map((query) => query.refId))).toEqual([
+        ['A', 'C'],
+        ['B'],
+        ['A', 'C'],
+      ]);
+    });
+
+    it('keeps two Prometheus datasources in a mixed pane apart', () => {
+      mockDatasources(PROM, PROM_TWO);
+      const queries = [
+        { refId: 'A', datasource: { uid: 'p1' } },
+        { refId: 'B', datasource: { uid: 'p2' } },
+      ];
+
+      const cards = resolveCards(queries, mixedInstance as unknown as DataSourceApi);
+
+      expect(cards[0].matchQueries.map((query) => query.refId)).toEqual(['A']);
+      expect(cards[1].matchQueries.map((query) => query.refId)).toEqual(['B']);
+    });
+
+    it('groups a datasource-less query with the pane datasource it inherits', () => {
+      mockDatasources(PROM);
+      const queries = [{ refId: 'A', datasource: { uid: 'p1' } }, { refId: 'B' }];
+
+      const cards = resolveCards(queries, instanceOf(PROM));
+
+      expect(cards[0].matchQueries.map((query) => query.refId)).toEqual(['A', 'B']);
+    });
+  });
+
   it('returns no cards when the pane has no queries', () => {
     mockDatasources(PROM);
 

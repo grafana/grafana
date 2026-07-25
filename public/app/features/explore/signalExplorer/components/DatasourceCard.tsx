@@ -27,11 +27,12 @@ export interface DatasourceCardProps {
   isActive: boolean;
   timeRange: TimeRange;
   /**
-   * Every query in the pane, read-only. The card matches them against its own datasource's catalog
-   * to work out which refIds already reference each metric — the host cannot do that for it,
-   * because in a mixed pane every card resolves a different catalog.
+   * The pane's queries that run against this card's datasource, read-only. Scoped by the host
+   * rather than filtered here: only the host knows how each query's datasource resolved. A metric
+   * name means nothing outside its own datasource, so matching a Loki query against a Prometheus
+   * catalog would badge refIds onto metrics that query never mentions.
    */
-  paneQueries: DataQuery[];
+  matchQueries: DataQuery[];
 }
 
 /**
@@ -47,7 +48,7 @@ export function DatasourceCard({
   isPrometheus,
   isActive,
   timeRange,
-  paneQueries,
+  matchQueries,
 }: DatasourceCardProps) {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
@@ -96,7 +97,7 @@ export function DatasourceCard({
               refId={refId}
               dsRef={dsRef}
               timeRange={timeRange}
-              paneQueries={paneQueries}
+              matchQueries={matchQueries}
             />
           ) : (
             <Text color="secondary">
@@ -114,7 +115,7 @@ interface PrometheusBodyProps {
   refId: string;
   dsRef: DataSourceRef;
   timeRange: TimeRange;
-  paneQueries: DataQuery[];
+  matchQueries: DataQuery[];
 }
 
 /**
@@ -122,7 +123,7 @@ interface PrometheusBodyProps {
  * catalog fetch it triggers — exists for a collapsed card or for a datasource that has no catalog
  * to browse in the first place.
  */
-function PrometheusBody({ exploreId, refId, dsRef, timeRange, paneQueries }: PrometheusBodyProps) {
+function PrometheusBody({ exploreId, refId, dsRef, timeRange, matchQueries }: PrometheusBodyProps) {
   const dispatch = useDispatch();
 
   const searchText = useSelector((state) => selectSearchText(state, exploreId));
@@ -165,7 +166,7 @@ function PrometheusBody({ exploreId, refId, dsRef, timeRange, paneQueries }: Pro
         value={typeFilter}
         onChange={(value: MetricType | null) => dispatch(setTypeFilter({ exploreId, typeFilter: value }))}
       />
-      <MetricTree exploreId={exploreId} refId={refId} dsRef={dsRef} timeRange={timeRange} matchQueries={paneQueries} />
+      <MetricTree exploreId={exploreId} refId={refId} dsRef={dsRef} timeRange={timeRange} matchQueries={matchQueries} />
     </>
   );
 }
