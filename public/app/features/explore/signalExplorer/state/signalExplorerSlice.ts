@@ -8,17 +8,32 @@ import type { MetricType } from '../types';
 const SPLIT_CLOSE_TYPE = 'explore/splitClose';
 const CLEAR_PANES_TYPE = 'explore/clearPanes';
 
-export interface PaneViewState {
-  activeRefId?: string;
-  selectedMetric?: { refId: string; metricName: string };
+/** What one card's own controls narrow, scoped to that card and nothing else in the pane. */
+export interface CardViewState {
   typeFilter: MetricType | null;
   searchText: string;
 }
 
+export interface PaneViewState {
+  activeRefId?: string;
+  selectedMetric?: { refId: string; metricName: string };
+  /**
+   * Keyed by refId. A mixed pane can hold two cards on the same datasource, and each browses its own
+   * catalog: one pane-wide search box would re-filter both trees from whichever one was typed in.
+   */
+  cards: Record<string, CardViewState>;
+}
+
 export type SignalExplorerState = Record<string, PaneViewState>;
 
-const emptyPane = (): PaneViewState => ({ typeFilter: null, searchText: '' });
+const emptyPane = (): PaneViewState => ({ cards: {} });
+const emptyCard = (): CardViewState => ({ typeFilter: null, searchText: '' });
 const initialState: SignalExplorerState = {};
+
+const cardOf = (state: SignalExplorerState, exploreId: string, refId: string): CardViewState => {
+  const pane = (state[exploreId] ??= emptyPane());
+  return (pane.cards[refId] ??= emptyCard());
+};
 
 const slice = createSlice({
   name: 'signalExplorer',
@@ -39,11 +54,14 @@ const slice = createSlice({
         pane.selectedMetric = undefined;
       }
     },
-    setTypeFilter: (state, action: PayloadAction<{ exploreId: string; typeFilter: MetricType | null }>) => {
-      (state[action.payload.exploreId] ??= emptyPane()).typeFilter = action.payload.typeFilter;
+    setTypeFilter: (
+      state,
+      action: PayloadAction<{ exploreId: string; refId: string; typeFilter: MetricType | null }>
+    ) => {
+      cardOf(state, action.payload.exploreId, action.payload.refId).typeFilter = action.payload.typeFilter;
     },
-    setSearchText: (state, action: PayloadAction<{ exploreId: string; searchText: string }>) => {
-      (state[action.payload.exploreId] ??= emptyPane()).searchText = action.payload.searchText;
+    setSearchText: (state, action: PayloadAction<{ exploreId: string; refId: string; searchText: string }>) => {
+      cardOf(state, action.payload.exploreId, action.payload.refId).searchText = action.payload.searchText;
     },
     clearExploreState: (state, action: PayloadAction<{ exploreId: string }>) => {
       delete state[action.payload.exploreId];

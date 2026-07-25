@@ -24,10 +24,34 @@ describe('signalExplorerSlice', () => {
     expect(s2['right'].selectedMetric).toEqual({ refId: 'B', metricName: 'node_load1' });
   });
   it('sets type filter and search text and active refId', () => {
-    let s = signalExplorerReducer(initial, setTypeFilter({ exploreId: 'left', typeFilter: 'counter' }));
+    let s = signalExplorerReducer(initial, setTypeFilter({ exploreId: 'left', refId: 'A', typeFilter: 'counter' }));
+    s = signalExplorerReducer(s, setSearchText({ exploreId: 'left', refId: 'A', searchText: 'node_' }));
     s = signalExplorerReducer(s, setActiveRefId({ exploreId: 'left', refId: 'A' }));
-    expect(s['left'].typeFilter).toBe('counter');
+    expect(s['left'].cards['A']).toEqual({ typeFilter: 'counter', searchText: 'node_' });
     expect(s['left'].activeRefId).toBe('A');
+  });
+
+  it('scopes search text to one card, so a sibling card in the same pane keeps its own', () => {
+    let s = signalExplorerReducer(initial, setSearchText({ exploreId: 'left', refId: 'A', searchText: 'node_' }));
+    s = signalExplorerReducer(s, setSearchText({ exploreId: 'left', refId: 'B', searchText: 'http_' }));
+
+    expect(s['left'].cards['A'].searchText).toBe('node_');
+    expect(s['left'].cards['B'].searchText).toBe('http_');
+  });
+
+  it('scopes the type filter to one card, so a sibling card in the same pane keeps its own', () => {
+    let s = signalExplorerReducer(initial, setTypeFilter({ exploreId: 'left', refId: 'A', typeFilter: 'counter' }));
+    s = signalExplorerReducer(s, setTypeFilter({ exploreId: 'left', refId: 'B', typeFilter: 'gauge' }));
+
+    expect(s['left'].cards['A'].typeFilter).toBe('counter');
+    expect(s['left'].cards['B'].typeFilter).toBe('gauge');
+  });
+
+  it('keeps a card’s search text when its type filter changes, and the reverse', () => {
+    let s = signalExplorerReducer(initial, setSearchText({ exploreId: 'left', refId: 'A', searchText: 'node_' }));
+    s = signalExplorerReducer(s, setTypeFilter({ exploreId: 'left', refId: 'A', typeFilter: 'gauge' }));
+
+    expect(s['left'].cards['A']).toEqual({ typeFilter: 'gauge', searchText: 'node_' });
   });
   it('clears the selected metric of one exploreId without touching the rest of the pane', () => {
     let s = signalExplorerReducer(initial, setSelectedMetric({ exploreId: 'left', refId: 'A', metricName: 'up' }));
@@ -51,9 +75,9 @@ describe('signalExplorerSlice', () => {
 
   describe('pane lifecycle', () => {
     const populated = () => {
-      let s = signalExplorerReducer(initial, setSearchText({ exploreId: 'left', searchText: 'node_' }));
+      let s = signalExplorerReducer(initial, setSearchText({ exploreId: 'left', refId: 'A', searchText: 'node_' }));
       s = signalExplorerReducer(s, setSelectedMetric({ exploreId: 'left', refId: 'A', metricName: 'up' }));
-      s = signalExplorerReducer(s, setSearchText({ exploreId: 'right', searchText: 'http_' }));
+      s = signalExplorerReducer(s, setSearchText({ exploreId: 'right', refId: 'A', searchText: 'http_' }));
       return s;
     };
 
@@ -67,7 +91,7 @@ describe('signalExplorerSlice', () => {
       const s = signalExplorerReducer(populated(), splitClose('left'));
 
       expect(s['left']).toBeUndefined();
-      expect(s['right'].searchText).toBe('http_');
+      expect(s['right'].cards['A'].searchText).toBe('http_');
     });
 
     it('drops every pane when Explore clears them all', () => {

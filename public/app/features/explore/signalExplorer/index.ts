@@ -31,11 +31,13 @@ export {
   setSelectedMetric,
   setTypeFilter,
   signalExplorerReducer,
+  type CardViewState,
   type PaneViewState,
   type SignalExplorerState,
 } from './state/signalExplorerSlice';
 export {
   selectActiveRefId,
+  selectCardViewState,
   selectSearchText,
   selectSelectedMetric,
   selectSignalExplorerState,

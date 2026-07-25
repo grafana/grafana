@@ -32,20 +32,21 @@ function mockInstanceSettings(settings: Partial<DataSourceInstanceSettings> | un
 
 const makeStore = () => configureStore({ reducer: { signalExplorer: signalExplorerReducer } });
 
+const cardProps: ComponentProps<typeof DatasourceCard> = {
+  exploreId: 'left',
+  refId: 'A',
+  dsRef,
+  dsName: 'Prometheus',
+  isPrometheus: true,
+  isActive: true,
+  timeRange,
+  matchQueries: [],
+};
+
 function renderCard(props: Partial<ComponentProps<typeof DatasourceCard>> = {}, store = makeStore()) {
   render(
     <Provider store={store}>
-      <DatasourceCard
-        exploreId="left"
-        refId="A"
-        dsRef={dsRef}
-        dsName="Prometheus"
-        isPrometheus
-        isActive
-        timeRange={timeRange}
-        matchQueries={[]}
-        {...props}
-      />
+      <DatasourceCard {...cardProps} {...props} />
     </Provider>
   );
   return store;
@@ -107,17 +108,34 @@ describe('DatasourceCard', () => {
       expect(input).toHaveValue('up');
       expect(store.getState().signalExplorer.left).toBeUndefined();
 
-      await waitFor(() => expect(store.getState().signalExplorer.left.searchText).toBe('up'));
+      await waitFor(() => expect(store.getState().signalExplorer.left.cards['A'].searchText).toBe('up'));
     });
 
-    it('adopts a search text that changed elsewhere in the pane', async () => {
+    it('adopts a search text set for this card from outside the input', async () => {
       const store = renderCard();
 
       act(() => {
-        store.dispatch(setSearchText({ exploreId: 'left', searchText: 'node_' }));
+        store.dispatch(setSearchText({ exploreId: 'left', refId: 'A', searchText: 'node_' }));
       });
 
       await waitFor(() => expect(screen.getByRole('textbox', { name: /search metrics/i })).toHaveValue('node_'));
+    });
+
+    it('leaves a sibling card’s search box alone when this one is typed in', async () => {
+      const store = makeStore();
+      render(
+        <Provider store={store}>
+          <DatasourceCard {...cardProps} refId="A" dsName="Prom A" />
+          <DatasourceCard {...cardProps} refId="B" dsName="Prom B" />
+        </Provider>
+      );
+
+      const [inputA, inputB] = screen.getAllByRole('textbox', { name: /search metrics/i });
+      await userEvent.type(inputA, 'node_');
+      await waitFor(() => expect(store.getState().signalExplorer.left.cards['A'].searchText).toBe('node_'));
+
+      expect(inputB).toHaveValue('');
+      expect(store.getState().signalExplorer.left.cards['B']).toBeUndefined();
     });
 
     it('dispatches setTypeFilter when the type filter changes', async () => {
@@ -126,7 +144,23 @@ describe('DatasourceCard', () => {
       await userEvent.click(screen.getByRole('combobox'));
       await userEvent.click(await screen.findByText('Counter'));
 
-      expect(store.getState().signalExplorer.left.typeFilter).toBe('counter');
+      expect(store.getState().signalExplorer.left.cards['A'].typeFilter).toBe('counter');
+    });
+
+    it('leaves a sibling card’s type filter alone when this one is changed', async () => {
+      const store = makeStore();
+      render(
+        <Provider store={store}>
+          <DatasourceCard {...cardProps} refId="A" dsName="Prom A" />
+          <DatasourceCard {...cardProps} refId="B" dsName="Prom B" />
+        </Provider>
+      );
+
+      await userEvent.click(screen.getAllByRole('combobox')[0]);
+      await userEvent.click(await screen.findByText('Counter'));
+
+      expect(store.getState().signalExplorer.left.cards['A'].typeFilter).toBe('counter');
+      expect(store.getState().signalExplorer.left.cards['B']).toBeUndefined();
     });
 
     it('dispatches setActiveRefId when the card is activated', async () => {

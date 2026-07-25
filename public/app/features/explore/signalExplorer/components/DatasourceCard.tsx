@@ -126,8 +126,8 @@ interface PrometheusBodyProps {
 function PrometheusBody({ exploreId, refId, dsRef, timeRange, matchQueries }: PrometheusBodyProps) {
   const dispatch = useDispatch();
 
-  const searchText = useSelector((state) => selectSearchText(state, exploreId));
-  const typeFilter = useSelector((state) => selectTypeFilter(state, exploreId));
+  const searchText = useSelector((state) => selectSearchText(state, exploreId, refId));
+  const typeFilter = useSelector((state) => selectTypeFilter(state, exploreId, refId));
 
   // The input keeps its own value and the store only hears about it once typing pauses: every
   // dispatch re-filters and re-sorts the whole catalog in `MetricTree`, which is far too much work
@@ -135,7 +135,7 @@ function PrometheusBody({ exploreId, refId, dsRef, timeRange, matchQueries }: Pr
   const [draftSearch, setDraftSearch] = useState(searchText);
   const [dispatchedSearch, setDispatchedSearch] = useState(searchText);
   if (searchText !== dispatchedSearch) {
-    // The store moved without us (another card sharing this pane's `searchText`, or a reset) —
+    // This card's stored search moved without us (a reset, or a host driving the slice directly) —
     // adopt it rather than let the input drift away from the list it is filtering.
     setDispatchedSearch(searchText);
     setDraftSearch(searchText);
@@ -145,7 +145,7 @@ function PrometheusBody({ exploreId, refId, dsRef, timeRange, matchQueries }: Pr
     () => {
       if (draftSearch !== searchText) {
         setDispatchedSearch(draftSearch);
-        dispatch(setSearchText({ exploreId, searchText: draftSearch }));
+        dispatch(setSearchText({ exploreId, refId, searchText: draftSearch }));
       }
     },
     SEARCH_DEBOUNCE_MS,
@@ -164,7 +164,7 @@ function PrometheusBody({ exploreId, refId, dsRef, timeRange, matchQueries }: Pr
       />
       <MetricTypeFilter
         value={typeFilter}
-        onChange={(value: MetricType | null) => dispatch(setTypeFilter({ exploreId, typeFilter: value }))}
+        onChange={(value: MetricType | null) => dispatch(setTypeFilter({ exploreId, refId, typeFilter: value }))}
       />
       <MetricTree exploreId={exploreId} refId={refId} dsRef={dsRef} timeRange={timeRange} matchQueries={matchQueries} />
     </>

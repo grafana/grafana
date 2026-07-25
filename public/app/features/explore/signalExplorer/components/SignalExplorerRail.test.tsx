@@ -135,7 +135,7 @@ describe('SignalExplorerRail', () => {
           { refId: 'A', datasource: { uid: 'p1' } },
           { refId: 'B', datasource: { uid: 'l1' } },
         ],
-        signalExplorer: { left: { typeFilter: null, searchText: '', activeRefId: 'B' } },
+        signalExplorer: { left: { cards: {}, activeRefId: 'B' } },
       });
 
       const cards = cardSentinels();
@@ -212,7 +212,7 @@ describe('SignalExplorerRail', () => {
       renderRail({
         queries: [{ refId: 'A', datasource: { uid: 'p1' } }],
         signalExplorer: {
-          left: { typeFilter: null, searchText: '', selectedMetric: { refId: 'A', metricName: 'up' } },
+          left: { cards: {}, selectedMetric: { refId: 'A', metricName: 'up' } },
         },
       });
 
@@ -232,7 +232,7 @@ describe('SignalExplorerRail', () => {
         ],
         datasourceInstance: mixedInstance,
         signalExplorer: {
-          left: { typeFilter: null, searchText: '', selectedMetric: { refId: 'B', metricName: 'up' } },
+          left: { cards: {}, selectedMetric: { refId: 'B', metricName: 'up' } },
         },
       });
 
@@ -244,7 +244,7 @@ describe('SignalExplorerRail', () => {
       const store = renderRail({
         queries: [{ refId: 'A', datasource: { uid: 'p1' } }],
         signalExplorer: {
-          left: { typeFilter: null, searchText: '', selectedMetric: { refId: 'A', metricName: 'up' } },
+          left: { cards: {}, selectedMetric: { refId: 'A', metricName: 'up' } },
         },
       });
 
@@ -282,7 +282,7 @@ describe('SignalExplorerRail', () => {
     it('hosts the metric tree on the Prometheus card and the placeholder on the other', async () => {
       renderRail({
         queries: twoQueries,
-        signalExplorer: { left: { typeFilter: null, searchText: '', activeRefId: 'A' } },
+        signalExplorer: { left: { cards: {}, activeRefId: 'A' } },
       });
       await userEvent.click(screen.getByRole('button', { name: /expand loki/i }));
 
@@ -298,7 +298,7 @@ describe('SignalExplorerRail', () => {
       // happens to look like a Prometheus name must not badge a Loki refId onto this card.
       renderRail({
         queries: [...twoQueries, { refId: 'C', datasource: { uid: 'p1' }, expr: 'up' } as DataQuery],
-        signalExplorer: { left: { typeFilter: null, searchText: '', activeRefId: 'A' } },
+        signalExplorer: { left: { cards: {}, activeRefId: 'A' } },
       });
 
       expect(badgesFor('up')).toEqual(['A', 'C']);
@@ -308,7 +308,7 @@ describe('SignalExplorerRail', () => {
     it('never mutates the pane queries', async () => {
       const store = renderRail({
         queries: twoQueries,
-        signalExplorer: { left: { typeFilter: null, searchText: '', activeRefId: 'A' } },
+        signalExplorer: { left: { cards: {}, activeRefId: 'A' } },
       });
 
       await userEvent.click(screen.getByRole('button', { name: 'up' }));

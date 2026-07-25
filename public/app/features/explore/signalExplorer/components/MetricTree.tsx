@@ -38,8 +38,8 @@ export function MetricTree({ exploreId, refId, dsRef, timeRange, matchQueries = 
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
 
-  const searchText = useSelector((state) => selectSearchText(state, exploreId));
-  const typeFilter = useSelector((state) => selectTypeFilter(state, exploreId));
+  const searchText = useSelector((state) => selectSearchText(state, exploreId, refId));
+  const typeFilter = useSelector((state) => selectTypeFilter(state, exploreId, refId));
   const selectedMetric = useSelector((state) => selectSelectedMetric(state, exploreId));
 
   // Expansion is high-frequency, unshared and worthless to persist, so it stays local instead of

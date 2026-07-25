@@ -109,6 +109,34 @@ describe('MetricTree', () => {
       expect(lp.queryLabelKeys).toHaveBeenCalledTimes(1);
     });
 
+    it('narrows only the card whose search text changed', async () => {
+      const lp = makeLanguageProvider();
+      jest.mocked(getDataSourceInstance).mockResolvedValue({ languageProvider: lp } as never);
+      const store = makeStore();
+
+      render(
+        <Provider store={store}>
+          <div data-testid="tree-A">
+            <MetricTree exploreId="left" refId="A" dsRef={dsRef} timeRange={timeRange} />
+          </div>
+          <div data-testid="tree-B">
+            <MetricTree exploreId="left" refId="B" dsRef={dsRef} timeRange={timeRange} />
+          </div>
+        </Provider>
+      );
+      await screen.findAllByText('up');
+
+      act(() => {
+        store.dispatch(setSearchText({ exploreId: 'left', refId: 'A', searchText: 'http' }));
+      });
+
+      const treeA = within(screen.getByTestId('tree-A'));
+      const treeB = within(screen.getByTestId('tree-B'));
+      expect(treeA.queryByText('up')).not.toBeInTheDocument();
+      expect(treeA.getByText('http_requests_total')).toBeInTheDocument();
+      expect(treeB.getByText('up')).toBeInTheDocument();
+    });
+
     it('loads only the expanded label’s values, scoped to that metric and label', async () => {
       const lp = makeLanguageProvider();
       jest.mocked(getDataSourceInstance).mockResolvedValue({ languageProvider: lp } as never);
@@ -281,7 +309,7 @@ describe('MetricTree', () => {
       expect(rowCount()).toBe(50);
 
       act(() => {
-        store.dispatch(setSearchText({ exploreId: 'left', searchText: 'metric_1' }));
+        store.dispatch(setSearchText({ exploreId: 'left', refId: 'A', searchText: 'metric_1' }));
       });
 
       expect(rowCount()).toBe(25);
