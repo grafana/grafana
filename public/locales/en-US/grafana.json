@@ -11037,10 +11037,11 @@
       },
       "logs": {
         "action": "Open Explore (Logs)",
+        "action-explore": "Open in Explore",
         "datasource": "via {{name}}",
         "stats": "ingested · 7d",
-        "stats-sources_one": "ingested · 7d · {{count}} source",
-        "stats-sources_other": "ingested · 7d · {{count}} sources",
+        "stats-sources_one": "ingested · 7d · ~{{count}} source",
+        "stats-sources_other": "ingested · 7d · ~{{count}} sources",
         "title": "Hosted Logs",
         "volume": "Ingest volume · last 24h"
       },
@@ -11049,11 +11050,13 @@
         "badge": "Getting started",
         "connect": "Connect a data source",
         "description": "Connect a data source to light up your dashboards and alerts, pick from available solutions, or follow a getting started guide.",
+        "description-partial": "Some signals are already flowing. Connect more data sources or pick a solution to see live stats here.",
         "popular-solutions": "Popular solutions",
         "solution-k6": "k6",
         "solution-kubernetes": "Kubernetes Monitoring",
         "solution-synthetics": "Synthetic Monitoring",
-        "title": "No data flowing yet"
+        "title": "No data flowing yet",
+        "title-partial": "Add more telemetry"
       },
       "pause": "Pause",
       "previous": "Previous",
@@ -11065,6 +11068,7 @@
       "title": "Recommendations for your stack",
       "traces": {
         "action": "Open Traces Drilldown",
+        "action-explore": "Open in Explore",
         "datasource": "via {{name}}",
         "spans_one": "{{value}} span",
         "spans_other": "{{value}} spans",
