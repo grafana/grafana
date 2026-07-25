@@ -228,7 +228,10 @@ describe('RecommendationExisting', () => {
     render(<RecommendationExisting />);
 
     expect(await screen.findByRole('heading', { name: 'Hosted Logs' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Open Explore \(Logs\)/ })).toHaveAttribute('href', '/explore');
+    const href = screen.getByRole('link', { name: /Open in Explore/ }).getAttribute('href') ?? '';
+    expect(href).toMatch(/^\/explore\?left=/);
+    const left = new URLSearchParams(href.split('?')[1]).get('left') ?? '';
+    expect(JSON.parse(left)).toEqual({ datasource: 'grafanacloud-logs', context: 'explore' });
   });
 
   it('links the logs entry into Logs Drilldown when the app is available', async () => {
@@ -586,7 +589,7 @@ describe('RecommendationExisting', () => {
       expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
       await user.click(screen.getByRole('button', { name: /Switch solution/i }));
       await user.click(screen.getByRole('menuitem', { name: 'Hosted Logs' }));
-      await user.click(await screen.findByRole('link', { name: /Open Explore \(Logs\)/ }));
+      await user.click(await screen.findByRole('link', { name: /Open in Explore/ }));
 
       expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
         surface: 'existing_solution',
