@@ -263,6 +263,36 @@ describe('RecommendationExisting', () => {
     expect(mockFetchTracesActivity).not.toHaveBeenCalled();
   });
 
+  it('drops an active entry when every detail fetch came back empty', async () => {
+    mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
+    setSolutionState(
+      { metrics: 'active', logs: 'active', traces: 'active' },
+      { loki: lokiDatasource, tempo: tempoDatasource }
+    );
+    // Signals are active but stats and sparklines all failed soft: a bare title card reads
+    // as broken, so neither solution renders.
+    mockFetchLogsActivity.mockResolvedValue({ bytes: null, sources: null, series: null });
+    mockFetchTracesActivity.mockResolvedValue({ spans: null, series: null });
+    mockFetchTracesServices.mockResolvedValue(34);
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByRole('heading', { name: 'No data flowing yet' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Hosted Logs' })).not.toBeInTheDocument();
+    // The services count alone renders nothing, so it cannot carry the traces card.
+    expect(screen.queryByRole('heading', { name: 'Hosted Traces' })).not.toBeInTheDocument();
+  });
+
+  it('keeps an entry whose sparkline failed but whose stats resolved', async () => {
+    mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
+    mockActiveLogs();
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByRole('heading', { name: 'Hosted Logs' })).toBeInTheDocument();
+    expect(await screen.findByText('47 GB')).toBeInTheDocument();
+  });
+
   it('shows a full-card skeleton while settings are pending', async () => {
     mockUsePluginBridge.mockReturnValue({ loading: true, installed: true, settings: undefined });
     mockResolveDatasource.mockImplementation(() => new Promise(() => {}));
