@@ -70,7 +70,14 @@ const mockUseSolutionState = jest.mocked(useSolutionState);
 function setSolutionState(overrides: Partial<SolutionState>) {
   mockUseSolutionState.mockReturnValue({
     value: {
-      state: { metrics: 'inactive', logs: 'inactive', traces: 'inactive', kubernetes: 'inactive', ...overrides },
+      state: {
+        metrics: 'inactive',
+        logs: 'inactive',
+        traces: 'inactive',
+        kubernetes: 'inactive',
+        spanMetrics: 'inactive',
+        ...overrides,
+      },
       lokiDatasource: null,
       tempoDatasource: null,
     },
@@ -271,8 +278,14 @@ describe('Recommendations', () => {
     expect(screen.queryByRole('region', { name: 'Recommended apps' })).not.toBeInTheDocument();
   });
 
-  it('renders the region left-only with no pills for fully active stacks', async () => {
-    setSolutionState({ metrics: 'active', logs: 'active', traces: 'active', kubernetes: 'active' });
+  it('renders the region left-only with no pills when everything including App O11y is active', async () => {
+    setSolutionState({
+      metrics: 'active',
+      logs: 'active',
+      traces: 'active',
+      kubernetes: 'active',
+      spanMetrics: 'active',
+    });
 
     const { user } = render(<Recommendations />);
 
@@ -285,14 +298,35 @@ describe('Recommendations', () => {
     expect(screen.queryByRole('link', { name: /Enable/ })).not.toBeInTheDocument();
   });
 
+  it('recommends App Observability for OTel starters, suppressed once span metrics exist', async () => {
+    setSolutionState({ metrics: 'active', logs: 'active', traces: 'active' });
+
+    const first = render(<Recommendations />);
+
+    let region = await carouselRegion();
+    const titles = within(region)
+      .getAllByRole('heading', { level: 3, hidden: true })
+      .map((heading) => heading.textContent?.trim());
+    expect(titles).toEqual(['Explore your service map', 'Monitor your Kubernetes fleet']);
+
+    first.unmount();
+    setSolutionState({ metrics: 'active', logs: 'active', traces: 'active', spanMetrics: 'active' });
+    render(<Recommendations />);
+
+    region = await carouselRegion();
+    expect(
+      within(region).queryByRole('link', { name: /Application Observability/, hidden: true })
+    ).not.toBeInTheDocument();
+    expect(
+      within(region).getByRole('link', { name: /Enable Kubernetes Monitoring/, hidden: true })
+    ).toBeInTheDocument();
+  });
+
   it('never renders the removed legacy cards, even installed and disabled', async () => {
     render(<Recommendations />);
 
     const region = await carouselRegion();
     expect(within(region).queryByRole('link', { name: /Synthetic Monitoring/, hidden: true })).not.toBeInTheDocument();
-    expect(
-      within(region).queryByRole('link', { name: /Application Observability/, hidden: true })
-    ).not.toBeInTheDocument();
     expect(
       within(region).queryByRole('link', { name: /Frontend Observability/, hidden: true })
     ).not.toBeInTheDocument();

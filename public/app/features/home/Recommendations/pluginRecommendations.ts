@@ -6,7 +6,7 @@ import { createBridgeURL } from 'app/features/alerting/unified/components/Plugin
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 
-import { HOSTED_TRACES_APP_ID } from './appPluginIds';
+import { APP_OBSERVABILITY_APP_ID, HOSTED_TRACES_APP_ID } from './appPluginIds';
 import { KUBERNETES_APP_ID } from './kubernetesData';
 import { type RecommendedCardId } from './solutionsMatrix';
 import { type RecommendationItem } from './types';
@@ -72,6 +72,21 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
       ),
       action: t('home.recommendations.hosted-traces.action', 'Enable Hosted Traces'),
       setupAction: t('home.recommendations.hosted-traces.setup-action', 'Set up Hosted Traces'),
+    }),
+    'application-observability': pluginCard({
+      id: 'application-observability',
+      pluginId: APP_OBSERVABILITY_APP_ID,
+      appPath: '',
+      icon: 'application-observability',
+      color: (theme) => theme.visualization.getColorByName('green'),
+      title: t('home.recommendations.application-observability.title', 'Explore your service map'),
+      context: t('home.recommendations.application-observability.context', 'Built automatically from your telemetry'),
+      description: t(
+        'home.recommendations.application-observability.description',
+        'Turn OpenTelemetry data into RED metrics, service maps, and correlated traces automatically.'
+      ),
+      action: t('home.recommendations.application-observability.action', 'Enable Application Observability'),
+      setupAction: t('home.recommendations.application-observability.setup-action', 'Set up Application Observability'),
     }),
     'kubernetes-monitoring': pluginCard({
       id: 'kubernetes-monitoring',

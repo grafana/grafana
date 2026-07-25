@@ -1,6 +1,7 @@
 /**
  * Pure recommendation matrix ("Homepage Led Growth" analytics matrix), scoped to Logs, Traces
- * (Hosted Traces) and Kubernetes Monitoring. No I/O: signal detection lives in solutionState.ts.
+ * (Hosted Traces), Kubernetes Monitoring and Application Observability. No I/O: signal
+ * detection lives in solutionState.ts.
  */
 
 export type SignalStatus = 'active' | 'inactive' | 'unknown';
@@ -10,6 +11,12 @@ export interface SolutionState {
   logs: SignalStatus;
   traces: SignalStatus;
   kubernetes: SignalStatus;
+  /**
+   * Span metrics in the org's Prometheus — the "App Observability in use" signal. Only gates
+   * the application-observability card and fails toward hiding it: unlike the core signals,
+   * 'unknown' never blanks the selection.
+   */
+  spanMetrics: SignalStatus;
 }
 
 export type RecommendedCardId =
@@ -17,7 +24,8 @@ export type RecommendedCardId =
   | 'enable-logs'
   | 'enable-logs-k8s'
   | 'hosted-traces'
-  | 'kubernetes-monitoring';
+  | 'kubernetes-monitoring'
+  | 'application-observability';
 
 /**
  * Matrix row that drove the selection — a selection driver id for analytics
@@ -49,7 +57,8 @@ export interface RecommendationSelection {
  * `metrics` inactive is unreachable — solutionState enforces the invariant.
  */
 export function selectRecommendations(state: SolutionState): RecommendationSelection {
-  const { metrics, logs, traces, kubernetes } = state;
+  const { metrics, logs, traces, kubernetes, spanMetrics } = state;
+  // The core-signal short-circuit deliberately excludes spanMetrics: it only gates one card.
   if (metrics === 'unknown' || logs === 'unknown' || traces === 'unknown' || kubernetes === 'unknown') {
     return { cards: [], baseRow: 'unknown' };
   }
@@ -59,12 +68,12 @@ export function selectRecommendations(state: SolutionState): RecommendationSelec
     if (logs === 'inactive' && traces === 'inactive') {
       return { cards: ['connect-metrics', 'enable-logs', 'hosted-traces'], baseRow: 'empty' };
     }
-    // Partial telemetry without metrics matches no matrix row; the "Logs-only" row
-    // recommends Metrics-first funnels owned by the separate metrics workstream.
+    // Metrics is the foundation gate: the "Logs-only" row recommends Metrics, and partial
+    // telemetry without metrics funnels there too before anything else.
     if (logs === 'active' && traces === 'inactive') {
-      return { cards: [], baseRow: 'logs_only' };
+      return { cards: ['connect-metrics'], baseRow: 'logs_only' };
     }
-    return { cards: [], baseRow: 'partial_telemetry' };
+    return { cards: ['connect-metrics'], baseRow: 'partial_telemetry' };
   }
 
   if (logs === 'inactive') {
@@ -82,7 +91,9 @@ export function selectRecommendations(state: SolutionState): RecommendationSelec
       : { cards: ['hosted-traces', 'kubernetes-monitoring'], baseRow: 'ml_no_traces' };
   }
 
+  // M+L+T (OTel starters): App Observability unless span metrics show it is already in use.
+  const appO11y: RecommendedCardId[] = spanMetrics === 'inactive' ? ['application-observability'] : [];
   return kubernetes === 'active'
-    ? { cards: [], baseRow: 'fully_active' }
-    : { cards: ['kubernetes-monitoring'], baseRow: 'mlt' };
+    ? { cards: appO11y, baseRow: 'fully_active' }
+    : { cards: [...appO11y, 'kubernetes-monitoring'], baseRow: 'mlt' };
 }

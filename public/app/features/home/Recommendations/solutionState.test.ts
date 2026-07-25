@@ -1,8 +1,9 @@
-import { type DataSourceInstanceListItem } from '@grafana/data';
+import { createDataFrame, type DataSourceInstanceListItem, FieldType } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { getDataSourceInstance, getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 import { resolveKubernetesDatasource } from './kubernetesData';
+import { runInstantQueries } from './promQuery';
 import { tempoHasTraces } from './solutionDataProbes';
 import {
   CLOUD_UTILITY_LOKI_DATASOURCE_UIDS,
@@ -22,6 +23,11 @@ jest.mock('./solutionDataProbes', () => ({
   tempoHasTraces: jest.fn(),
 }));
 
+jest.mock('./promQuery', () => ({
+  ...jest.requireActual('./promQuery'),
+  runInstantQueries: jest.fn(),
+}));
+
 jest.mock('./kubernetesData', () => ({
   ...jest.requireActual('./kubernetesData'),
   resolveKubernetesDatasource: jest.fn(),
@@ -31,6 +37,7 @@ const listMock = jest.mocked(getDataSourceInstanceList);
 const instanceMock = jest.mocked(getDataSourceInstance);
 const tempoHasTracesMock = jest.mocked(tempoHasTraces);
 const kubernetesMock = jest.mocked(resolveKubernetesDatasource);
+const instantQueriesMock = jest.mocked(runInstantQueries);
 
 const DATA_LOOKBACK_HOURS = 24;
 const SIGNAL_BUDGET_MS = 30_000;
@@ -119,6 +126,9 @@ describe('resolveSolutionState', () => {
     instanceMock.mockReset();
     tempoHasTracesMock.mockReset();
     kubernetesMock.mockReset();
+    instantQueriesMock.mockReset();
+    // Span-metrics probe settles clean-empty unless a test overrides it.
+    instantQueriesMock.mockResolvedValue([]);
     resetSolutionStateResolution();
   });
 
@@ -136,6 +146,7 @@ describe('resolveSolutionState', () => {
       logs: 'inactive',
       traces: 'inactive',
       kubernetes: 'inactive',
+      spanMetrics: 'inactive',
     });
     expect(resolution.lokiDatasource).toBeNull();
     expect(resolution.tempoDatasource).toBeNull();
@@ -158,6 +169,7 @@ describe('resolveSolutionState', () => {
     expect(resolution.state.metrics).toBe('inactive');
     expect(resolution.state.logs).toBe('inactive');
     expect(instanceMock).not.toHaveBeenCalled();
+    expect(instantQueriesMock).not.toHaveBeenCalled();
   });
 
   it('reports active with the winning datasource when a probe finds data', async () => {
@@ -253,6 +265,32 @@ describe('resolveSolutionState', () => {
     expect(resolution.state.metrics).toBe('active');
   });
 
+  it('settles span metrics active when the probe finds series', async () => {
+    freshCloudFixture();
+    instantQueriesMock.mockResolvedValue([
+      createDataFrame({ refId: 'probe', fields: [{ name: 'Value', type: FieldType.number, values: [12] }] }),
+    ]);
+
+    const resolution = await resolveSolutionState();
+
+    expect(resolution.state.spanMetrics).toBe('active');
+    expect(instantQueriesMock).toHaveBeenCalledWith(
+      { probe: expect.stringMatching(/traces_spanmetrics_calls_total.*traces_span_metrics_calls_total/s) },
+      expect.objectContaining({ uid: 'prom-main' }),
+      expect.any(Number)
+    );
+  });
+
+  it('settles span metrics unknown when every candidate query fails, without touching siblings', async () => {
+    freshCloudFixture();
+    instantQueriesMock.mockRejectedValue(new Error('query failed'));
+
+    const resolution = await resolveWithTimers();
+
+    expect(resolution.state.spanMetrics).toBe('unknown');
+    expect(resolution.state.metrics).toBe('inactive');
+  });
+
   it('probes the label endpoints with the lookback window in each datasource unit', async () => {
     const { promResource, lokiResource } = freshCloudFixture();
 
@@ -273,11 +311,12 @@ describe('resolveSolutionState', () => {
     freshCloudFixture();
 
     await Promise.all([resolveSolutionState(), resolveSolutionState()]);
-    expect(listMock).toHaveBeenCalledTimes(3);
+    // prometheus is listed twice (labels probe + span-metrics probe), loki and tempo once.
+    expect(listMock).toHaveBeenCalledTimes(4);
 
     resetSolutionStateResolution();
     await resolveSolutionState();
-    expect(listMock).toHaveBeenCalledTimes(6);
+    expect(listMock).toHaveBeenCalledTimes(8);
   });
 });
 
