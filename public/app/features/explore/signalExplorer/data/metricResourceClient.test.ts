@@ -66,6 +66,15 @@ describe('metricResourceClient', () => {
     expect(lp.queryLabelValues).toHaveBeenCalledWith(range, 'job', '{__name__="http_requests_total"}');
   });
 
+  it('escapes a UTF-8 metric name so the selector stays well-formed', async () => {
+    const lp = makeLP();
+    (getDataSourceInstance as jest.Mock).mockResolvedValue({ languageProvider: lp });
+
+    await fetchLabelKeys({ uid: 'p1' }, range, 'weird"name\\with_escapes');
+
+    expect(lp.queryLabelKeys).toHaveBeenCalledWith(range, '{__name__="weird\\"name\\\\with_escapes"}');
+  });
+
   it('does not cache a rejected fetch: a retry can succeed', async () => {
     (getDataSourceInstance as jest.Mock).mockRejectedValueOnce(new Error('resolve failed'));
     await expect(fetchCatalog({ uid: 'p3' }, range)).rejects.toThrow('resolve failed');

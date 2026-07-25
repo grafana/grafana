@@ -221,6 +221,25 @@ describe('SignalExplorerRail', () => {
       expect(screen.getByTestId('metric-metadata-unit')).toHaveTextContent('short');
     });
 
+    it('resolves the metadata against the datasource of the card the metric was selected in', () => {
+      mockDatasources(PROM, PROM_TWO);
+      const catalog = jest.mocked(catalogModule.useMetricCatalog);
+
+      renderRail({
+        queries: [
+          { refId: 'A', datasource: { uid: 'p1' } },
+          { refId: 'B', datasource: { uid: 'p2' } },
+        ],
+        datasourceInstance: mixedInstance,
+        signalExplorer: {
+          left: { typeFilter: null, searchText: '', selectedMetric: { refId: 'B', metricName: 'up' } },
+        },
+      });
+
+      // Card B's datasource — not `cards[0]`'s, and never the pane's Mixed ref.
+      expect(catalog).toHaveBeenCalledWith({ uid: 'p2', type: 'prometheus' }, timeRange);
+    });
+
     it('clears the selection when the block is closed', async () => {
       const store = renderRail({
         queries: [{ refId: 'A', datasource: { uid: 'p1' } }],

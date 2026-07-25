@@ -43,11 +43,17 @@ function rangeKey(tr: TimeRange): string {
   return `${tr.raw?.from ?? ''}:${tr.raw?.to ?? ''}`;
 }
 
-// `DataSourceRef.uid` is optional. A ref with no `uid` (e.g. `{ type: 'prometheus' }`, meaning
-// "the default datasource of this type") always resolves to the same concrete instance within a
-// session, so keying on `type` in that case is safe. The `u:`/`t:` prefixes keep a `uid` value
-// from ever colliding with a `type` value that happens to be the same string.
-function dsKey(dsRef: DataSourceRef): string {
+/**
+ * The cache identity of a datasource ref. Exported so the hooks key their refetches on exactly what
+ * the cache keys its entries on — two refs this considers equal are served the same data, so a hook
+ * that told them apart would fetch nothing new.
+ *
+ * `DataSourceRef.uid` is optional. A ref with no `uid` (e.g. `{ type: 'prometheus' }`, meaning "the
+ * default datasource of this type") always resolves to the same concrete instance within a session,
+ * so keying on `type` in that case is safe. The `u:`/`t:` prefixes keep a `uid` value from ever
+ * colliding with a `type` value that happens to be the same string.
+ */
+export function dsKey(dsRef: DataSourceRef): string {
   if (dsRef.uid) {
     return `u:${dsRef.uid}`;
   }
@@ -65,7 +71,9 @@ async function getLP(dsRef: DataSourceRef): Promise<PromLanguageProvider> {
   return ds.languageProvider;
 }
 
-const selector = (metric: string) => `{__name__="${metric}"}`;
+// A Prometheus 3.x UTF-8 metric name can contain a quote or a backslash; unescaped, either one ends
+// the string literal early and the datasource rejects the selector as malformed.
+const selector = (metric: string) => `{__name__="${metric.replace(/[\\"]/g, '\\$&')}"}`;
 
 export function fetchCatalog(dsRef: DataSourceRef, timeRange: TimeRange): Promise<MetricRow[]> {
   return once(catalogCache, `cat:${dsKey(dsRef)}:${rangeKey(timeRange)}`, async () => {

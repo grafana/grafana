@@ -696,7 +696,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                 exploreId={exploreId}
                 scroller={this.scrollElement}
                 panelId={`content-outline-container-${exploreId}`}
-                showMetricsExplorer={isPrometheusSelected}
+                showSignalExplorer={isPrometheusSelected}
               />
             )}
             <ScrollContainer

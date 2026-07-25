@@ -47,12 +47,12 @@ export function ContentOutline({
   exploreId,
   scroller,
   panelId,
-  showMetricsExplorer = false,
+  showSignalExplorer = false,
 }: {
   exploreId: string;
   scroller: HTMLElement | undefined;
   panelId: string;
-  showMetricsExplorer?: boolean;
+  showSignalExplorer?: boolean;
 }) {
   const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(
     store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.expanded, true)
@@ -61,8 +61,8 @@ export function ContentOutline({
     suspendUntilReady: false,
     suspendWhileReconciling: false,
   });
-  const metricsExplorerVisible = metricsSidebarEnabled && showMetricsExplorer && contentOutlineExpanded;
-  const styles = useStyles2(getStyles, contentOutlineExpanded, metricsExplorerVisible);
+  const signalExplorerVisible = metricsSidebarEnabled && showSignalExplorer && contentOutlineExpanded;
+  const styles = useStyles2(getStyles, contentOutlineExpanded, signalExplorerVisible);
   const scrollerRef = useRef(scroller || null);
   const { y: verticalScroll } = useScroll(scrollerRef);
   const { outlineItems } = useContentOutlineContext() ?? { outlineItems: [] };
@@ -190,7 +190,7 @@ export function ContentOutline({
 
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
-      {metricsExplorerVisible && (
+      {signalExplorerVisible && (
         <>
           <div className={styles.header}>
             <span className={styles.headerTitle}>
@@ -207,7 +207,7 @@ export function ContentOutline({
       <div className={styles.outlineSection}>
         <ScrollContainer>
           <div className={styles.content}>
-            {!metricsExplorerVisible && toggleButton}
+            {!signalExplorerVisible && toggleButton}
             {outlineItems.map((item) => {
               return (
                 <Fragment key={item.id}>
@@ -284,8 +284,8 @@ export function ContentOutline({
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, expanded: boolean, metricsExplorerVisible: boolean) => {
-  const expandedWidth = metricsExplorerVisible ? '300px' : '160px';
+const getStyles = (theme: GrafanaTheme2, expanded: boolean, signalExplorerVisible: boolean) => {
+  const expandedWidth = signalExplorerVisible ? '300px' : '160px';
 
   return {
     wrapper: css({
@@ -340,7 +340,7 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean, metricsExplorerVisib
       display: 'flex',
       flexDirection: 'column',
       minHeight: 0,
-      ...(metricsExplorerVisible
+      ...(signalExplorerVisible
         ? {
             // Shrinkable so a tall outline scrolls (via ScrollContainer) instead of
             // clipping against the wrapper, while still sizing to content and sitting

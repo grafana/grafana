@@ -84,6 +84,22 @@ describe('useMetricCatalog', () => {
     expect(spy).toHaveBeenLastCalledWith({ type: 'loki' }, range);
   });
 
+  it('refetches when a uid-only ref is swapped for a type-only ref of the same string', async () => {
+    // The client keys these two apart (`u:prometheus` vs `t:prometheus`), so the hook must too —
+    // otherwise it keeps painting the first one's catalog while the client holds a different entry.
+    const spy = jest.spyOn(client, 'fetchCatalog').mockResolvedValue(rows);
+    const { result, rerender } = renderHook(({ dsRef }) => useMetricCatalog(dsRef, range), {
+      initialProps: { dsRef: { uid: 'prometheus' } as { uid?: string; type?: string } },
+    });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    rerender({ dsRef: { type: 'prometheus' } });
+
+    await waitFor(() => expect(spy).toHaveBeenCalledTimes(2));
+    expect(spy).toHaveBeenLastCalledWith({ type: 'prometheus' }, range);
+  });
+
   it('does not let a superseded response overwrite a newer one (stale-response ordering)', async () => {
     const first = deferred<MetricRow[]>();
     const second = deferred<MetricRow[]>();

@@ -127,7 +127,17 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => ({
     get: () => Promise.resolve({}),
     getList: () => [],
-    getInstanceSettings: () => {},
+    // Anything that renders a query row needs real-looking settings back; the uid/type follow the
+    // query's own ref so a pane with two datasources still resolves to two of them.
+    getInstanceSettings: (ref?: { uid?: string; type?: string } | string) => {
+      const uid = typeof ref === 'string' ? ref : ref?.uid;
+      return {
+        uid: uid ?? 'test-uid',
+        type: (typeof ref === 'object' ? ref?.type : undefined) ?? 'prometheus',
+        name: `Datasource ${uid ?? 'test-uid'}`,
+        meta: { id: 'prometheus', mixed: false, info: { logos: { small: '' } } },
+      };
+    },
   }),
   usePluginLinks: jest.fn(() => ({ links: [] })),
 }));
@@ -159,7 +169,9 @@ const setup = (overrideProps?: Partial<Props>) => {
     explore: {
       ...initialExploreState,
       panes: {
-        left: makeExplorePaneState(),
+        // The queries live on the pane as well as on the props: components that read them from the
+        // store (the signal explorer rail) would otherwise see an empty pane.
+        left: makeExplorePaneState({ queries: overrideProps?.queries ?? [] }),
       },
     },
   });
@@ -270,6 +282,9 @@ describe('Explore', () => {
 
       expect(await screen.findByText('Datasource explorer')).toBeInTheDocument();
       expect(screen.getByTestId('signal-explorer-rail')).toBeInTheDocument();
+      // The rail renders its root even with zero cards, so assert it actually resolved the query
+      // to a card rather than just mounting.
+      expect(screen.getByTestId('signal-explorer-datasource-card')).toBeInTheDocument();
     });
 
     it('does not show the signal explorer rail for a non-Prometheus Mixed datasource query', async () => {

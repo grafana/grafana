@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import type { DataSourceRef, TimeRange } from '@grafana/data';
 
-import { fetchLabelKeys } from './metricResourceClient';
+import { dsKey, fetchLabelKeys } from './metricResourceClient';
 
 export function useMetricDetail(
   dsRef: DataSourceRef,
@@ -18,19 +18,17 @@ export function useMetricDetail(
   // objects fresh on every render, so depending on the objects directly would refetch on every
   // render instead of only when the datasource, range, metric, or `enabled` actually change.
   //
-  // `dsRef.uid` is optional: a type-only ref (e.g. `{ type: 'prometheus' }`, meaning "the
-  // default datasource of this type") is valid and must be distinguishable from another
-  // type-only ref. Fall back to `type` the same way `metricResourceClient`'s `dsKey()` does, so
-  // this hook's refetch trigger stays consistent with what the client treats as a distinct
-  // datasource.
-  const dsKey = dsRef.uid ?? dsRef.type ?? '';
+  // The datasource half of the key is the client's own `dsKey()`, not a re-derivation of it: the
+  // client serves two refs it considers equal from the same cache entry, so a hook that told them
+  // apart would refetch and get the same data back.
+  const requestDsKey = dsKey(dsRef);
   // A refresh that keeps the same relative range string (e.g. `now-1h`/`now`) intentionally does
   // not refetch here: the client already serves that unchanged key from its own cache, so a
   // second effect run would be a redundant no-op.
   const fromTo = `${timeRange.raw?.from ?? ''}:${timeRange.raw?.to ?? ''}`;
 
   // `null` while disabled: there's no request to key against, so nothing to adjust for.
-  const requestKey = enabled ? `${dsKey}|${fromTo}|${metric}` : null;
+  const requestKey = enabled ? `${requestDsKey}|${fromTo}|${metric}` : null;
   const [activeKey, setActiveKey] = useState<string | null>(null);
   if (requestKey !== activeKey) {
     // Adjust state during render, not only in the effect below: passive effects run after the
@@ -75,7 +73,7 @@ export function useMetricDetail(
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, dsKey, fromTo, metric]);
+  }, [enabled, requestDsKey, fromTo, metric]);
 
   return { labelKeys, loading, error };
 }

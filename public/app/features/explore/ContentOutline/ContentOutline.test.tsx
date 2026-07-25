@@ -26,7 +26,7 @@ const scrollerMock = document.createElement('div');
 
 const unregisterMock = jest.fn();
 
-const setup = (mergeSingleChild = false, showMetricsExplorer = false) => {
+const setup = (mergeSingleChild = false, showSignalExplorer = false) => {
   HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
 
   scrollerMock.scroll = jest.fn();
@@ -86,7 +86,7 @@ const setup = (mergeSingleChild = false, showMetricsExplorer = false) => {
       exploreId="left"
       scroller={scrollerMock}
       panelId="content-outline-container-1"
-      showMetricsExplorer={showMetricsExplorer}
+      showSignalExplorer={showSignalExplorer}
     />
   );
 };

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import type { DataSourceRef, TimeRange } from '@grafana/data';
 
-import { fetchLabelValues } from './metricResourceClient';
+import { dsKey, fetchLabelValues } from './metricResourceClient';
 
 export function useLabelValues(
   dsRef: DataSourceRef,
@@ -20,19 +20,17 @@ export function useLabelValues(
   // render instead of only when the datasource, range, metric, labelKey, or `enabled` actually
   // change.
   //
-  // `dsRef.uid` is optional: a type-only ref (e.g. `{ type: 'prometheus' }`, meaning "the
-  // default datasource of this type") is valid and must be distinguishable from another
-  // type-only ref. Fall back to `type` the same way `metricResourceClient`'s `dsKey()` does, so
-  // this hook's refetch trigger stays consistent with what the client treats as a distinct
-  // datasource.
-  const dsKey = dsRef.uid ?? dsRef.type ?? '';
+  // The datasource half of the key is the client's own `dsKey()`, not a re-derivation of it: the
+  // client serves two refs it considers equal from the same cache entry, so a hook that told them
+  // apart would refetch and get the same data back.
+  const requestDsKey = dsKey(dsRef);
   // A refresh that keeps the same relative range string (e.g. `now-1h`/`now`) intentionally does
   // not refetch here: the client already serves that unchanged key from its own cache, so a
   // second effect run would be a redundant no-op.
   const fromTo = `${timeRange.raw?.from ?? ''}:${timeRange.raw?.to ?? ''}`;
 
   // `null` while disabled: there's no request to key against, so nothing to adjust for.
-  const requestKey = enabled ? `${dsKey}|${fromTo}|${metric}|${labelKey}` : null;
+  const requestKey = enabled ? `${requestDsKey}|${fromTo}|${metric}|${labelKey}` : null;
   const [activeKey, setActiveKey] = useState<string | null>(null);
   if (requestKey !== activeKey) {
     // Adjust state during render, not only in the effect below: passive effects run after the
@@ -78,7 +76,7 @@ export function useLabelValues(
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, dsKey, fromTo, metric, labelKey]);
+  }, [enabled, requestDsKey, fromTo, metric, labelKey]);
 
   return { values, loading, error };
 }
