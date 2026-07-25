@@ -9,7 +9,7 @@ require (
 	github.com/grafana/authlib/types v0.0.0-20260621220415-f6aaf60e82b2
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana-app-sdk v0.56.6
-	github.com/grafana/grafana-app-sdk/logging v0.56.3
+	github.com/grafana/grafana-app-sdk/logging v0.56.4
 	github.com/grafana/grafana-plugin-sdk-go v0.292.2
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/grafana/grafana/pkg/plugins v0.0.0
