@@ -32,15 +32,20 @@ export async function resolveBackendInstance(uid: string): Promise<DataSourceWit
 }
 
 /**
- * GET through the classic datasource proxy with the probe retry/timeout policy. Expected to
- * fail on stacks without the endpoint; never toasts. Some datasource backends (e.g. Tempo)
- * serve their HTTP API only here, not on the resource router.
+ * GET through the classic datasource proxy, timeout-bounded, never toasts. Some datasource
+ * backends (e.g. Tempo) serve their HTTP API only here, not on the resource router.
+ * `retry: false` keeps a probe inside its caller's deadline.
  */
-export async function probeProxyGet<T>(uid: string, path: string, params: Record<string, unknown>): Promise<T> {
+export async function probeProxyGet<T>(
+  uid: string,
+  path: string,
+  params: Record<string, unknown>,
+  { retry = true } = {}
+): Promise<T> {
   const url = `/api/datasources/proxy/uid/${encodeURIComponent(uid)}/${path}`;
-  return withRetry(() =>
-    withTimeout(getBackendSrv().get<T>(url, params, undefined, { showErrorAlert: false }), PROBE_TIMEOUT_MS)
-  );
+  const call = () =>
+    withTimeout(getBackendSrv().get<T>(url, params, undefined, { showErrorAlert: false }), PROBE_TIMEOUT_MS);
+  return retry ? withRetry(call) : call();
 }
 
 export async function withRetry<T>(fn: () => Promise<T>): Promise<T> {

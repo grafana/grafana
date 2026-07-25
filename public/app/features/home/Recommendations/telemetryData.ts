@@ -39,8 +39,11 @@ interface TempoTagValuesResponse {
   tagValues?: Array<{ value?: string }>;
 }
 
+// Failures are expected (endpoint disabled, 403s) and handled by the caller; never toast.
 function getResource<T>(instance: DataSourceWithBackend, path: string, params: Record<string, unknown>): Promise<T> {
-  return withRetry(() => withTimeout(instance.getResource<T>(path, params), PROBE_TIMEOUT_MS));
+  return withRetry(() =>
+    withTimeout(instance.getResource<T>(path, params, { showErrorAlert: false }), PROBE_TIMEOUT_MS)
+  );
 }
 
 // Points are [unix ms, value]; a real trend needs at least two of them.
@@ -80,8 +83,11 @@ export async function fetchLogsActivity(ds: Pick<DataSourceInstanceListItem, 'ui
     return empty;
   }
   const query = `{${label}=~".+"}`;
+  // aggregateBy=labels collapses both volume responses to one server-side total series, so the
+  // per-query series limit cannot truncate what we present as a complete number.
+  const aggregate = { aggregateBy: 'labels', targetLabels: label };
   const [volume, values, volumeRange] = await Promise.all([
-    getResource<LokiVolumeResponse>(instance, 'index/volume', { query, start: statsStart, end, limit: 1000 }).catch(
+    getResource<LokiVolumeResponse>(instance, 'index/volume', { query, start: statsStart, end, ...aggregate }).catch(
       () => null
     ),
     getResource<{ data?: unknown }>(instance, `label/${encodeURIComponent(label)}/values`, {
@@ -93,10 +99,11 @@ export async function fetchLogsActivity(ds: Pick<DataSourceInstanceListItem, 'ui
       start: end - DATA_LOOKBACK_HOURS * 3600 * NS_IN_S,
       end,
       step: '30m',
+      ...aggregate,
     }).catch(() => null),
   ]);
   const volumes = volume?.data?.result;
-  // Sum the per-label matrix into one total-ingest series (timestamps are unix seconds).
+  // Sum the (single-series) matrix into ingest buckets (timestamps are unix seconds).
   const buckets = new Map<number, number>();
   for (const series of volumeRange?.data?.result ?? []) {
     for (const [ts, value] of series.values ?? []) {

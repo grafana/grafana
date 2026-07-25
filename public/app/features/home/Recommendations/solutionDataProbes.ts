@@ -41,14 +41,19 @@ interface TempoSearchResponse {
 }
 
 /**
- * One matching trace in the lookback proves data exists. Probes Tempo's search HTTP API through
- * the datasource proxy: the frontend query path reads streamed search responses as non-empty
- * frames on empty stores (observed live with traceQLStreaming), and the resource router 404s
- * Tempo API paths on cloud stacks.
+ * One matching trace in the lookback proves data exists. Uses Tempo's search HTTP API via the
+ * datasource proxy: the frontend query path misreads streamed empty results as data (observed
+ * live with traceQLStreaming) and the resource router 404s Tempo paths on cloud stacks.
  */
 export async function tempoHasTraces(ds: Pick<DataSourceInstanceListItem, 'uid'>): Promise<boolean> {
   const end = Math.floor(Date.now() / 1000);
   const start = end - DATA_LOOKBACK_HOURS * 3600;
-  const res = await probeProxyGet<TempoSearchResponse>(ds.uid, 'api/search', { q: '{}', limit: 1, start, end });
+  // Single attempt so the traces signal budget outlasts the whole probe (see solutionState).
+  const res = await probeProxyGet<TempoSearchResponse>(
+    ds.uid,
+    'api/search',
+    { q: '{}', limit: 1, start, end },
+    { retry: false }
+  );
   return Array.isArray(res?.traces) && res.traces.length > 0;
 }
