@@ -300,6 +300,44 @@ describe('MetricTree', () => {
       expect(rowCount()).toBe(50);
     });
 
+    it('resets paging back to the first batch when the datasource changes', async () => {
+      mockHooks({ metrics: manyMetrics });
+      const store = makeStore();
+      const tree = (ref: DataSourceRef) => (
+        <Provider store={store}>
+          <MetricTree exploreId="left" refId="A" dsRef={ref} timeRange={timeRange} />
+        </Provider>
+      );
+
+      const { rerender } = render(tree({ uid: 'p1' }));
+      await userEvent.click(screen.getByRole('button', { name: /show more/i }));
+      expect(rowCount()).toBe(50);
+
+      // A different catalog entirely — a page offset into the old one means nothing in the new one.
+      rerender(tree({ uid: 'p2' }));
+
+      expect(rowCount()).toBe(25);
+    });
+
+    it('resets paging back to the first batch when the time range changes', async () => {
+      mockHooks({ metrics: manyMetrics });
+      const store = makeStore();
+      const range = (from: string) => ({ raw: { from, to: 'now' }, from: {}, to: {} }) as unknown as TimeRange;
+      const tree = (tr: TimeRange) => (
+        <Provider store={store}>
+          <MetricTree exploreId="left" refId="A" dsRef={dsRef} timeRange={tr} />
+        </Provider>
+      );
+
+      const { rerender } = render(tree(range('now-1h')));
+      await userEvent.click(screen.getByRole('button', { name: /show more/i }));
+      expect(rowCount()).toBe(50);
+
+      rerender(tree(range('now-6h')));
+
+      expect(rowCount()).toBe(25);
+    });
+
     it('resets paging back to the first batch when the search changes', async () => {
       mockHooks({ metrics: manyMetrics });
       const store = makeStore();

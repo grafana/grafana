@@ -4,7 +4,7 @@ import type { DataSourceRef, TimeRange } from '@grafana/data';
 
 import type { MetricRow, MetricType } from '../types';
 
-import { dsKey, fetchCatalog } from './metricResourceClient';
+import { dsKey, fetchCatalog, rangeKey } from './metricResourceClient';
 
 export function useMetricCatalog(
   dsRef: DataSourceRef,
@@ -26,7 +26,7 @@ export function useMetricCatalog(
   // A refresh that keeps the same relative range string (e.g. `now-1h`/`now`) intentionally does
   // not refetch here: the client already serves that unchanged key from its own cache, so a
   // second effect run would be a redundant no-op.
-  const fromTo = `${timeRange.raw?.from ?? ''}:${timeRange.raw?.to ?? ''}`;
+  const fromTo = rangeKey(timeRange);
 
   const requestKey = `${requestDsKey}|${fromTo}`;
   const [activeKey, setActiveKey] = useState<string | null>(null);

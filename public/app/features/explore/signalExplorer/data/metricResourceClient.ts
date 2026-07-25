@@ -39,7 +39,12 @@ export function __clearCache() {
   labelValuesCache.clear();
 }
 
-function rangeKey(tr: TimeRange): string {
+/**
+ * The cache identity of a time range, on the same terms as `dsKey`. A refresh that keeps the same
+ * relative range string (`now-1h`/`now`) is deliberately the same key: it is served from cache, so
+ * anything keying off it should treat it as the same request rather than start over.
+ */
+export function rangeKey(tr: TimeRange): string {
   return `${tr.raw?.from ?? ''}:${tr.raw?.to ?? ''}`;
 }
 

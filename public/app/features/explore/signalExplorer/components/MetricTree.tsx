@@ -6,6 +6,7 @@ import { t } from '@grafana/i18n';
 import { Button, Icon, Text, useStyles2 } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types/store';
 
+import { dsKey, rangeKey } from '../data/metricResourceClient';
 import { useMetricCatalog } from '../data/useMetricCatalog';
 import { useMetricDetail } from '../data/useMetricDetail';
 import { detectMetricsInQueries } from '../query/detectMetricsInQueries';
@@ -62,8 +63,12 @@ export function MetricTree({ exploreId, refId, dsRef, timeRange, matchQueries = 
     return [...metrics].sort((a, b) => Number(isUsed(b.name)) - Number(isUsed(a.name)));
   }, [metrics, queryRefsByMetric]);
 
-  // A real catalog holds tens of thousands of names, so only a batch of them is rendered.
-  const { visibleCount, showMore } = useVisibleBatch(`${searchText}|${typeFilter ?? ''}`);
+  // A real catalog holds tens of thousands of names, so only a batch of them is rendered. The reset
+  // key covers the datasource and range as well as the filters: those swap the catalog out for a
+  // different one entirely, and a page offset into the old list means nothing in the new one.
+  const { visibleCount, showMore } = useVisibleBatch(
+    `${dsKey(dsRef)}|${rangeKey(timeRange)}|${searchText}|${typeFilter ?? ''}`
+  );
   const visibleMetrics = sortedMetrics.slice(0, visibleCount);
 
   // Stable identities, so the memoized rows below actually re-use their previous render. Both take
