@@ -261,17 +261,18 @@ describe('Explore', () => {
       getBoolMock.mockRestore();
     });
 
-    it('shows the metrics explorer when a Mixed datasource contains a managed Prometheus flavor query', async () => {
+    it('shows the signal explorer rail when a Mixed datasource contains a managed Prometheus flavor query', async () => {
       setTestFlags({ 'grafana.exploreMetricsSidebar': true });
       setup({
         datasourceInstance: { meta: { mixed: true, metrics: true } } as DataSourceApi,
         queries: [{ refId: 'A', datasource: { type: 'grafana-amazonprometheus-datasource', uid: 'amp-uid' } }],
       });
 
-      expect(await screen.findByPlaceholderText('Search metrics')).toBeInTheDocument();
+      expect(await screen.findByText('Datasource explorer')).toBeInTheDocument();
+      expect(screen.getByTestId('signal-explorer-rail')).toBeInTheDocument();
     });
 
-    it('does not show the metrics explorer for a non-Prometheus Mixed datasource query', async () => {
+    it('does not show the signal explorer rail for a non-Prometheus Mixed datasource query', async () => {
       setTestFlags({ 'grafana.exploreMetricsSidebar': true });
       setup({
         datasourceInstance: { meta: { mixed: true, metrics: true } } as DataSourceApi,
@@ -279,7 +280,20 @@ describe('Explore', () => {
       });
 
       await screen.findByTestId(selectors.components.DataSourcePicker.container);
-      expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
+      expect(screen.queryByText('Datasource explorer')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('signal-explorer-rail')).not.toBeInTheDocument();
+    });
+
+    it('does not show the signal explorer rail when the feature flag is off', async () => {
+      setup({
+        datasourceInstance: { meta: { mixed: true, metrics: true } } as DataSourceApi,
+        queries: [{ refId: 'A', datasource: { type: 'grafana-amazonprometheus-datasource', uid: 'amp-uid' } }],
+      });
+
+      await screen.findByTestId(selectors.components.DataSourcePicker.container);
+      expect(screen.queryByText('Datasource explorer')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('signal-explorer-rail')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Collapse outline' })).toBeInTheDocument();
     });
   });
 

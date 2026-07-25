@@ -9,6 +9,12 @@ jest.mock('./ContentOutlineContext', () => ({
   useContentOutlineContext: jest.fn(),
 }));
 
+jest.mock('../signalExplorer/components/SignalExplorerRail', () => ({
+  SignalExplorerRail: ({ exploreId }: { exploreId: string }) => (
+    <div data-testid="signal-explorer-rail" data-exploreid={exploreId} />
+  ),
+}));
+
 const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
 
 jest.mock('@openfeature/react-sdk', () => ({
@@ -77,6 +83,7 @@ const setup = (mergeSingleChild = false, showMetricsExplorer = false) => {
 
   return render(
     <ContentOutline
+      exploreId="left"
       scroller={scrollerMock}
       panelId="content-outline-container-1"
       showMetricsExplorer={showMetricsExplorer}
@@ -183,39 +190,53 @@ describe('<ContentOutline />', () => {
     getBoolMock.mockRestore();
   });
 
-  describe('metrics explorer', () => {
+  describe('signal explorer rail', () => {
     afterEach(() => {
       useBooleanFlagValueMock.mockImplementation((_: string, defaultValue: boolean) => defaultValue);
     });
 
-    it('hides the header title and the metrics explorer by default (feature toggle off)', () => {
+    it('hides the header title and the rail by default (feature toggle off)', () => {
       setup();
       expect(screen.queryByText('Outline')).not.toBeInTheDocument();
       expect(screen.queryByText('Datasource explorer')).not.toBeInTheDocument();
-      expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('signal-explorer-rail')).not.toBeInTheDocument();
     });
 
-    it('does not render the metrics explorer or header title when the feature toggle is disabled', () => {
+    it('renders the outline exactly as before when the feature toggle is disabled', () => {
       useBooleanFlagValueMock.mockReturnValue(false);
       setup(false, true);
-      expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('signal-explorer-rail')).not.toBeInTheDocument();
       expect(screen.queryByText('Outline')).not.toBeInTheDocument();
+      expect(screen.queryByText('Datasource explorer')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Collapse outline' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Item 1' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Item 2' })).toBeInTheDocument();
     });
 
-    it('renders the metrics explorer and "Datasource explorer" title when the toggle is enabled and Prometheus is selected', () => {
+    it('renders the rail and "Datasource explorer" title when the toggle is enabled and Prometheus is selected', () => {
       useBooleanFlagValueMock.mockReturnValue(true);
       setup(false, true);
       expect(screen.getByText('Datasource explorer')).toBeInTheDocument();
-      expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
-      expect(screen.getByText('up')).toBeInTheDocument();
+      expect(screen.getByTestId('signal-explorer-rail')).toHaveAttribute('data-exploreid', 'left');
+      // the outline still lists its items alongside the rail
+      expect(screen.getByRole('button', { name: 'Item 1' })).toBeInTheDocument();
     });
 
-    it('does not render the metrics explorer or header title when the toggle is enabled but Prometheus is not selected', () => {
+    it('does not render the rail or header title when the toggle is enabled but Prometheus is not selected', () => {
       useBooleanFlagValueMock.mockReturnValue(true);
       setup(false, false);
-      expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('signal-explorer-rail')).not.toBeInTheDocument();
       expect(screen.queryByText('Datasource explorer')).not.toBeInTheDocument();
       expect(screen.queryByText('Outline')).not.toBeInTheDocument();
+    });
+
+    it('hides the rail when the toggle is enabled and Prometheus is selected but the outline is collapsed', async () => {
+      useBooleanFlagValueMock.mockReturnValue(true);
+      setup(false, true);
+      await userEvent.click(screen.getByRole('button', { name: 'Collapse outline' }));
+
+      expect(screen.queryByTestId('signal-explorer-rail')).not.toBeInTheDocument();
+      expect(screen.queryByText('Datasource explorer')).not.toBeInTheDocument();
     });
   });
 });

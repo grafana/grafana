@@ -8,9 +8,10 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, PanelContainer, ScrollContainer } from '@grafana/ui';
 
+import { SignalExplorerRail } from '../signalExplorer/components/SignalExplorerRail';
+
 import { type ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';
-import { MetricsExplorer } from './MetricsExplorer';
 
 function scrollableChildren(item: ContentOutlineItemContextProps) {
   return item.children?.filter((child) => child.type !== 'filter') || [];
@@ -43,10 +44,12 @@ export const CONTENT_OUTLINE_LOCAL_STORAGE_KEYS = {
 };
 
 export function ContentOutline({
+  exploreId,
   scroller,
   panelId,
   showMetricsExplorer = false,
 }: {
+  exploreId: string;
   scroller: HTMLElement | undefined;
   panelId: string;
   showMetricsExplorer?: boolean;
@@ -195,7 +198,9 @@ export function ContentOutline({
             </span>
             <div className={styles.toggleWrapper}>{toggleButton}</div>
           </div>
-          <MetricsExplorer />
+          <div className={styles.railSection}>
+            <SignalExplorerRail exploreId={exploreId} />
+          </div>
         </>
       )}
 
@@ -322,6 +327,13 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean, metricsExplorerVisib
       justifyContent: 'center',
       flex: '0 0 auto',
       width: theme.spacing(4),
+    }),
+    railSection: css({
+      label: 'rail-section',
+      display: 'flex',
+      flexDirection: 'column',
+      flex: '1 1 auto',
+      minHeight: 0,
     }),
     outlineSection: css({
       label: 'outline-section',
