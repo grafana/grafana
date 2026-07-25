@@ -230,9 +230,17 @@ describe('Recommendations', () => {
 
     resolveProbe(false);
 
-    // The traces setup card joins ahead in priority order without stealing the visible slide.
+    // The traces setup card joins the deck without stealing the visible slide.
     expect(await screen.findByRole('link', { name: /Set up Hosted Traces/, hidden: true })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Add Synthetic Monitoring/ })).toBeInTheDocument();
+
+    // Late-settling cards append behind cards already showing (never insert in front — the
+    // carousel animates position shifts). getAllByRole returns document order.
+    const links = screen.getAllByRole('link', { hidden: true });
+    const smIndex = links.findIndex((link) => /Add Synthetic Monitoring/.test(link.textContent ?? ''));
+    const tracesIndex = links.findIndex((link) => /Set up Hosted Traces/.test(link.textContent ?? ''));
+    expect(smIndex).toBeGreaterThan(-1);
+    expect(tracesIndex).toBeGreaterThan(smIndex);
   });
 
   it('hides the section when every enabled app has data', async () => {

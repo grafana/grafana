@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { store } from '@grafana/data';
@@ -109,6 +109,17 @@ function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
           ? [toEnableItem(recommendation)]
           : [];
       });
+
+  // Cards keep the slot they first appeared in; later-settling cards append. A card must never
+  // insert in front of the slide the user is reading — the carousel animates position shifts.
+  // Append-only ref mutation during render: idempotent, so StrictMode replays are harmless.
+  const seenOrder = useRef<string[]>([]);
+  for (const recommendation of recommendations) {
+    if (!seenOrder.current.includes(recommendation.id)) {
+      seenOrder.current.push(recommendation.id);
+    }
+  }
+  recommendations.sort((a, b) => seenOrder.current.indexOf(a.id) - seenOrder.current.indexOf(b.id));
 
   const visible = recommendations.length > 0;
   // Settled empty: everything resolved and there is genuinely nothing to show — as opposed
