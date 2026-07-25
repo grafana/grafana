@@ -29,18 +29,23 @@ export function SignalExplorerRail({ exploreId }: SignalExplorerRailProps) {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
 
-  const pane = useSelector((state) => selectPanes(state)[exploreId]);
+  // One narrow subscription per field rather than one to the pane object: the pane's identity
+  // changes on every query-response tick, which would re-render the whole card column — and every
+  // catalog list inside it — on churn this rail does not care about.
+  const queries = useSelector((state) => selectPanes(state)[exploreId]?.queries);
+  const range = useSelector((state) => selectPanes(state)[exploreId]?.range);
+  const datasourceInstance = useSelector((state) => selectPanes(state)[exploreId]?.datasourceInstance);
   const activeRefId = useSelector((state) => selectActiveRefId(state, exploreId));
   const selectedMetric = useSelector((state) => selectSelectedMetric(state, exploreId));
 
-  const queries = pane?.queries;
-  const datasourceInstance = pane?.datasourceInstance;
   const cards = useMemo(() => resolveCards(queries, datasourceInstance), [queries, datasourceInstance]);
 
   const selectedCard = cards.find((card) => card.refId === selectedMetric?.refId);
   const onCloseMetadata = () => dispatch(clearSelectedMetric({ exploreId }));
 
-  if (!pane) {
+  // A closed or not-yet-initialized pane: `queries` and `range` are only absent together, and
+  // nothing below can be rendered without a range to fetch against.
+  if (!queries || !range) {
     return null;
   }
 
@@ -58,8 +63,8 @@ export function SignalExplorerRail({ exploreId }: SignalExplorerRailProps) {
             dsName={card.dsName ?? unknownDatasource}
             isPrometheus={card.isPrometheus}
             isActive={card.refId === activeRefId}
-            timeRange={pane.range}
-            paneQueries={pane.queries}
+            timeRange={range}
+            paneQueries={queries}
           />
         ))}
       </div>
@@ -67,7 +72,7 @@ export function SignalExplorerRail({ exploreId }: SignalExplorerRailProps) {
         {selectedMetric && selectedCard?.isPrometheus ? (
           <SelectedMetricMetadata
             dsRef={selectedCard.dsRef}
-            timeRange={pane.range}
+            timeRange={range}
             metricName={selectedMetric.metricName}
             onClose={onCloseMetadata}
           />

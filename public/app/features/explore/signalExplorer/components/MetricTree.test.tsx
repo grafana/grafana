@@ -1,18 +1,19 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 
-import type { DataSourceRef, TimeRange } from '@grafana/data';
+import type { DataQuery, DataSourceRef, TimeRange } from '@grafana/data';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 
 import { __clearCache } from '../data/metricResourceClient';
 import * as labelValuesModule from '../data/useLabelValues';
 import * as catalogModule from '../data/useMetricCatalog';
 import * as detailModule from '../data/useMetricDetail';
-import { signalExplorerReducer } from '../state/signalExplorerSlice';
+import { setSearchText, signalExplorerReducer } from '../state/signalExplorerSlice';
 import type { MetricRow } from '../types';
 
+import * as MetricRowModule from './MetricRow';
 import { MetricTree } from './MetricTree';
 
 jest.mock('@grafana/runtime/unstable', () => ({ getDataSourceInstance: jest.fn() }));
@@ -22,7 +23,7 @@ const timeRange = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as un
 
 const makeStore = () => configureStore({ reducer: { signalExplorer: signalExplorerReducer } });
 
-function renderTree(props: { queryRefsByMetric?: Record<string, string[]> } = {}, store = makeStore()) {
+function renderTree(props: { matchQueries?: DataQuery[] } = {}, store = makeStore()) {
   render(
     <Provider store={store}>
       <MetricTree exploreId="left" refId="A" dsRef={dsRef} timeRange={timeRange} {...props} />
@@ -155,13 +156,67 @@ describe('MetricTree', () => {
         ],
       });
 
-      renderTree({ queryRefsByMetric: { zzz_used: ['A', 'B'] } });
+      renderTree({
+        matchQueries: [
+          { refId: 'A', expr: 'sum(zzz_used)' } as DataQuery,
+          { refId: 'B', expr: 'zzz_used{job="x"}' } as DataQuery,
+        ],
+      });
 
       const rows = screen.getAllByTestId('signal-explorer-metric-row');
       expect(within(rows[0]).getByText('zzz_used')).toBeInTheDocument();
       expect(within(rows[0]).getByText('A')).toBeInTheDocument();
       expect(within(rows[0]).getByText('B')).toBeInTheDocument();
       expect(within(rows[1]).getByText('aaa_unused')).toBeInTheDocument();
+    });
+
+    it('badges only tokens this datasource knows as metrics', () => {
+      mockHooks({ metrics: [{ name: 'up', type: 'gauge' }] });
+
+      renderTree({
+        matchQueries: [
+          { refId: 'A', expr: 'sum(up) / rate(unknown_metric[5m])' } as DataQuery,
+          { refId: 'C', expr: 'unknown_metric' } as DataQuery,
+        ],
+      });
+
+      const row = screen.getAllByTestId('signal-explorer-metric-row')[0];
+      expect(within(row).getByText('A')).toBeInTheDocument();
+      expect(within(row).queryByText('C')).not.toBeInTheDocument();
+    });
+
+    it('passes row callbacks that keep their identity across re-renders', async () => {
+      mockHooks({
+        metrics: [
+          { name: 'up', type: 'gauge' },
+          { name: 'node_load1', type: 'gauge' },
+        ],
+        labelKeys: [],
+      });
+      // `MetricRow` is memoized; callbacks rebuilt per render would make that memo a no-op.
+      const seen: MetricRowModule.MetricRowProps[] = [];
+      jest.replaceProperty(MetricRowModule, 'MetricRow', (props: MetricRowModule.MetricRowProps) => {
+        seen.push(props);
+        return <button onClick={() => props.onToggleExpand(props.metric.name)}>{props.metric.name}</button>;
+      });
+
+      renderTree();
+      const beforeCount = seen.length;
+      const before = seen[0];
+
+      await userEvent.click(screen.getByText('up'));
+
+      const after = seen[beforeCount];
+      expect(after.onSelect).toBe(before.onSelect);
+      expect(after.onToggleExpand).toBe(before.onToggleExpand);
+    });
+
+    it('renders its own empty state when the catalog resolves to nothing', () => {
+      mockHooks({ metrics: [] });
+
+      renderTree();
+
+      expect(screen.getByText(/no metrics found/i)).toBeInTheDocument();
     });
 
     it('dispatches setSelectedMetric when a metric name is clicked', async () => {
@@ -189,6 +244,42 @@ describe('MetricTree', () => {
 
       renderTree();
       expect(screen.getByText(/failed to load metrics/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('metric list pagination (mocked hooks)', () => {
+    const manyMetrics: MetricRow[] = Array.from({ length: 5000 }, (_, i) => ({
+      name: `metric_${String(i).padStart(4, '0')}`,
+      type: 'gauge',
+    }));
+
+    const rowCount = () => screen.getAllByTestId('signal-explorer-metric-row').length;
+
+    it('renders only the first batch of a large catalog and pages with “show more”', async () => {
+      mockHooks({ metrics: manyMetrics });
+
+      renderTree();
+
+      expect(rowCount()).toBe(25);
+
+      await userEvent.click(screen.getByRole('button', { name: /show more/i }));
+
+      expect(rowCount()).toBe(50);
+    });
+
+    it('resets paging back to the first batch when the search changes', async () => {
+      mockHooks({ metrics: manyMetrics });
+      const store = makeStore();
+
+      renderTree({}, store);
+      await userEvent.click(screen.getByRole('button', { name: /show more/i }));
+      expect(rowCount()).toBe(50);
+
+      act(() => {
+        store.dispatch(setSearchText({ exploreId: 'left', searchText: 'metric_1' }));
+      });
+
+      expect(rowCount()).toBe(25);
     });
   });
 

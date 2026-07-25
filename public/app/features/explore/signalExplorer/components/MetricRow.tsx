@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { memo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -14,11 +15,24 @@ export interface MetricRowProps {
   refBadges: string[];
   selected: boolean;
   expanded: boolean;
-  onSelect: () => void;
-  onToggleExpand: () => void;
+  /**
+   * Both handlers take the metric name instead of closing over it, so a host rendering thousands of
+   * rows can hoist one stable callback out of its map and let the `memo` below do its job.
+   */
+  onSelect: (metricName: string) => void;
+  onToggleExpand: (metricName: string) => void;
 }
 
-export function MetricRow({ metric, refBadges, selected, expanded, onSelect, onToggleExpand }: MetricRowProps) {
+// Memoized: a catalog list re-renders on every keystroke, expansion and badge change, and only the
+// handful of rows whose own props moved need to re-render with it.
+export const MetricRow = memo(function MetricRow({
+  metric,
+  refBadges,
+  selected,
+  expanded,
+  onSelect,
+  onToggleExpand,
+}: MetricRowProps) {
   const styles = useStyles2(getStyles);
 
   const toggleLabel = expanded
@@ -31,9 +45,9 @@ export function MetricRow({ metric, refBadges, selected, expanded, onSelect, onT
         name={expanded ? 'angle-down' : 'angle-right'}
         aria-label={toggleLabel}
         aria-expanded={expanded}
-        onClick={onToggleExpand}
+        onClick={() => onToggleExpand(metric.name)}
       />
-      <button type="button" className={styles.name} onClick={onSelect}>
+      <button type="button" className={styles.name} onClick={() => onSelect(metric.name)}>
         {metric.name}
       </button>
       {refBadges.map((badge) => (
@@ -43,7 +57,7 @@ export function MetricRow({ metric, refBadges, selected, expanded, onSelect, onT
       ))}
     </div>
   );
-}
+});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   row: css({

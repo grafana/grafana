@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import { useMemo, useState, type ChangeEvent } from 'react';
+import { useState, type ChangeEvent } from 'react';
+import { useDebounce } from 'react-use';
 
 import { type DataQuery, type DataSourceRef, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -7,15 +8,15 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { Icon, Input, Text, useStyles2 } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { useMetricCatalog } from '../data/useMetricCatalog';
-import { detectMetricsInQueries } from '../query/detectMetricsInQueries';
-import { toRefsByMetric } from '../query/toRefsByMetric';
 import { selectSearchText, selectTypeFilter } from '../state/selectors';
 import { setActiveRefId, setSearchText, setTypeFilter } from '../state/signalExplorerSlice';
 import type { MetricType } from '../types';
 
 import { MetricTree } from './MetricTree';
 import { MetricTypeFilter } from './MetricTypeFilter';
+
+/** Long enough to swallow a burst of typing, short enough that the list still feels live. */
+const SEARCH_DEBOUNCE_MS = 250;
 
 export interface DatasourceCardProps {
   exploreId: string;
@@ -117,9 +118,9 @@ interface PrometheusBodyProps {
 }
 
 /**
- * Split out from `DatasourceCard` so its `useMetricCatalog` call only ever runs for an expanded
- * Prometheus card — the non-Prometheus branch has nothing to browse and must not fetch a catalog
- * for a datasource that has none.
+ * Split out from `DatasourceCard` so nothing below it — the search box's own state, the tree, the
+ * catalog fetch it triggers — exists for a collapsed card or for a datasource that has no catalog
+ * to browse in the first place.
  */
 function PrometheusBody({ exploreId, refId, dsRef, timeRange, paneQueries }: PrometheusBodyProps) {
   const dispatch = useDispatch();
@@ -127,23 +128,27 @@ function PrometheusBody({ exploreId, refId, dsRef, timeRange, paneQueries }: Pro
   const searchText = useSelector((state) => selectSearchText(state, exploreId));
   const typeFilter = useSelector((state) => selectTypeFilter(state, exploreId));
 
-  // `MetricTree` calls `useMetricCatalog` with these same arguments and renders an empty `<div>`
-  // when the catalog resolves to no metrics (e.g. every search that matches nothing). Reading it
-  // here too — the underlying fetch is cached by datasource+range, so this does not double the
-  // network cost — is how this card supplies the empty-state message that `MetricTree` itself
-  // deliberately does not own.
-  const { metrics, loading, error } = useMetricCatalog(dsRef, timeRange, { typeFilter, searchText });
-  const isCatalogEmpty = !loading && !error && metrics.length === 0;
+  // The input keeps its own value and the store only hears about it once typing pauses: every
+  // dispatch re-filters and re-sorts the whole catalog in `MetricTree`, which is far too much work
+  // to do per keystroke on a catalog with tens of thousands of names.
+  const [draftSearch, setDraftSearch] = useState(searchText);
+  const [dispatchedSearch, setDispatchedSearch] = useState(searchText);
+  if (searchText !== dispatchedSearch) {
+    // The store moved without us (another card sharing this pane's `searchText`, or a reset) —
+    // adopt it rather than let the input drift away from the list it is filtering.
+    setDispatchedSearch(searchText);
+    setDraftSearch(searchText);
+  }
 
-  // Matching happens here rather than in the host because the answer depends on *this* card's
-  // catalog: in a mixed pane every card resolves a different datasource, and the same token can be
-  // a metric in one and meaningless in another. All of the pane's queries are matched, not just
-  // this card's, so a metric this datasource knows is badged with every refId that references it.
-  // Matching the search/type-filtered catalog rather than the whole one is enough: `MetricTree`
-  // renders that same filtered list, so a name it cannot show cannot be badged either.
-  const queryRefsByMetric = useMemo(
-    () => toRefsByMetric(detectMetricsInQueries(paneQueries, new Set(metrics.map((metric) => metric.name)))),
-    [paneQueries, metrics]
+  useDebounce(
+    () => {
+      if (draftSearch !== searchText) {
+        setDispatchedSearch(draftSearch);
+        dispatch(setSearchText({ exploreId, searchText: draftSearch }));
+      }
+    },
+    SEARCH_DEBOUNCE_MS,
+    [draftSearch]
   );
 
   const searchLabel = t('explore.signal-explorer.card.search-metrics', 'Search metrics');
@@ -151,10 +156,8 @@ function PrometheusBody({ exploreId, refId, dsRef, timeRange, paneQueries }: Pro
   return (
     <>
       <Input
-        value={searchText}
-        onChange={(event: ChangeEvent<HTMLInputElement>) =>
-          dispatch(setSearchText({ exploreId, searchText: event.currentTarget.value }))
-        }
+        value={draftSearch}
+        onChange={(event: ChangeEvent<HTMLInputElement>) => setDraftSearch(event.currentTarget.value)}
         placeholder={searchLabel}
         aria-label={searchLabel}
       />
@@ -162,18 +165,7 @@ function PrometheusBody({ exploreId, refId, dsRef, timeRange, paneQueries }: Pro
         value={typeFilter}
         onChange={(value: MetricType | null) => dispatch(setTypeFilter({ exploreId, typeFilter: value }))}
       />
-      <MetricTree
-        exploreId={exploreId}
-        refId={refId}
-        dsRef={dsRef}
-        timeRange={timeRange}
-        queryRefsByMetric={queryRefsByMetric}
-      />
-      {isCatalogEmpty && (
-        <Text color="secondary" variant="bodySmall">
-          {t('explore.signal-explorer.card.no-metrics', 'No metrics found')}
-        </Text>
-      )}
+      <MetricTree exploreId={exploreId} refId={refId} dsRef={dsRef} timeRange={timeRange} matchQueries={paneQueries} />
     </>
   );
 }

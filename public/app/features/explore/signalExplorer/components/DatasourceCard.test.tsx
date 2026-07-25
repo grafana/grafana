@@ -1,5 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
 import { Provider } from 'react-redux';
@@ -9,7 +9,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 
 import * as catalogModule from '../data/useMetricCatalog';
-import { signalExplorerReducer } from '../state/signalExplorerSlice';
+import { setSearchText, signalExplorerReducer } from '../state/signalExplorerSlice';
 
 import { DatasourceCard } from './DatasourceCard';
 import * as MetricTreeModule from './MetricTree';
@@ -71,18 +71,16 @@ describe('DatasourceCard', () => {
       expect(screen.getByTestId('metric-tree-sentinel')).toBeInTheDocument();
     });
 
-    it('badges each catalog metric with every pane refId referencing it, ignoring unknown tokens', () => {
+    it('hands the tree the queries whose refIds may badge its metrics', () => {
       const tree = jest.mocked(MetricTreeModule.MetricTree);
+      const paneQueries = [
+        { refId: 'A', expr: 'sum(up)' } as DataQuery,
+        { refId: 'B', expr: 'up{job="x"}' } as DataQuery,
+      ];
 
-      renderCard({
-        paneQueries: [
-          { refId: 'A', expr: 'sum(up) / rate(unknown_metric[5m])' } as DataQuery,
-          { refId: 'B', expr: 'up{job="x"}' } as DataQuery,
-          { refId: 'C', expr: 'unknown_metric' } as DataQuery,
-        ],
-      });
+      renderCard({ paneQueries });
 
-      expect(tree.mock.calls[0][0].queryRefsByMetric).toEqual({ up: ['A', 'B'] });
+      expect(tree.mock.calls[0][0].matchQueries).toBe(paneQueries);
     });
 
     it('renders a placeholder and no tree for a non-Prometheus datasource', () => {
@@ -99,12 +97,27 @@ describe('DatasourceCard', () => {
       expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
     });
 
-    it('dispatches setSearchText as the user types', async () => {
+    it('keeps the search input responsive but only dispatches setSearchText once typing settles', async () => {
       const store = renderCard();
 
-      await userEvent.type(screen.getByRole('textbox', { name: /search metrics/i }), 'up');
+      const input = screen.getByRole('textbox', { name: /search metrics/i });
+      await userEvent.type(input, 'up');
 
-      expect(store.getState().signalExplorer.left.searchText).toBe('up');
+      // The input paints every keystroke; the store does not see any of them yet.
+      expect(input).toHaveValue('up');
+      expect(store.getState().signalExplorer.left).toBeUndefined();
+
+      await waitFor(() => expect(store.getState().signalExplorer.left.searchText).toBe('up'));
+    });
+
+    it('adopts a search text that changed elsewhere in the pane', async () => {
+      const store = renderCard();
+
+      act(() => {
+        store.dispatch(setSearchText({ exploreId: 'left', searchText: 'node_' }));
+      });
+
+      await waitFor(() => expect(screen.getByRole('textbox', { name: /search metrics/i })).toHaveValue('node_'));
     });
 
     it('dispatches setTypeFilter when the type filter changes', async () => {
@@ -146,10 +159,18 @@ describe('DatasourceCard', () => {
       jest.spyOn(catalogModule, 'useMetricCatalog').mockReturnValue({ metrics: [], loading: false });
     });
 
-    it("renders the card's own empty message instead of a blank body", () => {
+    it('renders an empty message rather than a blank body', () => {
       renderCard();
 
       expect(screen.getByText(/no metrics found/i)).toBeInTheDocument();
+    });
+
+    it('reads the catalog exactly once for an expanded card', () => {
+      const catalog = jest.mocked(catalogModule.useMetricCatalog);
+
+      renderCard();
+
+      expect(catalog).toHaveBeenCalledTimes(1);
     });
   });
 });

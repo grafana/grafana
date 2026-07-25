@@ -1,38 +1,40 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo, useState, type ChangeEvent } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
-import { type DataSourceRef, type GrafanaTheme2, type TimeRange } from '@grafana/data';
+import { type DataQuery, type DataSourceRef, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, Icon, IconButton, Input, Text, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Text, useStyles2 } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { useLabelValues } from '../data/useLabelValues';
 import { useMetricCatalog } from '../data/useMetricCatalog';
 import { useMetricDetail } from '../data/useMetricDetail';
+import { detectMetricsInQueries } from '../query/detectMetricsInQueries';
+import { toRefsByMetric } from '../query/toRefsByMetric';
 import { selectSearchText, selectSelectedMetric, selectTypeFilter } from '../state/selectors';
 import { setSelectedMetric } from '../state/signalExplorerSlice';
 
+import { LabelValuesBlock } from './LabelValuesBlock';
 import { MetricRow } from './MetricRow';
-
-/** How many label values reach the DOM at a time, and how many each "show more" adds. */
-const INITIAL_BATCH = 25;
+import { useVisibleBatch } from './useVisibleBatch';
 
 const NO_BADGES: string[] = [];
-
-// A single reused collator rather than per-comparison `localeCompare`: a high-cardinality label
-// can hold thousands of values, and this comparator runs across all of them on every reorder.
-const valueCollator = new Intl.Collator();
+const NO_QUERIES: DataQuery[] = [];
 
 export interface MetricTreeProps {
   exploreId: string;
   refId: string;
   dsRef: DataSourceRef;
   timeRange: TimeRange;
-  /** Metric name -> refIds of the queries in this pane that already reference it. */
-  queryRefsByMetric?: Record<string, string[]>;
+  /**
+   * Queries whose refIds may badge these metrics — the pane's queries that run against *this*
+   * datasource. Matching happens here rather than in the host because the answer depends on this
+   * datasource's catalog: in a mixed pane every card resolves a different one, and the same token
+   * can be a metric in one and meaningless in another.
+   */
+  matchQueries?: DataQuery[];
 }
 
-export function MetricTree({ exploreId, refId, dsRef, timeRange, queryRefsByMetric }: MetricTreeProps) {
+export function MetricTree({ exploreId, refId, dsRef, timeRange, matchQueries = NO_QUERIES }: MetricTreeProps) {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
 
@@ -47,11 +49,29 @@ export function MetricTree({ exploreId, refId, dsRef, timeRange, queryRefsByMetr
 
   const { metrics, loading, error } = useMetricCatalog(dsRef, timeRange, { typeFilter, searchText });
 
+  // Matching the search/type-filtered catalog rather than the whole one is enough: only the names
+  // rendered below can be badged anyway.
+  const queryRefsByMetric = useMemo(
+    () => toRefsByMetric(detectMetricsInQueries(matchQueries, new Set(metrics.map((metric) => metric.name)))),
+    [matchQueries, metrics]
+  );
+
   const sortedMetrics = useMemo(() => {
-    const isUsed = (name: string) => (queryRefsByMetric?.[name]?.length ?? 0) > 0;
+    const isUsed = (name: string) => (queryRefsByMetric[name]?.length ?? 0) > 0;
     // Array.prototype.sort is stable, so metrics that are equally (un)used keep the catalog order.
     return [...metrics].sort((a, b) => Number(isUsed(b.name)) - Number(isUsed(a.name)));
   }, [metrics, queryRefsByMetric]);
+
+  // A real catalog holds tens of thousands of names, so only a batch of them is rendered.
+  const { visibleCount, showMore } = useVisibleBatch(`${searchText}|${typeFilter ?? ''}`);
+  const visibleMetrics = sortedMetrics.slice(0, visibleCount);
+
+  // Stable identities, so the memoized rows below actually re-use their previous render. Both take
+  // the metric name rather than closing over it, which is what lets them be hoisted out of the map.
+  const selectMetric = useCallback(
+    (metricName: string) => dispatch(setSelectedMetric({ exploreId, refId, metricName })),
+    [dispatch, exploreId, refId]
+  );
 
   const toggleMetric = useCallback((name: string) => {
     setExpandedMetric((current) => (current === name ? null : name));
@@ -74,17 +94,22 @@ export function MetricTree({ exploreId, refId, dsRef, timeRange, queryRefsByMetr
           {t('explore.signal-explorer.tree.metrics-error', 'Failed to load metrics')}
         </Text>
       )}
-      {sortedMetrics.map((metric) => {
+      {!loading && !error && metrics.length === 0 && (
+        <Text color="secondary" variant="bodySmall">
+          {t('explore.signal-explorer.tree.no-metrics', 'No metrics found')}
+        </Text>
+      )}
+      {visibleMetrics.map((metric) => {
         const isExpanded = metric.name === expandedMetric;
         return (
           <div key={metric.name}>
             <MetricRow
               metric={metric}
-              refBadges={queryRefsByMetric?.[metric.name] ?? NO_BADGES}
+              refBadges={queryRefsByMetric[metric.name] ?? NO_BADGES}
               selected={selectedMetric?.refId === refId && selectedMetric.metricName === metric.name}
               expanded={isExpanded}
-              onSelect={() => dispatch(setSelectedMetric({ exploreId, refId, metricName: metric.name }))}
-              onToggleExpand={() => toggleMetric(metric.name)}
+              onSelect={selectMetric}
+              onToggleExpand={toggleMetric}
             />
             {isExpanded && (
               <MetricLabelsBlock
@@ -98,6 +123,11 @@ export function MetricTree({ exploreId, refId, dsRef, timeRange, queryRefsByMetr
           </div>
         );
       })}
+      {sortedMetrics.length > visibleMetrics.length && (
+        <Button className={styles.showMore} size="sm" variant="secondary" fill="text" onClick={showMore}>
+          {t('explore.signal-explorer.tree.show-more', 'Show more')}
+        </Button>
+      )}
     </div>
   );
 }
@@ -158,91 +188,14 @@ function MetricLabelsBlock({ dsRef, timeRange, metric, expandedLabel, onToggleLa
   );
 }
 
-interface LabelValuesBlockProps {
-  dsRef: DataSourceRef;
-  timeRange: TimeRange;
-  metric: string;
-  labelKey: string;
-}
-
-/**
- * Values of one expanded label key. Mounted only while that label is expanded, and renders at most
- * one batch at a time: a high-cardinality label can hold thousands of values.
- */
-function LabelValuesBlock({ dsRef, timeRange, metric, labelKey }: LabelValuesBlockProps) {
-  const styles = useStyles2(getStyles);
-  const { values, loading, error } = useLabelValues(dsRef, timeRange, metric, labelKey, true);
-
-  const [filter, setFilter] = useState('');
-  const [ascending, setAscending] = useState(true);
-  const [visibleCount, setVisibleCount] = useState(INITIAL_BATCH);
-
-  const ordered = useMemo(() => {
-    const needle = filter.trim().toLowerCase();
-    const matching = needle ? values.filter((value) => value.toLowerCase().includes(needle)) : values;
-    return [...matching].sort((a, b) => (ascending ? valueCollator.compare(a, b) : valueCollator.compare(b, a)));
-  }, [values, filter, ascending]);
-
-  // Slice before mapping: hiding the overflow with CSS would still put thousands of nodes in the DOM.
-  const visible = ordered.slice(0, visibleCount);
-
-  const onFilterChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setFilter(event.currentTarget.value);
-    // Reset paging with the filter: keeping a grown offset would show a batch of a list the user
-    // never paged through.
-    setVisibleCount(INITIAL_BATCH);
-  };
-
-  const filterLabel = t('explore.signal-explorer.tree.filter-values', 'Filter values');
-
-  return (
-    <div className={styles.valuesBlock}>
-      <div className={styles.valuesToolbar}>
-        <Input value={filter} onChange={onFilterChange} aria-label={filterLabel} placeholder={filterLabel} />
-        <IconButton
-          name={ascending ? 'sort-amount-up' : 'sort-amount-down'}
-          aria-label={
-            ascending
-              ? t('explore.signal-explorer.tree.sort-descending', 'Sort descending')
-              : t('explore.signal-explorer.tree.sort-ascending', 'Sort ascending')
-          }
-          onClick={() => setAscending((current) => !current)}
-        />
-      </div>
-      {loading && (
-        <Text color="secondary" variant="bodySmall">
-          {t('explore.signal-explorer.tree.loading-values', 'Loading values…')}
-        </Text>
-      )}
-      {error && (
-        <Text color="error" variant="bodySmall">
-          {t('explore.signal-explorer.tree.values-error', 'Failed to load values')}
-        </Text>
-      )}
-      {visible.map((value) => (
-        <div key={value} className={styles.valueRow} data-testid="signal-explorer-value-row">
-          {value}
-        </div>
-      ))}
-      {ordered.length > visible.length && (
-        <Button
-          size="sm"
-          variant="secondary"
-          fill="text"
-          onClick={() => setVisibleCount((count) => count + INITIAL_BATCH)}
-        >
-          {t('explore.signal-explorer.tree.show-more', 'Show more')}
-        </Button>
-      )}
-    </div>
-  );
-}
-
 const getStyles = (theme: GrafanaTheme2) => ({
   tree: css({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(0.25),
+  }),
+  showMore: css({
+    alignSelf: 'flex-start',
   }),
   labelsBlock: css({
     display: 'flex',
@@ -268,30 +221,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '&:hover': {
       background: theme.colors.action.hover,
     },
-  }),
-  valuesBlock: css({
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    gap: theme.spacing(0.25),
-    marginLeft: theme.spacing(2),
-    paddingLeft: theme.spacing(1),
-    borderLeft: `1px solid ${theme.colors.border.weak}`,
-  }),
-  valuesToolbar: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(0.5),
-    width: '100%',
-    padding: theme.spacing(0.5, 0),
-  }),
-  valueRow: css({
-    overflow: 'hidden',
-    maxWidth: '100%',
-    padding: theme.spacing(0, 0.5),
-    color: theme.colors.text.secondary,
-    fontSize: theme.typography.bodySmall.fontSize,
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
   }),
 });
