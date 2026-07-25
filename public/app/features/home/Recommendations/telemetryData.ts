@@ -1,17 +1,13 @@
 import {
-  type DataQuery,
   type DataSourceInstanceListItem,
-  dateTime,
   type Field,
   type FieldSparkline,
   FieldType,
   getMinMaxAndDelta,
-  type TimeRange,
 } from '@grafana/data';
 import { type DataSourceWithBackend } from '@grafana/runtime';
 
 import { probeProxyGet, PROBE_TIMEOUT_MS, resolveBackendInstance, withRetry, withTimeout } from './probeUtils';
-import { readSeries, runDatasourceQueries } from './promQuery';
 import { DATA_LOOKBACK_HOURS } from './solutionDataProbes';
 
 /** Stats window for the logs card (design-fixed), distinct from the 24h sparkline lookback. */
@@ -44,6 +40,17 @@ interface TempoTagValuesResponse {
 
 function getResource<T>(instance: DataSourceWithBackend, path: string, params: Record<string, unknown>): Promise<T> {
   return withRetry(() => withTimeout(instance.getResource<T>(path, params), PROBE_TIMEOUT_MS));
+}
+
+// Points are [unix ms, value]; a real trend needs at least two of them.
+function toSparkline(points: Array<[number, number]>, name: string): FieldSparkline | null {
+  if (points.length < 2) {
+    return null;
+  }
+  const sorted = [...points].sort(([a], [b]) => a - b);
+  const x: Field = { name: 'Time', type: FieldType.time, values: sorted.map(([ts]) => ts), config: {} };
+  const y: Field = { name, type: FieldType.number, values: sorted.map(([, value]) => value), config: {} };
+  return { x, y: { ...y, state: { range: getMinMaxAndDelta(y) } } };
 }
 
 // Loki rejects matcher-less queries; pick the label the org's streams actually carry.
@@ -111,16 +118,10 @@ export async function fetchLogsVolumeSeries(
   const buckets = new Map<number, number>();
   for (const series of res?.data?.result ?? []) {
     for (const [ts, value] of series.values ?? []) {
-      buckets.set(ts, (buckets.get(ts) ?? 0) + (Number(value) || 0));
+      buckets.set(ts * 1000, (buckets.get(ts * 1000) ?? 0) + (Number(value) || 0));
     }
   }
-  const points = [...buckets.entries()].sort(([a], [b]) => a - b);
-  if (points.length < 2) {
-    return null;
-  }
-  const x: Field = { name: 'Time', type: FieldType.time, values: points.map(([ts]) => ts * 1000), config: {} };
-  const y: Field = { name: 'Ingest volume', type: FieldType.number, values: points.map(([, v]) => v), config: {} };
-  return { x, y: { ...y, state: { range: getMinMaxAndDelta(y) } } };
+  return toSparkline([...buckets.entries()], 'Ingest volume');
 }
 
 /**
@@ -137,50 +138,40 @@ export async function fetchTracesServices(ds: Pick<DataSourceInstanceListItem, '
   return Array.isArray(res?.tagValues) ? res.tagValues.length : null;
 }
 
-interface TempoMetricsQuery extends DataQuery {
-  query: string;
-  metricsQueryType: 'range';
+interface TempoQueryRangeResponse {
+  series?: Array<{ samples?: Array<{ timestampMs?: string | number; value?: number }> }>;
 }
 
 /**
- * Span throughput over the last 24h via TraceQL metrics: the summed series feeds the sparkline,
- * its integral is the span count. Needs the metrics-generator; callers fail soft on rejection.
+ * Span throughput over the last 24h via Tempo's TraceQL-metrics HTTP API: the summed series
+ * feeds the sparkline, its integral is the span count. Datasource proxy on purpose — the
+ * frontend query path rebuilds raw targets on some plugin versions. Needs the
+ * metrics-generator; callers fail soft on rejection.
  */
-export async function fetchTracesActivity(
-  ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>
-): Promise<TracesActivity> {
-  const toTime = dateTime();
-  const fromTime = dateTime().subtract(DATA_LOOKBACK_HOURS, 'h');
-  const range: TimeRange = {
-    from: fromTime,
-    to: toTime,
-    raw: { from: `now-${DATA_LOOKBACK_HOURS}h`, to: 'now' },
-  };
-  const target: TempoMetricsQuery = {
-    refId: 'spans',
-    queryType: 'traceql',
-    query: '{} | count_over_time()',
-    metricsQueryType: 'range',
-  };
-  const frames = await withRetry(() => runDatasourceQueries([target], range, ds));
-  const series = readSeries(frames, 'spans');
+export async function fetchTracesActivity(ds: Pick<DataSourceInstanceListItem, 'uid'>): Promise<TracesActivity> {
+  const end = Math.floor(Date.now() / 1000);
+  const start = end - DATA_LOOKBACK_HOURS * 3600;
+  const res = await probeProxyGet<TempoQueryRangeResponse>(ds.uid, 'api/metrics/query_range', {
+    q: '{} | count_over_time()',
+    start,
+    end,
+    step: '30m',
+  });
+  const buckets = new Map<number, number>();
   let spans = 0;
   let seen = false;
-  for (const frame of frames) {
-    if (frame.refId !== 'spans') {
-      continue;
-    }
-    for (const field of frame.fields) {
-      if (field.type !== FieldType.number) {
+  for (const series of res?.series ?? []) {
+    for (const sample of series.samples ?? []) {
+      // Sparse samples: zero buckets may be omitted; values may arrive as strings.
+      const ts = Number(sample.timestampMs);
+      const value = Number(sample.value ?? 0);
+      if (!Number.isFinite(ts) || !Number.isFinite(value)) {
         continue;
       }
-      for (const value of field.values) {
-        if (typeof value === 'number' && Number.isFinite(value)) {
-          seen = true;
-          spans += value;
-        }
-      }
+      seen = true;
+      spans += value;
+      buckets.set(ts, (buckets.get(ts) ?? 0) + value);
     }
   }
-  return { spans: seen ? spans : null, series };
+  return { spans: seen ? spans : null, series: toSparkline([...buckets.entries()], 'Span throughput') };
 }
