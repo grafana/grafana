@@ -10970,6 +10970,13 @@
       "reset": "Reset recent dashboards"
     },
     "recommendations": {
+      "application-observability": {
+        "action": "Enable Application Observability",
+        "context": "Built automatically from your telemetry",
+        "description": "Turn OpenTelemetry data into RED metrics, service maps, and correlated traces automatically.",
+        "setup-action": "Set up Application Observability",
+        "title": "Explore your service map"
+      },
       "carousel-label": "Recommended apps",
       "carousel-roledescription": "carousel",
       "connect-metrics": {

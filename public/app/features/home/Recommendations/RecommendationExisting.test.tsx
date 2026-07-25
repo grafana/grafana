@@ -104,7 +104,14 @@ function setSolutionState(
 ) {
   mockUseSolutionState.mockReturnValue({
     value: {
-      state: { metrics: 'inactive', logs: 'inactive', traces: 'inactive', kubernetes: 'inactive', ...overrides },
+      state: {
+        metrics: 'inactive',
+        logs: 'inactive',
+        traces: 'inactive',
+        kubernetes: 'inactive',
+        spanMetrics: 'inactive',
+        ...overrides,
+      },
       lokiDatasource: ds.loki ?? null,
       tempoDatasource: ds.tempo ?? null,
     },

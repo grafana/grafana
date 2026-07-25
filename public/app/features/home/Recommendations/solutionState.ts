@@ -11,8 +11,13 @@ import {
   withRetry,
   withTimeout,
 } from './probeUtils';
+import { readScalar, runInstantQueries } from './promQuery';
 import { DATA_LOOKBACK_HOURS, probeFound, tempoHasTraces } from './solutionDataProbes';
 import { type SignalStatus, type SolutionState } from './solutionsMatrix';
+
+// Span metrics prove Application Observability is in use: the spanmetrics connector emits
+// traces_spanmetrics_*, OTel/Alloy emits traces_span_metrics_*.
+const SPAN_METRICS_PROBE = `count(last_over_time(traces_spanmetrics_calls_total[${DATA_LOOKBACK_HOURS}h])) or count(last_over_time(traces_span_metrics_calls_total[${DATA_LOOKBACK_HOURS}h]))`;
 
 // Cloud utility datasources hold platform telemetry, never the org's product data: excluded
 // from the activity probes unconditionally.
@@ -81,14 +86,21 @@ async function lokiHasRecentLabels(ds: DataSourceInstanceListItem): Promise<bool
   return Array.isArray(res?.data) && res.data.length > 0;
 }
 
+// Throws on query failure so probeFound counts the candidate as errored, not empty.
+async function prometheusHasSpanMetrics(ds: DataSourceInstanceListItem): Promise<boolean> {
+  const frames = await withRetry(() => runInstantQueries({ probe: SPAN_METRICS_PROBE }, ds, PROBE_TIMEOUT_MS));
+  return (readScalar(frames, 'probe') ?? 0) > 0;
+}
+
 // Each signal resolver settles on its own (never rejects), so Promise.all cannot discard
 // sibling results.
 async function resolveAllSignals(): Promise<SolutionStateResolution> {
-  const [metrics, logs, traces, kubernetes] = await Promise.all([
+  const [metrics, logs, traces, kubernetes, spanMetrics] = await Promise.all([
     resolveSignal(() => probeFound('prometheus', prometheusHasRecentLabels, CLOUD_UTILITY_PROM_DATASOURCE_UIDS)),
     resolveSignal(() => probeFound('loki', lokiHasRecentLabels, CLOUD_UTILITY_LOKI_DATASOURCE_UIDS)),
     resolveSignal(() => probeFound('tempo', tempoHasTraces)),
     resolveSignal(resolveKubernetesDatasource),
+    resolveSignal(() => probeFound('prometheus', prometheusHasSpanMetrics, CLOUD_UTILITY_PROM_DATASOURCE_UIDS)),
   ]);
 
   return {
@@ -98,6 +110,7 @@ async function resolveAllSignals(): Promise<SolutionStateResolution> {
       logs: logs.status,
       traces: traces.status,
       kubernetes: kubernetes.status,
+      spanMetrics: spanMetrics.status,
     },
     lokiDatasource: logs.datasource,
     tempoDatasource: traces.datasource,
