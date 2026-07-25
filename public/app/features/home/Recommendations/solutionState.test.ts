@@ -281,14 +281,44 @@ describe('resolveSolutionState', () => {
     );
   });
 
-  it('settles span metrics unknown when every candidate query fails, without touching siblings', async () => {
-    freshCloudFixture();
-    instantQueriesMock.mockRejectedValue(new Error('query failed'));
+  it('settles span metrics inactive when a candidate query fails - a dead datasource must not hide the card', async () => {
+    setupFixture({
+      prometheus: [
+        listItem('prometheus', { uid: 'prom-main', name: 'grafanacloud-prom', isDefault: true }),
+        listItem('prometheus', { uid: 'prom-demo', name: 'Prometheus Demo' }),
+      ],
+      loki: [],
+      tempo: [],
+      instances: { 'prom-main': backendInstance(emptyPromResource()) },
+    });
+    tempoHasTracesMock.mockResolvedValue(false);
+    kubernetesMock.mockResolvedValue(null);
+    instantQueriesMock.mockImplementation(async (_queries, ds) => {
+      if (ds.uid === 'prom-demo') {
+        throw new Error('dial tcp: no such host');
+      }
+      return [];
+    });
 
     const resolution = await resolveWithTimers();
 
-    expect(resolution.state.spanMetrics).toBe('unknown');
-    expect(resolution.state.metrics).toBe('inactive');
+    expect(resolution.state.spanMetrics).toBe('inactive');
+    // The core metrics signal keeps the strict direction: errored candidate + no data = unknown.
+    expect(resolution.state.metrics).toBe('unknown');
+  });
+
+  it('still settles span metrics active when a healthy candidate has series beside a broken one', async () => {
+    freshCloudFixture();
+    instantQueriesMock.mockImplementation(async (_queries, ds) => {
+      if (ds.uid !== 'prom-main') {
+        throw new Error('dial tcp: no such host');
+      }
+      return [createDataFrame({ refId: 'probe', fields: [{ name: 'Value', type: FieldType.number, values: [12] }] })];
+    });
+
+    const resolution = await resolveWithTimers();
+
+    expect(resolution.state.spanMetrics).toBe('active');
   });
 
   it('probes the label endpoints with the lookback window in each datasource unit', async () => {
