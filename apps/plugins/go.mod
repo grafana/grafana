@@ -16,7 +16,7 @@ require (
 	github.com/emicklei/go-restful/v3 v3.13.0
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana-app-sdk v0.56.6
-	github.com/grafana/grafana-app-sdk/logging v0.56.3
+	github.com/grafana/grafana-app-sdk/logging v0.56.4
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/grafana/grafana/pkg/apiserver v0.0.0
 	github.com/grafana/grafana/pkg/plugins v0.0.0
@@ -29,7 +29,7 @@ require (
 	k8s.io/apiserver v0.36.2
 	k8s.io/client-go v0.36.2
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a
-	sigs.k8s.io/structured-merge-diff/v6 v6.4.0
+	sigs.k8s.io/structured-merge-diff/v6 v6.4.2
 )
 
 require (

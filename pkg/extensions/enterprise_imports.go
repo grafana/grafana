@@ -536,6 +536,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/storage/unified/search"
 	_ "github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	_ "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
+	_ "github.com/grafana/grafana/pkg/storage/unified/search/rerank/provider"
 	_ "github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	_ "github.com/grafana/grafana/pkg/storage/unified/sql"
 	_ "github.com/grafana/grafana/pkg/storage/unified/sql/db"
