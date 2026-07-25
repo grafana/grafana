@@ -259,7 +259,7 @@ describe('RecommendationExisting', () => {
 
     render(<RecommendationExisting />);
 
-    expect(await screen.findByRole('heading', { name: 'No data flowing yet' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Add more telemetry' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Hosted Logs' })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Hosted Traces' })).not.toBeInTheDocument();
     expect(mockFetchLogsActivity).not.toHaveBeenCalled();
@@ -280,10 +280,20 @@ describe('RecommendationExisting', () => {
 
     render(<RecommendationExisting />);
 
-    expect(await screen.findByRole('heading', { name: 'No data flowing yet' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Add more telemetry' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Hosted Logs' })).not.toBeInTheDocument();
     // The services count alone renders nothing, so it cannot carry the traces card.
     expect(screen.queryByRole('heading', { name: 'Hosted Traces' })).not.toBeInTheDocument();
+  });
+
+  it('softens the no-data claim for a metrics-only org with nothing renderable', async () => {
+    mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
+    setSolutionState({ metrics: 'active' });
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByRole('heading', { name: 'Add more telemetry' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Connect a data source/ })).toBeInTheDocument();
   });
 
   it('keeps an entry whose sparkline failed but whose stats resolved', async () => {
