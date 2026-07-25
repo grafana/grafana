@@ -86,10 +86,16 @@ async function lokiHasRecentLabels(ds: DataSourceInstanceListItem): Promise<bool
   return Array.isArray(res?.data) && res.data.length > 0;
 }
 
-// Throws on query failure so probeFound counts the candidate as errored, not empty.
+// A broken candidate counts as no span metrics (unlike the core-signal probes): one dead
+// datasource must not hide the App Observability card behind an unknown — matches the
+// kubernetes probe's failure direction.
 async function prometheusHasSpanMetrics(ds: DataSourceInstanceListItem): Promise<boolean> {
-  const frames = await withRetry(() => runInstantQueries({ probe: SPAN_METRICS_PROBE }, ds, PROBE_TIMEOUT_MS));
-  return (readScalar(frames, 'probe') ?? 0) > 0;
+  try {
+    const frames = await withRetry(() => runInstantQueries({ probe: SPAN_METRICS_PROBE }, ds, PROBE_TIMEOUT_MS));
+    return (readScalar(frames, 'probe') ?? 0) > 0;
+  } catch {
+    return false;
+  }
 }
 
 // Each signal resolver settles on its own (never rejects), so Promise.all cannot discard
