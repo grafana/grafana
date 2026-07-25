@@ -302,7 +302,7 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
             />
           </Field>
           <Field noMargin label={t('dashboard-settings.general.tags-label', 'Tags')}>
-            <TagsInput id="tags-input" tags={tags} onChange={model.onTagsChange} width={40} />
+            <TagsInput id="tags-input" tags={tags} onChange={model.onTagsChange} width={40} maxLength={255} />
           </Field>
           {!meta.isDashboardTemplate && (
             <Field noMargin label={t('dashboard-settings.general.folder-label', 'Folder')}>

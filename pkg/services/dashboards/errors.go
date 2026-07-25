@@ -6,6 +6,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 )
 
+// DashboardTagMaxLength is the maximum length of a dashboard tag in UTF-8 bytes.
+// Kept in sync with dashboard_tag.term column length.
+const DashboardTagMaxLength = 255
+
 // Typed errors
 var (
 	ErrDashboardNotFound = dashboardaccess.DashboardErr{
@@ -57,7 +61,7 @@ var (
 		StatusCode: 400,
 	}
 	ErrDashboardTagTooLong = dashboardaccess.DashboardErr{
-		Reason:     "dashboard tag too long, max 50 characters",
+		Reason:     "dashboard tag too long, max 255 UTF-8 bytes",
 		StatusCode: 400,
 		Status:     "tag-too-long",
 	}

@@ -793,7 +793,7 @@ func validateDashboardTags(obj runtime.Object) error {
 	}
 
 	for _, tag := range tags {
-		if len(tag) > 50 {
+		if len(tag) > dashboards.DashboardTagMaxLength {
 			return dashboards.ErrDashboardTagTooLong
 		}
 	}
