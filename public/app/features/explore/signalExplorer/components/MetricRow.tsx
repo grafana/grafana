@@ -1,10 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, useStyles2 } from '@grafana/ui';
 
+import { getMetricTypeLabel } from '../data/metricType';
 // The component and the data shape share a name; alias the type so the component keeps the plain
 // name the rest of the tree refers to it by.
 import type { MetricRow as MetricRowModel } from '../types';
@@ -34,6 +35,7 @@ export const MetricRow = memo(function MetricRow({
   onToggleExpand,
 }: MetricRowProps) {
   const styles = useStyles2(getStyles);
+  const typeLabel = useMemo(() => getMetricTypeLabel(metric.type), [metric.type]);
 
   const toggleLabel = expanded
     ? t('explore.signal-explorer.metric-row.collapse', 'Collapse {{name}}', { name: metric.name })
@@ -50,6 +52,9 @@ export const MetricRow = memo(function MetricRow({
       <button type="button" className={styles.name} onClick={() => onSelect(metric.name)}>
         {metric.name}
       </button>
+      <span className={styles.type} data-testid="signal-explorer-metric-type">
+        {typeLabel}
+      </span>
       {refBadges.map((badge) => (
         <span key={badge} className={styles.badge}>
           {badge}
@@ -86,6 +91,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.primary,
     fontSize: theme.typography.bodySmall.fontSize,
     cursor: 'pointer',
+  }),
+  // Subordinate to the name: same size, secondary colour, no chrome — it labels the row, it is not
+  // the thing the row is.
+  type: css({
+    flexShrink: 0,
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
   }),
   badge: css({
     flexShrink: 0,

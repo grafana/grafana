@@ -5,7 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { getMetricTypeOptions } from '../data/metricType';
+import { getMetricTypeLabel } from '../data/metricType';
 import type { MetricRow } from '../types';
 
 export interface MetricMetadataBlockProps {
@@ -15,12 +15,9 @@ export interface MetricMetadataBlockProps {
 
 export function MetricMetadataBlock({ metric, onClose }: MetricMetadataBlockProps) {
   const styles = useStyles2(getStyles);
-  const typeOptions = useMemo(() => getMetricTypeOptions(), []);
   const closeLabel = t('explore.signal-explorer.metadata.close', 'Close');
 
-  const typeLabel = metric
-    ? (typeOptions.find((option) => option.value === metric.type)?.label ?? metric.type)
-    : undefined;
+  const typeLabel = useMemo(() => (metric ? getMetricTypeLabel(metric.type) : undefined), [metric]);
 
   return (
     <div className={styles.container}>

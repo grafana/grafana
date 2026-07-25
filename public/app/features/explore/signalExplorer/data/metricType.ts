@@ -25,6 +25,14 @@ export function deriveMetricType(name: string, meta?: { type?: string; help?: st
   }
 }
 
+/**
+ * The translated label for one metric type. Rebuilds the whole option list per call (and so calls
+ * `t()` six times), so call it from a `useMemo` rather than inside a render loop.
+ */
+export function getMetricTypeLabel(type: MetricType): string {
+  return getMetricTypeOptions().find((option) => option.value === type)?.label ?? type;
+}
+
 export function getMetricTypeOptions(): Array<{ value: MetricType; label: string }> {
   return [
     { value: 'counter', label: t('explore.signal-explorer.type.counter', 'Counter') },
