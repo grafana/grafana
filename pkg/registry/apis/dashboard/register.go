@@ -109,6 +109,7 @@ type DashboardsAPIBuilder struct {
 	dashboardService        dashboards.DashboardService
 	features                featuremgmt.FeatureToggles
 	accessControl           accesscontrol.AccessControl
+	acService               accesscontrol.Service // optional; used to clear creator permission cache after App Platform ACL writes
 	accessClient            authlib.AccessClient
 	legacy                  legacy.DashboardAccessor
 	unified                 resource.ResourceClient
@@ -150,6 +151,7 @@ func RegisterAPIService(
 	dashboardPermissions dashboards.PermissionsRegistrationService,
 	dashboardPermissionsSvc accesscontrol.DashboardPermissionsService,
 	accessControl accesscontrol.AccessControl,
+	acService accesscontrol.Service,
 	accessClient authlib.AccessClient,
 	provisioning provisioning.ProvisioningService,
 	reg prometheus.Registerer,
@@ -192,6 +194,7 @@ func RegisterAPIService(
 		dashboardPermissions:     dashboardPermissions,
 		dashboardPermissionsSvc:  dashboardPermissionsSvc,
 		accessControl:            accessControl,
+		acService:                acService,
 		accessClient:             accessClient,
 		unified:                  unified,
 		search:                   NewSearchHandler(tracing, unified, features),
@@ -244,11 +247,12 @@ func RegisterAPIService(
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, search *SearchHandler, unified resource.ResourceClient) *DashboardsAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, search *SearchHandler, unified resource.ResourceClient, acService accesscontrol.Service) *DashboardsAPIBuilder {
 	migration.Initialize(datasourceProvider, libraryElementProvider, migration.DefaultCacheTTL)
 	return &DashboardsAPIBuilder{
 		minRefreshInterval:     "10s",
 		accessClient:           ac,
+		acService:              acService,
 		features:               features,
 		dashboardService:       &dashsvc.DashboardServiceImpl{}, // for validation helpers only
 		folderClientProvider:   folderClientProvider,
@@ -1210,12 +1214,18 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 		return nil
 	}
 
-	if obj.GetFolder() != "" {
+	// only set default permissions for root dashboards ("" or "general")
+	if !folder.IsRootFolderUID(obj.GetFolder()) {
 		return nil
 	}
 
 	log := logging.FromContext(ctx)
 	log.Debug("setting default dashboard permissions", "uid", obj.GetName(), "namespace", obj.GetNamespace())
+
+	// Capture the creator before switching to a service identity so we can clear
+	// their permission cache after the ACL write (they need the new grants on the
+	// next DTO/search call).
+	originalCtx := ctx
 
 	// Setting the default permissions is a system operation triggered by the creation
 	// of the dashboard, not an action the requester performs directly. The creator does
@@ -1256,6 +1266,7 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 			return fmt.Errorf("update dashboard permissions: %w", err)
 		}
 
+		b.clearCreatorPermissionCache(originalCtx)
 		return nil
 	}
 
@@ -1280,7 +1291,23 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 		return fmt.Errorf("create dashboard permissions: %w", err)
 	}
 
+	b.clearCreatorPermissionCache(originalCtx)
 	return nil
+}
+
+// clearCreatorPermissionCache mirrors SetDefaultPermissionsAfterCreate: after seeding
+// ACLs the creator must see the new grants on their next call (DTO load / search).
+func (b *DashboardsAPIBuilder) clearCreatorPermissionCache(ctx context.Context) {
+	if b.acService == nil {
+		return
+	}
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return
+	}
+	if user.IsIdentityType(authlib.TypeUser, authlib.TypeServiceAccount) {
+		b.acService.ClearUserPermissionCache(user)
+	}
 }
 
 func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {

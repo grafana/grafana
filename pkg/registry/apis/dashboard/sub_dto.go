@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -200,7 +201,9 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		}
 
 		if !checkRes.Results["dash_read"].Allowed {
-			responder.Error(fmt.Errorf("not allowed to view"))
+			responder.Error(apierrors.NewForbidden(
+				dashv1.DashboardResourceInfo.GroupResource(), name,
+				fmt.Errorf("not allowed to view")))
 			return
 		}
 
