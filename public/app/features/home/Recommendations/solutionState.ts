@@ -139,6 +139,7 @@ export function resetSolutionStateResolution(): void {
   solutionStateResolution.reset();
 }
 
-export function useSolutionState(): { value?: SolutionStateResolution; loading: boolean } {
-  return useAsync(resolveSolutionState, []);
+/** Gate inside the callback (Rules of Hooks): a disabled caller never triggers the probes. */
+export function useSolutionState(enabled = true): { value?: SolutionStateResolution; loading: boolean } {
+  return useAsync(async () => (enabled ? resolveSolutionState() : undefined), [enabled]);
 }
