@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { memo } from 'react';
 import { Provider } from 'react-redux';
 
 import type { DataQuery, DataSourceRef, TimeRange } from '@grafana/data';
@@ -195,10 +196,14 @@ describe('MetricTree', () => {
       });
       // `MetricRow` is memoized; callbacks rebuilt per render would make that memo a no-op.
       const seen: MetricRowModule.MetricRowProps[] = [];
-      jest.replaceProperty(MetricRowModule, 'MetricRow', (props: MetricRowModule.MetricRowProps) => {
-        seen.push(props);
-        return <button onClick={() => props.onToggleExpand(props.metric.name)}>{props.metric.name}</button>;
-      });
+      jest.replaceProperty(
+        MetricRowModule,
+        'MetricRow',
+        memo(function MetricRowProbe(props: MetricRowModule.MetricRowProps) {
+          seen.push(props);
+          return <button onClick={() => props.onToggleExpand(props.metric.name)}>{props.metric.name}</button>;
+        })
+      );
 
       renderTree();
       const beforeCount = seen.length;
