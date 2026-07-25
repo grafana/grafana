@@ -8845,7 +8845,6 @@
       "card": {
         "collapse": "Collapse {{name}}",
         "expand": "Expand {{name}}",
-        "no-metrics": "No metrics found",
         "nothing-to-browse": "Nothing to browse for this datasource",
         "search-metrics": "Search metrics"
       },
@@ -8870,6 +8869,7 @@
         "loading-metrics": "Loading metrics…",
         "loading-values": "Loading values…",
         "metrics-error": "Failed to load metrics",
+        "no-metrics": "No metrics found",
         "show-more": "Show more",
         "show-values": "Show values for {{label}}",
         "sort-ascending": "Sort ascending",
