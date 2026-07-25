@@ -131,11 +131,14 @@ jest.mock('@grafana/runtime', () => ({
     // query's own ref so a pane with two datasources still resolves to two of them.
     getInstanceSettings: (ref?: { uid?: string; type?: string } | string) => {
       const uid = typeof ref === 'string' ? ref : ref?.uid;
+      const type = (typeof ref === 'object' ? ref?.type : undefined) ?? 'prometheus';
       return {
         uid: uid ?? 'test-uid',
-        type: (typeof ref === 'object' ? ref?.type : undefined) ?? 'prometheus',
+        type,
         name: `Datasource ${uid ?? 'test-uid'}`,
-        meta: { id: 'prometheus', mixed: false, info: { logos: { small: '' } } },
+        // meta.id must follow the ref's type too, or the fixture asserts "everything is
+        // Prometheus" and any card-level isPrometheus check passes for every datasource.
+        meta: { id: type, mixed: false, info: { logos: { small: '' } } },
       };
     },
   }),
