@@ -109,6 +109,18 @@ describe('LocationService', () => {
       });
     });
 
+    it('keeps the current path for a query-only string (no pathname)', () => {
+      expect(wrapper.appendOrgId('?inspectTab=help')).toEqual({ search: '?inspectTab=help&orgId=7', hash: '' });
+    });
+
+    it('keeps the current path for a hash-only string (no pathname)', () => {
+      expect(wrapper.appendOrgId('#h')).toEqual({ search: '?orgId=7', hash: '#h' });
+    });
+
+    it('leaves a query-only string unchanged when orgId is already present', () => {
+      expect(wrapper.appendOrgId('?orgId=3')).toBe('?orgId=3');
+    });
+
     it('floors fractional orgId', () => {
       wrapper.setOrgIdGetter(() => 7.9);
       expect(wrapper.appendOrgId('/p')).toEqual({ pathname: '/p', search: '?orgId=7', hash: '' });

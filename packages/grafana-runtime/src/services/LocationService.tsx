@@ -96,7 +96,13 @@ export class HistoryWrapper implements LocationService, H.History {
         return location;
       }
       url.searchParams.set('orgId', orgIdStr);
-      return { pathname: url.pathname, search: url.search, hash: url.hash };
+      // A query- or hash-only string is a relative navigation that keeps the
+      // current path; omitting pathname lets the router preserve it instead of
+      // resolving to '/'.
+      const relative = location.startsWith('?') || location.startsWith('#');
+      return relative
+        ? { search: url.search, hash: url.hash }
+        : { pathname: url.pathname, search: url.search, hash: url.hash };
     }
 
     const params = new URLSearchParams(location.search ?? '');
