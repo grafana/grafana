@@ -109,13 +109,19 @@ describe('DatasourceCard', () => {
       expect(store.getState().signalExplorer.left.activeRefId).toBe('A');
     });
 
-    it('renders without crashing when the datasource cannot be resolved', () => {
+    it('renders the datasource logo when instance settings resolve', () => {
+      renderCard();
+
+      expect(screen.getByTestId('signal-explorer-datasource-logo')).toHaveAttribute('src', '/logo.svg');
+    });
+
+    it('renders without crashing when the datasource cannot be resolved, and omits the logo', () => {
       mockInstanceSettings(undefined);
 
       renderCard();
 
       expect(screen.getByText('Prometheus')).toBeInTheDocument();
-      expect(screen.queryByRole('img')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('signal-explorer-datasource-logo')).not.toBeInTheDocument();
     });
   });
 

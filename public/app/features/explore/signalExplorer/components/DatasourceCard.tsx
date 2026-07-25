@@ -78,7 +78,7 @@ export function DatasourceCard({
         onClick={onToggle}
       >
         <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />
-        {logo && <img className={styles.logo} src={logo} alt="" />}
+        {logo && <img className={styles.logo} src={logo} alt="" data-testid="signal-explorer-datasource-logo" />}
         <Text weight="medium">{dsName}</Text>
       </button>
       {isExpanded && (
