@@ -21,11 +21,11 @@ const SPAN_METRICS_PROBE = `count(last_over_time(traces_spanmetrics_calls_total[
 
 // Cloud utility datasources hold platform telemetry, never the org's product data: excluded
 // from the activity probes unconditionally.
-export const CLOUD_UTILITY_PROM_DATASOURCE_UIDS: ReadonlySet<string> = new Set([
+const CLOUD_UTILITY_PROM_DATASOURCE_UIDS: ReadonlySet<string> = new Set([
   'grafanacloud-usage',
   'grafanacloud-ml-metrics',
 ]);
-export const CLOUD_UTILITY_LOKI_DATASOURCE_UIDS: ReadonlySet<string> = new Set([
+const CLOUD_UTILITY_LOKI_DATASOURCE_UIDS: ReadonlySet<string> = new Set([
   'grafanacloud-usage-insights',
   'grafanacloud-alert-state-history',
 ]);
@@ -139,7 +139,6 @@ export function resetSolutionStateResolution(): void {
   solutionStateResolution.reset();
 }
 
-export function useSolutionState(): { value: SolutionStateResolution | undefined; loading: boolean } {
-  const { value, loading } = useAsync(resolveSolutionState, []);
-  return { value, loading };
+export function useSolutionState(): { value?: SolutionStateResolution; loading: boolean } {
+  return useAsync(resolveSolutionState, []);
 }

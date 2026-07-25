@@ -5,7 +5,7 @@ import { useAppPluginMetas } from '@grafana/runtime/internal';
 import { HOSTED_TRACES_APP_ID, LOGS_DRILLDOWN_APP_ID } from './appPluginIds';
 import { buildLogsItem, buildTracesItem } from './buildTelemetryItems';
 import { useSolutionState } from './solutionState';
-import { fetchLogsStats, fetchLogsVolumeSeries, fetchTracesActivity, fetchTracesServices } from './telemetryData';
+import { fetchLogsActivity, fetchTracesActivity, fetchTracesServices } from './telemetryData';
 import { type ExistingSolutionProviderResult } from './types';
 
 export interface TelemetrySolutions {
@@ -28,8 +28,7 @@ export function useTelemetrySolutions(): TelemetrySolutions {
   const tempoDs = resolution?.state.traces === 'active' ? resolution.tempoDatasource : null;
 
   // Gate inside the callbacks (ds in the deps): an inactive or unknown signal never queries.
-  const logsStats = useAsync(async () => (lokiDs ? fetchLogsStats(lokiDs) : undefined), [lokiDs]);
-  const logsVolume = useAsync(async () => (lokiDs ? fetchLogsVolumeSeries(lokiDs) : undefined), [lokiDs]);
+  const logsActivity = useAsync(async () => (lokiDs ? fetchLogsActivity(lokiDs) : undefined), [lokiDs]);
   const tracesActivity = useAsync(async () => (tempoDs ? fetchTracesActivity(tempoDs) : undefined), [tempoDs]);
   const tracesServices = useAsync(async () => (tempoDs ? fetchTracesServices(tempoDs) : undefined), [tempoDs]);
 
@@ -37,10 +36,10 @@ export function useTelemetrySolutions(): TelemetrySolutions {
     ? {
         loading: false,
         item: buildLogsItem({
-          stats: logsStats.value,
-          statsLoading: logsStats.loading,
-          volumeSeries: logsVolume.value ?? null,
-          volumeLoading: logsVolume.loading,
+          bytes: logsActivity.value?.bytes,
+          sources: logsActivity.value?.sources,
+          volumeSeries: logsActivity.value?.series ?? null,
+          activityLoading: logsActivity.loading,
           datasourceName: lokiDs.name,
           drilldownAvailable: availableApps.has(LOGS_DRILLDOWN_APP_ID),
         }),

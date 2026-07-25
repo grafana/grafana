@@ -16,9 +16,10 @@ export const LOGS_STATS_LOOKBACK_DAYS = 7;
 const NS_IN_MS = 1e6;
 const NS_IN_S = 1e9;
 
-export interface LogsStats {
+export interface LogsActivity {
   bytes: number | null;
   sources: number | null;
+  series: FieldSparkline | null;
 }
 
 export interface TracesActivity {
@@ -47,9 +48,9 @@ function toSparkline(points: Array<[number, number]>, name: string): FieldSparkl
   if (points.length < 2) {
     return null;
   }
-  const sorted = [...points].sort(([a], [b]) => a - b);
-  const x: Field = { name: 'Time', type: FieldType.time, values: sorted.map(([ts]) => ts), config: {} };
-  const y: Field = { name, type: FieldType.number, values: sorted.map(([, value]) => value), config: {} };
+  points.sort(([a], [b]) => a - b);
+  const x: Field = { name: 'Time', type: FieldType.time, values: points.map(([ts]) => ts), config: {} };
+  const y: Field = { name, type: FieldType.number, values: points.map(([, value]) => value), config: {} };
   return { x, y: { ...y, state: { range: getMinMaxAndDelta(y) } } };
 }
 
@@ -62,66 +63,51 @@ async function resolveLogsLabel(instance: DataSourceWithBackend, start: number, 
   return ['service_name', 'job'].find((preferred) => labels.includes(preferred)) ?? labels[0] ?? null;
 }
 
-/** Ingested bytes and distinct sources over the stats window; null fields when unavailable. */
-export async function fetchLogsStats(ds: Pick<DataSourceInstanceListItem, 'uid'>): Promise<LogsStats> {
+/**
+ * Ingested bytes and distinct sources over the stats window plus the 24h ingest-volume
+ * sparkline, all riding Loki's index (cheap even over 7d). Each field fails soft to null.
+ */
+export async function fetchLogsActivity(ds: Pick<DataSourceInstanceListItem, 'uid'>): Promise<LogsActivity> {
+  const empty: LogsActivity = { bytes: null, sources: null, series: null };
   const instance = await resolveBackendInstance(ds.uid);
   if (!instance) {
-    return { bytes: null, sources: null };
+    return empty;
   }
   const end = Date.now() * NS_IN_MS;
-  const start = end - LOGS_STATS_LOOKBACK_DAYS * 24 * 3600 * NS_IN_S;
-  const label = await resolveLogsLabel(instance, start, end);
+  const statsStart = end - LOGS_STATS_LOOKBACK_DAYS * 24 * 3600 * NS_IN_S;
+  const label = await resolveLogsLabel(instance, statsStart, end);
   if (!label) {
-    return { bytes: null, sources: null };
+    return empty;
   }
-  // Volume rides the index (cheap even over 7d); a disabled volume endpoint fails soft to null.
-  const [volume, values] = await Promise.all([
-    getResource<LokiVolumeResponse>(instance, 'index/volume', {
-      query: `{${label}=~".+"}`,
-      start,
-      end,
-      limit: 1000,
-    }).catch(() => null),
-    getResource<{ data?: unknown }>(instance, `label/${encodeURIComponent(label)}/values`, { start, end }).catch(
+  const query = `{${label}=~".+"}`;
+  const [volume, values, volumeRange] = await Promise.all([
+    getResource<LokiVolumeResponse>(instance, 'index/volume', { query, start: statsStart, end, limit: 1000 }).catch(
       () => null
     ),
+    getResource<{ data?: unknown }>(instance, `label/${encodeURIComponent(label)}/values`, {
+      start: statsStart,
+      end,
+    }).catch(() => null),
+    getResource<LokiVolumeRangeResponse>(instance, 'index/volume_range', {
+      query,
+      start: end - DATA_LOOKBACK_HOURS * 3600 * NS_IN_S,
+      end,
+      step: '30m',
+    }).catch(() => null),
   ]);
   const volumes = volume?.data?.result;
-  const bytes = Array.isArray(volumes)
-    ? volumes.reduce((total, entry) => total + (Number(entry.value?.[1]) || 0), 0)
-    : null;
-  const sources = Array.isArray(values?.data) ? values.data.length : null;
-  return { bytes, sources };
-}
-
-/** Ingest-volume sparkline over the last 24h, or null when the series cannot be built. */
-export async function fetchLogsVolumeSeries(
-  ds: Pick<DataSourceInstanceListItem, 'uid'>
-): Promise<FieldSparkline | null> {
-  const instance = await resolveBackendInstance(ds.uid);
-  if (!instance) {
-    return null;
-  }
-  const end = Date.now() * NS_IN_MS;
-  const start = end - DATA_LOOKBACK_HOURS * 3600 * NS_IN_S;
-  const label = await resolveLogsLabel(instance, start, end);
-  if (!label) {
-    return null;
-  }
-  const res = await getResource<LokiVolumeRangeResponse>(instance, 'index/volume_range', {
-    query: `{${label}=~".+"}`,
-    start,
-    end,
-    step: '30m',
-  });
   // Sum the per-label matrix into one total-ingest series (timestamps are unix seconds).
   const buckets = new Map<number, number>();
-  for (const series of res?.data?.result ?? []) {
+  for (const series of volumeRange?.data?.result ?? []) {
     for (const [ts, value] of series.values ?? []) {
       buckets.set(ts * 1000, (buckets.get(ts * 1000) ?? 0) + (Number(value) || 0));
     }
   }
-  return toSparkline([...buckets.entries()], 'Ingest volume');
+  return {
+    bytes: Array.isArray(volumes) ? volumes.reduce((total, entry) => total + (Number(entry.value?.[1]) || 0), 0) : null,
+    sources: Array.isArray(values?.data) ? values.data.length : null,
+    series: toSparkline([...buckets.entries()], 'Ingest volume'),
+  };
 }
 
 /**
@@ -158,20 +144,18 @@ export async function fetchTracesActivity(ds: Pick<DataSourceInstanceListItem, '
     step: '30m',
   });
   const buckets = new Map<number, number>();
-  let spans = 0;
-  let seen = false;
   for (const series of res?.series ?? []) {
     for (const sample of series.samples ?? []) {
       // Sparse samples: zero buckets may be omitted; values may arrive as strings.
       const ts = Number(sample.timestampMs);
       const value = Number(sample.value ?? 0);
-      if (!Number.isFinite(ts) || !Number.isFinite(value)) {
-        continue;
+      if (Number.isFinite(ts) && Number.isFinite(value)) {
+        buckets.set(ts, (buckets.get(ts) ?? 0) + value);
       }
-      seen = true;
-      spans += value;
-      buckets.set(ts, (buckets.get(ts) ?? 0) + value);
     }
   }
-  return { spans: seen ? spans : null, series: toSparkline([...buckets.entries()], 'Span throughput') };
+  return {
+    spans: buckets.size > 0 ? [...buckets.values()].reduce((total, value) => total + value, 0) : null,
+    series: toSparkline([...buckets.entries()], 'Span throughput'),
+  };
 }

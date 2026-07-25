@@ -2,25 +2,23 @@ import { type FieldSparkline, formattedValueToString, getValueFormat, locationUt
 import { t } from '@grafana/i18n';
 
 import { HOSTED_TRACES_APP_ID, LOGS_DRILLDOWN_APP_ID } from './appPluginIds';
-import { type LogsStats } from './telemetryData';
 import { type ExistingItem } from './types';
 
 // Browser locale is the deliberate choice: the homepage number format follows the user's environment.
 const compactFormatter = new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 });
 
 export interface LogsItemParts {
-  stats: LogsStats | undefined;
-  statsLoading: boolean;
+  bytes: number | null | undefined;
+  sources: number | null | undefined;
+  activityLoading: boolean;
   volumeSeries: FieldSparkline | null | undefined;
-  volumeLoading: boolean;
   datasourceName: string;
   drilldownAvailable: boolean;
 }
 
 /** Build the Hosted Logs entry from live Loki data. */
 export function buildLogsItem(parts: LogsItemParts): ExistingItem {
-  const bytes = parts.stats?.bytes;
-  const sources = parts.stats?.sources;
+  const { bytes, sources } = parts;
   return {
     id: 'logs',
     title: t('home.recommendations.logs.title', 'Hosted Logs'),
@@ -40,14 +38,14 @@ export function buildLogsItem(parts: LogsItemParts): ExistingItem {
                 : t('home.recommendations.logs.stats', 'ingested · 7d'),
           }
         : undefined,
-    statsLoading: parts.statsLoading,
+    statsLoading: parts.activityLoading,
     sparkline: parts.volumeSeries
       ? {
           series: parts.volumeSeries,
           caption: t('home.recommendations.logs.volume', 'Ingest volume · last 24h'),
         }
       : undefined,
-    sparklineLoading: parts.volumeLoading,
+    sparklineLoading: parts.activityLoading,
     action: t('home.recommendations.logs.action', 'Open Explore (Logs)'),
     href: locationUtil.assureBaseUrl(parts.drilldownAvailable ? `/a/${LOGS_DRILLDOWN_APP_ID}` : '/explore'),
   };
