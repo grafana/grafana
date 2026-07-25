@@ -3,8 +3,8 @@
  *
  * `SignalExplorerRail` is one arrangement of these pieces — the leaf components, hooks and state
  * below it are exported so an alternative shell can be composed from the same parts. Anything not
- * listed here (the resource client, `toRefsByMetric`) is an implementation detail of that
- * arrangement and may change without notice.
+ * listed here (the resource client) is an implementation detail of that arrangement and may change
+ * without notice.
  */
 
 /* eslint-disable no-barrel-files/no-barrel-files -- this file is the module's published surface, not an import shortcut; code inside the module imports from the leaf files directly */
@@ -17,7 +17,11 @@ export { useLabelValues } from './data/useLabelValues';
 export { useMetricCatalog } from './data/useMetricCatalog';
 export { useMetricDetail } from './data/useMetricDetail';
 
+// `detectMetricsInQueries` produces `{ refId: metricNames[] }` and the metric rows badge off
+// `{ metricName: refIds[] }`; `toRefsByMetric` is the adapter between them, so it ships with them.
 export { detectMetricsInQueries } from './query/detectMetricsInQueries';
+export { toRefsByMetric } from './query/toRefsByMetric';
+export { resolveCards, type CardModel } from './query/resolveCards';
 
 export {
   clearExploreState,
