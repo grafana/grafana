@@ -127,6 +127,26 @@ describe('SignalExplorerRail', () => {
       expect(cards[1]).toHaveAttribute('data-isprometheus', 'false');
     });
 
+    // Explore renders the rail from a pane id; a split close removes the pane while the tree is
+    // still mounted, and nothing below can be fetched without a range.
+    it('renders nothing at all for a pane that is not open', () => {
+      const store = configureStore({
+        reducer: {
+          signalExplorer: signalExplorerReducer,
+          explore: (state: ExploreStubState = { panes: {} }): ExploreStubState => state,
+        },
+      });
+
+      render(
+        <Provider store={store}>
+          <SignalExplorerRail exploreId="left" />
+        </Provider>
+      );
+
+      expect(screen.queryByTestId('signal-explorer-rail')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('card-sentinel')).not.toBeInTheDocument();
+    });
+
     it('marks the card matching the slice activeRefId as active', () => {
       mockDatasources(PROM, LOKI);
 

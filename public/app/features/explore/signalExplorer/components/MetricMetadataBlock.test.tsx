@@ -26,6 +26,17 @@ describe('MetricMetadataBlock', () => {
     expect(screen.getByText(/select a metric/i)).toBeInTheDocument();
   });
 
+  // The dock is dismissible whether or not it is describing a metric: with no close control in the
+  // empty state, a user who deselects has no way to reclaim the space.
+  it('still offers the close control in the empty state', async () => {
+    const onClose = jest.fn();
+    render(<MetricMetadataBlock metric={undefined} onClose={onClose} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /close/i }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it('omits the unit line entirely when unit is undefined', () => {
     render(<MetricMetadataBlock metric={{ name: 'up', type: 'gauge', help: 'target up' }} onClose={jest.fn()} />);
 
