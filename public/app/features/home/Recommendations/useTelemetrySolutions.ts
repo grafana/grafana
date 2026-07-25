@@ -15,8 +15,8 @@ export interface TelemetrySolutions {
 
 /**
  * Logs and Traces solution providers: an entry appears only for a confirmed-active signal
- * ('unknown' never invents one), filled with live stats from the datasource that won the probe.
- * Detail fetches fail soft: the entry renders without the failed stat or sparkline.
+ * ('unknown' never invents one) AND when its detail fetches produced something to show —
+ * a bare title card with every stat failed-soft reads as broken, so it is dropped instead.
  */
 export function useTelemetrySolutions(): TelemetrySolutions {
   const { value: resolution, loading: stateLoading } = useSolutionState();
@@ -32,33 +32,47 @@ export function useTelemetrySolutions(): TelemetrySolutions {
   const tracesActivity = useAsync(async () => (tempoDs ? fetchTracesActivity(tempoDs) : undefined), [tempoDs]);
   const tracesServices = useAsync(async () => (tempoDs ? fetchTracesServices(tempoDs) : undefined), [tempoDs]);
 
-  const logs: ExistingSolutionProviderResult = lokiDs
-    ? {
-        loading: false,
-        item: buildLogsItem({
-          bytes: logsActivity.value?.bytes,
-          sources: logsActivity.value?.sources,
-          volumeSeries: logsActivity.value?.series ?? null,
-          activityLoading: logsActivity.loading,
-          datasourceName: lokiDs.name,
-          drilldownAvailable: availableApps.has(LOGS_DRILLDOWN_APP_ID),
-        }),
-      }
-    : { loading: stateLoading, item: null };
+  let logs: ExistingSolutionProviderResult = { loading: stateLoading, item: null };
+  if (lokiDs) {
+    const activity = logsActivity.value;
+    // Stats need bytes, the sparkline needs the series; with neither there is nothing to render.
+    logs =
+      logsActivity.loading || !activity
+        ? { loading: logsActivity.loading, item: null }
+        : activity.bytes == null && activity.series == null
+          ? { loading: false, item: null }
+          : {
+              loading: false,
+              item: buildLogsItem({
+                bytes: activity.bytes,
+                sources: activity.sources,
+                volumeSeries: activity.series,
+                datasourceName: lokiDs.name,
+                drilldownAvailable: availableApps.has(LOGS_DRILLDOWN_APP_ID),
+              }),
+            };
+  }
 
-  const traces: ExistingSolutionProviderResult = tempoDs
-    ? {
-        loading: false,
-        item: buildTracesItem({
-          spans: tracesActivity.value?.spans,
-          services: tracesServices.value,
-          activityLoading: tracesActivity.loading,
-          throughputSeries: tracesActivity.value?.series ?? null,
-          datasourceName: tempoDs.name,
-          drilldownAvailable: availableApps.has(HOSTED_TRACES_APP_ID),
-        }),
-      }
-    : { loading: stateLoading, item: null };
+  let traces: ExistingSolutionProviderResult = { loading: stateLoading, item: null };
+  if (tempoDs) {
+    const activity = tracesActivity.value;
+    // The services count alone renders nothing (it is the stats secondary), so it cannot carry a card.
+    traces =
+      tracesActivity.loading || tracesServices.loading || !activity
+        ? { loading: tracesActivity.loading || tracesServices.loading, item: null }
+        : activity.spans == null && activity.series == null
+          ? { loading: false, item: null }
+          : {
+              loading: false,
+              item: buildTracesItem({
+                spans: activity.spans,
+                services: tracesServices.value ?? null,
+                throughputSeries: activity.series,
+                datasourceName: tempoDs.name,
+                drilldownAvailable: availableApps.has(HOSTED_TRACES_APP_ID),
+              }),
+            };
+  }
 
   return { logs, traces };
 }

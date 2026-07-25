@@ -8,15 +8,14 @@ import { type ExistingItem } from './types';
 const compactFormatter = new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 });
 
 export interface LogsItemParts {
-  bytes: number | null | undefined;
-  sources: number | null | undefined;
-  activityLoading: boolean;
-  volumeSeries: FieldSparkline | null | undefined;
+  bytes: number | null;
+  sources: number | null;
+  volumeSeries: FieldSparkline | null;
   datasourceName: string;
   drilldownAvailable: boolean;
 }
 
-/** Build the Hosted Logs entry from live Loki data. */
+/** Build the Hosted Logs entry from live Loki data; the caller guarantees something to show. */
 export function buildLogsItem(parts: LogsItemParts): ExistingItem {
   const { bytes, sources } = parts;
   return {
@@ -38,29 +37,26 @@ export function buildLogsItem(parts: LogsItemParts): ExistingItem {
                 : t('home.recommendations.logs.stats', 'ingested · 7d'),
           }
         : undefined,
-    statsLoading: parts.activityLoading,
     sparkline: parts.volumeSeries
       ? {
           series: parts.volumeSeries,
           caption: t('home.recommendations.logs.volume', 'Ingest volume · last 24h'),
         }
       : undefined,
-    sparklineLoading: parts.activityLoading,
     action: t('home.recommendations.logs.action', 'Open Explore (Logs)'),
     href: locationUtil.assureBaseUrl(parts.drilldownAvailable ? `/a/${LOGS_DRILLDOWN_APP_ID}` : '/explore'),
   };
 }
 
 export interface TracesItemParts {
-  spans: number | null | undefined;
-  services: number | null | undefined;
-  activityLoading: boolean;
-  throughputSeries: FieldSparkline | null | undefined;
+  spans: number | null;
+  services: number | null;
+  throughputSeries: FieldSparkline | null;
   datasourceName: string;
   drilldownAvailable: boolean;
 }
 
-/** Build the Hosted Traces entry from live Tempo data. */
+/** Build the Hosted Traces entry from live Tempo data; the caller guarantees something to show. */
 export function buildTracesItem(parts: TracesItemParts): ExistingItem {
   const { spans, services } = parts;
   return {
@@ -87,14 +83,12 @@ export function buildTracesItem(parts: TracesItemParts): ExistingItem {
                 : t('home.recommendations.traces.stats', 'traced · 24h'),
           }
         : undefined,
-    statsLoading: parts.activityLoading,
     sparkline: parts.throughputSeries
       ? {
           series: parts.throughputSeries,
           caption: t('home.recommendations.traces.throughput', 'Span throughput · last 24h'),
         }
       : undefined,
-    sparklineLoading: parts.activityLoading,
     action: t('home.recommendations.traces.action', 'Open Traces Drilldown'),
     href: locationUtil.assureBaseUrl(parts.drilldownAvailable ? `/a/${HOSTED_TRACES_APP_ID}` : '/explore'),
   };
