@@ -10,7 +10,7 @@
 /* eslint-disable no-barrel-files/no-barrel-files -- this file is the module's published surface, not an import shortcut; code inside the module imports from the leaf files directly */
 
 // `MetricRow` the data shape is aliased so the `MetricRow` component keeps its own name here.
-export type { MetricLabel, MetricRow as MetricRowModel, MetricType } from './types';
+export type { MetricRow as MetricRowModel, MetricType } from './types';
 
 export { deriveMetricType, getMetricTypeOptions } from './data/metricType';
 export { useLabelValues } from './data/useLabelValues';
