@@ -51,21 +51,21 @@ type keySetHTTP struct {
 	cacheExpiration time.Duration
 }
 
-func (s *AuthService) checkKeySetConfiguration() error {
+func checkKeySetConfiguration(settings setting.AuthJWTSettings) error {
 	var count int
-	if s.Cfg.JWTAuth.KeyFile != "" {
+	if settings.KeyFile != "" {
 		count++
 	}
-	if s.Cfg.JWTAuth.KeyValue != "" {
+	if settings.KeyValue != "" {
 		count++
 	}
-	if s.Cfg.JWTAuth.JWKSetFile != "" {
+	if settings.JWKSetFile != "" {
 		count++
 	}
-	if s.Cfg.JWTAuth.JWKSetValue != "" {
+	if settings.JWKSetValue != "" {
 		count++
 	}
-	if s.Cfg.JWTAuth.JWKSetURL != "" {
+	if settings.JWKSetURL != "" {
 		count++
 	}
 
@@ -80,56 +80,50 @@ func (s *AuthService) checkKeySetConfiguration() error {
 	return nil
 }
 
-// initKeySet creates a provider for JWKSet from exactly one configured source: a
-// PEM key or JWKS provided as a file or inline value, or a JWKS https endpoint.
-func (s *AuthService) initKeySet() error {
-	if err := s.checkKeySetConfiguration(); err != nil {
-		return err
+// buildKeySet creates a provider for JWKSet from exactly one configured source:
+// a PEM key or JWKS provided as a file or inline value, or a JWKS https endpoint.
+// It reads only the passed settings and does not mutate the service, so apply
+// can build the new key set before swapping state.
+func (s *AuthService) buildKeySet(settings setting.AuthJWTSettings) (keySet, error) {
+	if err := checkKeySetConfiguration(settings); err != nil {
+		return nil, err
 	}
 
 	switch {
-	case s.Cfg.JWTAuth.KeyFile != "":
-		data, err := s.readKeyFile(s.Cfg.JWTAuth.KeyFile)
+	case settings.KeyFile != "":
+		data, err := s.readKeyFile(settings.KeyFile)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		s.keySet, err = parsePEMPublicKey(data, s.Cfg.JWTAuth.KeyID)
-		return err
-	case s.Cfg.JWTAuth.KeyValue != "":
-		data, err := decodeKeyValue(s.Cfg.JWTAuth.KeyValue)
+		return parsePEMPublicKey(data, settings.KeyID)
+	case settings.KeyValue != "":
+		data, err := decodeKeyValue(settings.KeyValue)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		s.keySet, err = parsePEMPublicKey(data, s.Cfg.JWTAuth.KeyID)
-		return err
-	case s.Cfg.JWTAuth.JWKSetFile != "":
-		data, err := s.readKeyFile(s.Cfg.JWTAuth.JWKSetFile)
+		return parsePEMPublicKey(data, settings.KeyID)
+	case settings.JWKSetFile != "":
+		data, err := s.readKeyFile(settings.JWKSetFile)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		s.keySet, err = parseJWKS(data)
-		return err
-	case s.Cfg.JWTAuth.JWKSetValue != "":
-		data, err := decodeKeyValue(s.Cfg.JWTAuth.JWKSetValue)
+		return parseJWKS(data)
+	case settings.JWKSetValue != "":
+		data, err := decodeKeyValue(settings.JWKSetValue)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		s.keySet, err = parseJWKS(data)
-		return err
-	case s.Cfg.JWTAuth.JWKSetURL != "":
-		keySet, err := s.newHTTPKeySet(s.Cfg.JWTAuth.JWKSetURL)
-		if err != nil {
-			return err
-		}
-		s.keySet = keySet
-		return nil
+		return parseJWKS(data)
+	case settings.JWKSetURL != "":
+		return s.newHTTPKeySet(settings, settings.JWKSetURL)
 	}
 
-	return nil
+	return nil, nil
 }
 
 // newHTTPKeySet builds a key set that fetches a JWKS from an https endpoint.
-func (s *AuthService) newHTTPKeySet(urlStr string) (*keySetHTTP, error) {
+// It reads only the passed settings so it can run before apply swaps state.
+func (s *AuthService) newHTTPKeySet(settings setting.AuthJWTSettings, urlStr string) (*keySetHTTP, error) {
 	urlParsed, err := url.Parse(urlStr)
 	if err != nil {
 		return nil, err
@@ -139,26 +133,26 @@ func (s *AuthService) newHTTPKeySet(urlStr string) (*keySetHTTP, error) {
 	}
 
 	var caCertPool *x509.CertPool
-	if s.Cfg.JWTAuth.TlsClientCa != "" {
+	if settings.TlsClientCa != "" {
 		s.log.Debug("reading ca from TlsClientCa path")
 		// nolint:gosec
 		// We can ignore the gosec G304 warning on this one because `tlsClientCa` comes from grafana configuration file
-		caCert, err := os.ReadFile(s.Cfg.JWTAuth.TlsClientCa)
+		caCert, err := os.ReadFile(settings.TlsClientCa)
 		if err != nil {
-			s.log.Error("Failed to read TlsClientCa", "path", s.Cfg.JWTAuth.TlsClientCa, "error", err)
+			s.log.Error("Failed to read TlsClientCa", "path", settings.TlsClientCa, "error", err)
 			return nil, fmt.Errorf("failed to read TlsClientCa: %w", err)
 		}
 
 		caCertPool = x509.NewCertPool()
 		if !caCertPool.AppendCertsFromPEM(caCert) {
-			s.log.Error("failed to decode provided PEM certs", "path", s.Cfg.JWTAuth.TlsClientCa)
+			s.log.Error("failed to decode provided PEM certs", "path", settings.TlsClientCa)
 			return nil, fmt.Errorf("failed to decode provided PEM certs file from TlsClientCa")
 		}
 	}
 
 	// Read Bearer token from file during init
-	if s.Cfg.JWTAuth.JWKSetBearerTokenFile != "" {
-		if _, err := getBearerToken(s.Cfg.JWTAuth.JWKSetBearerTokenFile); err != nil {
+	if settings.JWKSetBearerTokenFile != "" {
+		if _, err := getBearerToken(settings.JWKSetBearerTokenFile); err != nil {
 			return nil, err
 		}
 	}
@@ -166,12 +160,13 @@ func (s *AuthService) newHTTPKeySet(urlStr string) (*keySetHTTP, error) {
 	return &keySetHTTP{
 		url:             urlStr,
 		log:             s.log,
-		bearerTokenPath: s.Cfg.JWTAuth.JWKSetBearerTokenFile,
+		bearerTokenPath: settings.JWKSetBearerTokenFile,
 		client: &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
+					MinVersion:         tls.VersionTLS12,
 					Renegotiation:      tls.RenegotiateFreelyAsClient,
-					InsecureSkipVerify: s.Cfg.JWTAuth.TlsSkipVerify,
+					InsecureSkipVerify: settings.TlsSkipVerify,
 					RootCAs:            caCertPool,
 				},
 				Proxy: http.ProxyFromEnvironment,
@@ -187,7 +182,7 @@ func (s *AuthService) newHTTPKeySet(urlStr string) (*keySetHTTP, error) {
 			Timeout: time.Second * 30,
 		},
 		cacheKey:        fmt.Sprintf("auth-jwt:jwk-%s", urlStr),
-		cacheExpiration: s.Cfg.JWTAuth.CacheTTL,
+		cacheExpiration: settings.CacheTTL,
 		cache:           s.RemoteCache,
 	}, nil
 }
