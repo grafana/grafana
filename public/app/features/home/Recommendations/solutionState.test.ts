@@ -222,6 +222,17 @@ describe('resolveSolutionState', () => {
     expect(resolution.state.metrics).toBe('inactive');
   });
 
+  it('maps a rejecting kubernetes resolution to unknown without forcing metrics', async () => {
+    freshCloudFixture();
+    kubernetesMock.mockRejectedValue(new Error('all probes failed'));
+
+    const resolution = await resolveWithTimers();
+
+    expect(resolution.state.kubernetes).toBe('unknown');
+    // The k8s ⇒ metrics invariant must not fire on unknown.
+    expect(resolution.state.metrics).toBe('inactive');
+  });
+
   it('settles a hung probe to unknown within the signal budget, preserving siblings', async () => {
     const { lokiResource } = freshCloudFixture();
     lokiResource.mockImplementation(() => new Promise(() => {}));

@@ -458,7 +458,7 @@ describe('Kubernetes Prometheus resolution', () => {
     }
   });
 
-  it('retries an errored probe so a transient failure keeps the default', async () => {
+  it('an errored leader probe falls through to the fan-out without retrying', async () => {
     setDataSources([
       { uid: 'default-uid', name: 'default-prom', isDefault: true },
       { uid: 'team-uid', name: 'team-prom' },
@@ -466,19 +466,13 @@ describe('Kubernetes Prometheus resolution', () => {
     dataByUid = { 'default-uid': 5, 'team-uid': 1 };
     probeFailuresByUid = { 'default-uid': 1 };
 
-    jest.useFakeTimers();
-    try {
-      const inventoryPromise = fetchKubernetesInventory();
-      const healthPromise = fetchKubernetesHealth();
-      await jest.advanceTimersByTimeAsync(10_000);
-      const inventory = await inventoryPromise;
-      await healthPromise;
+    const inventory = await fetchKubernetesInventory();
+    await fetchKubernetesHealth();
 
-      expect(inventoryCalls()[0][0].datasource.uid).toBe('default-uid');
-      expect(inventory.clusters).toBe(5);
-    } finally {
-      jest.useRealTimers();
-    }
+    expect(inventoryCalls()[0][0].datasource.uid).toBe('team-uid');
+    expect(inventory.clusters).toBe(1);
+    // Exactly one attempt per candidate: the probe never retries.
+    expect(probeAttempts).toEqual({ 'default-uid': 1, 'team-uid': 1 });
   });
 
   it('rejects when every probe errors', async () => {
@@ -489,17 +483,8 @@ describe('Kubernetes Prometheus resolution', () => {
     dataByUid = { 'a-uid': 3, 'b-uid': 3 };
     probeErrorUids = new Set(['a-uid', 'b-uid']);
 
-    jest.useFakeTimers();
-    try {
-      const assertion = expect(fetchKubernetesInventory()).rejects.toThrow(
-        'No Prometheus datasource with Kubernetes data'
-      );
-      await jest.advanceTimersByTimeAsync(10_000);
-      await assertion;
-      expect(inventoryCalls()).toHaveLength(0);
-    } finally {
-      jest.useRealTimers();
-    }
+    await expect(fetchKubernetesInventory()).rejects.toThrow(/prometheus datasource probe\(s\) failed/);
+    expect(inventoryCalls()).toHaveLength(0);
   });
 
   it('probes only the leader when the top-priority datasource has data', async () => {
@@ -616,29 +601,6 @@ describe('Kubernetes Prometheus resolution', () => {
 
       expect(inventory.clusters).toBe(2);
       expect(inventoryCalls()).toHaveLength(3);
-    } finally {
-      jest.useRealTimers();
-    }
-  });
-
-  it('keeps the default when its probe fails twice then succeeds', async () => {
-    setDataSources([
-      { uid: 'default-uid', name: 'default-prom', isDefault: true },
-      { uid: 'team-uid', name: 'team-prom' },
-    ]);
-    dataByUid = { 'default-uid': 5, 'team-uid': 1 };
-    probeFailuresByUid = { 'default-uid': 2 };
-
-    jest.useFakeTimers();
-    try {
-      const inventoryPromise = fetchKubernetesInventory();
-      await jest.advanceTimersByTimeAsync(10_000);
-      const inventory = await inventoryPromise;
-
-      expect(inventoryCalls()[0][0].datasource.uid).toBe('default-uid');
-      expect(inventory.clusters).toBe(5);
-      expect(probeAttempts['default-uid']).toBe(3);
-      expect(probeCalls().map(([o]) => o.datasource.uid)).not.toContain('team-uid');
     } finally {
       jest.useRealTimers();
     }
