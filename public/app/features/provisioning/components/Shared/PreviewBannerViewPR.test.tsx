@@ -172,6 +172,22 @@ describe('PreviewBannerViewPR', () => {
         )
       ).toBeInTheDocument();
     });
+
+    it('should keep Open pull request label for GitLab when a PR URL is present', () => {
+      setup({ prURL: 'test-url', isNewPr: true, repoType: 'gitlab' });
+
+      expect(screen.getByText('Open pull request in GitLab')).toBeInTheDocument();
+      expect(screen.queryByText(/cannot open pull requests from Grafana/i)).not.toBeInTheDocument();
+    });
+
+    it('should use Open in Git and show the no-PR hint for pure git', () => {
+      setup({ prURL: 'https://git.example.com/org/repo', isNewPr: true, repoType: 'git' });
+
+      expect(screen.getByText('Open in Git')).toBeInTheDocument();
+      expect(screen.queryByText('Open pull request in Git')).not.toBeInTheDocument();
+      expect(screen.queryByText('View pull request in Git')).not.toBeInTheDocument();
+      expect(screen.getByText(/This connection cannot open pull requests from Grafana/i)).toBeInTheDocument();
+    });
   });
 
   describe('Delete action', () => {

@@ -105,6 +105,14 @@ export const supportsWebhooks = (type?: RepoType): type is 'github' | 'githubEnt
   return type === 'github' || type === 'githubEnterprise' || type === 'gitlab' || type === 'bitbucket';
 };
 
+// Providers whose repositories can open pull/merge requests. Mirrors the backend, where only
+// hosting providers implement RepositoryWithURLs and pass spec.pullRequest validation.
+export const supportsPullRequests = (
+  type?: RepoType
+): type is 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' => {
+  return type === 'github' || type === 'githubEnterprise' || type === 'gitlab' || type === 'bitbucket';
+};
+
 /**
  * Get repository configurations ordered by provider type priority:
  * 1. Git providers first (github, gitlab, bitbucket) - excludes pure git
