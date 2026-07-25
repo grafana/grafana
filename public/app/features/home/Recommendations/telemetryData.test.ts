@@ -1,8 +1,7 @@
-import { createDataFrame, type DataSourceInstanceListItem, FieldType } from '@grafana/data';
+import { type DataSourceInstanceListItem } from '@grafana/data';
 import { type BackendSrv, type DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 
 import { resolveBackendInstance } from './probeUtils';
-import { runDatasourceQueries } from './promQuery';
 import {
   fetchLogsStats,
   fetchLogsVolumeSeries,
@@ -16,25 +15,19 @@ jest.mock('./probeUtils', () => ({
   resolveBackendInstance: jest.fn(),
 }));
 
-jest.mock('./promQuery', () => ({
-  ...jest.requireActual('./promQuery'),
-  runDatasourceQueries: jest.fn(),
-}));
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: jest.fn(),
 }));
 
 const mockResolveBackendInstance = jest.mocked(resolveBackendInstance);
-const mockRunDatasourceQueries = jest.mocked(runDatasourceQueries);
 const mockProxyGet = jest.fn();
 
 const DATA_LOOKBACK_HOURS = 24;
 const NS_IN_MS = 1e6;
 
 const loki: Pick<DataSourceInstanceListItem, 'uid'> = { uid: 'loki-uid' };
-const tempo = { uid: 'tempo-uid', type: 'tempo' };
+const tempo = { uid: 'tempo-uid' };
 
 function instanceWith(getResource: jest.Mock): DataSourceWithBackend {
   return { getResource } as unknown as DataSourceWithBackend;
@@ -44,7 +37,6 @@ beforeEach(() => {
   jest.useFakeTimers();
   jest.setSystemTime(new Date('2026-07-24T12:00:00Z'));
   mockResolveBackendInstance.mockReset();
-  mockRunDatasourceQueries.mockReset();
   mockProxyGet.mockReset();
   jest.mocked(getBackendSrv).mockReturnValue({ get: mockProxyGet } as unknown as BackendSrv);
 });
@@ -203,29 +195,35 @@ describe('fetchTracesServices', () => {
 });
 
 describe('fetchTracesActivity', () => {
-  it('reads the throughput series and integrates it into a span count', async () => {
-    const frame = createDataFrame({
-      refId: 'spans',
-      fields: [
-        { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
-        { name: 'Value', type: FieldType.number, values: [100, 200, 300] },
+  it('sums the query_range samples into a span count and throughput series', async () => {
+    mockProxyGet.mockResolvedValue({
+      series: [
+        {
+          samples: [
+            { timestampMs: '1000', value: 100 },
+            { timestampMs: '2000', value: 200 },
+            { timestampMs: '3000', value: 300 },
+          ],
+        },
       ],
     });
-    mockRunDatasourceQueries.mockResolvedValue([frame]);
 
     const activity = await fetchTracesActivity(tempo);
 
     expect(activity.spans).toBe(600);
+    expect(activity.series?.x?.values).toEqual([1000, 2000, 3000]);
     expect(activity.series?.y.values).toEqual([100, 200, 300]);
-    expect(mockRunDatasourceQueries).toHaveBeenCalledWith(
-      [{ refId: 'spans', queryType: 'traceql', query: '{} | count_over_time()', metricsQueryType: 'range' }],
-      expect.objectContaining({ raw: { from: `now-${DATA_LOOKBACK_HOURS}h`, to: 'now' } }),
-      tempo
+    const end = Math.floor(Date.now() / 1000);
+    expect(mockProxyGet).toHaveBeenCalledWith(
+      '/api/datasources/proxy/uid/tempo-uid/api/metrics/query_range',
+      { q: '{} | count_over_time()', start: end - DATA_LOOKBACK_HOURS * 3600, end, step: '30m' },
+      undefined,
+      { showErrorAlert: false }
     );
   });
 
-  it('reports null spans when the query returns no numeric data', async () => {
-    mockRunDatasourceQueries.mockResolvedValue([]);
+  it('reports null spans when the response has no samples', async () => {
+    mockProxyGet.mockResolvedValue({ series: [] });
 
     await expect(fetchTracesActivity(tempo)).resolves.toEqual({ spans: null, series: null });
   });
