@@ -9,7 +9,7 @@ import { buildPanelEditScene } from '../PanelEditor';
 import { PanelDataPaneNext } from './PanelDataPaneNext';
 import { VizAndDataPaneNext } from './VizAndDataPaneNext';
 import { SidebarSize } from './constants';
-import { useVizAndDataPaneLayout } from './hooks';
+import { useQueryEditorBanner, useVizAndDataPaneLayout } from './hooks';
 
 jest.mock('./hooks', () => ({
   useVizAndDataPaneLayout: jest.fn(),
@@ -101,6 +101,14 @@ describe('VizAndDataPaneNext', () => {
     it('renders the data pane component', () => {
       render(<VizAndDataPaneNext model={panelEditor} />);
       expect(screen.getByTestId('data-pane-content')).toBeInTheDocument();
+    });
+
+    it('renders the query editor banner when enabled', () => {
+      jest.mocked(useQueryEditorBanner).mockReturnValue({ showBanner: true, dismissBanner: jest.fn() });
+
+      render(<VizAndDataPaneNext model={panelEditor} />);
+
+      expect(screen.getByTestId('query-editor-banner')).toBeInTheDocument();
     });
   });
 });
