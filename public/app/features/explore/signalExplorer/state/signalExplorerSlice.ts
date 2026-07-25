@@ -27,6 +27,12 @@ const slice = createSlice({
         metricName: action.payload.metricName,
       };
     },
+    clearSelectedMetric: (state, action: PayloadAction<{ exploreId: string }>) => {
+      const pane = state[action.payload.exploreId];
+      if (pane) {
+        pane.selectedMetric = undefined;
+      }
+    },
     setTypeFilter: (state, action: PayloadAction<{ exploreId: string; typeFilter: MetricType | null }>) => {
       (state[action.payload.exploreId] ??= emptyPane()).typeFilter = action.payload.typeFilter;
     },
@@ -39,5 +45,12 @@ const slice = createSlice({
   },
 });
 
-export const { setActiveRefId, setSelectedMetric, setTypeFilter, setSearchText, clearExploreState } = slice.actions;
+export const {
+  setActiveRefId,
+  setSelectedMetric,
+  clearSelectedMetric,
+  setTypeFilter,
+  setSearchText,
+  clearExploreState,
+} = slice.actions;
 export const signalExplorerReducer = slice.reducer;

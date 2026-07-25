@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
 import { Provider } from 'react-redux';
 
-import type { DataSourceInstanceSettings, DataSourceRef, TimeRange } from '@grafana/data';
+import type { DataQuery, DataSourceInstanceSettings, DataSourceRef, TimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 
@@ -43,6 +43,7 @@ function renderCard(props: Partial<ComponentProps<typeof DatasourceCard>> = {}, 
         isPrometheus
         isActive
         timeRange={timeRange}
+        paneQueries={[]}
         {...props}
       />
     </Provider>
@@ -68,6 +69,20 @@ describe('DatasourceCard', () => {
       renderCard();
 
       expect(screen.getByTestId('metric-tree-sentinel')).toBeInTheDocument();
+    });
+
+    it('badges each catalog metric with every pane refId referencing it, ignoring unknown tokens', () => {
+      const tree = jest.mocked(MetricTreeModule.MetricTree);
+
+      renderCard({
+        paneQueries: [
+          { refId: 'A', expr: 'sum(up) / rate(unknown_metric[5m])' } as DataQuery,
+          { refId: 'B', expr: 'up{job="x"}' } as DataQuery,
+          { refId: 'C', expr: 'unknown_metric' } as DataQuery,
+        ],
+      });
+
+      expect(tree.mock.calls[0][0].queryRefsByMetric).toEqual({ up: ['A', 'B'] });
     });
 
     it('renders a placeholder and no tree for a non-Prometheus datasource', () => {

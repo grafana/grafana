@@ -1,13 +1,15 @@
 import { css } from '@emotion/css';
-import { useState, type ChangeEvent } from 'react';
+import { useMemo, useState, type ChangeEvent } from 'react';
 
-import { type DataSourceRef, type GrafanaTheme2, type TimeRange } from '@grafana/data';
+import { type DataQuery, type DataSourceRef, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Icon, Input, Text, useStyles2 } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { useMetricCatalog } from '../data/useMetricCatalog';
+import { detectMetricsInQueries } from '../query/detectMetricsInQueries';
+import { toRefsByMetric } from '../query/toRefsByMetric';
 import { selectSearchText, selectTypeFilter } from '../state/selectors';
 import { setActiveRefId, setSearchText, setTypeFilter } from '../state/signalExplorerSlice';
 import type { MetricType } from '../types';
@@ -23,8 +25,12 @@ export interface DatasourceCardProps {
   isPrometheus: boolean;
   isActive: boolean;
   timeRange: TimeRange;
-  /** Metric name -> refIds of the queries in this pane that already reference it. Forwarded to `MetricTree` untouched. */
-  queryRefsByMetric?: Record<string, string[]>;
+  /**
+   * Every query in the pane, read-only. The card matches them against its own datasource's catalog
+   * to work out which refIds already reference each metric — the host cannot do that for it,
+   * because in a mixed pane every card resolves a different catalog.
+   */
+  paneQueries: DataQuery[];
 }
 
 /**
@@ -40,7 +46,7 @@ export function DatasourceCard({
   isPrometheus,
   isActive,
   timeRange,
-  queryRefsByMetric,
+  paneQueries,
 }: DatasourceCardProps) {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
@@ -89,7 +95,7 @@ export function DatasourceCard({
               refId={refId}
               dsRef={dsRef}
               timeRange={timeRange}
-              queryRefsByMetric={queryRefsByMetric}
+              paneQueries={paneQueries}
             />
           ) : (
             <Text color="secondary">
@@ -107,7 +113,7 @@ interface PrometheusBodyProps {
   refId: string;
   dsRef: DataSourceRef;
   timeRange: TimeRange;
-  queryRefsByMetric?: Record<string, string[]>;
+  paneQueries: DataQuery[];
 }
 
 /**
@@ -115,7 +121,7 @@ interface PrometheusBodyProps {
  * Prometheus card — the non-Prometheus branch has nothing to browse and must not fetch a catalog
  * for a datasource that has none.
  */
-function PrometheusBody({ exploreId, refId, dsRef, timeRange, queryRefsByMetric }: PrometheusBodyProps) {
+function PrometheusBody({ exploreId, refId, dsRef, timeRange, paneQueries }: PrometheusBodyProps) {
   const dispatch = useDispatch();
 
   const searchText = useSelector((state) => selectSearchText(state, exploreId));
@@ -128,6 +134,17 @@ function PrometheusBody({ exploreId, refId, dsRef, timeRange, queryRefsByMetric 
   // deliberately does not own.
   const { metrics, loading, error } = useMetricCatalog(dsRef, timeRange, { typeFilter, searchText });
   const isCatalogEmpty = !loading && !error && metrics.length === 0;
+
+  // Matching happens here rather than in the host because the answer depends on *this* card's
+  // catalog: in a mixed pane every card resolves a different datasource, and the same token can be
+  // a metric in one and meaningless in another. All of the pane's queries are matched, not just
+  // this card's, so a metric this datasource knows is badged with every refId that references it.
+  // Matching the search/type-filtered catalog rather than the whole one is enough: `MetricTree`
+  // renders that same filtered list, so a name it cannot show cannot be badged either.
+  const queryRefsByMetric = useMemo(
+    () => toRefsByMetric(detectMetricsInQueries(paneQueries, new Set(metrics.map((metric) => metric.name)))),
+    [paneQueries, metrics]
+  );
 
   const searchLabel = t('explore.signal-explorer.card.search-metrics', 'Search metrics');
 

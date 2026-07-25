@@ -1,6 +1,7 @@
 import {
   signalExplorerReducer,
   setSelectedMetric,
+  clearSelectedMetric,
   setTypeFilter,
   setActiveRefId,
   clearExploreState,
@@ -24,6 +25,20 @@ describe('signalExplorerSlice', () => {
     s = signalExplorerReducer(s, setActiveRefId({ exploreId: 'left', refId: 'A' }));
     expect(s['left'].typeFilter).toBe('counter');
     expect(s['left'].activeRefId).toBe('A');
+  });
+  it('clears the selected metric of one exploreId without touching the rest of the pane', () => {
+    let s = signalExplorerReducer(initial, setSelectedMetric({ exploreId: 'left', refId: 'A', metricName: 'up' }));
+    s = signalExplorerReducer(s, setActiveRefId({ exploreId: 'left', refId: 'A' }));
+    s = signalExplorerReducer(s, setSelectedMetric({ exploreId: 'right', refId: 'B', metricName: 'up' }));
+
+    s = signalExplorerReducer(s, clearSelectedMetric({ exploreId: 'left' }));
+
+    expect(s['left'].selectedMetric).toBeUndefined();
+    expect(s['left'].activeRefId).toBe('A');
+    expect(s['right'].selectedMetric).toEqual({ refId: 'B', metricName: 'up' });
+  });
+  it('ignores clearing the selected metric of an unknown exploreId', () => {
+    expect(signalExplorerReducer(initial, clearSelectedMetric({ exploreId: 'left' }))).toEqual(initial);
   });
   it('clears one exploreId', () => {
     const s1 = signalExplorerReducer(initial, setActiveRefId({ exploreId: 'left', refId: 'A' }));
