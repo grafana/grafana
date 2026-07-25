@@ -103,10 +103,10 @@ export function initializeFromURL(
     const oldQuery = location.getSearchObject();
 
     // we create the default query params from the current URL, omitting all the properties we know should be in the final url.
-    // This includes params from previous schema versions and 'schemaVersion', 'panes', 'orgId' as we want to replace those.
+    // This includes params from previous schema versions and 'schemaVersion', 'panes' as we want to replace those.
     let defaults: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(oldQuery).filter(
-      ([key]) => !['schemaVersion', 'panes', 'orgId', 'left', 'right'].includes(key)
+      ([key]) => !['schemaVersion', 'panes', 'left', 'right'].includes(key)
     )) {
       defaults[key] = value;
     }
@@ -115,7 +115,6 @@ export function initializeFromURL(
       // we set the schemaVersion as the first parameter so that when URLs are truncated the schemaVersion is more likely to be present.
       schemaVersion: `${urlState.schemaVersion}`,
       panes: JSON.stringify(panesObj),
-      orgId: `${orgId}`,
       ...defaults,
     });
 
