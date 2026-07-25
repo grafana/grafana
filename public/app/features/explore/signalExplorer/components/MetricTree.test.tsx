@@ -261,22 +261,129 @@ describe('MetricTree', () => {
       expect(store.getState().signalExplorer.left.selectedMetric).toEqual({ refId: 'A', metricName: 'up' });
     });
 
-    it('renders inline loading and error states for the metric list', () => {
-      jest
-        .spyOn(catalogModule, 'useMetricCatalog')
-        .mockReturnValueOnce({ metrics: [], loading: true })
-        .mockReturnValue({ metrics: [], loading: false, error: new Error('boom') });
-
-      const { unmount } = render(
-        <Provider store={makeStore()}>
-          <MetricTree exploreId="left" refId="A" dsRef={dsRef} timeRange={timeRange} />
-        </Provider>
-      );
-      expect(screen.getByText(/loading metrics/i)).toBeInTheDocument();
-      unmount();
+    it('renders an inline loading state for the metric list', () => {
+      jest.spyOn(catalogModule, 'useMetricCatalog').mockReturnValue({ metrics: [], loading: true });
 
       renderTree();
+
+      expect(screen.getByText(/loading metrics/i)).toBeInTheDocument();
+      expect(screen.queryByText(/no metrics found/i)).not.toBeInTheDocument();
+    });
+
+    it('renders an inline error state for the metric list', () => {
+      jest
+        .spyOn(catalogModule, 'useMetricCatalog')
+        .mockReturnValue({ metrics: [], loading: false, error: new Error('boom') });
+
+      renderTree();
+
       expect(screen.getByText(/failed to load metrics/i)).toBeInTheDocument();
+      // An error is not an empty catalog; saying both would read as "loaded fine, found nothing".
+      expect(screen.queryByText(/no metrics found/i)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('label loading and error states (mocked hooks)', () => {
+    const expandUp = async () => {
+      jest
+        .spyOn(catalogModule, 'useMetricCatalog')
+        .mockReturnValue({ metrics: [{ name: 'up', type: 'gauge' }], loading: false });
+      renderTree();
+      await userEvent.click(screen.getByRole('button', { name: /expand up/i }));
+    };
+
+    it('renders an inline loading state while an expanded metric’s labels load', async () => {
+      jest.spyOn(detailModule, 'useMetricDetail').mockReturnValue({ labelKeys: [], loading: true });
+
+      await expandUp();
+
+      expect(screen.getByText(/loading labels/i)).toBeInTheDocument();
+    });
+
+    it('renders an inline error state when an expanded metric’s labels fail', async () => {
+      jest
+        .spyOn(detailModule, 'useMetricDetail')
+        .mockReturnValue({ labelKeys: [], loading: false, error: new Error('boom') });
+
+      await expandUp();
+
+      expect(screen.getByText(/failed to load labels/i)).toBeInTheDocument();
+    });
+
+    it('renders an inline loading state while an expanded label’s values load', async () => {
+      jest.spyOn(detailModule, 'useMetricDetail').mockReturnValue({ labelKeys: ['job'], loading: false });
+      jest.spyOn(labelValuesModule, 'useLabelValues').mockReturnValue({ values: [], loading: true });
+
+      await expandUp();
+      await userEvent.click(screen.getByRole('button', { name: /show values for job/i }));
+
+      expect(screen.getByText(/loading values/i)).toBeInTheDocument();
+    });
+
+    it('renders an inline error state when an expanded label’s values fail', async () => {
+      jest.spyOn(detailModule, 'useMetricDetail').mockReturnValue({ labelKeys: ['job'], loading: false });
+      jest
+        .spyOn(labelValuesModule, 'useLabelValues')
+        .mockReturnValue({ values: [], loading: false, error: new Error('boom') });
+
+      await expandUp();
+      await userEvent.click(screen.getByRole('button', { name: /show values for job/i }));
+
+      expect(screen.getByText(/failed to load values/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('single-expansion accordion (mocked hooks)', () => {
+    /** Label keys that name their own metric, so the DOM says which metric is expanded. */
+    function mockAccordionHooks() {
+      jest.spyOn(catalogModule, 'useMetricCatalog').mockReturnValue({
+        metrics: [
+          { name: 'up', type: 'gauge' },
+          { name: 'node_load1', type: 'gauge' },
+        ],
+        loading: false,
+      });
+      jest.spyOn(detailModule, 'useMetricDetail').mockImplementation((_dsRef, _timeRange, metric, enabled) => ({
+        labelKeys: enabled ? [`job_of_${metric}`] : [],
+        loading: false,
+      }));
+      jest
+        .spyOn(labelValuesModule, 'useLabelValues')
+        .mockImplementation((_dsRef, _timeRange, _metric, _labelKey, enabled) => ({
+          values: enabled ? ['web-1'] : [],
+          loading: false,
+        }));
+    }
+
+    it('collapses the previously expanded metric when another one is expanded', async () => {
+      mockAccordionHooks();
+      renderTree();
+
+      await userEvent.click(screen.getByRole('button', { name: /expand up/i }));
+      expect(screen.getByText('job_of_up')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: /expand node_load1/i }));
+
+      expect(screen.queryByText('job_of_up')).not.toBeInTheDocument();
+      expect(screen.getByText('job_of_node_load1')).toBeInTheDocument();
+    });
+
+    it('forgets the expanded label, so re-expanding a metric shows its labels collapsed', async () => {
+      mockAccordionHooks();
+      renderTree();
+
+      await userEvent.click(screen.getByRole('button', { name: /expand up/i }));
+      await userEvent.click(screen.getByRole('button', { name: /show values for job_of_up/i }));
+      expect(screen.getAllByTestId('signal-explorer-value-row')).toHaveLength(1);
+
+      await userEvent.click(screen.getByRole('button', { name: /expand node_load1/i }));
+      await userEvent.click(screen.getByRole('button', { name: /expand up/i }));
+
+      // `up` is expanded again, but its label is not — a stale expanded label would otherwise pop
+      // values open under a metric the user only just re-opened.
+      expect(screen.getByText('job_of_up')).toBeInTheDocument();
+      expect(screen.queryByTestId('signal-explorer-value-row')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /show values for job_of_up/i })).toBeInTheDocument();
     });
   });
 
