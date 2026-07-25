@@ -49,20 +49,25 @@ function fromHelpText(help?: string): string {
 }
 
 /**
- * The translated label for one metric type. Rebuilds the whole option list per call (and so calls
- * `t()` six times), so call it from a `useMemo` rather than inside a render loop.
+ * One thunk per type, keyed for lookup. `t()` cannot run at module level, so a label has to be
+ * produced on demand — but the previous shape rebuilt the whole list to read one entry, translating
+ * all six labels once per rendered row. Insertion order is the order the filter offers them in, and
+ * `metricType.test.ts` asserts a label exists for every member of `MetricType`.
  */
+const METRIC_TYPE_LABELS = new Map<MetricType, () => string>([
+  ['counter', () => t('explore.signal-explorer.type.counter', 'Counter')],
+  ['gauge', () => t('explore.signal-explorer.type.gauge', 'Gauge')],
+  ['histogram', () => t('explore.signal-explorer.type.histogram', 'Histogram')],
+  ['native histogram', () => t('explore.signal-explorer.type.native-histogram', 'Native histogram')],
+  ['summary', () => t('explore.signal-explorer.type.summary', 'Summary')],
+  ['unknown', () => t('explore.signal-explorer.type.unknown', 'Unknown')],
+]);
+
+/** The translated label for one metric type, falling back to the raw value rather than throwing. */
 export function getMetricTypeLabel(type: MetricType): string {
-  return getMetricTypeOptions().find((option) => option.value === type)?.label ?? type;
+  return METRIC_TYPE_LABELS.get(type)?.() ?? type;
 }
 
 export function getMetricTypeOptions(): Array<{ value: MetricType; label: string }> {
-  return [
-    { value: 'counter', label: t('explore.signal-explorer.type.counter', 'Counter') },
-    { value: 'gauge', label: t('explore.signal-explorer.type.gauge', 'Gauge') },
-    { value: 'histogram', label: t('explore.signal-explorer.type.histogram', 'Histogram') },
-    { value: 'native histogram', label: t('explore.signal-explorer.type.native-histogram', 'Native histogram') },
-    { value: 'summary', label: t('explore.signal-explorer.type.summary', 'Summary') },
-    { value: 'unknown', label: t('explore.signal-explorer.type.unknown', 'Unknown') },
-  ];
+  return [...METRIC_TYPE_LABELS].map(([value, label]) => ({ value, label: label() }));
 }
