@@ -20,7 +20,7 @@ import {
 import { readSeries } from './promQuery';
 import { useSolutionState } from './solutionState';
 import { type SolutionState } from './solutionsMatrix';
-import { fetchLogsStats, fetchLogsVolumeSeries, fetchTracesActivity, fetchTracesServices } from './telemetryData';
+import { fetchLogsActivity, fetchTracesActivity, fetchTracesServices } from './telemetryData';
 
 jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
   ...jest.requireActual('app/features/alerting/unified/hooks/usePluginBridge'),
@@ -45,8 +45,7 @@ jest.mock('./solutionState', () => ({
 
 jest.mock('./telemetryData', () => ({
   ...jest.requireActual('./telemetryData'),
-  fetchLogsStats: jest.fn(),
-  fetchLogsVolumeSeries: jest.fn(),
+  fetchLogsActivity: jest.fn(),
   fetchTracesActivity: jest.fn(),
   fetchTracesServices: jest.fn(),
 }));
@@ -63,8 +62,7 @@ const mockFetchHealth = jest.mocked(fetchKubernetesHealth);
 const mockFetchCpuSeries = jest.mocked(fetchClusterCpuSeries);
 const mockUseSolutionState = jest.mocked(useSolutionState);
 const mockUseAppPluginMetas = jest.mocked(useAppPluginMetas);
-const mockFetchLogsStats = jest.mocked(fetchLogsStats);
-const mockFetchLogsVolumeSeries = jest.mocked(fetchLogsVolumeSeries);
+const mockFetchLogsActivity = jest.mocked(fetchLogsActivity);
 const mockFetchTracesActivity = jest.mocked(fetchTracesActivity);
 const mockFetchTracesServices = jest.mocked(fetchTracesServices);
 
@@ -121,8 +119,7 @@ function setSolutionState(
 
 function mockActiveLogs() {
   setSolutionState({ metrics: 'active', logs: 'active' }, { loki: lokiDatasource });
-  mockFetchLogsStats.mockResolvedValue({ bytes: 47_000_000_000, sources: 8 });
-  mockFetchLogsVolumeSeries.mockResolvedValue(null);
+  mockFetchLogsActivity.mockResolvedValue({ bytes: 47_000_000_000, sources: 8, series: null });
 }
 
 function mockActiveTraces() {
@@ -160,10 +157,8 @@ beforeEach(() => {
   mockUseSolutionState.mockReset();
   setSolutionState({});
   mockUseAppPluginMetas.mockReturnValue({ loading: false, error: undefined, value: [] });
-  mockFetchLogsStats.mockReset();
-  mockFetchLogsStats.mockResolvedValue({ bytes: null, sources: null });
-  mockFetchLogsVolumeSeries.mockReset();
-  mockFetchLogsVolumeSeries.mockResolvedValue(null);
+  mockFetchLogsActivity.mockReset();
+  mockFetchLogsActivity.mockResolvedValue({ bytes: null, sources: null, series: null });
   mockFetchTracesActivity.mockReset();
   mockFetchTracesActivity.mockResolvedValue({ spans: null, series: null });
   mockFetchTracesServices.mockReset();
@@ -264,7 +259,7 @@ describe('RecommendationExisting', () => {
     expect(await screen.findByRole('heading', { name: 'No data flowing yet' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Hosted Logs' })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Hosted Traces' })).not.toBeInTheDocument();
-    expect(mockFetchLogsStats).not.toHaveBeenCalled();
+    expect(mockFetchLogsActivity).not.toHaveBeenCalled();
     expect(mockFetchTracesActivity).not.toHaveBeenCalled();
   });
 

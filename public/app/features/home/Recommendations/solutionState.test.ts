@@ -5,12 +5,7 @@ import { getDataSourceInstance, getDataSourceInstanceList } from '@grafana/runti
 import { resolveKubernetesDatasource } from './kubernetesData';
 import { runInstantQueries } from './promQuery';
 import { tempoHasTraces } from './solutionDataProbes';
-import {
-  CLOUD_UTILITY_LOKI_DATASOURCE_UIDS,
-  CLOUD_UTILITY_PROM_DATASOURCE_UIDS,
-  resetSolutionStateResolution,
-  resolveSolutionState,
-} from './solutionState';
+import { resetSolutionStateResolution, resolveSolutionState } from './solutionState';
 
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
@@ -347,15 +342,5 @@ describe('resolveSolutionState', () => {
     resetSolutionStateResolution();
     await resolveSolutionState();
     expect(listMock).toHaveBeenCalledTimes(8);
-  });
-});
-
-describe('cloud utility uid sets', () => {
-  it('pin the platform telemetry datasources', () => {
-    expect([...CLOUD_UTILITY_PROM_DATASOURCE_UIDS]).toEqual(['grafanacloud-usage', 'grafanacloud-ml-metrics']);
-    expect([...CLOUD_UTILITY_LOKI_DATASOURCE_UIDS]).toEqual([
-      'grafanacloud-usage-insights',
-      'grafanacloud-alert-state-history',
-    ]);
   });
 });

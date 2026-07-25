@@ -1,9 +1,7 @@
-import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { RecommendationsSkeleton } from './RecommendationsSkeleton';
@@ -39,13 +37,9 @@ function toSetupItem(recommendation: PluginRecommendationCard): RecommendationIt
   return { ...recommendation, action: recommendation.setupAction, href: recommendation.appHref, cta: 'setup' };
 }
 
-function mapPluginsById(plugins: LocalPlugin[] = []) {
-  return new Map(plugins.map((plugin) => [plugin.id, plugin]));
-}
-
 function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
   const { value: installedPlugins, loading: pluginsLoading } = useAsync(fetchInstalledPlugins, []);
-  const pluginsById = useMemo(() => mapPluginsById(installedPlugins), [installedPlugins]);
+  const pluginsById = new Map((installedPlugins ?? []).map((plugin) => [plugin.id, plugin]));
 
   const { value: resolution, loading: stateLoading } = useSolutionState();
   const selection = resolution ? selectRecommendations(resolution.state) : undefined;
