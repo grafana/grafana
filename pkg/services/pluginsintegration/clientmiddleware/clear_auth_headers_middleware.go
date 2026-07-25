@@ -12,20 +12,16 @@ import (
 // NewClearAuthHeadersMiddleware creates a new backend.HandlerMiddleware
 // that will clear any outgoing HTTP headers that was part of the incoming
 // HTTP request and used when authenticating to Grafana.
-func NewClearAuthHeadersMiddleware(cfgJWTAuth *setting.AuthJWTSettings, cfgAuthProxy *setting.AuthProxySettings) backend.HandlerMiddleware {
+func NewClearAuthHeadersMiddleware() backend.HandlerMiddleware {
 	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &ClearAuthHeadersMiddleware{
-			BaseHandler:  backend.NewBaseHandler(next),
-			cfgJWTAuth:   cfgJWTAuth,
-			cfgAuthProxy: cfgAuthProxy,
+			BaseHandler: backend.NewBaseHandler(next),
 		}
 	})
 }
 
 type ClearAuthHeadersMiddleware struct {
 	backend.BaseHandler
-	cfgJWTAuth   *setting.AuthJWTSettings
-	cfgAuthProxy *setting.AuthProxySettings
 }
 
 func (m *ClearAuthHeadersMiddleware) clearHeaders(ctx context.Context, h backend.ForwardHTTPHeaders) {
@@ -35,7 +31,15 @@ func (m *ClearAuthHeadersMiddleware) clearHeaders(ctx context.Context, h backend
 		return
 	}
 
-	items := contexthandler.GetAuthHTTPHeaders(m.cfgJWTAuth, m.cfgAuthProxy)
+	// Strip the auth-header snapshot frozen at request start (see
+	// contexthandler.WithAuthHTTPHeaders) so clearing always matches the headers
+	// that authenticated this request, regardless of any concurrent reload. When
+	// no snapshot is present (request paths that bypass the context handler),
+	// fall back to the unconditional auth headers rather than forwarding them.
+	items := contexthandler.GetAuthHTTPHeaders(&setting.AuthJWTSettings{}, &setting.AuthProxySettings{})
+	if list := contexthandler.AuthHTTPHeaderListFromContext(reqCtx.Req.Context()); list != nil {
+		items = list.Items
+	}
 	for _, k := range items {
 		h.DeleteHTTPHeader(k)
 	}

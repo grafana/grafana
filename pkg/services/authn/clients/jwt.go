@@ -32,24 +32,32 @@ var (
 		"jwt.invalid_role", errutil.WithPublicMessage("Invalid Role in claim"))
 )
 
-func ProvideJWT(jwtService auth.JWTVerifierService, orgRoleMapper *connectors.OrgRoleMapper, cfg *setting.Cfg, tracer trace.Tracer) *JWT {
+func ProvideJWT(jwtService auth.JWTVerifierService, orgRoleMapper *connectors.OrgRoleMapper, tracer trace.Tracer) *JWT {
 	return &JWT{
-		cfg:           cfg,
 		log:           log.New(authn.ClientJWT),
 		jwtService:    jwtService,
 		orgRoleMapper: orgRoleMapper,
-		orgMappingCfg: orgRoleMapper.ParseOrgMappingSettings(context.Background(), cfg.JWTAuth.OrgMapping, cfg.JWTAuth.RoleAttributeStrict),
 		tracer:        tracer,
 	}
 }
 
 type JWT struct {
-	cfg           *setting.Cfg
 	orgRoleMapper *connectors.OrgRoleMapper
-	orgMappingCfg connectors.MappingConfiguration
 	log           log.Logger
 	jwtService    auth.JWTVerifierService
 	tracer        trace.Tracer
+}
+
+// settings returns the JWT settings for the current request. It prefers the
+// per-request snapshot frozen on the context (see jwt.WithSettings) so that
+// authentication and outbound header clearing agree even across a concurrent
+// reload, and falls back to the live snapshot when none was frozen (e.g. paths
+// that do not go through the context handler).
+func (s *JWT) settings(ctx context.Context) setting.AuthJWTSettings {
+	if snapshot, ok := authJWT.SettingsFromContext(ctx); ok {
+		return snapshot
+	}
+	return s.jwtService.Settings()
 }
 
 func (s *JWT) Name() string {
@@ -60,8 +68,10 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	ctx, span := s.tracer.Start(ctx, "authn.jwt.Authenticate")
 	defer span.End()
 
-	jwtToken := s.retrieveToken(r.HTTPRequest)
-	s.stripSensitiveParam(r.HTTPRequest)
+	jwtSettings := s.settings(ctx)
+
+	jwtToken := retrieveToken(r.HTTPRequest, jwtSettings)
+	stripSensitiveParam(r.HTTPRequest, jwtSettings)
 
 	claims, err := s.jwtService.Verify(ctx, jwtToken)
 	if err != nil {
@@ -82,28 +92,28 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 			SyncUser:        true,
 			FetchSyncedUser: true,
 			SyncPermissions: true,
-			SyncOrgRoles:    !s.cfg.JWTAuth.SkipOrgRoleSync,
-			AllowSignUp:     s.cfg.JWTAuth.AutoSignUp,
-			SyncTeams:       s.cfg.JWTAuth.GroupsAttributePath != "",
+			SyncOrgRoles:    !jwtSettings.SkipOrgRoleSync,
+			AllowSignUp:     jwtSettings.AutoSignUp,
+			SyncTeams:       jwtSettings.GroupsAttributePath != "",
 		},
 	}
 
-	if key := s.cfg.JWTAuth.UsernameClaim; key != "" {
+	if key := jwtSettings.UsernameClaim; key != "" {
 		id.Login, _ = claims[key].(string)
 		id.ClientParams.LookUpParams.Login = &id.Login
-	} else if key := s.cfg.JWTAuth.UsernameAttributePath; key != "" {
-		id.Login, err = util.SearchJSONForStringAttr(s.cfg.JWTAuth.UsernameAttributePath, claims)
+	} else if key := jwtSettings.UsernameAttributePath; key != "" {
+		id.Login, err = util.SearchJSONForStringAttr(key, claims)
 		if err != nil {
 			return nil, err
 		}
 		id.ClientParams.LookUpParams.Login = &id.Login
 	}
 
-	if key := s.cfg.JWTAuth.EmailClaim; key != "" {
+	if key := jwtSettings.EmailClaim; key != "" {
 		id.Email, _ = claims[key].(string)
 		id.ClientParams.LookUpParams.Email = &id.Email
-	} else if key := s.cfg.JWTAuth.EmailAttributePath; key != "" {
-		id.Email, err = util.SearchJSONForStringAttr(s.cfg.JWTAuth.EmailAttributePath, claims)
+	} else if key := jwtSettings.EmailAttributePath; key != "" {
+		id.Email, err = util.SearchJSONForStringAttr(key, claims)
 		if err != nil {
 			return nil, err
 		}
@@ -114,26 +124,29 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		id.Name = name
 	}
 
-	id.ExternalGroups, err = s.extractGroups(claims)
+	id.ExternalGroups, err = extractGroups(claims, jwtSettings)
 	if err != nil {
 		return nil, err
 	}
 
-	if !s.cfg.JWTAuth.SkipOrgRoleSync {
-		role, grafanaAdmin := s.extractRoleAndAdmin(claims)
+	if !jwtSettings.SkipOrgRoleSync {
+		role, grafanaAdmin := extractRoleAndAdmin(claims, jwtSettings)
 
-		if s.cfg.JWTAuth.AllowAssignGrafanaAdmin {
+		if jwtSettings.AllowAssignGrafanaAdmin {
 			id.IsGrafanaAdmin = &grafanaAdmin
 		}
 
-		externalOrgs, err := s.extractOrgs(claims)
+		externalOrgs, err := extractOrgs(claims, jwtSettings)
 		if err != nil {
 			s.log.Warn("Failed to extract orgs", "err", err)
 			return nil, err
 		}
 
-		id.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, externalOrgs, role)
-		if s.cfg.JWTAuth.RoleAttributeStrict && len(id.OrgRoles) == 0 {
+		// Org mapping is parsed per-call so changes pushed via the SSO settings
+		// API take effect at the next authentication.
+		orgMappingCfg := s.orgRoleMapper.ParseOrgMappingSettings(ctx, jwtSettings.OrgMapping, jwtSettings.RoleAttributeStrict)
+		id.OrgRoles = s.orgRoleMapper.MapOrgRoles(orgMappingCfg, externalOrgs, role)
+		if jwtSettings.RoleAttributeStrict && len(id.OrgRoles) == 0 {
 			return nil, errJWTInvalidRole.Errorf("could not evaluate any valid roles using IdP provided data")
 		}
 	}
@@ -148,13 +161,13 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 }
 
 func (s *JWT) IsEnabled() bool {
-	return s.cfg.JWTAuth.Enabled
+	return s.jwtService.Settings().Enabled
 }
 
-// remove sensitive query param
-// avoid JWT URL login passing auth_token in URL
-func (s *JWT) stripSensitiveParam(httpRequest *http.Request) {
-	if s.cfg.JWTAuth.URLLogin {
+// stripSensitiveParam removes the auth_token query parameter when URL login is
+// enabled, so it doesn't leak into logs or metrics.
+func stripSensitiveParam(httpRequest *http.Request, settings setting.AuthJWTSettings) {
+	if settings.URLLogin {
 		params := httpRequest.URL.Query()
 		if params.Has(authQueryParamName) {
 			params.Del(authQueryParamName)
@@ -164,9 +177,9 @@ func (s *JWT) stripSensitiveParam(httpRequest *http.Request) {
 }
 
 // retrieveToken retrieves the JWT token from the request.
-func (s *JWT) retrieveToken(httpRequest *http.Request) string {
-	jwtToken := httpRequest.Header.Get(s.cfg.JWTAuth.HeaderName)
-	if jwtToken == "" && s.cfg.JWTAuth.URLLogin {
+func retrieveToken(httpRequest *http.Request, settings setting.AuthJWTSettings) string {
+	jwtToken := httpRequest.Header.Get(settings.HeaderName)
+	if jwtToken == "" && settings.URLLogin {
 		jwtToken = httpRequest.URL.Query().Get("auth_token")
 	}
 	// Strip the 'Bearer' prefix if it exists.
@@ -174,11 +187,12 @@ func (s *JWT) retrieveToken(httpRequest *http.Request) string {
 }
 
 func (s *JWT) Test(ctx context.Context, r *authn.Request) bool {
-	if !s.cfg.JWTAuth.Enabled || s.cfg.JWTAuth.HeaderName == "" {
+	jwtSettings := s.settings(ctx)
+	if !jwtSettings.Enabled || (jwtSettings.HeaderName == "" && !jwtSettings.URLLogin) {
 		return false
 	}
 
-	jwtToken := s.retrieveToken(r.HTTPRequest)
+	jwtToken := retrieveToken(r.HTTPRequest, jwtSettings)
 
 	if jwtToken == "" {
 		return false
@@ -198,12 +212,12 @@ func (s *JWT) Priority() uint {
 
 const roleGrafanaAdmin = "GrafanaAdmin"
 
-func (s *JWT) extractRoleAndAdmin(claims map[string]any) (org.RoleType, bool) {
-	if s.cfg.JWTAuth.RoleAttributePath == "" {
+func extractRoleAndAdmin(claims map[string]any, settings setting.AuthJWTSettings) (org.RoleType, bool) {
+	if settings.RoleAttributePath == "" {
 		return "", false
 	}
 
-	role, err := util.SearchJSONForStringAttr(s.cfg.JWTAuth.RoleAttributePath, claims)
+	role, err := util.SearchJSONForStringAttr(settings.RoleAttributePath, claims)
 	if err != nil || role == "" {
 		return "", false
 	}
@@ -214,19 +228,19 @@ func (s *JWT) extractRoleAndAdmin(claims map[string]any) (org.RoleType, bool) {
 	return org.RoleType(role), false
 }
 
-func (s *JWT) extractGroups(claims map[string]any) ([]string, error) {
-	if s.cfg.JWTAuth.GroupsAttributePath == "" {
+func extractGroups(claims map[string]any, settings setting.AuthJWTSettings) ([]string, error) {
+	if settings.GroupsAttributePath == "" {
 		return []string{}, nil
 	}
 
-	return util.SearchJSONForStringSliceAttr(s.cfg.JWTAuth.GroupsAttributePath, claims)
+	return util.SearchJSONForStringSliceAttr(settings.GroupsAttributePath, claims)
 }
 
 // This code was copied from the social_base.go file and was adapted to match with the JWT structure
-func (s *JWT) extractOrgs(claims map[string]any) ([]string, error) {
-	if s.cfg.JWTAuth.OrgAttributePath == "" {
+func extractOrgs(claims map[string]any, settings setting.AuthJWTSettings) ([]string, error) {
+	if settings.OrgAttributePath == "" {
 		return []string{}, nil
 	}
 
-	return util.SearchJSONForStringSliceAttr(s.cfg.JWTAuth.OrgAttributePath, claims)
+	return util.SearchJSONForStringSliceAttr(settings.OrgAttributePath, claims)
 }
