@@ -1,6 +1,6 @@
 import { type DataSourceInstanceListItem } from '@grafana/data';
 
-import { findDatasourceWithData, listProbeCandidates, probeProxyGet } from './probeUtils';
+import { findDatasourceWithDataStrict, listProbeCandidates, probeProxyGet } from './probeUtils';
 
 // "Seen recently" lookback shared by all data probes, tolerating scrape/ingest gaps.
 export const DATA_LOOKBACK_HOURS = 24;
@@ -16,24 +16,7 @@ export async function probeFound(
   excludeUids?: ReadonlySet<string>
 ): Promise<DataSourceInstanceListItem | null> {
   const candidates = await listProbeCandidates(type, undefined, excludeUids);
-  let errored = 0;
-  // findDatasourceWithData requires a non-throwing callback; count failures for the unknown check.
-  const guardedHasData = async (ds: DataSourceInstanceListItem) => {
-    try {
-      return await hasData(ds);
-    } catch {
-      errored++;
-      return false;
-    }
-  };
-  const found = await findDatasourceWithData(candidates, guardedHasData);
-  if (found) {
-    return found;
-  }
-  if (errored > 0) {
-    throw new Error(`${errored} ${type} datasource probe(s) failed with no data found elsewhere`);
-  }
-  return null;
+  return findDatasourceWithDataStrict(candidates, hasData, type);
 }
 
 interface TempoSearchResponse {

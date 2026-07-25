@@ -153,3 +153,33 @@ export async function findDatasourceWithData(
   }
   return null;
 }
+
+/**
+ * findDatasourceWithData with error accounting: null only when every candidate probed
+ * clean-and-empty; throws when nothing was found and any candidate errored (an errored
+ * datasource may hold the data). Unlike findDatasourceWithData, hasData may throw.
+ */
+export async function findDatasourceWithDataStrict(
+  candidates: DataSourceInstanceListItem[],
+  hasData: (ds: DataSourceInstanceListItem) => Promise<boolean>,
+  type: string
+): Promise<DataSourceInstanceListItem | null> {
+  let errored = 0;
+  // findDatasourceWithData requires a non-throwing callback; count failures for the unknown check.
+  const guardedHasData = async (ds: DataSourceInstanceListItem) => {
+    try {
+      return await hasData(ds);
+    } catch {
+      errored++;
+      return false;
+    }
+  };
+  const found = await findDatasourceWithData(candidates, guardedHasData);
+  if (found) {
+    return found;
+  }
+  if (errored > 0) {
+    throw new Error(`${errored} ${type} datasource probe(s) failed with no data found elsewhere`);
+  }
+  return null;
+}

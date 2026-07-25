@@ -8,7 +8,7 @@ import { config } from '@grafana/runtime';
 
 import {
   createTtlCachedPromise,
-  findDatasourceWithData,
+  findDatasourceWithDataStrict,
   listProbeCandidates,
   MAX_PROBED_DATASOURCES,
   PROBE_TIMEOUT_MS,
@@ -85,21 +85,18 @@ async function orderedCandidates(): Promise<DataSourceInstanceListItem[]> {
   return storedMatch ? [storedMatch, ...ordered.filter((ds) => ds !== storedMatch)] : ordered;
 }
 
-// "Has Kubernetes data" = namespaces detected; an errored probe retries with backoff, then counts
-// as no data — an unusable datasource must not win the probe.
+// Single attempt so the solution-state signal budget outlasts leader + fan-out; errors
+// propagate so an all-errored scan reads inconclusive, not "no data".
 async function hasKubernetesNamespaces(ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>): Promise<boolean> {
-  try {
-    const frames = await withRetry(() => runInstantQueries({ namespaces: NAMESPACE_PROBE }, ds, PROBE_TIMEOUT_MS));
-    return (readScalar(frames, 'namespaces') ?? 0) > 0;
-  } catch {
-    return false;
-  }
+  const frames = await runInstantQueries({ namespaces: NAMESPACE_PROBE }, ds, PROBE_TIMEOUT_MS);
+  return (readScalar(frames, 'namespaces') ?? 0) > 0;
 }
 
-// Leader-first probe over the ordered candidates; see findDatasourceWithData for the fan-out rules.
+// Leader-first strict scan over the ordered candidates; rejects when nothing was found and any
+// probe errored, so an inconclusive scan never settles as "no data".
 async function resolveKubernetesPrometheus(): Promise<DataSourceInstanceListItem | null> {
   const candidates = (await orderedCandidates()).slice(0, MAX_PROBED_DATASOURCES);
-  return findDatasourceWithData(candidates, hasKubernetesNamespaces);
+  return findDatasourceWithDataStrict(candidates, hasKubernetesNamespaces, 'prometheus');
 }
 
 const kubernetesPrometheusResolution = createTtlCachedPromise(resolveKubernetesPrometheus, PROBE_TTL_MS);
