@@ -1,7 +1,10 @@
+import { clearPanes, splitClose } from '../../state/main';
+
 import {
   signalExplorerReducer,
   setSelectedMetric,
   clearSelectedMetric,
+  setSearchText,
   setTypeFilter,
   setActiveRefId,
   clearExploreState,
@@ -44,5 +47,31 @@ describe('signalExplorerSlice', () => {
     const s1 = signalExplorerReducer(initial, setActiveRefId({ exploreId: 'left', refId: 'A' }));
     const s2 = signalExplorerReducer(s1, clearExploreState({ exploreId: 'left' }));
     expect(s2['left']).toBeUndefined();
+  });
+
+  describe('pane lifecycle', () => {
+    const populated = () => {
+      let s = signalExplorerReducer(initial, setSearchText({ exploreId: 'left', searchText: 'node_' }));
+      s = signalExplorerReducer(s, setSelectedMetric({ exploreId: 'left', refId: 'A', metricName: 'up' }));
+      s = signalExplorerReducer(s, setSearchText({ exploreId: 'right', searchText: 'http_' }));
+      return s;
+    };
+
+    // The slice matches these action types as literals to avoid a require cycle with `main.ts`.
+    it('matches the action types Explore actually dispatches', () => {
+      expect(splitClose.type).toBe('explore/splitClose');
+      expect(clearPanes.type).toBe('explore/clearPanes');
+    });
+
+    it('drops a closed pane so a recycled exploreId cannot inherit its view state', () => {
+      const s = signalExplorerReducer(populated(), splitClose('left'));
+
+      expect(s['left']).toBeUndefined();
+      expect(s['right'].searchText).toBe('http_');
+    });
+
+    it('drops every pane when Explore clears them all', () => {
+      expect(signalExplorerReducer(populated(), clearPanes())).toEqual({});
+    });
   });
 });

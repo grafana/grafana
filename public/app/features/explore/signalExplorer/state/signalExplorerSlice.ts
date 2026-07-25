@@ -1,6 +1,12 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction, type UnknownAction } from '@reduxjs/toolkit';
 
 import type { MetricType } from '../types';
+
+// Explore's own pane-removal actions, matched as literals. `explore/state/main.ts` imports this
+// slice to register it, so importing `splitClose`/`clearPanes` back from it would be a require
+// cycle. `signalExplorerSlice.test.ts` asserts these strings still equal the real action types.
+const SPLIT_CLOSE_TYPE = 'explore/splitClose';
+const CLEAR_PANES_TYPE = 'explore/clearPanes';
 
 export interface PaneViewState {
   activeRefId?: string;
@@ -42,6 +48,23 @@ const slice = createSlice({
     clearExploreState: (state, action: PayloadAction<{ exploreId: string }>) => {
       delete state[action.payload.exploreId];
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      // A pane's view state has to die with the pane. `generateExploreId()` only checks *live*
+      // panes for id collisions, so state left behind by a closed pane can be inherited by a new
+      // one — which would then open pre-filtered, with a metric selected from a query that no
+      // longer exists.
+      .addMatcher(
+        (action: UnknownAction): action is PayloadAction<string> => action.type === SPLIT_CLOSE_TYPE,
+        (state, action) => {
+          delete state[action.payload];
+        }
+      )
+      .addMatcher(
+        (action: UnknownAction) => action.type === CLEAR_PANES_TYPE,
+        () => ({})
+      );
   },
 });
 
