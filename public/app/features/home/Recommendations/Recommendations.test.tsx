@@ -211,6 +211,30 @@ describe('Recommendations', () => {
     expect(await screen.findByRole('link', { name: /Set up Synthetic Monitoring/, hidden: true })).toBeInTheDocument();
   });
 
+  it('keeps the visible slide when an earlier-ordered setup card settles later', async () => {
+    let resolveProbe: (hasData: boolean) => void = () => {};
+    jest
+      .mocked(hasSolutionData)
+      .mockImplementation((pluginId: string) =>
+        pluginId === 'grafana-exploretraces-app'
+          ? new Promise((resolve) => (resolveProbe = resolve))
+          : Promise.resolve(true)
+      );
+    mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id, { enabled: id === 'grafana-exploretraces-app' })));
+
+    render(<Recommendations />);
+
+    // Hosted Traces is still probing; Synthetic Monitoring's enable card leads the deck and is
+    // the visible (non-aria-hidden) slide.
+    expect(await screen.findByRole('link', { name: /Add Synthetic Monitoring/ })).toBeInTheDocument();
+
+    resolveProbe(false);
+
+    // The traces setup card joins ahead in priority order without stealing the visible slide.
+    expect(await screen.findByRole('link', { name: /Set up Hosted Traces/, hidden: true })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Add Synthetic Monitoring/ })).toBeInTheDocument();
+  });
+
   it('hides the section when every enabled app has data', async () => {
     mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id, { enabled: true })));
 
