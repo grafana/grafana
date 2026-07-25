@@ -178,7 +178,7 @@ describe('RecommendationExisting', () => {
 
     expect(screen.getByRole('heading', { name: 'Hosted Logs' })).toBeInTheDocument();
     expect(await screen.findByText('47 GB')).toBeInTheDocument();
-    expect(screen.getByText('ingested · 7d · 8 sources')).toBeInTheDocument();
+    expect(screen.getByText('ingested · 7d · ~8 sources')).toBeInTheDocument();
   });
 
   it('lists live solutions in registry order with no stub entries', async () => {

@@ -31,10 +31,12 @@ export function buildLogsItem(parts: LogsItemParts): ExistingItem {
             primary: formattedValueToString(getValueFormat('decbytes')(bytes)),
             secondary:
               sources != null
-                ? t('home.recommendations.logs.stats-sources', '', {
+                ? // '~': Loki label-values may scan a wider window than requested, so the count can
+                  // include stale sources.
+                  t('home.recommendations.logs.stats-sources', '', {
                     count: sources,
-                    defaultValue_one: 'ingested · 7d · {{count}} source',
-                    defaultValue_other: 'ingested · 7d · {{count}} sources',
+                    defaultValue_one: 'ingested · 7d · ~{{count}} source',
+                    defaultValue_other: 'ingested · 7d · ~{{count}} sources',
                   })
                 : t('home.recommendations.logs.stats', 'ingested · 7d'),
           }
