@@ -5,18 +5,30 @@ import { Stack } from '@grafana/ui';
 
 import { ExistingSolutionCard } from './ExistingSolutionCard';
 import { NoDataCard } from './NoDataCard';
+import { useSolutionState } from './solutionState';
 import { useExistingSolutions } from './useExistingSolutions';
 
 export function RecommendationExisting() {
   const [selectedTitle, setSelectedTitle] = useState<string>();
   const { loading, solutions } = useExistingSolutions();
+  // Shares the TTL-cached resolution with useExistingSolutions — no extra probes.
+  const { value: resolution } = useSolutionState();
 
   if (loading) {
     return <RecommendationExistingSkeleton />;
   }
 
   if (solutions.length === 0) {
-    return <NoDataCard />;
+    // NoDataCard's hard claim is only true when every core signal settled inactive; anything
+    // else (active-but-no-entry, unknown) gets the softened variant.
+    const s = resolution?.state;
+    const allInactive =
+      !!s &&
+      s.metrics === 'inactive' &&
+      s.logs === 'inactive' &&
+      s.traces === 'inactive' &&
+      s.kubernetes === 'inactive';
+    return <NoDataCard variant={allInactive ? 'empty' : 'partial'} />;
   }
 
   const selected = solutions.find((item) => item.title === selectedTitle) ?? solutions[0];

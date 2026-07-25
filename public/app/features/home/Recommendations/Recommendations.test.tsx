@@ -279,7 +279,7 @@ describe('Recommendations', () => {
     render(<Recommendations />);
 
     await screen.findByText('Recommendations for your stack');
-    expect(await screen.findByRole('heading', { name: 'No data flowing yet' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Add more telemetry' })).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Recommended apps' })).not.toBeInTheDocument();
   });
 
