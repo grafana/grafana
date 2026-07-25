@@ -71,21 +71,26 @@ const mockUsePluginBridge = jest.mocked(usePluginBridge);
 const mockUseSolutionState = jest.mocked(useSolutionState);
 
 function setSolutionState(overrides: Partial<SolutionState>) {
-  mockUseSolutionState.mockReturnValue({
-    value: {
-      state: {
-        metrics: 'inactive',
-        logs: 'inactive',
-        traces: 'inactive',
-        kubernetes: 'inactive',
-        spanMetrics: 'inactive',
-        ...overrides,
-      },
-      lokiDatasource: null,
-      tempoDatasource: null,
-    },
-    loading: false,
-  });
+  // Honor the enabled gate like the real hook: a collapsed region resolves nothing.
+  mockUseSolutionState.mockImplementation((enabled = true) =>
+    enabled
+      ? {
+          value: {
+            state: {
+              metrics: 'inactive',
+              logs: 'inactive',
+              traces: 'inactive',
+              kubernetes: 'inactive',
+              spanMetrics: 'inactive',
+              ...overrides,
+            },
+            lokiDatasource: null,
+            tempoDatasource: null,
+          },
+          loading: false,
+        }
+      : { value: undefined, loading: false }
+  );
 }
 
 beforeEach(() => {
@@ -454,11 +459,32 @@ describe('Recommendations', () => {
     await user.click(await screen.findByRole('button', { name: 'Show' }));
     await waitFor(() => expect(mockResolve).toHaveBeenCalledTimes(1));
 
+    // Let the remounted view settle before toggling; a click mid-remount can hit a detached node.
+    await screen.findByRole('button', { name: 'Next' });
     await user.click(screen.getByRole('button', { name: 'Hide' }));
     await screen.findByRole('button', { name: 'Show' });
     await user.click(screen.getByRole('button', { name: 'Show' }));
     expect(mockResolve).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId('recommendation-existing-skeleton')).not.toBeInTheDocument();
+  });
+
+  it('resolves no solution state and fetches no plugins while collapsed from a stored preference', async () => {
+    window.localStorage.setItem('grafana.home.recommendations.collapsed', 'true');
+
+    const { user } = render(<Recommendations />);
+
+    // The region renders header-only: no skeleton, no probes, no plugin fetch, no pills.
+    expect(await screen.findByRole('button', { name: 'Show' })).toBeInTheDocument();
+    expect(screen.queryByTestId('recommendations-skeleton')).not.toBeInTheDocument();
+    expect(mockUseSolutionState).toHaveBeenLastCalledWith(false);
+    expect(mockGet).not.toHaveBeenCalled();
+    expect(screen.queryByRole('link', { name: /Enable/ })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Show' }));
+
+    expect(mockUseSolutionState).toHaveBeenCalledWith(true);
+    expect(await screen.findByRole('link', { name: /Enable Hosted Traces/ })).toBeInTheDocument();
+    await waitFor(() => expect(mockGet).toHaveBeenCalled());
   });
 
   it('navigates recommendations with previous/next buttons', async () => {
@@ -599,9 +625,11 @@ describe('Recommendations', () => {
     });
 
     it('tracks enable from a pill when the section is collapsed', async () => {
-      window.localStorage.setItem('grafana.home.recommendations.collapsed', 'true');
-
       const { user } = render(<Recommendations />);
+
+      // Pills only exist for in-session collapses: a stored preference gates the probes off.
+      await screen.findByRole('link', { name: /Enable Hosted Traces/ });
+      await user.click(screen.getByRole('button', { name: 'Hide' }));
 
       await user.click(await screen.findByRole('link', { name: /Enable Hosted Traces/ }));
 

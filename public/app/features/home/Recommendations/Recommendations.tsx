@@ -1,6 +1,8 @@
+import { useRef } from 'react';
 import { useAsync } from 'react-use';
 
 import { config } from '@grafana/runtime';
+import { useStoredBoolean } from 'app/core/hooks/useStoredBoolean';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -11,11 +13,12 @@ import { useSolutionState } from './solutionState';
 import { selectRecommendations } from './solutionsMatrix';
 import { type RecommendationItem } from './types';
 
+const HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY = 'grafana.home.recommendations.collapsed';
+
 export function Recommendations() {
   const canInstall = contextSrv.hasPermission(AccessControlAction.PluginsInstall) && config.pluginAdminEnabled;
-  // Unscoped pre-gate only; each card re-checks its own scoped permission. Recommendations are a
-  // plugin + connection surface: plugin management or datasource creation both qualify, and the
-  // pre-gate spares every other viewer the /api/plugins fetch and the solution probes.
+  // Unscoped pre-gate; each card re-checks its scoped permission. Plugin management or
+  // datasource creation qualifies — everyone else is spared the fetches and probes.
   const canWriteSome = contextSrv.hasPermission(AccessControlAction.PluginsWrite);
   const canCreateDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
   if (!canInstall && !canWriteSome && !canCreateDataSources) {
@@ -38,10 +41,22 @@ function toSetupItem(recommendation: PluginRecommendationCard): RecommendationIt
 }
 
 function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
-  const { value: installedPlugins, loading: pluginsLoading } = useAsync(fetchInstalledPlugins, []);
-  const pluginsById = new Map((installedPlugins ?? []).map((plugin) => [plugin.id, plugin]));
+  const [collapsed, setCollapsed] = useStoredBoolean(HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY, false);
+  // A stored collapsed preference must not fire the probes or the plugin fetch. Monotonic
+  // render-time latch: expanding never commits an ungated frame, re-collapsing never refetches.
+  const everExpanded = useRef(!collapsed);
+  if (!collapsed) {
+    everExpanded.current = true;
+  }
+  const probesEnabled = everExpanded.current;
 
-  const { value: resolution, loading: stateLoading } = useSolutionState();
+  const plugins = useAsync(async () => (probesEnabled ? fetchInstalledPlugins() : undefined), [probesEnabled]);
+  const pluginsById = new Map((plugins.value ?? []).map((plugin) => [plugin.id, plugin]));
+  // Derived from the settled value, not the loading flag: on the probesEnabled flip, useAsync
+  // still reports the gated run's state for one frame, which must read as pending.
+  const pluginsSettled = !!plugins.value || !!plugins.error;
+
+  const { value: resolution } = useSolutionState(probesEnabled);
   const selection = resolution ? selectRecommendations(resolution.state) : undefined;
 
   const cardsById = getRecommendationCards();
@@ -49,7 +64,7 @@ function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
 
   // An unavailable plugin list fails closed (plugin cards only). /api/plugins always lists at
   // least the core plugins, so an empty response means the list is unreliable and also fails closed.
-  const listReady = !pluginsLoading && !!installedPlugins && installedPlugins.length > 0;
+  const listReady = !!plugins.value && plugins.value.length > 0;
 
   const recommendations = selectedCards.flatMap((card): RecommendationItem[] => {
     if (card.kind === 'connection') {
@@ -75,12 +90,19 @@ function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
     return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin) ? [toEnableItem(card)] : [];
   });
 
-  // The region always renders once state settles; recommendations only decide the right column.
-  // Hold the skeleton while a selected plugin card still waits on the plugin list.
-  const waitingOnPlugins = pluginsLoading && selectedCards.some((card) => card.kind === 'plugin');
-  if (stateLoading || !selection || waitingOnPlugins) {
+  // The region renders once state settles; recommendations only decide the right column.
+  // Collapsed (gated-off) renders immediately as just the header row.
+  const waitingOnPlugins = !pluginsSettled && selectedCards.some((card) => card.kind === 'plugin');
+  if (probesEnabled && (!selection || waitingOnPlugins)) {
     return <RecommendationsSkeleton />;
   }
 
-  return <RecommendationsView recommendations={recommendations} startingState={selection.baseRow} />;
+  return (
+    <RecommendationsView
+      recommendations={recommendations}
+      startingState={selection?.baseRow ?? 'unknown'}
+      collapsed={collapsed}
+      setCollapsed={setCollapsed}
+    />
+  );
 }

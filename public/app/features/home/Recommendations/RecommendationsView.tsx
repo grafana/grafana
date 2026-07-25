@@ -4,7 +4,6 @@ import { useEffect, useLayoutEffect, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Button, Grid, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
-import { useStoredBoolean } from 'app/core/hooks/useStoredBoolean';
 
 import { RecommendationCard } from './RecommendationCard';
 import { RecommendationExisting } from './RecommendationExisting';
@@ -12,17 +11,22 @@ import { RecommendationPill } from './RecommendationPill';
 import { type BaseRow } from './solutionsMatrix';
 import { type RecommendationItem } from './types';
 
-const HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY = 'grafana.home.recommendations.collapsed';
-
 interface RecommendationsViewProps {
   recommendations: RecommendationItem[];
   /** Matrix row that drove the selection; threaded into cta_clicked as starting_state. */
   startingState: BaseRow;
+  /** Owned by the parent: the stored preference also gates the solution probes there. */
+  collapsed: boolean;
+  setCollapsed: (collapsed: boolean) => void;
 }
 
-export function RecommendationsView({ recommendations, startingState }: RecommendationsViewProps) {
+export function RecommendationsView({
+  recommendations,
+  startingState,
+  collapsed,
+  setCollapsed,
+}: RecommendationsViewProps) {
   const styles = useStyles2(getStyles);
-  const [collapsed, setCollapsed] = useStoredBoolean(HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY, false);
 
   // Lazy-mount: a persisted collapsed preference must not fire the Kubernetes queries.
   // Once expanded, stay mounted so collapse/expand never refetches (hidden preserves state).
