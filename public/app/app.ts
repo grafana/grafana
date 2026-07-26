@@ -281,19 +281,20 @@ export class GrafanaApp {
         getVariablesUrlParams: getVariablesUrlParams,
       });
 
+      // For multi-org users, ensure every SPA navigation carries ?orgId so
+      // dashboard / alert URLs are shareable across orgs. Single-org users
+      // (the OSS / Cloud majority) skip this, no URL pollution. Registered
+      // before handleRedirectTo() so the post-login redirect gets orgId too.
+      if (locationService instanceof HistoryWrapper && contextSrv.user.orgCount > 1) {
+        locationService.setOrgIdGetter(() => contextSrv.user.orgId);
+      }
+
       if (config.featureToggles.useSessionStorageForRedirection) {
         handleRedirectTo();
       }
 
       // intercept anchor clicks and forward it to custom history instead of relying on browser's history
       document.addEventListener('click', interceptLinkClicks);
-
-      // For multi-org users, ensure every SPA navigation carries ?orgId so
-      // dashboard / alert URLs are shareable across orgs. Single-org users
-      // (the OSS / Cloud majority) skip this — no URL pollution.
-      if (locationService instanceof HistoryWrapper && contextSrv.user.orgCount > 1) {
-        locationService.setOrgIdGetter(() => contextSrv.user.orgId);
-      }
 
       // Init async data source services (populates cache from boot data so
       // new `getInstanceSettings` / `getInstanceSettingsList` callers don't
