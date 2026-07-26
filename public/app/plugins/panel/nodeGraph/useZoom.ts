@@ -2,11 +2,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ZoomMode } from './panelcfg.gen';
 
+export const minZoom = 0.13;
+export const maxZoom = 2.25;
+
 const defaultOptions: Required<Options> = {
   stepUp: (s) => s * 1.5,
   stepDown: (s) => s / 1.5,
-  min: 0.13,
-  max: 2.25,
+  min: minZoom,
+  max: maxZoom,
   zoomMode: ZoomMode.Cooperative,
 };
 
@@ -102,5 +105,6 @@ export function useZoom(options: Options = defaultOptions) {
     isMax: scale >= (max ?? Infinity),
     isMin: scale <= (min ?? -Infinity),
     ref,
+    setScale,
   };
 }
