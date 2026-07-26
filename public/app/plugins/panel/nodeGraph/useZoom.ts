@@ -21,7 +21,8 @@ interface Options {
   stepDown?: (scale: number) => number;
 
   /**
-   * Set max and min values. Scale updates are clamped to these bounds.
+   * Set max and min values. If stepUp/down overshoots these bounds this will return min or max, but the internal scale
+   * value will remain whatever the step function returned.
    */
   min?: number;
   max?: number;
@@ -43,32 +44,23 @@ export function useZoom(options: Options = defaultOptions) {
   const stepDown = options.stepDown ?? defaultOptions.stepDown;
 
   const ref = useRef<HTMLElement | null>(null);
-  const [storedScale, setStoredScale] = useState(1);
-  const scale = clampScale(storedScale, min, max);
-  const setScale = useCallback(
-    (nextScale: number) => {
-      setStoredScale(clampScale(nextScale, min, max));
-    },
-    [min, max]
-  );
+  const [scale, setScale] = useState(1);
 
   useEffect(() => {
-    if (storedScale !== scale) {
-      setStoredScale(scale);
-    }
-  }, [scale, storedScale]);
+    setScale((scale) => clampScale(scale, min, max));
+  }, [max, min]);
 
   const onStepUp = useCallback(() => {
     if (scale < (max ?? Infinity)) {
       setScale(stepUp(scale));
     }
-  }, [max, scale, setScale, stepUp]);
+  }, [max, scale, stepUp]);
 
   const onStepDown = useCallback(() => {
     if (scale > (min ?? -Infinity)) {
       setScale(stepDown(scale));
     }
-  }, [min, scale, setScale, stepDown]);
+  }, [min, scale, stepDown]);
 
   const onWheel = useCallback(
     function (wheelEvent: WheelEvent) {
@@ -90,7 +82,7 @@ export function useZoom(options: Options = defaultOptions) {
         }
       }
     },
-    [max, min, scale, setScale, zoomMode]
+    [max, min, scale, zoomMode]
   );
 
   useEffect(() => {
@@ -113,7 +105,7 @@ export function useZoom(options: Options = defaultOptions) {
   return {
     onStepUp,
     onStepDown,
-    scale,
+    scale: clampScale(scale, min, max),
     isMax: scale >= (max ?? Infinity),
     isMin: scale <= (min ?? -Infinity),
     ref,

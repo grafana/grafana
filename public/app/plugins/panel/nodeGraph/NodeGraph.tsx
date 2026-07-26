@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import cx from 'clsx';
-import { memo, type MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, type MouseEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
 import { type DataFrame, type GrafanaTheme2, type LinkModel } from '@grafana/data';
@@ -512,12 +512,15 @@ function usePanAndZoom(
   viewport?: Viewport,
   contentPadding?: number
 ) {
-  const fit = useMemo(
-    () => (viewport && contentPadding ? getFitToView(bounds, viewport, contentPadding) : undefined),
-    [bounds, contentPadding, viewport]
-  );
+  const { bottom, left, right, top } = bounds;
+  const viewportHeight = viewport?.height;
+  const viewportWidth = viewport?.width;
+  const fit = viewport && contentPadding ? getFitToView(bounds, viewport, contentPadding) : undefined;
+  const fitScale = fit?.scale;
+  const fitPositionX = fit?.position.x;
+  const fitPositionY = fit?.position.y;
   const { scale, onStepDown, onStepUp, ref, isMax, isMin, setScale } = useZoom({
-    min: fit ? Math.min(fit.scale, minZoom) : minZoom,
+    min: fitScale !== undefined ? Math.min(fitScale, minZoom) : minZoom,
     zoomMode,
   });
   const {
@@ -530,12 +533,25 @@ function usePanAndZoom(
     focus,
   });
 
-  useEffect(() => {
-    if (fit) {
-      setScale(fit.scale);
-      setPosition(fit.position);
+  useLayoutEffect(() => {
+    if (fitScale !== undefined && fitPositionX !== undefined && fitPositionY !== undefined) {
+      setScale(fitScale);
+      setPosition({ x: fitPositionX, y: fitPositionY });
     }
-  }, [fit, setPosition, setScale]);
+  }, [
+    bottom,
+    contentPadding,
+    fitPositionX,
+    fitPositionY,
+    fitScale,
+    left,
+    right,
+    setPosition,
+    setScale,
+    top,
+    viewportHeight,
+    viewportWidth,
+  ]);
 
   const { position, isPanning } = panningState;
   return { zoomRef: ref, panRef, position, isPanning, scale, onStepDown, onStepUp, isMaxZoom: isMax, isMinZoom: isMin };
