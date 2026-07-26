@@ -11,11 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestUpdateWithMapBean verifies that calling Update() with a map bean inside
-// a transaction does not panic. Previously, xorm used the bean value directly
-// as a key in session.afterUpdateBeans (a map[any]...), which causes a runtime
-// panic in Go when the bean is itself a map type, because maps are not hashable
-// and cannot be used as map keys.
+// TestUpdateWithMapBean verifies that Update() with a map bean inside a transaction
+// does not panic. Go panics when a map is used as a map key; the old code attempted
+// to store bean in session.afterUpdateBeans (map[any]...) without guarding for this.
 func TestUpdateWithMapBean(t *testing.T) {
 	eng, err := NewEngine("sqlite3", ":memory:")
 	require.NoError(t, err)
@@ -34,10 +32,12 @@ func TestUpdateWithMapBean(t *testing.T) {
 		err := sess.Begin()
 		require.NoError(t, err)
 
-		// Using a map as the bean is valid xorm usage for dynamic updates.
-		// Inside a transaction (non-autocommit), the old code would attempt to
-		// store this map in session.afterUpdateBeans using the map itself as the
-		// key, triggering a runtime panic.
+		// Register an after-closure so len(session.afterClosures) > 0, which is
+		// required to enter the afterUpdateBeans map-key path that used to panic.
+		afterCalled := false
+		sess.After(func(any) { afterCalled = true })
+
+		// map[string]any is valid for dynamic column updates in xorm.
 		bean := map[string]any{"name": "updated"}
 
 		require.NotPanics(t, func() {
@@ -47,6 +47,10 @@ func TestUpdateWithMapBean(t *testing.T) {
 
 		err = sess.Commit()
 		require.NoError(t, err)
+
+		// after-closures are not invoked for map beans (they can't be tracked),
+		// but the update must still succeed without panicking.
+		_ = afterCalled
 	})
 
 	t.Run("update with map bean verifies the row was actually updated", func(t *testing.T) {

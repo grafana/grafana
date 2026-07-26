@@ -283,20 +283,22 @@ func (session *Session) Update(bean any, condiBean ...any) (int64, error) {
 	} else {
 		lenAfterClosures := len(session.afterClosures)
 		if lenAfterClosures > 0 {
-			if value, has := session.afterUpdateBeans[bean]; has && value != nil {
-				*value = append(*value, session.afterClosures...)
-			} else {
-				afterClosures := make([]func(any), lenAfterClosures)
-				copy(afterClosures, session.afterClosures)
-				// map types cannot be used as map keys in Go and will panic at runtime
-				if !isMap {
+			// Skip afterUpdateBeans tracking for map beans: maps are not hashable
+			// and cannot be used as map keys in Go, causing a runtime panic.
+			if !isMap {
+				if value, has := session.afterUpdateBeans[bean]; has && value != nil {
+					*value = append(*value, session.afterClosures...)
+				} else {
+					afterClosures := make([]func(any), lenAfterClosures)
+					copy(afterClosures, session.afterClosures)
 					session.afterUpdateBeans[bean] = &afterClosures
 				}
 			}
-
 		} else {
-			if _, ok := any(bean).(AfterUpdateProcessor); ok {
-				session.afterUpdateBeans[bean] = nil
+			if !isMap { // guard matches the block above; maps cannot be map keys
+				if _, ok := any(bean).(AfterUpdateProcessor); ok {
+					session.afterUpdateBeans[bean] = nil
+				}
 			}
 		}
 	}
