@@ -233,17 +233,15 @@ describe('Recommendations', () => {
     expect(setupLogs).toHaveAttribute('href', '/connections/add-new-connection');
   });
 
-  it('hides connection cards without datasource creation permission', async () => {
+  it('hides the whole region when permissions filter out every card', async () => {
     setSolutionState({ metrics: 'active' });
     jest
       .mocked(contextSrv.hasPermission)
       .mockImplementation((action) => action !== AccessControlAction.DataSourcesCreate);
 
-    render(<Recommendations />);
+    const { container } = render(<Recommendations />);
 
-    await screen.findByText('Recommendations for your stack');
-    expect(screen.queryByRole('link', { name: /Add Logs/, hidden: true })).not.toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: 'Recommended apps' })).not.toBeInTheDocument();
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
   });
 
   it('keeps connection cards when the plugin fetch rejects, while plugin cards fail closed', async () => {
@@ -258,34 +256,30 @@ describe('Recommendations', () => {
 
     expect(await screen.findByRole('link', { name: /Add Logs/ })).toBeInTheDocument();
 
-    // Same failure with a plugin-card selection: nothing renders but the region stays.
+    // Same failure with a plugin-card selection: both cards fail closed and the whole region hides.
     setSolutionState({ metrics: 'active', logs: 'active' });
-    render(<Recommendations />);
+    const { container: second } = render(<Recommendations />);
 
-    expect(await screen.findByText('Recommendations for your stack')).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Hosted Traces/, hidden: true })).not.toBeInTheDocument();
+    await waitFor(() => expect(second).toBeEmptyDOMElement());
   });
 
-  it('fails plugin cards closed when the plugin list is empty', async () => {
+  it('hides the whole region when the plugin list is empty and every card is plugin-kind', async () => {
     mockGet.mockResolvedValue([]);
 
-    render(<Recommendations />);
+    const { container } = render(<Recommendations />);
 
-    await screen.findByText('Recommendations for your stack');
-    expect(screen.queryByRole('region', { name: 'Recommended apps' })).not.toBeInTheDocument();
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
   });
 
-  it('renders the region left-only when any signal is unknown', async () => {
+  it('hides the whole region when any signal is unknown', async () => {
     setSolutionState({ metrics: 'active', logs: 'unknown' });
 
-    render(<Recommendations />);
+    const { container } = render(<Recommendations />);
 
-    await screen.findByText('Recommendations for your stack');
-    expect(await screen.findByRole('heading', { name: 'Add more telemetry' })).toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: 'Recommended apps' })).not.toBeInTheDocument();
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
   });
 
-  it('renders the region left-only with no pills when everything including App O11y is active', async () => {
+  it('hides the whole region when there is nothing left to recommend', async () => {
     setSolutionState({
       metrics: 'active',
       logs: 'active',
@@ -294,15 +288,9 @@ describe('Recommendations', () => {
       spanMetrics: 'active',
     });
 
-    const { user } = render(<Recommendations />);
+    const { container } = render(<Recommendations />);
 
-    await screen.findByText('Recommendations for your stack');
-    expect(screen.queryByRole('region', { name: 'Recommended apps' })).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Hide' }));
-
-    // Collapsed with zero recommendations: no pill row either.
-    expect(screen.queryByRole('link', { name: /Enable/ })).not.toBeInTheDocument();
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
   });
 
   it('recommends App Observability for OTel starters, suppressed once span metrics exist', async () => {
