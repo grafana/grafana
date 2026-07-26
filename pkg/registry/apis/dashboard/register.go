@@ -7,6 +7,7 @@ import (
 	"maps"
 	"strconv"
 	"sync"
+	"unicode/utf8"
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -774,6 +775,11 @@ func validateNotV2Object(obj runtime.Object) error {
 }
 
 // validateDashboardTags validates that all dashboard tags are within the maximum length
+// of 50 characters. The count is based on Unicode code points (runes), matching the
+// dashboard_tag.term column schema (VARCHAR(50) with a utf8mb4 charset) and the
+// "max 50 characters" message returned to users. Counting bytes with len(tag) would
+// reject a 50-character tag containing any multi-byte rune (e.g. Cyrillic or CJK) that
+// the database would otherwise accept.
 func validateDashboardTags(obj runtime.Object) error {
 	var tags []string
 
@@ -793,7 +799,7 @@ func validateDashboardTags(obj runtime.Object) error {
 	}
 
 	for _, tag := range tags {
-		if len(tag) > 50 {
+		if utf8.RuneCountInString(tag) > 50 {
 			return dashboards.ErrDashboardTagTooLong
 		}
 	}
