@@ -292,6 +292,24 @@ func TestReadClassicResource_TypeAssertions(t *testing.T) {
 	})
 }
 
+func TestReadClassicResource_EmptyInput(t *testing.T) {
+	t.Run("empty file returns a validation error, not a panic", func(t *testing.T) {
+		_, _, _, err := ReadClassicResource(context.Background(), &repository.FileInfo{
+			Data: []byte{},
+		})
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrUnableToReadResourceBytes)
+	})
+
+	t.Run("BOM-only file returns a validation error, not a panic", func(t *testing.T) {
+		_, _, _, err := ReadClassicResource(context.Background(), &repository.FileInfo{
+			Data: []byte{0xEF, 0xBB, 0xBF},
+		})
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrUnableToReadResourceBytes)
+	})
+}
+
 func TestParseFileResource(t *testing.T) {
 	t.Run("k8s resource parsed directly", func(t *testing.T) {
 		info := &repository.FileInfo{
