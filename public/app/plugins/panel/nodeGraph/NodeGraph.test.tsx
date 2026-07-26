@@ -59,6 +59,29 @@ describe('NodeGraph', () => {
     expect(getScale()).toBe(1);
   });
 
+  it('restores the previous zoom after stepping past the limit', async () => {
+    render(
+      <NodeGraph
+        dataFrames={[makeNodesDataFrame(2), makeEdgesDataFrame([{ source: '0', target: '1' }])]}
+        getLinks={() => []}
+        layoutAlgorithm={LayoutAlgorithm.Force}
+      />
+    );
+
+    await screen.findByLabelText('Node: service:1');
+
+    for (let i = 0; i < 10; i++) {
+      scrollView({ deltaY: -4, ctrlKey: true });
+    }
+    expect(getScale()).toBeCloseTo(1.6);
+
+    await userEvent.click(screen.getByLabelText(/Zoom in/));
+    expect(getScale()).toBe(maxZoom);
+
+    await userEvent.click(screen.getByLabelText(/Zoom out/));
+    expect(getScale()).toBeCloseTo(1.6);
+  });
+
   it('fits the graph again when the panel size changes', async () => {
     const dataFrames = [
       makeNodesDataFrame(3),
@@ -97,6 +120,45 @@ describe('NodeGraph', () => {
       expect(getScale()).toBeLessThan(minZoom);
       expect(Math.abs(position.x)).toBeLessThanOrEqual(1);
       expect(Math.abs(position.y)).toBeLessThanOrEqual(1);
+    });
+  });
+
+  it('preserves the manual view until refreshed data changes the bounds', async () => {
+    const makeDataFrames = (verticalOffset = 0) => [
+      makeFixedNodesDataFrame(
+        [
+          { x: -500, y: -verticalOffset },
+          { x: 500, y: verticalOffset },
+        ],
+        [40, 40]
+      ),
+    ];
+    const props = { fitToView: true, getLinks: () => [] };
+    const { rerender } = render(<NodeGraph {...props} dataFrames={makeDataFrames()} />);
+
+    await screen.findByLabelText('Node: service:0');
+    await waitFor(() => expect(getScale()).toBeLessThan(1));
+    const fittedScale = getScale();
+
+    await userEvent.click(screen.getByLabelText(/Zoom in/));
+    panView({ x: 20, y: 0 });
+    await waitFor(() => expect(getTranslate().x).toBeGreaterThan(0));
+
+    const manualScale = getScale();
+    const manualPosition = getTranslate();
+
+    rerender(<NodeGraph {...props} dataFrames={makeDataFrames()} />);
+
+    await waitFor(() => {
+      expect(getScale()).toBeCloseTo(manualScale);
+      expect(getTranslate()).toEqual(manualPosition);
+    });
+
+    rerender(<NodeGraph {...props} dataFrames={makeDataFrames(100)} />);
+
+    await waitFor(() => {
+      expect(getScale()).toBeCloseTo(fittedScale);
+      expect(getTranslate()).toEqual({ x: 0, y: 0 });
     });
   });
 
