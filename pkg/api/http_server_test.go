@@ -367,7 +367,7 @@ func TestHTTPServer_getListeners(t *testing.T) {
 
 	t.Run("protocol=h2c, serve_on_socket=true", func(t *testing.T) {
 		cfg := setting.NewCfg()
-		cfg.Protocol = setting.SocketHTTP2PlaintextScheme
+		cfg.Protocol = setting.HTTP2PlaintextScheme
 		cfg.HTTPPort = "0"
 		cfg.ServeOnSocket = true
 		cfg.SocketGid = -1

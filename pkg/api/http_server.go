@@ -458,9 +458,8 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
 	host := strings.TrimSuffix(strings.TrimPrefix(hs.Cfg.HTTPAddr, "["), "]")
 	protocols := http.Protocols{}
-	if hs.Cfg.Protocol == setting.HTTPScheme || hs.Cfg.Protocol == setting.SocketScheme {
-		protocols.SetHTTP1(true)
-	} else if hs.Cfg.Protocol == setting.HTTP2Scheme || hs.Cfg.Protocol == setting.SocketHTTP2Scheme {
+	protocols.SetHTTP1(true)
+	if hs.Cfg.Protocol == setting.HTTP2Scheme || hs.Cfg.Protocol == setting.SocketHTTP2Scheme {
 		protocols.SetHTTP2(true)
 	} else if hs.Cfg.Protocol == setting.HTTP2PlaintextScheme || hs.Cfg.Protocol == setting.SocketHTTP2PlaintextScheme {
 		protocols.SetUnencryptedHTTP2(true)
