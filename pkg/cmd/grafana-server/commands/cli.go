@@ -125,7 +125,8 @@ func RunServer(opts standalone.BuildInfo, cli *cli.Context) error {
 			Commit:      opts.Commit,
 			BuildBranch: opts.BuildBranch,
 		},
-		api.ServerOptions{},
+		api.ServerOptions{
+		},
 	)
 	if err != nil {
 		return err
