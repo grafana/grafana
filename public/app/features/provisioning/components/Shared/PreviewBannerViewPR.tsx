@@ -54,15 +54,19 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
   // PR/compare URL carries it. Returns prURL unchanged when no title was threaded through.
   const prLink = appendPullRequestTitleParam(prURL, repoType, prTitle);
   const linkUrl = prLink || branchInfo?.repoBaseUrl || repoUrl;
-  // Pure git (and local) cannot open PRs — don't claim "Open pull request" when we only have a repo URL.
-  const hasPullRequest = supportsPullRequests(repoType) && Boolean(prLink);
+  // Capability (can this provider open PRs?) vs whether we have a PR URL right now.
+  const canOpenPullRequests = supportsPullRequests(repoType);
+  const hasPullRequestLink = canOpenPullRequests && Boolean(prLink);
+  // Only claim "cannot open pull requests" for known non-PR providers (git/local), not when
+  // repoType is missing or the PR link simply isn't ready yet.
+  const showNoPullRequestHint = isValidRepoType(repoType) && !canOpenPullRequests;
 
   const actionText =
     action === 'delete'
-      ? getDeleteBannerText(capitalizedRepoType, hasPullRequest)
+      ? getDeleteBannerText(capitalizedRepoType, hasPullRequestLink, showNoPullRequestHint)
       : action === 'update'
-        ? getUpdateBannerText(capitalizedRepoType, hasPullRequest)
-        : getCreateBannerText(isNewPr, capitalizedRepoType, hasPullRequest);
+        ? getUpdateBannerText(capitalizedRepoType, hasPullRequestLink, showNoPullRequestHint)
+        : getCreateBannerText(isNewPr, capitalizedRepoType, hasPullRequestLink, showNoPullRequestHint);
 
   if (behindBranch) {
     return (
@@ -136,8 +140,8 @@ function noPullRequestSupportBody(): string {
   );
 }
 
-function withNoPullRequestHint(body: string, hasPullRequest: boolean): string {
-  return hasPullRequest ? body : `${body} ${noPullRequestSupportBody()}`;
+function withNoPullRequestHint(body: string, showNoPullRequestHint: boolean): string {
+  return showNoPullRequestHint ? `${body} ${noPullRequestSupportBody()}` : body;
 }
 
 function openInRepoButton(repoType: string): string {
@@ -154,7 +158,12 @@ function openPullRequestButton(repoType: string): string {
   );
 }
 
-function getCreateBannerText(isNewPr: boolean | undefined, repoType: string, hasPullRequest: boolean): BannerText {
+function getCreateBannerText(
+  isNewPr: boolean | undefined,
+  repoType: string,
+  hasPullRequestLink: boolean,
+  showNoPullRequestHint: boolean
+): BannerText {
   return {
     title: isNewPr
       ? t(
@@ -172,9 +181,9 @@ function getCreateBannerText(isNewPr: boolean | undefined, repoType: string, has
         'provisioned-resource-preview-banner.preview-banner.not-saved',
         'The rest of Grafana users in your organization will still see the current version saved to configured default branch until this branch is merged'
       ),
-      hasPullRequest
+      showNoPullRequestHint
     ),
-    button: hasPullRequest
+    button: hasPullRequestLink
       ? isNewPr
         ? openPullRequestButton(repoType)
         : t(
@@ -186,7 +195,7 @@ function getCreateBannerText(isNewPr: boolean | undefined, repoType: string, has
   };
 }
 
-function getDeleteBannerText(repoType: string, hasPullRequest: boolean): BannerText {
+function getDeleteBannerText(repoType: string, hasPullRequestLink: boolean, showNoPullRequestHint: boolean): BannerText {
   return {
     title: t(
       'provisioned-resource-preview-banner.title-deleted-resource-in-branch',
@@ -198,13 +207,13 @@ function getDeleteBannerText(repoType: string, hasPullRequest: boolean): BannerT
         'provisioned-resource-preview-banner.preview-banner.delete-from-branch',
         'The rest of Grafana users in your organization will still see this resource until this branch is merged'
       ),
-      hasPullRequest
+      showNoPullRequestHint
     ),
-    button: hasPullRequest ? openPullRequestButton(repoType) : openInRepoButton(repoType),
+    button: hasPullRequestLink ? openPullRequestButton(repoType) : openInRepoButton(repoType),
   };
 }
 
-function getUpdateBannerText(repoType: string, hasPullRequest: boolean): BannerText {
+function getUpdateBannerText(repoType: string, hasPullRequestLink: boolean, showNoPullRequestHint: boolean): BannerText {
   return {
     title: t(
       'provisioned-resource-preview-banner.title-updated-resource-in-branch',
@@ -216,9 +225,9 @@ function getUpdateBannerText(repoType: string, hasPullRequest: boolean): BannerT
         'provisioned-resource-preview-banner.preview-banner.update-from-branch',
         'The rest of Grafana users in your organization will still see the current version until this branch is merged'
       ),
-      hasPullRequest
+      showNoPullRequestHint
     ),
-    button: hasPullRequest ? openPullRequestButton(repoType) : openInRepoButton(repoType),
+    button: hasPullRequestLink ? openPullRequestButton(repoType) : openInRepoButton(repoType),
   };
 }
 
