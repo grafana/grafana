@@ -2390,35 +2390,35 @@ func TestService_Reload(t *testing.T) {
 		})).Return(nil).Once()
 		env.reloadables[provider] = reloadable
 
-		env.service.Reload(context.Background(), provider)
+		err := env.service.Reload(context.Background(), provider)
+		require.NoError(t, err)
 
 		wg.Wait()
 	})
 
-	t.Run("no-op when no reloadable is registered for the provider", func(t *testing.T) {
+	t.Run("returns an error when no reloadable is registered for the provider", func(t *testing.T) {
 		t.Parallel()
 
 		env := setupTestEnv(t, false, false, false)
 
-		require.NotPanics(t, func() {
-			env.service.Reload(context.Background(), "unknown-provider")
-		})
+		err := env.service.Reload(context.Background(), "unknown-provider")
+		require.ErrorIs(t, err, ssosettings.ErrInvalidProvider)
 	})
 
-	t.Run("no-op when GetForProvider returns an error", func(t *testing.T) {
+	t.Run("returns an error when GetForProvider fails", func(t *testing.T) {
 		t.Parallel()
 
 		env := setupTestEnv(t, false, false, false)
 		provider := social.AzureADProviderName
 
-		env.store.ExpectedError = errors.New("failed fetching the settings")
+		expectedErr := errors.New("failed fetching the settings")
+		env.store.ExpectedError = expectedErr
 
 		reloadable := ssosettingstests.NewMockReloadable(t)
 		env.reloadables[provider] = reloadable
 
-		require.NotPanics(t, func() {
-			env.service.Reload(context.Background(), provider)
-		})
+		err := env.service.Reload(context.Background(), provider)
+		require.ErrorIs(t, err, expectedErr)
 	})
 }
 

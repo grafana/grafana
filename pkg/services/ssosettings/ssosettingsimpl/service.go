@@ -318,7 +318,7 @@ func (s *Service) Upsert(ctx context.Context, settings *models.SSOSettings, requ
 	reloadSettings := *settings
 	reloadSettings.Settings = overrideMaps(storedSettings.Settings, settingsWithSecrets)
 
-	go s.reload(reloadable, settings.Provider, reloadSettings)
+	go s.reload(context.WithoutCancel(ctx), reloadable, settings.Provider, reloadSettings)
 
 	return nil
 }
@@ -375,7 +375,7 @@ func (s *Service) Patch(ctx context.Context, provider string, data map[string]an
 	reloadSettings := *newSettings
 	reloadSettings.Settings = overrideMaps(storedSettings.Settings, settingsWithSecrets)
 
-	go s.reload(reloadable, provider, reloadSettings)
+	go s.reload(context.WithoutCancel(ctx), reloadable, provider, reloadSettings)
 
 	return nil
 }
@@ -414,35 +414,35 @@ func (s *Service) Delete(ctx context.Context, provider string) error {
 		return nil
 	}
 
-	go s.reload(reloadable, provider, *currentSettings)
+	go s.reload(context.WithoutCancel(ctx), reloadable, provider, *currentSettings)
 
 	return nil
 }
 
-func (s *Service) reload(reloadable ssosettings.Reloadable, provider string, currentSettings models.SSOSettings) {
+func (s *Service) reload(ctx context.Context, reloadable ssosettings.Reloadable, provider string, currentSettings models.SSOSettings) {
 	s.updateCachedSSOSettings(provider, &currentSettings)
 
-	err := reloadable.Reload(context.Background(), currentSettings)
+	err := reloadable.Reload(ctx, currentSettings)
 	if err != nil {
 		s.metrics.reloadFailures.WithLabelValues(provider).Inc()
 		s.logger.Error("failed to reload the provider", "provider", provider, "error", err)
 	}
 }
 
-func (s *Service) Reload(ctx context.Context, provider string) {
+func (s *Service) Reload(ctx context.Context, provider string) error {
 	reloadable, ok := s.reloadables[provider]
 	if !ok {
-		s.logger.Warn("no reloadable found for provider, skipping reload", "provider", provider)
-		return
+		return ssosettings.ErrInvalidProvider.Errorf("provider %s not found in reloadables", provider)
 	}
 
 	settings, err := s.GetForProvider(ctx, provider)
 	if err != nil {
-		s.logger.Error("failed to get settings for provider, skipping reload", "provider", provider, "error", err)
-		return
+		return fmt.Errorf("failed to get settings for provider %s: %w", provider, err)
 	}
 
-	go s.reload(reloadable, provider, *settings)
+	go s.reload(context.WithoutCancel(ctx), reloadable, provider, *settings)
+
+	return nil
 }
 
 func (s *Service) RegisterReloadable(provider string, reloadable ssosettings.Reloadable) {
