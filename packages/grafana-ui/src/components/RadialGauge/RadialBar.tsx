@@ -38,7 +38,7 @@ export function RadialBar({
 }: RadialBarProps) {
   const theme = useTheme2();
   const colorProps = gradient ? { gradient } : { color: fieldDisplay.display.color ?? FALLBACK_COLOR };
-  const trackColor = theme.colors.secondary.main;
+  const trackColor = theme.colors.action.hover;
 
   return (
     <>
