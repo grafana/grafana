@@ -63,7 +63,7 @@ Fields explanation:
 ## Configuring multiple identity providers
 
 Grafana allows you to configure more than one authentication provider, however it is not possible to configure the same type of authentication provider twice.
-For example, you can have [SAML](saml/) (Enterprise and Cloud) and [Generic OAuth](generic-oauth/) configured, but you can not have two different [Generic OAuth](generic-oauth/) configurations.
+For example, you can have [SAML](saml/) (Enterprise and Cloud) and [Generic OAuth](generic-oauth/) configured, but you cannot have two different [Generic OAuth](generic-oauth/) configurations.
 
 > Note: Grafana does not support multiple identity providers resolving the same user. Make sure no user account overlaps between the different providers.
 
