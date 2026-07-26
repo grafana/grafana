@@ -168,6 +168,10 @@ Choose how the node graph should handle zoom and scroll events:
 - **Cooperative** - Allows you to scroll the visualization normally.
 - **Greedy** - Reacts to all zoom gestures.
 
+#### Fit graph to view
+
+Turn on **Fit graph to view** to automatically fit and center the graph when its layout or panel size changes. You can pan and zoom manually until the graph or panel changes again.
+
 #### Layout algorithm
 
 Choose how the visualization layout is generated:

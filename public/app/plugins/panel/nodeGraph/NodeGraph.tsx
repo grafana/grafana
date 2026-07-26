@@ -11,7 +11,7 @@ import { Edge } from './Edge';
 import { EdgeLabel } from './EdgeLabel';
 import { Legend } from './Legend';
 import { Marker } from './Marker';
-import { Node } from './Node';
+import { Node, nodeR } from './Node';
 import { ViewControls } from './ViewControls';
 import { type Config, defaultConfig, useLayout, type LayoutCache } from './layout';
 import { LayoutAlgorithm, type ZoomMode } from './panelcfg.gen';
@@ -21,7 +21,7 @@ import { useContextMenu } from './useContextMenu';
 import { useFocusPositionOnLayout } from './useFocusPositionOnLayout';
 import { useHighlight } from './useHighlight';
 import { usePanning } from './usePanning';
-import { useZoom } from './useZoom';
+import { maxZoom, minZoom, useZoom } from './useZoom';
 import { processNodes, type Bounds, findConnectedNodesForEdge, findConnectedNodesForNode } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -125,8 +125,9 @@ interface Props {
   panelId?: string;
   zoomMode?: ZoomMode;
   layoutAlgorithm?: LayoutAlgorithm;
+  fitToView?: boolean;
 }
-export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, layoutAlgorithm }: Props) {
+export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, layoutAlgorithm, fitToView }: Props) {
   const nodeCountLimit = nodeLimit || defaultNodeCountLimit;
   const { edges: edgesDataFrames, nodes: nodesDataFrames } = useCategorizeFrames(dataFrames);
 
@@ -201,10 +202,17 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
   // If we move from grid to graph layout, and we have focused node lets get its position to center there. We want to
   // do it specifically only in that case.
   const focusPosition = useFocusPositionOnLayout(config, nodes, focusedNodeId);
+  const fitViewport = useMemo(
+    () => (fitToView && nodes.length > 0 && width > 0 && height > 0 ? { width, height } : undefined),
+    [fitToView, height, nodes.length, width]
+  );
+  const graphContentPadding = useMemo(() => getGraphContentPadding(nodes), [nodes]);
   const { panRef, zoomRef, onStepUp, onStepDown, isPanning, position, scale, isMaxZoom, isMinZoom } = usePanAndZoom(
     bounds,
     focusPosition,
-    zoomMode
+    zoomMode,
+    fitViewport,
+    graphContentPadding
   );
 
   const { onEdgeOpen, onNodeOpen, MenuComponent } = useContextMenu(
@@ -456,8 +464,8 @@ const Edges = memo(function Edges(props: EdgesProps) {
             key={`${e.id}-${e.source.y ?? ''}-${props.processedNodesLength}-${props.processedEdgesLength}-${index}`}
             edge={e}
             hovering={
-              (e.source as NodeDatum).id === props.nodeHoveringId ||
-              (e.target as NodeDatum).id === props.nodeHoveringId ||
+              e.source.id === props.nodeHoveringId ||
+              e.target.id === props.nodeHoveringId ||
               props.edgeHoveringId === e.id
             }
             onClick={props.onClick}
@@ -483,9 +491,7 @@ const EdgeLabels = memo(function EdgeLabels(props: EdgeLabelsProps) {
         // We show the edge label in case user hovers over the edge directly or if they hover over node edge is
         // connected to.
         const shouldShow =
-          (e.source as NodeDatum).id === props.nodeHoveringId ||
-          (e.target as NodeDatum).id === props.nodeHoveringId ||
-          props.edgeHoveringId === e.id;
+          e.source.id === props.nodeHoveringId || e.target.id === props.nodeHoveringId || props.edgeHoveringId === e.id;
 
         const hasStats = e.mainStat || e.secondaryStat;
         return shouldShow && hasStats && <EdgeLabel key={e.id} edge={e} />;
@@ -494,15 +500,72 @@ const EdgeLabels = memo(function EdgeLabels(props: EdgeLabelsProps) {
   );
 });
 
-function usePanAndZoom(bounds: Bounds, focus?: { x: number; y: number }, zoomMode?: ZoomMode) {
-  const { scale, onStepDown, onStepUp, ref, isMax, isMin } = useZoom({ zoomMode });
-  const { state: panningState, ref: panRef } = usePanning<SVGSVGElement>({
+interface Viewport {
+  width: number;
+  height: number;
+}
+
+function usePanAndZoom(
+  bounds: Bounds,
+  focus?: { x: number; y: number },
+  zoomMode?: ZoomMode,
+  viewport?: Viewport,
+  contentPadding?: number
+) {
+  const fit = useMemo(
+    () => (viewport && contentPadding ? getFitToView(bounds, viewport, contentPadding) : undefined),
+    [bounds, contentPadding, viewport]
+  );
+  const { scale, onStepDown, onStepUp, ref, isMax, isMin, setScale } = useZoom({
+    min: fit ? Math.min(fit.scale, minZoom) : minZoom,
+    zoomMode,
+  });
+  const {
+    state: panningState,
+    ref: panRef,
+    setPosition,
+  } = usePanning<SVGSVGElement>({
     scale,
     bounds,
     focus,
   });
+
+  useEffect(() => {
+    if (fit) {
+      setScale(fit.scale);
+      setPosition(fit.position);
+    }
+  }, [fit, setPosition, setScale]);
+
   const { position, isPanning } = panningState;
   return { zoomRef: ref, panRef, position, isPanning, scale, onStepDown, onStepUp, isMaxZoom: isMax, isMinZoom: isMin };
+}
+
+const fitToViewPadding = 20;
+const defaultGraphContentPadding = nodeR * 2;
+
+function getFitToView(bounds: Bounds, viewport: Viewport, contentPadding: number) {
+  const availableWidth = Math.max(viewport.width - fitToViewPadding * 2, 1);
+  const availableHeight = Math.max(viewport.height - fitToViewPadding * 2, 1);
+  const graphWidth = bounds.right - bounds.left + contentPadding * 2;
+  const graphHeight = bounds.bottom - bounds.top + contentPadding * 2;
+
+  return {
+    scale: Math.min(maxZoom, availableWidth / graphWidth, availableHeight / graphHeight),
+    position: {
+      x: -bounds.center.x,
+      y: -bounds.center.y,
+    },
+  };
+}
+
+function getGraphContentPadding(nodes: NodeDatum[]) {
+  return nodes.reduce((padding, node) => {
+    const radius = node.nodeRadius?.values[node.dataFrameRowIndex];
+    return typeof radius === 'number' && Number.isFinite(radius) && radius > 0
+      ? Math.max(padding, radius + nodeR)
+      : padding;
+  }, defaultGraphContentPadding);
 }
 
 function useHover() {

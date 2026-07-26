@@ -3047,11 +3047,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/nodeGraph/NodeGraph.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 4
-    }
-  },
   "public/app/plugins/panel/nodeGraph/ViewControls.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1

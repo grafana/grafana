@@ -1,4 +1,4 @@
-import { useEffect, useRef, type RefObject, useState, useMemo } from 'react';
+import { useCallback, useEffect, useRef, type RefObject, useState, useMemo } from 'react';
 import useMountedState from 'react-use/lib/useMountedState';
 import usePrevious from 'react-use/lib/usePrevious';
 
@@ -32,6 +32,7 @@ interface Options {
 export function usePanning<T extends Element>({ scale = 1, bounds, focus }: Options = {}): {
   state: State;
   ref: RefObject<T>;
+  setPosition: (position: State['position']) => void;
 } {
   const isMounted = useMountedState();
   const isPanning = useRef(false);
@@ -62,6 +63,15 @@ export function usePanning<T extends Element>({ scale = 1, bounds, focus }: Opti
     isPanning: false,
     position: initial,
   });
+
+  const setPosition = useCallback((position: State['position']) => {
+    currentPosition.current = position;
+    prevPosition.current = position;
+    setState({
+      position,
+      isPanning: false,
+    });
+  }, []);
 
   useEffect(() => {
     const startPanning = (event: Event) => {
@@ -150,15 +160,9 @@ export function usePanning<T extends Element>({ scale = 1, bounds, focus }: Opti
         x: inBounds(focus.x, viewBounds.left, viewBounds.right),
         y: inBounds(focus.y, viewBounds.top, viewBounds.bottom),
       };
-      setState({
-        position,
-        isPanning: false,
-      });
-
-      currentPosition.current = position;
-      prevPosition.current = position;
+      setPosition(position);
     }
-  }, [focus, previousFocus, viewBounds, currentPosition, prevPosition]);
+  }, [focus, previousFocus, setPosition, viewBounds]);
 
   let position = state.position;
   // This part prevents an ugly jump from initial position to the focused one as the set state in the effects is after
@@ -176,6 +180,7 @@ export function usePanning<T extends Element>({ scale = 1, bounds, focus }: Opti
       },
     },
     ref: panRef,
+    setPosition,
   };
 }
 

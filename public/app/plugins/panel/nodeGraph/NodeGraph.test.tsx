@@ -1,9 +1,14 @@
 import { render, screen, fireEvent, waitFor, getByText } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { FieldType, NodeGraphDataFrameFieldNames } from '@grafana/data';
+
 import { NodeGraph } from './NodeGraph';
 import { LayoutAlgorithm, ZoomMode } from './panelcfg.gen';
+import { maxZoom, minZoom } from './useZoom';
 import { makeEdgesDataFrame, makeNodesDataFrame } from './utils';
+
+let mockDimensions = { width: 500, height: 200 };
 
 jest.mock('./layout', () => {
   const actual = jest.requireActual('./layout');
@@ -20,12 +25,16 @@ jest.mock('react-use/lib/useMeasure', () => {
   return {
     __esModule: true,
     default: () => {
-      return [() => {}, { width: 500, height: 200 }];
+      return [() => {}, mockDimensions];
     },
   };
 });
 
 describe('NodeGraph', () => {
+  beforeEach(() => {
+    mockDimensions = { width: 500, height: 200 };
+  });
+
   it('shows no data message without any data', async () => {
     render(<NodeGraph dataFrames={[]} getLinks={() => []} />);
 
@@ -48,6 +57,95 @@ describe('NodeGraph', () => {
     expect(getScale()).toBe(1.5);
     await userEvent.click(zoomOut);
     expect(getScale()).toBe(1);
+  });
+
+  it('fits the graph again when the panel size changes', async () => {
+    const dataFrames = [
+      makeNodesDataFrame(3),
+      makeEdgesDataFrame([
+        { source: '0', target: '1' },
+        { source: '1', target: '2' },
+      ]),
+    ];
+    const props = {
+      dataFrames,
+      fitToView: true,
+      getLinks: () => [],
+      layoutAlgorithm: LayoutAlgorithm.Force,
+    };
+    const { rerender } = render(<NodeGraph {...props} />);
+
+    await screen.findByLabelText('Node: service:1');
+    await waitFor(() => expect(getScale()).toBeLessThan(1));
+    const fittedScale = getScale();
+
+    const zoomIn = screen.getByLabelText(/Zoom in/);
+    await userEvent.click(zoomIn);
+    expect(getScale()).toBeCloseTo(fittedScale * 1.5);
+
+    panView({ x: 10, y: 0 });
+    await waitFor(() => {
+      expect(getScale()).toBeCloseTo(fittedScale * 1.5);
+      expect(getTranslate().x).toBeGreaterThan(0);
+    });
+
+    mockDimensions = { width: 100, height: 200 };
+    rerender(<NodeGraph {...props} />);
+
+    await waitFor(() => {
+      const position = getTranslate();
+      expect(getScale()).toBeLessThan(minZoom);
+      expect(Math.abs(position.x)).toBeLessThanOrEqual(1);
+      expect(Math.abs(position.y)).toBeLessThanOrEqual(1);
+    });
+  });
+
+  it('includes custom node radii when fitting the graph', async () => {
+    const radius = 200;
+    const nodes = makeNodesDataFrame(1, [{ [NodeGraphDataFrameFieldNames.nodeRadius]: radius }]);
+
+    render(<NodeGraph dataFrames={[nodes]} fitToView={true} getLinks={() => []} />);
+
+    const node = await screen.findByTestId('node-circle-0');
+    await waitFor(() => {
+      expect(parseFloat(node.getAttribute('r') ?? '0') * 2 * getScale()).toBeLessThanOrEqual(
+        mockDimensions.height - 40
+      );
+    });
+  });
+
+  it('centers a graph with fixed positions', async () => {
+    const nodes = makeFixedNodesDataFrame(
+      [
+        { x: 1000, y: -500 },
+        { x: 1200, y: -300 },
+      ],
+      [40, 40]
+    );
+
+    render(<NodeGraph dataFrames={[nodes]} fitToView={true} getLinks={() => []} />);
+
+    await screen.findByLabelText('Node: service:0');
+    await waitFor(() => {
+      const position = getTranslate();
+      expect(Math.abs(position.x + 1100)).toBeLessThanOrEqual(1);
+      expect(Math.abs(position.y - 400)).toBeLessThanOrEqual(1);
+    });
+  });
+
+  it('waits for panel dimensions before fitting and caps the zoom level', async () => {
+    mockDimensions = { width: 0, height: 0 };
+    const nodes = makeFixedNodesDataFrame([{ x: 0, y: 0 }], [40]);
+    const props = { dataFrames: [nodes], fitToView: true, getLinks: () => [] };
+    const { rerender } = render(<NodeGraph {...props} />);
+
+    await screen.findByLabelText('Node: service:0');
+    expect(getScale()).toBe(1);
+
+    mockDimensions = { width: 1000, height: 1000 };
+    rerender(<NodeGraph {...props} />);
+
+    await waitFor(() => expect(getScale()).toBe(maxZoom));
   });
 
   it('can zoom while pressing ctrl/command key with cooperative zoom mode', async () => {
@@ -315,7 +413,7 @@ function getScale() {
 }
 
 function getTranslate() {
-  const matches = getTransform().match(/translate\((\d+)px, (\d+)px\)/);
+  const matches = getTransform().match(/translate\((-?\d+)px, (-?\d+)px\)/);
   return {
     x: parseFloat(matches![1]),
     y: parseFloat(matches![2]),
@@ -327,4 +425,26 @@ function getXY(e: Element) {
     x: parseFloat(e.attributes.getNamedItem('cx')?.value || ''),
     y: parseFloat(e.attributes.getNamedItem('cy')?.value || ''),
   };
+}
+
+function makeFixedNodesDataFrame(positions: Array<{ x: number; y: number }>, radii: number[]) {
+  const nodes = makeNodesDataFrame(
+    positions.length,
+    radii.map((radius) => ({ [NodeGraphDataFrameFieldNames.nodeRadius]: radius }))
+  );
+  nodes.fields.push(
+    {
+      name: NodeGraphDataFrameFieldNames.fixedX,
+      type: FieldType.number,
+      values: positions.map((position) => position.x),
+      config: {},
+    },
+    {
+      name: NodeGraphDataFrameFieldNames.fixedY,
+      type: FieldType.number,
+      values: positions.map((position) => position.y),
+      config: {},
+    }
+  );
+  return nodes;
 }
