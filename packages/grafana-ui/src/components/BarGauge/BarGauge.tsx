@@ -539,7 +539,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   };
 
   const emptyBar: CSSProperties = {
-    background: theme.colors.background.secondary,
+    background: theme.colors.secondary.main,
     flexGrow: 1,
     display: 'flex',
     borderRadius: theme.shape.radius.sm,
