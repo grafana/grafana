@@ -148,6 +148,28 @@ describe('NodeGraph', () => {
     await waitFor(() => expect(getScale()).toBe(maxZoom));
   });
 
+  it('zooms immediately after fit-to-view is disabled', async () => {
+    mockDimensions = { width: 100, height: 200 };
+    const nodes = makeFixedNodesDataFrame(
+      [
+        { x: -1000, y: 0 },
+        { x: 1000, y: 0 },
+      ],
+      [40, 40]
+    );
+    const props = { dataFrames: [nodes], getLinks: () => [] };
+    const { rerender } = render(<NodeGraph {...props} fitToView={true} />);
+
+    await screen.findByLabelText('Node: service:0');
+    await waitFor(() => expect(getScale()).toBeLessThan(minZoom));
+
+    rerender(<NodeGraph {...props} fitToView={false} />);
+    await waitFor(() => expect(getScale()).toBe(minZoom));
+
+    await userEvent.click(screen.getByLabelText(/Zoom in/));
+    expect(getScale()).toBeCloseTo(minZoom * 1.5);
+  });
+
   it('can zoom while pressing ctrl/command key with cooperative zoom mode', async () => {
     render(
       <NodeGraph

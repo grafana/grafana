@@ -21,8 +21,7 @@ interface Options {
   stepDown?: (scale: number) => number;
 
   /**
-   * Set max and min values. If stepUp/down overshoots these bounds this will return min or max but internal scale value
-   * will still be what ever the step functions returned last.
+   * Set max and min values. Scale updates are clamped to these bounds.
    */
   min?: number;
   max?: number;
@@ -44,19 +43,32 @@ export function useZoom(options: Options = defaultOptions) {
   const stepDown = options.stepDown ?? defaultOptions.stepDown;
 
   const ref = useRef<HTMLElement | null>(null);
-  const [scale, setScale] = useState(1);
+  const [storedScale, setStoredScale] = useState(1);
+  const scale = clampScale(storedScale, min, max);
+  const setScale = useCallback(
+    (nextScale: number) => {
+      setStoredScale(clampScale(nextScale, min, max));
+    },
+    [min, max]
+  );
+
+  useEffect(() => {
+    if (storedScale !== scale) {
+      setStoredScale(scale);
+    }
+  }, [scale, storedScale]);
 
   const onStepUp = useCallback(() => {
     if (scale < (max ?? Infinity)) {
       setScale(stepUp(scale));
     }
-  }, [scale, stepUp, max]);
+  }, [max, scale, setScale, stepUp]);
 
   const onStepDown = useCallback(() => {
     if (scale > (min ?? -Infinity)) {
       setScale(stepDown(scale));
     }
-  }, [scale, stepDown, min]);
+  }, [min, scale, setScale, stepDown]);
 
   const onWheel = useCallback(
     function (wheelEvent: WheelEvent) {
@@ -78,7 +90,7 @@ export function useZoom(options: Options = defaultOptions) {
         }
       }
     },
-    [min, max, scale, zoomMode]
+    [max, min, scale, setScale, zoomMode]
   );
 
   useEffect(() => {
@@ -101,10 +113,14 @@ export function useZoom(options: Options = defaultOptions) {
   return {
     onStepUp,
     onStepDown,
-    scale: Math.max(Math.min(scale, max ?? Infinity), min ?? -Infinity),
+    scale,
     isMax: scale >= (max ?? Infinity),
     isMin: scale <= (min ?? -Infinity),
     ref,
     setScale,
   };
+}
+
+function clampScale(scale: number, min?: number, max?: number) {
+  return Math.max(Math.min(scale, max ?? Infinity), min ?? -Infinity);
 }
