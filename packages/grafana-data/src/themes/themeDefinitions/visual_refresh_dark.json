@@ -8,7 +8,7 @@
       "page": "palette.ink900",
       "primary": "palette.ink850",
       "secondary": "palette.ink800",
-      "elevated": "palette.ink750"
+      "elevated": "palette.ink800"
     },
     "primary": {
       "main": "palette.ink100",
@@ -16,9 +16,9 @@
       "border": "palette.ink100"
     },
     "secondary": {
-      "main": "palette.ink700",
-      "background": "palette.ink700",
-      "border": "palette.ink600",
+      "main": "palette.ink750",
+      "background": "palette.ink800",
+      "border": "palette.ink650",
       "text": "palette.ink200",
       "contrastText": "palette.ink200"
     },
@@ -107,6 +107,9 @@
     },
     "input": {
       "background": "palette.ink850"
+    },
+    "panel": {
+      "background": "palette.ink800"
     },
     "tag": {
       "colors": [

@@ -116,6 +116,7 @@ export const getCardContainerStyles = (
       width: '100%',
       padding: theme.spacing(isCompact ? 1 : 2),
       background: theme.colors.background.secondary,
+      border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.lg,
       marginBottom: theme.spacing(noMargin ? 0 : 1),
       pointerEvents: disabled ? 'none' : 'auto',

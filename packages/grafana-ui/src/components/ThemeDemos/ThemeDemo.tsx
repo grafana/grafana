@@ -135,10 +135,10 @@ export const ThemeDemo = () => {
       <DemoBox bg="canvas">
         <CollapsableSection label="Layers" isOpen={true}>
           <DemoText>t.colors.background.canvas</DemoText>
-          <DemoBox bg="primary" border="weak">
-            <DemoText>t.colors.background.primary is the main & preferred content </DemoText>
-            <DemoBox bg="secondary" border="weak">
-              <DemoText>t.colors.background.secondary (Used for cards)</DemoText>
+          <DemoBox bg="page" border="weak">
+            <DemoText>t.colors.background.page is the main & preferred content backgrund</DemoText>
+            <DemoBox bg="secondary" border="medium">
+              <DemoText>t.colors.background.secondary (Used for cards and panels)</DemoText>
             </DemoBox>
             <Box padding={4}>
               <DemoText>t.colors.background.elevated</DemoText>
@@ -273,7 +273,7 @@ export const ThemeDemo = () => {
           </DemoBox>
         </CollapsableSection>
         <CollapsableSection label="Buttons" isOpen={true}>
-          <DemoBox bg="primary">
+          <DemoBox bg="canvas">
             <Stack direction="column" gap={3}>
               <Stack wrap="wrap">
                 {allButtonVariants.map((variant) => (
