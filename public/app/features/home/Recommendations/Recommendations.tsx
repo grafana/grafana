@@ -97,6 +97,14 @@ function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
     return <RecommendationsSkeleton />;
   }
 
+  // All-or-nothing: the region never renders one column alone. An empty right column —
+  // inconclusive detection (the matrix's unknown short-circuit), nothing left to recommend,
+  // or every card failing closed — hides the whole region. The collapsed-gated render
+  // (probesEnabled false) keeps its header row: with probes off, emptiness is unknowable.
+  if (probesEnabled && recommendations.length === 0) {
+    return null;
+  }
+
   return (
     <RecommendationsView
       recommendations={recommendations}
