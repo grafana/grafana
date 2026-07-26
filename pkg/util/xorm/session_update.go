@@ -288,8 +288,10 @@ func (session *Session) Update(bean any, condiBean ...any) (int64, error) {
 			} else {
 				afterClosures := make([]func(any), lenAfterClosures)
 				copy(afterClosures, session.afterClosures)
-				// FIXME: if bean is a map type, it will panic because map cannot be as map key
-				session.afterUpdateBeans[bean] = &afterClosures
+				// map types cannot be used as map keys in Go and will panic at runtime
+				if !isMap {
+					session.afterUpdateBeans[bean] = &afterClosures
+				}
 			}
 
 		} else {
