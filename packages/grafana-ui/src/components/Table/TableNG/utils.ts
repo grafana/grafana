@@ -78,9 +78,6 @@ function inferPillsImpl(rawValue: unknown): unknown[] {
  * writes go to `primary`; when `primary` fills, it becomes `secondary` (whatever was in the old
  * `secondary` is dropped) and a fresh `primary` starts. Reads check both generations and promote a
  * survivor back into `primary`, which approximates LRU. Total live entries stay within ~2x maxSize.
- *
- * This is deliberately not a delete-oldest FIFO: on a high-cardinality workload a FIFO evicts on
- * every insert, and `map.keys().next()` allocates an iterator each time, which dominated CPU traces.
  */
 function createBoundedCache<K, V>(maxSize: number) {
   let primary = new Map<K, V>();
@@ -354,21 +351,35 @@ export function getPillCellHeightEstimator(avgCharWidth: number): MeasureCellHei
     if (value == null) {
       return 0;
     }
-    const str = String(value);
-    if (str.length === 0) {
-      return 0;
-    }
-
-    // approximate pill count from separators without allocating (inferPills splits on commas)
+    // we're going to figure out the number of pills and the length of the first pill,
+    // regardless of whether this is an array or a string-able primitive. we'll set defaults
+    // to avoid dividing by zero anywhere.
     let pillCount = 1;
-    for (let i = 0; i < str.length; i++) {
-      if (str.charCodeAt(i) === 44 /* comma */) {
-        pillCount++;
+    let firstStrLength = 10;
+    if (Array.isArray(value)) {
+      if (value.length === 0) {
+        return 0;
+      }
+      pillCount = value.length;
+      firstStrLength = value.find((v) => v != null)?.toString().length ?? firstStrLength;
+    } else {
+      const str = String(value);
+      if (str.length === 0) {
+        return 0;
+      }
+      firstStrLength = str.length;
+      for (let i = 0; i < str.length; i++) {
+        if (str.charCodeAt(i) === 44 /* comma */) {
+          if (pillCount === 1) {
+            firstStrLength = i; // freeze the string length as the first pill's length
+          }
+          pillCount++;
+        }
       }
     }
 
     // model atomic pills of roughly average width packing into the available width
-    const avgPillWidth = (str.length / pillCount) * avgCharWidth + PILLS_SPACING;
+    const avgPillWidth = firstStrLength * avgCharWidth + PILLS_SPACING;
     const pillsPerLine = Math.max(1, Math.floor((width + PILLS_GAP) / (avgPillWidth + PILLS_GAP)));
     const lines = Math.ceil(pillCount / pillsPerLine);
 

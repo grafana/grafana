@@ -1223,6 +1223,62 @@ describe('TableNG utils', () => {
         );
       }
     });
+
+    describe('array values', () => {
+      it('estimates a single-line height when the pills fit on one line', () => {
+        const estimate = getPillCellHeightEstimator(5);
+        expect(estimate(['a', 'b'], 1000, {} as Field, 0, 20)).toBe(20);
+      });
+
+      it('estimates more lines as more pills are added', () => {
+        const estimate = getPillCellHeightEstimator(5);
+        const few = estimate(['aaaa', 'aaaa'], 100, {} as Field, 0, 20);
+        const many = estimate(['aaaa', 'aaaa', 'aaaa', 'aaaa', 'aaaa', 'aaaa'], 100, {} as Field, 0, 20);
+        expect(many).toBeGreaterThan(few);
+      });
+
+      it('estimates more lines as the column narrows', () => {
+        const estimate = getPillCellHeightEstimator(5);
+        const value = ['aaaa', 'aaaa', 'aaaa', 'aaaa', 'aaaa', 'aaaa'];
+        const wide = estimate(value, 400, {} as Field, 0, 20);
+        const narrow = estimate(value, 100, {} as Field, 0, 20);
+        expect(narrow).toBeGreaterThan(wide);
+      });
+
+      it('returns 0 for an empty array', () => {
+        const estimate = getPillCellHeightEstimator(5);
+        expect(estimate([], 100, {} as Field, 0, 20)).toBe(0);
+      });
+
+      it('is never shorter with nullish entries than without them', () => {
+        const estimate = getPillCellHeightEstimator(5);
+        // inferPills drops null/undefined; the estimator may count them or not, but counting them
+        // only over-estimates (taller), which is the safe direction — it must never come out shorter.
+        const withNulls = estimate(['a', null, 'b', undefined], 1000, {} as Field, 0, 20);
+        const withoutNulls = estimate(['a', 'b'], 1000, {} as Field, 0, 20);
+        expect(withNulls).toBeGreaterThanOrEqual(withoutNulls);
+      });
+
+      it('returns a finite, non-negative height when every entry is nullish', () => {
+        const estimate = getPillCellHeightEstimator(5);
+        const height = estimate([null, undefined], 100, {} as Field, 0, 20);
+        expect(Number.isFinite(height)).toBe(true);
+        expect(height).toBeGreaterThanOrEqual(0);
+      });
+
+      it('does not under-estimate the precise measurer for array input', () => {
+        // the precise measurer stringifies the array (String(['a','b']) === 'a,b') and infers pills;
+        // the estimator must not size the row shorter than the precise measurer would.
+        const estimate = getPillCellHeightEstimator(5);
+        const precise = getPillCellHeightMeasurer((s) => s.length * 5);
+        const value = ['aaaa', 'aaaa', 'aaaa', 'aaaa', 'aaaa', 'aaaa'];
+        for (const width of [80, 120, 200, 400]) {
+          expect(estimate(value, width, {} as Field, 0, 20)).toBeGreaterThanOrEqual(
+            precise(value, width, {} as Field, 0, 20)
+          );
+        }
+      });
+    });
   });
 
   describe('buildHeaderHeightMeasurers', () => {
