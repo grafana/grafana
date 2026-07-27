@@ -1,16 +1,13 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { type ChatContextItem } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { Alert, Modal, useStyles2 } from '@grafana/ui';
-import { getMessageFromError } from 'app/core/utils/errors';
+import { Modal, useStyles2 } from '@grafana/ui';
 
 import { PromptStep } from './PromptStep';
-import { QuestionsStep } from './QuestionsStep';
-import { SummaryStep } from './SummaryStep';
 import { getWizardDatasources, useWizardAssistant } from './api';
 import { formatContextItemsForPrompt, scopeDatasourcesToContext } from './context';
 import {
@@ -18,15 +15,10 @@ import {
   prewarmDashboardGeneration,
   startDashboardGeneration,
 } from './generationState';
-import {
-  SHOWCASE_DISPLAY_PROMPT,
-  SHOWCASE_INTENT,
-  WIZARD_ORIGIN,
-  buildDisplayPrompt,
-  buildGenerationPrompt,
-} from './prompts';
+import { startPlanningInAssistant } from './handoff';
+import { SHOWCASE_DISPLAY_PROMPT, SHOWCASE_INTENT, WIZARD_ORIGIN, buildGenerationPrompt } from './prompts';
 import { supportsLabelLookups } from './tools';
-import { type WizardQuestion, type WizardRefinement, type WizardSeed } from './types';
+import { type WizardSeed } from './types';
 
 interface Props {
   onDismiss: () => void;
@@ -34,44 +26,31 @@ interface Props {
   seed?: WizardSeed;
 }
 
-type Step = 'prompt' | 'questions' | 'summary';
-
-/** Labels the build agent typically turns into template variables. */
+/** Labels the showcase build agent typically turns into template variables. */
 const COMMON_VARIABLE_LABELS = ['job', 'namespace', 'cluster', 'instance'];
 
 /** How many datasources the speculative label prefetch fans out to. */
 const MAX_PREFETCH_DATASOURCES = 4;
 
 /**
- * The "Generate dashboard" wizard. The user describes the dashboard in their
- * own words — optionally attaching specific datasources, metrics, labels, or
- * dashboards through the assistant's context picker — and the assistant
- * reorganizes that request into a precise build prompt (verifying the data it
- * refers to), asks one round of clarifying questions only when genuinely
- * needed, and then builds. Alternatively, "Just show me what Grafana can do"
- * skips straight to a showcase build. Building happens headlessly (via
- * DashboardGenerationHost): the wizard drops the user into the new-dashboard
- * editor with the build's conversation streaming in the assistant sidebar,
- * while the dashboard edit lock (dim + progress pill) blocks manual edits.
- * When it finishes, the lock lifts and the finished dashboard is left in the
- * editor — new, dirty, and unsaved — for the user to review and save.
+ * The "Generate dashboard" entry modal. The user describes the dashboard in
+ * their own words — optionally attaching specific datasources, metrics,
+ * labels, or dashboards through the assistant's context picker — and the
+ * modal hands the request to the assistant sidebar: the user lands in the
+ * new-dashboard editor, where the assistant plans the dashboard in the
+ * conversation (grounding the plan in verified data, asking clarifying
+ * questions in the chat, rendering the plan as a card with a "Build it"
+ * button) and builds it in the same conversation once the plan is accepted.
+ * Alternatively, "Just show me what Grafana can do" skips planning and runs a
+ * headless showcase build (via DashboardGenerationHost) behind the dashboard
+ * edit lock.
  */
 export function GenerateDashboardModal({ onDismiss, seed }: Props) {
   const styles = useStyles2(getStyles);
-  const { refine, getFindings, prefetchLabelValues } = useWizardAssistant();
-
-  const [step, setStep] = useState<Step>('prompt');
-  const [error, setError] = useState<string>();
-  const [busy, setBusy] = useState(false);
+  const { getFindings, prefetchLabelValues } = useWizardAssistant();
 
   const [freeText, setFreeText] = useState('');
   const [contextItems, setContextItems] = useState<ChatContextItem[]>([]);
-  const [refinement, setRefinement] = useState<WizardRefinement | null>(null);
-  /** Plan changes the user asked for on the review step, shown in the build conversation. */
-  const [planFeedback, setPlanFeedback] = useState<string[]>([]);
-
-  const [questions, setQuestions] = useState<WizardQuestion[]>([]);
-  const [answers, setAnswers] = useState<Record<string, string[]>>({});
 
   const allDatasources = useMemo(() => {
     const list = getWizardDatasources();
@@ -89,21 +68,18 @@ export function GenerateDashboardModal({ onDismiss, seed }: Props) {
     [allDatasources, contextItems]
   );
 
-  const disposed = useRef(false);
-
   useEffect(() => {
     reportInteraction('dashboard_wizard_opened');
-    // Both wizard paths end in a build, so let the host mount the assistant's
-    // builder in prewarm mode right away: the chat session the build needs is
-    // then already created when generation starts. Also warm the label values
-    // the build agent will want for template variables.
+    // The showcase path still builds headlessly, so let the host mount the
+    // assistant's builder in prewarm mode: the chat session that build needs
+    // is then already created when generation starts. Also warm the label
+    // values that build folds into its prompt as verified findings.
     prewarmDashboardGeneration(WIZARD_ORIGIN);
     prefetchLabelValues(
       allDatasources.filter(supportsLabelLookups).slice(0, MAX_PREFETCH_DATASOURCES),
       COMMON_VARIABLE_LABELS
     );
     return () => {
-      disposed.current = true;
       // Release the prewarmed assistant session if the user backed out
       // without building (no-op once a generation has started).
       cancelDashboardGenerationPrewarm();
@@ -120,106 +96,41 @@ export function GenerateDashboardModal({ onDismiss, seed }: Props) {
     setContextItems((prev) => prev.filter((existing) => existing.node.id !== item.node.id));
   };
 
-  /** The user's free text plus any entry-point hint, as sent to the refine call. */
+  /** The user's free text plus any entry-point hint, as sent to the assistant. */
   const composeRequest = () => {
     const written = freeText.trim();
     return seed?.promptHint ? `${written}\n\nWhere this request came from:\n${seed.promptHint}` : written;
   };
 
-  const handleSubmitPrompt = async () => {
+  /**
+   * Hands the prompt to the assistant sidebar for planning: the user lands in
+   * the new-dashboard editor and the conversation takes it from there.
+   */
+  const handleSubmitPrompt = () => {
     if (freeText.trim() === '') {
       return;
     }
 
-    setBusy(true);
-    setError(undefined);
+    reportInteraction('dashboard_wizard_planning_started', { contextItems: contextItems.length });
 
-    const request = composeRequest();
-    const contextNotes = formatContextItemsForPrompt(contextItems);
+    startPlanningInAssistant({
+      request: composeRequest(),
+      displayPrompt: freeText.trim(),
+      contextItems,
+      datasources,
+    });
 
-    try {
-      const result = await refine(request, datasources, contextNotes || undefined);
-      if (disposed.current) {
-        return;
-      }
-      setRefinement(result);
-      // A fresh plan was proposed from scratch; feedback on the old one no longer applies.
-      setPlanFeedback([]);
-      if (result.questions.length > 0) {
-        setQuestions(result.questions);
-        setAnswers({});
-        setStep('questions');
-      } else {
-        // No clarifications needed — go straight to the review step.
-        setStep('summary');
-      }
-    } catch (err) {
-      setError(getMessageFromError(err));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleShowMeWhatGrafanaCanDo = () => {
-    // The showcase path has no user intent to preview, so build directly.
-    handOffToAssistant({ prompt: SHOWCASE_INTENT, questions: [] }, [], SHOWCASE_DISPLAY_PROMPT);
-  };
-
-  /** The clarifying questions the user answered, folded into the build request. */
-  const clarifications = questions
-    .map((question) => ({ question: question.text, answer: (answers[question.id] ?? []).join(', ') }))
-    .filter((clarification) => clarification.answer !== '');
-
-  const handleConfirmBuild = () => {
-    if (!refinement) {
-      return;
-    }
-    handOffToAssistant(refinement, clarifications);
-  };
-
-  /** Re-run the refine call with the current plan and the user's requested changes. */
-  const handleRefinePlan = async (feedback: string) => {
-    if (!refinement || feedback.trim() === '') {
-      return;
-    }
-
-    setBusy(true);
-    setError(undefined);
-
-    const contextNotes = formatContextItemsForPrompt(contextItems);
-
-    try {
-      const result = await refine(composeRequest(), datasources, contextNotes || undefined, {
-        previousPrompt: refinement.prompt,
-        previousSummary: refinement.summary,
-        feedback: feedback.trim(),
-      });
-      if (disposed.current) {
-        return;
-      }
-      reportInteraction('dashboard_wizard_plan_refined');
-      setRefinement(result);
-      setPlanFeedback((prev) => [...prev, feedback.trim()]);
-    } catch (err) {
-      setError(getMessageFromError(err));
-    } finally {
-      setBusy(false);
-    }
+    onDismiss();
   };
 
   /**
-   * Publishes the composed request for the app-level DashboardGenerationHost,
-   * which runs the assistant's dashboarding agent headlessly while the build's
-   * conversation streams in the assistant sidebar. The agent builds into the
-   * live scene behind the dashboard edit lock; when it finishes the dashboard
-   * is left in the editor — new, dirty, and unsaved.
+   * The showcase path has no user intent to plan around, so it builds
+   * directly and headlessly: publish the request for the app-level
+   * DashboardGenerationHost, which runs the assistant's dashboarding agent
+   * against the live scene behind the dashboard edit lock, with the build's
+   * conversation streaming in the assistant sidebar.
    */
-  const handOffToAssistant = (
-    result: WizardRefinement,
-    clarifications: Array<{ question: string; answer: string }>,
-    /** The request as the user typed it — shown as their message in the conversation. */
-    displayRequest: string = freeText.trim()
-  ) => {
+  const handleShowMeWhatGrafanaCanDo = () => {
     reportInteraction('dashboard_wizard_generated', { contextItems: contextItems.length });
 
     const contextNotes = formatContextItemsForPrompt(contextItems);
@@ -228,22 +139,17 @@ export function GenerateDashboardModal({ onDismiss, seed }: Props) {
       origin: WIZARD_ORIGIN,
       target: 'new',
       prompt: buildGenerationPrompt({
-        intent: result.prompt,
-        clarifications,
+        intent: SHOWCASE_INTENT,
+        clarifications: [],
         datasources,
-        dataNotes: result.dataNotes,
         findings: getFindings(),
         contextNotes: contextNotes || undefined,
-        summary: result.summary,
-        verifiedMetrics: result.verifiedMetrics,
       }),
-      displayPrompt: buildDisplayPrompt({ request: displayRequest, clarifications, planFeedback }),
+      displayPrompt: SHOWCASE_DISPLAY_PROMPT,
     });
 
     // Land in the new-dashboard editor right away so the user watches the
-    // build from the start. The assistant re-navigates to the same page with
-    // its own params (title, edit source) via location.replace, which reuses
-    // the scene — so history keeps a single entry back to this page.
+    // build from the start.
     locationService.push('/dashboard/new');
 
     onDismiss();
@@ -256,53 +162,16 @@ export function GenerateDashboardModal({ onDismiss, seed }: Props) {
       onDismiss={onDismiss}
       className={styles.modal}
     >
-      {error && (
-        <Alert severity="error" title={t('dashboard-wizard.modal.error-title', 'Something went wrong')}>
-          {error}
-        </Alert>
-      )}
-
-      {step === 'prompt' && (
-        <PromptStep
-          freeText={freeText}
-          onFreeTextChange={setFreeText}
-          contextItems={contextItems}
-          onAddContextItem={handleAddContextItem}
-          onRemoveContextItem={handleRemoveContextItem}
-          onSubmit={handleSubmitPrompt}
-          onShowMeWhatGrafanaCanDo={handleShowMeWhatGrafanaCanDo}
-          busy={busy}
-        />
-      )}
-
-      {step === 'questions' && (
-        <QuestionsStep
-          questions={questions}
-          answers={answers}
-          onAnswersChange={setAnswers}
-          onContinue={() => setStep('summary')}
-          onBack={() => {
-            setStep('prompt');
-            setError(undefined);
-          }}
-        />
-      )}
-
-      {step === 'summary' && refinement && (
-        <SummaryStep
-          summary={refinement.summary}
-          fallbackText={refinement.prompt}
-          // Only surface datasources when the set is a deliberate selection; the
-          // full instance list (when nothing was attached) is noise the agent picks from.
-          datasourceNames={datasources.length < allDatasources.length ? datasources.map((ds) => ds.name ?? ds.uid) : []}
-          variableNames={refinement.summary?.variables ?? []}
-          clarifications={clarifications}
-          busy={busy}
-          onRefine={handleRefinePlan}
-          onGenerate={handleConfirmBuild}
-          onBack={() => setStep(questions.length > 0 ? 'questions' : 'prompt')}
-        />
-      )}
+      <PromptStep
+        freeText={freeText}
+        onFreeTextChange={setFreeText}
+        contextItems={contextItems}
+        onAddContextItem={handleAddContextItem}
+        onRemoveContextItem={handleRemoveContextItem}
+        onSubmit={handleSubmitPrompt}
+        onShowMeWhatGrafanaCanDo={handleShowMeWhatGrafanaCanDo}
+        busy={false}
+      />
     </Modal>
   );
 }
