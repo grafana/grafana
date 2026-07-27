@@ -17,6 +17,7 @@ import {
   parseLiveChannelAddress,
   type ScopedVars,
   type AdHocVariableFilter,
+  type TimeRange,
 } from '@grafana/data';
 
 import { reportInteraction } from '../analytics/utils';
@@ -56,6 +57,23 @@ export function isExpressionReference(ref?: DataSourceRef | string | null): bool
   }
   const v = typeof ref === 'string' ? ref : ref.type;
   return v === ExpressionDatasourceRef.type || v === ExpressionDatasourceRef.name || v === '-100'; // -100 was a legacy accident that should be removed
+}
+
+function getQueryTimeRangeBounds(range?: TimeRange): { from: string; to: string } {
+  let from: unknown;
+  let to: unknown;
+  try {
+    from = range?.from.valueOf();
+    to = range?.to.valueOf();
+  } catch {
+    throw new Error('Invalid DateTime in query time range');
+  }
+
+  if (typeof from !== 'number' || typeof to !== 'number' || Number.isNaN(from) || Number.isNaN(to)) {
+    throw new Error('Invalid DateTime in query time range');
+  }
+
+  return { from: from.toString(), to: to.toString() };
 }
 
 export class HealthCheckError extends Error {
@@ -234,10 +252,11 @@ class DataSourceWithBackend<
       return of({ data: [] });
     }
 
+    const { from, to } = getQueryTimeRangeBounds(range);
     const body = {
       queries,
-      from: range?.from.valueOf().toString(),
-      to: range?.to.valueOf().toString(),
+      from,
+      to,
     };
 
     const headers: Record<string, string> = request.headers ?? {};
