@@ -4,6 +4,7 @@ import (
 	"maps"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/keyword"
@@ -245,6 +246,81 @@ func TestFacetFieldsForMapping(t *testing.T) {
 	assert.NotContains(t, fields, "labels.region")
 }
 
+func TestTextQueryKindsForMapping(t *testing.T) {
+	gvr := schema.GroupVersionResource{Group: "example.grafana.app", Version: "v1", Resource: "widgets"}
+	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+		gvr: {
+			{
+				Name: "panel_title",
+				Type: resource.SearchFieldTypeString,
+				Capabilities: []resource.SearchCapability{
+					resource.SearchCapabilityText,
+					resource.SearchCapabilityPartial,
+				},
+			},
+			{
+				Name:         "team",
+				Type:         resource.SearchFieldTypeString,
+				Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter},
+			},
+			{
+				Name:         "summary",
+				Type:         resource.SearchFieldTypeString,
+				Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilityFilter},
+			},
+			{
+				Name:         "linkCount",
+				Type:         resource.SearchFieldTypeInt64,
+				Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter},
+			},
+		},
+	}, nil)
+
+	kinds := textQueryKindsForMapping(provider, gvr.Group, gvr.Resource, []string{"spec.slug"})
+
+	// The title trio: each variant gets the query its analyzer needs.
+	assert.Equal(t, textQueryStandard, kinds[resource.SEARCH_FIELD_TITLE])
+	assert.Equal(t, textQueryNgram, kinds[resource.SEARCH_FIELD_TITLE_NGRAM])
+	// title_phrase holds a lowercased copy of the title.
+	assert.Equal(t, textQueryTermLowered, kinds[resource.SEARCH_FIELD_TITLE_PHRASE])
+
+	// Other standard fields.
+	assert.Equal(t, textQueryStandard, kinds[resource.SEARCH_FIELD_DESCRIPTION])
+	assert.Equal(t, textQueryTerm, kinds[resource.SEARCH_FIELD_FOLDER])
+	assert.Equal(t, textQueryTerm, kinds[resource.SEARCH_FIELD_TAGS])
+
+	// Per-kind fields live under fields.*
+	assert.Equal(t, textQueryStandard, kinds["fields.panel_title"])
+	assert.Equal(t, textQueryNgram, kinds["fields.panel_title_ngram"])
+	// team is keyword-mapped in place, so it keeps the value's case, while
+	// summary_keyword is a lowercased copy of the text field.
+	assert.Equal(t, textQueryTerm, kinds["fields.team"])
+	assert.Equal(t, textQueryStandard, kinds["fields.summary"])
+	assert.Equal(t, textQueryTermLowered, kinds["fields.summary_keyword"])
+
+	// Non-string fields are never analyzed, so they are absent.
+	assert.NotContains(t, kinds, "fields.linkCount")
+
+	// Selectable fields are keyword-mapped.
+	assert.Equal(t, textQueryTerm, kinds[resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.slug"])
+
+	// Keyword-mapped sub-document fields, and labels which are not.
+	assert.Equal(t, textQueryTerm, kinds[resource.SEARCH_FIELD_MANAGER_KIND])
+	assert.Equal(t, textQueryTerm, kinds[resource.SEARCH_FIELD_SOURCE_PATH])
+	assert.NotContains(t, kinds, resource.SEARCH_FIELD_LABELS+".region")
+
+	// An index without per-kind fields still knows the standard ones.
+	assert.Equal(t, textQueryTermLowered, textQueryKindsForMapping(nil, "", "", nil)[resource.SEARCH_FIELD_TITLE_PHRASE])
+}
+
+func TestBleveIndex_textQueryKindFor(t *testing.T) {
+	b := &bleveIndex{textQueryKinds: map[string]textQueryKind{resource.SEARCH_FIELD_TITLE_PHRASE: textQueryTerm}}
+	assert.Equal(t, textQueryTerm, b.textQueryKindFor(resource.SEARCH_FIELD_TITLE_PHRASE))
+	// reference keys are dynamic, so the keyword sub-document is matched by prefix.
+	assert.Equal(t, textQueryTerm, b.textQueryKindFor("reference.datasource"))
+	// Undeclared fields fall back to the analyzed query.
+	assert.Equal(t, textQueryStandard, b.textQueryKindFor(resource.SEARCH_FIELD_LABELS+".region"))
+}
 func TestAddCapabilityFieldMappings_RetrieveOnly_StoreOnly(t *testing.T) {
 	// With no dynamic fallback, a retrieve-only field must be stored explicitly.
 	t.Run("int64", func(t *testing.T) {
@@ -489,11 +565,12 @@ func TestBleveIndex_resolveQueryFields(t *testing.T) {
 	// An explicit title field fans out the same way.
 	assert.Equal(t, titleVariants, names(b.resolveQueryFields([]*resourcepb.ResourceSearchRequest_QueryField{{Name: resource.SEARCH_FIELD_TITLE}})))
 
-	// A per-kind field resolves to fields.* and keeps its requested type/boost.
-	got := b.resolveQueryFields([]*resourcepb.ResourceSearchRequest_QueryField{{Name: "panel_title", Type: resourcepb.QueryFieldType_TEXT, Boost: 3}})
+	// A per-kind field resolves to fields.* and keeps its requested boost. The
+	// requested type is dropped: the backend derives it from the mapping.
+	got := b.resolveQueryFields([]*resourcepb.ResourceSearchRequest_QueryField{{Name: "panel_title", Type: resourcepb.QueryFieldType_KEYWORD, Boost: 3}})
 	require.Len(t, got, 1)
 	assert.Equal(t, resource.SEARCH_FIELD_PREFIX+"panel_title", got[0].Name)
-	assert.Equal(t, resourcepb.QueryFieldType_TEXT, got[0].Type)
+	assert.Equal(t, resourcepb.QueryFieldType_DEFAULT, got[0].Type)
 	assert.Equal(t, float32(3), got[0].Boost)
 
 	// title + per-kind field: title variants first, then the resolved field.
@@ -547,4 +624,242 @@ func TestCombineFilterAndTextQueries(t *testing.T) {
 	filter, ok := bq.Filter.(*query.ConjunctionQuery)
 	require.True(t, ok)
 	assert.Equal(t, []query.Query{f1, f2}, filter.Conjuncts)
+}
+
+// TestBulkIndexPopulatesFieldVariants indexes a document for a synthetic kind
+// that declares a field with both text and filter capabilities. No in-tree
+// kind declares that combination, so the keyword variant it maps can only be
+// exercised with a kind constructed here.
+func TestBulkIndexPopulatesFieldVariants(t *testing.T) {
+	const group, kindResource = "example.test", "widgets"
+	gvr := schema.GroupVersionResource{Group: group, Version: "v1", Resource: kindResource}
+	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+		gvr: {
+			{
+				Name: "category",
+				Type: resource.SearchFieldTypeString,
+				Capabilities: []resource.SearchCapability{
+					resource.SearchCapabilityText,
+					resource.SearchCapabilityFilter,
+					resource.SearchCapabilityRetrieve,
+				},
+			},
+			{
+				Name:  "owners",
+				Type:  resource.SearchFieldTypeString,
+				Array: true,
+				Capabilities: []resource.SearchCapability{
+					resource.SearchCapabilityText,
+					resource.SearchCapabilityFilter,
+				},
+			},
+			{
+				Name:         "region",
+				Type:         resource.SearchFieldTypeString,
+				Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter},
+			},
+		},
+	}, map[schema.GroupResource]string{gvr.GroupResource(): gvr.Version})
+
+	key := resource.NamespacedResource{Namespace: "default", Group: group, Resource: kindResource}
+	backend, err := NewBleveBackend(BleveOptions{
+		Root:          t.TempDir(),
+		FileThreshold: 5, // stay in memory
+		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+			resource.NewLowerGroupResource(group, kindResource): provider,
+		}),
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	index, err := backend.BuildIndex(t.Context(), key, 1, "test", func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{
+			Items: []*resource.BulkIndexItem{{
+				Action: resource.ActionIndex,
+				Doc: &resource.IndexableDocument{
+					Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: group, Resource: kindResource, Name: "w1"},
+					Title: "Widget one",
+					Fields: map[string]any{
+						"category": "Time Series",
+						"owners":   []string{"Ops Team", "SRE"},
+						"region":   "US West",
+					},
+				},
+			}},
+		})
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	bi, ok := index.(*bleveIndex)
+	require.True(t, ok)
+
+	termHits := func(t *testing.T, field, term string) uint64 {
+		t.Helper()
+		q := bleve.NewTermQuery(term)
+		q.SetField(field)
+		res, err := bi.index.Search(bleve.NewSearchRequest(q))
+		require.NoError(t, err)
+		return res.Total
+	}
+
+	t.Run("keyword variant holds the whole value, lowercased", func(t *testing.T) {
+		assert.Equal(t, uint64(1), termHits(t, "fields.category_keyword", "time series"))
+		// The analyzed variant still only matches single tokens, which is why
+		// the keyword variant is needed for exact matching.
+		assert.Equal(t, uint64(0), termHits(t, "fields.category", "time series"))
+		assert.Equal(t, uint64(1), termHits(t, "fields.category", "series"))
+	})
+
+	t.Run("array keyword variant holds whole elements", func(t *testing.T) {
+		assert.Equal(t, uint64(1), termHits(t, "fields.owners_keyword", "ops team"))
+		assert.Equal(t, uint64(1), termHits(t, "fields.owners_keyword", "sre"))
+		assert.Equal(t, uint64(0), termHits(t, "fields.owners_keyword", "ops"))
+	})
+
+	t.Run("filter-only field keeps its own name", func(t *testing.T) {
+		assert.Equal(t, uint64(1), termHits(t, "fields.region", "US West"))
+		assert.Equal(t, uint64(0), termHits(t, "fields.region_keyword", "us west"))
+	})
+
+	// Re-indexing a document sees the variants the previous pass added, so they
+	// must not be mistaken for values written under an undeclared name.
+	t.Run("variant names count as declared", func(t *testing.T) {
+		assert.True(t, bi.isDeclaredField("fields.category_keyword"))
+		assert.True(t, bi.isDeclaredField("owners_keyword"))
+		assert.False(t, bi.isDeclaredField("fields.region_keyword"))
+	})
+}
+
+// TestNoVariantsForDashboards guards the on-disk shape of the kinds that exist
+// today: none of them declares a text field that also filters, sorts or
+// facets, so no extra field is written and no index has to be rebuilt.
+func TestNoVariantsForDashboards(t *testing.T) {
+	provider := DashboardSearchFieldsProviderForTest()
+	assert.Empty(t, fieldVariantsOf(fieldDefinitionsForMapping(provider, "dashboard.grafana.app", "dashboards")))
+}
+
+func TestFieldVariantsOf(t *testing.T) {
+	str := func(caps ...resource.SearchCapability) resource.SearchFieldDefinition {
+		return resource.SearchFieldDefinition{Name: "field", Type: resource.SearchFieldTypeString, Capabilities: caps}
+	}
+
+	tests := []struct {
+		name string
+		def  resource.SearchFieldDefinition
+		want []fieldVariant
+	}{
+		{
+			name: "text and filter",
+			def:  str(resource.SearchCapabilityText, resource.SearchCapabilityFilter),
+			want: []fieldVariant{{field: "field", keyword: "field_keyword"}},
+		},
+		{
+			name: "text and facet",
+			def:  str(resource.SearchCapabilityText, resource.SearchCapabilityFacet),
+			want: []fieldVariant{{field: "field", keyword: "field_keyword"}},
+		},
+		{
+			name: "text and sort",
+			def:  str(resource.SearchCapabilityText, resource.SearchCapabilitySort),
+			want: []fieldVariant{{field: "field", keyword: "field_keyword"}},
+		},
+		{
+			name: "partial",
+			def:  str(resource.SearchCapabilityText, resource.SearchCapabilityPartial),
+			want: []fieldVariant{{field: "field", ngram: "field_ngram"}},
+		},
+		{
+			name: "text, filter and partial",
+			def:  str(resource.SearchCapabilityText, resource.SearchCapabilityFilter, resource.SearchCapabilityPartial),
+			want: []fieldVariant{{field: "field", keyword: "field_keyword", ngram: "field_ngram"}},
+		},
+		{
+			name: "filter only is keyword-analyzed under its own name",
+			def:  str(resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve),
+		},
+		{
+			name: "text only has no keyword mapping to fill in",
+			def:  str(resource.SearchCapabilityText, resource.SearchCapabilityRetrieve),
+		},
+		{
+			name: "retrieve only",
+			def:  str(resource.SearchCapabilityRetrieve),
+		},
+		{
+			name: "non-string fields keep their native form",
+			def: resource.SearchFieldDefinition{Name: "field", Type: resource.SearchFieldTypeInt64,
+				Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilitySort}},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, fieldVariantsOf([]resource.SearchFieldDefinition{tc.def}))
+		})
+	}
+}
+
+func TestPopulateFieldVariants(t *testing.T) {
+	variants := fieldVariantsOf([]resource.SearchFieldDefinition{
+		{
+			Name:         "category",
+			Type:         resource.SearchFieldTypeString,
+			Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilityFilter},
+		},
+		{
+			Name:  "owners",
+			Type:  resource.SearchFieldTypeString,
+			Array: true,
+			Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilityFilter,
+				resource.SearchCapabilityPartial},
+		},
+		{
+			Name:         "region",
+			Type:         resource.SearchFieldTypeString,
+			Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter},
+		},
+		{
+			Name:         "linkCount",
+			Type:         resource.SearchFieldTypeInt64,
+			Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilitySort},
+		},
+	})
+
+	t.Run("writes lowercased whole values", func(t *testing.T) {
+		doc := &resource.IndexableDocument{Fields: map[string]any{
+			"category":  "Time Series",
+			"owners":    []string{"Ops Team", "SRE"},
+			"region":    "US West",
+			"linkCount": int64(3),
+		}}
+		populateFieldVariants(doc, variants)
+
+		assert.Equal(t, map[string]any{
+			"category":         "Time Series",
+			"category_keyword": "time series",
+			"owners":           []string{"Ops Team", "SRE"},
+			"owners_keyword":   []string{"ops team", "sre"},
+			"owners_ngram":     []string{"Ops Team", "SRE"},
+			"region":           "US West",
+			"linkCount":        int64(3),
+		}, doc.Fields)
+	})
+
+	t.Run("handles the []any shape the path extractor produces", func(t *testing.T) {
+		doc := &resource.IndexableDocument{Fields: map[string]any{"owners": []any{"Ops Team"}}}
+		populateFieldVariants(doc, variants)
+		assert.Equal(t, []any{"ops team"}, doc.Fields["owners_keyword"])
+	})
+
+	t.Run("absent fields stay absent", func(t *testing.T) {
+		doc := &resource.IndexableDocument{Fields: map[string]any{"region": "US West"}}
+		populateFieldVariants(doc, variants)
+		assert.Equal(t, map[string]any{"region": "US West"}, doc.Fields)
+	})
+
+	t.Run("a value that does not match its declared type is left alone", func(t *testing.T) {
+		doc := &resource.IndexableDocument{Fields: map[string]any{"category": 42}}
+		populateFieldVariants(doc, variants)
+		assert.Equal(t, map[string]any{"category": 42}, doc.Fields)
+	})
 }
