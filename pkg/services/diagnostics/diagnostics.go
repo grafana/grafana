@@ -45,13 +45,27 @@ const (
 	maxDashboardQueryDataBytes = 32 << 20
 	// minQueryDataArtifactBytes is the smallest budget worth attempting: below it not even a truncated
 	// artifact (version + omission markers) fits, so the panel's query data is skipped up front.
+	//
+	// The snapshot gate in BuildDashboard reuses it as a floor even though the snapshot has no
+	// truncated form and its own minimum (schemaVersion + title + an empty panel + target) is nearer
+	// 600 bytes. Deliberately loose: the gate exists to avoid re-encoding a whole response once per
+	// remaining panel with no budget left, and a too-low floor only costs one encode that is then
+	// measured and reported as over-budget -- whereas a floor tuned to the empty-snapshot size would
+	// have to track every change to the dashboard scaffold to stay correct.
 	minQueryDataArtifactBytes = 256
 )
 
-// grafanaSnapshotDatasourceRef mirrors the frontend's GRAFANA_DATASOURCE_REF: the built-in Grafana
-// datasource that serves baked snapshot frames offline. A snapshot panel points here so it renders
-// with no live datasource and no query re-run.
-var grafanaSnapshotDatasourceRef = map[string]any{"type": "grafana", "uid": "grafana", "name": "grafana"}
+// grafanaSnapshotDatasourceRef returns the built-in Grafana datasource ref that serves baked snapshot
+// frames offline: a snapshot panel points here so it renders with no live datasource and no query
+// re-run. "grafana" is the built-in plugin's id, so it is the ref's type as well as its uid -- the
+// same ref HelpWizard's debug dashboard uses for its snapshot targets (see
+// public/app/features/dashboard-scene/inspect/HelpWizard/utils.ts).
+//
+// A fresh map per call: the result is embedded in both the panel and its target, and a shared
+// package-level map would alias the two (and be mutable from anywhere in the package).
+func grafanaSnapshotDatasourceRef() map[string]any {
+	return map[string]any{"type": "grafana", "uid": "grafana", "name": "grafana"}
+}
 
 // queryDataArtifactVersion is the schema version stamped into every querydata.json (including its
 // truncated fallbacks) so a reader can tell how to interpret the artifact.
@@ -99,14 +113,24 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 	// snapshot-backend.json: an importable, data-baked dashboard that renders the plugin's returned
 	// frames offline (no datasource). A convenience artifact -- querydata.json remains the authoritative
 	// record -- so a failure or an over-budget artifact costs only the snapshot. Why it went missing is
-	// recorded in snapshot-error.txt, mirroring how the dashboard path records manifest.snapshotError:
-	// omitting it silently leaves a reader unable to tell a failure from a response with no frames.
+	// recorded in snapshot-backend-error.txt, mirroring how the dashboard path records
+	// manifest.snapshotBackendError: omitting it silently leaves a reader unable to tell a failure from
+	// a response with no frames.
+	//
+	// Named for the artifact rather than "snapshot" generically, because the rendered (post-transform)
+	// counterpart lands as snapshot-rendered.json and needs a failure record of its own.
+	//
+	// Encoded in full before it is measured: like querydata.json above (see the note on its allocation
+	// cost) an oversized response is built and then discarded, and the snapshot's frame slice plus the
+	// indented dashboard around it are a second and third copy on top of that peak. Acceptable while
+	// this is experimental, server-admin-only, and off by default; a streaming size check would be the
+	// fix if it ever ships more widely.
 	snapshot, snapshotErr := marshalSnapshotBackendArtifact(panelJSON, queryRequestJSON, resp)
 	switch {
 	case snapshotErr != nil:
-		files["snapshot-error.txt"] = []byte(snapshotErr.Error() + "\n")
+		files["snapshot-backend-error.txt"] = []byte(snapshotErr.Error() + "\n")
 	case len(snapshot) > maxQueryDataArtifactBytes:
-		files["snapshot-error.txt"] = []byte(fmt.Sprintf("snapshot-backend artifact (%d bytes) exceeded the %d-byte limit\n", len(snapshot), maxQueryDataArtifactBytes))
+		files["snapshot-backend-error.txt"] = []byte(fmt.Sprintf("snapshot-backend artifact (%d bytes) exceeded the %d-byte limit\n", len(snapshot), maxQueryDataArtifactBytes))
 	case len(snapshot) > 0:
 		files["snapshot-backend.json"] = snapshot
 	}
@@ -354,10 +378,13 @@ type manifestPanelEntry struct {
 	QueryDataBytes     int      `json:"queryDataBytes,omitempty"`
 	QueryDataTruncated bool     `json:"queryDataTruncated,omitempty"`
 	QueryDataError     string   `json:"queryDataError,omitempty"`
-	SnapshotBytes      int      `json:"snapshotBytes,omitempty"`
-	SnapshotError      string   `json:"snapshotError,omitempty"`
-	Skipped            string   `json:"skipped,omitempty"`
-	Error              string   `json:"error,omitempty"`
+	// SnapshotBackendBytes/SnapshotBackendError are scoped to snapshot-backend.json rather than named
+	// "snapshot" generically: the rendered (post-transform) counterpart lands as snapshot-rendered.json
+	// and needs its own pair, and renaming these later would break readers of an artifact schema.
+	SnapshotBackendBytes int    `json:"snapshotBackendBytes,omitempty"`
+	SnapshotBackendError string `json:"snapshotBackendError,omitempty"`
+	Skipped              string `json:"skipped,omitempty"`
+	Error                string `json:"error,omitempty"`
 	// CaptureError records a failure to serialize this panel's captured traffic. It's kept separate
 	// from Error (a query failure) so one unserializable buffer only loses this panel's traffic.har,
 	// not the whole multi-panel bundle.
@@ -398,7 +425,7 @@ func marshalSnapshotBackendArtifact(panelJSON, queryRequestJSON json.RawMessage,
 	// Prometheus -- so sibling targets collapse onto the same key and all but one are dropped.
 	panel["targets"] = []map[string]any{{
 		"refId":      "A",
-		"datasource": grafanaSnapshotDatasourceRef,
+		"datasource": grafanaSnapshotDatasourceRef(),
 		"queryType":  "snapshot",
 		"snapshot":   frames,
 	}}
@@ -453,6 +480,29 @@ func snapshotFrames(resp *backend.QueryDataResponse) ([]json.RawMessage, error) 
 	return frames, nil
 }
 
+// hasSnapshotFrames reports whether resp holds at least one frame the snapshot could bake, without
+// encoding anything. A non-nil response is not the same as one with frames -- a panel whose queries
+// all failed carries per-refID errors and no frames, which is the common case in a diagnostics bundle
+// -- so BuildDashboard needs this to tell "nothing to bake" (not a failure, exactly as the
+// single-panel path treats it) from "the snapshot didn't fit" BEFORE its budget gate decides which of
+// the two to record.
+func hasSnapshotFrames(resp *backend.QueryDataResponse) bool {
+	if resp == nil {
+		return false
+	}
+	for refID, response := range resp.Responses {
+		if isHARResponse(refID) {
+			continue
+		}
+		for _, frame := range response.Frames {
+			if frame != nil {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // snapshotPanel builds the snapshot dashboard's single panel from the supplied panel model, keeping
 // only what a v1 dashboard can render offline. Callers set the targets.
 func snapshotPanel(panelJSON json.RawMessage) map[string]any {
@@ -475,7 +525,7 @@ func snapshotPanel(panelJSON json.RawMessage) map[string]any {
 	}
 	panel["id"] = 1
 	panel["gridPos"] = map[string]any{"h": 12, "w": 24, "x": 0, "y": 0}
-	panel["datasource"] = grafanaSnapshotDatasourceRef
+	panel["datasource"] = grafanaSnapshotDatasourceRef()
 	delete(panel, "snapshotData")
 	// A library-panel reference would make the import resolve the panel from a library uid that doesn't
 	// exist in the reader's Grafana, discarding the baked targets along with the panel model.
@@ -495,6 +545,16 @@ func snapshotPanel(panelJSON json.RawMessage) map[string]any {
 	delete(panel, "timeShift")
 	delete(panel, "timeCompare")
 	delete(panel, "hideTimeOverride")
+	// Repeat is meaningless here for the same reason: the snapshot dashboard carries no templating, and
+	// one panel's frames are all there is to render. It does not merely no-op -- the repeat processor
+	// substitutes an empty variable for the missing one and binds the panel's clone to the value ""
+	// (see DashboardGridItem.performRepeat), so "$host" in a title or description renders BLANK instead
+	// of showing which series was captured. Kept out so the panel reads as what it is: the one panel
+	// whose queries ran. A repeated panel is the common case here -- the client resolves a clone's save
+	// model back to the source panel, which is the one carrying these fields.
+	delete(panel, "repeat")
+	delete(panel, "repeatDirection")
+	delete(panel, "maxPerRow")
 	return panel
 }
 
@@ -515,6 +575,13 @@ func v2ElementSpec(raw json.RawMessage) json.RawMessage {
 // the snapshot replaces them, and so is anything whose v1 equivalent has a different shape (v2
 // transformations are {kind, spec}, not {id, options}) -- copying the spec wholesale would emit a
 // hybrid object and carry the original datasource refs into an artifact that must not re-query.
+//
+// A v2 LibraryPanel element reaches here too (indexPanelJSON indexes both kinds), and its spec is only
+// {id, title, libraryPanel} -- the viz lives in the library, not the dashboard. The whitelist is what
+// keeps the library ref out of the artifact, so nothing can resolve the panel from a uid the reader's
+// Grafana doesn't have; the cost is no "type", and snapshotPanel's fallback renders the frames as a
+// timeseries. The same trade the v1 path makes by deleting libraryPanel: a generic render of the real
+// data beats no snapshot at all.
 func v1PanelFromV2Spec(spec json.RawMessage) map[string]any {
 	var v2 struct {
 		Title       string `json:"title"`
@@ -570,6 +637,14 @@ func v1PanelFromV2Spec(spec json.RawMessage) map[string]any {
 // time.from/to is parsed as a date expression, not a number; anything else (a relative "now-1h" from
 // a non-browser caller) is passed through verbatim. Returns nil when there is no range to bake, so
 // the import falls back to Grafana's default.
+//
+// Only the request's TOP-LEVEL range is read. Under Query V2 (the X-Query-V2 header, which makes both
+// handlers dispatch to QueryDataNew) an individual query's own "timeRange" overrides that global range
+// for the query that actually ran -- see getTimeRange in pkg/services/query -- so a panel mixing
+// per-query ranges would bake a window its frames may sit outside of. Left as-is deliberately: no
+// client sends that header today, and collapsing several per-query windows into the one range a
+// dashboard can hold (widest span? first query's?) is a decision worth making against a real caller
+// rather than guessed at here.
 func snapshotTimeRange(queryRequestJSON json.RawMessage) map[string]any {
 	if len(queryRequestJSON) == 0 {
 		return nil
@@ -678,23 +753,27 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 		// offline). Convenience artifact -- querydata.json remains the authoritative record -- so it draws
 		// from what querydata.json left of the shared dashboard budget rather than getting a pool of its
 		// own, and is omitted (with the reason in the manifest) on failure or when the budget is spent.
-		if p.Resp != nil {
+		// Gated on having FRAMES, not merely a response: a panel whose queries all failed carries
+		// per-refID errors and nothing to bake, and that is not a failure of the snapshot (the
+		// single-panel path treats it the same way). Checking first keeps the budget gate below from
+		// reporting such a panel's absent snapshot as dropped-for-budget.
+		if hasSnapshotFrames(p.Resp) {
 			snapshotLimit := min(maxQueryDataArtifactBytes, queryDataBytesRemaining)
 			if snapshotLimit < minQueryDataArtifactBytes {
 				// Checked BEFORE marshalling, mirroring the query-data gate above: the snapshot is
 				// all-or-nothing (there is no truncated form to fall back to), so building one for every
 				// remaining panel just to measure and discard it would re-encode the whole response -- the
 				// largest allocation in this path -- once per panel with no budget left to spend on it.
-				entry.SnapshotError = fmt.Sprintf("remaining dashboard query-data budget (%d bytes) below the %d-byte minimum artifact size", queryDataBytesRemaining, minQueryDataArtifactBytes)
+				entry.SnapshotBackendError = fmt.Sprintf("remaining dashboard query-data budget (%d bytes) below the %d-byte minimum artifact size", queryDataBytesRemaining, minQueryDataArtifactBytes)
 			} else if snapshot, err := marshalSnapshotBackendArtifact(panelJSON, p.QueryRequest, p.Resp); err != nil {
-				entry.SnapshotError = err.Error()
+				entry.SnapshotBackendError = err.Error()
 			} else if len(snapshot) > 0 {
 				if len(snapshot) <= snapshotLimit {
 					files[dir+"/snapshot-backend.json"] = snapshot
-					entry.SnapshotBytes = len(snapshot)
+					entry.SnapshotBackendBytes = len(snapshot)
 					queryDataBytesRemaining -= len(snapshot)
 				} else {
-					entry.SnapshotError = fmt.Sprintf("snapshot-backend artifact (%d bytes) exceeded the remaining dashboard query-data budget (%d bytes)", len(snapshot), snapshotLimit)
+					entry.SnapshotBackendError = fmt.Sprintf("snapshot-backend artifact (%d bytes) exceeded the remaining dashboard query-data budget (%d bytes)", len(snapshot), snapshotLimit)
 				}
 			}
 		}
@@ -768,8 +847,10 @@ func indexPanelsByID(panels []json.RawMessage, panelsByID map[int64]json.RawMess
 }
 
 // indexElementsByID indexes v2 "elements" entries by their spec.id. Both a regular "Panel" and a
-// "LibraryPanel" carry a resolved panel spec with an id, so both are indexed; other element kinds
-// (rows, tabs, ...) have no panel id and are skipped.
+// "LibraryPanel" carry a spec with a panel id, so both are indexed; other element kinds (rows, tabs,
+// ...) have no panel id and are skipped. Only "Panel" carries the panel's viz config, though -- a
+// LibraryPanel spec is just {id, title, libraryPanel} and the model lives in the library -- so a
+// reader of panel.json (and anything deriving from it, e.g. v1PanelFromV2Spec) gets identity only.
 func indexElementsByID(elements map[string]json.RawMessage, panelsByID map[int64]json.RawMessage) {
 	for _, raw := range elements {
 		var meta struct {

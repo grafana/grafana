@@ -155,7 +155,7 @@ func TestBundler_Build_noSnapshotWithoutResponse(t *testing.T) {
 
 	files := readTarGz(t, blob)
 	require.NotContains(t, files, "snapshot-backend.json")
-	require.NotContains(t, files, "snapshot-error.txt", "nothing to bake is not a failure")
+	require.NotContains(t, files, "snapshot-backend-error.txt", "nothing to bake is not a failure")
 }
 
 // Every refID's frames go into ONE snapshot target: the Grafana datasource emits each snapshot target
@@ -351,7 +351,7 @@ func TestBundler_Build_recordsSnapshotEncodeFailure(t *testing.T) {
 
 	files := readTarGz(t, blob)
 	require.NotContains(t, files, "snapshot-backend.json")
-	require.Contains(t, string(files["snapshot-error.txt"]), "encode frame for refId A")
+	require.Contains(t, string(files["snapshot-backend-error.txt"]), "encode frame for refId A")
 	require.Contains(t, files, "querydata.json", "the authoritative record still ships")
 }
 
@@ -366,8 +366,8 @@ func TestBundler_Build_recordsOversizedSnapshot(t *testing.T) {
 
 	files := readTarGz(t, blob)
 	require.NotContains(t, files, "snapshot-backend.json")
-	require.Contains(t, files, "snapshot-error.txt")
-	require.Contains(t, string(files["snapshot-error.txt"]), "exceeded")
+	require.Contains(t, files, "snapshot-backend-error.txt")
+	require.Contains(t, string(files["snapshot-backend-error.txt"]), "exceeded")
 }
 
 // A panel-level time override must not survive into the snapshot: the client reads the submitted range
@@ -392,6 +392,94 @@ func TestBundler_Build_snapshotDropsPanelTimeOverride(t *testing.T) {
 	// The baked range still stands on its own, and the rest of the panel model survives.
 	require.Contains(t, snap, `"from": "`+time.UnixMilli(1690000000000).UTC().Format(time.RFC3339Nano)+`"`)
 	require.Contains(t, snap, `"CPU"`)
+}
+
+// Repeat must not survive either, and for a reason a no-op check wouldn't catch: the snapshot dashboard
+// has no templating, so the repeat processor binds the panel to an EMPTY value for the missing variable
+// and "$host" in the title renders blank instead of naming the captured series. A repeated panel is the
+// common case -- the client resolves a clone's save model back to the source panel that carries these.
+func TestBundler_Build_snapshotDropsPanelRepeat(t *testing.T) {
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
+	panelJSON := json.RawMessage(`{"type":"timeseries","title":"CPU $host","repeat":"host","repeatDirection":"h","maxPerRow":2}`)
+
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, panelJSON, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	snap := string(readTarGz(t, blob)["snapshot-backend.json"])
+	require.NotContains(t, snap, "repeat")
+	require.NotContains(t, snap, "repeatDirection")
+	require.NotContains(t, snap, "maxPerRow")
+	// The title is kept verbatim, unresolved variable and all: it says more about what was captured
+	// than the blank the repeat processor would have substituted.
+	require.Contains(t, snap, `"CPU $host"`)
+}
+
+// A panel model that isn't a JSON object at all must cost only the panel's viz, never the snapshot:
+// the frames are the point of the artifact.
+func TestBundler_Build_snapshotFallsBackOnMalformedPanelJSON(t *testing.T) {
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
+
+	for name, panelJSON := range map[string]json.RawMessage{
+		"not json":           json.RawMessage(`{"type":`),
+		"array":              json.RawMessage(`[{"type":"stat"}]`),
+		"v2 spec not object": json.RawMessage(`{"kind":"Panel","spec":"nonsense"}`),
+	} {
+		t.Run(name, func(t *testing.T) {
+			blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, panelJSON, nil, nil, nil, nil)
+			require.NoError(t, err)
+
+			files := readTarGz(t, blob)
+			require.Contains(t, files, "snapshot-backend.json", "a bad panel model must not lose the snapshot")
+			require.NotContains(t, files, "snapshot-backend-error.txt")
+
+			var dash struct {
+				Panels []struct {
+					Type    string `json:"type"`
+					Targets []struct {
+						QueryType string            `json:"queryType"`
+						Snapshot  []json.RawMessage `json:"snapshot"`
+					} `json:"targets"`
+				} `json:"panels"`
+			}
+			require.NoError(t, json.Unmarshal(files["snapshot-backend.json"], &dash))
+			require.Len(t, dash.Panels, 1)
+			require.Equal(t, "timeseries", dash.Panels[0].Type, "falls back to a minimal panel")
+			require.Len(t, dash.Panels[0].Targets, 1)
+			require.Equal(t, "snapshot", dash.Panels[0].Targets[0].QueryType)
+			require.NotEmpty(t, dash.Panels[0].Targets[0].Snapshot, "the frames still make it in")
+		})
+	}
+}
+
+// A v2 LibraryPanel element's spec is only {id, title, libraryPanel} -- the viz lives in the library.
+// The library REF must stay out of the artifact (an import would otherwise resolve the panel from a uid
+// the reader's Grafana doesn't have, discarding the baked frames); the viz type is unavoidably lost, so
+// the frames render with the fallback.
+func TestBundler_Build_snapshotDropsV2LibraryPanelRef(t *testing.T) {
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
+	panelJSON := json.RawMessage(`{"kind":"LibraryPanel","spec":{"id":4,"title":"Shared CPU","libraryPanel":{"uid":"lib-1","name":"Shared CPU"}}}`)
+
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, panelJSON, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	snap := string(files["snapshot-backend.json"])
+	require.NotContains(t, snap, "libraryPanel")
+	require.NotContains(t, snap, "lib-1")
+
+	var dash struct {
+		Panels []struct {
+			Type  string `json:"type"`
+			Title string `json:"title"`
+		} `json:"panels"`
+	}
+	require.NoError(t, json.Unmarshal(files["snapshot-backend.json"], &dash))
+	require.Equal(t, "Shared CPU", dash.Panels[0].Title, "identity survives")
+	require.Equal(t, "timeseries", dash.Panels[0].Type, "the viz is not in the dashboard model to recover")
+	require.Contains(t, snap, "42", "the frames are what the artifact is for")
 }
 
 func TestBundler_Build_recordsQueryDataRequest(t *testing.T) {
@@ -897,7 +985,7 @@ func TestBuildDashboard_writesSnapshotPerPanel(t *testing.T) {
 	var m dashboardManifest
 	require.NoError(t, json.Unmarshal(files["manifest.json"], &m))
 	require.Len(t, m.Panels, 1)
-	require.Positive(t, m.Panels[0].SnapshotBytes, "manifest records the snapshot size")
+	require.Positive(t, m.Panels[0].SnapshotBackendBytes, "manifest records the snapshot size")
 }
 
 // The per-panel time range comes from that panel's own submitted request.
@@ -973,14 +1061,88 @@ func TestBuildDashboard_snapshotSharesQueryDataBudget(t *testing.T) {
 
 	var m dashboardManifest
 	require.NoError(t, json.Unmarshal(files["manifest.json"], &m))
-	var dropped int
+	// Two distinct reasons a snapshot is dropped for budget, and the manifest has to tell them apart:
+	// the artifact was built and didn't fit what was left, or the budget was already too spent to try.
+	// Asserting only on "budget" would pass with either message, so neither path would be pinned. These
+	// panels are large enough that the budget drains in ~8MB steps and never lands under the minimum,
+	// so this fixture exercises the exceeded path; the default case fails on anything else.
+	var exceeded, belowMinimum int
 	for _, p := range m.Panels {
-		if p.SnapshotError != "" {
-			dropped++
-			require.Contains(t, p.SnapshotError, "budget")
+		switch {
+		case p.SnapshotBackendError == "":
+		case strings.Contains(p.SnapshotBackendError, "exceeded the remaining dashboard query-data budget"):
+			exceeded++
+		case strings.Contains(p.SnapshotBackendError, "below the"):
+			belowMinimum++
+		default:
+			t.Fatalf("unexpected snapshotBackendError: %q", p.SnapshotBackendError)
 		}
 	}
-	require.Positive(t, dropped, "the panels past the budget record why their snapshot is missing")
+	require.Positive(t, exceeded, "a snapshot that outgrew what the budget had left says so")
+	require.Zero(t, belowMinimum)
+}
+
+// BuildDashboard's snapshot gate keys off having FRAMES, not a non-nil response, so that a panel with
+// nothing to bake is never reported as one whose snapshot was dropped for budget. Tested directly: the
+// difference only shows in the manifest once the shared budget has drained below the minimum artifact
+// size, which takes ~32MB of artifacts to reach and is impractical to stage as a fixture.
+func TestHasSnapshotFrames(t *testing.T) {
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+
+	for name, tc := range map[string]struct {
+		resp *backend.QueryDataResponse
+		want bool
+	}{
+		"nil response": {resp: nil, want: false},
+		"error only, no frames": {resp: &backend.QueryDataResponse{Responses: backend.Responses{
+			"A": {Error: errors.New("datasource exploded")},
+		}}, want: false},
+		"empty frame slice": {resp: &backend.QueryDataResponse{Responses: backend.Responses{
+			"A": {Frames: data.Frames{}},
+		}}, want: false},
+		"only a nil frame": {resp: &backend.QueryDataResponse{Responses: backend.Responses{
+			"A": {Frames: data.Frames{nil}},
+		}}, want: false},
+		"capture frames only": {resp: &backend.QueryDataResponse{Responses: backend.Responses{
+			"__har__P1": {Frames: data.Frames{frame}},
+		}}, want: false},
+		"one real frame": {resp: &backend.QueryDataResponse{Responses: backend.Responses{
+			"A": {Frames: data.Frames{frame}},
+		}}, want: true},
+		"real frame beside a failed refID": {resp: &backend.QueryDataResponse{Responses: backend.Responses{
+			"A": {Error: errors.New("boom")},
+			"B": {Frames: data.Frames{frame}},
+		}}, want: true},
+	} {
+		t.Run(name, func(t *testing.T) {
+			require.Equal(t, tc.want, hasSnapshotFrames(tc.resp))
+		})
+	}
+}
+
+// A panel whose queries all failed has a response but no frames: nothing to bake, which is not a
+// snapshot failure. Nothing is written and the manifest stays silent about it -- the query failure is
+// recorded as the panel's error, where a reader expects it.
+func TestBuildDashboard_noSnapshotForFramelessResponse(t *testing.T) {
+	panels := []DashboardPanel{{
+		ID:    99,
+		Title: "Broken",
+		Resp: &backend.QueryDataResponse{Responses: backend.Responses{
+			"A": {Error: errors.New("datasource exploded")},
+		}},
+	}}
+
+	blob, err := NewBundler().BuildDashboard(nil, panels)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.NotContains(t, files, "panels/99-broken/snapshot-backend.json")
+
+	var m dashboardManifest
+	require.NoError(t, json.Unmarshal(files["manifest.json"], &m))
+	require.Len(t, m.Panels, 1)
+	require.Empty(t, m.Panels[0].SnapshotBackendError, "no frames to bake is not a snapshot failure")
+	require.Zero(t, m.Panels[0].SnapshotBackendBytes)
 }
 
 func TestBuildDashboard_boundsAggregateQueryData(t *testing.T) {
