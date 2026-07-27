@@ -33,6 +33,8 @@ beforeEach(() => {
   jest.setSystemTime(new Date('2026-07-24T12:00:00Z'));
   mockList.mockReset();
   mockProxyGet.mockReset();
+  // Health checks share getBackendSrv().get: answer /health OK by default so candidates survive the filter.
+  mockProxyGet.mockImplementation(async (url: string) => (url.endsWith('/health') ? { status: 'OK' } : undefined));
   jest.mocked(getBackendSrv).mockReturnValue({ get: mockProxyGet } as unknown as BackendSrv);
 });
 
@@ -63,7 +65,7 @@ describe('probeFound', () => {
     expect(hasData).not.toHaveBeenCalled();
   });
 
-  it('throws when a candidate errored and no data was found elsewhere', async () => {
+  it('settles null when a candidate errored and no data was found elsewhere', async () => {
     mockList.mockResolvedValue([datasource('tempo', 'broken'), datasource('tempo', 'empty')]);
 
     await expect(
@@ -73,7 +75,21 @@ describe('probeFound', () => {
         }
         return false;
       })
-    ).rejects.toThrow(/1 tempo datasource probe\(s\) failed/);
+    ).resolves.toBeNull();
+  });
+
+  it('never probes an unhealthy candidate', async () => {
+    mockList.mockResolvedValue([datasource('loki', 'broken'), datasource('loki', 'healthy')]);
+    mockProxyGet.mockImplementation((url: string) =>
+      url.includes('broken') ? Promise.reject(new Error('health check failed')) : Promise.resolve({ status: 'OK' })
+    );
+
+    const hasData = jest.fn().mockResolvedValue(true);
+    const found = await probeFound('loki', hasData);
+
+    expect(found?.name).toBe('healthy');
+    expect(hasData).toHaveBeenCalledTimes(1);
+    expect(hasData).toHaveBeenCalledWith(expect.objectContaining({ uid: 'healthy' }));
   });
 
   it('never probes excluded uids', async () => {
@@ -109,13 +125,9 @@ describe('tempoHasTraces', () => {
     await expect(tempoHasTraces(datasource('tempo'))).resolves.toBe(false);
   });
 
-  it('throws when the search endpoint keeps failing', async () => {
+  it('throws when the search endpoint fails', async () => {
     mockProxyGet.mockRejectedValue(new Error('HTTP 404'));
 
-    const promise = tempoHasTraces(datasource('tempo'));
-    // Sink the rejection before the retry sleeps run out, or Jest flags it as unhandled.
-    const outcome = expect(promise).rejects.toThrow('HTTP 404');
-    await jest.advanceTimersByTimeAsync(5_000);
-    await outcome;
+    await expect(tempoHasTraces(datasource('tempo'))).rejects.toThrow('HTTP 404');
   });
 });

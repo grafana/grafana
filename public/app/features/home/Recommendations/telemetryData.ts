@@ -7,7 +7,7 @@ import {
 } from '@grafana/data';
 import { type DataSourceWithBackend } from '@grafana/runtime';
 
-import { probeProxyGet, PROBE_TIMEOUT_MS, resolveBackendInstance, withRetry, withTimeout } from './probeUtils';
+import { probeProxyGet, PROBE_TIMEOUT_MS, resolveBackendInstance, withTimeout } from './probeUtils';
 import { readLabeledScalar, readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
 import { DATA_LOOKBACK_HOURS } from './solutionDataProbes';
 
@@ -45,9 +45,7 @@ interface TempoTagValuesResponse {
 
 // Failures are expected (endpoint disabled, 403s) and handled by the caller; never toast.
 function getResource<T>(instance: DataSourceWithBackend, path: string, params: Record<string, unknown>): Promise<T> {
-  return withRetry(() =>
-    withTimeout(instance.getResource<T>(path, params, { showErrorAlert: false }), PROBE_TIMEOUT_MS)
-  );
+  return withTimeout(instance.getResource<T>(path, params, { showErrorAlert: false }), PROBE_TIMEOUT_MS);
 }
 
 // Points are [unix ms, value]; a real trend needs at least two of them.

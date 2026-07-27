@@ -1,7 +1,19 @@
 import { type DataSourceInstanceListItem } from '@grafana/data';
+import { type BackendSrv, getBackendSrv } from '@grafana/runtime';
 import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
-import { listProbeCandidates, MAX_PROBED_DATASOURCES, withTimeout } from './probeUtils';
+import {
+  filterHealthyDatasources,
+  findDatasourceWithData,
+  listProbeCandidates,
+  MAX_PROBED_DATASOURCES,
+  withTimeout,
+} from './probeUtils';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: jest.fn(),
+}));
 
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
@@ -9,6 +21,7 @@ jest.mock('@grafana/runtime/unstable', () => ({
 }));
 
 const getDataSourceInstanceListMock = jest.mocked(getDataSourceInstanceList);
+const healthGetMock = jest.fn();
 
 function listItem(ds: { uid?: string; name: string; isDefault?: boolean }): DataSourceInstanceListItem {
   return {
@@ -95,5 +108,102 @@ describe('listProbeCandidates', () => {
 
     expect(candidates).toHaveLength(MAX_PROBED_DATASOURCES);
     expect(candidates[0].name).toBe('the-default');
+  });
+});
+
+describe('filterHealthyDatasources', () => {
+  beforeEach(() => {
+    healthGetMock.mockReset();
+    jest.mocked(getBackendSrv).mockReturnValue({ get: healthGetMock } as unknown as BackendSrv);
+  });
+
+  it('keeps candidates whose health check reports OK', async () => {
+    healthGetMock.mockResolvedValue({ status: 'OK' });
+
+    const kept = await filterHealthyDatasources([listItem({ uid: 'healthy', name: 'healthy' })]);
+
+    expect(kept.map((ds) => ds.uid)).toEqual(['healthy']);
+    expect(healthGetMock).toHaveBeenCalledWith('/api/datasources/uid/healthy/health', undefined, undefined, {
+      showErrorAlert: false,
+    });
+  });
+
+  it('drops a candidate whose health check reports a non-OK status', async () => {
+    healthGetMock.mockImplementation(async (url: string) => ({ status: url.includes('sick') ? 'ERROR' : 'OK' }));
+
+    const kept = await filterHealthyDatasources([
+      listItem({ uid: 'sick', name: 'sick' }),
+      listItem({ uid: 'healthy', name: 'healthy' }),
+    ]);
+
+    expect(kept.map((ds) => ds.uid)).toEqual(['healthy']);
+  });
+
+  it('drops a candidate whose health check rejects', async () => {
+    healthGetMock.mockImplementation((url: string) =>
+      url.includes('broken') ? Promise.reject(new Error('connection refused')) : Promise.resolve({ status: 'OK' })
+    );
+
+    const kept = await filterHealthyDatasources([
+      listItem({ uid: 'broken', name: 'broken' }),
+      listItem({ uid: 'healthy', name: 'healthy' }),
+    ]);
+
+    expect(kept.map((ds) => ds.uid)).toEqual(['healthy']);
+  });
+
+  it('drops a candidate whose health check hangs past the 3s cutoff', async () => {
+    jest.useFakeTimers();
+    try {
+      healthGetMock.mockImplementation((url: string) =>
+        url.includes('hung') ? new Promise(() => {}) : Promise.resolve({ status: 'OK' })
+      );
+
+      const promise = filterHealthyDatasources([
+        listItem({ uid: 'hung', name: 'hung' }),
+        listItem({ uid: 'healthy', name: 'healthy' }),
+      ]);
+      await jest.advanceTimersByTimeAsync(3_500);
+
+      expect((await promise).map((ds) => ds.uid)).toEqual(['healthy']);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+});
+
+describe('findDatasourceWithData', () => {
+  it('prefers the first candidate in priority order even when a later one settles sooner', async () => {
+    jest.useFakeTimers();
+    try {
+      const first = listItem({ uid: 'first', name: 'first' });
+      const second = listItem({ uid: 'second', name: 'second' });
+      const hasData = (ds: DataSourceInstanceListItem) =>
+        ds.uid === 'first'
+          ? new Promise<boolean>((resolve) => setTimeout(() => resolve(true), 20))
+          : Promise.resolve(true);
+
+      const promise = findDatasourceWithData([first, second], hasData);
+      await jest.advanceTimersByTimeAsync(25);
+
+      await expect(promise).resolves.toBe(first);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('reads a rejected probe as no data', async () => {
+    const candidates = [listItem({ uid: 'broken', name: 'broken' }), listItem({ uid: 'empty', name: 'empty' })];
+    const hasData = (ds: DataSourceInstanceListItem) =>
+      ds.uid === 'broken' ? Promise.reject(new Error('probe failed')) : Promise.resolve(false);
+
+    await expect(findDatasourceWithData(candidates, hasData)).resolves.toBeNull();
+  });
+
+  it('settles null for an empty candidate list without probing', async () => {
+    const hasData = jest.fn();
+
+    await expect(findDatasourceWithData([], hasData)).resolves.toBeNull();
+    expect(hasData).not.toHaveBeenCalled();
   });
 });

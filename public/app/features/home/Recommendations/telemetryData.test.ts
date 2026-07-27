@@ -166,11 +166,7 @@ describe('fetchLogsActivity', () => {
     });
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
 
-    const promise = fetchLogsActivity(loki);
-    // withRetry sleeps between volume attempts; drive the fake timers past them.
-    await jest.advanceTimersByTimeAsync(5_000);
-
-    await expect(promise).resolves.toEqual({ bytes: null, sources: 2, series: null });
+    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, sources: 2, series: null });
   });
 
   it('reports nulls when no usable label exists', async () => {
@@ -330,11 +326,7 @@ describe('fetchMetricsActivity', () => {
     });
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
 
-    const promise = fetchMetricsActivity(prom);
-    // withRetry sleeps between cardinality attempts; drive the fake timers past them.
-    await jest.advanceTimersByTimeAsync(5_000);
-
-    await expect(promise).resolves.toMatchObject({ series: 987, names: 1 });
+    await expect(fetchMetricsActivity(prom)).resolves.toMatchObject({ series: 987, names: 1 });
   });
 
   it('keeps the name count when both active-series sources fail', async () => {

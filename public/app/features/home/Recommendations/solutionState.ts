@@ -27,8 +27,7 @@ const CLOUD_UTILITY_LOKI_DATASOURCE_UIDS: ReadonlySet<string> = new Set([
   'grafanacloud-alert-state-history',
 ]);
 
-// Hard ceiling per signal. Candidates are single-attempt (leader + fan-out ≤ 2x10s), so no
-// request outlives an unknown; transient failures self-heal on the next TTL cycle.
+// Hard ceiling per signal; one parallel scan (3s health filter + 10s probes) settles well inside it.
 const SIGNAL_BUDGET_MS = 30_000;
 
 export interface SolutionStateResolution {
@@ -48,8 +47,8 @@ interface SignalResolution {
   datasource: DataSourceInstanceListItem | null;
 }
 
-// Empty results are definitive 'inactive'; ANY rejection or timeout — transport errors,
-// 401/403, every-candidate-errored — is 'unknown'. The two are never conflated.
+// Empty results are definitive 'inactive'; 'unknown' = candidate-list or resolution failure or
+// signal-budget timeout. Probe errors read as no data; the health filter drops broken candidates.
 async function resolveSignal(probe: () => Promise<DataSourceInstanceListItem | null>): Promise<SignalResolution> {
   try {
     const datasource = await withTimeout(probe(), SIGNAL_BUDGET_MS);
@@ -91,15 +90,10 @@ async function lokiHasRecentLabels(ds: DataSourceInstanceListItem): Promise<bool
   return Array.isArray(res?.data) && res.data.length > 0;
 }
 
-// A broken candidate counts as no span metrics: one dead datasource must not hide the App O11y
-// card behind an unknown (the kubernetes probe's failure direction; core signals stay strict).
+// Span metrics prove App O11y usage; a probe error reads as no span metrics in the scan.
 async function prometheusHasSpanMetrics(ds: DataSourceInstanceListItem): Promise<boolean> {
-  try {
-    const frames = await runInstantQueries({ probe: SPAN_METRICS_PROBE }, ds, PROBE_TIMEOUT_MS);
-    return (readScalar(frames, 'probe') ?? 0) > 0;
-  } catch {
-    return false;
-  }
+  const frames = await runInstantQueries({ probe: SPAN_METRICS_PROBE }, ds, PROBE_TIMEOUT_MS);
+  return (readScalar(frames, 'probe') ?? 0) > 0;
 }
 
 // Each signal resolver settles on its own (never rejects), so Promise.all cannot discard

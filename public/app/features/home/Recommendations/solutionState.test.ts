@@ -1,11 +1,16 @@
 import { createDataFrame, type DataSourceInstanceListItem, FieldType } from '@grafana/data';
-import { DataSourceWithBackend } from '@grafana/runtime';
+import { type BackendSrv, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import { getDataSourceInstance, getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 import { resolveKubernetesDatasource } from './kubernetesData';
 import { runInstantQueries } from './promQuery';
 import { tempoHasTraces } from './solutionDataProbes';
 import { resetSolutionStateResolution, resolveSolutionState } from './solutionState';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: jest.fn(),
+}));
 
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
@@ -33,6 +38,7 @@ const instanceMock = jest.mocked(getDataSourceInstance);
 const tempoHasTracesMock = jest.mocked(tempoHasTraces);
 const kubernetesMock = jest.mocked(resolveKubernetesDatasource);
 const instantQueriesMock = jest.mocked(runInstantQueries);
+const backendSrvGetMock = jest.fn();
 
 const DATA_LOOKBACK_HOURS = 24;
 const SIGNAL_BUDGET_MS = 30_000;
@@ -122,6 +128,10 @@ describe('resolveSolutionState', () => {
     tempoHasTracesMock.mockReset();
     kubernetesMock.mockReset();
     instantQueriesMock.mockReset();
+    backendSrvGetMock.mockReset();
+    // Health pre-filter: every candidate healthy unless a test overrides by uid.
+    backendSrvGetMock.mockResolvedValue({ status: 'OK' });
+    jest.mocked(getBackendSrv).mockReturnValue({ get: backendSrvGetMock } as unknown as BackendSrv);
     // Span-metrics probe settles clean-empty unless a test overrides it.
     instantQueriesMock.mockResolvedValue([]);
     resetSolutionStateResolution();
@@ -181,9 +191,8 @@ describe('resolveSolutionState', () => {
     expect(resolution.tempoDatasource?.uid).toBe('tempo-main');
   });
 
-  it('treats an errored candidate as unknown when no data was found elsewhere, active when it was', async () => {
-    const { promResource } = freshCloudFixture();
-    const failing = jest.fn().mockRejectedValue(new Error('gateway blew up'));
+  it('skips a candidate whose health check fails', async () => {
+    freshCloudFixture();
     const withData = jest.fn().mockResolvedValue({ data: ['__name__'] });
     setupFixture({
       prometheus: [
@@ -193,32 +202,48 @@ describe('resolveSolutionState', () => {
       loki: [listItem('loki', { uid: 'loki-main', name: 'grafanacloud-logs' })],
       tempo: [],
       instances: {
-        'prom-broken': backendInstance(failing),
         'prom-main': backendInstance(withData),
         'loki-main': backendInstance(emptyLokiResource()),
       },
     });
+    backendSrvGetMock.mockImplementation((url: string) =>
+      url.includes('prom-broken') ? Promise.reject(new Error('health check failed')) : Promise.resolve({ status: 'OK' })
+    );
 
-    let resolution = await resolveWithTimers();
+    const resolution = await resolveSolutionState();
+
     expect(resolution.state.metrics).toBe('active');
-
-    // Same broken candidate, but the healthy one is empty: the errored one may hold data.
-    resetSolutionStateResolution();
-    failing.mockClear();
-    withData.mockResolvedValue({ data: [] });
-
-    resolution = await resolveWithTimers();
-    expect(resolution.state.metrics).toBe('unknown');
-    expect(promResource).not.toHaveBeenCalled();
+    expect(resolution.prometheusDatasource?.uid).toBe('prom-main');
+    // The unhealthy candidate is dropped before its probe could run.
+    expect(instanceMock).not.toHaveBeenCalledWith({ uid: 'prom-broken' });
   });
 
-  it('maps an all-errored traces probe to unknown without touching the other signals', async () => {
+  it('reads inactive when the only candidate with data potential errors', async () => {
+    freshCloudFixture();
+    const failing = jest.fn().mockRejectedValue(new Error('gateway blew up'));
+    setupFixture({
+      prometheus: [listItem('prometheus', { uid: 'prom-broken', name: 'broken', isDefault: true })],
+      loki: [listItem('loki', { uid: 'loki-main', name: 'grafanacloud-logs' })],
+      tempo: [],
+      instances: {
+        'prom-broken': backendInstance(failing),
+        'loki-main': backendInstance(emptyLokiResource()),
+      },
+    });
+
+    const resolution = await resolveSolutionState();
+
+    expect(resolution.state.metrics).toBe('inactive');
+    expect(failing).toHaveBeenCalled();
+  });
+
+  it('reads an all-errored traces probe as inactive without touching the other signals', async () => {
     freshCloudFixture();
     tempoHasTracesMock.mockRejectedValue(new Error('tempo down'));
 
     const resolution = await resolveWithTimers();
 
-    expect(resolution.state.traces).toBe('unknown');
+    expect(resolution.state.traces).toBe('inactive');
     expect(resolution.state.logs).toBe('inactive');
     expect(resolution.state.metrics).toBe('inactive');
   });
@@ -234,13 +259,13 @@ describe('resolveSolutionState', () => {
     expect(resolution.state.metrics).toBe('inactive');
   });
 
-  it('settles a hung probe to unknown within the signal budget, preserving siblings', async () => {
+  it('settles a hung probe as no data within the signal budget, preserving siblings', async () => {
     const { lokiResource } = freshCloudFixture();
     lokiResource.mockImplementation(() => new Promise(() => {}));
 
     const resolution = await resolveWithTimers();
 
-    expect(resolution.state.logs).toBe('unknown');
+    expect(resolution.state.logs).toBe('inactive');
     expect(resolution.state.metrics).toBe('inactive');
     expect(resolution.state.traces).toBe('inactive');
   });
@@ -328,8 +353,8 @@ describe('resolveSolutionState', () => {
     const resolution = await resolveWithTimers();
 
     expect(resolution.state.spanMetrics).toBe('inactive');
-    // The core metrics signal keeps the strict direction: errored candidate + no data = unknown.
-    expect(resolution.state.metrics).toBe('unknown');
+    // Metrics reads the same direction: the errored candidate is no data, not unknown.
+    expect(resolution.state.metrics).toBe('inactive');
   });
 
   it('still settles span metrics active when a healthy candidate has series beside a broken one', async () => {

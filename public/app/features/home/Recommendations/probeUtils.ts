@@ -5,25 +5,20 @@ import { getDataSourceInstance, getDataSourceInstanceList } from '@grafana/runti
 /** Cap the probe fan-out: only the first N candidates (in priority order) are probed per page load. */
 export const MAX_PROBED_DATASOURCES = 10;
 
-// Probes gate homepage cards: 3 attempts x 30s meant a fallback could wait 92s+. 10s per attempt
-// bounds the leader to ~32s worst case while still outlasting a slow-but-alive datasource.
+// Probes gate homepage cards: 10s outlasts a slow-but-alive datasource without stalling the region.
 export const PROBE_TIMEOUT_MS = 10_000;
 
 /** One shared probe resolution per TTL window; a later home visit re-resolves after datasource changes. */
 export const PROBE_TTL_MS = 60_000;
 
-// Spacing between retry attempts: the transient browser-side failures observed on the homepage
-// (connection queuing, gateway blips) can outlast an immediate retry; a short backoff covers
-// them while the region shows its skeleton. 3 attempts total.
-const RETRY_DELAYS_MS = [500, 1500];
+// ponytail: 3s /health cutoff (drilldown's) — suspected too tight for OPS-scale instances; revisit as follow-up.
+const HEALTH_CHECK_TIMEOUT_MS = 3000;
 
 // Exact names of Grafana Cloud's utility Prometheus datasources (billing/ML) — never where product data lives.
 const CLOUD_UTILITY_DATASOURCE_NAMES: Record<string, true> = {
   'grafanacloud-usage': true,
   'grafanacloud-ml-metrics': true,
 };
-
-const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 /** Backend-capable datasource instance for `uid`, or null when it cannot serve resource calls. */
 export async function resolveBackendInstance(uid: string): Promise<DataSourceWithBackend | null> {
@@ -34,31 +29,10 @@ export async function resolveBackendInstance(uid: string): Promise<DataSourceWit
 /**
  * GET through the classic datasource proxy, timeout-bounded, never toasts. Some datasource
  * backends (e.g. Tempo) serve their HTTP API only here, not on the resource router.
- * `retry: false` keeps a probe inside its caller's deadline.
  */
-export async function probeProxyGet<T>(
-  uid: string,
-  path: string,
-  params: Record<string, unknown>,
-  { retry = true } = {}
-): Promise<T> {
+export async function probeProxyGet<T>(uid: string, path: string, params: Record<string, unknown>): Promise<T> {
   const url = `/api/datasources/proxy/uid/${encodeURIComponent(uid)}/${path}`;
-  const call = () =>
-    withTimeout(getBackendSrv().get<T>(url, params, undefined, { showErrorAlert: false }), PROBE_TIMEOUT_MS);
-  return retry ? withRetry(call) : call();
-}
-
-export async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
-  for (let attempt = 0; ; attempt++) {
-    try {
-      return await fn();
-    } catch (err) {
-      if (attempt >= RETRY_DELAYS_MS.length) {
-        throw err;
-      }
-      await sleep(RETRY_DELAYS_MS[attempt]);
-    }
-  }
+  return withTimeout(getBackendSrv().get<T>(url, params, undefined, { showErrorAlert: false }), PROBE_TIMEOUT_MS);
 }
 
 /** Rejects when `promise` outlasts `ms`; the underlying request keeps running but stops gating the caller. */
@@ -113,13 +87,11 @@ export async function listProbeCandidates(
   cap = MAX_PROBED_DATASOURCES,
   excludeUids?: ReadonlySet<string>
 ): Promise<DataSourceInstanceListItem[]> {
-  const list = await withRetry(() =>
-    getDataSourceInstanceList({
-      type,
-      // Reject the -- Grafana -- builtin by meta.id; a ds.type check would drop alias datasources.
-      filter: (ds) => ds.meta.id !== 'grafana',
-    })
-  );
+  const list = await getDataSourceInstanceList({
+    type,
+    // Reject the -- Grafana -- builtin by meta.id; a ds.type check would drop alias datasources.
+    filter: (ds) => ds.meta.id !== 'grafana',
+  });
   const eligible = excludeUids ? list.filter((ds) => !excludeUids.has(ds.uid)) : list;
   const preferred = eligible.filter((ds) => !CLOUD_UTILITY_DATASOURCE_NAMES[ds.name]);
   const pool = preferred.length > 0 ? preferred : eligible;
@@ -128,58 +100,35 @@ export async function listProbeCandidates(
   return ordered.slice(0, cap);
 }
 
-/**
- * Probe the top-priority candidate alone first: in the common case (the default datasource has
- * the data) this issues 1 query instead of N, and a transient sibling race can never outrank it.
- * Only when the leader has no data (or errors) fan out to the rest in parallel. `hasData` must
- * not throw — an unusable datasource counts as no data.
- */
-async function findDatasourceWithData(
+/** Candidates whose /health reports OK; broken or slow datasources drop out of detection. */
+export async function filterHealthyDatasources(
+  candidates: DataSourceInstanceListItem[]
+): Promise<DataSourceInstanceListItem[]> {
+  const results = await Promise.allSettled(
+    candidates.map((ds) =>
+      withTimeout(
+        getBackendSrv().get<{ status?: string }>(
+          `/api/datasources/uid/${encodeURIComponent(ds.uid)}/health`,
+          undefined,
+          undefined,
+          { showErrorAlert: false }
+        ),
+        HEALTH_CHECK_TIMEOUT_MS
+      )
+    )
+  );
+  return candidates.filter((_, i) => {
+    const result = results[i];
+    return result.status === 'fulfilled' && result.value?.status === 'OK';
+  });
+}
+
+/** First candidate (in priority order) whose probe confirms data; probe errors read as no data. */
+export async function findDatasourceWithData(
   candidates: DataSourceInstanceListItem[],
   hasData: (ds: DataSourceInstanceListItem) => Promise<boolean>
 ): Promise<DataSourceInstanceListItem | null> {
-  if (candidates.length === 0) {
-    return null;
-  }
-  if (await hasData(candidates[0])) {
-    return candidates[0];
-  }
-  const rest = candidates.slice(1);
-  // Parallel probe for hasData while retaining priority of original list
-  for (const [index, probe] of rest.map(hasData).entries()) {
-    if (await probe) {
-      return rest[index];
-    }
-  }
-  return null;
-}
-
-/**
- * findDatasourceWithData with error accounting: null only when every candidate probed
- * clean-and-empty; throws when nothing was found and any candidate errored (an errored
- * datasource may hold the data). Unlike findDatasourceWithData, hasData may throw.
- */
-export async function findDatasourceWithDataStrict(
-  candidates: DataSourceInstanceListItem[],
-  hasData: (ds: DataSourceInstanceListItem) => Promise<boolean>,
-  type: string
-): Promise<DataSourceInstanceListItem | null> {
-  let errored = 0;
-  // findDatasourceWithData requires a non-throwing callback; count failures for the unknown check.
-  const guardedHasData = async (ds: DataSourceInstanceListItem) => {
-    try {
-      return await hasData(ds);
-    } catch {
-      errored++;
-      return false;
-    }
-  };
-  const found = await findDatasourceWithData(candidates, guardedHasData);
-  if (found) {
-    return found;
-  }
-  if (errored > 0) {
-    throw new Error(`${errored} ${type} datasource probe(s) failed with no data found elsewhere`);
-  }
-  return null;
+  const results = await Promise.allSettled(candidates.map((ds) => hasData(ds)));
+  const winner = results.findIndex((result) => result.status === 'fulfilled' && result.value === true);
+  return winner === -1 ? null : candidates[winner];
 }
