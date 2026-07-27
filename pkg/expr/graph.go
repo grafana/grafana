@@ -17,6 +17,7 @@ import (
 
 	"github.com/open-feature/go-sdk/openfeature"
 
+	"github.com/grafana/grafana/pkg/expr/exprcapture"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -163,6 +164,62 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 		span.End()
 	}
 	return vars, nil
+}
+
+// diagnosticStageType maps a node type to the stable string used in the diagnostics expression-stage
+// artifact.
+func diagnosticStageType(nt NodeType) string {
+	switch nt {
+	case TypeCMDNode:
+		return "expression"
+	case TypeDatasourceNode:
+		return "datasource"
+	case TypeMLNode:
+		return "ml"
+	default:
+		return "unknown"
+	}
+}
+
+// captureDiagnosticStages records each pipeline node's output frames and input dependencies into the
+// exprcapture buffer when one is attached to ctx (the on-demand diagnostics path); it is a no-op
+// otherwise. vars holds every executed node's final result keyed by refID, so iterating the ordered
+// pipeline yields the full DAG -- datasource, expression, and ML nodes alike -- regardless of whether
+// datasource nodes ran grouped or inline.
+func captureDiagnosticStages(ctx context.Context, dp DataPipeline, vars mathexp.Vars) {
+	buf := exprcapture.FromContext(ctx)
+	if buf == nil {
+		return
+	}
+	stages := make([]exprcapture.Stage, 0, len(dp))
+	for _, node := range dp {
+		refID := node.RefID()
+		stage := exprcapture.Stage{
+			RefID:       refID,
+			Type:        diagnosticStageType(node.NodeType()),
+			InputRefIDs: node.NeedsVars(),
+		}
+		switch n := node.(type) {
+		case *CMDNode:
+			if n.Command != nil {
+				stage.Command = n.Command.Type()
+			}
+		case *DSNode:
+			if n.datasource != nil {
+				stage.Command = n.datasource.Type
+			}
+		case *MLNode:
+			if n.command != nil {
+				stage.Command = n.command.Type()
+			}
+		}
+		if res, ok := vars[refID]; ok {
+			stage.Frames = res.Values.AsDataFrames(refID)
+			stage.Error = res.Error
+		}
+		stages = append(stages, stage)
+	}
+	buf.Record(stages)
 }
 
 // GetDatasourceTypes returns an unique list of data source types used in the query. Machine learning node is encoded as `ml_<type>`, e.g. ml_outlier

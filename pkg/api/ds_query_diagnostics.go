@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/expr/exprcapture"
 	"github.com/grafana/grafana/pkg/infra/httpclient/harcapture"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/diagnostics"
@@ -53,6 +54,7 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	}
 
 	captureCtx, harBuffer := harcapture.WithCapture(ctx)
+	captureCtx, exprBuffer := exprcapture.WithCapture(captureCtx)
 
 	// Force a live query: a query-result cache hit returns without a datasource round trip, so HTTP
 	// capture would run on nothing and traffic.har would be silently empty. Diagnostics must capture
@@ -108,7 +110,7 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	if marshalErr != nil {
 		queryRequestJSON = nil
 	}
-	bundle, err := diagnostics.NewBundler().Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, queryRequestJSON, marshalErr, bundleErr)
+	bundle, err := diagnostics.NewBundler().Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, queryRequestJSON, exprBuffer.Stages(), marshalErr, bundleErr)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to build diagnostics bundle", err)
 	}

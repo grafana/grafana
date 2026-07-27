@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/expr/exprcapture"
 	"github.com/grafana/grafana/pkg/infra/httpclient/harcapture"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -406,8 +407,10 @@ func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user
 		}
 
 		pctx, harBuffer := harcapture.WithCapture(ctx) // capture each panel independently
+		pctx, exprBuffer := exprcapture.WithCapture(pctx)
 		resp, err := queryData(pctx, user, skipDSCache, p.MetricRequest)
 		panel.HARBuffer = harBuffer
+		panel.ExpressionStages = exprBuffer.Stages()
 		panel.Resp = resp // carries external (gRPC) plugins' __har__ capture frames, merged in BuildDashboard
 		// A datasource query usually fails per-refId (DataResponse.Error) with no top-level error
 		// (see diagnostics.ResponseError doc) -- capture that too, or a failed panel would be recorded

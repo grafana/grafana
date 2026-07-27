@@ -134,6 +134,7 @@ func (s *Service) ExecutePipeline(ctx context.Context, now time.Time, pipeline D
 	if err != nil {
 		return nil, err
 	}
+	captureDiagnosticStages(ctx, pipeline, vars)
 	for refID, val := range vars {
 		res.Responses[refID] = backend.DataResponse{
 			Frames: val.Values.AsDataFrames(refID),

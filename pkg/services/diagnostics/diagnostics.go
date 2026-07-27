@@ -16,7 +16,9 @@ import (
 	"unicode/utf8"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/expr/exprcapture"
 	"github.com/grafana/grafana/pkg/infra/httpclient/harcapture"
 )
 
@@ -49,7 +51,7 @@ func NewBundler() *Bundler {
 //
 // Server logs are intentionally omitted because they are not scoped to this request and would leak
 // unrelated activity into a bundle meant for external sharing; they will be tackled in a follow-up.
-func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer, panelJSON, dashboardJSON, queryRequestJSON json.RawMessage, queryRequestErr, queryErr error) ([]byte, error) {
+func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer, panelJSON, dashboardJSON, queryRequestJSON json.RawMessage, expressionStages []exprcapture.Stage, queryRequestErr, queryErr error) ([]byte, error) {
 	files := map[string][]byte{}
 
 	// queryRequestErr is the caller's failure to serialize the request into queryRequestJSON. Record it
@@ -59,8 +61,8 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 	if queryRequestErr != nil {
 		queryDataErr = fmt.Errorf("serialize query request: %w", queryRequestErr)
 	}
-	if resp != nil || len(queryRequestJSON) > 0 {
-		queryData, err := marshalQueryDataArtifact(queryRequestJSON, resp)
+	if resp != nil || len(queryRequestJSON) > 0 || len(expressionStages) > 0 {
+		queryData, err := marshalQueryDataArtifact(queryRequestJSON, resp, expressionStages)
 		if err != nil {
 			// A query-data artifact that cannot be fully JSON-encoded must not sink the whole bundle:
 			// record the failure and still ship HAR and the other artifacts, mirroring how the dashboard
@@ -102,18 +104,37 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 }
 
 type queryDataArtifact struct {
-	Version         int                                 `json:"version"`
-	Request         json.RawMessage                     `json:"request,omitempty"`
-	Response        json.RawMessage                     `json:"response,omitempty"`
-	ResponseSummary map[string]queryDataResponseSummary `json:"responseSummary,omitempty"`
+	Version            int                                 `json:"version"`
+	Request            json.RawMessage                     `json:"request,omitempty"`
+	Response           json.RawMessage                     `json:"response,omitempty"`
+	Expressions        []queryDataExpressionStage          `json:"expressions,omitempty"`
+	ResponseSummary    map[string]queryDataResponseSummary `json:"responseSummary,omitempty"`
+	ExpressionsSummary []queryDataExpressionStage          `json:"expressionsSummary,omitempty"`
 	// ResponseError records why the full response is missing when it could not be JSON-encoded, so a
 	// reader can tell an unencodable response from one that was dropped to fit the size cap.
-	ResponseError   string `json:"responseError,omitempty"`
-	Truncated       bool   `json:"truncated,omitempty"`
-	LimitBytes      int    `json:"limitBytes,omitempty"`
-	OriginalBytes   int    `json:"originalBytes,omitempty"`
-	RequestOmitted  bool   `json:"requestOmitted,omitempty"`
-	ResponseOmitted bool   `json:"responseOmitted,omitempty"`
+	ResponseError      string `json:"responseError,omitempty"`
+	Truncated          bool   `json:"truncated,omitempty"`
+	LimitBytes         int    `json:"limitBytes,omitempty"`
+	OriginalBytes      int    `json:"originalBytes,omitempty"`
+	RequestOmitted     bool   `json:"requestOmitted,omitempty"`
+	ResponseOmitted    bool   `json:"responseOmitted,omitempty"`
+	ExpressionsOmitted bool   `json:"expressionsOmitted,omitempty"`
+}
+
+// queryDataExpressionStage is one node of the executed server-side expression pipeline. It records
+// which refIDs feed the node (InputRefIDs -> the node's inputs) and the node's Output, so a reader
+// can walk the DAG from the datasource nodes down to the panel's final expression and find the first
+// stage whose output differs from its inputs. Output is a datasource-style {status,frames,error}
+// object -- the same shape as the per-refID entries under "response" -- so intermediate stages read
+// identically to a normal query result. In the summarized (truncated) form Output holds a per-frame
+// row/field summary instead of the frame values.
+type queryDataExpressionStage struct {
+	RefID       string          `json:"refId"`
+	Type        string          `json:"type,omitempty"`
+	Command     string          `json:"command,omitempty"`
+	InputRefIDs []string        `json:"inputRefIds,omitempty"`
+	Error       string          `json:"error,omitempty"`
+	Output      json.RawMessage `json:"output,omitempty"`
 }
 
 type queryDataResponseSummary struct {
@@ -131,14 +152,21 @@ type queryDataFrameSummary struct {
 	Fields int    `json:"fields"`
 }
 
-func marshalQueryDataArtifact(request json.RawMessage, resp *backend.QueryDataResponse) ([]byte, error) {
-	data, _, err := marshalQueryDataArtifactWithLimit(request, resp, maxQueryDataArtifactBytes)
+func marshalQueryDataArtifact(request json.RawMessage, resp *backend.QueryDataResponse, stages []exprcapture.Stage) ([]byte, error) {
+	data, _, err := marshalQueryDataArtifactWithLimit(request, resp, stages, maxQueryDataArtifactBytes)
 	return data, err
 }
 
 // marshalQueryDataArtifactWithLimit returns the encoded querydata.json plus whether it had to drop
 // content to fit maxBytes, so callers don't have to re-parse the result to learn that.
-func marshalQueryDataArtifactWithLimit(request json.RawMessage, resp *backend.QueryDataResponse, maxBytes int) ([]byte, bool, error) {
+//
+// The response and the captured expression stages share one budget and one degradation ladder: the
+// full artifact carries both the full response and the full per-stage output frames; over budget (or
+// on an encode failure) both collapse to their summaries (per-refID and per-stage row/field counts)
+// via fitQueryDataArtifact, which then drops the request, both summaries, and finally the free-form
+// responseError -- so a reader always keeps the execution shape (which stage/refID errored or changed
+// frame counts) even when the values can't be kept.
+func marshalQueryDataArtifactWithLimit(request json.RawMessage, resp *backend.QueryDataResponse, stages []exprcapture.Stage, maxBytes int) ([]byte, bool, error) {
 	artifact := queryDataArtifact{Version: queryDataArtifactVersion, Request: request}
 	if resp != nil {
 		// The SDK encoder returns a complete byte slice. The artifact/archive is bounded below, but
@@ -148,17 +176,20 @@ func marshalQueryDataArtifactWithLimit(request json.RawMessage, resp *backend.Qu
 			// A response that cannot be encoded (e.g. an unserializable value in a frame's Meta.Custom)
 			// usually still has a serializable request beside it. Degrade to the same request + summary
 			// shape the size cap uses instead of dropping both -- losing the submitted query in exactly
-			// the hard-to-encode cases this artifact exists to capture defeats its purpose.
+			// the hard-to-encode cases this artifact exists to capture defeats its purpose. The captured
+			// expression stages degrade to their summary alongside it.
 			//
 			// The error is returned as well, so both callers record it outside the artifact
 			// (querydata-error.txt, manifest.queryDataError). That makes the embedded copy a convenience:
 			// bound it by the budget so a verbose plugin error cannot crowd out the request, which is
 			// recorded nowhere else.
 			out, fallbackErr := fitQueryDataArtifact(queryDataArtifact{
-				Version:         queryDataArtifactVersion,
-				ResponseSummary: summarizeQueryDataResponse(resp),
-				ResponseError:   truncateDiagnosticString(err.Error(), min(1024, maxBytes/4)),
-				ResponseOmitted: true,
+				Version:            queryDataArtifactVersion,
+				ResponseSummary:    summarizeQueryDataResponse(resp),
+				ExpressionsSummary: summarizeExpressionStages(stages),
+				ResponseError:      truncateDiagnosticString(err.Error(), min(1024, maxBytes/4)),
+				ResponseOmitted:    true,
+				ExpressionsOmitted: len(stages) > 0,
 			}, request, maxBytes)
 			if fallbackErr != nil {
 				return nil, false, errors.Join(err, fallbackErr)
@@ -167,18 +198,40 @@ func marshalQueryDataArtifactWithLimit(request json.RawMessage, resp *backend.Qu
 		}
 		artifact.Response = responseJSON
 	}
+	expressions, err := buildExpressionStages(stages)
+	if err != nil {
+		// An expression stage we cannot encode is degraded symmetrically to an unencodable response:
+		// keep every stage's summary (metadata + row/field counts) rather than dropping the whole
+		// artifact. The response degrades to its summary too so the fallback stays uniformly
+		// summary-shaped and bounded, and the error is returned so the caller records it outside the
+		// artifact (querydata-error.txt / manifest.queryDataError).
+		out, fallbackErr := fitQueryDataArtifact(queryDataArtifact{
+			Version:            queryDataArtifactVersion,
+			ResponseSummary:    summarizeQueryDataResponse(resp),
+			ExpressionsSummary: summarizeExpressionStages(stages),
+			ResponseOmitted:    resp != nil,
+			ExpressionsOmitted: len(stages) > 0,
+		}, request, maxBytes)
+		if fallbackErr != nil {
+			return nil, false, errors.Join(err, fallbackErr)
+		}
+		return out, false, err
+	}
+	artifact.Expressions = expressions
 	full, err := json.MarshalIndent(artifact, "", "  ")
 	if err != nil || len(full) <= maxBytes {
 		return full, false, err
 	}
 
 	out, err := fitQueryDataArtifact(queryDataArtifact{
-		Version:         queryDataArtifactVersion,
-		ResponseSummary: summarizeQueryDataResponse(resp),
-		Truncated:       true,
-		LimitBytes:      maxBytes,
-		OriginalBytes:   len(full),
-		ResponseOmitted: resp != nil,
+		Version:            queryDataArtifactVersion,
+		ResponseSummary:    summarizeQueryDataResponse(resp),
+		ExpressionsSummary: summarizeExpressionStages(stages),
+		Truncated:          true,
+		LimitBytes:         maxBytes,
+		OriginalBytes:      len(full),
+		ResponseOmitted:    resp != nil,
+		ExpressionsOmitted: len(stages) > 0,
 	}, request, maxBytes)
 	return out, true, err
 }
@@ -208,7 +261,11 @@ func fitQueryDataArtifact(artifact queryDataArtifact, request json.RawMessage, m
 		return out, nil
 	}
 
+	// The per-refID and per-stage summaries are dropped together: both are variable-size "execution
+	// shape without values" content, and the ResponseOmitted/ExpressionsOmitted markers below still
+	// record that they existed.
 	artifact.ResponseSummary = nil
+	artifact.ExpressionsSummary = nil
 	out, err = json.MarshalIndent(artifact, "", "  ")
 	if err != nil {
 		return nil, err
@@ -221,6 +278,95 @@ func fitQueryDataArtifact(artifact queryDataArtifact, request json.RawMessage, m
 	// is recorded outside the artifact, so dropping it leaves markers a reader can still act on.
 	artifact.ResponseError = ""
 	return json.MarshalIndent(artifact, "", "  ")
+}
+
+// buildExpressionStages serializes each captured pipeline node into the artifact's expression-stage
+// view. Each node's Output is rendered as a datasource-style {status,frames,error} object (the same
+// shape as a "response" entry) with any synthetic __har__ carrier frames removed, so an expression
+// node reads exactly like a normal query result.
+func buildExpressionStages(stages []exprcapture.Stage) ([]queryDataExpressionStage, error) {
+	if len(stages) == 0 {
+		return nil, nil
+	}
+	out := make([]queryDataExpressionStage, 0, len(stages))
+	for _, s := range stages {
+		stage := queryDataExpressionStage{
+			RefID:       s.RefID,
+			Type:        s.Type,
+			Command:     s.Command,
+			InputRefIDs: s.InputRefIDs,
+		}
+		if s.Error != nil {
+			stage.Error = truncateDiagnosticString(s.Error.Error(), 1024)
+		}
+		dr := backend.DataResponse{Frames: framesWithoutCaptureFrames(s.Frames), Error: s.Error}
+		outputJSON, err := json.Marshal(dr)
+		if err != nil {
+			return nil, err
+		}
+		stage.Output = outputJSON
+		out = append(out, stage)
+	}
+	return out, nil
+}
+
+// summarizeExpressionStages renders each stage without frame values: node metadata, error, and a
+// per-frame row/field summary. Used when the full artifact exceeds its byte budget.
+func summarizeExpressionStages(stages []exprcapture.Stage) []queryDataExpressionStage {
+	if len(stages) == 0 {
+		return nil
+	}
+	out := make([]queryDataExpressionStage, 0, len(stages))
+	for _, s := range stages {
+		stage := queryDataExpressionStage{
+			RefID:       s.RefID,
+			Type:        s.Type,
+			Command:     s.Command,
+			InputRefIDs: s.InputRefIDs,
+		}
+		if s.Error != nil {
+			stage.Error = truncateDiagnosticString(s.Error.Error(), 1024)
+		}
+		summaries := make([]queryDataFrameSummary, 0, len(s.Frames))
+		for _, frame := range framesWithoutCaptureFrames(s.Frames) {
+			if frame == nil {
+				continue
+			}
+			rows, err := frame.RowLen()
+			if err != nil {
+				rows = -1
+			}
+			summaries = append(summaries, queryDataFrameSummary{
+				Name:   truncateDiagnosticString(frame.Name, 256),
+				RefID:  truncateDiagnosticString(frame.RefID, 256),
+				Rows:   rows,
+				Fields: len(frame.Fields),
+			})
+		}
+		if len(summaries) > 0 {
+			if raw, err := json.Marshal(summaries); err == nil {
+				stage.Output = raw
+			}
+		}
+		out = append(out, stage)
+	}
+	return out
+}
+
+// framesWithoutCaptureFrames drops the synthetic __har__ capture carrier frames (matched by refID or
+// name prefix) so they don't leak into an expression node's output.
+func framesWithoutCaptureFrames(frames data.Frames) data.Frames {
+	if len(frames) == 0 {
+		return frames
+	}
+	out := make(data.Frames, 0, len(frames))
+	for _, frame := range frames {
+		if frame != nil && (isHARResponse(frame.RefID) || isHARResponse(frame.Name)) {
+			continue
+		}
+		out = append(out, frame)
+	}
+	return out
 }
 
 func summarizeQueryDataResponse(resp *backend.QueryDataResponse) map[string]queryDataResponseSummary {
@@ -294,12 +440,13 @@ type DashboardPanel struct {
 	QueryRequest json.RawMessage // MetricRequest submitted for this panel
 	// QueryRequestErr records a failure to serialize this panel's MetricRequest. Kept separate so one
 	// unserializable request only costs this panel its request JSON, not the whole multi-panel bundle.
-	QueryRequestErr error
-	Datasources     []string                   // datasource UIDs the panel references (for the manifest)
-	Resp            *backend.QueryDataResponse // query response, carries external plugins' __har__ frames
-	HARBuffer       *harcapture.Buffer         // in-process capture buffer for this panel's queries
-	QueryErr        error                      // top-level error running the panel's queries, if any
-	Skipped         string                     // non-empty => panel was not executed (e.g. non-data panel)
+	QueryRequestErr  error
+	Datasources      []string                   // datasource UIDs the panel references (for the manifest)
+	Resp             *backend.QueryDataResponse // query response, carries external plugins' __har__ frames
+	HARBuffer        *harcapture.Buffer         // in-process capture buffer for this panel's queries
+	ExpressionStages []exprcapture.Stage        // captured server-side expression pipeline stages, if any
+	QueryErr         error                      // top-level error running the panel's queries, if any
+	Skipped          string                     // non-empty => panel was not executed (e.g. non-data panel)
 }
 
 // dashboardManifest is manifest.json: a machine-readable summary of what the whole-dashboard bundle
@@ -381,7 +528,7 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 				entry.QueryDataTruncated = true
 				queryDataErrs = append(queryDataErrs, fmt.Sprintf("remaining dashboard query-data budget (%d bytes) below the %d-byte minimum artifact size", queryDataBytesRemaining, minQueryDataArtifactBytes))
 			} else {
-				queryData, truncated, err := marshalQueryDataArtifactWithLimit(p.QueryRequest, p.Resp, queryDataLimit)
+				queryData, truncated, err := marshalQueryDataArtifactWithLimit(p.QueryRequest, p.Resp, p.ExpressionStages, queryDataLimit)
 				if err != nil {
 					queryDataErrs = append(queryDataErrs, err.Error())
 				}
