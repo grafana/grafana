@@ -959,6 +959,8 @@ func TestPanelTitleSlug(t *testing.T) {
 		"***":                   "",    // all-symbol -> empty slug
 		"Über/CPU!!!":           "ber-cpu",
 		strings.Repeat("a", 50): strings.Repeat("a", 40), // capped at 40
+		// A cap that lands on a separator must not leave a trailing hyphen in the directory name.
+		strings.Repeat("a", 39) + " bcd": strings.Repeat("a", 39),
 	} {
 		require.Equalf(t, want, panelTitleSlug(in), "panelTitleSlug(%q)", in)
 	}

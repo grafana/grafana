@@ -119,8 +119,15 @@ func TestQueryDiagnostics_flagOff_returns404(t *testing.T) {
 func TestQueryDiagnostics_noQueries_returns400(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
 	hs := &HTTPServer{queryDataService: query.NewFakeQueryService(t)}
-	c, _ := newDiagReqCtx(t, `{"queries":[]}`, nil)
-	require.Equal(t, http.StatusBadRequest, hs.QueryDiagnostics(c).Status())
+	c, rec := newDiagReqCtx(t, `{"queries":[]}`, nil)
+
+	resp := hs.QueryDiagnostics(c)
+	require.Equal(t, http.StatusBadRequest, resp.Status())
+
+	// Assert the message, not just the status: a binding failure is also a 400, so a bare status check
+	// would pass even if the body never bound and the empty-queries guard was never reached.
+	resp.WriteTo(c)
+	require.Contains(t, rec.Body.String(), "at least one query is required")
 }
 
 func TestQueryDiagnostics_success_bundleHeadersAndSkipCache(t *testing.T) {
@@ -140,11 +147,37 @@ func TestQueryDiagnostics_success_bundleHeadersAndSkipCache(t *testing.T) {
 
 	files := readTarGzFiles(t, rec.Body.Bytes())
 	require.Contains(t, files, "querydata.json")
-	require.Contains(t, files, "traffic.har")
+	require.Contains(t, string(files["traffic.har"]), "http://x/api", "the captured entry must reach traffic.har")
 	// Assert on the datasource uid, not the refID: the mocked response carries refID "A" too, so a
 	// `"A"` match would still pass if the handler dropped the submitted request entirely. "prom" only
 	// appears in the request the client posted.
 	require.Contains(t, string(files["querydata.json"]), `"uid": "prom"`, "the submitted request must be recorded")
+}
+
+// TestQueryDiagnostics_capturedTrafficWithQueryError_stillBundles covers the fall-through the
+// no-capture guard exists to allow: a query that failed AFTER reaching the wire leaves captured
+// traffic, and that captured failure is exactly what the bundle is for — so it must ship as a 200
+// bundle with query-error.txt, not the bare 400 the no-capture path returns.
+func TestQueryDiagnostics_capturedTrafficWithQueryError_stillBundles(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(func(context.Context, identity.Requester, bool, dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+			r := diagHARResponse()
+			// Same per-refID failure as the no-capture case, but this time traffic was captured.
+			r.Responses["A"] = backend.DataResponse{Error: errors.New("bad promql")}
+			return r, nil
+		})
+	hs := &HTTPServer{queryDataService: fakeQuery}
+	c, rec := newDiagReqCtx(t, `{"queries":[{"refId":"A"}]}`, nil)
+
+	resp := hs.QueryDiagnostics(c)
+	require.Equal(t, http.StatusOK, resp.Status(), "a failure that hit the wire must still ship its captured traffic")
+
+	resp.WriteTo(c)
+	files := readTarGzFiles(t, rec.Body.Bytes())
+	require.Contains(t, string(files["traffic.har"]), "http://x/api")
+	require.Contains(t, string(files["query-error.txt"]), "bad promql", "the failure must be recorded in the bundle")
 }
 
 func TestQueryDiagnostics_queryV2Dispatch(t *testing.T) {
