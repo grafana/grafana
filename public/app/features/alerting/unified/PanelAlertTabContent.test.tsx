@@ -1,6 +1,7 @@
 import { render } from 'test/test-utils';
 import { byTestId, byText } from 'testing-library-selector';
 
+import { type DataSourceApi } from '@grafana/data';
 import { type PromOptions } from '@grafana/prometheus';
 import { setPluginLinksHook } from '@grafana/runtime';
 import config from 'app/core/config';
@@ -197,7 +198,27 @@ describe('PanelAlertTabContent', () => {
       AccessControlAction.AlertingRuleExternalRead,
       AccessControlAction.AlertingRuleExternalWrite,
     ]);
-    setupDataSources(...Object.values(dataSources));
+    const dataSourceSrv = setupDataSources(...Object.values(dataSources));
+    jest.spyOn(dataSourceSrv, 'get').mockImplementation(async (ref) => {
+      const settings = dataSourceSrv.getInstanceSettings(ref);
+      const options = settings?.jsonData as PromOptions | undefined;
+      const dataSource: Partial<DataSourceApi> = {
+        uid: settings?.uid,
+        type: settings?.type,
+        interval: options?.timeInterval ?? '15s',
+        interpolateVariablesInQueries: (queries, scopedVars) =>
+          queries.map((query) => ({
+            ...query,
+            datasource: { uid: settings?.uid, type: settings?.type },
+            expr: (query as { expr?: string }).expr?.replace(
+              '$__interval',
+              String(scopedVars.__interval?.value)
+            ),
+            interval: '',
+          })),
+      };
+      return dataSource as DataSourceApi;
+    });
 
     setPluginLinksHook(() => ({
       links: [],

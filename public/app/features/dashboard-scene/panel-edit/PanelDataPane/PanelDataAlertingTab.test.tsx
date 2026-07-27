@@ -2,6 +2,7 @@ import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 import { byTestId } from 'testing-library-selector';
 
+import { type DataSourceApi } from '@grafana/data';
 import { type PromOptions } from '@grafana/prometheus';
 import { config, locationService, setPluginLinksHook } from '@grafana/runtime';
 import * as ruler from 'app/features/alerting/unified/api/ruler';
@@ -189,7 +190,27 @@ describe('PanelAlertTabContent', () => {
       AccessControlAction.AlertingRuleExternalWrite,
     ]);
 
-    setupDataSources(...Object.values(dataSources));
+    const dataSourceSrv = setupDataSources(...Object.values(dataSources));
+    jest.spyOn(dataSourceSrv, 'get').mockImplementation(async (ref) => {
+      const settings = dataSourceSrv.getInstanceSettings(ref);
+      const options = settings?.jsonData as PromOptions | undefined;
+      const dataSource: Partial<DataSourceApi> = {
+        uid: settings?.uid,
+        type: settings?.type,
+        interval: options?.timeInterval ?? '15s',
+        interpolateVariablesInQueries: (queries, scopedVars) =>
+          queries.map((query) => ({
+            ...query,
+            datasource: { uid: settings?.uid, type: settings?.type },
+            expr: (query as { expr?: string }).expr?.replace(
+              '$__interval',
+              String(scopedVars.__interval?.value)
+            ),
+            interval: '',
+          })),
+      };
+      return dataSource as DataSourceApi;
+    });
 
     mocks.rulerBuilderMock.mockReturnValue({
       rules: () => ({ path: `api/ruler/${GRAFANA_RULES_SOURCE_NAME}/api/v1/rules` }),
