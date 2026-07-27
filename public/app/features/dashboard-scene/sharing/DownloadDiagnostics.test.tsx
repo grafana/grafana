@@ -4,7 +4,7 @@ import { render } from 'test/test-utils';
 
 import { type ScopedVars } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils } from '@grafana/runtime';
+import { logError, setPluginImportUtils } from '@grafana/runtime';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
@@ -32,6 +32,11 @@ jest.mock('@grafana/runtime/unstable', () => ({
   getDataSourceInstance: jest.fn(() => Promise.resolve({ interpolateVariablesInQueries })),
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  logError: jest.fn(),
+}));
+
 setPluginImportUtils({
   importPanelPlugin: () => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: () => undefined,
@@ -40,6 +45,7 @@ setPluginImportUtils({
 describe('DownloadDiagnostics', () => {
   beforeEach(() => {
     jest.mocked(downloadDiagnosticsForQueries).mockClear();
+    jest.mocked(logError).mockClear();
     interpolateVariablesInQueries.mockClear();
     interpolateVariablesInQueries.mockImplementation((queries: DataQuery[]) => queries);
   });
@@ -101,9 +107,11 @@ describe('DownloadDiagnostics', () => {
   it('still downloads (without panel/dashboard JSON) when getSaveModel throws', async () => {
     // getSaveModel() can throw (e.g. a v2 CUE validation failure). The panel/dashboard JSON is optional
     // context, so its failure must not abort a download whose queries and time range are already valid.
+    const consoleWarn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const saveModelError = new Error('v2 validation failed');
     const { tab, dashboard } = setupScenario();
     jest.spyOn(dashboard, 'getSaveModel').mockImplementation(() => {
-      throw new Error('v2 validation failed');
+      throw saveModelError;
     });
 
     render(<tab.Component model={tab} />);
@@ -114,6 +122,11 @@ describe('DownloadDiagnostics', () => {
     expect(panelModel).toBeUndefined();
     expect(dashboardModel).toBeUndefined();
     expect(screen.queryByText('Failed to generate diagnostics')).not.toBeInTheDocument();
+    // The bundle is still produced, so the omission has to be reported somewhere or a bundle missing
+    // panel.json looks identical to one that never had it.
+    expect(logError).toHaveBeenCalledWith(saveModelError, { panelKey: 'panel-1', dashboardUid: 'dash-1' });
+    expect(consoleWarn).toHaveBeenCalled();
+    consoleWarn.mockRestore();
   });
 
   it('fills the runner-level datasource onto queries that lack one', async () => {

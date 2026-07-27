@@ -4,7 +4,7 @@ import { useAsyncFn } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { isFetchError } from '@grafana/runtime';
+import { isFetchError, logError } from '@grafana/runtime';
 import {
   sceneGraph,
   type SceneComponentProps,
@@ -45,6 +45,8 @@ export class DownloadDiagnostics extends SceneObjectBase<DownloadDiagnosticsStat
     );
   }
 }
+
+const SAVE_MODEL_FAILURE_MESSAGE = 'Download diagnostics: failed to build panel/dashboard JSON, bundling without it';
 
 // Inlined rather than imported from dashboard-scene/utils/utils: that module transitively reaches
 // DashboardScene, which imports ShareDrawer (which imports this view), creating an import cycle.
@@ -185,7 +187,12 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
     try {
       dashboardModel = dashboard?.getSaveModel();
       panelModel = dashboard ? findPanelSaveModel(dashboardModel, panel, dashboard) : undefined;
-    } catch {
+    } catch (error) {
+      console.warn(SAVE_MODEL_FAILURE_MESSAGE, error);
+      logError(error instanceof Error ? error : new Error(SAVE_MODEL_FAILURE_MESSAGE), {
+        panelKey: panel.state.key ?? '',
+        dashboardUid: dashboard?.state.uid ?? '',
+      });
       dashboardModel = undefined;
       panelModel = undefined;
     }
