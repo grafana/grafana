@@ -112,14 +112,11 @@ func migrateMinSpanToMaxPerRow(panel map[string]interface{}) {
 	// So we need to match this behavior
 	if factorIndex > 0 {
 		panel["maxPerRow"] = factors[factorIndex-1]
-	} else if factorIndex == 0 {
-		// If the first factor is already greater than max, use 1
-		panel["maxPerRow"] = 1
 	}
-	// If no factor is greater than max, don't set maxPerRow
-	// This matches frontend behavior when findIndex returns -1
-	// The frontend sets maxPerRow to undefined, which gets filtered out
-	// So we don't set it at all
+	// Otherwise leave maxPerRow unset. This matches the frontend, where
+	// factors[findIndex(...) - 1] is factors[-1] (findIndex 0, i.e. minSpan > grid
+	// width) or factors[-2] (findIndex -1, i.e. minSpan <= 1) - both undefined,
+	// which is dropped from the saved panel.
 
 	// Remove the minSpan property
 	delete(panel, "minSpan")
