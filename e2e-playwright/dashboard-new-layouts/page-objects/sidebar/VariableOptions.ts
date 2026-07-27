@@ -51,8 +51,8 @@ export class VariableOptions extends PageObject {
         const datasourceSelect = this.dashboardPage.getByGrafanaSelector(
           this.selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect
         );
-        await datasourceSelect.locator('input').fill(dsType);
-        await datasourceSelect.locator('input').press('Enter');
+        await datasourceSelect.fill(dsType);
+        await datasourceSelect.press('Enter');
       });
     },
     setNameFilter: async (filter: string) => {
