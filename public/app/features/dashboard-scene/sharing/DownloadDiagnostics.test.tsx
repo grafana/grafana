@@ -4,10 +4,11 @@ import { render } from 'test/test-utils';
 
 import { type ScopedVars } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils } from '@grafana/runtime';
+import { logError, setPluginImportUtils } from '@grafana/runtime';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { downloadDiagnosticsForQueries } from 'app/features/query/diagnostics/downloadDiagnostics';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -31,6 +32,11 @@ jest.mock('@grafana/runtime/unstable', () => ({
   getDataSourceInstance: jest.fn(() => Promise.resolve({ interpolateVariablesInQueries })),
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  logError: jest.fn(),
+}));
+
 setPluginImportUtils({
   importPanelPlugin: () => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: () => undefined,
@@ -39,6 +45,7 @@ setPluginImportUtils({
 describe('DownloadDiagnostics', () => {
   beforeEach(() => {
     jest.mocked(downloadDiagnosticsForQueries).mockClear();
+    jest.mocked(logError).mockClear();
     interpolateVariablesInQueries.mockClear();
     interpolateVariablesInQueries.mockImplementation((queries: DataQuery[]) => queries);
   });
@@ -65,6 +72,61 @@ describe('DownloadDiagnostics', () => {
     expect(queries).toEqual([{ refId: 'A' }, { refId: 'B', hide: true }]);
     expect(typeof from).toBe('string');
     expect(typeof to).toBe('string');
+  });
+
+  it('forwards the dashboard save model and this panel’s JSON (resolved by id)', async () => {
+    const { tab } = setupScenario();
+
+    render(<tab.Component model={tab} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+
+    const [, , , , panelModel, dashboardModel] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
+    // The whole dashboard save model is sent (bundled as dashboard.json), and this panel's JSON is
+    // resolved from it by id (VizPanel key "panel-1" -> id 1) and sent as panel.json.
+    expect(dashboardModel).toEqual(expect.objectContaining({ uid: 'dash-1' }));
+    expect(panelModel).toEqual(expect.objectContaining({ id: 1, type: 'table' }));
+  });
+
+  it('resolves a v2 repeat clone using the serializer element mapping', async () => {
+    const panelElement = { kind: 'Panel', spec: { id: 7, title: 'V2 panel' } };
+    const dashboardModel = {
+      title: 'V2 dashboard',
+      elements: { 'custom-panel-key': panelElement },
+      layout: { kind: 'GridLayout', spec: { items: [] } },
+    };
+    const { tab } = setupScenario(undefined, undefined, 'panel-7-clone-1', dashboardModel, 'v2');
+
+    render(<tab.Component model={tab} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+
+    const [, , , , panelModel, forwardedDashboardModel] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
+    expect(forwardedDashboardModel).toBe(dashboardModel);
+    expect(panelModel).toBe(panelElement);
+  });
+
+  it('still downloads (without panel/dashboard JSON) when getSaveModel throws', async () => {
+    // getSaveModel() can throw (e.g. a v2 CUE validation failure). The panel/dashboard JSON is optional
+    // context, so its failure must not abort a download whose queries and time range are already valid.
+    const consoleWarn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const saveModelError = new Error('v2 validation failed');
+    const { tab, dashboard } = setupScenario();
+    jest.spyOn(dashboard, 'getSaveModel').mockImplementation(() => {
+      throw saveModelError;
+    });
+
+    render(<tab.Component model={tab} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+
+    expect(downloadDiagnosticsForQueries).toHaveBeenCalledTimes(1);
+    const [, , , , panelModel, dashboardModel] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
+    expect(panelModel).toBeUndefined();
+    expect(dashboardModel).toBeUndefined();
+    expect(screen.queryByText('Failed to generate diagnostics')).not.toBeInTheDocument();
+    // The bundle is still produced, so the omission has to be reported somewhere or a bundle missing
+    // panel.json looks identical to one that never had it.
+    expect(logError).toHaveBeenCalledWith(saveModelError, { panelKey: 'panel-1', dashboardUid: 'dash-1' });
+    expect(consoleWarn).toHaveBeenCalled();
+    consoleWarn.mockRestore();
   });
 
   it('fills the runner-level datasource onto queries that lack one', async () => {
@@ -172,9 +234,18 @@ describe('DownloadDiagnostics', () => {
   });
 });
 
-function setupScenario(onDismiss?: () => void, runner?: SceneQueryRunner) {
+function setupScenario(
+  onDismiss?: () => void,
+  runner?: SceneQueryRunner,
+  panelKey = 'panel-1',
+  dashboardSaveModel: unknown = {
+    uid: 'dash-1',
+    panels: [{ id: 1, type: 'table', title: 'Panel' }],
+  },
+  serializerVersion: 'v1' | 'v2' = 'v1'
+) {
   const vizPanel = new VizPanel({
-    key: 'panel-1',
+    key: panelKey,
     pluginId: 'table',
     title: 'Panel',
     $data: runner ?? new SceneQueryRunner({ queries: [{ refId: 'A' }, { refId: 'B', hide: true }] }),
@@ -182,19 +253,34 @@ function setupScenario(onDismiss?: () => void, runner?: SceneQueryRunner) {
 
   const gridItem = new DashboardGridItem({ key: 'grid-item-1', body: vizPanel });
 
+  const dashboard = new DashboardScene(
+    {
+      title: 'Dash',
+      uid: 'dash-1',
+      meta: { canEdit: true },
+      $timeRange: new SceneTimeRange({}),
+      body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [gridItem] }) }),
+    },
+    serializerVersion
+  );
+
+  if (serializerVersion === 'v2') {
+    dashboard.serializer.initializeElementMapping(dashboardSaveModel as DashboardV2Spec);
+  }
+
+  // Stub the save model so tests exercise this view's panel lookup + payload wiring without depending
+  // on serializer internals. The default is v1; individual tests can supply a v2 model.
+  jest.spyOn(dashboard, 'getSaveModel').mockReturnValue(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    dashboardSaveModel as any
+  );
+
   const tab = new DownloadDiagnostics({
     panelRef: vizPanel.getRef(),
+    dashboardRef: dashboard.getRef(),
     onDismiss,
   });
-
-  const dashboard = new DashboardScene({
-    title: 'Dash',
-    uid: 'dash-1',
-    meta: { canEdit: true },
-    $timeRange: new SceneTimeRange({}),
-    body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [gridItem] }) }),
-    overlay: tab,
-  });
+  dashboard.setState({ overlay: tab });
 
   // Constructing the scene wires up parent pointers, which is all sceneGraph.getTimeRange and the
   // query-runner lookup need here. We deliberately skip activation so the SceneQueryRunner does not

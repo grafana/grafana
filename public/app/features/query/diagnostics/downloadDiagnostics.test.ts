@@ -56,6 +56,24 @@ describe('downloadDiagnosticsForQueries', () => {
     expect(saveAs).toHaveBeenCalledWith(blob, 'diagnostics-20260101-000000.tar.gz');
   });
 
+  it('includes the panel and dashboard save models in the POST body when provided', async () => {
+    const blob = new Blob(['bundle'], { type: 'application/gzip' });
+    const fetch = setupBackendSrv({ data: blob, headers: new Headers() });
+    const panel = { id: 1, type: 'timeseries' };
+    const dashboard = { uid: 'd1', panels: [panel] };
+
+    await downloadDiagnosticsForQueries([{ refId: 'A' }], '100', '200', undefined, panel, dashboard);
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: '/api/ds/diagnostics',
+        method: 'POST',
+        // panel.json / dashboard.json are bundled server-side from these.
+        data: { from: '100', to: '200', queries: [{ refId: 'A' }], panel, dashboard },
+      })
+    );
+  });
+
   it('falls back to a generated filename when no Content-Disposition is returned', async () => {
     const blob = new Blob(['bundle'], { type: 'application/gzip' });
     setupBackendSrv({ data: blob, headers: new Headers() });
