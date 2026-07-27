@@ -59,7 +59,7 @@ func TestBundler_Build_recordsExpressionStages(t *testing.T) {
 	// refIds.
 	resp := pipelineResponse([]float64{1})
 
-	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, nil, twoStagePipeline(), nil, nil)
+	blob, err := NewBundler().Build(BundleInput{Resp: resp, HARBuffer: &harcapture.Buffer{}, ExpressionStages: twoStagePipeline()})
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)

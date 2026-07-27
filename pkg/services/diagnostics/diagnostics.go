@@ -45,24 +45,48 @@ func NewBundler() *Bundler {
 	return &Bundler{}
 }
 
+// BundleInput is everything the single-panel bundle is assembled from. A struct rather than a
+// parameter list: the fields are mostly optional and several share a type (two json.RawMessage
+// documents, two errors), so positionally they were indistinguishable -- a call site that swapped
+// QueryRequestErr for QueryErr, or panel for dashboard JSON, still compiled and only showed up as a
+// mislabelled file inside the archive.
+type BundleInput struct {
+	// Resp is the query response. It also carries external (gRPC) plugins' __har__ capture frames.
+	Resp *backend.QueryDataResponse
+	// HARBuffer is the in-process HTTP capture for this request. Nil-safe: no traffic.har is written.
+	HARBuffer *harcapture.Buffer
+	// PanelJSON and DashboardJSON are the definitions the client already held, written verbatim.
+	PanelJSON     json.RawMessage
+	DashboardJSON json.RawMessage
+	// QueryRequestJSON is the submitted MetricRequest, recorded under querydata.json's "request".
+	QueryRequestJSON json.RawMessage
+	// ExpressionStages is the captured server-side expression pipeline, if any.
+	ExpressionStages []exprcapture.Stage
+	// QueryRequestErr is the CALLER's failure to serialize QueryRequestJSON -- not a query failure.
+	// Recorded in querydata-error.txt so a reader can tell an omitted request from a dropped one.
+	QueryRequestErr error
+	// QueryErr is the failure running the queries (top-level or folded per-refId), in query-error.txt.
+	QueryErr error
+}
+
 // Build assembles a .tar.gz bundle from the query response, the captured HAR buffer, and the
 // optional panel/dashboard JSON the client supplied. traffic.har is omitted when nothing was
 // captured.
 //
 // Server logs are intentionally omitted because they are not scoped to this request and would leak
 // unrelated activity into a bundle meant for external sharing; they will be tackled in a follow-up.
-func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer, panelJSON, dashboardJSON, queryRequestJSON json.RawMessage, expressionStages []exprcapture.Stage, queryRequestErr, queryErr error) ([]byte, error) {
+func (b *Bundler) Build(in BundleInput) ([]byte, error) {
 	files := map[string][]byte{}
 
-	// queryRequestErr is the caller's failure to serialize the request into queryRequestJSON. Record it
+	// QueryRequestErr is the caller's failure to serialize the request into QueryRequestJSON. Record it
 	// so a support engineer can tell the request JSON was omitted because serialization failed rather
 	// than silently dropped, mirroring how the per-panel dashboard path records manifest.queryDataError.
 	var queryDataErr error
-	if queryRequestErr != nil {
-		queryDataErr = fmt.Errorf("serialize query request: %w", queryRequestErr)
+	if in.QueryRequestErr != nil {
+		queryDataErr = fmt.Errorf("serialize query request: %w", in.QueryRequestErr)
 	}
-	if resp != nil || len(queryRequestJSON) > 0 || len(expressionStages) > 0 {
-		queryData, err := marshalQueryDataArtifact(queryRequestJSON, resp, expressionStages)
+	if in.Resp != nil || len(in.QueryRequestJSON) > 0 || len(in.ExpressionStages) > 0 {
+		queryData, err := marshalQueryDataArtifact(in.QueryRequestJSON, in.Resp, in.ExpressionStages)
 		if err != nil {
 			// A query-data artifact that cannot be fully JSON-encoded must not sink the whole bundle:
 			// record the failure and still ship HAR and the other artifacts, mirroring how the dashboard
@@ -79,7 +103,7 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 		files["querydata-error.txt"] = []byte(queryDataErr.Error() + "\n")
 	}
 
-	har, err := collectHAR(resp, harBuffer)
+	har, err := collectHAR(in.Resp, in.HARBuffer)
 	if err != nil {
 		return nil, err
 	}
@@ -87,17 +111,17 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 		files["traffic.har"] = har
 	}
 
-	if len(panelJSON) > 0 {
-		files["panel.json"] = indentJSON(panelJSON)
+	if len(in.PanelJSON) > 0 {
+		files["panel.json"] = indentJSON(in.PanelJSON)
 	}
-	if len(dashboardJSON) > 0 {
-		files["dashboard.json"] = indentJSON(dashboardJSON)
+	if len(in.DashboardJSON) > 0 {
+		files["dashboard.json"] = indentJSON(in.DashboardJSON)
 	}
 
-	if queryErr != nil {
+	if in.QueryErr != nil {
 		// Recorded verbatim -- redaction is intentionally deferred for this experimental feature
 		// (see the harcapture package doc); the error text can embed a request URL with credentials.
-		files["query-error.txt"] = []byte(queryErr.Error() + "\n")
+		files["query-error.txt"] = []byte(in.QueryErr.Error() + "\n")
 	}
 
 	return buildTarGz(files)
