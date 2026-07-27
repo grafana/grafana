@@ -219,6 +219,45 @@ test.describe(
 );
 
 test.describe(
+  'Panel presets - Preview interaction',
+  {
+    tag: ['@various', '@presets'],
+  },
+  () => {
+    test('hovering a preset card should not show the previewed panel tooltip', async ({
+      gotoPanelEditPage,
+      selectors,
+      page,
+    }) => {
+      await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
+      await waitForPanelToLoad(page);
+
+      const preset = getPresetCard(page, 'Lines with points');
+      await expect(preset, 'preset card is visible').toBeVisible({ timeout: 10000 });
+
+      // uPlot's cursor only reacts to a moving pointer and its tooltip dismisses itself
+      // shortly after the pointer stops, so sweep across the preview and sample as we go
+      const vizTooltip = page.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper);
+      const box = (await preset.boundingBox())!;
+      let vizTooltipsSeen = 0;
+
+      for (const fraction of [0.3, 0.5, 0.7]) {
+        await page.mouse.move(box.x + box.width * fraction, box.y + box.height * 0.5, { steps: 5 });
+        vizTooltipsSeen += await vizTooltip.count();
+      }
+
+      expect(vizTooltipsSeen, 'previewed panel should not render a viz tooltip').toBe(0);
+
+      // the hover did register - the card's own tooltip is showing the preset name
+      await expect(
+        page.getByTestId(selectors.components.Tooltip.container),
+        'card tooltip shows the preset name'
+      ).toContainText('Lines with points');
+    });
+  }
+);
+
+test.describe(
   'Panel presets - Save flow',
   {
     tag: ['@various', '@presets'],
