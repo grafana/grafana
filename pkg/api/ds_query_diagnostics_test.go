@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -15,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/httpclient/harcapture"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -130,6 +132,21 @@ func TestQueryDiagnostics_noQueries_returns400(t *testing.T) {
 	require.Contains(t, rec.Body.String(), "at least one query is required")
 }
 
+// TestQueryDiagnostics_unparseableBody_returns400 is the other half of the pair above: the two 400s
+// are distinct guards with distinct messages, so pinning both is what makes either assertion mean
+// something.
+func TestQueryDiagnostics_unparseableBody_returns400(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+	hs := &HTTPServer{queryDataService: query.NewFakeQueryService(t)}
+	c, rec := newDiagReqCtx(t, `{"queries":`, nil)
+
+	resp := hs.QueryDiagnostics(c)
+	require.Equal(t, http.StatusBadRequest, resp.Status())
+
+	resp.WriteTo(c)
+	require.Contains(t, rec.Body.String(), "bad request data")
+}
+
 func TestQueryDiagnostics_success_bundleHeadersAndSkipCache(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
 	fakeQuery := query.NewFakeQueryService(t)
@@ -178,6 +195,65 @@ func TestQueryDiagnostics_capturedTrafficWithQueryError_stillBundles(t *testing.
 	files := readTarGzFiles(t, rec.Body.Bytes())
 	require.Contains(t, string(files["traffic.har"]), "http://x/api")
 	require.Contains(t, string(files["query-error.txt"]), "bad promql", "the failure must be recorded in the bundle")
+}
+
+// TestQueryDiagnostics_capturesInProcessTraffic pins the capture wiring for CORE datasources — the
+// only capture path that works today, since collectHAR's __har__ frame path stays inert until the
+// SDK-side capture middleware ships (see its doc comment). The handler must hand queryData the
+// harcapture-wrapped context; passing the bare request context instead leaves the buffer empty and
+// traffic.har silently dropped, which no test that supplies capture via a __har__ frame can see.
+func TestQueryDiagnostics_capturesInProcessTraffic(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(func(ctx context.Context, _ identity.Requester, _ bool, _ dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+			// Stands in for the datasource's HTTP round trip: the real capture middleware finds the
+			// buffer on the query context exactly this way.
+			buf := harcapture.FromContext(ctx)
+			require.NotNil(t, buf, "queryData must receive the harcapture-wrapped context")
+			httpReq, err := http.NewRequest(http.MethodGet, "http://prom.example/api/v1/query?query=up", nil)
+			require.NoError(t, err)
+			buf.AddEntry(httpReq, &http.Response{StatusCode: http.StatusOK, Header: http.Header{}}, nil, time.Now(), time.Millisecond)
+
+			r := backend.NewQueryDataResponse()
+			r.Responses["A"] = backend.DataResponse{Frames: data.Frames{data.NewFrame("cpu")}}
+			return r, nil
+		})
+	hs := &HTTPServer{queryDataService: fakeQuery}
+	c, rec := newDiagReqCtx(t, `{"queries":[{"refId":"A"}]}`, nil)
+
+	resp := hs.QueryDiagnostics(c)
+	require.Equal(t, http.StatusOK, resp.Status())
+
+	resp.WriteTo(c)
+	files := readTarGzFiles(t, rec.Body.Bytes())
+	require.Contains(t, string(files["traffic.har"]), "prom.example/api/v1/query",
+		"the in-process buffer's entry must reach traffic.har")
+}
+
+// TestQueryDiagnostics_externalPluginSwallowedError_bundlesIt covers the second half of the handler's
+// errors.Join: an externalized (gRPC) plugin returns NO per-refId error — its top-level failure is
+// stashed on the __har__ frame so the captured traffic survives the wire (see
+// diagnostics.PluginCaptureError). Folding in only ResponseError drops it from query-error.txt.
+func TestQueryDiagnostics_externalPluginSwallowedError_bundlesIt(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(func(context.Context, identity.Requester, bool, dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+			r := diagHARResponse()
+			r.Responses["__har__A"].Frames[0].Meta.Custom.(map[string]interface{})["queryError"] = "dial tcp: connection refused"
+			return r, nil
+		})
+	hs := &HTTPServer{queryDataService: fakeQuery}
+	c, rec := newDiagReqCtx(t, `{"queries":[{"refId":"A"}]}`, nil)
+
+	resp := hs.QueryDiagnostics(c)
+	require.Equal(t, http.StatusOK, resp.Status())
+
+	resp.WriteTo(c)
+	files := readTarGzFiles(t, rec.Body.Bytes())
+	require.Contains(t, string(files["query-error.txt"]), "connection refused",
+		"an external plugin's swallowed error must reach query-error.txt")
 }
 
 func TestQueryDiagnostics_queryV2Dispatch(t *testing.T) {

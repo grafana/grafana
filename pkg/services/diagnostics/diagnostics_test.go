@@ -853,6 +853,7 @@ func TestSummarizeQueryDataResponse(t *testing.T) {
 
 	t.Run("oversized strings are truncated and an unmeasurable frame records rows = -1", func(t *testing.T) {
 		namedFrame := data.NewFrame(strings.Repeat("n", 300), data.NewField("v", nil, []float64{1}))
+		namedFrame.RefID = strings.Repeat("r", 300) // truncated on its own, independently of Name
 		// Mismatched field lengths make RowLen() error, which must be recorded as rows = -1.
 		badRows := data.NewFrame("", data.NewField("a", nil, []int64{1, 2}), data.NewField("b", nil, []int64{1}))
 		resp := backend.NewQueryDataResponse()
@@ -864,6 +865,7 @@ func TestSummarizeQueryDataResponse(t *testing.T) {
 		a := summarizeQueryDataResponse(resp)["A"]
 		require.Len(t, a.Error, 1024+len("…"), "error must be truncated to 1024 bytes + ellipsis")
 		require.Len(t, a.Frames[0].Name, 256+len("…"), "frame name must be truncated to 256 bytes + ellipsis")
+		require.Len(t, a.Frames[0].RefID, 256+len("…"), "frame refId must be truncated to 256 bytes + ellipsis")
 		require.Equal(t, -1, a.Frames[1].Rows, "a frame whose RowLen() errors must record rows = -1")
 	})
 
@@ -948,6 +950,27 @@ func TestMarshalQueryDataArtifactWithLimit_truncationTiers(t *testing.T) {
 		require.Empty(t, art.ResponseSummary, "tier 3 drops even the per-refID summary")
 		require.Equal(t, 300, art.LimitBytes)
 		require.Positive(t, art.OriginalBytes)
+	})
+
+	// The two omission markers are how a reader tells "this was dropped to fit the cap" from "this was
+	// never supplied", so neither may claim a drop that didn't happen.
+	t.Run("omission markers only flag content that was actually dropped", func(t *testing.T) {
+		bigError := backend.NewQueryDataResponse()
+		bigError.Responses["A"] = backend.DataResponse{Error: errors.New(strings.Repeat("e", 4096))}
+
+		out, _, err := marshalQueryDataArtifactWithLimit(nil, bigError, 300)
+		require.NoError(t, err)
+		var noRequest queryDataArtifact
+		require.NoError(t, json.Unmarshal(out, &noRequest))
+		require.False(t, noRequest.RequestOmitted, "no request was supplied, so none was dropped")
+		require.True(t, noRequest.ResponseOmitted)
+
+		out, _, err = marshalQueryDataArtifactWithLimit(bigRequest, nil, 300)
+		require.NoError(t, err)
+		var noResponse queryDataArtifact
+		require.NoError(t, json.Unmarshal(out, &noResponse))
+		require.True(t, noResponse.RequestOmitted)
+		require.False(t, noResponse.ResponseOmitted, "no response was supplied, so none was dropped")
 	})
 }
 
