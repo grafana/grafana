@@ -21,6 +21,11 @@ type JobStatusApplyConfiguration struct {
 	Warnings []string                       `json:"warnings,omitempty"`
 	// Optional value 0-100 that can be set while running
 	Progress *float64 `json:"progress,omitempty"`
+	// ProgressUpdates is the number of times the job's status has been written
+	// while it was processed. It is carried over to the historic job so the total
+	// number of progress updates a job went through remains observable after
+	// completion.
+	ProgressUpdates *int64 `json:"progressUpdates,omitempty"`
 	// Summary of processed actions
 	Summary []*provisioningv0alpha1.JobResourceSummary `json:"summary,omitempty"`
 	// URLs contains URLs for the reference branch or commit if applicable.
@@ -90,6 +95,14 @@ func (b *JobStatusApplyConfiguration) WithWarnings(values ...string) *JobStatusA
 // If called multiple times, the Progress field is set to the value of the last call.
 func (b *JobStatusApplyConfiguration) WithProgress(value float64) *JobStatusApplyConfiguration {
 	b.Progress = &value
+	return b
+}
+
+// WithProgressUpdates sets the ProgressUpdates field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ProgressUpdates field is set to the value of the last call.
+func (b *JobStatusApplyConfiguration) WithProgressUpdates(value int64) *JobStatusApplyConfiguration {
+	b.ProgressUpdates = &value
 	return b
 }
 

@@ -1,9 +1,10 @@
 import { t, Trans } from '@grafana/i18n';
 import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
-import { Badge, LinkButton } from '@grafana/ui';
+import { Badge, LinkButton, Tooltip } from '@grafana/ui';
 import { ACTIVE_INCIDENTS_QUERY_LIMIT } from 'app/features/alerting/unified/api/incidentsApi';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { SeverityBars } from 'app/features/alerting/unified/triage/scene/filters/SeverityBars';
 import { canonicalSeverity } from 'app/features/alerting/unified/triage/scene/filters/severity';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
@@ -66,12 +67,22 @@ export function IncidentsCardView({
       renderItem={(incident) => (
         <ListRow
           prefix={
-            <SummaryCardPrefix>
-              <Badge
-                text={incident.severityLabel}
-                color={severityLevelColor(canonicalSeverity(incident.severityLabel))}
-              />
-            </SummaryCardPrefix>
+            redesignEnabled ? (
+              // Same severity treatment as the firing-alerts rows so the two tabs share one visual language
+              <Tooltip content={incident.severityLabel}>
+                <span>
+                  <SeverityBars level={canonicalSeverity(incident.severityLabel)} />
+                  <span className="sr-only">{incident.severityLabel}</span>
+                </span>
+              </Tooltip>
+            ) : (
+              <SummaryCardPrefix>
+                <Badge
+                  text={incident.severityLabel}
+                  color={severityLevelColor(canonicalSeverity(incident.severityLabel))}
+                />
+              </SummaryCardPrefix>
+            )
           }
           title={incident.title}
           trailing={<SummaryCardAge date={new Date(incident.createdTime)} />}

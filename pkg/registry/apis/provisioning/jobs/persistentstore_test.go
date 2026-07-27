@@ -15,6 +15,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	fakeclientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -417,4 +418,63 @@ func TestGenerateJobName(t *testing.T) {
 		assert.Contains(t, first.Name, "repo-test-")
 		assert.Contains(t, second.Name, "repo-test-")
 	})
+}
+
+func TestWebhookAttribution(t *testing.T) {
+	t.Run("no attribution in context", func(t *testing.T) {
+		require.Nil(t, webhookAttributionFromContext(t.Context()))
+	})
+
+	t.Run("empty attribution is not recorded", func(t *testing.T) {
+		ctx := WithWebhookAttribution(t.Context(), WebhookAttribution{})
+		require.Nil(t, webhookAttributionFromContext(ctx))
+	})
+
+	t.Run("origin is recorded without a sender", func(t *testing.T) {
+		ctx := WithWebhookAttribution(t.Context(), WebhookAttribution{Origin: "github"})
+		require.Equal(t, map[string]string{appjobs.AnnoAuthorOrigin: "github"}, webhookAttributionFromContext(ctx))
+	})
+
+	t.Run("sender without id or origin", func(t *testing.T) {
+		ctx := WithWebhookAttribution(t.Context(), WebhookAttribution{Sender: "grot"})
+		require.Equal(t, map[string]string{appjobs.AnnoAuthor: "grot"}, webhookAttributionFromContext(ctx))
+	})
+
+	t.Run("sender with id and origin", func(t *testing.T) {
+		ctx := WithWebhookAttribution(t.Context(), WebhookAttribution{Sender: "grot", SenderID: "123", Origin: "GitHub"})
+		require.Equal(t, map[string]string{
+			appjobs.AnnoAuthor:       "grot",
+			appjobs.AnnoAuthorID:     "123",
+			appjobs.AnnoAuthorOrigin: "GitHub",
+		}, webhookAttributionFromContext(ctx))
+	})
+
+	t.Run("insert stamps annotations on the job", func(t *testing.T) {
+		client := fakeclientset.NewSimpleClientset()
+		store := newTestStore(client.ProvisioningV0alpha1())
+
+		ctx := WithWebhookAttribution(t.Context(), WebhookAttribution{Sender: "grot", SenderID: "123", Origin: "GitHub"})
+		job, err := store.Insert(ctx, "default", provisioning.JobSpec{
+			Repository: "repo",
+			Action:     provisioning.JobActionPull,
+		})
+		require.NoError(t, err)
+		require.Equal(t, "grot", job.Annotations[appjobs.AnnoAuthor])
+		require.Equal(t, "123", job.Annotations[appjobs.AnnoAuthorID])
+		require.Equal(t, "GitHub", job.Annotations[appjobs.AnnoAuthorOrigin])
+	})
+}
+
+func TestWebhookAttributionFromContext_ReturnsACopy(t *testing.T) {
+	ctx := WithWebhookAttribution(t.Context(), WebhookAttribution{Sender: "grot", SenderID: "123", Origin: "github"})
+
+	first := webhookAttributionFromContext(ctx)
+	first[appjobs.AnnoAuthor] = "mutated"
+	delete(first, appjobs.AnnoAuthorID)
+
+	require.Equal(t, map[string]string{
+		appjobs.AnnoAuthor:       "grot",
+		appjobs.AnnoAuthorID:     "123",
+		appjobs.AnnoAuthorOrigin: "github",
+	}, webhookAttributionFromContext(ctx))
 }

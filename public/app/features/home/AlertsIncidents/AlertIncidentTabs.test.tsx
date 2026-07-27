@@ -128,7 +128,8 @@ describe('AlertIncidentTabs', () => {
     // Wait for the alert to load so the card content is rendered.
     expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
     // In the redesign the inner card header is hidden, so only the section heading remains.
-    expect(screen.getByRole('heading', { name: 'Alerts & incidents' })).toBeInTheDocument();
+    // The Incident plugin is absent here, so the heading drops the "& incidents" half.
+    expect(screen.getByRole('heading', { name: 'Alerts' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /firing alerts/i })).toBeInTheDocument();
     // The severity breakdown badge lives in the card header, which the redesign hides.
     expect(screen.queryByText(/1 critical/i)).not.toBeInTheDocument();
@@ -191,6 +192,7 @@ describe('AlertIncidentTabs', () => {
 
     expect(await screen.findByText('Database outage')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /incidents/i })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('heading', { name: 'Incidents' })).toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: /firing alerts/i })).not.toBeInTheDocument();
   });
 
@@ -203,6 +205,7 @@ describe('AlertIncidentTabs', () => {
 
     // Alerts tab is active by default.
     expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Alerts & incidents' })).toBeInTheDocument();
 
     await user.click(await screen.findByRole('tab', { name: /incidents/i }));
 
