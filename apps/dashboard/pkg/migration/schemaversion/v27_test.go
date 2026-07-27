@@ -9,6 +9,38 @@ import (
 func TestV27(t *testing.T) {
 	tests := []migrationTestCase{
 		{
+			name: "panels with falsy repeatPanelId/repeatByRow are kept (truthy check, not existence)",
+			input: map[string]interface{}{
+				"schemaVersion": 26,
+				"panels": []interface{}{
+					map[string]interface{}{"id": 1, "repeatByRow": false},
+					map[string]interface{}{"id": 2, "repeatPanelId": 0},
+					map[string]interface{}{
+						"id":   3,
+						"type": "row",
+						"panels": []interface{}{
+							map[string]interface{}{"id": 4, "repeatPanelId": 0},
+							map[string]interface{}{"id": 5, "repeatPanelId": 42},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 27,
+				"panels": []interface{}{
+					map[string]interface{}{"id": 1, "repeatByRow": false},
+					map[string]interface{}{"id": 2, "repeatPanelId": 0},
+					map[string]interface{}{
+						"id":   3,
+						"type": "row",
+						"panels": []interface{}{
+							map[string]interface{}{"id": 4, "repeatPanelId": 0},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "remove repeated panels with repeatPanelId and repeatByRow",
 			input: map[string]interface{}{
 				"schemaVersion": 26,

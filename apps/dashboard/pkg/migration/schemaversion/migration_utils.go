@@ -94,6 +94,32 @@ func ConvertToInt(value interface{}) (int, bool) {
 	}
 }
 
+// isTruthy reports whether value is truthy using the same rules as JavaScript,
+// so migrations that mirror the frontend treat 0, "", false and null/absent
+// values as falsy while any other value (including objects and arrays) is truthy.
+func isTruthy(value interface{}) bool {
+	switch v := value.(type) {
+	case nil:
+		return false
+	case bool:
+		return v
+	case string:
+		return v != ""
+	case float64:
+		return v != 0
+	case float32:
+		return v != 0
+	case int:
+		return v != 0
+	case int64:
+		return v != 0
+	case int32:
+		return v != 0
+	default:
+		return true
+	}
+}
+
 // IsArray checks if a value is an array (slice)
 func IsArray(value interface{}) bool {
 	if value == nil {

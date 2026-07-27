@@ -44,9 +44,10 @@ func V12(_ context.Context, dashboard map[string]interface{}) error {
 			continue
 		}
 
-		// Update refresh property
+		// Update refresh property. Match the frontend's truthy check so a
+		// non-boolean value like refresh:2 becomes 1, not 0.
 		if _, hasRefresh := variable["refresh"]; hasRefresh {
-			if GetBoolValue(variable, "refresh") {
+			if isTruthy(variable["refresh"]) {
 				variable["refresh"] = 1
 			} else {
 				variable["refresh"] = 0
@@ -55,9 +56,9 @@ func V12(_ context.Context, dashboard map[string]interface{}) error {
 
 		// Update hide property based on hideVariable and hideLabel
 		// hideVariable takes priority over hideLabel
-		if GetBoolValue(variable, "hideVariable") {
+		if isTruthy(variable["hideVariable"]) {
 			variable["hide"] = 2
-		} else if GetBoolValue(variable, "hideLabel") {
+		} else if isTruthy(variable["hideLabel"]) {
 			variable["hide"] = 1
 		}
 	}

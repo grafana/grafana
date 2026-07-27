@@ -108,11 +108,10 @@ func removeRepeatedPanels(panels []interface{}) []interface{} {
 			continue
 		}
 
-		// Skip panels with repeatPanelId or repeatByRow
-		if _, hasRepeatPanelId := p["repeatPanelId"]; hasRepeatPanelId {
-			continue
-		}
-		if _, hasRepeatByRow := p["repeatByRow"]; hasRepeatByRow {
+		// Skip panels with repeatPanelId or repeatByRow. Match the frontend's
+		// truthy check: a falsy-but-present value (e.g. repeatByRow:false,
+		// repeatPanelId:0) must NOT drop the panel.
+		if isTruthy(p["repeatPanelId"]) || isTruthy(p["repeatByRow"]) {
 			continue
 		}
 
@@ -122,7 +121,7 @@ func removeRepeatedPanels(panels []interface{}) []interface{} {
 				filteredNestedPanels := []interface{}{}
 				for _, nestedPanel := range nestedPanels {
 					if np, ok := nestedPanel.(map[string]interface{}); ok {
-						if _, hasRepeatPanelId := np["repeatPanelId"]; !hasRepeatPanelId {
+						if !isTruthy(np["repeatPanelId"]) {
 							filteredNestedPanels = append(filteredNestedPanels, nestedPanel)
 						}
 					}
