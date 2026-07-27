@@ -1221,7 +1221,7 @@ func TestReleaseExistingItems_ReturnsErrorWhenConflictPersists(t *testing.T) {
 	assert.Greater(t, atomic.LoadInt32(&calls), int32(1), "finalizer should have retried at least once before giving up")
 }
 
-// TestProcess_RemovePendingJobsFinalizer verifies that the remove-jobs finalizer clears
+// TestProcess_RemovePendingJobsFinalizer verifies that the remove-pending-jobs finalizer clears
 // the repository's job queue via the job queue cleaner.
 func TestProcess_RemovePendingJobsFinalizer(t *testing.T) {
 	jobs := NewMockJobQueueCleaner(t)

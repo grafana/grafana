@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,8 +24,8 @@ func newFilteringClientset() *fakeclientset.Clientset {
 	//nolint:staticcheck // NewSimpleClientset is needed; NewClientset requires schema registration not available for this type.
 	fc := fakeclientset.NewSimpleClientset()
 	fc.PrependReactor("list", "jobs", func(action clienttesting.Action) (bool, runtime.Object, error) {
-		la := action.(clienttesting.ListActionImpl)
-		obj, err := fc.Tracker().List(la.GetResource(), la.GetKind(), la.GetNamespace())
+		la := action.(clienttesting.ListAction)
+		obj, err := fc.Tracker().List(la.GetResource(), provisioning.JobResourceInfo.GroupVersionKind(), la.GetNamespace())
 		if err != nil {
 			return true, nil, err
 		}
@@ -96,6 +97,22 @@ func TestCleanupQueue_NoJobs(t *testing.T) {
 	require.NoError(t, err)
 
 	deleted, err := store.CleanupQueue(ctx, "stacks-123", "repo-a")
+	require.NoError(t, err)
+	assert.Equal(t, 0, deleted)
+}
+
+// TestCleanupQueue_InvalidRepositoryLabel verifies that a repository name that
+// is not a valid label value does not block deletion: no job could have been
+// queued under such a name, so cleanup is a no-op rather than an error.
+func TestCleanupQueue_InvalidRepositoryLabel(t *testing.T) {
+	fakeClient := newFilteringClientset()
+	store := newTestStore(fakeClient.ProvisioningV0alpha1())
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	longName := strings.Repeat("a", 64) // exceeds the 63-character label value limit
+	deleted, err := store.CleanupQueue(ctx, "stacks-123", longName)
 	require.NoError(t, err)
 	assert.Equal(t, 0, deleted)
 }

@@ -613,8 +613,12 @@ func (s *persistentStore) CleanupQueue(ctx context.Context, namespace, repositor
 	// finish, so it is excluded from the queue clean-up.
 	repoReq, err := labels.NewRequirement(LabelRepository, selection.Equals, []string{repository})
 	if err != nil {
-		span.RecordError(err)
-		return 0, apifmt.Errorf("could not create repository requirement: %w", err)
+		// The repository name is not a valid label value (e.g. longer than 63
+		// characters). Insert stamps this same name as a label, so no job could
+		// ever have been queued for it: the queue is necessarily empty. Return
+		// cleanly so this finalizer does not block repository deletion.
+		logger.Info("repository name is not a valid label value; nothing to clean up", "error", err)
+		return 0, nil
 	}
 	claimReq, err := labels.NewRequirement(LabelJobClaim, selection.DoesNotExist, nil)
 	if err != nil {
