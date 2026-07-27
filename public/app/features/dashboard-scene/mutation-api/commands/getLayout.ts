@@ -22,7 +22,7 @@ interface TrimmedPanelKind {
   kind: 'Panel';
   spec: {
     title: string;
-    description: string;
+    description?: string;
     vizConfig: {
       kind: 'VizConfig';
       group: string;

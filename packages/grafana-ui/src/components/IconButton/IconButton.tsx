@@ -117,7 +117,7 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
   // overall size of the IconButton on hover
   // theme.spacing.gridSize originates from 2*4px for padding and letting the IconSize generally decide on the hoverSize
   const hoverSize = getSvgSize(size) + theme.spacing.gridSize;
-  const activeButtonStyle = getActiveButtonStyles(theme.colors.secondary, 'text');
+  const activeButtonStyle = getActiveButtonStyles(theme.colors.secondary, 'text', theme.flags.visualDesignRefresh);
 
   let iconColor = theme.colors.primary.text;
   let hoverColor = theme.colors.action.hover;

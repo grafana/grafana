@@ -251,6 +251,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	provider2 "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
+	provider3 "github.com/grafana/grafana/pkg/storage/unified/search/rerank/provider"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -532,6 +533,10 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
+	reranker, err := provider3.ProvideReranker(cfg, vectorMetrics)
+	if err != nil {
+		return nil, err
+	}
 	experimentalKVOptions, err := sql.ProvideExperimentalKV(cfg)
 	if err != nil {
 		return nil, err
@@ -554,6 +559,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		SecureValues:   inlineSecureValueSupport,
 		VectorBackend:  vectorBackend,
 		Embedder:       embedder,
+		Reranker:       reranker,
 		DashboardStats: ossDashboardStats,
 		KV:             kv,
 		EDB:            dbProvider,
@@ -1278,6 +1284,10 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
+	reranker, err := provider3.ProvideReranker(cfg, vectorMetrics)
+	if err != nil {
+		return nil, err
+	}
 	dbProvider, err := sql.ProvideResourceDB(cfg, sqlStore)
 	if err != nil {
 		return nil, err
@@ -1308,6 +1318,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		SecureValues:   inlineSecureValueSupport,
 		VectorBackend:  vectorBackend,
 		Embedder:       embedder,
+		Reranker:       reranker,
 		DashboardStats: ossDashboardStats,
 		KV:             kv,
 		EDB:            dbProvider,
