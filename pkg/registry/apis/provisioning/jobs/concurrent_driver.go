@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
@@ -51,6 +50,10 @@ type ConcurrentJobDriver struct {
 	workers              []Worker
 	metrics              *JobMetrics
 	queue                workqueue.TypedRateLimitingInterface[string]
+
+	// logger is used by informer event callbacks, which run outside Run's
+	// context and therefore cannot use logging.FromContext.
+	logger logging.Logger
 }
 
 // NewConcurrentJobDriver creates a new concurrent job driver that spawns multiple job workers.
@@ -93,6 +96,7 @@ func NewConcurrentJobDriver(
 				Name: "provisioningJobDriver",
 			},
 		),
+		logger: logging.DefaultLogger.With("logger", "concurrent-job-driver"),
 	}, nil
 }
 
@@ -111,14 +115,17 @@ func (c *ConcurrentJobDriver) EventHandler() cache.ResourceEventHandlerFuncs {
 			// live events carry only namespace/name and always enqueue; the
 			// worker's claim then cheaply skips anything already taken.
 			if job, ok := obj.(*provisioning.Job); ok && job.Labels[LabelJobClaim] != "" {
+				c.logger.Debug("skip create event for already-claimed job",
+					"namespace", job.GetNamespace(), "job", job.GetName())
 				return
 			}
 			key, err := cache.MetaNamespaceKeyFunc(obj)
 			if err != nil {
-				utilruntime.HandleError(fmt.Errorf("could not build key for job: %w", err))
+				c.logger.Error("could not build key for job create event", "error", err)
 				return
 			}
 			c.queue.Add(key)
+			c.logger.Debug("job create event enqueued", "work_key", key, "queue_len", c.queue.Len())
 		},
 	}
 }
@@ -136,7 +143,11 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 		return apifmt.Errorf("failed to grant provisioning identity: %w", err)
 	}
 
-	logger.Info("start concurrent job driver")
+	logger.Info("start concurrent job driver",
+		"job_timeout", c.jobTimeout,
+		"backstop_poll_interval", c.jobInterval,
+		"lease_renewal_interval", c.leaseRenewalInterval,
+	)
 
 	var wg sync.WaitGroup
 
@@ -166,6 +177,7 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 				c.workers...,
 			)
 
+			driverLogger.Debug("start job driver")
 			for c.processNextWorkItem(driverCtx, processor) {
 			}
 			driverLogger.Debug("job driver stopped")
@@ -173,6 +185,7 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 	}
 
 	<-ctx.Done()
+	logger.Info("shutting down job drivers", "queued_jobs", c.queue.Len())
 	// ShutDown rather than ShutDownWithDrain: each queued key is a full job run,
 	// and unclaimed jobs persist in storage — a live replica's backstop re-adds them.
 	c.queue.ShutDown()
@@ -190,33 +203,42 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 	}
 	defer c.queue.Done(key)
 
+	logger := logging.FromContext(ctx).With("work_key", key)
+
 	// After shutdown begins, Get keeps returning queued keys until the queue is
 	// empty; skip them so workers exit promptly instead of claiming jobs mid-shutdown.
 	if ctx.Err() != nil {
+		logger.Debug("discard queued job during shutdown")
 		c.queue.Forget(key)
 		return true
 	}
-
-	logger := logging.FromContext(ctx)
 
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
-		logger.Error("invalid job key - dropping", "work_key", key, "error", err)
+		logger.Error("invalid job key - dropping", "error", err)
 		c.queue.Forget(key)
 		return true
 	}
 
+	logger.Debug("process job key", "attempt", c.queue.NumRequeues(key)+1)
+
 	err = processor.processKey(ctx, namespace, name)
 	switch {
-	case err == nil, errors.Is(err, ErrAlreadyClaimed), apierrors.IsNotFound(err):
-		// Processed, claimed by another worker, or already completed and deleted.
+	case err == nil:
+		c.queue.Forget(key)
+	case errors.Is(err, ErrAlreadyClaimed):
+		logger.Debug("job already claimed by another worker - dropping from queue")
+		c.queue.Forget(key)
+	case apierrors.IsNotFound(err):
+		logger.Debug("job no longer exists - dropping from queue")
 		c.queue.Forget(key)
 	case c.queue.NumRequeues(key)+1 >= maxClaimAttempts:
 		logger.Error("job failed too many times - dropping from queue; the backstop poll re-adds it if still unclaimed",
-			"work_key", key, "error", err)
+			"attempts", c.queue.NumRequeues(key)+1, "error", err)
 		c.queue.Forget(key)
 	default:
-		logger.Warn("failed to process job - will retry", "work_key", key, "error", err)
+		logger.Warn("failed to process job - will retry",
+			"attempt", c.queue.NumRequeues(key)+1, "error", err)
 		c.queue.AddRateLimited(key)
 	}
 	return true
@@ -238,6 +260,8 @@ func (c *ConcurrentJobDriver) runBackstopPoller(ctx context.Context) {
 		limit = maxBackstopListLimit
 	}
 
+	logger.Debug("start backstop poller", "interval", c.jobInterval, "list_limit", limit)
+
 	// Enqueue the startup backlog without waiting for the first tick.
 	c.enqueueUnclaimedJobs(ctx, limit)
 
@@ -256,19 +280,30 @@ func (c *ConcurrentJobDriver) runBackstopPoller(ctx context.Context) {
 }
 
 func (c *ConcurrentJobDriver) enqueueUnclaimedJobs(ctx context.Context, limit int) {
+	logger := logging.FromContext(ctx)
+
 	unclaimed, err := c.store.ListUnclaimedJobs(ctx, limit)
 	if err != nil {
-		logging.FromContext(ctx).Error("failed to list unclaimed jobs", "error", err)
+		logger.Error("failed to list unclaimed jobs", "error", err)
 		return
 	}
 
 	for _, job := range unclaimed {
 		key, err := cache.MetaNamespaceKeyFunc(job)
 		if err != nil {
-			logging.FromContext(ctx).Error("could not build key for job", "namespace", job.GetNamespace(), "job", job.GetName(), "error", err)
+			logger.Error("could not build key for job", "namespace", job.GetNamespace(), "job", job.GetName(), "error", err)
 			continue
 		}
 		// The queue deduplicates keys that are already queued or in flight.
 		c.queue.Add(key)
+	}
+
+	// Unclaimed jobs here are normal right after creation bursts (the poll races
+	// the informer event; the queue deduplicates), but a steady stream at an idle
+	// time means events are being missed and the backstop is doing the rescuing.
+	if len(unclaimed) > 0 {
+		logger.Info("backstop poll enqueued unclaimed jobs", "found", len(unclaimed), "queue_len", c.queue.Len())
+	} else {
+		logger.Debug("backstop poll found no unclaimed jobs")
 	}
 }
