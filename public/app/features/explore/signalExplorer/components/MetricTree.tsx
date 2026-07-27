@@ -115,38 +115,43 @@ export function MetricTree({ exploreId, refId, dsRef, timeRange, matchQueries = 
           {t('explore.signal-explorer.tree.no-metrics', 'No metrics found')}
         </Text>
       )}
-      {visibleMetrics.map((metric) => {
-        const isExpanded = metric.name === expandedMetric;
-        const labelsId = blockId(treeId, 'labels', metric.name);
-        return (
-          <div key={metric.name}>
-            <MetricRow
-              metric={metric}
-              refBadges={queryRefsByMetric[metric.name] ?? NO_BADGES}
-              selected={selectedMetric?.refId === refId && selectedMetric.metricName === metric.name}
-              expanded={isExpanded}
-              labelsId={labelsId}
-              onSelect={selectMetric}
-              onToggleExpand={toggleMetric}
-            />
-            {isExpanded && (
-              <MetricLabelsBlock
-                id={labelsId}
-                dsRef={dsRef}
-                timeRange={timeRange}
-                metric={metric.name}
-                expandedLabel={expandedLabel}
-                onToggleLabel={toggleLabel}
+      {/* Only the rows scroll. The status lines above stay put, and the host's search box — a sibling
+          of this whole tree — stays pinned above it however far the list is scrolled. */}
+      <div className={styles.list} data-testid="signal-explorer-metric-list">
+        {visibleMetrics.map((metric) => {
+          const isExpanded = metric.name === expandedMetric;
+          const labelsId = blockId(treeId, 'labels', metric.name);
+          return (
+            <div key={metric.name}>
+              <MetricRow
+                metric={metric}
+                refBadges={queryRefsByMetric[metric.name] ?? NO_BADGES}
+                selected={selectedMetric?.refId === refId && selectedMetric.metricName === metric.name}
+                expanded={isExpanded}
+                labelsId={labelsId}
+                onSelect={selectMetric}
+                onToggleExpand={toggleMetric}
               />
-            )}
-          </div>
-        );
-      })}
-      {sortedMetrics.length > visibleMetrics.length && (
-        <Button className={styles.showMore} size="sm" variant="secondary" fill="text" onClick={showMore}>
-          {t('explore.signal-explorer.tree.show-more', 'Show more')}
-        </Button>
-      )}
+              {isExpanded && (
+                <MetricLabelsBlock
+                  id={labelsId}
+                  dsRef={dsRef}
+                  timeRange={timeRange}
+                  metric={metric.name}
+                  expandedLabel={expandedLabel}
+                  onToggleLabel={toggleLabel}
+                />
+              )}
+            </div>
+          );
+        })}
+        {/* Inside the scroll region on purpose: it belongs to the end of the list, not to the card. */}
+        {sortedMetrics.length > visibleMetrics.length && (
+          <Button className={styles.showMore} size="sm" variant="secondary" fill="text" onClick={showMore}>
+            {t('explore.signal-explorer.tree.show-more', 'Show more')}
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
@@ -212,10 +217,23 @@ function MetricLabelsBlock({ id, dsRef, timeRange, metric, expandedLabel, onTogg
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  // Fills whatever height the host gives it and never grows past it, so the scroll below happens
+  // here rather than pushing the card — and the card's search box — off the top of the sidebar.
+  // `minHeight: 0` is what allows a flex child to shrink below its content height at all.
   tree: css({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(0.25),
+    flex: 1,
+    minHeight: 0,
+  }),
+  list: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.25),
+    flex: 1,
+    minHeight: 0,
+    overflowY: 'auto',
   }),
   showMore: css({
     alignSelf: 'flex-start',

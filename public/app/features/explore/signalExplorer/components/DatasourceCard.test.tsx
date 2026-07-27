@@ -187,5 +187,19 @@ describe('DatasourceCard', () => {
 
       expect(catalog).toHaveBeenCalledTimes(1);
     });
+
+    // The search box must sit outside the metric list's scroll region, or paging in more metrics
+    // scrolls the very control you filter them with out of reach.
+    it('keeps the search box outside the scrolling metric list', () => {
+      jest
+        .spyOn(catalogModule, 'useMetricCatalog')
+        .mockReturnValue({ metrics: [{ name: 'up', type: 'gauge' }], loading: false });
+
+      renderCard();
+
+      expect(screen.getByTestId('signal-explorer-metric-list')).not.toContainElement(
+        screen.getByRole('textbox', { name: /search metrics/i })
+      );
+    });
   });
 });

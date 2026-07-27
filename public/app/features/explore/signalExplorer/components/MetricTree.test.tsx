@@ -387,6 +387,48 @@ describe('MetricTree', () => {
     });
   });
 
+  describe('scroll structure (mocked hooks)', () => {
+    // The rows scroll inside their own region so the card's search box stays pinned above them.
+    // Paging in a few hundred metrics used to scroll the search box out of the card entirely.
+    it('renders the rows inside a dedicated scroll region', () => {
+      mockHooks({
+        metrics: [
+          { name: 'up', type: 'gauge' },
+          { name: 'node_load1', type: 'gauge' },
+        ],
+      });
+
+      renderTree();
+
+      const list = screen.getByTestId('signal-explorer-metric-list');
+      for (const row of screen.getAllByTestId('signal-explorer-metric-row')) {
+        expect(list).toContainElement(row);
+      }
+    });
+
+    it('keeps the paging control with the rows it pages', async () => {
+      mockHooks({ metrics: Array.from({ length: 60 }, (_, i) => ({ name: `m_${i}`, type: 'gauge' as const })) });
+
+      renderTree();
+
+      const list = screen.getByTestId('signal-explorer-metric-list');
+      expect(list).toContainElement(screen.getByRole('button', { name: /show more/i }));
+      await userEvent.click(screen.getByRole('button', { name: /show more/i }));
+      expect(screen.getAllByTestId('signal-explorer-metric-row')).toHaveLength(50);
+    });
+
+    // A status line outside the scroll region stays visible no matter how far down the list is.
+    it('keeps the loading message out of the scroll region', () => {
+      jest.spyOn(catalogModule, 'useMetricCatalog').mockReturnValue({ metrics: [], loading: true });
+
+      renderTree();
+
+      expect(screen.getByTestId('signal-explorer-metric-list')).not.toContainElement(
+        screen.getByText(/loading metrics/i)
+      );
+    });
+  });
+
   describe('aria-controls wiring (mocked hooks)', () => {
     function mockNamedHooks() {
       jest.spyOn(catalogModule, 'useMetricCatalog').mockReturnValue({
