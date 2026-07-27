@@ -729,12 +729,11 @@ describe('preparePlotConfigBuilder with namePosition', () => {
     expect(values!.every((v) => typeof v === 'string' && v.length > 0)).toBe(true);
   });
 
-  it('removes y-axis gutter when namePosition is "top"', () => {
+  it('uses auto-sizing when namePosition is "top"', () => {
     const builder = buildConfig('top', 3);
     const yAxis = getYAxis(builder);
 
-    expect(yAxis.size).toBe(0);
-    expect(yAxis.gap).toBe(0);
+    expect(typeof yAxis.size).toBe('function');
   });
 
   it('uses fixed axis width when namePosition is "left"', () => {

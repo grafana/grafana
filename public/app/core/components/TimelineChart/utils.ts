@@ -34,7 +34,14 @@ import {
   type HideableFieldConfig,
   MappingType,
 } from '@grafana/schema';
-import { FIXED_UNIT, UPlotConfigBuilder, type UPlotConfigPrepFn, type VizLegendItem } from '@grafana/ui';
+import {
+  FIXED_UNIT,
+  measureText,
+  UPlotConfigBuilder,
+  type UPlotConfigPrepFn,
+  UPLOT_AXIS_FONT_SIZE,
+  type VizLegendItem,
+} from '@grafana/ui';
 import { preparePlotData2, getStackingGroups } from '@grafana/ui/internal';
 
 import { getConfig, type TimelineCoreOptions } from './timeline';
@@ -221,6 +228,18 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
 
   const aboveBarLabelsActive = namePosition === 'top' && !userHiddenYAxis;
 
+  const aboveBarAxisSize = (self: uPlot, values: Array<string | null>) => {
+    if (!values?.some((v) => v != null && v !== '')) {
+      return 0;
+    }
+    const maxW = values.reduce(
+      (acc, v) => (v ? Math.max(acc, measureText(v, UPLOT_AXIS_FONT_SIZE).width) : acc),
+      0
+    );
+    const axis = self.axes[1];
+    return Math.ceil((axis?.ticks?.size ?? 0) + (axis?.gap ?? 0) + Math.min(self.width * 0.4, maxW));
+  };
+
   builder.addAxis({
     scaleKey: FIXED_UNIT, // y
     isTime: false,
@@ -240,8 +259,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
         : coreConfig.yValues,
     grid: { show: false },
     ticks: { show: false },
-    gap: userHiddenYAxis || aboveBarLabelsActive ? 0 : 16,
-    size: userHiddenYAxis || aboveBarLabelsActive ? 0 : yAxisWidth,
+    gap: userHiddenYAxis ? 0 : 16,
+    size: userHiddenYAxis ? 0 : aboveBarLabelsActive ? aboveBarAxisSize : yAxisWidth,
     theme,
   });
 

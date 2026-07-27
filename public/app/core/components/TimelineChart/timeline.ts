@@ -134,13 +134,20 @@ export function getConfig(opts: TimelineCoreOptions) {
     const slotH = dim / count;
     const barAreaWithLabels = Math.max(0, slotH - labelHeightPx);
     const showLabels = barAreaWithLabels >= minBarH + minGap;
-    const effectiveLabelH = showLabels ? labelHeightPx : 0;
-    const barArea = Math.max(0, slotH - effectiveLabelH);
+
+    if (!showLabels) {
+      walk(rh, yIdx, count, dim, (i, y0, hgt) => {
+        draw(i, y0, 0, y0, hgt);
+      });
+      return;
+    }
+
+    const barArea = Math.max(0, slotH - labelHeightPx);
     const barH = Math.min(barArea * Math.min(rh, 1), Math.max(0, barArea - minGap));
 
     const doOne = (i: number) => {
       const slotTop = i * slotH;
-      draw(i, slotTop, effectiveLabelH, slotTop + effectiveLabelH, barH);
+      draw(i, slotTop, labelHeightPx, slotTop + labelHeightPx, barH);
     };
 
     if (yIdx == null) {
