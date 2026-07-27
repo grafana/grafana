@@ -79,9 +79,21 @@ function inferPillsImpl(rawValue: unknown): unknown[] {
  * `secondary` is dropped) and a fresh `primary` starts. Reads check both generations and promote a
  * survivor back into `primary`, which approximates LRU. Total live entries stay within ~2x maxSize.
  */
-function createBoundedCache<K, V>(maxSize: number) {
+export function createBoundedCache<K, V>(maxSize: number) {
   let primary = new Map<K, V>();
   let secondary = new Map<K, V>();
+
+  // Every write to `primary` — whether a fresh `set` or a promotion from `secondary` in `get` — goes
+  // through here so the rotation check runs on all growth paths. (Rotating only in `set` let `get`'s
+  // promotions grow `primary` past `maxSize` between writes, breaking the ~2x bound.)
+  const put = (key: K, value: V): void => {
+    primary.set(key, value);
+    if (primary.size >= maxSize) {
+      secondary = primary;
+      primary = new Map<K, V>();
+    }
+  };
+
   return {
     get(key: K): V | undefined {
       const fromPrimary = primary.get(key);
@@ -90,17 +102,11 @@ function createBoundedCache<K, V>(maxSize: number) {
       }
       const fromSecondary = secondary.get(key);
       if (fromSecondary !== undefined) {
-        primary.set(key, fromSecondary); // promote into the current generation
+        put(key, fromSecondary); // promote into the current generation, keeping the size bound
       }
       return fromSecondary;
     },
-    set(key: K, value: V): void {
-      primary.set(key, value);
-      if (primary.size >= maxSize) {
-        secondary = primary;
-        primary = new Map<K, V>();
-      }
-    },
+    set: put,
   };
 }
 
