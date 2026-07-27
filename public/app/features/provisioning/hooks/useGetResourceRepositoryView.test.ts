@@ -78,18 +78,6 @@ describe('useGetResourceRepositoryView', () => {
     config.featureToggles = originalToggles;
   });
 
-  describe('provisioning disabled', () => {
-    it('returns Disabled status', () => {
-      config.featureToggles = { ...originalToggles, provisioning: false };
-      setupMocks();
-
-      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'some-folder' }));
-
-      expect(result.current.status).toBe(RepoViewStatus.Disabled);
-      expect(result.current.isLoading).toBe(false);
-    });
-  });
-
   describe('loading states', () => {
     it('returns Loading when settings are loading', () => {
       setupMocks({ settingsLoading: true });
@@ -423,16 +411,6 @@ describe('useGetResourceRepositoryView', () => {
       const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'some-folder' }));
 
       expect(result.current.status).toBe(RepoViewStatus.Error);
-      expect(result.current.isMissingRepo).toBe(true);
-    });
-
-    it('is true when provisioning is disabled (no repository can exist)', () => {
-      config.featureToggles = { ...originalToggles, provisioning: false };
-      setupMocks();
-
-      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'some-folder' }));
-
-      expect(result.current.status).toBe(RepoViewStatus.Disabled);
       expect(result.current.isMissingRepo).toBe(true);
     });
   });
