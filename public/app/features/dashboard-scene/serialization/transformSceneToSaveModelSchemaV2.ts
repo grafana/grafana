@@ -59,8 +59,6 @@ import {
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { type DashboardScene } from '../scene/DashboardScene';
-import { RowItem } from '../scene/layout-rows/RowItem';
-import { TabItem } from '../scene/layout-tabs/TabItem';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { type DashboardSceneState } from '../scene/types/dashboard';
 import { isLinkEditable } from '../settings/links/utils';
@@ -226,18 +224,34 @@ function getElements(scene: DashboardScene, dsReferencesMapping?: DSReferencesMa
   }, {});
 }
 
+// A repeated row/tab clone: duck-typed (rather than importing RowItem/TabItem, which would create a circular
+// dependency through the layout serializers). Sections expose `dashboardLayoutItemType` and `getLayout()`;
+// VizPanels also carry `repeatSourceKey` but have no `getLayout`, so they're excluded.
+type RepeatCloneSection = SceneObject & {
+  dashboardLayoutItemType: 'row' | 'tab';
+  getLayout: () => { getVizPanels: () => VizPanel[] };
+};
+
+function isRepeatCloneSection(obj: SceneObject): obj is RepeatCloneSection {
+  const layoutItemType = 'dashboardLayoutItemType' in obj ? obj.dashboardLayoutItemType : undefined;
+  const repeatSourceKey = 'repeatSourceKey' in obj.state ? obj.state.repeatSourceKey : undefined;
+  return (
+    (layoutItemType === 'row' || layoutItemType === 'tab') &&
+    Boolean(repeatSourceKey) &&
+    'getLayout' in obj &&
+    typeof obj.getLayout === 'function'
+  );
+}
+
 // Panels inside a repeated row/tab clone are not returned by the layout's getVizPanels() (which only walks
 // source sections), so collect them explicitly for snapshot serialization.
 function getRepeatedSectionPanelsForSnapshot(scene: DashboardScene): VizPanel[] {
   const panels: VizPanel[] = [];
 
-  const cloneSections = sceneGraph.findAllObjects(
-    scene.getRoot(),
-    (obj) => (obj instanceof RowItem || obj instanceof TabItem) && Boolean(obj.state.repeatSourceKey)
-  );
+  const cloneSections = sceneGraph.findAllObjects(scene.getRoot(), isRepeatCloneSection);
 
   for (const section of cloneSections) {
-    if (section instanceof RowItem || section instanceof TabItem) {
+    if (isRepeatCloneSection(section)) {
       panels.push(...section.getLayout().getVizPanels());
     }
   }

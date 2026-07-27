@@ -1,9 +1,9 @@
+import { sceneGraph } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec, type TabsLayoutTabKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
-import { interpolateSectionTitle } from '../../utils/utils';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
 import { deserializeSectionVariables, serializeSectionVariables } from './sectionVariables';
@@ -34,8 +34,12 @@ export function serializeTab(tab: TabItem, isSnapshot?: boolean): TabsLayoutTabK
   // `undefined` only while the repeat hasn't run yet; an empty array means it ran with a single value. When
   // serializing a snapshot of a materialized repeat we bake the interpolated title (matching the tab renderer)
   // and strip the repeat directive below. If it hasn't run, leave both untouched so it isn't silently dropped.
+  // The 'text' format matches the tab renderer; the repeat-local value is read from the tab's own $variables.
   const isMaterializedRepeat = Boolean(tab.state.repeatSourceKey) || tab.state.repeatedTabs !== undefined;
-  const title = isSnapshot && isMaterializedRepeat ? interpolateSectionTitle(tab, tab.state.title) : tab.state.title;
+  const title =
+    isSnapshot && isMaterializedRepeat && tab.state.title
+      ? sceneGraph.interpolate(tab, tab.state.title, undefined, 'text')
+      : tab.state.title;
 
   const tabKind: TabsLayoutTabKind = {
     kind: 'TabsLayoutTab',
