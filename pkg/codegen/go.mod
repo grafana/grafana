@@ -19,7 +19,7 @@ require (
 	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/emicklei/proto v1.14.2 // indirect
 	github.com/fatih/color v1.19.0 // indirect
-	github.com/getkin/kin-openapi v0.140.0 // indirect
+	github.com/getkin/kin-openapi v0.144.0 // indirect
 	github.com/go-openapi/jsonpointer v0.23.1 // indirect
 	github.com/go-openapi/swag/jsonname v0.26.1 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
@@ -34,8 +34,8 @@ require (
 	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mpvl/unique v0.0.0-20150818121801-cbe035fff7de // indirect
-	github.com/oasdiff/yaml v0.1.0 // indirect
-	github.com/oasdiff/yaml3 v0.0.13 // indirect
+	github.com/oasdiff/yaml v0.1.1 // indirect
+	github.com/oasdiff/yaml3 v0.0.14 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20251124094003-fcb97cc64c7b // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect

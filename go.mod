@@ -71,7 +71,7 @@ require (
 	github.com/fsnotify/fsnotify v1.10.1 // @grafana/identity-access-team
 	github.com/fullstorydev/grpchan v1.1.2 // @grafana/grafana-backend-group
 	github.com/gchaincl/sqlhooks v1.3.0 // @grafana/grafana-search-and-storage
-	github.com/getkin/kin-openapi v0.140.0 // @grafana/grafana-app-platform-squad
+	github.com/getkin/kin-openapi v0.144.0 // @grafana/grafana-app-platform-squad
 	github.com/go-jose/go-jose/v4 v4.1.4 // @grafana/identity-access-team
 	github.com/go-kit/log v0.2.1 //  @grafana/grafana-backend-group
 	github.com/go-ldap/ldap/v3 v3.4.4 // @grafana/identity-access-team
@@ -474,7 +474,7 @@ require (
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
 	github.com/gomodule/redigo v1.8.9 // indirect
 	github.com/google/btree v1.1.3 // indirect
-	github.com/google/cel-go v0.28.1 // indirect
+	github.com/google/cel-go v0.29.0 // indirect
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
 	github.com/google/gnostic v0.7.1 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
@@ -582,8 +582,8 @@ require (
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/nikunjy/rules v1.5.0 // indirect
 	github.com/oapi-codegen/runtime v1.0.0 // indirect
-	github.com/oasdiff/yaml v0.1.0 // indirect
-	github.com/oasdiff/yaml3 v0.0.13 // indirect
+	github.com/oasdiff/yaml v0.1.1 // indirect
+	github.com/oasdiff/yaml3 v0.0.14 // indirect
 	github.com/oklog/run v1.2.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/olekukonko/cat v0.0.0-20250911104152-50322a0618f6 // indirect
