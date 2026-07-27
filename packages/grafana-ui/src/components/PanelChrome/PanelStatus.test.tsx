@@ -93,14 +93,9 @@ describe('PanelStatus', () => {
       await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
       await screen.findByText('first error');
 
-      const texts = [
-        'first error',
-        'second error',
-        'first warning',
-        'second warning',
-        'first info',
-        'second info',
-      ].map((text) => screen.getByText(text));
+      const texts = ['first error', 'second error', 'first warning', 'second warning', 'first info', 'second info'].map(
+        (text) => screen.getByText(text)
+      );
 
       for (let i = 0; i < texts.length - 1; i++) {
         expect(texts[i].compareDocumentPosition(texts[i + 1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
