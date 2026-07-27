@@ -225,6 +225,45 @@ func TestInformer_LiveEventsDispatchMinimalObject(t *testing.T) {
 	})
 }
 
+// The stub dispatched for a live notification carries the change's identity
+// (UID), freshness (Generation), and intent (an operation annotation), so a
+// controller can classify its reconcile read without re-deriving it. ADDED and
+// MODIFIED are upserts; DELETED is a delete.
+func TestInformer_LiveEventsCarryIdentityAndIntent(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		handler := &recordingHandler{}
+		_, stop := start(t, sub, nil, newObjectFunc, handler)
+		defer stop()
+
+		added := event(resourcepb.WatchNotification_ADDED, "fresh")
+		added.Uid, added.Generation = "uid-fresh", 3
+		modified := event(resourcepb.WatchNotification_MODIFIED, "changed")
+		modified.Uid, modified.Generation = "uid-changed", 5
+		deleted := event(resourcepb.WatchNotification_DELETED, "gone")
+		deleted.Uid, deleted.Generation = "uid-gone", 9
+
+		sub.publish(t, subject(), added)
+		sub.publish(t, subject(), modified)
+		sub.publish(t, subject(), deleted)
+		synctest.Wait()
+
+		require.Len(t, handler.adds, 1)
+		assertStub(t, handler.adds[0], "uid-fresh", 3, NotificationOperationUpsert)
+
+		require.Len(t, handler.updates, 2)
+		assertStub(t, handler.updates[0], "uid-changed", 5, NotificationOperationUpsert)
+		assertStub(t, handler.updates[1], "uid-gone", 9, NotificationOperationDelete)
+	})
+}
+
+func assertStub(t *testing.T, obj *metav1.PartialObjectMetadata, uid string, generation int64, operation string) {
+	t.Helper()
+	assert.Equal(t, uid, string(obj.UID))
+	assert.Equal(t, generation, obj.Generation)
+	assert.Equal(t, operation, obj.Annotations[NotificationOperationAnnotation])
+}
+
 // Malformed envelopes and unknown verbs are skipped; a valid notification after
 // them still arrives.
 func TestInformer_SkipsMalformedAndUnknown(t *testing.T) {

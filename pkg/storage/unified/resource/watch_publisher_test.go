@@ -46,6 +46,8 @@ func TestPublishWatchNotification(t *testing.T) {
 		Action:          DataActionUpdated,
 		Folder:          "folder-1",
 		PreviousRV:      41,
+		UID:             "uid-abc",
+		Generation:      7,
 	}
 
 	t.Run("publishes a metadata-only notification on the resource subject", func(t *testing.T) {
@@ -67,6 +69,9 @@ func TestPublishWatchNotification(t *testing.T) {
 		assert.Equal(t, event.ResourceVersion, got.GetResourceVersion())
 		assert.Equal(t, event.Folder, got.GetFolder())
 		assert.Equal(t, event.PreviousRV, got.GetPreviousResourceVersion())
+		// Identity/freshness metadata lets a consumer classify its reconcile read.
+		assert.Equal(t, event.UID, got.GetUid())
+		assert.Equal(t, event.Generation, got.GetGeneration())
 	})
 
 	t.Run("does nothing when the publisher is disabled", func(t *testing.T) {

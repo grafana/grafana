@@ -8,6 +8,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
@@ -19,6 +20,7 @@ import (
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 const connectionLoggerName = "provisioning-connection-controller"
@@ -35,6 +37,14 @@ const (
 type connectionQueueItem struct {
 	key      string
 	attempts int
+	// visibilityAttempts counts read-after-write (not-yet-visible) retries for
+	// this item, bounded separately from attempts (which counts the general
+	// service-unavailable retries). AddAfter is not counted by the rate limiter,
+	// so it is tracked on the item.
+	visibilityAttempts int
+	// hint carries the notification's identity/freshness/intent for classifying
+	// this item's reconcile read. Upsert-by-default for resync/unknown enqueues.
+	hint reconcileHint
 }
 
 // ConnectionStatusPatcher defines the interface for updating connection status.
@@ -60,6 +70,10 @@ type ConnectionController struct {
 	queue          workqueue.TypedRateLimitingInterface[*connectionQueueItem]
 	resyncInterval time.Duration
 	drainTimeout   time.Duration
+
+	// visibilityBackoff is the per-attempt not-yet-visible delay schedule; a field
+	// so tests can shrink it. Defaults to defaultVisibilityBackoff.
+	visibilityBackoff []time.Duration
 }
 
 // NewConnectionController creates a new ConnectionController.
@@ -87,6 +101,7 @@ func NewConnectionController(
 		logger:            logging.DefaultLogger.With("logger", connectionLoggerName),
 		resyncInterval:    resyncInterval,
 		drainTimeout:      drainTimeout,
+		visibilityBackoff: defaultVisibilityBackoff,
 	}
 
 	cc.processFn = cc.process
@@ -111,7 +126,14 @@ func (cc *ConnectionController) enqueue(obj interface{}) {
 		cc.logger.Error("failed to get key for object", "error", err)
 		return
 	}
-	cc.queue.Add(&connectionQueueItem{key: key})
+	// Carry the notification's identity/freshness/intent on the item so the
+	// reconcile can classify its read; default to upsert for resync/unknown
+	// enqueues so a NotFound gets the brief retry rather than being dropped.
+	item := &connectionQueueItem{key: key, hint: reconcileHint{operation: usinformer.NotificationOperationUpsert}}
+	if m, ok := obj.(metav1.Object); ok {
+		item.hint = hintFromObject(m)
+	}
+	cc.queue.Add(item)
 }
 
 // Run starts the ConnectionController. The onStarted callback is invoked once
@@ -175,6 +197,23 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 		return true
 	}
 
+	// Read-after-write race: the reconcile read has not observed an upserted
+	// connection yet. Requeue with a brief, bounded, jittered delay instead of
+	// dropping the key until the next resync; a connection that never appears
+	// exhausts the retries and is then forgotten.
+	if errors.Is(err, errObjectNotYetVisible) {
+		delay, ok := visibilityRetryDelay(cc.visibilityBackoff, item.visibilityAttempts)
+		if !ok {
+			logger.With("attempts", item.visibilityAttempts).Info("ConnectionController: connection still not visible after retries; leaving for the next resync")
+			cc.queue.Forget(item)
+			return true
+		}
+		item.visibilityAttempts++
+		logger.With("attempts", item.visibilityAttempts, "delay", delay.String()).Debug("ConnectionController: connection not yet visible, requeuing")
+		cc.queue.AddAfter(item, delay)
+		return true
+	}
+
 	item.attempts++
 	logger = logger.With("error", err, "attempts", item.attempts)
 	logger.Error("ConnectionController failed to process key")
@@ -208,12 +247,23 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		return err
 	}
 
-	// Reconcile the object the read seam returns; how it is sourced and kept
-	// fresh is the informer.ConnectionGetter's concern, not the controller's.
+	// Treat the notification as a reconcile hint: read current state and converge.
+	// The item's hint carries the change's identity/freshness/intent so an
+	// ambiguous read can be classified rather than dropped. How the object is
+	// sourced is the ConnectionGetter's concern.
 	conn, err := cc.conns.Get(ctx, namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
-		return errors.New("connection not found")
+		if item.hint.operation == usinformer.NotificationOperationDelete {
+			// Expected: the object a delete notification refers to is already gone.
+			logger.Debug("connection not found for a delete notification; nothing to reconcile")
+			return nil
+		}
+		// Ambiguous under the decoupled NATS read seam: usually a read-after-write
+		// race on a just-created connection. Ask for a brief, bounded retry rather
+		// than treating it as a deletion.
+		logger.Debug("connection not yet visible for an upsert notification; will retry briefly")
+		return errObjectNotYetVisible
 	case err != nil:
 		logger.Error("getting connection", "error", err)
 		return err
@@ -221,6 +271,21 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 
 	logger = logger.With("namespace", namespace, "connection", name)
 	ctx = logging.Context(ctx, logger)
+
+	// Now that the live object is in hand, guard against acting on a stale event.
+	if item.hint.uid != "" && string(conn.UID) != item.hint.uid {
+		// Same namespace/name, different object lifetime (a delete+recreate). Ignore
+		// this stale event; the current object is reconciled by its own notification.
+		logger.Info("ignoring stale notification: connection UID differs from the event", "event_uid", item.hint.uid, "object_uid", string(conn.UID))
+		return nil
+	}
+	if item.hint.operation != usinformer.NotificationOperationDelete && item.hint.generation > 0 && conn.Generation < item.hint.generation {
+		// The fetched object predates the spec change that triggered this event: a
+		// read-after-write race on an update. Retry briefly for the newer generation.
+		logger.Debug("fetched connection is older than the notification; will retry briefly",
+			"event_generation", item.hint.generation, "object_generation", conn.Generation)
+		return errObjectNotYetVisible
+	}
 
 	// Skip if being deleted
 	if conn.DeletionTimestamp != nil {

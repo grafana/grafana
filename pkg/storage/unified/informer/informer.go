@@ -8,8 +8,10 @@ import (
 	"time"
 
 	"google.golang.org/protobuf/proto"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -298,9 +300,9 @@ func (n *Informer) onNotification() nats.MessageHandler {
 			return
 		}
 
-		n.log.Debug("nats notification received", "subject", subject, "type", evt.Type, "namespace", evt.Namespace, "name", evt.Name, "rv", evt.ResourceVersion)
+		n.log.Debug("nats notification received", "subject", subject, "type", evt.Type, "namespace", evt.Namespace, "name", evt.Name, "rv", evt.ResourceVersion, "generation", evt.Generation)
 
-		obj := n.newObject(evt.Namespace, evt.Name)
+		obj := n.stubFromNotification(&evt)
 		// ADDED becomes OnAdd; everything else (MODIFIED, or a DELETED whose object
 		// may still exist mid-finalization) becomes OnUpdate. The handlers key off
 		// namespace/name and re-fetch in their reconcile, so old == new is fine and
@@ -311,6 +313,50 @@ func (n *Informer) onNotification() nats.MessageHandler {
 		}
 		n.dispatch(func(h cache.ResourceEventHandler) { h.OnUpdate(obj, obj) })
 	}
+}
+
+// Notification operation annotations mark the intent of the notification that
+// built a stub object. A controller re-fetches in its reconcile, so the stub's
+// only job is to carry the queue key and enough hint metadata to classify a
+// later read: whether a NotFound is an expected delete (no-op) or a
+// read-after-write race on an upsert (worth a brief retry), plus the object's
+// identity (UID) and freshness (Generation) at the moment of the change. These
+// annotations, and the UID/Generation set on the stub, live only on the
+// transient stub dispatched for a live notification — a re-fetched or re-listed
+// object never carries them.
+const (
+	NotificationOperationAnnotation = "internal.grafana.app/nats-notification-operation"
+	NotificationOperationUpsert     = "upsert"
+	NotificationOperationDelete     = "delete"
+)
+
+// stubFromNotification builds the minimal object handed to the handlers for a
+// live notification, annotated with the change's identity/freshness/intent so a
+// controller can classify its reconcile read without re-deriving it. Fields the
+// producer did not populate (older producers send an empty UID / zero
+// Generation) are left unset, and a consumer treats them as "unknown" rather
+// than a definite value.
+func (n *Informer) stubFromNotification(evt *resourcepb.WatchNotification) runtime.Object {
+	obj := n.newObject(evt.Namespace, evt.Name)
+	acc, err := meta.Accessor(obj)
+	if err != nil {
+		// newObject returns the resource's concrete type, which always has
+		// ObjectMeta; if that ever changes, fall back to the bare stub.
+		n.log.Warn("nats informer: stub is not a metav1.Object", "gvr", n.gvr.String(), "error", err)
+		return obj
+	}
+
+	if evt.Uid != "" {
+		acc.SetUID(types.UID(evt.Uid))
+	}
+	acc.SetGeneration(evt.Generation)
+
+	operation := NotificationOperationUpsert
+	if evt.Type == resourcepb.WatchNotification_DELETED {
+		operation = NotificationOperationDelete
+	}
+	acc.SetAnnotations(map[string]string{NotificationOperationAnnotation: operation})
+	return obj
 }
 
 // relist reads the full set from the API and reconciles it against the previous
