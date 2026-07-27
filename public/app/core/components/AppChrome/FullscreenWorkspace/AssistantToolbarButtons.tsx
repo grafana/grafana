@@ -2,9 +2,8 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { MessageSparkles, Sparkles, Icon as SVGIcon } from '@grafana/icons';
 import { useFlagAssistantFullscreenWorkspace } from '@grafana/runtime/internal';
-import { ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { Icon, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
@@ -15,7 +14,8 @@ import {
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
 const ASSISTANT_PLUGIN_ID = 'grafana-assistant-app';
-const ASSISTANT_ICON_GRADIENT_ID = 'grafana-assistant-toolbar-icon-gradient';
+const CHAT_ICON_GRADIENT_ID = 'grafana-assistant-chat-icon-gradient';
+const WORKSPACE_ICON_GRADIENT_ID = 'grafana-assistant-workspace-icon-gradient';
 
 function getOrangeColor(theme: GrafanaTheme2) {
   return theme.visualization.getColorByName('orange');
@@ -26,13 +26,19 @@ function getPurpleColor(theme: GrafanaTheme2) {
 
 function AssistantIconGradientDefs() {
   const theme = useTheme2();
+  const orange = getOrangeColor(theme);
+  const purple = getPurpleColor(theme);
 
   return (
     <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden focusable="false">
       <defs>
-        <linearGradient id={ASSISTANT_ICON_GRADIENT_ID} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="24" y2="24">
-          <stop offset="0%" stopColor={getOrangeColor(theme)} />
-          <stop offset="80%" stopColor={getPurpleColor(theme)} />
+        <linearGradient id={CHAT_ICON_GRADIENT_ID} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="32" y2="32">
+          <stop offset="0%" stopColor={orange} />
+          <stop offset="80%" stopColor={purple} />
+        </linearGradient>
+        <linearGradient id={WORKSPACE_ICON_GRADIENT_ID} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="24" y2="24">
+          <stop offset="0%" stopColor={orange} />
+          <stop offset="80%" stopColor={purple} />
         </linearGradient>
       </defs>
     </svg>
@@ -67,7 +73,7 @@ export function AssistantToolbarButtons() {
         <ToolbarButton
           icon={
             <span className={styles.chatIcon}>
-              <SVGIcon component={Sparkles} size="lg" />
+              <Icon name="ai-sparkle" size="lg" />
             </span>
           }
           onClick={() => setDockedComponentId(isOpen ? undefined : assistantComponentId)}
@@ -93,7 +99,7 @@ export function AssistantToolbarButtons() {
         <ToolbarButton
           icon={
             <span className={styles.workspaceIcon}>
-              <SVGIcon component={MessageSparkles} size="lg" />
+              <Icon name="message-sparkles" size="lg" />
             </span>
           }
           onClick={() => chrome.setFullscreenWorkspace(true)}
@@ -121,17 +127,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
   chatIcon: css({
     display: 'inline-flex',
     '& svg path': {
-      fill: 'none',
-      stroke: `url(#${ASSISTANT_ICON_GRADIENT_ID})`,
+      fill: `url(#${CHAT_ICON_GRADIENT_ID})`,
+      stroke: `url(#${CHAT_ICON_GRADIENT_ID})`,
     },
   }),
   workspaceIcon: css({
     display: 'inline-flex',
     '& svg path:first-of-type': {
       fill: 'none',
-      stroke: `url(#${ASSISTANT_ICON_GRADIENT_ID})`,
+      stroke: `url(#${WORKSPACE_ICON_GRADIENT_ID})`,
     },
-    '& svg path:nth-of-type(2)': {
+    '& svg path:not(:first-of-type)': {
       fill: getPurpleColor(theme),
       stroke: 'none',
     },

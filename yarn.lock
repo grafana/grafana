@@ -2452,17 +2452,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/icons@npm:^0.4.0":
-  version: 0.4.0
-  resolution: "@grafana/icons@npm:0.4.0"
-  dependencies:
-    "@emotion/css": "npm:^11.13.5"
-  peerDependencies:
-    react: ">=18"
-  checksum: 10/49011cac7f82ff3c925e18c6bfad4cb02dacc30b623bddae8ba92378c401c400ec83bc50f5a355a8c8f13cdc5cf445b35684542e0216c20ddb4d5421ab2f7c78
-  languageName: node
-  linkType: hard
-
 "@grafana/levitate@npm:0.17.2":
   version: 0.17.2
   resolution: "@grafana/levitate@npm:0.17.2"
@@ -18524,7 +18513,6 @@ __metadata:
     "@grafana/faro-web-tracing": "npm:^2.8.2"
     "@grafana/flamegraph": "workspace:*"
     "@grafana/i18n": "workspace:*"
-    "@grafana/icons": "npm:^0.4.0"
     "@grafana/levitate": "npm:0.17.2"
     "@grafana/lezer-logql": "npm:0.4.0"
     "@grafana/llm": "npm:1.0.9"
