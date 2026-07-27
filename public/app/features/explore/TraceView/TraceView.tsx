@@ -152,7 +152,10 @@ export function TraceView(props: Props) {
     [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, props.traceProp?.traceID]
   );
 
-  const { settings: instanceSettings } = useDataSourceInstanceSettings(datasource?.uid ?? datasource?.name);
+  const datasourceRef = datasource?.uid ?? datasource?.name;
+  const { settings: loadedInstanceSettings } = useDataSourceInstanceSettings(datasourceRef);
+  // Undefined ref resolves to the default DS — only use settings when we had an explicit ref.
+  const instanceSettings = datasourceRef ? loadedInstanceSettings : undefined;
   const traceToLogsOptions = getTraceToLogsOptions(instanceSettings?.jsonData);
   const traceToMetrics: TraceToMetricsData | undefined = instanceSettings?.jsonData;
   const traceToMetricsOptions = traceToMetrics?.tracesToMetrics;
@@ -160,9 +163,15 @@ export function TraceView(props: Props) {
   const traceToProfilesOptions = traceToProfilesData?.tracesToProfiles;
   const spanBarOptions: SpanBarOptionsData | undefined = instanceSettings?.jsonData;
 
-  const { settings: logsDataSourceSettings } = useDataSourceInstanceSettings(traceToLogsOptions?.datasourceUid);
-  const { settings: metricsDataSourceSettings } = useDataSourceInstanceSettings(traceToMetricsOptions?.datasourceUid);
-  const { settings: profilesDataSourceSettings } = useDataSourceInstanceSettings(traceToProfilesOptions?.datasourceUid);
+  const logsUid = traceToLogsOptions?.datasourceUid;
+  const metricsUid = traceToMetricsOptions?.datasourceUid;
+  const profilesUid = traceToProfilesOptions?.datasourceUid;
+  const { settings: loadedLogsSettings } = useDataSourceInstanceSettings(logsUid);
+  const { settings: loadedMetricsSettings } = useDataSourceInstanceSettings(metricsUid);
+  const { settings: loadedProfilesSettings } = useDataSourceInstanceSettings(profilesUid);
+  const logsDataSourceSettings = logsUid ? loadedLogsSettings : undefined;
+  const metricsDataSourceSettings = metricsUid ? loadedMetricsSettings : undefined;
+  const profilesDataSourceSettings = profilesUid ? loadedProfilesSettings : undefined;
 
   const dataLinksContext = useDataLinksContext();
 
