@@ -1,5 +1,5 @@
-import { type TimeRange } from '@grafana/data';
-import { PrometheusDatasource } from '@grafana/prometheus';
+import { DataSourceApi, type TimeRange } from '@grafana/data';
+import { type PrometheusDatasource } from '@grafana/prometheus';
 import {
   AdHocFiltersVariable,
   type SceneDataQuery,
@@ -64,14 +64,22 @@ type AdHocFilterOperator = '=' | '!=' | '=~' | '!~' | '=|' | '!=|';
 
 /**
  * Type guard that narrows an unknown value to `PrometheusDatasource`.
- * The parameter is typed as `unknown` rather than `DataSourceApi` because
- * `PrometheusDatasource` is not structurally assignable to the base class
- * (generic variance in `components`/`annotations` causes a TS2677 error).
- * Using `unknown` is safe here: `instanceof` performs the runtime check and
- * TypeScript narrows the type correctly at every call site.
+ *
+ * Deliberately NOT implemented with `instanceof PrometheusDatasource`:
+ * - a runtime import of `@grafana/prometheus` would pull the entire package
+ *   (query editor, Monaco/PromQL language support) into this chunk, and
+ * - once the prometheus plugin is decoupled and ships its own copy of the
+ *   class, `instanceof` against the core-bundled class would return false.
+ * The structural check below avoids both; only the type is imported.
+ *
+ * The `'prometheus'` literal is intentional too: `DataSourceType.Prometheus`
+ * lives in `utils/datasource.ts`, which transitively imports the alertmanager
+ * RTK Query slice, ability hooks, and alertmanager plugin types — dragging all
+ * of that in here would defeat the purpose. `getDataQuery` above uses the same
+ * literal.
  */
 export function isPrometheusDatasource(ds: unknown): ds is PrometheusDatasource {
-  return ds instanceof PrometheusDatasource;
+  return ds instanceof DataSourceApi && ds.type === 'prometheus';
 }
 
 export function addOrReplaceFilter(

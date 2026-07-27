@@ -48,6 +48,7 @@ func (p *BaseProvider) GetBasePluginContext(ctx context.Context, plugin pluginst
 		PluginVersion: plugin.Info.Version,
 		Namespace:     ns,
 	}
+	p.logger.FromContext(ctx).Debug("[mt-debug] GetBasePluginContext", "userNil", user == nil, "userIsNil", user != nil && user.IsNil())
 	if user != nil && !user.IsNil() {
 		pCtx.OrgID = user.GetOrgID() // nolint:staticcheck
 		pCtx.User = adapters.BackendUserFromSignedInUser(user)
