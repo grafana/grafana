@@ -51,15 +51,9 @@ func NewRepositoryInformer(subscriber nats.Subscriber, client versioned.Interfac
 		return &provisioningapis.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
 	}
 	list := func(ctx context.Context) ([]runtime.Object, error) {
-		l, err := c.Repositories(namespace).List(ctx, metav1.ListOptions{})
-		if err != nil {
-			return nil, err
-		}
-		out := make([]runtime.Object, len(l.Items))
-		for i := range l.Items {
-			out[i] = &l.Items[i]
-		}
-		return out, nil
+		return pagedList(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+			return c.Repositories(namespace).List(ctx, opts)
+		})
 	}
 	return usinformer.NewInformer(subscriber, provisioningapis.RepositoryResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, list)
 }

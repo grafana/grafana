@@ -37,16 +37,16 @@ func NewHistoricJobDeltaSource(natsEnabled bool, client versioned.Interface, res
 // namespace).
 func NewHistoricJobPeriodicInformer(client versioned.Interface, namespace string, resync time.Duration) *usinformer.CachelessPeriodicInformer {
 	c := client.ProvisioningV0alpha1()
-	list := func(ctx context.Context) ([]runtime.Object, error) {
-		l, err := c.HistoricJobs(namespace).List(ctx, metav1.ListOptions{})
-		if err != nil {
-			return nil, err
-		}
-		out := make([]runtime.Object, len(l.Items))
-		for i := range l.Items {
-			out[i] = &l.Items[i]
-		}
-		return out, nil
+	// Historic jobs are the most numerous resource provisioning lists, and the
+	// cleanup handler only reads each one's age, so stream them a page at a
+	// time rather than holding every namespace's history in memory per pass.
+	list := func(ctx context.Context, emit func(runtime.Object)) error {
+		return eachListItem(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+			return c.HistoricJobs(namespace).List(ctx, opts)
+		}, func(obj runtime.Object) error {
+			emit(obj)
+			return nil
+		})
 	}
 	return usinformer.NewCachelessPeriodicInformer(provisioningapis.HistoricJobResourceInfo.GroupVersionResource().Resource, resync, list)
 }

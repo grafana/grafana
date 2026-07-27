@@ -12,8 +12,10 @@ import (
 )
 
 func TestCachelessPeriodicInformer_DeliversListedObjects(t *testing.T) {
-	list := func(_ context.Context) ([]runtime.Object, error) {
-		return []runtime.Object{obj("a"), obj("b")}, nil
+	list := func(_ context.Context, emit func(runtime.Object)) error {
+		emit(obj("a"))
+		emit(obj("b"))
+		return nil
 	}
 
 	src := NewCachelessPeriodicInformer("things", time.Hour, list)
@@ -29,16 +31,40 @@ func TestCachelessPeriodicInformer_DeliversListedObjects(t *testing.T) {
 	assert.ElementsMatch(t, []string{"a", "b"}, h.addedNames())
 }
 
+func TestCachelessPeriodicInformer_DeliversObjectsEmittedBeforeAListFails(t *testing.T) {
+	// A streaming list that fails partway has already handed over what it read;
+	// dropping it would mean the handler never sees those objects until the next
+	// pass, for no gain - the handler is idempotent either way.
+	list := func(_ context.Context, emit func(runtime.Object)) error {
+		emit(obj("a"))
+		return assert.AnError
+	}
+
+	src := NewCachelessPeriodicInformer("things", time.Hour, list)
+	src.retryInterval = 10 * time.Millisecond
+	h := &recordingHandler{}
+	_, err := src.AddEventHandler(h)
+	require.NoError(t, err)
+
+	stop := make(chan struct{})
+	defer close(stop)
+	go src.Run(stop)
+
+	require.Eventually(t, func() bool { return len(h.addedNames()) > 0 }, time.Second, 5*time.Millisecond)
+	assert.Equal(t, "a", h.addedNames()[0])
+}
+
 func TestCachelessPeriodicInformer_RetriesInitialListUntilItSucceeds(t *testing.T) {
 	var mu sync.Mutex
 	fail := true
-	list := func(_ context.Context) ([]runtime.Object, error) {
+	list := func(_ context.Context, emit func(runtime.Object)) error {
 		mu.Lock()
 		defer mu.Unlock()
 		if fail {
-			return nil, assert.AnError
+			return assert.AnError
 		}
-		return []runtime.Object{obj("a")}, nil
+		emit(obj("a"))
+		return nil
 	}
 
 	src := NewCachelessPeriodicInformer("things", time.Hour, list)

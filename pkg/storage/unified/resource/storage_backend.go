@@ -133,6 +133,8 @@ type kvBackendMetrics struct {
 	ConflictErrors      *prometheus.CounterVec
 	EventEmitFailures   *prometheus.CounterVec
 	NatsNotifierDropped *prometheus.CounterVec
+	ListKeysScanned     *prometheus.CounterVec
+	ListKeysYielded     *prometheus.CounterVec
 }
 
 func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
@@ -151,6 +153,16 @@ func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 			Name: "storage_server_nats_notifier_dropped_events_total",
 			Help: "Notifications dropped by the NATS notifier before delivery, by reason (unmarshal_error, unknown_type, buffer_full).",
 		}, []string{"reason"}),
+		ListKeysScanned: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Namespace: "storage_server",
+			Name:      "list_keys_scanned_total",
+			Help:      "Keys read from the KV store while listing resources, including older revisions and deleted resources",
+		}, []string{"resource"}),
+		ListKeysYielded: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Namespace: "storage_server",
+			Name:      "list_keys_yielded_total",
+			Help:      "Keys returned by listing resources. Divided into list_keys_scanned_total, this is how much of a list scan is wasted work",
+		}, []string{"resource"}),
 	}
 }
 
@@ -159,6 +171,14 @@ func (m *kvBackendMetrics) recordConflict(event WriteEvent) {
 		return
 	}
 	m.ConflictErrors.WithLabelValues(event.Key.Resource, event.Type.String()).Inc()
+}
+
+func (m *kvBackendMetrics) recordKeyScan(resource string, scanned, yielded int64) {
+	if m == nil {
+		return
+	}
+	m.ListKeysScanned.WithLabelValues(resource).Add(float64(scanned))
+	m.ListKeysYielded.WithLabelValues(resource).Add(float64(yielded))
 }
 
 func (m *kvBackendMetrics) recordEventEmitFailure(event WriteEvent) {
@@ -1453,6 +1473,10 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		},
 		ResourceVersion: req.ResourceVersion,
 	}
+	if req.Limit > 0 {
+		// One more than the page so the iterator below can tell there is a next page.
+		listOptions.Limit = req.Limit + 1
+	}
 
 	if req.NextPageToken != "" {
 		token, err := GetContinueToken(req.NextPageToken)
@@ -1481,6 +1505,19 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 
 	if listOptions.ResourceVersion > 0 {
 		listRV = listOptions.ResourceVersion
+	}
+
+	// A bounded scan runs as several statements, and an unpinned one reads
+	// "latest" afresh in each: no two statements need agree, so the page could
+	// carry writes newer than the listRV it is returned under. Pin it to that
+	// listRV instead, which is the same pinning a continued page already gets
+	// from its token - only the first page of a list arrives without one.
+	//
+	// The cost is that a write whose data has committed but whose event has not
+	// yet been saved sorts above listRV and waits for the next list. Every
+	// continued page already accepts exactly that.
+	if listOptions.Limit > 0 && listOptions.ResourceVersion == 0 {
+		listOptions.ResourceVersion = listRV
 	}
 
 	// Fetch the latest objects.
