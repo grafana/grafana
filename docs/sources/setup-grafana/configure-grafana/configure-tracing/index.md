@@ -112,3 +112,20 @@ go tool trace <trace file>
 ```
 
 For more information about how to analyze trace files, refer to [Go command trace](https://golang.org/cmd/trace/).
+
+## Export traces to a file
+
+Grafana can write its own distributed traces to a local file in OpenTelemetry Protocol (OTLP) JSON format, without a collector or a tracing backend. This helps you get traces for debugging without setting up the backend: turn on the exporter, reproduce the issue, then collect and share the file. This feature is not intended to be used as a permanent configuration, but as a helper for troubleshooting issues at Grafana.
+
+This is different from the `-tracing` option in the previous section. That option writes a low-level Go runtime execution trace for `go tool trace`, whereas the file exporter emits the same OpenTelemetry spans that Grafana sends to Jaeger or OTLP endpoints, which describe how requests flow through Grafana.
+
+To turn it on, set a `path` in the `[tracing.opentelemetry.file]` section. Grafana uses this exporter only when you haven't configured a `tracing.opentelemetry.jaeger` or `tracing.opentelemetry.otlp` endpoint. Grafana limits each capture by file size and duration to protect disk space.
+
+```ini
+[tracing.opentelemetry.file]
+path = /var/lib/grafana/traces/capture.json
+```
+
+For the available options, refer to [`[tracing.opentelemetry.file]`](../#tracingopentelemetryfile) in the configuration reference.
+
+To view the captured file, open Grafana, go to **Explore**, select a Tempo data source, and select **Import trace**.
