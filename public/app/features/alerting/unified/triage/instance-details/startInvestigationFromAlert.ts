@@ -137,7 +137,8 @@ export interface BuildFromAlertRequestArgs {
   rule?: GrafanaRuleDefinition;
 }
 
-/** Builds the stable from-alert payload (no startsAt/status/name/generatorURL). */
+/** Builds the from-alert payload. Identity fields are alerts[].labels / groupLabels;
+ * commonLabels are included for Assistant context but stripped from RTK cache keys. */
 export function buildFromAlertRequest({
   instanceLabels,
   commonLabels,

@@ -45,7 +45,6 @@ export type StartInvestigationViewModel =
   | { status: 'reportFailed'; href: string; onStart: () => void }
   | { status: 'pollError'; href: string; onRetry: () => void }
   | { status: 'running'; href: string }
-  | { status: 'open'; href: string }
   | { status: 'idle'; onStart: () => void };
 
 /**
@@ -63,45 +62,37 @@ export function useStartInvestigation({
   const featureEnabled = isManualAssistantInvestigationEnabled();
   const { installed } = usePluginBridge(SupportedPlugin.Assistant);
 
-  // Stable identity for RTK Query cache keys — omit startsAt/status/name/generatorURL/
-  // commonLabels (create-time or sibling-derived; can change mid-drawer). Wait for rule
-  // identity when the instance has no labels, otherwise early Start/lookup can hash a
-  // different group key once the rule arrives.
+  // Wait for rule identity when the instance has no labels, otherwise early
+  // Start/lookup can hash a different group key once the rule arrives.
   const hasStableIdentity = Object.keys(instanceLabels).length > 0 || Boolean(rule?.uid) || Boolean(rule?.title);
 
+  // Full create payload (may include volatile commonLabels). Identity for cache
+  // keys strips those via stableFromAlertRequest — see stableRequestBody.
   const requestBody = useMemo(
     () => (hasStableIdentity ? buildFromAlertRequest({ instanceLabels, commonLabels, rule }) : null),
-    // Labels are plain objects from parents; stringify keeps the body stable across
-    // equivalent re-renders so lookup does not thrash. alertState is intentionally
-    // excluded — firing↔resolved must not change the cache key mid-drawer.
+    // Labels are plain objects from parents; stringify keeps equivalent objects
+    // stable. alertState is excluded — firing↔resolved must not change identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [JSON.stringify(instanceLabels), JSON.stringify(commonLabels), rule?.uid, rule?.title, hasStableIdentity]
   );
 
-  // Lookup / mutation matching key — commonLabels stripped so sibling recomputation
-  // does not reset an in-flight start or split the lookup cache.
+  const stableRequestKey = requestBody ? JSON.stringify(stableFromAlertRequest(requestBody)) : '';
   const stableRequestBody = useMemo(
     () => (requestBody ? stableFromAlertRequest(requestBody) : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [requestBody ? JSON.stringify(stableFromAlertRequest(requestBody)) : '']
-  );
-
-  const requestBodyKey = useMemo(
-    () => (stableRequestBody ? JSON.stringify(stableRequestBody) : ''),
-    [stableRequestBody]
+    [stableRequestKey]
   );
 
   const [startInvestigation, { isLoading, data, isError, reset, originalArgs }] =
     assistantApi.useStartInvestigationFromAlertMutation();
 
-  // Mutation result is shared RTK state. Only trust it for the current alert identity
-  // (create-only / volatile fields stripped via stableFromAlertRequest).
+  // Mutation result is shared RTK state — only trust it for this alert identity.
   const mutationMatchesCurrent = useMemo(() => {
-    if (!originalArgs || !requestBodyKey) {
+    if (!originalArgs || !stableRequestKey) {
       return false;
     }
-    return JSON.stringify(stableFromAlertRequest(originalArgs)) === requestBodyKey;
-  }, [originalArgs, requestBodyKey]);
+    return JSON.stringify(stableFromAlertRequest(originalArgs)) === stableRequestKey;
+  }, [originalArgs, stableRequestKey]);
 
   const startedInvestigation = mutationMatchesCurrent ? data : undefined;
   const isStarting = mutationMatchesCurrent && isLoading;
@@ -114,22 +105,24 @@ export function useStartInvestigation({
     }
   }, [mutationMatchesCurrent, reset]);
 
+  // currentData: never reuse a previous alert-group's lookup while the new key loads.
   const {
-    data: lookedUpInvestigation,
+    currentData: lookedUpInvestigation,
     isLoading: isLookingUp,
     isError: isLookupError,
     refetch: refetchLookup,
   } = assistantApi.useLookupInvestigationFromAlertQuery(stableRequestBody ?? skipToken, {
     skip: !featureEnabled || !installed,
-    // Drawer remount must not trust a start-time pending upsert forever.
     refetchOnMountOrArgChange: true,
   });
 
   const knownId = startedInvestigation?.id ?? lookedUpInvestigation?.id;
   const [shouldPoll, setShouldPoll] = useState(false);
 
+  // currentData: after knownId changes (instance switch / retry), do not keep
+  // showing or upserting the previous investigation's poll snapshot.
   const {
-    data: polledInvestigation,
+    currentData: polledInvestigation,
     isError: isPollError,
     refetch: refetchPoll,
   } = assistantApi.useGetAssistantInvestigationQuery(knownId ?? '', {
@@ -138,9 +131,6 @@ export function useStartInvestigation({
     refetchOnMountOrArgChange: true,
   });
 
-  // Prefer the create/retry snapshot until poll has data for that same investigation
-  // id. Terminal same-id snapshots from lookup always beat stale pending caches —
-  // see selectAssistantInvestigation.
   const investigation = useMemo(
     () =>
       selectAssistantInvestigation({
@@ -151,11 +141,10 @@ export function useStartInvestigation({
     [polledInvestigation, startedInvestigation, lookedUpInvestigation]
   );
 
-  // Keep lookup cache aligned with poll so reopen does not restore a stale
-  // pending/in_progress snapshot after the report already finished. Never write a
-  // stale non-terminal poll over a fresher terminal lookup for the same id.
+  // Keep lookup aligned with poll so reopen does not restore a stale pending
+  // snapshot. Only upsert when poll data is for the current knownId.
   useEffect(() => {
-    if (!stableRequestBody || !polledInvestigation) {
+    if (!stableRequestBody || !knownId || !polledInvestigation || polledInvestigation.id !== knownId) {
       return;
     }
     if (
@@ -164,16 +153,16 @@ export function useStartInvestigation({
       isAssistantInvestigationTerminal(lookedUpInvestigation.state) &&
       !isAssistantInvestigationTerminal(polledInvestigation.state)
     ) {
-      // Heal the stale get cache from the fresher lookup so poll preference stays correct.
+      // Heal stale get cache from a fresher terminal lookup.
       dispatch(
         assistantApi.util.upsertQueryData('getAssistantInvestigation', lookedUpInvestigation.id, lookedUpInvestigation)
       );
       return;
     }
     dispatch(assistantApi.util.upsertQueryData('lookupInvestigationFromAlert', stableRequestBody, polledInvestigation));
-  }, [dispatch, stableRequestBody, polledInvestigation, lookedUpInvestigation]);
+  }, [dispatch, stableRequestBody, knownId, polledInvestigation, lookedUpInvestigation]);
 
-  // Drop a stale create-time pending mutation once lookup/poll knows the same id is terminal.
+  // Clear create-time pending mutation once the same id is known terminal.
   useEffect(() => {
     if (
       !startedInvestigation ||
@@ -191,11 +180,9 @@ export function useStartInvestigation({
 
   useEffect(() => {
     if (!knownId || isPollError) {
-      // Stop on poll failure so we don't keep spinning "Generating…" with no recovery.
       setShouldPoll(false);
       return;
     }
-    // Keep polling until a terminal state — unknown/paused must not freeze the UI.
     setShouldPoll(!isAssistantInvestigationTerminal(investigation?.state ?? 'pending'));
   }, [knownId, investigation?.state, isPollError]);
 
@@ -210,8 +197,6 @@ export function useStartInvestigation({
       name: rule?.title,
       alerts: requestBody.alerts.map((alert) => ({
         ...alert,
-        // Prefer the real firing-episode start from state history. Omit rather
-        // than inventing click time — Assistant uses startsAt for context.
         ...(alertStartsAt ? { startsAt: alertStartsAt } : {}),
         status,
         generatorURL,
@@ -243,11 +228,9 @@ export function useStartInvestigation({
     return { status: 'starting' };
   }
 
-  // Prefer reportFailed over startError when a failed/cancelled investigation is
-  // already known — a retry mutation error must not hide "Open failed report".
+  // Prefer reportFailed over startError so a retry mutation error does not
+  // hide "Open failed report" for an already-known failed investigation.
   if (investigationFailed && investigation) {
-    // Retry POSTs from-alert again; the Assistant manual path creates a fresh
-    // investigation for failed/cancelled.
     return {
       status: 'reportFailed',
       href: getAssistantInvestigationUrl(investigation.id),
@@ -260,7 +243,6 @@ export function useStartInvestigation({
   }
 
   if (isPollError && knownId && !isAssistantInvestigationTerminal(investigation?.state)) {
-    // Keep the workspace link — a refresh error does not invalidate the id.
     return {
       status: 'pollError',
       href: getAssistantInvestigationUrl(knownId),
@@ -270,10 +252,6 @@ export function useStartInvestigation({
 
   if (investigation && !isAssistantInvestigationTerminal(investigation.state)) {
     return { status: 'running', href: getAssistantInvestigationUrl(investigation.id) };
-  }
-
-  if (investigation) {
-    return { status: 'open', href: getAssistantInvestigationUrl(investigation.id) };
   }
 
   return { status: 'idle', onStart };

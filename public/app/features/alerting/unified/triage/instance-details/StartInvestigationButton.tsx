@@ -75,7 +75,6 @@ export function StartInvestigationButton({
       );
 
     case 'completed':
-    case 'open':
       return (
         <LinkButton
           icon="file-alt"
