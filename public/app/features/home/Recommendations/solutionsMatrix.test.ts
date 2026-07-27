@@ -1,8 +1,11 @@
 import {
   type BaseRow,
+  EXISTING_SOLUTION_IDS,
+  orderCardsForSolution,
   type RecommendedCardId,
   selectRecommendations,
   type SignalStatus,
+  SOLUTION_CARD_PRIORITY,
   type SolutionState,
 } from './solutionsMatrix';
 
@@ -68,5 +71,67 @@ describe('selectRecommendations', () => {
       cards: ['hosted-traces', 'kubernetes-monitoring'],
       baseRow: 'ml_no_traces',
     });
+  });
+});
+
+describe('orderCardsForSolution', () => {
+  const ALL_CARD_IDS: RecommendedCardId[] = [
+    'connect-metrics',
+    'enable-logs',
+    'enable-logs-k8s',
+    'hosted-traces',
+    'kubernetes-monitoring',
+    'application-observability',
+  ];
+
+  it('leads ml_no_traces with K8s Monitoring for metrics and Hosted Traces for logs', () => {
+    const { cards } = selectRecommendations(state(on, on, off, off));
+
+    expect(orderCardsForSolution(cards, 'metrics')).toEqual(['kubernetes-monitoring', 'hosted-traces']);
+    expect(orderCardsForSolution(cards, 'logs')).toEqual(['hosted-traces', 'kubernetes-monitoring']);
+  });
+
+  it('leads mlt with K8s Monitoring for metrics and App Observability for logs and traces', () => {
+    const { cards } = selectRecommendations(state(on, on, on, off));
+
+    expect(orderCardsForSolution(cards, 'metrics')).toEqual(['kubernetes-monitoring', 'application-observability']);
+    expect(orderCardsForSolution(cards, 'logs')).toEqual(['application-observability', 'kubernetes-monitoring']);
+    expect(orderCardsForSolution(cards, 'traces')).toEqual(['application-observability', 'kubernetes-monitoring']);
+  });
+
+  it('only reorders: every solution view yields a permutation of every reachable selection', () => {
+    // All 12 reachable core combinations (kubernetes ⇒ metrics removes 4 of 16).
+    const reachable: SolutionState[] = (['active', 'inactive'] as const).flatMap((m) =>
+      (['active', 'inactive'] as const).flatMap((l) =>
+        (['active', 'inactive'] as const).flatMap((t) =>
+          (['active', 'inactive'] as const)
+            .filter((k) => !(k === 'active' && m === 'inactive'))
+            .map((k) => state(m, l, t, k))
+        )
+      )
+    );
+    expect(reachable).toHaveLength(12);
+
+    for (const solutionState of reachable) {
+      const { cards } = selectRecommendations(solutionState);
+      for (const id of EXISTING_SOLUTION_IDS) {
+        const ordered = orderCardsForSolution(cards, id);
+        expect([...ordered].sort()).toEqual([...cards].sort());
+      }
+    }
+  });
+
+  it('holds a complete total order per solution: every card id exactly once', () => {
+    for (const id of EXISTING_SOLUTION_IDS) {
+      expect([...SOLUTION_CARD_PRIORITY[id]].sort()).toEqual([...ALL_CARD_IDS].sort());
+    }
+  });
+
+  it('never mutates its input', () => {
+    const cards: RecommendedCardId[] = ['hosted-traces', 'kubernetes-monitoring'];
+
+    orderCardsForSolution(cards, 'metrics');
+
+    expect(cards).toEqual(['hosted-traces', 'kubernetes-monitoring']);
   });
 });

@@ -1,12 +1,26 @@
-import { type DataSourceInstanceListItem } from '@grafana/data';
+import { createDataFrame, type DataSourceInstanceListItem, FieldType } from '@grafana/data';
 import { type BackendSrv, type DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 
 import { resolveBackendInstance } from './probeUtils';
-import { fetchLogsActivity, fetchTracesActivity, fetchTracesServices, LOGS_STATS_LOOKBACK_DAYS } from './telemetryData';
+import { runInstantQueries, runRangeQuery } from './promQuery';
+import {
+  fetchLogsActivity,
+  fetchMetricsActivity,
+  fetchTracesActivity,
+  fetchTracesServices,
+  LOGS_STATS_LOOKBACK_DAYS,
+  METRICS_STATS_LOOKBACK_DAYS,
+} from './telemetryData';
 
 jest.mock('./probeUtils', () => ({
   ...jest.requireActual('./probeUtils'),
   resolveBackendInstance: jest.fn(),
+}));
+
+jest.mock('./promQuery', () => ({
+  ...jest.requireActual('./promQuery'),
+  runInstantQueries: jest.fn(),
+  runRangeQuery: jest.fn(),
 }));
 
 jest.mock('@grafana/runtime', () => ({
@@ -15,6 +29,8 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 const mockResolveBackendInstance = jest.mocked(resolveBackendInstance);
+const mockRunInstantQueries = jest.mocked(runInstantQueries);
+const mockRunRangeQuery = jest.mocked(runRangeQuery);
 const mockProxyGet = jest.fn();
 
 const DATA_LOOKBACK_HOURS = 24;
@@ -32,6 +48,10 @@ beforeEach(() => {
   jest.setSystemTime(new Date('2026-07-24T12:00:00Z'));
   mockResolveBackendInstance.mockReset();
   mockProxyGet.mockReset();
+  mockRunInstantQueries.mockReset();
+  mockRunInstantQueries.mockResolvedValue([]);
+  mockRunRangeQuery.mockReset();
+  mockRunRangeQuery.mockResolvedValue([]);
   jest.mocked(getBackendSrv).mockReturnValue({ get: mockProxyGet } as unknown as BackendSrv);
 });
 
@@ -227,5 +247,158 @@ describe('fetchTracesActivity', () => {
     mockProxyGet.mockResolvedValue({ series: [] });
 
     await expect(fetchTracesActivity(tempo)).resolves.toEqual({ spans: null, series: null });
+  });
+});
+
+describe('fetchMetricsActivity', () => {
+  const prom = { uid: 'prom-uid', type: 'prometheus' };
+
+  const scalarFrame = (refId: string, value: number, labels?: Record<string, string>) =>
+    createDataFrame({ refId, fields: [{ name: 'Value', type: FieldType.number, values: [value], labels }] });
+
+  it('reads cardinality, name count, hosts, disk pressure, and the series sparkline', async () => {
+    const getResource = jest.fn(async (path: string) => {
+      if (path === 'api/v1/cardinality/label_values') {
+        return { series_count_total: 4_200_000 };
+      }
+      if (path === 'api/v1/label/__name__/values') {
+        return { data: ['up', 'node_cpu_seconds_total', 'node_uname_info'] };
+      }
+      throw new Error(`unexpected path ${path}`);
+    });
+    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockRunRangeQuery.mockResolvedValue([
+      createDataFrame({
+        refId: 'series',
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1_000, 2_000] },
+          { name: 'Value', type: FieldType.number, values: [10, 20] },
+        ],
+      }),
+    ]);
+    mockRunInstantQueries.mockImplementation(async (queries) =>
+      'eta' in queries
+        ? [scalarFrame('eta', 6.4)]
+        : [
+            scalarFrame('hosts', 12),
+            scalarFrame('diskHosts', 3),
+            scalarFrame('diskWorst', 0.96, { instance: 'web-03:9100' }),
+          ]
+    );
+
+    const activity = await fetchMetricsActivity(prom);
+
+    expect(activity.series).toBe(4_200_000);
+    expect(activity.names).toBe(3);
+    expect(activity.hosts).toBe(12);
+    expect(activity.seriesSparkline?.y.values).toEqual([10, 20]);
+    expect(activity.disk).toEqual({
+      hostsAbove: 3,
+      worstInstance: 'web-03:9100',
+      worstRatio: 0.96,
+      hoursToFull: 6.4,
+    });
+
+    const end = Math.floor(Date.now() / 1000);
+    expect(getResource).toHaveBeenCalledWith(
+      'api/v1/label/__name__/values',
+      { start: end - METRICS_STATS_LOOKBACK_DAYS * 24 * 3600, end },
+      { showErrorAlert: false }
+    );
+    expect(mockRunRangeQuery).toHaveBeenCalledWith(
+      'series',
+      'sum(prometheus_tsdb_head_series)',
+      DATA_LOOKBACK_HOURS,
+      prom
+    );
+    // The follow-up ETA query pins the worst host by its full instance label.
+    expect(mockRunInstantQueries).toHaveBeenCalledWith(
+      { eta: expect.stringContaining('instance="web-03:9100"') },
+      prom
+    );
+  });
+
+  it('falls back to TSDB head stats when the cardinality API is unavailable', async () => {
+    const getResource = jest.fn(async (path: string) => {
+      if (path === 'api/v1/cardinality/label_values') {
+        throw new Error('unsupported');
+      }
+      if (path === 'api/v1/status/tsdb') {
+        return { data: { headStats: { numSeries: 987 } } };
+      }
+      return { data: ['up'] };
+    });
+    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+
+    const promise = fetchMetricsActivity(prom);
+    // withRetry sleeps between cardinality attempts; drive the fake timers past them.
+    await jest.advanceTimersByTimeAsync(5_000);
+
+    await expect(promise).resolves.toMatchObject({ series: 987, names: 1 });
+  });
+
+  it('keeps the name count when both active-series sources fail', async () => {
+    const getResource = jest.fn(async (path: string) => {
+      if (path === 'api/v1/label/__name__/values') {
+        return { data: ['up', 'process_cpu_seconds_total'] };
+      }
+      throw new Error('unsupported');
+    });
+    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+
+    const promise = fetchMetricsActivity(prom);
+    await jest.advanceTimersByTimeAsync(10_000);
+
+    await expect(promise).resolves.toMatchObject({ series: null, names: 2 });
+  });
+
+  it('reports no disk pressure and skips the ETA query when nobody is above threshold', async () => {
+    const getResource = jest.fn(async () => ({ data: [] }));
+    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    // count() over an empty vector returns an empty result, not zero: no diskHosts frame.
+    mockRunInstantQueries.mockResolvedValue([scalarFrame('hosts', 12)]);
+
+    const promise = fetchMetricsActivity(prom);
+    await jest.advanceTimersByTimeAsync(10_000);
+    const activity = await promise;
+
+    expect(activity.hosts).toBe(12);
+    expect(activity.disk).toBeNull();
+    expect(mockRunInstantQueries).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([90, 0])('drops a meaningless linear ETA (%s h)', async (eta) => {
+    const getResource = jest.fn(async () => ({ data: [] }));
+    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockRunInstantQueries.mockImplementation(async (queries) =>
+      'eta' in queries
+        ? [scalarFrame('eta', eta)]
+        : [scalarFrame('diskHosts', 1), scalarFrame('diskWorst', 0.93, { instance: 'db-01:9100' })]
+    );
+
+    const promise = fetchMetricsActivity(prom);
+    await jest.advanceTimersByTimeAsync(10_000);
+    const activity = await promise;
+
+    expect(activity.disk).toEqual({
+      hostsAbove: 1,
+      worstInstance: 'db-01:9100',
+      worstRatio: 0.93,
+      hoursToFull: null,
+    });
+  });
+
+  it('resolves all-null without querying when the datasource has no backend instance', async () => {
+    mockResolveBackendInstance.mockResolvedValue(null);
+
+    await expect(fetchMetricsActivity(prom)).resolves.toEqual({
+      series: null,
+      names: null,
+      hosts: null,
+      seriesSparkline: null,
+      disk: null,
+    });
+    expect(mockRunInstantQueries).not.toHaveBeenCalled();
+    expect(mockRunRangeQuery).not.toHaveBeenCalled();
   });
 });

@@ -14,10 +14,10 @@ export interface ExistingSolutionsResult {
  */
 export function useExistingSolutions(): ExistingSolutionsResult {
   const kubernetes = useKubernetesSolution();
-  const { logs, traces } = useTelemetrySolutions();
+  const { metrics, logs, traces } = useTelemetrySolutions();
 
-  // UI order: kubernetes, logs, traces.
-  const providers: ExistingSolutionProviderResult[] = [kubernetes, logs, traces];
+  // UI order: kubernetes, metrics, logs, traces.
+  const providers: ExistingSolutionProviderResult[] = [kubernetes, metrics, logs, traces];
 
   const solutions = providers.flatMap((provider) => (provider.item ? [provider.item] : []));
   // A discovered solution renders immediately; the empty state waits for every

@@ -28,6 +28,65 @@ export type RecommendedCardId =
   | 'application-observability';
 
 /**
+ * Existing-solution ids the left card can display (ExistingItem.id values) — the KEYS of the
+ * priority table below. Distinct namespace from RecommendedCardId (the card ids inside the
+ * arrays).
+ */
+export const EXISTING_SOLUTION_IDS = ['kubernetes', 'metrics', 'logs', 'traces'] as const;
+export type ExistingSolutionId = (typeof EXISTING_SOLUTION_IDS)[number];
+
+// Complete total orders (every RecommendedCardId appears once) so the sort is deterministic;
+// gating means several entries are unreachable for a given solution, which is harmless.
+// Exported for the completeness invariant test only — consumers go through orderCardsForSolution.
+export const SOLUTION_CARD_PRIORITY: Record<ExistingSolutionId, readonly RecommendedCardId[]> = {
+  // Infra affinity: K8s Monitoring turns the metrics already flowing into curated views.
+  metrics: [
+    'enable-logs',
+    'enable-logs-k8s',
+    'kubernetes-monitoring',
+    'hosted-traces',
+    'application-observability',
+    'connect-metrics',
+  ],
+  // Logs↔traces correlation is the classic next step from logs.
+  logs: [
+    'connect-metrics',
+    'hosted-traces',
+    'application-observability',
+    'kubernetes-monitoring',
+    'enable-logs',
+    'enable-logs-k8s',
+  ],
+  // Traces are the App Observability foundation.
+  traces: [
+    'application-observability',
+    'connect-metrics',
+    'enable-logs',
+    'enable-logs-k8s',
+    'kubernetes-monitoring',
+    'hosted-traces',
+  ],
+  kubernetes: [
+    'enable-logs-k8s',
+    'enable-logs',
+    'hosted-traces',
+    'application-observability',
+    'connect-metrics',
+    'kubernetes-monitoring',
+  ],
+};
+
+/**
+ * Reorder a settled selection for the solution the user is viewing. Membership NEVER changes:
+ * the matrix's blocking rules (selectRecommendations) stay authoritative; a solution view only
+ * changes which of the selected cards leads the carousel.
+ */
+export function orderCardsForSolution(cards: RecommendedCardId[], solution: ExistingSolutionId): RecommendedCardId[] {
+  const priority = SOLUTION_CARD_PRIORITY[solution];
+  return [...cards].sort((a, b) => priority.indexOf(a) - priority.indexOf(b));
+}
+
+/**
  * Matrix row that drove the selection — a selection driver id for analytics
  * (`starting_state`), not a full state descriptor.
  */

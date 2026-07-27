@@ -1,6 +1,6 @@
 import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
-import { type PluginMeta } from '@grafana/data';
+import { type DataSourceInstanceListItem, type PluginMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -19,6 +19,7 @@ import {
 } from './kubernetesData';
 import { useSolutionState } from './solutionState';
 import { type SolutionState } from './solutionsMatrix';
+import { fetchLogsActivity, fetchMetricsActivity } from './telemetryData';
 
 const mockGet = jest.fn();
 jest.mock('@grafana/runtime', () => ({
@@ -54,6 +55,14 @@ jest.mock('./solutionState', () => ({
   useSolutionState: jest.fn(),
 }));
 
+jest.mock('./telemetryData', () => ({
+  ...jest.requireActual('./telemetryData'),
+  fetchLogsActivity: jest.fn(),
+  fetchMetricsActivity: jest.fn(),
+  fetchTracesActivity: jest.fn(),
+  fetchTracesServices: jest.fn(),
+}));
+
 const LEGACY_APP_IDS = ['grafana-synthetic-monitoring-app', 'grafana-app-observability-app', 'grafana-kowalski-app'];
 const APP_IDS = ['grafana-exploretraces-app', 'grafana-k8s-app', ...LEGACY_APP_IDS];
 
@@ -66,8 +75,31 @@ const listItem = (id: string, overrides: Partial<LocalPlugin> = {}) => ({
 
 const mockUsePluginBridge = jest.mocked(usePluginBridge);
 const mockUseSolutionState = jest.mocked(useSolutionState);
+const mockFetchLogsActivity = jest.mocked(fetchLogsActivity);
+const mockFetchMetricsActivity = jest.mocked(fetchMetricsActivity);
 
-function setSolutionState(overrides: Partial<SolutionState>) {
+const prometheusDatasource: DataSourceInstanceListItem = {
+  uid: 'prom-uid',
+  name: 'grafanacloud-prom',
+  type: 'prometheus',
+  meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
+  readOnly: false,
+  isDefault: false,
+};
+
+const lokiDatasource: DataSourceInstanceListItem = {
+  uid: 'loki-uid',
+  name: 'grafanacloud-logs',
+  type: 'loki',
+  meta: { id: 'loki' } as DataSourceInstanceListItem['meta'],
+  readOnly: false,
+  isDefault: false,
+};
+
+function setSolutionState(
+  overrides: Partial<SolutionState>,
+  ds: { loki?: DataSourceInstanceListItem; prometheus?: DataSourceInstanceListItem } = {}
+) {
   // Honor the enabled gate like the real hook: a collapsed region resolves nothing.
   mockUseSolutionState.mockImplementation((enabled = true) =>
     enabled
@@ -81,8 +113,9 @@ function setSolutionState(overrides: Partial<SolutionState>) {
               spanMetrics: 'inactive',
               ...overrides,
             },
-            lokiDatasource: null,
+            lokiDatasource: ds.loki ?? null,
             tempoDatasource: null,
+            prometheusDatasource: ds.prometheus ?? null,
           },
           loading: false,
         }
@@ -102,6 +135,16 @@ beforeEach(() => {
   mockGet.mockReset();
   mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id)));
   mockUseSolutionState.mockReset();
+  mockFetchLogsActivity.mockReset();
+  mockFetchLogsActivity.mockResolvedValue({ bytes: null, sources: null, series: null });
+  mockFetchMetricsActivity.mockReset();
+  mockFetchMetricsActivity.mockResolvedValue({
+    series: null,
+    names: null,
+    hosts: null,
+    seriesSparkline: null,
+    disk: null,
+  });
   // Metrics + Logs, no Traces: the two-card row (hosted-traces, kubernetes-monitoring).
   setSolutionState({ metrics: 'active', logs: 'active' });
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
@@ -112,6 +155,8 @@ afterEach(() => jest.restoreAllMocks());
 const carouselRegion = async () => screen.findByRole('region', { name: 'Recommended apps' });
 
 describe('Recommendations', () => {
+  // The default fixtures resolve no solution datasources, so the left card is in its no-data
+  // state and no solution view is active: the carousel keeps the global matrix order.
   it('renders the matrix-selected cards in matrix order for ml_no_traces', async () => {
     render(<Recommendations />);
 
@@ -124,6 +169,49 @@ describe('Recommendations', () => {
     expect(
       within(region).getByRole('link', { name: /Enable Kubernetes Monitoring/, hidden: true })
     ).toBeInTheDocument();
+  });
+
+  it('follows the selected solution: metrics-led by default, logs-led after switching', async () => {
+    setSolutionState({ metrics: 'active', logs: 'active' }, { prometheus: prometheusDatasource, loki: lokiDatasource });
+    mockFetchMetricsActivity.mockResolvedValue({
+      series: 4_200_000,
+      names: null,
+      hosts: 12,
+      seriesSparkline: null,
+      disk: null,
+    });
+    mockFetchLogsActivity.mockResolvedValue({ bytes: 47_000_000_000, sources: 8, series: null });
+
+    const { user } = render(<Recommendations />);
+
+    // The left card defaults to the first registry entry (kubernetes resolves no datasource).
+    expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
+
+    const region = await carouselRegion();
+    const titles = () =>
+      within(region)
+        .getAllByRole('heading', { level: 3, hidden: true })
+        .map((heading) => heading.textContent?.trim());
+    // The metrics view leads with K8s Monitoring — the reverse of the matrix order.
+    expect(titles()).toEqual(['Monitor your Kubernetes fleet', 'Trace requests across services']);
+
+    // Advance to the second slide so the switch provably resets the carousel.
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByRole('button', { name: 'Go to recommendation 1' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Switch solution/i }));
+    await user.click(screen.getByRole('menuitem', { name: 'Hosted Logs' }));
+
+    expect(screen.getByRole('heading', { name: 'Hosted Logs' })).toBeInTheDocument();
+    // The logs view re-leads with Hosted Traces and restarts on the first slide.
+    expect(titles()).toEqual(['Trace requests across services', 'Monitor your Kubernetes fleet']);
+    expect(screen.queryByRole('button', { name: 'Go to recommendation 1' })).not.toBeInTheDocument();
+    expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+      surface: 'existing_solution',
+      action: 'switch_solution',
+      placement: 'card',
+      solution: 'logs',
+    });
   });
 
   it('shows a skeleton while the solution state is resolving', async () => {
@@ -170,7 +258,6 @@ describe('Recommendations', () => {
     const setupLink = await screen.findByRole('link', { name: /Set up Hosted Traces/, hidden: true });
     expect(setupLink).toHaveAttribute('href', '/a/grafana-exploretraces-app');
     expect(screen.queryByRole('link', { name: /Enable Hosted Traces/, hidden: true })).not.toBeInTheDocument();
-
   });
 
   it('hides the setup card when the user lacks app access to the silent app', async () => {
@@ -607,6 +694,36 @@ describe('Recommendations', () => {
         placement: 'card',
         recommendation_id: 'hosted-traces',
         starting_state: 'ml_no_traces',
+      });
+    });
+
+    it('tracks the active solution view on card clicks once a solution is selected', async () => {
+      setSolutionState(
+        { metrics: 'active', logs: 'active' },
+        { prometheus: prometheusDatasource, loki: lokiDatasource }
+      );
+      mockFetchMetricsActivity.mockResolvedValue({
+        series: 4_200_000,
+        names: null,
+        hosts: null,
+        seriesSparkline: null,
+        disk: null,
+      });
+      mockFetchLogsActivity.mockResolvedValue({ bytes: 47_000_000_000, sources: 8, series: null });
+
+      const { user } = render(<Recommendations />);
+
+      // Once the default (metrics) selection settles, its leading card is K8s Monitoring.
+      expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
+      await user.click(await screen.findByRole('link', { name: /Enable Kubernetes Monitoring/ }));
+
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'recommendations',
+        action: 'enable',
+        placement: 'card',
+        recommendation_id: 'kubernetes-monitoring',
+        starting_state: 'ml_no_traces',
+        solution: 'metrics',
       });
     });
 

@@ -11040,6 +11040,26 @@
         "title": "Hosted Logs",
         "volume": "Ingest volume · last 24h"
       },
+      "metrics": {
+        "action": "Open Metrics Drilldown",
+        "action-explore": "Open in Explore",
+        "datasource": "via {{name}}",
+        "disk-eta_one": "~{{count}} h to full",
+        "disk-eta_other": "~{{count}} h to full",
+        "disk-hosts_one": "{{count}} host above 90% disk",
+        "disk-hosts_other": "{{count}} hosts above 90% disk",
+        "disk-worst": "{{host}} at {{percent}}%",
+        "names_one": "{{value}} metric",
+        "names_other": "{{value}} metrics",
+        "series_one": "{{value}} series",
+        "series_other": "{{value}} series",
+        "series-trend": "Active series · last 24h",
+        "stats": "active",
+        "stats-hosts_one": "active · {{count}} host",
+        "stats-hosts_other": "active · {{count}} hosts",
+        "title": "Metrics & infrastructure",
+        "view": "View"
+      },
       "next": "Next",
       "no-data": {
         "badge": "Getting started",

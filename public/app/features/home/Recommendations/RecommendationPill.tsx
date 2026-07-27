@@ -10,9 +10,11 @@ import type { RecommendationItem } from './types';
 interface RecommendationPillProps {
   recommendation: RecommendationItem;
   startingState: string;
+  /** Solution view active when the pill was clicked; absent when no solution is selected. */
+  solution?: string;
 }
 
-export function RecommendationPill({ recommendation, startingState }: RecommendationPillProps) {
+export function RecommendationPill({ recommendation, startingState, solution }: RecommendationPillProps) {
   const styles = useStyles2(getStyles, recommendation.color);
 
   return (
@@ -29,6 +31,7 @@ export function RecommendationPill({ recommendation, startingState }: Recommenda
           placement: 'pill',
           recommendation_id: recommendation.id,
           starting_state: startingState,
+          solution,
         })
       }
       className={styles.pill}

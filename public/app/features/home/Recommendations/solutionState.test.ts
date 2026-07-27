@@ -145,6 +145,7 @@ describe('resolveSolutionState', () => {
     });
     expect(resolution.lokiDatasource).toBeNull();
     expect(resolution.tempoDatasource).toBeNull();
+    expect(resolution.prometheusDatasource).toBeNull();
   });
 
   it('never probes cloud utility datasources, even when they are all there is', async () => {
@@ -269,6 +270,24 @@ describe('resolveSolutionState', () => {
 
     expect(resolution.state.kubernetes).toBe('active');
     expect(resolution.state.metrics).toBe('active');
+  });
+
+  it('exposes the winning prometheus datasource, falling back to the kubernetes one', async () => {
+    const { promResource } = freshCloudFixture();
+    promResource.mockResolvedValue({ data: ['__name__'] });
+
+    let resolution = await resolveSolutionState();
+    expect(resolution.state.metrics).toBe('active');
+    expect(resolution.prometheusDatasource?.uid).toBe('prom-main');
+
+    // Metrics probe empty but kubernetes active: its (Prometheus) datasource carries the card.
+    resetSolutionStateResolution();
+    promResource.mockResolvedValue({ data: [] });
+    kubernetesMock.mockResolvedValue(listItem('prometheus', { uid: 'prom-k8s', name: 'k8s-prom' }));
+
+    resolution = await resolveSolutionState();
+    expect(resolution.state.metrics).toBe('active');
+    expect(resolution.prometheusDatasource?.uid).toBe('prom-k8s');
   });
 
   it('settles span metrics active when the probe finds series', async () => {
