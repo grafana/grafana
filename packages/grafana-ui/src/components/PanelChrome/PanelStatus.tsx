@@ -68,7 +68,6 @@ interface PanelStatusPopoverProps {
 function PanelStatusPopover({ items, onInspect, ariaLabel }: PanelStatusPopoverProps) {
   const styles = useStyles2(getStyles);
   const topSeverity = getTopSeverity(items);
-  // Sort error > warning > info to match the inspector "Errors and notices" tab ordering.
   const sortedItems = [...items].sort((a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity]);
 
   const content = (
