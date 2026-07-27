@@ -377,6 +377,50 @@ describe('Plugins/Helpers', () => {
     });
   });
 
+  describe('mergeLocalsAndRemotes() - alias deduplication', () => {
+    test('does not deduplicate direct slug matches — only alias matches are deduplicated', () => {
+      // Regression: emittedCanonicalIds must only track alias-matched canonical IDs.
+      // Direct slug matches (remotePlugin.slug === localPlugin.id) must not be deduplicated
+      // as that would break tests and real scenarios relying on duplicate remote entries.
+      const local = [getLocalPluginMock({ id: 'plugin-1' })];
+      const remote = [getRemotePluginMock({ slug: 'plugin-1' }), getRemotePluginMock({ slug: 'plugin-1' })];
+
+      const merged = mergeLocalsAndRemotes({ local, remote });
+      expect(merged).toHaveLength(2);
+      expect(merged.every(({ id }) => id === 'plugin-1')).toBe(true);
+    });
+
+    test('deduplicates when both alias slug and canonical slug appear in remote for same local plugin', () => {
+      const local = [getLocalPluginMock({ id: 'grafana-canvas-panel', aliasIDs: ['canvas'] })];
+      const remote = [getRemotePluginMock({ slug: 'canvas' }), getRemotePluginMock({ slug: 'grafana-canvas-panel' })];
+
+      const merged = mergeLocalsAndRemotes({ local, remote });
+      expect(merged).toHaveLength(1);
+      expect(merged[0].id).toBe('grafana-canvas-panel');
+    });
+
+    test('uses canonical ID when remote slug is an alias', () => {
+      const local = [getLocalPluginMock({ id: 'grafana-canvas-panel', aliasIDs: ['canvas'] })];
+      const remote = [getRemotePluginMock({ slug: 'canvas' })];
+
+      const merged = mergeLocalsAndRemotes({ local, remote });
+      expect(merged).toHaveLength(1);
+      expect(merged[0].id).toBe('grafana-canvas-panel');
+    });
+
+    test('attaches error keyed by canonical ID when remote slug is an alias', () => {
+      const local = [getLocalPluginMock({ id: 'grafana-canvas-panel', aliasIDs: ['canvas'] })];
+      const remote = [getRemotePluginMock({ slug: 'canvas' })];
+      const pluginErrors = [
+        { pluginId: 'grafana-canvas-panel', errorCode: PluginErrorCode.invalidSignature, pluginType: PluginType.panel },
+      ];
+
+      const merged = mergeLocalsAndRemotes({ local, remote, pluginErrors });
+      expect(merged).toHaveLength(1);
+      expect(merged[0].error).toBe(PluginErrorCode.invalidSignature);
+    });
+  });
+
   describe('mapLocalToCatalog()', () => {
     test('maps local response to PluginCatalog', () => {
       expect(mapLocalToCatalog(localPlugin)).toEqual({

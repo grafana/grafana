@@ -82,7 +82,12 @@ export function mergeLocalsAndRemotes({
           localMap.has(remotePlugin.slug)
         );
       }
-      emittedCanonicalIds.add(canonicalId);
+      // Only track alias-matched canonical IDs for deduplication.
+      // Direct slug matches (remotePlugin.slug === localCounterpart?.id) are not tracked
+      // to preserve existing behaviour where duplicate direct-slug remotes pass through.
+      if (localCounterpart && localCounterpart.id !== remotePlugin.slug) {
+        emittedCanonicalIds.add(canonicalId);
+      }
       catalogPlugins.push(catalogPlugin);
     }
   });
