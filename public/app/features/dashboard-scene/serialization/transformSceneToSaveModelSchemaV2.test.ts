@@ -1751,6 +1751,14 @@ describe('snapshot mode: repeated rows', () => {
 
     const cloneGrid = rowsLayout.rows[1].spec.layout.spec as GridLayoutSpec;
     expect(cloneGrid.items[0].spec.element.name).toBe('row-1-clone-1-panel-9');
+
+    // The single-value panel repeat is materialized (repeatedPanels: []), so its repeat directive must be
+    // stripped — otherwise the snapshot viewer would re-expand it and could collapse to an "All" placeholder.
+    for (const row of rowsLayout.rows) {
+      for (const item of (row.spec.layout.spec as GridLayoutSpec).items) {
+        expect(item.spec.repeat).toBeUndefined();
+      }
+    }
   });
 
   it('keeps the repeat directive when a repeat row has not been materialized', () => {
@@ -1764,7 +1772,10 @@ describe('snapshot mode: repeated rows', () => {
       layout: new DefaultGridLayoutManager({
         grid: new SceneGridLayout({
           children: [
-            new DashboardGridItem({ key: 'grid-item-1', body: new VizPanel({ key: 'panel-1', pluginId: 'timeseries' }) }),
+            new DashboardGridItem({
+              key: 'grid-item-1',
+              body: new VizPanel({ key: 'panel-1', pluginId: 'timeseries' }),
+            }),
           ],
         }),
       }),
@@ -1791,7 +1802,10 @@ describe('snapshot mode: repeated rows', () => {
       layout: new DefaultGridLayoutManager({
         grid: new SceneGridLayout({
           children: [
-            new DashboardGridItem({ key: 'grid-item-1', body: new VizPanel({ key: 'panel-1', pluginId: 'timeseries' }) }),
+            new DashboardGridItem({
+              key: 'grid-item-1',
+              body: new VizPanel({ key: 'panel-1', pluginId: 'timeseries' }),
+            }),
           ],
         }),
       }),

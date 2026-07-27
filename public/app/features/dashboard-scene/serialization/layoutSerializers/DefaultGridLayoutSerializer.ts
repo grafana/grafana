@@ -144,12 +144,19 @@ function repeaterToLayoutItems(repeater: DashboardGridItem, isSnapshot = false):
 
     const vizPanels = [repeater.state.body, ...(repeater.state.repeatedPanels ?? [])];
 
-    // If repeats haven't been processed yet, fall back to serializing the source panel only. Pass
-    // isSnapshot so the element reference is resolved with the same (clone-row-aware) key that
-    // getElements uses — otherwise a single-value repeater inside a repeated row clone would reference
-    // a non-prefixed key that isn't present in `elements`.
+    // Fall back to serializing the source panel only (no clones to expand). Pass isSnapshot so the element
+    // reference is resolved with the same (clone-row-aware) key that getElements uses — otherwise a
+    // single-value repeater inside a repeated row clone would reference a non-prefixed key that isn't
+    // present in `elements`.
     if (vizPanels.length === 1) {
-      return [gridItemToGridLayoutItemKind(repeater, undefined, isSnapshot)];
+      const item = gridItemToGridLayoutItemKind(repeater, undefined, isSnapshot);
+      // If the repeat has already run (materialized — `repeatedPanels` is defined, even if empty for a
+      // single value), strip the repeat directive: the panel is baked and the viewer must not re-expand it
+      // (which could collapse back to "All"). If it hasn't run yet (`undefined`), keep it as a fallback.
+      if (repeater.state.repeatedPanels !== undefined) {
+        delete item.spec.repeat;
+      }
+      return [item];
     }
 
     if (vizPanels.length > 1) {
