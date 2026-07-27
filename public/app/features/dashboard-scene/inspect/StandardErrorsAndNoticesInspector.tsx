@@ -26,6 +26,8 @@ interface InspectableEntry {
   link?: string;
   // Errors are raw payloads shown verbatim in a code block; notices are rendered as markdown.
   isCode?: boolean;
+  // Human-readable summary shown above the raw payload; matches the panel header popover text.
+  message?: string;
 }
 
 // Higher number = higher priority, used to sort cards error > warning > info.
@@ -61,6 +63,7 @@ function buildEntries(data: DataFrame[] | undefined, errors: DataQueryError[] | 
     entries.push({
       severity: 'error',
       title: error.message ?? error.data?.message ?? SEVERITY_LABELS.error(),
+      message: error.message ?? error.data?.message,
       content: formatError(error),
       isCode: true,
     });
@@ -134,6 +137,7 @@ function EntryCard({ entry }: { entry: InspectableEntry }) {
 
       {isOpen && (
         <div className={styles.body}>
+          {entry.message && <div className={styles.message}>{entry.message}</div>}
           {entry.isCode ? (
             <pre className={styles.code}>{entry.content}</pre>
           ) : (
@@ -196,6 +200,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   body: css({
     borderTop: `1px solid ${theme.colors.border.weak}`,
     padding: theme.spacing(1.5, 1.5, 1.5, 4.5),
+  }),
+  message: css({
+    fontSize: theme.typography.bodySmall.fontSize,
+    wordBreak: 'break-word',
+    marginBottom: theme.spacing(1),
   }),
   code: css({
     margin: 0,

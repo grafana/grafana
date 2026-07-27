@@ -68,6 +68,8 @@ interface PanelStatusPopoverProps {
 function PanelStatusPopover({ items, onInspect, ariaLabel }: PanelStatusPopoverProps) {
   const styles = useStyles2(getStyles);
   const topSeverity = getTopSeverity(items);
+  // Sort error > warning > info to match the inspector "Errors and notices" tab ordering.
+  const sortedItems = [...items].sort((a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity]);
 
   const content = (
     <div className={styles.popover}>
@@ -82,7 +84,7 @@ function PanelStatusPopover({ items, onInspect, ariaLabel }: PanelStatusPopoverP
         )}
       </div>
       <Stack direction="column" gap={1}>
-        {items.map((item, index) => (
+        {sortedItems.map((item, index) => (
           <div key={`${item.severity}-${index}`} className={styles.item}>
             <span className={styles.itemIcon}>
               <Icon name={getSeverityIcon(item.severity)} className={styles[item.severity]} size="sm" />
