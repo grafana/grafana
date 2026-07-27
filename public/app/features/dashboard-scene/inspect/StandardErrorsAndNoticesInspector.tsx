@@ -21,13 +21,13 @@ type Severity = QueryResultMetaNotice['severity'];
 
 interface InspectableEntry {
   severity: Severity;
-  title: string;
+  // Human-readable summary; matches the panel header popover text. Shown above the raw payload
+  // for errors and used as the toggle's accessible label.
+  title?: string;
   content: string;
   link?: string;
   // Errors are raw payloads shown verbatim in a code block; notices are rendered as markdown.
   isCode?: boolean;
-  // Human-readable summary shown above the raw payload; matches the panel header popover text.
-  message?: string;
 }
 
 // Higher number = higher priority, used to sort cards error > warning > info.
@@ -62,8 +62,7 @@ function buildEntries(data: DataFrame[] | undefined, errors: DataQueryError[] | 
   for (const error of errors ?? []) {
     entries.push({
       severity: 'error',
-      title: error.message ?? error.data?.message ?? SEVERITY_LABELS.error(),
-      message: error.message ?? error.data?.message,
+      title: error.message ?? error.data?.message,
       content: formatError(error),
       isCode: true,
     });
@@ -124,7 +123,7 @@ function EntryCard({ entry }: { entry: InspectableEntry }) {
           className={styles.toggle}
           onClick={() => setIsOpen((open) => !open)}
           aria-expanded={isOpen}
-          aria-label={entry.title}
+          aria-label={entry.title ?? SEVERITY_LABELS[entry.severity]()}
         >
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} className={styles.chevron} />
           <Icon name={getSeverityIcon(entry.severity)} className={styles[entry.severity]} />
@@ -137,9 +136,11 @@ function EntryCard({ entry }: { entry: InspectableEntry }) {
 
       {isOpen && (
         <div className={styles.body}>
-          {entry.message && <div className={styles.message}>{entry.message}</div>}
           {entry.isCode ? (
-            <pre className={styles.code}>{entry.content}</pre>
+            <>
+              {entry.title && <div className={styles.message}>{entry.title}</div>}
+              <pre className={styles.code}>{entry.content}</pre>
+            </>
           ) : (
             // renderMarkdown sanitizes its output, so this is safe to set as HTML.
             <div className={styles.markdown} dangerouslySetInnerHTML={{ __html: renderMarkdown(entry.content) }} />
