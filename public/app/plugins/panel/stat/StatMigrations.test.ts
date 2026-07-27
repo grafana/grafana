@@ -149,7 +149,7 @@ describe('Stat Panel Migrations', () => {
     expect(panel.fieldConfig.defaults.color).toBeUndefined();
   });
 
-  it('does not touch the field config when there is no angular config to migrate', () => {
+  it('does not touch the field config when this is a different plugin', () => {
     const old = {};
 
     const panel = { fieldConfig: { defaults: {}, overrides: [] } } as unknown as PanelModel;
