@@ -1,8 +1,10 @@
 package search
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -11,19 +13,62 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
+const (
+	dashboardGroup    = "dashboard.grafana.app"
+	dashboardResource = "dashboards"
+)
+
+// servedVersions reads the versions of a kind straight from the compiled-in
+// manifests, so this cannot fall behind when a version is added.
+func servedVersions(t *testing.T, group, resourceName string) []string {
+	t.Helper()
+
+	var out []string
+	for _, m := range resource.AppManifests() {
+		if m.ManifestData == nil || m.ManifestData.Group != group {
+			continue
+		}
+		for _, version := range m.ManifestData.Versions {
+			if !version.Served {
+				continue
+			}
+			for _, kind := range version.Kinds {
+				if resourceNameFor(kind) == resourceName {
+					out = append(out, version.Name)
+				}
+			}
+		}
+	}
+	require.NotEmpty(t, out, "found no served versions of %s/%s", group, resourceName)
+	return out
+}
+
+func resourceNameFor(kind app.ManifestVersionKind) string {
+	plural := kind.Plural
+	if plural == "" {
+		plural = kind.Kind + "s"
+	}
+	return strings.ToLower(plural)
+}
+
 // The search route is mounted on every served version of a kind, and validation
 // resolves fields for the version in the URL. A version that does not declare
 // its search fields would reject every custom field, so this checks the real
 // compiled-in manifests rather than a test fixture.
-func TestDashboardCustomFieldsResolveOnEverServedVersion(t *testing.T) {
+func TestDashboardCustomFieldsResolveOnEveryServedVersion(t *testing.T) {
 	provider := resource.NewManifestBackedProvider(resource.AppManifests())
 
-	for _, version := range []string{"v0alpha1", "v1", "v1beta1", "v2alpha1", "v2beta1"} {
+	versions := servedVersions(t, dashboardGroup, dashboardResource)
+	// Guard against the manifest shrinking to a single version and this test
+	// quietly stopping to prove anything about cross-version consistency.
+	require.Greater(t, len(versions), 1, "expected several served dashboard versions, got %v", versions)
+
+	for _, version := range versions {
 		t.Run(version, func(t *testing.T) {
 			gvr := schema.GroupVersionResource{
-				Group:    "dashboard.grafana.app",
+				Group:    dashboardGroup,
 				Version:  version,
-				Resource: "dashboards",
+				Resource: dashboardResource,
 			}
 
 			q := &searchv0.SearchQuery{
