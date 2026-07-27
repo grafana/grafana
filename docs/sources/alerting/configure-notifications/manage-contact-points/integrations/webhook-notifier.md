@@ -66,6 +66,14 @@ For more details on contact points, including how to test them and enable notifi
 | ------ | ------------------------------------------------------------------------------------------------------------ |
 | URL    | The Webhook URL. This field is [protected](ref:configure-contact-points) from modification in Grafana Cloud. |
 
+{{< admonition type="caution" >}}
+
+The URL is not a secured field. It's stored in plain text and isn't masked when the contact point is read back. Include secrets such as tokens or passwords in the URL at your own risk.
+
+To authenticate to your webhook endpoint, use the authorization fields in the [optional settings](#optional-settings) instead, such as Basic Authentication or the Authorization request header. These fields are stored securely and are masked on read.
+
+{{< /admonition >}}
+
 #### Optional settings
 
 | Option                            | Description                                                                                                                                                                               |
