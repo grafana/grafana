@@ -199,9 +199,10 @@ func captureDiagnosticStages(ctx context.Context, dp DataPipeline, vars mathexp.
 	for _, node := range dp {
 		refID := node.RefID()
 		stage := exprcapture.Stage{
-			RefID:       refID,
-			Type:        diagnosticStageType(node.NodeType()),
-			InputRefIDs: node.NeedsVars(),
+			RefID: refID,
+			Type:  diagnosticStageType(node.NodeType()),
+			// Cloned: NeedsVars returns the command's own slice, and the buffer outlives the pipeline.
+			InputRefIDs: slices.Clone(node.NeedsVars()),
 		}
 		switch n := node.(type) {
 		case *CMDNode:

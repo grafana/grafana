@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -106,32 +107,39 @@ type queryDataArtifact struct {
 	Version         int                                 `json:"version"`
 	Request         json.RawMessage                     `json:"request,omitempty"`
 	Response        json.RawMessage                     `json:"response,omitempty"`
-	Expressions     []queryDataExpressionStage          `json:"expressions,omitempty"`
+	Pipeline        []queryDataPipelineStage            `json:"pipeline,omitempty"`
 	ResponseSummary map[string]queryDataResponseSummary `json:"responseSummary,omitempty"`
 	// ResponseError records why the full response is missing when it could not be JSON-encoded, so a
 	// reader can tell an unencodable response from one that was dropped to fit the size cap.
-	ResponseError      string `json:"responseError,omitempty"`
-	Truncated          bool   `json:"truncated,omitempty"`
-	LimitBytes         int    `json:"limitBytes,omitempty"`
-	OriginalBytes      int    `json:"originalBytes,omitempty"`
-	RequestOmitted     bool   `json:"requestOmitted,omitempty"`
-	ResponseOmitted    bool   `json:"responseOmitted,omitempty"`
-	ExpressionsOmitted bool   `json:"expressionsOmitted,omitempty"`
+	ResponseError         string `json:"responseError,omitempty"`
+	Truncated             bool   `json:"truncated,omitempty"`
+	LimitBytes            int    `json:"limitBytes,omitempty"`
+	OriginalBytes         int    `json:"originalBytes,omitempty"`
+	RequestOmitted        bool   `json:"requestOmitted,omitempty"`
+	ResponseOmitted       bool   `json:"responseOmitted,omitempty"`
+	PipelineErrorsOmitted bool   `json:"pipelineErrorsOmitted,omitempty"`
+	PipelineOmitted       bool   `json:"pipelineOmitted,omitempty"`
 }
 
-// queryDataExpressionStage is one node of the executed server-side expression pipeline: the DAG that
+// queryDataPipelineStage is one node of the executed server-side expression pipeline: the DAG that
 // "response" alone cannot express. It records the node's kind (Type/Command) and which refIDs feed it
 // (InputRefIDs -> the node's inputs), so a reader can walk from the datasource nodes down to the
 // panel's final expression and find the first stage whose output differs from its inputs.
+//
+// The array is named "pipeline" rather than "expressions" because it holds every node the expression
+// service executed, datasource and ml nodes included -- for those, Command carries the plugin type
+// (e.g. "prometheus") rather than an expression command.
 //
 // A stage carries no output of its own. The expression service returns every executed node under its
 // own refID, so this stage's output is the entry with the same refId under "response".results (or,
 // once the artifact is over budget, under "responseSummary") -- a reader joins the two on refId.
 // Repeating the frames here would duplicate "response" byte-for-byte and halve the effective budget.
+// That join holds for hidden queries too: the diagnostics capture path keeps them in the response
+// (see expr.Service.TransformData), which the panel's own query response would have dropped.
 //
 // Error is duplicated from the response entry on purpose: it is bounded, and it lets "which stage
 // failed" be answered from the DAG alone, without the join.
-type queryDataExpressionStage struct {
+type queryDataPipelineStage struct {
 	RefID       string   `json:"refId"`
 	Type        string   `json:"type,omitempty"`
 	Command     string   `json:"command,omitempty"`
@@ -162,16 +170,16 @@ func marshalQueryDataArtifact(request json.RawMessage, resp *backend.QueryDataRe
 // marshalQueryDataArtifactWithLimit returns the encoded querydata.json plus whether it had to drop
 // content to fit maxBytes, so callers don't have to re-parse the result to learn that.
 //
-// The captured expression stages are bounded by the node count and carry no frame values (see
-// queryDataExpressionStage), so they ride along at every tier rather than sharing the response's
+// The captured pipeline stages are bounded by the node count and carry no frame values (see
+// queryDataPipelineStage), so they ride along at every tier rather than sharing the response's
 // degradation ladder: over budget, or on an encode failure, the response collapses to its per-refID
 // summary while the DAG survives intact. fitQueryDataArtifact then drops the request, the response
-// summary, the stages, and finally the free-form responseError.
+// summary, the stage errors, the stages, and finally the free-form responseError.
 func marshalQueryDataArtifactWithLimit(request json.RawMessage, resp *backend.QueryDataResponse, stages []exprcapture.Stage, maxBytes int) ([]byte, bool, error) {
 	artifact := queryDataArtifact{
-		Version:     queryDataArtifactVersion,
-		Request:     request,
-		Expressions: buildExpressionStages(stages),
+		Version:  queryDataArtifactVersion,
+		Request:  request,
+		Pipeline: buildPipelineStages(stages),
 	}
 	if resp != nil {
 		// The SDK encoder returns a complete byte slice. The artifact/archive is bounded below, but
@@ -190,7 +198,7 @@ func marshalQueryDataArtifactWithLimit(request json.RawMessage, resp *backend.Qu
 			// recorded nowhere else.
 			out, fallbackErr := fitQueryDataArtifact(queryDataArtifact{
 				Version:         queryDataArtifactVersion,
-				Expressions:     artifact.Expressions,
+				Pipeline:        artifact.Pipeline,
 				ResponseSummary: summarizeQueryDataResponse(resp),
 				ResponseError:   truncateDiagnosticString(err.Error(), min(1024, maxBytes/4)),
 				ResponseOmitted: true,
@@ -209,7 +217,7 @@ func marshalQueryDataArtifactWithLimit(request json.RawMessage, resp *backend.Qu
 
 	out, err := fitQueryDataArtifact(queryDataArtifact{
 		Version:         queryDataArtifactVersion,
-		Expressions:     artifact.Expressions,
+		Pipeline:        artifact.Pipeline,
 		ResponseSummary: summarizeQueryDataResponse(resp),
 		Truncated:       true,
 		LimitBytes:      maxBytes,
@@ -220,11 +228,11 @@ func marshalQueryDataArtifactWithLimit(request json.RawMessage, resp *backend.Qu
 }
 
 // fitQueryDataArtifact encodes artifact with progressively less content -- request kept, request
-// omitted, response summary dropped, expression stages dropped, then markers only -- and returns the
-// first encoding within maxBytes. The last rung holds only fixed-size markers, which keeps it under
-// minQueryDataArtifactBytes so the budget gate in BuildDashboard stays meaningful; it is returned
-// even when it somehow still doesn't fit, because there is nothing further to drop, and callers
-// enforcing a hard budget re-check length.
+// omitted, response summary dropped, stage errors dropped, stages dropped, then markers only -- and
+// returns the first encoding within maxBytes. The last rung holds only fixed-size markers, which
+// keeps it under minQueryDataArtifactBytes so the budget gate in BuildDashboard stays meaningful; it
+// is returned even when it somehow still doesn't fit, because there is nothing further to drop, and
+// callers enforcing a hard budget re-check length.
 func fitQueryDataArtifact(artifact queryDataArtifact, request json.RawMessage, maxBytes int) ([]byte, error) {
 	artifact.Request = request
 	out, err := json.MarshalIndent(artifact, "", "  ")
@@ -254,11 +262,34 @@ func fitQueryDataArtifact(artifact queryDataArtifact, request json.RawMessage, m
 		return out, nil
 	}
 
-	// The expression stages outlive the response summary: they are the smaller of the two (bounded by
-	// node count, no per-frame entries) and they are the only record of the pipeline's shape, which
-	// nothing else in the bundle carries. ExpressionsOmitted records that they existed.
-	artifact.ExpressionsOmitted = len(artifact.Expressions) > 0
-	artifact.Expressions = nil
+	// The stage errors go before the stages themselves: each is free-form text up to 1 KiB, so on a
+	// tight budget they are what pushes the DAG over, and they are the one part of a stage that is
+	// recoverable elsewhere -- responseSummary[refId].error carries the same string, and the failure is
+	// recorded again outside the artifact. Dropping them keeps the pipeline's shape, which nothing else
+	// in the bundle records at all.
+	if pipelineHasErrors(artifact.Pipeline) {
+		// Cloned rather than cleared in place: artifact is a value copy, but its Pipeline slice still
+		// shares a backing array with the caller's.
+		artifact.Pipeline = slices.Clone(artifact.Pipeline)
+		for i := range artifact.Pipeline {
+			artifact.Pipeline[i].Error = ""
+		}
+		artifact.PipelineErrorsOmitted = true
+		out, err = json.MarshalIndent(artifact, "", "  ")
+		if err != nil {
+			return nil, err
+		}
+		if len(out) <= maxBytes {
+			return out, nil
+		}
+	}
+
+	// The stages outlive the response summary: they are the smaller of the two (bounded by node count,
+	// no per-frame entries) and they are the only record of the pipeline's shape, which nothing else in
+	// the bundle carries. PipelineOmitted records that they existed, and subsumes the error marker.
+	artifact.PipelineOmitted = len(artifact.Pipeline) > 0
+	artifact.PipelineErrorsOmitted = false
+	artifact.Pipeline = nil
 	out, err = json.MarshalIndent(artifact, "", "  ")
 	if err != nil {
 		return nil, err
@@ -273,17 +304,24 @@ func fitQueryDataArtifact(artifact queryDataArtifact, request json.RawMessage, m
 	return json.MarshalIndent(artifact, "", "  ")
 }
 
-// buildExpressionStages renders the captured pipeline nodes as the artifact's expression-stage view:
-// the DAG (node kind, command, input refIDs) and each node's error, with outputs left to the
-// response entry sharing the stage's refId. Total size is bounded by the node count, so unlike the
-// response this needs no summarized form.
-func buildExpressionStages(stages []exprcapture.Stage) []queryDataExpressionStage {
+// pipelineHasErrors reports whether any stage carries error text worth dropping before the stages
+// themselves.
+func pipelineHasErrors(stages []queryDataPipelineStage) bool {
+	return slices.ContainsFunc(stages, func(s queryDataPipelineStage) bool { return s.Error != "" })
+}
+
+// buildPipelineStages renders the captured nodes as the artifact's pipeline view: the DAG (node kind,
+// command, input refIDs) and each node's error, with outputs left to the response entry sharing the
+// stage's refId. Total size is bounded by the node count, so unlike the response this needs no
+// summarized form -- only the free-form error text is capped, and fitQueryDataArtifact drops it
+// before the stages when even that is too much.
+func buildPipelineStages(stages []exprcapture.Stage) []queryDataPipelineStage {
 	if len(stages) == 0 {
 		return nil
 	}
-	out := make([]queryDataExpressionStage, 0, len(stages))
+	out := make([]queryDataPipelineStage, 0, len(stages))
 	for _, s := range stages {
-		stage := queryDataExpressionStage{
+		stage := queryDataPipelineStage{
 			RefID:       s.RefID,
 			Type:        s.Type,
 			Command:     s.Command,

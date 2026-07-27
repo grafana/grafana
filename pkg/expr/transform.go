@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/expr/exprcapture"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
@@ -108,7 +109,14 @@ func (s *Service) TransformData(ctx context.Context, now time.Time, req *Request
 		return nil, err
 	}
 
-	if len(hidden) != 0 {
+	// The diagnostics capture path keeps hidden nodes in the response. exprcapture records every
+	// executed node as a stage, and a stage's output is the response entry sharing its refID, so
+	// dropping hidden refIDs here would leave those stages with nothing to join to -- and a hidden
+	// datasource query feeding a visible expression is exactly the stage a support engineer needs, to
+	// tell "the datasource returned the wrong data" from "the expression mangled it". Nothing renders
+	// this response: the diagnostics handlers serialize it into the bundle, and panel.json in the same
+	// bundle carries each target's hide flag, so a reader can still see which nodes the panel drew.
+	if len(hidden) != 0 && exprcapture.FromContext(ctx) == nil {
 		filteredRes := backend.NewQueryDataResponse()
 		for refID, res := range responses.Responses {
 			if _, ok := hidden[refID]; !ok {

@@ -131,10 +131,13 @@ func (s *Service) ExecutePipeline(ctx context.Context, now time.Time, pipeline D
 	defer span.End()
 	res := backend.NewQueryDataResponse()
 	vars, err := pipeline.execute(ctx, now, s)
+	// Captured before the error check on purpose: execute returns populated vars alongside a hard
+	// failure (an unexpected node type), and the pipeline's shape is worth more to a reader in exactly
+	// that case, where no response is produced at all.
+	captureDiagnosticStages(ctx, pipeline, vars)
 	if err != nil {
 		return nil, err
 	}
-	captureDiagnosticStages(ctx, pipeline, vars)
 	for refID, val := range vars {
 		res.Responses[refID] = backend.DataResponse{
 			Frames: val.Values.AsDataFrames(refID),

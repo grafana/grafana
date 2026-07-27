@@ -115,6 +115,82 @@ func TestExecutePipeline_capturesDependencyErrorStage(t *testing.T) {
 	require.Empty(t, res.Responses["B"].Frames, "B produced no output")
 }
 
+// hiddenDSQueryA is dsQueryA with "hide": true -- the usual shape for a datasource query that only
+// feeds an expression and is not drawn by the panel.
+func hiddenDSQueryA() Query {
+	q := dsQueryA()
+	q.JSON = json.RawMessage(`{ "datasource": { "uid": "test" }, "hide": true, "intervalMs": 1000, "maxDataPoints": 1000 }`)
+	return q
+}
+
+func TestTransformData_keepsHiddenNodesInResponseWhenCapturing(t *testing.T) {
+	// A stage carries no output of its own, so every captured stage needs a response entry under the
+	// same refID to join to. TransformData normally strips hidden refIDs from the response, which would
+	// leave the hidden datasource stage -- the input side of the first expression, and the whole point
+	// of the capture -- with nothing to join to. A capture buffer in context suppresses that filtering.
+	dsDF := data.NewFrame("A",
+		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+		data.NewField("value", data.Labels{"host": "a"}, []*float64{fptr(2.0)}),
+	)
+	resp := map[string]backend.DataResponse{"A": {Frames: data.Frames{dsDF}}}
+	queries := []Query{hiddenDSQueryA(), mathQuery("B", "$A * 2")}
+
+	t.Run("with a capture buffer the hidden node's output survives", func(t *testing.T) {
+		s, req := newMockQueryService(resp, queries)
+		s.cfg.ExpressionsEnabled = true
+
+		ctx, buf := exprcapture.WithCapture(context.Background())
+		res, err := s.TransformData(ctx, time.Now(), req)
+		require.NoError(t, err)
+
+		stages := buf.Stages()
+		require.Len(t, stages, 2)
+		for _, st := range stages {
+			require.Contains(t, res.Responses, st.RefID, "stage %s has no response entry to join to", st.RefID)
+		}
+		// Both sides of the comparison a support engineer needs: A's raw value and B's derived one.
+		requireResponseValue(t, res, "A", 2.0)
+		requireResponseValue(t, res, "B", 4.0)
+	})
+
+	t.Run("without one the hidden node is still stripped", func(t *testing.T) {
+		s, req := newMockQueryService(resp, queries)
+		s.cfg.ExpressionsEnabled = true
+
+		res, err := s.TransformData(context.Background(), time.Now(), req)
+		require.NoError(t, err)
+		require.NotContains(t, res.Responses, "A", "the normal query path must keep hiding hidden queries")
+		require.Contains(t, res.Responses, "B")
+	})
+}
+
+// unexecutableNode is a pipeline node that is not an ExecutableNode, which makes execute bail out with
+// makeUnexpectedNodeTypeError while still returning the vars it accumulated.
+type unexecutableNode struct{ refID string }
+
+func (n *unexecutableNode) ID() int64                      { return 1 }
+func (n *unexecutableNode) NodeType() NodeType             { return TypeCMDNode }
+func (n *unexecutableNode) RefID() string                  { return n.refID }
+func (n *unexecutableNode) String() string                 { return n.refID }
+func (n *unexecutableNode) NeedsVars() []string            { return []string{} }
+func (n *unexecutableNode) SetInputTo(string)              {}
+func (n *unexecutableNode) IsInputTo() map[string]struct{} { return nil }
+func (n *unexecutableNode) DisabledErr() error             { return nil }
+
+func TestExecutePipeline_capturesStagesWhenExecutionFailsHard(t *testing.T) {
+	// The DAG is worth more, not less, when the pipeline fails outright and produces no response at
+	// all, so the capture must not sit behind ExecutePipeline's error return.
+	s, _ := newMockQueryService(nil, nil)
+
+	ctx, buf := exprcapture.WithCapture(context.Background())
+	_, err := s.ExecutePipeline(ctx, time.Now(), DataPipeline{&unexecutableNode{refID: "A"}})
+	require.Error(t, err, "an unexecutable node fails the pipeline")
+
+	stages := buf.Stages()
+	require.Len(t, stages, 1, "the pipeline's shape is captured despite the failure")
+	require.Equal(t, "A", stages[0].RefID)
+}
+
 func TestExecutePipeline_noCaptureWithoutBuffer(t *testing.T) {
 	// Without a capture buffer in context the pipeline runs normally and records nothing.
 	resp := map[string]backend.DataResponse{"A": {Frames: data.Frames{

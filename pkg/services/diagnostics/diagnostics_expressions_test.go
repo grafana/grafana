@@ -42,7 +42,7 @@ func pipelineResponse(aValues []float64) *backend.QueryDataResponse {
 	}}
 }
 
-func stageByRefID(t *testing.T, stages []queryDataExpressionStage, refID string) queryDataExpressionStage {
+func stageByRefID(t *testing.T, stages []queryDataPipelineStage, refID string) queryDataPipelineStage {
 	t.Helper()
 	for _, s := range stages {
 		if s.RefID == refID {
@@ -50,7 +50,7 @@ func stageByRefID(t *testing.T, stages []queryDataExpressionStage, refID string)
 		}
 	}
 	t.Fatalf("no stage with refId %q in %v", refID, stages)
-	return queryDataExpressionStage{}
+	return queryDataPipelineStage{}
 }
 
 func TestBundler_Build_recordsExpressionStages(t *testing.T) {
@@ -66,29 +66,29 @@ func TestBundler_Build_recordsExpressionStages(t *testing.T) {
 	require.Contains(t, files, "querydata.json")
 
 	a := parseArtifact(t, files["querydata.json"])
-	require.Len(t, a.Expressions, 2)
+	require.Len(t, a.Pipeline, 2)
 
-	require.Equal(t, "A", a.Expressions[0].RefID)
-	require.Equal(t, "datasource", a.Expressions[0].Type)
-	require.Equal(t, "prometheus", a.Expressions[0].Command)
-	require.Empty(t, a.Expressions[0].InputRefIDs)
+	require.Equal(t, "A", a.Pipeline[0].RefID)
+	require.Equal(t, "datasource", a.Pipeline[0].Type)
+	require.Equal(t, "prometheus", a.Pipeline[0].Command)
+	require.Empty(t, a.Pipeline[0].InputRefIDs)
 
-	require.Equal(t, "B", a.Expressions[1].RefID)
-	require.Equal(t, "expression", a.Expressions[1].Type)
-	require.Equal(t, "reduce", a.Expressions[1].Command)
-	require.Equal(t, []string{"A"}, a.Expressions[1].InputRefIDs, "the DAG edge B<-A is recorded")
+	require.Equal(t, "B", a.Pipeline[1].RefID)
+	require.Equal(t, "expression", a.Pipeline[1].Type)
+	require.Equal(t, "reduce", a.Pipeline[1].Command)
+	require.Equal(t, []string{"A"}, a.Pipeline[1].InputRefIDs, "the DAG edge B<-A is recorded")
 
 	// Every stage's refId resolves to a response entry -- that join is what gives a stage its output.
 	var response struct {
 		Results map[string]json.RawMessage `json:"results"`
 	}
 	require.NoError(t, json.Unmarshal(a.Response, &response))
-	for _, stage := range a.Expressions {
+	for _, stage := range a.Pipeline {
 		require.Contains(t, response.Results, stage.RefID, "stage %s has no response entry to join to", stage.RefID)
 	}
 
 	require.False(t, a.Truncated)
-	require.False(t, a.ExpressionsOmitted)
+	require.False(t, a.PipelineOmitted)
 }
 
 func TestMarshalQueryDataArtifact_stagesDoNotDuplicateResponse(t *testing.T) {
@@ -114,7 +114,7 @@ func TestMarshalQueryDataArtifact_stagesDoNotDuplicateResponse(t *testing.T) {
 		"frame values must appear exactly once, under \"response\"")
 
 	a := parseArtifact(t, withStages)
-	require.Len(t, a.Expressions, 2, "the DAG is still recorded")
+	require.Len(t, a.Pipeline, 2, "the DAG is still recorded")
 }
 
 func TestMarshalQueryDataArtifact_stagesSurviveResponseTruncation(t *testing.T) {
@@ -136,9 +136,9 @@ func TestMarshalQueryDataArtifact_stagesSurviveResponseTruncation(t *testing.T) 
 	require.Empty(t, a.Response)
 	require.NotEmpty(t, a.ResponseSummary, "per-refID row/field counts stand in for the values")
 
-	require.False(t, a.ExpressionsOmitted)
-	require.Len(t, a.Expressions, 2, "the DAG survives the response's degradation")
-	b := stageByRefID(t, a.Expressions, "B")
+	require.False(t, a.PipelineOmitted)
+	require.Len(t, a.Pipeline, 2, "the DAG survives the response's degradation")
+	b := stageByRefID(t, a.Pipeline, "B")
 	require.Equal(t, "reduce", b.Command)
 	require.Equal(t, []string{"A"}, b.InputRefIDs)
 	require.NotContains(t, string(raw), "4095", "individual frame values are not present when summarized")
@@ -154,10 +154,53 @@ func TestFitQueryDataArtifact_dropsStagesAtTheFloor(t *testing.T) {
 	require.LessOrEqual(t, len(raw), minQueryDataArtifactBytes)
 
 	a := parseArtifact(t, raw)
-	require.Empty(t, a.Expressions)
-	require.True(t, a.ExpressionsOmitted, "the marker records that a DAG was captured and dropped")
+	require.Empty(t, a.Pipeline)
+	require.True(t, a.PipelineOmitted, "the marker records that a DAG was captured and dropped")
+	require.False(t, a.PipelineErrorsOmitted, "pipelineOmitted subsumes the error marker")
 	require.Empty(t, a.ResponseSummary)
 	require.True(t, a.ResponseOmitted)
+}
+
+func TestFitQueryDataArtifact_dropsStageErrorsBeforeTheStages(t *testing.T) {
+	// Stage errors are the only free-form text on a stage, and responseSummary[refId].error carries the
+	// same string, so on a budget too small for both they go first -- losing the error text but keeping
+	// the DAG, which nothing else in the bundle records.
+	stages := []exprcapture.Stage{
+		{RefID: "A", Type: "datasource", Command: "prometheus", Error: errStub(strings.Repeat("x", 600))},
+		{RefID: "B", Type: "expression", Command: "reduce", InputRefIDs: []string{"A"}, Error: errStub(strings.Repeat("y", 600))},
+	}
+	resp := pipelineResponse([]float64{1, 2, 3})
+
+	// Sized between "the DAG with its error text" and "the DAG alone".
+	raw, truncated, err := marshalQueryDataArtifactWithLimit(nil, resp, stages, 700)
+	require.NoError(t, err)
+	require.True(t, truncated)
+
+	a := parseArtifact(t, raw)
+	require.Len(t, a.Pipeline, 2, "the DAG outlives its own error text")
+	require.True(t, a.PipelineErrorsOmitted, "the marker records that error text was dropped")
+	require.False(t, a.PipelineOmitted)
+
+	b := stageByRefID(t, a.Pipeline, "B")
+	require.Equal(t, "reduce", b.Command)
+	require.Equal(t, []string{"A"}, b.InputRefIDs, "the DAG edge survives")
+	for _, s := range a.Pipeline {
+		require.Empty(t, s.Error, "stage %s kept its error text", s.RefID)
+	}
+	require.NotContains(t, string(raw), "xxxxx")
+}
+
+func TestFitQueryDataArtifact_clearingStageErrorsDoesNotMutateCaller(t *testing.T) {
+	// fitQueryDataArtifact takes the artifact by value, but its Pipeline slice shares a backing array
+	// with the caller's, so the error-dropping rung must clone before clearing.
+	stages := buildPipelineStages([]exprcapture.Stage{
+		{RefID: "A", Type: "datasource", Error: errStub(strings.Repeat("x", 600))},
+	})
+	require.NotEmpty(t, stages[0].Error)
+
+	_, err := fitQueryDataArtifact(queryDataArtifact{Version: queryDataArtifactVersion, Pipeline: stages}, nil, 200)
+	require.NoError(t, err)
+	require.NotEmpty(t, stages[0].Error, "the caller's stages were cleared in place")
 }
 
 func TestMarshalQueryDataArtifact_recordsStageError(t *testing.T) {
@@ -171,9 +214,9 @@ func TestMarshalQueryDataArtifact_recordsStageError(t *testing.T) {
 	require.NoError(t, err)
 
 	a := parseArtifact(t, raw)
-	require.Len(t, a.Expressions, 2)
-	require.Equal(t, "upstream 500", a.Expressions[0].Error)
-	require.Equal(t, "dependency error", a.Expressions[1].Error)
+	require.Len(t, a.Pipeline, 2)
+	require.Equal(t, "upstream 500", a.Pipeline[0].Error)
+	require.Equal(t, "dependency error", a.Pipeline[1].Error)
 }
 
 func TestBuildDashboard_recordsExpressionStagesWithoutResponse(t *testing.T) {
@@ -198,7 +241,7 @@ func TestBuildDashboard_recordsExpressionStagesWithoutResponse(t *testing.T) {
 	require.NotEmpty(t, found, "the panel's captured stages are recorded, got files %v", files)
 
 	a := parseArtifact(t, files[found])
-	require.Len(t, a.Expressions, 2)
+	require.Len(t, a.Pipeline, 2)
 }
 
 type errStub string

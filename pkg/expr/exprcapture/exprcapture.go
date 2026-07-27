@@ -13,6 +13,12 @@
 // refID. Capturing the frames again would duplicate the response byte-for-byte and halve the
 // artifact's effective size budget.
 //
+// For that join to resolve for every stage, the presence of a Buffer also makes the expression
+// service keep hidden ("hide": true) nodes in the response it returns, which it otherwise strips
+// after execution -- see expr.Service.TransformData. A hidden datasource query feeding a visible
+// expression is the usual panel shape, and it is precisely the stage whose output a support engineer
+// needs in order to tell a bad datasource result from a bad expression.
+//
 // Like the other diagnostics capture buffers, this is a no-op unless a Buffer is present in the
 // context, so the normal query path pays only a context lookup. Stage metadata is recorded VERBATIM
 // -- redaction is intentionally deferred for the experimental, admin-only, on-prem, feature-flagged
@@ -69,7 +75,9 @@ func (b *Buffer) Record(stages []Stage) {
 	b.mu.Unlock()
 }
 
-// Stages returns a copy of the captured stages. Thread-safe.
+// Stages returns a shallow copy of the captured stages: the slice is fresh, and each Stage's
+// InputRefIDs is already owned by the buffer (the recorder clones it off the pipeline node, which
+// outlives neither the request nor this buffer). Thread-safe.
 func (b *Buffer) Stages() []Stage {
 	if b == nil {
 		return nil
