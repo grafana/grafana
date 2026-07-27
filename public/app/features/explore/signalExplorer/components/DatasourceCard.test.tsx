@@ -6,7 +6,6 @@ import { Provider } from 'react-redux';
 
 import type { DataQuery, DataSourceInstanceSettings, DataSourceRef, TimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { mockComboboxRect } from '@grafana/test-utils';
 
 import * as catalogModule from '../data/useMetricCatalog';
 import { setSearchText, signalExplorerReducer } from '../state/signalExplorerSlice';
@@ -18,8 +17,6 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: jest.fn(),
 }));
-
-mockComboboxRect();
 
 const dsRef: DataSourceRef = { uid: 'p1' };
 const timeRange = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
@@ -91,11 +88,20 @@ describe('DatasourceCard', () => {
       expect(screen.queryByTestId('metric-tree-sentinel')).not.toBeInTheDocument();
     });
 
-    it('renders no search input or type filter for a non-Prometheus datasource', () => {
+    it('renders no search input for a non-Prometheus datasource', () => {
       renderCard({ isPrometheus: false });
 
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    });
+
+    // The type filter was removed from the card: it took a full row of a narrow sidebar to filter a
+    // list whose rows already show their type. The slice still carries `typeFilter` for whoever
+    // reintroduces the control somewhere better.
+    it('renders no type filter control', () => {
+      renderCard();
+
       expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+      expect(screen.queryByText(/filter by type/i)).not.toBeInTheDocument();
     });
 
     it('keeps the search input responsive but only dispatches setSearchText once typing settles', async () => {
@@ -135,31 +141,6 @@ describe('DatasourceCard', () => {
       await waitFor(() => expect(store.getState().signalExplorer.left.cards['A'].searchText).toBe('node_'));
 
       expect(inputB).toHaveValue('');
-      expect(store.getState().signalExplorer.left.cards['B']).toBeUndefined();
-    });
-
-    it('dispatches setTypeFilter when the type filter changes', async () => {
-      const store = renderCard();
-
-      await userEvent.click(screen.getByRole('combobox'));
-      await userEvent.click(await screen.findByText('Counter'));
-
-      expect(store.getState().signalExplorer.left.cards['A'].typeFilter).toBe('counter');
-    });
-
-    it('leaves a sibling card’s type filter alone when this one is changed', async () => {
-      const store = makeStore();
-      render(
-        <Provider store={store}>
-          <DatasourceCard {...cardProps} refId="A" dsName="Prom A" />
-          <DatasourceCard {...cardProps} refId="B" dsName="Prom B" />
-        </Provider>
-      );
-
-      await userEvent.click(screen.getAllByRole('combobox')[0]);
-      await userEvent.click(await screen.findByText('Counter'));
-
-      expect(store.getState().signalExplorer.left.cards['A'].typeFilter).toBe('counter');
       expect(store.getState().signalExplorer.left.cards['B']).toBeUndefined();
     });
 

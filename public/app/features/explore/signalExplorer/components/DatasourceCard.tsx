@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useState, type ChangeEvent } from 'react';
 import { useDebounce } from 'react-use';
 
@@ -8,12 +8,10 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { Icon, Input, Text, useStyles2 } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { selectSearchText, selectTypeFilter } from '../state/selectors';
-import { setActiveRefId, setSearchText, setTypeFilter } from '../state/signalExplorerSlice';
-import type { MetricType } from '../types';
+import { selectSearchText } from '../state/selectors';
+import { setActiveRefId, setSearchText } from '../state/signalExplorerSlice';
 
 import { MetricTree } from './MetricTree';
-import { MetricTypeFilter } from './MetricTypeFilter';
 
 /** Long enough to swallow a burst of typing, short enough that the list still feels live. */
 const SEARCH_DEBOUNCE_MS = 250;
@@ -77,7 +75,7 @@ export function DatasourceCard({
     : t('explore.signal-explorer.card.expand', 'Expand {{name}}', { name: dsName });
 
   return (
-    <div className={styles.card} data-testid="signal-explorer-datasource-card">
+    <div className={cx(styles.card, isExpanded && styles.cardExpanded)} data-testid="signal-explorer-datasource-card">
       <button
         type="button"
         className={styles.header}
@@ -85,9 +83,11 @@ export function DatasourceCard({
         aria-label={expandLabel}
         onClick={onToggle}
       >
-        <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />
+        <Icon className={cx(styles.chevron, isExpanded && styles.chevronExpanded)} name="angle-right" />
         {logo && <img className={styles.logo} src={logo} alt="" data-testid="signal-explorer-datasource-logo" />}
-        <Text weight="medium">{dsName}</Text>
+        <Text weight="medium">
+          <span className={styles.name}>{dsName}</span>
+        </Text>
       </button>
       {isExpanded && (
         <div className={styles.body} data-testid="signal-explorer-datasource-card-body">
@@ -127,7 +127,6 @@ function PrometheusBody({ exploreId, refId, dsRef, timeRange, matchQueries }: Pr
   const dispatch = useDispatch();
 
   const searchText = useSelector((state) => selectSearchText(state, exploreId, refId));
-  const typeFilter = useSelector((state) => selectTypeFilter(state, exploreId, refId));
 
   // The input keeps its own value and the store only hears about it once typing pauses: every
   // dispatch re-filters and re-sorts the whole catalog in `MetricTree`, which is far too much work
@@ -162,39 +161,90 @@ function PrometheusBody({ exploreId, refId, dsRef, timeRange, matchQueries }: Pr
         placeholder={searchLabel}
         aria-label={searchLabel}
       />
-      <MetricTypeFilter
-        value={typeFilter}
-        onChange={(value: MetricType | null) => dispatch(setTypeFilter({ exploreId, refId, typeFilter: value }))}
-      />
       <MetricTree exploreId={exploreId} refId={refId} dsRef={dsRef} timeRange={timeRange} matchQueries={matchQueries} />
     </>
   );
 }
 
+/** Collapsed card height, and the header's height in an expanded one. Matches the panel editor's
+ * SidebarCard, which this card is meant to read as a sibling of. */
+const CARD_HEIGHT = 30;
+
 const getStyles = (theme: GrafanaTheme2) => ({
   card: css({
+    position: 'relative',
     display: 'flex',
     flexDirection: 'column',
-    border: `1px solid ${theme.colors.border.weak}`,
+    // A collapsed card keeps its own height rather than stretching to share the column.
+    flexShrink: 0,
+    minHeight: CARD_HEIGHT,
+    border: `1px solid ${theme.colors.border.medium}`,
     borderRadius: theme.shape.radius.default,
     background: theme.colors.background.primary,
+    // Keeps the accent strip and the body's corners inside the rounded border.
+    overflow: 'hidden',
+  }),
+  // Only the open card is marked. The strip is `::before` on the card rather than a border so it
+  // does not shift the content, and so it spans the body as well as the header.
+  cardExpanded: css({
+    flex: 1,
+    minHeight: 0,
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      bottom: 0,
+      width: 2,
+      background: theme.colors.warning.main,
+    },
   }),
   header: css({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
     width: '100%',
-    padding: theme.spacing(1),
+    minHeight: CARD_HEIGHT,
+    flexShrink: 0,
+    padding: theme.spacing(0.5, 1, 0.5, 1.25),
     background: 'none',
     border: 'none',
     color: theme.colors.text.primary,
     textAlign: 'left',
     cursor: 'pointer',
+    // A long datasource name must not widen the sidebar.
+    minWidth: 0,
+    overflow: 'hidden',
     '&:hover': {
       background: theme.colors.action.hover,
     },
+    // `handleMotion` respects prefers-reduced-motion, which a bare `transition` would not.
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: theme.transitions.create(['background'], {
+        duration: theme.transitions.duration.shortest,
+      }),
+    },
+  }),
+  chevron: css({
+    flexShrink: 0,
+    color: theme.colors.text.secondary,
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: theme.transitions.create(['transform'], {
+        duration: theme.transitions.duration.shortest,
+      }),
+    },
+  }),
+  // Rotated rather than swapped for a different icon, so the change animates.
+  chevronExpanded: css({
+    transform: 'rotate(90deg)',
+  }),
+  name: css({
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   }),
   logo: css({
+    flexShrink: 0,
     width: theme.spacing(2),
     height: theme.spacing(2),
   }),
@@ -202,6 +252,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(1),
-    padding: theme.spacing(0, 1, 1, 1),
+    minHeight: 0,
+    padding: theme.spacing(0, 1, 1, 1.25),
   }),
 });
