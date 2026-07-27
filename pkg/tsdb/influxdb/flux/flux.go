@@ -16,6 +16,14 @@ import (
 func Query(ctx context.Context, dsInfo *models.DatasourceInfo, tsdbQuery backend.QueryDataRequest, logger log.Logger) (*backend.QueryDataResponse, error) {
 	logger = logger.FromContext(ctx)
 	tRes := backend.NewQueryDataResponse()
+	refIDs := make([]string, 0, len(tsdbQuery.Queries))
+	for _, q := range tsdbQuery.Queries {
+		refIDs = append(refIDs, q.RefID)
+	}
+	// Log only non-sensitive fields. The previous form logged the entire
+	// backend.QueryDataRequest, which embeds PluginContext.DataSourceInstanceSettings.DecryptedSecureJSONData
+	// and so wrote the InfluxDB API token to the journal at debug level.
+	logger.Debug("Received a query", "numQueries", len(tsdbQuery.Queries), "refIDs", refIDs)
 	r, err := runnerFromDataSource(dsInfo)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
