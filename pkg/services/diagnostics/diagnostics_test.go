@@ -739,12 +739,80 @@ func TestBuildDashboard_joinsQueryDataErrors(t *testing.T) {
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
-	require.NotContains(t, files, "panels/1-broken-both-ways/querydata.json", "unserializable query data is omitted")
+	// The response could not be encoded and the request never serialized, so the artifact keeps only the
+	// frame summary -- but it still ships, because that summary is all the query data there is.
+	queryData := string(files["panels/1-broken-both-ways/querydata.json"])
+	require.Contains(t, queryData, `"responseOmitted": true`)
+	require.Contains(t, queryData, `"rows": 1`)
+	require.NotContains(t, queryData, `"request"`, "the request never serialized")
 
 	var m dashboardManifest
 	require.NoError(t, json.Unmarshal(files["manifest.json"], &m))
 	require.Contains(t, m.Panels[0].QueryDataError, "serialize query request: request: unsupported value: +Inf")
 	require.Contains(t, m.Panels[0].QueryDataError, "data.FrameMeta.Custom: unsupported value: NaN")
+}
+
+func TestBundler_Build_keepsRequestWhenResponseEncodingFails(t *testing.T) {
+	// A response the SDK cannot encode (unserializable frame metadata) must not take a perfectly
+	// serializable request down with it: that request is the query a support engineer needs most in
+	// exactly the hard-to-encode cases this artifact exists for.
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	frame.Meta = &data.FrameMeta{Custom: math.NaN()}
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
+	request := json.RawMessage(`{"queries":[{"refId":"A","expr":"up"}]}`)
+
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, request, nil, nil)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	queryData := string(files["querydata.json"])
+	require.Contains(t, queryData, `"expr": "up"`, "the serializable request survives")
+	require.Contains(t, queryData, `"responseOmitted": true`)
+	require.Contains(t, queryData, `"responseError"`, "the encode failure is explained in the artifact")
+	require.Contains(t, queryData, `"rows": 1`, "the frame summary stands in for the response")
+	require.NotContains(t, queryData, `"truncated"`, "this is an encode failure, not a size truncation")
+
+	// The failure is still recorded alongside the degraded artifact rather than swallowed by it.
+	require.Contains(t, string(files["querydata-error.txt"]), "unsupported value: NaN")
+}
+
+func TestBuildDashboard_keepsRequestWhenResponseEncodingFails(t *testing.T) {
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	frame.Meta = &data.FrameMeta{Custom: math.NaN()}
+	panels := []DashboardPanel{{
+		ID:           1,
+		Title:        "Broken response",
+		QueryRequest: json.RawMessage(`{"queries":[{"refId":"A","expr":"up"}]}`),
+		Resp:         &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}},
+	}}
+	blob, err := NewBundler().BuildDashboard(nil, panels)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	queryData := string(files["panels/1-broken-response/querydata.json"])
+	require.Contains(t, queryData, `"expr": "up"`, "the serializable request survives")
+	require.Contains(t, queryData, `"responseOmitted": true`)
+
+	var m dashboardManifest
+	require.NoError(t, json.Unmarshal(files["manifest.json"], &m))
+	require.Contains(t, m.Panels[0].QueryDataError, "unsupported value: NaN")
+	require.NotZero(t, m.Panels[0].QueryDataBytes, "the surviving artifact is accounted for in the manifest")
+}
+
+func TestSummarizeQueryDataResponse_errorWithoutStatus(t *testing.T) {
+	// Core datasources run in-process, so nothing normalizes their status the way the SDK does on the
+	// gRPC boundary; several return a bare DataResponse{Error: ...}. Reporting 200 beside an error
+	// string would tell a support engineer the query succeeded.
+	summaries := summarizeQueryDataResponse(&backend.QueryDataResponse{Responses: backend.Responses{
+		"A": {Error: errors.New("influxdb: parse error")},
+		"B": {Frames: data.Frames{data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))}},
+		"C": {Status: backend.StatusBadRequest, Error: errors.New("bad query")},
+	}})
+
+	require.Equal(t, backend.StatusUnknown, summaries["A"].Status, "an errored response must not be summarized as OK")
+	require.Contains(t, summaries["A"].Error, "parse error")
+	require.Equal(t, backend.StatusOK, summaries["B"].Status, "an error-free response with no status is still OK")
+	require.Equal(t, backend.StatusBadRequest, summaries["C"].Status, "an explicit status is preserved")
 }
 
 func TestTruncateDiagnosticString_runeBoundary(t *testing.T) {

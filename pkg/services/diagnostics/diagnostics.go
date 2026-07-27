@@ -62,11 +62,14 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 	if resp != nil || len(queryRequestJSON) > 0 {
 		queryData, err := marshalQueryDataArtifact(queryRequestJSON, resp)
 		if err != nil {
-			// A response that cannot be JSON-encoded (e.g. non-finite floats) must not sink the whole
-			// bundle: record the failure and still ship HAR and the other artifacts, mirroring how the
-			// dashboard path degrades per panel via manifest.queryDataError.
+			// A query-data artifact that cannot be fully JSON-encoded must not sink the whole bundle:
+			// record the failure and still ship HAR and the other artifacts, mirroring how the dashboard
+			// path degrades per panel via manifest.queryDataError.
 			queryDataErr = errors.Join(queryDataErr, err)
-		} else {
+		}
+		// An unencodable response still leaves a degraded artifact (request plus frame summary), so ship
+		// whatever survived rather than discarding it along with the error.
+		if len(queryData) > 0 {
 			files["querydata.json"] = queryData
 		}
 	}
@@ -103,11 +106,14 @@ type queryDataArtifact struct {
 	Request         json.RawMessage                     `json:"request,omitempty"`
 	Response        json.RawMessage                     `json:"response,omitempty"`
 	ResponseSummary map[string]queryDataResponseSummary `json:"responseSummary,omitempty"`
-	Truncated       bool                                `json:"truncated,omitempty"`
-	LimitBytes      int                                 `json:"limitBytes,omitempty"`
-	OriginalBytes   int                                 `json:"originalBytes,omitempty"`
-	RequestOmitted  bool                                `json:"requestOmitted,omitempty"`
-	ResponseOmitted bool                                `json:"responseOmitted,omitempty"`
+	// ResponseError records why the full response is missing when it could not be JSON-encoded, so a
+	// reader can tell an unencodable response from one that was dropped to fit the size cap.
+	ResponseError   string `json:"responseError,omitempty"`
+	Truncated       bool   `json:"truncated,omitempty"`
+	LimitBytes      int    `json:"limitBytes,omitempty"`
+	OriginalBytes   int    `json:"originalBytes,omitempty"`
+	RequestOmitted  bool   `json:"requestOmitted,omitempty"`
+	ResponseOmitted bool   `json:"responseOmitted,omitempty"`
 }
 
 type queryDataResponseSummary struct {
@@ -139,7 +145,21 @@ func marshalQueryDataArtifactWithLimit(request json.RawMessage, resp *backend.Qu
 		// serializing an oversized response can still temporarily allocate its full JSON size.
 		responseJSON, err := queryDataResponseWithoutCaptureFrames(resp).MarshalJSON()
 		if err != nil {
-			return nil, false, err
+			// A response that cannot be encoded (e.g. an unserializable value in a frame's Meta.Custom)
+			// usually still has a serializable request beside it. Degrade to the same request + summary
+			// shape the size cap uses instead of dropping both -- losing the submitted query in exactly
+			// the hard-to-encode cases this artifact exists to capture defeats its purpose. The error is
+			// still returned so the caller records it too.
+			out, fallbackErr := fitQueryDataArtifact(queryDataArtifact{
+				Version:         queryDataArtifactVersion,
+				ResponseSummary: summarizeQueryDataResponse(resp),
+				ResponseError:   truncateDiagnosticString(err.Error(), 1024),
+				ResponseOmitted: true,
+			}, request, maxBytes)
+			if fallbackErr != nil {
+				return nil, false, errors.Join(err, fallbackErr)
+			}
+			return out, false, err
 		}
 		artifact.Response = responseJSON
 	}
@@ -148,42 +168,43 @@ func marshalQueryDataArtifactWithLimit(request json.RawMessage, resp *backend.Qu
 		return full, false, err
 	}
 
-	truncated := queryDataArtifact{
+	out, err := fitQueryDataArtifact(queryDataArtifact{
 		Version:         queryDataArtifactVersion,
-		Request:         request,
 		ResponseSummary: summarizeQueryDataResponse(resp),
 		Truncated:       true,
 		LimitBytes:      maxBytes,
 		OriginalBytes:   len(full),
 		ResponseOmitted: resp != nil,
-	}
-	out, err := json.MarshalIndent(truncated, "", "  ")
-	if err != nil {
-		return nil, true, err
-	}
-	if len(out) <= maxBytes {
-		return out, true, nil
-	}
-
-	truncated.Request = nil
-	truncated.RequestOmitted = len(request) > 0
-	out, err = json.MarshalIndent(truncated, "", "  ")
-	if err != nil {
-		return nil, true, err
-	}
-	if len(out) <= maxBytes {
-		return out, true, nil
-	}
-
-	out, err = json.MarshalIndent(queryDataArtifact{
-		Version:         queryDataArtifactVersion,
-		Truncated:       true,
-		LimitBytes:      maxBytes,
-		OriginalBytes:   len(full),
-		RequestOmitted:  len(request) > 0,
-		ResponseOmitted: resp != nil,
-	}, "", "  ")
+	}, request, maxBytes)
 	return out, true, err
+}
+
+// fitQueryDataArtifact encodes artifact with progressively less content -- request kept, request
+// omitted, then markers only -- and returns the first encoding within maxBytes. The last rung is
+// returned even when it still doesn't fit, because there is nothing further to drop; callers that
+// enforce a hard budget re-check the length.
+func fitQueryDataArtifact(artifact queryDataArtifact, request json.RawMessage, maxBytes int) ([]byte, error) {
+	artifact.Request = request
+	out, err := json.MarshalIndent(artifact, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	if len(out) <= maxBytes {
+		return out, nil
+	}
+
+	artifact.Request = nil
+	artifact.RequestOmitted = len(request) > 0
+	out, err = json.MarshalIndent(artifact, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	if len(out) <= maxBytes {
+		return out, nil
+	}
+
+	artifact.ResponseSummary = nil
+	return json.MarshalIndent(artifact, "", "  ")
 }
 
 func summarizeQueryDataResponse(resp *backend.QueryDataResponse) map[string]queryDataResponseSummary {
@@ -197,7 +218,14 @@ func summarizeQueryDataResponse(resp *backend.QueryDataResponse) map[string]quer
 		}
 		status := response.Status
 		if !status.IsValid() {
+			// Core datasources run in-process, so nothing normalizes their status the way the SDK does on
+			// the gRPC boundary, and several return a bare DataResponse{Error: ...} with status unset.
+			// Assume OK only when the response carries no error, otherwise the summary reports success
+			// next to an error string.
 			status = backend.StatusOK
+			if response.Error != nil {
+				status = backend.StatusUnknown
+			}
 		}
 		summary := queryDataResponseSummary{
 			RefID:       refID,
@@ -340,10 +368,16 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 				queryData, truncated, err := marshalQueryDataArtifactWithLimit(p.QueryRequest, p.Resp, queryDataLimit)
 				if err != nil {
 					queryDataErrs = append(queryDataErrs, err.Error())
-				} else if len(queryData) > queryDataLimit {
+				}
+				// An unencodable response still leaves a degraded artifact (request plus frame summary),
+				// so write whatever survived instead of discarding it along with the error.
+				switch {
+				case len(queryData) == 0:
+					// Nothing survived the failure; the error above is the whole record.
+				case len(queryData) > queryDataLimit:
 					entry.QueryDataTruncated = true
 					queryDataErrs = append(queryDataErrs, "query-data artifact exceeded its assigned dashboard budget")
-				} else {
+				default:
 					files[dir+"/querydata.json"] = queryData
 					entry.QueryDataBytes = len(queryData)
 					queryDataBytesRemaining -= len(queryData)
