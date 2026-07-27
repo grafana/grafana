@@ -1,6 +1,6 @@
 import { Trans } from '@grafana/i18n';
-import { LinkButton, Stack } from '@grafana/ui';
 
+import { FooterAction, FooterActions } from '../FooterActions';
 import { ctaClicked } from '../analytics/main';
 
 interface Props {
@@ -12,24 +12,18 @@ interface Props {
 
 export const CreateAndViewAlertsButtons = ({ hasAlerts, canCreate, newRuleHref, viewAllHref }: Props) => {
   return (
-    <Stack justifyContent="flex-end" wrap="wrap">
+    <FooterActions>
       {hasAlerts && canCreate && (
-        <LinkButton
-          variant="secondary"
-          size="sm"
-          fill="text"
+        <FooterAction
           icon="plus"
           href={newRuleHref}
           onClick={() => ctaClicked({ surface: 'alerts_card', action: 'create_rule', placement: 'footer' })}
         >
           <Trans i18nKey="home.firing-alerts-card.create">Create an alert rule</Trans>
-        </LinkButton>
+        </FooterAction>
       )}
 
-      <LinkButton
-        variant="secondary"
-        size="sm"
-        fill="text"
+      <FooterAction
         href={viewAllHref}
         onClick={() =>
           ctaClicked({
@@ -44,7 +38,7 @@ export const CreateAndViewAlertsButtons = ({ hasAlerts, canCreate, newRuleHref, 
         ) : (
           <Trans i18nKey="home.firing-alerts-card.view-rules">View all alert rules</Trans>
         )}
-      </LinkButton>
-    </Stack>
+      </FooterAction>
+    </FooterActions>
   );
 };
