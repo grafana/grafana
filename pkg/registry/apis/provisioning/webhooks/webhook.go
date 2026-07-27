@@ -52,7 +52,6 @@ type webhookConnector struct {
 	// replayCache is the process-wide webhook replay cache, shared across every
 	// provider repository the connector dispatches for.
 	replayCache *replayCache
-	timeout     time.Duration
 	rateLimiter *ipRateLimiter
 }
 

@@ -1517,6 +1517,15 @@ func WithProvisioningPublicRootURL(url string) GrafanaOption {
 	}
 }
 
+// WithProvisioningWebhookRateLimitRPS sets [provisioning] webhook_rate_limit_rps,
+// enabling the per-client webhook rate limiter at the given sustained rate. The
+// limiter's burst is twice the rate. A value <= 0 leaves the limiter disabled.
+func WithProvisioningWebhookRateLimitRPS(rps int) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningWebhookRateLimitRPS = rps
+	}
+}
+
 // WithProvisioningMaxIncrementalChanges overrides the controller-side
 // incremental-sync size threshold. A small value (e.g. 5) keeps tests fast
 // when they need to exercise the full-sync fallback; 0 disables the check.
