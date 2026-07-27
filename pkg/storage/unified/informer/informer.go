@@ -301,15 +301,27 @@ func (n *Informer) onNotification() nats.MessageHandler {
 		n.log.Debug("nats notification received", "subject", subject, "type", evt.Type, "namespace", evt.Namespace, "name", evt.Name, "rv", evt.ResourceVersion)
 
 		obj := n.newObject(evt.Namespace, evt.Name)
-		// ADDED becomes OnAdd; everything else (MODIFIED, or a DELETED whose object
-		// may still exist mid-finalization) becomes OnUpdate. The handlers key off
-		// namespace/name and re-fetch in their reconcile, so old == new is fine and
-		// a delete just enqueues a key whose GET will 404 and be handled there.
-		if evt.Type == resourcepb.WatchNotification_ADDED {
+		// The handlers key off namespace/name and re-fetch the object in their
+		// reconcile, so the minimal object and old == new are both fine.
+		switch evt.Type {
+		case resourcepb.WatchNotification_ADDED:
 			n.dispatch(func(h cache.ResourceEventHandler) { h.OnAdd(obj, false) })
-			return
+		case resourcepb.WatchNotification_DELETED:
+			// A DELETED notification is published only once the object is actually
+			// removed from storage; a delete that merely sets a deletionTimestamp is an
+			// update, delivered as MODIFIED (and that is where finalizers run). So by
+			// the time DELETED arrives the object is gone and a re-fetch can only 404.
+			// Deliver it as OnDelete — the standard delete signal handlers already
+			// ignore or key off — rather than OnUpdate: a re-fetching controller would
+			// otherwise enqueue a key whose only possible outcome is a spurious "not
+			// found" reconcile error. Drop it from the snapshot too, so a
+			// staleness-tolerant reader (e.g. a quota count) stops counting it without
+			// waiting for the next re-list.
+			n.store.Delete(context.Background(), evt.Namespace, evt.Name)
+			n.dispatch(func(h cache.ResourceEventHandler) { h.OnDelete(obj) })
+		default: // MODIFIED
+			n.dispatch(func(h cache.ResourceEventHandler) { h.OnUpdate(obj, obj) })
 		}
-		n.dispatch(func(h cache.ResourceEventHandler) { h.OnUpdate(obj, obj) })
 	}
 }
 
