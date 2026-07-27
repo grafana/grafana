@@ -713,7 +713,7 @@ describe('preparePlotConfigBuilder with namePosition', () => {
 
     const mockU = { bbox: { height: 600 } } as unknown as uPlot;
     const splits = [0.1, 0.5, 0.9];
-    const values = (yAxis.values as (u: uPlot, splits: number[]) => (string | null)[])(mockU, splits);
+    const values = (yAxis.values as (u: uPlot, splits: number[]) => Array<string | null>)(mockU, splits);
 
     expect(values).toEqual(['', '', '']);
   });
@@ -724,7 +724,7 @@ describe('preparePlotConfigBuilder with namePosition', () => {
 
     const mockU = { bbox: { height: 100 } } as unknown as uPlot;
     const splits = Array(50).fill(0);
-    const values = (yAxis.values as (u: uPlot, splits: number[]) => (string | null)[])(mockU, splits);
+    const values = (yAxis.values as (u: uPlot, splits: number[]) => Array<string | null>)(mockU, splits);
 
     expect(values!.every((v) => typeof v === 'string' && v.length > 0)).toBe(true);
   });
@@ -749,7 +749,7 @@ describe('preparePlotConfigBuilder with namePosition', () => {
 
     const mockU = { bbox: { height: 600 } } as unknown as uPlot;
     const splits = [0.1, 0.5, 0.9];
-    const values = (yAxis.values as (u: uPlot, splits: number[]) => (string | null)[])(mockU, splits);
+    const values = (yAxis.values as (u: uPlot, splits: number[]) => Array<string | null>)(mockU, splits);
 
     expect(values).toEqual([null, null, null]);
     expect(yAxis.size).toBe(0);

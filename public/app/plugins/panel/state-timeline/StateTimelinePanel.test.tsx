@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react';
+import { act, render, screen } from 'test/test-utils';
 
 import {
   applyFieldOverrides,
@@ -13,7 +14,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { act, render, screen } from 'test/test-utils';
 
 import { getPanelProps } from '../test-utils';
 
