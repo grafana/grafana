@@ -58,4 +58,20 @@ message WatchNotification {
   // unknown (e.g. a create).
   // +optional
   int64 previous_resource_version = 8;
+
+  // UID is the Kubernetes metadata.uid of the object the change refers to. It
+  // identifies a specific object lifetime, so a consumer can tell a
+  // delete/recreate of the same namespace/name apart (the re-created object has
+  // a different UID) and ignore an event that no longer matches the live object.
+  // Empty when the writing storage did not populate it (older producers).
+  // +optional
+  string uid = 9;
+
+  // Generation is the Kubernetes metadata.generation of the object at the time
+  // of the change. It advances only when the desired state (spec) changes, so a
+  // consumer that re-fetches the object can compare it against this value to
+  // tell whether its read already reflects the spec update that triggered the
+  // event. 0 when the writing storage did not populate it (older producers).
+  // +optional
+  int64 generation = 10;
 }

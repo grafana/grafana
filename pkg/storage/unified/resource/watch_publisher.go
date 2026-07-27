@@ -64,6 +64,8 @@ func (k *kvStorageBackend) publishWatchNotification(ctx context.Context, event E
 		ResourceVersion:         event.ResourceVersion,
 		Folder:                  event.Folder,
 		PreviousResourceVersion: event.PreviousRV,
+		Uid:                     event.UID,
+		Generation:              event.Generation,
 	})
 	if err != nil {
 		k.log.Warn("failed to marshal watch notification", "subject", subject, "error", err)

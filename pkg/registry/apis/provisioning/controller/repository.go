@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -30,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -77,6 +79,18 @@ type RepositoryController struct {
 	tokenMetrics                  *repositoryTokenMetrics
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	webhookSecretRotationInterval time.Duration
+
+	// hints holds the freshest reconcile hint (identity/freshness/operation from
+	// the notification that enqueued the key), keyed by work key. Written on
+	// enqueue, read on reconcile, cleared when the key reaches a terminal outcome.
+	hints sync.Map // string -> reconcileHint
+	// visibilityAttempts counts consecutive not-yet-visible retries per work key.
+	// The read-after-write requeue uses AddAfter, which the rate limiter does not
+	// count, so the bound is tracked here. Cleared with the hint.
+	visibilityAttempts sync.Map // string -> int
+	// visibilityBackoff is the per-attempt not-yet-visible delay schedule; a field
+	// so tests can shrink it. Defaults to defaultVisibilityBackoff.
+	visibilityBackoff []time.Duration
 }
 
 // NewRepositoryController creates new RepositoryController.
@@ -138,6 +152,7 @@ func NewRepositoryController(
 		tokenMetrics:                  repoTokenMetrics,
 		incrementalPolicy:             incrementalPolicy,
 		webhookSecretRotationInterval: webhookSecretRotationInterval,
+		visibilityBackoff:             defaultVisibilityBackoff,
 	}
 
 	rc.processFn = rc.process
@@ -222,7 +237,30 @@ func (rc *RepositoryController) enqueue(obj interface{}) {
 		utilruntime.HandleError(fmt.Errorf("couldn't get key for object: %v", err))
 		return
 	}
+	// Record the notification's identity/freshness/intent so the reconcile can
+	// classify its read. The queue coalesces by key, so the freshest enqueue wins;
+	// a lost or stale hint only relaxes the classification (the reconcile always
+	// reads and converges on current state regardless).
+	if m, ok := obj.(v1.Object); ok {
+		rc.hints.Store(key, hintFromObject(m))
+	}
 	rc.queue.Add(key)
+}
+
+func (rc *RepositoryController) loadHint(key string) reconcileHint {
+	if v, ok := rc.hints.Load(key); ok {
+		if h, ok := v.(reconcileHint); ok {
+			return h
+		}
+	}
+	// No hint (e.g. a resync-driven enqueue): treat as an upsert so a NotFound
+	// gets the brief read-after-write retry rather than being dropped outright.
+	return reconcileHint{operation: usinformer.NotificationOperationUpsert}
+}
+
+func (rc *RepositoryController) clearHint(key string) {
+	rc.hints.Delete(key)
+	rc.visibilityAttempts.Delete(key)
 }
 
 // processNextWorkItem deals with one key off the queue.
@@ -241,8 +279,32 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	err := rc.processFn(key)
 	if err == nil {
 		rc.queue.Forget(key)
+		rc.clearHint(key)
 		return true
 	}
+
+	// Read-after-write race: the reconcile read has not observed an upserted
+	// repository yet. Requeue with a brief, bounded, jittered delay to let the
+	// write become visible instead of dropping the key until the next resync; a
+	// repository that never appears exhausts the retries and is then forgotten.
+	if errors.Is(err, errObjectNotYetVisible) {
+		prev, _ := rc.visibilityAttempts.Load(key)
+		attempts, _ := prev.(int)
+		delay, ok := visibilityRetryDelay(rc.visibilityBackoff, attempts)
+		if !ok {
+			logger.With("attempts", attempts).Info("RepositoryController: repository still not visible after retries; leaving for the next resync")
+			rc.queue.Forget(key)
+			rc.clearHint(key)
+			return true
+		}
+		rc.visibilityAttempts.Store(key, attempts+1)
+		logger.With("attempts", attempts+1, "delay", delay.String()).Debug("RepositoryController: repository not yet visible, requeuing")
+		rc.queue.AddAfter(key, delay)
+		return true
+	}
+	// Past the not-visible stage: reset that counter but keep the hint for the
+	// retried reconcile.
+	rc.visibilityAttempts.Delete(key)
 
 	// NumRequeues counts prior AddRateLimited calls; add 1 for the current attempt.
 	attempts := rc.queue.NumRequeues(key) + 1
@@ -252,12 +314,14 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	if attempts >= maxAttempts {
 		logger.Error("RepositoryController failed too many times")
 		rc.queue.Forget(key)
+		rc.clearHint(key)
 		return true
 	}
 
 	if !apierrors.IsServiceUnavailable(err) {
 		logger.Info("RepositoryController will not retry")
 		rc.queue.Forget(key)
+		rc.clearHint(key)
 		return true
 	} else {
 		logger.Info("RepositoryController will retry as service is unavailable")
@@ -575,14 +639,42 @@ func (rc *RepositoryController) process(key string) error {
 		return err
 	}
 
-	// Reconcile the object the read seam returns; how it is sourced and kept
-	// fresh is the informer.RepositoryGetter's concern, not the controller's.
+	// Treat the notification as a reconcile hint: read current state and converge.
+	// The hint carries the change's identity/freshness/intent so an ambiguous read
+	// (NotFound, or an object older than the event) can be classified rather than
+	// dropped. How the object is sourced is the RepositoryGetter's concern.
+	hint := rc.loadHint(key)
 	obj, err := rc.repos.Get(ctx, namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
-		return errors.New("repository not found")
+		if hint.operation == usinformer.NotificationOperationDelete {
+			// Expected: the object a delete notification refers to is already gone.
+			logger.Debug("repository not found for a delete notification; nothing to reconcile")
+			return nil
+		}
+		// Ambiguous under the decoupled NATS read seam: usually a read-after-write
+		// race on a just-created repository. Ask processNextWorkItem for a brief,
+		// bounded retry rather than treating it as a deletion.
+		logger.Debug("repository not yet visible for an upsert notification; will retry briefly")
+		return errObjectNotYetVisible
 	case err != nil:
 		return err
+	}
+
+	// Now that the live object is in hand, guard against acting on a stale event.
+	if hint.uid != "" && string(obj.UID) != hint.uid {
+		// Same namespace/name, different object lifetime (a delete+recreate). The
+		// event refers to an object that no longer exists; the current one will be
+		// reconciled by its own notification, so ignore this stale event.
+		logger.Info("ignoring stale notification: repository UID differs from the event", "event_uid", hint.uid, "object_uid", string(obj.UID))
+		return nil
+	}
+	if hint.operation != usinformer.NotificationOperationDelete && hint.generation > 0 && obj.Generation < hint.generation {
+		// The fetched object predates the spec change that triggered this event: a
+		// read-after-write race on an update. Retry briefly for the newer generation.
+		logger.Debug("fetched repository is older than the notification; will retry briefly",
+			"event_generation", hint.generation, "object_generation", obj.Generation)
+		return errObjectNotYetVisible
 	}
 
 	logger = logger.With(
