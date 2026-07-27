@@ -783,13 +783,11 @@ func TestWriteResourceFromParsed_AccidentalDuplicateUIDAcrossFiles(t *testing.T)
 		require.ErrorIs(t, err, ErrDuplicateName)
 		require.Contains(t, err.Error(), pathP)
 		require.Contains(t, err.Error(), pathQ)
-		// A cross-file accidental duplicate is a hard error, not a validation
-		// warning: an incremental sync that merely warned would succeed and
-		// discard the change (updating the last-applied hash), so the duplicate
-		// would only resurface on a full sync.
+		// A cross-file accidental duplicate is surfaced as a validation warning
+		// (JobStateWarning), consistent with the in-run duplicate path.
 		var validationErr *ResourceValidationError
-		require.False(t, errors.As(err, &validationErr),
-			"accidental duplicate must be a hard error, not a warning")
+		require.ErrorAs(t, err, &validationErr,
+			"cross-file duplicate must be surfaced as a warning")
 		// The hijacking write must not happen — dir-a keeps the UID.
 		requireNoWrite(t, client)
 	})
@@ -916,12 +914,44 @@ func TestWriteResourceFromParsed_AccidentalDuplicateUIDAcrossFiles(t *testing.T)
 		require.Contains(t, err.Error(), "transient parse failure")
 		requireNoWrite(t, client)
 	})
+
+	t.Run("in-place update (previousName == UID) skips the probe", func(t *testing.T) {
+		_, _, client, mgr := newManager(t)
+
+		// The resource is reported as owned by a different path; no repo.Read for
+		// that path is registered, so IF the probe ran it would panic the mock.
+		// WithPreviousName(uid) marks this as an in-place update, so the probe is
+		// skipped and the write proceeds straight to the claim + update.
+		client.On("Get", mock.Anything, uid, metav1.GetOptions{}, mock.Anything).Return(ownedByQ(), nil)
+		client.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(ownedByQ(), nil)
+
+		_, _, err := mgr.WriteResourceFromFile(context.Background(), pathP, ref, WithPreviousName(uid))
+
+		require.NoError(t, err)
+		client.AssertCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("identity-change update (previousName != UID) still probes", func(t *testing.T) {
+		repo, parser, client, mgr := newManager(t)
+
+		// previousName differs from the new UID, so the probe must still run and
+		// catch a collision on the new UID.
+		client.On("Get", mock.Anything, uid, metav1.GetOptions{}, mock.Anything).Return(ownedByQ(), nil)
+		fileQ := &repository.FileInfo{Data: []byte(`{}`), Path: pathQ}
+		repo.On("Read", mock.Anything, pathQ, ref).Return(fileQ, nil)
+		parser.On("Parse", mock.Anything, fileQ).Return(mustBuildParsedResource(uid, nil), nil)
+
+		_, _, err := mgr.WriteResourceFromFile(context.Background(), pathP, ref, WithPreviousName("old-uid"))
+
+		require.ErrorIs(t, err, ErrDuplicateName)
+		requireNoWrite(t, client)
+	})
 }
 
-// TestWriteResourceFromParsed_SkippedDuplicateDoesNotPolluteLookup guards the
-// ordering of addResource relative to the cross-file duplicate check: a skipped
-// duplicate must not leave its path in resourcesLookup, or the real owner file
-// processed later in the same run would be wrongly flagged as an in-run duplicate.
+// TestWriteResourceFromParsed_SkippedDuplicateDoesNotPolluteLookup verifies that a
+// probe-rejected cross-file duplicate never claims the UID (the claim happens only
+// on the write path, after the probe), so the real owner file processed later in
+// the same run is not wrongly flagged as an in-run duplicate.
 func TestWriteResourceFromParsed_SkippedDuplicateDoesNotPolluteLookup(t *testing.T) {
 	const (
 		ref   = "abc123"
