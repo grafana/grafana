@@ -16,6 +16,7 @@ import {
   type DateTime,
   escapeRegex,
   FieldType,
+  getDefaultTimeRange,
   type MetricFindValue,
   type QueryVariableModel,
   type RawTimeRange,
@@ -386,6 +387,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return lastValueFrom(
       super.query({
         targets: [target],
+        range: getDefaultTimeRange(),
       } as DataQueryRequest)
     ).then(this.toMetricFindValue);
   }
@@ -401,6 +403,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return lastValueFrom(
         super.query({
           ...(options ?? {}), // includes 'range'
+          range: options?.range ?? getDefaultTimeRange(),
           maxDataPoints: query.maxDataPoints,
           targets: [target],
         })
@@ -447,7 +450,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       withTimeFilter: this.showTagTime,
     });
 
-    return this.metricFindQuery({ refId: 'get-tag-keys', query });
+    return this.metricFindQuery({ refId: 'get-tag-keys', query }, { range: options?.timeRange });
   }
 
   getTagValues(options: DataSourceGetTagValuesOptions<InfluxQuery>) {
@@ -459,7 +462,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       withTimeFilter: this.showTagTime,
     });
 
-    return this.metricFindQuery({ refId: 'get-tag-values', query });
+    return this.metricFindQuery({ refId: 'get-tag-values', query }, { range: options?.timeRange });
   }
 
   /**
