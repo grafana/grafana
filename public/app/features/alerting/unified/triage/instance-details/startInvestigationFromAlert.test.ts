@@ -77,13 +77,28 @@ describe('buildFromAlertRequest', () => {
 });
 
 describe('stableFromAlertRequest', () => {
-  it('strips startsAt, status, name, and generatorURL so rule load does not change identity', () => {
+  it('strips startsAt, status, name, generatorURL, and commonLabels so identity stays stable', () => {
     const beforeRule = stableFromAlertRequest({
       alerts: [{ labels: { alertname: 'HighCPU' } }],
       groupLabels: { alertname: 'HighCPU' },
     });
     const afterStart = stableFromAlertRequest({
       name: 'High CPU',
+      commonLabels: { team: 'platform' },
+      alerts: [
+        {
+          labels: { alertname: 'HighCPU' },
+          status: 'firing',
+          startsAt: '2026-01-01T00:00:00Z',
+          generatorURL: 'https://grafana.example/alerting/grafana/rule-1/view',
+        },
+      ],
+      groupLabels: { alertname: 'HighCPU' },
+    });
+    const afterCommonLabelsShift = stableFromAlertRequest({
+      name: 'High CPU',
+      // Sibling instances changed — commonLabels recomputed mid-drawer.
+      commonLabels: { team: 'platform', region: 'eu' },
       alerts: [
         {
           labels: { alertname: 'HighCPU' },
@@ -96,7 +111,9 @@ describe('stableFromAlertRequest', () => {
     });
 
     expect(beforeRule).toEqual(afterStart);
+    expect(afterStart).toEqual(afterCommonLabelsShift);
     expect(afterStart.name).toBeUndefined();
+    expect(afterStart.commonLabels).toBeUndefined();
     expect(afterStart.alerts[0].status).toBeUndefined();
     expect(afterStart.alerts[0].startsAt).toBeUndefined();
     expect(afterStart.alerts[0].generatorURL).toBeUndefined();

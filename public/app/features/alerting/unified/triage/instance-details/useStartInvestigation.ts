@@ -63,10 +63,10 @@ export function useStartInvestigation({
   const featureEnabled = isManualAssistantInvestigationEnabled();
   const { installed } = usePluginBridge(SupportedPlugin.Assistant);
 
-  // Stable identity for RTK Query cache keys — omit startsAt/status/name/generatorURL
-  // (those are attached only on create). Wait for rule identity when the instance has
-  // no labels, otherwise early Start/lookup can hash a different group key once the
-  // rule arrives.
+  // Stable identity for RTK Query cache keys — omit startsAt/status/name/generatorURL/
+  // commonLabels (create-time or sibling-derived; can change mid-drawer). Wait for rule
+  // identity when the instance has no labels, otherwise early Start/lookup can hash a
+  // different group key once the rule arrives.
   const hasStableIdentity = Object.keys(instanceLabels).length > 0 || Boolean(rule?.uid) || Boolean(rule?.title);
 
   const requestBody = useMemo(
@@ -78,13 +78,24 @@ export function useStartInvestigation({
     [JSON.stringify(instanceLabels), JSON.stringify(commonLabels), rule?.uid, rule?.title, hasStableIdentity]
   );
 
-  const requestBodyKey = useMemo(() => (requestBody ? JSON.stringify(requestBody) : ''), [requestBody]);
+  // Lookup / mutation matching key — commonLabels stripped so sibling recomputation
+  // does not reset an in-flight start or split the lookup cache.
+  const stableRequestBody = useMemo(
+    () => (requestBody ? stableFromAlertRequest(requestBody) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [requestBody ? JSON.stringify(stableFromAlertRequest(requestBody)) : '']
+  );
+
+  const requestBodyKey = useMemo(
+    () => (stableRequestBody ? JSON.stringify(stableRequestBody) : ''),
+    [stableRequestBody]
+  );
 
   const [startInvestigation, { isLoading, data, isError, reset, originalArgs }] =
     assistantApi.useStartInvestigationFromAlertMutation();
 
   // Mutation result is shared RTK state. Only trust it for the current alert identity
-  // (create-only fields stripped via stableFromAlertRequest).
+  // (create-only / volatile fields stripped via stableFromAlertRequest).
   const mutationMatchesCurrent = useMemo(() => {
     if (!originalArgs || !requestBodyKey) {
       return false;
@@ -108,7 +119,7 @@ export function useStartInvestigation({
     isLoading: isLookingUp,
     isError: isLookupError,
     refetch: refetchLookup,
-  } = assistantApi.useLookupInvestigationFromAlertQuery(requestBody ?? skipToken, {
+  } = assistantApi.useLookupInvestigationFromAlertQuery(stableRequestBody ?? skipToken, {
     skip: !featureEnabled || !installed,
     // Drawer remount must not trust a start-time pending upsert forever.
     refetchOnMountOrArgChange: true,
@@ -144,7 +155,7 @@ export function useStartInvestigation({
   // pending/in_progress snapshot after the report already finished. Never write a
   // stale non-terminal poll over a fresher terminal lookup for the same id.
   useEffect(() => {
-    if (!requestBody || !polledInvestigation) {
+    if (!stableRequestBody || !polledInvestigation) {
       return;
     }
     if (
@@ -159,8 +170,8 @@ export function useStartInvestigation({
       );
       return;
     }
-    dispatch(assistantApi.util.upsertQueryData('lookupInvestigationFromAlert', requestBody, polledInvestigation));
-  }, [dispatch, requestBody, polledInvestigation, lookedUpInvestigation]);
+    dispatch(assistantApi.util.upsertQueryData('lookupInvestigationFromAlert', stableRequestBody, polledInvestigation));
+  }, [dispatch, stableRequestBody, polledInvestigation, lookedUpInvestigation]);
 
   // Drop a stale create-time pending mutation once lookup/poll knows the same id is terminal.
   useEffect(() => {

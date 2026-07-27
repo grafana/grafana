@@ -25,11 +25,12 @@ export interface StartInvestigationFromAlertRequest {
 
 /**
  * Strips per-delivery / rule-metadata fields so create/lookup share one RTK cache
- * identity. startsAt, status, name, and generatorURL can appear after Start or when
- * the rule query resolves; group identity (labels) must not change mid-drawer.
+ * identity. startsAt, status, name, generatorURL, and commonLabels can change while
+ * the drawer is open (rule load, Start click, sibling-instance recomputation);
+ * group identity (alerts[].labels / groupLabels) must not change mid-drawer.
  */
 export function stableFromAlertRequest(body: StartInvestigationFromAlertRequest): StartInvestigationFromAlertRequest {
-  const { name: _name, ...rest } = body;
+  const { name: _name, commonLabels: _commonLabels, ...rest } = body;
   return {
     ...rest,
     alerts: body.alerts.map(({ startsAt: _startsAt, status: _status, generatorURL: _generatorURL, ...alert }) => alert),
