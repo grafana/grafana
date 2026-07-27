@@ -2,7 +2,13 @@ import { find } from 'lodash';
 
 import { type AzureCredentials } from '@grafana/azure-sdk';
 import { type ScopedVars } from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv, type VariableInterpolation } from '@grafana/runtime';
+import {
+  config,
+  DataSourceWithBackend,
+  getTemplateSrv,
+  type TemplateSrv,
+  type VariableInterpolation,
+} from '@grafana/runtime';
 
 import { getCredentials } from '../credentials';
 import { type AzureMetricQuery, AzureQueryType } from '../dataquery.gen';
@@ -51,6 +57,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
   locationsApiVersion = '2020-01-01';
   defaultSubscriptionId?: string;
   basicLogsEnabled?: boolean;
+  batchAPIEnabled?: boolean;
   resourcePath: string;
   declare resourceGroup: string;
   declare resourceName: string;
@@ -64,6 +71,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
 
     this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
     this.basicLogsEnabled = instanceSettings.jsonData.basicLogsEnabled;
+    // Gate on the feature toggle so batchAPIEnabled is the single source of truth (callers needn't re-check it).
+    this.batchAPIEnabled = !!config.featureToggles.azureMonitorBatchAPI && instanceSettings.jsonData.batchAPIEnabled;
 
     this.resourcePath = routeNames.azureMonitor;
   }
@@ -207,7 +216,13 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
   }
 
   // Note globalRegion should be false when querying custom metric namespaces
-  getMetricNamespaces(query: GetMetricNamespacesQuery, globalRegion: boolean, region?: string, custom?: boolean) {
+  getMetricNamespaces(
+    query: GetMetricNamespacesQuery,
+    globalRegion: boolean,
+    region?: string,
+    custom?: boolean,
+    excludeCustom?: boolean
+  ) {
     const url = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
       this.resourcePath,
       this.apiPreviewVersion,
@@ -221,6 +236,12 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
       .then((result: AzureAPIResponse<MetricNamespace>) => {
         if (custom) {
           result.value = result.value.filter((namespace) => namespace.classification === 'Custom');
+        } else if (excludeCustom) {
+          // Custom metric namespaces (e.g. Application Insights custom telemetry) are not
+          // available through the Metrics Batch API, so drop them when the caller can only
+          // use batchable namespaces. The API's classification is the reliable signal here;
+          // custom namespaces have no fixed naming prefix.
+          result.value = result.value.filter((namespace) => namespace.classification !== 'Custom');
         }
         return ResponseParser.parseResponseValues(
           result,
@@ -252,7 +273,9 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
   }
 
   getMetricNames(query: GetMetricNamesQuery, multipleResources?: boolean, region?: string) {
-    const apiVersion = multipleResources ? this.apiPreviewVersion : this.apiVersion;
+    // The batch API forces a per-resource (resource-scoped) URL, so it uses the standard API
+    // version rather than the subscription-scoped preview version used for multi-resource requests.
+    const apiVersion = multipleResources && !this.batchAPIEnabled ? this.apiPreviewVersion : this.apiVersion;
     const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
       this.resourcePath,
       apiVersion,
@@ -260,7 +283,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
       this.replaceSingleTemplateVariables(query),
       this.templateSrv,
       multipleResources,
-      region
+      region,
+      this.batchAPIEnabled
     );
     return this.getResource(url).then((result: AzureAPIResponse<Metric>) => {
       return ResponseParser.parseResponseValues(result, 'name.localizedValue', 'name.value');
@@ -269,7 +293,9 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
 
   getMetricMetadata(query: GetMetricMetadataQuery, multipleResources?: boolean, region?: string) {
     const { metricName } = query;
-    const apiVersion = multipleResources ? this.apiPreviewVersion : this.apiVersion;
+    // The batch API forces a per-resource (resource-scoped) URL, so it uses the standard API
+    // version rather than the subscription-scoped preview version used for multi-resource requests.
+    const apiVersion = multipleResources && !this.batchAPIEnabled ? this.apiPreviewVersion : this.apiVersion;
     const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
       this.resourcePath,
       apiVersion,
@@ -277,7 +303,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
       this.replaceSingleTemplateVariables(query),
       this.templateSrv,
       multipleResources,
-      region
+      region,
+      this.batchAPIEnabled
     );
     return this.getResource(url).then((result: AzureMonitorMetricsMetadataResponse) => {
       return ResponseParser.parseMetadata(result, this.templateSrv.replace(metricName));

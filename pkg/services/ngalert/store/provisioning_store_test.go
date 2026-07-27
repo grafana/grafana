@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert"
@@ -201,6 +202,142 @@ func TestIntegrationProvisioningStore(t *testing.T) {
 				p, err = store.GetProvenance(context.Background(), &ruleOrg, orgID)
 				require.NoError(t, err)
 				require.Equal(t, models.ProvenanceNone, p)
+			})
+		})
+	}
+}
+
+func TestIntegrationProvisioningStoreManagerProperties(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	testCases := []struct {
+		name           string
+		featureEnabled bool
+	}{
+		{name: "without feature flag", featureEnabled: false},
+		{name: "with feature flag", featureEnabled: true},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ng, dbStore := tests.SetupTestEnv(t, testAlertingIntervalSeconds)
+			if tc.featureEnabled {
+				dbStore.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertingProvenanceLockWrites)
+			}
+			store := createProvisioningStoreSut(ng, dbStore)
+
+			t.Run("Default manager properties of an unset record are empty", func(t *testing.T) {
+				rule := models.AlertRule{UID: "mp-unset"}
+
+				mp, err := store.GetManagerProperties(context.Background(), &rule, 1)
+
+				require.NoError(t, err)
+				require.Equal(t, utils.ManagerProperties{}, mp)
+			})
+
+			t.Run("SetManagerProperties round-trips kind and identity", func(t *testing.T) {
+				const orgID = 1
+				rule := models.AlertRule{UID: "mp-terraform", OrgID: orgID}
+				want := utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "my-workspace"}
+
+				err := store.SetManagerProperties(context.Background(), &rule, orgID, want)
+				require.NoError(t, err)
+
+				got, err := store.GetManagerProperties(context.Background(), &rule, orgID)
+				require.NoError(t, err)
+				require.Equal(t, want, got)
+
+				// The legacy provenance column is kept in sync (terraform maps to api).
+				p, err := store.GetProvenance(context.Background(), &rule, orgID)
+				require.NoError(t, err)
+				require.Equal(t, models.ProvenanceAPI, p)
+			})
+
+			t.Run("SetProvenance keeps manager_kind in sync so GetManagerProperties reflects it", func(t *testing.T) {
+				const orgID = 1
+				rule := models.AlertRule{UID: "mp-from-provenance", OrgID: orgID}
+
+				err := store.SetProvenance(context.Background(), &rule, orgID, models.ProvenanceFile)
+				require.NoError(t, err)
+
+				mp, err := store.GetManagerProperties(context.Background(), &rule, orgID)
+				require.NoError(t, err)
+				require.Equal(t, models.ProvenanceToManagerProperties(models.ProvenanceFile), mp)
+				require.True(t, mp.Kind.IsClassic())
+			})
+
+			t.Run("SetProvenance preserves a stored specific manager when provenance is unchanged", func(t *testing.T) {
+				// Terraform collapses to ProvenanceAPI on the legacy API. A legacy
+				// write carrying that same coarse provenance is not a request to
+				// downgrade the manager to classic-api-provisioning; it is the only
+				// value the legacy API can express. The stored terraform manager
+				// (and its identity) must survive the write.
+				const orgID = 1
+				rule := models.AlertRule{UID: "mp-preserve", OrgID: orgID}
+
+				err := store.SetManagerProperties(context.Background(), &rule, orgID, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"})
+				require.NoError(t, err)
+
+				err = store.SetProvenance(context.Background(), &rule, orgID, models.ProvenanceAPI)
+				require.NoError(t, err)
+
+				mp, err := store.GetManagerProperties(context.Background(), &rule, orgID)
+				require.NoError(t, err)
+				require.Equal(t, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"}, mp,
+					"stored terraform manager and identity must not be clobbered by a legacy api provenance write")
+			})
+
+			t.Run("SetProvenance re-derives the manager on a genuine provenance change", func(t *testing.T) {
+				// Moving a terraform-managed rule (coarse: api) to file provenance
+				// is a real change of provenance, not just the coarse view of the
+				// stored manager, so the manager is re-derived and the identity dropped.
+				const orgID = 1
+				rule := models.AlertRule{UID: "mp-overwrite", OrgID: orgID}
+
+				err := store.SetManagerProperties(context.Background(), &rule, orgID, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"})
+				require.NoError(t, err)
+
+				err = store.SetProvenance(context.Background(), &rule, orgID, models.ProvenanceFile)
+				require.NoError(t, err)
+
+				mp, err := store.GetManagerProperties(context.Background(), &rule, orgID)
+				require.NoError(t, err)
+				require.Equal(t, models.ProvenanceToManagerProperties(models.ProvenanceFile), mp)
+				require.Empty(t, mp.Identity)
+			})
+
+			t.Run("GetManagerPropertiesByUIDs returns properties and respects org + UID filters", func(t *testing.T) {
+				const orgID = 200
+				ruleTF := models.AlertRule{UID: "mp-by-uid-tf", OrgID: orgID}
+				ruleFile := models.AlertRule{UID: "mp-by-uid-file", OrgID: orgID}
+				ruleOther := models.AlertRule{UID: "mp-by-uid-other", OrgID: orgID}
+
+				require.NoError(t, store.SetManagerProperties(context.Background(), &ruleTF, orgID, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"}))
+				require.NoError(t, store.SetProvenance(context.Background(), &ruleFile, orgID, models.ProvenanceFile))
+				require.NoError(t, store.SetProvenance(context.Background(), &ruleOther, orgID, models.ProvenanceAPI))
+
+				got, err := store.GetManagerPropertiesByUIDs(context.Background(), orgID, ruleTF.ResourceType(), []string{ruleTF.UID, ruleFile.UID})
+				require.NoError(t, err)
+				require.Len(t, got, 2)
+				require.Equal(t, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"}, got[ruleTF.UID])
+				require.Equal(t, models.ProvenanceToManagerProperties(models.ProvenanceFile), got[ruleFile.UID])
+				_, exists := got[ruleOther.UID]
+				require.False(t, exists)
+			})
+
+			t.Run("GetManagerPropertiesByUIDs returns empty map for empty UIDs", func(t *testing.T) {
+				got, err := store.GetManagerPropertiesByUIDs(context.Background(), 1, (&models.AlertRule{}).ResourceType(), []string{})
+				require.NoError(t, err)
+				require.Empty(t, got)
+			})
+
+			t.Run("GetManagerProperties is scoped by org", func(t *testing.T) {
+				rule := models.AlertRule{UID: "mp-cross-org"}
+				require.NoError(t, store.SetManagerProperties(context.Background(), &rule, 301, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"}))
+
+				mp, err := store.GetManagerProperties(context.Background(), &rule, 302)
+				require.NoError(t, err)
+				require.Equal(t, utils.ManagerProperties{}, mp)
 			})
 		})
 	}

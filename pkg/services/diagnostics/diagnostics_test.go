@@ -417,6 +417,72 @@ func TestBuildDashboard(t *testing.T) {
 	require.Positive(t, m.Panels[0].HARBytes)
 }
 
+// The whole-dashboard client posts the dashboard save model once instead of each panel's JSON, so
+// BuildDashboard must resolve each panel's panel.json from that model by id -- including panels nested
+// inside a collapsed row.
+func TestBuildDashboard_resolvesPanelJSONFromDashboardModel(t *testing.T) {
+	dashboardJSON := json.RawMessage(`{
+		"title": "My dash",
+		"panels": [
+			{"id": 1, "type": "timeseries", "title": "CPU Usage"},
+			{"id": 9, "type": "row", "title": "Row", "panels": [
+				{"id": 2, "type": "logs", "title": "Logs"}
+			]}
+		]
+	}`)
+	// Neither panel carries inline PanelJSON -- it must be extracted from dashboardJSON by id.
+	panels := []DashboardPanel{
+		{ID: 1, Title: "CPU Usage", HARBuffer: bufferWithEntry(t, "http://ds/1")},
+		{ID: 2, Title: "Logs", HARBuffer: bufferWithEntry(t, "http://ds/2")},
+	}
+	blob, err := NewBundler().BuildDashboard(dashboardJSON, panels)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.Contains(t, files, "panels/1-cpu-usage/panel.json", "top-level panel JSON resolved by id")
+	require.Contains(t, files, "panels/2-logs/panel.json", "panel nested in a collapsed row resolved by id")
+	require.Contains(t, string(files["panels/1-cpu-usage/panel.json"]), `"timeseries"`)
+	require.Contains(t, string(files["panels/2-logs/panel.json"]), `"logs"`)
+}
+
+func TestBuildDashboard_resolvesPanelJSONFromDashboardV2Model(t *testing.T) {
+	dashboardJSON := json.RawMessage(`{
+		"title": "My dash",
+		"elements": {
+			"panel-3": {
+				"kind": "Panel",
+				"spec": {"id": 3, "title": "CPU Usage", "vizConfig": {"group": "timeseries"}}
+			},
+			"panel-4": {
+				"kind": "LibraryPanel",
+				"spec": {"id": 4, "title": "Shared Errors", "libraryPanel": {"uid": "shared-errors"}}
+			}
+		}
+	}`)
+	panels := []DashboardPanel{
+		{ID: 3, Title: "CPU Usage", HARBuffer: bufferWithEntry(t, "http://ds/3")},
+		{ID: 4, Title: "Shared Errors", HARBuffer: bufferWithEntry(t, "http://ds/4")},
+	}
+	blob, err := NewBundler().BuildDashboard(dashboardJSON, panels)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.Contains(t, files, "panels/3-cpu-usage/panel.json")
+	require.Contains(t, files, "panels/4-shared-errors/panel.json")
+	require.Contains(t, string(files["panels/3-cpu-usage/panel.json"]), `"timeseries"`)
+	require.Contains(t, string(files["panels/4-shared-errors/panel.json"]), `"shared-errors"`)
+}
+
+func TestIndexPanelJSON(t *testing.T) {
+	dash := json.RawMessage(`{"panels":[{"id":1,"type":"a"},{"id":5,"type":"row","panels":[{"id":6,"type":"b"}]}]}`)
+	panelsByID := indexPanelJSON(dash)
+	require.Contains(t, string(panelsByID[1]), `"a"`)
+	require.Contains(t, string(panelsByID[6]), `"b"`, "must index panels nested in a row")
+	require.NotContains(t, panelsByID, int64(99), "unknown id is omitted")
+	require.Empty(t, indexPanelJSON(nil), "empty dashboard produces an empty index")
+	require.Empty(t, indexPanelJSON(json.RawMessage(`not json`)), "malformed dashboard produces an empty index")
+}
+
 func TestBuildDashboard_recordsPanelQueryError(t *testing.T) {
 	panels := []DashboardPanel{
 		{ID: 7, Title: "Broken", QueryErr: errors.New("datasource exploded")},

@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
+import SVG from 'react-inlinesvg';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -81,11 +82,8 @@ function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEditPane>) 
                           }}
                           aria-label={t('dashboard.add.new-panel.title', 'Panel')}
                         >
-                          <img
-                            alt={t('dashboard.add.new-panel.button', 'Add new panel button')}
-                            src={addPanelSvg}
-                            draggable={false}
-                          />
+                          {/* @ts-expect-error react-inlinesvg@4.3.0 return type includes bigint, which isn't in @types/react@18's ReactNode. Remove when we update @types/react. */}
+                          <SVG title={t('dashboard.add.new-panel.button', 'Add new panel button')} src={addPanelSvg} />
                         </div>
                       );
                     }}
@@ -168,7 +166,8 @@ function getStyles(theme: GrafanaTheme2) {
       '&:hover': {
         opacity: 1,
       },
-      img: {
+      svg: {
+        color: theme.colors.accent.main,
         display: 'block',
         width: 'auto',
         maxWidth: '100%',

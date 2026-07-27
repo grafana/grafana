@@ -1021,7 +1021,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     }
 
     // fetchPredefinedVariables is a no-op when the feature flag is off.
-    if (!config.featureToggles.globalDashboardVariables) {
+    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GlobalDashboardVariables, false)) {
       return options;
     }
 

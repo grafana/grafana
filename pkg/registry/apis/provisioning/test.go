@@ -158,6 +158,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 				if len(cfg.GetFinalizers()) == 0 {
 					cfg.SetFinalizers([]string{
 						repository.RemoveOrphanResourcesFinalizer,
+						repository.RemovePendingJobsFinalizer,
 						repository.CleanFinalizer,
 					})
 				}

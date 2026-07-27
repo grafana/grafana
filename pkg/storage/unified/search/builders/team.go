@@ -29,6 +29,6 @@ var TeamSearchFields = iamProvider.Fields(
 	v0alpha1.TeamResourceInfo.GroupVersionResource(),
 )
 
-func GetTeamSearchBuilder() (resource.DocumentBuilderInfo, error) {
-	return iamBuilder(v0alpha1.TeamResourceInfo, TeamSearchFields)
+func GetTeamSearchBuilder(registry *resource.SearchFieldsRegistry) (resource.DocumentBuilderInfo, error) {
+	return iamBuilder(registry, v0alpha1.TeamResourceInfo)
 }

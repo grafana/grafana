@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -912,8 +912,8 @@ func TestUpdateMuteTimings(t *testing.T) {
 
 		revision := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
 		assert.EqualValues(t, append(initialConfig().AlertmanagerConfig.TimeIntervals, v1.TimeInterval(interval)), revision.Config.AlertmanagerConfig.TimeIntervals)
-		assert.Falsef(t, isTimeIntervalInUseInRoutes(expected.Name, revision.Config.AlertmanagerConfig.Route), "There are still references to the old time interval")
-		assert.Truef(t, isTimeIntervalInUseInRoutes(interval.Name, revision.Config.AlertmanagerConfig.Route), "There are no references to the new time interval")
+		assert.Falsef(t, revision.TimeIntervalUsedByRoutes(expected.Name), "There are still references to the old time interval")
+		assert.Truef(t, revision.TimeIntervalUsedByRoutes(interval.Name), "There are no references to the new time interval")
 	})
 
 	t.Run("returns ErrTimeIntervalDependentResourcesProvenance if route has different provenance status", func(t *testing.T) {
@@ -1091,6 +1091,8 @@ func TestDeleteMuteTimings(t *testing.T) {
 	correctVersion := calculateMuteTimeIntervalFingerprint(timingToDelete)
 	usedMuteTiming := "used-timing"
 	usedActiveTiming := "used-active-timing"
+	managedRouteMuteTiming := "managed-route-used-timing"
+	managedRouteActiveTiming := "managed-route-used-active-timing"
 	initialConfig := func() *v1.AMConfigV1 {
 		return &v1.AMConfigV1{
 			Templates: nil,
@@ -1105,6 +1107,9 @@ func TestDeleteMuteTimings(t *testing.T) {
 							Name: usedMuteTiming,
 						},
 						timingToDelete,
+						{
+							Name: managedRouteMuteTiming,
+						},
 					},
 					TimeIntervals: []v1.TimeInterval{
 						{
@@ -1113,9 +1118,22 @@ func TestDeleteMuteTimings(t *testing.T) {
 						{
 							Name: "timing-to-delete2",
 						},
+						{
+							Name: managedRouteActiveTiming,
+						},
 					},
 				},
 				Receivers: nil,
+			},
+			ManagedRoutes: map[string]*v1.Route{
+				"managed-route": {
+					Routes: []*v1.Route{
+						{
+							MuteTimeIntervals:   []string{managedRouteMuteTiming},
+							ActiveTimeIntervals: []string{managedRouteActiveTiming},
+						},
+					},
+				},
 			},
 		}
 	}
@@ -1137,8 +1155,6 @@ func TestDeleteMuteTimings(t *testing.T) {
 
 	t.Run("returns ErrTimeIntervalInUse if mute timing is used by a route", func(t *testing.T) {
 		sut, store, prov := createMuteTimingSvcSut()
-		fakeLogger := &logtest.Fake{}
-		sut.log = fakeLogger
 		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
 			return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
 		}
@@ -1150,8 +1166,6 @@ func TestDeleteMuteTimings(t *testing.T) {
 		require.Equal(t, "Get", store.Calls[0].Method)
 		require.Equal(t, orgID, store.Calls[0].Args[1])
 		require.ErrorIs(t, err, ErrTimeIntervalInUse)
-		require.Equal(t, 1, fakeLogger.ErrorLogs.Calls)
-		require.Contains(t, fakeLogger.ErrorLogs.Ctx, usedMuteTiming)
 	})
 
 	t.Run("returns ErrTimeIntervalInUse if active timing is used by a route", func(t *testing.T) {
@@ -1169,10 +1183,40 @@ func TestDeleteMuteTimings(t *testing.T) {
 		require.ErrorIs(t, err, ErrTimeIntervalInUse)
 	})
 
+	t.Run("returns ErrTimeIntervalInUse if mute timing is used by a managed route", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
+
+		version := calculateMuteTimeIntervalFingerprint(v1.MuteTimeInterval{Name: managedRouteMuteTiming})
+		err := sut.DeleteMuteTiming(context.Background(), managedRouteMuteTiming, orgID, definitions.Provenance(models.ProvenanceAPI), version)
+
+		require.Len(t, store.Calls, 1)
+		require.Equal(t, "Get", store.Calls[0].Method)
+		require.Equal(t, orgID, store.Calls[0].Args[1])
+		require.ErrorIs(t, err, ErrTimeIntervalInUse)
+	})
+
+	t.Run("returns ErrTimeIntervalInUse if active timing is used by a managed route", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
+
+		version := calculateMuteTimeIntervalFingerprint(v1.MuteTimeInterval{Name: managedRouteActiveTiming})
+		err := sut.DeleteMuteTiming(context.Background(), managedRouteActiveTiming, orgID, definitions.Provenance(models.ProvenanceAPI), version)
+
+		require.Len(t, store.Calls, 1)
+		require.Equal(t, "Get", store.Calls[0].Method)
+		require.Equal(t, orgID, store.Calls[0].Args[1])
+		require.ErrorIs(t, err, ErrTimeIntervalInUse)
+	})
+
 	t.Run("returns ErrTimeIntervalInUse if mute timing is used by rules", func(t *testing.T) {
 		sut, store, prov := createMuteTimingSvcSut()
-		fakeLogger := &logtest.Fake{}
-		sut.log = fakeLogger
 		ruleKey := models.GenerateRuleKey(orgID)
 		ruleNsStore := fakeAlertRuleNotificationStore{
 			ListContactPointRoutingsFn: func(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
@@ -1199,9 +1243,10 @@ func TestDeleteMuteTimings(t *testing.T) {
 		require.ErrorIs(t, err, ErrTimeIntervalInUse)
 		require.Len(t, ruleNsStore.Calls, 1)
 		require.Equal(t, "ListContactPointRoutings", ruleNsStore.Calls[0].Method)
-		require.Equal(t, 1, fakeLogger.ErrorLogs.Calls)
-		require.Contains(t, fakeLogger.ErrorLogs.Ctx, timingToDelete.Name)
-		require.Contains(t, fakeLogger.ErrorLogs.Ctx, ruleKey.UID)
+
+		var gfErr errutil.Error
+		require.ErrorAs(t, err, &gfErr)
+		require.Contains(t, gfErr.LogMessage, ruleKey.UID)
 	})
 
 	t.Run("returns ErrVersionConflict if provided version does not match", func(t *testing.T) {

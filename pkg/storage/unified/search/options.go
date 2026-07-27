@@ -14,7 +14,6 @@ import (
 	"github.com/oklog/ulid/v2"
 	"gocloud.dev/blob"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -43,15 +42,13 @@ const (
 // that would otherwise be built from cfg.IndexSnapshotBucketURL. Used by
 // the SQL wiring layer to inject a KV-backed store.
 func NewSearchOptions(
-	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 	docs resource.DocumentBuilderSupplier,
 	indexMetrics *resource.BleveIndexMetrics,
 	ownsIndexFn func(key resource.NamespacedResource) (bool, error),
 	snapshotStore RemoteIndexStore,
 ) (resource.SearchOptions, error) {
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if cfg.EnableSearch || features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+	if cfg.EnableSearch {
 		root := cfg.IndexPath
 		if root == "" {
 			root = filepath.Join(cfg.DataPath, "unified-search", "bleve")

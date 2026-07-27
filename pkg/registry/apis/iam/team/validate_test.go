@@ -3,6 +3,7 @@ package team
 import (
 	"context"
 	"errors"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/authlib/types"
+	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
@@ -334,6 +336,77 @@ func TestValidateOnUpdate(t *testing.T) {
 	}
 }
 
+func TestValidateOnDelete(t *testing.T) {
+	team := &iamv0alpha1.Team{ObjectMeta: metav1.ObjectMeta{Name: "team-a", Namespace: "org-1"}}
+
+	t.Run("allows deleting a team that does not own folders", func(t *testing.T) {
+		searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{}}
+
+		require.NoError(t, ValidateOnDelete(t.Context(), searcher, team))
+		require.NotNil(t, searcher.request)
+		assert.Equal(t, int64(1), searcher.request.Limit)
+		assert.Equal(t, &resourcepb.ResourceKey{
+			Namespace: team.Namespace,
+			Group:     foldersv1.FolderResourceInfo.GroupResource().Group,
+			Resource:  foldersv1.FolderResourceInfo.GroupResource().Resource,
+		}, searcher.request.Options.Key)
+		require.Len(t, searcher.request.Options.Fields, 1)
+		assert.Equal(t, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
+			Operator: "=",
+			Values:   []string{"iam.grafana.app/Team/team-a"},
+		}, searcher.request.Options.Fields[0])
+
+		requester, err := identity.GetRequester(searcher.ctx)
+		require.NoError(t, err)
+		assert.True(t, requester.IsIdentityType(types.TypeAccessPolicy))
+		assert.Equal(t, team.Namespace, requester.GetNamespace())
+	})
+
+	t.Run("blocks deleting a team that owns a folder", func(t *testing.T) {
+		searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{TotalHits: 1}}
+
+		err := ValidateOnDelete(t.Context(), searcher, team)
+
+		require.Error(t, err)
+		assert.True(t, apierrors.IsConflict(err))
+		assert.ErrorContains(t, err, "remove folder ownership before deleting the team")
+	})
+
+	t.Run("blocks when the search backend returns a row without total hits", func(t *testing.T) {
+		searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{{}}},
+		}}
+
+		err := ValidateOnDelete(t.Context(), searcher, team)
+
+		require.Error(t, err)
+		assert.True(t, apierrors.IsConflict(err))
+	})
+
+	t.Run("returns search errors", func(t *testing.T) {
+		searchErr := errors.New("search unavailable")
+		searcher := &deleteValidationSearchClient{err: searchErr}
+
+		assert.ErrorIs(t, ValidateOnDelete(t.Context(), searcher, team), searchErr)
+	})
+
+	t.Run("returns errors embedded in the search response", func(t *testing.T) {
+		searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{
+			Error: &resourcepb.ErrorResult{Message: "search unavailable", Code: http.StatusServiceUnavailable},
+		}}
+
+		err := ValidateOnDelete(t.Context(), searcher, team)
+
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "search unavailable")
+	})
+
+	t.Run("allows deletion when folder search is not configured", func(t *testing.T) {
+		require.NoError(t, ValidateOnDelete(t.Context(), nil, team))
+	})
+}
+
 func TestValidateExternalGroups(t *testing.T) {
 	t.Run("nil and empty pass through to reconciler.Validate", func(t *testing.T) {
 		stub := &stubReconciler{}
@@ -385,6 +458,20 @@ type stubReconciler struct {
 	legacy.NoopExternalGroupReconciler
 	err      error
 	gotInput []string
+}
+
+type deleteValidationSearchClient struct {
+	resourcepb.ResourceIndexClient
+	ctx      context.Context
+	request  *resourcepb.ResourceSearchRequest
+	response *resourcepb.ResourceSearchResponse
+	err      error
+}
+
+func (s *deleteValidationSearchClient) Search(ctx context.Context, request *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	s.ctx = ctx
+	s.request = request
+	return s.response, s.err
 }
 
 func (s *stubReconciler) Validate(groups []string) error {

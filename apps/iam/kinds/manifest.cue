@@ -123,4 +123,6 @@ v0alpha1: {
 	created: int64
 	score:   float64
 	accessControl?: {[string]: bool}
+	// Auth module identifiers the user is externally synced with.
+	externalAuthModules?: [...string]
 }

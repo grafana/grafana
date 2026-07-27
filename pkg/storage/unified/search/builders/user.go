@@ -18,11 +18,12 @@ var iamManifests = []app.Manifest{iam.LocalManifest()}
 var iamProvider = resource.NewManifestBackedProvider(iamManifests)
 
 const (
-	USER_EMAIL        = "email"
-	USER_LOGIN        = "login"
-	USER_LAST_SEEN_AT = "lastSeenAt"
-	USER_ROLE         = "role"
-	USER_DISABLED     = "disabled"
+	USER_EMAIL                 = "email"
+	USER_LOGIN                 = "login"
+	USER_LAST_SEEN_AT          = "lastSeenAt"
+	USER_ROLE                  = "role"
+	USER_DISABLED              = "disabled"
+	USER_EXTERNAL_AUTH_MODULES = "externalAuthModules"
 )
 
 // UserSortableExtraFields are the additional fields that can be used for sorting user search results.
@@ -48,6 +49,6 @@ var UserSortableExtraFields = []string{
 // Exported for the IAM legacy SQL search backend; do not mutate.
 var UserSearchFields = iamProvider.Fields(iamv0.UserResourceInfo.GroupVersionResource())
 
-func GetUserBuilder() (resource.DocumentBuilderInfo, error) {
-	return iamBuilder(iamv0.UserResourceInfo, UserSearchFields)
+func GetUserBuilder(registry *resource.SearchFieldsRegistry) (resource.DocumentBuilderInfo, error) {
+	return iamBuilder(registry, iamv0.UserResourceInfo)
 }

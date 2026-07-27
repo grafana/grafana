@@ -89,8 +89,6 @@
     "panel_tests_flame_graph": (import '../dev-dashboards/panel-flamegraph/panel_tests_flame_graph.json'),
     "panels_without_title": (import '../dev-dashboards/panel-common/panels_without_title.json'),
     "polystat_test": (import '../dev-dashboards/panel-polystat/polystat_test.json'),
-    "postgres_fakedata": (import '../dev-dashboards/datasource-postgres/postgres_fakedata.json'),
-    "postgres_unittest": (import '../dev-dashboards/datasource-postgres/postgres_unittest.json'),
     "regression-analysis": (import '../dev-dashboards/transforms/regression-analysis.json'),
     "relative_time_zone_support": (import '../dev-dashboards/scenarios/relative_time_zone_support.json'),
     "reuse": (import '../dev-dashboards/transforms/reuse.json'),
