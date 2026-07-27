@@ -171,6 +171,34 @@ func TestQueryDiagnostics_success_bundleHeadersAndSkipCache(t *testing.T) {
 	require.Contains(t, string(files["querydata.json"]), `"uid": "prom"`, "the submitted request must be recorded")
 }
 
+// TestQueryDiagnostics_bundlesPanelAndDashboardJSON pins the passthrough that diagnosticsRequest
+// exists for: the client posts the panel and dashboard definitions it already holds so the bundle
+// doesn't need a dashboard-service lookup. Nothing else asserts these two reach the archive, and
+// they are handed to Build as adjacent same-typed arguments — so a swap would silently ship the
+// dashboard as panel.json and vice versa. The markers are distinct per file for exactly that reason:
+// a shared marker would still match with the two transposed.
+func TestQueryDiagnostics_bundlesPanelAndDashboardJSON(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+	fakeQuery := query.NewFakeQueryService(t)
+	returnFreshHARResponse(fakeQuery, "QueryData")
+	hs := &HTTPServer{queryDataService: fakeQuery}
+	c, rec := newDiagReqCtx(t, `{
+		"queries":[{"refId":"A"}],
+		"panel":{"id":7,"title":"panel-marker"},
+		"dashboard":{"uid":"d1","title":"dashboard-marker"}
+	}`, nil)
+
+	resp := hs.QueryDiagnostics(c)
+	require.Equal(t, http.StatusOK, resp.Status())
+
+	resp.WriteTo(c)
+	files := readTarGzFiles(t, rec.Body.Bytes())
+	require.Contains(t, string(files["panel.json"]), "panel-marker", "the posted panel must land in panel.json")
+	require.Contains(t, string(files["dashboard.json"]), "dashboard-marker", "the posted dashboard must land in dashboard.json")
+	require.NotContains(t, string(files["panel.json"]), "dashboard-marker", "panel.json must not carry the dashboard")
+	require.NotContains(t, string(files["dashboard.json"]), "panel-marker", "dashboard.json must not carry the panel")
+}
+
 // TestQueryDiagnostics_capturedTrafficWithQueryError_stillBundles covers the fall-through the
 // no-capture guard exists to allow: a query that failed AFTER reaching the wire leaves captured
 // traffic, and that captured failure is exactly what the bundle is for — so it must ship as a 200
