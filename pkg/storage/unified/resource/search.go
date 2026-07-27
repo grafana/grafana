@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/util/debouncer"
 )
@@ -169,6 +170,12 @@ type SearchBackend interface {
 	// TotalDocs returns the total number of documents across all indexes.
 	TotalDocs() int64
 
+	// SnapshotCountThreshold returns the document count at or above which
+	// BuildIndex uses remote snapshots, or 0 when snapshots are inactive (no
+	// store configured). The startup prebuild uses it to cap counting without
+	// changing the snapshot decision.
+	SnapshotCountThreshold() int64
+
 	// GetOpenIndexes returns the list of indexes that are currently open.
 	GetOpenIndexes() []NamespacedResource
 
@@ -182,6 +189,7 @@ type searchServer struct {
 	storage       StorageBackend
 	vectorBackend vector.VectorBackend
 	embedder      *embedder.Embedder
+	reranker      *rerank.Reranker
 	search        SearchBackend
 	indexMetrics  *BleveIndexMetrics
 	vectorMetrics *VectorMetrics
@@ -256,7 +264,7 @@ var (
 )
 
 // newSearchServer creates a new search server implementation.
-func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend vector.VectorBackend, embedder *embedder.Embedder, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, vectorMetrics *VectorMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (*searchServer, error) {
+func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend vector.VectorBackend, embedder *embedder.Embedder, reranker *rerank.Reranker, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, vectorMetrics *VectorMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (*searchServer, error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
@@ -286,6 +294,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		storage:        storage,
 		vectorBackend:  vectorBackend,
 		embedder:       embedder,
+		reranker:       reranker,
 		search:         opts.Backend,
 		log:            log.New("resource-search"),
 		initWorkers:    opts.InitWorkerThreads,
@@ -666,13 +675,11 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 	// An unprovisioned (group, resource) pair — no catalog row, so no
 	// partition to search — is NOT_FOUND before we spend an embedding on
 	// the query.
-	coll, found, err := s.vectorBackend.ResolveCollection(ctx, req.Key.Group, req.Key.Resource)
+	coll, collAllowed, err := s.resolveAllowedCollection(ctx, req.Key.Group, req.Key.Resource)
 	if err != nil {
-		s.log.Error("vector search: resolve collection", "err", err)
-		return nil, status.Error(codes.Internal, "resolve collection")
+		return nil, s.grpcStatusError(ctx, "vector search: resolve collection", err)
 	}
-	// Config-disallowed and unprovisioned are deliberately the same answer, so callers can't probe which collections exist.
-	if !found || !s.collectionAllowlist.Allows(coll) {
+	if !collAllowed {
 		return &resourcepb.VectorSearchResponse{Error: NewNotFoundError(req.Key)}, nil
 	}
 
@@ -1186,9 +1193,18 @@ func (s *searchServer) startupIndexStats(ctx context.Context) ([]ResourceStats, 
 		s.log.FromContext(ctx).Debug("open index stats unavailable, falling back to resource stats")
 	}
 
+	// The prebuild only compares counts against thresholds, so cap counting above
+	// the highest one that consumes the count: init min size, plus the snapshot
+	// threshold when a snapshot store is active.
+	limit := s.initMinSize
+	if t := int(s.search.SnapshotCountThreshold()); t > limit {
+		limit = t
+	}
+	limit++
+
 	start := time.Now()
-	stats, err = s.storage.GetResourceStats(ctx, NamespacedResource{}, s.initMinSize)
-	s.log.Debug("startupIndexStats: got resource stats from storage", "elapsed", time.Since(start).String(), "stats", len(stats), "err", err)
+	stats, err = s.storage.GetResourceStatsWithLimit(ctx, NamespacedResource{}, s.initMinSize, limit)
+	s.log.Debug("startupIndexStats: got resource stats from storage", "elapsed", time.Since(start).String(), "stats", len(stats), "err", err, "countLimit", limit)
 	return stats, err
 }
 

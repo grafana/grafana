@@ -28,6 +28,7 @@ import { type DataSourceRef, VariableHide, VariableRefresh } from '@grafana/sche
 
 import { toControlSourceRef } from '../utils/predefinedVariables';
 
+import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { sceneVariablesSetToSchemaV2Variables, sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
 
 const runRequestMock = jest.fn().mockReturnValue(
@@ -604,6 +605,27 @@ describe('sceneVariablesSetToVariables', () => {
       "type": "adhoc",
     }
     `);
+  });
+
+  it('should skip SnapshotVariable without throwing', () => {
+    const variable = new SnapshotVariable({
+      name: 'test',
+      label: 'test-label',
+      value: 'selected-value',
+      text: 'selected-value-text',
+      options: [{ label: 'selected-value-text', value: 'selected-value' }],
+      hide: VariableHide.dontHide,
+    });
+
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    let result: ReturnType<typeof sceneVariablesSetToVariables> = [];
+    expect(() => {
+      result = sceneVariablesSetToVariables(set);
+    }).not.toThrow();
+    expect(result).toHaveLength(0);
   });
 
   describe('should adapt AdHocFiltersVariable filters', () => {
@@ -1600,6 +1622,27 @@ describe('sceneVariablesSetToVariables', () => {
       },
     }
     `);
+    });
+
+    it('should skip SnapshotVariable without throwing', () => {
+      const variable = new SnapshotVariable({
+        name: 'test',
+        label: 'test-label',
+        value: 'selected-value',
+        text: 'selected-value-text',
+        options: [{ label: 'selected-value-text', value: 'selected-value' }],
+        hide: VariableHide.dontHide,
+      });
+
+      const set = new SceneVariableSet({
+        variables: [variable],
+      });
+
+      let result: ReturnType<typeof sceneVariablesSetToSchemaV2Variables> = [];
+      expect(() => {
+        result = sceneVariablesSetToSchemaV2Variables(set);
+      }).not.toThrow();
+      expect(result).toHaveLength(0);
     });
 
     describe('when the dashboardUnifiedDrilldownControls feature toggle is enabled', () => {

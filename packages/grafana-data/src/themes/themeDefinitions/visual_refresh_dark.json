@@ -16,9 +16,9 @@
       "border": "palette.ink100"
     },
     "secondary": {
-      "main": "palette.ink750",
-      "background": "palette.ink800",
-      "border": "palette.ink650",
+      "main": "palette.ink700",
+      "background": "palette.ink700",
+      "border": "palette.ink600",
       "text": "palette.ink200",
       "contrastText": "palette.ink200"
     },
