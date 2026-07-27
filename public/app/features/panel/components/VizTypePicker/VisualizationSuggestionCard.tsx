@@ -105,11 +105,11 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '&:hover': {
         background: theme.colors.background.secondary,
-        borderColor: theme.colors.primary.border,
+        borderColor: theme.colors.accent.border,
       },
     }),
     selected: css({
-      borderColor: theme.colors.primary.border,
+      borderColor: theme.colors.accent.border,
       background: theme.colors.background.secondary,
     }),
     imgBox: css({

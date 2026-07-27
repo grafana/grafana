@@ -67,6 +67,12 @@ export const AnnoKeySavedFromUI = 'grafana.app/saved-from-ui';
 // Grant permissions to the created resource
 export const AnnoKeyGrantPermissions = 'grafana.app/grant-permissions';
 
+// Attribution of provisioning jobs to the identity that triggered them
+export const AnnoKeyProvisioningAuthor = 'provisioning.grafana.app/author';
+export const AnnoKeyProvisioningAuthorEmail = 'provisioning.grafana.app/authorEmail';
+export const AnnoKeyProvisioningAuthorId = 'provisioning.grafana.app/authorId';
+export const AnnoKeyProvisioningAuthorOrigin = 'provisioning.grafana.app/authorOrigin';
+
 /** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeySlug = 'grafana.app/slug';
 /** @deprecated NOT A REAL annotation -- this is just a shim */

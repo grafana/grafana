@@ -823,6 +823,7 @@ func (b *bleveBackend) BuildIndex(
 
 	idx := b.newBleveIndex(key, prepared.index, prepared.indexStorage, fields, allFields, standardSearchFields, updater, b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
 	idx.facetFieldByRequestName = facetFieldsForMapping(searchFieldsProvider, key.Group, key.Resource)
+	idx.fieldVariants = fieldVariantsOf(fieldDefinitionsForMapping(searchFieldsProvider, key.Group, key.Resource))
 
 	if prepared.source.needsBuild() {
 		// Type-convert so buildIndexFromScratch can call updateResourceVersion after the builder returns.
@@ -1237,6 +1238,7 @@ func (b *bleveBackend) promoteBuildIndexToFile(
 
 	promoted := b.newBleveIndex(key, fileIndex, indexStorageFile, fields, allFields, standardSearchFields, updater, delegate.logger)
 	promoted.facetFieldByRequestName = delegate.facetFieldByRequestName
+	promoted.fieldVariants = delegate.fieldVariants
 	promoted.resourceVersion.Store(delegate.resourceVersion.Load())
 	cleanup = false
 
@@ -1482,6 +1484,16 @@ func isPathWithinRoot(path, absoluteRoot string) bool {
 }
 
 // TotalDocs returns the total number of documents across all indices
+// SnapshotCountThreshold returns the snapshot MinDocCount, or 0 when no snapshot
+// store is configured (in which case BuildIndex never uses snapshots and the
+// count is not consumed by that decision).
+func (b *bleveBackend) SnapshotCountThreshold() int64 {
+	if b.opts.Snapshot.Store == nil {
+		return 0
+	}
+	return b.opts.Snapshot.MinDocCount
+}
+
 func (b *bleveBackend) TotalDocs() int64 {
 	var totalDocs int64
 	// We iterate over keys and call getCachedIndex for each index individually.
@@ -1606,6 +1618,10 @@ type bleveIndex struct {
 	// facetFieldByRequestName maps ResourceSearchRequest facet field names to
 	// keyword-analyzed Bleve index field names.
 	facetFieldByRequestName map[string]string
+	// fieldVariants drives the index-time copy of per-kind values into the
+	// variant fields this kind's mapping declares. Derived from the same
+	// declarations as the mapping, once per index rather than per document.
+	fieldVariants []fieldVariant
 
 	indexStorage string // memory or file, used when updating metrics
 
@@ -1691,6 +1707,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 				return fmt.Errorf("missing document")
 			}
 			doc := item.Doc.UpdateCopyFields()
+			populateFieldVariants(doc, b.fieldVariants)
 
 			// The static fields.* mapping drops values written under an undeclared
 			// name; collect them so the loss is logged, not silent.
@@ -1729,7 +1746,18 @@ func (b *bleveIndex) isDeclaredField(name string) bool {
 	if b.fields != nil && b.fields.Field(name) != nil {
 		return true
 	}
-	return b.standard != nil && b.standard.Field(name) != nil
+	if b.standard != nil && b.standard.Field(name) != nil {
+		return true
+	}
+	// Variant fields are mapped but never named by a document builder, so they
+	// only show up here when a document is indexed twice.
+	bare := strings.TrimPrefix(name, resource.SEARCH_FIELD_PREFIX)
+	for _, v := range b.fieldVariants {
+		if bare == v.keyword || bare == v.ngram {
+			return true
+		}
+	}
+	return false
 }
 
 func (b *bleveIndex) updateResourceVersion(rv int64) error {
@@ -2101,6 +2129,9 @@ func (b *bleveIndex) Search(
 	}
 
 	response.TotalHits = int64(res.Total)
+	// bleve counts matches exactly, and authz is applied in-searcher here, so the
+	// count is the exact authorized total.
+	response.TotalHitsExact = true
 	response.QueryCost = float64(res.Cost)
 	response.MaxScore = res.MaxScore
 	stats.AddSearchTime(res.Took)
@@ -2262,24 +2293,15 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		searchrequest.From = 0
 	}
 
-	// Everything is combined within an AND query: label/field filters plus the
-	// optional free-text clause.
-	queries, errResult := b.filterQueries(req)
+	// Label/field filters are constraints, not relevance signals, so they go into
+	// the boolean Filter clause (scored "none" by bleve) while the free-text query
+	// scores in Must. This keeps ranking driven by text relevance alone.
+	filters, errResult := b.filterQueries(req)
 	if errResult != nil {
 		return nil, errResult
 	}
-	if q := b.buildTextQuery(searchrequest, req); q != nil {
-		queries = append(queries, q)
-	}
-
-	switch len(queries) {
-	case 0:
-		searchrequest.Query = bleve.NewMatchAllQuery()
-	case 1:
-		searchrequest.Query = queries[0]
-	default:
-		searchrequest.Query = bleve.NewConjunctionQuery(queries...) // AND
-	}
+	textQuery := b.buildTextQuery(searchrequest, req)
+	searchrequest.Query = combineFilterAndTextQueries(filters, textQuery)
 
 	// postFilter applies authorization after ranking in runPostFilterAuthz, so
 	// skip the in-searcher wrapper here and let bleve return unfiltered ranked hits.
@@ -2330,6 +2352,41 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	return searchrequest, nil
+}
+
+// combineFilterAndTextQueries assembles the final bleve query from the filter
+// clauses and the optional free-text query.
+//
+// Filters are non-scoring only when there is a free-text query to rank by: they
+// go in the boolean Filter slot so text relevance alone drives the score, and the
+// text query drives iteration. Without a free-text query the results are ordered
+// by the sort fields (not score), so the filters go straight into the query,
+// which keeps bleve iterating their posting lists instead of scanning every
+// document (a filter-only boolean query wraps a match-all searcher).
+func combineFilterAndTextQueries(filters []query.Query, textQuery query.Query) query.Query {
+	if textQuery == nil {
+		switch len(filters) {
+		case 0:
+			return bleve.NewMatchAllQuery()
+		case 1:
+			return filters[0]
+		default:
+			return bleve.NewConjunctionQuery(filters...)
+		}
+	}
+
+	if len(filters) == 0 {
+		return textQuery
+	}
+
+	bq := bleve.NewBooleanQuery()
+	bq.AddMust(textQuery)
+	if len(filters) == 1 {
+		bq.AddFilter(filters[0])
+	} else {
+		bq.AddFilter(bleve.NewConjunctionQuery(filters...))
+	}
+	return bq
 }
 
 // resolveFieldName maps a public field name to its physical index name. Clients
