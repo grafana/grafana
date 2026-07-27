@@ -240,8 +240,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
         : coreConfig.yValues,
     grid: { show: false },
     ticks: { show: false },
-    gap: userHiddenYAxis ? 0 : 16,
-    size: userHiddenYAxis ? 0 : aboveBarLabelsActive ? null : yAxisWidth,
+    gap: userHiddenYAxis || aboveBarLabelsActive ? 0 : 16,
+    size: userHiddenYAxis || aboveBarLabelsActive ? 0 : yAxisWidth,
     theme,
   });
 
