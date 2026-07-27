@@ -6,12 +6,11 @@ import { Provider } from 'react-redux';
 import { type DataFrame, MutableDataFrame } from '@grafana/data';
 import { mockTimeRange } from '@grafana/plugin-ui/test';
 import {
-  type DataSourceSrv,
-  setDataSourceSrv,
   setPluginLinksHook,
   setPluginComponentsHook,
   useAppPluginInstalled,
 } from '@grafana/runtime';
+import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
 import { configureStore } from '../../../store/configureStore';
 
@@ -24,7 +23,13 @@ jest.mock('@grafana/runtime', () => ({
   useAppPluginInstalled: jest.fn(),
 }));
 
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
+}));
+
 const mockUseAppPluginInstalled = jest.mocked(useAppPluginInstalled);
+const mockUseDataSourceInstanceSettings = jest.mocked(useDataSourceInstanceSettings);
 
 function getTraceView(frames: DataFrame[]) {
   const store = configureStore();
@@ -66,6 +71,7 @@ describe('TraceView', () => {
       error: undefined,
       value: undefined,
     });
+    mockUseDataSourceInstanceSettings.mockReturnValue({ isLoading: false, settings: undefined });
   });
 
   afterEach(() => {
@@ -81,12 +87,6 @@ describe('TraceView', () => {
       isLoading: false,
       components: [],
     }));
-
-    setDataSourceSrv({
-      getInstanceSettings() {
-        return undefined;
-      },
-    } as DataSourceSrv);
   });
 
   it('renders TraceTimelineViewer', () => {
