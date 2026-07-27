@@ -459,9 +459,8 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	host := strings.TrimSuffix(strings.TrimPrefix(hs.Cfg.HTTPAddr, "["), "]")
 	protocols := http.Protocols{}
 	protocols.SetHTTP1(true)
-	if hs.Cfg.Protocol == setting.HTTP2Scheme || hs.Cfg.Protocol == setting.SocketHTTP2Scheme {
-		protocols.SetHTTP2(true)
-	} else if hs.Cfg.Protocol == setting.HTTP2PlaintextScheme || hs.Cfg.Protocol == setting.SocketHTTP2PlaintextScheme {
+	protocols.SetHTTP2(true)
+	if hs.Cfg.Protocol == setting.HTTP2PlaintextScheme || hs.Cfg.Protocol == setting.SocketHTTP2PlaintextScheme {
 		protocols.SetUnencryptedHTTP2(true)
 	}
 	hs.httpSrv = &http.Server{

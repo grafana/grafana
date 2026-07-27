@@ -43,10 +43,10 @@ const (
 	HTTPScheme                           Scheme = "http"
 	HTTPSScheme                          Scheme = "https"
 	HTTP2Scheme                          Scheme = "h2"
-	HTTP2PlaintextScheme                          Scheme = "h2c"
+	HTTP2PlaintextScheme                 Scheme = "h2c"
 	SocketScheme                         Scheme = "socket"
 	SocketHTTP2Scheme                    Scheme = "socket_h2"
-	SocketHTTP2PlaintextScheme                    Scheme = "socket_h2c"
+	SocketHTTP2PlaintextScheme           Scheme = "socket_h2c"
 	DefaultSQLExpressionCellLimit               = 100000
 	DefaultSQLExpressionOutputCellLimit         = 100000
 	DefaultSQLExpressionTimeout                 = time.Second * 10
