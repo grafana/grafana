@@ -896,3 +896,103 @@ func readTarGz(t *testing.T, data []byte) map[string][]byte {
 	}
 	return out
 }
+
+func TestMarshalQueryDataArtifact_truncationTiers(t *testing.T) {
+	// A request large enough that neither the full artifact nor the (request + summary) tier fits,
+	// forcing the ladder past tier 1.
+	bigRequest := json.RawMessage(`{"pad":"` + strings.Repeat("q", 4096) + `"}`)
+
+	t.Run("tier 2 drops the request but keeps the per-refID summary", func(t *testing.T) {
+		resp := backend.NewQueryDataResponse()
+		resp.Responses["A"] = backend.DataResponse{
+			Status: backend.StatusOK,
+			Frames: data.Frames{data.NewFrame("cpu", data.NewField("v", nil, []float64{1, 2, 3}))},
+		}
+		out, _, err := marshalQueryDataArtifactWithLimit(bigRequest, resp, 800)
+		require.NoError(t, err)
+		require.LessOrEqual(t, len(out), 800)
+
+		var art queryDataArtifact
+		require.NoError(t, json.Unmarshal(out, &art))
+		require.True(t, art.Truncated)
+		require.True(t, art.RequestOmitted)
+		require.True(t, art.ResponseOmitted)
+		require.Empty(t, art.Request, "the oversized request must be dropped at tier 2")
+		require.Contains(t, art.ResponseSummary, "A", "the per-refID summary must survive tier 2")
+	})
+
+	t.Run("tier 3 falls back to metadata only when even the summary is too big", func(t *testing.T) {
+		resp := backend.NewQueryDataResponse()
+		resp.Responses["A"] = backend.DataResponse{Error: errors.New(strings.Repeat("e", 4096))}
+		out, _, err := marshalQueryDataArtifactWithLimit(bigRequest, resp, 300)
+		require.NoError(t, err)
+		require.LessOrEqual(t, len(out), 300)
+
+		var art queryDataArtifact
+		require.NoError(t, json.Unmarshal(out, &art))
+		require.True(t, art.Truncated)
+		require.True(t, art.RequestOmitted)
+		require.True(t, art.ResponseOmitted)
+		require.Empty(t, art.Request)
+		require.Empty(t, art.ResponseSummary, "tier 3 drops even the per-refID summary")
+		require.Equal(t, 300, art.LimitBytes)
+		require.Positive(t, art.OriginalBytes)
+	})
+}
+
+func TestSummarizeQueryDataResponse(t *testing.T) {
+	resp := backend.NewQueryDataResponse()
+	longName := strings.Repeat("n", 300)
+	namedFrame := data.NewFrame(longName, data.NewField("v", nil, []float64{1}))
+	// Mismatched field lengths make RowLen() error, which must be recorded as rows = -1.
+	badRows := data.NewFrame("", data.NewField("a", nil, []int64{1, 2}), data.NewField("b", nil, []int64{1}))
+	resp.Responses["A"] = backend.DataResponse{
+		Status: backend.Status(0), // invalid status + a non-nil error -> must normalize to StatusUnknown
+		Error:  errors.New(strings.Repeat("e", 2000)),
+		Frames: data.Frames{namedFrame, badRows},
+	}
+	// __har__ capture responses must be excluded from the summary.
+	hcap := data.NewFrame("")
+	hcap.Meta = &data.FrameMeta{Custom: map[string]interface{}{"har": `{"log":{"entries":[]}}`}}
+	resp.Responses["__har__A"] = backend.DataResponse{Frames: data.Frames{hcap}}
+
+	sum := summarizeQueryDataResponse(resp)
+	require.NotContains(t, sum, "__har__A", "capture frames must be excluded from the summary")
+	a, ok := sum["A"]
+	require.True(t, ok)
+	// An invalid status alongside a non-nil error normalizes to Unknown (not OK), so the summary never
+	// reports success next to an error string.
+	require.Equal(t, backend.StatusUnknown, a.Status, "an invalid status with an error must normalize to Unknown")
+	require.Len(t, a.Error, 1024+len("…"), "error must be truncated to 1024 bytes + ellipsis")
+	require.Equal(t, 256+len("…"), len(a.Frames[0].Name), "frame name must be truncated to 256 bytes + ellipsis")
+
+	var sawNegativeRows bool
+	for _, f := range a.Frames {
+		if f.Rows == -1 {
+			sawNegativeRows = true
+		}
+	}
+	require.True(t, sawNegativeRows, "a frame whose RowLen() errors must record rows = -1")
+}
+
+func TestTruncateDiagnosticString(t *testing.T) {
+	require.Equal(t, "abc", truncateDiagnosticString("abc", 3), "exactly maxBytes is kept verbatim")
+	require.Equal(t, "abc", truncateDiagnosticString("abc", 5), "under maxBytes is kept verbatim")
+	require.Equal(t, "abc…", truncateDiagnosticString("abcdef", 3), "over maxBytes is byte-cut + ellipsis")
+	require.Equal(t, "", truncateDiagnosticString("", 10))
+}
+
+func TestPanelTitleSlug(t *testing.T) {
+	for in, want := range map[string]string{
+		"CPU Usage":             "cpu-usage",
+		"a   b":                 "a-b", // runs of non-alnum collapse to one hyphen
+		"--a--":                 "a",   // leading/trailing separators trimmed
+		"***":                   "",    // all-symbol -> empty slug
+		"Über/CPU!!!":           "ber-cpu",
+		strings.Repeat("a", 50): strings.Repeat("a", 40), // capped at 40
+	} {
+		require.Equalf(t, want, panelTitleSlug(in), "panelTitleSlug(%q)", in)
+	}
+	// An empty slug means the panel dir has no title suffix.
+	require.Equal(t, "panels/7", uniquePanelDir(7, "***", map[string]bool{}))
+}
