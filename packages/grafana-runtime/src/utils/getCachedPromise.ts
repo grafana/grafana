@@ -2,6 +2,7 @@ import { hash } from 'immutable';
 import { LRUCache } from 'lru-cache';
 
 import { generateUUID } from '@grafana/data';
+import { type LogContext } from '@grafana/faro-web-sdk';
 
 import { getLogger } from '../services/logging/registry';
 
@@ -69,12 +70,103 @@ function invalidateCacheIfNotReplaced<T>(key: string, cached: Promise<T>): void 
   cache.delete(key);
 }
 
+/**
+ * Returns true if the error was already handled by the caller (e.g. a 401/403) and shouldn't be reported as an error.
+ * @param error - The rejection value to check
+ * @returns Whether `error.isHandled` is `true`
+ */
+export function isHandledError(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'isHandled' in error && error.isHandled === true;
+}
+
+/**
+ * Returns a FetchError's `data.message`, or `undefined` if it isn't present as a string.
+ * @param cause - The rejection value to read `data.message` from
+ * @returns The `data.message` string, or `undefined`
+ */
+export function getDataMessage(cause: unknown): string | undefined {
+  if (typeof cause !== 'object' || cause === null) {
+    return undefined;
+  }
+
+  if (!('data' in cause) || typeof cause.data !== 'object' || cause.data === null) {
+    return undefined;
+  }
+
+  const { data } = cause;
+
+  if ('message' in data && typeof data.message === 'string') {
+    return data.message;
+  }
+
+  return undefined;
+}
+
+/**
+ * Returns the best available message for a rejection cause, or `''` if none can be found.
+ * @param cause - The rejection value to extract a message from
+ * @returns A string message, or `''` if none is available
+ */
+export function getOriginMessage(cause: unknown): string {
+  if (typeof cause === 'string') {
+    return cause;
+  }
+
+  if (typeof cause !== 'object' || cause === null) {
+    return '';
+  }
+
+  if ('message' in cause && typeof cause.message === 'string') {
+    return cause.message;
+  }
+
+  return getDataMessage(cause) ?? '';
+}
+
+/**
+ * Extracts `status`, `statusText` and `traceId` from a FetchError-shaped cause into a Faro log context.
+ * @param cause - The rejection value to extract fields from
+ * @returns A `LogContext` containing whichever of `status`/`statusText`/`traceId` are present
+ */
+export function getFetchErrorContext(cause: unknown): LogContext {
+  const context: LogContext = {};
+
+  if (typeof cause !== 'object' || cause === null) {
+    return context;
+  }
+
+  if ('status' in cause) {
+    context.status = String(cause.status);
+  }
+
+  if ('statusText' in cause) {
+    context.statusText = String(cause.statusText);
+  }
+
+  if ('traceId' in cause) {
+    context.traceId = String(cause.traceId);
+  }
+
+  return context;
+}
+
 function logError({ error, key }: LogErrorArgs): void {
   try {
-    getLogger('grafana/runtime.utils.getCachedPromise').logError(
-      new TracedError('getCachedPromise: Something failed while resolving a cached promise', error),
-      { key }
-    );
+    const logger = getLogger('grafana/runtime.utils.getCachedPromise');
+
+    if (!isHandledError(error)) {
+      logger.logError(new TracedError('getCachedPromise: Something failed while resolving a cached promise', error), {
+        key,
+      });
+      return;
+    }
+
+    const traced = new TracedError('getCachedPromise: Handled error while resolving a cached promise', error);
+    const originMessage = getOriginMessage(traced.cause);
+    const originStack = traced.stack ?? '';
+    const additional = getFetchErrorContext(traced.cause);
+    const contexts = { ...additional, key, originMessage, originStack };
+    logger.logDebug(traced.message, contexts);
   } catch (error) {
     console.error(error);
   }

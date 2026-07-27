@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"strconv"
 	"time"
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util"
@@ -546,6 +548,7 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 			Labels: map[string]string{
 				LabelRepository: spec.Repository,
 			},
+			Annotations: webhookAttributionFromContext(ctx),
 		},
 		Spec: spec,
 	}
@@ -620,4 +623,41 @@ func mutateJobAction(job *provisioning.Job) error {
 		return apierrors.NewBadRequest("multiple job types found")
 	}
 	return nil
+}
+
+type webhookAttributionCtxKey struct{}
+
+// WebhookAttribution identifies the webhook sender a job should be attributed
+// to: the provider account name and ID, and the provider it came from.
+type WebhookAttribution struct {
+	Sender   string
+	SenderID string
+	Origin   string
+}
+
+// WithWebhookAttribution attaches the webhook request's identity to the
+// context. Insert stamps it onto the created job as annotations.
+func WithWebhookAttribution(ctx context.Context, attribution WebhookAttribution) context.Context {
+	annotations := map[string]string{}
+	if attribution.Sender != "" {
+		annotations[appjobs.AnnoAuthor] = attribution.Sender
+	}
+	if attribution.SenderID != "" {
+		annotations[appjobs.AnnoAuthorID] = attribution.SenderID
+	}
+	if attribution.Origin != "" {
+		annotations[appjobs.AnnoAuthorOrigin] = attribution.Origin
+	}
+	if len(annotations) == 0 {
+		return ctx
+	}
+	return context.WithValue(ctx, webhookAttributionCtxKey{}, annotations)
+}
+
+// webhookAttributionFromContext returns a copy of the attribution annotations:
+// the same context serves every Insert, so callers must not be able to mutate
+// the stored map through a job's annotations.
+func webhookAttributionFromContext(ctx context.Context) map[string]string {
+	annotations, _ := ctx.Value(webhookAttributionCtxKey{}).(map[string]string)
+	return maps.Clone(annotations)
 }
