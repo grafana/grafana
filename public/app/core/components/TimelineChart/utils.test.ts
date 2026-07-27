@@ -11,8 +11,10 @@ import {
   FieldMatcherID,
   type Field,
   SpecialValueMatch,
+  getDefaultTimeRange,
 } from '@grafana/data';
-import { LegendDisplayMode, MappingType, type VizLegendOptions } from '@grafana/schema';
+import { AxisPlacement, LegendDisplayMode, MappingType, VisibilityMode, type VizLegendOptions } from '@grafana/schema';
+import { FIXED_UNIT } from '@grafana/ui';
 
 import { preparePlotFrame } from '../GraphNG/utils';
 
@@ -22,8 +24,10 @@ import {
   getThresholdItems,
   hasSpecialMappedValue,
   makeFramePerSeries,
+  preparePlotConfigBuilder,
   prepareTimelineFields,
   prepareTimelineLegendItems,
+  TimelineMode,
 } from './utils';
 
 const theme = createTheme();
@@ -638,5 +642,116 @@ describe('prepareTimelineFields with percentage threshold merging', () => {
     expect(mergedField.values[0]).toBe('0%+');
     expect(mergedField.values[1]).toBeNull();
     expect(mergedField.values[2]).toBe('80%+');
+  });
+});
+
+describe('preparePlotConfigBuilder with namePosition', () => {
+  function buildFrame(numValueFields: number, axisPlacement?: AxisPlacement): DataFrame {
+    const timeField: Field = {
+      name: 'time',
+      type: FieldType.time,
+      values: [1, 2, 3],
+      config: { custom: {} },
+      state: { origin: { frameIndex: 0, fieldIndex: 0 } },
+      display: (v: number) => ({ text: String(v), numeric: v }),
+    } as unknown as Field;
+
+    const fields: Field[] = [timeField];
+    for (let i = 0; i < numValueFields; i++) {
+      fields.push({
+        name: `series-${i}`,
+        type: FieldType.string,
+        values: ['a', 'b', 'c'],
+        config: {
+          custom: {
+            axisPlacement: axisPlacement ?? AxisPlacement.Auto,
+            axisWidth: 80,
+          },
+        },
+        state: { origin: { frameIndex: 0, fieldIndex: i + 1 } },
+        display: (v: string) => ({ text: String(v), numeric: NaN }),
+      } as unknown as Field);
+    }
+
+    return { fields, length: 3 } as DataFrame;
+  }
+
+  function buildConfig(namePosition?: 'left' | 'top', numValueFields = 3, axisPlacement?: AxisPlacement) {
+    const frame = buildFrame(numValueFields, axisPlacement);
+    return preparePlotConfigBuilder({
+      frame,
+      theme,
+      timeZones: ['browser'],
+      getTimeRange: () => getDefaultTimeRange(),
+      allFrames: [frame],
+      mode: TimelineMode.Changes,
+      showValue: VisibilityMode.Auto,
+      hoverMulti: false,
+      getValueColor: () => '#fff',
+      namePosition,
+    });
+  }
+
+  function getYAxis(builder: ReturnType<typeof buildConfig>) {
+    const config = builder.getConfig();
+    return config.axes!.find((a) => a.scale === FIXED_UNIT)!;
+  }
+
+  it('registers drawSeriesLabels hook when namePosition is "top"', () => {
+    const config = buildConfig('top').getConfig();
+    expect(config.hooks!.draw!.length).toBeGreaterThan(0);
+  });
+
+  it('does not register drawSeriesLabels hook when namePosition is "left"', () => {
+    const config = buildConfig('left').getConfig();
+    expect(config.hooks!.draw).toBeUndefined();
+  });
+
+  it('suppresses y-axis labels when namePosition is "top" and slots are large enough', () => {
+    const builder = buildConfig('top', 3);
+    const yAxis = getYAxis(builder);
+
+    const mockU = { bbox: { height: 600 } } as unknown as uPlot;
+    const splits = [0.1, 0.5, 0.9];
+    const values = (yAxis.values as (u: uPlot, splits: number[]) => (string | null)[])(mockU, splits);
+
+    expect(values).toEqual(['', '', '']);
+  });
+
+  it('falls back to normal y-axis labels when namePosition is "top" and rows are dense', () => {
+    const builder = buildConfig('top', 50);
+    const yAxis = getYAxis(builder);
+
+    const mockU = { bbox: { height: 100 } } as unknown as uPlot;
+    const splits = Array(50).fill(0);
+    const values = (yAxis.values as (u: uPlot, splits: number[]) => (string | null)[])(mockU, splits);
+
+    expect(values!.every((v) => typeof v === 'string' && v.length > 0)).toBe(true);
+  });
+
+  it('uses auto-sizing for y-axis when namePosition is "top"', () => {
+    const builder = buildConfig('top', 3);
+    const yAxis = getYAxis(builder);
+
+    expect(typeof yAxis.size).toBe('function');
+  });
+
+  it('uses fixed axis width when namePosition is "left"', () => {
+    const builder = buildConfig('left', 3);
+    const yAxis = getYAxis(builder);
+
+    expect(yAxis.size).toBe(80);
+  });
+
+  it('hides y-axis regardless of namePosition when axis placement is hidden', () => {
+    const builder = buildConfig('top', 3, AxisPlacement.Hidden);
+    const yAxis = getYAxis(builder);
+
+    const mockU = { bbox: { height: 600 } } as unknown as uPlot;
+    const splits = [0.1, 0.5, 0.9];
+    const values = (yAxis.values as (u: uPlot, splits: number[]) => (string | null)[])(mockU, splits);
+
+    expect(values).toEqual([null, null, null]);
+    expect(yAxis.size).toBe(0);
   });
 });

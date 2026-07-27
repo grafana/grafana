@@ -87,7 +87,11 @@ export const StateTimelinePanel = ({
 
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
   const nameAboveBarsEnabled = useFlagStateTimelineNameAboveBars();
-  const namePosition = nameAboveBarsEnabled ? options.namePosition : undefined;
+  const namePosition: 'left' | 'top' | undefined = nameAboveBarsEnabled
+    ? options.namePosition === 'top'
+      ? 'top'
+      : 'left'
+    : undefined;
 
   if (!paginatedFrames || typeof warn === 'string') {
     return <PanelDataErrorView panelId={panelId} fieldConfig={fieldConfig} data={data} message={warn} needsTimeField />;

@@ -18,6 +18,11 @@ import { getPanelProps } from '../test-utils';
 import { StateTimelinePanel } from './StateTimelinePanel';
 import { defaultOptions, type Options } from './panelcfg.gen';
 
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  useFlagStateTimelineNameAboveBars: jest.fn().mockReturnValue(false),
+}));
+
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
   // Invoke the panel's render-prop (as the real plugin does on hover) so the tooltip body is exercised.
