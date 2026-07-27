@@ -153,7 +153,7 @@ describe('GetStartedWithDataSource', () => {
         origin: `grafana/plugin-page/${plugin.id}/add-data-source`,
         mode: 'assistant',
         autoSend: true,
-        context: [expect.objectContaining({ type: 'structured', data: { pluginId: plugin.id, title: 'Plugin ID' } })],
+        context: [expect.objectContaining({ type: 'structured', title: 'Plugin ID', data: { pluginId: plugin.id } })],
       })
     );
   });

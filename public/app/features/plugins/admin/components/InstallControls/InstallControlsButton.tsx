@@ -127,7 +127,8 @@ export function InstallControlsButton({
       mode: 'assistant',
       context: [
         createAssistantContextItem('structured', {
-          data: { pluginId: plugin.id, title: t('plugins.install-controls.plugin-id', 'Plugin ID') },
+          title: t('plugins.install-controls.plugin-id', 'Plugin ID'),
+          data: { pluginId: plugin.id },
         }),
       ],
       prompt: `Help me install and create a new ${plugin.name} datasource.`,
