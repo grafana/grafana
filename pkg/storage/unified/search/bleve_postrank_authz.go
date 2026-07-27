@@ -140,17 +140,26 @@ func (b *bleveIndex) ensureAuthzFields(searchrequest *bleve.SearchRequest) {
 	}
 }
 
-// ensureFacetFields makes bleve load the facet stored fields so the post-rank
-// runner can aggregate them app-side (facetAggregator.add reads them from
-// doc.Fields). Like ensureAuthzFields this extends the bleve load list only; it
-// is NOT part of the response column list (selectFields).
+func (b *bleveIndex) canAggregateFacetsPostRank(facets map[string]*resourcepb.ResourceSearchRequest_Facet) bool {
+	for _, facet := range facets {
+		if _, ok := b.searchFields.storedFacetFields[facet.Field]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+// ensureFacetFields makes Bleve load the stored facet fields so the post-rank
+// runner can aggregate them app-side. Like ensureAuthzFields this extends the
+// Bleve load list only; it is not part of the response column list.
 func (b *bleveIndex) ensureFacetFields(searchrequest *bleve.SearchRequest, req *resourcepb.ResourceSearchRequest) {
 	if slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_ALL_FIELDS) {
 		return
 	}
-	for _, f := range req.Facet {
-		if !slices.Contains(searchrequest.Fields, f.Field) {
-			searchrequest.Fields = append(searchrequest.Fields, f.Field)
+	for _, facet := range req.Facet {
+		field := b.searchFields.storedFacetFields[facet.Field]
+		if !slices.Contains(searchrequest.Fields, field) {
+			searchrequest.Fields = append(searchrequest.Fields, field)
 		}
 	}
 }
@@ -209,9 +218,10 @@ func parseHitDocInfo(doc *search.DocumentMatch, resources map[string]string) (do
 // authorizes hits in rank order, and stops once the page is filled (page-fill
 // queries) or the candidate budget is hit. TotalHits is the exact authorized
 // count when the scan exhausts the index from the top (small sets, no incoming
-// SearchAfter), else the unfiltered match count (page filled early / cap hit /
-// cursor pages — fast over exact). Facets are aggregated app-side over the
-// authorized sample. index may be a single bleve index or an IndexAlias
+// cursor), else the unfiltered match count (page filled early / cap hit /
+// cursor pages — fast over exact). Facets are aggregated app-side over an
+// authorized sample that always starts at the top of the full query. index may
+// be a single bleve index or an IndexAlias
 // (dashboards + folders); the globally-unique doc ID keeps the SortDocID
 // tie-breaker a total order across the merged set. SearchBefore is a
 // reversed-sort SearchAfter (see applySearchBefore).
@@ -252,7 +262,20 @@ func (b *bleveIndex) runPostFilterAuthz(
 	page := make(search.DocumentMatchCollection, 0, limit)
 	var agg *facetAggregator
 	if wantFacets {
-		agg = newFacetAggregator(req.Facet)
+		agg = newFacetAggregator(req.Facet, b.searchFields.storedFacetFields)
+	}
+	aggregateFacetsInPageScan := wantFacets
+	var facetAuthorized int64
+	var facetExhausted bool
+	if wantFacets && (len(req.SearchAfter) > 0 || len(req.SearchBefore) > 0) {
+		var err error
+		agg, facetAuthorized, facetExhausted, err = b.aggregateFacetsFromTop(
+			ctx, access, index, firstReq, resources, extractFn, req.Facet, stats,
+		)
+		if err != nil {
+			return nil, err
+		}
+		aggregateFacetsInPageScan = false
 	}
 
 	var candidates int64
@@ -262,7 +285,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 	// Facet scans sample to FacetSampleSize; page-fill scans use the larger
 	// MaxCandidates budget so low authorized fractions can still fill the page.
 	maxCandidates := int64(cfg.MaxCandidates)
-	if wantFacets {
+	if aggregateFacetsInPageScan {
 		maxCandidates = int64(cfg.FacetSampleSize)
 	}
 
@@ -284,13 +307,13 @@ func (b *bleveIndex) runPostFilterAuthz(
 			stats.AddTotalHits(int(res.Total))
 		}
 
-		// Authorize this window's hits in rank order. Facets always stop at the
+		// Authorize this window's hits in rank order. Facet scans stop at the
 		// sample budget; page-fill scans keep going past MaxCandidates until at
 		// least one row is found, so sparse users don't get an empty first page.
 		windowHits := res.Hits
 		candidateSeq := func(yield func(docInfo) bool) {
 			for _, hit := range windowHits {
-				if candidates >= maxCandidates && (wantFacets || len(page) > 0) {
+				if candidates >= maxCandidates && (aggregateFacetsInPageScan || len(page) > 0) {
 					return
 				}
 				info, ok := parseHitDocInfo(hit, resources)
@@ -310,7 +333,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 				return nil, err
 			}
 			authorized++
-			if wantFacets {
+			if aggregateFacetsInPageScan {
 				agg.add(info.doc)
 			}
 			// Skip the first `offset` authorized hits, then fill the page.
@@ -319,7 +342,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 			}
 			// Page-fill: stop as soon as the page is full (early-exit). Facet
 			// scans never early-exit — they walk the whole sample budget.
-			if !wantFacets && len(page) >= limit {
+			if !aggregateFacetsInPageScan && len(page) >= limit {
 				stop = true
 				break
 			}
@@ -332,7 +355,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 		// sparse user does not get an empty first page just because the first
 		// authorized hit sorted beyond MaxCandidates. Facet scans always honor
 		// the FacetSampleSize budget.
-		if candidates >= maxCandidates && (wantFacets || len(page) > 0) {
+		if candidates >= maxCandidates && (aggregateFacetsInPageScan || len(page) > 0) {
 			break
 		}
 		// Window returned fewer hits than requested -> no more matches: every
@@ -355,7 +378,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 		next := *windowReq
 		next.SearchAfter = cursor
 		next.SearchBefore = nil
-		if wantFacets {
+		if aggregateFacetsInPageScan {
 			next.Size = cfg.facetWindowSize()
 		} else {
 			next.Size = cfg.growWindow(cfg.windowSize(limit), window+1)
@@ -367,8 +390,82 @@ func (b *bleveIndex) runPostFilterAuthz(
 		attribute.Int64("search.candidates", candidates),
 		attribute.Int64("search.authorized", authorized),
 	)
+	if wantFacets && !aggregateFacetsInPageScan {
+		authorized = facetAuthorized
+		exhausted = facetExhausted
+	}
 	return response, b.finalizePostFilter(ctx, response, page, selectFields, firstReq.Sort, req, firstRes,
 		authorized, exhausted, reverseSort, wantFacets, agg, stats)
+}
+
+func (b *bleveIndex) aggregateFacetsFromTop(
+	ctx context.Context,
+	access authlib.AccessClient,
+	index bleve.Index,
+	firstReq *bleve.SearchRequest,
+	resources map[string]string,
+	extractFn func(docInfo) authz.BatchCheckItem,
+	facets map[string]*resourcepb.ResourceSearchRequest_Facet,
+	stats *resource.SearchStats,
+) (*facetAggregator, int64, bool, error) {
+	agg := newFacetAggregator(facets, b.searchFields.storedFacetFields)
+	cfg := b.postRankAuthz
+	maxCandidates := int64(cfg.FacetSampleSize)
+	var candidates int64
+	var authorized int64
+
+	initial := *firstReq
+	initial.SearchAfter = nil
+	initial.SearchBefore = nil
+	initial.Size = cfg.facetWindowSize()
+	windowReq := &initial
+
+	for {
+		res, err := index.SearchInContext(ctx, windowReq)
+		if err != nil {
+			return nil, 0, false, err
+		}
+		stats.AddSearchTime(res.Took)
+
+		windowHits := res.Hits
+		candidateSeq := func(yield func(docInfo) bool) {
+			for _, hit := range windowHits {
+				if candidates >= maxCandidates {
+					return
+				}
+				info, ok := parseHitDocInfo(hit, resources)
+				if !ok {
+					continue
+				}
+				candidates++
+				if !yield(info) {
+					return
+				}
+			}
+		}
+		for info, err := range authz.FilterAuthorized(ctx, access, candidateSeq, extractFn, authz.WithTracer(tracer)) {
+			if err != nil {
+				return nil, 0, false, err
+			}
+			authorized++
+			agg.add(info.doc)
+		}
+
+		if candidates >= maxCandidates {
+			return agg, authorized, false, nil
+		}
+		if len(res.Hits) < windowReq.Size || len(res.Hits) == 0 {
+			return agg, authorized, true, nil
+		}
+		cursor := hitSortFields(res.Hits[len(res.Hits)-1], windowReq.Sort)
+		if len(cursor) == 0 {
+			return agg, authorized, true, nil
+		}
+		next := *windowReq
+		next.SearchAfter = cursor
+		next.Size = cfg.facetWindowSize()
+		windowReq = &next
+	}
 }
 
 // applySearchBefore converts a SearchBefore request into a reversed-sort
@@ -386,11 +483,11 @@ func applySearchBefore(req *resourcepb.ResourceSearchRequest, firstReq *bleve.Se
 	return true
 }
 
-// finalizePostFilter sets TotalHits (exact authorized count when the scan
-// exhausted the index from the top, else the unfiltered match count), reverses
-// the page for SearchBefore, converts hits + facets into the response, and
-// reverses the page back to forward order for SearchBefore. See
-// runPostFilterAuthz for the TotalHits / facet-count semantics.
+// finalizePostFilter sets TotalHits, reverses the page for SearchBefore, and
+// converts hits + facets into the response. Facet requests report the
+// authorized facet-sample count so TotalHits and facet counts have the same
+// lower-bound semantics when capped. Non-facet requests retain the unfiltered
+// upper-bound fallback when their page scan does not produce an exact total.
 func (b *bleveIndex) finalizePostFilter(
 	ctx context.Context,
 	response *resourcepb.ResourceSearchResponse,
@@ -404,15 +501,13 @@ func (b *bleveIndex) finalizePostFilter(
 	agg *facetAggregator,
 	stats *resource.SearchStats,
 ) error {
-	// Exact authorized total only when the scan started from the top (no
-	// incoming SearchAfter/SearchBefore) and exhausted it. With a cursor the
-	// runner only authorizes hits returned after the cursor, so `authorized`
-	// on exhaustion is the tail count, not the whole-query total — fall back
-	// to the unfiltered firstRes.Total.
-	exact := exhausted && req.Limit > 0 && len(req.SearchAfter) == 0 && len(req.SearchBefore) == 0
-	if exact {
+	exact := exhausted
+	if wantFacets {
+		response.TotalHits = authorized
+	} else if exhausted && req.Limit > 0 && len(req.SearchAfter) == 0 && len(req.SearchBefore) == 0 {
 		response.TotalHits = authorized
 	} else {
+		exact = false
 		// Approximate: report the pre-authz match count (an over-count of the
 		// authorized total) instead of paying for a full scan.
 		response.TotalHits = int64(firstRes.Total)
@@ -450,44 +545,50 @@ func (b *bleveIndex) finalizePostFilter(
 // (<= FacetSampleSize candidates), not the full authorized set.
 type facetAggregator struct {
 	fields map[string]*resourcepb.ResourceSearchRequest_Facet
-	// field -> term -> count
+	// requested field -> stored Bleve field
+	storedFields map[string]string
+	// facet name -> term -> count
 	counts map[string]map[string]int64
-	// field -> number of authorized hits missing that field
+	// facet name -> number of authorized hits missing that field
 	missing map[string]int64
-	// field -> total authorized hits considered for that field
+	// facet name -> total authorized hits considered for that field
 	total map[string]int64
 }
 
-func newFacetAggregator(facets map[string]*resourcepb.ResourceSearchRequest_Facet) *facetAggregator {
+func newFacetAggregator(
+	facets map[string]*resourcepb.ResourceSearchRequest_Facet,
+	storedFields map[string]string,
+) *facetAggregator {
 	a := &facetAggregator{
-		fields:  facets,
-		counts:  make(map[string]map[string]int64, len(facets)),
-		missing: make(map[string]int64, len(facets)),
-		total:   make(map[string]int64, len(facets)),
+		fields:       facets,
+		storedFields: storedFields,
+		counts:       make(map[string]map[string]int64, len(facets)),
+		missing:      make(map[string]int64, len(facets)),
+		total:        make(map[string]int64, len(facets)),
 	}
-	for _, f := range facets {
-		a.counts[f.Field] = make(map[string]int64)
+	for name := range facets {
+		a.counts[name] = make(map[string]int64)
 	}
 	return a
 }
 
 func (a *facetAggregator) add(doc *search.DocumentMatch) {
-	for _, f := range a.fields {
-		v, ok := doc.Fields[f.Field]
+	for name, f := range a.fields {
+		v, ok := doc.Fields[a.storedFields[f.Field]]
 		if !ok || v == nil {
-			a.missing[f.Field]++
+			a.missing[name]++
 			continue
 		}
 		terms := facetTermValues(v)
 		if len(terms) == 0 {
-			a.missing[f.Field]++
+			a.missing[name]++
 			continue
 		}
 		// Total is the number of field values, not documents (matches bleve's
 		// TermsFacetBuilder: total counts every term visited).
-		a.total[f.Field] += int64(len(terms))
+		a.total[name] += int64(len(terms))
 		for _, term := range terms {
-			a.counts[f.Field][term]++
+			a.counts[name][term]++
 		}
 	}
 }
@@ -540,7 +641,7 @@ func facetTermValues(v any) []string {
 func (a *facetAggregator) build() map[string]*resourcepb.ResourceSearchResponse_Facet {
 	out := make(map[string]*resourcepb.ResourceSearchResponse_Facet, len(a.fields))
 	for k, f := range a.fields {
-		terms := a.counts[f.Field]
+		terms := a.counts[k]
 		limit := int(f.Limit)
 		sorted := make([]*resourcepb.ResourceSearchResponse_TermFacet, 0, len(terms))
 		for term, count := range terms {
@@ -555,13 +656,15 @@ func (a *facetAggregator) build() map[string]*resourcepb.ResourceSearchResponse_
 			}
 			return sorted[i].Term < sorted[j].Term
 		})
-		if limit > 0 && len(sorted) > limit {
+		if limit == 0 {
+			sorted = nil
+		} else if len(sorted) > limit {
 			sorted = sorted[:limit]
 		}
 		out[k] = &resourcepb.ResourceSearchResponse_Facet{
 			Field:   f.Field,
-			Total:   a.total[f.Field],
-			Missing: a.missing[f.Field],
+			Total:   a.total[k],
+			Missing: a.missing[k],
 			Terms:   sorted,
 		}
 	}

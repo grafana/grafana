@@ -21,6 +21,9 @@ type kindSearchFields struct {
 	// keywordFields maps a filter, sort or facet field name to the
 	// keyword-analyzed index field backing it.
 	keywordFields map[string]keywordField
+	// storedFacetFields maps a facet field name to the stored canonical field
+	// post-rank authorization loads for app-side aggregation.
+	storedFacetFields map[string]string
 	// textQueryKinds maps physical index field names to the query their analyzer
 	// needs.
 	textQueryKinds map[string]textQueryKind
@@ -31,9 +34,10 @@ type kindSearchFields struct {
 
 func newKindSearchFields(provider resource.SearchFieldsProvider, group, kindResource string, selectableFields []string) kindSearchFields {
 	return kindSearchFields{
-		keywordFields:  keywordFieldsForMapping(provider, group, kindResource, selectableFields),
-		textQueryKinds: textQueryKindsForMapping(provider, group, kindResource, selectableFields),
-		variants:       fieldVariantsOf(fieldDefinitionsForMapping(provider, group, kindResource)),
+		keywordFields:     keywordFieldsForMapping(provider, group, kindResource, selectableFields),
+		storedFacetFields: storedFacetFieldsForMapping(provider, group, kindResource),
+		textQueryKinds:    textQueryKindsForMapping(provider, group, kindResource, selectableFields),
+		variants:          fieldVariantsOf(fieldDefinitionsForMapping(provider, group, kindResource)),
 	}
 }
 
@@ -189,6 +193,37 @@ var keywordSubDocumentFields = []string{
 // referenceFieldPrefix is the keyword-analyzed reference sub-document. Its keys
 // are resource kinds, so they cannot be enumerated up front.
 const referenceFieldPrefix = "reference."
+
+// storedFacetFieldsForMapping returns the stored Bleve field that post-rank
+// authorization can load for each facet-capable API field. Facet capability
+// implies the canonical field is stored (see addCapabilityFieldMappings), so
+// every facetable field has a stored form the app-side aggregator can read.
+func storedFacetFieldsForMapping(provider resource.SearchFieldsProvider, group, kindResource string) map[string]string {
+	fields := make(map[string]string)
+	add := func(def resource.SearchFieldDefinition, prefix string) {
+		if !def.HasCapability(resource.SearchCapabilityFacet) {
+			return
+		}
+
+		logicalName := prefix + def.Name
+		storedName := logicalName
+		if !def.HasCapability(resource.SearchCapabilityText) {
+			storedName = prefix + keywordVariantName(def.Name, false)
+		}
+		fields[logicalName] = storedName
+	}
+
+	for _, def := range resource.StandardSearchFieldDefinitions() {
+		add(def, "")
+	}
+	for _, def := range fieldDefinitionsForMapping(provider, group, kindResource) {
+		add(def, resource.SEARCH_FIELD_PREFIX)
+		if storedName, ok := fields[resource.SEARCH_FIELD_PREFIX+def.Name]; ok {
+			fields[def.Name] = storedName
+		}
+	}
+	return fields
+}
 
 // addCapabilityFieldMappings adds bleve field mappings to parent for a single
 // declared search field. The field is placed under parent using def.Name as

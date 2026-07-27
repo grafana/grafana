@@ -1748,29 +1748,103 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 	// --- Facets on the postFilter path (aggregated app-side over authorized hits) ---
 
-	t.Run("facets aggregated app-side over authorized hits", func(t *testing.T) {
-		index := newTestDashboardsIndexPostRank(t, 2)
-		indexDocs(t, index, []*resource.BulkIndexItem{
-			newDoc("doc-0", "allowed"),
-			newDoc("doc-1", "denied"),
-			newDoc("doc-2", "allowed"),
-		})
-		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+	t.Run("exhausted tag facets match the in-searcher path", func(t *testing.T) {
+		legacyIndex := newTestDashboardsIndex(t, threshold, 2, noop)
+		postRankIndex := newTestDashboardsIndexPostRank(t, 2)
+		docs := []*resource.BulkIndexItem{
+			newDocWithTags("doc-0", "allowed", []string{"prod east", "latency"}),
+			newDocWithTags("doc-1", "denied", []string{"secret"}),
+			newDocWithTags("doc-2", "allowed", []string{"prod east"}),
+		}
+		indexDocs(t, legacyIndex, docs)
+		indexDocs(t, postRankIndex, docs)
 		q := listQuery(10)
 		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
-			"folder": {Field: "folder", Limit: 10},
+			"tags": {Field: "tags", Limit: 10},
 		}
-		names, res := searchNames(t, index, ac, q)
+
+		legacyNames, legacyRes := searchNames(t, legacyIndex, &countingAccessClient{
+			allowedFolders: map[string]bool{"allowed": true},
+		}, q)
+		names, res := searchNames(t, postRankIndex, &countingAccessClient{
+			allowedFolders: map[string]bool{"allowed": true},
+		}, q)
+		require.Equal(t, legacyNames, names)
 		require.ElementsMatch(t, []string{"doc-0", "doc-2"}, names)
-		f := res.Facet["folder"]
-		require.NotNil(t, f, "facet counts should be aggregated app-side")
-		// Only authorized hits contribute: both authorized docs are in the
-		// "allowed" folder; "denied" must not appear.
-		require.Equal(t, int64(2), f.Total)
-		require.Equal(t, int64(0), f.Missing)
-		require.Len(t, f.Terms, 1)
-		require.Equal(t, "allowed", f.Terms[0].Term)
-		require.Equal(t, int64(2), f.Terms[0].Count)
+		require.Equal(t, legacyRes.Facet, res.Facet)
+	})
+
+	t.Run("non-stored facets stay on the in-searcher path", func(t *testing.T) {
+		legacyIndex := newTestDashboardsIndex(t, threshold, 2, noop)
+		postRankIndex := newTestDashboardsIndexPostRank(t, 2)
+		docs := []*resource.BulkIndexItem{
+			newDoc("doc-0", "allowed"),
+			newDoc("doc-1", "allowed"),
+			newDoc("doc-2", "denied"),
+		}
+		docs[0].Doc.ManagedBy = "repo:one"
+		docs[1].Doc.ManagedBy = "repo:two"
+		docs[2].Doc.ManagedBy = "repo:secret"
+		indexDocs(t, legacyIndex, docs)
+		indexDocs(t, postRankIndex, docs)
+		q := listQuery(10)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"managedBy": {Field: "managedBy", Limit: 10},
+		}
+
+		legacyAC := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		postRankAC := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		legacyNames, legacyRes := searchNames(t, legacyIndex, legacyAC, q)
+		names, res := searchNames(t, postRankIndex, postRankAC, q)
+
+		require.Equal(t, legacyNames, names)
+		require.Equal(t, legacyRes.Facet, res.Facet)
+	})
+
+	t.Run("zero facet limit matches the in-searcher path", func(t *testing.T) {
+		legacyIndex := newTestDashboardsIndex(t, threshold, 2, noop)
+		postRankIndex := newTestDashboardsIndexPostRank(t, 2)
+		docs := []*resource.BulkIndexItem{
+			newDocWithTags("doc-0", "allowed", []string{"prod", "latency"}),
+			newDocWithTags("doc-1", "allowed", nil),
+		}
+		indexDocs(t, legacyIndex, docs)
+		indexDocs(t, postRankIndex, docs)
+		q := listQuery(10)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 0},
+		}
+
+		_, legacyRes := searchNames(t, legacyIndex, &countingAccessClient{allowAll: true}, q)
+		_, res := searchNames(t, postRankIndex, &countingAccessClient{allowAll: true}, q)
+		require.Equal(t, legacyRes.Facet, res.Facet)
+		require.Empty(t, res.Facet["tags"].Terms)
+		require.Equal(t, int64(2), res.Facet["tags"].Total)
+		require.Equal(t, int64(1), res.Facet["tags"].Missing)
+	})
+
+	t.Run("facet aliases targeting the same field do not double-count", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDocWithTags("doc-0", "allowed", []string{"prod", "latency"}),
+			newDocWithTags("doc-1", "allowed", []string{"prod"}),
+		})
+		q := listQuery(10)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"primary":   {Field: "tags", Limit: 10},
+			"secondary": {Field: "tags", Limit: 10},
+		}
+
+		_, res := searchNames(t, index, &countingAccessClient{allowAll: true}, q)
+		require.Equal(t, res.Facet["primary"], res.Facet["secondary"])
+		for _, name := range []string{"primary", "secondary"} {
+			facet := res.Facet[name]
+			require.Equal(t, int64(3), facet.Total)
+			require.Equal(t, []*resourcepb.ResourceSearchResponse_TermFacet{
+				{Term: "prod", Count: 2},
+				{Term: "latency", Count: 1},
+			}, facet.Terms)
+		}
 	})
 
 	t.Run("facets split multi-value tag fields into individual terms", func(t *testing.T) {
@@ -1804,6 +1878,42 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.NotContains(t, terms, "secrets", "unauthorized doc's tag must not be counted")
 	})
 
+	t.Run("facets are independent of forward and backward cursors", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		docs := make([]*resource.BulkIndexItem, 0, 10)
+		for i := 0; i < 10; i++ {
+			tag := "even"
+			if i%2 != 0 {
+				tag = "odd"
+			}
+			docs = append(docs, newDocWithTags(fmt.Sprintf("doc-%02d", i), "allowed", []string{tag}))
+		}
+		indexDocs(t, index, docs)
+		ac := &countingAccessClient{allowAll: true}
+		facets := map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 10},
+		}
+
+		baselineQuery := listQuery(4)
+		baselineQuery.Facet = facets
+		_, baseline := searchNames(t, index, ac, baselineQuery)
+
+		afterQuery := listQuery(3)
+		afterQuery.Facet = facets
+		afterQuery.SearchAfter = baseline.Results.GetRows()[3].SortFields
+		afterNames, after := searchNames(t, index, ac, afterQuery)
+		require.Equal(t, []string{"doc-04", "doc-05", "doc-06"}, afterNames)
+		require.Equal(t, baseline.Facet, after.Facet)
+
+		_, cursorPage := searchNames(t, index, ac, listQuery(7))
+		beforeQuery := listQuery(3)
+		beforeQuery.Facet = facets
+		beforeQuery.SearchBefore = cursorPage.Results.GetRows()[6].SortFields
+		beforeNames, before := searchNames(t, index, ac, beforeQuery)
+		require.Equal(t, []string{"doc-03", "doc-04", "doc-05"}, beforeNames)
+		require.Equal(t, baseline.Facet, before.Facet)
+	})
+
 	t.Run("facets report exact sample counts when the scan is capped (no extrapolation)", func(t *testing.T) {
 		// FacetSampleSize below the dataset size forces a capped scan. Counts
 		// are the exact authorized term counts within the bounded sample, NOT
@@ -1814,23 +1924,23 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		})
 		docs := make([]*resource.BulkIndexItem, 0, 100)
 		for i := 0; i < 100; i++ {
-			docs = append(docs, newDoc(fmt.Sprintf("doc-%03d", i), "allowed"))
+			docs = append(docs, newDocWithTags(fmt.Sprintf("doc-%03d", i), "allowed", []string{"sampled"}))
 		}
 		indexDocs(t, index, docs)
 
 		ac := &countingAccessClient{allowAll: true}
 		q := listQuery(10)
 		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
-			"folder": {Field: "folder", Limit: 10},
+			"tags": {Field: "tags", Limit: 10},
 		}
 		_, res := searchNames(t, index, ac, q)
-		f := res.Facet["folder"]
+		f := res.Facet["tags"]
 		require.NotNil(t, f)
 		// 20 candidates sampled (FacetSampleSize cap); all 20 are "allowed".
 		// Counts reflect only the sample, not the full 100-doc set.
 		require.Equal(t, int64(20), f.Total, "Total is the sample count, not extrapolated")
 		require.Len(t, f.Terms, 1)
-		require.Equal(t, "allowed", f.Terms[0].Term)
+		require.Equal(t, "sampled", f.Terms[0].Term)
 		require.Equal(t, int64(20), f.Terms[0].Count, "term count is the sample count, not extrapolated")
 	})
 
@@ -1864,21 +1974,43 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// Only the 4 allowed docs are authorized; the facet counts those, not
 		// the 200 unfiltered matches.
 		require.Equal(t, int64(4), f.Terms[0].Count, "facet count is the authorized count, not extrapolated to the unfiltered total")
+		require.Equal(t, int64(4), res.TotalHits, "total and facet counts use the same authorized sample")
+		require.False(t, res.TotalHitsExact, "the facet sample stopped at its cap")
+	})
+
+	t.Run("exhausted facet-only query reports an exact authorized total", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDocWithTags("doc-0", "allowed", []string{"prod"}),
+			newDocWithTags("doc-1", "denied", []string{"secret"}),
+			newDocWithTags("doc-2", "allowed", []string{"latency"}),
+		})
+		q := listQuery(0)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 10},
+		}
+
+		_, res := searchNames(t, index, &countingAccessClient{
+			allowedFolders: map[string]bool{"allowed": true},
+		}, q)
+		require.Equal(t, int64(2), res.TotalHits)
+		require.True(t, res.TotalHitsExact)
+		require.Equal(t, int64(2), res.Facet["tags"].Total)
 	})
 
 	t.Run("app-side facet term list respects Limit", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
-		// Folders with descending counts so the top-2 are well defined.
-		folders := []struct {
+		// Tags with descending counts so the top-2 are well defined.
+		tags := []struct {
 			name  string
 			count int
 		}{
 			{"f1", 4}, {"f2", 3}, {"f3", 2}, {"f4", 1},
 		}
 		docs := make([]*resource.BulkIndexItem, 0, 10)
-		for _, f := range folders {
-			for i := 0; i < f.count; i++ {
-				docs = append(docs, newDoc(fmt.Sprintf("%s-%d", f.name, i), f.name))
+		for _, tag := range tags {
+			for i := 0; i < tag.count; i++ {
+				docs = append(docs, newDocWithTags(fmt.Sprintf("%s-%d", tag.name, i), "allowed", []string{tag.name}))
 			}
 		}
 		indexDocs(t, index, docs)
@@ -1886,10 +2018,10 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		ac := &countingAccessClient{allowAll: true}
 		q := listQuery(100)
 		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
-			"folder": {Field: "folder", Limit: 2},
+			"tags": {Field: "tags", Limit: 2},
 		}
 		_, res := searchNames(t, index, ac, q)
-		f := res.Facet["folder"]
+		f := res.Facet["tags"]
 		require.NotNil(t, f)
 		require.Len(t, f.Terms, 2, "term list must be truncated to the requested Limit")
 		require.Equal(t, "f1", f.Terms[0].Term)
@@ -2326,26 +2458,26 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 	t.Run("facets aggregated app-side over authorized federated hits", func(t *testing.T) {
 		dash := newTestDashboardsIndexPostRank(t, 2)
 		folder := newTestFoldersIndexPostRank(t, 2, search.PostRankAuthzConfig{})
-		indexDashboards(t, dash, []*resource.BulkIndexItem{
-			newDash("d-aaa", "aaa", "any"), // no region label -> missing
-		})
-		indexDashboards(t, folder, []*resource.BulkIndexItem{
-			newFolder("f-zzz", "zzz", map[string]string{"region": "west"}),
-			newFolder("f-mmm", "mmm", map[string]string{"region": "east"}),
-		})
+		dashboardDoc := newDash("d-aaa", "aaa", "any") // no tags -> missing
+		westFolder := newFolder("f-zzz", "zzz", nil)
+		westFolder.Doc.Tags = []string{"west"}
+		eastFolder := newFolder("f-mmm", "mmm", nil)
+		eastFolder.Doc.Tags = []string{"east"}
+		indexDashboards(t, dash, []*resource.BulkIndexItem{dashboardDoc})
+		indexDashboards(t, folder, []*resource.BulkIndexItem{westFolder, eastFolder})
 
 		ac := search.NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true})
 		q := federatedQuery(100)
 		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
-			"region": {Field: "labels.region", Limit: 100},
+			"tags": {Field: "tags", Limit: 100},
 		}
 		_, res := searchFederated(t, dash, folder, ac, q)
 
-		f, ok := res.Facet["region"]
+		f, ok := res.Facet["tags"]
 		require.True(t, ok, "facet should be aggregated app-side")
 		require.NotNil(t, f)
-		// 2 authorized hits have a region label (west, east); the dashboard has
-		// none -> missing. Total is the number of field values, not docs.
+		// 2 authorized hits have tags (west, east); the dashboard has none.
+		// Total is the number of field values, not docs.
 		require.Equal(t, int64(2), f.Total)
 		require.Equal(t, int64(1), f.Missing)
 		terms := map[string]int64{}

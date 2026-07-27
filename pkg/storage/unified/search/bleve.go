@@ -2109,6 +2109,9 @@ func (b *bleveIndex) Search(
 	// (facets). Pure count-only (Limit==0, no facets) stays on the in-searcher
 	// path for an exact total.
 	postRank := b.postRankAuthzEnabled && access != nil && (req.Limit > 0 || len(req.Facet) > 0)
+	if postRank && len(req.Facet) > 0 && !b.canAggregateFacetsPostRank(req.Facet) {
+		postRank = false
+	}
 
 	conversionStarts := time.Now()
 	// convert protobuf request to bleve request

@@ -272,6 +272,25 @@ func TestKeywordFieldsForMapping_StandardNameWins(t *testing.T) {
 	assert.Equal(t, resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_TAGS, fields[resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_TAGS].name)
 }
 
+func TestStoredFacetFieldsForMapping(t *testing.T) {
+	gvr := schema.GroupVersionResource{Group: "example.test", Version: "v1", Resource: "widgets"}
+	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+		gvr: {
+			{Name: "summary", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilityFacet}},
+			{Name: "category", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFacet}},
+		},
+	}, nil)
+
+	fields := storedFacetFieldsForMapping(provider, gvr.Group, gvr.Resource)
+	assert.Equal(t, resource.SEARCH_FIELD_TAGS, fields[resource.SEARCH_FIELD_TAGS])
+	assert.Equal(t, resource.SEARCH_FIELD_MANAGED_BY, fields[resource.SEARCH_FIELD_MANAGED_BY])
+	assert.Equal(t, "fields.summary", fields["summary"])
+	assert.Equal(t, "fields.summary", fields["fields.summary"])
+	assert.Equal(t, "fields.category", fields["category"])
+	assert.Equal(t, "fields.category", fields["fields.category"])
+	assert.NotContains(t, fields, resource.SEARCH_FIELD_FOLDER)
+}
+
 func TestTextQueryKindsForMapping(t *testing.T) {
 	gvr := schema.GroupVersionResource{Group: "example.grafana.app", Version: "v1", Resource: "widgets"}
 	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
