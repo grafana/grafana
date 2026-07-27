@@ -1,4 +1,3 @@
-import { render, screen } from '@testing-library/react';
 import { type ReactNode } from 'react';
 
 import {
@@ -11,17 +10,15 @@ import {
   LoadingState,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { act, render, screen } from 'test/test-utils';
 
 import { getPanelProps } from '../test-utils';
 
 import { StateTimelinePanel } from './StateTimelinePanel';
 import { defaultOptions, type Options } from './panelcfg.gen';
-
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  useFlagStateTimelineNameAboveBars: jest.fn().mockReturnValue(false),
-}));
 
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
@@ -73,9 +70,13 @@ describe('StateTimelinePanel', () => {
 
   beforeEach(() => {
     consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+    setTestFlags({ [FlagKeys.StateTimelineNameAboveBars]: false });
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    await act(async () => {
+      setTestFlags();
+    });
     consoleSpy.mockRestore();
   });
 
