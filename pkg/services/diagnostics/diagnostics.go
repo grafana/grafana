@@ -30,9 +30,16 @@ type Bundler struct{}
 // their uncompressed JSON bounded independently so adding querydata.json cannot multiply a large
 // panel/dashboard archive without an explicit truncation marker.
 //
-// maxDashboardQueryDataBytes covers querydata.json AND snapshot-backend.json together: the snapshot
-// re-encodes the same frames, so giving it its own allowance would double a dashboard bundle's
-// uncompressed artifact ceiling for data querydata.json already holds.
+// querydata.json and snapshot-backend.json hold the same frames twice, so how the two are bounded
+// together differs by path, deliberately:
+//
+//   - BuildDashboard draws both from one shared maxDashboardQueryDataBytes pool. It has a single
+//     running budget spanning every panel, so letting the snapshot claim an allowance of its own
+//     would double the whole archive's ceiling for data querydata.json already holds.
+//   - Build has no running budget -- one panel, one shot -- and applies maxQueryDataArtifactBytes to
+//     each artifact separately, so a single-panel bundle's real ceiling is twice that. Sharing one
+//     allowance here would instead drop the snapshot whenever querydata.json had spent most of it,
+//     losing the offline render on exactly the large responses it exists to make readable.
 const (
 	maxQueryDataArtifactBytes  = 8 << 20
 	maxDashboardQueryDataBytes = 32 << 20
