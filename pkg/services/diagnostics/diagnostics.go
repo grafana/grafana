@@ -403,6 +403,12 @@ const snapshotArtifactTitle = "Diagnostics snapshot (backend / plugin output)"
 // supplies the panel's visualization + field config so the render matches the real panel; its own
 // datasource/targets are replaced so the imported panel can never re-query.
 //
+// This is the EXPLORABLE copy of the pipeline: the frames are frozen at the plugin's output, but the
+// panel's transformations ride along so a reader can re-run and tweak them against real data (see
+// snapshotPanel). Its frozen counterpart, snapshot-rendered.json, bakes post-transform frames with the
+// transforms stripped -- what the user actually saw -- and a divergence between the two is a finding
+// in its own right.
+//
 // queryRequestJSON supplies the submitted time range, which is baked into the dashboard: an import
 // with no time range defaults to now-6h, so a bundle read a day later would render an empty panel
 // with the frames sitting outside the window.
@@ -530,10 +536,21 @@ func snapshotPanel(panelJSON json.RawMessage) map[string]any {
 	// A library-panel reference would make the import resolve the panel from a library uid that doesn't
 	// exist in the reader's Grafana, discarding the baked targets along with the panel model.
 	delete(panel, "libraryPanel")
-	// The baked frames are the plugin's output, BEFORE frontend processing. Applying the panel's
-	// transformations on top would render something that is neither the backend response this artifact
-	// records nor the panel's real output; the post-transform view is snapshot-rendered.json's job.
-	delete(panel, "transformations")
+	// Transformations are deliberately KEPT. This is the explorable copy of the pipeline: the frames are
+	// the plugin's output and the panel's transform config sits on top, so a reader can import it, toggle
+	// or edit a transform, and watch the result move -- the dashboard is editable, so stripping them
+	// would be the lossy, irreversible choice (they cannot be added back from the artifact alone,
+	// whereas removing them in the imported panel is two clicks).
+	//
+	// The frozen "what the user saw" view is snapshot-rendered.json's job: it bakes post-transform
+	// frames with the transforms stripped. That split is what makes a divergence between the two
+	// meaningful -- transform replay here vs. what the customer's browser actually produced -- and
+	// stripping transforms here would destroy the signal instead, since the two would then differ
+	// whenever the panel has any transform at all.
+	//
+	// Safe alongside the single-target merge below: frames carry the refId they came from (stamped in
+	// snapshotFrames), so refId-addressed transforms such as filterByRefId and seriesToColumns still
+	// resolve.
 	// The baked dashboard time range is the range the queries actually ran over, and the client reads
 	// it from the PANEL's effective range -- so a relative override has already been resolved into the
 	// absolute timestamps baked below. Leaving the override on the panel applies it a SECOND time: a
@@ -571,10 +588,17 @@ func v2ElementSpec(raw json.RawMessage) json.RawMessage {
 }
 
 // v1PanelFromV2Spec translates the parts of a v2 panel spec that a v1 snapshot dashboard can render:
-// the viz plugin and its options/fieldConfig, plus the panel's identity. Queries are dropped because
-// the snapshot replaces them, and so is anything whose v1 equivalent has a different shape (v2
-// transformations are {kind, spec}, not {id, options}) -- copying the spec wholesale would emit a
-// hybrid object and carry the original datasource refs into an artifact that must not re-query.
+// the viz plugin and its options/fieldConfig, the panel's transformations, and its identity. Queries
+// are dropped because the snapshot replaces them; the spec is translated field by field rather than
+// copied wholesale, which would emit a hybrid v1/v2 object and carry the original datasource refs into
+// an artifact that must not re-query.
+//
+// Transformations come across so the v2 path is as explorable as the v1 one -- a snapshot that kept the
+// pipeline for v1 dashboards and silently dropped it for v2 would make the artifact mean different
+// things depending on the source dashboard's version. Only the v2 WRAPPER differs: a v2
+// TransformationKind is {kind, spec} where kind repeats the transformation id and spec is already a
+// complete v1 DataTransformerConfig ({id, options, disabled, filter, topic}), so lifting each spec is
+// the whole translation.
 //
 // A v2 LibraryPanel element reaches here too (indexPanelJSON indexes both kinds), and its spec is only
 // {id, title, libraryPanel} -- the viz lives in the library, not the dashboard. The whitelist is what
@@ -587,7 +611,14 @@ func v1PanelFromV2Spec(spec json.RawMessage) map[string]any {
 		Title       string `json:"title"`
 		Description string `json:"description"`
 		Transparent bool   `json:"transparent"`
-		VizConfig   struct {
+		Data        struct {
+			Spec struct {
+				Transformations []struct {
+					Spec json.RawMessage `json:"spec"`
+				} `json:"transformations"`
+			} `json:"spec"`
+		} `json:"data"`
+		VizConfig struct {
 			Kind    string `json:"kind"`
 			Group   string `json:"group"`
 			Version string `json:"version"`
@@ -628,6 +659,17 @@ func v1PanelFromV2Spec(spec json.RawMessage) map[string]any {
 	}
 	if len(v2.VizConfig.Spec.FieldConfig) > 0 {
 		panel["fieldConfig"] = v2.VizConfig.Spec.FieldConfig
+	}
+	// Each entry's spec is already a v1 DataTransformerConfig, so it is carried verbatim; the {kind,
+	// spec} wrapper around it is what stays behind.
+	var transformations []json.RawMessage
+	for _, t := range v2.Data.Spec.Transformations {
+		if len(t.Spec) > 0 {
+			transformations = append(transformations, t.Spec)
+		}
+	}
+	if len(transformations) > 0 {
+		panel["transformations"] = transformations
 	}
 	return panel
 }

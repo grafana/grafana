@@ -284,7 +284,7 @@ func TestBundler_Build_snapshotFlattensV2PanelElement(t *testing.T) {
 			"description": "how busy",
 			"data": {"kind": "QueryGroup", "spec": {
 				"queries": [{"kind": "PanelQuery", "spec": {"refId": "A", "query": {"kind": "prometheus", "group": "prometheus", "datasource": {"name": "prom-x"}, "spec": {"expr": "up"}}}}],
-				"transformations": [{"kind": "reduce", "group": "reduce", "spec": {"options": {}}}],
+				"transformations": [{"kind": "reduce", "spec": {"id": "reduce", "options": {"reducers": ["mean"]}}}],
 				"queryOptions": {}
 			}},
 			"vizConfig": {"kind": "VizConfig", "group": "stat", "version": "11.0.0", "spec": {
@@ -313,6 +313,12 @@ func TestBundler_Build_snapshotFlattensV2PanelElement(t *testing.T) {
 					Unit string `json:"unit"`
 				} `json:"defaults"`
 			} `json:"fieldConfig"`
+			Transformations []struct {
+				ID      string `json:"id"`
+				Options struct {
+					Reducers []string `json:"reducers"`
+				} `json:"options"`
+			} `json:"transformations"`
 		} `json:"panels"`
 	}
 	require.NoError(t, json.Unmarshal(files["snapshot-backend.json"], &dash))
@@ -322,9 +328,15 @@ func TestBundler_Build_snapshotFlattensV2PanelElement(t *testing.T) {
 	require.Equal(t, "11.0.0", dash.Panels[0].PluginVersion)
 	require.Equal(t, "value", dash.Panels[0].Options.ColorMode)
 	require.Equal(t, "percent", dash.Panels[0].FieldConfig.Defaults.Unit)
+	// The v2 pipeline comes across as v1 transformations, so a v2 dashboard's snapshot is as explorable
+	// as a v1 one. Each entry's spec is already a v1 DataTransformerConfig; only the {kind, spec} wrapper
+	// is left behind.
+	require.Len(t, dash.Panels[0].Transformations, 1)
+	require.Equal(t, "reduce", dash.Panels[0].Transformations[0].ID)
+	require.Equal(t, []string{"mean"}, dash.Panels[0].Transformations[0].Options.Reducers)
 	require.NotContains(t, snap, "prom-x", "the v2 query's datasource is not carried into the artifact")
 	require.NotContains(t, snap, "vizConfig", "the v2 wrapper is translated, not copied")
-	require.NotContains(t, snap, `"spec"`)
+	require.NotContains(t, snap, `"spec"`, "no v2 wrapper survives, transformations included")
 }
 
 // v2alpha1 named the plugin in vizConfig.kind before it moved to vizConfig.group.
@@ -346,12 +358,11 @@ func TestBundler_Build_snapshotFlattensV2AlphaPanelElement(t *testing.T) {
 }
 
 // A library-panel ref would make the import resolve the panel from a uid the reader's Grafana doesn't
-// have, discarding the baked targets. Transformations are dropped too: the baked frames are the
-// plugin's output before frontend processing.
-func TestBundler_Build_snapshotDropsLibraryPanelAndTransformations(t *testing.T) {
+// have, discarding the baked targets. snapshotData is stale v1 panel state the baked target replaces.
+func TestBundler_Build_snapshotDropsLibraryPanelRef(t *testing.T) {
 	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
 	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
-	panelJSON := json.RawMessage(`{"type":"stat","title":"CPU","libraryPanel":{"uid":"lib-1","name":"Shared CPU"},"transformations":[{"id":"reduce","options":{}}],"snapshotData":[]}`)
+	panelJSON := json.RawMessage(`{"type":"stat","title":"CPU","libraryPanel":{"uid":"lib-1","name":"Shared CPU"},"snapshotData":[]}`)
 
 	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, panelJSON, nil, nil, nil, nil)
 	require.NoError(t, err)
@@ -359,9 +370,38 @@ func TestBundler_Build_snapshotDropsLibraryPanelAndTransformations(t *testing.T)
 	snap := string(readTarGz(t, blob)["snapshot-backend.json"])
 	require.NotContains(t, snap, "libraryPanel")
 	require.NotContains(t, snap, "lib-1")
-	require.NotContains(t, snap, "transformations")
 	require.NotContains(t, snap, "snapshotData")
 	require.Contains(t, snap, `"stat"`, "the rest of the panel model still contributes")
+}
+
+// Transformations are KEPT, unlike every other stripped field. snapshot-backend.json is the explorable
+// copy: frames frozen at the plugin's output with the transform config on top, so a reader can re-run
+// and tweak the pipeline against real data. The frozen "what the user saw" view is
+// snapshot-rendered.json's job, and a divergence between the two is itself a finding -- stripping here
+// would erase that signal, since the two would differ whenever the panel has any transform at all.
+func TestBundler_Build_snapshotKeepsTransformations(t *testing.T) {
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
+	panelJSON := json.RawMessage(`{"type":"stat","title":"CPU","transformations":[{"id":"reduce","options":{"reducers":["mean"]}}]}`)
+
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, panelJSON, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	var dash struct {
+		Panels []struct {
+			Transformations []struct {
+				ID      string `json:"id"`
+				Options struct {
+					Reducers []string `json:"reducers"`
+				} `json:"options"`
+			} `json:"transformations"`
+		} `json:"panels"`
+	}
+	require.NoError(t, json.Unmarshal(readTarGz(t, blob)["snapshot-backend.json"], &dash))
+	require.Len(t, dash.Panels[0].Transformations, 1, "the transform config rides along with the frames")
+	require.Equal(t, "reduce", dash.Panels[0].Transformations[0].ID)
+	require.Equal(t, []string{"mean"}, dash.Panels[0].Transformations[0].Options.Reducers,
+		"carried verbatim, so re-running it in the import reproduces the panel's pipeline")
 }
 
 // A frame the SDK cannot encode costs only the snapshot: querydata.json still ships (degraded), and
