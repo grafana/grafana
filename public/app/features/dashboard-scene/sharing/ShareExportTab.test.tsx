@@ -1,3 +1,5 @@
+import saveAs from 'file-saver';
+
 import { config } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
 import {
@@ -22,6 +24,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { ShareExportTab } from './ShareExportTab';
 
 jest.mock('app/features/dashboard/api/dashboard_api');
+jest.mock('file-saver', () => jest.fn());
 
 const mockV1Spec: DashboardDataDTO = {
   title: 'Test Dashboard V1',
@@ -401,6 +404,32 @@ describe('ShareExportTab', () => {
 
       tab.onExportFormatChange(ExportFormat.V2Resource);
       expect(tab.state.isViewingYAML).toBe(true);
+    });
+  });
+
+  describe('Download', () => {
+    it('should not save an API error as a dashboard file', async () => {
+      const getDashboardAPIMock = dashboardApiModule.getDashboardAPI as jest.Mock;
+      getDashboardAPIMock.mockImplementation(() => ({
+        getDashboardDTO: jest.fn().mockRejectedValue(new Error('API down')),
+      }));
+
+      const tab = buildV1DashboardScenario();
+      const result = await tab.onSaveAsFile();
+
+      expect(result).toEqual({
+        success: false,
+        error: 'Failed to fetch dashboard in classic format. API down',
+      });
+      expect(saveAs).not.toHaveBeenCalled();
+    });
+
+    it('should save a valid dashboard file', async () => {
+      const tab = buildV1DashboardScenario();
+      const result = await tab.onSaveAsFile();
+
+      expect(result).toEqual({ success: true });
+      expect(saveAs).toHaveBeenCalledTimes(1);
     });
   });
 
