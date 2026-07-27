@@ -10,7 +10,12 @@ import { RecommendationsSkeleton } from './RecommendationsSkeleton';
 import { RecommendationsView } from './RecommendationsView';
 import { fetchInstalledPlugins, getRecommendationCards, type PluginRecommendationCard } from './pluginRecommendations';
 import { useSolutionState } from './solutionState';
-import { selectRecommendations } from './solutionsMatrix';
+import {
+  type ExistingSolutionId,
+  orderCardsForSolution,
+  type RecommendedCardId,
+  selectRecommendations,
+} from './solutionsMatrix';
 import { type RecommendationItem } from './types';
 
 const HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY = 'grafana.home.recommendations.collapsed';
@@ -66,29 +71,43 @@ function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
   // least the core plugins, so an empty response means the list is unreliable and also fails closed.
   const listReady = !!plugins.value && plugins.value.length > 0;
 
-  const recommendations = selectedCards.flatMap((card): RecommendationItem[] => {
-    if (card.kind === 'connection') {
-      // Independent of the plugin list: a failing /api/plugins must not hide a connection card.
-      return contextSrv.hasPermission(AccessControlAction.DataSourcesCreate) ? [{ ...card, cta: 'enable' }] : [];
-    }
-    if (!listReady) {
-      return [];
-    }
-    const plugin = pluginsById.get(card.pluginId);
-    if (!plugin) {
-      // Unlistable plugins take the install-only path.
-      return canInstall ? [toEnableItem(card)] : [];
-    }
-    if (plugin.enabled) {
-      // Selection already established the solution is silent; the setup CTA leads into the app,
-      // so it only renders for users who can open it.
-      return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsAppAccess, plugin)
-        ? [toSetupItem(card)]
-        : [];
-    }
-    // plugins:write is scoped to this plugin.
-    return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin) ? [toEnableItem(card)] : [];
-  });
+  const toItems = (cards: RecommendedCardId[]): RecommendationItem[] =>
+    cards.flatMap((cardId): RecommendationItem[] => {
+      const card = cardsById[cardId];
+      if (card.kind === 'connection') {
+        // Independent of the plugin list: a failing /api/plugins must not hide a connection card.
+        return contextSrv.hasPermission(AccessControlAction.DataSourcesCreate) ? [{ ...card, cta: 'enable' }] : [];
+      }
+      if (!listReady) {
+        return [];
+      }
+      const plugin = pluginsById.get(card.pluginId);
+      if (!plugin) {
+        // Unlistable plugins take the install-only path.
+        return canInstall ? [toEnableItem(card)] : [];
+      }
+      if (plugin.enabled) {
+        // Selection already established the solution is silent; the setup CTA leads into the app,
+        // so it only renders for users who can open it.
+        return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsAppAccess, plugin)
+          ? [toSetupItem(card)]
+          : [];
+      }
+      // plugins:write is scoped to this plugin.
+      return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin) ? [toEnableItem(card)] : [];
+    });
+
+  const recommendations = toItems(selection?.cards ?? []);
+  // Per-solution views are permutations of the same selection (membership is the matrix's
+  // call, never the view's), so the skeleton and region-hide gates below stay list-agnostic.
+  // The Record type keeps the literal in lockstep with EXISTING_SOLUTION_IDS.
+  const forSolution = (id: ExistingSolutionId) => toItems(orderCardsForSolution(selection?.cards ?? [], id));
+  const recommendationsBySolution: Record<ExistingSolutionId, RecommendationItem[]> = {
+    kubernetes: forSolution('kubernetes'),
+    metrics: forSolution('metrics'),
+    logs: forSolution('logs'),
+    traces: forSolution('traces'),
+  };
 
   // The region renders once state settles; recommendations only decide the right column.
   // Collapsed (gated-off) renders immediately as just the header row.
@@ -108,6 +127,7 @@ function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
   return (
     <RecommendationsView
       recommendations={recommendations}
+      recommendationsBySolution={recommendationsBySolution}
       startingState={selection?.baseRow ?? 'unknown'}
       collapsed={collapsed}
       setCollapsed={setCollapsed}

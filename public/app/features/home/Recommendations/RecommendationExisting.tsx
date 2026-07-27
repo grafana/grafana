@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { Stack } from '@grafana/ui';
@@ -6,19 +6,37 @@ import { Stack } from '@grafana/ui';
 import { ExistingSolutionCard } from './ExistingSolutionCard';
 import { NoDataCard } from './NoDataCard';
 import { useSolutionState } from './solutionState';
+import { type ExistingSolutionId } from './solutionsMatrix';
+import { type ExistingItem } from './types';
 import { useExistingSolutions } from './useExistingSolutions';
 
-export function RecommendationExisting() {
-  const [selectedTitle, setSelectedTitle] = useState<string>();
+interface RecommendationExistingProps {
+  /** Reports the solution the card displays — explicit pick or default — undefined until one settles. */
+  onSelectionChange?: (id: ExistingSolutionId | undefined) => void;
+}
+
+export function RecommendationExisting({ onSelectionChange }: RecommendationExistingProps) {
+  const [selectedId, setSelectedId] = useState<ExistingSolutionId>();
   const { loading, solutions } = useExistingSolutions();
   // Shares the TTL-cached resolution with useExistingSolutions — no extra probes.
   const { value: resolution } = useSolutionState();
+
+  // The effective selection (explicit pick ?? default) is computed before the early returns so
+  // the report effect runs unconditionally (Rules of Hooks). While loading/empty it is
+  // undefined and the parent shows the global list.
+  const selected: ExistingItem | undefined = solutions.find((item) => item.id === selectedId) ?? solutions[0];
+  const effectiveId = selected?.id;
+  // useLayoutEffect: the parent's carousel swap commits before paint, so the list never
+  // flashes the global order once the default selection settles.
+  useLayoutEffect(() => {
+    onSelectionChange?.(effectiveId);
+  }, [effectiveId, onSelectionChange]);
 
   if (loading) {
     return <RecommendationExistingSkeleton />;
   }
 
-  if (solutions.length === 0) {
+  if (!selected) {
     // NoDataCard's hard claim is only true when every core signal settled inactive; anything
     // else (active-but-no-entry, unknown) gets the softened variant.
     const s = resolution?.state;
@@ -31,8 +49,7 @@ export function RecommendationExisting() {
     return <NoDataCard variant={allInactive ? 'empty' : 'partial'} />;
   }
 
-  const selected = solutions.find((item) => item.title === selectedTitle) ?? solutions[0];
-  return <ExistingSolutionCard existing={solutions} selected={selected} onSelect={setSelectedTitle} />;
+  return <ExistingSolutionCard existing={solutions} selected={selected} onSelect={setSelectedId} />;
 }
 
 // Mirrors the card body (dropdown pill, icon + title, stats, CTA) while the solution

@@ -17,10 +17,18 @@ const mockUseKubernetesSolution = jest.mocked(useKubernetesSolution);
 const mockUseTelemetrySolutions = jest.mocked(useTelemetrySolutions);
 
 const kubernetesItem: ExistingItem = {
-  id: 'kubernetes-monitoring',
+  id: 'kubernetes',
   title: 'Kubernetes Monitoring',
   icon: 'kubernetes',
   action: 'Open K8s app',
+  href: '#',
+};
+
+const metricsItem: ExistingItem = {
+  id: 'metrics',
+  title: 'Metrics & infrastructure',
+  icon: 'chart-line',
+  action: 'Open Metrics Drilldown',
   href: '#',
 };
 
@@ -44,7 +52,7 @@ const settled = (item: ExistingItem | null) => ({ loading: false, item });
 
 beforeEach(() => {
   mockUseKubernetesSolution.mockReturnValue(settled(null));
-  mockUseTelemetrySolutions.mockReturnValue({ logs: settled(null), traces: settled(null) });
+  mockUseTelemetrySolutions.mockReturnValue({ metrics: settled(null), logs: settled(null), traces: settled(null) });
 });
 
 describe('useExistingSolutions', () => {
@@ -57,7 +65,11 @@ describe('useExistingSolutions', () => {
   });
 
   it('reports loading while a telemetry provider is still resolving', () => {
-    mockUseTelemetrySolutions.mockReturnValue({ logs: { loading: true, item: null }, traces: settled(null) });
+    mockUseTelemetrySolutions.mockReturnValue({
+      metrics: settled(null),
+      logs: { loading: true, item: null },
+      traces: settled(null),
+    });
 
     const { result } = renderHook(() => useExistingSolutions());
 
@@ -78,18 +90,26 @@ describe('useExistingSolutions', () => {
     expect(result.current).toEqual({ loading: false, solutions: [kubernetesItem] });
   });
 
-  it('orders solutions kubernetes, logs, traces with no duplicates', () => {
+  it('orders solutions kubernetes, metrics, logs, traces with no duplicates', () => {
     mockUseKubernetesSolution.mockReturnValue(settled(kubernetesItem));
-    mockUseTelemetrySolutions.mockReturnValue({ logs: settled(logsItem), traces: settled(tracesItem) });
+    mockUseTelemetrySolutions.mockReturnValue({
+      metrics: settled(metricsItem),
+      logs: settled(logsItem),
+      traces: settled(tracesItem),
+    });
 
     const { result } = renderHook(() => useExistingSolutions());
 
-    expect(result.current.solutions).toEqual([kubernetesItem, logsItem, tracesItem]);
+    expect(result.current.solutions).toEqual([kubernetesItem, metricsItem, logsItem, tracesItem]);
   });
 
   it('renders a discovered solution immediately even if a provider still reports loading', () => {
     mockUseKubernetesSolution.mockReturnValue({ loading: true, item: null });
-    mockUseTelemetrySolutions.mockReturnValue({ logs: settled(logsItem), traces: settled(null) });
+    mockUseTelemetrySolutions.mockReturnValue({
+      metrics: settled(null),
+      logs: settled(logsItem),
+      traces: settled(null),
+    });
 
     const { result } = renderHook(() => useExistingSolutions());
 

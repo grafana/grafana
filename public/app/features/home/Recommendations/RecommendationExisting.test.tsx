@@ -20,7 +20,7 @@ import {
 import { readSeries } from './promQuery';
 import { useSolutionState } from './solutionState';
 import { type SolutionState } from './solutionsMatrix';
-import { fetchLogsActivity, fetchTracesActivity, fetchTracesServices } from './telemetryData';
+import { fetchLogsActivity, fetchMetricsActivity, fetchTracesActivity, fetchTracesServices } from './telemetryData';
 
 jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
   ...jest.requireActual('app/features/alerting/unified/hooks/usePluginBridge'),
@@ -46,6 +46,7 @@ jest.mock('./solutionState', () => ({
 jest.mock('./telemetryData', () => ({
   ...jest.requireActual('./telemetryData'),
   fetchLogsActivity: jest.fn(),
+  fetchMetricsActivity: jest.fn(),
   fetchTracesActivity: jest.fn(),
   fetchTracesServices: jest.fn(),
 }));
@@ -63,6 +64,7 @@ const mockFetchCpuSeries = jest.mocked(fetchClusterCpuSeries);
 const mockUseSolutionState = jest.mocked(useSolutionState);
 const mockUseAppPluginMetas = jest.mocked(useAppPluginMetas);
 const mockFetchLogsActivity = jest.mocked(fetchLogsActivity);
+const mockFetchMetricsActivity = jest.mocked(fetchMetricsActivity);
 const mockFetchTracesActivity = jest.mocked(fetchTracesActivity);
 const mockFetchTracesServices = jest.mocked(fetchTracesServices);
 
@@ -96,9 +98,22 @@ const tempoDatasource: DataSourceInstanceListItem = {
   isDefault: false,
 };
 
+const prometheusDatasource: DataSourceInstanceListItem = {
+  uid: 'prom-uid',
+  name: 'grafanacloud-prom',
+  type: 'prometheus',
+  meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
+  readOnly: false,
+  isDefault: false,
+};
+
 function setSolutionState(
   overrides: Partial<SolutionState>,
-  ds: { loki?: DataSourceInstanceListItem; tempo?: DataSourceInstanceListItem } = {}
+  ds: {
+    loki?: DataSourceInstanceListItem;
+    tempo?: DataSourceInstanceListItem;
+    prometheus?: DataSourceInstanceListItem;
+  } = {}
 ) {
   mockUseSolutionState.mockReturnValue({
     value: {
@@ -112,6 +127,7 @@ function setSolutionState(
       },
       lokiDatasource: ds.loki ?? null,
       tempoDatasource: ds.tempo ?? null,
+      prometheusDatasource: ds.prometheus ?? null,
     },
     loading: false,
   });
@@ -163,6 +179,14 @@ beforeEach(() => {
   mockFetchTracesActivity.mockResolvedValue({ spans: null, series: null });
   mockFetchTracesServices.mockReset();
   mockFetchTracesServices.mockResolvedValue(null);
+  mockFetchMetricsActivity.mockReset();
+  mockFetchMetricsActivity.mockResolvedValue({
+    series: null,
+    names: null,
+    hosts: null,
+    seriesSparkline: null,
+    disk: null,
+  });
 });
 
 afterEach(() => jest.restoreAllMocks());
@@ -183,11 +207,18 @@ describe('RecommendationExisting', () => {
 
   it('lists live solutions in registry order with no stub entries', async () => {
     mockActiveLogs();
+    mockFetchMetricsActivity.mockResolvedValue({
+      series: 4_200_000,
+      names: null,
+      hosts: null,
+      seriesSparkline: null,
+      disk: null,
+    });
     mockFetchTracesActivity.mockResolvedValue({ spans: 4_800_000, series: null });
     mockFetchTracesServices.mockResolvedValue(34);
     setSolutionState(
       { metrics: 'active', logs: 'active', traces: 'active' },
-      { loki: lokiDatasource, tempo: tempoDatasource }
+      { prometheus: prometheusDatasource, loki: lokiDatasource, tempo: tempoDatasource }
     );
 
     const { user } = render(<RecommendationExisting />);
@@ -196,7 +227,7 @@ describe('RecommendationExisting', () => {
     await user.click(screen.getByRole('button', { name: /Switch solution/i }));
 
     const items = screen.getAllByRole('menuitem').map((item) => item.textContent?.trim());
-    expect(items).toEqual(['Kubernetes Monitoring', 'Hosted Logs', 'Hosted Traces']);
+    expect(items).toEqual(['Kubernetes Monitoring', 'Metrics & infrastructure', 'Hosted Logs', 'Hosted Traces']);
   });
 
   it('shows traces stats and the drilldown href when the app is available', async () => {
@@ -251,6 +282,85 @@ describe('RecommendationExisting', () => {
       'href',
       '/a/grafana-lokiexplore-app'
     );
+  });
+
+  it('shows metrics stats, the disk alert, and the drilldown href when the app is available', async () => {
+    mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
+    setSolutionState({ metrics: 'active' }, { prometheus: prometheusDatasource });
+    mockFetchMetricsActivity.mockResolvedValue({
+      series: 4_200_000,
+      names: 1_200,
+      hosts: 12,
+      seriesSparkline: null,
+      disk: { hostsAbove: 3, worstInstance: 'web-03:9100', worstRatio: 0.96, hoursToFull: 6.4 },
+    });
+    mockUseAppPluginMetas.mockReturnValue({
+      loading: false,
+      error: undefined,
+      value: [{ id: 'grafana-metricsdrilldown-app' } as AppPluginConfig],
+    });
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
+    expect(screen.getByText('via grafanacloud-prom')).toBeInTheDocument();
+    expect(await screen.findByText('4.2M series')).toBeInTheDocument();
+    expect(screen.getByText('active · 12 hosts')).toBeInTheDocument();
+    expect(screen.getByText('3 hosts above 90% disk')).toBeInTheDocument();
+    // Scrape port stripped from the worst host; the rounded ETA rides along.
+    expect(screen.getByText('web-03 at 96%')).toBeInTheDocument();
+    expect(screen.getByText('~6 h to full')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /View/ }).getAttribute('href')).toMatch(/^\/explore\?left=/);
+    expect(screen.getByRole('link', { name: /Open Metrics Drilldown/ })).toHaveAttribute(
+      'href',
+      '/a/grafana-metricsdrilldown-app'
+    );
+  });
+
+  it('falls back to the name count and Explore when no active-series source responded', async () => {
+    mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
+    setSolutionState({ metrics: 'active' }, { prometheus: prometheusDatasource });
+    mockFetchMetricsActivity.mockResolvedValue({
+      series: null,
+      names: 1_200,
+      hosts: null,
+      seriesSparkline: null,
+      disk: null,
+    });
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
+    expect(await screen.findByText('1.2K metrics')).toBeInTheDocument();
+    // No host count: the secondary degrades to the bare qualifier, and no alert row renders.
+    expect(screen.getByText('active')).toBeInTheDocument();
+    expect(screen.queryByText(/above 90% disk/)).not.toBeInTheDocument();
+    const href = screen.getByRole('link', { name: /Open in Explore/ }).getAttribute('href') ?? '';
+    expect(href).toMatch(/^\/explore\?left=/);
+    const left = new URLSearchParams(href.split('?')[1]).get('left') ?? '';
+    expect(JSON.parse(left)).toEqual({ datasource: 'grafanacloud-prom', context: 'explore' });
+  });
+
+  it('drops the metrics entry when series, names, and sparkline all failed soft', async () => {
+    mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
+    setSolutionState({ metrics: 'active', logs: 'active' }, { prometheus: prometheusDatasource, loki: lokiDatasource });
+    mockFetchLogsActivity.mockResolvedValue({ bytes: 47_000_000_000, sources: 8, series: null });
+    // Hosts alone are secondary content — they cannot carry the card.
+    mockFetchMetricsActivity.mockResolvedValue({
+      series: null,
+      names: null,
+      hosts: 12,
+      seriesSparkline: null,
+      disk: null,
+    });
+
+    const { user } = render(<RecommendationExisting />);
+
+    expect(await screen.findByRole('heading', { name: 'Hosted Logs' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Switch solution/i }));
+
+    const items = screen.getAllByRole('menuitem').map((item) => item.textContent?.trim());
+    expect(items).toEqual(['Hosted Logs']);
   });
 
   it('never invents an entry for an unknown signal', async () => {
@@ -568,7 +678,7 @@ describe('RecommendationExisting', () => {
         surface: 'existing_solution',
         action: 'open_solution',
         placement: 'card',
-        solution: 'kubernetes-monitoring',
+        solution: 'kubernetes',
       });
     });
 
@@ -588,7 +698,7 @@ describe('RecommendationExisting', () => {
         surface: 'existing_solution',
         action: 'view_alerts',
         placement: 'card',
-        solution: 'kubernetes-monitoring',
+        solution: 'kubernetes',
       });
     });
 

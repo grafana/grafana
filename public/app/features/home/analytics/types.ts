@@ -51,6 +51,10 @@ export interface CtaClicked extends EventProperty {
    * values are the BaseRow union in solutionsMatrix.ts.
    */
   starting_state?: string;
-  /** Stable id of the solution whose control was clicked (surfaces 'existing_solution' and 'no_data_card' only). */
+  /**
+   * Stable id of the solution whose control was clicked (surfaces 'existing_solution' and
+   * 'no_data_card'). Also valid for surface 'recommendations', where it carries the solution
+   * view active when the card/pill was clicked.
+   */
   solution?: string;
 }

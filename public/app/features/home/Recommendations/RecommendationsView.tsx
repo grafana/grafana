@@ -8,11 +8,13 @@ import { Badge, Button, Grid, Icon, Stack, Text, useStyles2 } from '@grafana/ui'
 import { RecommendationCard } from './RecommendationCard';
 import { RecommendationExisting } from './RecommendationExisting';
 import { RecommendationPill } from './RecommendationPill';
-import { type BaseRow } from './solutionsMatrix';
+import { type BaseRow, type ExistingSolutionId } from './solutionsMatrix';
 import { type RecommendationItem } from './types';
 
 interface RecommendationsViewProps {
   recommendations: RecommendationItem[];
+  /** The same recommendations reordered per solution view; keyed by ExistingItem id. */
+  recommendationsBySolution: Record<ExistingSolutionId, RecommendationItem[]>;
   /** Matrix row that drove the selection; threaded into cta_clicked as starting_state. */
   startingState: BaseRow;
   /** Owned by the parent: the stored preference also gates the solution probes there. */
@@ -22,6 +24,7 @@ interface RecommendationsViewProps {
 
 export function RecommendationsView({
   recommendations,
+  recommendationsBySolution,
   startingState,
   collapsed,
   setCollapsed,
@@ -40,11 +43,21 @@ export function RecommendationsView({
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
+  // The carousel follows the solution displayed on the left card (default selection included);
+  // undefined = no solution settled yet, so the global matrix order stands.
+  const [activeSolution, setActiveSolution] = useState<ExistingSolutionId>();
+  const items = activeSolution ? recommendationsBySolution[activeSolution] : recommendations;
+
+  // A solution switch restarts the carousel: the point of the swap is the new leading card.
+  useEffect(() => {
+    setIndex(0);
+  }, [activeSolution]);
+
   // Clamp during render so a shrinking list cannot select an undefined entry.
-  const safeIndex = Math.min(index, recommendations.length - 1);
-  const hasRecommendations = recommendations.length > 0;
+  const safeIndex = Math.min(index, items.length - 1);
+  const hasRecommendations = items.length > 0;
   // A single card needs no carousel controls and must not auto-advance onto itself.
-  const showControls = recommendations.length > 1;
+  const showControls = items.length > 1;
 
   useEffect(() => {
     if (collapsed || paused || !showControls) {
@@ -52,11 +65,11 @@ export function RecommendationsView({
     }
 
     const timeout = setTimeout(() => {
-      setIndex((safeIndex + 1) % recommendations.length);
+      setIndex((safeIndex + 1) % items.length);
     }, 5000);
 
     return () => clearTimeout(timeout);
-  }, [collapsed, paused, safeIndex, recommendations.length, showControls]);
+  }, [collapsed, paused, safeIndex, items.length, showControls]);
 
   return (
     <div>
@@ -68,11 +81,12 @@ export function RecommendationsView({
         {collapsed && hasRecommendations && (
           <div className={styles.pills}>
             <Stack direction="row" alignItems="center" gap={1} wrap="wrap">
-              {recommendations.map((recommendation) => (
+              {items.map((recommendation) => (
                 <RecommendationPill
                   key={recommendation.id}
                   recommendation={recommendation}
                   startingState={startingState}
+                  solution={activeSolution}
                 />
               ))}
             </Stack>
@@ -104,7 +118,7 @@ export function RecommendationsView({
         <div className={styles.cards} hidden={collapsed}>
           <Grid gap={0} columns={hasRecommendations ? { xs: 1, md: 2 } : 1}>
             <div className={styles.card}>
-              <RecommendationExisting />
+              <RecommendationExisting onSelectionChange={setActiveSolution} />
 
               {hasRecommendations && (
                 <div className={styles.arrow}>
@@ -130,11 +144,11 @@ export function RecommendationsView({
                         size="sm"
                         fill="text"
                         icon="angle-left"
-                        onClick={() => setIndex((safeIndex - 1 + recommendations.length) % recommendations.length)}
+                        onClick={() => setIndex((safeIndex - 1 + items.length) % items.length)}
                         aria-label={t('home.recommendations.previous', 'Previous')}
                       />
 
-                      {recommendations.map((_, i) =>
+                      {items.map((_, i) =>
                         i === safeIndex ? (
                           <Button
                             key={i}
@@ -171,7 +185,7 @@ export function RecommendationsView({
                         size="sm"
                         fill="text"
                         icon="angle-right"
-                        onClick={() => setIndex((safeIndex + 1) % recommendations.length)}
+                        onClick={() => setIndex((safeIndex + 1) % items.length)}
                         aria-label={t('home.recommendations.next', 'Next')}
                       />
                     </Stack>
@@ -180,14 +194,18 @@ export function RecommendationsView({
 
                 <div className={styles.outer}>
                   <div className={styles.inner} style={{ transform: `translateX(-${safeIndex * 100}%)` }}>
-                    {recommendations.map((recommendation, i) => (
+                    {items.map((recommendation, i) => (
                       <div
                         key={recommendation.id}
                         className={styles.item}
                         aria-hidden={i !== safeIndex}
                         {...(i !== safeIndex && { inert: '' })}
                       >
-                        <RecommendationCard recommendation={recommendation} startingState={startingState} />
+                        <RecommendationCard
+                          recommendation={recommendation}
+                          startingState={startingState}
+                          solution={activeSolution}
+                        />
                       </div>
                     ))}
                   </div>

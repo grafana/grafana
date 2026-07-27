@@ -36,6 +36,11 @@ export interface SolutionStateResolution {
   /** Datasources that won the logs/traces probes; null unless the signal is active. */
   lokiDatasource: DataSourceInstanceListItem | null;
   tempoDatasource: DataSourceInstanceListItem | null;
+  /**
+   * Datasource that won the metrics probe (or the kubernetes probe when kubernetes forced
+   * metrics active); null unless metrics is active.
+   */
+  prometheusDatasource: DataSourceInstanceListItem | null;
 }
 
 interface SignalResolution {
@@ -119,6 +124,9 @@ async function resolveAllSignals(): Promise<SolutionStateResolution> {
     },
     lokiDatasource: logs.datasource,
     tempoDatasource: traces.datasource,
+    // The kubernetes⇒metrics invariant can force metrics active with an empty metrics probe;
+    // the kubernetes datasource is a Prometheus (kube-state-metrics), so it carries the card.
+    prometheusDatasource: metrics.datasource ?? (kubernetes.status === 'active' ? kubernetes.datasource : null),
   };
 }
 
