@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef } from 'react';
 import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { type VizPanel, useSceneObjectState } from '@grafana/scenes';
+import { useSceneObjectState } from '@grafana/scenes';
 import {
   ElementSelectionContext,
   useSidebar,
@@ -23,12 +23,6 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
 
-import { type PopoverTarget, AssistantPopoverContext } from '../assistant/AssistantPopoverContext';
-import {
-  useDashboardAssistantViewMode,
-  usePopoverDismissOnClickOutside,
-} from '../assistant/DashboardAssistantViewMode';
-import { ViewModePanelPromptCard } from '../assistant/ViewModePanelPromptCard';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
@@ -87,54 +81,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     shouldActivateOrKeepAlive: true,
   });
 
-  const { isEnabled: isAssistantEnabled } = useDashboardAssistantViewMode({
-    dashboard,
-    isEditing,
-  });
-
-  // --- Assistant popover state (decoupled from selection system) ---
-  // Stores an array of PopoverTargets to support multi-panel context.
-  // Once the popover is open, clicking another sparkle adds that panel;
-  // clicking the same sparkle again removes it (toggle).
-  const [popoverTargets, setPopoverTargets] = useState<PopoverTarget[]>([]);
-
-  // Close popover when entering edit mode
-  useEffect(() => {
-    if (isEditing) {
-      setPopoverTargets([]);
-    }
-  }, [isEditing]);
-
-  const clearPopover = useCallback(() => setPopoverTargets([]), []);
-  usePopoverDismissOnClickOutside(popoverTargets.length > 0, clearPopover);
-
-  const popoverContextValue = useMemo(
-    () => ({
-      openPopover: (panel: VizPanel, anchorEl: HTMLElement, multi: boolean) => {
-        setPopoverTargets((prev) => {
-          const exists = prev.findIndex((t) => t.panel === panel);
-
-          if (multi) {
-            // Shift+click: toggle panel in/out of the selection
-            if (exists >= 0) {
-              return prev.filter((_, i) => i !== exists);
-            }
-            return [...prev, { panel, anchorEl }];
-          }
-
-          // Plain click: replace selection, or toggle off if already the only one
-          if (exists >= 0 && prev.length === 1) {
-            return [];
-          }
-          return [{ panel, anchorEl }];
-        });
-      },
-    }),
-    []
-  );
-
-  // Selection is only needed in edit mode — the assistant popover is triggered
-  // exclusively via the sparkle button, not through the selection system.
+  // Selection is only needed in edit mode.
   useEffect(() => {
     if (isEditing) {
       editPane.enableSelection();
@@ -223,20 +170,15 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     );
   }
 
-  const showPopover = !isEditing && isAssistantEnabled && popoverTargets.length > 0;
-
   return (
-    <AssistantPopoverContext.Provider value={popoverContextValue}>
-      <div className={styles.container}>
-        <ElementSelectionContext.Provider value={selectionContext}>
-          <div className={styles.controlsWrapperSticky} onPointerDown={onClearSelection}>
-            {controls}
-          </div>
-          {renderBody()}
-          {showPopover && <ViewModePanelPromptCard targets={popoverTargets} onClose={clearPopover} />}
-        </ElementSelectionContext.Provider>
-      </div>
-    </AssistantPopoverContext.Provider>
+    <div className={styles.container}>
+      <ElementSelectionContext.Provider value={selectionContext}>
+        <div className={styles.controlsWrapperSticky} onPointerDown={onClearSelection}>
+          {controls}
+        </div>
+        {renderBody()}
+      </ElementSelectionContext.Provider>
+    </div>
   );
 }
 

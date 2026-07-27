@@ -2317,6 +2317,20 @@ func (k *kvStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedR
 	return k.dataStore.GetResourceStats(ctx, nsr, minCount)
 }
 
+// GetResourceStatsWithLimit is like GetResourceStats but stops counting each
+// namespace at countLimit. See dataStore.GetResourceStatsWithLimit.
+func (k *kvStorageBackend) GetResourceStatsWithLimit(ctx context.Context, nsr NamespacedResource, minCount, countLimit int) ([]ResourceStats, error) {
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.GetResourceStatsWithLimit", trace.WithAttributes(
+		attribute.String("namespace", nsr.Namespace),
+		attribute.String("group", nsr.Group),
+		attribute.String("resource", nsr.Resource),
+		attribute.Int("countLimit", countLimit),
+	))
+	defer span.End()
+
+	return k.dataStore.GetResourceStatsWithLimit(ctx, nsr, minCount, countLimit)
+}
+
 // ListStoredResources discovers resource identities in the storage backend.
 func (k *kvStorageBackend) ListStoredResources(ctx context.Context, filter NamespacedResource) ([]NamespacedResource, error) {
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ListStoredResources", trace.WithAttributes(
