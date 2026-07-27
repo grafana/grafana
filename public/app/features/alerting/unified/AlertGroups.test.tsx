@@ -7,6 +7,7 @@ import { setupDataSources } from 'app/features/alerting/unified/testSetup/dataso
 import { AccessControlAction } from 'app/types/accessControl';
 
 import AlertGroups from './AlertGroups';
+import * as analytics from './Analytics';
 import { setupMswServer } from './mockApi';
 import { grantUserPermissions, mockAlertGroup, mockAlertmanagerAlert, mockDataSource } from './mocks';
 import { AlertmanagerProvider } from './state/AlertmanagerContext';
@@ -254,5 +255,31 @@ describe('AlertGroups', () => {
     expect(url.searchParams.get('active')).toBe('true');
     expect(url.searchParams.get('silenced')).toBe('false');
     expect(url.searchParams.get('inhibited')).toBe('false');
+  });
+
+  describe('CUJ landing event', () => {
+    it('emits a success event once the alert groups query settles', async () => {
+      const trackSpy = jest.spyOn(analytics, 'trackAlertGroupsLoaded');
+      mockAlertGroupsResponse([]);
+
+      renderAmNotifications();
+
+      await waitFor(() => expect(trackSpy).toHaveBeenCalledWith({ status: 'success' }));
+      trackSpy.mockRestore();
+    });
+
+    it('emits an error event when the alert groups query fails', async () => {
+      const trackSpy = jest.spyOn(analytics, 'trackAlertGroupsLoaded');
+      server.use(
+        http.get('/api/alertmanager/:datasourceUid/api/v2/alerts/groups', () =>
+          HttpResponse.json({ message: 'nope' }, { status: 500 })
+        )
+      );
+
+      renderAmNotifications();
+
+      await waitFor(() => expect(trackSpy).toHaveBeenCalledWith({ status: 'error' }));
+      trackSpy.mockRestore();
+    });
   });
 });

@@ -14,6 +14,7 @@ This documentation describes the Critical User Journey tracking framework in Gra
   - [Journeys](#journeys)
   - [Phase 1 Journeys](#phase-1-journeys)
     - [search_to_resource](#search_to_resource)
+    - [home_to_alert_insight](#home_to_alert_insight)
     - [browse_to_resource](#browse_to_resource)
     - [dashboard_edit](#dashboard_edit)
     - [panel_edit](#panel_edit)
@@ -184,7 +185,7 @@ handle.end('success', { dashboardUid })
 
 ## Journeys
 
-> # **Status:** only `search_to_resource` ships in this PR. The other five entries below are forward-looking specs for the squads that will own them — wirings land in a follow-up PR.
+> **Status:** `search_to_resource` and `home_to_alert_insight` ship today. The other five entries below are forward-looking specs for the squads that will own them — wirings land in a follow-up PR.
 
 ## Phase 1 Journeys
 
@@ -209,6 +210,37 @@ User searches for a resource via command palette and navigates to it.
 - Resource type detection uses action ID prefixes: `go/dashboard` -> dashboard, `go/folder` -> folder, anything else -> other (nav action).
 - Nav actions (Explore, Alerting, etc.) end as `success` when the palette closes after selection, since the close IS the navigation.
 - `command_palette_closed` is a silent interaction - fires `onInteraction` subscribers but is not sent to analytics backends.
+
+### home_to_alert_insight
+
+**File:** `public/app/core/journeys/homeToAlertInsight.ts`
+
+User clicks a control on the homepage "Firing alerts" card and reaches the destination value moment. Measures time-to-value (MTTV) from the homepage widget to the alerting page requested. Three of the four card controls start the journey (`view_all_rules` is excluded — see key behaviors); `action` selects which destination load event ends it.
+
+| Event                 | Trigger                                                                                            | Action                                                     |
+| --------------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Start                 | `grafana_homepage_cta_clicked` (surface `alerts_card`: alert_detail, view_all_alerts, create_rule) | Journey starts; `action` selects the end leg               |
+| End (alert_detail)    | `grafana_alerting_rule_viewer_loaded`                                                              | Rule detail settled — success, or error on not_found/error |
+| End (view_all_alerts) | `grafana_alerting_alert_groups_loaded`                                                             | Alert groups query settled — success or error              |
+| End (create_rule)     | `grafana_alerting_rule_editor_loaded`                                                              | Editor rendered — success, or error when permission denied |
+
+**Silent interactions added by this journey:** `grafana_alerting_rule_viewer_loaded`, `grafana_alerting_alert_groups_loaded`, `grafana_alerting_rule_editor_loaded` — emitted once per mount on RuleViewer, AlertGroups, and RuleEditor respectively.
+
+**Attributes:**
+
+- `action` — which card control was clicked (`alert_detail`, `view_all_alerts`, `view_all_rules`, `create_rule`); slices the insight legs from the creation leg.
+- `placement` — where on the card the control lives (`list`, `empty_state`, `footer`).
+- `severity` — canonical severity of the clicked alert (`alert_detail` only; empty otherwise).
+- `msSinceLoad` — dwell: milliseconds between the card's data becoming visible and the click. Carried as an additive prop on the loud `grafana_homepage_cta_clicked` event and mirrored onto the journey.
+
+**Key behaviors:**
+
+- Per-leg end matching: a journey only ends on ITS destination's load event, so a user who bails to a different alerting page never records a false success.
+- `cancelOnRestart` (registry default): a second qualifying click cancels the in-flight journey and starts a fresh one — correct MTTV semantics for a retried click. The wiring does not guard with `getActiveJourney`.
+- No discard condition: nothing emits a "navigated elsewhere" interaction, so an abandoned journey ends via the 60s timeout, not `discarded`.
+- `view_all_rules` does not start a journey: the rule list's only signal (`grafana_alerting_rule_list_page_view`) fires at mount, before the lazy list and rule data load, so it would report router time as MTTV. The leg returns when the rule list emits a real data-settled signal (v1 and v2). The click itself is still counted by the loud card-click event.
+- New-tab clicks never start a journey: `new_tab: true` (Cmd/Ctrl, mirroring `interceptLinkClicks`) is carried on the click event and the trigger skips it — the destination loads in another tab and cross-tab correlation is unsupported.
+- The three `*_loaded` events are silent (`reportInteraction(..., { silent: true })`): they reach `onInteraction` subscribers (the journey) but never analytics backends.
 
 ### browse_to_resource
 
@@ -865,14 +897,17 @@ Silent interactions:
 
 Use silent mode for interactions added specifically for journey tracking that have no standalone analytics value:
 
-| Interaction                           | Why silent                                              |
-| ------------------------------------- | ------------------------------------------------------- |
-| `command_palette_closed`              | Only needed to detect palette dismiss vs navigation     |
-| `grafana_browse_dashboards_page_view` | Only needed to detect folder load and journey start     |
-| `panel_edit_closed`                   | Only needed to detect panel editor deactivation         |
-| `panel_edit_discarded`                | Only needed to distinguish discard vs save before close |
-| `explore_to_dashboard_panel_applied`  | Only needed to detect panel applied on dashboard side   |
-| `e_2_d_discarded`                     | Only needed to detect form dismiss without submit       |
+| Interaction                            | Why silent                                                                        |
+| -------------------------------------- | --------------------------------------------------------------------------------- |
+| `command_palette_closed`               | Only needed to detect palette dismiss vs navigation                               |
+| `grafana_browse_dashboards_page_view`  | Only needed to detect folder load and journey start                               |
+| `panel_edit_closed`                    | Only needed to detect panel editor deactivation                                   |
+| `panel_edit_discarded`                 | Only needed to distinguish discard vs save before close                           |
+| `explore_to_dashboard_panel_applied`   | Only needed to detect panel applied on dashboard side                             |
+| `e_2_d_discarded`                      | Only needed to detect form dismiss without submit                                 |
+| `grafana_alerting_rule_viewer_loaded`  | Only needed to detect the rule detail view settling for `home_to_alert_insight`   |
+| `grafana_alerting_alert_groups_loaded` | Only needed to detect the alert groups query settling for `home_to_alert_insight` |
+| `grafana_alerting_rule_editor_loaded`  | Only needed to detect the rule editor rendering for `home_to_alert_insight`       |
 
 Existing interactions like `command_palette_opened`, `command_palette_action_selected`, and `dashboards_init_dashboard_completed` are NOT silent - they have independent analytics value.
 

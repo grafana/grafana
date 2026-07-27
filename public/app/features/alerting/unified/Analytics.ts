@@ -472,3 +472,18 @@ export function trackViewExperienceToggleConfirmed(
 export function trackRuleListPageView(payload: { view: 'v1' | 'v2' }) {
   reportInteraction('grafana_alerting_rule_list_page_view', payload);
 }
+
+/** Silent CUJ signal: rule detail view settled (data loaded, errored, or rule not found). */
+export function trackRuleViewerLoaded(payload: { status: 'success' | 'error' | 'not_found' }) {
+  reportInteraction('grafana_alerting_rule_viewer_loaded', { ...payload }, { silent: true });
+}
+
+/** Silent CUJ signal: alert groups page query settled. */
+export function trackAlertGroupsLoaded(payload: { status: 'success' | 'error' }) {
+  reportInteraction('grafana_alerting_alert_groups_loaded', { ...payload }, { silent: true });
+}
+
+/** Silent CUJ signal: rule editor rendered (form visible or permission denied). */
+export function trackRuleEditorLoaded(payload: { status: 'success' | 'denied' }) {
+  reportInteraction('grafana_alerting_rule_editor_loaded', { ...payload }, { silent: true });
+}

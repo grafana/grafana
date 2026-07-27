@@ -44,7 +44,7 @@ function AlertIncidentTabsInner({
   const [activeTab, setActiveTab] = useState(canViewAlerts ? ALERTS_TAB_ID : INCIDENTS_TAB_ID);
   const alertsData = useFiringAlerts();
   const incidentsData = useIncidents();
-  const { count, hasAlerts, loading, canCreate, newRuleHref, viewAllHref, error } = alertsData;
+  const { count, hasAlerts, loading, canCreate, newRuleHref, viewAllHref, error, trackClick } = alertsData;
   const {
     loading: incidentsLoading,
     error: incidentsError,
@@ -133,6 +133,7 @@ function AlertIncidentTabsInner({
                 canCreate={canCreate}
                 newRuleHref={newRuleHref}
                 viewAllHref={viewAllHref}
+                track={trackClick}
               />
             )}
 

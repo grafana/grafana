@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type ReactNode } from 'react';
+import { type MouseEvent, type ReactNode } from 'react';
 
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { Button, Icon, Stack, TextLink, useStyles2 } from '@grafana/ui';
@@ -16,7 +16,8 @@ export function FooterActions({ children }: { children: ReactNode }) {
 interface FooterActionProps {
   /** Renders a TextLink when set; a text Button otherwise, for actions that mutate instead of navigate. */
   href?: string;
-  onClick: () => void;
+  /** Receives the DOM event so analytics handlers can read modifier keys (new-tab clicks). */
+  onClick: (e: MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => void;
   icon?: IconName;
   children: ReactNode;
 }

@@ -11,6 +11,7 @@ import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/s
 import { DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import * as analytics from '../Analytics';
 import { grantUserPermissions, mockDataSource, mockFolder } from '../mocks';
 import {
   grafanaRulerGroup,
@@ -244,6 +245,18 @@ describe('RuleEditor grafana managed rules', () => {
 
     // The rule type section should be visible in advanced mode
     expect(await screen.findByText('Rule type')).toBeInTheDocument();
+  });
+
+  it('emits the rule editor loaded CUJ signal once on mount', async () => {
+    const trackSpy = jest.spyOn(analytics, 'trackRuleEditorLoaded');
+
+    renderRuleEditor();
+    await ui.inputs.name.find();
+
+    expect(trackSpy).toHaveBeenCalledTimes(1);
+    expect(trackSpy).toHaveBeenCalledWith({ status: 'success' });
+
+    trackSpy.mockRestore();
   });
 });
 

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { type NavModelItem } from '@grafana/data';
@@ -7,6 +7,7 @@ import { isFetchError } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 
+import { trackRuleViewerLoaded } from './Analytics';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertRuleProvider } from './components/rule-viewer/RuleContext';
 import DetailView, { useActiveTab } from './components/rule-viewer/RuleViewer';
@@ -40,6 +41,26 @@ const RuleViewer = () => {
 
   // we then fetch the rule from the correct API endpoint(s)
   const { loading, error, result: rule } = useCombinedRule({ ruleIdentifier: identifier, limitAlerts });
+
+  // CUJ signal (home_to_alert_insight): emit once when the rule detail settles; refetches don't re-fire.
+  const loadedTracked = useRef(false);
+  useEffect(() => {
+    if (loading || loadedTracked.current) {
+      return;
+    }
+    loadedTracked.current = true;
+    let status: 'success' | 'error' | 'not_found';
+    if (isFetchError(error) && error.status === 404) {
+      status = 'not_found';
+    } else if (error) {
+      status = 'error';
+    } else if (rule) {
+      status = 'success';
+    } else {
+      status = 'not_found';
+    }
+    trackRuleViewerLoaded({ status });
+  }, [loading, error, rule]);
 
   if (error) {
     return (

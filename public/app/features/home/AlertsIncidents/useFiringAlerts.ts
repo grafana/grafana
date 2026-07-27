@@ -1,6 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { escapeRegExp } from 'lodash';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, type MouseEvent } from 'react';
 import { useAsync } from 'react-use';
 
 import { getBackendSrv } from '@grafana/runtime';
@@ -13,6 +13,9 @@ import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type Team } from 'app/types/teams';
+
+import { ctaClicked } from '../analytics/main';
+import { type CtaClicked } from '../analytics/types';
 
 import { HOME_CARD_MAX_ITEMS } from './constants';
 import { severityLevelRank } from './severity';
@@ -75,6 +78,20 @@ export function useFiringAlerts() {
   // enabled && ... so the useAsync microtask tick doesn't report loading for gated users
   const loading = enabled && (teamsLoading || alertsLoading);
 
+  // Dwell anchor (home_to_alert_insight): set once on the first successful load — an error screen must not anchor it.
+  const loadedAtRef = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (!loading && !error && loadedAtRef.current === undefined) {
+      loadedAtRef.current = Date.now();
+    }
+  }, [loading, error]);
+
+  // Card clicks route through here to carry the dwell attribute and the new-tab flag (interceptLinkClicks ctrl/meta).
+  const trackClick = (e: MouseEvent, props: Pick<CtaClicked, 'action' | 'placement' | 'severity'>) => {
+    const msSinceLoad = loadedAtRef.current === undefined ? undefined : Date.now() - loadedAtRef.current;
+    ctaClicked({ surface: 'alerts_card', ...props, ms_since_load: msSinceLoad, new_tab: e.ctrlKey || e.metaKey });
+  };
+
   // Severity and timestamp are derived once per alert so the sort comparator,
   // the badge counts, and the rows don't recompute them.
   const { visibleAlerts, criticalCount, highCount } = useMemo(() => {
@@ -119,5 +136,6 @@ export function useFiringAlerts() {
     canCreate,
     newRuleHref,
     viewAllHref,
+    trackClick,
   };
 }

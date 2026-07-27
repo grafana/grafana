@@ -39,4 +39,10 @@ export interface CtaClicked extends EventProperty {
   recommendation_id?: string;
   /** Stable id of the solution whose control was clicked (surfaces 'existing_solution' and 'no_data_card' only). */
   solution?: string;
+  /** Canonical severity of the clicked alert (surface 'alerts_card', action 'alert_detail' only). */
+  severity?: string;
+  /** Milliseconds between the card's data becoming visible and this click. Absent if the card never finished loading (surface 'alerts_card' only). */
+  ms_since_load?: number;
+  /** True when the click opens a new tab/window (Cmd/Ctrl-click) instead of SPA-navigating this tab. */
+  new_tab?: boolean;
 }
