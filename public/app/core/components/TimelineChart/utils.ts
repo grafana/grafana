@@ -232,7 +232,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
         ? (u: uPlot, splits: number[]) => {
             const numFields = frame.fields.length - 1;
             const slotH = u.bbox.height / numFields;
-            if (slotH > coreConfig.labelHeightPx) {
+            if (slotH >= coreConfig.minSlotForLabels) {
               return splits.map(() => '');
             }
             return coreConfig.yValues(u, splits);

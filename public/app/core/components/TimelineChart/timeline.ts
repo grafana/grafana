@@ -120,6 +120,9 @@ export function getConfig(opts: TimelineCoreOptions) {
   const font = `500 ${Math.round(12 * devicePixelRatio)}px ${theme.typography.fontFamily}`;
   const labelHeightPx =
     namePosition === 'top' ? Math.round(12 * devicePixelRatio) + Math.round(4 * devicePixelRatio) : 0;
+  const minGap = Math.round(4 * devicePixelRatio);
+  const minBarH = Math.round(4 * devicePixelRatio);
+  const minSlotForLabels = labelHeightPx + minBarH + minGap;
 
   function walkWithLabels(
     rh: number,
@@ -129,14 +132,15 @@ export function getConfig(opts: TimelineCoreOptions) {
     draw: (idx: number, labelY: number, labelH: number, barY: number, barH: number) => void
   ) {
     const slotH = dim / count;
-    const minGap = Math.round(4 * devicePixelRatio);
-    const barArea = Math.max(0, slotH - labelHeightPx);
+    const barAreaWithLabels = Math.max(0, slotH - labelHeightPx);
+    const showLabels = barAreaWithLabels >= minBarH + minGap;
+    const effectiveLabelH = showLabels ? labelHeightPx : 0;
+    const barArea = Math.max(0, slotH - effectiveLabelH);
     const barH = Math.min(barArea * Math.min(rh, 1), Math.max(0, barArea - minGap));
 
     const doOne = (i: number) => {
       const slotTop = i * slotH;
-      const lH = barArea > 0 ? labelHeightPx : 0;
-      draw(i, slotTop, lH, slotTop + labelHeightPx, barH);
+      draw(i, slotTop, effectiveLabelH, slotTop + effectiveLabelH, barH);
     };
 
     if (yIdx == null) {
@@ -629,6 +633,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     yRange,
 
     labelHeightPx,
+    minSlotForLabels,
 
     // pathbuilders
     drawPaths,

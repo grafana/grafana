@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { DashboardCursorSync, type DataFrame, type PanelProps, useDataLinksContext } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
+import { useFlagStateTimelineNameAboveBars } from '@grafana/runtime/internal';
 import {
   AxisPlacement,
   EventBusPlugin,
@@ -85,6 +86,8 @@ export const StateTimelinePanel = ({
   );
 
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
+  const nameAboveBarsEnabled = useFlagStateTimelineNameAboveBars();
+  const namePosition = nameAboveBarsEnabled ? options.namePosition : undefined;
 
   if (!paginatedFrames || typeof warn === 'string') {
     return <PanelDataErrorView panelId={panelId} fieldConfig={fieldConfig} data={data} message={warn} needsTimeField />;
@@ -106,6 +109,7 @@ export const StateTimelinePanel = ({
         legendItems={legendItems}
         annotations={options.annotations}
         {...options}
+        namePosition={namePosition}
         mode={TimelineMode.Changes}
         replaceVariables={replaceVariables}
         dataLinkPostProcessor={dataLinkPostProcessor}

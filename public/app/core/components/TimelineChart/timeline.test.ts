@@ -350,6 +350,53 @@ describe('StateTimeline uPlot integration', () => {
       });
     });
 
+    describe('dense series fallback with namePosition="top"', () => {
+      it('gives bars nonzero height when too many series to fit labels', () => {
+        // With bbox height 100 and 5 series, slot = 20px. labelHeightPx = 16 (12+4 at dpr=1).
+        // Without fallback, barArea = 20 - 16 = 4, barH = min(4*0.9, max(0, 4-4)) = 0.
+        // With fallback, labels are dropped: barArea = 20, barH > 0.
+        const { drawClear, drawPaths } = getConfig(
+          buildTestCoreOptions({
+            namePosition: 'top',
+            rowHeight: 0.9,
+            numSeries: 5,
+            formatValue: () => 'foo',
+          })
+        );
+        const mockUplot = buildMockUplotInstance([[0], [1]]);
+
+        drawClear(mockUplot);
+        drawPaths(mockUplot, 1, 0, 0);
+
+        const { rect } = callOrientCallback(mockUplot);
+        expect(rect).toHaveBeenCalledTimes(2);
+
+        const boxCall = rect.mock.calls[1] as unknown[];
+        const boxHeight = boxCall[3] as number;
+        expect(boxHeight).toBeGreaterThan(0);
+      });
+
+      it('computes ySplits midpoints inside bar area when labels are dropped', () => {
+        const numSeries = 5;
+        const config = getConfig(
+          buildTestCoreOptions({
+            namePosition: 'top',
+            rowHeight: 0.9,
+            numSeries,
+          })
+        );
+        const mockUplot = buildMockUplotInstance();
+        (uPlot as unknown as Record<string, number>).pxRatio = 1;
+        mockUplot.posToVal = jest.fn((px: number) => px);
+
+        const splits = config.ySplits(mockUplot);
+
+        expect(splits[0]).toBeGreaterThan(0);
+        const slotH = 100 / numSeries;
+        expect(splits[0]).toBeLessThan(slotH);
+      });
+    });
+
     describe('bar offset with namePosition="top"', () => {
       it('offsets bars down when namePosition is "top"', () => {
         const { drawClear, drawPaths } = getConfig(
