@@ -2111,6 +2111,9 @@ func (b *bleveIndex) Search(
 	}
 
 	response.TotalHits = int64(res.Total)
+	// bleve counts matches exactly, and authz is applied in-searcher here, so the
+	// count is the exact authorized total.
+	response.TotalHitsExact = true
 	response.QueryCost = float64(res.Cost)
 	response.MaxScore = res.MaxScore
 	stats.AddSearchTime(res.Took)
