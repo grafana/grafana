@@ -13,23 +13,35 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr/exprcapture"
+	"github.com/grafana/grafana/pkg/infra/httpclient/harcapture"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-// The seam these tests cover: the handlers must attach the exprcapture buffer to the SAME context
-// they hand to queryData. The expression service records stages into whatever buffer that context
+// The seam these tests cover: a handler must attach the exprcapture buffer to the SAME context it
+// hands to queryData. The expression service records stages into whatever buffer that context
 // carries, so a buffer attached to the wrong context -- to ctx instead of the HAR-wrapped pctx, say --
 // leaves every bundle with an empty pipeline. No unit test in pkg/expr or pkg/services/diagnostics
 // would notice: both packages are correct in isolation, and the fake query service used elsewhere in
 // this package doesn't care what the context holds.
 //
+// Only the dashboard handler is covered here: QueryDiagnostics has no test harness in this package
+// (nothing invokes it -- it needs the OpenFeature gate, a ReqContext and web.Bind), so its identical
+// two-line wiring is still unguarded. Worth closing when that harness lands.
+//
 // recordTwoStages stands in for the expression service: it records into the buffer it finds in ctx,
 // or fails the test if there is none.
+//
+// It also asserts the HAR buffer is still reachable. The wiring is two nested WithCapture calls, so
+// the likely slip is chaining the second off the ORIGINAL ctx rather than the HAR-wrapped one --
+// which leaves expression capture working and silently empties traffic.har. Asserting only the
+// exprcapture buffer would pass straight through that.
 func recordTwoStages(t *testing.T, ctx context.Context) *exprcapture.Buffer {
 	t.Helper()
 	buf := exprcapture.FromContext(ctx)
 	require.NotNil(t, buf, "the context passed to queryData carries no exprcapture buffer")
+	require.NotNil(t, harcapture.FromContext(ctx),
+		"attaching the exprcapture buffer dropped the HAR buffer from the context handed to queryData")
 	buf.Record([]exprcapture.Stage{
 		{RefID: "A", Type: "datasource", Command: "prometheus"},
 		{RefID: "B", Type: "expression", Command: "reduce", InputRefIDs: []string{"A"}},

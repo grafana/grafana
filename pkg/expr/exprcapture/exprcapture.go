@@ -39,7 +39,7 @@ type contextKey struct{}
 // nodes down to the panel's final expression to find where the data changed.
 type Stage struct {
 	RefID       string
-	Type        string // "datasource", "expression", or "ml"
+	Type        string // "datasource", "expression", "ml", or "unknown" for a node kind we don't map
 	Command     string // expression command (reduce/math/resample/...) or datasource type; may be empty
 	InputRefIDs []string
 	Error       error // node error (dependency/execution failure), if any

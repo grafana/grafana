@@ -264,8 +264,10 @@ func fitQueryDataArtifact(artifact queryDataArtifact, request json.RawMessage, m
 
 	// The stage errors go before the stages themselves: each is free-form text up to 1 KiB, so on a
 	// tight budget they are what pushes the DAG over, and they are the one part of a stage that is
-	// recoverable elsewhere -- responseSummary[refId].error carries the same string, and the failure is
-	// recorded again outside the artifact. Dropping them keeps the pipeline's shape, which nothing else
+	// recoverable elsewhere -- query-error.txt carries the same per-refID failures, folded in by
+	// ResponseError, and the capture path keeps hidden refIDs in the response so even a hidden stage's
+	// error reaches it. Not responseSummary[refId].error: the rung above already dropped the summary,
+	// so by here it is gone. Dropping the stage errors keeps the pipeline's shape, which nothing else
 	// in the bundle records at all.
 	if pipelineHasErrors(artifact.Pipeline) {
 		// Cloned rather than cleared in place: artifact is a value copy, but its Pipeline slice still

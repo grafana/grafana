@@ -2,10 +2,9 @@ package expr
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
-
-	"encoding/json"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr/exprcapture"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func fptr(f float64) *float64 { return &f }
@@ -29,6 +29,14 @@ func dsQueryA() Query {
 		JSON:      json.RawMessage(`{ "datasource": { "uid": "test" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
 		TimeRange: AbsoluteTimeRange{From: time.Time{}, To: time.Time{}},
 	}
+}
+
+// dsQuery is dsQueryA for an arbitrary refID, so a test can put two datasource nodes on the same
+// datasource -- the shape executeDSNodesGrouped collapses into one plugin call.
+func dsQuery(refID string) Query {
+	q := dsQueryA()
+	q.RefID = refID
+	return q
 }
 
 func mathQuery(refID, expression string) Query {
@@ -54,7 +62,7 @@ func TestExecutePipeline_capturesExpressionStages(t *testing.T) {
 	pl, err := s.BuildPipeline(t.Context(), req)
 	require.NoError(t, err)
 
-	ctx, buf := exprcapture.WithCapture(context.Background())
+	ctx, buf := exprcapture.WithCapture(t.Context())
 	res, err := s.ExecutePipeline(ctx, time.Now(), pl)
 	require.NoError(t, err)
 
@@ -92,6 +100,53 @@ func TestExecutePipeline_capturesExpressionStages(t *testing.T) {
 	requireResponseValue(t, res, "C", 14.0) // $B + 10
 }
 
+// TestExecutePipeline_capturesStagesWhenDatasourceNodesRunGrouped pins the other half of
+// captureDiagnosticStages' claim: with sseGroupByDatasource on, datasource nodes are executed up front
+// by executeDSNodesGrouped and then SKIPPED by the main loop. The capture walks the pipeline rather
+// than the loop's execution trace, so it must still record them -- were it driven off the executed
+// nodes, every grouped datasource stage would vanish and the DAG would start at the expressions, which
+// is exactly the half a support engineer needs to rule the datasource in or out.
+func TestExecutePipeline_capturesStagesWhenDatasourceNodesRunGrouped(t *testing.T) {
+	frame := func(name string, v float64) *data.Frame {
+		return data.NewFrame(name,
+			data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+			data.NewField("value", data.Labels{"host": "a"}, []*float64{fptr(v)}),
+		)
+	}
+	// A and B hit the same datasource ("test"), so they are grouped into a single plugin call.
+	resp := map[string]backend.DataResponse{
+		"A": {Frames: data.Frames{frame("A", 2.0)}},
+		"B": {Frames: data.Frames{frame("B", 3.0)}},
+	}
+	queries := []Query{dsQuery("A"), dsQuery("B"), mathQuery("C", "$A + $B")}
+
+	s, req := newMockQueryService(resp, queries)
+	s.features = featuremgmt.WithFeatures(featuremgmt.FlagSseGroupByDatasource)
+	pl, err := s.BuildPipeline(t.Context(), req)
+	require.NoError(t, err)
+
+	ctx, buf := exprcapture.WithCapture(t.Context())
+	res, err := s.ExecutePipeline(ctx, time.Now(), pl)
+	require.NoError(t, err)
+
+	byRef := map[string]exprcapture.Stage{}
+	for _, st := range buf.Stages() {
+		byRef[st.RefID] = st
+	}
+	require.Len(t, byRef, 3, "the grouped datasource nodes are captured alongside the expression")
+	require.Equal(t, "datasource", byRef["A"].Type)
+	require.Equal(t, "datasource", byRef["B"].Type)
+	require.Equal(t, "test", byRef["A"].Command)
+	require.Equal(t, "expression", byRef["C"].Type)
+	require.ElementsMatch(t, []string{"A", "B"}, byRef["C"].InputRefIDs, "C consumes both grouped nodes")
+
+	// The join still resolves for the grouped nodes, which is what makes their stages usable.
+	for refID := range byRef {
+		require.Contains(t, res.Responses, refID, "stage %s has no response entry to join to", refID)
+	}
+	requireResponseValue(t, res, "C", 5.0) // $A + $B
+}
+
 func TestExecutePipeline_capturesDependencyErrorStage(t *testing.T) {
 	// A fails at the datasource; B depends on A, so B is never executed and carries a dependency error.
 	resp := map[string]backend.DataResponse{"A": {Error: context.DeadlineExceeded}}
@@ -101,7 +156,7 @@ func TestExecutePipeline_capturesDependencyErrorStage(t *testing.T) {
 	pl, err := s.BuildPipeline(t.Context(), req)
 	require.NoError(t, err)
 
-	ctx, buf := exprcapture.WithCapture(context.Background())
+	ctx, buf := exprcapture.WithCapture(t.Context())
 	res, err := s.ExecutePipeline(ctx, time.Now(), pl)
 	require.NoError(t, err)
 
@@ -139,7 +194,7 @@ func TestTransformData_keepsHiddenNodesInResponseWhenCapturing(t *testing.T) {
 		s, req := newMockQueryService(resp, queries)
 		s.cfg.ExpressionsEnabled = true
 
-		ctx, buf := exprcapture.WithCapture(context.Background())
+		ctx, buf := exprcapture.WithCapture(t.Context())
 		res, err := s.TransformData(ctx, time.Now(), req)
 		require.NoError(t, err)
 
@@ -157,7 +212,7 @@ func TestTransformData_keepsHiddenNodesInResponseWhenCapturing(t *testing.T) {
 		s, req := newMockQueryService(resp, queries)
 		s.cfg.ExpressionsEnabled = true
 
-		res, err := s.TransformData(context.Background(), time.Now(), req)
+		res, err := s.TransformData(t.Context(), time.Now(), req)
 		require.NoError(t, err)
 		require.NotContains(t, res.Responses, "A", "the normal query path must keep hiding hidden queries")
 		require.Contains(t, res.Responses, "B")
@@ -182,7 +237,7 @@ func TestExecutePipeline_capturesStagesWhenExecutionFailsHard(t *testing.T) {
 	// all, so the capture must not sit behind ExecutePipeline's error return.
 	s, _ := newMockQueryService(nil, nil)
 
-	ctx, buf := exprcapture.WithCapture(context.Background())
+	ctx, buf := exprcapture.WithCapture(t.Context())
 	_, err := s.ExecutePipeline(ctx, time.Now(), DataPipeline{&unexecutableNode{refID: "A"}})
 	require.Error(t, err, "an unexecutable node fails the pipeline")
 
@@ -202,10 +257,11 @@ func TestExecutePipeline_noCaptureWithoutBuffer(t *testing.T) {
 	pl, err := s.BuildPipeline(t.Context(), req)
 	require.NoError(t, err)
 
-	// context.Background() carries no exprcapture buffer, so this buffer is unreachable from the
-	// pipeline's context and must stay empty.
-	_, unreachable := exprcapture.WithCapture(context.Background())
-	_, err = s.ExecutePipeline(context.Background(), time.Now(), pl)
+	// The buffer lives in a CHILD of t.Context(); the pipeline runs on t.Context() itself, which does
+	// not carry it. So the buffer is unreachable from the pipeline's context and must stay empty --
+	// sharing an ancestor with a capture context must not be enough to start recording.
+	_, unreachable := exprcapture.WithCapture(t.Context())
+	_, err = s.ExecutePipeline(t.Context(), time.Now(), pl)
 	require.NoError(t, err)
 	require.Empty(t, unreachable.Stages(), "a pipeline run without the buffer in its context records nothing")
 }
