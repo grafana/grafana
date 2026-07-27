@@ -38,8 +38,8 @@ import { LogLineContext } from 'app/features/logs/components/panel/LogLineContex
 import { LogList } from 'app/features/logs/components/panel/LogList';
 import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
 import { isMissingStringField, isMissingTimeField } from 'app/features/logs/utils';
+import { combineResponses } from 'app/features/loki-helpers/mergeResponses';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
-import { combineResponses } from 'app/plugins/datasource/loki/mergeResponses';
 
 import { createAndCopyShortLink, getLogsPermalinkRange } from '../../../core/utils/shortLinks';
 import { dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsModel';
