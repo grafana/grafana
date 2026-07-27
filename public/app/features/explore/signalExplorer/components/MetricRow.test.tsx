@@ -44,6 +44,28 @@ describe('MetricRow', () => {
     expect(screen.getByText('C')).toBeInTheDocument();
   });
 
+  describe('aria-controls', () => {
+    it('points the toggle at the block it has opened', () => {
+      renderRow({ expanded: true, labelsId: 'labels-up' });
+
+      expect(screen.getByRole('button', { name: /collapse up/i })).toHaveAttribute('aria-controls', 'labels-up');
+    });
+
+    // A collapsed row does not render its labels block at all, so the id would dangle — and an
+    // aria-controls pointing at nothing is worse for a screen reader than no aria-controls.
+    it('drops aria-controls while collapsed, since there is no block to point at', () => {
+      renderRow({ expanded: false, labelsId: 'labels-up' });
+
+      expect(screen.getByRole('button', { name: /expand up/i })).not.toHaveAttribute('aria-controls');
+    });
+
+    it('omits aria-controls when the host renders no labels block', () => {
+      renderRow({ expanded: true });
+
+      expect(screen.getByRole('button', { name: /collapse up/i })).not.toHaveAttribute('aria-controls');
+    });
+  });
+
   it('reports the metric name back to both handlers', async () => {
     const { onSelect, onToggleExpand } = renderRow();
 

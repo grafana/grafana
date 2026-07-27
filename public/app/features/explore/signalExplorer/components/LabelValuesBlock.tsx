@@ -14,6 +14,8 @@ import { useVisibleBatch } from './useVisibleBatch';
 const valueCollator = new Intl.Collator();
 
 export interface LabelValuesBlockProps {
+  /** Set on the container so the label row that expanded it can name it in `aria-controls`. */
+  id?: string;
   dsRef: DataSourceRef;
   timeRange: TimeRange;
   metric: string;
@@ -24,7 +26,7 @@ export interface LabelValuesBlockProps {
  * Values of one expanded label key. Mounted only while that label is expanded, and renders at most
  * one batch at a time: a high-cardinality label can hold thousands of values.
  */
-export function LabelValuesBlock({ dsRef, timeRange, metric, labelKey }: LabelValuesBlockProps) {
+export function LabelValuesBlock({ id, dsRef, timeRange, metric, labelKey }: LabelValuesBlockProps) {
   const styles = useStyles2(getStyles);
   const { values, loading, error } = useLabelValues(dsRef, timeRange, metric, labelKey, true);
 
@@ -52,7 +54,7 @@ export function LabelValuesBlock({ dsRef, timeRange, metric, labelKey }: LabelVa
   const filterLabel = t('explore.signal-explorer.tree.filter-values', 'Filter values');
 
   return (
-    <div className={styles.valuesBlock}>
+    <div id={id} className={styles.valuesBlock}>
       <div className={styles.valuesToolbar}>
         <Input value={filter} onChange={onFilterChange} aria-label={filterLabel} placeholder={filterLabel} />
         <IconButton

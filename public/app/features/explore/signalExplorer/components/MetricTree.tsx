@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useId, useMemo, useState } from 'react';
 
 import { type DataQuery, type DataSourceRef, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -21,6 +21,13 @@ import { useVisibleBatch } from './useVisibleBatch';
 const NO_BADGES: string[] = [];
 const NO_QUERIES: DataQuery[] = [];
 
+/**
+ * An `id` for an expandable block, safe to put in an `aria-controls` token list. The name has to be
+ * escaped: `aria-controls` is space-separated, and a Prometheus 3.x UTF-8 metric name or label key
+ * may contain a space, which would parse as several ids pointing nowhere.
+ */
+const blockId = (prefix: string, kind: string, name: string) => `${prefix}-${kind}-${encodeURIComponent(name)}`;
+
 export interface MetricTreeProps {
   exploreId: string;
   refId: string;
@@ -38,6 +45,10 @@ export interface MetricTreeProps {
 export function MetricTree({ exploreId, refId, dsRef, timeRange, matchQueries = NO_QUERIES }: MetricTreeProps) {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
+
+  // Per-instance, because a mixed pane renders one tree per card and both can list the same metric
+  // name — deriving ids from the name alone would put duplicates in the document.
+  const treeId = useId();
 
   const searchText = useSelector((state) => selectSearchText(state, exploreId, refId));
   const typeFilter = useSelector((state) => selectTypeFilter(state, exploreId, refId));
@@ -106,6 +117,7 @@ export function MetricTree({ exploreId, refId, dsRef, timeRange, matchQueries = 
       )}
       {visibleMetrics.map((metric) => {
         const isExpanded = metric.name === expandedMetric;
+        const labelsId = blockId(treeId, 'labels', metric.name);
         return (
           <div key={metric.name}>
             <MetricRow
@@ -113,11 +125,13 @@ export function MetricTree({ exploreId, refId, dsRef, timeRange, matchQueries = 
               refBadges={queryRefsByMetric[metric.name] ?? NO_BADGES}
               selected={selectedMetric?.refId === refId && selectedMetric.metricName === metric.name}
               expanded={isExpanded}
+              labelsId={labelsId}
               onSelect={selectMetric}
               onToggleExpand={toggleMetric}
             />
             {isExpanded && (
               <MetricLabelsBlock
+                id={labelsId}
                 dsRef={dsRef}
                 timeRange={timeRange}
                 metric={metric.name}
@@ -138,6 +152,8 @@ export function MetricTree({ exploreId, refId, dsRef, timeRange, matchQueries = 
 }
 
 interface MetricLabelsBlockProps {
+  /** Set on the container, and the base for each label row's own values-block id. */
+  id: string;
   dsRef: DataSourceRef;
   timeRange: TimeRange;
   metric: string;
@@ -149,12 +165,12 @@ interface MetricLabelsBlockProps {
  * Label keys of one expanded metric. Mounted only while that row is expanded — the laziness comes
  * from mounting, which is also what keeps `useMetricDetail` out of a render loop over the rows.
  */
-function MetricLabelsBlock({ dsRef, timeRange, metric, expandedLabel, onToggleLabel }: MetricLabelsBlockProps) {
+function MetricLabelsBlock({ id, dsRef, timeRange, metric, expandedLabel, onToggleLabel }: MetricLabelsBlockProps) {
   const styles = useStyles2(getStyles);
   const { labelKeys, loading, error } = useMetricDetail(dsRef, timeRange, metric, true);
 
   return (
-    <div className={styles.labelsBlock}>
+    <div id={id} className={styles.labelsBlock}>
       {loading && (
         <Text color="secondary" variant="bodySmall">
           {t('explore.signal-explorer.tree.loading-labels', 'Loading labels…')}
@@ -167,12 +183,14 @@ function MetricLabelsBlock({ dsRef, timeRange, metric, expandedLabel, onToggleLa
       )}
       {labelKeys.map((labelKey) => {
         const isLabelExpanded = labelKey === expandedLabel;
+        const valuesId = blockId(id, 'values', labelKey);
         return (
           <div key={labelKey}>
             <button
               type="button"
               className={styles.labelRow}
               aria-expanded={isLabelExpanded}
+              aria-controls={isLabelExpanded ? valuesId : undefined}
               aria-label={
                 isLabelExpanded
                   ? t('explore.signal-explorer.tree.hide-values', 'Hide values for {{label}}', { label: labelKey })
@@ -184,7 +202,7 @@ function MetricLabelsBlock({ dsRef, timeRange, metric, expandedLabel, onToggleLa
               {labelKey}
             </button>
             {isLabelExpanded && (
-              <LabelValuesBlock dsRef={dsRef} timeRange={timeRange} metric={metric} labelKey={labelKey} />
+              <LabelValuesBlock id={valuesId} dsRef={dsRef} timeRange={timeRange} metric={metric} labelKey={labelKey} />
             )}
           </div>
         );

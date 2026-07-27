@@ -387,6 +387,98 @@ describe('MetricTree', () => {
     });
   });
 
+  describe('aria-controls wiring (mocked hooks)', () => {
+    function mockNamedHooks() {
+      jest.spyOn(catalogModule, 'useMetricCatalog').mockReturnValue({
+        metrics: [{ name: 'up', type: 'gauge' }],
+        loading: false,
+      });
+      jest.spyOn(detailModule, 'useMetricDetail').mockImplementation((_dsRef, _timeRange, _metric, enabled) => ({
+        labelKeys: enabled ? ['job'] : [],
+        loading: false,
+      }));
+      jest
+        .spyOn(labelValuesModule, 'useLabelValues')
+        .mockImplementation((_dsRef, _timeRange, _metric, _labelKey, enabled) => ({
+          values: enabled ? ['web-1'] : [],
+          loading: false,
+        }));
+    }
+
+    /** The element an expanded toggle claims to control, resolved through the document. */
+    const controlledBy = (button: HTMLElement) => {
+      const id = button.getAttribute('aria-controls');
+      expect(id).toBeTruthy();
+      return document.getElementById(id!);
+    };
+
+    it('points a metric’s toggle at the labels block it opens', async () => {
+      mockNamedHooks();
+      renderTree();
+
+      await userEvent.click(screen.getByRole('button', { name: /expand up/i }));
+
+      const controlled = controlledBy(screen.getByRole('button', { name: /collapse up/i }));
+      expect(controlled).toBeInTheDocument();
+      expect(controlled).toContainElement(screen.getByText('job'));
+    });
+
+    it('points a label’s toggle at the values block it opens', async () => {
+      mockNamedHooks();
+      renderTree();
+
+      await userEvent.click(screen.getByRole('button', { name: /expand up/i }));
+      await userEvent.click(screen.getByRole('button', { name: /show values for job/i }));
+
+      const controlled = controlledBy(screen.getByRole('button', { name: /hide values for job/i }));
+      expect(controlled).toBeInTheDocument();
+      expect(controlled).toContainElement(screen.getByTestId('signal-explorer-value-row'));
+    });
+
+    // Two cards in a mixed pane render the same metric names, and duplicate ids would make each
+    // toggle resolve to whichever block happens to come first in the document.
+    it('gives two trees showing the same metric distinct ids', async () => {
+      mockNamedHooks();
+      const store = makeStore();
+      render(
+        <Provider store={store}>
+          <MetricTree exploreId="left" refId="A" dsRef={dsRef} timeRange={timeRange} />
+          <MetricTree exploreId="left" refId="B" dsRef={dsRef} timeRange={timeRange} />
+        </Provider>
+      );
+
+      const [expandA, expandB] = screen.getAllByRole('button', { name: /expand up/i });
+      await userEvent.click(expandA);
+      await userEvent.click(expandB);
+
+      const [collapseA, collapseB] = screen.getAllByRole('button', { name: /collapse up/i });
+      const idA = collapseA.getAttribute('aria-controls');
+      const idB = collapseB.getAttribute('aria-controls');
+      expect(idA).toBeTruthy();
+      expect(idA).not.toBe(idB);
+      expect(document.querySelectorAll(`[id="${idA}"]`)).toHaveLength(1);
+    });
+
+    it('builds a usable id from a metric name that needs escaping', async () => {
+      jest.spyOn(catalogModule, 'useMetricCatalog').mockReturnValue({
+        metrics: [{ name: 'a metric "with" spaces', type: 'gauge' }],
+        loading: false,
+      });
+      jest.spyOn(detailModule, 'useMetricDetail').mockImplementation((_dsRef, _timeRange, _metric, enabled) => ({
+        labelKeys: enabled ? ['job'] : [],
+        loading: false,
+      }));
+      renderTree();
+
+      await userEvent.click(screen.getByRole('button', { name: /expand a metric/i }));
+
+      const id = screen.getByRole('button', { name: /collapse a metric/i }).getAttribute('aria-controls');
+      // aria-controls is a space-separated id list, so a raw name would parse as several ids.
+      expect(id).not.toContain(' ');
+      expect(document.getElementById(id!)).toContainElement(screen.getByText('job'));
+    });
+  });
+
   describe('metric list pagination (mocked hooks)', () => {
     const manyMetrics: MetricRow[] = Array.from({ length: 5000 }, (_, i) => ({
       name: `metric_${String(i).padStart(4, '0')}`,

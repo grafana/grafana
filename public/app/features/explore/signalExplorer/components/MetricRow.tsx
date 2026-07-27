@@ -17,6 +17,12 @@ export interface MetricRowProps {
   selected: boolean;
   expanded: boolean;
   /**
+   * `id` of the block this row's toggle expands, so assistive technology can follow `aria-expanded`
+   * to the thing that actually appeared. The host owns it because the block is the host's sibling
+   * element, not this row's child. Omit it if the host renders no block.
+   */
+  labelsId?: string;
+  /**
    * Both handlers take the metric name instead of closing over it, so a host rendering thousands of
    * rows can hoist one stable callback out of its map and let the `memo` below do its job.
    */
@@ -31,6 +37,7 @@ export const MetricRow = memo(function MetricRow({
   refBadges,
   selected,
   expanded,
+  labelsId,
   onSelect,
   onToggleExpand,
 }: MetricRowProps) {
@@ -47,6 +54,9 @@ export const MetricRow = memo(function MetricRow({
         name={expanded ? 'angle-down' : 'angle-right'}
         aria-label={toggleLabel}
         aria-expanded={expanded}
+        // Only while expanded: a collapsed row's block is unmounted, and pointing at an id that is
+        // not in the document is worse than saying nothing.
+        aria-controls={expanded ? labelsId : undefined}
         onClick={() => onToggleExpand(metric.name)}
       />
       <button type="button" className={styles.name} onClick={() => onSelect(metric.name)}>
