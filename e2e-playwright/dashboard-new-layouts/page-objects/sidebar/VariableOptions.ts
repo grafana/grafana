@@ -150,13 +150,13 @@ export class VariableOptions extends PageObject {
           .click();
       });
     },
-    selectDatasource: async (dataSource: string) => {
-      await test.step(`Select query datasource "${dataSource}"`, async () => {
+    selectTargetDatasource: async (dataSource: string) => {
+      await test.step(`Select target datasource "${dataSource}"`, async () => {
         await this.components.dataSourcePicker.set(dataSource);
       });
     },
-    setQuery: async (query: string) => {
-      await test.step(`Set variable query to "${query}"`, async () => {
+    setTestDataQuery: async (query: string) => {
+      await test.step(`Set TestData query to "${query}"`, async () => {
         await this.dashboardPage
           .getByGrafanaSelector(
             this.selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput

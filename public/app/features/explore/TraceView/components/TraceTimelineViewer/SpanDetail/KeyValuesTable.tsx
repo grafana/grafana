@@ -15,14 +15,14 @@
 import { css } from '@emotion/css';
 import cx from 'clsx';
 import DOMPurify from 'dompurify';
-import { type PropsWithChildren } from 'react';
+import { type PropsWithChildren, type ReactNode, useId, useLayoutEffect, useRef, useState } from 'react';
 
-import { type GrafanaTheme2, type PluginExtensionLink, type TraceKeyValuePair } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { type GrafanaTheme2, type PluginExtensionLink, textUtil, type TraceKeyValuePair } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { Dropdown, Icon, Menu, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';
-import type TNil from '../../types/TNil';
 
 import jsonMarkup from './jsonMarkup';
 
@@ -81,10 +81,45 @@ const getStyles = (theme: GrafanaTheme2) => {
       verticalAlign: 'middle',
       whiteSpace: 'nowrap',
     }),
+    linkValue: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+    }),
     linkIcon: css({
-      label: 'linkIcon',
-      verticalAlign: 'middle',
-      fontWeight: 'bold',
+      flexShrink: 0,
+    }),
+    multiLinkValue: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.25),
+    }),
+    multiLinkContent: css({
+      color: theme.colors.text.link,
+      cursor: 'pointer',
+      '&:hover': {
+        textDecoration: 'underline',
+      },
+      // Match single-link styling so json-markup spans use the link color
+      span: {
+        color: `${theme.colors.text.link} !important`,
+      },
+    }),
+    multiLinkTrigger: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      padding: 0,
+      margin: 0,
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      color: theme.colors.text.link,
+      '&:hover': {
+        textDecoration: 'underline',
+      },
+    }),
+    multiLinkChevron: css({
+      flexShrink: 0,
     }),
     jsonTable: css({
       display: 'inline-block',
@@ -106,25 +141,97 @@ function parseIfComplexJson(value: unknown) {
   return value;
 }
 
-export type KeyValuesTableLink = Pick<PluginExtensionLink, 'path' | 'title' | 'onClick' | 'icon'>;
+export type KeyValuesTableLink = Pick<PluginExtensionLink, 'path' | 'title' | 'onClick' | 'icon'> &
+  Partial<Pick<PluginExtensionLink, 'description'>>;
 
 interface LinkValueProps {
   link: KeyValuesTableLink;
 }
 
 export const LinkValue = ({ link, children }: PropsWithChildren<LinkValueProps>) => {
-  const { path, title = '', onClick, icon = 'external-link-alt' } = link;
+  const { path, title, onClick, icon = 'external-link-alt' } = link;
+  const styles = useStyles2(getStyles);
 
   return (
-    <a href={path} title={title} onClick={onClick} target="_blank" rel="noopener noreferrer">
-      {children} <Icon name={icon} />
+    <a
+      href={path ? textUtil.sanitizeUrl(path) : path}
+      title={title}
+      onClick={onClick}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={styles.linkValue}
+    >
+      <Icon name={icon} className={styles.linkIcon} />
+      {children}
     </a>
+  );
+};
+
+interface LinkValuesMenuProps {
+  links: KeyValuesTableLink[];
+  children: ReactNode;
+}
+
+const LinkValuesMenu = ({ links, children }: LinkValuesMenuProps) => {
+  const styles = useStyles2(getStyles);
+  const openValueInLabel = t('explore.key-values-table.open-value-in', 'Open value in');
+  const triggerId = useId();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [menuOffset, setMenuOffset] = useState<[number, number]>([8, 0]);
+
+  // Align the menu to the start of the attribute value, not the chevron button
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    const button = container?.querySelector('button');
+    if (!container || !button) {
+      return;
+    }
+    setMenuOffset([8, container.getBoundingClientRect().left - button.getBoundingClientRect().left]);
+  }, [links, children]);
+
+  return (
+    <div className={styles.multiLinkValue} ref={containerRef}>
+      <label htmlFor={triggerId} className={styles.multiLinkContent}>
+        {children}
+      </label>
+      <Dropdown
+        placement="bottom-start"
+        offset={menuOffset}
+        overlay={
+          <Menu>
+            <Menu.Group label={openValueInLabel.toLocaleUpperCase()}>
+              {links.map((link, index) => (
+                <div key={index} title={link.title}>
+                  <Menu.Item
+                    label={link.description || link.title || t('explore.key-values-table.link-fallback-label', 'Link')}
+                    icon={link.icon}
+                    url={link.path ? textUtil.sanitizeUrl(link.path) : undefined}
+                    target="_blank"
+                    onClick={link.onClick}
+                  />
+                </div>
+              ))}
+            </Menu.Group>
+          </Menu>
+        }
+      >
+        <button
+          id={triggerId}
+          type="button"
+          className={styles.multiLinkTrigger}
+          title={openValueInLabel}
+          aria-haspopup="menu"
+        >
+          <Icon name="angle-down" size="sm" className={styles.multiLinkChevron} />
+        </button>
+      </Dropdown>
+    </div>
   );
 };
 
 export type KeyValuesTableProps = {
   data: TraceKeyValuePair[];
-  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[]) | TNil;
+  linksGetter?: (pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[];
   onlyValues?: boolean;
 };
 
@@ -148,18 +255,16 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
             const jsonTable = (
               <div className={styles.jsonTable} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }} />
             );
-            const links = linksGetter?.(data, i);
-            let valueMarkup;
-            if (links && links.length) {
-              // TODO: handle multiple items
-              valueMarkup = (
-                <div>
-                  <LinkValue link={links[0]}>{jsonTable}</LinkValue>
-                </div>
+            const links = linksGetter?.(data, i) ?? [];
+            const valueMarkup =
+              links.length > 1 ? (
+                <LinkValuesMenu links={links}>{jsonTable}</LinkValuesMenu>
+              ) : links.length === 1 ? (
+                <LinkValue link={links[0]}>{jsonTable}</LinkValue>
+              ) : (
+                jsonTable
               );
-            } else {
-              valueMarkup = jsonTable;
-            }
+
             return (
               // `i` is necessary in the key because row.key can repeat
               <tr className={styles.row} key={`${row.key}-${i}`}>

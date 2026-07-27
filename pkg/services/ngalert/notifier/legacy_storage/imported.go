@@ -78,7 +78,7 @@ func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]v1.MuteTimeInterval, e
 	grafanaTime := e.rev.Config.AlertmanagerConfig.TimeIntervals
 
 	// Merge to get the renames map (only renamed if name collision occurs)
-	_, renames, _ := merge.TimeIntervals(
+	timeIntervals, _, added := merge.TimeIntervals(
 		grafanaMute,
 		grafanaTime,
 		importedMute,
@@ -86,22 +86,19 @@ func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]v1.MuteTimeInterval, e
 		e.identifier,
 	)
 
-	// Apply renames to imported intervals
-	result := make([]v1.MuteTimeInterval, 0, len(importedTime)+len(importedMute))
+	importedTitles := make(map[string]struct{}, len(added))
+	for _, title := range added {
+		importedTitles[title] = struct{}{}
+	}
 
-	pushRenamed := func(mt v1.MuteTimeInterval) {
-		if newName, renamed := renames[mt.Name]; renamed {
-			mt.Name = newName
+	// Filter to imported intervals
+	result := make([]v1.MuteTimeInterval, 0, len(added))
+	for _, ti := range timeIntervals {
+		if _, ok := importedTitles[ti.Name]; !ok {
+			continue
 		}
-		result = append(result, mt)
-	}
 
-	for _, ti := range importedTime {
-		pushRenamed(v1.MuteTimeInterval(ti))
-	}
-
-	for _, mti := range importedMute {
-		pushRenamed(mti)
+		result = append(result, v1.MuteTimeInterval(ti))
 	}
 
 	return result, nil

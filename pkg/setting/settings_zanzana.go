@@ -136,6 +136,9 @@ type ZanzanaServerSettings struct {
 }
 
 type OpenFgaServerSettings struct {
+	// OpenFGA experimental features to enable
+	Experimentals []string
+
 	// ListObjects settings
 	// Max number of concurrent datastore reads for ListObjects queries
 	MaxConcurrentReadsForListObjects uint32
@@ -353,6 +356,7 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zs.CacheSettings.SharedIteratorTTL = serverSec.Key("shared_iterator_ttl").MustDuration(10 * time.Second)
 
 	openfgaSec := cfg.SectionWithEnvOverrides("openfga")
+	zs.OpenFgaServerSettings.Experimentals = openfgaSec.Key("experimentals").Strings(",")
 
 	// ListObjects settings
 	zs.OpenFgaServerSettings.MaxConcurrentReadsForListObjects = uint32(openfgaSec.Key("max_concurrent_reads_for_list_objects").MustUint(0))

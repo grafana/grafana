@@ -51,7 +51,6 @@ import AccordionKeyValues from './AccordionKeyValues';
 import AccordionLogs from './AccordionLogs';
 import AccordionReferences from './AccordionReferences';
 import type DetailState from './DetailState';
-import { ShareSpanButton } from './ShareSpanButton';
 import { SpanDetailLinkButtons } from './SpanDetailLinkButtons';
 import SpanFlameGraph from './SpanFlameGraph';
 
@@ -616,7 +615,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             traceToProfilesOptions={traceToProfilesOptions}
             timeRange={timeRange}
             app={app}
-            shareButton={<ShareSpanButton focusSpanLink={focusSpanLink} />}
+            focusSpanLink={focusSpanLink}
           />
         </div>
         <div className={styles.listWrapper}>

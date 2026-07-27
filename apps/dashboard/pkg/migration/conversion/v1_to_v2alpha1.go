@@ -769,7 +769,7 @@ func buildPanelKind(ctx context.Context, panelMap map[string]interface{}, dsInde
 		Spec: dashv2alpha1.DashboardPanelSpec{
 			Id:          panelID,
 			Title:       schemaversion.GetStringValue(panelMap, "title"),
-			Description: schemaversion.GetStringValue(panelMap, "description"),
+			Description: schemaversion.GetStringValueOrNil(panelMap, "description"),
 			Links:       links,
 			Data: dashv2alpha1.DashboardQueryGroupKind{
 				Kind: "QueryGroup",
