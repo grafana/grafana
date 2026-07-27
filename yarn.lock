@@ -7004,10 +7004,10 @@ __metadata:
   linkType: hard
 
 "@react-hookz/web@npm:^25.2.0":
-  version: 25.2.0
-  resolution: "@react-hookz/web@npm:25.2.0"
+  version: 25.2.1
+  resolution: "@react-hookz/web@npm:25.2.1"
   dependencies:
-    "@ver0/deep-equal": "npm:^1.0.0"
+    "@ver0/deep-equal": "npm:^2.0.1"
   peerDependencies:
     js-cookie: ^3.0.5
     react: ^16.8 || ^17 || ^18 || ^19
@@ -7015,7 +7015,7 @@ __metadata:
   peerDependenciesMeta:
     js-cookie:
       optional: true
-  checksum: 10/c23a10a1028760951318df440d1c314b0a1d848fc4a80968f5c31a1c832b388cb300e4a7f9f4edf0b80e81274f53ca2adfe5fe0ea97cac92bd8fb1b94a15bae0
+  checksum: 10/6b11df85dc8d6584cc867b305a0f19baeca6c76d59ba9cf5a408b840f84a8907050d4de7af141f333b7e001f7947614177210b02c771dff28ad8f8453004da3b
   languageName: node
   linkType: hard
 
@@ -11224,10 +11224,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ver0/deep-equal@npm:^1.0.0":
-  version: 1.0.1
-  resolution: "@ver0/deep-equal@npm:1.0.1"
-  checksum: 10/7ab3679eaecdee998335e7873ac06b1d2121b8587f75bb4b25a0ece7c525754146ee9d3ef490705b00858990c9e369909e73bdfc858d1095113de637e3d03526
+"@ver0/deep-equal@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "@ver0/deep-equal@npm:2.0.1"
+  checksum: 10/970e8d0f13715af821ec80854ae3fce785567d810ef18ef596877d28cccd70b31245556c4c442d8bd30405a3949a1f8219bbe9b82a07ee8b2ad018936ad6f895
   languageName: node
   linkType: hard
 
