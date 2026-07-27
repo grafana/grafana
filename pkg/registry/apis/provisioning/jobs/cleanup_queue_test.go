@@ -52,9 +52,14 @@ func createJob(ctx context.Context, t *testing.T, client *fakeclientset.Clientse
 		jobLabels[LabelJobClaim] = "123456789"
 		jobLabels[LabelJobClaimOwner] = "worker-1"
 	}
+	createJobWith(ctx, t, client, ns, name, jobLabels, provisioning.JobSpec{Repository: repo, Action: provisioning.JobActionPull})
+}
+
+func createJobWith(ctx context.Context, t *testing.T, client *fakeclientset.Clientset, ns, name string, jobLabels map[string]string, spec provisioning.JobSpec) {
+	t.Helper()
 	_, err := client.ProvisioningV0alpha1().Jobs(ns).Create(ctx, &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns, Labels: jobLabels},
-		Spec:       provisioning.JobSpec{Repository: repo, Action: provisioning.JobActionPull},
+		Spec:       spec,
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 }
@@ -115,4 +120,56 @@ func TestCleanupQueue_InvalidRepositoryLabel(t *testing.T) {
 	deleted, err := store.CleanupQueue(ctx, "stacks-123", longName)
 	require.NoError(t, err)
 	assert.Equal(t, 0, deleted)
+}
+
+// TestCleanupQueue_DeletesJobsMatchedBySpecRepository verifies that a pending
+// job created without the repository label (e.g. via the jobs resource directly)
+// is still cleared, because matching is done on spec.Repository.
+func TestCleanupQueue_DeletesJobsMatchedBySpecRepository(t *testing.T) {
+	fakeClient := newFilteringClientset()
+	store := newTestStore(fakeClient.ProvisioningV0alpha1())
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	// No LabelRepository, only spec.Repository.
+	createJobWith(ctx, t, fakeClient, "stacks-123", "unlabeled", nil,
+		provisioning.JobSpec{Repository: "repo-a", Action: provisioning.JobActionPull})
+
+	deleted, err := store.CleanupQueue(ctx, "stacks-123", "repo-a")
+	require.NoError(t, err)
+	assert.Equal(t, 1, deleted)
+
+	remaining, err := fakeClient.ProvisioningV0alpha1().Jobs("stacks-123").List(ctx, metav1.ListOptions{})
+	require.NoError(t, err)
+	assert.Empty(t, remaining.Items)
+}
+
+// TestCleanupQueue_PreservesOrphanCleanupJobs verifies that releaseResources and
+// deleteResources jobs are left in the queue: an admin may enqueue them against a
+// terminating repository as a recovery path, so clearing them would defeat it.
+func TestCleanupQueue_PreservesOrphanCleanupJobs(t *testing.T) {
+	fakeClient := newFilteringClientset()
+	store := newTestStore(fakeClient.ProvisioningV0alpha1())
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	createJob(ctx, t, fakeClient, "stacks-123", "repo-a-pending", "repo-a", false)
+	createJobWith(ctx, t, fakeClient, "stacks-123", "repo-a-release", map[string]string{LabelRepository: "repo-a"},
+		provisioning.JobSpec{Repository: "repo-a", Action: provisioning.JobActionReleaseResources})
+	createJobWith(ctx, t, fakeClient, "stacks-123", "repo-a-delete", map[string]string{LabelRepository: "repo-a"},
+		provisioning.JobSpec{Repository: "repo-a", Action: provisioning.JobActionDeleteResources})
+
+	deleted, err := store.CleanupQueue(ctx, "stacks-123", "repo-a")
+	require.NoError(t, err)
+	assert.Equal(t, 1, deleted)
+
+	remaining, err := fakeClient.ProvisioningV0alpha1().Jobs("stacks-123").List(ctx, metav1.ListOptions{})
+	require.NoError(t, err)
+	names := make([]string, 0, len(remaining.Items))
+	for _, job := range remaining.Items {
+		names = append(names, job.GetName())
+	}
+	assert.ElementsMatch(t, []string{"repo-a-release", "repo-a-delete"}, names)
 }

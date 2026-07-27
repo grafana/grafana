@@ -580,12 +580,20 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 	return created, nil
 }
 
-// CleanupQueue deletes all queued jobs for the repository that are not currently
-// being executed by a worker, effectively clearing the repository's queue.
+// CleanupQueue deletes the pending jobs for the repository, effectively clearing
+// the repository's queue. Returns the number of jobs deleted.
 //
-// A job is considered to be executing once a worker has claimed it (it carries
-// the LabelJobClaim label); those are left untouched so the running worker can
-// finish and archive them. Returns the number of jobs deleted.
+// A job is skipped (left in place) when it is:
+//   - executing: a worker has claimed it (it carries the LabelJobClaim label),
+//     so it is left to finish and archive itself;
+//   - an orphan-cleanup action (releaseResources/deleteResources): an admin may
+//     enqueue these against a terminating repository as a recovery path, and
+//     this method runs on every reconcile while the repository terminates, so
+//     removing them would defeat that recovery.
+//
+// Jobs are matched on spec.Repository rather than the repository label so that
+// jobs created directly through the jobs resource — which are valid and claimable
+// without the label — are not silently left behind.
 func (s *persistentStore) CleanupQueue(ctx context.Context, namespace, repository string) (int, error) {
 	ctx, span := tracing.Start(ctx, "provisioning.jobs.cleanup_queue")
 	defer span.End()
@@ -608,36 +616,30 @@ func (s *persistentStore) CleanupQueue(ctx context.Context, namespace, repositor
 		return 0, apifmt.Errorf("failed to get provisioning identity for '%s': %w", namespace, err)
 	}
 
-	// Select jobs for this repository that have not been claimed by a worker.
-	// A claimed job (LabelJobClaim present) is executing and must be left to
-	// finish, so it is excluded from the queue clean-up.
-	repoReq, err := labels.NewRequirement(LabelRepository, selection.Equals, []string{repository})
-	if err != nil {
-		// The repository name is not a valid label value (e.g. longer than 63
-		// characters). Insert stamps this same name as a label, so no job could
-		// ever have been queued for it: the queue is necessarily empty. Return
-		// cleanly so this finalizer does not block repository deletion.
-		logger.Info("repository name is not a valid label value; nothing to clean up", "error", err)
-		return 0, nil
-	}
+	// Only unclaimed jobs are candidates: a claimed job (LabelJobClaim present)
+	// is executing and must be left alone. This selector is repository-agnostic;
+	// the repository match is done on spec.Repository below so unlabeled jobs are
+	// still covered.
 	claimReq, err := labels.NewRequirement(LabelJobClaim, selection.DoesNotExist, nil)
 	if err != nil {
 		span.RecordError(err)
 		return 0, apifmt.Errorf("could not create claim requirement: %w", err)
 	}
-	selector := labels.NewSelector().Add(*repoReq, *claimReq)
 
 	list, err := s.client.Jobs(namespace).List(ctx, metav1.ListOptions{
-		LabelSelector: selector.String(),
+		LabelSelector: labels.NewSelector().Add(*claimReq).String(),
 	})
 	if err != nil {
 		span.RecordError(err)
-		return 0, apifmt.Errorf("failed to list jobs for repository '%s' in '%s': %w", repository, namespace, err)
+		return 0, apifmt.Errorf("failed to list jobs in '%s': %w", namespace, err)
 	}
 
 	var deleted int
 	for i := range list.Items {
 		job := &list.Items[i]
+		if job.Spec.Repository != repository || IsOrphanCleanupAction(job.Spec.Action) {
+			continue
+		}
 
 		// Guard against the race where a worker claims the job between the List
 		// and the Delete: the ResourceVersion precondition makes the delete fail
