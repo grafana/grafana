@@ -139,7 +139,13 @@ The status bar shows metadata about the flame graph and currently applied modifi
 
 ## Top table mode
 
-The top table shows the functions from the profile in table format. The table has three columns: **Symbol**, **Self**, and **Total**. The table is sorted by self time by default, but can be reordered by total time or symbol name by clicking the column headers. Each row represents aggregated values for the given function if the function appears in multiple places in the profile.
+The top table shows the functions from the profile in table format.
+
+In standard mode, the table has three columns: **Symbol**, **Self**, and **Total**. The table is sorted by self time by default, but can be reordered by total time or symbol name by clicking the column headers.
+
+When you compare two profiles in diff mode, the table has four columns instead: **Symbol**, **Baseline**, **Comparison**, and **Diff**. **Baseline** and **Comparison** show each function's share of total ticks in the two profiles, and **Diff** shows the percentage change between them, colored using the selected [diff color scheme](#change-color-scheme).
+
+Each row represents aggregated values for the given function if the function appears in multiple places in the profile.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-flamegraph-toptable-v12.0.png" max-width="700px" alt="Table view">}}
 
@@ -155,7 +161,7 @@ The following table lists the features of the toolbar:
 | ------ | ----------- |
 | [Search](#search) | Use the search field to find functions with a particular name. All the functions in the flame graph that match the search will remain colored while the rest of the functions appear in gray. |
 | Reset | Reset the flame graph back to its original state from a focus block or sandwich view. The reset icon is only displayed when the flame graph is in one of those two states. |
-| [Change color scheme](#change-color-scheme) | Switch between **By value** and **By package name** to visually tie functions from the same package together. |
+| [Change color scheme](#change-color-scheme) | Switch color schemes. In standard mode, choose **By value** or **By package name**. In diff mode, choose **Default (green to red)** or **Color blind (blue to red)**. |
 | Grouping | Expand or collapse all groups to show all instances of a function or show the function grouped. |
 | Text align | Align text either to the left or to the right to show more important parts of the function name when it does not fit into the block. |
 | Visualization picker | Choose to show only the flame graph, only table, or both at the same time. |
@@ -170,7 +176,9 @@ You can use the search field to find functions with a particular name. All the f
 
 ### Change color scheme
 
-You can switch between **By value** and **By package name** to visually tie functions from the same package together.
+In standard mode, you can switch between **By value** and **By package name** to visually tie functions from the same package together.
+
+In diff mode, you can switch between **Default (green to red)** and **Color blind (blue to red)** to highlight relative increases and decreases between the baseline and comparison profiles.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-flamegraph-color-v11.6.png" max-width="700px" alt="Different color scheme" >}}
 
