@@ -12391,8 +12391,10 @@
     },
     "extension-sidebar": {
       "assistant-close": "Close Grafana Assistant",
+      "assistant-close-tooltip": "Close Chat",
       "assistant-label": "Chat",
       "assistant-open": "Open Grafana Assistant",
+      "assistant-open-tooltip": "Open Chat",
       "button-tooltip": {
         "close": "Close {{title}}",
         "open": "Open {{title}}",
@@ -12404,7 +12406,8 @@
       "error-exit": "Exit workspace",
       "error-message": "The Grafana Assistant workspace could not be loaded.",
       "error-reload": "Reload page",
-      "error-title": "Workspace unavailable"
+      "error-title": "Workspace unavailable",
+      "workspace": "Workspace"
     },
     "help": {
       "aria-label": "Help",
