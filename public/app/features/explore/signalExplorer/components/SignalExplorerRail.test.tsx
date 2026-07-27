@@ -222,10 +222,13 @@ describe('SignalExplorerRail', () => {
       });
     });
 
-    it('prompts for a selection when the slice has none', () => {
+    // No selection means no dock. An empty panel explaining itself would sit in the sidebar
+    // permanently, costing width the metric list needs.
+    it('renders no metadata dock at all when the slice has no selection', () => {
       renderRail({ queries: [{ refId: 'A', datasource: { uid: 'p1' } }] });
 
-      expect(screen.getByText(/select a metric to see its details/i)).toBeInTheDocument();
+      expect(screen.queryByRole('heading')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /close/i })).not.toBeInTheDocument();
     });
 
     it('populates from the slice selectedMetric', () => {
@@ -271,7 +274,8 @@ describe('SignalExplorerRail', () => {
       await userEvent.click(screen.getByRole('button', { name: /close/i }));
 
       expect(store.getState().signalExplorer.left.selectedMetric).toBeUndefined();
-      expect(screen.getByText(/select a metric to see its details/i)).toBeInTheDocument();
+      // Closing removes the dock rather than swapping it for a placeholder.
+      expect(screen.queryByRole('heading', { name: 'up' })).not.toBeInTheDocument();
     });
   });
 

@@ -6,46 +6,41 @@ import type { MetricRow } from '../types';
 import { MetricMetadataBlock } from './MetricMetadataBlock';
 
 describe('MetricMetadataBlock', () => {
-  it('renders type, name, help and unit', () => {
+  it('shows the type, name, help and unit of the selected metric', () => {
     render(
       <MetricMetadataBlock
-        metric={{ name: 'up', type: 'gauge', help: 'target up', unit: 'bool' }}
+        metricName="up"
+        metric={{ name: 'up', type: 'gauge', help: 'Target liveness', unit: 'bool' }}
         onClose={jest.fn()}
       />
     );
 
-    expect(screen.getByText('up')).toBeInTheDocument();
-    expect(screen.getByText('target up')).toBeInTheDocument();
-    expect(screen.getByText(/gauge/i)).toBeInTheDocument();
+    expect(screen.getByTestId('signal-explorer-metric-type-badge')).toHaveTextContent('Gauge');
+    expect(screen.getByRole('heading', { name: 'up' })).toBeInTheDocument();
+    expect(screen.getByText('Target liveness')).toBeInTheDocument();
     expect(screen.getByText('bool')).toBeInTheDocument();
   });
 
-  it('renders an empty hint when nothing is selected', () => {
-    render(<MetricMetadataBlock metric={undefined} onClose={jest.fn()} />);
-
-    expect(screen.getByText(/select a metric/i)).toBeInTheDocument();
-  });
-
-  // The dock is dismissible whether or not it is describing a metric: with no close control in the
-  // empty state, a user who deselects has no way to reclaim the space.
-  it('still offers the close control in the empty state', async () => {
-    const onClose = jest.fn();
-    render(<MetricMetadataBlock metric={undefined} onClose={onClose} />);
-
-    await userEvent.click(screen.getByRole('button', { name: /close/i }));
-
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
   it('omits the unit line entirely when unit is undefined', () => {
-    render(<MetricMetadataBlock metric={{ name: 'up', type: 'gauge', help: 'target up' }} onClose={jest.fn()} />);
+    render(
+      <MetricMetadataBlock metricName="up" metric={{ name: 'up', type: 'gauge', help: 'up' }} onClose={jest.fn()} />
+    );
 
     expect(screen.queryByTestId('metric-metadata-unit')).not.toBeInTheDocument();
   });
 
+  // The catalog that describes the metric may still be loading when the user clicks a row. Showing
+  // the name they just picked beats an empty panel that pops into place a moment later.
+  it('names the metric before its metadata has resolved, without a type badge', () => {
+    render(<MetricMetadataBlock metricName="node_load1" metric={undefined} onClose={jest.fn()} />);
+
+    expect(screen.getByRole('heading', { name: 'node_load1' })).toBeInTheDocument();
+    expect(screen.queryByTestId('signal-explorer-metric-type-badge')).not.toBeInTheDocument();
+  });
+
   it('calls onClose when the close control is activated', async () => {
     const onClose = jest.fn();
-    render(<MetricMetadataBlock metric={{ name: 'up', type: 'gauge' }} onClose={onClose} />);
+    render(<MetricMetadataBlock metricName="up" metric={{ name: 'up', type: 'gauge' }} onClose={onClose} />);
 
     await userEvent.click(screen.getByRole('button', { name: /close/i }));
 
@@ -59,9 +54,20 @@ describe('MetricMetadataBlock', () => {
     ['native histogram', 'Native histogram'],
     ['summary', 'Summary'],
     ['unknown', 'Unknown'],
-  ])('renders the human label for type %s', (type, label) => {
-    render(<MetricMetadataBlock metric={{ name: 'metric_name', type }} onClose={jest.fn()} />);
+  ])('labels a %s metric as "%s"', (type, label) => {
+    render(<MetricMetadataBlock metricName="metric_name" metric={{ name: 'metric_name', type }} onClose={jest.fn()} />);
 
-    expect(screen.getByText(label)).toBeInTheDocument();
+    expect(screen.getByTestId('signal-explorer-metric-type-badge')).toHaveTextContent(label);
+  });
+
+  // Each type is visually distinguishable in the design, so the badge carries its type rather than
+  // relying on colour alone reaching the DOM.
+  it('marks the badge with the metric type it is colouring', () => {
+    render(<MetricMetadataBlock metricName="c" metric={{ name: 'c', type: 'native histogram' }} onClose={jest.fn()} />);
+
+    expect(screen.getByTestId('signal-explorer-metric-type-badge')).toHaveAttribute(
+      'data-metric-type',
+      'native histogram'
+    );
   });
 });

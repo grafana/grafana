@@ -68,18 +68,18 @@ export function SignalExplorerRail({ exploreId }: SignalExplorerRailProps) {
           />
         ))}
       </div>
-      <div className={styles.dock}>
-        {selectedMetric && selectedCard?.isPrometheus ? (
+      {/* No selection means no dock at all. An empty panel saying "select a metric" occupies the
+          sidebar permanently to explain itself, which is worse than not being there. */}
+      {selectedMetric && selectedCard?.isPrometheus && (
+        <div className={styles.dock}>
           <SelectedMetricMetadata
             dsRef={selectedCard.dsRef}
             timeRange={range}
             metricName={selectedMetric.metricName}
             onClose={onCloseMetadata}
           />
-        ) : (
-          <MetricMetadataBlock metric={undefined} onClose={onCloseMetadata} />
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -99,7 +99,13 @@ interface SelectedMetricMetadataProps {
 function SelectedMetricMetadata({ dsRef, timeRange, metricName, onClose }: SelectedMetricMetadataProps) {
   const { metrics } = useMetricCatalog(dsRef, timeRange);
 
-  return <MetricMetadataBlock metric={metrics.find((metric) => metric.name === metricName)} onClose={onClose} />;
+  return (
+    <MetricMetadataBlock
+      metricName={metricName}
+      metric={metrics.find((metric) => metric.name === metricName)}
+      onClose={onClose}
+    />
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
