@@ -1,5 +1,6 @@
 import { type ExistingItem, type ExistingSolutionProviderResult } from './types';
 import { useKubernetesSolution } from './useKubernetesSolution';
+import { useMetricsSolution } from './useMetricsSolution';
 
 export interface ExistingSolutionsResult {
   loading: boolean;
@@ -13,8 +14,9 @@ export interface ExistingSolutionsResult {
  */
 export function useExistingSolutions(): ExistingSolutionsResult {
   const kubernetes = useKubernetesSolution();
+  const metrics = useMetricsSolution();
 
-  const providers: ExistingSolutionProviderResult[] = [kubernetes];
+  const providers: ExistingSolutionProviderResult[] = [kubernetes, metrics];
 
   const solutions = providers.flatMap((provider) => (provider.item ? [provider.item] : []));
   // A discovered solution renders immediately; the empty state waits for every

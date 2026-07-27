@@ -16,6 +16,7 @@ import {
   type KubernetesInventory,
 } from './kubernetesData';
 import { readSeries } from './promQuery';
+import { useMetricsSolution } from './useMetricsSolution';
 
 jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
   ...jest.requireActual('app/features/alerting/unified/hooks/usePluginBridge'),
@@ -30,6 +31,10 @@ jest.mock('./kubernetesData', () => ({
   fetchClusterCpuSeries: jest.fn(),
 }));
 
+jest.mock('./useMetricsSolution', () => ({
+  useMetricsSolution: jest.fn(),
+}));
+
 jest.mock('../analytics/main', () => ({
   ctaClicked: jest.fn(),
 }));
@@ -39,6 +44,7 @@ const mockResolveDatasource = jest.mocked(resolveKubernetesDatasource);
 const mockFetchInventory = jest.mocked(fetchKubernetesInventory);
 const mockFetchHealth = jest.mocked(fetchKubernetesHealth);
 const mockFetchCpuSeries = jest.mocked(fetchClusterCpuSeries);
+const mockUseMetricsSolution = jest.mocked(useMetricsSolution);
 
 const compactFormatter = new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 });
 
@@ -72,6 +78,7 @@ function mockResolvedKubernetes(
 
 beforeEach(() => {
   mockUsePluginBridge.mockReturnValue({ loading: false, installed: true, settings });
+  mockUseMetricsSolution.mockReturnValue({ loading: false, item: null });
   mockResolvedKubernetes();
   mockResolveDatasource.mockClear();
   mockFetchInventory.mockClear();
@@ -88,10 +95,36 @@ describe('RecommendationExisting', () => {
 
     expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Switch solution/i }));
-    await user.click(screen.getByRole('menuitem', { name: 'Hosted Metrics' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Hosted Logs' }));
 
-    expect(screen.getByRole('heading', { name: 'Hosted Metrics' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Hosted Logs' })).toBeInTheDocument();
+    expect(screen.getByText('47 GB ingested')).toBeInTheDocument();
+  });
+
+  it('renders a discovered Metrics card without waiting for Kubernetes', async () => {
+    mockResolveDatasource.mockImplementation(() => new Promise(() => {}));
+    mockUseMetricsSolution.mockReturnValue({
+      loading: false,
+      item: {
+        id: 'metrics',
+        title: 'Metrics & infrastructure',
+        icon: 'chart-line',
+        stats: { primary: '4.2M series' },
+        action: 'Open metrics',
+        href: '/a/grafana-metricsdrilldown-app/drilldown',
+      },
+    });
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
     expect(screen.getByText('4.2M series')).toBeInTheDocument();
+    expect(screen.queryByText(/data points\/min/)).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open metrics' })).toHaveAttribute(
+      'href',
+      '/a/grafana-metricsdrilldown-app/drilldown'
+    );
+    expect(screen.queryByTestId('recommendation-existing-skeleton')).not.toBeInTheDocument();
   });
 
   it('shows a full-card skeleton while settings are pending', async () => {
@@ -159,7 +192,6 @@ describe('RecommendationExisting', () => {
 
     expect(await screen.findByRole('heading', { name: 'No data flowing yet' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Hosted Metrics' })).not.toBeInTheDocument();
   });
 
   it('shows the no-data card when resolution rejects without flashing the Kubernetes title', async () => {
@@ -223,7 +255,6 @@ describe('RecommendationExisting', () => {
     expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
     expect(screen.getByText('via k8s-prom')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open K8s app' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Hosted Metrics' })).not.toBeInTheDocument();
     expect(screen.queryByTestId('kubernetes-stats-skeleton')).not.toBeInTheDocument();
   });
 
@@ -273,9 +304,9 @@ describe('RecommendationExisting', () => {
 
     expect(await screen.findByTestId('kubernetes-stats-skeleton')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Switch solution/i }));
-    await user.click(screen.getByRole('menuitem', { name: 'Hosted Metrics' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Hosted Logs' }));
 
-    expect(screen.getByText('4.2M series')).toBeInTheDocument();
+    expect(screen.getByText('47 GB ingested')).toBeInTheDocument();
     expect(screen.queryByTestId('kubernetes-stats-skeleton')).not.toBeInTheDocument();
     expect(screen.queryByTestId('kubernetes-sparkline-skeleton')).not.toBeInTheDocument();
   });
@@ -328,7 +359,7 @@ describe('RecommendationExisting', () => {
 
     expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Switch solution/i }));
-    await user.click(screen.getByRole('menuitem', { name: 'Hosted Metrics' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Hosted Logs' }));
 
     expect(screen.queryByText(/^via /)).not.toBeInTheDocument();
   });
@@ -385,14 +416,14 @@ describe('RecommendationExisting', () => {
 
       expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
       await user.click(screen.getByRole('button', { name: /Switch solution/i }));
-      await user.click(screen.getByRole('menuitem', { name: 'Hosted Metrics' }));
-      await user.click(await screen.findByRole('link', { name: /Open infrastructure/ }));
+      await user.click(screen.getByRole('menuitem', { name: 'Hosted Logs' }));
+      await user.click(await screen.findByRole('link', { name: /Open Explore \(Logs\)/ }));
 
       expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
         surface: 'existing_solution',
         action: 'open_solution',
         placement: 'card',
-        solution: 'hosted-metrics',
+        solution: 'hosted-logs',
       });
     });
 
@@ -401,13 +432,13 @@ describe('RecommendationExisting', () => {
 
       expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
       await user.click(screen.getByRole('button', { name: /Switch solution/i }));
-      await user.click(screen.getByRole('menuitem', { name: 'Hosted Metrics' }));
+      await user.click(screen.getByRole('menuitem', { name: 'Hosted Logs' }));
 
       expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
         surface: 'existing_solution',
         action: 'switch_solution',
         placement: 'card',
-        solution: 'hosted-metrics',
+        solution: 'hosted-logs',
       });
     });
 

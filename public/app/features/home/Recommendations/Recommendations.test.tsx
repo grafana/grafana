@@ -145,7 +145,6 @@ describe('Recommendations', () => {
 
     expect(await screen.findByRole('heading', { name: 'No data flowing yet' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Hosted Metrics' })).not.toBeInTheDocument();
   });
 
   it('renders nothing when the user cannot manage plugins', async () => {

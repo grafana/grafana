@@ -10,23 +10,6 @@ import { useExistingSolutions } from './useExistingSolutions';
 
 const stubbedExisting: ExistingItem[] = [
   {
-    id: 'hosted-metrics',
-    title: 'Hosted Metrics',
-    icon: 'chart-line',
-    stats: {
-      primary: '4.2M series',
-      secondary: '12 hosts',
-    },
-    alert: {
-      primary: '3 hosts above 90% disk',
-      details: ['web-03 critical at 96%, ~6 h to full'],
-      action: 'View',
-      href: '#',
-    },
-    action: 'Open infrastructure',
-    href: '#',
-  },
-  {
     id: 'hosted-logs',
     title: 'Hosted Logs',
     icon: 'file-alt',

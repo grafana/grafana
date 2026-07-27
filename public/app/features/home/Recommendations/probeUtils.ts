@@ -79,13 +79,13 @@ export function createTtlCachedPromise<T>(fn: () => Promise<T>, ttlMs: number): 
 }
 
 /**
- * Candidate datasources of `type` for a data-existence probe: cloud utility datasources are
- * skipped (unless they are all there is), the default datasource leads, capped for fan-out.
- * Pass an Infinity `cap` when the caller reorders before capping itself.
+ * Candidate datasources of `type` for a data-existence probe. Explicit preferences lead in their
+ * supplied order, followed by the default and remaining datasources, then the list is capped.
+ * Preferred UIDs override the normal exclusion of Cloud utility datasources.
  */
 export async function listProbeCandidates(
   type: string,
-  cap = MAX_PROBED_DATASOURCES
+  { cap = MAX_PROBED_DATASOURCES, preferredUids = [] }: { cap?: number; preferredUids?: string[] } = {}
 ): Promise<DataSourceInstanceListItem[]> {
   const list = await withRetry(() =>
     getDataSourceInstanceList({
@@ -94,10 +94,37 @@ export async function listProbeCandidates(
       filter: (ds) => ds.meta.id !== 'grafana',
     })
   );
-  const preferred = list.filter((ds) => !CLOUD_UTILITY_DATASOURCE_NAMES[ds.name]);
-  const pool = preferred.length > 0 ? preferred : list;
-  const def = pool.find((ds) => ds.isDefault);
-  const ordered = def ? [def, ...pool.filter((ds) => ds !== def)] : [...pool];
+  const preferred: DataSourceInstanceListItem[] = [];
+  const defaultProduct: DataSourceInstanceListItem[] = [];
+  const product: DataSourceInstanceListItem[] = [];
+  const defaultUtility: DataSourceInstanceListItem[] = [];
+  const utility: DataSourceInstanceListItem[] = [];
+  let hasProductDatasource = false;
+  for (const datasource of list) {
+    const isUtility = CLOUD_UTILITY_DATASOURCE_NAMES[datasource.name];
+    if (!isUtility) {
+      hasProductDatasource = true;
+    }
+    if (preferredUids.includes(datasource.uid)) {
+      preferred.push(datasource);
+    } else if (isUtility && datasource.isDefault) {
+      defaultUtility.push(datasource);
+    } else if (isUtility) {
+      utility.push(datasource);
+    } else if (datasource.isDefault) {
+      defaultProduct.push(datasource);
+    } else {
+      product.push(datasource);
+    }
+  }
+
+  preferred.sort((a, b) => preferredUids.indexOf(a.uid) - preferredUids.indexOf(b.uid));
+  const ordered = [
+    ...preferred,
+    ...defaultProduct,
+    ...product,
+    ...(hasProductDatasource ? [] : [...defaultUtility, ...utility]),
+  ];
   return ordered.slice(0, cap);
 }
 
