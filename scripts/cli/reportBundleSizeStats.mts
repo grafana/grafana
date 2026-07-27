@@ -38,20 +38,7 @@ async function readEntrypoints(manifestPath: string): Promise<Record<string, Ent
     throw new Error(`Could not read ${manifestPath}. Run 'yarn build' first.`, { cause: err });
   }
 
-  const { entrypoints } = JSON.parse(contents);
-  if (!isEntrypointsMap(entrypoints) || Object.keys(entrypoints).length === 0) {
-    throw new Error(`${manifestPath} has no entrypoints`);
-  }
-
-  return entrypoints;
-}
-
-function isEntrypointsMap(value: unknown): value is Record<string, Entrypoint> {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    Object.values(value).every((entry) => typeof entry?.assets === 'object' && entry.assets !== null)
-  );
+  return JSON.parse(contents).entrypoints;
 }
 
 /**
