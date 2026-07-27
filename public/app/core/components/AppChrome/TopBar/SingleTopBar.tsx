@@ -119,7 +119,7 @@ export const SingleTopBar = memo(function SingleTopBar({
           {!showToolbarLevel && actions}
           {!contextSrv.user.isSignedIn && <SignInLink />}
           <NavRightButton />
-          {fullscreenWorkspaceEnabled && (
+          {fullscreenWorkspaceEnabled && !isSmallScreen && assistantComponentId !== undefined && (
             <AssistantToolbarButtons
               isOpen={isAssistantSidebarOpen}
               onClick={() => setDockedComponentId(isAssistantSidebarOpen ? undefined : assistantComponentId)}
