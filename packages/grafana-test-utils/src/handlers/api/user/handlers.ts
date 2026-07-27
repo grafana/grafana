@@ -43,9 +43,9 @@ const patchPreferencesHandler = () =>
     return HttpResponse.json({ message: 'Preferences updated' });
   });
 
-const getSignedInUserTeamListHandler = () =>
+export const getSignedInUserTeamListHandler = (teams: Array<{ uid: string; name: string }> = []) =>
   http.get('/api/user/teams', async () => {
-    return HttpResponse.json([]);
+    return HttpResponse.json(teams);
   });
 
 const handlers = [

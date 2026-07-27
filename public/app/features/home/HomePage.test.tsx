@@ -13,11 +13,20 @@ import { createComponentWithMeta } from 'app/features/plugins/extensions/usePlug
 
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import HomePage from './HomePage';
+import { homepageViewed } from './analytics/main';
+
+jest.mock('./analytics/main', () => ({
+  ctaClicked: jest.fn(),
+  tabChanged: jest.fn(),
+  clearHistoryClicked: jest.fn(),
+  homepageViewed: jest.fn(),
+}));
 
 setBackendSrv(backendSrv);
 setupMockServer();
 
 beforeEach(() => {
+  jest.clearAllMocks();
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 
   // Deny alerting permission so the FiringAlertsCard renders null
@@ -171,6 +180,7 @@ describe('HomePage', () => {
 
     expect(await screen.findByTestId('home-page-skeleton')).toBeInTheDocument();
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
   });
 
   it('lands on the auto-switched Starred tab once the dashboard fetches settle', async () => {
@@ -179,6 +189,7 @@ describe('HomePage', () => {
     // dashboards load inside DashboardTabs now; the page does not gate reveal on them
     expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
     expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).toHaveBeenCalledTimes(1);
   });
 
   it('reveals extension tabs together with the built-in tabs', async () => {
@@ -262,6 +273,7 @@ describe('HomePage', () => {
     // and the greeting stays — the suspension must not bubble to the route-level spinner.
     expect(screen.getByRole('heading', { name: /^Good \w+\.$/ })).toBeInTheDocument();
     expect(screen.getByTestId('home-page-skeleton')).toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
 
     await act(async () => {
       resolveComponent({ default: () => <div>Lazy assistant content</div> });
@@ -273,5 +285,6 @@ describe('HomePage', () => {
     expect(screen.getByText('Lazy assistant content')).toBeInTheDocument();
     expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).toHaveBeenCalledTimes(1);
   });
 });

@@ -244,6 +244,9 @@ type KVBackendOptions struct {
 	// TenantDeleterConfig, if set, enables periodic deletion of expired pending-delete tenant data.
 	TenantDeleterConfig *TenantDeleterConfig
 
+	// EmbeddingDeleter, if set, deletes vector embeddings on tenant deletion.
+	EmbeddingDeleter EmbeddingDeleter
+
 	// SearchLookback is the duration subtracted from sinceRv in calls to ListModifiedSince.
 	// This guards against concurrent writes that commit slightly out-of-order. 0 means no lookback.
 	SearchLookback time.Duration
@@ -388,7 +391,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	// Optionally start the tenant deleter.
 	if opts.TenantDeleterConfig != nil {
-		td := NewTenantDeleter(backend.dataStore, pds, *opts.TenantDeleterConfig)
+		td := NewTenantDeleter(backend.dataStore, pds, *opts.TenantDeleterConfig, opts.EmbeddingDeleter)
 		td.Start(ctx)
 		backend.tenantDeleter = td
 	}
@@ -2312,6 +2315,20 @@ func (k *kvStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedR
 	defer span.End()
 
 	return k.dataStore.GetResourceStats(ctx, nsr, minCount)
+}
+
+// GetResourceStatsWithLimit is like GetResourceStats but stops counting each
+// namespace at countLimit. See dataStore.GetResourceStatsWithLimit.
+func (k *kvStorageBackend) GetResourceStatsWithLimit(ctx context.Context, nsr NamespacedResource, minCount, countLimit int) ([]ResourceStats, error) {
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.GetResourceStatsWithLimit", trace.WithAttributes(
+		attribute.String("namespace", nsr.Namespace),
+		attribute.String("group", nsr.Group),
+		attribute.String("resource", nsr.Resource),
+		attribute.Int("countLimit", countLimit),
+	))
+	defer span.End()
+
+	return k.dataStore.GetResourceStatsWithLimit(ctx, nsr, minCount, countLimit)
 }
 
 // ListStoredResources discovers resource identities in the storage backend.

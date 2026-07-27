@@ -806,6 +806,16 @@ type Cfg struct {
 	AzureDimensions    int    // requested output dimensionality; default 1024 (text-embedding-3-small reduced from native 1536)
 	AzureBatchSize     int    // texts per Azure embeddings call; default 50
 
+	// Rerank provider for the HybridSearch RPC ([vector_reranker] section).
+	// Empty = disabled (RRF ordering is returned as-is, min_relevance is a
+	// no-op).
+	RerankProvider        string
+	RerankVertexProjectID string
+	RerankVertexLocation  string
+	RerankVertexModel     string
+	RerankBedrockRegion   string
+	RerankBedrockModel    string
+
 	// Overrides/Quotas
 	OverridesFilePath             string
 	OverridesReloadInterval       time.Duration
@@ -868,6 +878,9 @@ type Cfg struct {
 
 	// Enable CAP token based authentication in grafana's embedded kube-aggregator
 	EnableKubernetesAggregatorCapTokenAuth bool
+
+	// Enable playlist reconciler
+	EnablePlaylistsReconciler bool
 }
 
 type UnifiedStorageConfig struct {
@@ -1828,6 +1841,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	// unified storage config
 	cfg.setUnifiedStorageConfig()
 
+	cfg.readStartupParams(iniFile)
 	return nil
 }
 
@@ -1918,6 +1932,12 @@ func (cfg *Cfg) initLogging(file *ini.File) error {
 	return log.ReadLoggingConfig(logModes, cfg.LogsPath, file)
 }
 
+func (cfg *Cfg) readStartupParams(iniFile *ini.File) {
+	cfg.EnablePlaylistsReconciler = iniFile.Section("playlists").Key("enable_playlists_reconciler").MustBool(false)
+
+	cfg.EnableKubernetesAggregator = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_enabled").MustBool(false)
+	cfg.EnableKubernetesAggregatorCapTokenAuth = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_cap_token_auth_enabled").MustBool(false)
+}
 func (cfg *Cfg) LogConfigSources() {
 	var text bytes.Buffer
 
@@ -2543,8 +2563,6 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	if !cfg.DisableControllers {
 		cfg.DisableControllers = iniFile.Section("grafana-apiserver").Key("disable_controllers").MustBool(false)
 	}
-	cfg.EnableKubernetesAggregator = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_enabled").MustBool(false)
-	cfg.EnableKubernetesAggregatorCapTokenAuth = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_cap_token_auth_enabled").MustBool(false)
 	cfg.ProvisioningAllowedTargets = iniFile.Section("provisioning").Key("allowed_targets").Strings("|")
 	if len(cfg.ProvisioningAllowedTargets) == 0 {
 		cfg.ProvisioningAllowedTargets = []string{"folder", "folderless"}
