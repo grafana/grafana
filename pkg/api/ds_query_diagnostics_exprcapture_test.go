@@ -3,7 +3,11 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/mock"
@@ -14,8 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr/exprcapture"
 	"github.com/grafana/grafana/pkg/infra/httpclient/harcapture"
+	"github.com/grafana/grafana/pkg/infra/log"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 // The seam these tests cover: a handler must attach the exprcapture buffer to the SAME context it
@@ -25,9 +33,8 @@ import (
 // would notice: both packages are correct in isolation, and the fake query service used elsewhere in
 // this package doesn't care what the context holds.
 //
-// Only the dashboard handler is covered here: QueryDiagnostics has no test harness in this package
-// (nothing invokes it -- it needs the OpenFeature gate, a ReqContext and web.Bind), so its identical
-// two-line wiring is still unguarded. Worth closing when that harness lands.
+// Both handlers are covered: QueryDiagnostics (single panel) and buildDashboardDiagnosticsArchive
+// (per panel). They wire the two buffers up independently, so neither one's tests protect the other.
 //
 // recordTwoStages stands in for the expression service: it records into the buffer it finds in ctx,
 // or fails the test if there is none.
@@ -47,6 +54,104 @@ func recordTwoStages(t *testing.T, ctx context.Context) *exprcapture.Buffer {
 		{RefID: "B", Type: "expression", Command: "reduce", InputRefIDs: []string{"A"}},
 	})
 	return buf
+}
+
+// recordTwoStagesAndTraffic records a stage pair into ctx's exprcapture buffer AND one HTTP exchange
+// into its harcapture buffer. Recording through both makes the resulting bundle prove the seam
+// end-to-end: querydata.json's pipeline and traffic.har can only both be present if the two buffers
+// the handler hands to Build are the same two the query saw in its context.
+func recordTwoStagesAndTraffic(t *testing.T, ctx context.Context) {
+	t.Helper()
+	recordTwoStages(t, ctx)
+	harcapture.FromContext(ctx).AddEntry(
+		httptest.NewRequest(http.MethodGet, "http://ds.example/api/v1/query?query=up", nil),
+		&http.Response{StatusCode: http.StatusOK, Header: http.Header{}, Body: http.NoBody},
+		nil, time.Unix(0, 0), time.Millisecond,
+	)
+}
+
+// diagnosticsReqContext builds the ReqContext QueryDiagnostics binds its request off. The body must
+// carry at least one query or the handler short-circuits with 400 before any capture happens.
+func diagnosticsReqContext(t *testing.T, queryV2 bool) *contextmodel.ReqContext {
+	t.Helper()
+	body := `{"from":"now-1h","to":"now","queries":[{"refId":"A","datasource":{"uid":"prom"}}],` +
+		`"panel":{"id":7,"targets":[{"refId":"A","hide":true},{"refId":"B"}]}}`
+	req, err := http.NewRequest(http.MethodPost, "/api/ds/diagnostics", strings.NewReader(body))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	if queryV2 {
+		req.Header.Set("X-Query-V2", "true")
+	}
+	return &contextmodel.ReqContext{
+		Context: &web.Context{
+			Req:  req,
+			Resp: web.NewResponseWriter(req.Method, httptest.NewRecorder()),
+		},
+		SignedInUser: &user.SignedInUser{OrgID: 1, UserUID: "u1"},
+		Logger:       log.New("test"),
+	}
+}
+
+// TestQueryDiagnostics_capturesPipelineIntoBundle covers the single-panel handler's half of the seam.
+// Both dispatch branches are exercised: the handler picks QueryData or QueryDataNew off the X-Query-V2
+// header, and each is a separate call site that has to be handed captureCtx rather than the bare ctx.
+func TestQueryDiagnostics_capturesPipelineIntoBundle(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+
+	for _, tc := range []struct {
+		name     string
+		queryV2  bool
+		method   string
+		unwanted string
+	}{
+		{name: "v1 dispatch", queryV2: false, method: "QueryData", unwanted: "QueryDataNew"},
+		{name: "v2 dispatch", queryV2: true, method: "QueryDataNew", unwanted: "QueryData"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			fakeQuery := query.NewFakeQueryService(t)
+			fakeQuery.On(tc.method, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+				Return(func(ctx context.Context, _ identity.Requester, _ bool, _ dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+					recordTwoStagesAndTraffic(t, ctx)
+					return backend.NewQueryDataResponse(), nil
+				})
+			hs := &HTTPServer{queryDataService: fakeQuery}
+
+			c := diagnosticsReqContext(t, tc.queryV2)
+			resp := hs.QueryDiagnostics(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			fakeQuery.AssertNotCalled(t, tc.unwanted, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+
+			// The handler forces a live query: a cache hit returns without a datasource round trip, so
+			// capture would run on nothing and both artifacts below would be empty.
+			require.True(t, c.SkipQueryCache, "diagnostics must bypass the query-result cache")
+
+			files := readTarGzFiles(t, resp.Body())
+			require.Contains(t, files, "traffic.har",
+				"the HAR buffer handed to Build is not the one the query recorded into")
+
+			require.Contains(t, files, "querydata.json")
+			var artifact struct {
+				Pipeline []struct {
+					RefID       string   `json:"refId"`
+					Type        string   `json:"type"`
+					Command     string   `json:"command"`
+					InputRefIDs []string `json:"inputRefIds"`
+				} `json:"pipeline"`
+			}
+			require.NoError(t, json.Unmarshal(files["querydata.json"], &artifact))
+			require.Len(t, artifact.Pipeline, 2, "querydata.json recorded no pipeline")
+			require.Equal(t, "A", artifact.Pipeline[0].RefID)
+			require.Equal(t, "datasource", artifact.Pipeline[0].Type)
+			require.Equal(t, "reduce", artifact.Pipeline[1].Command)
+			require.Equal(t, []string{"A"}, artifact.Pipeline[1].InputRefIDs,
+				"the DAG edge B<-A reached the artifact")
+
+			// panel.json still carries each target's hide flag, which is what lets a reader tell which
+			// captured stages the panel actually drew now that hidden refIds stay in the response.
+			require.Contains(t, files, "panel.json")
+			require.Contains(t, string(files["panel.json"]), `"hide": true`)
+		})
+	}
 }
 
 func TestBuildDashboardDiagnosticsArchive_capturesPipelinePerPanel(t *testing.T) {
