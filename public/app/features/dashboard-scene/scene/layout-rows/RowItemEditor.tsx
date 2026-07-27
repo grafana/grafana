@@ -1,4 +1,3 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useId, useMemo, useRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -75,12 +74,6 @@ export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPan
 
   const layoutCategory = useLayoutCategory(layout);
 
-  // OpenFeature is not initialized for anonymous users, so fall back to
-  // the static feature toggle to ensure section variables work without auth.
-  const sectionVariablesEnabled = useBooleanFlagValue(
-    'dashboardSectionVariables',
-    Boolean(config.featureToggles.dashboardSectionVariables)
-  );
   const sectionVariablesCategory = useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.rows-layout.row-options.section-variables.title', 'Variables'),
@@ -123,15 +116,13 @@ export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPan
     return category;
   }, [model]);
 
-  const editOptions = sectionVariablesEnabled
-    ? [
-        rowCategory,
-        ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [sectionFiltersCategory] : []),
-        sectionVariablesCategory,
-        ...layoutCategory,
-        repeatCategory,
-      ]
-    : [rowCategory, ...layoutCategory, repeatCategory];
+  const editOptions = [
+    rowCategory,
+    ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [sectionFiltersCategory] : []),
+    sectionVariablesCategory,
+    ...layoutCategory,
+    repeatCategory,
+  ];
 
   const conditionalRenderingCategory = useMemo(
     () => useConditionalRenderingEditor(model.state.conditionalRendering),

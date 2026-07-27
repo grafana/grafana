@@ -55,6 +55,13 @@ type FallbackStrategy interface {
 	GetProviderConfig(ctx context.Context, provider string) (map[string]any, error)
 }
 
+// MTSettingsFallback marks a FallbackStrategy that reads from MT-Settings. When
+// such a strategy serves a read (past the storage read-flip), MT-Settings wins
+// the read precedence over the legacy database.
+type MTSettingsFallback interface {
+	ServesMTSettings() bool
+}
+
 // Store is a SSO settings store
 //
 //go:generate mockery --name Store --structname MockStore --outpkg ssosettingstests --filename store_mock.go --output ./ssosettingstests/
