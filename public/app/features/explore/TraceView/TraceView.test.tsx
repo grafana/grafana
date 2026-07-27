@@ -5,11 +5,7 @@ import { Provider } from 'react-redux';
 
 import { type DataFrame, MutableDataFrame } from '@grafana/data';
 import { mockTimeRange } from '@grafana/plugin-ui/test';
-import {
-  setPluginLinksHook,
-  setPluginComponentsHook,
-  useAppPluginInstalled,
-} from '@grafana/runtime';
+import { setPluginLinksHook, setPluginComponentsHook, useAppPluginInstalled } from '@grafana/runtime';
 import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
 import { configureStore } from '../../../store/configureStore';

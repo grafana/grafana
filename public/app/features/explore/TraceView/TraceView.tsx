@@ -162,9 +162,7 @@ export function TraceView(props: Props) {
 
   const { settings: logsDataSourceSettings } = useDataSourceInstanceSettings(traceToLogsOptions?.datasourceUid);
   const { settings: metricsDataSourceSettings } = useDataSourceInstanceSettings(traceToMetricsOptions?.datasourceUid);
-  const { settings: profilesDataSourceSettings } = useDataSourceInstanceSettings(
-    traceToProfilesOptions?.datasourceUid
-  );
+  const { settings: profilesDataSourceSettings } = useDataSourceInstanceSettings(traceToProfilesOptions?.datasourceUid);
 
   const dataLinksContext = useDataLinksContext();
 

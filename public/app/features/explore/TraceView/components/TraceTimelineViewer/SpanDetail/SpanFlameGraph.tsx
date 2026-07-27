@@ -56,9 +56,7 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
   } = props;
   const [sizeRef, { height: containerHeight }] = useMeasure<HTMLDivElement>();
   const styles = useStyles2(getStyles);
-  const { settings: profilesDataSourceSettings } = useDataSourceInstanceSettings(
-    traceToProfilesOptions?.datasourceUid
-  );
+  const { settings: profilesDataSourceSettings } = useDataSourceInstanceSettings(traceToProfilesOptions?.datasourceUid);
 
   const profileTag = span.tags.filter((tag) => tag.key === pyroscopeProfileIdTagKey);
   const profileTagValue = profileTag.length > 0 ? profileTag[0].value : undefined;
