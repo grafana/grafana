@@ -117,7 +117,7 @@ Use the following options to refine how your visualization displays the value:
 | Show | Set how Grafana displays your data. Choose from:<ul><li>**Calculate** - Show a calculated value based on all rows.</li><li>**All values** - Show a separate value for every row. If you select this option, then you can also limit the number of rows to display.</li></ul> |
 | Calculation | If you chose **Calculate** as your **Show** option, select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types](ref:calculation-types). |
 | Limit | If you chose **All values** as your **Show** option, enter the maximum number of rows to display. The default is 25 and the maximum is 5,000. |
-| Fields | Select the fields display in the panel. |
+| Fields | Select the fields that should be included in the panel. Choose from **Numeric Fields** (default), **All Fields**, or a specific field. |
 
 <!-- prettier-ignore-end -->
 
