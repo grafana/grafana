@@ -210,10 +210,13 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 
 	// Reconcile the object the read seam returns; how it is sourced and kept
 	// fresh is the informer.ConnectionGetter's concern, not the controller's.
+	// Under NATS the getter reads the informer's warmed, authoritative store, so a
+	// NotFound means the connection is genuinely gone — nothing to reconcile.
 	conn, err := cc.conns.Get(ctx, namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
-		return errors.New("connection not found")
+		logger.Debug("connection not found; already deleted, nothing to reconcile")
+		return nil
 	case err != nil:
 		logger.Error("getting connection", "error", err)
 		return err

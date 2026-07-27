@@ -2,6 +2,7 @@ package informer
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -11,7 +12,6 @@ import (
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	versioned "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
-	typedclient "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/nats"
@@ -31,20 +31,22 @@ type RepositoryGetter interface {
 }
 
 // NewRepositoryDeltaSource returns the repository delta source and the getter it
-// backs. Under NATS the getter reads reconcile state fresh from the API and the
-// quota count from the informer's shared snapshot (written back on each reconcile
-// read); otherwise the getter reads the informer's cache lister.
+// backs. Under NATS the informer warms an authoritative Store (fetch + validate
+// before dispatch) and the getter reads that Store; otherwise the getter reads
+// the informer's cache lister.
 func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration) (DeltaSource, RepositoryGetter) {
 	if nats.Enabled(subscriber) {
 		store := usinformer.NewStore()
 		source := NewRepositoryInformer(subscriber, client, "", resync, store)
-		return source, NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store)
+		return source, NewStoreRepositoryGetter(store)
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Repositories()
 	return inf.Informer(), NewCachedRepositoryGetter(inf.Lister())
 }
 
-// NewRepositoryInformer builds an Informer for repositories.
+// NewRepositoryInformer builds an Informer for repositories. Under NATS it warms:
+// the informer fetches and validates each notified repository into the Store
+// before dispatching, so the reconcile reads a present, current object.
 func NewRepositoryInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store) *usinformer.Informer {
 	c := client.ProvisioningV0alpha1()
 	newObject := func(ns, name string) runtime.Object {
@@ -61,7 +63,14 @@ func NewRepositoryInformer(subscriber nats.Subscriber, client versioned.Interfac
 		}
 		return out, nil
 	}
-	return usinformer.NewInformer(subscriber, provisioningapis.RepositoryResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, list)
+	get := func(ctx context.Context, ns, name string) (runtime.Object, error) {
+		repo, err := c.Repositories(ns).Get(ctx, name, metav1.GetOptions{})
+		if err != nil {
+			return nil, err
+		}
+		return repo, nil
+	}
+	return usinformer.NewInformer(subscriber, provisioningapis.RepositoryResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, list, usinformer.WithGet(get))
 }
 
 // NewCachedRepositoryGetter backs a RepositoryGetter with the informer's
@@ -82,36 +91,33 @@ func (g cachedRepositoryGetter) List(_ context.Context, namespace string) ([]*pr
 	return g.lister.Repositories(namespace).List(labels.Everything())
 }
 
-// NewClientGetCachedListRepositoryGetter backs Get with the API client — fresh,
-// for the reconcile — and List with the NATS informer's snapshot (a
-// unified-storage informer Cache). The quota count is the only List caller and
-// tolerates the snapshot's staleness (as stale as the resync interval), so
-// reading it avoids an API LIST on every quota check. Each reconcile Get is
-// written back into the store (or removed on NotFound), keeping the count warm
-// between re-lists rather than only as fresh as the last resync.
-func NewClientGetCachedListRepositoryGetter(c typedclient.ProvisioningV0alpha1Interface, store usinformer.Cache) RepositoryGetter {
-	return clientGetCachedListRepositoryGetter{client: c, store: store}
+// NewStoreRepositoryGetter backs a RepositoryGetter with the NATS informer's
+// warmed Store. Because the informer fetches and validates each notified object
+// into the Store before dispatching, the Store is authoritative for the
+// reconcile: a present object is current, and an absent one is genuinely gone
+// rather than merely not-yet-fetched. List serves the quota count from the same
+// Store.
+func NewStoreRepositoryGetter(store usinformer.Cache) RepositoryGetter {
+	return storeRepositoryGetter{store: store}
 }
 
-type clientGetCachedListRepositoryGetter struct {
-	client typedclient.ProvisioningV0alpha1Interface
-	store  usinformer.Cache
+type storeRepositoryGetter struct {
+	store usinformer.Cache
 }
 
-func (g clientGetCachedListRepositoryGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error) {
-	repo, err := g.client.Repositories(namespace).Get(ctx, name, metav1.GetOptions{})
-	if apierrors.IsNotFound(err) {
-		g.store.Delete(ctx, namespace, name)
-		return nil, err
+func (g storeRepositoryGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error) {
+	obj, ok := g.store.Get(ctx, namespace, name)
+	if !ok {
+		return nil, apierrors.NewNotFound(provisioningapis.RepositoryResourceInfo.GroupResource(), name)
 	}
-	if err != nil {
-		return nil, err
+	repo, ok := obj.(*provisioningapis.Repository)
+	if !ok {
+		return nil, fmt.Errorf("unexpected object type %T in repository store", obj)
 	}
-	g.store.Update(ctx, repo)
 	return repo, nil
 }
 
-func (g clientGetCachedListRepositoryGetter) List(ctx context.Context, namespace string) ([]*provisioningapis.Repository, error) {
+func (g storeRepositoryGetter) List(ctx context.Context, namespace string) ([]*provisioningapis.Repository, error) {
 	var out []*provisioningapis.Repository
 	for _, obj := range g.store.List(ctx) {
 		repo, ok := obj.(*provisioningapis.Repository)

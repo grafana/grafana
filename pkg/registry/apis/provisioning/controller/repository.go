@@ -587,10 +587,13 @@ func (rc *RepositoryController) process(key string) error {
 
 	// Reconcile the object the read seam returns; how it is sourced and kept
 	// fresh is the informer.RepositoryGetter's concern, not the controller's.
+	// Under NATS the getter reads the informer's warmed, authoritative store, so a
+	// NotFound means the repository is genuinely gone — nothing to reconcile.
 	obj, err := rc.repos.Get(ctx, namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
-		return errors.New("repository not found")
+		logger.Debug("repository not found; already deleted, nothing to reconcile")
+		return nil
 	case err != nil:
 		return err
 	}

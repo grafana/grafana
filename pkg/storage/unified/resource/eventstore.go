@@ -89,6 +89,13 @@ type Event struct {
 	Action          kv.DataAction `json:"action"`
 	Folder          string        `json:"folder"`
 	PreviousRV      int64         `json:"previous_rv"`
+	// UID and Generation carry the object's Kubernetes identity/freshness so a
+	// downstream notification consumer can tell a delete/recreate apart (UID) and
+	// know whether a re-fetched object already reflects the spec change that
+	// triggered the event (Generation). They are not persisted with the event
+	// (populated only in-memory for the publish path).
+	UID        string `json:"-"`
+	Generation int64  `json:"-"`
 }
 
 func newEventStore(kv KV) *eventStore {

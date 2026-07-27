@@ -13,6 +13,11 @@ import (
 // keeps a count warm (e.g. a controller getter) takes this rather than the full
 // Store.
 type Cache interface {
+	// Get returns the object stored under namespace/name, or ok=false if absent.
+	// It backs an authoritative read for a reader that reconciles against the
+	// store the informer keeps warm (fetch-before-dispatch), where an absent key
+	// means the object is genuinely gone rather than merely not-yet-fetched.
+	Get(ctx context.Context, namespace, name string) (runtime.Object, bool)
 	List(ctx context.Context) []runtime.Object
 	Update(ctx context.Context, obj runtime.Object)
 	Delete(ctx context.Context, namespace, name string)
@@ -55,6 +60,25 @@ func NewStore() Store {
 	return &store{items: map[string]runtime.Object{}}
 }
 
+// storeKey builds the map key for an object, matching cache.MetaNamespaceKeyFunc
+// (namespace/name, or just name when cluster-scoped) so Get/Delete agree with
+// the keys Update/Replace derive from the object itself.
+func storeKey(namespace, name string) string {
+	if namespace == "" {
+		return name
+	}
+	return namespace + "/" + name
+}
+
+// Get returns the object stored under namespace/name. The context is accepted
+// for signature parity with API-backed readers; the read itself is in-memory.
+func (s *store) Get(_ context.Context, namespace, name string) (runtime.Object, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	obj, ok := s.items[storeKey(namespace, name)]
+	return obj, ok
+}
+
 // List returns a snapshot of the objects in the store. It returns an empty
 // (non-nil) slice before the first Replace. The context is accepted for signature
 // parity with API-backed readers; the read itself is in-memory.
@@ -83,13 +107,9 @@ func (s *store) Update(_ context.Context, obj runtime.Object) {
 // Delete removes an object from the store, the write-through counterpart to
 // Update for a caller that has just observed the object is gone.
 func (s *store) Delete(_ context.Context, namespace, name string) {
-	key := name
-	if namespace != "" {
-		key = namespace + "/" + name
-	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	delete(s.items, key)
+	delete(s.items, storeKey(namespace, name))
 }
 
 // Replace swaps the store's contents for objs and returns the objects that were

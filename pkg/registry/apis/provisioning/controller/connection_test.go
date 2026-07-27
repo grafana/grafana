@@ -824,7 +824,9 @@ func TestConnectionController_process(t *testing.T) {
 			errorContains: "failed to update connection status",
 		},
 		{
-			name: "connection not found",
+			// The getter reads the informer's warmed, authoritative store, so a
+			// NotFound means the connection is genuinely gone: a no-op, not an error.
+			name: "connection not found is a no-op",
 			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
 				mockLister := &mockConnectionLister{}
 
@@ -836,7 +838,7 @@ func TestConnectionController_process(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			expectError: true,
+			expectError: false,
 		},
 		{
 			name: "build connection error",

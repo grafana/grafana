@@ -24,11 +24,9 @@ func repo(namespace, name string) *provisioningapis.Repository {
 	return &provisioningapis.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: name}}
 }
 
-// fakeStore is a minimal usinformer.Cache for asserting the client getter's
-// write-through behaviour.
+// fakeStore is a minimal usinformer.Cache for exercising the store-backed getter.
 type fakeStore struct {
-	objs    map[string]runtime.Object
-	deleted []string
+	objs map[string]runtime.Object
 }
 
 func newFakeStore(objs ...*provisioningapis.Repository) *fakeStore {
@@ -37,6 +35,11 @@ func newFakeStore(objs ...*provisioningapis.Repository) *fakeStore {
 		s.objs[o.Namespace+"/"+o.Name] = o
 	}
 	return s
+}
+
+func (s *fakeStore) Get(_ context.Context, namespace, name string) (runtime.Object, bool) {
+	o, ok := s.objs[namespace+"/"+name]
+	return o, ok
 }
 
 func (s *fakeStore) List(_ context.Context) []runtime.Object {
@@ -53,19 +56,18 @@ func (s *fakeStore) Update(_ context.Context, obj runtime.Object) {
 }
 
 func (s *fakeStore) Delete(_ context.Context, namespace, name string) {
-	key := namespace + "/" + name
-	delete(s.objs, key)
-	s.deleted = append(s.deleted, key)
+	delete(s.objs, namespace+"/"+name)
 }
 
-// A live repository notification is delivered as the concrete *Repository the
-// controller's handler expects, built from the notification's identity.
+// A live repository notification warms the object into the Store and delivers it
+// as the concrete *Repository the controller's handler expects.
 func TestNewRepositoryInformer_DeliversRepositoryType(t *testing.T) {
 	sub := newFakeSubscriber()
 	rec := &typeRecorder{}
 	gvr := provisioningapis.RepositoryResourceInfo.GroupVersionResource()
 
-	inf := NewRepositoryInformer(sub, fake.NewClientset(), testNamespace, time.Minute, usinformer.NewStore())
+	// The informer warms by fetching, so the object must be readable from the API.
+	inf := NewRepositoryInformer(sub, fake.NewClientset(repo(testNamespace, "repo-a")), testNamespace, time.Minute, usinformer.NewStore())
 	_, err := inf.AddEventHandler(rec)
 	require.NoError(t, err)
 	stopCh := make(chan struct{})
@@ -104,57 +106,47 @@ func TestNewCachedRepositoryGetter(t *testing.T) {
 	assert.Len(t, list, 2, "List must be scoped to the namespace")
 }
 
-// A successful reconcile Get returns the fresh object and writes it back into the
-// store, so a later List (the quota count) reflects it without waiting for a
-// re-list.
-func TestClientGetCachedListRepositoryGetter_GetWritesThrough(t *testing.T) {
-	client := fake.NewClientset(repo("ns", "fresh"))
-	store := newFakeStore()
-	g := NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store)
+// The store getter serves Get from the informer's warmed Store.
+func TestStoreRepositoryGetter_GetReadsStore(t *testing.T) {
+	g := NewStoreRepositoryGetter(newFakeStore(repo("ns", "present")))
 
-	got, err := g.Get(context.Background(), "ns", "fresh")
+	got, err := g.Get(context.Background(), "ns", "present")
 	require.NoError(t, err)
-	assert.Equal(t, "fresh", got.Name)
-
-	list, err := g.List(context.Background(), "ns")
-	require.NoError(t, err)
-	require.Len(t, list, 1)
-	assert.Equal(t, "fresh", list[0].Name, "the fresh Get must be reflected in the store")
+	assert.Equal(t, "present", got.Name)
 }
 
-// A reconcile Get for a vanished object returns NotFound and removes it from the
-// store, so the count drops it without waiting for a re-list.
-func TestClientGetCachedListRepositoryGetter_GetNotFoundRemoves(t *testing.T) {
-	client := fake.NewClientset()
-	store := newFakeStore(repo("ns", "stale"))
-	g := NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store)
+// An object absent from the warmed Store is an authoritative NotFound: the
+// informer only dispatches after warming, so absence means genuinely gone.
+func TestStoreRepositoryGetter_GetMissingReturnsNotFound(t *testing.T) {
+	g := NewStoreRepositoryGetter(newFakeStore())
 
-	_, err := g.Get(context.Background(), "ns", "stale")
-	require.True(t, apierrors.IsNotFound(err))
-	assert.Equal(t, []string{"ns/stale"}, store.deleted)
-
-	list, err := g.List(context.Background(), "ns")
-	require.NoError(t, err)
-	assert.Empty(t, list, "the vanished object must be removed from the store")
+	_, err := g.Get(context.Background(), "ns", "gone")
+	assert.True(t, apierrors.IsNotFound(err))
 }
 
 // List reads only the requested namespace out of the store.
-func TestClientGetCachedListRepositoryGetter_ListFiltersNamespace(t *testing.T) {
-	store := newFakeStore(repo("ns-a", "one"), repo("ns-a", "two"), repo("ns-b", "other"))
-	g := NewClientGetCachedListRepositoryGetter(fake.NewClientset().ProvisioningV0alpha1(), store)
+func TestStoreRepositoryGetter_ListFiltersNamespace(t *testing.T) {
+	g := NewStoreRepositoryGetter(newFakeStore(repo("ns-a", "one"), repo("ns-a", "two"), repo("ns-b", "other")))
 
 	list, err := g.List(context.Background(), "ns-a")
 	require.NoError(t, err)
 	assert.Len(t, list, 2)
 }
 
-// The delta source's getter is client-backed under NATS (reads fresh from the
-// API) and cache-backed otherwise (reads the informer's lister, not the API).
+// The delta source's getter is store-backed under NATS (reads the informer's
+// warmed Store) and cache-backed otherwise (reads the informer's lister).
 func TestNewRepositoryDeltaSource(t *testing.T) {
 	client := fake.NewClientset(repo(testNamespace, "r"))
 
-	t.Run("nats enabled reads fresh from the API", func(t *testing.T) {
-		_, getter := NewRepositoryDeltaSource(newFakeSubscriber(), client, time.Minute)
+	t.Run("nats enabled reads the warmed store", func(t *testing.T) {
+		source, getter := NewRepositoryDeltaSource(newFakeSubscriber(), client, time.Minute)
+		inf := source.(*usinformer.Informer)
+		stopCh := make(chan struct{})
+		go inf.Run(stopCh)
+		t.Cleanup(func() { close(stopCh) })
+		// The initial re-list warms the Store; then the getter reads it.
+		require.Eventually(t, func() bool { return inf.HasSynced() }, 5*time.Second, 5*time.Millisecond)
+
 		got, err := getter.Get(context.Background(), testNamespace, "r")
 		require.NoError(t, err)
 		assert.Equal(t, "r", got.Name)

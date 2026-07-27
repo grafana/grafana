@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"google.golang.org/protobuf/proto"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/cache"
@@ -38,6 +40,25 @@ type ObjectFunc func(namespace, name string) runtime.Object
 // that is never announced, is reconciled on the next list.
 type ListFunc func(ctx context.Context) ([]runtime.Object, error)
 
+// GetFunc reads a single object of one resource kind from the API. When set (via
+// WithGet), the informer "warms" a live notification: it fetches the object,
+// validates it against the notification's identity/freshness, writes it into the
+// Store, and only then dispatches — so a handler reconciling against the Store
+// reads a present, current object rather than racing an as-yet-invisible write.
+// A nil GetFunc keeps the signal-only behavior (dispatch a stub, no fetch).
+type GetFunc func(ctx context.Context, namespace, name string) (runtime.Object, error)
+
+// Option configures an Informer at construction. See WithGet.
+type Option func(*Informer)
+
+// WithGet enables fetch-before-dispatch warming: the informer reads and
+// validates each live-notified object into the Store before dispatching. Pass it
+// together with a Store that the controller's read seam also reads, so the
+// Store is the authoritative source for the reconcile.
+func WithGet(get GetFunc) Option {
+	return func(n *Informer) { n.get = get }
+}
+
 // defaultResync is the fallback re-list cadence when a caller passes a
 // non-positive interval.
 const defaultResync = 5 * time.Minute
@@ -46,6 +67,16 @@ const defaultResync = 5 * time.Minute
 // while it is unavailable — most commonly at startup, when the embedded NATS
 // server is still starting and has no client URL yet.
 const defaultSubscribeRetry = 5 * time.Second
+
+// defaultWarmBackoff is the bounded, increasing delay between fetch retries when
+// a live-notified object is not visible yet (a read-after-write race). The reads
+// are direct API GETs, so the window is short; an object still missing after the
+// full schedule (~2.6s) is left for the next re-list rather than retried harder.
+var defaultWarmBackoff = []time.Duration{
+	100 * time.Millisecond,
+	500 * time.Millisecond,
+	2 * time.Second,
+}
 
 // Informer drives a controller's informer event handlers from NATS instead of an
 // apiserver-backed SharedInformer. It keeps no live per-object cache: on each
@@ -91,6 +122,20 @@ type Informer struct {
 	handlers []cache.ResourceEventHandler
 	synced   atomic.Bool
 	syncedCh chan struct{} // closed once the initial list completes
+
+	// get, when non-nil, enables fetch-before-dispatch warming (see WithGet).
+	get GetFunc
+	// warmBackoff is the retry schedule for a not-yet-visible warm fetch;
+	// a field so tests can shrink it. Defaults to defaultWarmBackoff.
+	warmBackoff []time.Duration
+	// warmMu guards the warming coalescing state below.
+	warmMu sync.Mutex
+	// warmLatest holds the most recent pending notification per key; a running
+	// warm goroutine re-reads it so a newer event supersedes an in-flight fetch.
+	warmLatest map[string]*resourcepb.WatchNotification
+	// warmActive marks keys with a warm goroutine running, so at most one runs
+	// per key (coalescing a burst of events for the same object into one fetch).
+	warmActive map[string]bool
 }
 
 // NewInformer builds an Informer for one resource kind. namespace scopes the NATS
@@ -111,7 +156,7 @@ type Informer struct {
 // store is the snapshot the informer refreshes on each re-list. Pass the same
 // Store to a reader (e.g. a getter serving a quota count) to share it; the
 // informer never reads it, so an unshared informer can be given its own.
-func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, namespace string, resync time.Duration, queueGroup string, store Store, newObject ObjectFunc, list ListFunc) *Informer {
+func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, namespace string, resync time.Duration, queueGroup string, store Store, newObject ObjectFunc, list ListFunc, opts ...Option) *Informer {
 	if resync <= 0 {
 		resync = defaultResync
 	}
@@ -119,7 +164,7 @@ func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, na
 	if store == nil {
 		store = NewStore()
 	}
-	return &Informer{
+	n := &Informer{
 		subscriber:    subscriber,
 		gvr:           gvr,
 		namespace:     namespace,
@@ -132,7 +177,14 @@ func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, na
 		retryInterval: defaultSubscribeRetry,
 		syncedCh:      make(chan struct{}),
 		reconnect:     make(chan struct{}, 1),
+		warmBackoff:   defaultWarmBackoff,
+		warmLatest:    map[string]*resourcepb.WatchNotification{},
+		warmActive:    map[string]bool{},
 	}
+	for _, opt := range opts {
+		opt(n)
+	}
+	return n
 }
 
 // AddEventHandler registers a handler to receive add/update/delete deltas,
@@ -218,7 +270,7 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 			opts = append(opts, nats.WithQueueGroup(n.queueGroup))
 		}
 		for {
-			s, err := n.subscriber.Subscribe(ctx, subject, n.onNotification(), opts...)
+			s, err := n.subscriber.Subscribe(ctx, subject, n.onNotification(ctx), opts...)
 			if err == nil {
 				sub = s
 				n.log.Debug("opened nats informer", "subject", subject, "gvr", n.gvr.String())
@@ -278,12 +330,16 @@ func (n *Informer) signalReconnect() {
 	}
 }
 
-// onNotification returns the NATS message handler. It builds a minimal object
-// from the notification's identity and dispatches it — the controllers re-fetch
-// in their reconcile, so no object read happens here. Malformed envelopes and
+// onNotification returns the NATS message handler. Malformed envelopes and
 // unknown verbs are logged and skipped so one bad notification cannot stop
 // delivery of the rest.
-func (n *Informer) onNotification() nats.MessageHandler {
+//
+// Without a GetFunc it dispatches a minimal stub built from the notification's
+// identity — the signal-only mode, where the controller re-fetches in its
+// reconcile. With a GetFunc it warms instead: the object is fetched, validated,
+// and written to the Store off the delivery goroutine (see warm), so a handler
+// reconciling against the Store sees a present, current object.
+func (n *Informer) onNotification(ctx context.Context) nats.MessageHandler {
 	return func(subject string, data []byte) {
 		var evt resourcepb.WatchNotification
 		if err := proto.Unmarshal(data, &evt); err != nil {
@@ -298,19 +354,153 @@ func (n *Informer) onNotification() nats.MessageHandler {
 			return
 		}
 
-		n.log.Debug("nats notification received", "subject", subject, "type", evt.Type, "namespace", evt.Namespace, "name", evt.Name, "rv", evt.ResourceVersion)
+		n.log.Debug("nats notification received", "subject", subject, "type", evt.Type, "namespace", evt.Namespace, "name", evt.Name, "rv", evt.ResourceVersion, "generation", evt.Generation)
 
-		obj := n.newObject(evt.Namespace, evt.Name)
-		// ADDED becomes OnAdd; everything else (MODIFIED, or a DELETED whose object
-		// may still exist mid-finalization) becomes OnUpdate. The handlers key off
-		// namespace/name and re-fetch in their reconcile, so old == new is fine and
-		// a delete just enqueues a key whose GET will 404 and be handled there.
-		if evt.Type == resourcepb.WatchNotification_ADDED {
-			n.dispatch(func(h cache.ResourceEventHandler) { h.OnAdd(obj, false) })
+		if n.get == nil {
+			n.dispatchStub(&evt)
 			return
 		}
-		n.dispatch(func(h cache.ResourceEventHandler) { h.OnUpdate(obj, obj) })
+
+		// Warming: coalesce by key and fetch off this delivery goroutine so a slow
+		// read never blocks delivery of the other notifications. At most one warm
+		// goroutine runs per key; a burst for the same object collapses onto the
+		// latest event.
+		key := storeKey(evt.Namespace, evt.Name)
+		n.warmMu.Lock()
+		n.warmLatest[key] = &evt
+		if n.warmActive[key] {
+			n.warmMu.Unlock()
+			return
+		}
+		n.warmActive[key] = true
+		n.warmMu.Unlock()
+		go n.warm(ctx, key)
 	}
+}
+
+// dispatchStub delivers a minimal identity-only object for a notification: OnAdd
+// for a create, OnUpdate for everything else (a MODIFIED, or a DELETED whose
+// object may still exist mid-finalization). Used in signal-only mode, and for
+// the delete wake-up in warming mode (the object has already been removed from
+// the Store, so the reconcile reads it gone).
+func (n *Informer) dispatchStub(evt *resourcepb.WatchNotification) {
+	obj := n.newObject(evt.Namespace, evt.Name)
+	n.dispatchByType(evt.Type, obj)
+}
+
+// dispatchByType delivers obj as an add (for a create) or an update (otherwise).
+func (n *Informer) dispatchByType(t resourcepb.WatchNotification_Type, obj runtime.Object) {
+	if t == resourcepb.WatchNotification_ADDED {
+		n.dispatch(func(h cache.ResourceEventHandler) { h.OnAdd(obj, false) })
+		return
+	}
+	n.dispatch(func(h cache.ResourceEventHandler) { h.OnUpdate(obj, obj) })
+}
+
+// warm processes pending notifications for one key until none remain, then
+// releases the key. It always acts on the latest pending event, so a newer
+// notification that arrives while a fetch is in flight supersedes the older one.
+func (n *Informer) warm(ctx context.Context, key string) {
+	for {
+		n.warmMu.Lock()
+		evt := n.warmLatest[key]
+		n.warmMu.Unlock()
+		if evt == nil {
+			return
+		}
+
+		n.warmOne(ctx, key, evt)
+
+		n.warmMu.Lock()
+		// If no newer event arrived while we worked, we are done with this key.
+		if n.warmLatest[key] == evt {
+			delete(n.warmLatest, key)
+			delete(n.warmActive, key)
+			n.warmMu.Unlock()
+			return
+		}
+		n.warmMu.Unlock()
+	}
+}
+
+// warmOne handles a single notification: on a delete it removes the object from
+// the Store and wakes the handlers; on an upsert it fetches and validates the
+// object (retrying briefly through the read-after-write window), writes it to the
+// Store, then dispatches. It returns without dispatching when the object cannot
+// be confirmed (never appears, or is a stale event for a superseded object
+// lifetime) — the periodic re-list is the backstop for anything left behind.
+func (n *Informer) warmOne(ctx context.Context, key string, evt *resourcepb.WatchNotification) {
+	if evt.Type == resourcepb.WatchNotification_DELETED {
+		// The object is gone (a soft delete arrives as MODIFIED with a
+		// deletionTimestamp, so it takes the upsert path and stays readable for
+		// finalizers). Drop it from the authoritative Store and wake the handlers;
+		// the reconcile reads the Store, finds it absent, and no-ops.
+		n.store.Delete(ctx, evt.Namespace, evt.Name)
+		n.dispatchStub(evt)
+		return
+	}
+
+	for attempt := 0; ; attempt++ {
+		obj, err := n.get(ctx, evt.Namespace, evt.Name)
+		switch {
+		case apierrors.IsNotFound(err):
+			// Read-after-write race: the write is not visible on this replica yet.
+		case err != nil:
+			n.log.Warn("nats informer: warm fetch failed", "gvr", n.gvr.String(), "key", key, "error", err)
+		default:
+			if done := n.acceptWarmObject(ctx, evt, obj); done {
+				return
+			}
+			// Present but older than the event's generation: keep retrying for the
+			// version the event announced.
+		}
+
+		if attempt >= len(n.warmBackoff) {
+			n.log.Debug("nats informer: object not observed after warm retries; leaving for the next re-list", "gvr", n.gvr.String(), "key", key)
+			return
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(n.warmBackoff[attempt]):
+		}
+		// A newer event for this key means this one is stale; let warm re-drive it.
+		n.warmMu.Lock()
+		superseded := n.warmLatest[key] != evt
+		n.warmMu.Unlock()
+		if superseded {
+			return
+		}
+	}
+}
+
+// acceptWarmObject validates a fetched object against the notification and, if it
+// is the right object at (or past) the announced generation, writes it to the
+// Store and dispatches. It reports done=true when no further retry is warranted:
+// either the object was accepted, or the event is stale for a different object
+// lifetime (UID mismatch). A false result means "present but not fresh enough,
+// retry".
+func (n *Informer) acceptWarmObject(ctx context.Context, evt *resourcepb.WatchNotification, obj runtime.Object) (done bool) {
+	acc, err := meta.Accessor(obj)
+	if err != nil {
+		// Cannot validate freshness; accept it rather than spin.
+		n.store.Update(ctx, obj)
+		n.dispatchByType(evt.Type, obj)
+		return true
+	}
+	if evt.Uid != "" && string(acc.GetUID()) != evt.Uid {
+		// Same namespace/name, different object lifetime (a delete+recreate). This
+		// event is for an object that no longer exists; its replacement is warmed by
+		// its own notification. Ignore the stale event.
+		n.log.Debug("nats informer: ignoring stale notification (uid mismatch)", "gvr", n.gvr.String(), "namespace", evt.Namespace, "name", evt.Name, "event_uid", evt.Uid, "object_uid", string(acc.GetUID()))
+		return true
+	}
+	if acc.GetGeneration() < evt.Generation {
+		return false // stale read of an update; retry for the newer generation
+	}
+	n.store.Update(ctx, obj)
+	n.dispatchByType(evt.Type, obj)
+	return true
 }
 
 // relist reads the full set from the API and reconciles it against the previous
