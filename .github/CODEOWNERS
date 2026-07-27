@@ -228,6 +228,7 @@
 /devenv/docker/blocks/auth/ @grafana/identity-access-team
 
 # Logs code, developers environment
+/devenv/docker/blocks/loki* @grafana/data-sources-plugins
 /devenv/docker/blocks/elastic* @grafana/data-sources-plugins
 /devenv/docker/blocks/self-instrumentation* @grafana/data-sources-plugins
 
@@ -270,6 +271,7 @@
 /devenv/dev-dashboards/home.json @grafana/dataviz-squad
 /devenv/dev-dashboards/datasource-elasticsearch/ @grafana/data-sources-plugins
 /devenv/dev-dashboards/datasource-influxdb/ @grafana/data-sources-plugins
+/devenv/dev-dashboards/datasource-loki/ @grafana/grafana-catalog
 /devenv/dev-dashboards/datasource-testdata/ @grafana/grafana-catalog
 /devenv/dev-dashboards/datasource-mysql/ @grafana/data-sources-plugins
 
