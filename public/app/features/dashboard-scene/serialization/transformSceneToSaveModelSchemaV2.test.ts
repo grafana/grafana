@@ -87,28 +87,29 @@ jest.mock('../utils/dashboardSceneGraph', () => {
     // Return the panel key if it exists, otherwise use panel-1 as default
     return panel?.state?.key || 'panel-1';
   });
-  // Walk up from a panel to the nearest enclosing repeat-clone section key.
-  const getEnclosingRepeatCloneKey = jest.fn().mockImplementation((panel) => {
+  // Walk up from a panel collecting the full chain of enclosing repeat-clone section keys.
+  const getEnclosingRepeatCloneKeys = jest.fn().mockImplementation((panel) => {
+    const keys = [];
     let current = panel?.parent;
     while (current) {
       if (current.state?.repeatSourceKey && current.state?.key) {
-        return current.state.key;
+        keys.push(current.state.key);
       }
       current = current.parent;
     }
-    return undefined;
+    return keys;
   });
   return {
     ...original,
     dashboardSceneGraph: {
       ...original.dashboardSceneGraph,
       getElementIdentifierForVizPanel,
-      getEnclosingRepeatCloneKey,
+      getEnclosingRepeatCloneKeys,
       getSnapshotElementIdentifierForVizPanel: jest.fn().mockImplementation((panel) => {
         const base =
           panel?.state?.repeatSourceKey && panel?.state?.key ? panel.state.key : getElementIdentifierForVizPanel(panel);
-        const enclosingCloneKey = getEnclosingRepeatCloneKey(panel);
-        return enclosingCloneKey ? `${enclosingCloneKey}-${base}` : base;
+        const enclosingCloneKeys = getEnclosingRepeatCloneKeys(panel);
+        return enclosingCloneKeys.length ? `${enclosingCloneKeys.join('-')}-${base}` : base;
       }),
       getPanelLinks: jest.fn().mockImplementation(() => {
         return new VizPanelLinks({
@@ -1705,8 +1706,8 @@ describe('snapshot mode: repeated rows', () => {
 
     // Descriptions are baked with the default (value) format, matching the panel renderer / live
     // dashboard: the title shows the display text (Bob) but the description shows the value (1).
-    expect(result.elements['panel-2'].spec.description).toBe('srv=A pod=1');
-    expect(result.elements['row-1-clone-1-panel-2'].spec.description).toBe('srv=B pod=1');
+    expect((result.elements['panel-2'].spec as PanelSpec).description).toBe('srv=A pod=1');
+    expect((result.elements['row-1-clone-1-panel-2'].spec as PanelSpec).description).toBe('srv=B pod=1');
   });
 
   it('keeps element references resolvable for an unexpanded (single-value) panel repeater inside a row clone', () => {
@@ -1815,6 +1816,55 @@ describe('snapshot mode: repeated rows', () => {
     expect(result.elements['panel-1']).toBeDefined();
     expect(result.elements['row-1-clone-1-panel-1']).toBeDefined();
     expect(result.elements['panel-1'].spec.id).not.toBe(result.elements['row-1-clone-1-panel-1'].spec.id);
+  });
+
+  it('disambiguates nested section clones by the full chain of enclosing clone keys', () => {
+    // A repeating tab lives inside a repeating row. cloneLayout does not rekey children, so the tab clone
+    // keeps key `tab-1-clone-1` inside BOTH the source row and the row clone, and its panel keeps `panel-1`.
+    // Prefixing by only the nearest clone key would collide (both → `tab-1-clone-1-panel-1`) and drop a
+    // panel from `elements`; the full chain keeps them distinct.
+    const buildTabsLayout = () => {
+      const buildTab = (tabKey: string, repeatSourceKey?: string) =>
+        new TabItem({
+          key: tabKey,
+          repeatByVariable: repeatSourceKey ? undefined : 'pod',
+          repeatSourceKey,
+          layout: new DefaultGridLayoutManager({
+            grid: new SceneGridLayout({
+              children: [
+                new DashboardGridItem({
+                  key: 'grid-item-1',
+                  body: new VizPanel({ key: 'panel-1', pluginId: 'timeseries', title: 'p' }),
+                }),
+              ],
+            }),
+          }),
+        });
+      const sourceTab = buildTab('tab-1');
+      sourceTab.setState({ repeatedTabs: [buildTab('tab-1-clone-1', 'tab-1')] });
+      return new TabsLayoutManager({ tabs: [sourceTab] });
+    };
+
+    const buildRow = (rowKey: string, repeatSourceKey?: string) =>
+      new RowItem({ key: rowKey, repeatByVariable: 'server', repeatSourceKey, layout: buildTabsLayout() });
+
+    const sourceRow = buildRow('row-1');
+    sourceRow.setState({ repeatedRows: [buildRow('row-1-clone-1', 'row-1')] });
+
+    const scene = setupDashboardScene(getMinimalSceneState(new RowsLayoutManager({ rows: [sourceRow] })));
+    const result = transformSceneToSaveModelSchemaV2(scene, true);
+
+    // All four (row × tab) source/clone combinations must be present as distinct elements.
+    const expectedKeys = [
+      'panel-1', // source row / source tab
+      'tab-1-clone-1-panel-1', // source row / tab clone
+      'row-1-clone-1-panel-1', // row clone / source tab
+      'tab-1-clone-1-row-1-clone-1-panel-1', // row clone / tab clone (full chain)
+    ];
+    for (const key of expectedKeys) {
+      expect(result.elements[key]).toBeDefined();
+    }
+    expect(new Set(expectedKeys.map((k) => result.elements[k].spec.id)).size).toBe(4);
   });
 });
 

@@ -331,7 +331,7 @@ export function vizPanelToSchemaV2(
   const isDisambiguatedSnapshotPanel =
     isSnapshot &&
     (Boolean(vizPanel.state.repeatSourceKey && vizPanel.state.key) ||
-      Boolean(dashboardSceneGraph.getEnclosingRepeatCloneKey(vizPanel)));
+      dashboardSceneGraph.getEnclosingRepeatCloneKeys(vizPanel).length > 0);
 
   // Bake the interpolated title/description for repeated panels so per-repeat values survive in the
   // snapshot. Match the panel renderer's formats so the snapshot matches the live dashboard: the title

@@ -96,26 +96,29 @@ function getElementIdentifierForVizPanel(vizPanel: VizPanel): string {
 }
 
 /**
- * Walk up from a panel to the key of the nearest enclosing repeat-clone section (row or tab).
- * Panels inside a repeated row/tab clone reuse the source panels' keys, so when a snapshot
- * materializes the repeats they must be disambiguated by the enclosing clone's key.
+ * Walk up from a panel and collect the keys of ALL enclosing repeat-clone sections (rows/tabs), from the
+ * nearest to the outermost. Panels inside a repeated row/tab clone reuse the source panels' keys, so when a
+ * snapshot materializes the repeats they must be disambiguated by their enclosing clones. The FULL chain is
+ * needed for nested sections: `cloneLayout` doesn't rekey children, so an inner clone (e.g. a repeating tab)
+ * keeps the same key inside every outer clone — only the nearest key would collide across those outer clones.
  */
-function getEnclosingRepeatCloneKey(vizPanel: VizPanel): string | undefined {
+function getEnclosingRepeatCloneKeys(vizPanel: VizPanel): string[] {
+  const keys: string[] = [];
   let current: SceneObject | undefined = vizPanel.parent;
   while (current) {
     const state: { repeatSourceKey?: string; key?: string } = current.state;
     if (state.repeatSourceKey && state.key) {
-      return state.key;
+      keys.push(state.key);
     }
     current = current.parent;
   }
-  return undefined;
+  return keys;
 }
 
 /**
  * Element identifier for a viz panel when serializing a snapshot. Repeated panel clones use their own
- * key; panels inside a repeated row/tab clone are additionally prefixed with the enclosing clone's key
- * so each materialized repeat references a unique element.
+ * key; panels inside repeated row/tab clones are additionally prefixed with the full chain of enclosing
+ * clone keys so each materialized repeat (including nested sections) references a unique element.
  */
 function getSnapshotElementIdentifierForVizPanel(vizPanel: VizPanel): string {
   const base =
@@ -123,8 +126,8 @@ function getSnapshotElementIdentifierForVizPanel(vizPanel: VizPanel): string {
       ? vizPanel.state.key
       : getElementIdentifierForVizPanel(vizPanel);
 
-  const enclosingCloneKey = getEnclosingRepeatCloneKey(vizPanel);
-  return enclosingCloneKey ? `${enclosingCloneKey}-${base}` : base;
+  const enclosingCloneKeys = getEnclosingRepeatCloneKeys(vizPanel);
+  return enclosingCloneKeys.length ? `${enclosingCloneKeys.join('-')}-${base}` : base;
 }
 
 // Used to find the section owner of a variable (row or tab)
@@ -151,6 +154,6 @@ export const dashboardSceneGraph = {
   getPanelIdGenerator,
   getElementIdentifierForVizPanel,
   getSnapshotElementIdentifierForVizPanel,
-  getEnclosingRepeatCloneKey,
+  getEnclosingRepeatCloneKeys,
   findSectionOwner,
 };
