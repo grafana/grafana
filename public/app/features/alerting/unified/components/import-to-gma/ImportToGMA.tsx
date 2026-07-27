@@ -55,7 +55,7 @@ import { getPauseRulesLabel } from './Wizard/steps';
 import { type ImportMethod, StepKey } from './Wizard/types';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
-import { StepImportMethod, isAutoSyncSegmentEnabled } from './steps/StepImportMethod';
+import { StepImportMethod } from './steps/StepImportMethod';
 import { StepReviewEnableAutoSync } from './steps/StepReviewEnableAutoSync';
 import { type DryRunValidationResult, type PromoteStatsSummary } from './types';
 import { useCanImportToGMA } from './useCanImportToGMA';
