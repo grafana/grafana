@@ -99,6 +99,18 @@ describe('DataSourceWithBackend', () => {
   });
 
   describe('invalid query time range', () => {
+    test('allows queries with no range (metadata / metric-find style requests)', () => {
+      const { ds, mock } = createMockDatasource();
+
+      ds.query({
+        targets: [{ refId: 'A' }],
+      } as DataQueryRequest);
+
+      expect(mock.calls.length).toBe(1);
+      expect(mock.calls[0][0].data.from).toBeUndefined();
+      expect(mock.calls[0][0].data.to).toBeUndefined();
+    });
+
     test('throws a clear error when range from/to are undefined', () => {
       const { ds, mock } = createMockDatasource();
 

@@ -59,8 +59,19 @@ export function isExpressionReference(ref?: DataSourceRef | string | null): bool
   return v === ExpressionDatasourceRef.type || v === ExpressionDatasourceRef.name || v === '-100'; // -100 was a legacy accident that should be removed
 }
 
-function getQueryTimeRangeBounds(range?: TimeRange): { from: string; to: string } {
-  if (range?.from == null || range?.to == null) {
+/**
+ * Converts a request time range into epoch-ms strings for `/api/ds/query`.
+ *
+ * When `range` is omitted entirely (common for metadata / metric-find queries),
+ * returns no bounds — matching the previous `range?.from.valueOf()` short-circuit.
+ * When a range is provided, `from`/`to` must exist and be valid DateTimes.
+ */
+function getQueryTimeRangeBounds(range?: TimeRange): { from?: string; to?: string } {
+  if (range == null) {
+    return {};
+  }
+
+  if (range.from == null || range.to == null) {
     throw new Error('Missing DateTime in query time range');
   }
 
@@ -256,11 +267,9 @@ class DataSourceWithBackend<
       return of({ data: [] });
     }
 
-    const { from, to } = getQueryTimeRangeBounds(range);
     const body = {
       queries,
-      from,
-      to,
+      ...getQueryTimeRangeBounds(range),
     };
 
     const headers: Record<string, string> = request.headers ?? {};
