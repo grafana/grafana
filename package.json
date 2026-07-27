@@ -223,7 +223,7 @@
     "ora": "^9.0.0",
     "papaparse": "5.5.3",
     "pdf-parse": "^1.1.1",
-    "postcss": "8.5.10",
+    "postcss": "8.5.18",
     "postcss-loader": "8.1.1",
     "postcss-reporter": "7.1.0",
     "prettier": "3.6.2",
@@ -443,7 +443,7 @@
     "tmp@npm:^0.0.33": "~0.2.1",
     "js-yaml@npm:4.1.1": "^4.1.0",
     "js-yaml@npm:=4.1.1": "^4.1.0",
-    "nodemailer": "8.0.7",
+    "nodemailer": "9.0.1",
     "storybook@npm:10.3.6": "patch:storybook@npm%3A10.3.6#~/.yarn/patches/storybook-npm-10.3.6-8a0644ac0b.patch",
     "@types/slate/immutable": "^5.0.0",
     "@types/slate-react/immutable": "^5.0.0",
@@ -452,7 +452,8 @@
     "@opentelemetry/core": "2.8.0",
     "shell-quote": "1.9.0",
     "tmp": "0.2.7",
-    "yaml@npm:^1.10.0": "1.10.3"
+    "yaml@npm:^1.10.0": "1.10.3",
+    "tar@npm:7.5.11": "7.5.21"
   },
   "workspaces": {
     "packages": [
