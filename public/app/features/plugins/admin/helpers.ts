@@ -74,11 +74,12 @@ export function mergeLocalsAndRemotes({
     if (!shouldSkip) {
       let catalogPlugin = mergeLocalAndRemote(localCounterpart, remotePlugin, error);
       if (config.pluginAdminExternalManageEnabled) {
+        const pluginKey = isAliasMatch ? canonicalId : remotePlugin.slug;
         catalogPlugin = mergeCloudState(
           catalogPlugin,
           instancesMap,
-          provisionedSet.has(remotePlugin.slug),
-          localMap.has(remotePlugin.slug)
+          provisionedSet.has(pluginKey),
+          localMap.has(pluginKey)
         );
       }
       if (isAliasMatch) {

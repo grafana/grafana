@@ -419,6 +419,22 @@ describe('Plugins/Helpers', () => {
       expect(merged).toHaveLength(1);
       expect(merged[0].error).toBe(PluginErrorCode.invalidSignature);
     });
+
+    test('resolves provisioned status by canonical ID when remote slug is an alias', () => {
+      const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
+      config.pluginAdminExternalManageEnabled = true;
+
+      const local = [getLocalPluginMock({ id: 'grafana-canvas-panel', aliasIDs: ['canvas'] })];
+      const remote = [getRemotePluginMock({ slug: 'canvas' })];
+      const provisioned = [{ slug: 'grafana-canvas-panel' }];
+
+      const merged = mergeLocalsAndRemotes({ local, remote, provisioned });
+      expect(merged).toHaveLength(1);
+      expect(merged[0].id).toBe('grafana-canvas-panel');
+      expect(merged[0].isProvisioned).toBe(true);
+
+      config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
+    });
   });
 
   describe('mapLocalToCatalog()', () => {
