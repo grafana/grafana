@@ -55,7 +55,7 @@ func TestExecutePipeline_capturesExpressionStages(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx, buf := exprcapture.WithCapture(context.Background())
-	_, err = s.ExecutePipeline(ctx, time.Now(), pl)
+	res, err := s.ExecutePipeline(ctx, time.Now(), pl)
 	require.NoError(t, err)
 
 	stages := buf.Stages()
@@ -69,23 +69,27 @@ func TestExecutePipeline_capturesExpressionStages(t *testing.T) {
 	require.Equal(t, "datasource", byRef["A"].Type)
 	require.Equal(t, "test", byRef["A"].Command)
 	require.Empty(t, byRef["A"].InputRefIDs, "the datasource node consumes no other node")
-	require.NotEmpty(t, byRef["A"].Frames, "the datasource node's output frames are captured")
 	require.NoError(t, byRef["A"].Error)
 
 	require.Equal(t, "expression", byRef["B"].Type)
 	require.Equal(t, "math", byRef["B"].Command)
 	require.Equal(t, []string{"A"}, byRef["B"].InputRefIDs, "B consumes A")
-	require.NotEmpty(t, byRef["B"].Frames)
 
 	require.Equal(t, "expression", byRef["C"].Type)
 	require.Equal(t, []string{"B"}, byRef["C"].InputRefIDs, "C consumes B")
-	require.NotEmpty(t, byRef["C"].Frames)
 
-	// The captured chain lets a reader walk A -> B -> C: each stage's inputs are the outputs of its
-	// InputRefIDs, so the first stage whose output differs from its inputs is localizable.
-	requireStageValue(t, byRef["A"], 2.0)
-	requireStageValue(t, byRef["B"], 4.0)  // $A * 2
-	requireStageValue(t, byRef["C"], 14.0) // $B + 10
+	// The stages carry no frames of their own: every executed node is returned under its own refID,
+	// which is where the diagnostics bundle reads a stage's output from. Assert that join holds for
+	// every captured stage -- the capture is useless without it.
+	for _, st := range stages {
+		require.Contains(t, res.Responses, st.RefID, "stage %s has no response entry to join to", st.RefID)
+	}
+
+	// So a reader can walk A -> B -> C: each stage's inputs are the outputs of its InputRefIDs, and
+	// the first stage whose output differs from its inputs is localizable.
+	requireResponseValue(t, res, "A", 2.0)
+	requireResponseValue(t, res, "B", 4.0)  // $A * 2
+	requireResponseValue(t, res, "C", 14.0) // $B + 10
 }
 
 func TestExecutePipeline_capturesDependencyErrorStage(t *testing.T) {
@@ -98,7 +102,7 @@ func TestExecutePipeline_capturesDependencyErrorStage(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx, buf := exprcapture.WithCapture(context.Background())
-	_, err = s.ExecutePipeline(ctx, time.Now(), pl)
+	res, err := s.ExecutePipeline(ctx, time.Now(), pl)
 	require.NoError(t, err)
 
 	byRef := map[string]exprcapture.Stage{}
@@ -107,8 +111,8 @@ func TestExecutePipeline_capturesDependencyErrorStage(t *testing.T) {
 	}
 	require.Error(t, byRef["A"].Error, "A carries the datasource failure")
 	require.Error(t, byRef["B"].Error, "B carries a dependency error and did not run")
-	require.Empty(t, byRef["B"].Frames, "B produced no output")
 	require.Equal(t, []string{"A"}, byRef["B"].InputRefIDs)
+	require.Empty(t, res.Responses["B"].Frames, "B produced no output")
 }
 
 func TestExecutePipeline_noCaptureWithoutBuffer(t *testing.T) {
@@ -122,17 +126,20 @@ func TestExecutePipeline_noCaptureWithoutBuffer(t *testing.T) {
 	pl, err := s.BuildPipeline(t.Context(), req)
 	require.NoError(t, err)
 
-	// context.Background() carries no exprcapture buffer.
+	// context.Background() carries no exprcapture buffer, so this buffer is unreachable from the
+	// pipeline's context and must stay empty.
+	_, unreachable := exprcapture.WithCapture(context.Background())
 	_, err = s.ExecutePipeline(context.Background(), time.Now(), pl)
 	require.NoError(t, err)
-	require.Nil(t, exprcapture.FromContext(context.Background()))
+	require.Empty(t, unreachable.Stages(), "a pipeline run without the buffer in its context records nothing")
 }
 
-// requireStageValue asserts the single scalar/number value carried by a stage's output frame.
-func requireStageValue(t *testing.T, stage exprcapture.Stage, want float64) {
+// requireResponseValue asserts the single scalar/number value carried by a refID's output frame.
+func requireResponseValue(t *testing.T, res *backend.QueryDataResponse, refID string, want float64) {
 	t.Helper()
-	require.NotEmpty(t, stage.Frames)
-	for _, f := range stage.Frames {
+	frames := res.Responses[refID].Frames
+	require.NotEmpty(t, frames, "no frames for refId %s", refID)
+	for _, f := range frames {
 		for _, field := range f.Fields {
 			if field.Type() != data.FieldTypeNullableFloat64 && field.Type() != data.FieldTypeFloat64 {
 				continue
@@ -148,5 +155,5 @@ func requireStageValue(t *testing.T, stage exprcapture.Stage, want float64) {
 			return
 		}
 	}
-	t.Fatalf("no float value field found in stage %s", stage.RefID)
+	t.Fatalf("no float value field found for refId %s", refID)
 }

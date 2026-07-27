@@ -181,11 +181,15 @@ func diagnosticStageType(nt NodeType) string {
 	}
 }
 
-// captureDiagnosticStages records each pipeline node's output frames and input dependencies into the
+// captureDiagnosticStages records each pipeline node's identity and input dependencies into the
 // exprcapture buffer when one is attached to ctx (the on-demand diagnostics path); it is a no-op
 // otherwise. vars holds every executed node's final result keyed by refID, so iterating the ordered
 // pipeline yields the full DAG -- datasource, expression, and ML nodes alike -- regardless of whether
 // datasource nodes ran grouped or inline.
+//
+// Only the node's error is taken from vars, not its frames: ExecutePipeline turns every entry in
+// vars into its own refID in the returned QueryDataResponse, so the diagnostics bundle already has
+// each stage's output and joins the two on refID (see the exprcapture package doc).
 func captureDiagnosticStages(ctx context.Context, dp DataPipeline, vars mathexp.Vars) {
 	buf := exprcapture.FromContext(ctx)
 	if buf == nil {
@@ -214,7 +218,6 @@ func captureDiagnosticStages(ctx context.Context, dp DataPipeline, vars mathexp.
 			}
 		}
 		if res, ok := vars[refID]; ok {
-			stage.Frames = res.Values.AsDataFrames(refID)
 			stage.Error = res.Error
 		}
 		stages = append(stages, stage)

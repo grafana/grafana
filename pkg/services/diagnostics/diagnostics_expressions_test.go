@@ -21,38 +21,45 @@ func parseArtifact(t *testing.T, raw []byte) queryDataArtifact {
 	return a
 }
 
-func stageOutputFrameNames(t *testing.T, stage queryDataExpressionStage) []string {
+// twoStagePipeline is A (datasource) -> B (reduce), the DAG shared by the tests below.
+func twoStagePipeline() []exprcapture.Stage {
+	return []exprcapture.Stage{
+		{RefID: "A", Type: "datasource", Command: "prometheus"},
+		{RefID: "B", Type: "expression", Command: "reduce", InputRefIDs: []string{"A"}},
+	}
+}
+
+// pipelineResponse is what the expression service returns for twoStagePipeline: every node under its
+// own refID, which is where a stage's output lives.
+func pipelineResponse(aValues []float64) *backend.QueryDataResponse {
+	aFrame := data.NewFrame("A", data.NewField("value", data.Labels{"host": "a"}, aValues))
+	aFrame.RefID = "A"
+	bFrame := data.NewFrame("B", data.NewField("B", nil, []float64{1}))
+	bFrame.RefID = "B"
+	return &backend.QueryDataResponse{Responses: backend.Responses{
+		"A": {Frames: data.Frames{aFrame}},
+		"B": {Frames: data.Frames{bFrame}},
+	}}
+}
+
+func stageByRefID(t *testing.T, stages []queryDataExpressionStage, refID string) queryDataExpressionStage {
 	t.Helper()
-	var dr struct {
-		Frames []struct {
-			Schema struct {
-				Name string `json:"name"`
-			} `json:"schema"`
-		} `json:"frames"`
+	for _, s := range stages {
+		if s.RefID == refID {
+			return s
+		}
 	}
-	require.NoError(t, json.Unmarshal(stage.Output, &dr))
-	names := make([]string, 0, len(dr.Frames))
-	for _, f := range dr.Frames {
-		names = append(names, f.Schema.Name)
-	}
-	return names
+	t.Fatalf("no stage with refId %q in %v", refID, stages)
+	return queryDataExpressionStage{}
 }
 
 func TestBundler_Build_recordsExpressionStages(t *testing.T) {
-	// A (datasource, 2 series) -> B ($A reduced/last, expression). The captured stages record the DAG
-	// edge B<-A and each node's output so a reader can localize which stage changed the data.
-	dsFrame := data.NewFrame("A",
-		data.NewField("value", data.Labels{"host": "a"}, []float64{1}),
-	)
-	bFrame := data.NewFrame("B", data.NewField("B", nil, []float64{1}))
-	bFrame.RefID = "B"
+	// A (datasource) -> B ($A reduced/last, expression). The captured stages record the DAG edge
+	// B<-A and each node's kind; the outputs they refer to live under "response", keyed by the same
+	// refIds.
+	resp := pipelineResponse([]float64{1})
 
-	stages := []exprcapture.Stage{
-		{RefID: "A", Type: "datasource", Command: "prometheus", Frames: data.Frames{dsFrame}},
-		{RefID: "B", Type: "expression", Command: "reduce", InputRefIDs: []string{"A"}, Frames: data.Frames{bFrame}},
-	}
-
-	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, nil, stages, nil, nil)
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, nil, twoStagePipeline(), nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -63,6 +70,7 @@ func TestBundler_Build_recordsExpressionStages(t *testing.T) {
 
 	require.Equal(t, "A", a.Expressions[0].RefID)
 	require.Equal(t, "datasource", a.Expressions[0].Type)
+	require.Equal(t, "prometheus", a.Expressions[0].Command)
 	require.Empty(t, a.Expressions[0].InputRefIDs)
 
 	require.Equal(t, "B", a.Expressions[1].RefID)
@@ -70,73 +78,91 @@ func TestBundler_Build_recordsExpressionStages(t *testing.T) {
 	require.Equal(t, "reduce", a.Expressions[1].Command)
 	require.Equal(t, []string{"A"}, a.Expressions[1].InputRefIDs, "the DAG edge B<-A is recorded")
 
-	require.NotEmpty(t, a.Expressions[0].Output, "each stage carries its output frames")
-	require.NotEmpty(t, a.Expressions[1].Output)
+	// Every stage's refId resolves to a response entry -- that join is what gives a stage its output.
+	var response struct {
+		Results map[string]json.RawMessage `json:"results"`
+	}
+	require.NoError(t, json.Unmarshal(a.Response, &response))
+	for _, stage := range a.Expressions {
+		require.Contains(t, response.Results, stage.RefID, "stage %s has no response entry to join to", stage.RefID)
+	}
+
 	require.False(t, a.Truncated)
 	require.False(t, a.ExpressionsOmitted)
 }
 
-func TestBuildExpressionStages_excludesCaptureFrames(t *testing.T) {
-	// A datasource node's output frames may include the synthetic __har__ carrier frame; it must not
-	// leak into the expression-stage output.
-	realFrame := data.NewFrame("real", data.NewField("value", nil, []float64{1}))
-	harFrame := data.NewFrame("__har__test")
-	harFrame.RefID = "__har__test"
-
-	stages := []exprcapture.Stage{
-		{RefID: "A", Type: "datasource", Frames: data.Frames{realFrame, harFrame}},
-	}
-
-	out, err := buildExpressionStages(stages)
-	require.NoError(t, err)
-	require.Len(t, out, 1)
-
-	names := stageOutputFrameNames(t, out[0])
-	require.Contains(t, names, "real")
-	require.NotContains(t, names, "__har__test", "capture carrier frames are filtered out")
-}
-
-func TestMarshalQueryDataArtifact_expressionStagesDegradeToSummary(t *testing.T) {
-	// A stage carrying a large frame that pushes the artifact over budget must degrade to a per-stage
-	// summary (row/field counts) with the frame values omitted, not silently drop the stage.
+func TestMarshalQueryDataArtifact_stagesDoNotDuplicateResponse(t *testing.T) {
+	// The expression service returns every node under its own refID, so "response" already carries
+	// each stage's output frames. Capturing the DAG must not re-serialize them: doing so doubles
+	// querydata.json and halves the effective size budget.
 	values := make([]float64, 4096)
 	for i := range values {
 		values[i] = float64(i)
 	}
-	big := data.NewFrame("big", data.NewField("value", nil, values))
-	stages := []exprcapture.Stage{
-		{RefID: "A", Type: "datasource", Frames: data.Frames{big}},
-		{RefID: "B", Type: "expression", Command: "reduce", InputRefIDs: []string{"A"}, Frames: data.Frames{
-			data.NewFrame("B", data.NewField("B", nil, []float64{1})),
-		}},
-	}
+	values[0] = 1234.5 // a distinctive value to count occurrences of
+	resp := pipelineResponse(values)
 
-	// A budget below the full frame values but above the compact per-stage summary forces the middle
-	// (summary) degrade tier.
-	raw, truncated, err := marshalQueryDataArtifactWithLimit(nil, nil, stages, 4096)
+	withoutStages, _, err := marshalQueryDataArtifactWithLimit(nil, resp, nil, maxQueryDataArtifactBytes)
+	require.NoError(t, err)
+	withStages, _, err := marshalQueryDataArtifactWithLimit(nil, resp, twoStagePipeline(), maxQueryDataArtifactBytes)
+	require.NoError(t, err)
+
+	require.Less(t, len(withStages), len(withoutStages)+1024,
+		"the DAG is bounded by node count; it must not scale with frame values (got %d vs %d bytes)",
+		len(withStages), len(withoutStages))
+	require.Equal(t, 1, strings.Count(string(withStages), "1234.5"),
+		"frame values must appear exactly once, under \"response\"")
+
+	a := parseArtifact(t, withStages)
+	require.Len(t, a.Expressions, 2, "the DAG is still recorded")
+}
+
+func TestMarshalQueryDataArtifact_stagesSurviveResponseTruncation(t *testing.T) {
+	// Over budget the response collapses to its per-refID summary, but the DAG is small and nothing
+	// else in the bundle records it, so it survives intact.
+	values := make([]float64, 4096)
+	for i := range values {
+		values[i] = float64(i)
+	}
+	resp := pipelineResponse(values)
+
+	raw, truncated, err := marshalQueryDataArtifactWithLimit(nil, resp, twoStagePipeline(), 4096)
 	require.NoError(t, err)
 	require.True(t, truncated)
 
 	a := parseArtifact(t, raw)
 	require.True(t, a.Truncated)
-	require.True(t, a.ExpressionsOmitted, "full expression frames are omitted over budget")
-	require.Empty(t, a.Expressions, "no full-frame expressions when truncated")
-	require.Len(t, a.ExpressionsSummary, 2, "each stage still appears in the summary")
+	require.True(t, a.ResponseOmitted, "the frame values are dropped over budget")
+	require.Empty(t, a.Response)
+	require.NotEmpty(t, a.ResponseSummary, "per-refID row/field counts stand in for the values")
 
-	// The summary preserves the DAG edge and node metadata even without frame values.
-	var bSummary queryDataExpressionStage
-	for _, s := range a.ExpressionsSummary {
-		if s.RefID == "B" {
-			bSummary = s
-		}
-	}
-	require.Equal(t, "reduce", bSummary.Command)
-	require.Equal(t, []string{"A"}, bSummary.InputRefIDs)
-	require.NotEmpty(t, bSummary.Output, "the summary lists per-frame row/field counts")
-	require.NotContains(t, string(raw), "\"4095\"", "individual large-frame values are not present when summarized")
+	require.False(t, a.ExpressionsOmitted)
+	require.Len(t, a.Expressions, 2, "the DAG survives the response's degradation")
+	b := stageByRefID(t, a.Expressions, "B")
+	require.Equal(t, "reduce", b.Command)
+	require.Equal(t, []string{"A"}, b.InputRefIDs)
+	require.NotContains(t, string(raw), "4095", "individual frame values are not present when summarized")
+}
+
+func TestFitQueryDataArtifact_dropsStagesAtTheFloor(t *testing.T) {
+	// A budget too small even for the response summary walks the ladder to the bottom. The stages go
+	// after the summary -- last of the variable-size content -- and leave a marker behind.
+	resp := pipelineResponse([]float64{1, 2, 3})
+
+	raw, _, err := marshalQueryDataArtifactWithLimit(nil, resp, twoStagePipeline(), minQueryDataArtifactBytes)
+	require.NoError(t, err)
+	require.LessOrEqual(t, len(raw), minQueryDataArtifactBytes)
+
+	a := parseArtifact(t, raw)
+	require.Empty(t, a.Expressions)
+	require.True(t, a.ExpressionsOmitted, "the marker records that a DAG was captured and dropped")
+	require.Empty(t, a.ResponseSummary)
+	require.True(t, a.ResponseOmitted)
 }
 
 func TestMarshalQueryDataArtifact_recordsStageError(t *testing.T) {
+	// A stage's error is duplicated from its response entry on purpose, so "which stage failed" is
+	// answerable from the DAG alone.
 	stages := []exprcapture.Stage{
 		{RefID: "A", Type: "datasource", Error: errStub("upstream 500")},
 		{RefID: "B", Type: "expression", Command: "math", InputRefIDs: []string{"A"}, Error: errStub("dependency error")},
@@ -148,8 +174,31 @@ func TestMarshalQueryDataArtifact_recordsStageError(t *testing.T) {
 	require.Len(t, a.Expressions, 2)
 	require.Equal(t, "upstream 500", a.Expressions[0].Error)
 	require.Equal(t, "dependency error", a.Expressions[1].Error)
-	require.True(t, strings.Contains(string(a.Expressions[1].Output), "dependency error"),
-		"the stage output object also carries the error")
+}
+
+func TestBuildDashboard_recordsExpressionStagesWithoutResponse(t *testing.T) {
+	// A panel that captured a DAG but produced neither a response nor a serializable request must
+	// still get a querydata.json -- the per-panel gate matches Build's.
+	panels := []DashboardPanel{{
+		ID:               1,
+		Title:            "expressions",
+		ExpressionStages: twoStagePipeline(),
+	}}
+
+	blob, err := NewBundler().BuildDashboard(nil, panels)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	var found string
+	for name := range files {
+		if strings.HasSuffix(name, "/querydata.json") {
+			found = name
+		}
+	}
+	require.NotEmpty(t, found, "the panel's captured stages are recorded, got files %v", files)
+
+	a := parseArtifact(t, files[found])
+	require.Len(t, a.Expressions, 2)
 }
 
 type errStub string
@@ -157,6 +206,3 @@ type errStub string
 func (e errStub) Error() string { return string(e) }
 
 var _ error = errStub("")
-
-// ensure backend import is used even if assertions above change.
-var _ = backend.NewQueryDataResponse
