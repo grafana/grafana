@@ -12,7 +12,7 @@ function renderButtons(props: Partial<React.ComponentProps<typeof AssistantToolb
 }
 
 describe('AssistantToolbarButtons', () => {
-  it('renders the Chat pill in its open state and an Enter Workspace button', () => {
+  it('renders the Chat pill in its open state and a Workspace button', () => {
     renderButtons({ isOpen: false });
 
     const pill = screen.getByTestId('extension-toolbar-button-open');
@@ -20,7 +20,7 @@ describe('AssistantToolbarButtons', () => {
     expect(pill).toHaveAttribute('aria-label', 'Open Grafana Assistant');
     expect(pill).toHaveAttribute('aria-expanded', 'false');
     expect(screen.getByText('Chat')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Enter Workspace' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Workspace' })).toBeInTheDocument();
   });
 
   it('renders the Chat pill in its close state when open', () => {
@@ -40,10 +40,10 @@ describe('AssistantToolbarButtons', () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
-  it('enters fullscreen workspace when the Enter Workspace button is clicked', () => {
+  it('enters fullscreen workspace when the Workspace button is clicked', () => {
     const { chrome } = renderButtons({ isOpen: false });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Enter Workspace' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Workspace' }));
 
     expect(chrome.state.getValue().fullscreenWorkspace).toBe(true);
   });
