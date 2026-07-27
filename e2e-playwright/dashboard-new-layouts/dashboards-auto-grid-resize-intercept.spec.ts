@@ -45,7 +45,7 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
 
       const customLayoutOption = page.getByLabel('layout-selection-option-Custom');
-      expect(customLayoutOption).toBeChecked();
+      await expect(customLayoutOption).toBeChecked();
     });
 
     test('intercepts a resize gesture and can open the auto grid layout settings', async ({

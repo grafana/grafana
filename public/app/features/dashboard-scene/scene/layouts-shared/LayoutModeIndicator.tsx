@@ -2,7 +2,13 @@ import { type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, Tooltip } from '@grafana/ui';
 
-export function LayoutModeIndicator({ layoutMode: layoutType, className }: { layoutMode: 'auto' | 'custom'; className?: string }) {
+export function LayoutModeIndicator({
+  layoutMode: layoutType,
+  className,
+}: {
+  layoutMode: 'auto' | 'custom';
+  className?: string;
+}) {
   const tooltip =
     layoutType === 'auto'
       ? t('dashboard.auto-grid.layout-indicator', 'Auto layout - panel size managed by auto grid')
