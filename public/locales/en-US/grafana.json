@@ -12381,8 +12381,10 @@
     },
     "extension-sidebar": {
       "assistant-close": "Close Grafana Assistant",
+      "assistant-close-tooltip": "Close Chat",
       "assistant-label": "Chat",
       "assistant-open": "Open Grafana Assistant",
+      "assistant-open-tooltip": "Open Chat",
       "button-tooltip": {
         "close": "Close {{title}}",
         "open": "Open {{title}}",
