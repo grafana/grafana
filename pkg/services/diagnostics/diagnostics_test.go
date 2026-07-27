@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"math"
 	"net/http"
 	"strings"
 	"testing"
@@ -719,6 +720,31 @@ func TestBuildDashboard_recordsQueryRequestError(t *testing.T) {
 	require.NoError(t, json.Unmarshal(files["manifest.json"], &m))
 	require.Contains(t, m.Panels[0].QueryDataError, "serialize query request")
 	require.Contains(t, m.Panels[0].QueryDataError, "unsupported value: NaN")
+}
+
+// A panel that hits two query-data failures keeps both in the manifest: the request-serialize failure
+// explains the missing request, so a later response-marshal failure must not replace it.
+func TestBuildDashboard_joinsQueryDataErrors(t *testing.T) {
+	// Metadata that cannot be JSON-encoded makes the response marshal fail after the request already
+	// failed to serialize.
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	frame.Meta = &data.FrameMeta{Custom: math.NaN()}
+	panels := []DashboardPanel{{
+		ID:              1,
+		Title:           "Broken both ways",
+		QueryRequestErr: errors.New("request: unsupported value: +Inf"),
+		Resp:            &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}},
+	}}
+	blob, err := NewBundler().BuildDashboard(nil, panels)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.NotContains(t, files, "panels/1-broken-both-ways/querydata.json", "unserializable query data is omitted")
+
+	var m dashboardManifest
+	require.NoError(t, json.Unmarshal(files["manifest.json"], &m))
+	require.Contains(t, m.Panels[0].QueryDataError, "serialize query request: request: unsupported value: +Inf")
+	require.Contains(t, m.Panels[0].QueryDataError, "data.FrameMeta.Custom: unsupported value: NaN")
 }
 
 func TestTruncateDiagnosticString_runeBoundary(t *testing.T) {

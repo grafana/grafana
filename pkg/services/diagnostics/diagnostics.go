@@ -323,21 +323,26 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 		if len(panelJSON) > 0 {
 			files[dir+"/panel.json"] = indentJSON(panelJSON)
 		}
+		// A panel can hit more than one query-data problem: an unserializable request still leaves a
+		// response to encode, which can itself fail or exhaust the dashboard budget. Collect them all so
+		// a later failure doesn't hide the request-serialize failure that explains the missing request --
+		// the single-panel Build path joins the same combination into querydata-error.txt.
+		var queryDataErrs []string
 		if p.QueryRequestErr != nil {
-			entry.QueryDataError = "serialize query request: " + p.QueryRequestErr.Error()
+			queryDataErrs = append(queryDataErrs, "serialize query request: "+p.QueryRequestErr.Error())
 		}
 		if p.Resp != nil || len(p.QueryRequest) > 0 {
 			queryDataLimit := min(maxQueryDataArtifactBytes, queryDataBytesRemaining)
 			if queryDataLimit < minQueryDataArtifactBytes {
 				entry.QueryDataTruncated = true
-				entry.QueryDataError = fmt.Sprintf("remaining dashboard query-data budget (%d bytes) below the %d-byte minimum artifact size", queryDataBytesRemaining, minQueryDataArtifactBytes)
+				queryDataErrs = append(queryDataErrs, fmt.Sprintf("remaining dashboard query-data budget (%d bytes) below the %d-byte minimum artifact size", queryDataBytesRemaining, minQueryDataArtifactBytes))
 			} else {
 				queryData, truncated, err := marshalQueryDataArtifactWithLimit(p.QueryRequest, p.Resp, queryDataLimit)
 				if err != nil {
-					entry.QueryDataError = err.Error()
+					queryDataErrs = append(queryDataErrs, err.Error())
 				} else if len(queryData) > queryDataLimit {
 					entry.QueryDataTruncated = true
-					entry.QueryDataError = "query-data artifact exceeded its assigned dashboard budget"
+					queryDataErrs = append(queryDataErrs, "query-data artifact exceeded its assigned dashboard budget")
 				} else {
 					files[dir+"/querydata.json"] = queryData
 					entry.QueryDataBytes = len(queryData)
@@ -346,6 +351,9 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 				}
 			}
 		}
+		// Joined with "; " rather than errors.Join's newline so the manifest keeps one readable line per
+		// panel instead of embedded \n escapes.
+		entry.QueryDataError = strings.Join(queryDataErrs, "; ")
 
 		// A single panel's capture that fails to serialize must not sink the whole multi-panel bundle:
 		// record it against this panel in the manifest and keep everything else (dashboard.json, the
