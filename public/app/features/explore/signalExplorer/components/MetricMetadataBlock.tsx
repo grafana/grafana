@@ -65,6 +65,40 @@ export function MetricMetadataBlock({ metricName, metric, onClose }: MetricMetad
 
 const cxTypeBadge = (styles: ReturnType<typeof getStyles>, type: MetricType) => `${styles.typeBadge} ${styles[type]}`;
 
+/**
+ * The badge background for a metric type. Exported so `MetricMetadataBlock.test.tsx` can assert every
+ * one of them clears WCAG AA against the foreground `getContrastText` picks for it, in both themes.
+ *
+ * Semantic/visualization theme colours rather than the prototype's raw hexes, so they follow the
+ * active theme. Each was measured against `getContrastText`'s choice in both themes before being
+ * picked — several obvious candidates fail: `semi-dark-orange` lands at 3.05:1 in the light theme and
+ * `purple` at 3.14:1 in the dark one, because `getContrastText` uses a fixed threshold and chooses
+ * white where black would be far better. `native histogram` is amber rather than a second orange
+ * because the nearest passing orange is visually identical to `warning.main` in the light theme.
+ */
+export function getMetricTypeBadgeColor(theme: GrafanaTheme2, type: MetricType): string {
+  switch (type) {
+    case 'counter':
+      return theme.colors.primary.main;
+    case 'gauge':
+      return theme.colors.success.main;
+    case 'histogram':
+      return theme.colors.warning.main;
+    case 'native histogram':
+      return theme.visualization.getColorByName('dark-yellow');
+    case 'summary':
+      return theme.visualization.getColorByName('dark-purple');
+    case 'unknown':
+      return theme.colors.secondary.main;
+  }
+}
+
+/** Background plus the foreground that is actually readable on it, never a fixed text colour. */
+const badgeVariant = (theme: GrafanaTheme2, type: MetricType) => {
+  const background = getMetricTypeBadgeColor(theme, type);
+  return css({ background, color: theme.colors.getContrastText(background) });
+};
+
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     display: 'flex',
@@ -90,21 +124,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignSelf: 'flex-start',
     padding: theme.spacing(0.25, 1),
     borderRadius: theme.shape.radius.default,
-    color: theme.colors.text.maxContrast,
     fontSize: theme.typography.size.xs,
     fontWeight: theme.typography.fontWeightBold,
     letterSpacing: 0.6,
     textTransform: 'uppercase',
   }),
-  // One colour per type, so the type reads at a glance. Semantic theme colours rather than the
-  // prototype's raw hexes: these are the same hues but they follow the light/dark theme, which a
-  // fixed hex on a fixed `maxContrast` foreground would not.
-  counter: css({ background: theme.colors.primary.main }),
-  gauge: css({ background: theme.colors.success.main }),
-  histogram: css({ background: theme.colors.warning.main }),
-  'native histogram': css({ background: theme.visualization.getColorByName('purple') }),
-  summary: css({ background: theme.visualization.getColorByName('super-light-purple') }),
-  unknown: css({ background: theme.colors.secondary.main }),
+  // One colour per type, each paired with a foreground derived from it — see `badgeVariant`.
+  counter: badgeVariant(theme, 'counter'),
+  gauge: badgeVariant(theme, 'gauge'),
+  histogram: badgeVariant(theme, 'histogram'),
+  'native histogram': badgeVariant(theme, 'native histogram'),
+  summary: badgeVariant(theme, 'summary'),
+  unknown: badgeVariant(theme, 'unknown'),
   closeButton: css({
     marginLeft: 'auto',
   }),
