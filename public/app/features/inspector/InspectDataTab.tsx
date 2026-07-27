@@ -96,7 +96,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     }
   }
 
-  exportCsv(dataFrames: DataFrame[], hasLogs: boolean) {
+  exportCsv(dataFrames: DataFrame[]) {
     const { dataName } = this.props;
     const { transformId } = this.state;
     const dataFrame = dataFrames[this.state.dataFrameIndex];
@@ -219,7 +219,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
   renderActions(dataFrames: DataFrame[], hasLogs: boolean, hasTraces: boolean, hasServiceGraph: boolean) {
     return (
       <>
-        <Button variant="primary" onClick={() => this.exportCsv(dataFrames, hasLogs)} size="sm">
+        <Button variant="primary" onClick={() => this.exportCsv(dataFrames)} size="sm">
           <Trans i18nKey="dashboard.inspect-data.download-csv">Download CSV</Trans>
         </Button>
         {hasLogs && !config.exploreHideLogsDownload && (
