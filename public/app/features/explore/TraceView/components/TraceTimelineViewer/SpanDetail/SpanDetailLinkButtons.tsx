@@ -27,7 +27,7 @@ import { type TraceSpan } from '../../types/trace';
 export type ProfilesButtonContext = {
   serviceName: string;
   profileTypeId: string;
-  spanSelector: string;
+  spanSelector: string[];
   explorationType: string;
   timeRange: RawTimeRange;
   datasource: DataSourceRef;
@@ -248,7 +248,8 @@ export const getProfileLinkButtonsContext = (
   const context: ProfilesButtonContext = {
     serviceName: span.process.serviceName ?? '',
     profileTypeId: traceToProfilesOptions?.profileTypeId ?? '',
-    spanSelector: spanSelector.length === 1 && spanSelector[0].value ? spanSelector[0].value : '',
+    // Profiles Drilldown expects an array (calls .join); a bare string throws at click time.
+    spanSelector: spanSelector.length === 1 && spanSelector[0].value ? [String(spanSelector[0].value)] : [],
     explorationType: 'flame-graph',
     timeRange: {
       from: timeRange.from.toISOString(),
