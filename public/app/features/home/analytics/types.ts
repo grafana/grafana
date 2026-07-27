@@ -12,7 +12,14 @@ export interface ClearHistoryClicked extends EventProperty {
 
 export interface CtaClicked extends EventProperty {
   /** Which homepage widget fired the CTA. */
-  surface: 'alerts_card' | 'incidents_card' | 'recent_tab' | 'recommendations' | 'existing_solution' | 'no_data_card';
+  surface:
+    | 'alerts_card'
+    | 'incidents_card'
+    | 'news_card'
+    | 'recent_tab'
+    | 'recommendations'
+    | 'existing_solution'
+    | 'no_data_card';
   /** What the user asked for. Which values are valid depends on the surface (not compiler-enforced). */
   action:
     | 'alert_detail'
@@ -22,9 +29,11 @@ export interface CtaClicked extends EventProperty {
     | 'incident_detail'
     | 'declare_incident'
     | 'view_all_incidents'
+    | 'read_more_news'
     | 'create_dashboard'
     | 'browse_dashboards'
     | 'enable'
+    | 'setup'
     | 'open_solution'
     | 'view_alerts'
     | 'switch_solution'

@@ -11,6 +11,7 @@ jest.mock('./useKubernetesSolution', () => ({
 const mockUseKubernetesSolution = jest.mocked(useKubernetesSolution);
 
 const kubernetesItem: ExistingItem = {
+  id: 'kubernetes-monitoring',
   title: 'Kubernetes Monitoring',
   icon: 'kubernetes',
   action: 'Open K8s app',
