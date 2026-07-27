@@ -35,8 +35,10 @@ export function mergeLocalsAndRemotes({
   const errorByPluginId = groupErrorsByPluginId(errors);
 
   const remoteSet = new Set<string>(remote?.map((plugin) => plugin.slug));
-  const localMap = new Map<string, LocalPlugin>(local.map((plugin) => [plugin.id, plugin]));
-  local.forEach((plugin) => plugin.aliasIDs?.forEach((alias) => localMap.set(alias, plugin)));
+  const localMap = new Map<string, LocalPlugin>([
+    ...local.map((plugin): [string, LocalPlugin] => [plugin.id, plugin]),
+    ...local.flatMap((plugin) => (plugin.aliasIDs ?? []).map((alias): [string, LocalPlugin] => [alias, plugin])),
+  ]);
   const instancesMap = new Map<string, InstancePlugin>(instance?.map((plugin) => [plugin.pluginSlug, plugin]));
   const provisionedSet = new Set<string>(provisioned?.map((plugin) => plugin.slug));
 
@@ -58,19 +60,16 @@ export function mergeLocalsAndRemotes({
     }
   });
 
-  // Track canonical IDs already emitted from the remote loop to avoid duplicates when
-  // both a legacy alias slug (e.g. "canvas") and the real slug ("grafana-canvas-panel")
-  // appear in the GCOM response and both resolve to the same local plugin.
-  const emittedCanonicalIds = new Set<string>();
+  const seenAliasCanonicalIds = new Set<string>();
 
   // add remote
   remote.forEach((remotePlugin) => {
     const localCounterpart = localMap.get(remotePlugin.slug);
     const canonicalId = localCounterpart?.id ?? remotePlugin.slug;
     const error = errorByPluginId[canonicalId] ?? errorByPluginId[remotePlugin.slug];
-    const shouldSkip =
-      (remotePlugin.status === RemotePluginStatus.Deprecated && !localCounterpart) || // We are only listing deprecated plugins in case they are installed.
-      emittedCanonicalIds.has(canonicalId);
+    const isAliasMatch = Boolean(localCounterpart && localCounterpart.id !== remotePlugin.slug);
+    const isUninstalledDeprecatedPlugin = remotePlugin.status === RemotePluginStatus.Deprecated && !localCounterpart;
+    const shouldSkip = isUninstalledDeprecatedPlugin || seenAliasCanonicalIds.has(canonicalId);
 
     if (!shouldSkip) {
       let catalogPlugin = mergeLocalAndRemote(localCounterpart, remotePlugin, error);
@@ -82,11 +81,8 @@ export function mergeLocalsAndRemotes({
           localMap.has(remotePlugin.slug)
         );
       }
-      // Only track alias-matched canonical IDs for deduplication.
-      // Direct slug matches (remotePlugin.slug === localCounterpart?.id) are not tracked
-      // to preserve existing behaviour where duplicate direct-slug remotes pass through.
-      if (localCounterpart && localCounterpart.id !== remotePlugin.slug) {
-        emittedCanonicalIds.add(canonicalId);
+      if (isAliasMatch) {
+        seenAliasCanonicalIds.add(canonicalId);
       }
       catalogPlugins.push(catalogPlugin);
     }
