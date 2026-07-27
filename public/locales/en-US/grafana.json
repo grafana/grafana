@@ -10954,6 +10954,12 @@
       "error-title": "Could not load most used dashboards",
       "loading": "Loading most used dashboards..."
     },
+    "news-card": {
+      "empty": "No recent blog posts.",
+      "error-title": "Could not load recent blog posts",
+      "read-more": "Read more from the Grafana Labs blog",
+      "title": "Latest from the blog"
+    },
     "recent-dashboards-tab": {
       "browse": "Browse dashboards",
       "clear": "Clear history",
@@ -12385,8 +12391,10 @@
     },
     "extension-sidebar": {
       "assistant-close": "Close Grafana Assistant",
+      "assistant-close-tooltip": "Close Chat",
       "assistant-label": "Chat",
       "assistant-open": "Open Grafana Assistant",
+      "assistant-open-tooltip": "Open Chat",
       "button-tooltip": {
         "close": "Close {{title}}",
         "open": "Open {{title}}",
@@ -12398,7 +12406,8 @@
       "error-exit": "Exit workspace",
       "error-message": "The Grafana Assistant workspace could not be loaded.",
       "error-reload": "Reload page",
-      "error-title": "Workspace unavailable"
+      "error-title": "Workspace unavailable",
+      "workspace": "Workspace"
     },
     "help": {
       "aria-label": "Help",
