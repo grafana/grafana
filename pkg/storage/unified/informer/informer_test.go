@@ -205,9 +205,10 @@ func TestInformer_InitialListDeliversAdds(t *testing.T) {
 	})
 }
 
-// A live ADDED goes through OnAdd; a MODIFIED/DELETED through OnUpdate. The
-// delivered object is the minimal one built from the notification's identity —
-// the controllers re-fetch, so the informer does not read the object.
+// A live ADDED goes through OnAdd, a MODIFIED through OnUpdate, and a DELETED
+// through OnDelete. The delivered object is the minimal one built from the
+// notification's identity — the controllers re-fetch, so the informer does not
+// read the object.
 func TestInformer_LiveEventsDispatchMinimalObject(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		sub := newFakeSubscriber()
@@ -221,7 +222,28 @@ func TestInformer_LiveEventsDispatchMinimalObject(t *testing.T) {
 		synctest.Wait()
 
 		assert.Equal(t, []string{"fresh"}, handler.addedNames())
-		assert.Equal(t, []string{"changed", "gone"}, handler.updatedNames())
+		assert.Equal(t, []string{"changed"}, handler.updatedNames())
+		assert.Equal(t, []string{"gone"}, handler.deletedNames())
+	})
+}
+
+// A live DELETED drops the object from the informer's snapshot so a
+// staleness-tolerant reader stops counting it before the next re-list.
+func TestInformer_LiveDeleteEvictsFromStore(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		handler := &recordingHandler{}
+		n, stop := start(t, sub, []runtime.Object{obj("keep"), obj("gone")}, newObjectFunc, handler)
+		defer stop()
+
+		sub.publish(t, subject(), event(resourcepb.WatchNotification_DELETED, "gone"))
+		synctest.Wait()
+
+		var got []string
+		for _, o := range n.store.List(context.Background()) {
+			got = append(got, o.(*metav1.PartialObjectMetadata).Name)
+		}
+		assert.Equal(t, []string{"keep"}, got)
 	})
 }
 
