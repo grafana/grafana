@@ -1142,6 +1142,19 @@
     },
     {
       "metadata": {
+        "name": "azureMonitorBatchAPI",
+        "resourceVersion": "1782267315125",
+        "creationTimestamp": "2026-06-24T02:15:15Z"
+      },
+      "spec": {
+        "description": "Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "azureMonitorDisableLogLimit",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-10-24T13:32:09Z"
@@ -1555,7 +1568,8 @@
       "metadata": {
         "name": "dashboardAssistantPopover",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-23T18:07:04Z"
       },
       "spec": {
         "description": "Enables the assistant prompt popover on panel click in dashboard view mode",
@@ -2697,6 +2711,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.dynamicTraceToLogs",
+        "resourceVersion": "1784712177554",
+        "creationTimestamp": "2026-07-22T09:22:57Z"
+      },
+      "spec": {
+        "description": "Check for the existence of logs when linking from the Trace View",
+        "stage": "preview",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.enableScopesFirstMode",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -2842,14 +2870,16 @@
     {
       "metadata": {
         "name": "grafana.multiTenantNavTree",
-        "resourceVersion": "1784042116563",
-        "creationTimestamp": "2026-07-14T15:15:16Z"
+        "resourceVersion": "1784635043218",
+        "creationTimestamp": "2026-07-14T15:15:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-21 11:57:23.218354 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Builds the navigation tree client-side instead of reading it from /bootdata",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-navigation",
-        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -3085,16 +3115,19 @@
     {
       "metadata": {
         "name": "grafana.viewPanelPane",
-        "resourceVersion": "1778761195995",
-        "creationTimestamp": "2026-05-14T12:19:55Z"
+        "resourceVersion": "1784896787869",
+        "creationTimestamp": "2026-05-14T12:19:55Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-24 12:39:47.869351 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the sidebar pane with new toggles and options in panel view mode",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -3702,14 +3735,17 @@
     {
       "metadata": {
         "name": "kubernetesLibraryPanels",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-06-25T22:21:56Z"
+        "resourceVersion": "1784652599954",
+        "creationTimestamp": "2025-06-25T22:21:56Z",
+        "deletionTimestamp": "2026-07-21T16:51:34Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-21 16:49:59.954584 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Routes library panel requests from /api to the /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresRestart": true,
         "expression": "false"
       }
     },
@@ -3896,6 +3932,33 @@
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "libpanels.kubernetesLibraryPanels",
+        "resourceVersion": "1784652694911",
+        "creationTimestamp": "2026-07-21T16:51:34Z",
+        "deletionTimestamp": "2026-07-21T16:54:06Z"
+      },
+      "spec": {
+        "description": "Routes library panel requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "libraryelements.kubernetesLibraryPanels",
+        "resourceVersion": "1784652846634",
+        "creationTimestamp": "2026-07-21T16:54:06Z"
+      },
+      "spec": {
+        "description": "Routes library panel requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
         "expression": "false"
       }
     },
@@ -4511,7 +4574,8 @@
       "metadata": {
         "name": "playlistsReconciler",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-12-20T03:09:31Z"
+        "creationTimestamp": "2024-12-20T03:09:31Z",
+        "deletionTimestamp": "2026-07-16T15:23:31Z"
       },
       "spec": {
         "description": "Enables experimental reconciler for playlists",
@@ -4636,14 +4700,16 @@
     {
       "metadata": {
         "name": "plugins.useMTPlugins",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1784801546639",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-23 10:12:26.639861 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables plugins decoupling from bootdata",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-catalog",
-        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
