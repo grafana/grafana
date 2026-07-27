@@ -477,6 +477,15 @@ describe('Plugins/Helpers', () => {
       expect(mapLocalToCatalog(pluginWithoutDev).isDev).toBe(false);
       expect(mapLocalToCatalog(pluginWithDev).isDev).toBe(true);
     });
+
+    test('propagates aliasIDs when present', () => {
+      const pluginWithAliases = { ...localPlugin, aliasIDs: ['canvas', 'old-canvas'] };
+      expect(mapLocalToCatalog(pluginWithAliases).aliasIDs).toEqual(['canvas', 'old-canvas']);
+    });
+
+    test('aliasIDs is undefined when not set on local plugin', () => {
+      expect(mapLocalToCatalog(localPlugin).aliasIDs).toBeUndefined();
+    });
   });
 
   describe('mapToCatalogPlugin()', () => {
@@ -975,6 +984,45 @@ describe('Plugins/Helpers', () => {
         config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
         setTestFlags({});
       });
+    });
+  });
+
+  describe('mapToCatalogPlugin() - alias matching', () => {
+    const localWithAlias = getLocalPluginMock({
+      id: 'grafana-canvas-panel',
+      aliasIDs: ['canvas'],
+    });
+    const remoteWithAliasSlug = getRemotePluginMock({ slug: 'canvas', internal: true });
+
+    test('uses canonical local ID when remote slug matches an aliasID', () => {
+      const result = mapToCatalogPlugin(localWithAlias, remoteWithAliasSlug);
+      expect(result.id).toBe('grafana-canvas-panel');
+    });
+
+    test('uses local logos when matched via alias', () => {
+      const result = mapToCatalogPlugin(localWithAlias, remoteWithAliasSlug);
+      expect(result.info.logos).toEqual(localWithAlias.info.logos);
+    });
+
+    test('does not inherit isCore from remote internal flag when matched via alias', () => {
+      const result = mapToCatalogPlugin(localWithAlias, remoteWithAliasSlug);
+      expect(result.isCore).toBe(false);
+    });
+
+    test('propagates aliasIDs from local plugin', () => {
+      const result = mapToCatalogPlugin(localWithAlias, remoteWithAliasSlug);
+      expect(result.aliasIDs).toEqual(['canvas']);
+    });
+
+    test('uses remote slug as ID when no alias match', () => {
+      const result = mapToCatalogPlugin(localPlugin, remotePlugin);
+      expect(result.id).toBe(remotePlugin.slug);
+    });
+
+    test('inherits isCore from remote internal flag when not an alias match', () => {
+      const internalRemote = getRemotePluginMock({ internal: true });
+      const result = mapToCatalogPlugin(undefined, internalRemote);
+      expect(result.isCore).toBe(true);
     });
   });
 

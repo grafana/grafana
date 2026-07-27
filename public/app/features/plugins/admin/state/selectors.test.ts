@@ -3,7 +3,7 @@ import { configureStore } from 'app/store/configureStore';
 
 import { getCatalogPluginMock, getPluginsStateMock } from '../mocks/mockHelpers';
 
-import { selectPlugins } from './selectors';
+import { selectPlugins, selectByIdOrAlias } from './selectors';
 
 describe('Plugins Selectors', () => {
   describe('selectPlugins()', () => {
@@ -94,6 +94,41 @@ describe('Plugins Selectors', () => {
 
       expect(results).toHaveLength(1);
       expect(results[0].name).toBe('Plugin 2');
+    });
+  });
+
+  describe('selectByIdOrAlias()', () => {
+    const store = configureStore({
+      plugins: getPluginsStateMock([
+        getCatalogPluginMock({ id: 'grafana-canvas-panel', aliasIDs: ['canvas'] }),
+        getCatalogPluginMock({ id: 'plugin-2', aliasIDs: undefined }),
+      ]),
+    });
+
+    it('finds a plugin by its direct ID', () => {
+      const result = selectByIdOrAlias(store.getState(), 'grafana-canvas-panel');
+      expect(result?.id).toBe('grafana-canvas-panel');
+    });
+
+    it('finds a plugin by an aliasID when direct lookup fails', () => {
+      const result = selectByIdOrAlias(store.getState(), 'canvas');
+      expect(result?.id).toBe('grafana-canvas-panel');
+    });
+
+    it('returns undefined when neither ID nor alias matches', () => {
+      const result = selectByIdOrAlias(store.getState(), 'non-existent-plugin');
+      expect(result).toBeUndefined();
+    });
+
+    it('returns direct match when both direct and alias match exist', () => {
+      const storeWithBoth = configureStore({
+        plugins: getPluginsStateMock([
+          getCatalogPluginMock({ id: 'canvas', aliasIDs: undefined }),
+          getCatalogPluginMock({ id: 'grafana-canvas-panel', aliasIDs: ['canvas'] }),
+        ]),
+      });
+      const result = selectByIdOrAlias(storeWithBoth.getState(), 'canvas');
+      expect(result?.id).toBe('canvas');
     });
   });
 });
