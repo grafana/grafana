@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/infra/httpclient/harcapture"
 )
 
@@ -129,6 +130,30 @@ func TestBundler_Build_writesSnapshotBackend(t *testing.T) {
 	require.Equal(t, "grafana", dash.Panels[0].Targets[0].Datasource.UID)
 	require.NotEmpty(t, dash.Panels[0].Targets[0].Snapshot, "baked frames are present")
 	require.Contains(t, string(files["snapshot-backend.json"]), "42", "the baked value is carried")
+}
+
+// The dashboard scaffold around the panel, which nothing else asserts. schemaVersion is the load-bearing
+// one: it decides whether an import runs migrations over the panel model. The client sends a save model
+// already migrated to the frontend's current version, so the artifact must claim the same version --
+// understating it re-runs migrations over an already-migrated panel, and there is no cheap way to notice
+// either mistake from the rendered result.
+func TestBundler_Build_snapshotDashboardScaffold(t *testing.T) {
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
+
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	var dash struct {
+		SchemaVersion int    `json:"schemaVersion"`
+		Title         string `json:"title"`
+		Editable      bool   `json:"editable"`
+	}
+	require.NoError(t, json.Unmarshal(readTarGz(t, blob)["snapshot-backend.json"], &dash))
+	require.Equal(t, schemaversion.LATEST_VERSION, dash.SchemaVersion,
+		"the baked dashboard claims the schema version the client's save model is already at")
+	require.Equal(t, snapshotArtifactTitle, dash.Title)
+	require.True(t, dash.Editable, "a support engineer has to be able to poke at the imported panel")
 }
 
 func TestBundler_Build_snapshotKeepsPanelVizButOverridesDatasource(t *testing.T) {
