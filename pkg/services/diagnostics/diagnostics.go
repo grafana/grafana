@@ -477,6 +477,17 @@ func snapshotPanel(panelJSON json.RawMessage) map[string]any {
 	// transformations on top would render something that is neither the backend response this artifact
 	// records nor the panel's real output; the post-transform view is snapshot-rendered.json's job.
 	delete(panel, "transformations")
+	// The baked dashboard time range is the range the queries actually ran over, and the client reads
+	// it from the PANEL's effective range -- so a relative override has already been resolved into the
+	// absolute timestamps baked below. Leaving the override on the panel applies it a SECOND time: a
+	// timeShift shifts the absolute range further off the frames and the panel renders empty. Dropped
+	// rather than reconciled, since the override's whole purpose (a window relative to now) is
+	// meaningless once the data is frozen. The v2 path already drops these -- v2 keeps them in
+	// data.spec.queryOptions, which v1PanelFromV2Spec doesn't carry over.
+	delete(panel, "timeFrom")
+	delete(panel, "timeShift")
+	delete(panel, "timeCompare")
+	delete(panel, "hideTimeOverride")
 	return panel
 }
 
@@ -661,15 +672,22 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 		// from what querydata.json left of the shared dashboard budget rather than getting a pool of its
 		// own, and is omitted (with the reason in the manifest) on failure or when the budget is spent.
 		if p.Resp != nil {
-			if snapshot, err := marshalSnapshotBackendArtifact(panelJSON, p.QueryRequest, p.Resp); err != nil {
+			snapshotLimit := min(maxQueryDataArtifactBytes, queryDataBytesRemaining)
+			if snapshotLimit < minQueryDataArtifactBytes {
+				// Checked BEFORE marshalling, mirroring the query-data gate above: the snapshot is
+				// all-or-nothing (there is no truncated form to fall back to), so building one for every
+				// remaining panel just to measure and discard it would re-encode the whole response -- the
+				// largest allocation in this path -- once per panel with no budget left to spend on it.
+				entry.SnapshotError = fmt.Sprintf("remaining dashboard query-data budget (%d bytes) below the %d-byte minimum artifact size", queryDataBytesRemaining, minQueryDataArtifactBytes)
+			} else if snapshot, err := marshalSnapshotBackendArtifact(panelJSON, p.QueryRequest, p.Resp); err != nil {
 				entry.SnapshotError = err.Error()
 			} else if len(snapshot) > 0 {
-				if len(snapshot) <= min(maxQueryDataArtifactBytes, queryDataBytesRemaining) {
+				if len(snapshot) <= snapshotLimit {
 					files[dir+"/snapshot-backend.json"] = snapshot
 					entry.SnapshotBytes = len(snapshot)
 					queryDataBytesRemaining -= len(snapshot)
 				} else {
-					entry.SnapshotError = "snapshot-backend artifact exceeded the remaining dashboard query-data budget"
+					entry.SnapshotError = fmt.Sprintf("snapshot-backend artifact (%d bytes) exceeded the remaining dashboard query-data budget (%d bytes)", len(snapshot), snapshotLimit)
 				}
 			}
 		}

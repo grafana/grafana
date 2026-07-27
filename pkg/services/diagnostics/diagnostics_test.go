@@ -370,6 +370,30 @@ func TestBundler_Build_recordsOversizedSnapshot(t *testing.T) {
 	require.Contains(t, string(files["snapshot-error.txt"]), "exceeded")
 }
 
+// A panel-level time override must not survive into the snapshot: the client reads the submitted range
+// from the panel's EFFECTIVE range, so the override is already resolved into the absolute timestamps
+// baked into the dashboard. Keeping it applies the override twice -- a timeShift moves the panel's
+// window off the frames entirely and it renders empty.
+func TestBundler_Build_snapshotDropsPanelTimeOverride(t *testing.T) {
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
+	panelJSON := json.RawMessage(`{"type":"timeseries","title":"CPU","timeFrom":"5m","timeShift":"1d","timeCompare":"1h","hideTimeOverride":true}`)
+	// The submitted range is the shifted one the panel actually queried.
+	request := json.RawMessage(`{"from":"1690000000000","to":"1690003600000","queries":[{"refId":"A"}]}`)
+
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, panelJSON, nil, request, nil, nil)
+	require.NoError(t, err)
+
+	snap := string(readTarGz(t, blob)["snapshot-backend.json"])
+	require.NotContains(t, snap, "timeFrom")
+	require.NotContains(t, snap, "timeShift")
+	require.NotContains(t, snap, "timeCompare")
+	require.NotContains(t, snap, "hideTimeOverride")
+	// The baked range still stands on its own, and the rest of the panel model survives.
+	require.Contains(t, snap, `"from": "`+time.UnixMilli(1690000000000).UTC().Format(time.RFC3339Nano)+`"`)
+	require.Contains(t, snap, `"CPU"`)
+}
+
 func TestBundler_Build_recordsQueryDataRequest(t *testing.T) {
 	request := json.RawMessage(`{"from":"now-1h","to":"now","queries":[{"refId":"A","expr":"up"}]}`)
 
