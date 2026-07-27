@@ -8851,7 +8851,6 @@
       "filter-by-type": "Filter by type",
       "metadata": {
         "close": "Close",
-        "empty": "Select a metric to see its details",
         "unit-label": "Unit"
       },
       "metric-row": {
