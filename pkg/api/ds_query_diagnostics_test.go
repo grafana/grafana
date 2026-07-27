@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/httpclient/harcapture"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -150,13 +151,29 @@ func TestQueryDiagnostics_unparseableBody_returns400(t *testing.T) {
 func TestQueryDiagnostics_success_bundleHeadersAndSkipCache(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
 	fakeQuery := query.NewFakeQueryService(t)
-	returnFreshHARResponse(fakeQuery, "QueryData")
+	// SkipQueryCache is sampled from INSIDE the query, not after the handler returns: the caching
+	// middleware reads it off the ReqContext while the query runs, so setting the flag after dispatching
+	// would leave cache bypass broken — and a post-hoc `require.True(t, c.SkipQueryCache)` would still
+	// pass. Capturing the ReqContext the query actually saw also pins the handler's claim that it is the
+	// same pointer c, which is what makes mutating c here take effect for this request.
+	var queryReqCtx *contextmodel.ReqContext
+	var skipQueryCacheDuringQuery bool
+	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(func(ctx context.Context, _ identity.Requester, _ bool, _ dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+			queryReqCtx = contexthandler.FromContext(ctx)
+			if queryReqCtx != nil {
+				skipQueryCacheDuringQuery = queryReqCtx.SkipQueryCache
+			}
+			return diagHARResponse(), nil
+		})
 	hs := &HTTPServer{queryDataService: fakeQuery}
 	c, rec := newDiagReqCtx(t, `{"queries":[{"refId":"A","datasource":{"uid":"prom"}}]}`, nil)
 
 	resp := hs.QueryDiagnostics(c)
 	require.Equal(t, http.StatusOK, resp.Status())
-	require.True(t, c.SkipQueryCache, "diagnostics must force a live query so HAR capture sees the wire")
+	require.Same(t, c, queryReqCtx, "the query context must carry the same ReqContext the caching middleware reads back")
+	require.True(t, skipQueryCacheDuringQuery,
+		"diagnostics must force a live query BEFORE dispatching, so HAR capture sees the wire")
 
 	resp.WriteTo(c)
 	require.Equal(t, "application/tar+gzip", rec.Header().Get("Content-Type"))
@@ -284,16 +301,33 @@ func TestQueryDiagnostics_externalPluginSwallowedError_bundlesIt(t *testing.T) {
 		"an external plugin's swallowed error must reach query-error.txt")
 }
 
+// TestQueryDiagnostics_queryV2Dispatch pins the header-driven dispatch. The handler compares
+// X-Query-V2 against exactly "true", mirroring QueryMetricsV2, so the negative case is pinned too:
+// loosening the check to any non-empty value would hand Query V2's per-query time ranges to a client
+// that explicitly sent "false", and captured traffic would stop matching the panel.
+//
+// Only the expected method is stubbed per case; a dispatch to the other one fails the test on an
+// unexpected mock call.
 func TestQueryDiagnostics_queryV2Dispatch(t *testing.T) {
-	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
-	fakeQuery := query.NewFakeQueryService(t)
-	// Only QueryDataNew is stubbed; had the handler dispatched to QueryData the mock would fail the test.
-	returnFreshHARResponse(fakeQuery, "QueryDataNew")
-	hs := &HTTPServer{queryDataService: fakeQuery}
-	c, _ := newDiagReqCtx(t, `{"queries":[{"refId":"A"}]}`, map[string]string{"X-Query-V2": "true"})
+	for _, tc := range []struct {
+		name       string
+		header     string
+		wantMethod string
+	}{
+		{name: `"true" dispatches to QueryDataNew`, header: "true", wantMethod: "QueryDataNew"},
+		{name: "any other value keeps QueryData", header: "false", wantMethod: "QueryData"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+			fakeQuery := query.NewFakeQueryService(t)
+			returnFreshHARResponse(fakeQuery, tc.wantMethod)
+			hs := &HTTPServer{queryDataService: fakeQuery}
+			c, _ := newDiagReqCtx(t, `{"queries":[{"refId":"A"}]}`, map[string]string{"X-Query-V2": tc.header})
 
-	require.Equal(t, http.StatusOK, hs.QueryDiagnostics(c).Status())
-	fakeQuery.AssertCalled(t, "QueryDataNew", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+			require.Equal(t, http.StatusOK, hs.QueryDiagnostics(c).Status())
+			fakeQuery.AssertCalled(t, tc.wantMethod, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		})
+	}
 }
 
 func TestQueryDiagnostics_noCapturePerRefIDError_returns400(t *testing.T) {
