@@ -226,6 +226,8 @@ export function AutoGridResizeIntercept({ item }: AutoGridResizeInterceptProps) 
       <button
         ref={setRefEl}
         type="button"
+        // no keyboard resize support
+        tabIndex={-1}
         className={styles.zone}
         aria-label={t('dashboard.auto-grid.resize-intercept.aria-label', 'Panel sizes are managed by auto layout')}
         onMouseEnter={onHover}
