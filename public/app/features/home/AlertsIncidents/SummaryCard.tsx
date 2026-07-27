@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
-import { type Ref, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -27,7 +27,6 @@ interface SummaryCardProps<T> {
   // Rendered in the empty state in place of emptyMessage — a call-to-action button. Caller gates it.
   emptyAction?: ReactNode;
   items: T[];
-  itemsRef?: Ref<HTMLUListElement>;
   getItemKey: (item: T) => string;
   renderItem: (item: T) => ReactNode;
   // Footer element, already gated by the caller. Omit to render no footer.
@@ -44,7 +43,6 @@ export function SummaryCard<T>({
   emptyMessage,
   emptyAction,
   items,
-  itemsRef,
   getItemKey,
   renderItem,
   footer,
@@ -96,7 +94,7 @@ export function SummaryCard<T>({
         )}
 
         {!loading && !error && items.length > 0 && (
-          <ul ref={itemsRef} className={redesignEnabled ? undefined : styles.list}>
+          <ul className={redesignEnabled ? undefined : styles.list}>
             {items.map((item) => (
               <li key={getItemKey(item)} className={!redesignEnabled ? styles.rowPadding : undefined}>
                 {renderItem(item)}

@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { useEffect } from 'react';
-import { useMeasure } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -17,7 +16,6 @@ import { SummaryCard } from './SummaryCard';
 export function NewsCard() {
   const styles = useStyles2(getStyles);
   const { state, getNews } = useNewsFeed(DEFAULT_FEED_URL);
-  const [widthRef, widthMeasure] = useMeasure<HTMLUListElement>();
 
   useEffect(() => {
     getNews();
@@ -34,13 +32,8 @@ export function NewsCard() {
       }
       emptyMessage={t('home.news-card.empty', 'No recent blog posts.')}
       items={Array.from({ length: state.value?.length ?? 0 }, (_, i) => i)}
-      itemsRef={widthRef}
       getItemKey={(index) => state.value?.get(index)?.link ?? String(index)}
-      renderItem={(index) =>
-        state.value && (
-          <News showImage width={widthMeasure.width} data={state.value} index={index} className={styles.post} />
-        )
-      }
+      renderItem={(index) => state.value && <News showImage data={state.value} index={index} className={styles.post} />}
       footer={
         !!state.value?.length && (
           <FooterActions>
