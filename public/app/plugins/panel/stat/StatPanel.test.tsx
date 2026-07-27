@@ -104,7 +104,7 @@ describe('StatPanel', () => {
     expect(screen.queryByText('30')).not.toBeInTheDocument();
   });
 
-  it('renders a sparkline value when graphMode is Area', () => {
+  it('renders a sparkline chart alongside the value when graphMode is Area', () => {
     // A time + number frame produces a sparkline, exercising the sparkline.timeRange branch.
     const frame = toDataFrame({
       fields: [
@@ -113,9 +113,25 @@ describe('StatPanel', () => {
       ],
     });
 
-    renderStatPanel({ graphMode: BigValueGraphMode.Area }, { series: [frame] });
+    const { container } = renderStatPanel({ graphMode: BigValueGraphMode.Area }, { series: [frame] });
 
     expect(screen.getByText('30')).toBeInTheDocument();
+    // The Area graph mode draws the sparkline into a uPlot chart.
+    expect(container.querySelector('.uplot')).toBeInTheDocument();
+  });
+
+  it('renders no sparkline chart when graphMode is None', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2, 3], config: {} },
+        { name: 'value', type: FieldType.number, values: [10, 20, 30], config: {} },
+      ],
+    });
+
+    const { container } = renderStatPanel({ graphMode: BigValueGraphMode.None }, { series: [frame] });
+
+    expect(screen.getByText('30')).toBeInTheDocument();
+    expect(container.querySelector('.uplot')).not.toBeInTheDocument();
   });
 
   it('renders the value with percent change enabled', () => {
@@ -129,6 +145,8 @@ describe('StatPanel', () => {
     renderStatPanel({ showPercentChange: true }, { series: [frame] });
 
     expect(screen.getByText('30')).toBeInTheDocument();
+    // diffperc of [10, 20, 30] is (30 - 10) / 10 = 200%
+    expect(screen.getByText('200%')).toBeInTheDocument();
   });
 
   it('renders each row when reduceOptions.values is true', () => {

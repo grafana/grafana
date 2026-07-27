@@ -18,7 +18,12 @@ describe('addStandardDataReduceOptions', () => {
     addStandardDataReduceOptions(builder);
 
     const paths = builder.getItems().map((item) => item.path);
-    expect(paths).toMatchSnapshot();
+    expect(paths).toEqual([
+      'reduceOptions.values',
+      'reduceOptions.limit',
+      'reduceOptions.calcs',
+      'reduceOptions.fields',
+    ]);
   });
 
   it('omits the field matcher option when includeFieldMatcher is false', () => {
@@ -31,28 +36,32 @@ describe('addStandardDataReduceOptions', () => {
 
   // The limit input and the calculation picker are mutually exclusive: limit shows for "all values"
   // (values: true), the calc picker shows when reducing to a single value (values: false).
-  describe.each([
-    { reduceOptions: { values: true }, showsLimit: true, showsCalcs: false },
-    { reduceOptions: { values: false }, showsLimit: false, showsCalcs: true },
-  ])('showIf gating for reduceOptions $reduceOptions', ({ reduceOptions, showsLimit, showsCalcs }) => {
-    const config = { reduceOptions } as SingleStatBaseOptions;
+  describe.each`
+    reduceOptionsValues | limitShown | calcsShown
+    ${true}             | ${true}    | ${false}
+    ${false}            | ${false}   | ${true}
+  `(
+    'showIf gating for reduceOptions.values=$reduceOptionsValues',
+    ({ reduceOptionsValues, limitShown, calcsShown }) => {
+      const config = { reduceOptions: { values: reduceOptionsValues } } as SingleStatBaseOptions;
 
-    it(`${showsLimit ? 'shows' : 'hides'} the limit input`, () => {
-      const builder = new PanelOptionsEditorBuilder<SingleStatBaseOptions>();
-      addStandardDataReduceOptions(builder);
+      it(`${limitShown ? 'shows' : 'hides'} the limit input`, () => {
+        const builder = new PanelOptionsEditorBuilder<SingleStatBaseOptions>();
+        addStandardDataReduceOptions(builder);
 
-      const showIf = getItem(builder, 'reduceOptions.limit')?.showIf!;
-      expect(showIf(config, undefined)).toBe(showsLimit);
-    });
+        const showIf = getItem(builder, 'reduceOptions.limit')?.showIf!;
+        expect(showIf(config, undefined)).toBe(limitShown);
+      });
 
-    it(`${showsCalcs ? 'shows' : 'hides'} the calculation picker`, () => {
-      const builder = new PanelOptionsEditorBuilder<SingleStatBaseOptions>();
-      addStandardDataReduceOptions(builder);
+      it(`${calcsShown ? 'shows' : 'hides'} the calculation picker`, () => {
+        const builder = new PanelOptionsEditorBuilder<SingleStatBaseOptions>();
+        addStandardDataReduceOptions(builder);
 
-      const showIf = getItem(builder, 'reduceOptions.calcs')?.showIf!;
-      expect(showIf(config, undefined)).toBe(showsCalcs);
-    });
-  });
+        const showIf = getItem(builder, 'reduceOptions.calcs')?.showIf!;
+        expect(showIf(config, undefined)).toBe(calcsShown);
+      });
+    }
+  );
 
   describe('fields getOptions', () => {
     function getFieldsOptions(builder: PanelOptionsEditorBuilder<SingleStatBaseOptions>) {
