@@ -11,12 +11,15 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/infra/httpclient/harcapture"
 )
 
@@ -26,6 +29,10 @@ type Bundler struct{}
 // Query responses can contain substantially more data than the diagnostic traffic itself. Keep
 // their uncompressed JSON bounded independently so adding querydata.json cannot multiply a large
 // panel/dashboard archive without an explicit truncation marker.
+//
+// maxDashboardQueryDataBytes covers querydata.json AND snapshot-backend.json together: the snapshot
+// re-encodes the same frames, so giving it its own allowance would double a dashboard bundle's
+// uncompressed artifact ceiling for data querydata.json already holds.
 const (
 	maxQueryDataArtifactBytes  = 8 << 20
 	maxDashboardQueryDataBytes = 32 << 20
@@ -83,9 +90,17 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 	}
 
 	// snapshot-backend.json: an importable, data-baked dashboard that renders the plugin's returned
-	// frames offline (no datasource). A convenience artifact -- on failure or when it would exceed the
-	// per-panel budget it is simply omitted; querydata.json remains the authoritative record.
-	if snapshot, err := marshalSnapshotBackendArtifact(panelJSON, resp); err == nil && len(snapshot) > 0 && len(snapshot) <= maxQueryDataArtifactBytes {
+	// frames offline (no datasource). A convenience artifact -- querydata.json remains the authoritative
+	// record -- so a failure or an over-budget artifact costs only the snapshot. Why it went missing is
+	// recorded in snapshot-error.txt, mirroring how the dashboard path records manifest.snapshotError:
+	// omitting it silently leaves a reader unable to tell a failure from a response with no frames.
+	snapshot, snapshotErr := marshalSnapshotBackendArtifact(panelJSON, queryRequestJSON, resp)
+	switch {
+	case snapshotErr != nil:
+		files["snapshot-error.txt"] = []byte(snapshotErr.Error() + "\n")
+	case len(snapshot) > maxQueryDataArtifactBytes:
+		files["snapshot-error.txt"] = []byte(fmt.Sprintf("snapshot-backend artifact (%d bytes) exceeded the %d-byte limit\n", len(snapshot), maxQueryDataArtifactBytes))
+	case len(snapshot) > 0:
 		files["snapshot-backend.json"] = snapshot
 	}
 
@@ -342,59 +357,106 @@ type manifestPanelEntry struct {
 	CaptureError string `json:"captureError,omitempty"`
 }
 
+// snapshotArtifactTitle names both the snapshot dashboard and its panel when the panel model doesn't
+// supply a title of its own.
+const snapshotArtifactTitle = "Diagnostics snapshot (backend / plugin output)"
+
 // marshalSnapshotBackendArtifact builds an importable, data-baked dashboard from the backend
-// QueryDataResponse. It reuses Grafana's snapshot format -- each refID becomes a Grafana-datasource
-// target with queryType "snapshot" carrying the response frames verbatim (the same DataFrameJSON
-// querydata.json records) -- so the dashboard renders OFFLINE, with no live datasource and no query
-// re-run: the "what did the plugin return" view a support engineer can open and see. panelJSON, when
-// present, supplies the panel's visualization + field config so the render matches the real panel;
-// its own datasource/targets are replaced so the imported panel can never re-query.
+// QueryDataResponse. It reuses Grafana's snapshot format -- a Grafana-datasource target with
+// queryType "snapshot" carrying the response frames verbatim (the same DataFrameJSON querydata.json
+// records) -- so the dashboard renders OFFLINE, with no live datasource and no query re-run: the
+// "what did the plugin return" view a support engineer can open and see. panelJSON, when present,
+// supplies the panel's visualization + field config so the render matches the real panel; its own
+// datasource/targets are replaced so the imported panel can never re-query.
+//
+// queryRequestJSON supplies the submitted time range, which is baked into the dashboard: an import
+// with no time range defaults to now-6h, so a bundle read a day later would render an empty panel
+// with the frames sitting outside the window.
 //
 // Returns nil (no artifact) when there is no response or no frames to bake.
-func marshalSnapshotBackendArtifact(panelJSON json.RawMessage, resp *backend.QueryDataResponse) ([]byte, error) {
+func marshalSnapshotBackendArtifact(panelJSON, queryRequestJSON json.RawMessage, resp *backend.QueryDataResponse) ([]byte, error) {
 	if resp == nil {
 		return nil, nil
 	}
-	respJSON, err := queryDataResponseWithoutCaptureFrames(resp).MarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	var parsed struct {
-		Results map[string]struct {
-			Frames []json.RawMessage `json:"frames"`
-		} `json:"results"`
-	}
-	if err := json.Unmarshal(respJSON, &parsed); err != nil {
+	frames, err := snapshotFrames(resp)
+	if err != nil || len(frames) == 0 {
 		return nil, err
 	}
 
-	// Deterministic refID order so the artifact (and its tests) are stable.
-	refIDs := make([]string, 0, len(parsed.Results))
-	for refID := range parsed.Results {
-		refIDs = append(refIDs, refID)
+	panel := snapshotPanel(panelJSON)
+	// One target holding every refID's frames, matching the format's only other producer (the scenes
+	// snapshot serializer). Per-refID targets look tidier but lose data: the Grafana datasource emits
+	// each snapshot target as a keyless response packet, and the query runner then keys packets by the
+	// first frame's refId -- which is omitempty in the SDK and unset by core datasources such as
+	// Prometheus -- so sibling targets collapse onto the same key and all but one are dropped.
+	panel["targets"] = []map[string]any{{
+		"refId":      "A",
+		"datasource": grafanaSnapshotDatasourceRef,
+		"queryType":  "snapshot",
+		"snapshot":   frames,
+	}}
+
+	dashboard := map[string]any{
+		"schemaVersion": schemaversion.LATEST_VERSION,
+		"title":         snapshotArtifactTitle,
+		"editable":      true,
+		"panels":        []any{panel},
+	}
+	if timeRange := snapshotTimeRange(queryRequestJSON); timeRange != nil {
+		dashboard["time"] = timeRange
+	}
+	return json.MarshalIndent(dashboard, "", "  ")
+}
+
+// snapshotFrames encodes every non-capture frame in resp as DataFrameJSON, in deterministic refID
+// order so the artifact (and its tests) are stable. Frames are encoded one at a time rather than by
+// re-marshalling the whole response: the response JSON has already been built once for
+// querydata.json, and a second full encode plus a decode into frames would hold several copies of a
+// large response at peak.
+func snapshotFrames(resp *backend.QueryDataResponse) ([]json.RawMessage, error) {
+	refIDs := make([]string, 0, len(resp.Responses))
+	for refID := range resp.Responses {
+		if !isHARResponse(refID) {
+			refIDs = append(refIDs, refID)
+		}
 	}
 	sort.Strings(refIDs)
 
-	targets := make([]map[string]any, 0, len(refIDs))
-	frameCount := 0
+	var frames []json.RawMessage
 	for _, refID := range refIDs {
-		frames := parsed.Results[refID].Frames
-		frameCount += len(frames)
-		targets = append(targets, map[string]any{
-			"refId":      refID,
-			"datasource": grafanaSnapshotDatasourceRef,
-			"queryType":  "snapshot",
-			"snapshot":   frames,
-		})
+		for _, frame := range resp.Responses[refID].Frames {
+			if frame == nil {
+				continue
+			}
+			// Merging every refID into one target loses the per-refID grouping the response map gave us,
+			// so stamp the refId the frame is missing -- the snapshot format expects the payload itself to
+			// reference the original refIds. Stamped on a copy: resp belongs to the caller, which also
+			// serializes it for querydata.json.
+			stamped := *frame
+			if stamped.RefID == "" {
+				stamped.RefID = refID
+			}
+			encoded, err := data.FrameToJSON(&stamped, data.IncludeAll)
+			if err != nil {
+				return nil, fmt.Errorf("encode frame for refId %s: %w", refID, err)
+			}
+			frames = append(frames, encoded)
+		}
 	}
-	if frameCount == 0 {
-		return nil, nil
-	}
+	return frames, nil
+}
 
+// snapshotPanel builds the snapshot dashboard's single panel from the supplied panel model, keeping
+// only what a v1 dashboard can render offline. Callers set the targets.
+func snapshotPanel(panelJSON json.RawMessage) map[string]any {
 	panel := map[string]any{}
 	if len(panelJSON) > 0 {
-		// A malformed panel model shouldn't lose the snapshot; fall back to a minimal panel.
-		if err := json.Unmarshal(panelJSON, &panel); err != nil {
+		// v2 dashboards store elements as {kind, spec}, and BuildDashboard hands that through verbatim
+		// (see indexPanelJSON), so the wrapper has to be translated rather than unmarshalled as a panel.
+		// A malformed panel model shouldn't lose the snapshot either; both fall back to a minimal panel.
+		if spec := v2ElementSpec(panelJSON); spec != nil {
+			panel = v1PanelFromV2Spec(spec)
+		} else if err := json.Unmarshal(panelJSON, &panel); err != nil {
 			panel = map[string]any{}
 		}
 	}
@@ -402,21 +464,119 @@ func marshalSnapshotBackendArtifact(panelJSON json.RawMessage, resp *backend.Que
 		panel["type"] = "timeseries"
 	}
 	if _, ok := panel["title"]; !ok {
-		panel["title"] = "Diagnostics snapshot (backend / plugin output)"
+		panel["title"] = snapshotArtifactTitle
 	}
 	panel["id"] = 1
 	panel["gridPos"] = map[string]any{"h": 12, "w": 24, "x": 0, "y": 0}
 	panel["datasource"] = grafanaSnapshotDatasourceRef
-	panel["targets"] = targets
 	delete(panel, "snapshotData")
+	// A library-panel reference would make the import resolve the panel from a library uid that doesn't
+	// exist in the reader's Grafana, discarding the baked targets along with the panel model.
+	delete(panel, "libraryPanel")
+	// The baked frames are the plugin's output, BEFORE frontend processing. Applying the panel's
+	// transformations on top would render something that is neither the backend response this artifact
+	// records nor the panel's real output; the post-transform view is snapshot-rendered.json's job.
+	delete(panel, "transformations")
+	return panel
+}
 
-	dashboard := map[string]any{
-		"schemaVersion": 41,
-		"title":         "Diagnostics snapshot (backend / plugin output)",
-		"editable":      true,
-		"panels":        []any{panel},
+// v2ElementSpec returns the spec of a v2 dashboard element ({kind, spec}), or nil if raw isn't one.
+func v2ElementSpec(raw json.RawMessage) json.RawMessage {
+	var element struct {
+		Kind string          `json:"kind"`
+		Spec json.RawMessage `json:"spec"`
 	}
-	return json.MarshalIndent(dashboard, "", "  ")
+	if err := json.Unmarshal(raw, &element); err != nil || element.Kind == "" || len(element.Spec) == 0 {
+		return nil
+	}
+	return element.Spec
+}
+
+// v1PanelFromV2Spec translates the parts of a v2 panel spec that a v1 snapshot dashboard can render:
+// the viz plugin and its options/fieldConfig, plus the panel's identity. Queries are dropped because
+// the snapshot replaces them, and so is anything whose v1 equivalent has a different shape (v2
+// transformations are {kind, spec}, not {id, options}) -- copying the spec wholesale would emit a
+// hybrid object and carry the original datasource refs into an artifact that must not re-query.
+func v1PanelFromV2Spec(spec json.RawMessage) map[string]any {
+	var v2 struct {
+		Title       string `json:"title"`
+		Description string `json:"description"`
+		Transparent bool   `json:"transparent"`
+		VizConfig   struct {
+			Kind    string `json:"kind"`
+			Group   string `json:"group"`
+			Version string `json:"version"`
+			Spec    struct {
+				Options     map[string]any  `json:"options"`
+				FieldConfig json.RawMessage `json:"fieldConfig"`
+			} `json:"spec"`
+		} `json:"vizConfig"`
+	}
+	if err := json.Unmarshal(spec, &v2); err != nil {
+		return map[string]any{}
+	}
+
+	panel := map[string]any{}
+	// v2alpha1 put the plugin id in vizConfig.kind; v2beta1 onwards moved it to vizConfig.group and set
+	// kind to the literal "VizConfig".
+	pluginID := v2.VizConfig.Group
+	if pluginID == "" && v2.VizConfig.Kind != "VizConfig" {
+		pluginID = v2.VizConfig.Kind
+	}
+	if pluginID != "" {
+		panel["type"] = pluginID
+	}
+	if v2.Title != "" {
+		panel["title"] = v2.Title
+	}
+	if v2.Description != "" {
+		panel["description"] = v2.Description
+	}
+	if v2.Transparent {
+		panel["transparent"] = true
+	}
+	if v2.VizConfig.Version != "" {
+		panel["pluginVersion"] = v2.VizConfig.Version
+	}
+	if len(v2.VizConfig.Spec.Options) > 0 {
+		panel["options"] = v2.VizConfig.Spec.Options
+	}
+	if len(v2.VizConfig.Spec.FieldConfig) > 0 {
+		panel["fieldConfig"] = v2.VizConfig.Spec.FieldConfig
+	}
+	return panel
+}
+
+// snapshotTimeRange resolves the submitted MetricRequest's time range for the snapshot dashboard.
+// The client sends epoch milliseconds, which are converted to absolute RFC3339 because a dashboard's
+// time.from/to is parsed as a date expression, not a number; anything else (a relative "now-1h" from
+// a non-browser caller) is passed through verbatim. Returns nil when there is no range to bake, so
+// the import falls back to Grafana's default.
+func snapshotTimeRange(queryRequestJSON json.RawMessage) map[string]any {
+	if len(queryRequestJSON) == 0 {
+		return nil
+	}
+	var request struct {
+		From string `json:"from"`
+		To   string `json:"to"`
+	}
+	if err := json.Unmarshal(queryRequestJSON, &request); err != nil {
+		return nil
+	}
+	if request.From == "" || request.To == "" {
+		return nil
+	}
+	return map[string]any{
+		"from": snapshotTimeValue(request.From),
+		"to":   snapshotTimeValue(request.To),
+	}
+}
+
+func snapshotTimeValue(value string) string {
+	if epochMillis, err := strconv.ParseInt(value, 10, 64); err == nil {
+		return time.UnixMilli(epochMillis).UTC().Format(time.RFC3339Nano)
+	}
+	return value
 }
 
 // BuildDashboard assembles a whole-dashboard .tar.gz: a shared dashboard.json and manifest.json plus
@@ -437,7 +597,6 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 
 	usedDirs := map[string]bool{}
 	queryDataBytesRemaining := maxDashboardQueryDataBytes
-	snapshotBytesRemaining := maxDashboardQueryDataBytes
 	panelJSONByID := indexPanelJSON(dashboardJSON)
 	for _, p := range panels {
 		entry := manifestPanelEntry{ID: p.ID, Title: p.Title, Datasources: p.Datasources}
@@ -498,18 +657,19 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 		entry.QueryDataError = strings.Join(queryDataErrs, "; ")
 
 		// snapshot-backend.json: importable, data-baked view of this panel's returned frames (renders
-		// offline). Convenience artifact, bounded by a shared dashboard budget; omitted on failure or
-		// when it would exceed the remaining budget (querydata.json remains the authoritative record).
+		// offline). Convenience artifact -- querydata.json remains the authoritative record -- so it draws
+		// from what querydata.json left of the shared dashboard budget rather than getting a pool of its
+		// own, and is omitted (with the reason in the manifest) on failure or when the budget is spent.
 		if p.Resp != nil {
-			if snapshot, err := marshalSnapshotBackendArtifact(panelJSON, p.Resp); err != nil {
+			if snapshot, err := marshalSnapshotBackendArtifact(panelJSON, p.QueryRequest, p.Resp); err != nil {
 				entry.SnapshotError = err.Error()
 			} else if len(snapshot) > 0 {
-				if len(snapshot) <= min(maxQueryDataArtifactBytes, snapshotBytesRemaining) {
+				if len(snapshot) <= min(maxQueryDataArtifactBytes, queryDataBytesRemaining) {
 					files[dir+"/snapshot-backend.json"] = snapshot
 					entry.SnapshotBytes = len(snapshot)
-					snapshotBytesRemaining -= len(snapshot)
+					queryDataBytesRemaining -= len(snapshot)
 				} else {
-					entry.SnapshotError = "snapshot-backend artifact exceeded its assigned dashboard budget"
+					entry.SnapshotError = "snapshot-backend artifact exceeded the remaining dashboard query-data budget"
 				}
 			}
 		}

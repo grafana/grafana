@@ -155,6 +155,219 @@ func TestBundler_Build_noSnapshotWithoutResponse(t *testing.T) {
 
 	files := readTarGz(t, blob)
 	require.NotContains(t, files, "snapshot-backend.json")
+	require.NotContains(t, files, "snapshot-error.txt", "nothing to bake is not a failure")
+}
+
+// Every refID's frames go into ONE snapshot target: the Grafana datasource emits each snapshot target
+// as a keyless response packet, so sibling targets collapse onto the same key in the query runner and
+// all but one would be dropped. The merge loses the response map's per-refID grouping, so each frame
+// carries the refId it came from.
+func TestBundler_Build_snapshotMergesRefIDsIntoOneTarget(t *testing.T) {
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{
+		"B": {Frames: data.Frames{data.NewFrame("mem", data.NewField("value", nil, []float64{2}))}},
+		"A": {Frames: data.Frames{data.NewFrame("cpu", data.NewField("value", nil, []float64{1}))}},
+	}}
+
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	var dash struct {
+		Panels []struct {
+			Targets []struct {
+				RefID    string `json:"refId"`
+				Snapshot []struct {
+					Schema struct {
+						Name  string `json:"name"`
+						RefID string `json:"refId"`
+					} `json:"schema"`
+				} `json:"snapshot"`
+			} `json:"targets"`
+		} `json:"panels"`
+	}
+	require.NoError(t, json.Unmarshal(files["snapshot-backend.json"], &dash))
+	require.Len(t, dash.Panels[0].Targets, 1, "one target, not one per refID")
+	require.Equal(t, "A", dash.Panels[0].Targets[0].RefID)
+
+	frames := dash.Panels[0].Targets[0].Snapshot
+	require.Len(t, frames, 2, "both refIDs' frames are baked")
+	// Sorted by refID, so A's frame comes first regardless of response map iteration order.
+	require.Equal(t, "cpu", frames[0].Schema.Name)
+	require.Equal(t, "A", frames[0].Schema.RefID, "the frame carries the refId it came from")
+	require.Equal(t, "mem", frames[1].Schema.Name)
+	require.Equal(t, "B", frames[1].Schema.RefID)
+}
+
+// A frame that already names its refId keeps it, and the caller's response is left untouched (Build
+// also serializes it for querydata.json).
+func TestBundler_Build_snapshotDoesNotMutateResponseFrames(t *testing.T) {
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	frame.RefID = "Q1"
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
+
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	require.Equal(t, "Q1", frame.RefID, "the response frame is not stamped in place")
+	require.Contains(t, string(readTarGz(t, blob)["snapshot-backend.json"]), `"refId": "Q1"`)
+}
+
+// Without a baked time range an import defaults to now-6h and the frames sit outside the window, so
+// the panel renders empty. The client submits epoch milliseconds; a dashboard parses time.from/to as
+// a date expression, so they have to be absolute timestamps.
+func TestBundler_Build_snapshotBakesRequestTimeRange(t *testing.T) {
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
+	request := json.RawMessage(`{"from":"1690000000000","to":"1690003600000","queries":[{"refId":"A"}]}`)
+
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, request, nil, nil)
+	require.NoError(t, err)
+
+	var dash struct {
+		Time struct {
+			From string `json:"from"`
+			To   string `json:"to"`
+		} `json:"time"`
+	}
+	require.NoError(t, json.Unmarshal(readTarGz(t, blob)["snapshot-backend.json"], &dash))
+	require.Equal(t, time.UnixMilli(1690000000000).UTC().Format(time.RFC3339Nano), dash.Time.From)
+	require.Equal(t, time.UnixMilli(1690003600000).UTC().Format(time.RFC3339Nano), dash.Time.To)
+}
+
+// A non-browser caller can submit a relative range; it is passed through rather than mangled.
+func TestBundler_Build_snapshotKeepsRelativeTimeRange(t *testing.T) {
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
+	request := json.RawMessage(`{"from":"now-1h","to":"now","queries":[{"refId":"A"}]}`)
+
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, request, nil, nil)
+	require.NoError(t, err)
+
+	require.Contains(t, string(readTarGz(t, blob)["snapshot-backend.json"]), `"from": "now-1h"`)
+}
+
+// v2 dashboards store panels as {kind, spec}. The translatable viz config is lifted into the v1
+// snapshot panel; the query definitions (and the datasource they name) are not carried over.
+func TestBundler_Build_snapshotFlattensV2PanelElement(t *testing.T) {
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
+	panelJSON := json.RawMessage(`{
+		"kind": "Panel",
+		"spec": {
+			"id": 3,
+			"title": "CPU",
+			"description": "how busy",
+			"data": {"kind": "QueryGroup", "spec": {
+				"queries": [{"kind": "PanelQuery", "spec": {"refId": "A", "query": {"kind": "prometheus", "group": "prometheus", "datasource": {"name": "prom-x"}, "spec": {"expr": "up"}}}}],
+				"transformations": [{"kind": "reduce", "group": "reduce", "spec": {"options": {}}}],
+				"queryOptions": {}
+			}},
+			"vizConfig": {"kind": "VizConfig", "group": "stat", "version": "11.0.0", "spec": {
+				"options": {"colorMode": "value"},
+				"fieldConfig": {"defaults": {"unit": "percent"}, "overrides": []}
+			}}
+		}
+	}`)
+
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, panelJSON, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	snap := string(files["snapshot-backend.json"])
+	var dash struct {
+		Panels []struct {
+			Type          string `json:"type"`
+			Title         string `json:"title"`
+			Description   string `json:"description"`
+			PluginVersion string `json:"pluginVersion"`
+			Options       struct {
+				ColorMode string `json:"colorMode"`
+			} `json:"options"`
+			FieldConfig struct {
+				Defaults struct {
+					Unit string `json:"unit"`
+				} `json:"defaults"`
+			} `json:"fieldConfig"`
+		} `json:"panels"`
+	}
+	require.NoError(t, json.Unmarshal(files["snapshot-backend.json"], &dash))
+	require.Equal(t, "stat", dash.Panels[0].Type, "the plugin id comes from vizConfig.group")
+	require.Equal(t, "CPU", dash.Panels[0].Title)
+	require.Equal(t, "how busy", dash.Panels[0].Description)
+	require.Equal(t, "11.0.0", dash.Panels[0].PluginVersion)
+	require.Equal(t, "value", dash.Panels[0].Options.ColorMode)
+	require.Equal(t, "percent", dash.Panels[0].FieldConfig.Defaults.Unit)
+	require.NotContains(t, snap, "prom-x", "the v2 query's datasource is not carried into the artifact")
+	require.NotContains(t, snap, "vizConfig", "the v2 wrapper is translated, not copied")
+	require.NotContains(t, snap, `"spec"`)
+}
+
+// v2alpha1 named the plugin in vizConfig.kind before it moved to vizConfig.group.
+func TestBundler_Build_snapshotFlattensV2AlphaPanelElement(t *testing.T) {
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
+	panelJSON := json.RawMessage(`{"kind":"Panel","spec":{"id":3,"title":"CPU","vizConfig":{"kind":"gauge","spec":{"options":{},"fieldConfig":{}}}}}`)
+
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, panelJSON, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	var dash struct {
+		Panels []struct {
+			Type string `json:"type"`
+		} `json:"panels"`
+	}
+	require.NoError(t, json.Unmarshal(readTarGz(t, blob)["snapshot-backend.json"], &dash))
+	require.Equal(t, "gauge", dash.Panels[0].Type)
+}
+
+// A library-panel ref would make the import resolve the panel from a uid the reader's Grafana doesn't
+// have, discarding the baked targets. Transformations are dropped too: the baked frames are the
+// plugin's output before frontend processing.
+func TestBundler_Build_snapshotDropsLibraryPanelAndTransformations(t *testing.T) {
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
+	panelJSON := json.RawMessage(`{"type":"stat","title":"CPU","libraryPanel":{"uid":"lib-1","name":"Shared CPU"},"transformations":[{"id":"reduce","options":{}}],"snapshotData":[]}`)
+
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, panelJSON, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	snap := string(readTarGz(t, blob)["snapshot-backend.json"])
+	require.NotContains(t, snap, "libraryPanel")
+	require.NotContains(t, snap, "lib-1")
+	require.NotContains(t, snap, "transformations")
+	require.NotContains(t, snap, "snapshotData")
+	require.Contains(t, snap, `"stat"`, "the rest of the panel model still contributes")
+}
+
+// A frame the SDK cannot encode costs only the snapshot: querydata.json still ships (degraded), and
+// the reason the snapshot is missing is recorded rather than swallowed.
+func TestBundler_Build_recordsSnapshotEncodeFailure(t *testing.T) {
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	frame.Meta = &data.FrameMeta{Custom: math.NaN()}
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
+
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.NotContains(t, files, "snapshot-backend.json")
+	require.Contains(t, string(files["snapshot-error.txt"]), "encode frame for refId A")
+	require.Contains(t, files, "querydata.json", "the authoritative record still ships")
+}
+
+// The snapshot is a convenience artifact, but a reader must be able to tell "no frames to bake" from
+// "the snapshot didn't fit" -- the single-panel bundle has no manifest to record it in.
+func TestBundler_Build_recordsOversizedSnapshot(t *testing.T) {
+	frame := data.NewFrame("logs", data.NewField("line", nil, []string{strings.Repeat("x", maxQueryDataArtifactBytes)}))
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
+
+	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.NotContains(t, files, "snapshot-backend.json")
+	require.Contains(t, files, "snapshot-error.txt")
+	require.Contains(t, string(files["snapshot-error.txt"]), "exceeded")
 }
 
 func TestBundler_Build_recordsQueryDataRequest(t *testing.T) {
@@ -661,6 +874,89 @@ func TestBuildDashboard_writesSnapshotPerPanel(t *testing.T) {
 	require.NoError(t, json.Unmarshal(files["manifest.json"], &m))
 	require.Len(t, m.Panels, 1)
 	require.Positive(t, m.Panels[0].SnapshotBytes, "manifest records the snapshot size")
+}
+
+// The per-panel time range comes from that panel's own submitted request.
+func TestBuildDashboard_snapshotBakesPanelTimeRange(t *testing.T) {
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	panels := []DashboardPanel{{
+		ID:           1,
+		Title:        "CPU Usage",
+		QueryRequest: json.RawMessage(`{"from":"1690000000000","to":"1690003600000","queries":[{"refId":"A"}]}`),
+		Resp:         &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}},
+	}}
+
+	blob, err := NewBundler().BuildDashboard(nil, panels)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.Contains(t, string(files["panels/1-cpu-usage/snapshot-backend.json"]),
+		`"from": "`+time.UnixMilli(1690000000000).UTC().Format(time.RFC3339Nano)+`"`)
+}
+
+// v2 dashboards post the save model once, so a panel's JSON is resolved from it as a {kind, spec}
+// element -- the shape the snapshot has to translate rather than copy.
+func TestBuildDashboard_snapshotFlattensV2ElementFromDashboardModel(t *testing.T) {
+	dashboardJSON := json.RawMessage(`{"elements":{"panel-1":{"kind":"Panel","spec":{"id":1,"title":"CPU","vizConfig":{"kind":"VizConfig","group":"stat","version":"","spec":{"options":{},"fieldConfig":{}}}}}}}`)
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	panels := []DashboardPanel{{
+		ID:    1,
+		Title: "CPU",
+		Resp:  &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}},
+	}}
+
+	blob, err := NewBundler().BuildDashboard(dashboardJSON, panels)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	var dash struct {
+		Panels []struct {
+			Type string `json:"type"`
+		} `json:"panels"`
+	}
+	require.NoError(t, json.Unmarshal(files["panels/1-cpu/snapshot-backend.json"], &dash))
+	require.Equal(t, "stat", dash.Panels[0].Type)
+	require.NotContains(t, string(files["panels/1-cpu/snapshot-backend.json"]), "vizConfig")
+}
+
+// The snapshot draws from what querydata.json left of the shared dashboard budget instead of getting
+// a pool of its own, which would double the bundle's uncompressed ceiling for the same frames. Once
+// the budget is spent the snapshot is dropped and the manifest says why.
+func TestBuildDashboard_snapshotSharesQueryDataBudget(t *testing.T) {
+	panels := make([]DashboardPanel, 0, 5)
+	for i := 1; i <= 5; i++ {
+		frame := data.NewFrame("logs", data.NewField("line", nil, []string{strings.Repeat("x", maxQueryDataArtifactBytes-4096)}))
+		panels = append(panels, DashboardPanel{
+			ID:    int64(i),
+			Title: "Logs",
+			Resp: &backend.QueryDataResponse{Responses: backend.Responses{
+				"A": {Frames: data.Frames{frame}},
+			}},
+		})
+	}
+
+	blob, err := NewBundler().BuildDashboard(nil, panels)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	artifactBytes := 0
+	for name, contents := range files {
+		if strings.HasSuffix(name, "/querydata.json") || strings.HasSuffix(name, "/snapshot-backend.json") {
+			artifactBytes += len(contents)
+		}
+	}
+	require.LessOrEqual(t, artifactBytes, maxDashboardQueryDataBytes, "both artifacts share one budget")
+
+	var m dashboardManifest
+	require.NoError(t, json.Unmarshal(files["manifest.json"], &m))
+	var dropped int
+	for _, p := range m.Panels {
+		if p.SnapshotError != "" {
+			dropped++
+			require.Contains(t, p.SnapshotError, "budget")
+		}
+	}
+	require.Positive(t, dropped, "the panels past the budget record why their snapshot is missing")
 }
 
 func TestBuildDashboard_boundsAggregateQueryData(t *testing.T) {
