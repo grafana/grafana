@@ -157,6 +157,13 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(testDirRoot, '/dashboards-suite'),
     }),
     withAuth({
+      name: 'diagnostics',
+      testDir: path.join(testDirRoot, '/diagnostics-suite'),
+      // Flow 3 capture: record the run (screenshots are taken explicitly in-spec; video + trace give
+      // a shareable recording of the drawer→download flow).
+      use: { video: 'on', trace: 'on' },
+    }),
+    withAuth({
       name: 'cloud-plugins',
       testDir: path.join(testDirRoot, '/cloud-plugins-suite'),
     }),
