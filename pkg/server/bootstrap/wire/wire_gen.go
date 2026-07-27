@@ -86,6 +86,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	correlations2 "github.com/grafana/grafana/pkg/registry/apps/correlations"
+	migrator7 "github.com/grafana/grafana/pkg/registry/apps/correlations/migrator"
 	"github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
 	live2 "github.com/grafana/grafana/pkg/registry/apps/live"
@@ -214,7 +215,7 @@ import (
 	kvstore2 "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	migrations3 "github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
-	migrator7 "github.com/grafana/grafana/pkg/services/secrets/migrator"
+	migrator8 "github.com/grafana/grafana/pkg/services/secrets/migrator"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/extsvcaccounts"
 	manager2 "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/proxy"
@@ -623,7 +624,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	starsMigrator := legacy2.ProvideStarsMigrator(legacyDatabaseProvider)
 	preferencesMigrator := legacy3.ProvidePreferencesMigrator(legacyDatabaseProvider)
 	queryCacheConfigMigrator := migrator6.ProvideQueryCacheConfigMigrator(legacyDatabaseProvider)
-	migrationRegistry := server.ProvideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator, snapshotMigrator, dataSourceMigrator, starsMigrator, preferencesMigrator, queryCacheConfigMigrator)
+	correlationMigrator := migrator7.ProvideCorrelationMigrator(legacyDatabaseProvider)
+	migrationRegistry := server.ProvideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator, snapshotMigrator, dataSourceMigrator, starsMigrator, preferencesMigrator, queryCacheConfigMigrator, correlationMigrator)
 	unifiedMigrator := migrations2.ProvideUnifiedMigrator(resourceClient, migrationRegistry)
 	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, legacyDatabaseProvider, cfg, sqlStore, kvStore, resourceClient, migrationRegistry, gcGate)
 	migrationStatusReader, err := migrations2.ProvideMigrationStatusReader(sqlStore, cfg, migrationRegistry, registerer)
@@ -757,7 +759,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	starService := starimpl.ProvideService(sqlStore)
 	csrfCSRF := csrf.ProvideCSRFFilter(cfg)
-	secretsMigrator := migrator7.ProvideSecretsMigrator(serviceService, secretsService, sqlStore, ossImpl, featureToggles)
+	secretsMigrator := migrator8.ProvideSecretsMigrator(serviceService, secretsService, sqlStore, ossImpl, featureToggles)
 	dataSourceSecretMigrationService := migrations3.ProvideDataSourceMigrationService(service13, kvStore, featureToggles)
 	secretMigrationProviderImpl := migrations3.ProvideSecretMigrationProvider(serverLockService, dataSourceSecretMigrationService)
 	v4 := publicdashboards.ProvideService(cfg, featureToggles, v2, queryServiceImpl, repositoryImpl, accessControl, v3, dashboardService, ossLicensingService)
@@ -1371,7 +1373,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	starsMigrator := legacy2.ProvideStarsMigrator(legacyDatabaseProvider)
 	preferencesMigrator := legacy3.ProvidePreferencesMigrator(legacyDatabaseProvider)
 	queryCacheConfigMigrator := migrator6.ProvideQueryCacheConfigMigrator(legacyDatabaseProvider)
-	migrationRegistry := server.ProvideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator, snapshotMigrator, dataSourceMigrator, starsMigrator, preferencesMigrator, queryCacheConfigMigrator)
+	correlationMigrator := migrator7.ProvideCorrelationMigrator(legacyDatabaseProvider)
+	migrationRegistry := server.ProvideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator, snapshotMigrator, dataSourceMigrator, starsMigrator, preferencesMigrator, queryCacheConfigMigrator, correlationMigrator)
 	unifiedMigrator := migrations2.ProvideUnifiedMigrator(resourceClient, migrationRegistry)
 	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, legacyDatabaseProvider, cfg, sqlStore, kvStore, resourceClient, migrationRegistry, gcGate)
 	migrationStatusReader, err := migrations2.ProvideMigrationStatusReader(sqlStore, cfg, migrationRegistry, registerer)
@@ -1518,7 +1521,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	starService := starimpl.ProvideService(sqlStore)
 	csrfCSRF := csrf.ProvideCSRFFilter(cfg)
-	secretsMigrator := migrator7.ProvideSecretsMigrator(serviceService, secretsService, sqlStore, ossImpl, featureToggles)
+	secretsMigrator := migrator8.ProvideSecretsMigrator(serviceService, secretsService, sqlStore, ossImpl, featureToggles)
 	dataSourceSecretMigrationService := migrations3.ProvideDataSourceMigrationService(service13, kvStore, featureToggles)
 	secretMigrationProviderImpl := migrations3.ProvideSecretMigrationProvider(serverLockService, dataSourceSecretMigrationService)
 	v4 := publicdashboards.ProvideService(cfg, featureToggles, v2, queryServiceImpl, repositoryImpl, accessControl, v3, dashboardService, ossLicensingService)
@@ -1831,7 +1834,7 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	if err != nil {
 		return server.Runner{}, err
 	}
-	secretsMigrator := migrator7.ProvideSecretsMigrator(serviceService, secretsService, sqlStore, ossImpl, featureToggles)
+	secretsMigrator := migrator8.ProvideSecretsMigrator(serviceService, secretsService, sqlStore, ossImpl, featureToggles)
 	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	quotaService := quotaimpl.ProvideService(ctx, legacyDatabaseProvider, configProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)

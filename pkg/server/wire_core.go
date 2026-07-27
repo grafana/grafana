@@ -234,6 +234,7 @@ var wireBasicSet = wire.NewSet(
 	legacystars.ProvideStarsMigrator,
 	legacypreferences.ProvidePreferencesMigrator,
 	dsmigrator.ProvideDataSourceMigrator,
+	correlationsmigrator.ProvideCorrelationMigrator,
 	ProvideMigrationRegistry,
 	unifiedmigrations.ProvideUnifiedMigrator,
 	pluginsintegration.WireSet,
