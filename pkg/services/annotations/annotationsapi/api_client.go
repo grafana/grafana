@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	authnlib "github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
@@ -299,10 +300,24 @@ func (rt *bearerTokenExchangeRT) RoundTrip(req *http.Request) (*http.Response, e
 		return nil, fmt.Errorf("resolving requester for token exchange: %w", err)
 	}
 
-	resp, err := rt.exchanger.Exchange(ctx, authnlib.TokenExchangeRequest{
+	namespace := rt.nsMapper(requester.GetOrgID())
+
+	exchangeReq := authnlib.TokenExchangeRequest{
 		Audiences: []string{annotationServerAudience},
-		Namespace: rt.nsMapper(requester.GetOrgID()),
-	})
+		Namespace: namespace,
+	}
+
+	// Authenticate with OBO, when possible, so the new API properly attributes annotations.
+	if requester.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
+		exchangeReq.Subject = &authnlib.TokenExchangeSubject{
+			Sub:        requester.GetSubject(),
+			Identifier: requester.GetIdentifier(),
+			Type:       string(requester.GetIdentityType()),
+			Namespace:  namespace,
+		}
+	}
+
+	resp, err := rt.exchanger.Exchange(ctx, exchangeReq)
 	if err != nil {
 		return nil, fmt.Errorf("exchanging token: %w", err)
 	}
