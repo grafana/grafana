@@ -60,18 +60,18 @@ func NewWebhookConnector(
 	core webhookCore,
 	renderer pullrequest.ScreenshotRenderer,
 	registry prometheus.Registerer,
-	trustedProxyDepth int,
+	trustedIPHeader string,
 	rateLimitRPS int,
 ) *webhookConnector {
 	metrics := registerWebhookMetrics(registry)
 
 	// A non-positive rps disables rate limiting: the limiter is left nil and
-	// Connect skips wrapping. This is the default so an upgrade never starts
-	// throttling traffic until a deployment explicitly configures a rate (and,
-	// where it sits behind a proxy, the trusted-proxy depth to key on).
+	// Connect skips wrapping. When enabled, the limiter keys on the client IP
+	// carried by trustedIPHeader if that header is configured; when the header is
+	// empty (the default) it always keys on the real TCP peer (RemoteAddr).
 	var rateLimiter *ipRateLimiter
 	if rateLimitRPS > 0 {
-		rateLimiter = newIPRateLimiter(rate.Limit(rateLimitRPS), rateLimitRPS*2, trustedProxyDepth)
+		rateLimiter = newIPRateLimiter(rate.Limit(rateLimitRPS), rateLimitRPS*2, trustedIPHeader)
 	}
 
 	return &webhookConnector{

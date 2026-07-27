@@ -606,7 +606,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 				webhook = webhooks.ProvideWebhooks(
 					provisioningAppURL,
 					c.Registry(),
-					provisioningSec.Key("webhook_trusted_proxy_depth").MustInt(0),
+					provisioningSec.Key("webhook_trusted_ip_header").MustString(""),
 					provisioningSec.Key("webhook_rate_limit_rps").MustInt(0),
 				)
 			}

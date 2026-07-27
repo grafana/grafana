@@ -23,11 +23,11 @@ const (
 )
 
 type ipRateLimiter struct {
-	rps               rate.Limit
-	burst             int
-	ttl               time.Duration
-	maxBuckets        int
-	trustedProxyDepth int
+	rps             rate.Limit
+	burst           int
+	ttl             time.Duration
+	maxBuckets      int
+	trustedIPHeader string
 
 	mu        sync.Mutex
 	buckets   map[string]*ipBucket
@@ -41,15 +41,15 @@ type ipBucket struct {
 	elem     *list.Element // position of this key in order
 }
 
-func newIPRateLimiter(rps rate.Limit, burst, trustedProxyDepth int) *ipRateLimiter {
+func newIPRateLimiter(rps rate.Limit, burst int, trustedIPHeader string) *ipRateLimiter {
 	return &ipRateLimiter{
-		rps:               rps,
-		burst:             burst,
-		ttl:               defaultRateLimiterTTL,
-		maxBuckets:        defaultMaxBuckets,
-		trustedProxyDepth: trustedProxyDepth,
-		buckets:           make(map[string]*ipBucket),
-		order:             list.New(),
+		rps:             rps,
+		burst:           burst,
+		ttl:             defaultRateLimiterTTL,
+		maxBuckets:      defaultMaxBuckets,
+		trustedIPHeader: trustedIPHeader,
+		buckets:         make(map[string]*ipBucket),
+		order:           list.New(),
 	}
 }
 
@@ -122,40 +122,20 @@ func (l *ipRateLimiter) clientKey(tenant string, r *http.Request) string {
 	return tenant + "|" + l.clientIP(r)
 }
 
-// clientIP resolves the client address. Client-supplied forwarding headers are
-// trusted only when trustedProxyDepth > 0, i.e. the endpoint is declared to sit
-// behind that many trusted reverse proxies; otherwise the real TCP peer
-// (RemoteAddr) is used so a forged header cannot evade the limit.
-//
-// When trusted, X-Real-Ip is preferred: infrastructure in front of Grafana
-// (such as the Grafana Cloud gateway) sets it to the resolved client IP and
-// overrides any client-injected value, making it a single trustworthy address.
-// X-Forwarded-For is the fallback, where the rightmost trustedProxyDepth entries
-// are treated as inserted by our own infrastructure and the entry just before
-// them is the originating client.
+// clientIP resolves the address used to bucket the caller. When trustedIPHeader
+// is empty (the default) the real TCP peer (RemoteAddr) is always used, so no
+// client-supplied header can move the key. When set, it names the header the
+// fronting proxy sets to the resolved client IP, overwriting any client-injected
+// value; that header is the key, falling back to the peer when it is absent on a
+// request. Only the configured header is consulted — no other forwarding header
+// (e.g. X-Forwarded-For) is, since trusting a positional entry in a
+// client-controlled list is spoofable.
 func (l *ipRateLimiter) clientIP(r *http.Request) string {
 	peer := remoteHost(r.RemoteAddr)
-	if l.trustedProxyDepth <= 0 {
+	if l.trustedIPHeader == "" {
 		return peer
 	}
-
-	if realIP := strings.TrimSpace(r.Header.Get("X-Real-Ip")); realIP != "" {
-		return realIP
-	}
-
-	xff := r.Header.Get("X-Forwarded-For")
-	if xff == "" {
-		return peer
-	}
-
-	parts := strings.Split(xff, ",")
-	// The client sits just to the left of the trusted proxy hops. If the chain
-	// is shorter than configured we can't trust any entry, so fall back to peer.
-	idx := len(parts) - l.trustedProxyDepth - 1
-	if idx < 0 {
-		return peer
-	}
-	if ip := strings.TrimSpace(parts[idx]); ip != "" {
+	if ip := strings.TrimSpace(r.Header.Get(l.trustedIPHeader)); ip != "" {
 		return ip
 	}
 	return peer

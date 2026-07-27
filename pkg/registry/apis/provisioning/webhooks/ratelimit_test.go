@@ -16,7 +16,7 @@ func TestIPRateLimiterAllow(t *testing.T) {
 	now := time.Unix(0, 0)
 
 	t.Run("allows up to burst then rejects within the same instant", func(t *testing.T) {
-		l := newIPRateLimiter(10, 20, 0)
+		l := newIPRateLimiter(10, 20, "")
 
 		for i := 0; i < 20; i++ {
 			assert.True(t, l.allow("1.2.3.4", now), "request %d should be allowed within burst", i)
@@ -26,7 +26,7 @@ func TestIPRateLimiterAllow(t *testing.T) {
 
 	t.Run("consumes one token per request", func(t *testing.T) {
 		// burst of 3 means exactly 3 instantaneous requests are allowed.
-		l := newIPRateLimiter(1, 3, 0)
+		l := newIPRateLimiter(1, 3, "")
 
 		assert.True(t, l.allow("1.2.3.4", now))
 		assert.True(t, l.allow("1.2.3.4", now))
@@ -35,7 +35,7 @@ func TestIPRateLimiterAllow(t *testing.T) {
 	})
 
 	t.Run("refills at the configured rps over time", func(t *testing.T) {
-		l := newIPRateLimiter(10, 10, 0)
+		l := newIPRateLimiter(10, 10, "")
 
 		for i := 0; i < 10; i++ {
 			require.True(t, l.allow("1.2.3.4", now))
@@ -51,7 +51,7 @@ func TestIPRateLimiterAllow(t *testing.T) {
 	})
 
 	t.Run("tracks each key independently", func(t *testing.T) {
-		l := newIPRateLimiter(1, 1, 0)
+		l := newIPRateLimiter(1, 1, "")
 
 		assert.True(t, l.allow("1.1.1.1", now))
 		assert.False(t, l.allow("1.1.1.1", now), "first key is now drained")
@@ -62,7 +62,7 @@ func TestIPRateLimiterAllow(t *testing.T) {
 }
 
 func TestIPRateLimiterTTLSweep(t *testing.T) {
-	l := newIPRateLimiter(1, 1, 0)
+	l := newIPRateLimiter(1, 1, "")
 	start := time.Unix(0, 0)
 
 	require.True(t, l.allow("1.1.1.1", start))
@@ -84,7 +84,7 @@ func TestIPRateLimiterMaxBuckets(t *testing.T) {
 	now := time.Unix(0, 0)
 
 	t.Run("caps the number of tracked keys", func(t *testing.T) {
-		l := newIPRateLimiter(1, 1, 0)
+		l := newIPRateLimiter(1, 1, "")
 		l.maxBuckets = 3
 
 		l.allow("a", now)
@@ -99,7 +99,7 @@ func TestIPRateLimiterMaxBuckets(t *testing.T) {
 	})
 
 	t.Run("evicts least-recently-seen, not least-recently-inserted", func(t *testing.T) {
-		l := newIPRateLimiter(1, 1, 0)
+		l := newIPRateLimiter(1, 1, "")
 		l.maxBuckets = 3
 
 		l.allow("a", now)
@@ -115,7 +115,7 @@ func TestIPRateLimiterMaxBuckets(t *testing.T) {
 	})
 
 	t.Run("eviction resets rather than denies an evicted client", func(t *testing.T) {
-		l := newIPRateLimiter(1, 1, 0)
+		l := newIPRateLimiter(1, 1, "")
 		l.maxBuckets = 1
 
 		assert.True(t, l.allow("victim", now))
@@ -130,7 +130,7 @@ func TestIPRateLimiterMaxBuckets(t *testing.T) {
 
 func TestIPRateLimiterWrap(t *testing.T) {
 	t.Run("passes allowed requests to the next handler", func(t *testing.T) {
-		l := newIPRateLimiter(10, 20, 0)
+		l := newIPRateLimiter(10, 20, "")
 		var called bool
 		h := l.wrap("ns1", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			called = true
@@ -147,7 +147,7 @@ func TestIPRateLimiterWrap(t *testing.T) {
 	})
 
 	t.Run("returns 429 once the limit is exceeded", func(t *testing.T) {
-		l := newIPRateLimiter(1, 1, 0)
+		l := newIPRateLimiter(1, 1, "")
 		var calls int
 		h := l.wrap("ns1", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			calls++
@@ -169,24 +169,26 @@ func TestIPRateLimiterWrap(t *testing.T) {
 		assert.Equal(t, 1, calls, "blocked request must not reach the next handler")
 	})
 
-	t.Run("forged X-Forwarded-For cannot evade the limit by default", func(t *testing.T) {
-		l := newIPRateLimiter(1, 1, 0)
+	t.Run("forged forwarding headers cannot evade the limit when no header is trusted", func(t *testing.T) {
+		// With no trusted header configured the limiter keys on the TCP peer, so
+		// forged headers are ignored: every request from one peer shares a bucket.
+		l := newIPRateLimiter(1, 1, "")
 		var calls int
 		h := l.wrap("ns1", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			calls++
 		}))
 
-		// Same TCP peer, a different forged XFF on each request.
-		for i, xff := range []string{"9.9.9.1", "9.9.9.2", "9.9.9.3"} {
+		for i := range 3 {
 			req := httptest.NewRequest(http.MethodPost, "/webhook", nil)
 			req.RemoteAddr = "1.2.3.4:5678"
-			req.Header.Set("X-Forwarded-For", xff)
+			req.Header.Set("X-Forwarded-For", "9.9.9.1, 9.9.9.2")
+			req.Header.Set("X-Real-Ip", "8.8.8.8")
 			rec := httptest.NewRecorder()
 			h.ServeHTTP(rec, req)
 			if i == 0 {
 				assert.Equal(t, http.StatusOK, rec.Code)
 			} else {
-				assert.Equal(t, http.StatusTooManyRequests, rec.Code, "forged XFF must not mint a new bucket")
+				assert.Equal(t, http.StatusTooManyRequests, rec.Code, "forged headers must not mint a new bucket")
 			}
 		}
 		assert.Equal(t, 1, calls)
@@ -196,75 +198,59 @@ func TestIPRateLimiterWrap(t *testing.T) {
 
 func TestClientKey(t *testing.T) {
 	tests := []struct {
-		name       string
-		proxyDepth int
-		xff        string
-		xRealIP    string
-		remoteAddr string
-		want       string
+		name            string
+		trustedIPHeader string
+		xff             string
+		xRealIP         string
+		remoteAddr      string
+		want            string
 	}{
 		{
-			name:       "ignores forwarding headers and uses peer when depth is 0",
-			proxyDepth: 0,
-			xff:        "9.9.9.9",
-			xRealIP:    "8.8.8.8",
-			remoteAddr: "1.2.3.4:5678",
-			want:       "1.2.3.4",
+			name:            "ignores headers and uses peer when no header is trusted",
+			trustedIPHeader: "",
+			xff:             "9.9.9.9",
+			xRealIP:         "8.8.8.8",
+			remoteAddr:      "1.2.3.4:5678",
+			want:            "1.2.3.4",
 		},
 		{
-			name:       "prefers X-Real-Ip over X-Forwarded-For when trusted",
-			proxyDepth: 1,
-			xRealIP:    "8.8.8.8",
-			xff:        "5.5.5.5, 6.6.6.6",
-			remoteAddr: "10.0.0.1:5678",
-			want:       "8.8.8.8",
+			name:            "uses the trusted header value",
+			trustedIPHeader: "X-Real-Ip",
+			xRealIP:         "8.8.8.8",
+			remoteAddr:      "10.0.0.1:5678",
+			want:            "8.8.8.8",
 		},
 		{
-			name:       "trims whitespace around X-Real-Ip",
-			proxyDepth: 1,
-			xRealIP:    "  8.8.8.8 ",
-			remoteAddr: "10.0.0.1:5678",
-			want:       "8.8.8.8",
+			name:            "trims whitespace around the trusted header value",
+			trustedIPHeader: "X-Real-Ip",
+			xRealIP:         "  8.8.8.8 ",
+			remoteAddr:      "10.0.0.1:5678",
+			want:            "8.8.8.8",
 		},
 		{
-			name:       "uses peer host when no port-stripping needed fails gracefully",
-			proxyDepth: 0,
-			remoteAddr: "1.2.3.4",
-			want:       "1.2.3.4",
+			name:            "consults only the trusted header, not X-Forwarded-For",
+			trustedIPHeader: "X-Real-Ip",
+			xff:             "5.5.5.5, 6.6.6.6",
+			remoteAddr:      "10.0.0.1:5678",
+			want:            "10.0.0.1",
 		},
 		{
-			name:       "with one trusted hop, uses the entry left of it",
-			proxyDepth: 1,
-			xff:        "5.5.5.5, 6.6.6.6",
-			remoteAddr: "10.0.0.1:5678",
-			want:       "5.5.5.5",
+			name:            "falls back to peer when the trusted header is absent",
+			trustedIPHeader: "X-Real-Ip",
+			remoteAddr:      "10.0.0.1:5678",
+			want:            "10.0.0.1",
 		},
 		{
-			name:       "trims whitespace around the chosen entry",
-			proxyDepth: 1,
-			xff:        "5.5.5.5 ,  6.6.6.6",
-			remoteAddr: "10.0.0.1:5678",
-			want:       "5.5.5.5",
-		},
-		{
-			name:       "falls back to peer when chain is shorter than configured depth",
-			proxyDepth: 2,
-			xff:        "6.6.6.6",
-			remoteAddr: "10.0.0.1:5678",
-			want:       "10.0.0.1",
-		},
-		{
-			name:       "falls back to peer when XFF is absent",
-			proxyDepth: 1,
-			remoteAddr: "10.0.0.1:5678",
-			want:       "10.0.0.1",
+			name:            "uses peer host when RemoteAddr has no port",
+			trustedIPHeader: "",
+			remoteAddr:      "1.2.3.4",
+			want:            "1.2.3.4",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := newIPRateLimiter(1, 1, 0)
-			l.trustedProxyDepth = tt.proxyDepth
+			l := newIPRateLimiter(1, 1, tt.trustedIPHeader)
 			req := httptest.NewRequest(http.MethodPost, "/webhook", nil)
 			req.RemoteAddr = tt.remoteAddr
 			if tt.xff != "" {
@@ -279,7 +265,7 @@ func TestClientKey(t *testing.T) {
 }
 
 func TestClientKeyTenantScoping(t *testing.T) {
-	l := newIPRateLimiter(1, 1, 0)
+	l := newIPRateLimiter(1, 1, "")
 	newReq := func() *http.Request {
 		req := httptest.NewRequest(http.MethodPost, "/webhook", nil)
 		req.RemoteAddr = "1.2.3.4:5678"
@@ -299,18 +285,26 @@ func TestRateLimiterDefaults(t *testing.T) {
 }
 
 func TestNewWebhookConnectorRateLimit(t *testing.T) {
-	t.Run("configured rps builds a limiter with burst twice the rate", func(t *testing.T) {
-		c := NewWebhookConnector(false, nil, nil, prometheus.NewRegistry(), 0, 25)
+	t.Run("positive rps with a trusted header builds a limiter with burst twice the rate", func(t *testing.T) {
+		c := NewWebhookConnector(false, nil, nil, prometheus.NewRegistry(), "X-Real-Ip", 25)
 		if assert.NotNil(t, c.rateLimiter) {
 			assert.Equal(t, rate.Limit(25), c.rateLimiter.rps)
 			assert.Equal(t, 50, c.rateLimiter.burst)
+			assert.Equal(t, "X-Real-Ip", c.rateLimiter.trustedIPHeader)
 		}
 	})
 
 	t.Run("non-positive rps disables the limiter", func(t *testing.T) {
 		for _, rps := range []int{0, -5} {
-			c := NewWebhookConnector(false, nil, nil, prometheus.NewRegistry(), 0, rps)
+			c := NewWebhookConnector(false, nil, nil, prometheus.NewRegistry(), "X-Real-Ip", rps)
 			assert.Nil(t, c.rateLimiter, "rps=%d should leave the limiter disabled", rps)
+		}
+	})
+
+	t.Run("positive rps without a trusted header enables the limiter keyed on the peer", func(t *testing.T) {
+		c := NewWebhookConnector(false, nil, nil, prometheus.NewRegistry(), "", 25)
+		if assert.NotNil(t, c.rateLimiter) {
+			assert.Equal(t, "", c.rateLimiter.trustedIPHeader, "no header means it keys on RemoteAddr")
 		}
 	})
 }

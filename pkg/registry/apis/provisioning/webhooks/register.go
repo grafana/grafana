@@ -151,7 +151,7 @@ func ProvideWebhooksWithImages(
 				b,
 				screenshotRenderer,
 				registry,
-				cfg.ProvisioningWebhookTrustedProxyDepth,
+				cfg.ProvisioningWebhookTrustedIPHeader,
 				cfg.ProvisioningWebhookRateLimitRPS,
 			)
 
@@ -169,7 +169,7 @@ func ProvideWebhooksWithImages(
 	}
 }
 
-func ProvideWebhooks(provisioningURL string, registry prometheus.Registerer, trustedProxyDepth int, rateLimitRPS int) *WebhookExtraBuilder {
+func ProvideWebhooks(provisioningURL string, registry prometheus.Registerer, trustedIPHeader string, rateLimitRPS int) *WebhookExtraBuilder {
 	urlProvider := func(_ context.Context, _ string) string {
 		return provisioningURL
 	}
@@ -181,7 +181,7 @@ func ProvideWebhooks(provisioningURL string, registry prometheus.Registerer, tru
 		urlProvider: urlProvider,
 		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
 			screenshotRenderer := pullrequest.NewNoOpRenderer()
-			webhook := NewWebhookConnector(isPublic, b, screenshotRenderer, registry, trustedProxyDepth, rateLimitRPS)
+			webhook := NewWebhookConnector(isPublic, b, screenshotRenderer, registry, trustedIPHeader, rateLimitRPS)
 
 			return NewWebhookExtra(webhook)
 		},

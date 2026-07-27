@@ -880,6 +880,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("webhook_rate_limit_rps", fmt.Sprintf("%d", opts.ProvisioningWebhookRateLimitRPS))
 		require.NoError(t, err)
 	}
+	if opts.ProvisioningWebhookTrustedIPHeader != "" {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("webhook_trusted_ip_header", opts.ProvisioningWebhookTrustedIPHeader)
+		require.NoError(t, err)
+	}
 	if len(opts.ProvisioningRepositoryTypes) > 0 {
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
@@ -1118,6 +1124,7 @@ type GrafanaOpts struct {
 	ProvisioningMaxIncrementalChanges                    *int
 	ProvisioningMaxFileSize                              *int64
 	ProvisioningWebhookRateLimitRPS                      int
+	ProvisioningWebhookTrustedIPHeader                   string
 	// ProvisioningControllerResyncInterval overrides [provisioning]
 	// resync_interval (repo/connection/job informer re-list). Set it
 	// high in NATS tests so a fast reconcile can only be a live notification, not

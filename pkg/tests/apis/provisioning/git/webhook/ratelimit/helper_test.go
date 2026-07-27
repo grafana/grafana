@@ -15,6 +15,8 @@ const webhookRateLimitRPS = 5
 // per-client bucket is not shared with — and drained by — the unrelated webhook
 // tests next door.
 var env = common.NewSharedGitEnv(
+	// No trusted IP header is configured, so the limiter keys on the TCP peer
+	// (loopback) — which is what these tests rely on.
 	common.WithProvisioningWebhookRateLimitRPS(webhookRateLimitRPS),
 	// Match the sibling webhook env so the webhook connector is wired the same
 	// way (public root URL makes the endpoint "enabled"; github is registered
