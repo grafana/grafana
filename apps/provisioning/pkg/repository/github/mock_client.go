@@ -191,17 +191,17 @@ func (_c *MockClient_CreateWebhook_Call) RunAndReturn(run func(context.Context, 
 	return _c
 }
 
-// DeleteWebhook provides a mock function with given fields: ctx, webhookID
-func (_m *MockClient) DeleteWebhook(ctx context.Context, webhookID int64) error {
-	ret := _m.Called(ctx, webhookID)
+// DeleteWebhook provides a mock function with given fields: ctx, id
+func (_m *MockClient) DeleteWebhook(ctx context.Context, id repository.WebhookID) error {
+	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteWebhook")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64) error); ok {
-		r0 = rf(ctx, webhookID)
+	if rf, ok := ret.Get(0).(func(context.Context, repository.WebhookID) error); ok {
+		r0 = rf(ctx, id)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -216,14 +216,14 @@ type MockClient_DeleteWebhook_Call struct {
 
 // DeleteWebhook is a helper method to define mock.On call
 //   - ctx context.Context
-//   - webhookID int64
-func (_e *MockClient_Expecter) DeleteWebhook(ctx interface{}, webhookID interface{}) *MockClient_DeleteWebhook_Call {
-	return &MockClient_DeleteWebhook_Call{Call: _e.mock.On("DeleteWebhook", ctx, webhookID)}
+//   - id repository.WebhookID
+func (_e *MockClient_Expecter) DeleteWebhook(ctx interface{}, id interface{}) *MockClient_DeleteWebhook_Call {
+	return &MockClient_DeleteWebhook_Call{Call: _e.mock.On("DeleteWebhook", ctx, id)}
 }
 
-func (_c *MockClient_DeleteWebhook_Call) Run(run func(ctx context.Context, webhookID int64)) *MockClient_DeleteWebhook_Call {
+func (_c *MockClient_DeleteWebhook_Call) Run(run func(ctx context.Context, id repository.WebhookID)) *MockClient_DeleteWebhook_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int64))
+		run(args[0].(context.Context), args[1].(repository.WebhookID))
 	})
 	return _c
 }
@@ -233,7 +233,7 @@ func (_c *MockClient_DeleteWebhook_Call) Return(_a0 error) *MockClient_DeleteWeb
 	return _c
 }
 
-func (_c *MockClient_DeleteWebhook_Call) RunAndReturn(run func(context.Context, int64) error) *MockClient_DeleteWebhook_Call {
+func (_c *MockClient_DeleteWebhook_Call) RunAndReturn(run func(context.Context, repository.WebhookID) error) *MockClient_DeleteWebhook_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -459,9 +459,9 @@ func (_c *MockClient_GetRulesets_Call) RunAndReturn(run func(context.Context, st
 	return _c
 }
 
-// GetWebhook provides a mock function with given fields: ctx, webhookID
-func (_m *MockClient) GetWebhook(ctx context.Context, webhookID int64) (repository.WebhookConfig, error) {
-	ret := _m.Called(ctx, webhookID)
+// GetWebhook provides a mock function with given fields: ctx, id
+func (_m *MockClient) GetWebhook(ctx context.Context, id repository.WebhookID) (repository.WebhookConfig, error) {
+	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetWebhook")
@@ -469,19 +469,19 @@ func (_m *MockClient) GetWebhook(ctx context.Context, webhookID int64) (reposito
 
 	var r0 repository.WebhookConfig
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64) (repository.WebhookConfig, error)); ok {
-		return rf(ctx, webhookID)
+	if rf, ok := ret.Get(0).(func(context.Context, repository.WebhookID) (repository.WebhookConfig, error)); ok {
+		return rf(ctx, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int64) repository.WebhookConfig); ok {
-		r0 = rf(ctx, webhookID)
+	if rf, ok := ret.Get(0).(func(context.Context, repository.WebhookID) repository.WebhookConfig); ok {
+		r0 = rf(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(repository.WebhookConfig)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
-		r1 = rf(ctx, webhookID)
+	if rf, ok := ret.Get(1).(func(context.Context, repository.WebhookID) error); ok {
+		r1 = rf(ctx, id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -496,14 +496,14 @@ type MockClient_GetWebhook_Call struct {
 
 // GetWebhook is a helper method to define mock.On call
 //   - ctx context.Context
-//   - webhookID int64
-func (_e *MockClient_Expecter) GetWebhook(ctx interface{}, webhookID interface{}) *MockClient_GetWebhook_Call {
-	return &MockClient_GetWebhook_Call{Call: _e.mock.On("GetWebhook", ctx, webhookID)}
+//   - id repository.WebhookID
+func (_e *MockClient_Expecter) GetWebhook(ctx interface{}, id interface{}) *MockClient_GetWebhook_Call {
+	return &MockClient_GetWebhook_Call{Call: _e.mock.On("GetWebhook", ctx, id)}
 }
 
-func (_c *MockClient_GetWebhook_Call) Run(run func(ctx context.Context, webhookID int64)) *MockClient_GetWebhook_Call {
+func (_c *MockClient_GetWebhook_Call) Run(run func(ctx context.Context, id repository.WebhookID)) *MockClient_GetWebhook_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int64))
+		run(args[0].(context.Context), args[1].(repository.WebhookID))
 	})
 	return _c
 }
@@ -513,7 +513,7 @@ func (_c *MockClient_GetWebhook_Call) Return(_a0 repository.WebhookConfig, _a1 e
 	return _c
 }
 
-func (_c *MockClient_GetWebhook_Call) RunAndReturn(run func(context.Context, int64) (repository.WebhookConfig, error)) *MockClient_GetWebhook_Call {
+func (_c *MockClient_GetWebhook_Call) RunAndReturn(run func(context.Context, repository.WebhookID) (repository.WebhookConfig, error)) *MockClient_GetWebhook_Call {
 	_c.Call.Return(run)
 	return _c
 }

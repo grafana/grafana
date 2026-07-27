@@ -1,5 +1,3 @@
-import { config } from '@grafana/runtime';
-
 import { type DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 
 import { useGetResourceRepositoryView } from './useGetResourceRepositoryView';
@@ -14,8 +12,5 @@ export function useIsProvisionedNG(dashboard: DashboardScene): boolean {
     includeFolderless: !folderName && isNewDashboard,
   });
 
-  if (!config.featureToggles.provisioning) {
-    return false;
-  }
   return dashboard.isManagedRepository() || Boolean(repository) || isInstanceManaged;
 }

@@ -3,8 +3,6 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { autoColor } from '../../Theme';
-
 export type KeyValuesSummaryProps = {
   data?: TraceKeyValuePair[] | null;
 };
@@ -48,7 +46,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     summaryLabel: css({
       label: 'summaryLabel',
-      color: autoColor(theme, '#777'),
+      color: theme.colors.text.secondary,
       paddingRight: '0.5rem',
     }),
   };

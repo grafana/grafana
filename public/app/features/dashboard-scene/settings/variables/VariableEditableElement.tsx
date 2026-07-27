@@ -31,7 +31,12 @@ import {
   isEditableDashboardElement,
 } from '../../scene/types/EditableDashboardElement';
 import { VariableDisplaySelect } from '../../settings/variables/components/VariableDisplaySelect';
-import { getEditableVariableDefinition, validateVariableName } from '../../settings/variables/utils';
+import {
+  dropShadowedPredefinedVariables,
+  getEditableVariableDefinition,
+  restoreUnshadowedPredefinedVariables,
+  validateVariableName,
+} from '../../settings/variables/utils';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getTopPlacementLabel } from '../../utils/getTopPlacementLabel';
 import { DashboardInteractions } from '../../utils/interactions';
@@ -204,7 +209,18 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
       return result;
     }
 
+    // Do not drop predefined vars here — onChangeName runs per keystroke (outline rename).
+    // Drop happens on commit via onCommitName / changeVariableName.
     return;
+  }
+
+  /**
+   * Called when an outline rename commits (blur / Enter). Restores any predefined
+   * variable freed by the rename, then drops any shadowed by the committed name.
+   */
+  public onCommitName() {
+    restoreUnshadowedPredefinedVariables(this.variable);
+    dropShadowedPredefinedVariables(this.variable, this.variable.state.name);
   }
 
   public scrollIntoView() {
@@ -250,7 +266,8 @@ function VariableNameInput({ variable, autoFocus }: { variable: SceneVariable; a
   const id = useId();
 
   const onChange = (e: FormEvent<HTMLInputElement>) => {
-    const result = validateVariableName(variable, e.currentTarget.value);
+    const nextName = e.currentTarget.value;
+    const result = validateVariableName(variable, nextName);
     if (result.errorMessage !== nameError) {
       setNameError(result.errorMessage);
     }
@@ -258,7 +275,9 @@ function VariableNameInput({ variable, autoFocus }: { variable: SceneVariable; a
       setNameWarning(result.warningMessage);
     }
 
-    variable.setState({ name: e.currentTarget.value });
+    // Update live state for the input; drop shadowed predefined vars only on blur
+    // commit (changeVariableName) so intermediate keystrokes cannot permanently remove them.
+    variable.setState({ name: nextName });
   };
 
   const oldName = useRef(name);

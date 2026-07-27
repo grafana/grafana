@@ -73,8 +73,7 @@ func ProvideAppInstallers(
 		installers = append(installers, logsdrilldownAppInstaller)
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) {
+	if advisorAppInstaller != nil {
 		installers = append(installers, advisorAppInstaller)
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature

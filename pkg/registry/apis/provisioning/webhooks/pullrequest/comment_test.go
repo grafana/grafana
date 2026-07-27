@@ -356,6 +356,58 @@ func TestGenerateComment_NilParsedDeletedInTableTemplate(t *testing.T) {
 	require.Contains(t, capturedComment, "File")
 }
 
+// TestGenerateComment_ParsedDeletedWithoutResourceAction reproduces how deleted
+// files are evaluated: evaluateDeletedFile parses the file at the previous ref
+// (so Parsed is non-nil) but never runs a DryRun, so Parsed.Action stays empty.
+// The action label must fall back to the FileAction ("deleted") instead of
+// rendering a blank Action column.
+func TestGenerateComment_ParsedDeletedWithoutResourceAction(t *testing.T) {
+	repo := repository.NewMockPullRequestRepo(t)
+
+	var capturedComment string
+	repo.On("CommentPullRequest", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
+		capturedComment = comment
+		return true
+	})).Return(nil)
+
+	info := changeInfo{
+		GrafanaBaseURL: "http://host/",
+		Changes: []fileChangeInfo{
+			{
+				Parsed: &resources.ParsedResource{
+					Info: &repository.FileInfo{
+						Path: "valid.json",
+					},
+					Action: v0alpha1.ResourceActionCreate,
+					GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+				},
+				Title:      "Valid Dashboard",
+				PreviewURL: "http://grafana/admin/preview",
+			},
+			{
+				// Parsed is populated from the previous ref but Action is unset,
+				// exactly as evaluateDeletedFile leaves it.
+				Parsed: &resources.ParsedResource{
+					Info: &repository.FileInfo{
+						Path: "deleted-file.json",
+					},
+					GVK: schema.GroupVersionKind{Kind: "Dashboard"},
+				},
+				Change: repository.VersionedFileChange{
+					Action: repository.FileActionDeleted,
+					Path:   "deleted-file.json",
+				},
+				Title: "Deleted Dashboard",
+			},
+		},
+	}
+
+	commenter := NewCommenter(false)
+	err := commenter.Comment(context.Background(), repo, 1, info)
+	require.NoError(t, err)
+	require.Contains(t, capturedComment, "🗑️ Deleted")
+}
+
 func TestGenerateComment_SingleChangeNilParsed(t *testing.T) {
 	repo := repository.NewMockPullRequestRepo(t)
 

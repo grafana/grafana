@@ -25,6 +25,7 @@ jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
     editSessionStarted: jest.fn(),
     outlineItemClicked: jest.fn(),
+    dashboardEditDiscarded: jest.fn(),
   },
 }));
 

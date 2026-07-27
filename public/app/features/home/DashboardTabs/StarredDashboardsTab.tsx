@@ -14,9 +14,10 @@ interface Props {
   error: Error | undefined;
   retry: () => void;
   foldersByUid: Record<string, LocationInfo>;
+  density?: 'default' | 'compact'; // 'compact' is only used in the homepage redesign
 }
 
-export function StarredDashboardsTab({ dashboards, loading, error, retry, foldersByUid }: Props) {
+export function StarredDashboardsTab({ dashboards, loading, error, retry, foldersByUid, density }: Props) {
   const styles = useStyles2(getStyles);
 
   if (loading) {
@@ -60,6 +61,7 @@ export function StarredDashboardsTab({ dashboards, loading, error, retry, folder
             layoutMode="list"
             source="homepage_starredTab"
             onStarChange={retry}
+            density={density}
           />
         </li>
       ))}

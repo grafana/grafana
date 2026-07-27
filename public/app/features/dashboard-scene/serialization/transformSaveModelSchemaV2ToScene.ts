@@ -115,26 +115,35 @@ export function transformSaveModelSchemaV2ToScene(
 ): DashboardScene {
   const { spec: dashboard, metadata, apiVersion } = dto;
 
-  const annotations = dashboard.annotations ?? [];
-  const found = annotations.some((item) => item.spec.builtIn);
-  if (!found) {
-    annotations.unshift(getGrafanaBuiltInAnnotation());
+  const isSnapshot = Boolean(metadata.annotations?.[AnnoKeyDashboardIsSnapshot]);
+
+  // Snapshots embed their annotation results in the per-panel snapshot query data, so we must
+  // not create annotation data layers — those would fire live annotation queries (e.g. the
+  // authorized annotations endpoint, which returns 401 for snapshots). Mirrors the v1
+  // transform's `!oldModel.isSnapshot()` guard.
+  let annotationLayers: DashboardAnnotationsDataLayer[] = [];
+  if (!isSnapshot) {
+    const annotations = dashboard.annotations ?? [];
+    const found = annotations.some((item) => item.spec.builtIn);
+    if (!found) {
+      annotations.unshift(getGrafanaBuiltInAnnotation());
+    }
+
+    annotationLayers = annotations.map((annotation) => {
+      const annotationQuerySpec = transformV2ToV1AnnotationQuery(annotation);
+
+      const layerState = {
+        key: uniqueId('annotations-'),
+        query: annotationQuerySpec,
+        name: annotation.spec.name,
+        isEnabled: Boolean(annotation.spec.enable),
+        isHidden: Boolean(annotation.spec.hide),
+        placement: annotation.spec.placement,
+      };
+
+      return new DashboardAnnotationsDataLayer(layerState);
+    });
   }
-
-  const annotationLayers = annotations.map((annotation) => {
-    const annotationQuerySpec = transformV2ToV1AnnotationQuery(annotation);
-
-    const layerState = {
-      key: uniqueId('annotations-'),
-      query: annotationQuerySpec,
-      name: annotation.spec.name,
-      isEnabled: Boolean(annotation.spec.enable),
-      isHidden: Boolean(annotation.spec.hide),
-      placement: annotation.spec.placement,
-    };
-
-    return new DashboardAnnotationsDataLayer(layerState);
-  });
 
   // Create alert states data layer if unified alerting is enabled
   let alertStatesLayer: AlertStatesDataLayer | undefined;
@@ -164,7 +173,7 @@ export function transformSaveModelSchemaV2ToScene(
     updatedBy: metadata.annotations?.[AnnoKeyUpdatedBy],
     folderUid: metadata.annotations?.[AnnoKeyFolder],
     folderTitle: metadata.annotations?.[AnnoKeyFolderTitle],
-    isSnapshot: Boolean(metadata.annotations?.[AnnoKeyDashboardIsSnapshot]),
+    isSnapshot,
     isEmbedded: Boolean(metadata.annotations?.[AnnoKeyEmbedded]),
     publicDashboardEnabled: dto.access.isPublic,
 
@@ -321,6 +330,9 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariable
     // Added temporarily to allow skipping non-compatible variables
     .filter(isDefined);
 
+  // Nearest scope wins: a dashboard-local variable shadows a default (e.g. predefined
+  // global/folder) variable of the same name.
+  const localNames = new Set(variableObjects.map((v) => v.state.name));
   const defaultVariableObjects = defaultVariables
     .map((v) => {
       try {
@@ -330,7 +342,8 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariable
         return null;
       }
     })
-    .filter(isDefined);
+    .filter(isDefined)
+    .filter((v) => !localNames.has(v.state.name));
 
   // Explicitly disable scopes for public dashboards
   if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {

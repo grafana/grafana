@@ -37,16 +37,14 @@ func TestIntegrationProvisioning_MultiOrgUsageStats(t *testing.T) {
 	// One synced local repo (with a single dashboard) in each org. Distinct
 	// LocalPath dirs keep the two repositories fully isolated on disk.
 	orgAHelper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   "org-a-usage-repo",
-		LocalPath:              helper.ProvisioningPath + "/org-a-usage-repo",
-		Copies:                 map[string]string{"../testdata/all-panels.json": "dashboard.json"},
-		SkipResourceAssertions: true,
+		Name:      "org-a-usage-repo",
+		LocalPath: helper.ProvisioningPath + "/org-a-usage-repo",
+		Copies:    map[string]string{"../testdata/all-panels.json": "dashboard.json"},
 	})
 	orgBHelper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   "org-b-usage-repo",
-		LocalPath:              helper.ProvisioningPath + "/org-b-usage-repo",
-		Copies:                 map[string]string{"../testdata/all-panels.json": "dashboard.json"},
-		SkipResourceAssertions: true,
+		Name:      "org-b-usage-repo",
+		LocalPath: helper.ProvisioningPath + "/org-b-usage-repo",
+		Copies:    map[string]string{"../testdata/all-panels.json": "dashboard.json"},
 	})
 
 	assert.EventuallyWithT(t, func(collect *assert.CollectT) {

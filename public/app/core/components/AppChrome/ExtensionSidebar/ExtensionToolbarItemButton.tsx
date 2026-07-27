@@ -1,7 +1,10 @@
 import React from 'react';
 
 import { t } from '@grafana/i18n';
-import { ToolbarButton } from '@grafana/ui';
+import { useFlagAssistantFullscreenWorkspace } from '@grafana/runtime/internal';
+import { type IconName, ToolbarButton } from '@grafana/ui';
+
+import { AssistantToolbarButtons } from '../FullscreenWorkspace/AssistantToolbarButtons';
 
 interface ToolbarItemButtonProps {
   isOpen: boolean;
@@ -10,7 +13,7 @@ interface ToolbarItemButtonProps {
   pluginId?: string;
 }
 
-function getPluginIcon(pluginId?: string): string {
+function getPluginIcon(pluginId?: string): IconName {
   switch (pluginId) {
     // The docs plugin ID is transitioning from grafana-grafanadocsplugin-app to grafana-pathfinder-app.
     // Support both until that migration is complete.
@@ -28,6 +31,7 @@ function ExtensionToolbarItemButtonComponent(
   { isOpen, title, onClick, pluginId }: ToolbarItemButtonProps,
   ref: React.ForwardedRef<HTMLButtonElement>
 ) {
+  const fullscreenWorkspaceEnabled = useFlagAssistantFullscreenWorkspace();
   const icon = getPluginIcon(pluginId);
   const tooltip = (() => {
     if (isOpen) {
@@ -38,6 +42,10 @@ function ExtensionToolbarItemButtonComponent(
     }
     return t('navigation.extension-sidebar.button-tooltip.open-all', 'Open AI assistants and sidebar apps');
   })();
+
+  if (fullscreenWorkspaceEnabled && pluginId === 'grafana-assistant-app') {
+    return <AssistantToolbarButtons ref={ref} isOpen={isOpen} onClick={onClick} />;
+  }
 
   return (
     <ToolbarButton

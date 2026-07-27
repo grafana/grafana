@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -110,6 +111,17 @@ func TestParseResults(t *testing.T) {
 
 		_, err := ParseResults(resSearchResp, 0)
 		require.Error(t, err)
+	})
+
+	t.Run("should preserve the status of a response error", func(t *testing.T) {
+		resSearchResp := &resourcepb.ResourceSearchResponse{
+			Error: resource.AsErrorResult(apierrors.NewServiceUnavailable("search unavailable")),
+		}
+
+		_, err := ParseResults(resSearchResp, 0)
+		require.Error(t, err)
+		// The 503 status must survive so retry classification can detect it.
+		require.True(t, apierrors.IsServiceUnavailable(err))
 	})
 }
 

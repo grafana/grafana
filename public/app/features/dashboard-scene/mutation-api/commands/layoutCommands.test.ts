@@ -1,6 +1,5 @@
 import { config } from '@grafana/runtime';
 import { CustomVariable, SceneVariableSet, VizPanel } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -90,6 +89,7 @@ function buildRowsScene(rowTitles: string[] = ['Row A', 'Row B']): DashboardScen
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
+    activateEditPane: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
@@ -126,6 +126,7 @@ function buildTabsScene(tabTitles: string[] = ['Tab A', 'Tab B']): DashboardScen
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
+    activateEditPane: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
@@ -166,6 +167,7 @@ function buildRowsSceneWithPanels(): DashboardScene {
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
+    activateEditPane: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
@@ -208,6 +210,7 @@ function buildSceneWithLayoutParent(
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
+    activateEditPane: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
@@ -799,6 +802,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
+        activateEditPane: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -960,6 +964,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
+        activateEditPane: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1005,6 +1010,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
+        activateEditPane: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1048,6 +1054,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
+        activateEditPane: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1095,6 +1102,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
+        activateEditPane: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1138,6 +1146,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
+        activateEditPane: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1351,6 +1360,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
+        activateEditPane: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1824,6 +1834,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
+        activateEditPane: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1866,6 +1877,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
+        activateEditPane: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1911,6 +1923,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
+        activateEditPane: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1953,6 +1966,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
+        activateEditPane: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1996,6 +2010,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           tabsState.isEditing = true;
         }),
+        activateEditPane: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(tabsState, partial);
@@ -2049,12 +2064,7 @@ describe('Layout mutation commands', () => {
       },
     };
 
-    afterEach(() => {
-      setTestFlags({});
-    });
-
-    it('ADD_ROW applies spec.variables when dashboardSectionVariables is enabled', async () => {
-      setTestFlags({ dashboardSectionVariables: true });
+    it('ADD_ROW applies spec.variables', async () => {
       const scene = buildRowsScene(['Existing']);
       const executor = new DashboardMutationClient(scene);
 
@@ -2072,26 +2082,7 @@ describe('Layout mutation commands', () => {
       expect(newRow.state.$variables?.getByName('secVar')).toBeDefined();
     });
 
-    it('ADD_ROW ignores spec.variables when dashboardSectionVariables is disabled', async () => {
-      setTestFlags({ dashboardSectionVariables: false });
-      const scene = buildRowsScene(['Existing']);
-      const executor = new DashboardMutationClient(scene);
-
-      const result = await executor.execute({
-        type: 'ADD_ROW',
-        payload: {
-          row: { kind: 'RowsLayoutRow', spec: { title: 'No vars', variables: [sectionVariableKind] } },
-          parentPath: '/',
-        },
-      });
-
-      expect(result.success).toBe(true);
-      const body = scene.state.body as RowsLayoutManager;
-      expect(body.state.rows[1].state.$variables).toBeUndefined();
-    });
-
-    it('ADD_TAB applies spec.variables when dashboardSectionVariables is enabled', async () => {
-      setTestFlags({ dashboardSectionVariables: true });
+    it('ADD_TAB applies spec.variables', async () => {
       const scene = buildTabsScene(['Existing']);
       const executor = new DashboardMutationClient(scene);
 
@@ -2108,8 +2099,7 @@ describe('Layout mutation commands', () => {
       expect(body.state.tabs[1].state.$variables?.getByName('secVar')).toBeDefined();
     });
 
-    it('UPDATE_ROW clears section variables with variables: [] when flag is on', async () => {
-      setTestFlags({ dashboardSectionVariables: true });
+    it('UPDATE_ROW clears section variables with variables: []', async () => {
       const row = new RowItem({
         title: 'R',
         layout: DefaultGridLayoutManager.fromVizPanels([]),
@@ -2130,8 +2120,7 @@ describe('Layout mutation commands', () => {
       expect(row.state.$variables).toBeUndefined();
     });
 
-    it('UPDATE_TAB clears section variables with variables: [] when flag is on', async () => {
-      setTestFlags({ dashboardSectionVariables: true });
+    it('UPDATE_TAB clears section variables with variables: []', async () => {
       const tab = new TabItem({
         title: 'T',
         layout: DefaultGridLayoutManager.fromVizPanels([]),
@@ -2150,50 +2139,6 @@ describe('Layout mutation commands', () => {
 
       expect(result.success).toBe(true);
       expect(tab.state.$variables).toBeUndefined();
-    });
-
-    it('UPDATE_ROW ignores spec.variables when dashboardSectionVariables is disabled', async () => {
-      setTestFlags({ dashboardSectionVariables: false });
-      const row = new RowItem({
-        title: 'R',
-        layout: DefaultGridLayoutManager.fromVizPanels([]),
-        $variables: new SceneVariableSet({
-          variables: [new CustomVariable({ name: 'secVar', query: 'x,y' })],
-        }),
-      });
-      const body = new RowsLayoutManager({ rows: [row] });
-      const scene = buildSceneWithLayoutParent(body);
-      const executor = new DashboardMutationClient(scene);
-
-      const result = await executor.execute({
-        type: 'UPDATE_ROW',
-        payload: { path: '/rows/0', spec: { variables: [] } },
-      });
-
-      expect(result.success).toBe(true);
-      expect(row.state.$variables?.getByName('secVar')).toBeDefined();
-    });
-
-    it('UPDATE_TAB ignores spec.variables when dashboardSectionVariables is disabled', async () => {
-      setTestFlags({ dashboardSectionVariables: false });
-      const tab = new TabItem({
-        title: 'T',
-        layout: DefaultGridLayoutManager.fromVizPanels([]),
-        $variables: new SceneVariableSet({
-          variables: [new CustomVariable({ name: 'secVar', query: 'x,y' })],
-        }),
-      });
-      const body = new TabsLayoutManager({ tabs: [tab] });
-      const scene = buildSceneWithLayoutParent(body);
-      const executor = new DashboardMutationClient(scene);
-
-      const result = await executor.execute({
-        type: 'UPDATE_TAB',
-        payload: { path: '/tabs/0', spec: { variables: [] } },
-      });
-
-      expect(result.success).toBe(true);
-      expect(tab.state.$variables?.getByName('secVar')).toBeDefined();
     });
   });
 

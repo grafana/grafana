@@ -143,7 +143,7 @@ Add a row to the layout. If the target is not a RowsLayout, the existing content
 }
 ```
 
-Row `spec` may include optional **`variables`**: an array of v2 `VariableKind` objects for section-scoped template variables on that row. Behavior matches dashboard deserialization (requires the **`dashboardSectionVariables`** feature toggle; when off, `variables` in the payload are ignored).
+Row `spec` may include optional **`variables`**: an array of v2 `VariableKind` objects for section-scoped template variables on that row. Behavior matches dashboard deserialization.
 
 **Response:**
 
@@ -310,7 +310,7 @@ Add a tab to the layout. If the target is not a TabsLayout, the existing content
 }
 ```
 
-Tab `spec` may include optional **`variables`** for section-scoped template variables on that tab (same rules as row `variables` and the **`dashboardSectionVariables`** toggle).
+Tab `spec` may include optional **`variables`** for section-scoped template variables on that tab (same rules as row `variables`).
 
 **Response:**
 
@@ -611,8 +611,10 @@ List elements on the dashboard (panels, library panels, etc.) as an array of `{ 
 
 **Request (with runtime status and data schema):**
 
+`includeStatus` and `includeSchema` are independent; request either or both.
+
 ```json
-{ "type": "LIST_PANELS", "payload": { "includeStatus": true } }
+{ "type": "LIST_PANELS", "payload": { "includeStatus": true, "includeSchema": true } }
 ```
 
 **Response:**
@@ -641,7 +643,15 @@ List elements on the dashboard (panels, library panels, etc.) as an array of `{ 
             "element": { "kind": "ElementReference", "name": "panel-1" }
           }
         },
-        "status": { "isLoading": false, "hasError": false, "hasNoData": false },
+        "status": {
+          "loadingState": "Error",
+          "hasError": true,
+          "hasNoData": false,
+          "errors": [
+            { "source": "query", "message": "parse error: unexpected } in query", "refId": "A", "type": "unknown" }
+          ],
+          "notices": [{ "severity": "warning", "text": "Query returned partial data" }]
+        },
         "dataSchema": [
           {
             "name": "response_time",
@@ -665,7 +675,16 @@ List elements on the dashboard (panels, library panels, etc.) as an array of `{ 
 }
 ```
 
-`status` and `dataSchema` are only present when `includeStatus` is `true` and the panel has a data provider. `dataSchema` contains field metadata (name, type, labels) from the panel's query results — not actual values.
+`status` is present only when `includeStatus` is `true`, and `dataSchema` only when `includeSchema` is `true` (and the panel has a data provider). Both are a runtime side-channel: never part of the saved v2 dashboard spec (`element`), only the read result.
+
+`status` reports the panel's live query health:
+
+- `loadingState` — the raw scene loading state (`NotStarted`, `Loading`, `Streaming`, `Done`, `Error`). Whether a panel is loading is derivable from this, so no separate `isLoading` is returned.
+- `hasError` / `hasNoData` — reported explicitly because `loadingState` does not imply them: a `Done` panel can still carry errors (a query error or an error-severity notice) or return no data.
+- `errors` — every panel error in one structured array. `source` (`query` / `plugin` / `notice`) says where the error came from; `message` plus `refId`/`type` (query errors only) are a curated subset of `@grafana/data`'s `DataQueryError`. Consolidates all channels: query/datasource errors, error-severity data-frame notices, and plugin failures (unknown/missing viz type, library-panel load failure, or a module that fails to compile).
+- `notices` — non-error (`info` / `warning`) data-frame notices, deduped across frames. Error-severity notices are folded into `errors` instead.
+
+`dataSchema` contains the fields each result frame produced (`name`, `type`, `labels`) — metadata, not values. Use it to get the real field (column) names before referencing a field by name in a transformation (`organize`, `calculateField`, `filterFieldsByName`, `sortBy`) or a `byName` field override, so you target names that actually exist.
 
 ````
 
@@ -744,7 +763,7 @@ Same `{ element, layoutItem }` shape as ADD_PANEL and UPDATE_PANEL. When moving 
 
 ## Variables
 
-Variable commands accept optional **`parentPath`** (layout path from `GET_LAYOUT`). Default **`"/"`** targets **dashboard-level** variables. Paths ending at a **row** or **tab** (for example `"/rows/0"` or `"/tabs/1/rows/0"`) target that section’s variable set **only when `dashboardSectionVariables` is enabled**. When the toggle is off, `parentPath` is ignored and commands behave as dashboard-scope (`"/"`). **`UPDATE_VARIABLE`** and **`REMOVE_VARIABLE`** require an explicit **`parentPath`** when the name does not exist on the dashboard but exists on a section (with section variables enabled).
+Variable commands accept optional **`parentPath`** (layout path from `GET_LAYOUT`). Default **`"/"`** targets **dashboard-level** variables. Paths ending at a **row** or **tab** (for example `"/rows/0"` or `"/tabs/1/rows/0"`) target that section’s variable set. **`UPDATE_VARIABLE`** and **`REMOVE_VARIABLE`** require an explicit **`parentPath`** when the name does not exist on the dashboard but exists on a section.
 
 ### `ADD_VARIABLE`
 
@@ -795,7 +814,7 @@ Variable commands accept optional **`parentPath`** (layout path from `GET_LAYOUT
 }
 ```
 
-For section scope, `changes[0].path` is prefixed (for example `"/rows/0/variables/region"`). With `dashboardSectionVariables` disabled, `changes[0].path` remains dashboard-scoped (for example `"/variables/env"`).
+For section scope, `changes[0].path` is prefixed (for example `"/rows/0/variables/region"`).
 
 ### `UPDATE_VARIABLE`
 

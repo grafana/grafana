@@ -199,6 +199,9 @@ export enum AccessControlAction {
 
   // Provisioning
   ProvisioningRepositoriesRead = 'provisioning.repositories:read',
+  ProvisioningRepositoriesWrite = 'provisioning.repositories:write',
+  ProvisioningConnectionsCreate = 'provisioning.connections:create',
+  ProvisioningConnectionsWrite = 'provisioning.connections:write',
 }
 
 export interface Role extends RoleDto {

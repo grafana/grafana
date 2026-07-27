@@ -56,6 +56,11 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
   const isRecentlyViewedEnabled = !folderUID && isRecentlyViewedEnabledValue;
 
+  // CUJ-only signal: silent so it doesn't create analytics noise
+  useEffect(() => {
+    reportInteraction('grafana_browse_dashboards_page_view', { folderUID: folderUID ?? '' }, { silent: true });
+  }, [folderUID]);
+
   useEffect(() => {
     stateManager.initStateFromUrl(folderUID);
 

@@ -240,7 +240,17 @@ describe('MegaMenu', () => {
         await user.click(await screen.findByRole('button', { name: 'Expand section: Dashboards' }));
         await user.click(await screen.findByRole('button', { name: 'Hide Playlists' }));
 
-        // While editing it stays visible (greyed) and can be shown again.
+        // Hiding reports an interaction (path = the item's url).
+        expect(reportInteraction).toHaveBeenCalledWith(
+          'grafana_nav_item_hidden',
+          expect.objectContaining({ path: '/playlists' })
+        );
+
+        // While editing it stays visible (greyed) and the control flips to a Show toggle.
+        await user.click(await screen.findByRole('button', { name: 'Show Playlists' }));
+
+        // Revealing flips the control back — the item is no longer marked hidden.
+        await user.click(await screen.findByRole('button', { name: 'Hide Playlists' }));
         expect(await screen.findByRole('button', { name: 'Show Playlists' })).toBeInTheDocument();
 
         await user.click(screen.getByRole('button', { name: 'Done' }));
@@ -325,17 +335,35 @@ describe('MegaMenu', () => {
         expect(labels.some((l) => l?.startsWith('Pin '))).toBe(false);
       });
 
-      it('offers a pin control on childless top-level sections but not on parent sections', async () => {
+      it('offers a pin control on all top-level sections, including parents', async () => {
         const { user } = renderMegaMenu();
 
         await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
         await screen.findByRole('link', { name: 'Dashboards' });
         const labels = screen.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
-        // Parent sections (with children) aren't pinnable — you pin their children instead.
-        expect(labels).not.toContain('Pin Dashboards');
-        expect(labels).not.toContain('Pin Administration');
-        // A childless top-level section (Explore) is pinnable.
+        // Parent sections are pinnable as a quick-link (as well as their children being pinnable).
+        expect(labels).toContain('Pin Dashboards');
+        expect(labels).toContain('Pin Administration');
+        // Childless top-level sections (Explore) are pinnable too.
         expect(labels).toContain('Pin Explore');
+      });
+
+      it('pins a top-level parent section as a quick-link and keeps it in the nav', async () => {
+        const { user } = renderMegaMenu();
+
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        const pin = screen
+          .getAllByRole('button', { hidden: true })
+          .find((button) => button.getAttribute('aria-label') === 'Pin Dashboards');
+        await user.click(pin!);
+        await user.click(screen.getByRole('button', { name: 'Done' }));
+
+        await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/dashboards']));
+        // Shows in the box as a single breadcrumb quick-link…
+        const pinned = within(await screen.findByRole('list', { name: 'Pinned' }));
+        expect(pinned.getByRole('link', { name: 'Dashboards' })).toBeInTheDocument();
+        // …and still appears in the nav below (pinning duplicates, it doesn't move).
+        expect(screen.getAllByRole('link', { name: 'Dashboards' }).length).toBeGreaterThanOrEqual(2);
       });
 
       it('offers a pin control on the Starred section (special case) but not its dashboards', async () => {
@@ -346,7 +374,7 @@ describe('MegaMenu', () => {
         expect(await screen.findByRole('link', { name: STARRED_DASHBOARD.name })).toBeInTheDocument();
 
         const labels = screen.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
-        expect(labels).toContain('Pin Starred'); // top-level section is pinnable as a special case
+        expect(labels).toContain('Pin Starred'); // the Starred section itself is pinnable
         expect(labels).not.toContain(`Pin ${STARRED_DASHBOARD.name}`); // but its sub-dashboards are not
       });
 
@@ -539,10 +567,11 @@ describe('MegaMenu', () => {
         await user.click(screen.getByRole('button', { name: 'Done' }));
 
         await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/playlists']));
-        expect(reportInteraction).toHaveBeenCalledWith('grafana_nav_customise_saved', {
-          hiddenCount: 0,
-          pinnedCount: 1,
-        });
+        // objectContaining: the event also carries the A/B experiment variant stamp.
+        expect(reportInteraction).toHaveBeenCalledWith(
+          'grafana_nav_customise_saved',
+          expect.objectContaining({ hiddenCount: 0, pinnedCount: 1 })
+        );
       });
     });
   });
