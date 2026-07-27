@@ -208,12 +208,21 @@ func preserveGrafanaExternalID(uid, stackExternalID string, existing, updated *s
 		(existingID != "" && (stackExternalID == "" || uid == "")) {
 		// Keep a validated ID, or any stored ID when we cannot validate (empty stack/uid)
 		// so a misconfigured AWSExternalId does not wipe a previously minted value.
-		updated.Set(idKey, existingID)
+		//
+		// Restore into the existing datasource's namespace when the update selected a
+		// different one (e.g. FT-off path with auth type omitted → updated looks native
+		// while existing is SigV4). Avoids copying a SigV4 ID onto the native keys.
+		restoreIdKey, restoreModeKey := idKey, modeKey
+		if existingIdKey != idKey {
+			restoreIdKey = existingIdKey
+			_, restoreModeKey = externalIDKeys(existing)
+		}
+		updated.Set(restoreIdKey, existingID)
 		// When the update omits the mode flag, restore the stored value so Terraform/API
 		// updates that only send partial jsonData do not silently fall back to stack ID.
 		if !modeSet {
 			if existingModeSet, existingModeOn := usePerDatasourceExternalID(existing); existingModeSet {
-				updated.Set(modeKey, existingModeOn)
+				updated.Set(restoreModeKey, existingModeOn)
 			}
 		}
 		return
