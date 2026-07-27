@@ -148,12 +148,16 @@ func marshalQueryDataArtifactWithLimit(request json.RawMessage, resp *backend.Qu
 			// A response that cannot be encoded (e.g. an unserializable value in a frame's Meta.Custom)
 			// usually still has a serializable request beside it. Degrade to the same request + summary
 			// shape the size cap uses instead of dropping both -- losing the submitted query in exactly
-			// the hard-to-encode cases this artifact exists to capture defeats its purpose. The error is
-			// still returned so the caller records it too.
+			// the hard-to-encode cases this artifact exists to capture defeats its purpose.
+			//
+			// The error is returned as well, so both callers record it outside the artifact
+			// (querydata-error.txt, manifest.queryDataError). That makes the embedded copy a convenience:
+			// bound it by the budget so a verbose plugin error cannot crowd out the request, which is
+			// recorded nowhere else.
 			out, fallbackErr := fitQueryDataArtifact(queryDataArtifact{
 				Version:         queryDataArtifactVersion,
 				ResponseSummary: summarizeQueryDataResponse(resp),
-				ResponseError:   truncateDiagnosticString(err.Error(), 1024),
+				ResponseError:   truncateDiagnosticString(err.Error(), min(1024, maxBytes/4)),
 				ResponseOmitted: true,
 			}, request, maxBytes)
 			if fallbackErr != nil {
@@ -180,9 +184,10 @@ func marshalQueryDataArtifactWithLimit(request json.RawMessage, resp *backend.Qu
 }
 
 // fitQueryDataArtifact encodes artifact with progressively less content -- request kept, request
-// omitted, then markers only -- and returns the first encoding within maxBytes. The last rung is
-// returned even when it still doesn't fit, because there is nothing further to drop; callers that
-// enforce a hard budget re-check the length.
+// omitted, summary dropped, then markers only -- and returns the first encoding within maxBytes. The
+// last rung holds only fixed-size markers, which keeps it under minQueryDataArtifactBytes so the
+// budget gate in BuildDashboard stays meaningful; it is returned even when it somehow still doesn't
+// fit, because there is nothing further to drop, and callers enforcing a hard budget re-check length.
 func fitQueryDataArtifact(artifact queryDataArtifact, request json.RawMessage, maxBytes int) ([]byte, error) {
 	artifact.Request = request
 	out, err := json.MarshalIndent(artifact, "", "  ")
@@ -204,6 +209,17 @@ func fitQueryDataArtifact(artifact queryDataArtifact, request json.RawMessage, m
 	}
 
 	artifact.ResponseSummary = nil
+	out, err = json.MarshalIndent(artifact, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	if len(out) <= maxBytes {
+		return out, nil
+	}
+
+	// ResponseError goes last: it is the only remaining field without a fixed size, and the same failure
+	// is recorded outside the artifact, so dropping it leaves markers a reader can still act on.
+	artifact.ResponseError = ""
 	return json.MarshalIndent(artifact, "", "  ")
 }
 

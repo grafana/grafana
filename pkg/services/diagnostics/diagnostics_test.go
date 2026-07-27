@@ -799,6 +799,41 @@ func TestBuildDashboard_keepsRequestWhenResponseEncodingFails(t *testing.T) {
 	require.NotZero(t, m.Panels[0].QueryDataBytes, "the surviving artifact is accounted for in the manifest")
 }
 
+func TestMarshalQueryDataArtifactWithLimit_encodeFailureFitsMinimumBudget(t *testing.T) {
+	// The BuildDashboard budget gate assumes the smallest artifact fits in minQueryDataArtifactBytes.
+	// An encode failure adds responseError, which must not push the floor past that assumption --
+	// otherwise a panel reaching the gate with a near-exhausted budget loses everything again.
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{
+		"A": {Frames: data.Frames{frameWithUnencodableMeta(longMarshalError)}},
+	}}
+	request := json.RawMessage(`{"queries":[{"refId":"A","expr":"` + strings.Repeat("x", 4096) + `"}]}`)
+
+	out, _, err := marshalQueryDataArtifactWithLimit(request, resp, minQueryDataArtifactBytes)
+	require.Error(t, err, "the response still fails to encode")
+	require.NotEmpty(t, out, "a floor artifact is produced rather than nothing")
+	require.LessOrEqual(t, len(out), minQueryDataArtifactBytes)
+
+	var artifact queryDataArtifact
+	require.NoError(t, json.Unmarshal(out, &artifact), "the floor artifact is valid JSON")
+	require.Equal(t, queryDataArtifactVersion, artifact.Version)
+	require.True(t, artifact.ResponseOmitted)
+	require.True(t, artifact.RequestOmitted)
+}
+
+// longMarshalError stands in for a plugin whose own MarshalJSON fails with a verbose message: the
+// error text embedded in the artifact is plugin-controlled and can dwarf the artifact's own markers.
+var longMarshalError = strings.Repeat("boom ", 400)
+
+type failingMarshaler struct{ msg string }
+
+func (f failingMarshaler) MarshalJSON() ([]byte, error) { return nil, errors.New(f.msg) }
+
+func frameWithUnencodableMeta(msg string) *data.Frame {
+	frame := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
+	frame.Meta = &data.FrameMeta{Custom: failingMarshaler{msg: msg}}
+	return frame
+}
+
 func TestSummarizeQueryDataResponse_errorWithoutStatus(t *testing.T) {
 	// Core datasources run in-process, so nothing normalizes their status the way the SDK does on the
 	// gRPC boundary; several return a bare DataResponse{Error: ...}. Reporting 200 beside an error
