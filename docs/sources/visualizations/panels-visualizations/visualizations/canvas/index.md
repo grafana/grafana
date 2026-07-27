@@ -367,7 +367,7 @@ Control the placement of elements on the canvas with the following options:
 | Option          | Description     |
 | --------------- | --------------- |
 | Quick placement | Select an alignment option to automatically place the element. Choose from:<ul><li>Align left</li><li>Align horizontal centers</li><li>Align right</li><li>Align top</li><li>Align vertical centers</li><li>Align bottom</li></ul> |
-| Constraints     | Set element constraints. Choose from: **Left**, **Right**, **Left & Right**, **Center**, and **Scale**.<br></br>Use the **Scale** option to ensure that elements are automatically resized when the panel size changes. |
+| Constraints     | Set element constraints for horizontal and vertical placement:<ul><li>**Horizontal** - Choose from **Left**, **Right**, **Left & right**, **Center**, and **Scale**.</li><li>**Vertical** - Choose from **Top**, **Bottom**, **Top & bottom**, **Center**, and **Scale**.</li></ul>Use the **Scale** option to ensure that elements are automatically resized when the panel size changes. |
 | Position        | Use these settings to manually set the position of an element. Set any or all of the following options: **top**, **left**, **width**, **height**, and **rotation**. |
 
 <!-- prettier-ignore-end -->
@@ -438,14 +438,15 @@ To add a data link, follow these steps:
    | Title                | A human-readable label for the action that's displayed in the UI.                                                                                                                                                                           |
    | Confirmation message | A descriptive prompt to confirm or cancel the action.                                                                                                                                                                                       |
    | One click            | If you want the action to be triggered by a single click on the element, toggle the switch.</p><p>Only one data link or action can have **One click** enabled at a time.                                                                    |
-   | Connection           | Specify how the action's HTTP request is sent. Choose from: **Direct from browser** or routed through a configured data source.                                                                                                             |
-   | Method               | Select from **POST**, **PUT**, or **GET**.                                                                                                                                                                                                  |
+   | Connection           | Specify how the action's HTTP request is sent. By default, requests are sent directly from the browser.                                                                                                                                    |
+   | Method               | Select from **POST** or **GET**.                                                                                                                                                                                                             |
    | URL                  | The request URL or variable to which you want to link.</p><p>To add a variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.                                             |
    | Variables            | **Key** and **Name** pairs with a type selection. Click the **+** icon to add as many variables as you need. To add a variable to the request, prefix the key with `$`. You can set the values for the variables when performing an action. |
    | Query parameters     | **Key** and **Value** pairs. Click the **+** icon to add as many key/value pairs as you need.                                                                                                                                               |
    | Headers              | Comprised of **Key** and **Value** pairs and a **Content-Type**.</p><p>Click the **+** icon to add as many key/value pairs as you need.                                                                                                     |
    | Content-Type         | Select from the following: **application/json**, **text/plain**, **application/xml**, and **application/x-www-form-urlencoded**.                                                                                                            |
    | Body                 | The body of the request.                                                                                                                                                                                                                    |
+   | Button style         | Set the **Color** of the action button.                                                                                                                                                                                                     |
 
 1. Click **Save** to save changes and close the dialog box.
 1. Disable inline editing.
@@ -473,6 +474,7 @@ You can style the selected connection using the following options:
   - **Zero** - Display no arrow heads.
 
 - **Line style** - Choose from the following line styles: **Solid**, **Dashed**, and **Dotted**.
+  - **Animate** - Toggle on to animate dashed or dotted lines. This option is only available when **Line style** is set to **Dashed** or **Dotted**.
 
 ### Standard options
 
