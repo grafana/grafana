@@ -2,6 +2,7 @@ package search
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -81,4 +82,23 @@ func TestAsReadAttributes(t *testing.T) {
 	assert.Equal(t, "dashboards", read.GetResource())
 	assert.Equal(t, "default", read.GetNamespace())
 	assert.True(t, read.IsResourceRequest())
+}
+
+func TestSearchOperationID(t *testing.T) {
+	versions := []string{"v0alpha1", "v1", "v1beta1", "v2alpha1", "v2beta1"}
+
+	// The endpoint is mounted on every served version, so the IDs have to stay
+	// distinct once the per-version specs are merged.
+	seen := map[string]bool{}
+	for _, v := range versions {
+		id := searchOperationID("Dashboard", v)
+		require.False(t, seen[id], "duplicate operation ID %q", id)
+		seen[id] = true
+
+		// Starting with a Kubernetes verb stops the route builder prefixing
+		// "create" onto what is really a read.
+		assert.True(t, strings.HasPrefix(id, "list"), "got %q", id)
+	}
+
+	assert.Equal(t, "listDashboardSearchV0alpha1", searchOperationID("Dashboard", "v0alpha1"))
 }

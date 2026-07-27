@@ -1,6 +1,8 @@
 package search
 
 import (
+	"strings"
+
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -29,9 +31,25 @@ func (h *Handler) SearchRoute(group, version, resourceName, kindName string) bui
 	kind := kindRef{group: group, version: version, resource: resourceName, kind: kindName}
 	return builder.APIRouteHandler{
 		Path:    resourceName + "/" + searchPathSegment,
-		Spec:    searchRouteSpec(kindName),
+		Spec:    searchRouteSpec(kindName, version),
 		Handler: h.SearchFor(kind),
 	}
+}
+
+// searchOperationID names the operation for OpenAPI. The version is part of the
+// name because the endpoint is mounted on every served version, and operation
+// IDs have to stay unique once the per-version specs are merged. It starts with
+// a Kubernetes verb so the route builder does not prefix one: searching reads,
+// it does not create.
+func searchOperationID(kindName, version string) string {
+	return "list" + kindName + "Search" + capitalize(version)
+}
+
+func capitalize(s string) string {
+	if s == "" {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
 }
 
 // IsSearchRequest reports whether attr describes a call to a kind's search
@@ -68,12 +86,12 @@ func AsReadAttributes(attr authorizer.Attributes) authorizer.Attributes {
 	}
 }
 
-func searchRouteSpec(kindName string) *spec3.PathProps {
+func searchRouteSpec(kindName, version string) *spec3.PathProps {
 	return &spec3.PathProps{
 		Post: &spec3.Operation{
 			OperationProps: spec3.OperationProps{
 				Tags:        []string{"Search"},
-				OperationId: "search" + kindName,
+				OperationId: searchOperationID(kindName, version),
 				Description: "Search " + kindName + " resources in a namespace.",
 				Parameters: []*spec3.Parameter{
 					{
