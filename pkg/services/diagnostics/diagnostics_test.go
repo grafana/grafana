@@ -834,30 +834,62 @@ func frameWithUnencodableMeta(msg string) *data.Frame {
 	return frame
 }
 
-func TestSummarizeQueryDataResponse_errorWithoutStatus(t *testing.T) {
-	// Core datasources run in-process, so nothing normalizes their status the way the SDK does on the
-	// gRPC boundary; several return a bare DataResponse{Error: ...}. Reporting 200 beside an error
-	// string would tell a support engineer the query succeeded.
-	summaries := summarizeQueryDataResponse(&backend.QueryDataResponse{Responses: backend.Responses{
-		"A": {Error: errors.New("influxdb: parse error")},
-		"B": {Frames: data.Frames{data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))}},
-		"C": {Status: backend.StatusBadRequest, Error: errors.New("bad query")},
-	}})
+func TestSummarizeQueryDataResponse(t *testing.T) {
+	t.Run("status never reports success next to an error", func(t *testing.T) {
+		// Core datasources run in-process, so nothing normalizes their status the way the SDK does on the
+		// gRPC boundary; several return a bare DataResponse{Error: ...}. Reporting 200 beside an error
+		// string would tell a support engineer the query succeeded.
+		summaries := summarizeQueryDataResponse(&backend.QueryDataResponse{Responses: backend.Responses{
+			"A": {Error: errors.New("influxdb: parse error")},
+			"B": {Frames: data.Frames{data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))}},
+			"C": {Status: backend.StatusBadRequest, Error: errors.New("bad query")},
+		}})
 
-	require.Equal(t, backend.StatusUnknown, summaries["A"].Status, "an errored response must not be summarized as OK")
-	require.Contains(t, summaries["A"].Error, "parse error")
-	require.Equal(t, backend.StatusOK, summaries["B"].Status, "an error-free response with no status is still OK")
-	require.Equal(t, backend.StatusBadRequest, summaries["C"].Status, "an explicit status is preserved")
+		require.Equal(t, backend.StatusUnknown, summaries["A"].Status, "an errored response must not be summarized as OK")
+		require.Contains(t, summaries["A"].Error, "parse error")
+		require.Equal(t, backend.StatusOK, summaries["B"].Status, "an error-free response with no status is still OK")
+		require.Equal(t, backend.StatusBadRequest, summaries["C"].Status, "an explicit status is preserved")
+	})
+
+	t.Run("oversized strings are truncated and an unmeasurable frame records rows = -1", func(t *testing.T) {
+		namedFrame := data.NewFrame(strings.Repeat("n", 300), data.NewField("v", nil, []float64{1}))
+		// Mismatched field lengths make RowLen() error, which must be recorded as rows = -1.
+		badRows := data.NewFrame("", data.NewField("a", nil, []int64{1, 2}), data.NewField("b", nil, []int64{1}))
+		resp := backend.NewQueryDataResponse()
+		resp.Responses["A"] = backend.DataResponse{
+			Error:  errors.New(strings.Repeat("e", 2000)),
+			Frames: data.Frames{namedFrame, badRows},
+		}
+
+		a := summarizeQueryDataResponse(resp)["A"]
+		require.Len(t, a.Error, 1024+len("…"), "error must be truncated to 1024 bytes + ellipsis")
+		require.Len(t, a.Frames[0].Name, 256+len("…"), "frame name must be truncated to 256 bytes + ellipsis")
+		require.Equal(t, -1, a.Frames[1].Rows, "a frame whose RowLen() errors must record rows = -1")
+	})
+
+	t.Run("capture frames are excluded", func(t *testing.T) {
+		hcap := data.NewFrame("")
+		hcap.Meta = &data.FrameMeta{Custom: map[string]interface{}{"har": `{"log":{"entries":[]}}`}}
+		resp := backend.NewQueryDataResponse()
+		resp.Responses["A"] = backend.DataResponse{Frames: data.Frames{data.NewFrame("cpu")}}
+		resp.Responses["__har__A"] = backend.DataResponse{Frames: data.Frames{hcap}}
+
+		sum := summarizeQueryDataResponse(resp)
+		require.NotContains(t, sum, "__har__A", "capture frames must be excluded from the summary")
+		require.Contains(t, sum, "A")
+	})
 }
 
-func TestTruncateDiagnosticString_runeBoundary(t *testing.T) {
+func TestTruncateDiagnosticString(t *testing.T) {
+	require.Equal(t, "", truncateDiagnosticString("", 10))
+	require.Equal(t, "hello", truncateDiagnosticString("hello", 10), "under maxBytes is kept verbatim")
+	require.Equal(t, "abc", truncateDiagnosticString("abc", 3), "exactly maxBytes is kept verbatim")
+	require.Equal(t, "abc…", truncateDiagnosticString("abcdef", 3), "over maxBytes is byte-cut + ellipsis")
+
 	// A single "世" is 3 bytes; a 4-byte limit lands mid-rune and must back off to the boundary.
 	got := truncateDiagnosticString("世界", 4)
 	require.True(t, utf8.ValidString(got), "truncation must not split a rune")
-	require.Equal(t, "世"+"…", got)
-
-	// ASCII within the limit is returned untouched.
-	require.Equal(t, "hello", truncateDiagnosticString("hello", 10))
+	require.Equal(t, "世…", got)
 }
 
 func TestMarshalQueryDataArtifactWithLimit_reportsTruncation(t *testing.T) {
@@ -876,28 +908,7 @@ func TestMarshalQueryDataArtifactWithLimit_reportsTruncation(t *testing.T) {
 	require.False(t, truncated, "a response that fits must report truncated=false")
 }
 
-func readTarGz(t *testing.T, data []byte) map[string][]byte {
-	t.Helper()
-
-	gz, err := gzip.NewReader(bytes.NewReader(data))
-	require.NoError(t, err)
-
-	tr := tar.NewReader(gz)
-	out := map[string][]byte{}
-	for {
-		hdr, err := tr.Next()
-		if errors.Is(err, io.EOF) {
-			break
-		}
-		require.NoError(t, err)
-		b, err := io.ReadAll(tr)
-		require.NoError(t, err)
-		out[hdr.Name] = b
-	}
-	return out
-}
-
-func TestMarshalQueryDataArtifact_truncationTiers(t *testing.T) {
+func TestMarshalQueryDataArtifactWithLimit_truncationTiers(t *testing.T) {
 	// A request large enough that neither the full artifact nor the (request + summary) tier fits,
 	// forcing the ladder past tier 1.
 	bigRequest := json.RawMessage(`{"pad":"` + strings.Repeat("q", 4096) + `"}`)
@@ -940,48 +951,6 @@ func TestMarshalQueryDataArtifact_truncationTiers(t *testing.T) {
 	})
 }
 
-func TestSummarizeQueryDataResponse(t *testing.T) {
-	resp := backend.NewQueryDataResponse()
-	longName := strings.Repeat("n", 300)
-	namedFrame := data.NewFrame(longName, data.NewField("v", nil, []float64{1}))
-	// Mismatched field lengths make RowLen() error, which must be recorded as rows = -1.
-	badRows := data.NewFrame("", data.NewField("a", nil, []int64{1, 2}), data.NewField("b", nil, []int64{1}))
-	resp.Responses["A"] = backend.DataResponse{
-		Status: backend.Status(0), // invalid status + a non-nil error -> must normalize to StatusUnknown
-		Error:  errors.New(strings.Repeat("e", 2000)),
-		Frames: data.Frames{namedFrame, badRows},
-	}
-	// __har__ capture responses must be excluded from the summary.
-	hcap := data.NewFrame("")
-	hcap.Meta = &data.FrameMeta{Custom: map[string]interface{}{"har": `{"log":{"entries":[]}}`}}
-	resp.Responses["__har__A"] = backend.DataResponse{Frames: data.Frames{hcap}}
-
-	sum := summarizeQueryDataResponse(resp)
-	require.NotContains(t, sum, "__har__A", "capture frames must be excluded from the summary")
-	a, ok := sum["A"]
-	require.True(t, ok)
-	// An invalid status alongside a non-nil error normalizes to Unknown (not OK), so the summary never
-	// reports success next to an error string.
-	require.Equal(t, backend.StatusUnknown, a.Status, "an invalid status with an error must normalize to Unknown")
-	require.Len(t, a.Error, 1024+len("…"), "error must be truncated to 1024 bytes + ellipsis")
-	require.Equal(t, 256+len("…"), len(a.Frames[0].Name), "frame name must be truncated to 256 bytes + ellipsis")
-
-	var sawNegativeRows bool
-	for _, f := range a.Frames {
-		if f.Rows == -1 {
-			sawNegativeRows = true
-		}
-	}
-	require.True(t, sawNegativeRows, "a frame whose RowLen() errors must record rows = -1")
-}
-
-func TestTruncateDiagnosticString(t *testing.T) {
-	require.Equal(t, "abc", truncateDiagnosticString("abc", 3), "exactly maxBytes is kept verbatim")
-	require.Equal(t, "abc", truncateDiagnosticString("abc", 5), "under maxBytes is kept verbatim")
-	require.Equal(t, "abc…", truncateDiagnosticString("abcdef", 3), "over maxBytes is byte-cut + ellipsis")
-	require.Equal(t, "", truncateDiagnosticString("", 10))
-}
-
 func TestPanelTitleSlug(t *testing.T) {
 	for in, want := range map[string]string{
 		"CPU Usage":             "cpu-usage",
@@ -995,4 +964,25 @@ func TestPanelTitleSlug(t *testing.T) {
 	}
 	// An empty slug means the panel dir has no title suffix.
 	require.Equal(t, "panels/7", uniquePanelDir(7, "***", map[string]bool{}))
+}
+
+func readTarGz(t *testing.T, data []byte) map[string][]byte {
+	t.Helper()
+
+	gz, err := gzip.NewReader(bytes.NewReader(data))
+	require.NoError(t, err)
+
+	tr := tar.NewReader(gz)
+	out := map[string][]byte{}
+	for {
+		hdr, err := tr.Next()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		require.NoError(t, err)
+		b, err := io.ReadAll(tr)
+		require.NoError(t, err)
+		out[hdr.Name] = b
+	}
+	return out
 }

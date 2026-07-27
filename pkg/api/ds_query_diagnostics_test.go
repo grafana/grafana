@@ -13,6 +13,8 @@ import (
 
 	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -84,6 +86,9 @@ func newDiagReqCtx(t *testing.T, body string, headers map[string]string) (*conte
 
 // diagHARResponse is a QueryData result with a normal refID A frame plus a synthetic __har__ frame
 // carrying a parseable HAR with one entry — so HasCapturedHAR is true and traffic.har is non-empty.
+//
+// Built fresh per call rather than shared: collectHAR consumes the capture response by deleting it
+// from the map, so handing the same value to two calls would leave the second with no HAR at all.
 func diagHARResponse() *backend.QueryDataResponse {
 	r := backend.NewQueryDataResponse()
 	r.Responses["A"] = backend.DataResponse{Frames: data.Frames{data.NewFrame("cpu", data.NewField("v", nil, []float64{1}))}}
@@ -93,6 +98,15 @@ func diagHARResponse() *backend.QueryDataResponse {
 	}}
 	r.Responses["__har__A"] = backend.DataResponse{Frames: data.Frames{capture}}
 	return r
+}
+
+// returnFreshHARResponse stubs method to hand every call its own diagHARResponse, so a second
+// dispatch can't silently observe a capture frame the first one already consumed.
+func returnFreshHARResponse(fake *query.FakeQueryService, method string) {
+	fake.On(method, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(func(context.Context, identity.Requester, bool, dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+			return diagHARResponse(), nil
+		})
 }
 
 func TestQueryDiagnostics_flagOff_returns404(t *testing.T) {
@@ -112,8 +126,7 @@ func TestQueryDiagnostics_noQueries_returns400(t *testing.T) {
 func TestQueryDiagnostics_success_bundleHeadersAndSkipCache(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
 	fakeQuery := query.NewFakeQueryService(t)
-	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(diagHARResponse(), nil)
+	returnFreshHARResponse(fakeQuery, "QueryData")
 	hs := &HTTPServer{queryDataService: fakeQuery}
 	c, rec := newDiagReqCtx(t, `{"queries":[{"refId":"A","datasource":{"uid":"prom"}}]}`, nil)
 
@@ -128,15 +141,17 @@ func TestQueryDiagnostics_success_bundleHeadersAndSkipCache(t *testing.T) {
 	files := readTarGzFiles(t, rec.Body.Bytes())
 	require.Contains(t, files, "querydata.json")
 	require.Contains(t, files, "traffic.har")
-	require.Contains(t, string(files["querydata.json"]), `"A"`, "the submitted refID must be recorded")
+	// Assert on the datasource uid, not the refID: the mocked response carries refID "A" too, so a
+	// `"A"` match would still pass if the handler dropped the submitted request entirely. "prom" only
+	// appears in the request the client posted.
+	require.Contains(t, string(files["querydata.json"]), `"uid": "prom"`, "the submitted request must be recorded")
 }
 
 func TestQueryDiagnostics_queryV2Dispatch(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
 	fakeQuery := query.NewFakeQueryService(t)
 	// Only QueryDataNew is stubbed; had the handler dispatched to QueryData the mock would fail the test.
-	fakeQuery.On("QueryDataNew", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(diagHARResponse(), nil)
+	returnFreshHARResponse(fakeQuery, "QueryDataNew")
 	hs := &HTTPServer{queryDataService: fakeQuery}
 	c, _ := newDiagReqCtx(t, `{"queries":[{"refId":"A"}]}`, map[string]string{"X-Query-V2": "true"})
 
