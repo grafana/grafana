@@ -29,6 +29,11 @@ var assistantOSSNavigationPaths = map[string]struct{}{
 	"/a/grafana-assistant-app/settings":  {},
 }
 
+var assistantTrialNavigationPaths = map[string]struct{}{
+	assistantAppHomePath:                 {},
+	"/a/grafana-assistant-app/workspace": {},
+}
+
 func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) error {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	appLinks := []*navtree.NavLink{}
@@ -333,7 +338,8 @@ func (s *ServiceImpl) shouldIncludeAssistantNavigation(plugin pluginstore.Plugin
 		return true
 	}
 	if trialMode {
-		return include.Path == assistantAppHomePath
+		_, allowed := assistantTrialNavigationPaths[include.Path]
+		return allowed
 	}
 	if s.cfg.IsEnterprise || s.cfg.StackID != "" {
 		return true

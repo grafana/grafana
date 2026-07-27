@@ -738,6 +738,10 @@ const (
 	// Adds support for Kubernetes alerting historian APIs
 	FlagKubernetesAlertingHistorian = "kubernetesAlertingHistorian"
 
+	// FlagPluginsUseMTPlugins
+	// Enables plugins decoupling from bootdata
+	FlagPluginsUseMTPlugins = "plugins.useMTPlugins"
+
 	// FlagGlobalDashboardVariables
 	// Enables global and folder-scoped dashboard variables via dashboard.grafana.app
 	FlagGlobalDashboardVariables = "globalDashboardVariables"
@@ -973,4 +977,8 @@ const (
 	// FlagFeaturesBulkFlagEvalFiltering
 	// Filters bulk OFREP flag evaluations to public-metadata flags only
 	FlagFeaturesBulkFlagEvalFiltering = "features.bulkFlagEvalFiltering"
+
+	// FlagGrafanaMultiTenantNavTree
+	// Builds the navigation tree client-side instead of reading it from /bootdata
+	FlagGrafanaMultiTenantNavTree = "grafana.multiTenantNavTree"
 )

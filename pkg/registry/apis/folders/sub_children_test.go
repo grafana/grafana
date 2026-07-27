@@ -51,6 +51,9 @@ func (c *capturingSearchClient) RebuildIndexes(ctx context.Context, in *resource
 func (c *capturingSearchClient) VectorSearch(ctx context.Context, in *resourcepb.VectorSearchRequest, opts ...grpc.CallOption) (*resourcepb.VectorSearchResponse, error) {
 	return nil, nil
 }
+func (c *capturingSearchClient) HybridSearch(ctx context.Context, in *resourcepb.HybridSearchRequest, opts ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
+	return nil, nil
+}
 
 type recordingResponder struct {
 	obj    runtime.Object
