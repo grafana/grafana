@@ -286,11 +286,6 @@
       "count": 1
     }
   },
-  "packages/grafana-data/src/utils/store.ts": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 6
-    }
-  },
   "packages/grafana-data/src/utils/url.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
