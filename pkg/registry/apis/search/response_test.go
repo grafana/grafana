@@ -46,7 +46,7 @@ func buildTable(t *testing.T, cols []*resourcepb.ResourceTableColumnDefinition, 
 			Name:      name,
 		}
 		require.NoError(t, b.AddRow(key, 1, vals))
-		if sortFields != nil {
+		if i < len(sortFields) && i < len(b.Rows) {
 			b.Rows[i].SortFields = sortFields[i]
 		}
 	}
@@ -85,8 +85,8 @@ func TestSearchResults_MapsItemsAndFields(t *testing.T) {
 	// No text query was run, so no score.
 	assert.Nil(t, out.Items[0].Score)
 
-	assert.Equal(t, searchv0.APIVERSION, out.TypeMeta.APIVersion)
-	assert.Equal(t, searchv0.KindSearchResults, out.TypeMeta.Kind)
+	assert.Equal(t, searchv0.APIVERSION, out.APIVersion)
+	assert.Equal(t, searchv0.KindSearchResults, out.Kind)
 }
 
 func TestSearchResults_ScoreIsSeparateFromFields(t *testing.T) {
