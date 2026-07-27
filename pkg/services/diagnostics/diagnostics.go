@@ -40,7 +40,9 @@ const (
 	// bundle, the way maxDashboardQueryDataBytes does for querydata.json -- without it a per-panel cap
 	// alone lets an N-panel dashboard contribute N * maxPostProcessingArtifactBytes, all resident at once
 	// while the archive is assembled. It matters more here than for query data: this payload is
-	// client-supplied and the request body is not yet capped (see the MVP NOTE in pkg/api).
+	// client-supplied, so unlike a query response its size is not a function of anything the server
+	// controls. The request body is capped too (maxDashboardDiagnosticsBodyBytes in pkg/api), but that
+	// bounds the whole request, not this artifact's share of the archive.
 	//
 	// Budgeted separately rather than drawn from the query-data pool because the two artifacts answer
 	// different questions and a reader usually needs both: sharing one pool would let a data-heavy

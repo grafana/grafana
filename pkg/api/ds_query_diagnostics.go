@@ -36,6 +36,39 @@ type diagnosticsRequest struct {
 // (staticcheck SA1019) and slated for removal.
 var diagnosticsFeatureClient = openfeature.NewDefaultClient()
 
+const (
+	// maxDiagnosticsBodyBytes caps the single-panel diagnostics request body. web.Bind already applies
+	// the generic web.MaxBindBodyBytes (100 MiB), which is far more than this endpoint needs -- the body
+	// carries one panel's queries, its panel/dashboard JSON, and the client-captured frontend pipeline
+	// evidence. Scoping it down bounds what a run holds resident: the decoded payload lives for the whole
+	// request, and PostProcessing in particular is client-supplied with no size the server can predict.
+	maxDiagnosticsBodyBytes = 32 << 20
+	// maxDashboardDiagnosticsBodyBytes is the whole-dashboard equivalent, larger because the body
+	// legitimately scales with panel count (each panel carries its own queries and frontend evidence).
+	// It matters more there: generation is asynchronous, so the decoded payload stays resident until the
+	// archive is assembled, multiplied by up to diagnosticsMaxInFlightJobs concurrent runs.
+	maxDashboardDiagnosticsBodyBytes = 64 << 20
+)
+
+// bindDiagnosticsRequest caps the request body at maxBytes before decoding it into v.
+//
+// An over-cap body surfaces from web.Bind as *http.MaxBytesError rather than a decode failure, so it is
+// reported as 413 instead of the generic 400 -- a "bad request data" on a too-large body reads as
+// malformed JSON and sends a caller looking for a syntax error that isn't there.
+func bindDiagnosticsRequest(c *contextmodel.ReqContext, maxBytes int64, v any) response.Response {
+	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, maxBytes)
+	err := web.Bind(c.Req, v)
+	if err == nil {
+		return nil
+	}
+	var tooLarge *http.MaxBytesError
+	if errors.As(err, &tooLarge) {
+		return response.Error(http.StatusRequestEntityTooLarge,
+			fmt.Sprintf("diagnostics request body exceeds the %d-byte limit", tooLarge.Limit), nil)
+	}
+	return response.Error(http.StatusBadRequest, "bad request data", err)
+}
+
 // QueryDiagnostics executes the supplied datasource queries with HAR capture active and returns a
 // .tar.gz diagnostic bundle (captured traffic and the panel/dashboard JSON). Bundle assembly lives
 // in the diagnostics service; this handler owns the HTTP concerns: gating, request binding, running
@@ -49,8 +82,8 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	}
 
 	reqDTO := diagnosticsRequest{}
-	if err := web.Bind(c.Req, &reqDTO); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+	if r := bindDiagnosticsRequest(c, maxDiagnosticsBodyBytes, &reqDTO); r != nil {
+		return r
 	}
 	if len(reqDTO.Queries) == 0 {
 		return response.Error(http.StatusBadRequest, "at least one query is required", nil)

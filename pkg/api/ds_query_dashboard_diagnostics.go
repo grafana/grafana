@@ -25,10 +25,12 @@ import (
 )
 
 // NOTE (MVP scope): resource limits are intentionally deferred to a follow-up PR (tracked) to keep
-// this experimental feature small: no panel-count cap, no per-run timeout, and no per-body/
-// per-request byte caps. See the "dashboard-level limits" follow-up. The in-memory job store is
-// still bounded (retention TTL + max-entries + in-flight caps below) so it can't grow without limit;
-// that is a correctness guard against unbounded memory, not one of the deferred resource limits.
+// this experimental feature small: no panel-count cap and no per-run timeout. See the
+// "dashboard-level limits" follow-up. Two bounds are already in place because they guard against
+// unbounded memory rather than merely shaping limits: the in-memory job store (retention TTL +
+// max-entries + in-flight caps below), and the request body (maxDashboardDiagnosticsBodyBytes, see
+// bindDiagnosticsRequest) -- panels carry client-supplied frontend pipeline evidence whose size the
+// server cannot predict, and an async run holds the whole decoded payload until the archive is built.
 
 // diagnosticsEnabled reports whether the grafana.onDemandDiagnostics feature flag is on for the
 // current request. It reuses the shared OpenFeature client (see ds_query_diagnostics.go).
@@ -272,8 +274,8 @@ func (hs *HTTPServer) QueryDashboardDiagnostics(c *contextmodel.ReqContext) resp
 	}
 
 	reqDTO := dashboardDiagnosticsRequest{}
-	if err := web.Bind(c.Req, &reqDTO); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+	if r := bindDiagnosticsRequest(c, maxDashboardDiagnosticsBodyBytes, &reqDTO); r != nil {
+		return r
 	}
 	if len(reqDTO.Panels) == 0 {
 		return response.Error(http.StatusBadRequest, "at least one panel is required", nil)

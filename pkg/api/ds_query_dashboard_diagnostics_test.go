@@ -21,6 +21,7 @@ import (
 
 	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -152,6 +153,93 @@ func TestQueryDashboardDiagnostics_rejectsWhenInFlightCapReached(t *testing.T) {
 	// The rejected request must not have created a job.
 	require.Len(t, dashboardDiagnosticsJobs.jobs, diagnosticsMaxInFlightJobs,
 		"a rejected request must not add a job to the store")
+}
+
+// TestQueryDiagnostics_rejectsOversizedBody pins the per-endpoint body cap on both diagnostics
+// handlers. The interesting part is the status: an over-cap body surfaces from web.Bind as
+// *http.MaxBytesError, and if that stops being unwrapped the request degrades to a generic 400 "bad
+// request data", telling a caller their JSON is malformed when the real problem is its size.
+//
+// It also guards the cap itself. web.Bind applies the generic web.MaxBindBodyBytes (100 MiB) to every
+// endpoint, so dropping these calls would leave the handlers accepting bodies several times larger
+// than they need, each one held resident for the whole run (an async one, for the dashboard path).
+func TestQueryDiagnostics_rejectsOversizedBody(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+
+	// Padding inside postProcessing rather than a bare blob: that is the client-supplied field with no
+	// server-side bound, and it must be the body cap -- not the artifact cap -- that rejects it.
+	oversized := func(maxBytes int64) string {
+		return `{"panels":[{"id":1,"queries":[{"refId":"A"}],"postProcessing":{"pad":"` +
+			strings.Repeat("x", int(maxBytes)+1024) + `"}}],` +
+			`"queries":[{"refId":"A"}],"postProcessing":{"pad":"x"}}`
+	}
+
+	tests := []struct {
+		name     string
+		maxBytes int64
+		call     func(*HTTPServer, *contextmodel.ReqContext) response.Response
+	}{
+		{"single panel", maxDiagnosticsBodyBytes, (*HTTPServer).QueryDiagnostics},
+		{"whole dashboard", maxDashboardDiagnosticsBodyBytes, (*HTTPServer).QueryDashboardDiagnostics},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// The cap trips during binding, before any query runs, so no fake queryDataService is needed --
+			// and a nil one would panic loudly if that stopped being true.
+			hs := &HTTPServer{}
+
+			req, err := http.NewRequest(http.MethodPost, "/api/ds/diagnostics", strings.NewReader(oversized(tc.maxBytes)))
+			require.NoError(t, err)
+			req.Header.Set("Content-Type", "application/json")
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{
+					Req:  req,
+					Resp: web.NewResponseWriter(req.Method, httptest.NewRecorder()),
+				},
+				SignedInUser: &user.SignedInUser{OrgID: 1, UserUID: "u1"},
+				Logger:       log.New("test"),
+			}
+			c.Req = req
+
+			resp := tc.call(hs, c)
+			require.Equal(t, http.StatusRequestEntityTooLarge, resp.Status(),
+				"an over-cap body is a 413, not a 400 that reads as malformed JSON")
+		})
+	}
+}
+
+// TestQueryDiagnostics_acceptsBodyWithinCap is the other half: the cap must not reject a body that
+// merely carries a large-but-legitimate frontend pipeline capture, or the feature loses the evidence
+// it exists to collect on exactly the panels that need it most.
+//
+// Exercised on the single-panel path because it is synchronous. The dashboard handler would answer 202
+// and leave a detached goroutine writing to the process-wide job store past the end of the test.
+func TestQueryDiagnostics_acceptsBodyWithinCap(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+
+	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(backend.NewQueryDataResponse(), nil)
+	hs := &HTTPServer{queryDataService: fakeQuery}
+
+	// Comfortably under the cap, comfortably over anything a hand-written body would reach.
+	body := `{"queries":[{"refId":"A"}],"postProcessing":{"pad":"` + strings.Repeat("x", 8<<20) + `"}}`
+	req, err := http.NewRequest(http.MethodPost, "/api/ds/diagnostics", strings.NewReader(body))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	c := &contextmodel.ReqContext{
+		Context: &web.Context{
+			Req:  req,
+			Resp: web.NewResponseWriter(req.Method, httptest.NewRecorder()),
+		},
+		SignedInUser: &user.SignedInUser{OrgID: 1, UserUID: "u1"},
+		Logger:       log.New("test"),
+	}
+	c.Req = req
+
+	resp := hs.QueryDiagnostics(c)
+	require.Equal(t, http.StatusOK, resp.Status(),
+		"a large but in-cap capture is accepted and bundled")
 }
 
 // TestBuildDashboardDiagnosticsArchive_recordsPerRefIDQueryError guards against a regression where
