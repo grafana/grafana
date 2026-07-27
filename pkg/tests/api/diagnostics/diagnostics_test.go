@@ -1,5 +1,3 @@
-//go:build integration
-
 package diagnostics
 
 import (
@@ -8,6 +6,7 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -59,9 +58,10 @@ const (
 	adminPass          = "admin"
 )
 
-// TestIntegrationDiagnosticsDisabled verifies the single-panel endpoint is 404 when the
+// TestIntegrationDiagnosticsDisabled verifies every diagnostics endpoint is 404 when the
 // grafana.onDemandDiagnostics flag is off, even for a server admin with an otherwise valid request.
-// The route is still registered (on-prem, StackID==""), so this exercises the handler's flag gate.
+// The routes are still registered (on-prem, StackID==""), so this exercises each handler's flag gate
+// -- all four carry their own, so all four are checked.
 func TestIntegrationDiagnosticsDisabled(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -73,10 +73,23 @@ func TestIntegrationDiagnosticsDisabled(t *testing.T) {
 	ctx := context.Background()
 
 	dsUID := addTestDataSource(t, ctx, testEnv, "diag-disabled-ds")
-	body := singlePanelBody(dsUID, "random_walk")
 
-	status, respBody, _ := doJSON(t, http.MethodPost, diagURL(addr, adminUser, adminPass, "ds/diagnostics"), body)
-	assert.Equal(t, http.StatusNotFound, status, "flag off must gate the endpoint: %s", string(respBody))
+	for _, tc := range []struct {
+		name   string
+		method string
+		path   string
+		body   []byte
+	}{
+		{"single panel", http.MethodPost, "ds/diagnostics", singlePanelBody(dsUID, "random_walk")},
+		{"dashboard create", http.MethodPost, "ds/dashboard-diagnostics", dashboardBody(dsUID)},
+		{"dashboard status", http.MethodGet, "ds/dashboard-diagnostics/some-uid", nil},
+		{"dashboard download", http.MethodGet, "ds/dashboard-diagnostics/some-uid/download", nil},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			status, respBody, _ := doJSON(t, tc.method, diagURL(addr, adminUser, adminPass, tc.path), tc.body)
+			assert.Equal(t, http.StatusNotFound, status, "flag off must gate the endpoint: %s", string(respBody))
+		})
+	}
 }
 
 // TestIntegrationDiagnosticsSinglePanel covers POST /api/ds/diagnostics with the flag ON.
@@ -113,7 +126,13 @@ func TestIntegrationDiagnosticsSinglePanel(t *testing.T) {
 		assert.Equal(t, 1, artifact.Version)
 		assert.Contains(t, string(artifact.Request), "random_walk", "request JSON should carry the submitted scenario")
 		require.NotEmpty(t, artifact.Response, "response should be recorded")
-		assert.Contains(t, string(artifact.Response), `"A"`, "response should carry the refID A result")
+		// Assert on the decoded shape rather than a substring: backend.QueryDataResponse marshals its
+		// per-refID map under "results", so a bare `"A"` substring check would also pass on unrelated text.
+		var response struct {
+			Results map[string]json.RawMessage `json:"results"`
+		}
+		require.NoError(t, json.Unmarshal(artifact.Response, &response))
+		assert.Contains(t, response.Results, "A", "response should carry the refID A result")
 
 		// The client-supplied panel/dashboard JSON is echoed into the bundle.
 		assert.Contains(t, memberNames(members), "panel.json")
@@ -147,8 +166,8 @@ func TestIntegrationDiagnosticsSinglePanel(t *testing.T) {
 
 	// A datasource error on the single-panel path: because testdata never touches the wire, no HAR is
 	// captured, so the handler surfaces the failure directly (per-refID failure => 400) instead of a
-	// 200 bundle. Recording a datasource error INSIDE a bundle is covered by the dashboard flow below,
-	// which builds the archive unconditionally. See NOTE in the report.
+	// 200 bundle. Recording a datasource error INSIDE a bundle is covered by TestIntegrationDiagnosticsDashboard,
+	// which builds the archive unconditionally.
 	t.Run("datasource error without HTTP capture surfaces a 400", func(t *testing.T) {
 		body := singlePanelBody(dsUID, "random_walk_with_error")
 		status, respBody, _ := doJSON(t, http.MethodPost, diagURL(addr, adminUser, adminPass, "ds/diagnostics"), body)
@@ -170,31 +189,8 @@ func TestIntegrationDiagnosticsDashboard(t *testing.T) {
 
 	dsUID := addTestDataSource(t, ctx, testEnv, "diag-dash-ds")
 
-	// Two data panels: one succeeds (random_walk), one fails per-refID (random_walk_with_error).
-	reqBody := fmt.Sprintf(`{
-		"dashboard": {"title":"Diag Dashboard","uid":"diag-dash-1","panels":[]},
-		"panels": [
-			{
-				"id": 1,
-				"title": "Success Panel",
-				"panel": {"id":1,"title":"Success Panel","type":"timeseries"},
-				"from": "now-1h",
-				"to": "now",
-				"queries": [{"refId":"A","scenarioId":"random_walk","datasource":{"uid":%q,"type":%q}}]
-			},
-			{
-				"id": 2,
-				"title": "Error Panel",
-				"panel": {"id":2,"title":"Error Panel","type":"timeseries"},
-				"from": "now-1h",
-				"to": "now",
-				"queries": [{"refId":"A","scenarioId":"random_walk_with_error","datasource":{"uid":%q,"type":%q}}]
-			}
-		]
-	}`, dsUID, testDataSourceType, dsUID, testDataSourceType)
-
 	// Create: returns 202 with a job UID.
-	status, respBody, _ := doJSON(t, http.MethodPost, diagURL(addr, adminUser, adminPass, "ds/dashboard-diagnostics"), []byte(reqBody))
+	status, respBody, _ := doJSON(t, http.MethodPost, diagURL(addr, adminUser, adminPass, "ds/dashboard-diagnostics"), dashboardBody(dsUID))
 	require.Equal(t, http.StatusAccepted, status, "body: %s", string(respBody))
 
 	var created struct {
@@ -205,7 +201,7 @@ func TestIntegrationDiagnosticsDashboard(t *testing.T) {
 	require.NotEmpty(t, created.UID)
 	assert.Equal(t, "pending", created.State)
 
-	// Unknown UID => 404 (also confirms per-identity scoping does not leak jobs).
+	// Unknown UID => 404. (Per-identity scoping is a separate guard, asserted after the download below.)
 	unknownStatus, _, _ := doJSON(t, http.MethodGet, diagURL(addr, adminUser, adminPass, "ds/dashboard-diagnostics/does-not-exist"), nil)
 	assert.Equal(t, http.StatusNotFound, unknownStatus)
 
@@ -244,14 +240,6 @@ func TestIntegrationDiagnosticsDashboard(t *testing.T) {
 	require.Contains(t, names, "dashboard.json")
 	require.Contains(t, names, "manifest.json")
 
-	// Per-panel directories.
-	successDir := findDir(t, names, "panels/1-")
-	errorDir := findDir(t, names, "panels/2-")
-	assert.Contains(t, names, successDir+"/panel.json")
-	assert.Contains(t, names, successDir+"/querydata.json")
-	// The failing panel records its error both as a file and in the manifest.
-	assert.Contains(t, names, errorDir+"/query-error.txt")
-
 	// Manifest: 2 panels total, exactly one ran successfully, and panel 2 carries an error string.
 	var manifest struct {
 		PanelsTotal int `json:"panelsTotal"`
@@ -266,12 +254,43 @@ func TestIntegrationDiagnosticsDashboard(t *testing.T) {
 	assert.Equal(t, 2, manifest.PanelsTotal)
 	assert.Equal(t, 1, manifest.PanelsRun, "only the success panel should count as run")
 
-	byID := map[int64]string{}
+	byID := map[int64]struct{ dir, err string }{}
 	for _, p := range manifest.Panels {
-		byID[p.ID] = p.Error
+		byID[p.ID] = struct{ dir, err string }{p.Dir, p.Error}
 	}
-	assert.Empty(t, byID[1], "success panel should have no error")
-	assert.NotEmpty(t, byID[2], "error panel should record its datasource error")
+	require.Len(t, byID, 2, "manifest should carry one entry per panel: %s", string(members["manifest.json"]))
+	assert.Empty(t, byID[1].err, "success panel should have no error")
+	assert.NotEmpty(t, byID[2].err, "error panel should record its datasource error")
+
+	// Per-panel directories, resolved from the manifest rather than guessed from a name prefix -- that
+	// also checks each manifest dir pointer actually resolves to members in the archive.
+	successDir, errorDir := byID[1].dir, byID[2].dir
+	require.NotEmpty(t, successDir)
+	require.NotEmpty(t, errorDir)
+	assert.Contains(t, names, successDir+"/panel.json")
+	assert.Contains(t, names, successDir+"/querydata.json")
+	assert.NotContains(t, names, successDir+"/query-error.txt", "success panel should not record an error file")
+	// The failing panel records its error both as a file and in the manifest.
+	assert.Contains(t, names, errorDir+"/query-error.txt")
+
+	// Per-identity scoping: the routes are admin-only, but a job may hold verbatim captured HTTP
+	// traffic, so a *different* server admin must not be able to read or download someone else's job.
+	// This needs a second grafana admin -- a non-admin would be rejected by reqGrafanaAdmin before the
+	// ownership check ever runs, which would pass for the wrong reason.
+	otherLogin, otherPass := "diag-other-admin", "other-admin-pass"
+	tests.CreateUser(t, testEnv.SQLStore, testEnv.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		IsAdmin:        true,
+		Password:       user.Password(otherPass),
+		Login:          otherLogin,
+		OrgID:          1,
+	})
+
+	otherStatus, otherBody, _ := doJSON(t, http.MethodGet, diagURL(addr, otherLogin, otherPass, "ds/dashboard-diagnostics/"+created.UID), nil)
+	assert.Equal(t, http.StatusNotFound, otherStatus, "another admin must not see this job's status: %s", string(otherBody))
+
+	otherDLStatus, otherDLBody, _ := doJSON(t, http.MethodGet, diagURL(addr, otherLogin, otherPass, "ds/dashboard-diagnostics/"+created.UID+"/download"), nil)
+	assert.Equal(t, http.StatusNotFound, otherDLStatus, "another admin must not download this job's archive: %s", string(otherDLBody))
 }
 
 // ---- helpers ------------------------------------------------------------------------------------
@@ -306,6 +325,32 @@ func singlePanelBody(dsUID, scenario string) []byte {
 		"panel": {"id":1,"title":"Diag Panel","type":"timeseries"},
 		"dashboard": {"title":"Diag Dashboard","uid":"diag-1"}
 	}`, scenario, dsUID, testDataSourceType))
+}
+
+// dashboardBody builds a POST /api/ds/dashboard-diagnostics body with two data panels: one succeeds
+// (random_walk) and one fails per-refID (random_walk_with_error).
+func dashboardBody(dsUID string) []byte {
+	return []byte(fmt.Sprintf(`{
+		"dashboard": {"title":"Diag Dashboard","uid":"diag-dash-1","panels":[]},
+		"panels": [
+			{
+				"id": 1,
+				"title": "Success Panel",
+				"panel": {"id":1,"title":"Success Panel","type":"timeseries"},
+				"from": "now-1h",
+				"to": "now",
+				"queries": [{"refId":"A","scenarioId":"random_walk","datasource":{"uid":%q,"type":%q}}]
+			},
+			{
+				"id": 2,
+				"title": "Error Panel",
+				"panel": {"id":2,"title":"Error Panel","type":"timeseries"},
+				"from": "now-1h",
+				"to": "now",
+				"queries": [{"refId":"A","scenarioId":"random_walk_with_error","datasource":{"uid":%q,"type":%q}}]
+			}
+		]
+	}`, dsUID, testDataSourceType, dsUID, testDataSourceType))
 }
 
 func diagURL(addr, user, pass, path string) string {
@@ -343,7 +388,7 @@ func readTarGz(t *testing.T, data []byte) map[string][]byte {
 	tr := tar.NewReader(gz)
 	for {
 		hdr, err := tr.Next()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		require.NoError(t, err)
@@ -360,19 +405,4 @@ func memberNames(members map[string][]byte) []string {
 		names = append(names, name)
 	}
 	return names
-}
-
-// findDir returns the first archive member name that begins with prefix and, from it, the directory
-// portion (the panels/<id>-<slug> path). Fails the test if no member matches.
-func findDir(t *testing.T, names []string, prefix string) string {
-	t.Helper()
-	for _, n := range names {
-		if strings.HasPrefix(n, prefix) {
-			if idx := strings.LastIndex(n, "/"); idx > 0 {
-				return n[:idx]
-			}
-		}
-	}
-	t.Fatalf("no archive member with prefix %q in %v", prefix, names)
-	return ""
 }
