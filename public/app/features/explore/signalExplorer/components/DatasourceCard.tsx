@@ -124,6 +124,7 @@ interface PrometheusBodyProps {
  * to browse in the first place.
  */
 function PrometheusBody({ exploreId, refId, dsRef, timeRange, matchQueries }: PrometheusBodyProps) {
+  const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
 
   const searchText = useSelector((state) => selectSearchText(state, exploreId, refId));
@@ -156,6 +157,7 @@ function PrometheusBody({ exploreId, refId, dsRef, timeRange, matchQueries }: Pr
   return (
     <>
       <Input
+        className={styles.search}
         value={draftSearch}
         onChange={(event: ChangeEvent<HTMLInputElement>) => setDraftSearch(event.currentTarget.value)}
         placeholder={searchLabel}
@@ -251,8 +253,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
   body: css({
     display: 'flex',
     flexDirection: 'column',
-    gap: theme.spacing(1),
+    // Separates the body from the header the same way the panel editor's sidebar cards do; without it
+    // the search box reads as part of the header row.
+    borderTop: `1px solid ${theme.colors.border.weak}`,
+    gap: theme.spacing(0.5),
+    flex: 1,
     minHeight: 0,
-    padding: theme.spacing(0, 1, 1, 1.25),
+    // Deliberately tight and symmetric: this sits in a narrow sidebar, and every horizontal pixel
+    // spent on padding is taken from the metric names, which are long and get truncated.
+    padding: theme.spacing(0.5, 0.5, 1),
+  }),
+  search: css({
+    flexShrink: 0,
   }),
 });
