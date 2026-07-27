@@ -11,6 +11,7 @@ import {
   type EventBus,
   EventBusSrv,
   type GrafanaTheme2,
+  type LoadingState,
   type LogLevel,
   type LogRowModel,
   LogsDedupStrategy,
@@ -41,6 +42,7 @@ import { usePopoverMenu } from './usePopoverMenu';
 import { LogLineVirtualization, getLogLineSize, type LogFieldDimension, ScrollToLogsEvent } from './virtualization';
 
 export interface Props {
+  allowDownload?: boolean;
   app: CoreApp;
   containerElement: HTMLDivElement;
   dedupStrategy: LogsDedupStrategy;
@@ -57,7 +59,7 @@ export interface Props {
   infiniteScrollMode?: InfiniteScrollMode;
   initialScrollPosition?: 'top' | 'bottom';
   isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
-  loading?: boolean;
+  loadingState?: LoadingState;
   loadMore?: LoadMoreLogsType;
   logLineMenuCustomItems?: LogLineMenuCustomItem[];
   logOptionsStorageKey?: string;
@@ -123,6 +125,7 @@ type LogListComponentProps = Omit<
 
 export const LogList = ({
   app,
+  allowDownload,
   displayedFields,
   dataFrames,
   containerElement,
@@ -139,7 +142,7 @@ export const LogList = ({
   infiniteScrollMode,
   initialScrollPosition = 'top',
   isLabelFilterActive,
-  loading,
+  loadingState,
   loadMore,
   logLineMenuCustomItems,
   logs,
@@ -179,6 +182,7 @@ export const LogList = ({
 }: Props) => {
   return (
     <LogListContextProvider
+      allowDownload={allowDownload}
       app={app}
       containerElement={containerElement}
       dedupStrategy={dedupStrategy}
@@ -240,7 +244,7 @@ export const LogList = ({
             grammar={grammar}
             initialScrollPosition={initialScrollPosition}
             infiniteScrollMode={infiniteScrollMode}
-            loading={loading}
+            loadingState={loadingState}
             loadMore={loadMore}
             logs={logs}
             showControls={showControls}
@@ -262,7 +266,7 @@ const LogListComponent = ({
   grammar,
   initialScrollPosition = 'top',
   infiniteScrollMode = 'interval',
-  loading,
+  loadingState,
   loadMore,
   logs,
   showControls,
@@ -468,10 +472,10 @@ const LogListComponent = ({
   );
 
   const focusLogLine = useCallback(
-    (log: LogListModel) => {
+    (log: LogListModel, align: Align = 'start') => {
       const index = filteredLogs.findIndex((filteredLog) => filteredLog.uid === log.uid);
       if (index >= 0) {
-        debouncedScrollToItem(index, 'start');
+        debouncedScrollToItem(index, align);
       }
     },
     [debouncedScrollToItem, filteredLogs]
@@ -545,7 +549,7 @@ const LogListComponent = ({
           displayedFields={displayedFields}
           handleOverflow={handleOverflow}
           infiniteScrollMode={infiniteScrollMode}
-          loading={loading}
+          loadingState={loadingState}
           logs={filteredLogs}
           loadMore={loadMore}
           onClick={handleLogLineClick}

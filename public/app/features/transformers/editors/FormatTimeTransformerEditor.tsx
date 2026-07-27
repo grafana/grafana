@@ -1,20 +1,10 @@
 import { useCallback, type ChangeEvent } from 'react';
 
-import {
-  DataTransformerID,
-  type SelectableValue,
-  standardTransformers,
-  type TransformerRegistryItem,
-  type TransformerUIProps,
-  getFieldDisplayName,
-  PluginState,
-} from '@grafana/data';
+import { type SelectableValue, type TransformerUIProps, getFieldDisplayName } from '@grafana/data';
 import { type FormatTimeTransformerOptions } from '@grafana/data/internal';
 import { Trans, t } from '@grafana/i18n';
 import { Select, InlineFieldRow, InlineField, Input, TextLink } from '@grafana/ui';
 
-import darkImage from '../images/dark/formatTime.svg';
-import lightImage from '../images/light/formatTime.svg';
 import { getTimezoneOptions } from '../utils';
 
 export function FormatTimeTransfomerEditor({
@@ -117,18 +107,3 @@ export function FormatTimeTransfomerEditor({
     </>
   );
 }
-
-export const getFormatTimeTransformerRegistryItem: () => TransformerRegistryItem<FormatTimeTransformerOptions> =
-  () => ({
-    id: DataTransformerID.formatTime,
-    editor: FormatTimeTransfomerEditor,
-    transformation: standardTransformers.formatTimeTransformer,
-    name: t('transformers.format-time-transformer-editor.name.format-time', 'Format time'),
-    state: PluginState.alpha,
-    description: t(
-      'transformers.format-time-transformer-editor.description.set-based-on-time',
-      'Set the output format of a time field'
-    ),
-    imageDark: darkImage,
-    imageLight: lightImage,
-  });

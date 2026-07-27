@@ -1,20 +1,19 @@
 import { dateTime } from '../datetime/moment_wrapper';
-import { type TimeSeries, type TableData } from '../types/data';
-import { FieldType, type DataFrameDTO, type Field } from '../types/dataFrame';
+import { LoadingState, type TimeSeries, type TableData } from '../types/data';
+import { FieldType, type DataFrameDTO } from '../types/dataFrame';
+import { type PanelData } from '../types/panel';
 
 import { ArrayDataFrame } from './ArrayDataFrame';
+import * as guessFieldTypeModule from './guessFieldType';
 import {
-  createDataFrame,
-  getFieldTypeFromValue,
-  guessFieldTypeForField,
-  guessFieldTypeFromValue,
-  guessFieldTypes,
   isDataFrame,
   isTableData,
   reverseDataFrame,
   sortDataFrame,
   toDataFrame,
   toLegacyResponseData,
+  getProcessedDataFrames,
+  preProcessPanelData,
 } from './processDataFrame';
 
 describe('toDataFrame', () => {
@@ -99,54 +98,6 @@ describe('toDataFrame', () => {
         rows: {},
       })
     ).toThrowError('Expected table rows to be array, got object.');
-  });
-
-  it('Guess Column Types from value', () => {
-    expect(guessFieldTypeFromValue(1)).toBe(FieldType.number);
-    expect(guessFieldTypeFromValue(1.234)).toBe(FieldType.number);
-    expect(guessFieldTypeFromValue(3.125e7)).toBe(FieldType.number);
-    expect(guessFieldTypeFromValue(true)).toBe(FieldType.boolean);
-    expect(guessFieldTypeFromValue(false)).toBe(FieldType.boolean);
-    expect(guessFieldTypeFromValue(new Date())).toBe(FieldType.time);
-    expect(guessFieldTypeFromValue(dateTime())).toBe(FieldType.time);
-  });
-
-  it('Guess Column Types from strings', () => {
-    expect(guessFieldTypeFromValue('1')).toBe(FieldType.number);
-    expect(guessFieldTypeFromValue('1.234')).toBe(FieldType.number);
-    expect(guessFieldTypeFromValue('NaN')).toBe(FieldType.number);
-    expect(guessFieldTypeFromValue('3.125e7')).toBe(FieldType.number);
-    expect(guessFieldTypeFromValue('True')).toBe(FieldType.boolean);
-    expect(guessFieldTypeFromValue('FALSE')).toBe(FieldType.boolean);
-    expect(guessFieldTypeFromValue('true')).toBe(FieldType.boolean);
-    expect(guessFieldTypeFromValue('xxxx')).toBe(FieldType.string);
-  });
-
-  it('Get column types from values', () => {
-    expect(getFieldTypeFromValue(1)).toBe(FieldType.number);
-    expect(getFieldTypeFromValue(1.234)).toBe(FieldType.number);
-    expect(getFieldTypeFromValue(NaN)).toBe(FieldType.number);
-    expect(getFieldTypeFromValue(3.125e7)).toBe(FieldType.number);
-    expect(getFieldTypeFromValue(true)).toBe(FieldType.boolean);
-    expect(getFieldTypeFromValue('xxxx')).toBe(FieldType.string);
-  });
-
-  it('Guess Column Types from series', () => {
-    const series = createDataFrame({
-      fields: [
-        { name: 'A (number)', values: [123, null] },
-        { name: 'B (strings)', values: [null, 'Hello'] },
-        { name: 'C (nulls)', values: [null, null] },
-        { name: 'Time', values: ['2000', 1967] },
-        { name: 'D (number strings)', values: ['NaN', null, 1] },
-      ],
-    });
-    const norm = guessFieldTypes(series);
-    expect(norm.fields[0].type).toBe(FieldType.number);
-    expect(norm.fields[1].type).toBe(FieldType.string);
-    expect(norm.fields[2].type).toBe(FieldType.other);
-    expect(norm.fields[3].type).toBe(FieldType.time); // based on name
-    expect(norm.fields[4].type).toBe(FieldType.number);
   });
 
   it('converts JSON document data to series', () => {
@@ -470,49 +421,122 @@ describe('reverse DataFrame', () => {
   });
 });
 
-describe('guessFieldTypeForField', () => {
-  it('should guess types if value exists', () => {
-    const field: Field = {
-      name: 'Field',
-      config: {},
-      type: FieldType.other,
-      values: [1, 2, 3],
-    };
-
-    expect(guessFieldTypeForField(field)).toBe(FieldType.number);
-
-    field.values = [null, null, 3];
-
-    expect(guessFieldTypeForField(field)).toBe(FieldType.number);
+describe('getProcessedDataFrames', () => {
+  it('returns empty array when results is undefined', () => {
+    expect(getProcessedDataFrames(undefined)).toEqual([]);
   });
 
-  it('should guess type if name suggests time values', () => {
-    const field: Field = {
-      name: 'Date',
-      config: {},
-      type: FieldType.other,
-      values: [1, 2, 3],
-    };
-
-    expect(guessFieldTypeForField(field)).toBe(FieldType.time);
-
-    field.name = 'time';
-
-    expect(guessFieldTypeForField(field)).toBe(FieldType.time);
+  it('returns empty array when results is not an array', () => {
+    expect(getProcessedDataFrames({} as unknown as unknown[])).toEqual([]);
   });
 
-  it('should return undefined if no values present', () => {
-    const field: Field = {
-      name: 'Val',
-      config: {},
-      type: FieldType.other,
-      values: [null, null],
+  it('returns empty array for empty input', () => {
+    expect(getProcessedDataFrames([])).toEqual([]);
+  });
+
+  it('calls guessFieldTypes once per frame to infer field types', () => {
+    const spy = jest.spyOn(guessFieldTypeModule, 'guessFieldTypes');
+    const frames = [
+      { fields: [{ name: 'value', values: [1, 2] }] },
+      { fields: [{ name: 'label', values: ['a', 'b'] }] },
+    ] as unknown as DataFrameDTO[];
+    getProcessedDataFrames(frames);
+    expect(spy).toHaveBeenCalledTimes(frames.length);
+    spy.mockRestore();
+  });
+
+  it('infers untyped fields via guessFieldTypes (time from timestamps, number from numeric values)', () => {
+    const raw = {
+      fields: [
+        { name: 'time', values: [1000, 2000] },
+        { name: 'value', values: [1, 2] },
+      ],
+    } as unknown as DataFrameDTO;
+    const [frame] = getProcessedDataFrames([raw]);
+    expect(frame.fields[0].type).toBe(FieldType.time);
+    expect(frame.fields[1].type).toBe(FieldType.number);
+  });
+
+  it('clears cached field state on processed frames', () => {
+    const raw = {
+      fields: [{ name: 'value', type: FieldType.number, values: [1], state: { calcs: { sum: 1 } } }],
     };
+    const result = getProcessedDataFrames([raw]);
+    expect(result[0].fields[0].state).toBeNull();
+  });
 
-    expect(guessFieldTypeForField(field)).toBe(undefined);
+  it('processes multiple frames', () => {
+    const frames = [
+      { fields: [{ name: 'a', type: FieldType.number, values: [1] }] },
+      { fields: [{ name: 'b', type: FieldType.string, values: ['x'] }] },
+    ];
+    const result = getProcessedDataFrames(frames);
+    expect(result).toHaveLength(2);
+  });
+});
 
-    field.values = [];
+describe('preProcessPanelData', () => {
+  const baseData = {
+    state: LoadingState.Done,
+    series: [
+      toDataFrame({
+        fields: [{ name: 'time', type: FieldType.time, values: [1000, 2000] }],
+      }),
+    ],
+    timeRange: { from: dateTime(0), to: dateTime(1000), raw: { from: dateTime(0), to: dateTime(1000) } },
+  };
 
-    expect(guessFieldTypeForField(field)).toBe(undefined);
+  it('clears field state on each series frame, proving getProcessedDataFrame ran', () => {
+    const frameWithState = toDataFrame({
+      fields: [{ name: 'value', type: FieldType.number, values: [1], state: { calcs: { sum: 1 } } }],
+    });
+    const data = { ...baseData, series: [frameWithState] };
+    const result = preProcessPanelData(data);
+    expect(result.series[0].fields[0].state).toBeNull();
+  });
+
+  it('reuses the previous series while loading with no data, to avoid a no-data flicker', () => {
+    const loadingData = {
+      state: LoadingState.Loading,
+      series: [],
+      timeRange: baseData.timeRange,
+    };
+    const lastResult = {
+      ...baseData,
+      state: LoadingState.Done,
+    };
+    const result = preProcessPanelData(loadingData, lastResult);
+    expect(result.state).toBe(LoadingState.Loading);
+    // the previous (non-empty) series is carried over rather than the incoming empty one
+    expect(result.series).toBe(lastResult.series);
+    expect(result.series).toHaveLength(1);
+  });
+
+  it('keeps its own empty series while loading when there is no previous result to fall back to', () => {
+    const loadingData = {
+      state: LoadingState.Loading,
+      series: [],
+      timeRange: baseData.timeRange,
+    };
+    const result = preProcessPanelData(loadingData, undefined);
+    expect(result.state).toBe(LoadingState.Loading);
+    // with no lastResult, there is nothing to carry over, so the empty series is preserved
+    expect(result.series).toBe(loadingData.series);
+    expect(result.series).toHaveLength(0);
+  });
+
+  it('includes timings in processed result', () => {
+    const result = preProcessPanelData(baseData);
+    expect(result.timings).toBeDefined();
+    expect(result.timings!.dataProcessingTime).toBeGreaterThanOrEqual(0);
+  });
+
+  it('processes annotations when present', () => {
+    const dataWithAnnotations = {
+      ...baseData,
+      annotations: [{ fields: [{ name: 'time', type: FieldType.time, values: [500] }] }],
+    };
+    const result = preProcessPanelData(dataWithAnnotations as unknown as PanelData);
+    expect(result.annotations).toHaveLength(1);
   });
 });

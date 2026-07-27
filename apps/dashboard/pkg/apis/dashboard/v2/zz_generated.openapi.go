@@ -724,8 +724,8 @@ func schema_pkg_apis_dashboard_v2_DashboardAnnotationPanelFilter(ref common.Refe
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: 0,
-										Type:    []string{"integer"},
-										Format:  "int64",
+										Type:    []string{"number"},
+										Format:  "double",
 									},
 								},
 							},
@@ -2173,6 +2173,13 @@ func schema_pkg_apis_dashboard_v2_DashboardFieldColor(ref common.ReferenceCallba
 							Format:      "",
 						},
 					},
+					"gradientColorTo": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The end color for the gradient color mode (smallest value). Only used when mode is gradient.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"seriesBy": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Some visualizations need to know how to assign a series color from by value color schemes.",
@@ -3333,9 +3340,16 @@ func schema_pkg_apis_dashboard_v2_DashboardPanelSpec(ref common.ReferenceCallbac
 					},
 					"description": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "Shown in a info icon tooltip next to panel title",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"subtitle": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Shown in a sub header below the title.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"links": {
@@ -3370,7 +3384,7 @@ func schema_pkg_apis_dashboard_v2_DashboardPanelSpec(ref common.ReferenceCallbac
 						},
 					},
 				},
-				Required: []string{"id", "title", "description", "links", "data", "vizConfig"},
+				Required: []string{"id", "title", "links", "data", "vizConfig"},
 			},
 		},
 		Dependencies: []string{

@@ -39,16 +39,16 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 				proxyFieldName:   "name",
 				proxyFieldRole:   "Viewer",
 				proxyFieldGroups: "grp1,grp2",
-				proxyFieldEmail:  "email@email.com",
+				proxyFieldEmail:  "email@example.com",
 			},
 			expectedIdentity: &authn.Identity{
 				OrgRoles:        map[int64]org.RoleType{1: org.RoleViewer},
 				Login:           "test",
 				Name:            "name",
-				Email:           "email@email.com",
+				Email:           "email@example.com",
 				AuthenticatedBy: login.AuthProxyAuthModule,
 				AuthID:          "test",
-				Groups:          []string{"grp1", "grp2"},
+				ExternalGroups:  []string{"grp1", "grp2"},
 				ClientParams: authn.ClientParams{
 					SyncUser:        true,
 					SyncTeams:       true,
@@ -56,8 +56,8 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 					FetchSyncedUser: true,
 					SyncOrgRoles:    true,
 					LookUpParams: login.UserLookupParams{
-						Email: strPtr("email@email.com"),
-						Login: strPtr("test"),
+						Email: new("email@example.com"),
+						Login: new("test"),
 					},
 				},
 			},
@@ -78,8 +78,8 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 					AllowSignUp:  true,
 					SyncOrgRoles: true,
 					LookUpParams: login.UserLookupParams{
-						Email: strPtr("test@test.com"),
-						Login: strPtr("test@test.com"),
+						Email: new("test@test.com"),
+						Login: new("test@test.com"),
 					},
 				},
 			},
@@ -109,7 +109,8 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 				assert.Equal(t, tt.expectedIdentity.Email, identity.Email)
 				assert.Equal(t, tt.expectedIdentity.AuthID, identity.AuthID)
 				assert.Equal(t, tt.expectedIdentity.AuthenticatedBy, identity.AuthenticatedBy)
-				assert.Equal(t, tt.expectedIdentity.Groups, identity.Groups)
+				assert.Equal(t, tt.expectedIdentity.ExternalGroups, identity.ExternalGroups)
+				assert.Empty(t, identity.Groups, "IdP groups must not leak into Identity.Groups")
 
 				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncUser, identity.ClientParams.SyncUser)
 				assert.Equal(t, tt.expectedIdentity.ClientParams.AllowSignUp, identity.ClientParams.AllowSignUp)

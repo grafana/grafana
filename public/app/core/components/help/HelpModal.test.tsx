@@ -1,7 +1,6 @@
 import { renderHook } from '@testing-library/react';
 
 import { useAssistant } from '@grafana/assistant';
-import { config } from '@grafana/runtime';
 
 import { useShortcuts } from './HelpModal';
 
@@ -168,9 +167,7 @@ describe('useShortcuts', () => {
       });
     });
 
-    it('should show new zoom shortcuts when feature toggle is enabled', () => {
-      config.featureToggles.newTimeRangeZoomShortcuts = true;
-
+    it('should show new zoom shortcuts', () => {
       const { result } = renderHook(() => useShortcuts());
 
       const timeRangeCategory = result.current.find((cat) => cat.category.includes('Time range'));
@@ -184,37 +181,7 @@ describe('useShortcuts', () => {
       expect(zoomOutShortcut!.isNew).toBe(true);
     });
 
-    it('should show legacy t z shortcut when feature toggle is disabled', () => {
-      config.featureToggles.newTimeRangeZoomShortcuts = false;
-
-      const { result } = renderHook(() => useShortcuts());
-
-      const timeRangeCategory = result.current.find((cat) => cat.category.includes('Time range'));
-
-      const legacyZoomShortcut = timeRangeCategory!.shortcuts.find((s) => s.keys.includes('t') && s.keys.includes('z'));
-      const newZoomInShortcut = timeRangeCategory!.shortcuts.find((s) => s.keys.includes('t') && s.keys.includes('+'));
-      const newZoomOutShortcut = timeRangeCategory!.shortcuts.find((s) => s.keys.includes('t') && s.keys.includes('-'));
-
-      expect(legacyZoomShortcut).toBeDefined();
-      expect(newZoomInShortcut).toBeUndefined();
-      expect(newZoomOutShortcut).toBeUndefined();
-    });
-
-    it('should not show isNew badge on legacy shortcuts', () => {
-      config.featureToggles.newTimeRangeZoomShortcuts = false;
-
-      const { result } = renderHook(() => useShortcuts());
-
-      const timeRangeCategory = result.current.find((cat) => cat.category.includes('Time range'));
-
-      const legacyZoomShortcut = timeRangeCategory!.shortcuts.find((s) => s.keys.includes('t') && s.keys.includes('z'));
-
-      expect(legacyZoomShortcut!.isNew).toBeUndefined();
-    });
-
-    it('should show isNew badge on new shortcuts when feature toggle is enabled', () => {
-      config.featureToggles.newTimeRangeZoomShortcuts = true;
-
+    it('should show isNew badge on new shortcuts', () => {
       const { result } = renderHook(() => useShortcuts());
 
       const timeRangeCategory = result.current.find((cat) => cat.category.includes('Time range'));

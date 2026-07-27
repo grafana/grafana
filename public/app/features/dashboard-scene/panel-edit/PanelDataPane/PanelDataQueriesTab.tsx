@@ -40,8 +40,9 @@ import { ExpressionDatasourceUID } from '../../../expressions/types';
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 import { PanelInspectDrawer } from '../../inspect/PanelInspectDrawer';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
+import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
-import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
+import { trackAddQuery } from '../PanelEditNext/tracking';
 
 import { type PanelDataPaneTab, type PanelDataTabHeaderProps, TabId } from './types';
 import { hasBackendDatasource } from './utils';
@@ -248,10 +249,12 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     const timeFrom = options.timeRange?.from ?? undefined;
     const timeShift = options.timeRange?.shift ?? undefined;
     const hideTimeOverride = options.timeRange?.hide;
+    const compareWith =
+      panel.state.$timeRange instanceof PanelTimeRange ? panel.state.$timeRange.state.compareWith : undefined;
 
-    if (timeFrom !== undefined || timeShift !== undefined) {
-      panelStateUpdate.$timeRange = new PanelTimeRange({ timeFrom, timeShift, hideTimeOverride });
-      panelStateUpdate.hoverHeader = getUpdatedHoverHeader(panel.state.title, panelStateUpdate.$timeRange);
+    if (timeFrom !== undefined || timeShift !== undefined || compareWith) {
+      panelStateUpdate.$timeRange = new PanelTimeRange({ timeFrom, timeShift, hideTimeOverride, compareWith });
+      panelStateUpdate.hoverHeader = getUpdatedHoverHeader(panel.state.title, panelStateUpdate.$timeRange?.state);
     } else {
       panelStateUpdate.$timeRange = undefined;
       panelStateUpdate.hoverHeader = getUpdatedHoverHeader(panel.state.title, undefined);
@@ -305,6 +308,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
   public addQueryClick = () => {
     const queries = this.getQueries();
+    trackAddQuery('new_query', 'legacy', { silent: true });
     this.onQueriesChange(addQuery(queries, this.newQuery()));
   };
 

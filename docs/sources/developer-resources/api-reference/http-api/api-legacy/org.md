@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../../http_api/org/ # /docs/grafana/next/http_api/org/
-  - ../../../http_api/organization/ # /docs/grafana/next/http_api/organization/
-  - ../../../developers/http_api/org/ # /docs/grafana/next/developers/http_api/org/
+  - ../../../../http_api/org/ # /docs/grafana/next/http_api/org/
+  - ../../../../http_api/organization/ # /docs/grafana/next/http_api/organization/
+  - ../../../../developers/http_api/org/ # /docs/grafana/next/developers/http_api/org/
   - ../../../../developer-resources/api-reference/http-api/org/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/org/
 description: Grafana Organization HTTP API
@@ -21,19 +21,40 @@ title: Organization HTTP API
 
 # Organization API
 
-{{< admonition type="caution" >}}
-
-Starting in Grafana 13, `/api` endpoints are being deprecated. This change doesn't disrupt or break your current setup: legacy APIs are not being disabled and remain fully accessible and operative. However, `/api` routes will no longer be updated and **will be removed in a future major release.**
-
-To learn more refer to the [new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
-
-{{< /admonition >}}
+{{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 The Organization HTTP API is divided in two resources, `/api/org` (current organization)
 and `/api/orgs` (admin organizations). One big difference between these are that
 the admin of all organizations API only works with basic authentication, see [Admin Organizations API](#admin-organizations-api) for more information.
 
 > If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
+
+### Current Organization endpoints
+
+| Method | Summary                                                                                                         | URI                    |
+| ------ | --------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| GET    | [Get current Organization](#get-current-organization)                                                           | /api/org/              |
+| GET    | [Get all users within the current organization](#get-all-users-within-the-current-organization)                 | /api/org/users         |
+| GET    | [Get all users within the current organization (lookup)](#get-all-users-within-the-current-organization-lookup) | /api/org/users/lookup  |
+| PATCH  | [Updates the given user](#updates-the-given-user)                                                               | /api/org/users/:userId |
+| DELETE | [Delete user in current organization](#delete-user-in-current-organization)                                     | /api/org/users/:userId |
+| PUT    | [Update current Organization](#update-current-organization)                                                     | /api/org               |
+| POST   | [Add a new user to the current organization](#add-a-new-user-to-the-current-organization)                       | /api/org/users         |
+
+### Admin Organizations endpoints
+
+| Method | Summary                                                       | URI                            |
+| ------ | ------------------------------------------------------------- | ------------------------------ |
+| GET    | [Get Organization by Id](#get-organization-by-id)             | /api/orgs/:orgId               |
+| GET    | [Get Organization by Name](#get-organization-by-name)         | /api/orgs/name/:orgName        |
+| POST   | [Create Organization](#create-organization)                   | /api/orgs                      |
+| GET    | [Search all Organizations](#search-all-organizations)         | /api/orgs                      |
+| PUT    | [Update Organization](#update-organization)                   | /api/orgs/:orgId               |
+| DELETE | [Delete Organization](#delete-organization)                   | /api/orgs/:orgId               |
+| GET    | [Get Users in Organization](#get-users-in-organization)       | /api/orgs/:orgId/users         |
+| POST   | [Add User in Organization](#add-user-in-organization)         | /api/orgs/:orgId/users         |
+| PATCH  | [Update Users in Organization](#update-users-in-organization) | /api/orgs/:orgId/users/:userId |
+| DELETE | [Delete User in Organization](#delete-user-in-organization)   | /api/orgs/:orgId/users/:userId |
 
 ## Current Organization API
 
@@ -55,7 +76,7 @@ See note in the [introduction](#organization-api) for an explanation.
 GET /api/org/ HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -91,7 +112,7 @@ See note in the [introduction](#organization-api) for an explanation.
 GET /api/org/users HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -137,7 +158,7 @@ See note in the [introduction](#organization-api) for an explanation.
 GET /api/org/users/lookup HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -173,7 +194,7 @@ See note in the [introduction](#organization-api) for an explanation.
 PATCH /api/org/users/1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "role": "Viewer",
@@ -207,7 +228,7 @@ See note in the [introduction](#organization-api) for an explanation.
 DELETE /api/org/users/1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -237,7 +258,7 @@ See note in the [introduction](#organization-api) for an explanation.
 PUT /api/org HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "name":"Main Org."
@@ -273,7 +294,7 @@ See note in the [introduction](#organization-api) for an explanation.
 POST /api/org/users HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "role": "Admin",

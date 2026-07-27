@@ -22,7 +22,7 @@ const mockTransformationInfo: DataTransformerInfo = {
 const mockTransformer: TransformerRegistryItem<null> = {
   id: 'test-transform',
   name: 'Test Transform',
-  transformation: mockTransformationInfo,
+  transformation: () => Promise.resolve(mockTransformationInfo),
   editor: () => null,
   imageDark: '',
   imageLight: '',
@@ -104,7 +104,8 @@ describe('TransformationEditorHelpDisplay', () => {
       ...mockTransformer,
       id: 'second-transform',
       name: 'Second Transform',
-      transformation: { ...mockTransformationInfo, id: 'second-transform', name: 'Second Transform' },
+      transformation: () =>
+        Promise.resolve({ ...mockTransformationInfo, id: 'second-transform', name: 'Second Transform' }),
     };
 
     const { rerender } = render(

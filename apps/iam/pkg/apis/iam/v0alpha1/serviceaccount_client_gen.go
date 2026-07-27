@@ -1,7 +1,13 @@
 package v0alpha1
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 )
@@ -77,4 +83,97 @@ func (c *ServiceAccountClient) Patch(ctx context.Context, identifier resource.Id
 
 func (c *ServiceAccountClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
 	return c.client.Delete(ctx, identifier, opts)
+}
+
+type DeleteServiceAccountTokenRequest struct {
+	Headers http.Header
+}
+
+func (c *ServiceAccountClient) DeleteServiceAccountToken(ctx context.Context, identifier resource.Identifier, request DeleteServiceAccountTokenRequest) (*DeleteServiceAccountTokenResponse, error) {
+	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
+		Path:    "/tokens/{tokenName}",
+		Verb:    "DELETE",
+		Headers: request.Headers,
+	})
+	if err != nil {
+		return nil, err
+	}
+	cast := DeleteServiceAccountTokenResponse{}
+	err = json.Unmarshal(resp, &cast)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response bytes into DeleteServiceAccountTokenResponse: %w", err)
+	}
+	return &cast, nil
+}
+
+type GetServiceAccountTokenRequest struct {
+	Headers http.Header
+}
+
+func (c *ServiceAccountClient) GetServiceAccountToken(ctx context.Context, identifier resource.Identifier, request GetServiceAccountTokenRequest) (*GetServiceAccountTokenResponse, error) {
+	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
+		Path:    "/tokens/{tokenName}",
+		Verb:    "GET",
+		Headers: request.Headers,
+	})
+	if err != nil {
+		return nil, err
+	}
+	cast := GetServiceAccountTokenResponse{}
+	err = json.Unmarshal(resp, &cast)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response bytes into GetServiceAccountTokenResponse: %w", err)
+	}
+	return &cast, nil
+}
+
+type ListServiceAccountTokensRequest struct {
+	Params  ListServiceAccountTokensRequestParams
+	Headers http.Header
+}
+
+func (c *ServiceAccountClient) ListServiceAccountTokens(ctx context.Context, identifier resource.Identifier, request ListServiceAccountTokensRequest) (*ListServiceAccountTokensResponse, error) {
+	params := url.Values{}
+	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
+		Path:    "/tokens",
+		Verb:    "GET",
+		Query:   params,
+		Headers: request.Headers,
+	})
+	if err != nil {
+		return nil, err
+	}
+	cast := ListServiceAccountTokensResponse{}
+	err = json.Unmarshal(resp, &cast)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response bytes into ListServiceAccountTokensResponse: %w", err)
+	}
+	return &cast, nil
+}
+
+type CreateServiceAccountTokenRequest struct {
+	Body    CreateServiceAccountTokenRequestBody
+	Headers http.Header
+}
+
+func (c *ServiceAccountClient) CreateServiceAccountToken(ctx context.Context, identifier resource.Identifier, request CreateServiceAccountTokenRequest) (*CreateServiceAccountTokenResponse, error) {
+	body, err := json.Marshal(request.Body)
+	if err != nil {
+		return nil, fmt.Errorf("unable to marshal body to JSON: %w", err)
+	}
+	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
+		Path:    "/tokens",
+		Verb:    "POST",
+		Body:    io.NopCloser(bytes.NewReader(body)),
+		Headers: request.Headers,
+	})
+	if err != nil {
+		return nil, err
+	}
+	cast := CreateServiceAccountTokenResponse{}
+	err = json.Unmarshal(resp, &cast)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response bytes into CreateServiceAccountTokenResponse: %w", err)
+	}
+	return &cast, nil
 }

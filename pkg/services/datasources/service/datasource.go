@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
+
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -28,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/datasources/awsexternalid"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -50,7 +52,7 @@ var (
 type Service struct {
 	SQLStore                  Store
 	SecretsStore              kvstore.SecretsKVStore
-	SecretsService            secrets.Service
+	SecretsService            secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	cfg                       *setting.Cfg
 	features                  featuremgmt.FeatureToggles
 	permissionsService        accesscontrol.DatasourcePermissionsService
@@ -75,7 +77,9 @@ type cachedRoundTripper struct {
 }
 
 func ProvideService(
-	db db.DB, secretsService secrets.Service, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg,
+	db db.DB,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, datasourcePermissionsService accesscontrol.DatasourcePermissionsService,
 	quotaService quota.Service, pluginStore pluginstore.Store, pluginClient plugins.Client,
 	basePluginContextProvider plugincontext.BasePluginContextProvider,
@@ -214,7 +218,29 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.G
 		}
 		query.AliasIDs = p.AliasIDs
 	}
-	return s.SQLStore.GetDataSourcesByType(ctx, query)
+
+	all, err := s.SQLStore.GetDataSourcesByType(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	// System/background callers have no requester in context — return all values.
+	user, err := identity.GetRequester(ctx)
+	if err != nil || user == nil {
+		return all, nil
+	}
+
+	filtered := make([]*datasources.DataSource, 0, len(all))
+	for _, ds := range all {
+		// Skip datasources they can not see
+		evaluator := accesscontrol.EvalPermission(datasources.ActionRead,
+			datasources.ScopeProvider.GetResourceScopeUID(ds.UID))
+		if ok, _ := s.ac.Evaluate(ctx, user, evaluator); !ok {
+			continue
+		}
+		filtered = append(filtered, ds)
+	}
+	return filtered, nil
 }
 
 // ListConnections implements v0alpha1.DataSourceConnectionProvider.
@@ -263,10 +289,16 @@ func (s *Service) ListConnections(ctx context.Context, query queryV0.DataSourceC
 			dss = []*datasources.DataSource{ds} // will check authz before returning
 		}
 	} else if query.Plugin != "" {
-		dss, err = s.GetDataSourcesByType(ctx, &datasources.GetDataSourcesByTypeQuery{
+		q := &datasources.GetDataSourcesByTypeQuery{
 			OrgID: ns.OrgID,
-			Type:  query.Plugin, // will support alias
-		})
+			Type:  query.Plugin,
+		}
+		p, found := s.pluginStore.Plugin(ctx, query.Plugin)
+		if !found {
+			return nil, fmt.Errorf("plugin %s not found", query.Plugin)
+		}
+		q.AliasIDs = p.AliasIDs
+		dss, err = s.SQLStore.GetDataSourcesByType(ctx, q) // Authz NOT applied
 	} else {
 		dss, err = s.GetDataSources(ctx, &datasources.GetDataSourcesQuery{
 			OrgID:           ns.OrgID,
@@ -356,6 +388,13 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 		if err != nil {
 			return nil, err
 		}
+	}
+	if cmd.JsonData == nil {
+		cmd.JsonData = simplejson.New()
+	}
+	// Run after the store assigns the final UID so the minted ID matches what is inserted.
+	cmd.BeforeSave = func(ctx context.Context, uid string, jsonData *simplejson.Json) {
+		awsexternalid.BeforeSave(ctx, uid, s.cfg, nil, jsonData)
 	}
 
 	var dataSource *datasources.DataSource
@@ -638,6 +677,13 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 				return err
 			}
 		}
+		if cmd.JsonData == nil {
+			cmd.JsonData = simplejson.New()
+		}
+		existingJSON := dataSource.JsonData
+		cmd.BeforeSave = func(ctx context.Context, uid string, jsonData *simplejson.Json) {
+			awsexternalid.BeforeSave(ctx, uid, s.cfg, existingJSON, jsonData)
+		}
 
 		// preserve existing lbac rules when updating datasource if we're not updating lbac rules
 		// TODO: Refactor to store lbac rules separate from a datasource
@@ -820,7 +866,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 	}
 
 	if ds.JsonData != nil {
-		opts.CustomOptions = ds.JsonData.MustMap()
+		opts.CustomOptions = ds.JsonDataMap()
 		// allow the plugin sdk to get the json data in JSONDataFromHTTPClientOptions
 		deepJsonDataCopy := make(map[string]any, len(opts.CustomOptions))
 		for k, v := range opts.CustomOptions {

@@ -23,7 +23,7 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
-jest.mock('app/features/provisioning/utils/isOnPrem', () => ({
+jest.mock('app/core/utils/isOnPrem', () => ({
   isOnPrem: jest.fn(() => true),
 }));
 
@@ -131,7 +131,7 @@ describe('InviteUserButtonUtils', () => {
 
   describe('shouldRenderUpgradeUserButton', () => {
     it('should return false on on-prem instances', () => {
-      const { isOnPrem } = require('app/features/provisioning/utils/isOnPrem');
+      const { isOnPrem } = require('app/core/utils/isOnPrem');
       isOnPrem.mockReturnValue(true);
       mockConfig.externalUserUpgradeLinkUrl = 'https://example.com/upgrade';
       mockContextSrv.hasPermission.mockReturnValue(true);
@@ -140,7 +140,7 @@ describe('InviteUserButtonUtils', () => {
     });
 
     it('should return false without upgrade URL even on cloud', () => {
-      const { isOnPrem } = require('app/features/provisioning/utils/isOnPrem');
+      const { isOnPrem } = require('app/core/utils/isOnPrem');
       isOnPrem.mockReturnValue(false);
       mockConfig.externalUserUpgradeLinkUrl = '';
       mockContextSrv.hasPermission.mockReturnValue(true);
@@ -149,7 +149,7 @@ describe('InviteUserButtonUtils', () => {
     });
 
     it('should return false without permission even with URL on cloud', () => {
-      const { isOnPrem } = require('app/features/provisioning/utils/isOnPrem');
+      const { isOnPrem } = require('app/core/utils/isOnPrem');
       isOnPrem.mockReturnValue(false);
       mockConfig.externalUserUpgradeLinkUrl = 'https://example.com/upgrade';
       mockContextSrv.hasPermission.mockReturnValue(false);
@@ -158,7 +158,7 @@ describe('InviteUserButtonUtils', () => {
     });
 
     it('should return true when all conditions met (cloud + URL + permission)', () => {
-      const { isOnPrem } = require('app/features/provisioning/utils/isOnPrem');
+      const { isOnPrem } = require('app/core/utils/isOnPrem');
       isOnPrem.mockReturnValue(false);
       mockConfig.externalUserUpgradeLinkUrl = 'https://example.com/upgrade';
       mockContextSrv.hasPermission.mockReturnValue(true);

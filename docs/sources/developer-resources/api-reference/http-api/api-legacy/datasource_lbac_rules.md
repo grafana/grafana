@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../http_api/datasource_lbac_rules/ # /docs/grafana/next/http_api/datasource_lbac_rules/
-  - ../../../developers/http_api/datasource_lbac_rules/ # /docs/grafana/next/developers/http_api/datasource_lbac_rules/
+  - ../../../../http_api/datasource_lbac_rules/ # /docs/grafana/next/http_api/datasource_lbac_rules/
+  - ../../../../developers/http_api/datasource_lbac_rules/ # /docs/grafana/next/developers/http_api/datasource_lbac_rules/
   - ../../../../developer-resources/api-reference/http-api/datasource_lbac_rules/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/datasource_lbac_rules/
 description: Data Source LBAC rules API
@@ -17,18 +17,13 @@ keywords:
 labels:
   products:
     - cloud
-title: Datasource LBAC rules HTTP API
+title: Data source LBAC rules HTTP API
+menuTitle: Data source LBAC rules HTTP API
 ---
 
-# Data Source LBAC rules API
+# Data source LBAC rules API
 
-{{< admonition type="caution" >}}
-
-Starting in Grafana 13, `/api` endpoints are being deprecated. This change doesn't disrupt or break your current setup: legacy APIs are not being disabled and remain fully accessible and operative. However, `/api` routes will no longer be updated and **will be removed in a future major release.**
-
-To learn more refer to the [new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
-
-{{< /admonition >}}
+{{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 LBAC (Label-Based Access Control) rules can be set for teams.
 
@@ -52,7 +47,7 @@ Gets all existing LBAC rules for the data source with the given `uid`.
 GET /api/datasources/uid/my_datasource/lbac/teams HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example response:**
@@ -102,7 +97,7 @@ Deleting a team from the list will remove the team's LBAC rules. You have to sub
 PUT /api/datasources/uid/my_datasource/lbac/teams
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "rules": [

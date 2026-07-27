@@ -12,7 +12,7 @@ import {
 import InfluxDatasource from '../datasource';
 import { type InfluxOptions, InfluxVersion } from '../types';
 
-export const replaceMock = jest.fn().mockImplementation((a: string, ...rest: unknown[]) => a);
+const replaceMock = jest.fn().mockImplementation((a: string, ...rest: unknown[]) => a);
 export const templateSrvStub = mockTemplateSrv(replaceMock);
 export function mockTemplateSrv(
   rm: (

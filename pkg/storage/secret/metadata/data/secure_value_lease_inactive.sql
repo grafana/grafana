@@ -2,7 +2,8 @@ UPDATE
   {{ .Ident "secret_secure_value" }}
 SET
   {{ .Ident "lease_token" }} = {{ .Arg .LeaseToken }},
-  {{ .Ident "lease_created" }} = {{ .Arg .Now }}
+  {{ .Ident "lease_created" }} = {{ .Arg .Now }},
+  {{ .Ident "lease_duration" }} = ({{ .Arg .LeaseTTL }} * POWER(2, {{ .Ident "gc_attempts" }}))
 WHERE {{ .Ident "guid" }} IN (
   SELECT {{ .Ident "guid" }} FROM (
     SELECT
@@ -12,8 +13,8 @@ WHERE {{ .Ident "guid" }} IN (
     WHERE
       {{ .Ident "active" }} = FALSE AND
       {{ .Arg .Now }} - {{ .Ident "updated" }} > {{ .Arg .MinAge }} AND
-      {{ .Arg .Now }} - {{ .Ident "lease_created" }} > {{ .Arg .LeaseTTL }}
-  ) AS sub
+      {{ .Arg .Now }} - {{ .Ident "lease_created" }} > {{ .Ident "lease_duration" }}
+  ) AS sub 
   WHERE rn <= {{ .Arg .MaxBatchSize }}
 )
 ;

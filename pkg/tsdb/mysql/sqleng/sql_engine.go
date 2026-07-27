@@ -19,6 +19,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+
+	"github.com/grafana/grafana/pkg/tsdb/sqlmacro"
 )
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
@@ -240,8 +242,14 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		ch <- queryResult
 	}
 
+	// A trailing SQLCommenter attribution tag must reach the database verbatim,
+	// so split it off before interpolation and re-append it afterwards. This
+	// keeps it out of comment stripping and macro substitution, and prevents a
+	// macro from completing across the comment boundary in either direction.
+	rawSQL, sqlCommenterTag := sqlmacro.SplitTrailingSQLCommenter(queryJson.RawSql, "--", "#")
+
 	// global substitutions
-	interpolatedQuery := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, queryJson.RawSql)
+	interpolatedQuery := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, rawSQL)
 
 	// data source specific substitutions
 	interpolatedQuery, err := e.macroEngine.Interpolate(&query, timeRange, interpolatedQuery)
@@ -249,6 +257,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		errAppendDebug("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery, backend.ErrorSourcePlugin)
 		return
 	}
+	interpolatedQuery += sqlCommenterTag
 
 	rows, err := e.db.QueryContext(queryContext, interpolatedQuery)
 	if err != nil {
@@ -348,7 +357,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 				}
 			}
 		}
-		if qm.FillMissing != nil {
+		if qm.FillMissing != nil && qm.Interval > 0 {
 			frame = e.applyFill(frame, qm)
 		}
 	}

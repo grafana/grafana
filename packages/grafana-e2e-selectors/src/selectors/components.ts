@@ -72,8 +72,14 @@ export const versionedComponents = {
     closePane: {
       '12.4.0': 'data-testid Sidebar close pane',
     },
+    goBack: {
+      '12.4.0': 'data-testid Sidebar go back',
+    },
     dockToggle: {
       '12.4.0': 'data-testid sidebar-dock-toggle',
+    },
+    headerTitle: {
+      '12.4.0': 'data-testid sidebar-pane-header-title',
     },
     showHideToggle: {
       '12.4.0': 'data-testid sidebar-show-hide-toggle',
@@ -83,6 +89,9 @@ export const versionedComponents = {
     },
     configurePanelButton: {
       '13.1.0': 'data-testid edit pane configure panel button',
+    },
+    addNewVariableButton: {
+      '13.1.0': 'data-testid edit pane add new variable button',
     },
   },
   EditPaneHeader: {
@@ -100,6 +109,11 @@ export const versionedComponents = {
     },
     paste: {
       '12.1.0': 'data-testid EditPaneHeader paste',
+    },
+  },
+  ViewPanelSidePane: {
+    goBackButton: {
+      '13.0.1': 'data-testid view-panel-side-pane-back-button',
     },
   },
   LayoutContainer: {
@@ -534,13 +548,13 @@ export const versionedComponents = {
         container: {
           ['13.1.0']: 'data-testid viz-layout',
         },
-        legend: {
-          ['13.1.0']: 'data-testid viz-layout-legend',
-        },
       },
       PieChart: {
         svgSlice: {
           '10.3.0': 'data testid Pie Chart Slice',
+        },
+        svgLabel: {
+          '13.2.0': 'data-testid Pie Chart Label',
         },
       },
       Text: {
@@ -610,6 +624,9 @@ export const versionedComponents = {
   VizLegend: {
     seriesName: {
       '10.3.0': (name: string) => `data-testid VizLegend series ${name}`,
+    },
+    legend: {
+      ['13.1.0']: 'data-testid viz-layout-legend',
     },
   },
   Drawer: {
@@ -742,6 +759,9 @@ export const versionedComponents = {
       addVariableButton: {
         '12.0.0': 'data-testid add variable button',
       },
+      showDependenciesButton: {
+        '13.1.0': 'data-testid show dependencies button',
+      },
       addAnnotationButton: {
         '12.6.0': 'data-testid add annotation button',
       },
@@ -837,6 +857,11 @@ export const versionedComponents = {
     },
     intervalButtonV2: {
       [MIN_GRAFANA_VERSION]: 'data-testid RefreshPicker interval button',
+    },
+  },
+  ResourcePicker: {
+    card: {
+      '13.2.0': 'data-testid resource-picker-card',
     },
   },
   QueryTab: {
@@ -962,6 +987,9 @@ export const versionedComponents = {
   Transforms: {
     card: {
       '10.1.0': (name: string) => `data-testid New transform ${name}`,
+    },
+    applicabilityInfo: {
+      '13.1.0': 'data-testid Transformation applicability info',
     },
     disableTransformationButton: {
       '10.4.0': 'data-testid Disable transformation button',
@@ -1167,7 +1195,24 @@ export const versionedComponents = {
       [MIN_GRAFANA_VERSION]: () => '[class*="-currentVisualizationItem"]',
     },
   },
+  Plugins: {
+    appPage: {
+      '13.2.0': (pluginId: string) => `data-testid App plugin page ${pluginId}`,
+    },
+    dataSourceConfigEditor: {
+      '13.2.0': (pluginId: string) => `data-testid Data source config editor ${pluginId}`,
+    },
+    configPage: {
+      '13.2.0': (pluginId: string, pageId: string) => `data-testid Plugin config page ${pluginId} ${pageId}`,
+    },
+    queryEditorRow: {
+      '13.2.0': (dataSourceType: string, refId: string) => `data-testid Query editor row ${dataSourceType} ${refId}`,
+    },
+  },
   Select: {
+    container: {
+      '13.1.0': 'data-testid Select container',
+    },
     menu: {
       '11.5.0': 'data-testid Select menu',
       [MIN_GRAFANA_VERSION]: 'Select options menu',
@@ -1184,6 +1229,26 @@ export const versionedComponents = {
     },
     singleValue: {
       [MIN_GRAFANA_VERSION]: () => 'div[class*="-singleValue"]',
+    },
+  },
+  MultiSelect: {
+    container: {
+      '13.1.0': 'data-testid MultiSelect container',
+    },
+  },
+  RadioGroup: {
+    container: {
+      '13.1.0': 'data-testid RadioGroup container',
+    },
+  },
+  Switch: {
+    container: {
+      '13.1.0': 'data-testid Switch container',
+    },
+  },
+  UnitPicker: {
+    container: {
+      '13.1.0': 'data-testid UnitPicker container',
     },
   },
   FieldConfigEditor: {

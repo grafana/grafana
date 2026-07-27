@@ -3,9 +3,8 @@ import React from 'react';
 import type uPlot from 'uplot';
 
 import { createTheme } from '@grafana/data';
-import { DashboardCursorSync } from '@grafana/schema';
+import { DashboardCursorSync, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 
-import { ScaleDirection, ScaleOrientation } from '../../../schema';
 import { mockThemeContext } from '../../../themes/ThemeContext';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 

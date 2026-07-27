@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -171,6 +173,22 @@ func TestNewJobResourceResult_WithErrorAsWarning(t *testing.T) {
 	assert.NotNil(t, result2.Warning(), "Error wrapping ParseError should be stored as warning")
 }
 
+func TestNewJobResourceResult_WithRequestEntityTooLargeAsWarning(t *testing.T) {
+	tooLarge := apierrors.NewRequestEntityTooLargeError("request body too large: max size 1048576 bytes")
+	wrapped := fmt.Errorf("writing resource from file dashboards/big.json: %w",
+		fmt.Errorf("failed to read file: %w", tooLarge))
+
+	result := NewResourceResult().
+		WithName("big-dashboard").
+		WithAction(repository.FileActionCreated).
+		WithError(wrapped).
+		Build()
+
+	assert.Nil(t, result.Error(), "too-large error should be stored as a warning, not an error")
+	assert.NotNil(t, result.Warning(), "too-large error should be stored as a warning")
+	assert.Equal(t, provisioning.ReasonResourceTooLarge, result.WarningReason())
+}
+
 func TestNewJobResourceResult_WithOwnershipConflictAsWarning(t *testing.T) {
 	name := "test-resource"
 	group := "test-group"
@@ -263,6 +281,49 @@ func TestNewJobResourceResult_WithUnmanagedConflictAsWarning(t *testing.T) {
 	assert.NotNil(t, result2.Warning(), "Error wrapping ResourceUnmanagedConflictError should be stored as warning")
 }
 
+func TestNewJobResourceResult_WithManagedByOtherFileAsWarning(t *testing.T) {
+	name := "test-resource"
+	group := "test-group"
+	kind := "test-kind"
+	path := "paidly/pecan-dashboards/amounts-metrics.json"
+	action := repository.FileActionUpdated
+
+	managedByOtherErr := resources.NewResourceManagedByOtherFileError(
+		"pecan-amounts-metrics",
+		"pecan/pecan-dashboards/amounts-metrics.json",
+		path,
+	)
+
+	result := NewResourceResult().
+		WithName(name).
+		WithGroup(group).
+		WithKind(kind).
+		WithPath(path).
+		WithAction(action).
+		WithError(managedByOtherErr).
+		Build()
+
+	assert.Nil(t, result.Error(), "ResourceManagedByOtherFileError should be stored as warning, not error")
+	assert.NotNil(t, result.Warning(), "ResourceManagedByOtherFileError should be stored as warning")
+	assert.Equal(t, managedByOtherErr, result.Warning())
+
+	// The sync loop wraps this with fmt.Errorf(...%w...); errors.As must still
+	// find the typed error through the wrap so it is classified as a warning.
+	wrappedErr := fmt.Errorf("replacing resource from file %s: %w", path, managedByOtherErr)
+
+	result2 := NewResourceResult().
+		WithName(name).
+		WithGroup(group).
+		WithKind(kind).
+		WithPath(path).
+		WithAction(action).
+		WithError(wrappedErr).
+		Build()
+
+	assert.Nil(t, result2.Error(), "Error wrapping ResourceManagedByOtherFileError should be stored as warning, not error")
+	assert.NotNil(t, result2.Warning(), "Error wrapping ResourceManagedByOtherFileError should be stored as warning")
+}
+
 func TestNewJobResourceResult_WithErrorAsRegularError(t *testing.T) {
 	name := "test-resource"
 	group := "test-group"
@@ -353,6 +414,29 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		assert.Equal(t, provisioning.ReasonResourceInvalid, result.WarningReason())
 	})
 
+	t.Run("ResourceManagedByOtherFileError returns ReasonResourceManagedByOther", func(t *testing.T) {
+		managedByOtherErr := resources.NewResourceManagedByOtherFileError(
+			"pecan-amounts-metrics",
+			"pecan/pecan-dashboards/amounts-metrics.json",
+			"paidly/pecan-dashboards/amounts-metrics.json",
+		)
+		result := NewResourceResult().WithError(managedByOtherErr).Build()
+
+		assert.Equal(t, provisioning.ReasonResourceManagedByOther, result.WarningReason())
+	})
+
+	t.Run("wrapped ResourceManagedByOtherFileError returns ReasonResourceManagedByOther", func(t *testing.T) {
+		managedByOtherErr := resources.NewResourceManagedByOtherFileError(
+			"pecan-amounts-metrics",
+			"pecan/pecan-dashboards/amounts-metrics.json",
+			"paidly/pecan-dashboards/amounts-metrics.json",
+		)
+		wrapped := fmt.Errorf("replacing resource from file paidly/pecan-dashboards/amounts-metrics.json: %w", managedByOtherErr)
+		result := NewResourceResult().WithError(wrapped).Build()
+
+		assert.Equal(t, provisioning.ReasonResourceManagedByOther, result.WarningReason())
+	})
+
 	t.Run("explicit WithWarning with QuotaExceededError returns reason", func(t *testing.T) {
 		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
 		result := NewResourceResult().WithWarning(quotaErr).Build()
@@ -381,6 +465,117 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 
 		assert.Equal(t, provisioning.ReasonFolderMetadataConflict, result.WarningReason())
 	})
+
+	t.Run("FolderDepthExceededError classifies as ReasonFolderDepthExceeded", func(t *testing.T) {
+		depthErr := resources.NewFolderDepthExceededError("a/b/c/d/e/", errors.New("folder max depth exceeded, max depth is 4"))
+		result := NewResourceResult().WithError(depthErr).Build()
+
+		assert.Equal(t, provisioning.ReasonFolderDepthExceeded, result.WarningReason())
+		assert.Nil(t, result.Error(), "depth-exceeded should be a warning, not an error")
+		assert.NotNil(t, result.Warning(), "depth-exceeded should populate the warning slot")
+	})
+
+	t.Run("PathCreationError wrapping FolderDepthExceededError classifies as ReasonFolderDepthExceeded", func(t *testing.T) {
+		depthErr := resources.NewFolderDepthExceededError("a/b/c/d/e/", errors.New("folder max depth exceeded, max depth is 4"))
+		pathErr := &resources.PathCreationError{
+			Path: "a/b/c/d/e/",
+			Err:  fmt.Errorf("ensure folder exists: %w", depthErr),
+		}
+		wrapped := fmt.Errorf("ensuring folder exists at path %s: %w", "a/b/c/d/e/", pathErr)
+		result := NewResourceResult().WithError(wrapped).Build()
+
+		assert.Equal(t, provisioning.ReasonFolderDepthExceeded, result.WarningReason())
+		assert.Nil(t, result.Error(), "depth-exceeded should be a warning even when wrapped through PathCreationError")
+		assert.NotNil(t, result.Warning())
+	})
+
+	t.Run("FolderManagedByOtherError classifies as ReasonFolderManagedByOther", func(t *testing.T) {
+		ownErr := resources.NewFolderManagedByOtherError("folder-id", "other-repo")
+		result := NewResourceResult().WithError(ownErr).Build()
+
+		assert.Equal(t, provisioning.ReasonFolderManagedByOther, result.WarningReason())
+		assert.Nil(t, result.Error(), "cross-manager conflict should be a warning, not an error")
+		assert.NotNil(t, result.Warning(), "cross-manager conflict should populate the warning slot")
+	})
+
+	t.Run("PathCreationError wrapping FolderManagedByOtherError classifies as ReasonFolderManagedByOther", func(t *testing.T) {
+		ownErr := resources.NewFolderManagedByOtherError("folder-id", "other-repo")
+		pathErr := &resources.PathCreationError{
+			Path: "somefolder/",
+			Err:  fmt.Errorf("ensure folder exists: %w", ownErr),
+		}
+		wrapped := fmt.Errorf("ensuring folder exists at path %s: %w", "somefolder/", pathErr)
+		result := NewResourceResult().WithError(wrapped).Build()
+
+		assert.Equal(t, provisioning.ReasonFolderManagedByOther, result.WarningReason())
+		assert.Nil(t, result.Error())
+		assert.NotNil(t, result.Warning())
+	})
+
+	t.Run("FolderUIDTooLongError classifies as ReasonFolderUIDTooLong", func(t *testing.T) {
+		uidErr := resources.NewFolderUIDTooLongError("GMPO/bare-metal-services-engineering/", "a0123456789012345678901234567890123456789", errors.New("uid too long, max 40 characters"))
+		result := NewResourceResult().WithError(uidErr).Build()
+
+		assert.Equal(t, provisioning.ReasonFolderUIDTooLong, result.WarningReason())
+		assert.Nil(t, result.Error(), "uid-too-long should be a warning, not an error")
+		assert.NotNil(t, result.Warning(), "uid-too-long should populate the warning slot")
+	})
+
+	t.Run("PathCreationError wrapping FolderUIDTooLongError classifies as ReasonFolderUIDTooLong", func(t *testing.T) {
+		uidErr := resources.NewFolderUIDTooLongError("GMPO/bare-metal-services-engineering/", "a0123456789012345678901234567890123456789", errors.New("uid too long, max 40 characters"))
+		pathErr := &resources.PathCreationError{
+			Path: "GMPO/bare-metal-services-engineering/",
+			Err:  fmt.Errorf("ensure folder exists: %w", uidErr),
+		}
+		wrapped := fmt.Errorf("ensuring folder exists at path %s: %w", "GMPO/bare-metal-services-engineering/", pathErr)
+		result := NewResourceResult().WithError(wrapped).Build()
+
+		assert.Equal(t, provisioning.ReasonFolderUIDTooLong, result.WarningReason())
+		assert.Nil(t, result.Error(), "uid-too-long should be a warning even when wrapped through PathCreationError")
+		assert.NotNil(t, result.Warning())
+	})
+
+	t.Run("FolderValidationError classifies as ReasonFolderValidationFailed", func(t *testing.T) {
+		validationErr := resources.NewFolderValidationError("bad-folder/", errors.New("uid contains illegal characters"))
+		result := NewResourceResult().WithError(validationErr).Build()
+
+		assert.Equal(t, provisioning.ReasonFolderValidationFailed, result.WarningReason())
+		assert.Nil(t, result.Error(), "folder validation should be a warning, not an error")
+		assert.NotNil(t, result.Warning(), "folder validation should populate the warning slot")
+	})
+
+	t.Run("PathCreationError wrapping FolderValidationError classifies as ReasonFolderValidationFailed", func(t *testing.T) {
+		validationErr := resources.NewFolderValidationError("bad-folder/", errors.New("uid contains illegal characters"))
+		pathErr := &resources.PathCreationError{
+			Path: "bad-folder/",
+			Err:  fmt.Errorf("ensure folder exists: %w", validationErr),
+		}
+		wrapped := fmt.Errorf("ensuring folder exists at path %s: %w", "bad-folder/", pathErr)
+		result := NewResourceResult().WithError(wrapped).Build()
+
+		assert.Equal(t, provisioning.ReasonFolderValidationFailed, result.WarningReason())
+		assert.Nil(t, result.Error(), "folder validation should be a warning even when wrapped through PathCreationError")
+		assert.NotNil(t, result.Warning())
+	})
+
+	t.Run("FolderDepthExceededError keeps its specific reason over the generic FolderValidationFailed", func(t *testing.T) {
+		// Guards the classifier's switch order: more specific reasons must
+		// be checked before the catch-all so user-facing reasons stay as
+		// descriptive as possible.
+		depthErr := resources.NewFolderDepthExceededError("deep/", errors.New("folder max depth exceeded, max depth is 4"))
+		result := NewResourceResult().WithError(depthErr).Build()
+
+		assert.Equal(t, provisioning.ReasonFolderDepthExceeded, result.WarningReason(),
+			"depth-exceeded must keep its specific reason; the generic FolderValidationFailed must not shadow it")
+	})
+
+	t.Run("FolderUIDTooLongError keeps its specific reason over the generic FolderValidationFailed", func(t *testing.T) {
+		uidErr := resources.NewFolderUIDTooLongError("path/", "uid", errors.New("uid too long, max 40 characters"))
+		result := NewResourceResult().WithError(uidErr).Build()
+
+		assert.Equal(t, provisioning.ReasonFolderUIDTooLong, result.WarningReason(),
+			"uid-too-long must keep its specific reason; the generic FolderValidationFailed must not shadow it")
+	})
 }
 
 func TestIsNonFailingWarning(t *testing.T) {
@@ -402,6 +597,23 @@ func TestIsNonFailingWarning(t *testing.T) {
 
 	t.Run("ResourceValidationError is not a non-failing warning", func(t *testing.T) {
 		assert.False(t, isNonFailingWarning(resources.NewResourceValidationError(errors.New("invalid"))))
+	})
+
+	t.Run("ResourceManagedByOtherFile is a non-failing warning", func(t *testing.T) {
+		assert.True(t, isNonFailingWarning(&resources.ResourceManagedByOtherFileError{
+			ResourceName: "shared-uid",
+			CurrentPath:  "dir-b/dashboard.json",
+			RequestPath:  "dir-a/dashboard.json",
+		}))
+	})
+
+	t.Run("wrapped ResourceManagedByOtherFile is a non-failing warning", func(t *testing.T) {
+		wrapped := fmt.Errorf("replacing resource from file dir-a/dashboard.json: %w", &resources.ResourceManagedByOtherFileError{
+			ResourceName: "shared-uid",
+			CurrentPath:  "dir-b/dashboard.json",
+			RequestPath:  "dir-a/dashboard.json",
+		})
+		assert.True(t, isNonFailingWarning(wrapped))
 	})
 
 	t.Run("generic error is not a non-failing warning", func(t *testing.T) {

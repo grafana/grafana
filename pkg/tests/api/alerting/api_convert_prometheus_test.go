@@ -44,7 +44,7 @@ var (
 			{
 				Alert: "HighMemoryUsage",
 				Expr:  "process_memory_usage > 80",
-				For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+				For:   new(prommodel.Duration(5 * time.Minute)),
 				Labels: map[string]string{
 					"severity": "warning",
 					"team":     "alerting",
@@ -57,7 +57,7 @@ var (
 			{
 				Alert: "ServiceDown",
 				Expr:  "up == 0",
-				For:   util.Pointer(prommodel.Duration(2 * time.Minute)),
+				For:   new(prommodel.Duration(2 * time.Minute)),
 				Labels: map[string]string{
 					"severity": "critical",
 				},
@@ -75,7 +75,7 @@ var (
 			{
 				Alert: "HighDiskUsage",
 				Expr:  "disk_usage > 80",
-				For:   util.Pointer(prommodel.Duration(1 * time.Minute)),
+				For:   new(prommodel.Duration(1 * time.Minute)),
 				Labels: map[string]string{
 					"severity": "low",
 					"team":     "alerting",
@@ -94,7 +94,7 @@ var (
 			{
 				Alert: "ServiceDown",
 				Expr:  "up == 0",
-				For:   util.Pointer(prommodel.Duration(2 * time.Minute)),
+				For:   new(prommodel.Duration(2 * time.Minute)),
 				Labels: map[string]string{
 					"severity": "critical",
 				},
@@ -418,7 +418,7 @@ func TestIntegrationConvertPrometheusEndpoints_UpdateRule(t *testing.T) {
 				{
 					Alert: "HighDiskUsage",
 					Expr:  "disk_usage > 80",
-					For:   util.Pointer(prommodel.Duration(1 * time.Minute)),
+					For:   new(prommodel.Duration(1 * time.Minute)),
 					Labels: map[string]string{
 						"severity": "low",
 						"team":     "alerting",
@@ -1194,7 +1194,7 @@ func TestIntegrationConvertPrometheusEndpoints_Editor(t *testing.T) {
 			{
 				Alert: "test-editor-permissions",
 				Expr:  "vector(0)",
-				For:   util.Pointer(prommodel.Duration(1 * time.Minute)),
+				For:   new(prommodel.Duration(1 * time.Minute)),
 			},
 		},
 	}
@@ -1239,7 +1239,7 @@ func TestIntegrationConvertPrometheusEndpoints_GroupLabels(t *testing.T) {
 			{
 				Alert: "TestAlert",
 				Expr:  "up == 0",
-				For:   util.Pointer(prommodel.Duration(2 * time.Minute)),
+				For:   new(prommodel.Duration(2 * time.Minute)),
 				Labels: map[string]string{
 					"rule_label": "value-2",
 				},

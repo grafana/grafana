@@ -157,7 +157,7 @@ type AlertingRule struct {
 	Duration              float64  `json:"duration,omitempty"`
 	KeepFiringFor         float64  `json:"keepFiringFor,omitempty"`
 	// required: true
-	Annotations promlabels.Labels `json:"annotations,omitempty"`
+	Annotations promlabels.Labels `json:"annotations,omitzero"`
 	// required: true
 	ActiveAt       *time.Time       `json:"activeAt,omitempty"`
 	Alerts         []Alert          `json:"alerts,omitempty"`
@@ -175,7 +175,7 @@ type Rule struct {
 	FolderUID string `json:"folderUid,omitempty"`
 	// required: true
 	Query  string            `json:"query"`
-	Labels promlabels.Labels `json:"labels,omitempty"`
+	Labels promlabels.Labels `json:"labels,omitzero"`
 	// required: true
 	Health    string `json:"health"`
 	LastError string `json:"lastError,omitempty"`

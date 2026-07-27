@@ -21,7 +21,7 @@ var (
 					return "", errors.New("provided object must be of type *Receiver")
 				}
 
-				return cast.Spec.Title, nil
+				return string(cast.Spec.Title), nil
 			},
 		},
 		}))

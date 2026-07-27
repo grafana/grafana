@@ -6,7 +6,7 @@ import { type MapLayerRegistryItem, type MapLayerOptions, type EventBus } from '
 
 export const standard: MapLayerRegistryItem = {
   id: 'osm-standard',
-  name: 'Open Street Map',
+  name: 'OpenStreetMap',
   description: 'Add map from a collaborative free geographic world database',
   isBaseMap: true,
 

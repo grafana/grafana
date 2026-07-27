@@ -49,11 +49,11 @@ When you grant a user or team permission on a folder:
 
 Folders support three permission levels. Each level includes all capabilities of the levels below it.
 
-| Permission | Folder capabilities                         | Resource capabilities                                                                                                                               |
-| ---------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **View**   | View folder and navigate its contents       | View dashboards, read alert rules, read silences, read annotations, read library panels                                                             |
-| **Edit**   | Create subfolders, modify folder properties | Create and edit dashboards, create and write alert rules, create and write silences, create and write annotations, create and manage library panels |
-| **Admin**  | Delete folder, manage folder permissions    | All Edit capabilities plus manage dashboard permissions                                                                                             |
+| Permission | Folder capabilities                                        | Resource capabilities                                                                                                                               |
+| ---------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **View**   | View folder and navigate its contents                      | View dashboards, read alert rules, read silences, read annotations, read library panels                                                             |
+| **Edit**   | Create subfolders, modify folder properties, delete folder | Create and edit dashboards, create and write alert rules, create and write silences, create and write annotations, create and manage library panels |
+| **Admin**  | Manage folder permissions                                  | All Edit capabilities plus manage dashboard permissions                                                                                             |
 
 #### Detailed action breakdown
 
@@ -69,6 +69,7 @@ Folders support three permission levels. Each level includes all capabilities of
 **Edit permission grants (in addition to View):**
 
 - `folders:write` - Modify folder name and properties
+- `folders:delete` - Delete the folder
 - `folders:create` - Create subfolders
 - `dashboards:create` - Create new dashboards
 - `dashboards:write` - Edit existing dashboards
@@ -87,7 +88,6 @@ Folders support three permission levels. Each level includes all capabilities of
 
 **Admin permission grants (in addition to Edit):**
 
-- `folders:delete` - Delete the folder
 - `folders.permissions:read` - View folder permissions
 - `folders.permissions:write` - Modify folder permissions
 - `dashboards.permissions:read` - View dashboard permissions

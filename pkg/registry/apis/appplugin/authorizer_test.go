@@ -9,6 +9,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -51,8 +52,10 @@ func TestGetAuthorizer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			builder := &AppPluginAPIBuilder{
-				pluginID:      "test-app",
-				accessControl: &tt.fakeAC,
+				pluginJSON: plugins.JSONData{
+					ID: "test-app",
+				},
+				accessChecker: NewPluginAccessChecker(&tt.fakeAC),
 			}
 
 			auth := builder.GetAuthorizer()

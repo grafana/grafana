@@ -17,13 +17,13 @@ import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 interface Props {
   link: DashboardLink;
   linkInfo: { title: string };
-  dashboardUID: string;
+  dashboardUID?: string;
   scopedVars?: ScopedVars;
 }
 
 interface DashboardLinksMenuProps {
   link: DashboardLink;
-  dashboardUID: string;
+  dashboardUID?: string;
 }
 
 function DashboardLinksMenu({ dashboardUID, link }: DashboardLinksMenuProps) {
@@ -123,7 +123,7 @@ const useResolvedLinks = ({ link, dashboardUID }: Pick<Props, 'link' | 'dashboar
   if (!result.value) {
     return [];
   }
-  return resolveLinks(dashboardUID, link, result.value.view);
+  return resolveLinks(link, result.value.view, dashboardUID);
 };
 
 interface ResolvedLinkDTO {
@@ -137,9 +137,9 @@ export async function searchForTags(tags: string[]) {
 }
 
 export function resolveLinks(
-  dashboardUID: string,
   link: DashboardLink,
   searchHits: DashboardQueryResult[],
+  dashboardUID?: string,
   dependencies: { getLinkSrv: typeof getLinkSrv; sanitize: typeof sanitize; sanitizeUrl: typeof sanitizeUrl } = {
     getLinkSrv,
     sanitize,

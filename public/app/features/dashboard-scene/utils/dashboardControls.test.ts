@@ -19,13 +19,8 @@ jest.mock('@grafana/runtime', () => {
   return {
     ...actual,
     getDataSourceSrv: jest.fn(),
-    reportInteraction: jest.fn(),
   };
 });
-
-jest.mock('nanoid', () => ({
-  nanoid: jest.fn(() => 'mock-trace-id'),
-}));
 
 jest.mock('../serialization/layoutSerializers/utils', () => ({
   getRuntimePanelDataSource: jest.fn(),

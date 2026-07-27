@@ -12,7 +12,9 @@ interface Props {
 export const InfoItem = ({ children, title, linkHref, linkTitle }: Props) => {
   return (
     <Stack gap={2} direction="column">
-      <Text element="h4">{title}</Text>
+      <Text element="h2" variant="h4">
+        {title}
+      </Text>
       <Text color="secondary">{children}</Text>
       {linkHref && (
         <TextLink href={linkHref} external>

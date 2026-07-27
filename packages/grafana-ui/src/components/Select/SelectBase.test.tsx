@@ -32,6 +32,16 @@ describe('SelectBase', () => {
     expect(() => render(<SelectBase onChange={onChangeHandler} />)).not.toThrow();
   });
 
+  it('exposes the Select container data-testid by default', () => {
+    render(<SelectBase onChange={onChangeHandler} />);
+    expect(screen.getByTestId(selectors.components.Select.container)).toBeInTheDocument();
+  });
+
+  it('lets the consumer override the data-testid', () => {
+    render(<SelectBase onChange={onChangeHandler} data-testid="custom-id" />);
+    expect(screen.getByTestId('custom-id')).toBeInTheDocument();
+  });
+
   it('renders empty options information', async () => {
     render(<SelectBase onChange={onChangeHandler} />);
     await userEvent.click(screen.getByText(/choose/i));

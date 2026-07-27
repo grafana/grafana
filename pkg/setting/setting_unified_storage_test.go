@@ -78,6 +78,31 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		assert.Equal(t, 5, cfg.IndexMinCount)
 	})
 
+	t.Run("search_ring_extend_replica_set", func(t *testing.T) {
+		setSectionKey := func(cfg *Cfg, value string) {
+			section := cfg.Raw.Section("unified_storage")
+			_, err := section.NewKey("search_ring_extend_replica_set", value)
+			assert.NoError(t, err)
+		}
+
+		t.Run("defaults to true", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			cfg.setUnifiedStorageConfig()
+			assert.True(t, cfg.SearchRingExtendReplicaSet)
+		})
+
+		t.Run("reads configured value", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			setSectionKey(cfg, "false")
+			cfg.setUnifiedStorageConfig()
+			assert.False(t, cfg.SearchRingExtendReplicaSet)
+		})
+	})
+
 	t.Run("search_inject_failures_percent", func(t *testing.T) {
 		setSectionKey := func(cfg *Cfg, key, value string) {
 			section := cfg.Raw.Section("unified_storage")
@@ -121,6 +146,40 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		})
 	})
 
+	t.Run("search_post_rank_authz", func(t *testing.T) {
+		setSectionKey := func(cfg *Cfg, key, value string) {
+			section := cfg.Raw.Section("unified_storage")
+			_, err := section.NewKey(key, value)
+			assert.NoError(t, err)
+		}
+
+		t.Run("defaults to off with zero tunables", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			cfg.setUnifiedStorageConfig()
+			assert.False(t, cfg.SearchPostRankAuthz)
+			assert.Equal(t, 0, cfg.SearchPostRankAuthzOverFetchFactor)
+			assert.Equal(t, 0, cfg.SearchPostRankAuthzMaxWindow)
+			assert.Equal(t, 0, cfg.SearchPostRankAuthzMaxCandidates)
+		})
+
+		t.Run("reads configured values", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			setSectionKey(cfg, "search_post_rank_authz", "true")
+			setSectionKey(cfg, "search_post_rank_authz_over_fetch_factor", "20")
+			setSectionKey(cfg, "search_post_rank_authz_max_window", "5000")
+			setSectionKey(cfg, "search_post_rank_authz_max_candidates", "12345")
+			cfg.setUnifiedStorageConfig()
+			assert.True(t, cfg.SearchPostRankAuthz)
+			assert.Equal(t, 20, cfg.SearchPostRankAuthzOverFetchFactor)
+			assert.Equal(t, 5000, cfg.SearchPostRankAuthzMaxWindow)
+			assert.Equal(t, 12345, cfg.SearchPostRankAuthzMaxCandidates)
+		})
+	})
+
 	t.Run("env vars create unified_storage resource sections without ini file", func(t *testing.T) {
 		// Set env vars for a resource that has NO ini section defined.
 		t.Setenv("GF_UNIFIED_STORAGE_DASHBOARDS_DASHBOARD_GRAFANA_APP_DUALWRITERMODE", "3")
@@ -152,6 +211,79 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		value, exists := cfg.UnifiedStorage["widgets.widget.custom.io"]
 		assert.True(t, exists, "widgets.widget.custom.io should exist from env var")
 		assert.Equal(t, rest.DualWriterMode(2), value.DualWriterMode)
+	})
+
+	t.Run("env vars populate bare [unified_storage] section keys", func(t *testing.T) {
+		// These env vars target keys in the bare [unified_storage] section
+		// that are not pre-defined in defaults.ini.
+		t.Setenv("GF_UNIFIED_STORAGE_MIGRATION_CACHE_SIZE_KB", "2000000")
+		t.Setenv("GF_UNIFIED_STORAGE_MIGRATION_PARQUET_BUFFER", "true")
+		t.Setenv("GF_UNIFIED_STORAGE_INDEX_WORKERS", "3")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		cfg.setUnifiedStorageConfig()
+
+		assert.Equal(t, 2000000, cfg.MigrationCacheSizeKB)
+		assert.True(t, cfg.MigrationParquetBuffer)
+		assert.Equal(t, 3, cfg.IndexWorkers)
+	})
+
+	t.Run("chunked writes config defaults", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		cfg.setUnifiedStorageConfig()
+
+		assert.False(t, cfg.MigrationChunkedWrites)
+		assert.Equal(t, int64(256*1024*1024), cfg.MigrationChunkMaxBytes)
+	})
+
+	t.Run("chunked writes config from env vars", func(t *testing.T) {
+		t.Setenv("GF_UNIFIED_STORAGE_MIGRATION_CHUNKED_WRITES", "true")
+		t.Setenv("GF_UNIFIED_STORAGE_MIGRATION_CHUNK_MAX_BYTES", "134217728")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		cfg.setUnifiedStorageConfig()
+
+		assert.True(t, cfg.MigrationChunkedWrites)
+		assert.Equal(t, int64(134217728), cfg.MigrationChunkMaxBytes)
+	})
+
+	t.Run("vector_embedder bedrock config", func(t *testing.T) {
+		setSectionKey := func(cfg *Cfg, key, value string) {
+			section := cfg.Raw.Section("vector_embedder")
+			_, err := section.NewKey(key, value)
+			assert.NoError(t, err)
+		}
+
+		t.Run("applies defaults", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			cfg.setUnifiedStorageConfig()
+			assert.Equal(t, 50, cfg.BedrockBatchSize)
+			assert.Equal(t, 5, cfg.BedrockMaxAttempts)
+		})
+
+		t.Run("reads configured values independent of vertex_batch_size", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			setSectionKey(cfg, "vertex_batch_size", "33")
+			setSectionKey(cfg, "bedrock_batch_size", "7")
+			setSectionKey(cfg, "bedrock_max_attempts", "15")
+			cfg.setUnifiedStorageConfig()
+			// Guards a regression where bedrock used vertex_batch_size.
+			assert.Equal(t, 7, cfg.BedrockBatchSize)
+			assert.Equal(t, 15, cfg.BedrockMaxAttempts)
+		})
 	})
 
 	t.Run("read unified_storage configs with defaults", func(t *testing.T) {
@@ -325,4 +457,31 @@ func TestIsTargetEligibleForMigrations(t *testing.T) {
 			assert.Equal(t, tt.expected, isTargetEligibleForMigrations(tt.targets))
 		})
 	}
+}
+
+func TestVectorAllowedCollections(t *testing.T) {
+	t.Run("defaults: dashboards internal, no external", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+		cfg.setUnifiedStorageConfig()
+
+		assert.Equal(t, []string{"dashboard.grafana.app/dashboards"}, cfg.VectorAllowedInternalCollections)
+		assert.Empty(t, cfg.VectorAllowedExternalCollections)
+	})
+
+	t.Run("explicit lists are parsed as CSV", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+		section := cfg.Raw.Section("unified_storage")
+		_, err = section.NewKey("vector_allowed_internal_collections", "dashboard.grafana.app/dashboards, folder.grafana.app/folders")
+		assert.NoError(t, err)
+		_, err = section.NewKey("vector_allowed_external_collections", "ext.example.com/my-things")
+		assert.NoError(t, err)
+		cfg.setUnifiedStorageConfig()
+
+		assert.Equal(t, []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}, cfg.VectorAllowedInternalCollections)
+		assert.Equal(t, []string{"ext.example.com/my-things"}, cfg.VectorAllowedExternalCollections)
+	})
 }

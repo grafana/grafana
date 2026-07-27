@@ -23,12 +23,32 @@ import { type RawTimeRange, type TimeRange } from './time';
 import { type UserStorage } from './userStorage';
 import { type CustomVariableSupport, type DataSourceVariableSupport, type StandardVariableSupport } from './variables';
 
+/** @alpha */
 export interface DataSourceConfigValidationAPI {
+  /**
+   * Registers a validator function that will be called during form submission.
+   * Returns a cleanup function that unregisters the validator.
+   */
   registerValidation: (validator: () => Promise<boolean> | boolean) => () => void;
+  /**
+   * Runs all registered validators and returns true if all pass.
+   */
   validate: () => Promise<boolean>;
+  /**
+   * Returns true if there are no active field errors.
+   */
   isValid: () => boolean;
+  /**
+   * Returns the current map of field errors, keyed by field name.
+   */
   getErrors: () => Record<string, string>;
+  /**
+   * Sets an error message for the given field.
+   */
   setError: (field: string, message: string) => void;
+  /**
+   * Clears the error for the given field, if one exists.
+   */
   clearError: (field: string) => void;
 }
 export interface DataSourcePluginOptionsEditorProps<
@@ -131,6 +151,13 @@ export class DataSourcePlugin<
     return this;
   }
 
+  setErrorsAndNoticesInspector(
+    ErrorsAndNoticesInspector: ComponentType<ErrorsAndNoticesInspectorProps<DSType, TQuery, TOptions>>
+  ) {
+    this.components.ErrorsAndNoticesInspector = ErrorsAndNoticesInspector;
+    return this;
+  }
+
   setComponentsFromLegacyExports(pluginExports: System.Module) {
     throwIfAngular(pluginExports);
 
@@ -193,6 +220,7 @@ export interface DataSourcePluginComponents<
   QueryEditorHelp?: ComponentType<QueryEditorHelpProps<TQuery>>;
   ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions, TSecureOptions>>;
   MetadataInspector?: ComponentType<MetadataInspectorProps<DSType, TQuery, TOptions>>;
+  ErrorsAndNoticesInspector?: ComponentType<ErrorsAndNoticesInspectorProps<DSType, TQuery, TOptions>>;
 }
 
 // Only exported for tests
@@ -436,7 +464,7 @@ abstract class DataSourceApi<
 /**
  * Base options shared across datasource filtering operations.
  */
-export interface DataSourceFilteringRequestOptions<TQuery extends DataQuery = DataQuery> {
+interface DataSourceFilteringRequestOptions<TQuery extends DataQuery = DataQuery> {
   /**
    * Context time range. New in v10.3
    */
@@ -477,6 +505,18 @@ export interface MetadataInspectorProps<
 
   // All Data from this DataSource
   data: DataFrame[];
+}
+
+export interface ErrorsAndNoticesInspectorProps<
+  DSType extends DataSourceApi<TQuery, TOptions>,
+  TQuery extends DataQuery = DataQuery,
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
+> {
+  datasource: DSType;
+
+  data: DataFrame[];
+
+  errors?: DataQueryError[];
 }
 
 export interface LegacyMetricFindQueryOptions {
@@ -795,6 +835,22 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
 
   /** When the name+uid are based on template variables, maintain access to the real values */
   rawRef?: DataSourceRef;
+}
+
+/**
+ * A lightweight view of a data source used for listing and selection. Carries
+ * identity fields (`uid`, `type`, `apiVersion`) and plugin metadata (`meta`),
+ * but not the per-instance settings (`jsonData`, `url`, secrets, `access`, …)
+ * which are fetched on demand when a data source is actually used.
+ */
+export interface DataSourceInstanceListItem {
+  uid: string;
+  type: string;
+  apiVersion?: string;
+  name: string;
+  meta: DataSourcePluginMeta;
+  readOnly: boolean;
+  isDefault: boolean;
 }
 
 /**

@@ -15,4 +15,16 @@ SET
   {{ .Ident "payload" }} = {{ .Arg .Row.Payload }}
 WHERE {{ .Ident "namespace" }} = {{ .Arg .Row.Namespace }} AND
   {{ .Ident "name" }} = {{ .Arg .Row.Name }}
+{{- if .UsedSecureValues }}
+  AND (
+    SELECT COUNT(*) FROM (
+      SELECT 1 FROM {{ .Ident "secret_secure_value" }}
+      WHERE {{ .Ident "namespace" }} = {{ .Arg .Row.Namespace }}
+        AND {{ .Ident "name" }} IN ({{ .ArgList .UsedSecureValues }})
+        AND {{ .Ident "active" }} = true
+        AND {{ .Ident "keeper" }} = {{ .Arg .SystemKeeperName }}
+      {{ .SelectFor "UPDATE" }}
+    ) AS {{ .Ident "sv_check" }}
+  ) = {{ .Arg (len .UsedSecureValues) }}
+{{- end }}
 ;

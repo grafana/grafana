@@ -1,10 +1,8 @@
 import { css } from '@emotion/css';
-import { skipToken } from '@reduxjs/toolkit/query';
 import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Stack, useStyles2 } from '@grafana/ui';
 import { type Repository, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -103,7 +101,7 @@ const getModalContent = (setupType: SetupType) => {
             ),
             description: t(
               'provisioning.getting-started.step-description-enable-feature-toggles',
-              'Add the provisioning feature toggle to your custom.ini file. Note: kubernetesDashboards is enabled by default, but if you have explicitly disabled it, you will need to enable it in your Grafana settings or remove the override from your configuration.'
+              'Add the provisioning feature toggle to your custom.ini file.'
             ),
             code: featureIni,
           },
@@ -124,8 +122,7 @@ interface Props {
 
 export default function GettingStarted({ items }: Props) {
   const styles = useStyles2(getStyles);
-  const settingsArg = config.featureToggles.provisioning ? undefined : skipToken;
-  const settingsQuery = useGetFrontendSettingsQuery(settingsArg, {
+  const settingsQuery = useGetFrontendSettingsQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
   const connectionCount = settingsQuery.data?.items?.length ?? 0;

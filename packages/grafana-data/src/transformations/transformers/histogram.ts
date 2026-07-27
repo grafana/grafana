@@ -1,6 +1,5 @@
 import { map } from 'rxjs/operators';
 
-import { outerJoinDataFrames } from '../..';
 import { getDisplayProcessor } from '../../field/displayProcessor';
 import { createTheme } from '../../themes/createTheme';
 import { type GrafanaTheme2 } from '../../themes/types';
@@ -10,7 +9,7 @@ import { type DataTransformContext, type SynchronousDataTransformerInfo } from '
 import { roundDecimals } from '../../utils/numbers';
 
 import { DataTransformerID } from './ids';
-import { type AlignedData, join } from './joinDataFrames';
+import { type AlignedData, join, joinDataFrames as outerJoinDataFrames } from './joinDataFrames';
 import { nullToValueField } from './nulls/nullToValue';
 
 /**
@@ -390,7 +389,7 @@ export function buildHistogram(
           if (!Number.isNaN(noValue)) {
             field = nullToValueField(field, noValue);
           } else {
-            field = { ...field, values: field.values.filter((v) => v != null) };
+            field = { ...field, values: field.values.filter((v) => Number.isFinite(v)) };
           }
         }
 

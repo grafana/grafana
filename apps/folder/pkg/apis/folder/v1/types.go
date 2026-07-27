@@ -58,6 +58,15 @@ type FolderAccessInfo struct {
 	CanEdit   bool `json:"canEdit"`
 	CanAdmin  bool `json:"canAdmin"`
 	CanDelete bool `json:"canDelete"`
+
+	// AccessControl is a flat map of folder-domain action strings to bool,
+	// reflecting permissions after parent-chain inheritance has been resolved
+	// by the authorization system. Mirrors the shape of legacy
+	// dtos.Folder.AccessControl so clients can drop their dual call to
+	// /api/folders/{uid}?accesscontrol=true. Only keys for actions the user
+	// is granted appear here; absent keys mean "not granted".
+	// +optional
+	AccessControl map[string]bool `json:"accessControl,omitempty"`
 }
 
 func (FolderAccessInfo) OpenAPIModelName() string {

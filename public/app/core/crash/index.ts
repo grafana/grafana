@@ -2,15 +2,14 @@ import { initCrashDetection } from 'crashme';
 import { type BaseStateReport } from 'crashme/dist/types';
 import { nanoid } from 'nanoid';
 
-import { config, createMonitoringLogger } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { getLogger } from '@grafana/runtime/unstable';
 import { CorsWorker as Worker } from 'app/core/utils/CorsWorker';
 
 import { contextSrv } from '../services/context_srv';
 import { CorsSharedWorker as SharedWorker, sharedWorkersSupported } from '../utils/CorsSharedWorker';
 
 import { isChromePerformance, prepareContext } from './crash.utils';
-
-const logger = createMonitoringLogger('core.crash-detection');
 
 interface GrafanaCrashReport extends BaseStateReport {
   app: {
@@ -67,13 +66,13 @@ export function initializeCrashDetection() {
 
     reportCrash: async (report) => {
       const preparedContext = prepareContext(report);
-      logger.logWarning('browser crash detected', preparedContext);
+      getLogger('core.crash-detection').logWarning('browser crash detected', preparedContext);
       return true;
     },
 
     reportStaleTab: async (report) => {
       const preparedContext = prepareContext(report);
-      logger.logWarning('stale browser tab detected', preparedContext);
+      getLogger('core.crash-detection').logWarning('stale browser tab detected', preparedContext);
       return true;
     },
 

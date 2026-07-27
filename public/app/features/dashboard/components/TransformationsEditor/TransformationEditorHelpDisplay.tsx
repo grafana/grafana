@@ -44,7 +44,7 @@ export const TransformationEditorHelpDisplay = ({
   }, [isOpen, transformer.id]);
 
   return isOpen ? (
-    <Drawer title={transformer.transformation.name} subtitle="Transformation help" onClose={() => onCloseClick(false)}>
+    <Drawer title={transformer.name} subtitle="Transformation help" onClose={() => onCloseClick(false)}>
       <OperationRowHelp markdown={helpContent} styleOverrides={{ borderTop: '2px solid' }} />
     </Drawer>
   ) : null;

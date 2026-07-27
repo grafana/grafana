@@ -1,7 +1,6 @@
 /* eslint-disable @grafana/i18n/no-translation-top-level */
 import { useSessionStorage } from 'react-use';
 
-import { BusEventWithPayload } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   dataLayers,
@@ -26,14 +25,15 @@ import { LocalVariableEditableElement } from '../settings/variables/LocalVariabl
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
 import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
 import {
-  SectionVariableAdd,
-  SectionVariableAddEditableElement,
-  VariableAdd,
-  VariableAddEditableElement,
-  VariableTypeChange,
-  VariableTypeChangeEditableElement,
-} from '../settings/variables/VariableTypeSelectionPane';
-import { isSceneVariable } from '../settings/variables/utils';
+  dropPredefinedVariableNamed,
+  dropShadowedPredefinedVariables,
+  isSceneVariable,
+  isVariableEditable,
+  restoreUnshadowedPredefinedVariables,
+  restoreVariableSetSnapshots,
+  snapshotVariableSetsAlongPath,
+} from '../settings/variables/utils';
+import { isPredefinedOrigin } from '../utils/predefinedVariables';
 
 import { type DashboardEditPane } from './DashboardEditPane';
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
@@ -41,19 +41,16 @@ import { VizPanelEditableElement } from './VizPanelEditableElement';
 import { DashboardEditableElement } from './dashboard/DashboardEditableElement';
 import { DashboardEditActionEvent, type DashboardEditActionEventPayload } from './events';
 
+export const EDIT_PANE_COLLAPSED_KEY = 'grafana.dashboards.edit-pane.isCollapsed';
+
 export function useEditPaneCollapsed() {
-  return useSessionStorage('grafana.dashboards.edit-pane.isCollapsed', false);
+  return useSessionStorage(EDIT_PANE_COLLAPSED_KEY, false);
 }
 
 export function getEditableElementForSelection(
   editPane: DashboardEditPane,
-  selected: ElementSelectionContextItem[],
-  openPaneTempHack?: SceneObject
+  selected: ElementSelectionContextItem[]
 ): EditableDashboardElement | undefined {
-  if (openPaneTempHack) {
-    return getEditableElementFor(openPaneTempHack);
-  }
-
   if (selected.length === 1) {
     const obj = editPane.getSelectedObject(selected[0].id);
     if (obj) {
@@ -114,19 +111,10 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined | null):
   }
 
   if (isSceneVariable(sceneObj)) {
+    if (!isVariableEditable(sceneObj)) {
+      return undefined;
+    }
     return new VariableEditableElement(sceneObj);
-  }
-
-  if (sceneObj instanceof VariableAdd) {
-    return new VariableAddEditableElement(sceneObj);
-  }
-
-  if (sceneObj instanceof SectionVariableAdd) {
-    return new SectionVariableAddEditableElement(sceneObj);
-  }
-
-  if (sceneObj instanceof VariableTypeChange) {
-    return new VariableTypeChangeEditableElement(sceneObj);
   }
 
   if (sceneObj instanceof LinkEdit) {
@@ -143,28 +131,6 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined | null):
 
   return undefined;
 }
-
-export class NewObjectAddedToCanvasEvent extends BusEventWithPayload<SceneObject> {
-  static type = 'new-object-added-to-canvas';
-}
-
-export class ObjectRemovedFromCanvasEvent extends BusEventWithPayload<SceneObject> {
-  static type = 'object-removed-from-canvas';
-}
-
-export class ObjectsReorderedOnCanvasEvent extends BusEventWithPayload<SceneObject> {
-  static type = 'objects-reordered-on-canvas';
-}
-
-export class ConditionalRenderingChangedEvent extends BusEventWithPayload<SceneObject> {
-  static type = 'conditional-rendering-changed';
-}
-
-export class RepeatsUpdatedEvent extends BusEventWithPayload<SceneObject> {
-  static type = 'repeats-updated';
-}
-
-export { DashboardEditActionEvent, DashboardStateChangedEvent, type DashboardEditActionEventPayload } from './events';
 
 export interface AddElementActionHelperProps {
   addedObject: SceneObject;
@@ -194,18 +160,6 @@ export interface ChangeVariableTypeActionHelperProps {
   oldVariable: SceneVariable;
   newVariable: SceneVariable;
   source: SceneVariableSet;
-}
-
-export interface ChangeTitleActionHelperProps {
-  oldTitle: string;
-  newTitle: string;
-  source: DashboardScene;
-}
-
-export interface ChangeDescriptionActionHelperProps {
-  oldDescription: string;
-  newDescription: string;
-  source: DashboardScene;
 }
 
 export interface MoveElementActionHelperProps {
@@ -274,12 +228,18 @@ export const dashboardEditActions = {
 
   addVariable({ source, addedObject }: AddVariableActionHelperProps) {
     const varsBeforeAddition = [...(source.state.variables ?? [])];
+    const name = addedObject.state.name;
 
     dashboardEditActions.addElement({
       source,
       addedObject,
       perform() {
-        source.setState({ variables: [...varsBeforeAddition, addedObject] });
+        // Stash then drop any predefined of the same name so the local wins live.
+        dropPredefinedVariableNamed(source, name);
+        const withoutShadowed = varsBeforeAddition.filter(
+          (v) => !(v.state.name === name && isPredefinedOrigin(v.state.origin))
+        );
+        source.setState({ variables: [...withoutShadowed, addedObject] });
       },
       undo() {
         source.setState({ variables: [...varsBeforeAddition] });
@@ -294,9 +254,11 @@ export const dashboardEditActions = {
       removedObject,
       perform() {
         source.setState({ variables: varsBeforeRemoval.filter((v) => v !== removedObject) });
+        // Local no longer shadows — re-inject any stashed predefined of the freed name.
+        restoreUnshadowedPredefinedVariables(source);
       },
       undo() {
-        source.setState({ variables: varsBeforeRemoval });
+        source.setState({ variables: [...varsBeforeRemoval] });
       },
     });
   },
@@ -324,10 +286,24 @@ export const dashboardEditActions = {
       },
     });
   },
-  changeVariableName: makeEditAction<SceneVariable, 'name'>({
-    description: t('dashboard.variable.name.action', 'Change variable name'),
-    prop: 'name',
-  }),
+  changeVariableName({ source, oldValue, newValue }: EditActionProps<SceneVariable, 'name'>) {
+    // Snapshot set + ancestors before mutate so undo restores drops and re-injections.
+    const snapshots = snapshotVariableSetsAlongPath(source);
+
+    dashboardEditActions.edit({
+      description: t('dashboard.variable.name.action', 'Change variable name'),
+      source,
+      perform: () => {
+        source.setState({ name: newValue });
+        restoreUnshadowedPredefinedVariables(source);
+        dropShadowedPredefinedVariables(source, newValue);
+      },
+      undo: () => {
+        source.setState({ name: oldValue });
+        restoreVariableSetSnapshots(snapshots);
+      },
+    });
+  },
   changeVariableLabel: makeEditAction<SceneVariable, 'label'>({
     description: t('dashboard.variable.label.action', 'Change variable label'),
     prop: 'label',
@@ -391,7 +367,7 @@ interface EditActionProps<Source extends SceneObject, T extends keyof Source['st
   newValue: Source['state'][T];
 }
 
-export function makeEditAction<Source extends SceneObject, T extends keyof Source['state']>({
+function makeEditAction<Source extends SceneObject, T extends keyof Source['state']>({
   description,
   prop,
 }: MakeEditActionProps<Source, T>) {

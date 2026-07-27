@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
@@ -234,18 +236,50 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	// Record job processing error on span
 	if err != nil {
 		span.RecordError(err)
-		logger.Error("job failed", "duration", duration, "error", err)
-	} else {
-		logger.Info("job complete", "duration", duration)
 	}
 
 	// Complete the job
 	d.mu.Lock()
+	// recorder.Complete builds a fresh status, so carry the running progress-update
+	// count forward and bump it for this final write -- otherwise the count
+	// accumulated during processing would be lost on the historic job.
+	progressUpdates := d.currentJob.Status.ProgressUpdates
 	d.currentJob.Status = recorder.Complete(ctx, err)
+	d.currentJob.Status.ProgressUpdates = progressUpdates + 1
 	defer func() {
 		d.currentJob = nil
 		d.mu.Unlock()
 	}()
+
+	// Log completion keyed off the final job state so that per-file errors that
+	// promoted the job to an error/warning state (without a top-level err) are
+	// still visible. The per-file breakdown stays at Debug to avoid noise at Info.
+	status := d.currentJob.Status
+	logFields := []any{
+		"duration", duration,
+		"state", status.State,
+		"errorCount", len(status.Errors),
+		"warningCount", len(status.Warnings),
+		"message", status.Message,
+	}
+	switch {
+	case err != nil:
+		logger.Error("job failed", append(logFields, "error", err)...)
+	case status.State == provisioning.JobStateError:
+		logger.Error("job completed with errors", logFields...)
+	case status.State == provisioning.JobStateWarning:
+		logger.Warn("job completed with warnings", logFields...)
+	default:
+		logger.Info("job complete", logFields...)
+	}
+
+	if len(status.Errors) > 0 || len(status.Warnings) > 0 {
+		logger.Debug("job completion details",
+			"errors", status.Errors,
+			"warnings", status.Warnings,
+			"reasons", recorder.ResultReasons(),
+		)
+	}
 
 	// Save the finished job
 	if err = d.historicJobs.WriteJob(ctx, d.currentJob.DeepCopy()); err != nil {
@@ -294,9 +328,20 @@ func (d *jobDriver) leaseRenewalLoop(ctx context.Context, logger logging.Logger,
 
 			if err != nil {
 				consecutiveFailures++
-				if apierrors.IsNotFound(err) ||
-					strings.Contains(err.Error(), "job no longer exists") {
-					logger.Error("job no longer exists - lease expired", "error", err)
+				// Both cases below are terminal: continuing to run would mean two workers
+				// process the same job. Abort immediately rather than retrying, which would
+				// only stomp the new owner's claim.
+
+				// Another worker now owns the claim (job reaped and re-claimed on the same name).
+				if errors.Is(err, ErrLeaseLost) {
+					logger.Error("lease taken over by another worker - aborting job", "error", err)
+					close(leaseExpired)
+					return
+				}
+
+				// The job no longer exists in the store (deleted or reaped before renewal).
+				if apierrors.IsNotFound(err) || strings.Contains(err.Error(), "job no longer exists") {
+					logger.Error("job no longer exists - aborting job", "error", err)
 					close(leaseExpired)
 					return
 				}
@@ -321,22 +366,54 @@ func (d *jobDriver) leaseRenewalLoop(ctx context.Context, logger logging.Logger,
 
 // processJobWithLeaseCheck processes a job but aborts if the lease expires or context is cancelled.
 func (d *jobDriver) processJobWithLeaseCheck(ctx context.Context, recorder JobProgressRecorder, leaseExpired <-chan struct{}) error {
+	// Derive a cancellable context for the worker so that losing the lease actively
+	// stops the in-flight work, rather than leaving the goroutine running until the
+	// caller's deferred cancel fires much later. Otherwise two pods could execute the
+	// same job concurrently once another worker takes over the reaped claim.
+	workerCtx, cancelWorker := context.WithCancel(ctx)
+	defer cancelWorker()
+
 	// Run the job processing in a goroutine so we can monitor lease expiry
 	resultChan := make(chan error, 1)
 	go func() {
-		resultChan <- d.processJob(ctx, recorder)
+		resultChan <- d.processJob(workerCtx, recorder)
 	}()
 
 	select {
 	case err := <-resultChan:
 		return err
 	case <-leaseExpired:
+		// Another worker now owns the job. Cancel our worker and wait for it to
+		// return so we don't keep running (and later complete) a job we no longer own.
+		// Also observe ctx.Done() so a worker that ignores cancellation can't pin this
+		// goroutine forever: on job timeout or shutdown we stop waiting and let the
+		// caller run its cleanup.
+		cancelWorker()
+		select {
+		case <-resultChan:
+		case <-ctx.Done():
+		}
 		return apifmt.Errorf("job aborted due to lease expiry")
 	case <-ctx.Done():
 		// Return context error directly - caller will determine if this is due to graceful shutdown
 		// or job timeout based on which context was cancelled
 		return ctx.Err()
 	}
+}
+
+// withJobAuthorSignature carries the job's recorded author into ctx as the git
+// commit signature. The author annotations are set at creation time by the job
+// admission mutator, which is where the user-attribution feature flag is
+// enforced; the driver simply applies whatever was recorded on the job. An
+// email is required: webhook attribution carries none, so webhook-created jobs
+// keep the default Grafana commit identity.
+func withJobAuthorSignature(ctx context.Context, job *provisioning.Job) context.Context {
+	name := job.Annotations[appjobs.AnnoAuthor]
+	email := job.Annotations[appjobs.AnnoAuthorEmail]
+	if email == "" {
+		return ctx
+	}
+	return repository.WithAuthorSignature(ctx, repository.CommitSignature{Name: name, Email: email})
 }
 
 func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder) error {
@@ -360,6 +437,8 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 		attribute.String("job.repository", repoName),
 		attribute.String("job.action", string(job.Spec.Action)),
 	)
+
+	ctx = withJobAuthorSignature(ctx, job)
 
 	for _, worker := range d.workers {
 		if !worker.IsSupported(ctx, *job) {
@@ -452,10 +531,15 @@ func (d *jobDriver) onProgress() ProgressFn {
 				*d.currentJob = *latest
 			}
 
-			job := d.currentJob
-			// Update status on the current job
-			job.Status = status
-			updated, err := d.store.Update(ctx, job)
+			// Build the candidate on a copy so a failed write never mutates our
+			// in-memory job: the recorder ignores progress errors and keeps going,
+			// so leaving an increment behind would count writes that never persisted.
+			// The incoming status replaces the whole status object, so carry the
+			// progress-update count forward and bump it for this write.
+			candidate := d.currentJob.DeepCopy()
+			candidate.Status = status
+			candidate.Status.ProgressUpdates = d.currentJob.Status.ProgressUpdates + 1
+			updated, err := d.store.Update(ctx, candidate)
 			if err != nil {
 				if apierrors.IsConflict(err) && attempt < maxRetries-1 {
 					d.mu.Unlock()
@@ -466,7 +550,7 @@ func (d *jobDriver) onProgress() ProgressFn {
 				return apifmt.Errorf("failed to update job progress: %w", err)
 			}
 
-			// Update succeeded, update our local copy
+			// Update succeeded, commit the persisted state to our local copy.
 			*d.currentJob = *updated
 			d.mu.Unlock()
 

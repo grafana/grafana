@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
@@ -102,7 +101,7 @@ func (c setRuleGuidMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) er
 			mg.Logger.Error("Failed to update alert_rule table", "error", err)
 			return err
 		}
-		lastId = util.Pointer(results[len(results)-1])
+		lastId = new(results[len(results)-1])
 	}
 
 	q := `UPDATE alert_rule_version

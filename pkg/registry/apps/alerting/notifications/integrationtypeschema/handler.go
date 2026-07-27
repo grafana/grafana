@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 )
 
 // AccessControlService provides access control for receivers.
@@ -27,12 +28,14 @@ type AccessControlService interface {
 }
 
 type Handler struct {
-	ac AccessControlService
+	ac                  AccessControlService
+	allowedIntegrations map[schema.IntegrationType]struct{}
 }
 
-func New(ac AccessControlService) *Handler {
+func New(ac AccessControlService, allowedIntegrations map[schema.IntegrationType]struct{}) *Handler {
 	return &Handler{
-		ac: ac,
+		ac:                  ac,
+		allowedIntegrations: allowedIntegrations,
 	}
 }
 
@@ -78,6 +81,7 @@ func (h *Handler) HandleGetSchemas(ctx context.Context, writer app.CustomRouteRe
 	slices.SortFunc(schemas, func(a, b schema.IntegrationTypeSchema) int {
 		return strings.Compare(string(a.Type), string(b.Type))
 	})
+	schemas = notifier.ApplyAllowedIntegrations(schemas, h.allowedIntegrations)
 
 	// Wrap each schema with K8s-style metadata for future-proofing migration
 	items := make([]v1beta1.GetIntegrationtypeschemasIntegrationTypeSchemaResource, 0, len(schemas))

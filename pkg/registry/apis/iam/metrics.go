@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/prometheus/client_golang/prometheus"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const (
@@ -57,6 +59,16 @@ var (
 		Name:      "hooks_tuples_total",
 		Help:      "Total number of tuples written or deleted by resource type and operation type",
 	}, []string{"resource_type", "operation", "action"})
+
+	// StorageWrapperHistogram tracks per-operation latency of the storage wrapper for IAM resources.
+	// Labels: layer (authz/inner), op (e.g. create, get), resource (group.resource), status (K8s reason).
+	StorageWrapperHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: metricsNamespace,
+		Subsystem: metricsSubSystem,
+		Name:      "storage_wrapper_duration_seconds",
+		Help:      "Latency of IAM storage wrapper operations split by layer (authz vs inner store), operation, resource, and status",
+		Buckets:   prometheus.ExponentialBuckets(0.001, 2, 10), // 1ms to ~1s
+	}, []string{"layer", "op", "resource", "status"})
 )
 
 func registerMetrics(reg prometheus.Registerer) {
@@ -66,6 +78,7 @@ func registerMetrics(reg prometheus.Registerer) {
 			HooksDurationHistogram,
 			HooksOperationCounter,
 			HooksTuplesCounter,
+			StorageWrapperHistogram,
 		}
 
 		for _, metric := range metrics {
@@ -75,3 +88,14 @@ func registerMetrics(reg prometheus.Registerer) {
 		}
 	})
 }
+
+// storageObserver implements storewrapper.Observer by recording operation durations
+// to StorageWrapperHistogram.
+type storageObserver struct{}
+
+func (storageObserver) Observe(layer, op string, resource schema.GroupResource, dur time.Duration, status string) {
+	StorageWrapperHistogram.WithLabelValues(layer, op, resource.String(), status).Observe(dur.Seconds())
+}
+
+// compile-time check
+var _ storewrapper.Observer = storageObserver{}

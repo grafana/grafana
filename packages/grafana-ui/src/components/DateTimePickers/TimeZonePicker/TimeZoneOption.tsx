@@ -1,8 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { type PropsWithChildren, type RefCallback, type JSX } from 'react';
-import * as React from 'react';
 
-import { type GrafanaTheme2, type SelectableValue, getTimeZoneInfo } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
@@ -11,6 +10,7 @@ import { Icon } from '../../Icon/Icon';
 import { TimeZoneDescription } from './TimeZoneDescription';
 import { TimeZoneOffset } from './TimeZoneOffset';
 import { TimeZoneTitle } from './TimeZoneTitle';
+import { type TimeZoneDisplayInfo } from './timeZoneUtils';
 
 interface Props {
   isFocused: boolean;
@@ -20,23 +20,15 @@ interface Props {
   data: SelectableZone;
 }
 
-const offsetClassName = 'tz-utc-offset';
-
 export interface SelectableZone extends SelectableValue<string> {
   searchIndex: string;
+  info: TimeZoneDisplayInfo;
 }
 
 export const WideTimeZoneOption = (props: PropsWithChildren<Props>) => {
   const { children, innerProps, innerRef, data, isSelected, isFocused } = props;
   const styles = useStyles2(getStyles);
-  const timestamp = Date.now();
   const containerStyles = cx(styles.container, isFocused && styles.containerFocused);
-
-  if (typeof data.value !== 'string') {
-    return null;
-  }
-
-  const timeZoneInfo = getTimeZoneInfo(data.value, timestamp);
 
   return (
     <div className={containerStyles} {...innerProps} ref={innerRef} data-testid={selectors.components.Select.option}>
@@ -44,16 +36,10 @@ export const WideTimeZoneOption = (props: PropsWithChildren<Props>) => {
         <div className={cx(styles.leftColumn, styles.wideRow)}>
           <TimeZoneTitle title={children} />
           <div className={styles.spacer} />
-          <TimeZoneDescription info={timeZoneInfo} />
+          <TimeZoneDescription info={data.info} />
         </div>
         <div className={styles.rightColumn}>
-          <TimeZoneOffset
-            /* Use the timeZoneInfo to pass the correct timeZone name,
-               as 'Default' has value '' which defaults to browser timezone */
-            timeZone={timeZoneInfo?.ianaName || data.value}
-            timestamp={timestamp}
-            className={offsetClassName}
-          />
+          <TimeZoneOffset offset={`UTC${data.info.offset}`} />
           {isSelected && (
             <span>
               <Icon name="check" />
@@ -65,17 +51,10 @@ export const WideTimeZoneOption = (props: PropsWithChildren<Props>) => {
   );
 };
 
-export const CompactTimeZoneOption = (props: React.PropsWithChildren<Props>) => {
+export const CompactTimeZoneOption = (props: PropsWithChildren<Props>) => {
   const { children, innerProps, innerRef, data, isSelected, isFocused } = props;
   const styles = useStyles2(getStyles);
-  const timestamp = Date.now();
   const containerStyles = cx(styles.container, isFocused && styles.containerFocused);
-
-  if (typeof data.value !== 'string') {
-    return null;
-  }
-
-  const timeZoneInfo = getTimeZoneInfo(data.value, timestamp);
 
   return (
     <div className={containerStyles} {...innerProps} ref={innerRef} data-testid={selectors.components.Select.option}>
@@ -94,16 +73,10 @@ export const CompactTimeZoneOption = (props: React.PropsWithChildren<Props>) => 
         </div>
         <div className={styles.row}>
           <div className={styles.leftColumn}>
-            <TimeZoneDescription info={timeZoneInfo} />
+            <TimeZoneDescription info={data.info} />
           </div>
           <div className={styles.rightColumn}>
-            <TimeZoneOffset
-              timestamp={timestamp}
-              /* Use the timeZoneInfo to pass the correct timeZone name,
-                 as 'Default' has value '' which defaults to browser timezone */
-              timeZone={timeZoneInfo?.ianaName || data.value}
-              className={offsetClassName}
-            />
+            <TimeZoneOffset offset={`UTC${data.info.offset}`} />
           </div>
         </div>
       </div>
@@ -119,7 +92,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexShrink: 0,
     whiteSpace: 'nowrap',
     cursor: 'pointer',
-    padding: '6px 8px 4px',
+    padding: theme.spacing(0.75, 1, 0.5),
+    borderRadius: theme.shape.radius.default,
 
     '&:hover': {
       background: theme.colors.action.hover,

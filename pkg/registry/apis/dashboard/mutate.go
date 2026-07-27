@@ -8,7 +8,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
-	"k8s.io/utils/ptr"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -18,6 +17,7 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
@@ -31,6 +31,23 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 	switch a.GetResource().Resource {
 	case dashboardV0.DASHBOARD_RESOURCE:
 		return b.mutateDashboard(ctx, a)
+	// Reachability invariant: this case only fires when the apiserver routes
+	// a request to the v2beta1 Variable storage, which is registered in
+	// UpdateAPIGroupInfo behind FlagGlobalDashboardVariables (see register.go).
+	// No other dashboard.grafana.app version registers a standalone Variable
+	// resource, so without the flag the apiserver has no route and admission
+	// never dispatches here. If Variable is ever added to another version or
+	// moved to a subresource, update both the storage registration and this
+	// switch in lockstep.
+	case dashboardV2beta1.VariableResourceInfo.GroupVersionResource().Resource:
+		return mutateVariable(a)
+
+	// Reachability invariant: this case only fires when the apiserver routes a
+	// request to the v2beta1 Notebook storage, which is registered in
+	// UpdateAPIGroupInfo behind FlagDashboardNotebooks (see register.go).
+	// Notebooks need no mutation today; layout validation happens in Validate.
+	case dashboardV2beta1.NotebookResourceInfo.GroupVersionResource().Resource:
+		return nil
 
 	case dashboardV0.LIBRARY_PANEL_RESOURCE:
 		return nil // nothing needed
@@ -59,6 +76,8 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 			delete(v.Spec.Object, "id")
 			internalID = int64(id)
 		}
+		// Strip BOMs from all string values in the dashboard spec
+		v.Spec.Object = util.StripBOMFromInterface(v.Spec.Object).(map[string]any)
 		resourceInfo = dashboardV0.DashboardResourceInfo
 
 	case *dashboardV1.Dashboard:
@@ -68,12 +87,14 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 			delete(v.Spec.Object, "id")
 			internalID = int64(id)
 		}
+		// Strip BOMs from all string values in the dashboard spec
+		v.Spec.Object = util.StripBOMFromInterface(v.Spec.Object).(map[string]any)
 		resourceInfo = dashboardV1.DashboardResourceInfo
 		migrationErr = migration.Migrate(ctx, v.Spec.Object, schemaversion.LATEST_VERSION)
 		if migrationErr != nil {
 			v.Status.Conversion = &dashboardV1.DashboardConversionStatus{
 				Failed: true,
-				Error:  ptr.To(migrationErr.Error()),
+				Error:  new(migrationErr.Error()),
 			}
 		}
 
@@ -86,6 +107,8 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 				Spec: dashboardV2alpha1.DashboardGridLayoutSpec{},
 			}
 		}
+		// Strip BOMs from all string fields recursively
+		util.StripBOMFromStruct(&v.Spec)
 		resourceInfo = dashboardV2alpha1.DashboardResourceInfo
 
 	case *dashboardV2beta1.Dashboard:
@@ -97,6 +120,8 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 				Spec: dashboardV2beta1.DashboardGridLayoutSpec{},
 			}
 		}
+		// Strip BOMs from all string fields recursively
+		util.StripBOMFromStruct(&v.Spec)
 		resourceInfo = dashboardV2beta1.DashboardResourceInfo
 
 	case *dashboardV2.Dashboard:
@@ -106,6 +131,8 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 				Spec: dashboardV2.DashboardGridLayoutSpec{},
 			}
 		}
+		// Strip BOMs from all string fields recursively
+		util.StripBOMFromStruct(&v.Spec)
 		resourceInfo = dashboardV2.DashboardResourceInfo
 
 	default:
@@ -114,6 +141,17 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 
 	if internalID != 0 {
 		meta.SetDeprecatedInternalID(internalID) // nolint:staticcheck
+	}
+
+	return b.validateDashboardIfStrict(ctx, a, migrationErr, resourceInfo)
+}
+
+// validateDashboardIfStrict validates the dashboard spec if field validation mode is strict.
+func (b *DashboardsAPIBuilder) validateDashboardIfStrict(ctx context.Context, a admission.Attributes, migrationErr error, resourceInfo utils.ResourceInfo) error {
+	obj := a.GetObject()
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return err
 	}
 
 	fieldValidationMode := getFieldValidationMode(a)
@@ -137,6 +175,36 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 		if len(validationErrorList) > 0 {
 			return apierrors.NewInvalid(resourceInfo.GroupVersionKind().GroupKind(), meta.GetName(), validationErrorList)
 		}
+	}
+
+	return nil
+}
+
+func mutateVariable(a admission.Attributes) error {
+	variable, ok := a.GetObject().(*dashboardV2beta1.Variable)
+	if !ok {
+		return fmt.Errorf("mutation error: expected variable, got %T", a.GetObject())
+	}
+
+	meta, err := utils.MetaAccessor(variable)
+	if err != nil {
+		return err
+	}
+
+	labels := variable.GetLabels()
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+
+	if folderUID := meta.GetFolder(); folderUID != "" {
+		labels[variableFolderLabelKey] = folderUID
+	} else {
+		delete(labels, variableFolderLabelKey)
+	}
+	variable.SetLabels(labels)
+
+	if a.GetOperation() == admission.Create && variable.GetName() == "" {
+		variable.SetName(deriveVariableMetadataName(getVariableName(variable.Spec), meta.GetFolder()))
 	}
 
 	return nil

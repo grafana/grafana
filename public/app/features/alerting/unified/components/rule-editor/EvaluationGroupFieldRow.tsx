@@ -5,15 +5,12 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Box, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
-import { type RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { useFetchGroupsForFolder } from '../../hooks/useFetchGroupsForFolder';
-import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
 import { type RuleFormValues } from '../../types/rule-form';
-import { isProvisionedRuleGroup } from '../../utils/rules';
 import { ProvisioningBadge } from '../Provisioning';
 
-import { EvaluationGroupCreationModal } from './GrafanaEvaluationBehavior';
+import { EvaluationGroupCreationModal, namespaceToGroupOptions } from './GrafanaEvaluationBehavior';
 
 export type GroupOption = SelectableValue<string> & { isProvisioned?: boolean };
 
@@ -29,28 +26,16 @@ export function EvaluationGroupFieldRow({ enableProvisionedGroups }: { enablePro
     control,
   } = useFormContext<RuleFormValues>();
 
-  const [group, folder] = watch(['group', 'folder']);
+  const [group, folder, evaluateEvery] = watch(['group', 'folder', 'evaluateEvery']);
   const { currentData: rulerNamespace, isLoading: loadingGroups } = useFetchGroupsForFolder(folder?.uid ?? '');
 
-  const collator = useMemo(() => new Intl.Collator(), []);
   const groupOptions = useMemo<GroupOption[]>(() => {
     if (!rulerNamespace) {
       return [];
     }
-    const folderGroups = Object.values(rulerNamespace).flat();
-    return folderGroups
-      .map<GroupOption>((g: RulerRuleGroupDTO) => {
-        const provisioned = isProvisionedRuleGroup(g);
-        return {
-          label: g.name,
-          value: g.name,
-          description: g.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL,
-          isDisabled: !enableProvisionedGroups ? provisioned : false,
-          isProvisioned: provisioned,
-        };
-      })
-      .sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
-  }, [collator, enableProvisionedGroups, rulerNamespace]);
+    const pendingGroup = group ? { name: group, interval: evaluateEvery } : undefined;
+    return namespaceToGroupOptions(rulerNamespace, enableProvisionedGroups, pendingGroup);
+  }, [enableProvisionedGroups, rulerNamespace, group, evaluateEvery]);
 
   const defaultGroupValue = group ? { value: group, label: group } : undefined;
 

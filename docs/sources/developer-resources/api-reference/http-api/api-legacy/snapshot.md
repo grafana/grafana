@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../http_api/snapshot/ # /docs/grafana/next/http_api/snapshot/
-  - ../../../developers/http_api/snapshot/ # /docs/grafana/next/developers/http_api/snapshot/
+  - ../../../../http_api/snapshot/ # /docs/grafana/next/http_api/snapshot/
+  - ../../../../developers/http_api/snapshot/ # /docs/grafana/next/developers/http_api/snapshot/
   - ../../../../developer-resources/api-reference/http-api/snapshot/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/snapshot/
 description: Grafana HTTP API
@@ -21,13 +21,7 @@ title: 'Snapshot API'
 
 # Snapshot API
 
-{{< admonition type="caution" >}}
-
-Starting in Grafana 13, `/api` endpoints are being deprecated. This change doesn't disrupt or break your current setup: legacy APIs are not being disabled and remain fully accessible and operative. However, `/api` routes will no longer be updated and **will be removed in a future major release.**
-
-To learn more refer to the [new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
-
-{{< /admonition >}}
+{{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Create new snapshot
 
@@ -39,7 +33,7 @@ To learn more refer to the [new API structure in Grafana](https://grafana.com/do
     POST /api/snapshots HTTP/1.1
     Accept: application/json
     Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+    Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
     {
       "dashboard": {
@@ -117,7 +111,7 @@ Query parameters:
 ```http
 GET /api/dashboard/snapshots HTTP/1.1
 Accept: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -151,7 +145,7 @@ Content-Type: application/json
 ```http
 GET /api/snapshots/YYYYYYY HTTP/1.1
 Accept: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -208,7 +202,7 @@ Content-Type: application/json
 ```http
 DELETE /api/snapshots/YYYYYYY HTTP/1.1
 Accept: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:

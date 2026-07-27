@@ -147,7 +147,7 @@ func (session *Session) Update(bean any, condiBean ...any) (int64, error) {
 			} else {
 				ct := reflect.TypeOf(condiBean[0])
 				k := ct.Kind()
-				if k == reflect.Ptr {
+				if k == reflect.Pointer {
 					k = ct.Elem().Kind()
 				}
 				if k == reflect.Struct {
@@ -335,7 +335,7 @@ func (session *Session) genUpdateColumns(bean any) ([]string, []any, error) {
 				if len(fieldValue.String()) == 0 {
 					continue
 				}
-			case reflect.Ptr:
+			case reflect.Pointer:
 				if fieldValue.Pointer() == 0 {
 					continue
 				}

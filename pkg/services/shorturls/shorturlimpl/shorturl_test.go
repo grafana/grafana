@@ -213,4 +213,53 @@ func TestIntegrationShortURLService(t *testing.T) {
 		require.ErrorIs(t, err, shorturls.ErrShortURLConflict)
 		require.Nil(t, newShortURL2)
 	})
+
+	t.Run("Delete by UID is scoped to the caller's org", func(t *testing.T) {
+		service := ShortURLService{SQLStore: &sqlStore{db: store}}
+
+		ctx := context.Background()
+		inOrg1 := *user
+		inOrg1.UserID = 10
+		inOrg1.OrgID = 100
+		user1 := &inOrg1
+
+		inOrg2 := *user
+		inOrg2.UserID = 20
+		inOrg2.OrgID = 200
+		user2 := &inOrg2
+
+		urlUser2, err := service.CreateShortURL(ctx, user2, &dtos.CreateShortURLCmd{
+			Path: "user2/path",
+			UID:  "shared-uid",
+		})
+		require.NoError(t, err)
+		require.NotNil(t, urlUser2)
+
+		urlUser1, err := service.CreateShortURL(ctx, user1, &dtos.CreateShortURLCmd{
+			Path: "user1/path",
+			UID:  "shared-uid",
+		})
+		require.NoError(t, err)
+		require.NotNil(t, urlUser1)
+
+		delCmd := shorturls.DeleteShortUrlCommand{OrgId: user1.OrgID, Uid: "shared-uid"}
+		err = service.DeleteStaleShortURLs(ctx, &delCmd)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), delCmd.NumDeleted)
+
+		_, err = service.GetShortURLByUID(ctx, user1, "shared-uid")
+		require.ErrorIs(t, err, shorturls.ErrShortURLNotFound)
+
+		survived, err := service.GetShortURLByUID(ctx, user2, "shared-uid")
+		require.NoError(t, err)
+		require.NotNil(t, survived)
+		require.Equal(t, "user2/path", survived.Path)
+	})
+
+	t.Run("Delete by UID without org id is rejected", func(t *testing.T) {
+		service := ShortURLService{SQLStore: &sqlStore{db: store}}
+
+		err := service.DeleteStaleShortURLs(context.Background(), &shorturls.DeleteShortUrlCommand{Uid: "any-uid"})
+		require.ErrorIs(t, err, shorturls.ErrShortURLBadRequest)
+	})
 }

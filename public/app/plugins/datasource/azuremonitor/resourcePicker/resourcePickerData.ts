@@ -1,3 +1,6 @@
+import { uniq } from 'lodash';
+
+import { AzureCloud, getDefaultAzureCloud } from '@grafana/azure-sdk';
 import { DataSourceWithBackend, reportInteraction } from '@grafana/runtime';
 
 import { logsResourceTypes } from '../azureMetadata/logsResourceTypes';
@@ -7,12 +10,12 @@ import type AzureResourceGraphDatasource from '../azure_resource_graph/azure_res
 import { type ResourceRow, type ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
 import {
   addResources,
-  findRow,
   parseMultipleResourceDetails,
   parseResourceDetails,
   parseResourceURI,
   resourceToString,
 } from '../components/ResourcePicker/utils';
+import { getCredentials } from '../credentials';
 import { type AzureMonitorResource } from '../dataquery.gen';
 import { type AzureMonitorQuery } from '../types/query';
 import {
@@ -35,6 +38,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<
   azureMonitorDatasource;
   azureResourceGraphDatasource;
   supportedMetricNamespaces = '';
+  private cloudName: string;
 
   constructor(
     instanceSettings: AzureMonitorDataSourceInstanceSettings,
@@ -44,6 +48,8 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     super(instanceSettings);
     this.azureMonitorDatasource = azureMonitorDatasource;
     this.azureResourceGraphDatasource = azureResourceGraphDatasource;
+    const creds = getCredentials(instanceSettings);
+    this.cloudName = 'azureCloud' in creds && creds.azureCloud ? creds.azureCloud : getDefaultAzureCloud();
   }
 
   async fetchInitialRows(
@@ -58,31 +64,42 @@ export default class ResourcePickerData extends DataSourceWithBackend<
         return subscriptions;
       }
 
-      let resources = subscriptions;
-      const promises = currentSelection.map((selection) => async () => {
-        if (selection.subscription) {
-          const resourceGroupURI = `/subscriptions/${selection.subscription}/resourceGroups/${selection.resourceGroup}`;
+      const rgUriOf = (s: AzureMonitorResource) => `/subscriptions/${s.subscription}/resourceGroups/${s.resourceGroup}`;
 
-          if (selection.resourceGroup && !findRow(resources, resourceGroupURI)) {
-            const resourceGroups = await this.getResourceGroupsBySubscriptionId(selection.subscription, type);
-            resources = addResources(resources, `/subscriptions/${selection.subscription}`, resourceGroups);
-          }
+      const hasSubAndRG = (
+        s: AzureMonitorResource
+      ): s is AzureMonitorResource & { subscription: string; resourceGroup: string } =>
+        Boolean(s.subscription && s.resourceGroup);
 
-          const resourceURI = resourceToString(selection);
-          if (selection.resourceName && !findRow(resources, resourceURI)) {
-            const resourcesForResourceGroup = await this.getResourcesForResourceGroup(resourceGroupURI, type);
-            resources = addResources(resources, resourceGroupURI, resourcesForResourceGroup);
-          }
-        }
-      });
+      const hasResource = (
+        s: AzureMonitorResource
+      ): s is AzureMonitorResource & { subscription: string; resourceGroup: string; resourceName: string } =>
+        hasSubAndRG(s) && Boolean(s.resourceName);
 
-      for (const promise of promises) {
-        // Fetch resources one by one, avoiding re-fetching the same resource
-        // and race conditions updating the resources array
-        await promise();
-      }
+      const subsToFetch = uniq(currentSelection.filter(hasSubAndRG).map(({ subscription }) => subscription));
 
-      return resources;
+      const rgUrisToFetch = uniq(currentSelection.filter(hasResource).map(rgUriOf));
+
+      const [groupsResults, resourcesResults] = await Promise.all([
+        Promise.all(
+          subsToFetch.map((sub) => this.getResourceGroupsBySubscriptionId(sub, type).then((rgs) => [sub, rgs] as const))
+        ),
+        Promise.all(
+          rgUrisToFetch.map((rgUri) =>
+            this.getResourcesForResourceGroup(rgUri, type).then((res) => [rgUri, res] as const)
+          )
+        ),
+      ]);
+
+      const withGroups = groupsResults.reduce<ResourceRowGroup>(
+        (acc, [sub, rgs]) => addResources(acc, `/subscriptions/${sub}`, rgs),
+        subscriptions
+      );
+
+      return resourcesResults.reduce<ResourceRowGroup>(
+        (acc, [rgUri, res]) => addResources(acc, rgUri, res),
+        withGroups
+      );
     } catch (err) {
       if (err instanceof Error) {
         if (err.message !== 'No subscriptions were found') {
@@ -300,6 +317,17 @@ export default class ResourcePickerData extends DataSourceWithBackend<
       : `| where type in (${this.supportedMetricNamespaces})`;
   };
 
+  private getRegionsForCloud(): string[] {
+    switch (this.cloudName) {
+      case AzureCloud.USGovernment:
+        return ['usgovvirginia', 'usgovarizona'];
+      case AzureCloud.China:
+        return ['chinanorth3', 'chinaeast3'];
+      default:
+        return ['westeurope', 'eastus', 'japaneast'];
+    }
+  }
+
   private async fetchAllNamespaces() {
     const subscriptions = await this.getSubscriptions();
     reportInteraction('grafana_ds_azuremonitor_subscriptions_loaded', { subscriptions: subscriptions.length });
@@ -310,21 +338,24 @@ export default class ResourcePickerData extends DataSourceWithBackend<
       supportedMetricNamespaces.add(`"${namespace}"`);
     });
 
-    // We make use of these three regions as they *should* contain every possible namespace
-    const regions = ['westeurope', 'eastus', 'japaneast'];
+    const regions = this.getRegionsForCloud();
     const getNamespacesForRegion = async (region: string) => {
-      const namespaces = await this.azureMonitorDatasource.getMetricNamespaces(
-        {
-          // We only need to run this request against the first available subscription
-          resourceUri: `/subscriptions/${subscriptions[0].id}`,
-        },
-        false,
-        region
-      );
-      if (namespaces) {
-        for (const namespace of namespaces) {
-          supportedMetricNamespaces.add(`"${namespace.value.toLocaleLowerCase()}"`);
+      try {
+        const namespaces = await this.azureMonitorDatasource.getMetricNamespaces(
+          {
+            // We only need to run this request against the first available subscription
+            resourceUri: `/subscriptions/${subscriptions[0].id}`,
+          },
+          false,
+          region
+        );
+        if (namespaces) {
+          for (const namespace of namespaces) {
+            supportedMetricNamespaces.add(`"${namespace.value.toLocaleLowerCase()}"`);
+          }
         }
+      } catch (e) {
+        console.warn(`Failed to fetch metric namespaces for region ${region}, falling back to predefined list:`, e);
       }
     };
 

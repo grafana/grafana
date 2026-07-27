@@ -17,6 +17,7 @@ import {
   setAppEvents,
   setDataSourceSrv,
 } from '@grafana/runtime';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { appEvents } from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
@@ -204,7 +205,23 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
+// Delegate the new async datasource APIs to the legacy srv configured per-test via setDataSourceSrv,
+// so the cache-miss legacy fallback (which logs a warning that fails on console) is never hit.
+jest.mock('@grafana/runtime/unstable', () => {
+  const actualRuntime = jest.requireActual('@grafana/runtime');
+  const actualUnstable = jest.requireActual('@grafana/runtime/unstable');
+
+  return {
+    ...actualUnstable,
+    getDataSourceInstanceSettings: (ref: Parameters<typeof actualUnstable.getDataSourceInstanceSettings>[0]) =>
+      Promise.resolve(actualRuntime.getDataSourceSrv().getInstanceSettings(ref)),
+    getDataSourceInstance: (ref: Parameters<typeof actualUnstable.getDataSourceInstance>[0]) =>
+      actualRuntime.getDataSourceSrv().get(ref),
+  };
+});
+
 beforeAll(() => {
+  mockBoundingClientRect();
   mocks.contextSrv.hasPermission.mockImplementation(() => true);
 });
 

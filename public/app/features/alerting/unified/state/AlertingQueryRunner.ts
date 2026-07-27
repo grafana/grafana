@@ -1,7 +1,6 @@
 import { reject } from 'lodash';
 import { type Observable, type OperatorFunction, ReplaySubject, type Unsubscribable, of } from 'rxjs';
 import { catchError, map, share } from 'rxjs/operators';
-import { v4 as uuidv4 } from 'uuid';
 
 import {
   type DataFrameJSON,
@@ -9,6 +8,7 @@ import {
   type PanelData,
   type TimeRange,
   dataFrameFromJSON,
+  generateUUID,
   getDefaultTimeRange,
   preProcessPanelData,
   rangeUtil,
@@ -25,7 +25,7 @@ import { type AlertQuery } from 'app/types/unified-alerting-dto';
 import { type LinkError, createDAGFromQueriesSafe, getDescendants } from '../components/rule-editor/dag';
 import { getTimeRangeForExpression } from '../utils/timeRange';
 
-export interface AlertingQueryResult {
+interface AlertingQueryResult {
   error?: string;
   status?: number; // HTTP status error
   frames: DataFrameJSON[];
@@ -177,7 +177,7 @@ const runRequest = (
     data: { data: queries, condition },
     url: '/api/v1/eval',
     method: 'POST',
-    requestId: uuidv4(),
+    requestId: generateUUID(),
   };
 
   return withLoadingIndicator({

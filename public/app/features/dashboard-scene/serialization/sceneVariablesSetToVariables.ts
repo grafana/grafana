@@ -58,7 +58,9 @@ import {
 export function sceneVariablesSetToVariables(
   set: SceneVariables,
   keepQueryOptions?: boolean,
-  excludedVariable?: SceneObject
+  excludedVariable?: SceneObject,
+  /** Include variables with `origin` (e.g. predefined global/folder). Default excludes them for persistence. */
+  includeRuntimeVariables?: boolean
 ) {
   const variables: VariableModel[] = [];
 
@@ -66,9 +68,9 @@ export function sceneVariablesSetToVariables(
     if (excludedVariable !== undefined && variable === excludedVariable) {
       continue;
     }
-    // Skipping default variables
+    // Skipping default / predefined variables unless the caller wants runtime listing
     // (Default variables don't get persisted to the JSON schema.)
-    if (variable.state.origin !== undefined) {
+    if (!includeRuntimeVariables && variable.state.origin !== undefined) {
       continue;
     }
 
@@ -274,10 +276,11 @@ export function sceneVariablesSetToVariables(
           },
         ],
       });
-    } else if (variable.state.type === 'system') {
-      // Not persisted
+    } else if (variable.state.type === 'system' || variable.state.type === 'snapshot') {
+      // Not persisted. Snapshot variables are read-only frozen values; the scene graph
+      // interpolates them directly, so there is nothing to serialize here.
     } else {
-      throw new Error('Unsupported variable type');
+      throw new Error('Unsupported variable type: ' + variable.state.type);
     }
   }
 
@@ -619,8 +622,9 @@ export function sceneVariablesSetToSchemaV2Variables(
         },
       };
       variables.push(switchVariable);
-    } else if (variable.state.type === 'system') {
-      // Do nothing
+    } else if (variable.state.type === 'system' || variable.state.type === 'snapshot') {
+      // Not persisted. Snapshot variables are read-only frozen values; the scene graph
+      // interpolates them directly, so there is nothing to serialize here.
     } else {
       throw new Error('Unsupported variable type: ' + variable.state.type);
     }

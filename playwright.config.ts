@@ -43,11 +43,6 @@ export const baseConfig: PlaywrightTestConfig<PluginOptions, {}> = {
     screenshot: 'only-on-failure',
     permissions: ['clipboard-read', 'clipboard-write'],
     provisioningRootDir: path.join(process.cwd(), process.env.PROV_DIR ?? 'conf/provisioning'),
-    // Preserve legacy dashboard layout behavior in E2E unless a test overrides this (shallow merge on
-    // `featureToggles` would otherwise drop toggles when a spec sets only a subset).
-    featureToggles: {
-      dashboardNewLayouts: false,
-    },
   },
 };
 
@@ -101,12 +96,21 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(pluginDirRoot, '/mysql'),
     }),
     withAuth({
-      name: 'mssql',
-      testDir: path.join(pluginDirRoot, '/mssql'),
-    }),
-    withAuth({
       name: 'extensions-test-app',
       testDir: path.join(testDirRoot, '/test-plugins/grafana-extensionstest-app'),
+    }),
+    // Baseline (MT flags off); the MT variant is a separate project below. Both toggle the same
+    // fixture, so they must not run concurrently — the MT project depends on this one to serialize.
+    withAuth({
+      name: 'grafana-e2etest-app',
+      testDir: path.join(testDirRoot, '/test-plugins/grafana-test-app'),
+      testIgnore: /useMTPlugins/,
+    }),
+    withAuth({
+      name: 'grafana-e2etest-app-mt',
+      testDir: path.join(testDirRoot, '/test-plugins/grafana-test-app/tests/useMTPlugins'),
+      // Runs only after grafana-e2etest-app finishes, so the two never toggle the fixture at once.
+      dependencies: ['grafana-e2etest-app'],
     }),
     withAuth({
       name: 'grafana-e2etest-datasource',
@@ -121,10 +125,6 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(pluginDirRoot, '/azuremonitor'),
     }),
     withAuth({
-      name: 'cloudmonitoring',
-      testDir: path.join(pluginDirRoot, '/cloudmonitoring'),
-    }),
-    withAuth({
       name: 'graphite',
       testDir: path.join(pluginDirRoot, '/graphite'),
     }),
@@ -133,24 +133,8 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(pluginDirRoot, '/influxdb'),
     }),
     withAuth({
-      name: 'opentsdb',
-      testDir: path.join(pluginDirRoot, '/opentsdb'),
-    }),
-    withAuth({
-      name: 'jaeger',
-      testDir: path.join(pluginDirRoot, '/jaeger'),
-    }),
-    withAuth({
-      name: 'grafana-postgresql-datasource',
-      testDir: path.join(pluginDirRoot, '/grafana-postgresql-datasource'),
-    }),
-    withAuth({
       name: 'canvas',
       testDir: path.join(testDirRoot, '/canvas'),
-    }),
-    withAuth({
-      name: 'zipkin',
-      testDir: path.join(pluginDirRoot, '/zipkin'),
     }),
     {
       name: 'unauthenticated',
@@ -209,8 +193,31 @@ export default defineConfig<PluginOptions>({
       dependencies: ['dashboard-cujs'],
     }),
     withAuth({
+      name: 'journey-tracking',
+      testDir: path.join(testDirRoot, '/journey-tracking'),
+      use: {
+        featureToggles: {
+          cujTracking: true,
+        },
+      },
+    }),
+    withAuth({
       name: 'grafana-e2etest-panel',
       testDir: path.join(testDirRoot, '/test-plugins/grafana-test-panel'),
+    }),
+    // Install/uninstall real catalog plugins; longer timeout since installs download the package.
+    withAuth({
+      name: 'plugin-catalog',
+      testDir: path.join(testDirRoot, '/plugin-catalog-suite/tests'),
+      testIgnore: /useMTPlugins/,
+      timeout: 60_000,
+    }),
+    withAuth({
+      name: 'plugin-catalog-mt',
+      testDir: path.join(testDirRoot, '/plugin-catalog-suite/tests/useMTPlugins'),
+      timeout: 60_000,
+      // Runs only after plugin-catalog finishes, so the two never install/uninstall at the same time.
+      dependencies: ['plugin-catalog'],
     }),
   ],
 });

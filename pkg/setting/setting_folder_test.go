@@ -26,37 +26,37 @@ func TestMaxDeptFolderSettings(t *testing.T) {
 		},
 		{
 			name:     "returns default when value is not a valid integer",
-			iniValue: strp("notanint"),
+			iniValue: new("notanint"),
 			expected: DefaultMaxNestedFolderDepth,
 		},
 		{
 			name:     "returns default when value is zero",
-			iniValue: strp("0"),
+			iniValue: new("0"),
 			expected: DefaultMaxNestedFolderDepth,
 		},
 		{
 			name:     "returns default when value is negative",
-			iniValue: strp("-1"),
+			iniValue: new("-1"),
 			expected: DefaultMaxNestedFolderDepth,
 		},
 		{
 			name:     "returns configured value when within range (3)",
-			iniValue: strp("3"),
+			iniValue: new("3"),
 			expected: 3,
 		},
 		{
 			name:     "returns configured value when within range (6)",
-			iniValue: strp("6"),
+			iniValue: new("6"),
 			expected: 6,
 		},
 		{
 			name:     "returns configured value when equals max",
-			iniValue: strp("7"),
+			iniValue: new("7"),
 			expected: maxNestedFolderDepth,
 		},
 		{
 			name:     "clamps to max when value exceeds max",
-			iniValue: strp("100"),
+			iniValue: new("100"),
 			expected: maxNestedFolderDepth,
 		},
 	}
@@ -80,5 +80,3 @@ func TestMaxDeptFolderSettings(t *testing.T) {
 		})
 	}
 }
-
-func strp(s string) *string { return &s }

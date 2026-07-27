@@ -79,6 +79,18 @@ func TestK8sDSActionToLegacy(t *testing.T) {
 			expectedAction: "datasources:read",
 			expectedOk:     true,
 		},
+		{
+			name:           "datasource api group get_permissions verb",
+			action:         "loki.datasource.grafana.app/datasources:get_permissions",
+			expectedAction: "datasources.permissions:read",
+			expectedOk:     true,
+		},
+		{
+			name:           "datasource api group set_permissions verb",
+			action:         "*.datasource.grafana.app/datasources:set_permissions",
+			expectedAction: "datasources.permissions:write",
+			expectedOk:     true,
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -90,13 +102,23 @@ func TestK8sDSActionToLegacy(t *testing.T) {
 }
 
 func TestK8sDSUIDScopeToLegacy(t *testing.T) {
-	scope, dsType, ok := K8sDSUIDScopeToLegacy("loki.datasource.grafana.app/datasources:abc")
+	scope, dsType, ok := K8sDSUIDScopeToLegacy("loki.datasource.grafana.app/datasources:uid:abc")
 	require.True(t, ok)
 	require.Equal(t, "datasources:uid:abc", scope)
 	require.Equal(t, "loki", dsType)
 
 	scope, dsType, ok = K8sDSUIDScopeToLegacy("*.datasource.grafana.app/datasources:*")
 	require.True(t, ok)
-	require.Equal(t, "datasources:uid:*", scope)
+	require.Equal(t, "datasources:*", scope)
 	require.Equal(t, "*", dsType)
+
+	scope, dsType, ok = K8sDSUIDScopeToLegacy("loki.datasource.grafana.app/datasources:uid:*")
+	require.True(t, ok)
+	require.Equal(t, "datasources:uid:*", scope)
+	require.Equal(t, "loki", dsType)
+
+	// old short form (no uid: attribute) is no longer accepted — rejected by admission
+	// validation (validatePermissionScopes), so this must not parse.
+	_, _, ok = K8sDSUIDScopeToLegacy("loki.datasource.grafana.app/datasources:abc")
+	require.False(t, ok)
 }

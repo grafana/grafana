@@ -24,6 +24,10 @@ type DisplayList struct {
 	Items []Display `json:"display"`
 }
 
+func (DisplayList) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DisplayList"
+}
+
 type Display struct {
 	Identity IdentityRef `json:"identity"`
 
@@ -38,6 +42,10 @@ type Display struct {
 	InternalID int64 `json:"internalId,omitempty"`
 }
 
+func (Display) OpenAPIModelName() string {
+	return OpenAPIPrefix + "Display"
+}
+
 type IdentityRef struct {
 	// Type of identity e.g. "user".
 	// For a full list see https://github.com/grafana/authlib/blob/d6737a7dc8f55e9d42834adb83b5da607ceed293/types/type.go#L15
@@ -45,6 +53,10 @@ type IdentityRef struct {
 
 	// Name is the unique identifier for identity, guaranteed to be a unique value for the type within a namespace.
 	Name string `json:"name"`
+}
+
+func (IdentityRef) OpenAPIModelName() string {
+	return OpenAPIPrefix + "IdentityRef"
 }
 
 func (i *IdentityRef) String() string {

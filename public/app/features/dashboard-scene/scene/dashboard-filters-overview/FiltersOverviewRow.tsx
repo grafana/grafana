@@ -167,7 +167,7 @@ export const FilterRow = memo(
             aria-label={t('dashboard.filters-overview.operator.aria-label', 'Operator')}
             options={operatorOptions}
             value={operatorValue}
-            placeholder={t('dashboard.filters-overview.operator.placeholder', 'Select operator')}
+            placeholder={'='}
             disabled={isOrigin}
             components={{ Menu: WideMenu }}
             onChange={(option) => {
@@ -305,6 +305,11 @@ const getRowStyles = (theme: GrafanaTheme2) => {
       '&& input': {
         borderRadius: 'unset',
       },
+      '&& [class*="-placeholder"]': {
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+      },
     }),
     valueCell: css({
       ...cellLayering,
@@ -324,6 +329,11 @@ const getRowStyles = (theme: GrafanaTheme2) => {
       '&& input': {
         borderTopLeftRadius: 'unset',
         borderBottomLeftRadius: 'unset',
+      },
+      '&& [class*="-placeholder"]': {
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
       },
     }),
     indicators: cx(getInputStyles({ theme, invalid: false }).suffix, css({ position: 'relative' })),

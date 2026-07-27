@@ -340,6 +340,27 @@ describe('locationUtil', () => {
         const result = locationUtil.processRedirectUri(redirectUri, currentLocation);
         expect(result).toBe('http://www.domain.com:1234/grafana/a/custom-home-plugin?tab=overview&theme=dark');
       });
+
+      test('handles relative path without subpath prefix (e.g. home_page = /admin/users)', () => {
+        const redirectUri = '/admin/users';
+        const currentLocation = { ...mockLocation, search: '' };
+        const result = locationUtil.processRedirectUri(redirectUri, currentLocation);
+        expect(result).toBe('/admin/users');
+      });
+
+      test('merges current params into relative path without subpath prefix', () => {
+        const redirectUri = '/admin/users';
+        const currentLocation = { ...mockLocation, search: '?orgId=2' };
+        const result = locationUtil.processRedirectUri(redirectUri, currentLocation);
+        expect(result).toBe('/admin/users?orgId=2');
+      });
+
+      test('redirect URI params take precedence over current params when no subpath prefix', () => {
+        const redirectUri = '/admin/users?tab=access';
+        const currentLocation = { ...mockLocation, search: '?tab=profile&orgId=2' };
+        const result = locationUtil.processRedirectUri(redirectUri, currentLocation);
+        expect(result).toBe('/admin/users?tab=access&orgId=2');
+      });
     });
   });
 });

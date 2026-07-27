@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/alerting/templates"
-	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/grafana/alerting/templates"
+	"github.com/grafana/grafana-app-sdk/resource"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/bus"
@@ -22,15 +23,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1model "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -335,7 +335,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 				})
 			}
 
-			deleteOptions := v1.DeleteOptions{Preconditions: &v1.Preconditions{ResourceVersion: util.Pointer(expected.ResourceVersion)}}
+			deleteOptions := v1.DeleteOptions{Preconditions: &v1.Preconditions{ResourceVersion: new(expected.ResourceVersion)}}
 			oldClient := common.NewTemplateGroupClient(t, tc.user) // TODO replace with normal client once delete is fixed
 			if tc.canDelete {
 				t.Run("should be able to delete template group", func(t *testing.T) {
@@ -597,7 +597,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 
 		err = oldClient.Delete(ctx, actual.GetStaticMetadata().Identifier().Name, v1.DeleteOptions{
 			Preconditions: &v1.Preconditions{
-				ResourceVersion: util.Pointer("something"),
+				ResourceVersion: new("something"),
 			},
 		})
 		require.Truef(t, errors.IsConflict(err), "should get Forbidden error but got %s", err)
@@ -608,7 +608,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 
 		err = oldClient.Delete(ctx, actual.GetStaticMetadata().Identifier().Name, v1.DeleteOptions{
 			Preconditions: &v1.Preconditions{
-				ResourceVersion: util.Pointer(actual.ResourceVersion),
+				ResourceVersion: new(actual.ResourceVersion),
 			},
 		})
 		require.NoError(t, err)
@@ -619,7 +619,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 
 		err = oldClient.Delete(ctx, actual.GetStaticMetadata().Identifier().Name, v1.DeleteOptions{
 			Preconditions: &v1.Preconditions{
-				ResourceVersion: util.Pointer(actual.ResourceVersion),
+				ResourceVersion: new(actual.ResourceVersion),
 			},
 		})
 		require.NoError(t, err)
@@ -723,8 +723,8 @@ func TestIntegrationListSelector(t *testing.T) {
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
-	require.NoError(t, db.SetProvenance(ctx, &definitions.NotificationTemplate{
-		Name: template2.Spec.Title,
+	require.NoError(t, db.SetProvenance(ctx, &v1model.TemplateGroup{
+		Title: template2.Spec.Title,
 	}, helper.Org1.Admin.Identity.GetOrgID(), "API"))
 	template2, err = adminClient.Get(ctx, template2.GetStaticMetadata().Identifier())
 

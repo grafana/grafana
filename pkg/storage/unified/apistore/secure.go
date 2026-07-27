@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -67,15 +70,10 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 				v.deleteSecureValues = append(v.deleteSecureValues, before.Name)
 				delete(previous, k)
 			}
-			if val.Remove {
-				delete(secure, k)
-				if before.Name == "" {
-					continue // no-op
-				}
-				v.hasChanged = true
-				continue
-			}
 			if !val.Create.IsZero() {
+				if val.Remove {
+					return newSecureValueError("only one of create, or remove is allowed", k)
+				}
 				n, err := store.CreateInline(ctx, v.ref, val.Create, val.Description)
 				if err != nil {
 					return err
@@ -88,7 +86,19 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 				obj.SetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig, "")
 				continue
 			}
-			return fmt.Errorf("invalid secure value state: %s", k)
+			if val.Remove {
+				delete(secure, k)
+				if before.Name == "" {
+					continue // no-op
+				}
+				v.hasChanged = true
+				continue
+			}
+			return newSecureValueError("invalid secure value state: %s", k)
+		}
+
+		if !val.Create.IsZero() || val.Remove {
+			return newSecureValueError("only one of name, create, or remove is allowed", k)
 		}
 
 		// The name changed from the previously stored value
@@ -99,7 +109,7 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 		}
 
 		if strings.HasPrefix(val.Name, LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX) {
-			return fmt.Errorf("unable to save secure value reference with legacy datasource prefix")
+			return newSecureValueError("unable to save secure value reference with legacy datasource prefix", k)
 		}
 
 		delete(previous, k)
@@ -159,4 +169,15 @@ func handleSecureValuesDelete(ctx context.Context, store secret.InlineSecureValu
 		}
 	}
 	return obj.SetSecureValues(nil) // remove them from the object
+}
+
+func newSecureValueError(msg string, key string) error {
+	err := apierrors.NewBadRequest(msg)
+	err.ErrStatus.Details = &v1.StatusDetails{
+		Causes: []v1.StatusCause{{
+			Type:  v1.CauseTypeFieldValueInvalid,
+			Field: fmt.Sprintf("secure.%s", key),
+		}},
+	}
+	return err
 }

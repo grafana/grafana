@@ -172,6 +172,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 
 			require.Len(t, response.Correlations, 1)
 			require.EqualValues(t, correlation, response.Correlations[0])
+			require.EqualValues(t, response.TotalCount, 1)
 
 			require.NoError(t, res.Body.Close())
 		})
@@ -191,6 +192,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Len(t, response.Correlations, 0)
+			require.EqualValues(t, response.TotalCount, 0)
 
 			require.NoError(t, res.Body.Close())
 		})

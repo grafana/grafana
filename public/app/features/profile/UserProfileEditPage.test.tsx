@@ -4,7 +4,8 @@ import { render } from 'test/test-utils';
 
 import { type ComponentTypeWithExtensionMeta, OrgRole } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { setPluginComponentsHook, type usePluginComponents } from '@grafana/runtime';
+import { setBackendSrv, setPluginComponentsHook, type usePluginComponents } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
 
 import { backendSrv } from '../../core/services/backend_srv';
 import { createComponentWithMeta } from '../plugins/extensions/usePluginComponents';
@@ -18,6 +19,8 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
     getDashboardDTO: jest.fn().mockResolvedValue({}),
   }),
 }));
+
+setupMockServer();
 
 const defaultProps: Props = {
   ...initialUserState,
@@ -164,6 +167,7 @@ async function getTestContext(overrides: Partial<Props & { components: Component
   const components = overrides.components || [];
 
   jest.clearAllMocks();
+  setBackendSrv(backendSrv);
   const putSpy = jest.spyOn(backendSrv, 'put');
   const getSpy = jest
     .spyOn(backendSrv, 'get')

@@ -49,7 +49,7 @@ export const FooterCell = (props: FooterProps) => {
     );
   }
 
-  return EmptyCell;
+  return <EmptyCell />;
 };
 
 export const EmptyCell = () => {

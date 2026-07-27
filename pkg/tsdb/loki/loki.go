@@ -5,25 +5,28 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	neturl "net/url"
+	"path"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/grafana/dskit/concurrency"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/dskit/concurrency"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	scope "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
-
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
+	schemas "github.com/grafana/schemads"
 )
 
 const (
@@ -31,6 +34,7 @@ const (
 	flagLokiRunQueriesInParallel  = "lokiRunQueriesInParallel"
 	flagLogQLScope                = "logQLScope"
 	flagLokiExperimentalStreaming = "lokiExperimentalStreaming"
+	flagDsAbstractionApp          = "dsAbstractionApp"
 	fromAlertHeaderName           = "FromAlert"
 )
 
@@ -47,10 +51,11 @@ var (
 )
 
 func ProvideService(httpClientProvider *httpclient.Provider, tracer trace.Tracer) *Service {
+	logger := backend.NewLoggerWith("logger", "tsdb.loki")
 	return &Service{
-		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, logger, tracer)),
 		tracer: tracer,
-		logger: backend.NewLoggerWith("logger", "tsdb.loki"),
+		logger: logger,
 	}
 }
 
@@ -69,6 +74,9 @@ type datasourceInfo struct {
 	// open streams
 	streams   map[string]data.FrameJSONCache
 	streamsMu sync.RWMutex
+
+	schemaDatasource *schemas.SchemaDatasource
+	schemaProvider   *SchemaProvider
 }
 
 type QueryJSONModel struct {
@@ -91,7 +99,7 @@ func parseQueryModel(raw json.RawMessage) (*QueryJSONModel, error) {
 	return model, nil
 }
 
-func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider *httpclient.Provider, logger log.Logger, tracer trace.Tracer) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		opts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
@@ -104,10 +112,27 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			return nil, backend.DownstreamError(fmt.Errorf("error creating http client: %w", err))
 		}
 
+		var schemaDs *schemas.SchemaDatasource
+		var schemaProv *SchemaProvider
+		grafCfg := config.GrafanaConfigFromContext(ctx)
+		if grafCfg != nil && grafCfg.FeatureToggles().IsEnabled(flagDsAbstractionApp) {
+			schemaProv = NewSchemaProvider(client, settings.URL, logger, tracer)
+			schemaDs = schemas.NewSchemaDatasource(
+				schemaProv,
+				schemaProv,
+				schemaProv,
+				nil,
+				schemaProv,
+				nil,
+			)
+		}
+
 		model := &datasourceInfo{
-			HTTPClient: client,
-			URL:        settings.URL,
-			streams:    make(map[string]data.FrameJSONCache),
+			HTTPClient:       client,
+			URL:              settings.URL,
+			streams:          make(map[string]data.FrameJSONCache),
+			schemaDatasource: schemaDs,
+			schemaProvider:   schemaProv,
 		}
 		return model, nil
 	}
@@ -124,9 +149,23 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 }
 
 func callResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender, dsInfo *datasourceInfo, plog log.Logger, tracer trace.Tracer) error {
+	if strings.HasPrefix(req.Path, schemas.BaseResourcePath) && dsInfo.schemaDatasource != nil {
+		return dsInfo.schemaDatasource.CallResource(ctx, req, sender)
+	}
+
 	url := req.URL
 
 	lokiURL := fmt.Sprintf("/loki/api/v1/%s", url)
+
+	// Reject resource paths that escape the /loki/api/v1/ prefix. neturl.Parse
+	// decodes percent-encoded segments so this catches both raw and encoded "../".
+	parsed, perr := neturl.Parse(lokiURL)
+	if perr != nil {
+		return sender.Send(&backend.CallResourceResponse{Status: http.StatusBadRequest})
+	}
+	if cleaned := path.Clean(parsed.Path); cleaned != "/loki/api/v1" && !strings.HasPrefix(cleaned, "/loki/api/v1/") {
+		return sender.Send(&backend.CallResourceResponse{Status: http.StatusBadRequest})
+	}
 
 	ctx, span := tracer.Start(ctx, "datasource.loki.CallResource", trace.WithAttributes(
 		attribute.String("url", lokiURL),
@@ -198,6 +237,20 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer trace.Tracer, plog log.Logger, runInParallel bool, logQLScopes bool) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
+	req, sqlKinds, sqlErrs := normalizeGrafanaSQLRequest(ctx, req, dsInfo)
+	for refID, e := range sqlErrs {
+		result.Responses[refID] = backend.DataResponse{
+			Error:       e,
+			ErrorSource: backend.ErrorSourceDownstream,
+		}
+	}
+	if len(req.Queries) == 0 {
+		if len(result.Responses) > 0 {
+			return result, nil
+		}
+		return result, fmt.Errorf("query contains no queries")
+	}
+
 	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer)
 
 	start := time.Now()
@@ -238,6 +291,21 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 		}
 	}
 	plog.Debug("Executed queries", "duration", time.Since(start), "queriesLength", len(queries), "runInParallel", runInParallel)
+
+	for refID, kind := range sqlKinds {
+		dr, ok := result.Responses[refID]
+		if !ok || dr.Error != nil {
+			continue
+		}
+		switch kind {
+		case sqlKindMetric:
+			dr.Frames = flattenMetricsToTabular(dr.Frames, plog)
+		case sqlKindLog:
+			dr.Frames = flattenLogsToTabular(dr.Frames, responseOpts.logsDataplane, plog)
+		}
+		result.Responses[refID] = dr
+	}
+
 	return result, err
 }
 
@@ -309,5 +377,5 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 }
 
 func isFeatureEnabled(ctx context.Context, feature string) bool {
-	return backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(feature)
+	return config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(feature)
 }

@@ -155,7 +155,7 @@ function getUrlSearchParams(): UrlQueryMap {
  * Attribution: Code dervived from https://github.com/angular/angular.js/master/src/Angular.js#L1396
  * @returns {Object.<string,boolean|Array>}
  */
-export function parseKeyValue(keyValue: string) {
+function parseKeyValue(keyValue: string) {
   const obj: any = {};
   const parts = (keyValue || '').split('&');
 

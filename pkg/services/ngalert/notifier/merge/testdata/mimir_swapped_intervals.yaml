@@ -1,0 +1,57 @@
+# fullMimirConfig variant with mute_time_intervals=[ti-1] and time_intervals=[ti-2, mti-1],
+# intentionally swapping names across both fields to verify that uniqueness is enforced across
+# both interval types during merge.
+mute_time_intervals:
+  - name: ti-1
+time_intervals:
+  - name: ti-2
+    time_intervals:
+    - weekdays:
+      - monday
+      - tuesday
+      - wednesday
+      - thursday
+      - friday
+  - name: mti-1
+inhibit_rules:
+    - source_matchers:
+        - alertname="test"
+      target_matchers:
+        - servicename="test2"
+      equal:
+        - namespace
+route:
+  receiver: recv
+  group_by:
+    - alertname
+    - groupby
+  group_wait: 65s
+  group_interval: 20m
+  repeat_interval: 10h
+  routes:
+    - receiver: recv2
+      matchers:
+        - team="teamC"
+      group_by:
+        - teste
+        - test2f
+      group_wait: 0s
+      group_interval: 1m
+      repeat_interval: 1m
+      active_time_intervals:
+        - ti-2
+    - matchers:
+        - label="test"
+      mute_time_intervals:
+        - ti-1
+      active_time_intervals:
+        - mti-1
+receivers:
+  - name: recv
+    email_configs:
+      - to: recv
+        smarthost: smtp.example.org:587
+        from: email@example.com
+  - name: recv2
+    webhook_configs:
+      - url: http://localhost

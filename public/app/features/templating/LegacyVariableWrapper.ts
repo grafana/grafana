@@ -11,13 +11,7 @@ export class LegacyVariableWrapper implements FormatVariable {
   }
 
   getValue(_fieldPath: string): VariableValue {
-    let { value } = this.state;
-
-    if (value === 'string' || value === 'number' || value === 'boolean') {
-      return value;
-    }
-
-    return String(value);
+    return this.state.value;
   }
 
   getValueText(): string {
@@ -31,7 +25,6 @@ export class LegacyVariableWrapper implements FormatVariable {
       return text.join(' + ');
     }
 
-    console.log('value', text);
     return String(text);
   }
 }

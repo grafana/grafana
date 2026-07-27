@@ -141,7 +141,7 @@ type QueryMappers<T extends DataQuery = DataQuery> = {
   mapToQuery: (existing: T, value: string | undefined) => T;
 };
 
-export function useQueryMappers(dataSourceName: string): QueryMappers {
+function useQueryMappers(dataSourceName: string): QueryMappers {
   return useMemo(() => {
     const settings = getDataSourceSrv().getInstanceSettings(dataSourceName);
     if (!settings) {

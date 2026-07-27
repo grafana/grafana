@@ -8,11 +8,11 @@ import {
   memo,
   type RefObject,
 } from 'react';
-import { type DataGridHandle } from 'react-data-grid';
 
 import { type ActionModel, type DataFrame, type Field, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { type DataGridHandle } from '@grafana/react-data-grid';
 import { type TableCellTooltipPlacement } from '@grafana/schema';
 
 import { Popover } from '../../../Tooltip/Popover';
@@ -36,7 +36,6 @@ export interface TableCellTooltipProps {
   renderer: TableCellRenderer;
   rowIdx: number;
   style?: CSSProperties;
-  tooltipField: Field;
   theme: GrafanaTheme2;
   width?: number;
 }
@@ -59,7 +58,6 @@ export const TableCellTooltip = memo(
     rowIdx,
     style,
     theme,
-    tooltipField,
     width = 300,
   }: TableCellTooltipProps) => {
     const rawValue = field.values[rowIdx];
@@ -69,7 +67,6 @@ export const TableCellTooltip = memo(
     const [pinned, setPinned] = useState(false);
 
     const show = hovered || pinned;
-    const dynamicHeight = tooltipField.config.custom?.cellOptions?.dynamicHeight;
 
     useEffect(() => {
       if (pinned) {
@@ -154,7 +151,7 @@ export const TableCellTooltip = memo(
             placement={placement}
             wrapperClassName={classes.tooltipWrapper}
             className={className}
-            style={{ ...style, width, ...(!dynamicHeight && { height }) }}
+            style={{ ...style, width }}
             referenceElement={cellElement}
             onMouseLeave={onMouseLeave}
             onMouseEnter={onMouseEnter}

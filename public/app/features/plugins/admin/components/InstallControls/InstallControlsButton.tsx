@@ -12,6 +12,7 @@ import { isOpenSourceBuildOrUnlicenced } from 'app/features/admin/EnterpriseAuth
 import { useDispatch } from 'app/types/store';
 
 import { getExternalManageLink, isDisabledAngularPlugin, isMarketplacePlugin } from '../../helpers';
+import { type EntitlementState } from '../../hooks/usePluginEntitlement';
 import {
   useInstallStatus,
   useUninstallStatus,
@@ -20,7 +21,7 @@ import {
   useUnsetInstall,
   useFetchDetailsLazy,
 } from '../../state/hooks';
-import { trackPluginInstalled, trackPluginUninstalled } from '../../tracking';
+import { trackPluginInstalled } from '../../tracking';
 import { type CatalogPlugin, PluginStatus, PluginTabIds, type Version } from '../../types';
 
 const PLUGIN_UPDATE_INTERACTION_EVENT_NAME = 'plugin_update_clicked';
@@ -31,6 +32,7 @@ type InstallControlsButtonProps = {
   latestCompatibleVersion?: Version;
   hasInstallWarning?: boolean;
   setNeedReload?: (needReload: boolean) => void;
+  entitlement?: EntitlementState;
 };
 
 export function InstallControlsButton({
@@ -39,6 +41,7 @@ export function InstallControlsButton({
   latestCompatibleVersion,
   hasInstallWarning,
   setNeedReload,
+  entitlement,
 }: InstallControlsButtonProps) {
   const dispatch = useDispatch();
   const [queryParams] = useQueryParams();
@@ -89,7 +92,6 @@ export function InstallControlsButton({
 
   const onUninstall = async () => {
     hideConfirmModal();
-    trackPluginUninstalled(trackingProps);
     await uninstall(plugin.id);
     if (!errorUninstalling) {
       // If an app plugin is uninstalled we need to reset the active tab when the config / dashboards tabs are removed.
@@ -205,16 +207,19 @@ export function InstallControlsButton({
   }
 
   if (isMarketplacePlugin(plugin)) {
-    return (
-      <LinkButton
-        href={`${getExternalManageLink(plugin.id)}?tab=installation`}
-        target="_blank"
-        rel="noopener noreferrer"
-        icon="external-link-alt"
-      >
-        <Trans i18nKey="plugins.install-controls.contact-us">Contact us</Trans>
-      </LinkButton>
-    );
+    if (!entitlement?.entitled) {
+      return (
+        <LinkButton
+          href={`${getExternalManageLink(plugin.id)}?tab=installation`}
+          target="_blank"
+          rel="noopener noreferrer"
+          icon={entitlement?.isLoading ? 'spinner' : 'external-link-alt'}
+          disabled={entitlement?.isLoading}
+        >
+          <Trans i18nKey="plugins.install-controls.contact-us">Contact us</Trans>
+        </LinkButton>
+      );
+    }
   }
 
   const shouldDisable = isInstalling || errorInstalling || plugin.angularDetected;

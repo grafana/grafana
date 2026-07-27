@@ -9,9 +9,9 @@ import {
   type LinkModel,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { TextLink, useStyles2 } from '@grafana/ui';
-import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
-import { getDataLinks } from 'app/plugins/panel/status-history/utils';
+import { TextLink, getFieldDisplayLinks, useStyles2 } from '@grafana/ui';
+
+import { renderValue } from './renderValue';
 
 export interface Props {
   data?: DataFrame; // source data
@@ -44,7 +44,7 @@ export function getDisplayValuesAndLinks(data: DataFrame, rowIndex: number, colu
     const value = field.values[rowIndex];
     const fieldDisplay = field.display ? field.display(value) : { text: `${value}`, numeric: +value };
 
-    getDataLinks(field, rowIndex).forEach((link) => {
+    getFieldDisplayLinks(field, rowIndex).forEach((link) => {
       const key = `${link.title}/${link.href}`;
       if (!linkLookup.has(key)) {
         links.push(link);

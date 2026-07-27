@@ -34,7 +34,6 @@ export function InstanceSilenceForm({ ruleUid, instanceLabels, onClose }: Instan
         alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
         onSilenceCreated={onClose}
         onCancel={onClose}
-        showCancelButton={false}
       />
     </AlertmanagerProvider>
   );

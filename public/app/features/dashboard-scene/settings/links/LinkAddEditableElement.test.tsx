@@ -110,7 +110,7 @@ describe('LinkAddEditableElement', () => {
       expect(editPane.getSelectedObject()).toBeDefined();
 
       act(() => editPane.undoAction());
-      expect(editPane.getSelectedObject()).toBeNull();
+      expect(editPane.getSelectedObject()).toBeUndefined();
     });
 
     it('reselects the link on redo after undo', () => {
@@ -121,7 +121,7 @@ describe('LinkAddEditableElement', () => {
       expect(editPane.getSelectedObject()).toBeDefined();
 
       act(() => editPane.undoAction());
-      expect(editPane.getSelectedObject()).toBeNull();
+      expect(editPane.getSelectedObject()).toBeUndefined();
 
       act(() => editPane.redoAction());
       expect(editPane.getSelectedObject()).toBeDefined();

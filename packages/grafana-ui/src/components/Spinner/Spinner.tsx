@@ -65,6 +65,7 @@ export const Spinner = ({
           className
         )}
       >
+        {/* @ts-expect-error react-inlinesvg@4.3.0 return type includes bigint, which isn't in @types/react@18's ReactNode. Remove when we update @types/react. */}
         <SVG
           src={svgPath}
           width={size}

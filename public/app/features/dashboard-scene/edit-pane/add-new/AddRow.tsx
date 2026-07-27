@@ -3,23 +3,22 @@ import { useCallback, useMemo } from 'react';
 import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
 
-import { type DashboardScene } from '../../scene/DashboardScene';
-import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
-import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { useNestingRestrictions } from '../../scene/layouts-shared/CanvasGridAddActions';
 import { addNewRowTo } from '../../scene/layouts-shared/addNew';
+import { isLayoutParent } from '../../scene/types/LayoutParent';
+import { type DashboardSceneLike } from '../../scene/types/dashboard';
 
 import { AddButton } from './AddButton';
 
 interface AddRowProps {
-  dashboardScene: DashboardScene;
+  dashboardScene: DashboardSceneLike;
   selectedElement: SceneObject | undefined;
 }
 
 export function AddRow({ dashboardScene, selectedElement }: AddRowProps) {
   const layout = useMemo(() => {
-    if (selectedElement instanceof RowItem || selectedElement instanceof TabItem) {
+    if (selectedElement && isLayoutParent(selectedElement)) {
       return selectedElement.getLayout();
     }
 

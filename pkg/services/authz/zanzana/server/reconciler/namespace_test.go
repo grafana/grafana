@@ -16,37 +16,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
-
-// mockOpenFGAServer implements only the Read method; all others panic via the embedded Unimplemented.
-type mockOpenFGAServer struct {
-	openfgav1.UnimplementedOpenFGAServiceServer
-	// pages is a list of tuple pages to return on successive Read calls.
-	pages [][]*openfgav1.Tuple
-}
-
-func (m *mockOpenFGAServer) Read(_ context.Context, _ *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
-	if len(m.pages) == 0 {
-		return &openfgav1.ReadResponse{}, nil
-	}
-	page := m.pages[0]
-	m.pages = m.pages[1:]
-
-	token := ""
-	if len(m.pages) > 0 {
-		token = "next"
-	}
-	return &openfgav1.ReadResponse{
-		Tuples:            page,
-		ContinuationToken: token,
-	}, nil
-}
 
 // mockServerInternal satisfies zanzana.ServerInternal for computeDiffStreaming tests.
 type mockServerInternal struct {
 	authzv1.UnimplementedAuthzServiceServer
 	authzextv1.UnimplementedAuthzExtentionServiceServer
-	fga *mockOpenFGAServer
+	pages [][]*openfgav1.Tuple
 }
 
 func (m *mockServerInternal) Close()                              {}
@@ -66,8 +43,25 @@ func (m *mockServerInternal) ListAllStores(context.Context) ([]zanzana.StoreInfo
 func (m *mockServerInternal) WriteTuples(context.Context, *zanzana.StoreInfo, []*openfgav1.TupleKey, []*openfgav1.TupleKeyWithoutCondition) error {
 	return nil
 }
+func (m *mockServerInternal) ReadTuples(_ context.Context, _ *zanzana.StoreInfo, _ *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
+	if len(m.pages) == 0 {
+		return &openfgav1.ReadResponse{}, nil
+	}
+	page := m.pages[0]
+	m.pages = m.pages[1:]
+
+	token := ""
+	if len(m.pages) > 0 {
+		token = "next"
+	}
+
+	return &openfgav1.ReadResponse{
+		Tuples:            page,
+		ContinuationToken: token,
+	}, nil
+}
 func (m *mockServerInternal) GetOpenFGAServer() openfgav1.OpenFGAServiceServer {
-	return m.fga
+	return nil
 }
 
 func makeTuple(user, relation, object string) *openfgav1.TupleKey {
@@ -118,7 +112,8 @@ func toTuple(tk *openfgav1.TupleKey) *openfgav1.Tuple {
 
 func newTestReconciler(pages [][]*openfgav1.Tuple) *Reconciler {
 	return &Reconciler{
-		server:  &mockServerInternal{fga: &mockOpenFGAServer{pages: pages}},
+		server:  &mockServerInternal{pages: pages},
+		cfg:     Config{CRDs: DefaultCRDs},
 		logger:  log.NewNopLogger(),
 		tracer:  tracing.NewNoopTracerService(),
 		metrics: newReconcilerMetrics(prometheus.NewRegistry()),
@@ -127,6 +122,41 @@ func newTestReconciler(pages [][]*openfgav1.Tuple) *Reconciler {
 
 func TestComputeDiffStreaming(t *testing.T) {
 	ctx := context.Background()
+
+	t.Run("datasource permission downgrade keeps query tuple", func(t *testing.T) {
+		const group = "loki.datasource.grafana.app"
+		currentBase := common.NewResourceTuple("user:u1", "admin", group, "datasources", "", "ds-1")
+		query := common.NewResourceTuple("user:u1", common.RelationCreate, group, "datasources", "query", "ds-1")
+		expectedBase := common.NewResourceTuple("user:u1", "view", group, "datasources", "", "ds-1")
+
+		expectedMap := map[string]*openfgav1.TupleKey{
+			tupleKey(expectedBase): expectedBase,
+			tupleKey(query):        query,
+		}
+		r := newTestReconciler([][]*openfgav1.Tuple{{toTuple(currentBase), toTuple(query)}})
+
+		toAdd, toDelete, err := r.computeDiffStreaming(ctx, "ns", expectedMap)
+		require.NoError(t, err)
+		require.Len(t, toAdd, 1)
+		assert.Equal(t, tupleKey(expectedBase), tupleKey(toAdd[0]))
+		require.Len(t, toDelete, 1)
+		assert.Equal(t, tupleKey(currentBase), tupleKey(toDelete[0]))
+	})
+
+	t.Run("datasource permission removal deletes both tuples", func(t *testing.T) {
+		const group = "loki.datasource.grafana.app"
+		base := common.NewResourceTuple("user:u1", "admin", group, "datasources", "", "ds-1")
+		query := common.NewResourceTuple("user:u1", common.RelationCreate, group, "datasources", "query", "ds-1")
+		r := newTestReconciler([][]*openfgav1.Tuple{{toTuple(base), toTuple(query)}})
+
+		toAdd, toDelete, err := r.computeDiffStreaming(ctx, "ns", map[string]*openfgav1.TupleKey{})
+		require.NoError(t, err)
+		assert.Empty(t, toAdd)
+		assert.ElementsMatch(t,
+			[]string{tupleKey(base), tupleKey(query)},
+			[]string{tupleKey(toDelete[0]), tupleKey(toDelete[1])},
+		)
+	})
 
 	t.Run("all in sync", func(t *testing.T) {
 		a := makeTuple("user:1", "viewer", "doc:1")

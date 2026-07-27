@@ -1,4 +1,4 @@
-import { type AdHocVariableFilter, type DataQueryRequest, dateTime } from '@grafana/data';
+import { type DataQueryRequest, dateTime } from '@grafana/data';
 import { type SQLQuery } from '@grafana/sql';
 
 import { type InfluxQuery } from '../types';
@@ -28,7 +28,7 @@ export const mockInfluxQueryRequest = (targets?: QueryType[]): DataQueryRequest<
   };
 };
 
-export const mockTargets = (): QueryType[] => {
+const mockTargets = (): QueryType[] => {
   return [
     {
       refId: 'A',
@@ -66,35 +66,3 @@ export const mockTargets = (): QueryType[] => {
     },
   ];
 };
-
-export const mockInfluxQueryWithTemplateVars = (adhocFilters: AdHocVariableFilter[]): InfluxQuery => ({
-  refId: 'x',
-  alias: '$var1',
-  measurement: '$var1',
-  policy: '$var1',
-  limit: '$var1',
-  slimit: '$var1',
-  tz: '$var1',
-  tags: [
-    {
-      key: 'drive',
-      operator: '=~',
-      value: '/^$path$/',
-    },
-  ],
-  groupBy: [
-    {
-      params: ['$var1'],
-      type: 'tag',
-    },
-  ],
-  select: [
-    [
-      {
-        params: ['$var1'],
-        type: 'field',
-      },
-    ],
-  ],
-  adhocFilters,
-});

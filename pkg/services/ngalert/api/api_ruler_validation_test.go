@@ -282,7 +282,8 @@ func TestValidateRuleGroupFailures(t *testing.T) {
 			name: "fail if interval is not aligned with base interval",
 			group: func() *apimodels.PostableRuleGroupConfig {
 				g := validGroup(cfg)
-				g.Interval = model.Duration(cfg.BaseInterval + time.Duration(rand.IntN(10)+1)*time.Second)
+				// Offset must be in [1, BaseInterval-1) seconds to guarantee misalignment with BaseInterval.
+				g.Interval = model.Duration(cfg.BaseInterval + time.Duration(rand.Int64N(int64(cfg.BaseInterval.Seconds())-2)+1)*time.Second)
 				return &g
 			},
 		},
@@ -491,7 +492,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 				r.GrafanaManagedAlert.NoDataState = apimodels.OK
 				r.GrafanaManagedAlert.ExecErrState = apimodels.AlertingErrState
 				r.GrafanaManagedAlert.NotificationSettings = &apimodels.AlertRuleNotificationSettings{}
-				r.GrafanaManagedAlert.MissingSeriesEvalsToResolve = util.Pointer[int64](1)
+				r.GrafanaManagedAlert.MissingSeriesEvalsToResolve = new(int64(1))
 				r.For = func() *model.Duration { five := model.Duration(time.Second * 5); return &five }()
 				r.KeepFiringFor = func() *model.Duration { five := model.Duration(time.Second * 5); return &five }()
 				return &r
@@ -991,9 +992,9 @@ func TestValidateRuleNodeNotificationSettings(t *testing.T) {
 			notificationSettings: apimodels.AlertRuleNotificationSettings{
 				Receiver:            "receiver",
 				GroupBy:             []string{model.AlertNameLabel, models.FolderTitleLabel},
-				GroupWait:           util.Pointer(model.Duration(1 * time.Second)),
-				GroupInterval:       util.Pointer(model.Duration(5 * time.Second)),
-				RepeatInterval:      util.Pointer(model.Duration(5 * time.Minute)),
+				GroupWait:           new(model.Duration(1 * time.Second)),
+				GroupInterval:       new(model.Duration(5 * time.Second)),
+				RepeatInterval:      new(model.Duration(5 * time.Minute)),
 				MuteTimeIntervals:   []string{"mute"},
 				ActiveTimeIntervals: []string{"active"},
 			},
@@ -1029,11 +1030,11 @@ func TestValidateRuleNodeNotificationSettings(t *testing.T) {
 		},
 		{
 			name:                 "group wait positive is valid",
-			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", GroupWait: util.Pointer(model.Duration(1 * time.Second))},
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", GroupWait: new(model.Duration(1 * time.Second))},
 		},
 		{
 			name:                 "group wait negative is invalid",
-			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", GroupWait: util.Pointer(model.Duration(-1 * time.Second))},
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", GroupWait: new(model.Duration(-1 * time.Second))},
 			expErrorContains:     "group wait",
 		},
 		{
@@ -1042,11 +1043,11 @@ func TestValidateRuleNodeNotificationSettings(t *testing.T) {
 		},
 		{
 			name:                 "group interval positive is valid",
-			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", GroupInterval: util.Pointer(model.Duration(1 * time.Second))},
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", GroupInterval: new(model.Duration(1 * time.Second))},
 		},
 		{
 			name:                 "group interval negative is invalid",
-			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", GroupInterval: util.Pointer(model.Duration(-1 * time.Second))},
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", GroupInterval: new(model.Duration(-1 * time.Second))},
 			expErrorContains:     "group interval",
 		},
 		{
@@ -1055,20 +1056,20 @@ func TestValidateRuleNodeNotificationSettings(t *testing.T) {
 		},
 		{
 			name:                 "repeat interval positive is valid",
-			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", RepeatInterval: util.Pointer(model.Duration(1 * time.Second))},
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", RepeatInterval: new(model.Duration(1 * time.Second))},
 		},
 		{
 			name:                 "repeat interval negative is invalid",
-			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", RepeatInterval: util.Pointer(model.Duration(-1 * time.Second))},
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", RepeatInterval: new(model.Duration(-1 * time.Second))},
 			expErrorContains:     "repeat interval",
 		},
 		{
 			name:                 "valid notification settings with policy routing",
-			notificationSettings: apimodels.AlertRuleNotificationSettings{Policy: util.Pointer("policy")},
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Policy: new("policy")},
 		},
 		{
 			name:                 "empty policy is invalid",
-			notificationSettings: apimodels.AlertRuleNotificationSettings{Policy: util.Pointer("")},
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Policy: new("")},
 			expErrorContains:     "policy must be specified",
 		},
 		{
@@ -1078,7 +1079,7 @@ func TestValidateRuleNodeNotificationSettings(t *testing.T) {
 		},
 		{
 			name:                 "contact point and policy routing both specific is invalid",
-			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", Policy: util.Pointer("policy")},
+			notificationSettings: apimodels.AlertRuleNotificationSettings{Receiver: "receiver", Policy: new("policy")},
 			expErrorContains:     "only one of policy routing or contact point routing can be specified",
 		},
 	}

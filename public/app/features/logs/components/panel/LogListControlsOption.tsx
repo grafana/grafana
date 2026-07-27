@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { type JSX } from 'react';
+import React, { type JSX, useId } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Dropdown, Icon, IconButton, Tooltip, useStyles2 } from '@grafana/ui';
@@ -22,26 +22,34 @@ export const LogListControlsOption = React.forwardRef<HTMLButtonElement, Props>(
       tooltip,
       className: iconButtonClassName,
       name: iconButtonName,
+      onClick,
+      id,
       ...iconButtonProps
     }: Props,
     ref
   ) => {
     const styles = useStyles2(getStyles, expanded);
+    const autoId = useId();
+    const controlButtonId = id ?? autoId;
 
     return (
       <div className={`${styles.container} ${stickToBottom ? styles.marginTopAuto : ''}`}>
-        <label className={styles.label}>
-          <span className={styles.labelText}>{label ?? tooltip}</span>
+        <div className={styles.label}>
+          <label className={styles.labelCaption} htmlFor={controlButtonId}>
+            <span className={styles.labelText}>{label ?? tooltip}</span>
+          </label>
           <span className={styles.iconContainer}>
             <IconButton
+              id={controlButtonId}
               name={iconButtonName}
               tooltip={tooltip}
               className={iconButtonClassName}
               ref={ref}
               {...iconButtonProps}
+              onClick={onClick}
             />
           </span>
-        </label>
+        </div>
       </div>
     );
   }
@@ -77,16 +85,20 @@ export const LogListControlsSelectOption = React.forwardRef<SVGElement, SelectPr
     ref
   ) => {
     const styles = useStyles2(getStyles, expanded);
+    const controlButtonId = useId();
 
     return (
       <div className={styles.container}>
-        <label className={styles.label}>
-          <span className={styles.labelText}>{label ?? tooltip}</span>
+        <div className={styles.label}>
+          <label className={styles.labelCaption} htmlFor={controlButtonId}>
+            <span className={styles.labelText}>{label ?? tooltip}</span>
+          </label>
           <span>
             <Dropdown overlay={dropdown} placement="auto-end">
               <div className={styles.iconContainer}>
                 <Tooltip content={tooltip}>
                   <button
+                    id={controlButtonId}
                     aria-pressed={isActive}
                     aria-label={buttonAriaLabel}
                     className={`${styles.customControlButton} ${isActive ? styles.controlButtonActive : styles.controlButton}`}
@@ -105,7 +117,7 @@ export const LogListControlsSelectOption = React.forwardRef<SVGElement, SelectPr
               </div>
             </Dropdown>
           </span>
-        </label>
+        </div>
       </div>
     );
   }
@@ -189,6 +201,12 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
     }),
     labelText: css({
       display: expanded ? 'block' : 'none',
+    }),
+    labelCaption: css({
+      cursor: 'pointer',
+      flex: expanded ? 1 : undefined,
+      minWidth: 0,
+      margin: 0,
     }),
     iconContainer: css({
       display: 'flex',

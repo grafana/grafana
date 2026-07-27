@@ -72,7 +72,7 @@ type Service struct {
 	pluginStore            pluginstore.Store
 	accessControl          accesscontrol.AccessControl
 	pluginSettingsService  pluginsettings.Service
-	secretsService         secrets.Service
+	secretsService         secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	kvStore                *kvstore.NamespacedKVStore
 	libraryElementsService libraryelements.Service
 	ngAlert                *ngalert.AlertNG
@@ -104,7 +104,7 @@ func ProvideService(
 	db db.DB,
 	dsService datasources.DataSourceService,
 	secretsStore secretskv.SecretsKVStore,
-	secretsService secrets.Service,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	routeRegister routing.RouteRegister,
 	prom prometheus.Registerer,
 	tracer tracing.Tracer,
@@ -143,7 +143,7 @@ func ProvideService(
 		libraryElementsService: libraryElementsService,
 		ngAlert:                ngAlert,
 	}
-	s.api = api.RegisterApi(routeRegister, s, tracer, accessControl, cloudmigration.ResourceDependency)
+	s.api = api.RegisterApi(routeRegister, s, tracer, accessControl, cloudmigration.ResourceDependency(cfg.UnifiedAlerting.IsEnabled()))
 
 	httpClientS3, err := httpClientProvider.New()
 	if err != nil {

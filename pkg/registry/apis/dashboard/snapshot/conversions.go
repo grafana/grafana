@@ -15,7 +15,7 @@ import (
 
 func convertSnapshotDTOToK8sResource(v *dashboardsnapshots.DashboardSnapshotDTO, namespacer request.NamespaceMapper) *dashV0.Snapshot {
 	expires := v.Expires.UnixMilli()
-	if v.Expires.After(time.Date(2070, time.January, 0, 0, 0, 0, 0, time.UTC)) {
+	if !v.Expires.Before(time.Date(2070, time.January, 1, 0, 0, 0, 0, time.UTC)) {
 		expires = 0 // ignore things expiring long into the future
 	}
 	snap := &dashV0.Snapshot{
@@ -48,7 +48,7 @@ func convertSnapshotDTOToK8sResource(v *dashboardsnapshots.DashboardSnapshotDTO,
 
 func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, namespacer request.NamespaceMapper) *dashV0.Snapshot {
 	expires := v.Expires.UnixMilli()
-	if v.Expires.After(time.Date(2070, time.January, 0, 0, 0, 0, 0, time.UTC)) {
+	if !v.Expires.Before(time.Date(2070, time.January, 1, 0, 0, 0, 0, time.UTC)) {
 		expires = 0 // ignore things expiring long into the future
 	}
 
@@ -108,11 +108,18 @@ func convertK8sResourceToCreateCommand(snap *dashV0.Snapshot, orgID int64, userI
 	// Map dashboard (convert map[string]interface{} to *common.Unstructured)
 	if snap.Spec.Dashboard != nil {
 		cmd.Dashboard = &common.Unstructured{Object: snap.Spec.Dashboard}
+	} else {
+		cmd.Dashboard = &common.Unstructured{}
 	}
 
 	// Map expires
-	if snap.Spec.Expires != nil {
-		cmd.Expires = *snap.Spec.Expires
+	// snap.Spec.Expires is an absolute timestamp in milliseconds; cmd.Expires is a
+	// duration in seconds, so convert back to a remaining duration.
+	if snap.Spec.Expires != nil && *snap.Spec.Expires > 0 {
+		remaining := time.Until(time.UnixMilli(*snap.Spec.Expires))
+		if remaining > 0 {
+			cmd.Expires = int64(remaining.Seconds())
+		}
 	}
 
 	// Map external settings

@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { LogsSortOrder } from '@grafana/data';
+import { CoreApp, EventBusSrv, LogsSortOrder } from '@grafana/data';
+import { PanelContextProvider } from '@grafana/ui';
 
 import { DownloadFormat, downloadLogs } from '../../utils';
 
@@ -121,23 +122,88 @@ describe('LogTableControls', () => {
     ['txt', DownloadFormat.Text],
     ['json', DownloadFormat.Json],
     ['csv', DownloadFormat.CSV],
-  ])('Allows to download logs', async (label: string, format: DownloadFormat) => {
+  ])('Allows to download logs in plugins and Explore', async (label: string, format: DownloadFormat) => {
     jest.mocked(downloadLogs).mockClear();
     render(
-      <LogTableControls
-        logOptionsStorageKey={''}
-        controlsExpanded={false}
-        setControlsExpanded={jest.fn()}
-        sortOrder={LogsSortOrder.Ascending}
-        setSortOrder={jest.fn()}
-        downloadLogs={downloadLogs as unknown as (f: DownloadFormat) => void}
-        wrapText={false}
-        onWrapTextClick={jest.fn()}
-      />
+      <PanelContextProvider
+        value={{
+          app: CoreApp.Explore,
+          eventsScope: 'test',
+          eventBus: new EventBusSrv(),
+        }}
+      >
+        <LogTableControls
+          logOptionsStorageKey={''}
+          controlsExpanded={false}
+          setControlsExpanded={jest.fn()}
+          sortOrder={LogsSortOrder.Ascending}
+          setSortOrder={jest.fn()}
+          downloadLogs={downloadLogs as unknown as (f: DownloadFormat) => void}
+          wrapText={false}
+          onWrapTextClick={jest.fn()}
+        />
+      </PanelContextProvider>
     );
     await userEvent.click(screen.getByLabelText(DOWNLOAD_LOGS_LABEL_COPY));
     await userEvent.click(await screen.findByText(label));
     expect(downloadLogs).toHaveBeenCalledTimes(1);
     expect(downloadLogs).toHaveBeenCalledWith(format);
+  });
+
+  test.each([
+    ['txt', DownloadFormat.Text],
+    ['json', DownloadFormat.Json],
+    ['csv', DownloadFormat.CSV],
+  ])('Allows to download logs in Dashboards when enabled', async (label: string, format: DownloadFormat) => {
+    jest.mocked(downloadLogs).mockClear();
+    render(
+      <PanelContextProvider
+        value={{
+          app: CoreApp.Dashboard,
+          eventsScope: 'test',
+          eventBus: new EventBusSrv(),
+        }}
+      >
+        <LogTableControls
+          allowDownload
+          logOptionsStorageKey={''}
+          controlsExpanded={false}
+          setControlsExpanded={jest.fn()}
+          sortOrder={LogsSortOrder.Ascending}
+          setSortOrder={jest.fn()}
+          downloadLogs={downloadLogs as unknown as (f: DownloadFormat) => void}
+          wrapText={false}
+          onWrapTextClick={jest.fn()}
+        />
+      </PanelContextProvider>
+    );
+    await userEvent.click(screen.getByLabelText(DOWNLOAD_LOGS_LABEL_COPY));
+    await userEvent.click(await screen.findByText(label));
+    expect(downloadLogs).toHaveBeenCalledTimes(1);
+    expect(downloadLogs).toHaveBeenCalledWith(format);
+  });
+
+  it('Does not allow to download when disabled', async () => {
+    render(
+      <PanelContextProvider
+        value={{
+          app: CoreApp.Dashboard,
+          eventsScope: 'test',
+          eventBus: new EventBusSrv(),
+        }}
+      >
+        <LogTableControls
+          logOptionsStorageKey={''}
+          controlsExpanded={false}
+          setControlsExpanded={jest.fn()}
+          sortOrder={LogsSortOrder.Ascending}
+          setSortOrder={jest.fn()}
+          downloadLogs={downloadLogs as unknown as (f: DownloadFormat) => void}
+          wrapText={false}
+          onWrapTextClick={jest.fn()}
+        />
+      </PanelContextProvider>
+    );
+    expect(screen.queryByLabelText(DOWNLOAD_LOGS_LABEL_COPY)).not.toBeInTheDocument();
   });
 });

@@ -1,16 +1,20 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
+import SVG from 'react-inlinesvg';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { type SceneObject } from '@grafana/scenes';
+import { type SceneComponentProps, sceneGraph, SceneObjectBase } from '@grafana/scenes';
 import { ScrollContainer, Sidebar, useStyles2 } from '@grafana/ui';
+import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 import addPanelSvg from 'img/dashboards/add-panel.svg';
 
 import { useClipboardState } from '../../scene/layouts-shared/useClipboardState';
-import { getDashboardSceneFor } from '../../utils/utils';
+import { getDashboardSceneLike } from '../../scene/types/dashboard';
+import { DashboardInteractions } from '../../utils/interactions';
+import { DashboardEditPane } from '../DashboardEditPane';
 
 import { AddAnnotationQuery } from './AddAnnotationQuery';
 import { AddButton } from './AddButton';
@@ -21,22 +25,29 @@ import { AddRow } from './AddRow';
 import { AddTab } from './AddTab';
 import { AddVariable } from './AddVariable';
 
-interface AddNewEditPaneProps {
-  dashboard: SceneObject;
-  selectedElement: SceneObject | undefined;
-  onAddPanel: () => void;
-  onPastePanel: () => void;
+export class AddNewEditPane extends SceneObjectBase {
+  public static Component = AddNewEditPaneRenderer;
+  public getId() {
+    return 'add' as const;
+  }
 }
 
-export function AddNewEditPane({ onAddPanel, onPastePanel, dashboard, selectedElement }: AddNewEditPaneProps) {
+function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEditPane>) {
+  const editPane = sceneGraph.getAncestor(model, DashboardEditPane);
   const { hasCopiedPanel } = useClipboardState();
   const styles = useStyles2(getStyles);
-  const dashboardScene = getDashboardSceneFor(dashboard);
+  const dashboardScene = getDashboardSceneLike(model);
   const orchestrator = dashboardScene.state.layoutOrchestrator;
+  const selectedObj = editPane.getSelectedObject();
 
   const onStartDragging = (result: { draggableId: string }) => {
     const mode = result.draggableId === 'paste-panel-drag' ? 'paste' : 'newPanel';
     orchestrator.startDraggingNewPanel(mode);
+  };
+
+  const pastePanel = () => {
+    editPane.pastePanel(selectedObj);
+    DashboardInteractions.trackPastePanelClick('sidebar', getLayoutType(selectedObj), 'click');
   };
 
   return (
@@ -62,20 +73,17 @@ export function AddNewEditPane({ onAddPanel, onPastePanel, dashboard, selectedEl
                           {...dragProvided.draggableProps}
                           {...dragProvided.dragHandleProps}
                           className={cx(styles.imageContainer, dragSnapshot.isDragging && styles.dragging)}
-                          onClick={onAddPanel}
+                          onClick={() => editPane.addNewPanel(selectedObj)}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
                               e.preventDefault();
-                              onAddPanel();
+                              editPane.addNewPanel(selectedObj);
                             }
                           }}
                           aria-label={t('dashboard.add.new-panel.title', 'Panel')}
                         >
-                          <img
-                            alt={t('dashboard.add.new-panel.button', 'Add new panel button')}
-                            src={addPanelSvg}
-                            draggable={false}
-                          />
+                          {/* @ts-expect-error react-inlinesvg@4.3.0 return type includes bigint, which isn't in @types/react@18's ReactNode. Remove when we update @types/react. */}
+                          <SVG title={t('dashboard.add.new-panel.button', 'Add new panel button')} src={addPanelSvg} />
                         </div>
                       );
                     }}
@@ -97,11 +105,11 @@ export function AddNewEditPane({ onAddPanel, onPastePanel, dashboard, selectedEl
                             className={styles.pasteButton}
                             icon="clipboard-alt"
                             tabIndex={0}
-                            onClick={onPastePanel}
+                            onClick={() => pastePanel()}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault();
-                                onPastePanel();
+                                pastePanel();
                               }
                             }}
                             aria-label={t('dashboard.canvas-actions.add.paste.title', 'Paste panel')}
@@ -122,12 +130,12 @@ export function AddNewEditPane({ onAddPanel, onPastePanel, dashboard, selectedEl
           </DragDropContext>
         </AddNewSection>
         <AddNewSection title={t('dashboard-scene.add-new-edit-pane.group-layouts', 'Group layouts')}>
-          <AddRow dashboardScene={dashboardScene} selectedElement={selectedElement} />
-          <AddTab dashboardScene={dashboardScene} selectedElement={selectedElement} />
+          <AddRow dashboardScene={dashboardScene} selectedElement={selectedObj} />
+          <AddTab dashboardScene={dashboardScene} selectedElement={selectedObj} />
         </AddNewSection>
         <AddNewSection title={t('dashboard-scene.dashboard-side-pane-new.dashboard-controls', 'Dashboard controls')}>
           {config.featureToggles.dashboardUnifiedDrilldownControls && <AddFilters dashboardScene={dashboardScene} />}
-          <AddVariable dashboardScene={dashboardScene} selectedElement={selectedElement} />
+          <AddVariable dashboardScene={dashboardScene} selectedElement={selectedObj} />
           <AddAnnotationQuery dashboardScene={dashboardScene} />
           <AddLink dashboardScene={dashboardScene} />
         </AddNewSection>
@@ -158,7 +166,8 @@ function getStyles(theme: GrafanaTheme2) {
       '&:hover': {
         opacity: 1,
       },
-      img: {
+      svg: {
+        color: theme.colors.accent.main,
         display: 'block',
         width: 'auto',
         maxWidth: '100%',

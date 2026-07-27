@@ -7,7 +7,7 @@ import {
   type ScopedVars,
   type TimeRange,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 
 import { type AwsUrl, encodeUrl } from '../aws_url';
 import { type CloudWatchLogsQuery } from '../dataquery.gen';
@@ -46,7 +46,8 @@ export async function addDataLinksToLogsResponse(
     }
 
     // add a link to the cloudwatch console as a separate field that will be displayed as a link
-    if (dataFrame.fields.length) {
+    // @ts-ignore ignore feature toggle type error
+    if (config.featureToggles.cloudWatchLogsInsightsDataLinks && dataFrame.fields.length) {
       dataFrame.fields.push({
         name: '',
         type: FieldType.string,

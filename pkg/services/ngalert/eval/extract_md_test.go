@@ -3,11 +3,11 @@ package eval
 import (
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr/classic"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestExtractEvalString(t *testing.T) {
@@ -19,33 +19,33 @@ func TestExtractEvalString(t *testing.T) {
 		{
 			desc: "1 EvalMatch",
 			inFrame: newMetaFrame([]classic.EvalMatch{
-				{Metric: "Test", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(32.3)},
-			}, util.Pointer(1.0)),
+				{Metric: "Test", Labels: data.Labels{"host": "foo"}, Value: new(32.3)},
+			}, new(1.0)),
 			outString: `[ var='0' metric='Test' labels={host=foo} type='classic_conditions' value=32.3 ]`,
 		},
 		{
 			desc: "2 EvalMatches",
 			inFrame: newMetaFrame([]classic.EvalMatch{
-				{Metric: "Test", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(32.3)},
-				{Metric: "Test", Labels: data.Labels{"host": "baz"}, Value: util.Pointer(10.0)},
-			}, util.Pointer(1.0), withRefID("A")),
+				{Metric: "Test", Labels: data.Labels{"host": "foo"}, Value: new(32.3)},
+				{Metric: "Test", Labels: data.Labels{"host": "baz"}, Value: new(10.0)},
+			}, new(1.0), withRefID("A")),
 			outString: `[ var='A0' metric='Test' labels={host=foo} type='classic_conditions' value=32.3 ], [ var='A1' metric='Test' labels={host=baz} type='classic_conditions' value=10 ]`,
 		},
 		{
 			desc: "3 EvalMatches",
 			inFrame: newMetaFrame([]classic.EvalMatch{
-				{Metric: "Test", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(32.3)},
-				{Metric: "Test", Labels: data.Labels{"host": "baz"}, Value: util.Pointer(10.0)},
-				{Metric: "TestA", Labels: data.Labels{"host": "zip"}, Value: util.Pointer(11.0)},
-			}, util.Pointer(1.0), withRefID("A")),
+				{Metric: "Test", Labels: data.Labels{"host": "foo"}, Value: new(32.3)},
+				{Metric: "Test", Labels: data.Labels{"host": "baz"}, Value: new(10.0)},
+				{Metric: "TestA", Labels: data.Labels{"host": "zip"}, Value: new(11.0)},
+			}, new(1.0), withRefID("A")),
 			outString: `[ var='A0' metric='Test' labels={host=foo} type='classic_conditions' value=32.3 ], [ var='A1' metric='Test' labels={host=baz} type='classic_conditions' value=10 ], [ var='A2' metric='TestA' labels={host=zip} type='classic_conditions' value=11 ]`,
 		},
 		{
 			desc: "Captures are sorted in ascending order of var",
 			inFrame: newMetaFrame([]NumberValueCapture{
-				{Var: "B", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(1.0), Type: "reduce"},
-				{Var: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(10.0), Type: "threshold"},
-			}, util.Pointer(1.0)),
+				{Var: "B", Labels: data.Labels{"host": "foo"}, Value: new(1.0), Type: "reduce"},
+				{Var: "A", Labels: data.Labels{"host": "foo"}, Value: new(10.0), Type: "threshold"},
+			}, new(1.0)),
 			outString: `[ var='A' labels={host=foo} type='threshold' value=10 ], [ var='B' labels={host=foo} type='reduce' value=1 ]`,
 		},
 	}
@@ -63,51 +63,51 @@ func TestExtractValues(t *testing.T) {
 		values  map[string]NumberValueCapture
 	}{{
 		desc:    "No values in frame returns nil",
-		inFrame: newMetaFrame(nil, util.Pointer(1.0)),
+		inFrame: newMetaFrame(nil, new(1.0)),
 		values:  nil,
 	}, {
 		desc: "Classic condition frame with one match",
 		inFrame: newMetaFrame([]classic.EvalMatch{
-			{Metric: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(1.0)},
-		}, util.Pointer(1.0), withRefID("A")),
+			{Metric: "A", Labels: data.Labels{"host": "foo"}, Value: new(1.0)},
+		}, new(1.0), withRefID("A")),
 		values: map[string]NumberValueCapture{
-			"A0": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(1.0), Type: "classic_conditions"},
+			"A0": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: new(1.0), Type: "classic_conditions"},
 		},
 	}, {
 		desc: "Classic condition frame with multiple matches",
 		inFrame: newMetaFrame([]classic.EvalMatch{
-			{Metric: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(1.0)},
-			{Metric: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(3.0)},
-		}, util.Pointer(1.0), withRefID("A")),
+			{Metric: "A", Labels: data.Labels{"host": "foo"}, Value: new(1.0)},
+			{Metric: "A", Labels: data.Labels{"host": "foo"}, Value: new(3.0)},
+		}, new(1.0), withRefID("A")),
 		values: map[string]NumberValueCapture{
-			"A0": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(1.0), Type: "classic_conditions"},
-			"A1": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(3.0), Type: "classic_conditions"},
+			"A0": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: new(1.0), Type: "classic_conditions"},
+			"A1": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: new(3.0), Type: "classic_conditions"},
 		},
 	}, {
 		desc: "Nil value",
 		inFrame: newMetaFrame([]NumberValueCapture{
 			{Var: "A", Labels: data.Labels{"host": "foo"}, Value: nil},
-		}, util.Pointer(1.0)),
+		}, new(1.0)),
 		values: map[string]NumberValueCapture{
 			"A": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: nil},
 		},
 	}, {
 		desc: "1 value",
 		inFrame: newMetaFrame([]NumberValueCapture{
-			{Var: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(1.0)},
-		}, util.Pointer(1.0)),
+			{Var: "A", Labels: data.Labels{"host": "foo"}, Value: new(1.0)},
+		}, new(1.0)),
 		values: map[string]NumberValueCapture{
-			"A": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(1.0)},
+			"A": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: new(1.0)},
 		},
 	}, {
 		desc: "2 values",
 		inFrame: newMetaFrame([]NumberValueCapture{
-			{Var: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(1.0)},
-			{Var: "B", Labels: nil, Value: util.Pointer(2.0)},
-		}, util.Pointer(1.0)),
+			{Var: "A", Labels: data.Labels{"host": "foo"}, Value: new(1.0)},
+			{Var: "B", Labels: nil, Value: new(2.0)},
+		}, new(1.0)),
 		values: map[string]NumberValueCapture{
-			"A": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(1.0)},
-			"B": {Var: "B", Value: util.Pointer(2.0)},
+			"A": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: new(1.0)},
+			"B": {Var: "B", Value: new(2.0)},
 		},
 	}}
 	for _, tc := range cases {

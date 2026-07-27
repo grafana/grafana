@@ -6,7 +6,7 @@ import {
 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 
 import { type Label } from '../../matchers/types';
-import { USER_DEFINED_TREE_NAME } from '../consts';
+import { USER_DEFINED_TREE_NAME } from '../routingTrees';
 import { type Route, type RouteWithID } from '../types';
 import { type RouteMatchResult, type TreeMatch, convertRoutingTreeToRoute, matchInstancesToRoute } from '../utils';
 

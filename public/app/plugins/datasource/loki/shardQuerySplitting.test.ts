@@ -11,10 +11,6 @@ import { LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX, LOKI_TIMEOUT_ERROR_MSG } fr
 import { runShardSplitQuery } from './shardQuerySplitting';
 import { type LokiQuery } from './types';
 
-jest.mock('uuid', () => ({
-  v4: jest.fn().mockReturnValue('uuid'),
-}));
-
 const originalLokiQueryLimitsContextState = config.featureToggles.lokiQueryLimitsContext;
 
 const originalLog = console.log;

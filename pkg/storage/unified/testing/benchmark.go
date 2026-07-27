@@ -375,9 +375,9 @@ func runSearchBackendBenchmarkWriteThroughput(ctx context.Context, backend resou
 
 	// Build initial index
 	size := int64(10000) // force the index to be on disk
-	index, err := backend.BuildIndex(ctx, nr, size, nil, "benchmark", func(index resource.ResourceIndex) (int64, error) {
+	index, err := backend.BuildIndex(ctx, nr, size, "benchmark", func(index resource.ResourceIndex) (int64, error) {
 		return 0, nil
-	}, nil, false, time.Time{})
+	}, nil, false, time.Time{}, 0)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize backend: %w", err)
 	}
@@ -488,7 +488,7 @@ func runStorageAndSearchBenchmark(
 	}
 
 	// Discover group/resource pairs from the configured document builders
-	builders, err := searchOpts.Resources.GetDocumentBuilders()
+	builders, err := searchOpts.Resources.GetDocumentBuilders(searchOpts.SearchFields)
 	require.NoError(t, err)
 	require.NotEmpty(t, builders, "search options must have at least one document builder")
 
@@ -535,7 +535,7 @@ func runStorageAndSearchBenchmark(
 				Query: job.title,
 				QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{
 					{
-						Name: "title",
+						Name: resource.SEARCH_FIELD_TITLE_PHRASE,
 						Type: resourcepb.QueryFieldType_KEYWORD,
 					},
 				},

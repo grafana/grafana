@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/admission"
-	"k8s.io/utils/ptr"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -24,7 +23,7 @@ func TestValidateSecureValue(t *testing.T) {
 			ObjectMeta: objectMeta,
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "description",
-				Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+				Value:       new(secretv1beta1.NewExposedSecureValue("value")),
 				Decrypters:  []string{"app1", "app2"},
 			},
 			Status: secretv1beta1.SecureValueStatus{Keeper: keeper},
@@ -50,7 +49,7 @@ func TestValidateSecureValue(t *testing.T) {
 			require.Equal(t, "spec", errs[0].Field)
 
 			// empty value
-			sv.Spec.Value = ptr.To(secretv1beta1.NewExposedSecureValue(""))
+			sv.Spec.Value = new(secretv1beta1.NewExposedSecureValue(""))
 			sv.Spec.Ref = nil
 
 			errs = validator.Validate(sv, nil, admission.Create)
@@ -59,7 +58,7 @@ func TestValidateSecureValue(t *testing.T) {
 
 			// present value and ref
 			ref := "value"
-			sv.Spec.Value = ptr.To(secretv1beta1.NewExposedSecureValue("value"))
+			sv.Spec.Value = new(secretv1beta1.NewExposedSecureValue("value"))
 			sv.Spec.Ref = &ref
 
 			errs = validator.Validate(sv, nil, admission.Create)
@@ -69,7 +68,7 @@ func TestValidateSecureValue(t *testing.T) {
 
 		t.Run("`value` cannot exceed 24576 bytes", func(t *testing.T) {
 			sv := validSecureValue.DeepCopy()
-			sv.Spec.Value = ptr.To(secretv1beta1.NewExposedSecureValue(strings.Repeat("a", contracts.SecureValueRawInputMaxSizeBytes+1)))
+			sv.Spec.Value = new(secretv1beta1.NewExposedSecureValue(strings.Repeat("a", contracts.SecureValueRawInputMaxSizeBytes+1)))
 			sv.Spec.Ref = nil
 
 			errs := validator.Validate(sv, nil, admission.Create)
@@ -113,7 +112,7 @@ func TestValidateSecureValue(t *testing.T) {
 			sv := &secretv1beta1.SecureValue{
 				ObjectMeta: objectMeta,
 				Spec: secretv1beta1.SecureValueSpec{
-					Value: ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+					Value: new(secretv1beta1.NewExposedSecureValue("value")),
 				},
 			}
 
@@ -135,7 +134,7 @@ func TestValidateSecureValue(t *testing.T) {
 			sv := &secretv1beta1.SecureValue{
 				ObjectMeta: objectMeta,
 				Spec: secretv1beta1.SecureValueSpec{
-					Value: ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+					Value: new(secretv1beta1.NewExposedSecureValue("value")),
 					Ref:   &ref,
 				},
 			}
@@ -147,7 +146,7 @@ func TestValidateSecureValue(t *testing.T) {
 			oldSv = &secretv1beta1.SecureValue{
 				ObjectMeta: objectMeta,
 				Spec: secretv1beta1.SecureValueSpec{
-					Value: ptr.To(secretv1beta1.NewExposedSecureValue("non-empty")),
+					Value: new(secretv1beta1.NewExposedSecureValue("non-empty")),
 				},
 			}
 
@@ -274,7 +273,7 @@ func TestValidateSecureValue(t *testing.T) {
 			},
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "description",
-				Ref:         ptr.To("ref"),
+				Ref:         new("ref"),
 			},
 		}
 
@@ -301,7 +300,7 @@ func TestValidateSecureValue(t *testing.T) {
 			},
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "description",
-				Ref:         ptr.To("ref"),
+				Ref:         new("ref"),
 			},
 		}
 

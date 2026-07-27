@@ -26,7 +26,7 @@ export interface QueryOperationRowProps {
   expanderMessages?: ExpanderMessages;
 }
 
-export type QueryOperationRowRenderProp = ((props: QueryOperationRowRenderProps) => React.ReactNode) | React.ReactNode;
+type QueryOperationRowRenderProp = ((props: QueryOperationRowRenderProps) => React.ReactNode) | React.ReactNode;
 
 export interface QueryOperationRowRenderProps {
   isOpen: boolean;

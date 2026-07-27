@@ -2,13 +2,18 @@ package migrations
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -70,6 +75,28 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 	}
 
 	r.log.Info("Starting migration for all organizations", "org_count", len(orgs), "resources", r.resources)
+
+	// Skip migration if all resources are already on unified storage
+	// this handles earlier instances that were writing directly to unistore and never
+	// migrated through the legacy path. without this check, the migration would wipe
+	// unistore and repopulate from sql, resulting in data loss
+	alreadyMigrated, err := r.isAlreadyOnUnifiedStorage(sess)
+	if err != nil {
+		r.log.Error("failed to check dualwrite state, aborting migration", "error", err)
+		return fmt.Errorf("failed to check dualwrite state: %w", err)
+	}
+	if alreadyMigrated {
+		r.log.Warn("skipping folders/dashboards unified-storage migration because a previous dualwrite marker "+
+			"says these resources were already migrated to unified storage. This protects data that may exist "+
+			"only in unified storage. If a Grafana 12 git-sync or unified-storage trial was disabled and later "+
+			"changes continued in legacy SQL, dashboards or folders changed after the trial may appear missing "+
+			"or revert to an older version after upgrade. To recover, restore from a pre-upgrade backup or "+
+			"follow the remediation steps in https://github.com/grafana/grafana/issues/123616. Only force "+
+			"re-migration after confirming legacy SQL is the source of truth; re-migration overwrites "+
+			"unified-storage data for folders/dashboards.",
+			"resources", r.definition.ConfigResources())
+		return nil
+	}
 
 	if opts.DriverName == migrator.SQLite {
 		// reuse transaction in SQLite to avoid "database is locked" errors
@@ -153,15 +180,17 @@ func (r *MigrationRunner) migrateAllOrgs(ctx context.Context, sess *xorm.Session
 			r.log.Error("Failed to parse organization namespace", "org_id", org.ID, "error", err)
 			return fmt.Errorf("failed to parse namespace for org %d: %w", org.ID, err)
 		}
-		if err = r.MigrateOrg(ctx, sess, mg.DBEngine, info, opts); err != nil {
+		if _, err = r.MigrateOrg(ctx, sess, mg.DBEngine, info, opts); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-// MigrateOrg handles migration for a single organization.
-func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, engine *xorm.Engine, info types.NamespaceInfo, opts RunOptions) error {
+// MigrateOrg handles migration for a single organization. On success it returns
+// the BulkResponse from the migration so callers can inspect rejected items
+// (rejections are non-fatal and do not fail the migration; see validator.go).
+func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, engine *xorm.Engine, info types.NamespaceInfo, opts RunOptions) (*resourcepb.BulkResponse, error) {
 	r.log.Info("Migrating organization", "org_id", info.OrgID, "namespace", info.Value)
 
 	// Create a service identity context for this namespace to authenticate with unified storage
@@ -182,11 +211,11 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, en
 	response, err := r.unifiedMigrator.Migrate(ctx, migrateOpts)
 	if err != nil {
 		r.log.Error("Migration failed", "org_id", info.OrgID, "error", err, "duration", time.Since(startTime))
-		return fmt.Errorf("migration failed for org %d (%s): %w", info.OrgID, info.Value, err)
+		return nil, fmt.Errorf("migration failed for org %d (%s): %w", info.OrgID, info.Value, err)
 	}
 	if response.Error != nil {
 		r.log.Error("Migration reported error", "org_id", info.OrgID, "error", response.Error.String(), "duration", time.Since(startTime))
-		return fmt.Errorf("migration failed for org %d (%s): %w", info.OrgID, info.Value, fmt.Errorf("migration error: %s", response.Error.Message))
+		return nil, fmt.Errorf("migration failed for org %d (%s): %w", info.OrgID, info.Value, fmt.Errorf("migration error: %s", response.Error.Message))
 	}
 
 	migrationFinishedAt := time.Now()
@@ -199,7 +228,7 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, en
 	})
 	if err != nil {
 		r.log.Error("Rebuilding indexes failed", "org_id", info.OrgID, "error", err, "duration", time.Since(startTime))
-		return fmt.Errorf("rebuilding indexes failed for org %d (%s): %w", info.OrgID, info.Value, err)
+		return nil, fmt.Errorf("rebuilding indexes failed for org %d (%s): %w", info.OrgID, info.Value, err)
 	}
 
 	// On MySQL with rename, use a separate session so validator SELECTs don't hold
@@ -211,7 +240,7 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, en
 	}
 	if err := r.validateMigration(ctx, validationSess, response, r.validators); err != nil {
 		r.log.Error("Migration validation failed", "org_id", info.OrgID, "error", err, "duration", time.Since(startTime))
-		return fmt.Errorf("migration validation failed for org %d (%s): %w", info.OrgID, info.Value, err)
+		return nil, fmt.Errorf("migration validation failed for org %d (%s): %w", info.OrgID, info.Value, err)
 	}
 
 	r.log.Info("Migration completed for organization",
@@ -221,7 +250,7 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, en
 		"summaries", len(response.Summary),
 		"rejected", len(response.Rejected))
 
-	return nil
+	return response, nil
 }
 
 // validateMigration runs all validators in sequence.
@@ -321,4 +350,125 @@ func ParseOrgIDFromNamespace(namespace string) (int64, error) {
 type orgInfo struct {
 	ID   int64  `xorm:"id"`
 	Name string `xorm:"name"`
+}
+
+// dualwriteKVNamespace was used in older versions of grafana to keep track of dual writer state.
+// it is no longer used, other than for backwards compatibility
+const dualwriteKVNamespace = "unified.dualwrite"
+
+// FoldersDashboardsMigrationID is the definition ID of the folders/dashboards migration.
+// It is the only migration whose legacy dualwrite state we need to verify.
+const FoldersDashboardsMigrationID = "folders-dashboards"
+
+// dualwriteFileName is the name of the file used by G12.0.0 to persist dualwrite state
+// in the data directory. It contains a JSON-encoded map of resource keys
+// (e.g. "dashboards.dashboard.grafana.app") to dualwriteStorageStatus.
+const dualwriteFileName = "dualwrite.json"
+
+// dualwriteStorageStatus holds info to determine whether a resource was already migrated to unified storage
+type dualwriteStorageStatus struct {
+	ReadUnified  bool  `json:"read_unified"`
+	WriteUnified bool  `json:"write_unified"`
+	WriteLegacy  bool  `json:"write_legacy"`
+	Migrated     int64 `json:"migrated"`
+}
+
+// migratedToUnified reports whether the status indicates a completed migration to unified storage.
+func (s dualwriteStorageStatus) migratedToUnified() bool {
+	return s.ReadUnified && s.WriteUnified && !s.WriteLegacy && s.Migrated > 0
+}
+
+// isAlreadyOnUnifiedStorage checks persisted dualwrite state used by prior versions of Grafana.
+// Returns true when all resources in the definition were already migrated to unified storage
+// (read_unified=true, write_unified=true, write_legacy=false, and migrated>0).
+// This is to prevent data loss, as otherwise unified storage will be wiped and repopulated
+// from sql, destroying resources that only exist in unified storage.
+//
+// Two historical locations are checked:
+//   - kv_store table with namespace "unified.dualwrite" (12.1.0+)
+//   - <data_path>/dualwrite.json file containing a map[string]StorageStatus (12.0.0)
+//
+// This legacy path was only ever exposed for folders/dashboards, so this check is skipped
+// for every other migration definition.
+func (r *MigrationRunner) isAlreadyOnUnifiedStorage(sess *xorm.Session) (bool, error) {
+	if r.definition.ID != FoldersDashboardsMigrationID {
+		return false, nil
+	}
+
+	configResources := r.definition.ConfigResources()
+	if len(configResources) == 0 {
+		return false, nil
+	}
+
+	fileStatuses, err := r.readDualwriteFile()
+	if err != nil {
+		return false, fmt.Errorf("failed to read dualwrite state file: %w", err)
+	}
+
+	for _, key := range configResources {
+		if status, ok := fileStatuses[key]; ok {
+			if !status.migratedToUnified() {
+				return false, nil
+			}
+			continue
+		}
+
+		status, found, err := r.readDualwriteKVState(sess, key)
+		if err != nil {
+			return false, err
+		}
+		if !found || !status.migratedToUnified() {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
+// readDualwriteKVState loads dualwrite state for the given resource key from kv_store.
+func (r *MigrationRunner) readDualwriteKVState(sess *xorm.Session, key string) (dualwriteStorageStatus, bool, error) {
+	orgID := int64(0)
+	ns := dualwriteKVNamespace
+	k := key
+	item := kvstore.Item{
+		OrgId:     &orgID,
+		Namespace: &ns,
+		Key:       &k,
+	}
+	found, err := sess.Get(&item)
+	if err != nil {
+		return dualwriteStorageStatus{}, false, fmt.Errorf("failed to query dualwrite state for %s: %w", key, err)
+	}
+	if !found {
+		return dualwriteStorageStatus{}, false, nil
+	}
+
+	var status dualwriteStorageStatus
+	if err := json.Unmarshal([]byte(item.Value), &status); err != nil {
+		return dualwriteStorageStatus{}, false, fmt.Errorf("failed to parse dualwrite state for %s: %w", key, err)
+	}
+	return status, true, nil
+}
+
+// readDualwriteFile loads dualwrite state written by G12.0.0 from <data_path>/dualwrite.json.
+// Returns an empty map (not an error) when the file or data path is not present.
+func (r *MigrationRunner) readDualwriteFile() (map[string]dualwriteStorageStatus, error) {
+	if r.cfg == nil || r.cfg.DataPath == "" {
+		return nil, nil
+	}
+
+	path := filepath.Clean(filepath.Join(r.cfg.DataPath, dualwriteFileName))
+	data, err := os.ReadFile(path) // #nosec G304 -- path is derived from trusted config
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	var statuses map[string]dualwriteStorageStatus
+	if err := json.Unmarshal(data, &statuses); err != nil {
+		return nil, fmt.Errorf("failed to parse %s: %w", path, err)
+	}
+	return statuses, nil
 }

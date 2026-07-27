@@ -6,7 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/bwmarrin/snowflake"
 	badger "github.com/dgraph-io/badger/v4"
@@ -16,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -3096,6 +3100,138 @@ func testDataStoreGetGroupResources(t *testing.T, ctx context.Context, ds *dataS
 	}
 }
 
+func TestIntegrationDataStore_GetResourceStatsWithLimit(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetResourceStatsWithLimit)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetResourceStatsWithLimit)
+}
+
+func testDataStoreGetResourceStatsWithLimit(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	save := func(ns, name string, action kv.DataAction) {
+		rv := node.Generate().Int64()
+		err := ds.Save(ctx, DataKey{
+			Namespace:       ns,
+			Group:           "apps",
+			Resource:        "deployments",
+			Name:            name,
+			ResourceVersion: rv,
+			Action:          action,
+			Folder:          "f",
+		}, bytes.NewReader([]byte("content")))
+		require.NoError(t, err)
+	}
+
+	// ns-big has 8 live resources; ns-small has 3 live plus one that was deleted.
+	// ns-big sorts before ns-small, so the scan hits the big namespace first.
+	for i := range 8 {
+		save("ns-big", fmt.Sprintf("name-%02d", i), DataActionCreated)
+	}
+	for i := range 3 {
+		save("ns-small", fmt.Sprintf("name-%02d", i), DataActionCreated)
+	}
+	save("ns-small", "gone", DataActionCreated)
+	save("ns-small", "gone", DataActionDeleted)
+	// Recreated resource: latest event is a create, so it counts as live.
+	save("ns-small", "back", DataActionCreated)
+	save("ns-small", "back", DataActionDeleted)
+	save("ns-small", "back", DataActionCreated)
+
+	byNamespace := func(stats []ResourceStats) map[string]int64 {
+		out := map[string]int64{}
+		for _, s := range stats {
+			require.Equal(t, "apps", s.Group)
+			require.Equal(t, "deployments", s.Resource)
+			out[s.Namespace] = s.Count
+		}
+		return out
+	}
+
+	// Exact counts (no limit): deleted resource is excluded.
+	exact, err := ds.GetResourceStats(ctx, NamespacedResource{}, 0)
+	require.NoError(t, err)
+	// ns-small: 3 singles + "gone" (deleted, excluded) + "back" (recreated, live) = 4.
+	require.Equal(t, map[string]int64{"ns-big": 8, "ns-small": 4}, byNamespace(exact))
+
+	// With a limit of 5: ns-big is capped (counted early-exit, not the full 8),
+	// ns-small stays exact because it is below the limit.
+	const countLimit = 5
+	capped, err := ds.GetResourceStatsWithLimit(ctx, NamespacedResource{}, 0, countLimit)
+	require.NoError(t, err)
+	got := byNamespace(capped)
+	require.Contains(t, got, "ns-big")
+	require.Contains(t, got, "ns-small")
+	require.GreaterOrEqual(t, got["ns-big"], int64(countLimit))
+	require.Less(t, got["ns-big"], int64(8), "large namespace should be capped, not fully counted")
+	require.Equal(t, int64(4), got["ns-small"], "namespace below the limit should be exact")
+
+	// minCount still excludes small namespaces when a valid countLimit (> minCount)
+	// caps a large one: ns-big (8 live) is capped and passes, ns-small (4 live) is
+	// excluded.
+	filtered, err := ds.GetResourceStatsWithLimit(ctx, NamespacedResource{}, 4, 6)
+	require.NoError(t, err)
+	gotFiltered := byNamespace(filtered)
+	require.GreaterOrEqual(t, gotFiltered["ns-big"], int64(6))
+	require.Less(t, gotFiltered["ns-big"], int64(8), "large namespace should be capped")
+	require.NotContains(t, gotFiltered, "ns-small", "namespace at or below minCount must be excluded")
+
+	// countLimit <= 0 behaves like the exact path.
+	unlimited, err := ds.GetResourceStatsWithLimit(ctx, NamespacedResource{}, 0, 0)
+	require.NoError(t, err)
+	require.Equal(t, map[string]int64{"ns-big": 8, "ns-small": 4}, byNamespace(unlimited))
+}
+
+func TestIntegrationDataStore_GetResourceStatsWithLimitClusterScoped(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetResourceStatsWithLimitClusterScoped)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetResourceStatsWithLimitClusterScoped)
+}
+
+// Cluster-scoped resources have keys with no namespace segment (Namespace == "").
+// They must be counted by the exact path, and the limited path must cap them and
+// terminate rather than re-scanning the same keys forever.
+func testDataStoreGetResourceStatsWithLimitClusterScoped(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	save := func(name string) {
+		rv := node.Generate().Int64()
+		err := ds.Save(ctx, DataKey{
+			Group:           "apps",
+			Resource:        "deployments",
+			Name:            name,
+			ResourceVersion: rv,
+			Action:          DataActionCreated,
+			Folder:          "f",
+		}, bytes.NewReader([]byte("content")))
+		require.NoError(t, err)
+	}
+	for i := range 8 {
+		save(fmt.Sprintf("item-%02d", i))
+	}
+
+	find := func(stats []ResourceStats) *ResourceStats {
+		for i := range stats {
+			if stats[i].Resource == "deployments" {
+				require.Equal(t, "", stats[i].Namespace, "cluster-scoped stats have empty namespace")
+				return &stats[i]
+			}
+		}
+		return nil
+	}
+
+	exact, err := ds.GetResourceStats(ctx, NamespacedResource{}, 0)
+	require.NoError(t, err)
+	cs := find(exact)
+	require.NotNil(t, cs, "cluster-scoped resource must appear in exact stats")
+	require.Equal(t, int64(8), cs.Count)
+
+	capped, err := ds.GetResourceStatsWithLimit(ctx, NamespacedResource{}, 0, 5)
+	require.NoError(t, err)
+	cs = find(capped)
+	require.NotNil(t, cs, "cluster-scoped resource must appear in limited stats")
+	require.GreaterOrEqual(t, cs.Count, int64(5))
+	require.Less(t, cs.Count, int64(8), "cluster-scoped count should be capped")
+}
+
 func TestIntegrationDataStore_BatchDelete(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreBatchDelete)
 	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreBatchDelete)
@@ -3186,7 +3322,7 @@ func testDataStoreBatchGet(t *testing.T, ctx context.Context, ds *dataStore) {
 
 	t.Run("batch get with some non-existent keys", func(t *testing.T) {
 		// Create 3 existing keys
-		existingKeys := make([]DataKey, 3)
+		existingKeys := make([]DataKey, 3) //nolint:prealloc
 		for i := 0; i < 3; i++ {
 			rv := node.Generate().Int64()
 			existingKeys[i] = DataKey{
@@ -3390,5 +3526,123 @@ func testDataStoreGetLatestAndPredecessor(t *testing.T, ctx context.Context, ds 
 		_, _, err := ds.GetLatestAndPredecessor(ctx, nonExistentKey)
 		require.Error(t, err)
 		require.Equal(t, ErrNotFound, err)
+	})
+}
+
+func TestIsSnowflake(t *testing.T) {
+	created2017 := time.Date(2017, 3, 26, 17, 3, 40, 0, time.UTC)
+	micro2017 := created2017.UnixMicro()
+	snowflake2017 := rvmanager.SnowflakeFromRV(micro2017)
+
+	require.Less(t, snowflake2017, int64(1e18),
+		"sanity: a pre-2018 snowflake must fall below the old 1e18 threshold")
+	require.Equal(t, micro2017, rvmanager.RVFromSnowflake(snowflake2017),
+		"sanity: the micro-RV and key_path snowflake must round-trip")
+
+	tests := []struct {
+		name string
+		rv   int64
+		want bool
+	}{
+		{"zero", 0, false},
+		{"legacy micro-RV from 2017", micro2017, false},
+		{"recent legacy micro-RV", time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC).UnixMicro(), false},
+		{"far-future legacy micro-RV (year 2200)", time.Date(2200, 1, 1, 0, 0, 0, 0, time.UTC).UnixMicro(), false},
+		// Regression: a snowflake from a pre-2018 timestamp is < 1e18 and was
+		// previously misclassified as a legacy micro-RV.
+		{"snowflake from 2017 timestamp", snowflake2017, true},
+		{"snowflake from 2013 timestamp", rvmanager.SnowflakeFromRV(time.Date(2013, 1, 1, 0, 0, 0, 0, time.UTC).UnixMicro()), true},
+		{"modern snowflake from 2025 timestamp", rvmanager.SnowflakeFromRV(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC).UnixMicro()), true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, IsSnowflake(tt.rv))
+		})
+	}
+}
+
+// TestToSnowflakeRVIdempotent verifies that a value that is already a snowflake
+// must pass through toSnowflakeRV unchanged, including when it derives from an
+// old (pre-2018) timestamp and is therefore numerically below 1e18.
+func TestToSnowflakeRVIdempotent(t *testing.T) {
+	cases := []struct {
+		name      string
+		snowflake int64
+	}{
+		{"snowflake from 2017 timestamp", rvmanager.SnowflakeFromRV(time.Date(2017, 3, 26, 17, 3, 40, 0, time.UTC).UnixMicro())},
+		{"snowflake from 2014 timestamp", rvmanager.SnowflakeFromRV(time.Date(2014, 6, 1, 0, 0, 0, 0, time.UTC).UnixMicro())},
+		{"snowflake from 2025 timestamp", rvmanager.SnowflakeFromRV(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC).UnixMicro())},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.snowflake, ToSnowflakeRV(tt.snowflake),
+				"toSnowflakeRV must not re-encode a value that is already a snowflake")
+		})
+	}
+}
+
+func TestIntegrationDataStore_ListStoredResources(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListStoredResources)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListStoredResources)
+}
+
+func testDataStoreListStoredResources(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	save := func(ns, group, resource, name string) {
+		key := DataKey{
+			Namespace:       ns,
+			Group:           group,
+			Resource:        resource,
+			Name:            name,
+			ResourceVersion: node.Generate().Int64(),
+			Action:          DataActionCreated,
+		}
+		require.NoError(t, ds.Save(ctx, key, bytes.NewReader([]byte("v"))))
+	}
+
+	sortFunc := func(a, b NamespacedResource) int {
+		if a.Namespace != b.Namespace {
+			return strings.Compare(a.Namespace, b.Namespace)
+		}
+		if a.Group != b.Group {
+			return strings.Compare(a.Group, b.Group)
+		}
+		return strings.Compare(a.Resource, b.Resource)
+	}
+
+	// Two objects of the same group/resource in ns1 must be reported once.
+	save("ns1", "apps", "deployments", "d1")
+	save("ns1", "apps", "deployments", "d2")
+	save("ns1", "apps", "services", "s1")
+	save("ns2", "apps", "deployments", "d1")
+
+	t.Run("namespace filter returns distinct identities", func(t *testing.T) {
+		got, err := ds.ListStoredResources(ctx, NamespacedResource{Namespace: "ns1"})
+		require.NoError(t, err)
+		slices.SortFunc(got, sortFunc)
+		require.Equal(t, []NamespacedResource{
+			{Namespace: "ns1", Group: "apps", Resource: "deployments"},
+			{Namespace: "ns1", Group: "apps", Resource: "services"},
+		}, got)
+	})
+
+	t.Run("resource filter is scoped to the namespace", func(t *testing.T) {
+		got, err := ds.ListStoredResources(ctx, NamespacedResource{Namespace: "ns1", Resource: "services"})
+		require.NoError(t, err)
+		require.Equal(t, []NamespacedResource{
+			{Namespace: "ns1", Group: "apps", Resource: "services"},
+		}, got)
+	})
+
+	t.Run("non-existent namespace is empty", func(t *testing.T) {
+		got, err := ds.ListStoredResources(ctx, NamespacedResource{Namespace: "missing"})
+		require.NoError(t, err)
+		require.Empty(t, got)
+	})
+
+	t.Run("empty namespace is rejected", func(t *testing.T) {
+		_, err := ds.ListStoredResources(ctx, NamespacedResource{})
+		require.Error(t, err)
 	})
 }

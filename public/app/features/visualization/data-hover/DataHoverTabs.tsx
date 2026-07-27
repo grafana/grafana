@@ -11,7 +11,7 @@ type Props = {
 
 export const DataHoverTabs = ({ layers, setActiveTabIndex, activeTabIndex }: Props) => {
   return (
-    <TabsBar>
+    <TabsBar data-testid="data-hover-tabs">
       {layers &&
         layers.map((g, index) => (
           <Tab

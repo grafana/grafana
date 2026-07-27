@@ -160,7 +160,7 @@ export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props)
       onDismiss={onDismissClick}
       disabled={shouldDisableConfirm(inProgress, installsRemaining, pluginsSelected)}
       confirmText={getConfirmationText(installsRemaining, inProgress, pluginsSelected)}
-      confirmButtonVariant="primary"
+      confirmVariant="primary"
     />
   );
 };

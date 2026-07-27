@@ -249,7 +249,7 @@ interface AddToOrgModalProps {
   onDismiss?(): void;
 }
 
-export const AddToOrgModal = memo(({ isOpen, user, userOrgs, onOrgAdd, onDismiss }: AddToOrgModalProps) => {
+const AddToOrgModal = memo(({ isOpen, user, userOrgs, onOrgAdd, onDismiss }: AddToOrgModalProps) => {
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
   const [role, setRole] = useState<OrgRole>(OrgRole.Viewer);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
@@ -373,7 +373,7 @@ const getChangeOrgButtonTheme = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export function ChangeOrgButton({
+function ChangeOrgButton({
   lockMessage,
   onChangeRoleClick,
   isExternalUser,

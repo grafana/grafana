@@ -30,7 +30,9 @@ describe('useTransformationSearchAndFilter', () => {
 
     // Should return all transformations from the registry
     const allTransformers = standardTransformersRegistry.list();
-    expect(result.current.filteredTransformations.length).toBe(allTransformers.length);
+    const visibleTransformers = allTransformers.filter(({ excludeFromPicker }) => !excludeFromPicker);
+    expect(allTransformers.length).toBeGreaterThan(visibleTransformers.length);
+    expect(result.current.filteredTransformations.length).toBe(visibleTransformers.length);
   });
 
   describe('filtering', () => {

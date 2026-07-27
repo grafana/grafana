@@ -97,6 +97,14 @@ describe('barchartPresetsSupplier', () => {
     });
   });
 
+  it('all presets include cardOptions with maxSeries', () => {
+    const dataSummary = getPanelDataSummary([createPresetFrame(2)]);
+    const presets = barchartPresetsSupplier({ dataSummary });
+    for (const preset of presets!) {
+      expect(preset.cardOptions?.maxSeries).toBeDefined();
+    }
+  });
+
   describe('preset structure', () => {
     it('each preset has name, options, fieldConfig, and cardOptions with previewModifier', () => {
       const dataSummary = getPanelDataSummary([createPresetFrame(1)]);
@@ -214,7 +222,6 @@ describe('barchartPresetsSupplier', () => {
           barWidth: 0.8,
           legend: {
             calcs: [],
-            displayMode: 'hidden',
             placement: 'right',
             showLegend: false,
           },

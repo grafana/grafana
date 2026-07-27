@@ -1,0 +1,107 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`useRuleAdministrationAbility matches snapshot for a Grafana rule with all permissions granted 1`] = `
+{
+  "delete": {
+    "granted": true,
+  },
+  "deletePermanently": {
+    "anyOfPermissions": [],
+    "cause": "INSUFFICIENT_PERMISSIONS",
+    "granted": false,
+  },
+  "duplicate": {
+    "granted": true,
+  },
+  "loading": false,
+  "pause": {
+    "granted": true,
+  },
+  "restore": {
+    "granted": true,
+  },
+  "update": {
+    "granted": true,
+  },
+}
+`;
+
+exports[`useRuleAdministrationAbility matches snapshot for a cloud rule in loading state 1`] = `
+{
+  "delete": {
+    "cause": "LOADING",
+    "granted": false,
+  },
+  "deletePermanently": {
+    "cause": "NOT_SUPPORTED",
+    "granted": false,
+  },
+  "duplicate": {
+    "cause": "LOADING",
+    "granted": false,
+  },
+  "loading": true,
+  "pause": {
+    "cause": "NOT_SUPPORTED",
+    "granted": false,
+  },
+  "restore": {
+    "cause": "NOT_SUPPORTED",
+    "granted": false,
+  },
+  "update": {
+    "cause": "LOADING",
+    "granted": false,
+  },
+}
+`;
+
+exports[`useRuleAdministrationAbility returns PROVISIONED for provisioned Grafana rules — duplicate remains grantable 1`] = `
+{
+  "delete": {
+    "cause": "PROVISIONED",
+    "granted": false,
+  },
+  "deletePermanently": {
+    "cause": "PROVISIONED",
+    "granted": false,
+  },
+  "duplicate": {
+    "granted": true,
+  },
+  "loading": false,
+  "pause": {
+    "cause": "PROVISIONED",
+    "granted": false,
+  },
+  "restore": {
+    "cause": "PROVISIONED",
+    "granted": false,
+  },
+  "update": {
+    "cause": "PROVISIONED",
+    "granted": false,
+  },
+}
+`;
+
+exports[`useRuleExploreAbility returns INSUFFICIENT_PERMISSIONS when user lacks DataSourcesExplore 1`] = `
+{
+  "anyOfPermissions": [
+    "datasources:explore",
+  ],
+  "cause": "INSUFFICIENT_PERMISSIONS",
+  "granted": false,
+}
+`;
+
+exports[`useRuleSilenceAbility matches snapshot for denied silence — freezes the anyOfPermissions list 1`] = `
+{
+  "anyOfPermissions": [
+    "alert.silences:create",
+    "alert.instances:create",
+  ],
+  "cause": "INSUFFICIENT_PERMISSIONS",
+  "granted": false,
+}
+`;

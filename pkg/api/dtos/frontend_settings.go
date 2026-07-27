@@ -91,7 +91,8 @@ type FrontendSettingsReportingDTO struct {
 }
 
 type FrontendSettingsAnalyticsDTO struct {
-	Enabled bool `json:"enabled"`
+	Enabled                    bool `json:"enabled"`
+	PresenceIndicatorsDisabled bool `json:"presenceIndicatorsDisabled,omitempty"`
 }
 
 type FrontendSettingsUnifiedAlertingStateHistoryDTO struct {
@@ -195,6 +196,8 @@ type FrontendSettingsDTO struct {
 	NewsFeedEnabled     bool `json:"newsFeedEnabled"`
 	QueryHistoryEnabled bool `json:"queryHistoryEnabled"`
 
+	AnnotationAppPlatformEnabled bool `json:"annotationAppPlatformEnabled"`
+
 	GoogleAnalyticsId                   string `json:"googleAnalyticsId"`
 	GoogleAnalytics4Id                  string `json:"googleAnalytics4Id"`
 	GoogleAnalytics4SendManualPageViews bool   `json:"GoogleAnalytics4SendManualPageViews"`
@@ -205,6 +208,9 @@ type FrontendSettingsDTO struct {
 	RudderstackV3SdkUrl        string `json:"rudderstackV3SdkUrl"`
 	RudderstackConfigUrl       string `json:"rudderstackConfigUrl"`
 	RudderstackIntegrationsUrl string `json:"rudderstackIntegrationsUrl"`
+
+	PostHogToken string `json:"postHogToken"`
+	PostHogHost  string `json:"postHogHost"`
 
 	AnalyticsConsoleReporting bool `json:"analyticsConsoleReporting"`
 

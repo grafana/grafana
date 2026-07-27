@@ -189,6 +189,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 		expectedUnregCalls int
 		registeredIDs      []string
 		unregisteredIDs    []string
+		updatedIDs         []string
 	}{
 		{
 			name:               "no installed plugins, no API plugins",
@@ -209,6 +210,74 @@ func TestSyncer_syncNamespace(t *testing.T) {
 			expectedRegCalls:   2,
 			expectedUnregCalls: 0,
 			registeredIDs:      []string{"plugin-1", "plugin-2"},
+		},
+		{
+			name: "child plugins are ignored",
+			installedPlugins: []pluginstore.Plugin{
+				{
+					JSONData: plugins.JSONData{ID: "parent-plugin", Info: plugins.Info{Version: "1.0.0"}},
+					Class:    plugins.ClassExternal,
+				},
+				{
+					JSONData:        plugins.JSONData{ID: "child-plugin", Info: plugins.Info{Version: "1.0.0"}},
+					Class:           plugins.ClassExternal,
+					IncludedInAppID: "parent-plugin",
+				},
+			},
+			apiPlugins: []pluginsv0alpha1.Plugin{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "child-plugin",
+						Annotations: map[string]string{
+							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
+						},
+					},
+					Spec: pluginsv0alpha1.PluginSpec{Id: "child-plugin"},
+				},
+			},
+			expectedError:      nil,
+			expectedRegCalls:   1,
+			expectedUnregCalls: 1,
+			registeredIDs:      []string{"parent-plugin"},
+			unregisteredIDs:    []string{"child-plugin"},
+		},
+		{
+			name: "directly installed dependency plugin is registered",
+			installedPlugins: []pluginstore.Plugin{
+				{
+					JSONData: plugins.JSONData{
+						ID:   "parent-datasource",
+						Type: plugins.TypeDataSource,
+						Info: plugins.Info{Version: "1.0.0"},
+						Dependencies: plugins.Dependencies{
+							Plugins: []plugins.Dependency{{ID: "dependency-panel"}},
+						},
+					},
+					Class: plugins.ClassExternal,
+				},
+				{
+					JSONData: plugins.JSONData{ID: "dependency-panel", Info: plugins.Info{Version: "2.0.0"}},
+					Class:    plugins.ClassExternal,
+				},
+			},
+			apiPlugins: []pluginsv0alpha1.Plugin{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "parent-datasource",
+						Annotations: map[string]string{
+							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
+						},
+					},
+					Spec: pluginsv0alpha1.PluginSpec{Id: "parent-datasource", Version: "1.0.0"},
+				},
+			},
+			expectedError:      nil,
+			expectedRegCalls:   1,
+			expectedUnregCalls: 0,
+			registeredIDs:      []string{"dependency-panel"},
+			// the parent's applied-dependencies annotation is missing, so the
+			// sync updates the parent to trigger dependency reconciliation
+			updatedIDs: []string{"parent-datasource"},
 		},
 		{
 			name:             "API plugins only",
@@ -287,6 +356,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 			// Track calls
 			var registeredIDs []string
 			var unregisteredIDs []string
+			var updatedIDs []string
 
 			// Setup fake client
 			fakeClient := &fakePluginInstallClient{
@@ -300,6 +370,10 @@ func TestSyncer_syncNamespace(t *testing.T) {
 				},
 				createFunc: func(ctx context.Context, obj *pluginsv0alpha1.Plugin, opts resource.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
 					registeredIDs = append(registeredIDs, obj.Spec.Id)
+					return obj, nil
+				},
+				updateFunc: func(ctx context.Context, obj *pluginsv0alpha1.Plugin, opts resource.UpdateOptions) (*pluginsv0alpha1.Plugin, error) {
+					updatedIDs = append(updatedIDs, obj.Spec.Id)
 					return obj, nil
 				},
 				deleteFunc: func(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
@@ -359,6 +433,8 @@ func TestSyncer_syncNamespace(t *testing.T) {
 					require.ElementsMatch(t, tt.unregisteredIDs, unregisteredIDs)
 				}
 			}
+
+			require.ElementsMatch(t, tt.updatedIDs, updatedIDs)
 		})
 	}
 }
@@ -484,6 +560,10 @@ func (f *fakeClientGenerator) ClientFor(kind resource.Kind) (resource.Client, er
 }
 
 func (f *fakeClientGenerator) GetCustomRouteClient(schema.GroupVersion, string) (resource.CustomRouteClient, error) {
+	return nil, nil
+}
+
+func (f *fakeClientGenerator) DiscoveryClient() (resource.DiscoveryClient, error) {
 	return nil, nil
 }
 

@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../http_api/other/ # /docs/grafana/next/http_api/other/
-  - ../../../developers/http_api/other/ # /docs/grafana/next/developers/http_api/other/
+  - ../../../../http_api/other/ # /docs/grafana/next/http_api/other/
+  - ../../../../developers/http_api/other/ # /docs/grafana/next/developers/http_api/other/
   - ../../../../developer-resources/api-reference/http-api/other/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/other/
 description: Grafana Other HTTP API
@@ -20,13 +20,7 @@ title: 'Other HTTP API '
 
 # Frontend Settings API
 
-{{< admonition type="caution" >}}
-
-Starting in Grafana 13, `/api` endpoints are being deprecated. This change doesn't disrupt or break your current setup: legacy APIs are not being disabled and remain fully accessible and operative. However, `/api` routes will no longer be updated and **will be removed in a future major release.**
-
-To learn more refer to the [new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
-
-{{< /admonition >}}
+{{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Get Settings
 
@@ -38,7 +32,7 @@ To learn more refer to the [new API structure in Grafana](https://grafana.com/do
 GET /api/frontend/settings HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -88,7 +82,7 @@ Content-Type: application/json
 GET /api/login/ping HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:

@@ -12,7 +12,7 @@
  * This is a temporary compat layer — remove once GroupByVariable is fully deprecated.
  */
 import type { GroupByVariableModel, TypedVariableModel } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import type {
   AdhocVariableKind,
   GroupByVariableKind,
@@ -64,6 +64,48 @@ function buildGroupByFilters(currentEntries: KeyWithLabel[], defaultEntries: Key
   return filters;
 }
 
+function readGroupByUrlEntries(name: string): KeyWithLabel[] | undefined {
+  const values = locationService
+    .getSearch()
+    .getAll(`var-${name}`)
+    .filter((v) => v !== '');
+  if (values.length === 0) {
+    return undefined;
+  }
+  return values.map((key) => ({ key }));
+}
+
+/**
+ * Rewrites the URL so that groupBy values are
+ * folded into its matching filter as adhoc-style groupBy filter entries. This
+ * runs before the scene activates, so scenes' URL sync sees the merged state
+ * when it first reads the URL.
+ */
+function rewriteUrlForGroupByMigration(groupByName: string, adhocName: string): void {
+  const search = locationService.getSearch();
+  const groupByValues = search.getAll(`var-${groupByName}`);
+
+  if (groupByValues.length === 0) {
+    return;
+  }
+
+  const adhocEntries = groupByValues.filter((v) => v !== '').map((key) => `${key}|groupBy`);
+
+  const groupByKey = `var-${groupByName}`;
+  const adhocKey = `var-${adhocName}`;
+
+  const existingAdhoc = search.getAll(adhocKey).filter((v) => v !== '');
+  const merged = [...existingAdhoc, ...adhocEntries];
+
+  locationService.partial(
+    {
+      [adhocKey]: merged.length === 0 ? '' : merged.length === 1 ? merged[0] : merged,
+      [groupByKey]: null,
+    },
+    true
+  );
+}
+
 // ---------------------------------------------------------------------------
 // V1 (legacy JSON model)
 // ---------------------------------------------------------------------------
@@ -106,9 +148,14 @@ export function migrateGroupByVariablesV1(variables: TypedVariableModel[]): Type
       continue;
     }
 
-    const currentEntries = extractV1Entries(gb.current);
+    const urlEntries = readGroupByUrlEntries(gb.name);
+    const currentEntries = urlEntries ?? extractV1Entries(gb.current);
     const defaultEntries = extractV1Entries(gb.defaultValue);
     const groupByFilters = buildGroupByFilters(currentEntries, defaultEntries);
+
+    if (urlEntries && urlEntries.length > 0) {
+      rewriteUrlForGroupByMigration(gb.name, v.name);
+    }
 
     result.push({
       ...v,
@@ -180,9 +227,14 @@ export function migrateGroupByVariablesV2(variables: VariableKind[]): VariableKi
       continue;
     }
 
-    const currentEntries = extractV2Entries(gb.spec.current);
+    const urlEntries = readGroupByUrlEntries(gb.spec.name);
+    const currentEntries = urlEntries ?? extractV2Entries(gb.spec.current);
     const defaultEntries = extractV2Entries(gb.spec.defaultValue);
     const groupByFilters = buildGroupByFilters(currentEntries, defaultEntries);
+
+    if (urlEntries && urlEntries.length > 0) {
+      rewriteUrlForGroupByMigration(gb.spec.name, v.spec.name);
+    }
 
     const migrated: AdhocVariableKind = {
       ...v,

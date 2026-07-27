@@ -19,6 +19,7 @@ import { CanvasGridAddActions, useNestingRestrictions } from './CanvasGridAddAct
 
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
+    editSessionStarted: jest.fn(),
     trackAddPanelClick: jest.fn(),
     trackGroupRowClick: jest.fn(),
     trackGroupTabClick: jest.fn(),

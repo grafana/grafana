@@ -5,15 +5,16 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestSyncWorker_IsSupported(t *testing.T) {
@@ -45,7 +46,7 @@ func TestSyncWorker_IsSupported(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			worker := NewSyncWorker(nil, nil, nil, nil, metrics, tracing.NewNoopTracerService(), 10)
+			worker := NewSyncWorker(nil, nil, nil, nil, metrics, tracing.NewNoopTracerService(), 10, 0)
 			result := worker.IsSupported(context.Background(), tt.job)
 			require.Equal(t, tt.expected, result)
 		})
@@ -62,7 +63,7 @@ func TestSyncWorker_ProcessNotReaderWriter(t *testing.T) {
 			Title: "test-repo",
 		},
 	})
-	worker := NewSyncWorker(nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracing.NewNoopTracerService(), 10)
+	worker := NewSyncWorker(nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracing.NewNoopTracerService(), 10, 0)
 	err := worker.Process(context.Background(), repo, provisioning.Job{}, jobs.NewMockJobProgressRecorder(t))
 	require.EqualError(t, err, "sync job submitted for repository that does not support read-write")
 }
@@ -91,7 +92,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			maxResourcesPerRepository: 5,
 			stats: &provisioning.ResourceStats{
 				Managed: []provisioning.ManagerStats{
-					{Stats: []provisioning.ResourceCount{{Group: "dashboards.grafana.app", Resource: "dashboards", Count: 10}}},
+					{Stats: []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 10}}},
 				},
 			},
 			expectedQuotaReason: provisioning.ReasonQuotaExceeded,
@@ -102,7 +103,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			maxResourcesPerRepository: 10,
 			stats: &provisioning.ResourceStats{
 				Managed: []provisioning.ManagerStats{
-					{Stats: []provisioning.ResourceCount{{Group: "dashboards.grafana.app", Resource: "dashboards", Count: 10}}},
+					{Stats: []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 10}}},
 				},
 			},
 			expectedQuotaReason: provisioning.ReasonQuotaReached,
@@ -113,7 +114,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			maxResourcesPerRepository: 100,
 			stats: &provisioning.ResourceStats{
 				Managed: []provisioning.ManagerStats{
-					{Stats: []provisioning.ResourceCount{{Group: "dashboards.grafana.app", Resource: "dashboards", Count: 50}}},
+					{Stats: []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 50}}},
 				},
 			},
 			expectedQuotaReason: provisioning.ReasonWithinQuota,
@@ -205,6 +206,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 				jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()),
 				tracing.NewNoopTracerService(),
 				10,
+				0,
 			)
 
 			// Create test job
@@ -343,6 +345,7 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 				jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()),
 				tracing.NewNoopTracerService(),
 				10,
+				0,
 			)
 
 			job := provisioning.Job{
@@ -903,6 +906,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()),
 				tracing.NewNoopTracerService(),
 				10,
+				0,
 			)
 
 			// Create test job

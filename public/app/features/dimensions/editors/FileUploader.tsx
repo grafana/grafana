@@ -18,7 +18,7 @@ interface Props {
 interface ErrorResponse {
   message: string;
 }
-export function FileDropzoneCustomChildren({ secondaryText = 'Drag and drop here or browse' }) {
+function FileDropzoneCustomChildren({ secondaryText = 'Drag and drop here or browse' }) {
   const styles = useStyles2(getStyles);
 
   return (

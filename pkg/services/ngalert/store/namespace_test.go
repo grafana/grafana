@@ -67,7 +67,7 @@ func TestGetNamespaceByTitle(t *testing.T) {
 	store := DBstore{
 		FolderService: folderService,
 	}
-	_, err := store.GetNamespaceByTitle(context.Background(), "Test Folder", 1, nil, folder.RootFolderUID)
+	_, err := store.GetNamespaceByTitle(context.Background(), "Test Folder", 1, nil, folder.LegacyRootFolderUID) //nolint:staticcheck
 	require.Error(t, err)
 	require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
 
@@ -76,7 +76,7 @@ func TestGetNamespaceByTitle(t *testing.T) {
 
 func TestGetOrCreateNamespaceByTitle(t *testing.T) {
 	store := DBstore{}
-	_, created, err := store.GetOrCreateNamespaceByTitle(context.Background(), "", 1, nil, folder.RootFolderUID)
+	_, created, err := store.GetOrCreateNamespaceByTitle(context.Background(), "", 1, nil, folder.LegacyRootFolderUID) //nolint:staticcheck
 	require.False(t, created)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "title is empty")

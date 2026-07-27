@@ -1064,5 +1064,66 @@
     "grants": [
       "Editor"
     ]
+  },
+  {
+    "name": "fixed:alerting.alertmanager-imports:writer",
+    "displayName": "Alerting alertmanager imports writer",
+    "description": "Read, write, and delete Prometheus/Mimir-compatible alertmanager configurations imported via the convert API.",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "notifications.alerting.grafana.app/alertmanagerimports:create",
+        "scope": "notifications.alerting.grafana.app/alertmanagerimports:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/alertmanagerimports:delete",
+        "scope": "notifications.alerting.grafana.app/alertmanagerimports:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/alertmanagerimports:get",
+        "scope": "notifications.alerting.grafana.app/alertmanagerimports:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/alertmanagerimports:update",
+        "scope": "notifications.alerting.grafana.app/alertmanagerimports:*"
+      }
+    ],
+    "grants": [
+      "Admin"
+    ]
+  },
+  {
+    "name": "fixed:alerting.notifications.config:reader",
+    "displayName": "Alerting Notifications Config Reader",
+    "description": "Read the alerting notifications configuration, including external Alertmanager sync state.",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "notifications.alerting.grafana.app/configs:get",
+        "scope": "configs:*"
+      }
+    ],
+    "grants": [
+      "Viewer"
+    ]
+  },
+  {
+    "name": "fixed:alerting.notifications.config:writer",
+    "displayName": "Alerting Notifications Config Writer",
+    "description": "Update the alerting notifications configuration, including the external Alertmanager sync target.",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "notifications.alerting.grafana.app/configs:get",
+        "scope": "configs:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/configs:update",
+        "scope": "configs:*"
+      }
+    ],
+    "grants": [
+      "Admin"
+    ]
   }
 ]

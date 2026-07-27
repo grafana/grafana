@@ -11,40 +11,40 @@ import (
 )
 
 type Broadcaster[T any] interface {
-	Subscribe(ctx context.Context, name string) (<-chan T, error)
+	Subscribe(ctx context.Context, name, resource string) (<-chan T, error)
 	Unsubscribe(<-chan T)
 }
 
 type BroadcasterMetrics struct {
-	Subscribers          prometheus.Gauge
+	Subscribers          *prometheus.GaugeVec
 	SubscriptionsTotal   *prometheus.CounterVec
 	UnsubscriptionsTotal *prometheus.CounterVec
-	EventsReceivedTotal  prometheus.Counter
-	OverflowEventsTotal  prometheus.Counter
+	EventsReceivedTotal  *prometheus.CounterVec
+	OverflowEventsTotal  *prometheus.CounterVec
 }
 
 func newBroadcasterMetrics(reg prometheus.Registerer) *BroadcasterMetrics {
 	return &BroadcasterMetrics{
-		Subscribers: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
+		Subscribers: promauto.With(reg).NewGaugeVec(prometheus.GaugeOpts{
 			Name: "storage_server_broadcaster_subscribers",
 			Help: "Current number of active broadcaster subscribers.",
-		}),
+		}, []string{"resource"}),
 		SubscriptionsTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "storage_server_broadcaster_subscriptions_total",
 			Help: "Total number of broadcaster subscription attempts by result.",
-		}, []string{"result"}),
+		}, []string{"resource", "result"}),
 		UnsubscriptionsTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "storage_server_broadcaster_unsubscriptions_total",
 			Help: "Total number of broadcaster unsubscriptions by reason.",
-		}, []string{"reason"}),
-		EventsReceivedTotal: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+		}, []string{"resource", "reason"}),
+		EventsReceivedTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "storage_server_broadcaster_events_received_total",
 			Help: "Total number of events received by the broadcaster.",
-		}),
-		OverflowEventsTotal: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+		}, []string{"resource"}),
+		OverflowEventsTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "storage_server_broadcaster_overflow_events_total",
 			Help: "Total number of events appended to subscriber overflow buffers.",
-		}),
+		}, []string{"resource"}),
 	}
 }
 
@@ -52,12 +52,14 @@ func newBroadcasterMetrics(reg prometheus.Registerer) *BroadcasterMetrics {
 // all active subscribers. The caller owns the input channel and is responsible
 // for closing it when no more data will be sent. The broadcaster terminates
 // when either ctx is cancelled or input is closed.
-func NewBroadcaster[T any](ctx context.Context, input <-chan T, metrics *BroadcasterMetrics) Broadcaster[T] {
-	return newBroadcasterWithSizes[T](ctx, input, watchChanSize, defaultOverflowCap, metrics)
+//
+// eventResourceFn extracts a resource label for an event entering the broadcaster.
+func NewBroadcaster[T any](ctx context.Context, input <-chan T, metrics *BroadcasterMetrics, eventResourceFn func(T) string) Broadcaster[T] {
+	return newBroadcasterWithSizes[T](ctx, input, watchChanSize, defaultOverflowCap, metrics, eventResourceFn)
 }
 
 // newBroadcasterWithSizes creates a broadcaster with configurable buffer sizes for testing.
-func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufSize, ovfCap int, metrics *BroadcasterMetrics) *broadcaster[T] {
+func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufSize, ovfCap int, metrics *BroadcasterMetrics, eventResourceFn func(T) string) *broadcaster[T] {
 	if metrics == nil {
 		metrics = newBroadcasterMetrics(nil)
 	}
@@ -69,6 +71,7 @@ func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufS
 		subs:            make(map[<-chan T]*subscription[T]),
 		terminated:      make(chan struct{}),
 		metrics:         metrics,
+		eventResourceFn: eventResourceFn,
 		watchBufSize:    subBufSize,
 		overflowCap:     ovfCap,
 	}
@@ -80,6 +83,7 @@ func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufS
 
 type subscription[T any] struct {
 	name     string
+	resource string // metric label for subscriber-attributed metrics
 	ch       chan T
 	overflow []T // pending items when channel is full, nil when not overflowing
 }
@@ -92,11 +96,12 @@ type broadcaster[T any] struct {
 
 	// subscription management
 
-	cache       ringBuffer[T]
-	subscribe   chan *subscription[T]
-	unsubscribe chan (<-chan T)
-	subs        map[<-chan T]*subscription[T]
-	metrics     *BroadcasterMetrics
+	cache           ringBuffer[T]
+	subscribe       chan *subscription[T]
+	unsubscribe     chan (<-chan T)
+	subs            map[<-chan T]*subscription[T]
+	metrics         *BroadcasterMetrics
+	eventResourceFn func(T) string
 
 	// configuration
 
@@ -104,6 +109,13 @@ type broadcaster[T any] struct {
 	overflowCap     int
 	lastOverflowLog time.Time
 	overflowCount   int64 // overflow events since last log
+}
+
+func (b *broadcaster[T]) eventResource(item T) string {
+	if b.eventResourceFn == nil {
+		return "unknown"
+	}
+	return b.eventResourceFn(item)
 }
 
 const (
@@ -141,15 +153,15 @@ const (
 	overflowLogInterval = 10 * time.Second
 )
 
-func (b *broadcaster[T]) Subscribe(ctx context.Context, name string) (<-chan T, error) {
-	sub := &subscription[T]{name: name, ch: make(chan T, b.watchBufSize)}
+func (b *broadcaster[T]) Subscribe(ctx context.Context, name, resource string) (<-chan T, error) {
+	sub := &subscription[T]{name: name, resource: resource, ch: make(chan T, b.watchBufSize)}
 
 	select {
 	case <-ctx.Done(): // client canceled
-		b.metrics.SubscriptionsTotal.WithLabelValues(subscriptionResultCtxCanceled).Inc()
+		b.metrics.SubscriptionsTotal.WithLabelValues(resource, subscriptionResultCtxCanceled).Inc()
 		return nil, ctx.Err()
 	case <-b.terminated: // no more data
-		b.metrics.SubscriptionsTotal.WithLabelValues(subscriptionResultTerminated).Inc()
+		b.metrics.SubscriptionsTotal.WithLabelValues(resource, subscriptionResultTerminated).Inc()
 		return nil, io.EOF
 	case b.subscribe <- sub: // success submitting subscription
 		return sub.ch, nil
@@ -210,13 +222,13 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 	addSubscriber := func(sub *subscription[T]) {
 		// send initial batch of cached items
 		if !b.cache.readInto(sub.ch) {
-			b.metrics.SubscriptionsTotal.WithLabelValues(subscriptionResultReplayFailed).Inc()
+			b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, subscriptionResultReplayFailed).Inc()
 			close(sub.ch)
 			return
 		}
 		b.subs[sub.ch] = sub
-		b.metrics.SubscriptionsTotal.WithLabelValues(subscriptionResultOK).Inc()
-		b.metrics.Subscribers.Inc()
+		b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, subscriptionResultOK).Inc()
+		b.metrics.Subscribers.WithLabelValues(sub.resource).Inc()
 	}
 
 	for {
@@ -245,7 +257,7 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 			if !ok {
 				return
 			}
-			b.metrics.EventsReceivedTotal.Inc()
+			b.metrics.EventsReceivedTotal.WithLabelValues(b.eventResource(item)).Inc()
 			b.cache.add(item)
 
 			var slow []<-chan T
@@ -255,7 +267,7 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 				if len(sub.overflow) > 0 {
 					// Still overflowing — append to overflow
 					sub.overflow = append(sub.overflow, item)
-					b.metrics.OverflowEventsTotal.Inc()
+					b.metrics.OverflowEventsTotal.WithLabelValues(sub.resource).Inc()
 					b.overflowCount++
 					if len(sub.overflow) > b.overflowCap {
 						slog.Warn("disconnecting subscriber: overflow cap exceeded",
@@ -269,7 +281,7 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 					case sub.ch <- item:
 					default:
 						sub.overflow = append(sub.overflow, item)
-						b.metrics.OverflowEventsTotal.Inc()
+						b.metrics.OverflowEventsTotal.WithLabelValues(sub.resource).Inc()
 						b.overflowCount++
 						now := time.Now()
 						if now.Sub(b.lastOverflowLog) > overflowLogInterval {
@@ -305,8 +317,8 @@ func (b *broadcaster[T]) removeSubscriber(recv <-chan T, reason string) {
 	}
 	sub.overflow = nil
 	delete(b.subs, recv)
-	b.metrics.Subscribers.Dec()
-	b.metrics.UnsubscriptionsTotal.WithLabelValues(reason).Inc()
+	b.metrics.Subscribers.WithLabelValues(sub.resource).Dec()
+	b.metrics.UnsubscriptionsTotal.WithLabelValues(sub.resource, reason).Inc()
 	close(sub.ch)
 }
 

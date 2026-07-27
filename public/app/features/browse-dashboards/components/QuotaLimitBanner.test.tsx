@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
+import { render, screen, waitFor, within } from 'test/test-utils';
 
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
@@ -70,23 +70,12 @@ const warningAlert = { name: /nearing your storage limits/i };
 const extensionButton = { name: /request quota extension/i };
 
 describe('QuotaLimitBanner', () => {
-  testWithFeatureToggles({ enable: ['kubernetesUnifiedStorageQuotas'] });
-
   beforeEach(() => {
     mockIsFreeTier = false;
     store.delete(DISMISS_STORAGE_KEY);
   });
 
   describe('renders nothing', () => {
-    describe('when feature flag is off', () => {
-      testWithFeatureToggles({ disable: ['kubernetesUnifiedStorageQuotas'] });
-
-      it('renders nothing', async () => {
-        render(<QuotaLimitBanner />);
-        await expectNoAlert();
-      });
-    });
-
     it('when both queries error', async () => {
       mockErrorForResource();
       render(<QuotaLimitBanner />);

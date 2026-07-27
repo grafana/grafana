@@ -1,6 +1,6 @@
 import { map } from 'rxjs/operators';
 
-import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
+import { guessFieldTypeForField } from '../../dataframe/guessFieldType';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { type KeyValue } from '../../types/data';
 import { type DataFrame, type Field, FieldType } from '../../types/dataFrame';

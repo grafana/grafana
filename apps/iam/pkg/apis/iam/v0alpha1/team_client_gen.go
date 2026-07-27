@@ -1,9 +1,11 @@
 package v0alpha1
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -82,6 +84,33 @@ func (c *TeamClient) Delete(ctx context.Context, identifier resource.Identifier,
 	return c.client.Delete(ctx, identifier, opts)
 }
 
+type CreateTeamMemberRequest struct {
+	Body    CreateTeamMemberRequestBody
+	Headers http.Header
+}
+
+func (c *TeamClient) CreateTeamMember(ctx context.Context, identifier resource.Identifier, request CreateTeamMemberRequest) (*CreateTeamMemberResponse, error) {
+	body, err := json.Marshal(request.Body)
+	if err != nil {
+		return nil, fmt.Errorf("unable to marshal body to JSON: %w", err)
+	}
+	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
+		Path:    "/addmember",
+		Verb:    "POST",
+		Body:    io.NopCloser(bytes.NewReader(body)),
+		Headers: request.Headers,
+	})
+	if err != nil {
+		return nil, err
+	}
+	cast := CreateTeamMemberResponse{}
+	err = json.Unmarshal(resp, &cast)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response bytes into CreateTeamMemberResponse: %w", err)
+	}
+	return &cast, nil
+}
+
 type GetTeamGroupsRequest struct {
 	Headers http.Header
 }
@@ -120,6 +149,33 @@ func (c *TeamClient) GetTeamMembers(ctx context.Context, identifier resource.Ide
 	err = json.Unmarshal(resp, &cast)
 	if err != nil {
 		return nil, fmt.Errorf("unable to unmarshal response bytes into GetTeamMembersResponse: %w", err)
+	}
+	return &cast, nil
+}
+
+type DeleteTeamMemberRequest struct {
+	Body    DeleteTeamMemberRequestBody
+	Headers http.Header
+}
+
+func (c *TeamClient) DeleteTeamMember(ctx context.Context, identifier resource.Identifier, request DeleteTeamMemberRequest) (*DeleteTeamMemberResponse, error) {
+	body, err := json.Marshal(request.Body)
+	if err != nil {
+		return nil, fmt.Errorf("unable to marshal body to JSON: %w", err)
+	}
+	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
+		Path:    "/removemember",
+		Verb:    "POST",
+		Body:    io.NopCloser(bytes.NewReader(body)),
+		Headers: request.Headers,
+	})
+	if err != nil {
+		return nil, err
+	}
+	cast := DeleteTeamMemberResponse{}
+	err = json.Unmarshal(resp, &cast)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response bytes into DeleteTeamMemberResponse: %w", err)
 	}
 	return &cast, nil
 }

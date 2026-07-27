@@ -58,7 +58,7 @@ export function DrilldownExtensionPoint(props: Props): ReactElement | null {
   );
 }
 
-export type PluginExtensionExploreContext = {
+type PluginExtensionExploreContext = {
   targets: DataQuery[];
   timeRange: RawTimeRange;
   timeZone: TimeZone;

@@ -178,13 +178,15 @@ func (s *Service) newUserNameResolver(ctx context.Context, ns types.NamespaceInf
 	}, nil
 }
 
-func permissionsDelegateResolverFunc(scope string) (string, error) {
-	if strings.TrimPrefix(scope, "permissions:type:") == "delegate" {
-		// The permissions:type:delegate scope does not have any discriminating value,
-		// so we return a wildcard to indicate that it applies to all roles.
+func permissionsTypeResolverFunc(scope string) (string, error) {
+	switch strings.TrimPrefix(scope, "permissions:type:") {
+	case "delegate":
 		return "*", nil
+	case "escalate":
+		return "", nil
+	default:
+		return "", fmt.Errorf("unsupported scope: %s", scope)
 	}
-	return "", fmt.Errorf("unsupported scope: %s", scope)
 }
 
 func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, scopePrefix string) (ScopeResolverFunc, error) {
@@ -193,7 +195,7 @@ func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, scop
 	}
 
 	if scopePrefix == "permissions:type:" {
-		return permissionsDelegateResolverFunc, nil
+		return permissionsTypeResolverFunc, nil
 	}
 	if scopePrefix == "serviceaccounts:id:" {
 		return s.newServiceAccountNameResolver(ctx, ns)
@@ -245,7 +247,12 @@ func (s *Service) resolveScopeMap(ctx context.Context, ns types.NamespaceInfo, s
 		}
 		if resolved != "" {
 			scopeMap[resolved] = true
-			delete(scopeMap, scope)
+			// Keep permissions:type:* literals alongside their resolved value.
+			// delegate resolves to "*" for the roles resource, but the permissions resource
+			// skips wildcards (SkipWildcard) to block privilege escalation
+			if !strings.HasPrefix(scope, "permissions:type:") {
+				delete(scopeMap, scope)
+			}
 		}
 	}
 	return scopeMap, nil

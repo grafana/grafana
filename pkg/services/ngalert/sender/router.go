@@ -12,13 +12,13 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
-	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/grafana/grafana/pkg/api/datasource"
+	"github.com/grafana/grafana/pkg/api/datasource/validation"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -49,15 +49,19 @@ type AlertsRouter struct {
 	adminConfigPollInterval time.Duration
 
 	datasourceService datasources.DataSourceService
-	secretService     secrets.Service
+	secretService     secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	featureManager    featuremgmt.FeatureToggles
 	broadcastAlerts   bool
+	senderMetrics     *metrics.Sender
 }
 
 func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.AdminConfigurationStore,
 	clk clock.Clock, appURL *url.URL, disabledOrgs map[int64]struct{}, configPollInterval time.Duration,
-	datasourceService datasources.DataSourceService, secretService secrets.Service, featureManager featuremgmt.FeatureToggles,
-	broadcastAlerts bool) *AlertsRouter {
+	datasourceService datasources.DataSourceService,
+	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	featureManager featuremgmt.FeatureToggles,
+	broadcastAlerts bool, senderMetrics *metrics.Sender,
+) *AlertsRouter {
 	d := &AlertsRouter{
 		logger:           log.New("ngalert.sender.router"),
 		clock:            clk,
@@ -78,6 +82,7 @@ func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store stor
 		secretService:     secretService,
 		featureManager:    featureManager,
 		broadcastAlerts:   broadcastAlerts,
+		senderMetrics:     senderMetrics,
 	}
 	return d
 }
@@ -176,7 +181,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error
 		// No sender and have Alertmanager(s) to send to - start a new one.
 		d.logger.Info("Creating new sender for the external alertmanagers", "org", cfg.OrgID, "alertmanagers", redactedAMs)
 		senderLogger := log.New("ngalert.sender.external-alertmanager")
-		s, err := NewExternalAlertmanagerSender(senderLogger, prometheus.NewRegistry())
+		s, err := NewExternalAlertmanagerSender(senderLogger, d.senderMetrics.GetOrCreateOrgRegistry(cfg.OrgID))
 		if err != nil {
 			d.adminConfigMtx.Unlock()
 			return err
@@ -208,6 +213,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error
 	for orgID, s := range sendersToStop {
 		d.logger.Info("Stopping sender", "org", orgID)
 		s.Stop()
+		d.senderMetrics.RemoveOrgRegistry(orgID)
 		d.logger.Info("Stopped sender", "org", orgID)
 	}
 
@@ -311,6 +317,7 @@ func (d *AlertsRouter) datasourceToExternalAMcfg(ds *datasources.DataSource) (Ex
 	}
 
 	return ExternalAMcfg{
+		DatasourceUID:      ds.UID,
 		URL:                amURL,
 		Headers:            headers,
 		InsecureSkipVerify: insecureSkipVerify,
@@ -322,7 +329,7 @@ func (d *AlertsRouter) datasourceToExternalAMcfg(ds *datasources.DataSource) (Ex
 func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, error) {
 	// We re-use the same parsing logic as the datasource to make sure it matches whatever output the user received
 	// when doing the healthcheck.
-	parsed, err := datasource.ValidateURL(datasources.DS_ALERTMANAGER, ds.URL)
+	parsed, err := validation.ValidateURL(datasources.DS_ALERTMANAGER, ds.URL)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse alertmanager datasource url: %w", err)
 	}
@@ -443,6 +450,7 @@ func (d *AlertsRouter) Run(ctx context.Context) error {
 			for orgID, s := range d.externalAlertmanagers {
 				delete(d.externalAlertmanagers, orgID) // delete before we stop to make sure we don't accept any more alerts.
 				s.Stop()
+				d.senderMetrics.RemoveOrgRegistry(orgID)
 			}
 			d.adminConfigMtx.Unlock()
 

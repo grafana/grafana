@@ -1,8 +1,11 @@
 import { act, render } from '@testing-library/react';
+import { type ReactNode } from 'react';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { toUtc } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneTimeRange } from '@grafana/scenes';
+import { GrafanaContext } from 'app/core/context/GrafanaContext';
 
 import { DashboardControls } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
@@ -23,7 +26,7 @@ jest.mock('app/features/panel/panellinks/link_srv', () => ({
 describe('DashboardLinksControls', () => {
   it('renders dashboard links correctly', () => {
     const { controls } = buildTestScene();
-    const renderer = render(<controls.Component model={controls} />);
+    const renderer = renderInGrafanaContext(<controls.Component model={controls} />);
 
     // // Expect two dashboard link containers to be rendered
     const linkContainers = renderer.getAllByTestId(selectors.components.DashboardLinks.container);
@@ -37,7 +40,7 @@ describe('DashboardLinksControls', () => {
 
   it('updates link hrefs when time range changes', () => {
     const { controls, dashboard } = buildTestScene();
-    render(<controls.Component model={controls} />);
+    renderInGrafanaContext(<controls.Component model={controls} />);
 
     //clear initial calls to getAnchorInfo
     mockGetAnchorInfo.mockClear();
@@ -57,6 +60,11 @@ describe('DashboardLinksControls', () => {
     expect(mockGetAnchorInfo).toHaveBeenCalledTimes(2);
   });
 });
+
+function renderInGrafanaContext(child: ReactNode) {
+  const context = getGrafanaContextMock();
+  return render(<GrafanaContext.Provider value={context}>{child}</GrafanaContext.Provider>);
+}
 
 function buildTestScene(): { controls: DashboardControls; dashboard: DashboardScene } {
   const dashboard = new DashboardScene({

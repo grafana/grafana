@@ -36,10 +36,12 @@ func (in *DashboardSnapshotWithDeleteKey) DeepCopyObject() runtime.Object {
 // This is currently set using custom.ini, but multi-tenant support will need
 // to be managed differently
 type SnapshotSharingOptions struct {
-	SnapshotsEnabled     bool   `json:"snapshotEnabled"`
-	ExternalSnapshotURL  string `json:"externalSnapshotURL,omitempty"`
-	ExternalSnapshotName string `json:"externalSnapshotName,omitempty"`
-	ExternalEnabled      bool   `json:"externalEnabled,omitempty"`
+	SnapshotsEnabled      bool   `json:"snapshotEnabled"`
+	ExternalSnapshotURL   string `json:"externalSnapshotURL,omitempty"`
+	ExternalSnapshotName  string `json:"externalSnapshotName,omitempty"`
+	ExternalEnabled       bool   `json:"externalEnabled,omitempty"`
+	ExternalSnapshotToken string `json:"-"`
+	PublicMode            bool   `json:"publicMode,omitempty"`
 }
 
 func (SnapshotSharingOptions) OpenAPIModelName() string {

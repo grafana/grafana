@@ -11,15 +11,15 @@ import (
 func Test_Tree(t *testing.T) {
 	tree := newFolderTree([]store.Folder{
 		{UID: "1"},
-		{UID: "11", ParentUID: strPtr("1")},
-		{UID: "12", ParentUID: strPtr("1")},
-		{UID: "111", ParentUID: strPtr("11")},
-		{UID: "1111", ParentUID: strPtr("111")},
-		{UID: "121", ParentUID: strPtr("12")},
+		{UID: "11", ParentUID: new("1")},
+		{UID: "12", ParentUID: new("1")},
+		{UID: "111", ParentUID: new("11")},
+		{UID: "1111", ParentUID: new("111")},
+		{UID: "121", ParentUID: new("12")},
 		// not ordered insert to make sure patching works correctly
-		{UID: "22", ParentUID: strPtr("2")},
-		{UID: "222", ParentUID: strPtr("22")},
-		{UID: "21", ParentUID: strPtr("2")},
+		{UID: "22", ParentUID: new("2")},
+		{UID: "222", ParentUID: new("22")},
+		{UID: "21", ParentUID: new("2")},
 		{UID: "2"},
 	})
 

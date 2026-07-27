@@ -650,7 +650,7 @@ const NewUIContainer = ({
 /**
  * Based on the search string it does a fuzzy search over all the unique labels, so we can highlight them later.
  */
-export function useLabelSearch(
+function useLabelSearch(
   search: string | undefined,
   data: FlameGraphDataContainer | undefined
 ): Set<string> | undefined {
@@ -751,11 +751,14 @@ function getStyles(theme: GrafanaTheme2) {
 
     horizontalGraphContainer: css({
       flexBasis: '50%',
+      minWidth: 0,
     }),
 
     horizontalTableContainer: css({
       flexBasis: '50%',
+      minWidth: 0,
       maxHeight: FLAMEGRAPH_CONTAINER_HEIGHT,
+      overflow: 'auto',
     }),
 
     verticalGraphContainer: css({

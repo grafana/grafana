@@ -1,8 +1,7 @@
 import { render } from '@testing-library/react';
 import type uPlot from 'uplot';
 
-import type { BootData } from '@grafana/data';
-
+import { mockBoundingClientRect } from '../../../test-utils/mockDom';
 import { UPlotConfigBuilder, type UPlotConfigBuilder as UPlotConfigBuilderType } from '../config/UPlotConfigBuilder';
 
 import { calculatePanRange, setupXAxisPan, XAxisInteractionAreaPlugin } from './XAxisInteractionAreaPlugin';
@@ -28,9 +27,7 @@ const createMockUPlot = (xAxisElement: HTMLElement) => {
   root.appendChild(xAxisElement);
 
   const over = document.createElement('div');
-  Object.defineProperty(over, 'getBoundingClientRect', {
-    value: () => ({ left: 0, top: 0, width: 800, height: 400 }),
-  });
+  mockBoundingClientRect({ left: 0, top: 0, width: 800, height: 400 });
 
   return {
     root,
@@ -175,17 +172,7 @@ describe('XAxisInteractionAreaPlugin', () => {
   });
 
   describe('event listeners', () => {
-    let prevBootData: typeof window.grafanaBootData;
-
-    beforeEach(() => {
-      prevBootData = window.grafanaBootData;
-      window.grafanaBootData = {
-        settings: { featureToggles: { timeRangePan: true } },
-      } as BootData;
-    });
-
     afterEach(() => {
-      window.grafanaBootData = prevBootData;
       document.body.innerHTML = '';
     });
 

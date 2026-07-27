@@ -52,9 +52,13 @@ var (
 	ErrVersionUnsupportedBase = errutil.Conflict("plugin.unsupportedVersion").
 					MustTemplate(ErrVersionUnsupportedMsg, errutil.WithPublic(ErrVersionUnsupportedMsg))
 
-	ErrVersionNotFoundMsg  = "{{.Public.PluginID}} v{{.Public.Version}} either does not exist or is not supported on your system {{.Public.SysInfo}}"
+	ErrVersionNotFoundMsg  = "{{.Public.PluginID}} v{{.Public.Version}} was not returned by the Grafana.com catalog. The version may not exist, or the configured Grafana.com proxy token ([grafana_com].proxy_token or GF_GRAFANA_COM_PROXY_TOKEN) may lack the required scopes."
 	ErrVersionNotFoundBase = errutil.NotFound("plugin.versionNotFound").
 				MustTemplate(ErrVersionNotFoundMsg, errutil.WithPublic(ErrVersionNotFoundMsg))
+
+	ErrVersionNotCompatibleMsg  = "{{.Public.PluginID}} v{{.Public.Version}} is not compatible with your Grafana version: {{.Public.GrafanaVersion}}"
+	ErrVersionNotCompatibleBase = errutil.NotFound("plugin.versionNotCompatible").
+					MustTemplate(ErrVersionNotCompatibleMsg, errutil.WithPublic(ErrVersionNotCompatibleMsg))
 
 	ErrArcNotFoundMsg  = "{{.Public.PluginID}} is not compatible with your system architecture: {{.Public.SysInfo}}"
 	ErrArcNotFoundBase = errutil.NotFound("plugin.archNotFound").
@@ -77,8 +81,19 @@ func ErrVersionUnsupported(pluginID, requestedVersion, systemInfo string) error 
 	return ErrVersionUnsupportedBase.Build(errutil.TemplateData{Public: map[string]any{"PluginID": pluginID, "Version": requestedVersion, "SysInfo": systemInfo}})
 }
 
-func ErrVersionNotFound(pluginID, requestedVersion, systemInfo string) error {
-	return ErrVersionNotFoundBase.Build(errutil.TemplateData{Public: map[string]any{"PluginID": pluginID, "Version": requestedVersion, "SysInfo": systemInfo}})
+func ErrVersionNotFound(pluginID, requestedVersion string) error {
+	return ErrVersionNotFoundBase.Build(errutil.TemplateData{Public: map[string]any{
+		"PluginID": pluginID,
+		"Version":  requestedVersion,
+	}})
+}
+
+func ErrVersionNotCompatible(pluginID, requestedVersion, grafanaVersion string) error {
+	return ErrVersionNotCompatibleBase.Build(errutil.TemplateData{Public: map[string]any{
+		"PluginID":       pluginID,
+		"Version":        requestedVersion,
+		"GrafanaVersion": grafanaVersion,
+	}})
 }
 
 func ErrArcNotFound(pluginID, systemInfo string) error {

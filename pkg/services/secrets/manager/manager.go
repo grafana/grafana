@@ -35,9 +35,14 @@ var (
 	now = time.Now
 )
 
+// SecretsService implements secrets.Service using envelope encryption backed by the legacy secrets store.
+//
+// Deprecated: Multi-tenant APIs should not use imports from pkg/services/secrets/, as it creates a dependency on the legacy database.
+//
+// If you need to encrypt data in a multi-tenant API, use Grafana Secrets Manager (GSM) instead.
 type SecretsService struct {
 	tracer     tracing.Tracer
-	store      secrets.Store
+	store      secrets.Store //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	enc        encryption.Internal
 	cfg        *setting.Cfg
 	features   featuremgmt.FeatureToggles
@@ -47,7 +52,7 @@ type SecretsService struct {
 	dataKeyCache *dataKeyCache
 
 	pOnce               sync.Once
-	providers           map[secrets.ProviderID]secrets.Provider
+	providers           map[secrets.ProviderID]secrets.Provider //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	kmsProvidersService kmsproviders.Service
 
 	currentProviderID secrets.ProviderID
@@ -55,9 +60,14 @@ type SecretsService struct {
 	log log.Logger
 }
 
+// ProvideSecretsService wires the legacy envelope encryption secrets service.
+//
+// Deprecated: Multi-tenant APIs should not use imports from pkg/services/secrets/, as it creates a dependency on the legacy database.
+//
+// If you need to encrypt data in a multi-tenant API, use Grafana Secrets Manager (GSM) instead.
 func ProvideSecretsService(
 	tracer tracing.Tracer,
-	store secrets.Store,
+	store secrets.Store, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	kmsProvidersService kmsproviders.Service,
 	enc encryption.Internal,
 	cfg *setting.Cfg,
@@ -422,7 +432,7 @@ func (s *SecretsService) dataKeyById(ctx context.Context, id string) ([]byte, er
 	return decrypted, nil
 }
 
-func (s *SecretsService) GetProviders() map[secrets.ProviderID]secrets.Provider {
+func (s *SecretsService) GetProviders() map[secrets.ProviderID]secrets.Provider { //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	return s.providers
 }
 
@@ -468,7 +478,7 @@ func (s *SecretsService) Run(ctx context.Context) error {
 	grp, gCtx := errgroup.WithContext(ctx)
 
 	for _, p := range s.providers {
-		if svc, ok := p.(secrets.BackgroundProvider); ok {
+		if svc, ok := p.(secrets.BackgroundProvider); ok { //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 			grp.Go(func() error {
 				return svc.Run(gCtx)
 			})

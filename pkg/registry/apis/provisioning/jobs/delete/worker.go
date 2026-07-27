@@ -96,7 +96,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	msg := fmt.Sprintf("Delete from Grafana %s", job.Name)
 	stageOptions := repository.StageOptions{
 		Mode:                  repository.StageModeCommitOnlyOnce,
-		CommitOnlyOnceMessage: msg,
+		CommitOnlyOnceMessage: jobs.CommitMessage(job, msg),
 		PushOnWrites:          false,
 		Timeout:               10 * time.Minute,
 		Ref:                   opts.Ref,
@@ -167,8 +167,8 @@ func (w *Worker) deleteFiles(ctx context.Context, rw repository.ReaderWriter, pr
 }
 
 // resolveResourcesToPaths converts ResourceRef entries to file paths, recording errors for individual resources
-func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.ReaderWriter, progress jobs.JobProgressRecorder, resources []provisioning.ResourceRef) ([]string, error) {
-	if len(resources) == 0 {
+func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.ReaderWriter, progress jobs.JobProgressRecorder, resourceRefs []provisioning.ResourceRef) ([]string, error) {
+	if len(resourceRefs) == 0 {
 		return nil, nil
 	}
 
@@ -178,8 +178,8 @@ func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.Read
 		return nil, fmt.Errorf("create repository resources client: %w", err)
 	}
 
-	resolvedPaths := make([]string, 0, len(resources))
-	for _, resource := range resources {
+	resolvedPaths := make([]string, 0, len(resourceRefs))
+	for _, resource := range resourceRefs {
 		gvk := schema.GroupVersionKind{
 			Group: resource.Group,
 			Kind:  resource.Kind,
@@ -190,6 +190,12 @@ func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.Read
 		progress.SetMessage(ctx, fmt.Sprintf("Finding path for resource %s/%s/%s", resource.Group, resource.Kind, resource.Name))
 		resourcePath, err := repositoryResources.FindResourcePath(ctx, resource.Name, gvk)
 		if err != nil {
+			if errors.Is(err, resources.ErrResourceNotFound) {
+				resultBuilder.WithWarning(fmt.Errorf("resource %s/%s/%s not found", resource.Group, resource.Kind, resource.Name))
+				progress.Record(ctx, resultBuilder.Build())
+				continue
+			}
+
 			resultBuilder.WithError(fmt.Errorf("find path for resource %s/%s/%s: %w", resource.Group, resource.Kind, resource.Name, err))
 			progress.Record(ctx, resultBuilder.Build())
 			// Continue with next resource instead of failing fast

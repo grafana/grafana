@@ -4,11 +4,18 @@ import {
   FieldType,
   formattedValueToString,
   getFieldColorModeForField,
+  type LinkModel,
 } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
+/** @alpha */
+export interface TooltipScrollableOptions {
+  mode: TooltipDisplayMode;
+  maxHeight?: number;
+}
+
 import { type ColorIndicatorStyles } from './VizTooltipColorIndicator';
-import { ColorIndicator, ColorPlacement, type VizTooltipItem } from './types';
+import { VizTooltipColorIndicator, VizTooltipColorPlacement, type VizTooltipItem } from './types';
 
 export const calculateTooltipPosition = (
   xPos = 0,
@@ -53,23 +60,23 @@ export const calculateTooltipPosition = (
 
 export const getColorIndicatorClass = (colorIndicator: string, styles: ColorIndicatorStyles) => {
   switch (colorIndicator) {
-    case ColorIndicator.series:
+    case VizTooltipColorIndicator.series:
       return styles.series;
-    case ColorIndicator.value:
+    case VizTooltipColorIndicator.value:
       return styles.value;
-    case ColorIndicator.hexagon:
+    case VizTooltipColorIndicator.hexagon:
       return styles.hexagon;
-    case ColorIndicator.pie_1_4:
+    case VizTooltipColorIndicator.pie_1_4:
       return styles.pie_1_4;
-    case ColorIndicator.pie_2_4:
+    case VizTooltipColorIndicator.pie_2_4:
       return styles.pie_2_4;
-    case ColorIndicator.pie_3_4:
+    case VizTooltipColorIndicator.pie_3_4:
       return styles.pie_3_4;
-    case ColorIndicator.marker_sm:
+    case VizTooltipColorIndicator.marker_sm:
       return styles.marker_sm;
-    case ColorIndicator.marker_md:
+    case VizTooltipColorIndicator.marker_md:
       return styles.marker_md;
-    case ColorIndicator.marker_lg:
+    case VizTooltipColorIndicator.marker_lg:
       return styles.marker_lg;
     default:
       return styles.value;
@@ -104,7 +111,22 @@ export const getTooltipDisplayValue = (
   return { text: formattedValueToString(display), numeric: display.numeric, color: display.color };
 };
 
-export const getContentItems = (
+/**
+ * @alpha
+ *
+ * Builds the list of {@link VizTooltipItem} rows to display in a visualization tooltip.
+ *
+ * @param fields - All fields in the aligned data frame (including the x/time field).
+ * @param xField - The x-axis or time field; it is excluded from the output rows.
+ * @param dataIdxs - Per-field data row indices for the hovered point. A `null` entry means that field has no hovered value and is omitted.
+ * @param seriesIdx - Index of the closest/hovered series. In `Single` mode only this series is shown; in `Multi` mode it controls the `isActive` highlight.
+ * @param mode - Whether to show only the hovered series (`Single`) or all series (`Multi`).
+ * @param sortOrder - How to sort the output rows. Use `SortOrder.None` to preserve field order.
+ * @param fieldFilter - Optional predicate to exclude specific fields. Defaults to including all fields.
+ * @param hideZeros - When `true`, rows whose value is exactly `0` are omitted. Defaults to `false`.
+ * @param extraFields - Additional fields appended after the main rows as supplementary context (e.g. fields not shown in the visualization). These rows have `isHiddenFromViz: true` and are not sorted.
+ */
+export const getFieldDisplayItems = (
   fields: Field[],
   xField: Field,
   dataIdxs: Array<number | null>,
@@ -113,7 +135,7 @@ export const getContentItems = (
   sortOrder: SortOrder,
   fieldFilter = (field: Field) => true,
   hideZeros = false,
-  _restFields?: Field[]
+  extraFields?: Field[]
 ): VizTooltipItem[] => {
   let rows: VizTooltipItem[] = [];
 
@@ -176,7 +198,7 @@ export const getContentItems = (
     });
   }
 
-  _restFields?.forEach((field) => {
+  extraFields?.forEach((field) => {
     if (!field.config.custom?.hideFrom?.tooltip) {
       const { colorIndicator, colorPlacement } = getIndicatorAndPlacement(field);
       const rawValue = field.values[dataIdxs[0]!];
@@ -203,16 +225,60 @@ export const getContentItems = (
   return rows;
 };
 
+/**
+ * @alpha
+ *
+ * Returns the resolved data links for a specific data point in a field.
+ *
+ * Deduplicates links by `title/href` so that the same link target is not shown
+ * twice when multiple override rules produce identical links.
+ *
+ * @param field - The field containing the data point and its link configuration.
+ * @param rowIdx - The row index of the hovered data point within `field.values`.
+ */
+export const getFieldDisplayLinks = (field: Field, rowIdx: number): Array<LinkModel<Field>> => {
+  const links: Array<LinkModel<Field>> = [];
+
+  if ((field.config.links?.length ?? 0) > 0 && field.getLinks != null) {
+    const v = field.values[rowIdx];
+    const disp = field.display ? field.display(v) : { text: `${v}`, numeric: +v };
+    const linkLookup = new Set<string>();
+
+    field.getLinks({ calculatedValue: disp, valueRowIndex: rowIdx }).forEach((link) => {
+      const key = `${link.title}/${link.href}`;
+      if (!linkLookup.has(key)) {
+        links.push(link);
+        linkLookup.add(key);
+      }
+    });
+  }
+
+  return links;
+};
+
 const getIndicatorAndPlacement = (field: Field) => {
   const colorMode = getFieldColorModeForField(field);
 
-  let colorIndicator = ColorIndicator.series;
-  let colorPlacement = ColorPlacement.first;
+  let colorIndicator = VizTooltipColorIndicator.series;
+  let colorPlacement = VizTooltipColorPlacement.first;
 
   if (colorMode.isByValue) {
-    colorIndicator = ColorIndicator.value;
-    colorPlacement = ColorPlacement.trailing;
+    colorIndicator = VizTooltipColorIndicator.value;
+    colorPlacement = VizTooltipColorPlacement.trailing;
   }
 
   return { colorIndicator, colorPlacement };
+};
+
+/**
+ * @alpha
+ *
+ * Returns true when the tooltip content area should be vertically scrollable.
+ *
+ * Scrolling is enabled only in `Multi` mode with an explicit `maxHeight` set —
+ * single-series tooltips are always short enough to not need it, and without a
+ * `maxHeight` there is nothing to constrain the height against.
+ */
+export const isTooltipScrollable = ({ mode, maxHeight }: TooltipScrollableOptions): boolean => {
+  return mode === TooltipDisplayMode.Multi && maxHeight != null;
 };

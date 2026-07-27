@@ -26,6 +26,18 @@ connection: {
 					// GitHub App installation ID
 					installationID: int
 				}
+				#GitHubEnterpriseConnectionConfig: {
+					// App-level information
+					// GitHub App ID
+					appID: int
+
+					// Installation-level information
+					// GitHub App installation ID
+					installationID: int
+
+					// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
+					serverUrl: string
+				}
 				#BitbucketConnectionConfig: {
 					// The app clientID
 					clientID: string
@@ -33,6 +45,12 @@ connection: {
 				#GitlabConnectionConfig: {
 					// The app clientID
 					clientID: string
+				}
+				#ConnectionWebhookConfig: {
+					// Disabled disables webhook integration for this connection. When true, the GitHub
+					// App does not require webhooks:write permission and Grafana will not register or receive
+					// webhook events. Use this when Grafana is not reachable from the public internet.
+					disabled?: bool
 				}
 				#HealthStatus: {
 					// When not healthy, requests will not be executed
@@ -45,18 +63,23 @@ connection: {
 				}
 				spec: {
 					// The connection provider type
-					type: "github" | "bitbucket" | "gitlab"
-					// The connection URL
+					type: "github" | "githubEnterprise" | "bitbucket" | "gitlab"
+					// The connection URL.
 					url: *"" | string
-					// GitHub connection configuration
-					// Only applicable when provider is "github"
+					// GitHub connection configuration.
+					// Only applicable when provider is "github".
 					github?: #GitHubConnectionConfig
+					// GitHub Enterprise Server connection configuration.
+					// Only applicable when provider is "githubEnterprise".
+					githubEnterprise?: #GitHubEnterpriseConnectionConfig
 					// Bitbucket connection configuration
 					// Only applicable when provider is "bitbucket"
 					bitbucket?: #BitbucketConnectionConfig
 					// Gitlab connection configuration
 					// Only applicable when provider is "gitlab"
 					gitlab?: #GitlabConnectionConfig
+					// Webhook configuration for this connection
+					webhook?: #ConnectionWebhookConfig
 				}
 				status: {
 					// The generation of the spec last time reconciliation ran

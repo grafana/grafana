@@ -3,7 +3,7 @@ package debouncer
 import (
 	"context"
 	"errors"
-	"math/rand"
+	"math/rand/v2"
 	"sync"
 	"testing"
 	"time"
@@ -69,8 +69,6 @@ func TestQueueConcurrency(t *testing.T) {
 	const writeConcurrency = 50
 	const readConcurrency = 25
 
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-
 	totalWrittenSum := atomic.NewInt64(0)
 	totalReadSum := atomic.NewInt64(0)
 	addCalls := atomic.NewInt64(0)
@@ -83,7 +81,7 @@ func TestQueueConcurrency(t *testing.T) {
 		go func() {
 			defer writesWG.Done()
 			for j := 0; j < numbers; j++ {
-				v := r.Int63n(100) // Generate small number, so that we have a chance for combining some numbers.
+				v := rand.Int64N(100) // Generate small number, so that we have a chance for combining some numbers.
 				q.Add(v)
 				addCalls.Inc()
 				totalWrittenSum.Add(v)

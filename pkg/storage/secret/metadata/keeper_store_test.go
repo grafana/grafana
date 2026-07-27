@@ -358,6 +358,84 @@ func Test_KeeperMetadataStorage_SetAsActive(t *testing.T) {
 	require.Equal(t, k2.Name, keeperName)
 }
 
+func TestList(t *testing.T) {
+	t.Run("status.active is true when keeper is the current active keeper", func(t *testing.T) {
+		keeperMetadataStorage := initStorage(t)
+		namespace := "ns1"
+
+		k1, err := keeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
+			ObjectMeta: v1.ObjectMeta{Namespace: namespace, Name: "k1"},
+			Spec: secretv1beta1.KeeperSpec{
+				Description: "description",
+				Aws:         &secretv1beta1.KeeperAWSConfig{},
+			},
+		}, "actor-uid")
+		require.NoError(t, err)
+
+		k2, err := keeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
+			ObjectMeta: v1.ObjectMeta{Namespace: namespace, Name: "k2"},
+			Spec: secretv1beta1.KeeperSpec{
+				Description: "description",
+				Aws:         &secretv1beta1.KeeperAWSConfig{},
+			},
+		}, "actor-uid")
+		require.NoError(t, err)
+
+		require.False(t, k1.Status.Active)
+		require.False(t, k2.Status.Active)
+
+		require.NoError(t, keeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(k1.Namespace), k1.Name))
+
+		keepers, err := keeperMetadataStorage.List(t.Context(), xkube.Namespace(namespace))
+		require.NoError(t, err)
+
+		require.Equal(t, 2, len(keepers))
+		for _, keeper := range keepers {
+			// Only k1 should have `active` set to true because
+			// it is the keeper set to active.
+			require.Equal(t, keeper.Name == k1.Name, keeper.Status.Active)
+		}
+	})
+}
+
+func TestRead(t *testing.T) {
+	t.Run("status.active is true when keeper is the current active keeper", func(t *testing.T) {
+		keeperMetadataStorage := initStorage(t)
+		namespace := "ns1"
+
+		k1, err := keeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
+			ObjectMeta: v1.ObjectMeta{Namespace: namespace, Name: "k1"},
+			Spec: secretv1beta1.KeeperSpec{
+				Description: "description",
+				Aws:         &secretv1beta1.KeeperAWSConfig{},
+			},
+		}, "actor-uid")
+		require.NoError(t, err)
+
+		k2, err := keeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
+			ObjectMeta: v1.ObjectMeta{Namespace: namespace, Name: "k2"},
+			Spec: secretv1beta1.KeeperSpec{
+				Description: "description",
+				Aws:         &secretv1beta1.KeeperAWSConfig{},
+			},
+		}, "actor-uid")
+		require.NoError(t, err)
+
+		require.False(t, k1.Status.Active)
+		require.False(t, k2.Status.Active)
+
+		require.NoError(t, keeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(k1.Namespace), k1.Name))
+
+		k, err := keeperMetadataStorage.Read(t.Context(), xkube.Namespace(k1.Namespace), k1.Name, contracts.ReadOpts{})
+		require.NoError(t, err)
+		require.True(t, k.Status.Active)
+
+		k, err = keeperMetadataStorage.Read(t.Context(), xkube.Namespace(k2.Namespace), k2.Name, contracts.ReadOpts{})
+		require.NoError(t, err)
+		require.False(t, k.Status.Active)
+	})
+}
+
 func initStorage(t *testing.T) contracts.KeeperMetadataStorage {
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 	tracer := noop.NewTracerProvider().Tracer("test")

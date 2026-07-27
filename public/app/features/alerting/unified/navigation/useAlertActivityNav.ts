@@ -134,6 +134,13 @@ function createNavHook(legacyNavId: string) {
     const useV2Nav = config.featureToggles.alertingNavigationV2;
 
     if (useV2Nav) {
+      // When V2 nav is enabled but the alert-activity nav item doesn't exist
+      // (e.g. alertingNavigationV2 is on but alertingTriage is off), the hook
+      // falls back to 'alert-alerts'. For pages whose legacy navId is not
+      // 'alert-alerts' (e.g. groups), we should use their own legacy navId.
+      if (alertActivityNav.navId === 'alert-alerts' && legacyNavId !== 'alert-alerts') {
+        return { navId: legacyNavId };
+      }
       return alertActivityNav;
     }
 

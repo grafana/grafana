@@ -1,6 +1,8 @@
 package rvmanager
 
 import (
+	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -12,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
+	"github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -57,13 +60,170 @@ func TestResourceVersionManager(t *testing.T) {
 		})
 		dbp.SQLMock.ExpectCommit()
 
-		rv, err := manager.ExecWithRV(ctx, key, func(tx db.Tx) (string, error) {
-			_, err := tx.ExecContext(ctx, "select 1")
+		rv, err := manager.ExecWithRV(ctx, key, func(txnCtx context.Context, tx db.Tx) (string, error) {
+			_, err := tx.ExecContext(txnCtx, "select 1")
 			return "1234", err
 		})
 		require.NoError(t, err)
 		require.Equal(t, rv, int64(200))
 	})
+}
+
+// TestExecWithRV_transactionContextRegression guards against using the request
+// context (passed to ExecWithRV) for ExecContext on the batch sql.Tx. The batch
+// runs inside db.WithTx with a separate context from the batch processor; if
+// ExecContext uses a caller context that gets canceled mid-batch, the driver
+// can invalidate the transaction and the next Exec fails with "transaction has
+// already been committed or rolled back" (seen as flaky resource_history
+// writes during provisioning incremental sync).
+func TestExecWithRV_transactionContextRegression(t *testing.T) {
+	ctx := testutil.NewDefaultTestContext(t)
+
+	t.Run("txn_context_allows_second_exec_after_request_context_cancelled", func(t *testing.T) {
+		dbp := test.NewDBProviderMatchWords(t)
+		dialect := sqltemplate.DialectForDriver(dbp.DB.DriverName())
+		manager, err := NewResourceVersionManager(ResourceManagerOptions{
+			DB:      dbp.DB,
+			Dialect: dialect,
+		})
+		require.NoError(t, err)
+
+		key := &resourcepb.ResourceKey{Group: "txn-ctx-ok", Resource: "res"}
+		// ExecWithRV must not use a context we cancel here — its select would
+		// return early. The production bug was the *write path* closing over the
+		// same canceled request context for tx.ExecContext, not ExecWithRV racing.
+		waitCtx := ctx
+		requestCtx, cancelRequest := context.WithCancel(ctx)
+
+		dbp.SQLMock.ExpectBegin()
+		expectSuccessfulResourceVersionExec(t, dbp, func() {
+			dbp.SQLMock.ExpectExec("select 1").WillReturnResult(sqlmock.NewResult(1, 1))
+			dbp.SQLMock.ExpectExec("select 2").WillReturnResult(sqlmock.NewResult(1, 1))
+		})
+		dbp.SQLMock.ExpectCommit()
+
+		_, err = manager.ExecWithRV(waitCtx, key, func(txnCtx context.Context, tx db.Tx) (string, error) {
+			if _, err := tx.ExecContext(txnCtx, "select 1"); err != nil {
+				return "", err
+			}
+			cancelRequest()
+			require.ErrorIs(t, requestCtx.Err(), context.Canceled)
+			require.NoError(t, txnCtx.Err(), "batch txn context must remain usable after request cancellation")
+			_, err := tx.ExecContext(txnCtx, "select 2")
+			return "1234", err
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("cancelled_request_context_fails_second_exec", func(t *testing.T) {
+		dbp := test.NewDBProviderMatchWords(t)
+		dialect := sqltemplate.DialectForDriver(dbp.DB.DriverName())
+		manager, err := NewResourceVersionManager(ResourceManagerOptions{
+			DB:      dbp.DB,
+			Dialect: dialect,
+		})
+		require.NoError(t, err)
+
+		key := &resourcepb.ResourceKey{Group: "txn-ctx-bad", Resource: "res"}
+		waitCtx := ctx
+		requestCtx, cancelRequest := context.WithCancel(ctx)
+
+		dbp.SQLMock.ExpectBegin()
+		dbp.SQLMock.ExpectExec("select 1").WillReturnResult(sqlmock.NewResult(1, 1))
+		dbp.SQLMock.ExpectRollback()
+
+		_, err = manager.ExecWithRV(waitCtx, key, func(txnCtx context.Context, tx db.Tx) (string, error) {
+			if _, err := tx.ExecContext(txnCtx, "select 1"); err != nil {
+				return "", err
+			}
+			cancelRequest()
+			// Pre-fix sql backend passed the request context into dbutil.Exec here;
+			// once canceled, database/sql does not run the statement and returns
+			// context.Canceled, aborting the batch.
+			_, err := tx.ExecContext(requestCtx, "select 2")
+			return "", err
+		})
+		require.Error(t, err)
+		require.True(t, errors.Is(err, context.Canceled), "got %v", err)
+	})
+}
+
+// TestExecBatch_RetriesOnSQLiteBusy guards the retry path added to absorb
+// transient SQLITE_BUSY errors during provisioning sync, where the unified
+// storage layer would otherwise surface "database is locked" through the
+// resource_insert.sql write and fail the whole sync job.
+func TestExecBatch_RetriesOnSQLiteBusy(t *testing.T) {
+	ctx := testutil.NewDefaultTestContext(t)
+
+	t.Run("retries until success", func(t *testing.T) {
+		dbp := test.NewDBProviderMatchWords(t)
+		dialect := sqltemplate.DialectForDriver(dbp.DB.DriverName())
+		manager, err := NewResourceVersionManager(ResourceManagerOptions{
+			DB:      dbp.DB,
+			Dialect: dialect,
+		})
+		require.NoError(t, err)
+
+		// First attempt: insert returns BUSY, transaction rolled back.
+		dbp.SQLMock.ExpectBegin()
+		dbp.SQLMock.ExpectExec("insert resource").WillReturnError(sqlite.ErrTestBusy)
+		dbp.SQLMock.ExpectRollback()
+
+		// Second attempt: clean run, including RV bookkeeping that ExecWithRV does.
+		dbp.SQLMock.ExpectBegin()
+		dbp.SQLMock.ExpectExec("insert resource").WillReturnResult(sqlmock.NewResult(1, 1))
+		expectSuccessfulResourceVersionExec(t, dbp)
+		dbp.SQLMock.ExpectCommit()
+
+		key := &resourcepb.ResourceKey{Group: "retry-busy", Resource: "res"}
+		rv, err := manager.ExecWithRV(ctx, key, func(txnCtx context.Context, tx db.Tx) (string, error) {
+			_, err := tx.ExecContext(txnCtx, "insert resource")
+			return "guid-1", err
+		})
+		require.NoError(t, err)
+		require.Equal(t, int64(200), rv)
+	})
+
+	t.Run("non-busy errors do not retry", func(t *testing.T) {
+		dbp := test.NewDBProviderMatchWords(t)
+		dialect := sqltemplate.DialectForDriver(dbp.DB.DriverName())
+		manager, err := NewResourceVersionManager(ResourceManagerOptions{
+			DB:      dbp.DB,
+			Dialect: dialect,
+		})
+		require.NoError(t, err)
+
+		boom := errors.New("not a busy error")
+		dbp.SQLMock.ExpectBegin()
+		dbp.SQLMock.ExpectExec("insert resource").WillReturnError(boom)
+		dbp.SQLMock.ExpectRollback()
+
+		key := &resourcepb.ResourceKey{Group: "no-retry", Resource: "res"}
+		_, err = manager.ExecWithRV(ctx, key, func(txnCtx context.Context, tx db.Tx) (string, error) {
+			_, err := tx.ExecContext(txnCtx, "insert resource")
+			return "guid-1", err
+		})
+		require.Error(t, err)
+		require.ErrorIs(t, err, boom)
+	})
+}
+
+func TestBatchTransactionTimeout_explicitOverride(t *testing.T) {
+	dbp := test.NewDBProviderMatchWords(t)
+	m, err := NewResourceVersionManager(ResourceManagerOptions{
+		DB:                      dbp.DB,
+		Dialect:                 sqltemplate.DialectForDriver("mysql"),
+		BatchTransactionTimeout: 3 * time.Second,
+	})
+	require.NoError(t, err)
+	require.Equal(t, 3*time.Second, m.batchTransactionTimeout())
+
+	m2, err := NewResourceVersionManager(ResourceManagerOptions{
+		DB:      dbp.DB,
+		Dialect: sqltemplate.DialectForDriver("mysql"),
+	})
+	require.NoError(t, err)
+	require.Equal(t, defaultBatchTimeout, m2.batchTransactionTimeout())
 }
 
 func TestSnowflakeFromRVRoundtrips(t *testing.T) {

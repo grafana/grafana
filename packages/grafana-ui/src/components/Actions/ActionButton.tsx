@@ -65,7 +65,7 @@ export function ActionButton({ action, ...buttonProps }: ActionButtonProps) {
           title={t('grafana-ui.action-editor.button.confirm-action', 'Confirm action')}
           body={action.confirmation(actionVars)}
           confirmText={t('grafana-ui.action-editor.button.confirm', 'Confirm')}
-          confirmButtonVariant="primary"
+          confirmVariant="primary"
           onConfirm={() => {
             setShowConfirm(false);
             action.onClick(new MouseEvent('click'), null, actionVars);

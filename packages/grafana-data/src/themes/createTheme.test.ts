@@ -23,4 +23,30 @@ describe('createTheme', () => {
     const theme = createTheme();
     expect(theme.colors.mode).toBe('dark');
   });
+
+  it('deep-merges component overrides on top of the defaults', () => {
+    const theme = createTheme({
+      components: {
+        height: { sm: 99 },
+      },
+    });
+
+    // overridden value is applied
+    expect(theme.components.height.sm).toBe(99);
+    // sibling defaults are preserved by the deep merge
+    expect(theme.components.height.md).toBe(4);
+    expect(theme.components.height.lg).toBe(6);
+  });
+
+  it('replaces tag colors wholesale rather than merging by index', () => {
+    const theme = createTheme({
+      components: {
+        tag: {
+          colors: [{ background: '#fff', text: '#000' }],
+        },
+      },
+    });
+
+    expect(theme.components.tag.colors).toEqual([{ background: '#fff', text: '#000' }]);
+  });
 });

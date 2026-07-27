@@ -23,16 +23,6 @@ export interface OrgUser extends WithAccessControlMetadata {
   isProvisioned?: boolean;
 }
 
-export interface User {
-  id: number;
-  label: string;
-  avatarUrl: string;
-  login: string;
-  email: string;
-  name: string;
-  orgId?: number;
-}
-
 export type Unit = { name: string; url: string };
 
 export interface UserDTO extends WithAccessControlMetadata {

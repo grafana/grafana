@@ -201,7 +201,7 @@ export const UsersTable = ({
   );
   return (
     <Stack direction={'column'} gap={2}>
-      <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.id)} fetchData={fetchData} />
+      <InteractiveTable columns={columns} data={users} getRowId={(user) => user.uid} fetchData={fetchData} />
       {showPaging && (
         <Stack justifyContent={'flex-end'}>
           <Pagination numberOfPages={totalPages} currentPage={currentPage} onNavigate={onChangePage} />

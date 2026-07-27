@@ -13,16 +13,17 @@ const ui = {
 
 describe('RuleLocation', () => {
   describe('ungrouped rules', () => {
-    it('should display "Ungrouped" text for groups with no_group_for_rule_ prefix', () => {
+    it('should render only the namespace and not the artificial group name', () => {
       const { container } = render(
         <RuleLocation namespace="TestNamespace" group={`${NO_GROUP_PREFIX}test-rule-uid`} application="grafana" />
       );
 
-      expect(container).toHaveTextContent('Ungrouped');
+      expect(container).toHaveTextContent('TestNamespace');
+      expect(container).not.toHaveTextContent('Ungrouped');
       expect(container).not.toHaveTextContent(`${NO_GROUP_PREFIX}test-rule-uid`);
     });
 
-    it('should render "Ungrouped" as link when groupUrl is provided', () => {
+    it('should not render a link even when groupUrl is provided', () => {
       render(
         <RuleLocation
           namespace="TestNamespace"
@@ -32,17 +33,15 @@ describe('RuleLocation', () => {
         />
       );
 
-      const link = ui.groupLink('Ungrouped').get();
-      expect(link).toHaveAttribute('href', '/alerting/grafana/namespaces/folder-123/groups/test-group/view');
+      expect(screen.queryByRole('link')).not.toBeInTheDocument();
     });
 
-    it('should render "Ungrouped" as text when groupUrl is not provided', () => {
-      const { container } = render(
+    it('should not render the chevron separator', () => {
+      render(
         <RuleLocation namespace="TestNamespace" group={`${NO_GROUP_PREFIX}test-rule-uid`} application="grafana" />
       );
 
-      expect(screen.queryByRole('link')).not.toBeInTheDocument();
-      expect(container).toHaveTextContent('Ungrouped');
+      expect(screen.queryByTestId('icon-angle-right')).not.toBeInTheDocument();
     });
   });
 

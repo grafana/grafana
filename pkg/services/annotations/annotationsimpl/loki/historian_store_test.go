@@ -11,13 +11,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	alertingInstrument "github.com/grafana/alerting/http/instrument"
 	"github.com/grafana/alerting/http/instrument/instrumenttest"
-
+	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"

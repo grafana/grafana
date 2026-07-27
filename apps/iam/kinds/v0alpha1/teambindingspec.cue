@@ -21,5 +21,3 @@ TeamRef: {
 	// Name is the unique identifier for a team.
 	name: string
 }
-
-TeamPermission: "admin" | "member"

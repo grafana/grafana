@@ -10,9 +10,9 @@ import (
 
 func TestManifest(t *testing.T) {
 	manifest := manifestdata.LocalManifest().ManifestData
-	for _, k := range manifest.Kinds() {
-		for _, v := range k.Versions {
-			require.NotNil(t, v.Schema)
+	for _, v := range manifest.Versions {
+		for _, k := range v.Kinds {
+			require.NotNil(t, k.Schema)
 		}
 	}
 }

@@ -48,5 +48,19 @@ module.exports = createNoRestrictedSyntax(
     selector: 'MemberExpression[object.name="config"][property.name="panels"]',
     message:
       'Usage of config.panels is not allowed. Use the function getPanelPluginMetas or usePanelPluginMetas from @grafana/runtime/internal instead',
+  },
+  {
+    name: 'no-direct-date-fns',
+    selector: 'ImportDeclaration[source.value="date-fns"][importKind!="type"]',
+    message: 'Use deep imports instead (e.g. date-fns/format) to avoid pulling in the entire library.',
+  },
+  {
+    name: 'no-direct-create-monitoring-logger',
+    selector: [
+      'ImportDeclaration[source.value="@grafana/runtime"] > ImportSpecifier[imported.name="createMonitoringLogger"]',
+      'Program:has(ImportDeclaration[source.value="@grafana/runtime"] > ImportDefaultSpecifier, ImportDeclaration[source.value="@grafana/runtime"] > ImportNamespaceSpecifier) MemberExpression[property.name="createMonitoringLogger"]',
+    ].join(', '),
+    message:
+      'Direct usage of createMonitoringLogger is not allowed. Register your logger source in packages/grafana-runtime/src/services/logging/loggers.ts and use getLogger from @grafana/runtime/unstable instead.',
   }
 );

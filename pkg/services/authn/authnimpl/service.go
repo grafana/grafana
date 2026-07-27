@@ -237,7 +237,7 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 
 	c, ok := s.clients[client]
 	if !ok {
-		s.metrics.failedLogin.WithLabelValues(client).Inc()
+		s.metrics.failedLogin.WithLabelValues("unknown").Inc()
 		return nil, authn.ErrClientNotConfigured.Errorf("client not configured: %s", client)
 	}
 

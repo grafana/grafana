@@ -11,6 +11,7 @@ import { BarGaugeSizing } from '@grafana/schema';
 import { type GraphFieldConfig } from '@grafana/ui';
 
 import { defaultOptions, type Options } from './panelcfg.gen';
+import { GAUGE_CARD_OPTIONS } from './suggestions';
 
 /**
  * Standard preset - gauge shape with thresholds
@@ -56,7 +57,7 @@ const defaultPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => 
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: GAUGE_CARD_OPTIONS,
   };
 };
 
@@ -104,7 +105,7 @@ const segmentedPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> =
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: GAUGE_CARD_OPTIONS,
   };
 };
 
@@ -143,7 +144,7 @@ const gradientPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> =>
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: GAUGE_CARD_OPTIONS,
   };
 };
 
@@ -191,7 +192,7 @@ const circlePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: GAUGE_CARD_OPTIONS,
   };
 };
 
@@ -230,7 +231,7 @@ const neonPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: GAUGE_CARD_OPTIONS,
   };
 };
 
@@ -269,7 +270,7 @@ const neonSegmentedPreset = (): VisualizationSuggestion<Options, GraphFieldConfi
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: GAUGE_CARD_OPTIONS,
   };
 };
 

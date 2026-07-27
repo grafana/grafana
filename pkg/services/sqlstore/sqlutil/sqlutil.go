@@ -97,17 +97,17 @@ func sqLite3TestDB() (*TestDB, error) {
 
 		ret.Cleanup = func() {
 			// remove db file if it exists
-			err := os.Remove(sqliteDb)
+			err := os.Remove(sqliteDb) // #nosec G703 -- path returned by os.CreateTemp, not user input
 			if err != nil && !errors.Is(err, fs.ErrNotExist) {
 				fmt.Printf("Error removing sqlite db file %s: %v\n", sqliteDb, err)
 			}
 
 			// remove wal & shm files if they exist
-			err = os.Remove(sqliteDb + "-wal")
+			err = os.Remove(sqliteDb + "-wal") // #nosec G703 -- path returned by os.CreateTemp, not user input
 			if err != nil && !errors.Is(err, fs.ErrNotExist) {
 				fmt.Printf("Error removing sqlite wal file %s: %v\n", sqliteDb+"-wal", err)
 			}
-			err = os.Remove(sqliteDb + "-shm")
+			err = os.Remove(sqliteDb + "-shm") // #nosec G703 -- path returned by os.CreateTemp, not user input
 			if err != nil && !errors.Is(err, fs.ErrNotExist) {
 				fmt.Printf("Error removing sqlite shm file %s: %v\n", sqliteDb+"-shm", err)
 			}

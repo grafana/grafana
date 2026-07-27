@@ -34,37 +34,58 @@ export interface GrafanaTheme2 {
   /** @deprecated Will be removed in a future version */
   v1: GrafanaTheme;
   /** feature flags that might impact component looks */
-  flags: {};
+  flags: {
+    /**
+     * @internal
+     */
+    visualDesignRefresh?: boolean;
+  };
 }
 
 export const ThemeRichColorInputSchema = z.object({
   /** color intent (primary, secondary, info, error, etc) */
-  name: z.string().optional(),
+  name: z.enum(['primary', 'secondary', 'tertiary', 'accent', 'info', 'success', 'error', 'warning']).optional(),
+
   /** Main color */
   main: z.string().optional(),
-  /** Used for hover */
-  shade: z.string().optional(),
-  /** Used for text */
+  /** Used for hover/focus/active states */
+  mainEmphasis: z.string().optional(),
+  /** Used for background */
+  background: z.string().optional(),
+  /** Used for background hover/focus/active states */
+  backgroundEmphasis: z.string().optional(),
+  /** Used for text. Can sit on top of the relevant ThemeRichColor background, or a standard background. */
   text: z.string().optional(),
+  /** Used for text hover/focus/active states */
+  textEmphasis: z.string().optional(),
   /** Used for borders */
   border: z.string().optional(),
-  /** Used subtly colored backgrounds */
-  transparent: z.string().optional(),
-  /** Used for weak colored borders like larger alert/banner boxes and smaller badges and tags */
-  borderTransparent: z.string().optional(),
+  /** Used for border hover/focus/active states */
+  borderEmphasis: z.string().optional(),
   /** Text color for text ontop of main */
   contrastText: z.string().optional(),
+
+  /**
+   * Used for hover
+   * @deprecated use `mainEmphasis` instead
+   */
+  shade: z.string().optional(),
+  /**
+   * Used subtly colored backgrounds
+   * @deprecated use `background` instead
+   */
+  transparent: z.string().optional(),
+  /**
+   * Used for weak colored borders like larger alert/banner boxes and smaller badges and tags
+   * @deprecated use `border` instead
+   */
+  borderTransparent: z.string().optional(),
 });
 
-export const ThemeRichColorSchema = ThemeRichColorInputSchema.required();
+const ThemeRichColorSchema = ThemeRichColorInputSchema.required();
 
 /** @alpha */
 export type ThemeRichColor = z.infer<typeof ThemeRichColorSchema>;
-
-/** @internal */
-export type DeepPartial<T> = {
-  [P in keyof T]?: DeepPartial<T[P]>;
-};
 
 /** @internal */
 export type DeepRequired<T> = Required<{

@@ -37,7 +37,7 @@ func (r IntegrationDiffReport) getMap(v reflect.Value) (reflect.Value, bool) {
 	if v.Kind() == reflect.Map {
 		return v, true
 	}
-	if v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
+	if v.Kind() == reflect.Pointer || v.Kind() == reflect.Interface {
 		return r.getMap(v.Elem())
 	}
 	return reflect.Value{}, false

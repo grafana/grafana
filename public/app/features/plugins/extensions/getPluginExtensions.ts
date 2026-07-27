@@ -4,12 +4,8 @@ import { PluginExtensionTypes, type PluginExtension, type PluginExtensionCompone
 import { type GetObservablePluginLinks, type GetObservablePluginComponents } from '@grafana/runtime/internal';
 
 import { log } from './logs/log';
-import { type AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
-import { type AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
-import { type RegistryType } from './registry/Registry';
 import { getPluginExtensionRegistries } from './registry/setup';
-import type { PluginExtensionRegistries } from './registry/types';
-import { type GetExtensions, type GetExtensionsOptions, type GetPluginExtensions } from './types';
+import { type GetExtensions, type GetExtensionsOptions } from './types';
 import {
   addedLinkToExtensionLink,
   getReadOnlyProxy,
@@ -65,23 +61,6 @@ export const getObservablePluginComponents: GetObservablePluginComponents = (opt
     map((value) => value.extensions.filter((extension) => extension.type === PluginExtensionTypes.component))
   );
 };
-
-export function createPluginExtensionsGetter(registries: PluginExtensionRegistries): GetPluginExtensions {
-  let addedComponentsRegistry: RegistryType<AddedComponentRegistryItem[]>;
-  let addedLinksRegistry: RegistryType<Array<AddedLinkRegistryItem<object>>>;
-
-  // Create registry subscriptions to keep an copy of the registry state for use in the non-async
-  // plugin extensions getter.
-  registries.addedComponentsRegistry.asObservable().subscribe((componentsRegistry) => {
-    addedComponentsRegistry = componentsRegistry;
-  });
-
-  registries.addedLinksRegistry.asObservable().subscribe((linksRegistry) => {
-    addedLinksRegistry = linksRegistry;
-  });
-
-  return (options) => getPluginExtensions({ ...options, addedComponentsRegistry, addedLinksRegistry });
-}
 
 // Returns with a list of plugin extensions for the given extension point
 export const getPluginExtensions: GetExtensions = ({

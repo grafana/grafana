@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -262,6 +263,122 @@ func TestWriteEvent_Add(t *testing.T) {
 			require.Contains(t, err.Error(), errConflict.Error())
 			require.Zero(t, rv)
 		})
+	})
+}
+
+// saMapper builds a registry with the default folders/dashboards mappers (from NewMappersRegistry)
+// plus serviceaccounts. The folders/dashboards entries are load-bearing for the useSAMapper case
+// in sql_test.go — do not replace NewMappersRegistry() with a bare registry.
+func saMapper() *MappersRegistry {
+	m := NewMappersRegistry()
+	m.RegisterMapper(
+		saGroupResource(),
+		NewMapperWithAttribute("serviceaccounts", []string{"Edit", "Admin"}, ScopeAttributeID,
+			[]v0alpha1.ResourcePermissionSpecPermissionKind{
+				v0alpha1.ResourcePermissionSpecPermissionKindUser,
+				v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount,
+				v0alpha1.ResourcePermissionSpecPermissionKindTeam,
+			}),
+		nil,
+	)
+	return m
+}
+
+func saGroupResource() schema.GroupResource {
+	return schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounts"}
+}
+
+func TestWriteEvent_Add_ServiceAccount(t *testing.T) {
+	store := db.InitTestDB(t)
+
+	timeNow = func() time.Time {
+		return time.Date(2025, 8, 28, 17, 13, 0, 0, time.UTC)
+	}
+
+	sqlHelper := &legacysql.LegacyDatabaseHelper{
+		DB:    store,
+		Table: func(name string) string { return name },
+	}
+	dbProvider := func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return sqlHelper, nil
+	}
+
+	t.Run("should write serviceaccount permission with user kind", func(t *testing.T) {
+		backend := ProvideStorageBackend(dbProvider, saMapper())
+		backend.identityStore = NewFakeIdentityStore(t)
+
+		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "iam.grafana.app-serviceaccounts-robot",
+				Namespace: "default",
+			},
+			Spec: v0alpha1.ResourcePermissionSpec{
+				Resource: v0alpha1.ResourcePermissionspecResource{
+					ApiGroup: "iam.grafana.app",
+					Resource: "serviceaccounts",
+					Name:     "robot",
+				},
+				Permissions: []v0alpha1.ResourcePermissionspecPermission{
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindUser,
+						Name: "captain",
+						Verb: "Edit",
+					},
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		gr := v0alpha1.ResourcePermissionInfo.GroupResource()
+		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
+			Type:   resourcepb.WatchEvent_ADDED,
+			Key:    &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "iam.grafana.app-serviceaccounts-robot", Namespace: "default"},
+			Object: resourcePerm,
+		})
+		require.NoError(t, err)
+		require.Equal(t, timeNow().UnixMilli(), rv)
+
+		// Verify the permission was written with the ID-based scope
+		sess := store.GetSqlxSession()
+		var scope string
+		err = sess.Get(context.Background(), &scope, "SELECT scope FROM permission WHERE action = ? AND role_id = (SELECT id FROM role WHERE name = ?)", "serviceaccounts:edit", "managed:users:101:permissions")
+		require.NoError(t, err)
+		require.Equal(t, "serviceaccounts:id:201", scope)
+	})
+
+	t.Run("folder with basicRole kind still works after sa mapper registration", func(t *testing.T) {
+		backend := ProvideStorageBackend(dbProvider, saMapper())
+		backend.identityStore = NewFakeIdentityStore(t)
+
+		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "folder.grafana.app-folders-fold1",
+				Namespace: "default",
+			},
+			Spec: v0alpha1.ResourcePermissionSpec{
+				Resource: v0alpha1.ResourcePermissionspecResource{
+					ApiGroup: "folder.grafana.app",
+					Resource: "folders",
+					Name:     "fold1",
+				},
+				Permissions: []v0alpha1.ResourcePermissionspecPermission{
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+						Name: "Viewer",
+						Verb: "Admin",
+					},
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		gr := v0alpha1.ResourcePermissionInfo.GroupResource()
+		_, err = backend.WriteEvent(context.Background(), resource.WriteEvent{
+			Type:   resourcepb.WatchEvent_ADDED,
+			Key:    &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "folder.grafana.app-folders-fold1", Namespace: "default"},
+			Object: resourcePerm,
+		})
+		require.NoError(t, err)
 	})
 }
 

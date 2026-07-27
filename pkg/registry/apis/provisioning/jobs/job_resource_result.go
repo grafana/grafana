@@ -3,6 +3,8 @@ package jobs
 import (
 	"errors"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -54,26 +56,46 @@ func classifyWarning(err error) (string, bool) {
 	var validationErr *resources.ResourceValidationError
 	var ownershipErr *resources.ResourceOwnershipConflictError
 	var unmanagedErr *resources.ResourceUnmanagedConflictError
+	var managedByOtherFileErr *resources.ResourceManagedByOtherFileError
 	var quotaExceededErr *quotas.QuotaExceededError
 	var missingMetaErr *resources.MissingFolderMetadata
 	var metaConflictErr *resources.FolderMetadataConflict
 	var invalidMetaErr *resources.InvalidFolderMetadata
+	var depthExceededErr *resources.FolderDepthExceededError
+	var folderManagedByOtherErr *resources.FolderManagedByOtherError
+	var uidTooLongErr *resources.FolderUIDTooLongError
+	var folderValidationErr *resources.FolderValidationError
 
+	// Order matters: the more specific folder reasons must be checked
+	// before the generic FolderValidationError fallback so the user-facing
+	// reason stays as descriptive as possible.
 	switch {
 	case errors.As(err, &quotaExceededErr):
 		return provisioning.ReasonQuotaExceeded, true
+	case apierrors.IsRequestEntityTooLargeError(err):
+		return provisioning.ReasonResourceTooLarge, true
 	case errors.As(err, &validationErr):
 		return provisioning.ReasonResourceInvalid, true
 	case errors.As(err, &ownershipErr):
 		return provisioning.ReasonResourceInvalid, true
 	case errors.As(err, &unmanagedErr):
 		return provisioning.ReasonResourceInvalid, true
+	case errors.As(err, &managedByOtherFileErr):
+		return provisioning.ReasonResourceManagedByOther, true
 	case errors.As(err, &missingMetaErr):
 		return provisioning.ReasonMissingFolderMetadata, true
 	case errors.As(err, &metaConflictErr):
 		return provisioning.ReasonFolderMetadataConflict, true
 	case errors.As(err, &invalidMetaErr):
 		return provisioning.ReasonInvalidFolderMetadata, true
+	case errors.As(err, &depthExceededErr):
+		return provisioning.ReasonFolderDepthExceeded, true
+	case errors.As(err, &folderManagedByOtherErr):
+		return provisioning.ReasonFolderManagedByOther, true
+	case errors.As(err, &uidTooLongErr):
+		return provisioning.ReasonFolderUIDTooLong, true
+	case errors.As(err, &folderValidationErr):
+		return provisioning.ReasonFolderValidationFailed, true
 	default:
 		return "", false
 	}
@@ -87,13 +109,15 @@ func isWarningError(err error) bool {
 
 // isNonFailingWarning reports whether the warning represents an informational
 // issue where the underlying resource operation still succeeded (e.g. missing
-// or invalid folder metadata).
+// or invalid folder metadata, or a skipped delete of an old resource now owned
+// by another file — the new resource was written successfully).
 func isNonFailingWarning(err error) bool {
 	if err == nil {
 		return false
 	}
 	return errors.Is(err, resources.ErrMissingFolderMetadata) ||
-		errors.Is(err, resources.ErrInvalidFolderMetadata)
+		errors.Is(err, resources.ErrInvalidFolderMetadata) ||
+		errors.Is(err, resources.ErrResourceManagedByOtherFile)
 }
 
 // JobResourceResult represents the result of a resource operation in a job.

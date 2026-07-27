@@ -7,12 +7,9 @@ import { useDispatch } from 'app/types/store';
 
 import { alertingFolderActionsApi } from '../../api/alertingFolderActionsApi';
 import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
-import {
-  AlertingAction,
-  FolderBulkAction,
-  useAlertingAbility,
-  useFolderBulkActionAbility,
-} from '../../hooks/useAbilities';
+import { useFolderBulkActionAbility } from '../../hooks/abilities/otherAbilities';
+import { useGlobalRuleAbility } from '../../hooks/abilities/rules/ruleAbilities';
+import { FolderBulkAction, RuleAction } from '../../hooks/abilities/types';
 import { useFolder } from '../../hooks/useFolder';
 import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -35,9 +32,7 @@ export const FolderActionsButton = ({ folderUID }: Props) => {
   const bulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
   const listView2Enabled = shouldUseAlertingListViewV2();
 
-  const [exportRulesSupported, exportRulesAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
-
-  const canExportRules = exportRulesSupported && exportRulesAllowed;
+  const { granted: canExportRules } = useGlobalRuleAbility(RuleAction.ExportRules);
 
   const [deleteGrafanaRulesFromFolder, deleteState] =
     alertingFolderActionsApi.endpoints.deleteGrafanaRulesFromFolder.useMutation();
@@ -134,11 +129,8 @@ function BulkActions({
   const bulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
 
   // abilities
-  const [pauseSupported, pauseAllowed] = useFolderBulkActionAbility(FolderBulkAction.Pause);
-  const [deleteSupported, deleteAllowed] = useFolderBulkActionAbility(FolderBulkAction.Delete);
-
-  const canPause = pauseSupported && pauseAllowed;
-  const canDelete = deleteSupported && deleteAllowed;
+  const { granted: canPause } = useFolderBulkActionAbility(FolderBulkAction.Pause);
+  const { granted: canDelete } = useFolderBulkActionAbility(FolderBulkAction.Delete);
 
   // mutations
   const [pauseFolder, updateState] = alertingFolderActionsApi.endpoints.pauseFolder.useMutation();

@@ -12,48 +12,73 @@ on:
         default: false
         required: false
 
-permissions:
-  id-token: write
-  contents: read
+permissions: {}
 
 jobs:
   bump-version:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+    env:
+      VERSION: ${{ inputs.version }}
+      DRY_RUN: ${{ inputs.dry_run }}
+      REF_NAME: ${{ github.ref_name }}
+      RUN_ID: ${{ github.run_id }}
     steps:
-      - uses: grafana/shared-workflows/actions/get-vault-secrets@main
+      # grafana/grafana is too large for GitHub's pre-receive workflow-file scan to
+      # finish within its timeout, so every push is rejected with "workflows scope may
+      # be required" -- even when no workflow files are touched. workflows:write tells
+      # GitHub to skip that scan. grafana-writer is the only app installed with that
+      # scope here. Commits go through the Git Data API via planetscale/ghcommit-action
+      # so they're automatically signed under grafana-writer[bot]'s identity, satisfying
+      # upcoming required_signatures rules.
+      - name: Get GitHub App token
+        id: get-writer-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          repo_secrets: |
-            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
-      - name: Generate token
-        id: generate_token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        with:
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
-          repositories: '["grafana"]'
-          permissions: '{"contents": "write", "pull_requests": "write", "workflows": "write"}'
+          github_app: grafana-writer
+          permission_set: ${{ startsWith(github.ref_name, 'release-') && 'release-writer' || 'release-writer-main' }}
       - name: Checkout Grafana
         uses: actions/checkout@v5
-        with:
-          token: ${{ steps.generate_token.outputs.token }}
       - name: Update package.json versions
         uses: ./pkg/build/actions/bump-version
         with:
           version: ${{ inputs.version }}
-      - if: ${{ inputs.push }}
-        name: Push & Create PR
+      - run: echo "WORK_BRANCH=bump-version/${RUN_ID}/${VERSION}" >> "$GITHUB_ENV"
+      # Pre-create the branch on the remote so kminehart has a target ref to commit to.
+      - if: ${{ inputs.push == true || inputs.push == 'true' }}
+        name: Pre-create branch on remote
         env:
-          VERSION: ${{ inputs.version }}
-          DRY_RUN: ${{ inputs.dry_run }}
-          REF_NAME: ${{ github.ref_name }}
-          RUN_ID: ${{ github.run_id }}
-          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          GH_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
         run: |
-          git config --local user.name "grafana-delivery-bot[bot]"
-          git config --local user.email "grafana-delivery-bot[bot]@users.noreply.github.com"
-          git config --local --add --bool push.autoSetupRemote true
-          git checkout -b "bump-version/${RUN_ID}/${VERSION}"
-          git add .
-          git commit -m "bump version ${VERSION}"
-          git push
-          gh pr create --dry-run="$DRY_RUN" -l "type/ci" -l "no-changelog" -B "$REF_NAME" --title "Release: Bump version to ${VERSION}" --body "Updated version to ${VERSION}"
+          BASE_SHA=$(git rev-parse "origin/${REF_NAME}")
+          gh api "repos/${GITHUB_REPOSITORY}/git/refs" \
+            --method POST \
+            -f "ref=refs/heads/${WORK_BRANCH}" \
+            -f "sha=${BASE_SHA}"
+      - if: ${{ inputs.push == true || inputs.push == 'true' }}
+        name: Commit bump-version changes
+        uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
+        with:
+          commit_message: "bump version ${{ env.VERSION }}"
+          repo: ${{ github.repository }}
+          branch: ${{ env.WORK_BRANCH }}
+          file_pattern: "**"
+        env:
+          GITHUB_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
+      - if: ${{ inputs.push == true || inputs.push == 'true' }}
+        name: Create PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr create \
+            --dry-run="$DRY_RUN" \
+            -l "type/ci" \
+            -l "no-changelog" \
+            --draft \
+            -B "$REF_NAME" \
+            -H "$WORK_BRANCH" \
+            --title "Release: Bump version to ${VERSION}" \
+            --body "Updated version to ${VERSION}"

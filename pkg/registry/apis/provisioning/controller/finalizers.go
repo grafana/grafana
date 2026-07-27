@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/util/retry"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -21,9 +22,17 @@ import (
 	metricutils "github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
+//go:generate mockery --name jobQueueCleaner --structname MockJobQueueCleaner --inpackage --filename job_queue_cleaner_mock.go --with-expecter
+type jobQueueCleaner interface {
+	// CleanupQueue deletes all queued jobs for the repository that are not
+	// currently being executed. Returns the number of jobs deleted.
+	CleanupQueue(ctx context.Context, namespace, repository string) (int, error)
+}
+
 type finalizer struct {
 	lister        resources.ResourceLister
 	clientFactory resources.ClientFactory
+	jobs          jobQueueCleaner
 	metrics       *finalizerMetrics
 	maxWorkers    int
 }
@@ -35,7 +44,10 @@ func (f *finalizer) process(ctx context.Context,
 	logger := logging.FromContext(ctx)
 	logger.Info("process finalizers", "finalizers", finalizers)
 
-	orderedFinalizers := [3]string{
+	// Clear the job queue first so no pending job gets picked up and starts
+	// running against the repository while the rest of the teardown proceeds.
+	orderedFinalizers := [4]string{
+		repository.RemovePendingJobsFinalizer,
 		repository.CleanFinalizer,
 		repository.ReleaseOrphanResourcesFinalizer,
 		repository.RemoveOrphanResourcesFinalizer}
@@ -51,12 +63,21 @@ func (f *finalizer) process(ctx context.Context,
 		outcome := metricutils.SuccessOutcome
 
 		switch finalizer {
+		case repository.RemovePendingJobsFinalizer:
+			logger.Info("clearing repository job queue")
+			cfg := repo.Config()
+			count, err = f.jobs.CleanupQueue(ctx, cfg.Namespace, cfg.Name)
+			if err != nil {
+				err = fmt.Errorf("clear job queue: %w", err)
+				outcome = metricutils.ErrorOutcome
+			}
+
 		case repository.CleanFinalizer:
 			// NOTE: the controller loop will never get run unless a finalizer is set
 			logger.Info("running cleanup finalizer")
-			hooks, ok := repo.(repository.Hooks)
+			webhookRepo, ok := repo.(repository.WebhookRepository)
 			if ok {
-				if err = hooks.OnDelete(ctx); err != nil {
+				if err = webhookOnDelete(ctx, webhookRepo); err != nil {
 					err = fmt.Errorf("execute deletion hooks: %w", err)
 					outcome = metricutils.ErrorOutcome
 				}
@@ -101,8 +122,12 @@ func (f *finalizer) newItemProcessor(
 	clients resources.ResourceClients,
 	cb func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error,
 ) itemProcessor {
-	logger := logging.FromContext(ctx)
+	baseLogger := logging.FromContext(ctx)
 	return func(jobCtx context.Context, item *provisioning.ResourceListItem) error {
+		logger := baseLogger
+
+		// Version is left empty so the client resolves the server's preferred
+		// version via discovery (this covers folders and any other resource).
 		res, _, err := clients.ForResource(jobCtx, schema.GroupVersionResource{
 			Group:    item.Group,
 			Resource: item.Resource,
@@ -112,7 +137,13 @@ func (f *finalizer) newItemProcessor(
 			return err
 		}
 
-		err = cb(res, item)
+		// Retry on optimistic-concurrency conflicts from the unified storage
+		// layer ("requested RV does not match current RV"). The finalizer races
+		// with other reconciles/syncs that may mutate the same resource, and a
+		// transient RV mismatch should not fail the whole finalizer run.
+		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			return cb(res, item)
+		})
 		if err != nil {
 			if errors.IsNotFound(err) {
 				logger.Info("resource not found, skipping", "name", item.Name, "group", item.Group, "resource", item.Resource)

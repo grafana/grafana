@@ -7,16 +7,12 @@ import (
 	"net/url"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
-)
-
-var (
-	glog = log.New("tsdb.influx_flightsql")
 )
 
 type SQLOptions struct {
@@ -25,11 +21,11 @@ type SQLOptions struct {
 	Token    string              `json:"token"`
 }
 
-func Query(ctx context.Context, dsInfo *models.DatasourceInfo, req backend.QueryDataRequest) (
+func Query(ctx context.Context, dsInfo *models.DatasourceInfo, req backend.QueryDataRequest, logger log.Logger) (
 	*backend.QueryDataResponse, error) {
-	logger := glog.FromContext(ctx)
+	logger = logger.FromContext(ctx)
 	tRes := backend.NewQueryDataResponse()
-	r, err := runnerFromDataSource(dsInfo)
+	r, err := runnerFromDataSource(dsInfo, logger)
 	if err != nil {
 		return tRes, err
 	}
@@ -127,7 +123,7 @@ func ParseURL(endpoint string) (string, error) {
 }
 
 // runnerFromDataSource creates a runner from the datasource model (the datasource instance's configuration).
-func runnerFromDataSource(dsInfo *models.DatasourceInfo) (*runner, error) {
+func runnerFromDataSource(dsInfo *models.DatasourceInfo, logger log.Logger) (*runner, error) {
 	if dsInfo.URL == "" {
 		return nil, fmt.Errorf("missing URL from datasource configuration")
 	}
@@ -145,7 +141,7 @@ func runnerFromDataSource(dsInfo *models.DatasourceInfo) (*runner, error) {
 		md.Set("Authorization", fmt.Sprintf("Bearer %s", dsInfo.Token))
 	}
 
-	fsqlClient, err := newFlightSQLClient(u, md, !dsInfo.InsecureGrpc, dsInfo.TLSConfig, dsInfo.ProxyClient)
+	fsqlClient, err := newFlightSQLClient(u, md, !dsInfo.InsecureGrpc, dsInfo.TLSConfig, dsInfo.ProxyClient, logger)
 	if err != nil {
 		return nil, err
 	}

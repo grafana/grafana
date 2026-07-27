@@ -7,10 +7,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
@@ -136,20 +139,22 @@ func TestSubHealthREST_Connect(t *testing.T) {
 		require.Contains(t, err.Error(), "failed to create plugin context")
 	})
 
-	t.Run("returns error when CheckHealth fails", func(t *testing.T) {
+	t.Run("reports CheckHealth failure via the responder", func(t *testing.T) {
 		builder := &DataSourceAPIBuilder{
 			datasources:     &mockHealthDatasourceProvider{instanceSettings: &backend.DataSourceInstanceSettings{}},
-			contextProvider: &mockHealthContextProvider{pluginCtx: backend.PluginContext{GrafanaConfig: backend.NewGrafanaCfg(map[string]string{})}},
+			contextProvider: &mockHealthContextProvider{pluginCtx: backend.PluginContext{GrafanaConfig: config.NewGrafanaCfg(map[string]string{})}},
 			client:          mockHealthClient{err: errors.New("test")},
 		}
 		r := &subHealthREST{builder: builder}
 
 		responder := &mockHealthResponder{}
 		handler, err := r.Connect(context.Background(), "test-ds", nil, responder)
+		require.NoError(t, err)
+		require.NotNil(t, handler)
 
-		require.Error(t, err)
-		require.Nil(t, handler)
-		require.Contains(t, err.Error(), "test")
+		handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
+		require.Error(t, responder.err)
+		require.Contains(t, responder.err.Error(), "test")
 	})
 }
 
@@ -165,7 +170,7 @@ func TestSubHealthREST_HandlerMapsResponse(t *testing.T) {
 					},
 				},
 				datasources:     &mockHealthDatasourceProvider{instanceSettings: &backend.DataSourceInstanceSettings{}},
-				contextProvider: &mockHealthContextProvider{pluginCtx: backend.PluginContext{GrafanaConfig: backend.NewGrafanaCfg(map[string]string{})}},
+				contextProvider: &mockHealthContextProvider{pluginCtx: backend.PluginContext{GrafanaConfig: config.NewGrafanaCfg(map[string]string{})}},
 			},
 		}
 
@@ -200,7 +205,7 @@ func TestSubHealthREST_HandlerMapsResponse(t *testing.T) {
 					},
 				},
 				datasources:     &mockHealthDatasourceProvider{instanceSettings: &backend.DataSourceInstanceSettings{}},
-				contextProvider: &mockHealthContextProvider{pluginCtx: backend.PluginContext{GrafanaConfig: backend.NewGrafanaCfg(map[string]string{})}},
+				contextProvider: &mockHealthContextProvider{pluginCtx: backend.PluginContext{GrafanaConfig: config.NewGrafanaCfg(map[string]string{})}},
 			},
 		}
 
@@ -228,7 +233,7 @@ func TestSubHealthREST_HandlerMapsResponse(t *testing.T) {
 					},
 				},
 				datasources:     &mockHealthDatasourceProvider{instanceSettings: &backend.DataSourceInstanceSettings{}},
-				contextProvider: &mockHealthContextProvider{pluginCtx: backend.PluginContext{GrafanaConfig: backend.NewGrafanaCfg(map[string]string{})}},
+				contextProvider: &mockHealthContextProvider{pluginCtx: backend.PluginContext{GrafanaConfig: config.NewGrafanaCfg(map[string]string{})}},
 			},
 		}
 
@@ -262,7 +267,7 @@ func TestSubHealthREST_HandlerMapsResponse(t *testing.T) {
 					},
 				},
 				datasources:     &mockHealthDatasourceProvider{instanceSettings: &backend.DataSourceInstanceSettings{}},
-				contextProvider: &mockHealthContextProvider{pluginCtx: backend.PluginContext{GrafanaConfig: backend.NewGrafanaCfg(map[string]string{})}},
+				contextProvider: &mockHealthContextProvider{pluginCtx: backend.PluginContext{GrafanaConfig: config.NewGrafanaCfg(map[string]string{})}},
 			},
 		}
 
@@ -293,7 +298,7 @@ func TestSubHealthREST_HandlerMapsResponse(t *testing.T) {
 					},
 				},
 				datasources:     &mockHealthDatasourceProvider{instanceSettings: &backend.DataSourceInstanceSettings{}},
-				contextProvider: &mockHealthContextProvider{pluginCtx: backend.PluginContext{GrafanaConfig: backend.NewGrafanaCfg(map[string]string{})}},
+				contextProvider: &mockHealthContextProvider{pluginCtx: backend.PluginContext{GrafanaConfig: config.NewGrafanaCfg(map[string]string{})}},
 			},
 		}
 
@@ -330,7 +335,7 @@ func TestSubHealthREST_HandlerMapsResponse(t *testing.T) {
 							},
 						},
 						datasources:     &mockHealthDatasourceProvider{instanceSettings: &backend.DataSourceInstanceSettings{}},
-						contextProvider: &mockHealthContextProvider{pluginCtx: backend.PluginContext{GrafanaConfig: backend.NewGrafanaCfg(map[string]string{})}},
+						contextProvider: &mockHealthContextProvider{pluginCtx: backend.PluginContext{GrafanaConfig: config.NewGrafanaCfg(map[string]string{})}},
 					},
 				}
 				responder := &mockHealthResponder{}
@@ -354,7 +359,7 @@ func TestSubHealthREST_HandlerMapsResponse(t *testing.T) {
 
 	t.Run("CheckHealth receives plugin context from builder", func(t *testing.T) {
 		pluginCtx := backend.PluginContext{
-			GrafanaConfig: backend.NewGrafanaCfg(map[string]string{"k": "v"}),
+			GrafanaConfig: config.NewGrafanaCfg(map[string]string{"k": "v"}),
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
 				UID:  "test-ds",
 				Name: "Test Datasource",
@@ -389,6 +394,36 @@ func TestSubHealthREST_HandlerMapsResponse(t *testing.T) {
 		require.Equal(t, "Test Datasource", capturedRequest.PluginContext.DataSourceInstanceSettings.Name)
 	})
 
+	t.Run("CheckHealth context carries the request namespace", func(t *testing.T) {
+		var gotNamespace string
+		shr := subHealthREST{
+			builder: &DataSourceAPIBuilder{
+				client: mockHealthClient{
+					checkHealthFunc: func(ctx context.Context, _ *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+						gotNamespace = request.NamespaceValue(ctx)
+						return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "ok"}, nil
+					},
+				},
+				datasources:     &mockHealthDatasourceProvider{instanceSettings: &backend.DataSourceInstanceSettings{}},
+				contextProvider: &mockHealthContextProvider{pluginCtx: backend.PluginContext{GrafanaConfig: config.NewGrafanaCfg(map[string]string{})}},
+			},
+		}
+
+		// The apiserver puts the request namespace in the Connect context. It must reach the
+		// plugin CheckHealth call so the multi-tenant middleware can resolve stack settings;
+		// the inner req.Context() does not carry it (httptest requests use context.Background).
+		ctx := request.WithNamespace(context.Background(), "stacks-10782")
+		responder := &mockHealthResponder{}
+		handler, err := shr.Connect(ctx, "dsname", nil, responder)
+		require.NoError(t, err)
+
+		handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
+
+		require.NoError(t, responder.err)
+		require.Equal(t, "stacks-10782", gotNamespace,
+			"the namespace from the apiserver request context must reach the plugin CheckHealth call")
+	})
+
 	t.Run("handler succeeds with full request URL", func(t *testing.T) {
 		shr := subHealthREST{
 			builder: &DataSourceAPIBuilder{
@@ -396,7 +431,7 @@ func TestSubHealthREST_HandlerMapsResponse(t *testing.T) {
 					resp: &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "ok"},
 				},
 				datasources:     &mockHealthDatasourceProvider{instanceSettings: &backend.DataSourceInstanceSettings{}},
-				contextProvider: &mockHealthContextProvider{pluginCtx: backend.PluginContext{GrafanaConfig: backend.NewGrafanaCfg(map[string]string{})}},
+				contextProvider: &mockHealthContextProvider{pluginCtx: backend.PluginContext{GrafanaConfig: config.NewGrafanaCfg(map[string]string{})}},
 			},
 		}
 		responder := &mockHealthResponder{}
@@ -410,4 +445,34 @@ func TestSubHealthREST_HandlerMapsResponse(t *testing.T) {
 		require.NoError(t, responder.err)
 		require.Equal(t, http.StatusOK, responder.statusCode)
 	})
+
+	t.Run("a denied request validation gates the health check", func(t *testing.T) {
+		var checkHealthCalled bool
+		shr := subHealthREST{
+			builder: &DataSourceAPIBuilder{
+				datasourceResourceInfo: datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("test.datasource.grafana.app", "test"),
+				client: mockHealthClient{checkHealthFunc: func(context.Context, *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+					checkHealthCalled = true
+					return &backend.CheckHealthResult{Status: backend.HealthStatusOk}, nil
+				}},
+				datasources:                &mockHealthDatasourceProvider{instanceSettings: &backend.DataSourceInstanceSettings{URL: "http://example.com"}},
+				contextProvider:            &mockHealthContextProvider{pluginCtx: backend.PluginContext{GrafanaConfig: config.NewGrafanaCfg(map[string]string{})}},
+				dataSourceRequestValidator: denyValidator{err: errors.New("blocked")},
+			},
+		}
+
+		responder := &mockHealthResponder{}
+		handler, err := shr.Connect(context.Background(), "dsname", nil, responder)
+		require.NoError(t, err)
+
+		handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
+
+		require.True(t, apierrors.IsForbidden(responder.err), "expected forbidden, got: %v", responder.err)
+		require.False(t, checkHealthCalled, "validation should gate the health check")
+	})
 }
+
+// denyValidator rejects every request with a fixed error.
+type denyValidator struct{ err error }
+
+func (v denyValidator) Validate(string, map[string]any, *http.Request) error { return v.err }

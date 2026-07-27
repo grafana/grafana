@@ -1,15 +1,20 @@
 import { t } from '@grafana/i18n';
-import { useCreateRepositoryJobsMutation, type RepositoryView, type Job } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  useCreateRepositoryJobsMutation,
+  type RepositoryView,
+  type Job,
+  type ResourceRef as GeneratedResourceRef,
+} from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
-export interface ResourceRef {
-  name: string;
-  group: 'dashboard.grafana.app' | 'folder.grafana.app';
-  kind: 'Dashboard' | 'Folder';
-}
+// Reuse the generated ResourceRef but require every field: a bulk delete/move job
+// needs a fully-specified ref, whereas the generated fields are all optional.
+export type ResourceRef = Required<GeneratedResourceRef>;
 
 export interface DeleteJobSpec {
   action: 'delete';
+  // Commit message for the resulting git commit. Carries the Grafana-saved-by trailer.
+  message?: string;
   delete: {
     ref?: string;
     resources: ResourceRef[];
@@ -18,6 +23,8 @@ export interface DeleteJobSpec {
 
 export interface MoveJobSpec {
   action: 'move';
+  // Commit message for the resulting git commit. Carries the Grafana-saved-by trailer.
+  message?: string;
   move: {
     ref?: string;
     targetPath: string; // Must end with '/' slash
@@ -25,7 +32,7 @@ export interface MoveJobSpec {
   };
 }
 
-export type BulkJobSpec = DeleteJobSpec | MoveJobSpec;
+type BulkJobSpec = DeleteJobSpec | MoveJobSpec;
 
 interface UseBulkActionJobResult {
   createBulkJob: (

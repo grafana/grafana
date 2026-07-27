@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { act, render, screen } from '@testing-library/react';
 import { type Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -13,6 +14,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { usePluginLinks } from '@grafana/runtime';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { configureStore } from 'app/store/configureStore';
 
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
@@ -114,10 +116,6 @@ const dummyProps: Props = {
   queryLibraryRef: undefined,
   queriesChangedIndexAtRun: 0,
 };
-jest.mock('@openfeature/react-sdk', () => ({
-  useBooleanFlagValue: jest.fn().mockReturnValue(false),
-}));
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
@@ -169,9 +167,11 @@ const setup = (overrideProps?: Partial<Props>) => {
 
   return render(
     <TestProvider store={store}>
-      <ContentOutlineContextProvider>
-        <Explore {...exploreProps} />
-      </ContentOutlineContextProvider>
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+        <ContentOutlineContextProvider>
+          <Explore {...exploreProps} />
+        </ContentOutlineContextProvider>
+      </OpenFeatureProvider>
     </TestProvider>
   );
 };
@@ -247,12 +247,39 @@ describe('Explore', () => {
   });
 
   describe('Content Outline', () => {
+    afterEach(() => {
+      act(() => {
+        setTestFlags({});
+      });
+    });
+
     it('should retrieve the last visible state from local storage', async () => {
       const getBoolMock = jest.spyOn(store, 'getBool').mockReturnValue(false);
       setup();
       const showContentOutlineButton = screen.queryByRole('button', { name: 'Collapse outline' });
       expect(showContentOutlineButton).not.toBeInTheDocument();
       getBoolMock.mockRestore();
+    });
+
+    it('shows the metrics explorer when a Mixed datasource contains a managed Prometheus flavor query', async () => {
+      setTestFlags({ 'grafana.exploreMetricsSidebar': true });
+      setup({
+        datasourceInstance: { meta: { mixed: true, metrics: true } } as DataSourceApi,
+        queries: [{ refId: 'A', datasource: { type: 'grafana-amazonprometheus-datasource', uid: 'amp-uid' } }],
+      });
+
+      expect(await screen.findByPlaceholderText('Search metrics')).toBeInTheDocument();
+    });
+
+    it('does not show the metrics explorer for a non-Prometheus Mixed datasource query', async () => {
+      setTestFlags({ 'grafana.exploreMetricsSidebar': true });
+      setup({
+        datasourceInstance: { meta: { mixed: true, metrics: true } } as DataSourceApi,
+        queries: [{ refId: 'A', datasource: { type: 'loki', uid: 'loki-uid' } }],
+      });
+
+      await screen.findByTestId(selectors.components.DataSourcePicker.container);
+      expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
     });
   });
 
@@ -290,11 +317,13 @@ describe('Explore', () => {
 
       render(
         <TestProvider store={store}>
-          <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
-            <ContentOutlineContextProvider>
-              <Explore {...exploreProps} />
-            </ContentOutlineContextProvider>
-          </QueryLibraryContextProviderMock>
+          <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+            <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
+              <ContentOutlineContextProvider>
+                <Explore {...exploreProps} />
+              </ContentOutlineContextProvider>
+            </QueryLibraryContextProviderMock>
+          </OpenFeatureProvider>
         </TestProvider>
       );
 

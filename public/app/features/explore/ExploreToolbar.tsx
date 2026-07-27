@@ -7,6 +7,7 @@ import { type DataSourceInstanceSettings, type RawTimeRange, type GrafanaTheme2 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import {
   defaultIntervals,
   PageToolbar,
@@ -42,7 +43,7 @@ import { isLeftPaneSelector, isSplit, selectCorrelationDetails, selectPanesEntri
 import { syncTimes, changeRefreshInterval } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 
-const getStyles = (theme: GrafanaTheme2, splitted: Boolean) => ({
+const getStyles = (theme: GrafanaTheme2, splitted: Boolean, visualRefreshEnabled: boolean) => ({
   rotateIcon: css({
     '> div > svg': {
       transform: 'rotate(180deg)',
@@ -54,6 +55,11 @@ const getStyles = (theme: GrafanaTheme2, splitted: Boolean) => ({
     marginRight: theme.spacing(0.5),
     width: splitted && theme.spacing(6),
   }),
+  pageToolbar: css({
+    background: theme.colors.background.page,
+    borderTopLeftRadius: theme.shape.radius.lg,
+    borderTopRightRadius: theme.shape.radius.lg,
+  }),
 });
 
 interface Props {
@@ -64,9 +70,10 @@ interface Props {
 }
 
 export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle, isContentOutlineOpen }: Props) {
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const dispatch = useDispatch();
   const splitted = useSelector(isSplit);
-  const styles = useStyles2(getStyles, splitted);
+  const styles = useStyles2(getStyles, splitted, visualRefreshEnabled);
 
   const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
   const fiscalYearStartMonth = useSelector((state: StoreState) => getFiscalYearStartMonth(state.user));
@@ -94,9 +101,9 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     [isLeftPane, isLargerPane]
   );
 
-  const refreshPickerLabel = loading
-    ? t('explore.toolbar.refresh-picker-cancel', 'Cancel')
-    : t('explore.toolbar.refresh-picker-run', 'Run query');
+  const refreshPickerLabel = t('explore.toolbar.refresh-picker-run', 'Run query');
+  const refreshPickerCancelLabel = t('explore.toolbar.refresh-picker-cancel', 'Cancel');
+  const tooltipLabel = loading ? refreshPickerCancelLabel : refreshPickerLabel;
 
   const onChangeDatasource = async (dsSettings: DataSourceInstanceSettings) => {
     if (!isCorrelationsEditorMode) {
@@ -216,7 +223,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             iconOnly={splitted}
             onClick={onContentOutlineToogle}
             aria-expanded={isContentOutlineOpen}
-            aria-controls={isContentOutlineOpen ? 'content-outline-container' : undefined}
+            aria-controls={isContentOutlineOpen ? `content-outline-container-${exploreId}` : undefined}
             className={styles.toolbarButton}
           >
             <Trans i18nKey="explore.explore-toolbar.outline">Outline</Trans>
@@ -237,6 +244,9 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
           />,
         ].filter(Boolean)}
         forceShowLeftItems
+        className={cx({
+          [styles.pageToolbar]: visualRefreshEnabled,
+        })}
       >
         {[
           !splitted ? (
@@ -303,13 +313,14 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             value={refreshInterval}
             isLoading={loading}
             text={showSmallTimePicker ? undefined : refreshPickerLabel}
-            tooltip={showSmallTimePicker ? refreshPickerLabel : undefined}
+            loadingText={showSmallTimePicker ? undefined : refreshPickerCancelLabel}
+            tooltip={showSmallTimePicker ? tooltipLabel : undefined}
             intervals={contextSrv.getValidIntervals(defaultIntervals)}
             isLive={isLive}
             onRefresh={() => onRunQuery(loading)}
             noIntervalPicker={isLive}
             primary={true}
-            width={(showSmallTimePicker ? 35 : 108) + 'px'}
+            width={showSmallTimePicker ? '35px' : undefined}
             data-testid={selectors.pages.Explore.toolbar.refreshPicker}
           />,
           (!splitted || !isLeftPane) && <ShortLinkButtonMenu key="share" hideText={showSmallTimePicker} />,

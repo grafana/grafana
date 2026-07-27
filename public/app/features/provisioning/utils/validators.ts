@@ -26,3 +26,65 @@ export function validateNoHiddenCharacters(value: string | undefined): string | 
     'This field contains hidden characters that may have been introduced by copying and pasting. Please retype or clean the value and try again.'
   );
 }
+
+/**
+ * react-hook-form `validate` function.
+ * Rejects URLs that embed credentials in the userinfo component (e.g. https://user:token@host/...).
+ * Returns `true` when valid, or an error message string when credentials are detected.
+ */
+export function validateNoUserInfoInUrl(value: string | undefined): string | true {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return true;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.username !== '' || parsed.password !== '') {
+      return t(
+        'provisioning.validation.url-with-credentials',
+        'Repository URL must not include a username or password. Remove credentials from the URL and use the token field instead.'
+      );
+    }
+  } catch {
+    // Malformed URL — defer to the per-provider regex pattern for the format error.
+    return true;
+  }
+
+  return true;
+}
+
+const notEmpty = (value: string | undefined): boolean => typeof value === 'string' && value.trim().length > 0;
+
+/**
+ * Builds a react-hook-form `validate` function for the commit signer name/email fields.
+ * Both are required once commit signing is enabled.
+ */
+export function validateSigner(signingEnabled: boolean) {
+  return (value: string | undefined): string | true =>
+    !signingEnabled ||
+    notEmpty(value) ||
+    t('provisioning.commit-options.signer-required', 'Required when commit signing is enabled.');
+}
+
+/**
+ * Builds a react-hook-form `validate` function for the signing key field.
+ * Required only when signing is enabled and no key has been configured yet.
+ */
+export function validateSigningKey(signingRequired: boolean) {
+  return (value: string | undefined): string | true =>
+    !signingRequired ||
+    notEmpty(value) ||
+    t('provisioning.commit-options.signing-key-required', 'Signing key is required');
+}
+
+/**
+ * Builds a react-hook-form `validate` function for the S/MIME certificate field.
+ * Required only when the selected signing method is S/MIME.
+ */
+export function validateSmimeCertificate(signingMethod: string | undefined) {
+  return (value: string | undefined): string | true =>
+    signingMethod !== 'smime' ||
+    notEmpty(value) ||
+    t('provisioning.commit-options.smime-certificate-required', 'Certificate is required');
+}

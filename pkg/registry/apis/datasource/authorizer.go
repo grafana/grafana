@@ -2,81 +2,72 @@ package datasource
 
 import (
 	"context"
-	"fmt"
 
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
+	authn "github.com/grafana/authlib/authn"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+	group := b.GetGroupVersion().Group
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 			if !attr.IsResourceRequest() {
 				return authorizer.DecisionNoOpinion, "", nil
 			}
+
+			sub := attr.GetSubresource()
+
+			var svcIdentity []string
+			if authInfo, ok := authlib.AuthInfoFrom(ctx); ok {
+				svcIdentity = authInfo.GetExtra()[authn.ServiceIdentityKey]
+			}
+
+			// Observe svc_identity state for future enforcement.
+			caller := "empty"
+			if len(svcIdentity) > 0 {
+				caller = svcIdentity[0]
+			}
+
+			verb := attr.GetVerb()
+
 			user, err := identity.GetRequester(ctx)
 			if err != nil {
+				recordAuthzDecision(group, sub, verb, caller, "deny", "no_user")
 				return authorizer.DecisionDeny, "valid user is required", err
 			}
 
-			uidScope := datasources.ScopeProvider.GetResourceScopeUID(attr.GetName())
+			req := authlib.CheckRequest{
+				Group:     group,
+				Resource:  "datasources",
+				Namespace: attr.GetNamespace(),
+				Name:      attr.GetName(),
+				Verb:      verb,
+			}
 
-			// Must have query permission to access any subresource
-			if attr.GetSubresource() != "" {
-				scopes := []string{}
-				if attr.GetName() != "" {
-					scopes = []string{uidScope}
-				}
-				ok, err := b.accessControl.Evaluate(ctx, user, ac.EvalPermission(datasources.ActionQuery, scopes...))
-				if !ok || err != nil {
-					return authorizer.DecisionDeny, "unable to query", err
-				}
+			if sub != "" {
+				req.Verb = utils.VerbCreate
+				req.Subresource = "query"
+			}
 
-				if attr.GetSubresource() == "proxy" {
-					return authorizer.DecisionDeny, "TODO: map the plugin settings to access rules", err
-				}
-
+			rsp, err := b.accessClient.Check(ctx, user, req, "")
+			if err != nil {
+				recordAuthzDecision(group, sub, verb, caller, "deny", "error")
+				return authorizer.DecisionDeny, "failed to check permissions", err
+			}
+			if rsp.Allowed {
+				recordAuthzDecision(group, sub, verb, caller, "allow", "")
 				return authorizer.DecisionAllow, "", nil
 			}
-
-			// Check for the right actions for datasource CRUD
-			action := "" // invalid
-
-			switch attr.GetVerb() {
-			case "list":
-				ok, err := b.accessControl.Evaluate(ctx, user,
-					ac.EvalPermission(datasources.ActionRead)) // Can see any datasource values
-				if !ok || err != nil {
-					return authorizer.DecisionDeny, "unable to read", err
-				}
-				return authorizer.DecisionAllow, "", nil
-
-			case "get":
-				action = datasources.ActionRead
-			case "create":
-				action = datasources.ActionWrite
-			case "post":
-				fallthrough
-			case "update":
-				fallthrough
-			case "patch":
-				fallthrough
-			case "put":
-				action = datasources.ActionWrite
-			case "delete":
-				action = datasources.ActionDelete
-			default:
-				//b.log.Info("unknown verb", "verb", attr.GetVerb())
-				return authorizer.DecisionDeny, "unsupported verb", nil // Unknown verb
+			if req.Subresource != "" {
+				recordAuthzDecision(group, sub, verb, caller, "deny", "missing_permissions")
+				return authorizer.DecisionDeny, "missing `query` subresource permission", nil
 			}
-			ok, err := b.accessControl.Evaluate(ctx, user,
-				ac.EvalPermission(action, uidScope))
-			if !ok || err != nil {
-				return authorizer.DecisionDeny, fmt.Sprintf("unable to %s", action), nil
-			}
-			return authorizer.DecisionAllow, "", nil
+
+			recordAuthzDecision(group, sub, verb, caller, "deny", "access_denied")
+			return authorizer.DecisionDeny, "access denied", nil
 		})
 }

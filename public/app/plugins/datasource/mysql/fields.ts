@@ -54,7 +54,7 @@ export function mapFieldsToTypes(columns: SQLSelectableValue[]) {
   return fields;
 }
 
-export function mapColumnTypeToIcon(type: string) {
+function mapColumnTypeToIcon(type: string) {
   switch (type) {
     case 'TIME':
     case 'DATETIME':

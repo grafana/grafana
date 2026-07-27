@@ -1,0 +1,2 @@
+# Ensure flag key module augmentation is not distributed
+openfeature-types.gen.d.ts

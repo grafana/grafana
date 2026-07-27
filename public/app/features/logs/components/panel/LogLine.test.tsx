@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import type { Grammar } from 'prismjs';
 
 import { CoreApp, createTheme, getDefaultTimeRange, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
-import { createTempoDatasource } from '@grafana-plugins/tempo/test/mocks';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
 import { createLogLine } from '../mocks/logRow';
@@ -15,6 +14,7 @@ import { type LogListFontSize } from './LogList';
 import { LogListContextProvider, LogListContext } from './LogListContext';
 import { LogListSearchContext } from './LogListSearchContext';
 import { defaultProps, defaultValue } from './__mocks__/LogListContext';
+import { createTempoDatasource } from './__mocks__/createTempoDatasource';
 import { type LogListModel } from './processing';
 import { LogLineVirtualization } from './virtualization';
 
@@ -50,7 +50,7 @@ jest.mock('@grafana/runtime', () => {
 });
 
 jest.mock('./LogListContext');
-jest.mock('../LogDetails');
+jest.mock('../useAttributesExtensionLinks');
 
 const theme = createTheme();
 const virtualization = new LogLineVirtualization(theme, 'default');
@@ -297,9 +297,9 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
           <LogLine {...defaultProps} />
         </LogListContextProvider>
       );
-      expect(screen.queryByText('Copy log line')).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: /Copy log line message/i })).not.toBeInTheDocument();
       await userEvent.click(screen.getByLabelText('Log menu'));
-      expect(screen.getByText('Copy log line')).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: /Copy log line message/i })).toBeInTheDocument();
     });
 
     test('The menu can be clicked', async () => {
@@ -308,9 +308,9 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
           <LogLine {...defaultProps} />
         </LogListContextProvider>
       );
-      expect(screen.queryByText('Copy log line')).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: /Copy log line message/i })).not.toBeInTheDocument();
       await userEvent.click(screen.getByRole('button'));
-      expect(screen.getByText('Copy log line')).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: /Copy log line message/i })).toBeInTheDocument();
     });
   });
 

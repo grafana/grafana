@@ -10,7 +10,9 @@ import {
   type DataSourceApi,
   type DataSourceInstanceSettings,
   type PanelPluginMeta,
+  standardTransformersRegistry,
 } from '@grafana/data';
+import { joinByFieldTransformer, mergeTransformer } from '@grafana/data/internal';
 import { type CorrelationData } from '@grafana/runtime';
 import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import { type DataSourceJsonData, type DataQuery } from '@grafana/schema';
@@ -30,6 +32,21 @@ jest.mock('@grafana/data', () => ({
   dateTimeFormat: () => 'format() jest mocked',
   dateTimeFormatTimeAgo: () => 'fromNow() jest mocked',
 }));
+
+beforeAll(() => {
+  standardTransformersRegistry.setInit(() =>
+    [joinByFieldTransformer, mergeTransformer].map((t) => ({
+      id: t.id,
+      aliasIds: t.aliasIds,
+      name: t.name,
+      transformation: () => Promise.resolve(t),
+      description: t.description,
+      editor: () => null,
+      imageDark: '',
+      imageLight: '',
+    }))
+  );
+});
 
 const getTestContext = () => {
   const timeSeries = toDataFrame({

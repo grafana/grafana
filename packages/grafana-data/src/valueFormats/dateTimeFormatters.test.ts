@@ -1,5 +1,6 @@
 import { toUtc, dateTime } from '../datetime/moment_wrapper';
 
+import { formattedValueToString } from './baseFormatters';
 import {
   dateTimeAsIso,
   dateTimeAsIsoNoDateIfToday,
@@ -18,7 +19,6 @@ import {
   toNanoSeconds,
   toSeconds,
 } from './dateTimeFormatters';
-import { formattedValueToString } from './valueFormats';
 
 describe('date time formats', () => {
   const epoch = 1505634997920;

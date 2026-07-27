@@ -1,16 +1,11 @@
 import { type ChangeEvent, useCallback } from 'react';
 
 import {
-  DataTransformerID,
   type FieldNamePickerConfigSettings,
   FieldType,
   type SelectableValue,
   type StandardEditorsRegistryItem,
-  standardTransformers,
-  type TransformerRegistryItem,
   type TransformerUIProps,
-  TransformerCategory,
-  getTimeZones,
 } from '@grafana/data';
 import { type ConvertFieldTypeOptions, type ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
 import { t, Trans } from '@grafana/i18n';
@@ -18,8 +13,6 @@ import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui'
 import { getAllFieldTypeIconOptions, FieldNamePicker } from '@grafana/ui/internal';
 import { findField } from 'app/features/dimensions/utils';
 
-import darkImage from '../images/dark/convertFieldType.svg';
-import lightImage from '../images/light/convertFieldType.svg';
 import { getTimezoneOptions } from '../utils';
 
 import { EnumMappingEditor } from './EnumMappingEditor';
@@ -35,20 +28,6 @@ export const ConvertFieldTypeTransformerEditor = ({
 }: TransformerUIProps<ConvertFieldTypeTransformerOptions>) => {
   const allTypes = getAllFieldTypeIconOptions().filter((v) => v.value !== FieldType.trace);
   const timeZoneOptions: Array<SelectableValue<string>> = getTimezoneOptions(true);
-
-  // Format timezone options
-  const tzs = getTimeZones();
-  timeZoneOptions.push({
-    label: t('transformers.convert-field-type-transformer-editor.label.browser', 'Browser'),
-    value: 'browser',
-  });
-  timeZoneOptions.push({
-    label: t('transformers.convert-field-type-transformer-editor.label.utc', 'UTC'),
-    value: 'utc',
-  });
-  for (const tz of tzs) {
-    timeZoneOptions.push({ label: tz, value: tz });
-  }
 
   const onSelectField = useCallback(
     (idx: number) => (value: string | undefined) => {
@@ -143,6 +122,9 @@ export const ConvertFieldTypeTransformerEditor = ({
         // This ensures consistent UI across versions where arrays may be classified differently.
         const shouldRenderJoinWith =
           c.joinWith?.length || (targetField?.type && [FieldType.other, FieldType.string].includes(targetField.type));
+        const shouldRenderTimezone =
+          c.destinationType === FieldType.time ||
+          (c.destinationType === FieldType.string && targetField?.type === FieldType.time);
 
         return (
           <div key={`${c.targetField}-${idx}`}>
@@ -217,21 +199,20 @@ export const ConvertFieldTypeTransformerEditor = ({
                           width={24}
                         />
                       </InlineField>
-                      <InlineField
-                        label={t(
-                          'transformers.convert-field-type-transformer-editor.label-set-timezone',
-                          'Set timezone'
-                        )}
-                        tooltip={t(
-                          'transformers.convert-field-type-transformer-editor.tooltip-timezone-manually',
-                          'Set the timezone of the date manually'
-                        )}
-                      >
-                        <Select options={timeZoneOptions} value={c.timezone} onChange={onTzChange(idx)} isClearable />
-                      </InlineField>
                     </>
                   )}
                 </>
+              )}
+              {shouldRenderTimezone && (
+                <InlineField
+                  label={t('transformers.convert-field-type-transformer-editor.label-set-timezone', 'Set timezone')}
+                  tooltip={t(
+                    'transformers.convert-field-type-transformer-editor.tooltip-timezone-manually',
+                    'Set the timezone of the date manually'
+                  )}
+                >
+                  <Select options={timeZoneOptions} value={c.timezone} onChange={onTzChange(idx)} isClearable />
+                </InlineField>
               )}
               <Button
                 size="md"
@@ -267,19 +248,3 @@ export const ConvertFieldTypeTransformerEditor = ({
     </>
   );
 };
-
-export const getConvertFieldTypeTransformRegistryItem: () => TransformerRegistryItem<ConvertFieldTypeTransformerOptions> =
-  () => ({
-    id: DataTransformerID.convertFieldType,
-    editor: ConvertFieldTypeTransformerEditor,
-    transformation: standardTransformers.convertFieldTypeTransformer,
-    name: t('transformers.convert-field-type-transformer-editor.name.convert-field-type', 'Convert field type'),
-    description: t(
-      'transformers.convert-field-type-transformer-editor.description.convert-to-specified-field-type',
-      'Convert a field to a specified field type.'
-    ),
-    categories: new Set([TransformerCategory.Reformat]),
-    tags: new Set([t('transformers.convert-field-type-transformer-editor.tags.format-field', 'Format field')]),
-    imageDark: darkImage,
-    imageLight: lightImage,
-  });

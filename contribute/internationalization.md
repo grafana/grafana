@@ -199,23 +199,40 @@ import { Trans } from "@grafana/i18n"
 
 ### Plurals
 
-Plurals require special handling to make sure they can be translated according to the rules of each locale (which may be more complex than you think). Use either the `<Trans />` component or the `t` function, with the `count` prop to provide a singular form. For example:
+Plurals require special handling to make sure they can be translated according to the rules of each locale (which may be more complex than you think). Use either the `<Trans />` component or the `t` function, providing a separate singular form alongside the `count` prop. For example:
 
-```js
+#### `Trans`
+
+```tsx
 import { Trans } from '@grafana/i18n';
 
-<Trans i18nKey="inbox.heading" count={messages.length}>
+<Trans
+  i18nKey="inbox.heading"
+  count={messages.length}
+  tOptions={{
+    defaultValue_one: 'You got {{count}} message',
+  }}
+>
   You got {{ count: messages.length }} messages
 </Trans>;
 ```
 
-```js
+#### `t`
+
+```ts
 import { t } from '@grafana/i18n';
 
-const translatedString = t('inbox.heading', 'You got {{count}} messages', { count: messages.length });
+const translatedString = t(
+  'inbox.heading',
+  'You got {{count}} messages',
+  {
+    count: messages.length
+    defaultValue_one: 'You got {{count}} message',
+  }
+);
 ```
 
-Once extracted with `make i18n-extract` you need to manually edit the [English `grafana.json` message catalog](../public/locales/en-US/grafana.json) to correct the plural forms. Refer to the [react-i18next docs](https://react.i18next.com/latest/trans-component#plural) for more details.
+Once extracted with `yarn i18n-extract`, you'll see your updated strings in the [English `grafana.json` message catalog](../public/locales/en-US/grafana.json). Refer to the [react-i18next docs](https://react.i18next.com/latest/trans-component#plural) for more details.
 
 ```json
 {

@@ -1,5 +1,5 @@
 import { screen, waitFor, within } from '@testing-library/react';
-import { render } from 'test/test-utils';
+import { render, testWithFeatureToggles } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import SettingsPage from './Settings';
@@ -7,7 +7,8 @@ import DataSourcesResponse from './components/settings/mocks/api/datasources.jso
 import { setupGrafanaManagedServer, withExternalOnlySetting } from './components/settings/mocks/server';
 import { setupMswServer } from './mockApi';
 import { grantUserRole } from './mocks';
-import { addSettingsSection, clearSettingsExtensions } from './settings/extensions';
+import { addSettingsSection } from './settings/extensions';
+import { setupDataSources } from './testSetup/datasources';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -19,6 +20,7 @@ const server = setupMswServer();
 const ui = {
   builtInAlertmanagerSection: byText('Built-in Alertmanager'),
   otherAlertmanagerSection: byText('Other Alertmanagers'),
+  autoSyncCard: byRole('region', { name: /auto-sync configuration/i }),
 
   alertmanagerCard: (name: string) => byTestId(`alertmanager-card-${name}`),
   builtInAlertmanagerCard: byTestId('alertmanager-card-Grafana built-in'),
@@ -45,14 +47,19 @@ const ui = {
 };
 
 describe('Alerting settings', () => {
+  const unregisterSections: Array<() => void> = [];
+
+  function registerSettingsSection(section: Parameters<typeof addSettingsSection>[0]) {
+    unregisterSections.push(addSettingsSection(section));
+  }
+
   beforeEach(() => {
     grantUserRole('ServerAdmin');
     setupGrafanaManagedServer(server);
-    clearSettingsExtensions();
   });
 
   afterEach(() => {
-    clearSettingsExtensions();
+    unregisterSections.splice(0).forEach((unregisterSection) => unregisterSection());
   });
 
   it('should render the page with Built-in only enabled, others disabled', async () => {
@@ -145,15 +152,14 @@ describe('Alerting settings', () => {
   });
 
   it('should display additional tabs when settings extensions are registered', async () => {
-    // Register extensions before rendering
-    addSettingsSection({
+    registerSettingsSection({
       id: 'enrichment',
       text: 'Enrichment',
       url: '/alerting/admin/enrichment',
       icon: 'star',
     });
 
-    addSettingsSection({
+    registerSettingsSection({
       id: 'notifications',
       text: 'Notifications',
       url: '/alerting/admin/notifications',
@@ -175,8 +181,7 @@ describe('Alerting settings', () => {
   });
 
   it('should correctly show active state for extension tabs based on route', async () => {
-    // Register an extension
-    addSettingsSection({
+    registerSettingsSection({
       id: 'enrichment',
       text: 'Enrichment',
       url: '/alerting/admin/enrichment',
@@ -204,22 +209,21 @@ describe('Alerting settings', () => {
   });
 
   it('should handle multiple extensions correctly', async () => {
-    // Register multiple extensions
-    addSettingsSection({
+    registerSettingsSection({
       id: 'enrichment',
       text: 'Enrichment',
       url: '/alerting/admin/enrichment',
       icon: 'star',
     });
 
-    addSettingsSection({
+    registerSettingsSection({
       id: 'notifications',
       text: 'Notifications',
       url: '/alerting/admin/notifications',
       icon: 'bell',
     });
 
-    addSettingsSection({
+    registerSettingsSection({
       id: 'custom-settings',
       text: 'Custom Settings',
       url: '/alerting/admin/custom',
@@ -256,5 +260,32 @@ describe('Alerting settings', () => {
     expect(ui.alertmanagerTab.get()).toBeInTheDocument();
     expect(ui.enrichmentTab.query()).not.toBeInTheDocument();
     expect(ui.notificationsTab.query()).not.toBeInTheDocument();
+  });
+
+  it('should not render the auto-sync configuration card when the feature flag is off', async () => {
+    render(<SettingsPage />);
+
+    await waitFor(() => expect(ui.builtInAlertmanagerSection.get()).toBeInTheDocument());
+    expect(ui.autoSyncCard.query()).not.toBeInTheDocument();
+  });
+
+  describe('with alerting.syncExternalAlertmanager feature flag enabled', () => {
+    testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
+
+    it('renders the auto-sync configuration card above the Built-in Alertmanager section', async () => {
+      // DataSourcePicker reads from getDataSourceSrv(); initialise it (empty list is fine here).
+      setupDataSources();
+      render(<SettingsPage />);
+
+      await waitFor(() => expect(ui.builtInAlertmanagerSection.get()).toBeInTheDocument());
+
+      const card = await ui.autoSyncCard.find();
+      expect(card).toBeInTheDocument();
+
+      // The card should precede the Built-in Alertmanager heading in document order.
+      const builtInHeading = ui.builtInAlertmanagerSection.get();
+      // eslint-disable-next-line no-bitwise
+      expect(card.compareDocumentPosition(builtInHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
   });
 });

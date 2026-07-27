@@ -12,7 +12,7 @@ import { type CatalogPlugin, PluginIconName } from '../types';
 import { PluginListItemBadges } from './PluginListItemBadges';
 import { PluginLogo } from './PluginLogo';
 
-export const LOGO_SIZE = '48px';
+const LOGO_SIZE = '48px';
 
 type Props = {
   plugin: CatalogPlugin;
@@ -94,7 +94,7 @@ const PluginListItemSkeleton: SkeletonComponent = ({ rootProps }) => {
 export const PluginListItem = attachSkeleton(PluginListItemComponent, PluginListItemSkeleton);
 
 // Styles shared between the different type of list items
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       display: 'grid',
@@ -103,7 +103,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(2),
       gridAutoFlow: 'row',
       background: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
       padding: theme.spacing(3),
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {

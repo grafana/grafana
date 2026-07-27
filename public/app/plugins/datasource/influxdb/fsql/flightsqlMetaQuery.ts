@@ -5,10 +5,6 @@ export function buildTableQuery(dataset?: string) {
   return `SELECT table_name FROM information_schema.tables WHERE table_schema = ${database} ORDER BY table_name`;
 }
 
-export function showDatabases() {
-  return `SELECT DISTINCT TABLE_SCHEMA from information_schema.TABLES where TABLE_TYPE != 'SYSTEM VIEW' ORDER BY TABLE_SCHEMA`;
-}
-
 export function buildColumnQuery(table: string, dbName?: string) {
   let query = 'SELECT column_name, data_type FROM information_schema.columns WHERE ';
   query += buildTableConstraint(table, dbName);
@@ -18,7 +14,7 @@ export function buildColumnQuery(table: string, dbName?: string) {
   return query;
 }
 
-export function buildTableConstraint(table: string, dbName?: string) {
+function buildTableConstraint(table: string, dbName?: string) {
   let query = '';
 
   // check for schema qualified table
@@ -35,6 +31,6 @@ export function buildTableConstraint(table: string, dbName?: string) {
   }
 }
 
-export function quoteIdentAsLiteral(value: string) {
+function quoteIdentAsLiteral(value: string) {
   return quoteLiteral(unquoteIdentifier(value));
 }

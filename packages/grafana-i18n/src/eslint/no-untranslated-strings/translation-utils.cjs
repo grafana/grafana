@@ -384,7 +384,6 @@ module.exports = {
   getNodeValue,
   getTFixers,
   getTransFixers,
-  getTranslationPrefix,
   canBeFixed,
   shouldBeFixed,
   elementIsTrans,

@@ -1,3 +1,5 @@
+import { of } from 'rxjs';
+
 import { type CustomVariableModel } from '@grafana/data';
 import { getBackendSrv, setBackendSrv } from '@grafana/runtime';
 
@@ -9,8 +11,10 @@ export function setupMockedResourcesAPI({
   variables,
   response,
   getMock,
+  fetchMock,
 }: {
   getMock?: jest.Mock;
+  fetchMock?: jest.Mock;
   response?: unknown;
   variables?: CustomVariableModel[];
   mockGetVariableName?: boolean;
@@ -18,11 +22,13 @@ export function setupMockedResourcesAPI({
   let templateService = setupMockedTemplateService(variables);
 
   const api = new ResourcesAPI(CloudWatchSettings, templateService);
-  let resourceRequestMock = getMock ? getMock : jest.fn().mockReturnValue(response);
+  const resourceRequestMock = getMock ? getMock : jest.fn().mockReturnValue(response);
+  const defaultFetchMock = fetchMock ?? jest.fn().mockReturnValue(of({ data: response, headers: new Headers() }));
   setBackendSrv({
     ...getBackendSrv(),
     get: resourceRequestMock,
+    fetch: defaultFetchMock,
   });
 
-  return { api, resourceRequestMock, templateService };
+  return { api, resourceRequestMock, fetchMock: defaultFetchMock, templateService };
 }

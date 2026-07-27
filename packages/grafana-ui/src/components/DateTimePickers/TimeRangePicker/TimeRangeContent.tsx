@@ -23,7 +23,6 @@ import { Icon } from '../../Icon/Icon';
 import { Input } from '../../Input/Input';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { type WeekStart } from '../WeekStartPicker';
-import { commonFormat } from '../commonFormat';
 import { isValid } from '../utils';
 
 import TimePickerCalendar from './TimePickerCalendar';
@@ -46,7 +45,6 @@ interface FormState {
 }
 
 const ERROR_MESSAGES = {
-  required: () => t('time-picker.range-content.required-error', 'This field is required'),
   default: () =>
     t(
       'time-picker.range-content.default-error',
@@ -79,7 +77,7 @@ export const TimeRangeContent = (props: Props) => {
     register,
     formState: { errors },
     setValue,
-    getValues,
+    watch,
   } = useForm<FormState>({
     defaultValues: {
       from: valueAsString(value.raw.from, timeZone),
@@ -101,7 +99,7 @@ export const TimeRangeContent = (props: Props) => {
   const onApply = useCallback(() => {
     handleSubmit((data) => {
       const raw: RawTimeRange = { from: data.from, to: data.to };
-      const timeRange = rangeUtil.convertRawToRange(raw, timeZone, fiscalYearStartMonth, commonFormat);
+      const timeRange = rangeUtil.convertRawToRange(raw, timeZone, fiscalYearStartMonth);
       onApplyFromProps(timeRange);
     })();
   }, [handleSubmit, timeZone, fiscalYearStartMonth, onApplyFromProps]);
@@ -181,7 +179,7 @@ export const TimeRangeContent = (props: Props) => {
         >
           <Input
             {...register('from', {
-              required: ERROR_MESSAGES.required(),
+              required: ERROR_MESSAGES.default(),
 
               validate: (value, formValues) => {
                 if (!isValid(value, false, timeZone)) {
@@ -210,7 +208,7 @@ export const TimeRangeContent = (props: Props) => {
         <Field label={t('time-picker.range-content.to-input', 'To')} invalid={!!errors.to} error={errors.to?.message}>
           <Input
             {...register('to', {
-              required: ERROR_MESSAGES.required(),
+              required: ERROR_MESSAGES.default(),
               validate: (value, formValues) => {
                 if (!isValid(value, true, timeZone)) {
                   return ERROR_MESSAGES.default();
@@ -259,8 +257,8 @@ export const TimeRangeContent = (props: Props) => {
       <TimePickerCalendar
         isFullscreen={isFullscreen}
         isOpen={isOpen}
-        from={dateTimeParse(getValues('from'), { timeZone })}
-        to={dateTimeParse(getValues('to'), { timeZone })}
+        from={dateTimeParse(watch('from'), { timeZone })}
+        to={dateTimeParse(watch('to'), { timeZone })}
         onApply={onApply}
         onClose={() => setOpen(false)}
         onChange={onChange}
@@ -274,7 +272,7 @@ export const TimeRangeContent = (props: Props) => {
 
 function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
   const raw: RawTimeRange = { from, to };
-  const timeRange = rangeUtil.convertRawToRange(raw, timezone, undefined, commonFormat);
+  const timeRange = rangeUtil.convertRawToRange(raw, timezone);
   const valid = timeRange.from.isSame(timeRange.to) || timeRange.from.isBefore(timeRange.to);
 
   return !valid;
@@ -282,12 +280,12 @@ function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
 
 function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
   if (isDateTime(value)) {
-    return dateTimeFormat(value, { timeZone, format: commonFormat });
+    return dateTimeFormat(value, { timeZone });
   }
 
   if (value.endsWith('Z')) {
     const dt = dateTimeParse(value);
-    return dateTimeFormat(dt, { timeZone, format: commonFormat });
+    return dateTimeFormat(dt, { timeZone });
   }
 
   return value;

@@ -10,7 +10,8 @@ SELECT
   `updated_by`,
   `description`,
   `type`,
-  `payload`
+  `payload`,
+  `active`
 FROM
   `secret_keeper`
 WHERE `namespace` = 'ns' AND

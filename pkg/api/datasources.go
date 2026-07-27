@@ -13,7 +13,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/api/datasource"
+	"github.com/grafana/grafana/pkg/api/datasource/validation"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -334,7 +334,7 @@ func (hs *HTTPServer) DeleteDataSourceByName(c *contextmodel.ReqContext) respons
 }
 
 func validateURL(cmdType string, url string) response.Response {
-	if _, err := datasource.ValidateURL(cmdType, url); err != nil {
+	if _, err := validation.ValidateURL(cmdType, url); err != nil {
 		datasourcesLogger.Error("Failed to validate URL", "url", url)
 		return response.Error(http.StatusBadRequest, "Validation error, invalid URL", err)
 	}
@@ -520,7 +520,12 @@ func (hs *HTTPServer) UpdateDataSourceByUID(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "Failed to update datasource", err)
 	}
 
-	ds, err := hs.getRawDataSourceByUID(c.Req.Context(), web.Params(c.Req)[":uid"], c.GetOrgID())
+	urlUID := web.Params(c.Req)[":uid"]
+	if cmd.UID != "" && cmd.UID != urlUID {
+		return response.Error(http.StatusBadRequest, "UID in the payload must match the UID in the URL", nil)
+	}
+
+	ds, err := hs.getRawDataSourceByUID(c.Req.Context(), urlUID, c.GetOrgID())
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
 			return response.Error(http.StatusNotFound, "Data source not found", nil)
@@ -847,7 +852,7 @@ func (hs *HTTPServer) checkDatasourceHealth(c *contextmodel.ReqContext, ds *data
 		Headers:       map[string]string{},
 	}
 
-	err = hs.DataSourceRequestValidator.Validate(ds.URL, ds.JsonData, c.Req)
+	err = hs.DataSourceRequestValidator.Validate(ds.URL, ds.JsonDataMap(), c.Req)
 	if err != nil {
 		return response.Error(http.StatusForbidden, "Access denied", err)
 	}

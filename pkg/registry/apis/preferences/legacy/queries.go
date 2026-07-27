@@ -28,7 +28,6 @@ func mustTemplate(filename string) *template.Template {
 var (
 	sqlPreferencesQuery = mustTemplate("sql_preferences_query.sql")
 	sqlPreferencesRV    = mustTemplate("sql_preferences_rv.sql")
-	sqlTeams            = mustTemplate("sql_teams.sql")
 )
 
 type preferencesQuery struct {
@@ -39,6 +38,7 @@ type preferencesQuery struct {
 	UserTeams []string // also requires user UID
 	TeamUID   string
 	All       bool // explicitly request all preferences
+	Namespace bool // get the org preferences
 
 	UserTable        string
 	TeamTable        string
@@ -61,7 +61,7 @@ func (r preferencesQuery) Validate() error {
 		return fmt.Errorf("user required when filtering by a set of teams")
 	}
 	if r.UserUID == "" && r.TeamUID == "" {
-		if r.All {
+		if r.All || r.Namespace {
 			return nil // OK
 		}
 		return fmt.Errorf("to list all preferences, explicitly set the .All flag")
@@ -78,38 +78,5 @@ func newPreferencesQueryReq(sql *legacysql.LegacyDatabaseHelper, orgId int64) pr
 		PreferencesTable: sql.Table("preferences"),
 		UserTable:        sql.Table("user"),
 		TeamTable:        sql.Table("team"),
-	}
-}
-
-type teamQuery struct {
-	sqltemplate.SQLTemplate
-
-	OrgID   int64
-	UserUID string
-	IsAdmin bool
-
-	TeamMemberTable string
-	TeamTable       string
-	UserTable       string
-}
-
-func (r teamQuery) Validate() error {
-	if r.UserUID != "" && r.OrgID < 1 {
-		return fmt.Errorf("requests with a userid, must include an orgID")
-	}
-	return nil
-}
-
-func newTeamsQueryReq(sql *legacysql.LegacyDatabaseHelper, orgId int64, user string, admin bool) teamQuery {
-	return teamQuery{
-		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
-
-		OrgID:   orgId,
-		UserUID: user,
-		IsAdmin: admin,
-
-		TeamMemberTable: sql.Table("team_member"),
-		TeamTable:       sql.Table("team"),
-		UserTable:       sql.Table("user"),
 	}
 }

@@ -5,13 +5,13 @@ import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@g
 
 import { BarGauge } from '../../BarGauge/BarGauge';
 import { DataLinksActionsTooltip, renderSingleLink } from '../DataLinksActionsTooltip';
-import { type TableCellProps } from '../types';
 import {
   type DataLinksActionsTooltipCoords,
   getAlignmentFactor,
   getCellOptions,
   getDataLinksActionsTooltipUtils,
-} from '../utils';
+} from '../cellUtils';
+import { type TableCellProps } from '../types';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,

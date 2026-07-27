@@ -5,12 +5,12 @@ import (
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 )
 
 func contextualMiddlewares(ctx context.Context) context.Context {
-	cfg := backend.GrafanaConfigFromContext(ctx)
+	cfg := config.GrafanaConfigFromContext(ctx)
 	responseLimitMiddleware := httpclient.ResponseLimitMiddleware(cfg.ResponseLimit())
 	ctx = httpclient.WithContextualMiddleware(ctx, responseLimitMiddleware)
 

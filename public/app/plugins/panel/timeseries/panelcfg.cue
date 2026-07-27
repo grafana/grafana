@@ -24,7 +24,8 @@ composableKinds: PanelCfg: lineage: {
 		schema: {
 			TimeSeriesLegendOptions: {
 				common.VizLegendOptions
-				enableFacetedFilter?: bool | *true
+				enableFacetedFilter?: bool | *false
+				facetedFilterPinned?: bool | *false
 			} @cuetsy(kind="interface")
 			Options: {
 				common.OptionsWithTimezones

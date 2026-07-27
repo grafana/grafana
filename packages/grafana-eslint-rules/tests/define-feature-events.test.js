@@ -22,7 +22,6 @@ ruleTester.run('define-feature-events', defineFeatureEventsRule, {
       code: `
         ${DEFINE_EVENTS_IMPORT}
         const createEvent = defineFeatureEvents('grafana', 'dashboard_library');
-        /** @owner grafana-dashboards */
         export const MyInteractions = {
           /** Fires when loaded. */
           loaded: createEvent('loaded'),
@@ -34,7 +33,6 @@ ruleTester.run('define-feature-events', defineFeatureEventsRule, {
       code: `
         ${DEFINE_EVENTS_IMPORT}
         const createEvent = defineFeatureEvents('grafana', 'dashboard_library');
-        /** @owner grafana-dashboards */
         export const MyInteractions = {
           /** Fires when the variant item is clicked. */
           itemClicked: (props) => createEvent('item_clicked')({ ...props, featureVariant: 'foo' }),
@@ -66,18 +64,6 @@ ruleTester.run('define-feature-events', defineFeatureEventsRule, {
         const createEvent = defineFeatureEvents('grafana', feature);
       `,
       errors: [{ messageId: 'literalArgsRequired' }],
-    },
-    // Missing @owner on exported events object
-    {
-      code: `
-        ${DEFINE_EVENTS_IMPORT}
-        const createEvent = defineFeatureEvents('grafana', 'dashboard_library');
-        export const MyInteractions = {
-          /** Fires when loaded. */
-          loaded: createEvent('loaded'),
-        };
-      `,
-      errors: [{ messageId: 'missingOwnerTag' }],
     },
     // Missing inline comment on an event
     {

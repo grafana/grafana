@@ -254,6 +254,46 @@ describe('AzureMonitor: metrics dataHooks', () => {
         });
       });
     });
+
+    it('updates allowedTimeGrainsMs when metric changes but aggregation and timeGrain remain the same', async () => {
+      // Simulate switching to a metric (e.g. AKS Cluster Health) that only supports a limited set of time grains.
+      // The query already has aggregation and timeGrain set, so only allowedTimeGrainsMs differs.
+      datasource.azureMonitorDatasource.getMetricMetadata = jest.fn().mockResolvedValue({
+        primaryAggType: 'Average',
+        supportedAggTypes: ['Average'],
+        supportedTimeGrains: [
+          { label: 'Auto', value: 'auto' },
+          { label: '5 minutes', value: 'PT5M' },
+          { label: '1 hour', value: 'PT1H' },
+          { label: '1 day', value: 'P1D' },
+        ],
+        dimensions: [],
+      });
+
+      const query = {
+        ...bareQuery,
+        azureMonitor: {
+          ...metricsMetadataConfig.emptyQueryPartial,
+          aggregation: 'Average',
+          timeGrain: 'auto',
+          // Stale allowedTimeGrainsMs from the previous metric (includes PT1M which the new metric doesn't support)
+          allowedTimeGrainsMs: [60_000, 300_000, 900_000, 1_800_000, 3_600_000, 21_600_000, 43_200_000, 86_400_000],
+        },
+      };
+      renderHook(() => metricsMetadataConfig.hook(query, datasource, onChange));
+
+      await waitFor(() => {
+        expect(onChange).toHaveBeenCalledWith({
+          ...query,
+          azureMonitor: {
+            ...query.azureMonitor,
+            aggregation: 'Average',
+            timeGrain: 'auto',
+            allowedTimeGrainsMs: [300_000, 3_600_000, 86_400_000],
+          },
+        });
+      });
+    });
   });
 
   describe('useMetricNamespaces', () => {
@@ -293,7 +333,35 @@ describe('AzureMonitor: metrics dataHooks', () => {
             metricNamespace: 'azure/vm',
           }),
           // Here, "global" should be false
-          false
+          false,
+          undefined,
+          false,
+          // excludeCustom mirrors whether the batch API is enabled
+          undefined
+        );
+      });
+    });
+
+    it('excludes custom namespaces when the batch API is enabled', async () => {
+      datasource.azureMonitorDatasource.batchAPIEnabled = true;
+      const query = {
+        ...bareQuery,
+        azureMonitor: metricNamespacesConfig.emptyQueryPartial,
+      };
+      renderHook(() => metricNamespacesConfig.hook(query, datasource, onChange, jest.fn()));
+
+      await waitFor(() => {
+        expect(datasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
+          expect.objectContaining({
+            resourceGroup: 'rg',
+            resourceName: 'rn',
+            metricNamespace: 'azure/vm',
+          }),
+          false,
+          undefined,
+          false,
+          // excludeCustom should be true when the batch API is enabled
+          true
         );
       });
     });

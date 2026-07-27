@@ -43,6 +43,10 @@ func GetUserDirectPermissionCacheKey(user identity.Requester) string {
 	return fmt.Sprintf("rbac-permissions-direct-%s", user.GetCacheKey())
 }
 
+func GetZanzanaUserPermissionCacheKey(user identity.Requester) string {
+	return fmt.Sprintf("rbac-zanzana-permissions-%s", user.GetCacheKey())
+}
+
 func GetBasicRolePermissionCacheKey(role string, orgID int64) string {
 	roleKey := strings.ReplaceAll(role, " ", "_")
 	roleKey = strings.ToLower(roleKey)

@@ -1,6 +1,6 @@
 /**
- * Mock `getBoundingClientRect` on `Element.prototype` so that layout-dependent
- * libraries (e.g. `@tanstack/react-virtual`) can measure containers in JSDOM.
+ * Mock element dimensions so that layout-dependent libraries
+ * (e.g. `@tanstack/react-virtual`) can measure containers in JSDOM.
  *
  * Call this in a `beforeAll` block in test files that render virtualized lists.
  */
@@ -17,8 +17,25 @@ export function mockBoundingClientRect(rect: Partial<DOMRect> = {}): void {
     toJSON: () => {},
   };
 
+  const merged = { ...defaults, ...rect };
+
   Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-    value: () => ({ ...defaults, ...rect }),
+    value: () => merged,
     configurable: true,
   });
+
+  // @tanstack/react-virtual >=3.11 reads offsetWidth/offsetHeight directly
+  // (not getBoundingClientRect) to size the scroll container and items.
+  Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
+    get: () => merged.width,
+    configurable: true,
+  });
+  Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
+    get: () => merged.height,
+    configurable: true,
+  });
+}
+
+export function mockComboboxRect() {
+  mockBoundingClientRect({ width: 120, height: 120 });
 }

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/snowflake"
+	"github.com/grafana/dskit/backoff"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel"
@@ -19,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"github.com/grafana/grafana/pkg/util/sqlite"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager")
@@ -62,7 +64,18 @@ var (
 const (
 	defaultMaxBatchSize     = 25
 	defaultMaxBatchWaitTime = 100 * time.Millisecond
-	defaultBatchTimeout     = 5 * time.Second
+	// defaultBatchTimeout bounds one batched WithTx (all WriteEventFunc calls,
+	// resource_version lock, RV stamp updates). Override per manager via
+	// ResourceManagerOptions.BatchTransactionTimeout (wired from the
+	// [unified_storage] resource_version_batch_transaction_timeout ini key).
+	defaultBatchTimeout = 5 * time.Second
+
+	// SQLite serializes writes; under contention an INSERT/UPDATE can return
+	// SQLITE_BUSY even with the busy_timeout pragma. The transaction is rolled
+	// back, so the whole batched WithTx is safe to retry from the start.
+	sqliteBusyMaxRetries = 5
+	sqliteBusyMinBackoff = 50 * time.Millisecond
+	sqliteBusyMaxBackoff = 500 * time.Millisecond
 )
 
 // ResourceVersionManager handles resource version operations
@@ -74,6 +87,7 @@ type ResourceVersionManager struct {
 
 	maxBatchSize     int           // The maximum number of operations to batch together
 	maxBatchWaitTime time.Duration // The maximum time to wait for a batch to be ready
+	batchTxnTimeout  time.Duration // 0 = use defaultBatchTimeout for each batched WithTx
 }
 
 type writeOpResult struct {
@@ -93,13 +107,20 @@ type writeOp struct {
 // WriteEventFunc is a function that writes a resource to the database
 // It returns the GUID of the created resource
 // The GUID is used to update the resource version for the resource in the same transaction.
-type WriteEventFunc func(tx db.Tx) (guid string, err error)
+//
+// ctx is the context associated with the batch transaction (from WithTx). Callers must use
+// this ctx for ExecContext/QueryContext on tx — not the original request context — so that
+// cancellation of the request cannot abort the transaction mid-batch while leaving tx stale.
+type WriteEventFunc func(ctx context.Context, tx db.Tx) (guid string, err error)
 
 type ResourceManagerOptions struct {
 	Dialect          sqltemplate.Dialect // The dialect to use for the database
 	DB               db.DB               // The database to use
 	MaxBatchSize     int                 // The maximum number of operations to batch together
 	MaxBatchWaitTime time.Duration       // The maximum time to wait for a batch to be ready
+	// BatchTransactionTimeout is the maximum duration for one batched transaction
+	// (all writes, lock, RV updates). Zero selects defaultBatchTimeout.
+	BatchTransactionTimeout time.Duration
 }
 
 // NewResourceVersionManager creates a new ResourceVersionManager
@@ -122,7 +143,15 @@ func NewResourceVersionManager(opts ResourceManagerOptions) (*ResourceVersionMan
 		batchChMap:       make(map[string]chan *writeOp),
 		maxBatchSize:     opts.MaxBatchSize,
 		maxBatchWaitTime: opts.MaxBatchWaitTime,
+		batchTxnTimeout:  opts.BatchTransactionTimeout,
 	}, nil
+}
+
+func (m *ResourceVersionManager) batchTransactionTimeout() time.Duration {
+	if m.batchTxnTimeout > 0 {
+		return m.batchTxnTimeout
+	}
+	return defaultBatchTimeout
 }
 
 // DB returns the underlying db.DB for backwards compatibility queries.
@@ -250,93 +279,127 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 	}))
 	defer timer.ObserveDuration()
 
-	ctx, cancel := context.WithTimeout(ctx, defaultBatchTimeout)
+	ctx, cancel := context.WithTimeout(ctx, m.batchTransactionTimeout())
 	defer cancel()
 
-	guidToRV := make(map[string]int64, len(batch))
-	guidToSnowflakeRV := make(map[string]int64, len(batch))
-	guids := make([]string, len(batch)) // The GUIDs of the created resources in the same order as the batch
-	rvs := make([]int64, len(batch))    // The RVs of the created resources in the same order as the batch
+	var (
+		guidToRV          map[string]int64
+		guidToSnowflakeRV map[string]int64
+		guids             []string
+		rvs               []int64
+	)
 
-	err = m.db.WithTx(ctx, readCommitted, func(ctx context.Context, tx db.Tx) error {
-		span.AddEvent("starting_batch_transaction")
+	runBatch := func() error {
+		// Reset per-attempt state so SQLite busy retries do not carry over
+		// guids/rvs from a rolled-back attempt.
+		guidToRV = make(map[string]int64, len(batch))
+		guidToSnowflakeRV = make(map[string]int64, len(batch))
+		guids = make([]string, len(batch))
+		rvs = make([]int64, len(batch))
 
-		writeTimer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
-			rvmExecBatchPhaseDuration.WithLabelValues(group, resource, "write_ops").Observe(v)
-		}))
-		for i := range batch {
-			guid, err := batch[i].fn(tx)
+		return m.db.WithTx(ctx, readCommitted, func(ctx context.Context, tx db.Tx) error {
+			span.AddEvent("starting_batch_transaction")
+
+			writeTimer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+				rvmExecBatchPhaseDuration.WithLabelValues(group, resource, "write_ops").Observe(v)
+			}))
+			for i := range batch {
+				guid, err := batch[i].fn(ctx, tx)
+				if err != nil {
+					span.AddEvent("batch_operation_failed", trace.WithAttributes(
+						attribute.Int("operation_index", i),
+						attribute.String("error", err.Error()),
+					))
+					return err
+				}
+				guids[i] = guid
+			}
+			writeTimer.ObserveDuration()
+			span.AddEvent("batch_operations_completed")
+
+			lockTimer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+				rvmExecBatchPhaseDuration.WithLabelValues(group, resource, "waiting_for_lock").Observe(v)
+			}))
+			rv, err := m.Lock(ctx, tx, group, resource)
+			lockTimer.ObserveDuration()
 			if err != nil {
-				span.AddEvent("batch_operation_failed", trace.WithAttributes(
-					attribute.Int("operation_index", i),
+				span.AddEvent("resource_version_lock_failed", trace.WithAttributes(
 					attribute.String("error", err.Error()),
 				))
-				return err
+				return fmt.Errorf("failed to increment resource version: %w", err)
 			}
-			guids[i] = guid
-		}
-		writeTimer.ObserveDuration()
-		span.AddEvent("batch_operations_completed")
+			span.AddEvent("resource_version_locked", trace.WithAttributes(
+				attribute.Int64("initial_rv", rv),
+			))
 
-		lockTimer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
-			rvmExecBatchPhaseDuration.WithLabelValues(group, resource, "waiting_for_lock").Observe(v)
-		}))
-		rv, err := m.Lock(ctx, tx, group, resource)
-		lockTimer.ObserveDuration()
-		if err != nil {
-			span.AddEvent("resource_version_lock_failed", trace.WithAttributes(
+			rvUpdateTimer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+				rvmExecBatchPhaseDuration.WithLabelValues(group, resource, "update_resource_versions").Observe(v)
+			}))
+			defer rvUpdateTimer.ObserveDuration()
+			// Allocate the RVs
+			for i, guid := range guids {
+				guidToRV[guid] = rv
+				guidToSnowflakeRV[guid] = SnowflakeFromRV(rv)
+				rvs[i] = rv
+				rv++
+			}
+			// Update the resource version for the created resources in both the resource and the resource history
+			if _, err := dbutil.Exec(ctx, tx, SqlResourceUpdateRV, SqlResourceUpdateRVRequest{
+				SQLTemplate: sqltemplate.New(m.dialect),
+				GUIDToRV:    guidToRV,
+			}); err != nil {
+				span.AddEvent("resource_update_rv_failed", trace.WithAttributes(
+					attribute.String("error", err.Error()),
+				))
+				return fmt.Errorf("update resource version: %w", err)
+			}
+			span.AddEvent("resource_versions_updated")
+
+			if _, err := dbutil.Exec(ctx, tx, SqlResourceHistoryUpdateRV, SqlResourceUpdateRVRequest{
+				SQLTemplate:       sqltemplate.New(m.dialect),
+				GUIDToRV:          guidToRV,
+				GUIDToSnowflakeRV: guidToSnowflakeRV,
+			}); err != nil {
+				span.AddEvent("resource_history_update_rv_failed", trace.WithAttributes(
+					attribute.String("error", err.Error()),
+				))
+				return fmt.Errorf("update resource history version: %w", err)
+			}
+			span.AddEvent("resource_history_versions_updated")
+
+			// Record the latest RV in the resource version table
+			err = m.SaveRV(ctx, tx, group, resource, rv)
+			if err != nil {
+				span.AddEvent("save_rv_failed", trace.WithAttributes(
+					attribute.String("error", err.Error()),
+				))
+			}
+			return err
+		})
+	}
+
+	err = runBatch()
+	if err != nil && sqlite.IsBusyOrLocked(err) {
+		boff := backoff.New(ctx, backoff.Config{
+			MinBackoff: sqliteBusyMinBackoff,
+			MaxBackoff: sqliteBusyMaxBackoff,
+			MaxRetries: sqliteBusyMaxRetries,
+		})
+		for boff.Ongoing() {
+			span.AddEvent("batch_transaction_retry_sqlite_busy", trace.WithAttributes(
+				attribute.Int("attempt", boff.NumRetries()+1),
 				attribute.String("error", err.Error()),
 			))
-			return fmt.Errorf("failed to increment resource version: %w", err)
+			boff.Wait()
+			if ctx.Err() != nil {
+				break
+			}
+			err = runBatch()
+			if err == nil || !sqlite.IsBusyOrLocked(err) {
+				break
+			}
 		}
-		span.AddEvent("resource_version_locked", trace.WithAttributes(
-			attribute.Int64("initial_rv", rv),
-		))
-
-		rvUpdateTimer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
-			rvmExecBatchPhaseDuration.WithLabelValues(group, resource, "update_resource_versions").Observe(v)
-		}))
-		defer rvUpdateTimer.ObserveDuration()
-		// Allocate the RVs
-		for i, guid := range guids {
-			guidToRV[guid] = rv
-			guidToSnowflakeRV[guid] = SnowflakeFromRV(rv)
-			rvs[i] = rv
-			rv++
-		}
-		// Update the resource version for the created resources in both the resource and the resource history
-		if _, err := dbutil.Exec(ctx, tx, SqlResourceUpdateRV, SqlResourceUpdateRVRequest{
-			SQLTemplate: sqltemplate.New(m.dialect),
-			GUIDToRV:    guidToRV,
-		}); err != nil {
-			span.AddEvent("resource_update_rv_failed", trace.WithAttributes(
-				attribute.String("error", err.Error()),
-			))
-			return fmt.Errorf("update resource version: %w", err)
-		}
-		span.AddEvent("resource_versions_updated")
-
-		if _, err := dbutil.Exec(ctx, tx, SqlResourceHistoryUpdateRV, SqlResourceUpdateRVRequest{
-			SQLTemplate:       sqltemplate.New(m.dialect),
-			GUIDToRV:          guidToRV,
-			GUIDToSnowflakeRV: guidToSnowflakeRV,
-		}); err != nil {
-			span.AddEvent("resource_history_update_rv_failed", trace.WithAttributes(
-				attribute.String("error", err.Error()),
-			))
-			return fmt.Errorf("update resource history version: %w", err)
-		}
-		span.AddEvent("resource_history_versions_updated")
-
-		// Record the latest RV in the resource version table
-		err = m.SaveRV(ctx, tx, group, resource, rv)
-		if err != nil {
-			span.AddEvent("save_rv_failed", trace.WithAttributes(
-				attribute.String("error", err.Error()),
-			))
-		}
-		return err
-	})
+	}
 
 	if err != nil {
 		span.AddEvent("batch_transaction_failed", trace.WithAttributes(

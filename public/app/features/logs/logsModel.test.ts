@@ -21,10 +21,23 @@ import {
   sortDataFrame,
   toDataFrame,
 } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { getMockFrames } from 'app/plugins/datasource/loki/mocks/frames';
 
 import { MockObservableDataSourceApi } from '../../../test/mocks/datasource_srv';
+
+const mockGetBooleanValue = jest.fn((key: string, defaultValue: boolean) => defaultValue);
+
+jest.mock('@grafana/runtime/internal', () => {
+  const actual = jest.requireActual('@grafana/runtime/internal');
+  return {
+    ...actual,
+    getFeatureFlagClient: jest.fn(() => ({
+      getBooleanValue: mockGetBooleanValue,
+    })),
+  };
+});
 
 import {
   COMMON_LABELS,
@@ -234,10 +247,22 @@ describe('dataFrameToLogsModel', () => {
               't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
               't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
             ],
-            labels: {
-              filename: '/var/log/grafana/grafana.log',
-              job: 'grafana',
-            },
+          },
+          {
+            name: 'labels',
+            type: FieldType.other,
+            values: [
+              {
+                filename: '/var/log/grafana/grafana.log',
+                job: 'grafana',
+                level: 'info',
+              },
+              {
+                filename: '/var/log/grafana/grafana.log',
+                job: 'grafana',
+                level: 'error',
+              },
+            ],
           },
           {
             name: 'id',
@@ -252,7 +277,7 @@ describe('dataFrameToLogsModel', () => {
       }),
     ];
     const logsModel = dataFrameToLogsModel(series, 1);
-    expect(logsModel.hasUniqueLabels).toBeFalsy();
+    expect(logsModel.hasUniqueLabels).toBeTruthy();
     expect(logsModel.rows).toHaveLength(2);
     expect(logsModel.rows).toMatchObject([
       {
@@ -678,10 +703,12 @@ describe('dataFrameToLogsModel', () => {
               {
                 filename: '/var/log/grafana/grafana.log',
                 job: 'grafana',
+                level: 'info',
               },
               {
                 filename: '/var/log/grafana/grafana.log',
                 job: 'grafana',
+                level: 'error',
               },
             ],
           },
@@ -711,7 +738,7 @@ describe('dataFrameToLogsModel', () => {
       }),
     ];
     const logsModel = dataFrameToLogsModel(series, 1);
-    expect(logsModel.hasUniqueLabels).toBeFalsy();
+    expect(logsModel.hasUniqueLabels).toBeTruthy();
     expect(logsModel.rows).toHaveLength(2);
     expect(logsModel.rows).toMatchObject([
       {
@@ -852,20 +879,20 @@ describe('dataFrameToLogsModel', () => {
       {
         entry: 't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
         labels: { filename: '/var/log/grafana/grafana.log', job: 'grafana', __error__: 'Failed while parsing' },
-        logLevel: 'info',
+        logLevel: LogLevel.unspecified,
         uniqueLabels: {},
         uid: 'A_foo',
       },
       {
         entry: 't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
         labels: { filename: '/var/log/grafana/grafana.log', job: 'grafana', __error__: 'Failed while parsing' },
-        logLevel: 'error',
+        logLevel: LogLevel.unspecified,
         uniqueLabels: {},
         uid: 'A_bar',
       },
     ]);
 
-    expect(logsModel.series).toHaveLength(2);
+    expect(logsModel.series).toHaveLength(1);
     expect(logsModel.meta).toHaveLength(3);
     expect(logsModel.meta![0]).toMatchObject({
       label: '',
@@ -1395,6 +1422,51 @@ describe('logSeriesToLogsModel', () => {
     ]);
   });
 
+  it('should not produce undefined uid or timeEpochNs when id and tsNs fields have empty value arrays', () => {
+    const logSeries: DataFrame[] = [
+      createDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: ['2019-04-26T09:28:11.352440161Z', '2019-04-26T14:42:50.991981292Z'],
+          },
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: ['log line 1', 'log line 2'],
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            values: [],
+          },
+          {
+            name: 'tsNs',
+            type: FieldType.string,
+            values: [],
+          },
+        ],
+        refId: 'A',
+      }),
+    ];
+
+    const logsModel = logSeriesToLogsModel(logSeries);
+    expect(logsModel?.rows).toHaveLength(2);
+
+    for (const row of logsModel!.rows) {
+      expect(row.uid).not.toBeUndefined();
+      expect(row.uid).not.toContain('undefined');
+      expect(row.timeEpochNs).not.toBeUndefined();
+      expect(row.rowId).toBeUndefined();
+    }
+
+    expect(logsModel!.rows[0].uid).toBe('A_0');
+    expect(logsModel!.rows[1].uid).toBe('A_1');
+    expect(logsModel!.rows[0].timeEpochNs).toBe('1556270891352000000');
+    expect(logsModel!.rows[1].timeEpochNs).toBe('1556289770991000000');
+  });
+
   it('should return empty string if message field is undefined', () => {
     const logSeries: DataFrame[] = [
       toDataFrame({
@@ -1445,34 +1517,46 @@ describe('logSeriesToLogsModel', () => {
     ]);
   });
 
-  it('should correctly get the log level if the message has ANSI color', () => {
-    const logSeries: DataFrame[] = [
-      toDataFrame({
-        fields: [
-          {
-            name: 'ts',
-            type: FieldType.time,
-            values: ['1970-01-01T00:00:01Z'],
-          },
-          {
-            name: 'line',
-            type: FieldType.string,
-            values: ['Line with ANSI \u001B[31mwarn\u001B[0m et dolor'],
-          },
-          {
-            name: 'id',
-            type: FieldType.string,
-            values: ['0'],
-          },
-        ],
-        refId: 'A',
-        meta: {},
-      }),
-    ];
+  describe('Deprecated log level inference', () => {
+    describe('with grafana.logLevelInference enabled', () => {
+      beforeEach(() => {
+        mockGetBooleanValue.mockImplementation((key, def) => (key === FlagKeys.GrafanaLogLevelInference ? true : def));
+      });
 
-    const logsModel = dataFrameToLogsModel(logSeries, 0);
-    expect(logsModel.rows).toHaveLength(1);
-    expect(logsModel.rows[0].logLevel).toEqual(LogLevel.warn);
+      afterEach(() => {
+        mockGetBooleanValue.mockImplementation((key, def) => def);
+      });
+
+      it('should correctly get the log level if the message has ANSI color', () => {
+        const logSeries: DataFrame[] = [
+          toDataFrame({
+            fields: [
+              {
+                name: 'ts',
+                type: FieldType.time,
+                values: ['1970-01-01T00:00:01Z'],
+              },
+              {
+                name: 'line',
+                type: FieldType.string,
+                values: ['Line with ANSI \u001B[31mwarn\u001B[0m et dolor'],
+              },
+              {
+                name: 'id',
+                type: FieldType.string,
+                values: ['0'],
+              },
+            ],
+            refId: 'A',
+            meta: {},
+          }),
+        ];
+
+        const logsModel = dataFrameToLogsModel(logSeries, 0);
+        expect(logsModel.rows).toHaveLength(1);
+        expect(logsModel.rows[0].logLevel).toEqual(LogLevel.warn);
+      });
+    });
   });
 });
 

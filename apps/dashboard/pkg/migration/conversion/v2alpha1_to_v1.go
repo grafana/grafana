@@ -1089,8 +1089,8 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 	panel["title"] = spec.Title
 	panel["pluginVersion"] = spec.VizConfig.Spec.PluginVersion
 
-	if spec.Description != "" {
-		panel["description"] = spec.Description
+	if spec.Description != nil && *spec.Description != "" {
+		panel["description"] = *spec.Description
 	}
 
 	// Convert vizConfig - use the plugin ID from VizConfig.Kind, not PanelKind.Kind
@@ -1183,6 +1183,9 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 	}
 	if queryOptions.TimeShift != nil {
 		panel["timeShift"] = *queryOptions.TimeShift
+	}
+	if queryOptions.TimeCompare != nil {
+		panel["timeCompare"] = *queryOptions.TimeCompare
 	}
 
 	// Convert transparent
@@ -1940,6 +1943,8 @@ func transformVariableHideFromEnum(hide dashv2alpha1.DashboardVariableHide) inte
 		return 1
 	case dashv2alpha1.DashboardVariableHideHideVariable:
 		return 2
+	case dashv2alpha1.DashboardVariableHideInControlsMenu:
+		return 3
 	default:
 		return 0
 	}

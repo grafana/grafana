@@ -22,6 +22,8 @@ export interface SegmentedToggleProps<T> {
   value: T;
   onChange: (value: T) => void;
   showBackground?: boolean;
+  /** Render icon-only tabs; option labels stay as the accessible names. */
+  hideLabels?: boolean;
   'aria-label'?: string;
 }
 
@@ -30,6 +32,7 @@ export function SegmentedToggle<T>({
   value,
   onChange,
   showBackground = true,
+  hideLabels = false,
   'aria-label': ariaLabel,
 }: SegmentedToggleProps<T>) {
   const styles = useStyles2(getStyles);
@@ -38,12 +41,13 @@ export function SegmentedToggle<T>({
 
   const activeIndex = options.findIndex((o) => o.value === value);
 
+  // hideLabels changes every tab's width, so the slider must be re-measured when it flips.
   useLayoutEffect(() => {
     const tab = tabRefs.current[activeIndex];
     if (tab) {
       setSliderStyle({ left: tab.offsetLeft, width: tab.offsetWidth });
     }
-  }, [activeIndex]);
+  }, [activeIndex, hideLabels]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>, index: number) => {
     const direction = ARROW_DIRECTION[e.key];
@@ -71,16 +75,19 @@ export function SegmentedToggle<T>({
         return (
           <button
             key={String(option.value)}
-            ref={(el) => (tabRefs.current[index] = el)}
+            ref={(el) => {
+              tabRefs.current[index] = el;
+            }}
             role="radio"
             aria-checked={isActive}
             tabIndex={isActive ? 0 : -1}
             className={cx(styles.tab, { [styles.tabActive]: isActive })}
             onClick={() => onChange(option.value)}
             onKeyDown={(e) => handleKeyDown(e, index)}
+            aria-label={option.label}
           >
             {option.icon && <Icon name={option.icon} size="xs" />}
-            {option.label}
+            {!hideLabels && option.label}
           </button>
         );
       })}
@@ -120,6 +127,10 @@ function getStyles(theme: GrafanaTheme2) {
       zIndex: 1,
       display: 'flex',
       alignItems: 'center',
+      justifyContent: 'center',
+      // The label's line height is what gives tabs their height; pin it so icon-only
+      // tabs (hideLabels) keep the same footprint.
+      minHeight: theme.spacing(3.25),
       gap: theme.spacing(0.5),
       background: 'transparent',
       border: 'none',

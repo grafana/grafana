@@ -1,3 +1,5 @@
+import saveAs from 'file-saver';
+
 import { config } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
 import {
@@ -5,6 +7,12 @@ import {
   defaultQueryGroupKind,
   defaultVizConfigSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import {
+  AnnoKeyFolder,
+  AnnoKeyFolderTitle,
+  AnnoKeyFolderUrl,
+  AnnoKeyGrantPermissions,
+} from 'app/features/apiserver/types';
 import * as dashboardApiModule from 'app/features/dashboard/api/dashboard_api';
 import { ExportFormat, type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { type DashboardDataDTO } from 'app/types/dashboard';
@@ -15,6 +23,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 
 import { ShareExportTab } from './ShareExportTab';
 
+jest.mock('file-saver', () => jest.fn());
 jest.mock('app/features/dashboard/api/dashboard_api');
 
 const mockV1Spec: DashboardDataDTO = {
@@ -148,7 +157,6 @@ describe('ShareExportTab', () => {
   let makeExportableV2Spy: jest.SpyInstance;
 
   beforeEach(() => {
-    config.featureToggles.kubernetesDashboards = true;
     config.featureToggles.dashboardNewLayouts = false;
 
     makeExportableV1Spy = jest.spyOn(exporters, 'makeExportableV1').mockImplementation(async (dashboard) => dashboard);
@@ -208,6 +216,58 @@ describe('ShareExportTab', () => {
       if ('metadata' in result.json) {
         expect(result.json.metadata).not.toHaveProperty('resourceVersion');
         expect(result.json.metadata).not.toHaveProperty('namespace');
+      }
+    });
+
+    it('should strip folder annotations when sharing externally is off', async () => {
+      mockGetDashboardAPI(mockV1Spec, {
+        ...mockV2ResourceResponse,
+        metadata: {
+          ...mockV2ResourceResponse.metadata,
+          annotations: {
+            [AnnoKeyFolder]: 'folder-uid',
+            [AnnoKeyFolderTitle]: 'My Folder',
+            [AnnoKeyFolderUrl]: '/dashboards/f/my-folder',
+            [AnnoKeyGrantPermissions]: 'default',
+          },
+        },
+      });
+
+      const tab = buildV2DashboardScenario();
+      tab.setState({ exportFormat: ExportFormat.V2Resource, isSharingExternally: false });
+
+      const result = await tab.getExportableDashboardJson();
+
+      expect('metadata' in result.json && result.json.metadata?.annotations).toEqual({
+        [AnnoKeyGrantPermissions]: 'default',
+      });
+    });
+
+    it('should strip folder annotations when sharing externally is on', async () => {
+      mockGetDashboardAPI(mockV1Spec, {
+        ...mockV2ResourceResponse,
+        metadata: {
+          ...mockV2ResourceResponse.metadata,
+          annotations: {
+            [AnnoKeyFolder]: 'folder-uid',
+            [AnnoKeyFolderTitle]: 'My Folder',
+            [AnnoKeyFolderUrl]: '/dashboards/f/my-folder',
+            [AnnoKeyGrantPermissions]: 'default',
+          },
+        },
+      });
+
+      const tab = buildV2DashboardScenario();
+      tab.setState({ exportFormat: ExportFormat.V2Resource, isSharingExternally: true });
+
+      const result = await tab.getExportableDashboardJson();
+
+      if ('metadata' in result.json) {
+        const annotations = result.json.metadata?.annotations ?? {};
+        expect(annotations[AnnoKeyFolder]).toBeUndefined();
+        expect(annotations[AnnoKeyFolderTitle]).toBeUndefined();
+        expect(annotations[AnnoKeyFolderUrl]).toBeUndefined();
+        expect(annotations[AnnoKeyGrantPermissions]).toBeUndefined();
       }
     });
 
@@ -327,6 +387,35 @@ describe('ShareExportTab', () => {
     });
   });
 
+  describe('onSaveAsFile filename', () => {
+    afterEach(() => {
+      jest.mocked(saveAs).mockClear();
+    });
+
+    it('should use dashboard title for classic export filename', async () => {
+      const tab = buildV1DashboardScenario();
+      tab.setState({ exportFormat: ExportFormat.Classic });
+
+      await tab.onSaveAsFile();
+
+      expect(saveAs).toHaveBeenCalledTimes(1);
+      const [, filename] = jest.mocked(saveAs).mock.calls[0];
+      expect(filename).toMatch(/^Test Dashboard V1-\d+\.json$/);
+    });
+
+    it('should use dashboard title from spec for v2 resource export filename', async () => {
+      config.featureToggles.dashboardNewLayouts = true;
+      const tab = buildV2DashboardScenario();
+      tab.setState({ exportFormat: ExportFormat.V2Resource });
+
+      await tab.onSaveAsFile();
+
+      expect(saveAs).toHaveBeenCalledTimes(1);
+      const [, filename] = jest.mocked(saveAs).mock.calls[0];
+      expect(filename).toMatch(/^Test Dashboard V2-\d+\.json$/);
+    });
+  });
+
   describe('Export mode state management', () => {
     it('should disable YAML viewing when switching to Classic mode', () => {
       const tab = buildV1DashboardScenario();
@@ -347,25 +436,7 @@ describe('ShareExportTab', () => {
     });
   });
 
-  describe('Legacy mode (kubernetesDashboards off)', () => {
-    beforeEach(() => {
-      config.featureToggles.kubernetesDashboards = false;
-      (dashboardApiModule.getDashboardAPI as jest.Mock).mockClear();
-    });
-
-    it('should use scene serialization instead of API', async () => {
-      const tab = buildV1DashboardScenario();
-
-      const result = await tab.getExportableDashboardJson();
-
-      expect(dashboardApiModule.getDashboardAPI).not.toHaveBeenCalled();
-      expect(result.json).toMatchObject({ title: 'Test Dashboard V1', uid: 'test-uid-v1' });
-      expect(result.initialSaveModelVersion).toBe('v1');
-    });
-  });
-
   function createDashboardScenario(version: 'v1' | 'v2'): ShareExportTab {
-    const currentDashboard = version === 'v1' ? mockV1Spec : mockV2Spec;
     const initialSaveModel = version === 'v1' ? mockV1Spec : mockV2Spec;
 
     const tab = new ShareExportTab({});
@@ -378,10 +449,6 @@ describe('ShareExportTab', () => {
       overlay: tab,
     });
 
-    scene.serializer.getSaveModel = jest.fn(() => currentDashboard);
-    scene.serializer.makeExportableExternally = jest.fn(() =>
-      Promise.resolve(currentDashboard)
-    ) as DashboardScene['serializer']['makeExportableExternally'];
     scene.getInitialSaveModel = jest.fn(() => initialSaveModel);
 
     return tab;

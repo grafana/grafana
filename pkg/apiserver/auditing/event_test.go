@@ -7,8 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/apiserver/auditing"
 )
 
 func TestEvent_MarshalJSON(t *testing.T) {
@@ -44,7 +45,7 @@ func TestEvent_KVPairs(t *testing.T) {
 
 		extraFields := 2
 		extra := make(map[string]string, 0)
-		for i := 0; i < extraFields; i++ {
+		for i := range extraFields {
 			extra[strconv.Itoa(i)] = "value"
 		}
 

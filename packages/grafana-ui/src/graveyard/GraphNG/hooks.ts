@@ -12,7 +12,7 @@ interface GraphNGContextType {
 }
 
 /** @deprecated */
-export const GraphNGContext = createContext<GraphNGContextType>({} as GraphNGContextType);
+const GraphNGContext = createContext<GraphNGContextType>({} as GraphNGContextType);
 
 /** @deprecated */
 export const useGraphNGContext = () => {

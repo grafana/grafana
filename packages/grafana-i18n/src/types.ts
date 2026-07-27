@@ -1,8 +1,4 @@
-/**
- * Hook type for translation function that takes an ID, default message, and optional values
- * @returns A function that returns the translated string
- */
-type UseTranslateHook = () => (id: string, defaultMessage: string, values?: Record<string, unknown>) => string;
+import { type TOptions } from 'i18next';
 
 /**
  * Type for children elements in Trans component
@@ -44,6 +40,11 @@ interface TransPropsBase {
    * Class name for the Trans component
    */
   className?: string;
+  /**
+   * Options to pass to the internal t function. Needed for plural forms.
+   * Note: use the separate `context` prop rather than setting context here.
+   */
+  tOptions?: Omit<TOptions, 'context'>;
 }
 
 interface TransPropsWithChildren extends TransPropsBase {
@@ -93,4 +94,4 @@ interface Resources extends Record<string, string | Resources | unknown> {}
  */
 type ResourceLoader = (resolvedLanguage: string) => Promise<Resources>;
 
-export type { ResourceLoader, Resources, TransProps, TransType, TFunction, UseTranslateHook };
+export type { ResourceLoader, Resources, TransProps, TransType, TFunction };

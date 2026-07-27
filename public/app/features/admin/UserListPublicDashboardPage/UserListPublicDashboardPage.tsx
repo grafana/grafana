@@ -63,6 +63,10 @@ export const UserListPublicDashboardPage = () => {
                     <Trans
                       i18nKey="public-dashboard-users-access-list.table-body.dashboard-count"
                       count={user.totalDashboards}
+                      tOptions={{
+                        defaultValue_one: '{{count}} dashboards',
+                        defaultValue_other: '{{count}} dashboards',
+                      }}
                     >
                       {{ count: user.totalDashboards }} dashboards
                     </Trans>

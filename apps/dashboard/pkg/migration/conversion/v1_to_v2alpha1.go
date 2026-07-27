@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 
@@ -89,6 +88,29 @@ func resolveGrafanaDatasourceUID(dsType, dsUID string) string {
 		return dashboard.GrafanaDatasourceUID
 	}
 	return dsUID
+}
+
+// resolveLegacyStringDatasource resolves a bare-string datasource name/UID
+// (e.g. "TEST_DB") to a (uid, type) pair via the datasource index
+func resolveLegacyStringDatasource(ctx context.Context, name string, provider schemaversion.DataSourceIndexProvider) (uid, typ string) {
+	if provider == nil {
+		return name, ""
+	}
+	if ds := schemaversion.ResolveDatasourceRef(name, provider.Index(ctx)); ds != nil {
+		return ds.UID, ds.Type
+	}
+	return name, ""
+}
+
+func buildDashboardDataSourceRef(uid, typ string) *dashv2alpha1.DashboardDataSourceRef {
+	if uid == "" {
+		return nil
+	}
+	ref := &dashv2alpha1.DashboardDataSourceRef{Uid: &uid}
+	if typ != "" {
+		ref.Type = &typ
+	}
+	return ref
 }
 
 // prepareV1ConversionContext sets up the context with namespace and service identity
@@ -747,7 +769,7 @@ func buildPanelKind(ctx context.Context, panelMap map[string]interface{}, dsInde
 		Spec: dashv2alpha1.DashboardPanelSpec{
 			Id:          panelID,
 			Title:       schemaversion.GetStringValue(panelMap, "title"),
-			Description: schemaversion.GetStringValue(panelMap, "description"),
+			Description: schemaversion.GetStringValueOrNil(panelMap, "description"),
 			Links:       links,
 			Data: dashv2alpha1.DashboardQueryGroupKind{
 				Kind: "QueryGroup",
@@ -929,6 +951,8 @@ func transformVariableHideToEnum(hide interface{}) dashv2alpha1.DashboardVariabl
 			return dashv2alpha1.DashboardVariableHideHideLabel
 		case 2:
 			return dashv2alpha1.DashboardVariableHideHideVariable
+		case 3:
+			return dashv2alpha1.DashboardVariableHideInControlsMenu
 		default:
 			return dashv2alpha1.DashboardVariableHideDontHide
 		}
@@ -942,6 +966,8 @@ func transformVariableHideToEnum(hide interface{}) dashv2alpha1.DashboardVariabl
 			return dashv2alpha1.DashboardVariableHideHideLabel
 		case "hideVariable":
 			return dashv2alpha1.DashboardVariableHideHideVariable
+		case "inControlsMenu":
+			return dashv2alpha1.DashboardVariableHideInControlsMenu
 		default:
 			return dashv2alpha1.DashboardVariableHideDontHide
 		}
@@ -1313,8 +1339,9 @@ func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, comm
 		}
 	} else if dsStr, ok := datasource.(string); ok && isTemplateVariable(dsStr) {
 		// Handle datasource variable reference (e.g., "$datasource")
-		// Only process template variables - other string values are not supported in V2 format
 		datasourceUID = dsStr
+	} else if dsStr, ok := datasource.(string); ok && dsStr != "" {
+		datasourceUID, datasourceType = resolveLegacyStringDatasource(ctx, dsStr, dsIndexProvider)
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
@@ -1346,14 +1373,8 @@ func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, comm
 		}
 	}
 
-	// Only include datasource if datasourceUID exists (matching frontend behavior)
-	if datasourceUID != "" {
-		dsRef := &dashv2alpha1.DashboardDataSourceRef{
-			Type: &datasourceType,
-			Uid:  &datasourceUID,
-		}
-		queryVar.Spec.Datasource = dsRef
-	}
+	// Only include datasource if datasourceUID exists (matching frontend behavior).
+	queryVar.Spec.Datasource = buildDashboardDataSourceRef(datasourceUID, datasourceType)
 
 	// Always set options (matching frontend behavior)
 	queryVar.Spec.Options = buildVariableOptions(varMap["options"])
@@ -1677,8 +1698,9 @@ func buildAdhocVariable(ctx context.Context, varMap map[string]interface{}, comm
 		}
 	} else if dsStr, ok := datasource.(string); ok && isTemplateVariable(dsStr) {
 		// Handle datasource variable reference (e.g., "$datasource")
-		// Only process template variables - other string values are not supported in V2 format
 		datasourceUID = dsStr
+	} else if dsStr, ok := datasource.(string); ok && dsStr != "" {
+		datasourceUID, datasourceType = resolveLegacyStringDatasource(ctx, dsStr, dsIndexProvider)
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
@@ -1734,14 +1756,8 @@ func buildAdhocVariable(ctx context.Context, varMap map[string]interface{}, comm
 		adhocVar.Spec.DefaultKeys = []dashv2alpha1.DashboardMetricFindValue{}
 	}
 
-	// Only include datasource if datasourceUID exists (matching frontend behavior)
-	if datasourceUID != "" {
-		dsRef := &dashv2alpha1.DashboardDataSourceRef{
-			Type: &datasourceType,
-			Uid:  &datasourceUID,
-		}
-		adhocVar.Spec.Datasource = dsRef
-	}
+	// Only include datasource if datasourceUID exists (matching frontend behavior).
+	adhocVar.Spec.Datasource = buildDashboardDataSourceRef(datasourceUID, datasourceType)
 
 	return dashv2alpha1.DashboardVariableKind{
 		AdhocVariableKind: adhocVar,
@@ -1870,8 +1886,9 @@ func buildGroupByVariable(ctx context.Context, varMap map[string]interface{}, co
 		datasourceUID = resolveGrafanaDatasourceUID(datasourceType, datasourceUID)
 	} else if dsStr, ok := datasource.(string); ok && isTemplateVariable(dsStr) {
 		// Handle datasource variable reference (e.g., "$datasource")
-		// Only process template variables - other string values are not supported in V2 format
 		datasourceUID = dsStr
+	} else if dsStr, ok := datasource.(string); ok && dsStr != "" {
+		datasourceUID, datasourceType = resolveLegacyStringDatasource(ctx, dsStr, dsIndexProvider)
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
@@ -1892,13 +1909,7 @@ func buildGroupByVariable(ctx context.Context, varMap map[string]interface{}, co
 	}
 
 	// Only include datasource if datasourceUID exists
-	if datasourceUID != "" {
-		dsRef := &dashv2alpha1.DashboardDataSourceRef{
-			Type: &datasourceType,
-			Uid:  &datasourceUID,
-		}
-		groupByVar.Spec.Datasource = dsRef
-	}
+	groupByVar.Spec.Datasource = buildDashboardDataSourceRef(datasourceUID, datasourceType)
 
 	// Always set options (matching frontend behavior)
 	groupByVar.Spec.Options = buildVariableOptions(varMap["options"])
@@ -2052,7 +2063,7 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 
 func buildAnnotationFilter(filterMap map[string]interface{}) *dashv2alpha1.DashboardAnnotationPanelFilter {
 	filter := &dashv2alpha1.DashboardAnnotationPanelFilter{
-		Ids: []uint32{},
+		Ids: []float64{},
 	}
 
 	if exclude := getBoolField(filterMap, "exclude", false); exclude {
@@ -2060,20 +2071,18 @@ func buildAnnotationFilter(filterMap map[string]interface{}) *dashv2alpha1.Dashb
 	}
 
 	if ids, ok := filterMap["ids"].([]interface{}); ok {
-		uintIds := make([]uint32, 0, len(ids))
+		floatIds := make([]float64, 0, len(ids))
 		for _, id := range ids {
 			switch v := id.(type) {
 			case float64:
-				if v >= 0 && v <= float64(^uint32(0)) {
-					uintIds = append(uintIds, uint32(v))
-				}
+				floatIds = append(floatIds, v)
 			case int:
-				if v >= 0 && uint64(v) <= math.MaxUint32 {
-					uintIds = append(uintIds, uint32(v))
-				}
+				floatIds = append(floatIds, float64(v))
+			case int64:
+				floatIds = append(floatIds, float64(v))
 			}
 		}
-		filter.Ids = uintIds
+		filter.Ids = floatIds
 	}
 
 	return filter
@@ -2176,10 +2185,12 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 			}
 		} else if dsStr, ok := ds.(string); ok && isTemplateVariable(dsStr) {
 			// Handle legacy panel datasource as string (template variable reference e.g., "$datasource")
-			// Only process template variables - other string values are not supported in V2 format
 			panelDatasource = &dashv2alpha1.DashboardDataSourceRef{
 				Uid: &dsStr,
 			}
+		} else if dsStr, ok := ds.(string); ok && dsStr != "" {
+			dsUID, dsType := resolveLegacyStringDatasource(ctx, dsStr, dsIndexProvider)
+			panelDatasource = buildDashboardDataSourceRef(dsUID, dsType)
 		}
 	}
 
@@ -2268,8 +2279,9 @@ func transformSingleQuery(ctx context.Context, targetMap map[string]interface{},
 		}
 	} else if dsStr, ok := targetMap["datasource"].(string); ok && isTemplateVariable(dsStr) {
 		// Handle legacy target datasource as string (template variable reference e.g., "$datasource")
-		// Only process template variables - other string values are not supported in V2 format
 		queryDatasourceUID = dsStr
+	} else if dsStr, ok := targetMap["datasource"].(string); ok && dsStr != "" {
+		queryDatasourceUID, queryDatasourceType = resolveLegacyStringDatasource(ctx, dsStr, dsIndexProvider)
 	}
 	// Apply panel ref when panel has a concrete UID (non-empty, not mixed) and query has no ref or differs (same rule as frontend).
 	panelHasUID := panelDatasource != nil && panelDatasource.Uid != nil && *panelDatasource.Uid != "" && *panelDatasource.Uid != "-- Mixed --"
@@ -2307,13 +2319,8 @@ func transformSingleQuery(ctx context.Context, targetMap map[string]interface{},
 		Query:  buildDataQueryKind(querySpec, queryDatasourceType),
 	}
 
-	// Only include datasource reference if UID is provided
-	if queryDatasourceUID != "" {
-		panelQuerySpec.Datasource = &dashv2alpha1.DashboardDataSourceRef{
-			Type: &queryDatasourceType,
-			Uid:  &queryDatasourceUID,
-		}
-	}
+	// Only include datasource reference if UID is provided.
+	panelQuerySpec.Datasource = buildDashboardDataSourceRef(queryDatasourceUID, queryDatasourceType)
 
 	return dashv2alpha1.DashboardPanelQueryKind{
 		Kind: "PanelQuery",
@@ -2403,6 +2410,9 @@ func buildQueryOptions(panelMap map[string]interface{}) dashv2alpha1.DashboardQu
 	}
 	if timeShift := schemaversion.GetStringValue(panelMap, "timeShift"); timeShift != "" {
 		queryOptions.TimeShift = &timeShift
+	}
+	if timeCompare := schemaversion.GetStringValue(panelMap, "timeCompare"); timeCompare != "" {
+		queryOptions.TimeCompare = &timeCompare
 	}
 
 	return queryOptions

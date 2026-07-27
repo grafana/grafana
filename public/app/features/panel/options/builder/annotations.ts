@@ -1,6 +1,5 @@
 import { DataTopic, type PanelOptionsEditorBuilder } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import type * as common from '@grafana/schema';
 
 import { CanvasControlsSwitchEditor } from './CanvasControlsSwitchEditor';
@@ -40,9 +39,7 @@ export function addAnnotationOptions<T extends common.OptionsWithAnnotations>(bu
       'Combines high density point annotations into region annotations'
     ),
     defaultValue: DEFAULT_CLUSTERING_ANNOTATION_SPACING_DISABLED,
-    showIf: (_, __, annotations) =>
-      config.featureToggles.annotationsClustering &&
-      annotations?.some((df) => df.meta?.dataTopic === DataTopic.Annotations),
+    showIf: (_, __, annotations) => annotations?.some((df) => df.meta?.dataTopic === DataTopic.Annotations),
   });
 
   builder.addCustomEditor({
@@ -56,8 +53,6 @@ export function addAnnotationOptions<T extends common.OptionsWithAnnotations>(bu
       'Hides annotation indicator lines and shaded regions'
     ),
     defaultValue: undefined,
-    showIf: (_, __, annotations) =>
-      config.featureToggles.annotationsClustering &&
-      annotations?.some((df) => df.meta?.dataTopic === DataTopic.Annotations),
+    showIf: (_, __, annotations) => annotations?.some((df) => df.meta?.dataTopic === DataTopic.Annotations),
   });
 }

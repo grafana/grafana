@@ -21,7 +21,7 @@ import (
 //
 // Gets all existing permissions for the given dashboard.
 //
-// Use: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}/access
+// Use: /apis/dashboard.grafana.app/v1/namespaces/{ns}/dashboards/{uid}/access
 //
 // Deprecated: true
 //

@@ -27,7 +27,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: true # required to get more history in the changed-files action
-          fetch-depth: 2
+          fetch-depth: 0
+          filter: blob:none
       - name: Detect changes
         id: detect-changes
         uses: ./.github/actions/change-detection
@@ -49,7 +50,7 @@ jobs:
           persist-credentials: false
 
       - name: Cache backend build
-        uses: actions/cache@v5
+        uses: actions/cache@v5  # zizmor: ignore[cache-poisoning] key derived only from hashFiles of tracked source
         id: cache
         with:
           key: "e2e-build-backend-${{ runner.os }}-${{ hashFiles('**/go.mod', '**/go.sum', 'go.work', 'go.work.sum', 'pkg/**/*.go', 'apps/**/*.go', '!**_test.go', 'Makefile', 'embed.go') }}"
@@ -85,7 +86,7 @@ jobs:
           persist-credentials: false
 
       - name: Cache frontend build
-        uses: actions/cache@v5
+        uses: actions/cache@v5  # zizmor: ignore[cache-poisoning] key derived only from hashFiles of tracked source
         id: cache
         with:
           key: "e2e-build-frontend-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', 'scripts/webpack/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', 'project.json', '.nvmrc') }}"
@@ -214,6 +215,8 @@ jobs:
 
       # Start Grafana from the standalone directory
       # The server is immediately backgrounded so it can initialise in parallel while the Playwright browsers are installing 🤓
+      # to turn on scrict CSP, add `cfg:security.content_security_policy_template="require-trusted-types-for 'script'; script-src 'self' 'unsafe-inline' 'strict-dynamic' \$NONCE;object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src * data:;base-uri 'self';connect-src 'self' grafana.com ws://\$ROOT_PATH wss://\$ROOT_PATH;manifest-src 'self';media-src 'none';form-action 'self';" \`
+
       - name: Start Grafana server
         run: |
           grafana-server/bin/grafana server \
@@ -420,7 +423,7 @@ jobs:
       - name: Extract and publish metrics
         run: ./scripts/ci-frontend-metrics.sh | node --experimental-strip-types .github/workflows/scripts/publish-frontend-metrics.mts
         env:
-          GRAFANA_MISC_STATS_API_KEY: ${{ env.GRAFANA_MISC_STATS_API_KEY}}
+          GRAFANA_MISC_STATS_API_KEY: ${{ fromJSON(steps.vault-secrets.outputs.secrets).GRAFANA_MISC_STATS_API_KEY }}
 
   # 'All E2E tests complete' is still a required check. To help with this transition, we keep
   # a placeholder job to avoid needing to remove the required check from github yet.

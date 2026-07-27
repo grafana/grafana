@@ -7,9 +7,11 @@ import {
   AnnoKeyFolder,
   AnnoKeyFolderTitle,
   AnnoKeyFolderUrl,
+  AnnoKeyGrantPermissions,
   AnnoKeyMessage,
   AnnoKeySavedFromUI,
   DeprecatedInternalId,
+  EMPTY_TABLE_RESPONSE,
 } from 'app/features/apiserver/types';
 
 import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
@@ -245,6 +247,7 @@ describe('v2 dashboard API', () => {
             name: 'existing-dash',
             annotations: {
               [AnnoKeyFolder]: 'folderUidXyz',
+              [AnnoKeyGrantPermissions]: 'default',
               [AnnoKeySavedFromUI]: '10.0.0',
             },
           },
@@ -283,6 +286,7 @@ describe('v2 dashboard API', () => {
             name: 'existing-dash',
             annotations: {
               [AnnoKeyFolder]: '',
+              [AnnoKeyGrantPermissions]: 'default',
               [AnnoKeyMessage]: 'Move to root folder',
               [AnnoKeySavedFromUI]: '10.0.0',
             },
@@ -315,6 +319,20 @@ describe('v2 dashboard API', () => {
       const requestBody = callArgs[1];
       expect(requestBody.metadata.annotations).not.toHaveProperty(AnnoKeyFolder);
       expect(requestBody.metadata.annotations[AnnoKeyMessage]).toBe('Save without folder');
+    });
+
+    it.each([
+      ['update path (metadata.name set)', { name: 'imported-dash' }, mockPut],
+      ['create path (metadata.name unset)', {}, mockPost],
+    ])('should set grant-permissions annotation on the %s', async (_name, k8s, requestMock) => {
+      const api = new K8sDashboardV2API();
+      await api.saveDashboard({ dashboard: defaultDashboardV2Spec(), k8s });
+
+      expect(requestMock).toHaveBeenCalledTimes(1);
+      const requestBody = requestMock.mock.calls[0][1];
+      expect(requestBody.metadata.annotations).toEqual(
+        expect.objectContaining({ [AnnoKeyGrantPermissions]: 'default' })
+      );
     });
   });
 
@@ -471,16 +489,23 @@ describe('v2 dashboard API', () => {
   });
 
   describe('listDeletedDashboards', () => {
-    it('should return list of deleted dashboards', async () => {
+    it('should return table of deleted dashboards', async () => {
       const mockDeletedDashboards = {
-        items: [
+        ...EMPTY_TABLE_RESPONSE,
+        metadata: { resourceVersion: '1' },
+        columnDefinitions: [
+          { name: 'Name', type: 'string' },
+          { name: 'Title', type: 'string' },
+          { name: 'Created At', type: 'date' },
+        ],
+        rows: [
           {
-            ...mockDashboardDto,
-            metadata: { ...mockDashboardDto.metadata, name: 'deleted-dash-1' },
+            cells: ['deleted-dash-1'],
+            object: { metadata: { ...mockDashboardDto.metadata, name: 'deleted-dash-1' } },
           },
           {
-            ...mockDashboardDto,
-            metadata: { ...mockDashboardDto.metadata, name: 'deleted-dash-2' },
+            cells: ['deleted-dash-2'],
+            object: { metadata: { ...mockDashboardDto.metadata, name: 'deleted-dash-2' } },
           },
         ],
       };
@@ -491,7 +516,32 @@ describe('v2 dashboard API', () => {
       const result = await api.listDeletedDashboards({ limit: 10 });
 
       expect(result).toEqual(mockDeletedDashboards);
-      expect(result.items).toHaveLength(2);
+      expect(result.rows).toHaveLength(2);
+    });
+  });
+
+  describe('getDeletedDashboard', () => {
+    it('should query the recently-deleted listing by name and return the matching item', async () => {
+      const deletedItem = { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, name: 'deleted-dash-1' } };
+      mockGet.mockResolvedValueOnce({ metadata: { resourceVersion: '1' }, items: [deletedItem] });
+
+      const api = new K8sDashboardV2API();
+      const result = await api.getDeletedDashboard('deleted-dash-1');
+
+      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining('/dashboards'), {
+        labelSelector: 'grafana.app/get-trash=true',
+        fieldSelector: 'metadata.name=deleted-dash-1',
+      });
+      expect(result).toBe(deletedItem);
+    });
+
+    it('should return undefined when the recently-deleted listing is empty', async () => {
+      mockGet.mockResolvedValueOnce({ metadata: { resourceVersion: '1' }, items: [] });
+
+      const api = new K8sDashboardV2API();
+      const result = await api.getDeletedDashboard('deleted-dash-1');
+
+      expect(result).toBeUndefined();
     });
   });
 
@@ -539,45 +589,26 @@ describe('v2 dashboard API', () => {
   });
 
   describe('restoreDashboard', () => {
-    it('should reset resource version and return created dashboard', async () => {
+    it('should send only metadata and spec, without apiVersion, kind, or status', async () => {
       const dashboardToRestore = {
         ...mockDashboardDto,
         metadata: {
           ...mockDashboardDto.metadata,
           resourceVersion: '123456',
         },
+        status: { conversion: { failed: false, storedVersion: 'v0alpha1' } },
       };
 
       const api = new K8sDashboardV2API();
       const result = await api.restoreDashboard(dashboardToRestore);
 
-      expect(dashboardToRestore.metadata.resourceVersion).toBe('');
-      expect(mockPost).toHaveBeenCalledWith(
-        expect.stringContaining('/apis/dashboard.grafana.app/v2/'),
-        expect.objectContaining({
-          metadata: expect.objectContaining({
-            resourceVersion: '',
-          }),
-        }),
-        expect.anything()
-      );
+      const payload = mockPost.mock.calls[0][1];
+      expect(payload).not.toHaveProperty('apiVersion');
+      expect(payload).not.toHaveProperty('kind');
+      expect(payload).not.toHaveProperty('status');
+      expect(payload.metadata.resourceVersion).toBe('');
+      expect(payload).toHaveProperty('spec');
       expect(result.metadata.name).toBe('dash-uid');
-    });
-
-    it('should handle dashboard with empty resource version', async () => {
-      const dashboardToRestore = {
-        ...mockDashboardDto,
-        metadata: {
-          ...mockDashboardDto.metadata,
-          resourceVersion: '',
-        },
-      };
-
-      const api = new K8sDashboardV2API();
-      await api.restoreDashboard(dashboardToRestore);
-
-      expect(dashboardToRestore.metadata.resourceVersion).toBe('');
-      expect(mockPost).toHaveBeenCalled();
     });
 
     it('should preserve dashboard folder metadata', async () => {
@@ -595,16 +626,12 @@ describe('v2 dashboard API', () => {
       const api = new K8sDashboardV2API();
       await api.restoreDashboard(dashboardToRestore);
 
-      expect(mockPost).toHaveBeenCalledWith(
-        expect.stringContaining('/apis/dashboard.grafana.app/v2/'),
+      const payload = mockPost.mock.calls[0][1];
+      expect(payload.metadata.annotations).toEqual(
         expect.objectContaining({
-          metadata: expect.objectContaining({
-            annotations: expect.objectContaining({
-              [AnnoKeyFolder]: 'randomFolderUid',
-            }),
-          }),
-        }),
-        expect.anything()
+          [AnnoKeyFolder]: 'randomFolderUid',
+          [AnnoKeyGrantPermissions]: 'default',
+        })
       );
     });
   });

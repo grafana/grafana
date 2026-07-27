@@ -1,0 +1,112 @@
+import { useAsync } from 'react-use';
+
+import {
+  type DataSourceApi,
+  type DataSourceInstanceListItem,
+  type DataSourceInstanceSettings,
+  type DataSourceRef,
+} from '@grafana/data';
+
+import { type GetDataSourceListFilters } from '../dataSourceSrv';
+
+import { getDataSourceInstance } from './dataSource';
+import {
+  type GetDataSourceInstanceListFilters,
+  getDataSourceInstanceSettings,
+  getDataSourceInstanceList,
+} from './settings';
+
+/**
+ * @public
+ */
+export interface UseDataSourceInstanceSettingsResult {
+  isLoading: boolean;
+  error?: Error;
+  settings?: DataSourceInstanceSettings;
+}
+
+/**
+ * @public
+ */
+export interface UseDataSourceInstanceListResult {
+  isLoading: boolean;
+  error?: Error;
+  items: DataSourceInstanceListItem[];
+}
+
+/**
+ * @public
+ */
+export interface UseDataSourceInstanceResult {
+  isLoading: boolean;
+  error?: Error;
+  dataSource?: DataSourceApi;
+}
+
+function stableKey(value: unknown): string {
+  return JSON.stringify(value ?? null);
+}
+
+function filtersKey(filters: GetDataSourceInstanceListFilters | GetDataSourceListFilters | undefined): string {
+  if (!filters) {
+    return stableKey(null);
+  }
+  const { filter: _, ...rest } = filters;
+  return stableKey(rest);
+}
+
+/**
+ * React hook wrapping {@link getDataSourceInstanceSettings}. Re-fetches when `ref`
+ * changes (compared by value, so inline objects are safe).
+ *
+ * Template variable strings (e.g. `$ds` or `${ds}`) are not supported — interpolate
+ * them before passing the resolved uid or name to this hook.
+ *
+ * @public
+ */
+export function useDataSourceInstanceSettings(
+  ref?: DataSourceRef | string | null
+): UseDataSourceInstanceSettingsResult {
+  const refKey = stableKey(ref);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const { loading, error, value } = useAsync(() => getDataSourceInstanceSettings(ref), [refKey]);
+  return { isLoading: loading, error, settings: value };
+}
+
+/**
+ * React hook wrapping {@link getDataSourceInstanceList}. Re-fetches when
+ * `filters` changes (compared by value, so inline objects are safe).
+ * When `filters.filter` (a callback) is set, the hook re-fetches when the
+ * function reference changes. Wrap inline filter callbacks in `useCallback`
+ * to avoid unnecessary re-fetches.
+ *
+ * @public
+ */
+export function useDataSourceInstanceList(filters?: GetDataSourceInstanceListFilters): UseDataSourceInstanceListResult {
+  const filterValuesKey = filtersKey(filters);
+  const filterFunc = filters?.filter;
+
+  const { loading, error, value } = useAsync(
+    () => getDataSourceInstanceList(filters),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filterValuesKey, filterFunc]
+  );
+
+  return { isLoading: loading, error, items: value ?? [] };
+}
+
+/**
+ * React hook wrapping {@link getDataSourceInstance}. Re-fetches when `ref`
+ * changes (compared by value, so inline objects are safe).
+ *
+ * Template variable strings (e.g. `$ds` or `${ds}`) are not supported — interpolate
+ * them before passing the resolved uid or name to this hook.
+ *
+ * @public
+ */
+export function useDataSourceInstance(ref?: DataSourceRef | string | null): UseDataSourceInstanceResult {
+  const refKey = stableKey(ref);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const { loading, error, value } = useAsync(() => getDataSourceInstance(ref), [refKey]);
+  return { isLoading: loading, error, dataSource: value };
+}

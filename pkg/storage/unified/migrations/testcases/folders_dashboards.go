@@ -20,11 +20,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// foldersAndDashboardsTestCase tests the "folders-dashboards" ResourceMigration
+// foldersAndDashboardsTestCase tests the folders-dashboards ResourceMigration.
 type foldersAndDashboardsTestCase struct {
 	parentFolderUID   string
 	childFolderUID    string
@@ -44,7 +45,7 @@ func NewFoldersAndDashboardsTestCase() ResourceMigratorTestCase {
 }
 
 func (tc *foldersAndDashboardsTestCase) Name() string {
-	return "folders-dashboards"
+	return migrations.FoldersDashboardsMigrationID
 }
 
 func (tc *foldersAndDashboardsTestCase) FeatureToggles() []string {

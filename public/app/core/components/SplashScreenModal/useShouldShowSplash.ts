@@ -16,10 +16,18 @@ export function useShouldShowSplash(version: string) {
     });
   }, [version, splashStorage]);
 
+  // Persist the dismissal but keep the modal open so the user can continue
+  // navigating slides. Used when the user clicks a CTA that opens an external
+  // page in a new tab - we treat that as "user has seen the splash" without
+  // unmounting the current tab's modal.
+  const markEngaged = useCallback(() => {
+    splashStorage.setItem(STORAGE_KEY, version);
+  }, [version, splashStorage]);
+
   const dismiss = useCallback(() => {
     splashStorage.setItem(STORAGE_KEY, version);
     setShouldShow(false);
   }, [version, splashStorage]);
 
-  return { shouldShow, dismiss };
+  return { shouldShow, dismiss, markEngaged };
 }

@@ -1,4 +1,4 @@
-import { type EventProperty } from '@grafana/runtime/internal';
+import { type EventProperty } from '@grafana/runtime/unstable';
 
 export interface SaveButtonClicked extends EventProperty {
   /** Whether the preference being saved belongs to an org, team, or individual user. */
@@ -23,9 +23,11 @@ export interface LanguageChanged extends EventProperty {
   toLanguage: string;
 }
 
-export interface RegionalFormatChanged extends EventProperty {
+export interface HomeDashboardChanged extends EventProperty {
   /** Whether the preference being changed belongs to an org, team, or individual user. */
   preferenceType: 'org' | 'team' | 'user';
-  /** The regional format the user switched to. */
-  toRegionalFormat: string;
+  /** Whether a custom home dashboard was set, or the preference was cleared back to the default homepage. */
+  action: 'set' | 'cleared';
+  /** Whether the unified homepage (grafana.unifiedHomepage) is enabled for this user. */
+  unifiedHomepageEnabled: boolean;
 }

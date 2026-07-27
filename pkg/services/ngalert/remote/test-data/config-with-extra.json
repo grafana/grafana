@@ -18,9 +18,10 @@
             "uid": "",
             "name": "some other name",
             "type": "email",
+            "version": "v1",
             "disableResolveMessage": false,
             "settings": {
-              "addresses": "<example@email.com>"
+              "addresses": "<example@example.com>"
             }
           }
         ]
@@ -30,7 +31,6 @@
   "extra_config": [
     {
       "identifier": "imported",
-      "merge_matchers": ["imported=\"true\""],
       "template_files":
       {
         "extra_template": "{{ define \"my_message\" }}TEST{{ end }}"

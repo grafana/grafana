@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../http_api/licensing/ # /docs/grafana/next/http_api/licensing/
-  - ../../../developers/http_api/licensing/ # /docs/grafana/next/developers/http_api/licensing/
+  - ../../../../http_api/licensing/ # /docs/grafana/next/http_api/licensing/
+  - ../../../../developers/http_api/licensing/ # /docs/grafana/next/developers/http_api/licensing/
   - ../../../../developer-resources/api-reference/http-api/licensing/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/licensing/
 description: Enterprise Licensing HTTP API
@@ -21,13 +21,7 @@ title: Licensing HTTP API
 
 # Enterprise License API
 
-{{< admonition type="caution" >}}
-
-Starting in Grafana 13, `/api` endpoints are being deprecated. This change doesn't disrupt or break your current setup: legacy APIs are not being disabled and remain fully accessible and operative. However, `/api` routes will no longer be updated and **will be removed in a future major release.**
-
-To learn more refer to the [new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
-
-{{< /admonition >}}
+{{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 Licensing is only available in Grafana Enterprise. Read more about [Grafana Enterprise](/docs/grafana/latest/introduction/grafana-enterprise/).
 
@@ -66,7 +60,7 @@ See note in the [introduction](#enterprise-license-api) for an explanation.
 ```http
 GET /api/licensing/check
 Accept: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example response:**
@@ -109,7 +103,7 @@ See note in the [introduction](#enterprise-license-api) for an explanation.
 POST /licensing/token
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aGlzIjoiaXMiLCJub3QiOiJhIiwidmFsaWQiOiJsaWNlbnNlIn0.bxDzxIoJlYMwiEYKYT_l2s42z0Y30tY-6KKoyz9RuLE"}
 ```
@@ -185,7 +179,7 @@ See note in the [introduction](#enterprise-license-api) for an explanation.
 POST /api/licensing/token/renew
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {}
 ```
@@ -246,7 +240,7 @@ See note in the [introduction](#enterprise-license-api) for an explanation.
 DELETE /api/licensing/token
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {"instance": "http://play.grafana.org/"}
 ```

@@ -2,12 +2,6 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 const DASHBOARD_UID = 'MP-Di9F7k';
 
-test.use({
-  featureToggles: {
-    timeRangePan: true,
-  },
-});
-
 test.describe('Panels test: Candlestick X-axis panning', { tag: ['@panels', '@candlestick'] }, () => {
   test('x-axis panning functionality', async ({ gotoDashboardPage, page, selectors }) => {
     let centerX: number;

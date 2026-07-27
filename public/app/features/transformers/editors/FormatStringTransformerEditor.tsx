@@ -1,16 +1,11 @@
 import { useCallback } from 'react';
 
 import {
-  DataTransformerID,
   type SelectableValue,
-  standardTransformers,
-  type TransformerRegistryItem,
   type TransformerUIProps,
-  PluginState,
   FieldType,
   type StandardEditorsRegistryItem,
   type FieldNamePickerConfigSettings,
-  TransformerCategory,
 } from '@grafana/data';
 import { FormatStringOutput, type FormatStringTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
@@ -18,10 +13,7 @@ import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import darkImage from '../images/dark/formatString.svg';
-import lightImage from '../images/light/formatString.svg';
-
-function FormatStringTransfomerEditor({
+export function FormatStringTransfomerEditor({
   input,
   options,
   onChange,
@@ -121,19 +113,3 @@ function FormatStringTransfomerEditor({
     </>
   );
 }
-
-export const getFormatStringTransformerRegistryItem: () => TransformerRegistryItem<FormatStringTransformerOptions> =
-  () => ({
-    id: DataTransformerID.formatString,
-    editor: FormatStringTransfomerEditor,
-    transformation: standardTransformers.formatStringTransformer,
-    name: t('transformers.format-string-transformer-editor.name.format-string', 'Format string'),
-    state: PluginState.beta,
-    description: t(
-      'transformers.format-string-transformer-editor.description.manipulate-string-fields-formatting',
-      'Manipulate string fields formatting.'
-    ),
-    categories: new Set([TransformerCategory.Reformat]),
-    imageDark: darkImage,
-    imageLight: lightImage,
-  });

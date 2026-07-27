@@ -2,11 +2,14 @@ package sender
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	common_config "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/config"
@@ -85,11 +88,11 @@ func TestSanitizeLabelSet(t *testing.T) {
 				"test_alert": "43",
 				"test+alert": "44",
 			},
-			expectedResult: labels.Labels{
-				labels.Label{Name: "test_alert", Value: "44"},
-				labels.Label{Name: "test_alert_ed6237", Value: "42"},
-				labels.Label{Name: "test_alert_a67b5e", Value: "43"},
-			},
+			expectedResult: labels.New([]labels.Label{
+				{Name: "test_alert", Value: "44"},
+				{Name: "test_alert_ed6237", Value: "42"},
+				{Name: "test_alert_a67b5e", Value: "43"},
+			}...),
 		},
 		{
 			desc: "If sanitize fails for a label, skip it",
@@ -98,10 +101,10 @@ func TestSanitizeLabelSet(t *testing.T) {
 				"   \t\n\v\n\f   ": "43",
 				"test+alert":       "44",
 			},
-			expectedResult: labels.Labels{
-				labels.Label{Name: "test_alert", Value: "44"},
-				labels.Label{Name: "test_alert_ed6237", Value: "42"},
-			},
+			expectedResult: labels.New([]labels.Label{
+				{Name: "test_alert", Value: "44"},
+				{Name: "test_alert_ed6237", Value: "42"},
+			}...),
 		},
 	}
 
@@ -230,6 +233,113 @@ func TestWithUTF8Labels(t *testing.T) {
 		result := am.alertToNotifierAlert(alert)
 		require.Equal(t, "test", result.Annotations.Get("some_name"))
 		require.Equal(t, "fire", result.Labels.Get("_0x1f525"))
+	})
+}
+
+func TestClampLabelSet(t *testing.T) {
+	logger := log.NewNopLogger()
+
+	t.Run("default cap: oversized value truncated, oversized name dropped, no panic", func(t *testing.T) {
+		// Above the prometheus stringlabels panic threshold (1<<24); without the
+		// clamp this would panic in labels.New downstream.
+		hugeVal := strings.Repeat("a", (1<<24)+1024)
+		hugeName := strings.Repeat("n", (1<<24)+1)
+
+		alert := models.PostableAlert{
+			Annotations: models.LabelSet{
+				"__value_string__": hugeVal,
+				hugeName:           "anything",
+			},
+			Alert: models.Alert{
+				Labels: models.LabelSet{
+					"alertname": "X",
+					"big":       hugeVal,
+				},
+			},
+		}
+
+		// Both sanitizeLabelSetFn paths call labels.New, the panic point.
+		for _, opts := range [][]Option{{WithUTF8Labels()}, nil} {
+			am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry(), opts...)
+			require.NoError(t, err)
+
+			require.NotPanics(t, func() {
+				result := am.alertToNotifierAlert(alert)
+				require.Len(t, result.Labels.Get("big"), DefaultMaxLabelStringSize)
+				require.Len(t, result.Annotations.Get("__value_string__"), DefaultMaxLabelStringSize)
+				require.Equal(t, "", result.Annotations.Get(hugeName))
+				require.Equal(t, "X", result.Labels.Get("alertname"))
+			})
+
+			clamped := am.manager.metrics.clampedStrings
+			require.Equal(t, float64(1), testutil.ToFloat64(clamped.WithLabelValues("annotation", "value_truncated")))
+			require.Equal(t, float64(1), testutil.ToFloat64(clamped.WithLabelValues("annotation", "name_dropped")))
+			require.Equal(t, float64(1), testutil.ToFloat64(clamped.WithLabelValues("label", "value_truncated")))
+		}
+	})
+
+	t.Run("payload below cap is unchanged", func(t *testing.T) {
+		alert := models.PostableAlert{
+			Annotations: models.LabelSet{"summary": "ok"},
+			Alert:       models.Alert{Labels: models.LabelSet{"alertname": "X"}},
+		}
+		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry(), WithUTF8Labels())
+		require.NoError(t, err)
+		result := am.alertToNotifierAlert(alert)
+		require.Equal(t, "ok", result.Annotations.Get("summary"))
+		require.Equal(t, "X", result.Labels.Get("alertname"))
+	})
+
+	t.Run("WithMaxLabelStringSize overrides the cap", func(t *testing.T) {
+		const customCap = 16
+		alert := models.PostableAlert{
+			Annotations: models.LabelSet{"summary": strings.Repeat("a", 100)},
+			Alert:       models.Alert{Labels: models.LabelSet{"alertname": "X"}},
+		}
+		am, err := NewExternalAlertmanagerSender(
+			logger, prometheus.NewRegistry(),
+			WithUTF8Labels(),
+			WithMaxLabelStringSize(customCap),
+		)
+		require.NoError(t, err)
+		result := am.alertToNotifierAlert(alert)
+		require.Len(t, result.Annotations.Get("summary"), customCap)
+	})
+
+	t.Run("WithMaxLabelStringSize(0) disables the clamp", func(t *testing.T) {
+		val := strings.Repeat("a", 100)
+		alert := models.PostableAlert{
+			Annotations: models.LabelSet{"summary": val},
+			Alert:       models.Alert{Labels: models.LabelSet{"alertname": "X"}},
+		}
+		am, err := NewExternalAlertmanagerSender(
+			logger, prometheus.NewRegistry(),
+			WithUTF8Labels(),
+			WithMaxLabelStringSize(0),
+		)
+		require.NoError(t, err)
+		result := am.alertToNotifierAlert(alert)
+		require.Equal(t, val, result.Annotations.Get("summary"))
+	})
+
+	t.Run("truncation does not split a multi-byte rune", func(t *testing.T) {
+		// 10-byte cap lands mid-rune: three 4-byte runes occupy bytes 0-11.
+		const customCap = 10
+		val := strings.Repeat("🔥", 3)
+		alert := models.PostableAlert{
+			Annotations: models.LabelSet{"summary": val},
+			Alert:       models.Alert{Labels: models.LabelSet{"alertname": "X"}},
+		}
+		am, err := NewExternalAlertmanagerSender(
+			logger, prometheus.NewRegistry(),
+			WithUTF8Labels(),
+			WithMaxLabelStringSize(customCap),
+		)
+		require.NoError(t, err)
+		result := am.alertToNotifierAlert(alert)
+		got := result.Annotations.Get("summary")
+		require.True(t, utf8.ValidString(got))
+		require.Equal(t, strings.Repeat("🔥", 2), got)
 	})
 }
 

@@ -1,4 +1,5 @@
 import { type SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { SelectBase } from './SelectBase';
 import { SelectContainer, type SelectContainerProps } from './SelectContainer';
@@ -26,7 +27,7 @@ export function Select<T, Rest = {}>(props: SelectCommonProps<T> & Rest) {
  */
 export function MultiSelect<T, Rest = {}>(props: MultiSelectCommonProps<T> & Rest) {
   // @ts-ignore
-  return <SelectBase {...props} isMulti />;
+  return <SelectBase data-testid={selectors.components.MultiSelect.container} {...props} isMulti />;
 }
 
 export interface AsyncSelectProps<T> extends Omit<SelectCommonProps<T>, 'options'>, SelectAsyncProps<T> {
@@ -73,7 +74,7 @@ interface AsyncMultiSelectProps<T> extends Omit<MultiSelectCommonProps<T>, 'opti
  */
 export function AsyncMultiSelect<T, Rest = {}>(props: AsyncMultiSelectProps<T> & Rest) {
   // @ts-ignore
-  return <SelectBase {...props} isMulti />;
+  return <SelectBase data-testid={selectors.components.MultiSelect.container} {...props} isMulti />;
 }
 
 export { SelectContainer, type SelectContainerProps };

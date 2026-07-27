@@ -1,3 +1,5 @@
+import { Fill, Stroke, Style } from 'ol/style';
+
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions/resource';
 
 import {
@@ -10,6 +12,12 @@ import {
   offsetExpression,
   getMarkerMaker,
   circleMarker,
+  getFillColor,
+  getStrokeStyle,
+  getMarkerAsPath,
+  textMarker,
+  polyStyle,
+  routeStyle,
 } from './markers';
 import { defaultStyleConfig } from './types';
 
@@ -127,5 +135,128 @@ describe('Icon Path Consistency', () => {
     const defaultMaker = await getMarkerMaker(); // No symbol
 
     expect(defaultMaker).toBe(circleMarker);
+  });
+});
+
+describe('getFillColor', () => {
+  it('returns a solid Fill when opacity is 1', () => {
+    const fill = getFillColor({ color: '#37872d', opacity: 1 });
+    expect(fill).toBeInstanceOf(Fill);
+    expect(fill?.getColor()).toBe('#37872d');
+  });
+
+  it('applies alpha via tinycolor when opacity is between 0 and 1', () => {
+    const fill = getFillColor({ color: '#37872d', opacity: 0.5 });
+    expect(fill).toBeInstanceOf(Fill);
+    // tinycolor's rgba string includes the alpha channel.
+    expect(String(fill?.getColor())).toMatch(/rgba\(.*0\.5\)/);
+  });
+
+  it('returns undefined when opacity is 0', () => {
+    expect(getFillColor({ color: '#37872d', opacity: 0 })).toBeUndefined();
+  });
+});
+
+describe('getStrokeStyle', () => {
+  it('returns a Stroke with the configured color and lineWidth at opacity 1', () => {
+    const stroke = getStrokeStyle({ color: '#000', opacity: 1, lineWidth: 3 });
+    expect(stroke).toBeInstanceOf(Stroke);
+    expect(stroke?.getColor()).toBe('#000');
+    expect(stroke?.getWidth()).toBe(3);
+  });
+
+  it('applies opacity via tinycolor when opacity is between 0 and 1', () => {
+    const stroke = getStrokeStyle({ color: '#000', opacity: 0.25 });
+    expect(stroke).toBeInstanceOf(Stroke);
+    expect(String(stroke?.getColor())).toMatch(/rgba\(.*0\.25\)/);
+    // lineWidth defaults to 1 when not supplied.
+    expect(stroke?.getWidth()).toBe(1);
+  });
+});
+
+describe('getMarkerAsPath', () => {
+  it('returns the icon path for a known marker shape and undefined for an unknown one', () => {
+    const known = getMarkerAsPath('circle');
+    expect(typeof known).toBe('string');
+    expect(known).toMatch(/\.svg$/);
+
+    expect(getMarkerAsPath('not-a-marker-shape')).toBeUndefined();
+  });
+});
+
+describe('textMarker', () => {
+  it('sets the text label to the provided string', () => {
+    const style = textMarker({ color: '#ff0000', opacity: 1, text: 'hello' });
+    expect(style.getText()?.getText()).toBe('hello');
+  });
+
+  it('has no text label when text is not provided', () => {
+    const style = textMarker({ color: '#ff0000', opacity: 1 });
+    expect(style.getText()).toBeNull();
+  });
+});
+
+describe('polyStyle', () => {
+  it('builds a stroke from the configured color/width and an opacity-adjusted fill', () => {
+    const style = polyStyle({ color: '#0000ff', opacity: 0.5, lineWidth: 2 });
+    expect(style).toBeInstanceOf(Style);
+
+    const stroke = style.getStroke();
+    expect(stroke).toBeInstanceOf(Stroke);
+    expect(stroke?.getColor()).toBe('#0000ff');
+    expect(stroke?.getWidth()).toBe(2);
+
+    const fill = style.getFill();
+    expect(fill).toBeInstanceOf(Fill);
+    // opacity 0.5 is folded into the fill color via tinycolor
+    expect(String(fill?.getColor())).toMatch(/rgba\(.*0\.5\)/);
+  });
+});
+
+describe('routeStyle', () => {
+  it('applies the configured stroke color and width and a solid fill at opacity 1', () => {
+    const style = routeStyle({ color: '#00ff00', opacity: 1, lineWidth: 3 });
+    expect(style).toBeInstanceOf(Style);
+
+    const stroke = style.getStroke();
+    expect(stroke).toBeInstanceOf(Stroke);
+    expect(stroke?.getColor()).toBe('#00ff00');
+    expect(stroke?.getWidth()).toBe(3);
+
+    expect(style.getFill()?.getColor()).toBe('#00ff00');
+  });
+
+  it('omits both stroke and fill when opacity is 0', () => {
+    const style = routeStyle({ color: '#00ff00', opacity: 0 });
+    expect(style).toBeInstanceOf(Style);
+    expect(style.getStroke()).toBeNull();
+    expect(style.getFill()).toBeNull();
+  });
+});
+
+describe('shape marker makers', () => {
+  const baseCfg = { color: '#ff0000', opacity: 0.8, lineWidth: 2, size: 12, rotation: 45 };
+
+  it.each(['circle', 'square', 'triangle', 'star', 'cross', 'x'])(
+    'getMarkerMaker resolves and make() returns a Style for shape "%s"',
+    async (shapeId) => {
+      const { Style } = require('ol/style');
+      const path = getMarkerAsPath(shapeId);
+      expect(path).toBeDefined();
+      const maker = await getMarkerMaker(path!);
+      const result = maker(baseCfg);
+      const styles = Array.isArray(result) ? result : [result];
+      expect(styles.length).toBeGreaterThan(0);
+      for (const s of styles) {
+        expect(s).toBeInstanceOf(Style);
+      }
+    }
+  );
+
+  it('maker uses default size when cfg.size is not set', async () => {
+    const { Style } = require('ol/style');
+    const maker = await getMarkerMaker(getMarkerAsPath('square')!);
+    const result = maker({ color: '#000', opacity: 1 });
+    expect(result).toBeInstanceOf(Style);
   });
 });

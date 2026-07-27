@@ -16,6 +16,10 @@ type HealthCheckerImpl struct {
 	PluginClient          plugins.Client
 }
 
+func (h *HealthCheckerImpl) Init(_ context.Context) error {
+	return nil
+}
+
 func (h *HealthCheckerImpl) CheckHealth(ctx context.Context, ds *datasources.DataSource) (*backend.CheckHealthResult, error) {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {

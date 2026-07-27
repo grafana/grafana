@@ -112,7 +112,18 @@ func (m *service) starting(ctx context.Context) error {
 	if err := m.serviceManager.StartAsync(ctx); err != nil {
 		return err
 	}
-	return m.serviceManager.AwaitHealthy(ctx)
+	if err := m.serviceManager.AwaitHealthy(ctx); err != nil {
+		m.serviceManager.StopAsync()
+		stopErr := m.serviceManager.AwaitStopped(context.Background())
+		if failure := m.firstServiceManagerFailure(); failure != nil {
+			return failure
+		}
+		if stopErr != nil {
+			return errors.Join(err, stopErr)
+		}
+		return err
+	}
+	return nil
 }
 
 func (m *service) running(ctx context.Context) error {
@@ -145,13 +156,19 @@ func (m *service) stopping(failureReason error) error {
 		return err
 	}
 
+	return m.firstServiceManagerFailure()
+}
+
+func (m *service) firstServiceManagerFailure() error {
 	failed := m.serviceManager.ServicesByState()[services.Failed]
 	for _, f := range failed {
-		// the service listener will log error details for all modules that failed,
-		// so here we return the first error that is not ErrStopProcess
-		if !errors.Is(f.FailureCase(), modules.ErrStopProcess) {
-			return f.FailureCase()
+		// The service listener logs error details for all failed modules, so here we return
+		// the first error that is not an expected shutdown signal.
+		cause := f.FailureCase()
+		if errors.Is(cause, modules.ErrStopProcess) || errors.Is(cause, context.Canceled) {
+			continue
 		}
+		return cause
 	}
 
 	return nil

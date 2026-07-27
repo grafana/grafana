@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../../http_api/user/ # /docs/grafana/next/http_api/user/
-  - ../../../developers/http_api/user/ # /docs/grafana/next/developers/http_api/user/
-  - ../../../../developer-resources/api-reference/http-api/user #legacy folder
+  - ../../../../http_api/user/ # /docs/grafana/next/http_api/user/
+  - ../../../../developers/http_api/user/ # /docs/grafana/next/developers/http_api/user/
+  - ../../../../developer-resources/api-reference/http-api/user/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/user/
 description: Grafana User HTTP API
 keywords:
@@ -27,13 +27,7 @@ refs:
 
 # User API
 
-{{< admonition type="caution" >}}
-
-Starting in Grafana 13, `/api` endpoints are being deprecated. This change doesn't disrupt or break your current setup: legacy APIs are not being disabled and remain fully accessible and operative. However, `/api` routes will no longer be updated and **will be removed in a future major release.**
-
-To learn more refer to the [new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
-
-{{< /admonition >}}
+{{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 {{< admonition type="caution" >}}
 You can't authenticate to the User HTTP API with service account tokens.
@@ -506,7 +500,7 @@ Switch user context to the given organization.
 POST /api/user/using/2 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -560,7 +554,7 @@ Return a list of all teams that the current user is member of.
 GET /api/user/teams HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -593,7 +587,7 @@ Stars the given Dashboard for the actual user.
 POST /api/user/stars/dashboard/uid/BqokFhx7z HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -617,7 +611,7 @@ Deletes the starring of the given Dashboard for the actual user.
 DELETE /api/user/stars/dashboard/uid/BqokFhx7z HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -641,7 +635,7 @@ Return a list of all auth tokens (devices) that the actual user currently have l
 GET /api/user/auth-tokens HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -691,7 +685,7 @@ and will be required to authenticate again upon next activity.
 POST /api/user/revoke-auth-token HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "authTokenId": 364

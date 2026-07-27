@@ -7,8 +7,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
-// urlBuilder builds the URL for calling the Azure Monitor API
-type urlBuilder struct {
+// UrlBuilder builds the URL for calling the Azure Monitor API
+type UrlBuilder struct {
 	ResourceURI *string
 
 	// Following fields will be used to generate a ResourceURI
@@ -20,7 +20,7 @@ type urlBuilder struct {
 	MetricDefinition    *string
 }
 
-func (params *urlBuilder) buildResourceURI() (*string, error) {
+func (params *UrlBuilder) BuildResourceURI() (*string, error) {
 	if params.ResourceURI != nil && *params.ResourceURI != "" {
 		return params.ResourceURI, nil
 	}

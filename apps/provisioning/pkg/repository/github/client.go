@@ -4,33 +4,33 @@ package github
 
 import (
 	"context"
+	"strconv"
 	"time"
+
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
 //go:generate mockery --name Client --structname MockClient --inpackage --filename mock_client.go --with-expecter
 type Client interface {
+	// Webhooks
+	repository.WebhookClient
+
 	// Repositories
-	GetRepository(ctx context.Context, owner, repository string) (Repository, error)
+	GetRepository(ctx context.Context) (Repository, error)
 
 	// Branch protection
-	GetBranchProtection(ctx context.Context, owner, repository, branch string) (*BranchProtection, error)
+	GetBranchProtection(ctx context.Context, branch string) (*BranchProtection, error)
 
 	// Repository rulesets
-	GetRulesets(ctx context.Context, owner, repository, branch string) (*Rulesets, error)
+	GetRulesets(ctx context.Context, branch string) (*Rulesets, error)
 
 	// Commits
-	Commits(ctx context.Context, owner, repository, path, branch string) ([]Commit, error)
-
-	// Webhooks
-	ListWebhooks(ctx context.Context, owner, repository string) ([]WebhookConfig, error)
-	CreateWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) (WebhookConfig, error)
-	GetWebhook(ctx context.Context, owner, repository string, webhookID int64) (WebhookConfig, error)
-	DeleteWebhook(ctx context.Context, owner, repository string, webhookID int64) error
-	EditWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) error
+	Commits(ctx context.Context, path, branch string) ([]Commit, error)
 
 	// Pull requests
-	ListPullRequestFiles(ctx context.Context, owner, repository string, number int) ([]CommitFile, error)
-	CreatePullRequestComment(ctx context.Context, owner, repository string, number int, body string) error
+	ListPullRequestFiles(ctx context.Context, number int) ([]CommitFile, error)
+	CreatePullRequestComment(ctx context.Context, number int, body string) error
+	MergeBase(ctx context.Context, base, head string) (string, error)
 }
 
 type Repository struct {
@@ -61,7 +61,7 @@ type CommitFile interface {
 	GetStatus() string
 }
 
-type WebhookConfig struct {
+type webhookConfig struct {
 	// The ID of the webhook.
 	// Can be 0 on creation.
 	ID int64
@@ -78,6 +78,14 @@ type WebhookConfig struct {
 	// If fetched from GitHub, this is empty as it contains no useful information.
 	Secret string
 }
+
+func (c *webhookConfig) GetID() string             { return strconv.FormatInt(c.ID, 10) }
+func (c *webhookConfig) GetURL() string            { return c.URL }
+func (c *webhookConfig) GetEvents() []string       { return c.Events }
+func (c *webhookConfig) GetSecret() string         { return c.Secret }
+func (c *webhookConfig) SetURL(url string)         { c.URL = url }
+func (c *webhookConfig) SetEvents(events []string) { c.Events = events }
+func (c *webhookConfig) SetSecret(secret string)   { c.Secret = secret }
 
 // BranchProtection holds the subset of GitHub branch protection rules
 // that unambiguously prevent direct pushes to a branch.

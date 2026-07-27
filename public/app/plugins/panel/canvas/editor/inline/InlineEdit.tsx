@@ -74,7 +74,7 @@ export function InlineEdit({ onClose, id, scene }: Props) {
   return (
     <Portal>
       <div className={styles.draggableWrapper}>
-        <Draggable handle="strong" onStop={onDragStop} position={{ x: placement.x, y: placement.y }}>
+        <Draggable handle="strong" onStop={onDragStop} position={{ x: placement.x, y: placement.y }} nodeRef={ref}>
           <Resizable height={measurements.height} width={measurements.width} onResize={onResizeStop}>
             <div
               className={styles.inlineEditorContainer}

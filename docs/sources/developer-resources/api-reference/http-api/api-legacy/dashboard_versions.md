@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../../http_api/dashboard_versions/ # /docs/grafana/next/http_api/dashboard_versions/
-  - ../../../http_api/dashboardversions/ # /docs/grafana/next/http_api/dashboardversions/
-  - ../../../developers/http_api/dashboard_versions/ # /docs/grafana/next/developers/http_api/dashboard_versions/
+  - ../../../../http_api/dashboard_versions/ # /docs/grafana/next/http_api/dashboard_versions/
+  - ../../../../http_api/dashboardversions/ # /docs/grafana/next/http_api/dashboardversions/
+  - ../../../../developers/http_api/dashboard_versions/ # /docs/grafana/next/developers/http_api/dashboard_versions/
   - ../../../../developer-resources/api-reference/http-api/dashboard_versions/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/dashboard_versions/
 description: Grafana Dashboard Versions HTTP API
@@ -23,13 +23,7 @@ title: 'Dashboard Versions HTTP API '
 
 # Dashboard Versions
 
-{{< admonition type="caution" >}}
-
-Starting in Grafana 13, `/api` endpoints are being deprecated. This change doesn't disrupt or break your current setup: legacy APIs are not being disabled and remain fully accessible and operative. However, `/api` routes will no longer be updated and **will be removed in a future major release.**
-
-To learn more refer to the [new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
-
-{{< /admonition >}}
+{{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Get all dashboard versions by dashboard UID
 
@@ -48,7 +42,7 @@ Gets all existing dashboard versions for the dashboard with the given `uid`.
 GET /api/dashboards/uid/QA7wKklGz/versions?limit=2?start=0 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**
@@ -106,7 +100,7 @@ Get the dashboard version with the given version, for the dashboard with the giv
 GET /api/dashboards/uid/QA7wKklGz/versions/1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example response**:

@@ -149,6 +149,17 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						LatestRv:    20000,
 					},
 				},
+				{
+					Name: "cross-namespace",
+					Data: &sqlResourceListModifiedSinceRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "",
+						Group:       "group",
+						Resource:    "res",
+						SinceRv:     10000,
+						LatestRv:    20000,
+					},
+				},
 			},
 			sqlResourceHistoryGarbageGetCandidates: {
 				{
@@ -173,6 +184,56 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						Candidates: []gcCandidateName{
 							{Namespace: "ns1", Name: "name1"},
 						},
+					},
+				},
+			},
+			sqlChunkCandidates: {
+				{
+					Name: "resource",
+					Data: &sqlChunkCandidatesRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Table:       tableResource,
+						Namespace:   "ns",
+						Group:       "group",
+						Resource:    "res",
+						BatchSize:   2000,
+						Response:    new(chunkCandidate),
+					},
+				},
+				{
+					Name: "history",
+					Data: &sqlChunkCandidatesRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Table:       tableResourceHistory,
+						Namespace:   "ns",
+						Group:       "group",
+						Resource:    "res",
+						BatchSize:   2000,
+						Response:    new(chunkCandidate),
+					},
+				},
+			},
+			sqlDeleteByGUIDs: {
+				{
+					Name: "resource",
+					Data: &sqlDeleteByGUIDsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Table:       tableResource,
+						Namespace:   "ns",
+						Group:       "group",
+						Resource:    "res",
+						GUIDs:       []string{"guid1", "guid2", "guid3"},
+					},
+				},
+				{
+					Name: "history",
+					Data: &sqlDeleteByGUIDsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Table:       tableResourceHistory,
+						Namespace:   "ns",
+						Group:       "group",
+						Resource:    "res",
+						GUIDs:       []string{"guid1", "guid2", "guid3"},
 					},
 				},
 			},
@@ -216,7 +277,7 @@ func TestUnifiedStorageQueries(t *testing.T) {
 								Name:      "nm",
 							},
 						},
-						Response: NewReadResponse(),
+						Response: NewHistoryReadResponse(),
 					},
 				},
 			},
@@ -478,13 +539,45 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Data: &sqlStatsRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "default",
-						Folder:      "folder",
+						Folders:     []string{"folder"},
 						MinCount:    10, // Not yet used in query (only response filter)
+					},
+				},
+				{
+					Name: "folders",
+					Data: &sqlStatsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "default",
+						Folders:     []string{"a", "b", "c"},
 					},
 				},
 				{
 					Name: "resource",
 					Data: &sqlStatsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "default",
+						Group:       "dashboard.grafana.app",
+						Resource:    "dashboards",
+					},
+				},
+			},
+			sqlResourceStoredList: {
+				{
+					Name: "global",
+					Data: &sqlStoredResourcesRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+					},
+				},
+				{
+					Name: "namespace",
+					Data: &sqlStoredResourcesRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "default",
+					},
+				},
+				{
+					Name: "resource",
+					Data: &sqlStoredResourcesRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "default",
 						Group:       "dashboard.grafana.app",
@@ -570,6 +663,31 @@ func TestUnifiedStorageQueries(t *testing.T) {
 							Group:     "dashboard.grafana.app",
 							Resource:  "dashboards",
 						},
+					},
+				},
+				{
+					Name: "update-ranged",
+					Data: &sqlResourceInsertFromHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resourcepb.ResourceKey{
+							Namespace: "default",
+							Group:     "dashboard.grafana.app",
+							Resource:  "dashboards",
+						},
+						StartName: "aaa",
+						EndName:   "mmm",
+					},
+				},
+			},
+			sqlResourceHistoryDistinctNames: {
+				{
+					Name: "single path",
+					Data: &sqlResourceHistoryDistinctNamesRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+						Group:       "group",
+						Resource:    "res",
+						Response:    new(distinctName),
 					},
 				},
 			},

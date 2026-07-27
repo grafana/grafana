@@ -877,10 +877,6 @@ func (c *countingExecDatabase) DriverName() string {
 	return c.inner.DriverName()
 }
 
-func (c *countingExecDatabase) Transaction(ctx context.Context, f func(context.Context) error) error {
-	return c.inner.Transaction(ctx, f)
-}
-
 func (c *countingExecDatabase) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
 	c.execCount++
 	return c.inner.ExecContext(ctx, query, args...)

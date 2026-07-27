@@ -59,6 +59,7 @@ func (g *Gateway) Handle(ctx *contextmodel.ReqContext) {
 	urlValues := ctx.Req.URL.Query()
 	frameFormat := pushurl.FrameFormatFromValues(urlValues)
 
+	ctx.Req.Body = http.MaxBytesReader(ctx.Resp, ctx.Req.Body, 500*1024) // 500k for each message
 	body, err := io.ReadAll(ctx.Req.Body)
 	if err != nil {
 		logger.Error("Error reading body", "error", err)

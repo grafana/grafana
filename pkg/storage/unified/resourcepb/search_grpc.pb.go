@@ -22,6 +22,8 @@ const (
 	ResourceIndex_Search_FullMethodName         = "/resource.ResourceIndex/Search"
 	ResourceIndex_GetStats_FullMethodName       = "/resource.ResourceIndex/GetStats"
 	ResourceIndex_RebuildIndexes_FullMethodName = "/resource.ResourceIndex/RebuildIndexes"
+	ResourceIndex_VectorSearch_FullMethodName   = "/resource.ResourceIndex/VectorSearch"
+	ResourceIndex_HybridSearch_FullMethodName   = "/resource.ResourceIndex/HybridSearch"
 )
 
 // ResourceIndexClient is the client API for ResourceIndex service.
@@ -37,6 +39,10 @@ type ResourceIndexClient interface {
 	GetStats(ctx context.Context, in *ResourceStatsRequest, opts ...grpc.CallOption) (*ResourceStatsResponse, error)
 	// Rebuild the search index
 	RebuildIndexes(ctx context.Context, in *RebuildIndexesRequest, opts ...grpc.CallOption) (*RebuildIndexesResponse, error)
+	// Semantic search
+	VectorSearch(ctx context.Context, in *VectorSearchRequest, opts ...grpc.CallOption) (*VectorSearchResponse, error)
+	// Hybrid search: RRF fuse lexical and vector with optional reranker
+	HybridSearch(ctx context.Context, in *HybridSearchRequest, opts ...grpc.CallOption) (*HybridSearchResponse, error)
 }
 
 type resourceIndexClient struct {
@@ -77,6 +83,26 @@ func (c *resourceIndexClient) RebuildIndexes(ctx context.Context, in *RebuildInd
 	return out, nil
 }
 
+func (c *resourceIndexClient) VectorSearch(ctx context.Context, in *VectorSearchRequest, opts ...grpc.CallOption) (*VectorSearchResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(VectorSearchResponse)
+	err := c.cc.Invoke(ctx, ResourceIndex_VectorSearch_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *resourceIndexClient) HybridSearch(ctx context.Context, in *HybridSearchRequest, opts ...grpc.CallOption) (*HybridSearchResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HybridSearchResponse)
+	err := c.cc.Invoke(ctx, ResourceIndex_HybridSearch_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ResourceIndexServer is the server API for ResourceIndex service.
 // All implementations should embed UnimplementedResourceIndexServer
 // for forward compatibility
@@ -90,6 +116,10 @@ type ResourceIndexServer interface {
 	GetStats(context.Context, *ResourceStatsRequest) (*ResourceStatsResponse, error)
 	// Rebuild the search index
 	RebuildIndexes(context.Context, *RebuildIndexesRequest) (*RebuildIndexesResponse, error)
+	// Semantic search
+	VectorSearch(context.Context, *VectorSearchRequest) (*VectorSearchResponse, error)
+	// Hybrid search: RRF fuse lexical and vector with optional reranker
+	HybridSearch(context.Context, *HybridSearchRequest) (*HybridSearchResponse, error)
 }
 
 // UnimplementedResourceIndexServer should be embedded to have forward compatible implementations.
@@ -104,6 +134,12 @@ func (UnimplementedResourceIndexServer) GetStats(context.Context, *ResourceStats
 }
 func (UnimplementedResourceIndexServer) RebuildIndexes(context.Context, *RebuildIndexesRequest) (*RebuildIndexesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RebuildIndexes not implemented")
+}
+func (UnimplementedResourceIndexServer) VectorSearch(context.Context, *VectorSearchRequest) (*VectorSearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method VectorSearch not implemented")
+}
+func (UnimplementedResourceIndexServer) HybridSearch(context.Context, *HybridSearchRequest) (*HybridSearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HybridSearch not implemented")
 }
 
 // UnsafeResourceIndexServer may be embedded to opt out of forward compatibility for this service.
@@ -171,6 +207,42 @@ func _ResourceIndex_RebuildIndexes_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ResourceIndex_VectorSearch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VectorSearchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceIndexServer).VectorSearch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceIndex_VectorSearch_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceIndexServer).VectorSearch(ctx, req.(*VectorSearchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ResourceIndex_HybridSearch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HybridSearchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceIndexServer).HybridSearch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceIndex_HybridSearch_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceIndexServer).HybridSearch(ctx, req.(*HybridSearchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ResourceIndex_ServiceDesc is the grpc.ServiceDesc for ResourceIndex service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -189,6 +261,14 @@ var ResourceIndex_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RebuildIndexes",
 			Handler:    _ResourceIndex_RebuildIndexes_Handler,
+		},
+		{
+			MethodName: "VectorSearch",
+			Handler:    _ResourceIndex_VectorSearch_Handler,
+		},
+		{
+			MethodName: "HybridSearch",
+			Handler:    _ResourceIndex_HybridSearch_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

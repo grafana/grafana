@@ -105,12 +105,170 @@ func TestAllowQuery(t *testing.T) {
 		{
 			name: "json aggregation",
 			q: `SELECT JSON_ARRAYAGG(JSON_OBJECT('color', color, 'value', value)) AS result
-            FROM (
-                SELECT 'red' AS color, 10 AS value UNION ALL
-                SELECT 'blue', 20 UNION ALL
-                SELECT 'green', 30
-            ) AS t;`,
+		        FROM (
+		            SELECT 'red' AS color, 10 AS value UNION ALL
+		            SELECT 'blue', 20 UNION ALL
+		            SELECT 'green', 30
+		        ) AS t;`,
 			err: nil,
+		},
+
+		// Functions in ORDER BY on a UNION bypass the allowlist
+		// because SetOp.walkSubtree only walks Left and Right.
+		{
+			name: "blocked: SLEEP in UNION ORDER BY",
+			q:    `SELECT 1 AS v FROM a UNION SELECT 2 AS v FROM a ORDER BY SLEEP(1)`,
+			err:  &ErrorWithCategory{},
+		},
+		{
+			name: "blocked: LOAD_FILE in UNION ORDER BY",
+			q:    `SELECT 1 AS v FROM a UNION SELECT 2 AS v FROM a ORDER BY LOAD_FILE('/etc/hostname')`,
+			err:  &ErrorWithCategory{},
+		},
+		{
+			name: "blocked: LOAD_FILE in CASE in UNION ORDER BY",
+			q:    `SELECT 1 AS v FROM a UNION SELECT 2 AS v FROM a ORDER BY CASE WHEN LOAD_FILE('/etc/passwd') IS NOT NULL THEN 1 ELSE 2 END`,
+			err:  &ErrorWithCategory{},
+		},
+		{
+			name: "blocked: MD5 in UNION ORDER BY",
+			q:    `SELECT 1 AS v FROM a UNION SELECT 2 AS v FROM a ORDER BY MD5('test')`,
+			err:  &ErrorWithCategory{},
+		},
+
+		// LOAD_FILE with timing oracle for blind file read
+		{
+			name: "blocked: LOAD_FILE timing oracle in UNION ORDER BY",
+			q:    `SELECT 1 AS v FROM a UNION SELECT 2 AS v FROM a ORDER BY SLEEP(IF(ASCII(SUBSTRING(LOAD_FILE('/etc/hostname'), 1, 1)) >= 64, 1, 0))`,
+			err:  &ErrorWithCategory{},
+		},
+
+		// Named WINDOW clauses
+		{
+			name: "allowed: named WINDOW clause",
+			q:    `SELECT val, ROW_NUMBER() OVER w FROM a WINDOW w AS (ORDER BY val)`,
+			err:  nil,
+		},
+		{
+			name: "blocked: LOAD_FILE in named WINDOW clause",
+			q:    `SELECT val, ROW_NUMBER() OVER w FROM a WINDOW w AS (ORDER BY LOAD_FILE('/etc/passwd'))`,
+			err:  &ErrorWithCategory{},
+		},
+
+		// FOR UPDATE / LOCK clauses
+		{
+			name: "blocked: SELECT FOR UPDATE",
+			q:    `SELECT * FROM a FOR UPDATE`,
+			err:  &ErrorWithCategory{},
+		},
+		{
+			name: "blocked: UNION FOR UPDATE",
+			q:    `SELECT 1 FROM a UNION SELECT 2 FROM a FOR UPDATE`,
+			err:  &ErrorWithCategory{},
+		},
+
+		// INTO OUTFILE / DUMPFILE — file write vectors
+		{
+			name: "blocked: SELECT INTO OUTFILE",
+			q:    `SELECT * FROM a INTO OUTFILE '/tmp/pwned'`,
+			err:  &ErrorWithCategory{},
+		},
+		{
+			name: "blocked: SELECT INTO DUMPFILE",
+			q:    `SELECT * FROM a INTO DUMPFILE '/tmp/pwned'`,
+			err:  &ErrorWithCategory{},
+		},
+		{
+			name: "blocked: UNION INTO OUTFILE",
+			q:    `SELECT 1 AS v FROM a UNION SELECT 2 AS v FROM a INTO OUTFILE '/tmp/pwned'`,
+			err:  &ErrorWithCategory{},
+		},
+
+		// BENCHMARK — timing attack alternative to SLEEP
+		{
+			name: "blocked: BENCHMARK in UNION ORDER BY",
+			q:    `SELECT 1 AS v FROM a UNION SELECT 2 AS v FROM a ORDER BY BENCHMARK(10000000, SHA1('test'))`,
+			err:  &ErrorWithCategory{},
+		},
+
+		// Error-based extraction functions
+		{
+			name: "blocked: EXTRACTVALUE for error-based extraction",
+			q:    `SELECT EXTRACTVALUE(1, CONCAT(0x7e, LOAD_FILE('/etc/passwd')))`,
+			err:  &ErrorWithCategory{},
+		},
+		{
+			name: "blocked: UPDATEXML for error-based extraction",
+			q:    `SELECT UPDATEXML(1, CONCAT(0x7e, LOAD_FILE('/etc/passwd')), 1)`,
+			err:  &ErrorWithCategory{},
+		},
+
+		// Blocked function in SetOp LIMIT (walkNodes covers v.Limit)
+		{
+			name: "blocked: SLEEP in UNION LIMIT",
+			q:    `SELECT 1 FROM a UNION SELECT 2 FROM a LIMIT SLEEP(1)`,
+			err:  &ErrorWithCategory{},
+		},
+
+		// Blocked function in CTE on a UNION (walkNodes covers v.With)
+		{
+			name: "blocked: SLEEP in CTE on UNION",
+			q:    `WITH x AS (SELECT SLEEP(1)) SELECT * FROM a UNION SELECT * FROM b`,
+			err:  &ErrorWithCategory{},
+		},
+
+		// Named WINDOW with PARTITION BY
+		{
+			name: "blocked: LOAD_FILE in named WINDOW PARTITION BY",
+			q:    `SELECT val, SUM(val) OVER w FROM a WINDOW w AS (PARTITION BY LOAD_FILE('/etc/passwd'))`,
+			err:  &ErrorWithCategory{},
+		},
+
+		// Nested UNION — blocked function in inner SetOp ORDER BY
+		{
+			name: "blocked: SLEEP in nested UNION ORDER BY",
+			q:    `(SELECT 1 FROM a UNION SELECT 2 FROM a ORDER BY SLEEP(1)) UNION SELECT 3 FROM a`,
+			err:  &ErrorWithCategory{},
+		},
+
+		// Legitimate UNION with ORDER BY using allowed expressions still works
+		{
+			name: "allowed: UNION with ORDER BY column ref",
+			q:    `SELECT val FROM a UNION SELECT val FROM b ORDER BY val`,
+			err:  nil,
+		},
+		{
+			name: "allowed: UNION with ORDER BY and LIMIT",
+			q:    `SELECT val FROM a UNION ALL SELECT val FROM b ORDER BY val LIMIT 10`,
+			err:  nil,
+		},
+
+		// === @@system variable access ===
+
+		{
+			name: "blocked: @@hostname",
+			q:    `SELECT @@hostname FROM a`,
+			err:  &ErrorWithCategory{},
+		},
+		{
+			name: "blocked: @@version",
+			q:    `SELECT @@version FROM a`,
+			err:  &ErrorWithCategory{},
+		},
+		{
+			name: "blocked: @@global.hostname",
+			q:    `SELECT @@global.hostname FROM a`,
+			err:  &ErrorWithCategory{},
+		},
+		{
+			name: "blocked: @@secure_file_priv",
+			q:    `SELECT @@secure_file_priv FROM a`,
+			err:  &ErrorWithCategory{},
+		},
+		{
+			name: "blocked: @user_variable",
+			q:    `SELECT @myvar FROM a`,
+			err:  &ErrorWithCategory{},
 		},
 	}
 	for _, tc := range testCases {

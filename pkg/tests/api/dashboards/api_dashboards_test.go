@@ -226,46 +226,20 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	dashboardWithDuplicatedLegacyAnnotation := "new-uid"
 	t.Run("When saving a dashboard with an already used legacy ID", func(t *testing.T) {
 		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
 			"dashboard": map[string]interface{}{
 				"id":    savedDashInFolder.ID, // nolint:staticcheck
-				"uid":   dashboardWithDuplicatedLegacyAnnotation,
+				"uid":   "new-uid",
 				"title": "Updated title",
 			},
 			"folderUid": savedDashInFolder.FolderUID,
 			"overwrite": true,
 		})
 		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, http.StatusConflict, resp.StatusCode)
 		err = resp.Body.Close()
 		require.NoError(t, err)
-	})
-
-	t.Run("When updating a dashboard with legacy ID in multiple dashboards", func(t *testing.T) {
-		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
-			"dashboard": map[string]interface{}{
-				"id":    savedDashInFolder.ID, // nolint:staticcheck
-				"uid":   savedDashInGeneralFolder.UID,
-				"title": "Updated title",
-			},
-			"folderUid": savedDashInFolder.FolderUID,
-			"overwrite": true,
-		})
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-		err = resp.Body.Close()
-		require.NoError(t, err)
-		// Delete the dashboard with duplicated legacy ID annotation
-		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/uid/%s", grafanaListedAddr, dashboardWithDuplicatedLegacyAnnotation)
-		req, err := http.NewRequest("DELETE", u, nil)
-		require.NoError(t, err)
-		resp, err = http.DefaultClient.Do(req)
-		require.NoError(t, err)
-		err = resp.Body.Close()
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
 	t.Run("When updating a dashboard already using that uid", func(t *testing.T) {
@@ -429,7 +403,7 @@ providers:
 	input, err := os.ReadFile(filepath.Join("./home.json"))
 	require.NoError(t, err)
 	provDashboardFile := filepath.Join(provDashboardsDir, "home.json")
-	err = os.WriteFile(provDashboardFile, input, 0644)
+	err = os.WriteFile(provDashboardFile, input, 0644) // #nosec G703 -- test writes to caller-provided temp dir
 	require.NoError(t, err)
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
@@ -712,10 +686,6 @@ func createFolder(t *testing.T, grafanaListedAddr string, title string) *dtos.Fo
 	return f
 }
 
-func intPtr(n int) *int {
-	return &n
-}
-
 func TestIntegrationPreserveSchemaVersion(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
@@ -723,7 +693,7 @@ func TestIntegrationPreserveSchemaVersion(t *testing.T) {
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
-	schemaVersions := []*int{intPtr(1), intPtr(36), intPtr(40), nil}
+	schemaVersions := []*int{new(1), new(36), new(40), nil}
 	for _, schemaVersion := range schemaVersions {
 		var title string
 		if schemaVersion == nil {

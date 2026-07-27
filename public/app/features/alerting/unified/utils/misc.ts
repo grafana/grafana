@@ -7,6 +7,7 @@ import { config, isFetchError } from '@grafana/runtime';
 import { type DataSourceRef } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError, getRequestConfigFromError, getStatusFromError } from 'app/core/utils/errors';
+import kbn from 'app/core/utils/kbn';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
 import {
   alertInstanceKey,
@@ -185,7 +186,8 @@ export function makeFolderLink(folderUID: string): string {
 }
 
 export function makeFolderAlertsLink(folderUID: string, title: string): string {
-  return createRelativeUrl(`/dashboards/f/${folderUID}/${title}/alerting`);
+  const slug = kbn.slugifyForUrl(title).replace(/^-+|-+$/g, '') || folderUID;
+  return createRelativeUrl(`/dashboards/f/${folderUID}/${slug}/alerting`);
 }
 
 export function makeFolderSettingsLink(uid: string): string {

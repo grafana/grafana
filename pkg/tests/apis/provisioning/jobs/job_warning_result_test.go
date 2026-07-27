@@ -23,8 +23,7 @@ func TestIntegrationProvisioning_JobWarningResult(t *testing.T) {
 		Copies: map[string]string{
 			"../testdata/invalid.json": "dashboard1.json",
 		},
-		SkipSync:               true, // Skip initial sync so we can add the malformed file first
-		SkipResourceAssertions: true, // will check both at the same time below to reduce duration of this test
+		SkipSync: true, // Skip initial sync so we can add the malformed file first
 	}
 	helper.CreateLocalRepo(t, testRepo)
 
@@ -78,8 +77,7 @@ func TestIntegrationProvisioning_JobWarningResult_MissingName(t *testing.T) {
 		Copies: map[string]string{
 			"../testdata/dashboard-missing-name.json": "dashboard-no-name.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	}
 	helper.CreateLocalRepo(t, testRepo)
 
@@ -124,8 +122,7 @@ func TestIntegrationProvisioning_JobWarningResult_DashboardRefreshInterval(t *te
 		Copies: map[string]string{
 			"../testdata/dashboard-refresh-too-low.json": "dashboard-refresh-low.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	}
 	helper.CreateLocalRepo(t, testRepo)
 
@@ -159,6 +156,68 @@ func TestIntegrationProvisioning_JobWarningResult_DashboardRefreshInterval(t *te
 		"should have warning message mentioning refresh interval validation error")
 }
 
+// TestIntegrationProvisioning_JobWarningResult_DashboardSchemaInvalid verifies
+// that Kubernetes apiserver "Invalid" (HTTP 422, StatusReasonInvalid) errors
+// produced by dashboard schema validation during a sync are treated as
+// warnings, not hard errors.
+func TestIntegrationProvisioning_JobWarningResult_DashboardSchemaInvalid(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "job-warning-invalid-schema-repo"
+	testRepo := common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
+		Copies: map[string]string{
+			"../testdata/dashboard-v2-schema-invalid.json": "dashboard-v2-invalid.json",
+		},
+		SkipSync: true,
+	}
+	helper.CreateLocalRepo(t, testRepo)
+
+	// Execute a pull job - this should process the dashboard, hit the v2 CUE
+	// validator via apiserver admission, and classify the resulting IsInvalid
+	// error as a warning rather than a hard error.
+	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{},
+	})
+
+	jobObj := &provisioning.Job{}
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
+	require.NoError(t, err)
+
+	t.Logf("job status: state=%s message=%s", jobObj.Status.State, jobObj.Status.Message)
+	for i, w := range jobObj.Status.Warnings {
+		t.Logf("  warning[%d]: %s", i, w)
+	}
+	for i, e := range jobObj.Status.Errors {
+		t.Logf("  error[%d]: %s", i, e)
+	}
+
+	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+		"job should complete with warning state for dashboard schema validation (IsInvalid) error")
+	require.NotEmpty(t, jobObj.Status.Warnings,
+		"job should have warnings for the schema validation error")
+	require.Empty(t, jobObj.Status.Errors,
+		"dashboard schema validation errors should be treated as warnings, not errors")
+
+	// The expected warning shape is produced by apierrors.NewInvalid, wrapped
+	// by the provisioning writer. It contains:
+	//   - the source file path (so users know which file to fix)
+	//   - the "is invalid" marker from StatusReasonInvalid
+	found := false
+	for _, warningMsg := range jobObj.Status.Warnings {
+		if strings.Contains(warningMsg, "dashboard-v2-invalid.json") &&
+			strings.Contains(warningMsg, "is invalid") {
+			found = true
+			break
+		}
+	}
+	require.True(t, found,
+		"should have a warning message mentioning the file and an IsInvalid schema validation error, got: %v",
+		jobObj.Status.Warnings)
+}
+
 func TestIntegrationProvisioning_JobWarningResult_DuplicateName(t *testing.T) {
 	helper := sharedHelper(t)
 
@@ -172,8 +231,7 @@ func TestIntegrationProvisioning_JobWarningResult_DuplicateName(t *testing.T) {
 			"../testdata/dashboard-duplicate-name.json":      "dashboard-dup1.json",
 			"../testdata/dashboard-duplicate-name-copy.json": "dashboard-dup2.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	}
 	helper.CreateLocalRepo(t, testRepo)
 

@@ -1,7 +1,7 @@
 import { firstValueFrom, map } from 'rxjs';
 
 import { isAssistantAvailable } from '@grafana/assistant';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type PluginDashboard } from 'app/types/plugins';
 
 import { type GnetDashboard } from '../types';
@@ -30,7 +30,7 @@ export interface TemplateContextData {
  */
 export function buildTemplateContextData(
   dashboard: PluginDashboard | GnetDashboard,
-  kind: 'template_dashboard' | 'suggested_dashboard'
+  kind: 'template_dashboard' | 'suggested_dashboard' | 'custom_dashboard_template'
 ): TemplateContextData {
   const isGnet = isGnetDashboard(dashboard);
 
@@ -106,7 +106,7 @@ export function buildTemplateContextData(
  */
 export function buildTemplateContextTitle(
   dashboard: PluginDashboard | GnetDashboard,
-  kind: 'template_dashboard' | 'suggested_dashboard'
+  kind: 'template_dashboard' | 'suggested_dashboard' | 'custom_dashboard_template'
 ): string {
   const isGnet = isGnetDashboard(dashboard);
   const name = isGnet ? dashboard.name : dashboard.title;
@@ -118,7 +118,9 @@ export function buildTemplateContextTitle(
  * For suggested dashboards (already rendered), asks to adapt the existing dashboard.
  * For template dashboards, asks to create a new dashboard from the template.
  */
-export function buildAssistantPrompt(kind: 'template_dashboard' | 'suggested_dashboard'): string {
+export function buildAssistantPrompt(
+  kind: 'template_dashboard' | 'suggested_dashboard' | 'custom_dashboard_template'
+): string {
   if (kind === 'suggested_dashboard') {
     return `Adapt this dashboard to my environment by connecting it to my available data sources and adjusting queries as needed.`;
   }
@@ -133,7 +135,10 @@ export function isSuggestedDashboardAssistantEnabled(): Promise<boolean> {
   return firstValueFrom(
     isAssistantAvailable().pipe(
       map((assistantAvailable) => {
-        const buttonEnabled = getFeatureFlagClient().getBooleanValue('suggestedDashboardsAssistantButton', false);
+        const buttonEnabled = getFeatureFlagClient().getBooleanValue(
+          FlagKeys.SuggestedDashboardsAssistantButton,
+          false
+        );
         return buttonEnabled && assistantAvailable;
       })
     )
@@ -149,9 +154,9 @@ export function isTemplateDashboardAssistantEnabled(): Promise<boolean> {
   return firstValueFrom(
     isAssistantAvailable().pipe(
       map((assistantAvailable) => {
-        const buttonEnabled = getFeatureFlagClient().getBooleanValue('dashboardTemplatesAssistantButton', false);
+        const buttonEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardTemplatesAssistantButton, false);
         const toolEnabled = getFeatureFlagClient().getBooleanValue(
-          'assistant.frontend.tools.dashboardTemplates',
+          FlagKeys.AssistantFrontendToolsDashboardTemplates,
           false
         );
         return buttonEnabled && toolEnabled && assistantAvailable;

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -320,22 +321,53 @@ func TestBuildConditionPatchOpsFromExisting(t *testing.T) {
 			}
 
 			require.NotNil(t, patchOps, "expected patch operations")
-			require.Len(t, patchOps, 1, "expected exactly one patch operation")
 
-			patch := patchOps[0]
-			assert.Equal(t, "replace", patch["op"])
-			assert.Equal(t, "/status/conditions", patch["path"])
+			finalConditions := applyConditionPatchOps(t, tt.existingConditions, patchOps)
+			assert.Len(t, finalConditions, tt.expectedConditions)
 
-			conditions, ok := patch["value"].([]metav1.Condition)
-			require.True(t, ok, "patch value should be []metav1.Condition")
-			assert.Len(t, conditions, tt.expectedConditions)
-
-			// Verify ObservedGeneration is set on all conditions
-			for _, cond := range conditions {
+			for _, cond := range finalConditions {
 				assert.Equal(t, tt.generation, cond.ObservedGeneration)
 			}
 		})
 	}
+}
+
+// applyConditionPatchOps simulates the apiserver applying the generated JSON
+// patch ops to the existing conditions so assertions can verify the logical
+// outcome regardless of whether the function emits a whole-array replace or
+// per-condition ops.
+func applyConditionPatchOps(t *testing.T, existing []metav1.Condition, ops []map[string]interface{}) []metav1.Condition {
+	t.Helper()
+	conditions := make([]metav1.Condition, len(existing))
+	copy(conditions, existing)
+	for _, op := range ops {
+		path, _ := op["path"].(string)
+		value := op["value"]
+		switch op["op"] {
+		case "replace":
+			if path == "/status/conditions" {
+				arr, ok := value.([]metav1.Condition)
+				require.True(t, ok, "whole-array replace value must be []metav1.Condition")
+				conditions = arr
+				continue
+			}
+			var idx int
+			_, err := fmt.Sscanf(path, "/status/conditions/%d", &idx)
+			require.NoError(t, err, "unexpected replace path: %s", path)
+			require.Less(t, idx, len(conditions), "replace index out of bounds")
+			cond, ok := value.(metav1.Condition)
+			require.True(t, ok, "replace value must be metav1.Condition")
+			conditions[idx] = cond
+		case "add":
+			require.Equal(t, "/status/conditions/-", path, "unexpected add path: %s", path)
+			cond, ok := value.(metav1.Condition)
+			require.True(t, ok, "add value must be metav1.Condition")
+			conditions = append(conditions, cond)
+		default:
+			t.Fatalf("unexpected op: %v", op["op"])
+		}
+	}
+	return conditions
 }
 
 func TestBuildConditionPatchOpsFromExisting_MultipleConditions(t *testing.T) {
@@ -487,14 +519,8 @@ func TestBuildConditionPatchOpsFromExisting_MultipleConditions(t *testing.T) {
 			}
 
 			require.NotNil(t, patchOps, "expected patch operations")
-			require.Len(t, patchOps, 1, "expected exactly one patch operation")
 
-			patch := patchOps[0]
-			assert.Equal(t, "replace", patch["op"])
-			assert.Equal(t, "/status/conditions", patch["path"])
-
-			conditions, ok := patch["value"].([]metav1.Condition)
-			require.True(t, ok, "patch value should be []metav1.Condition")
+			conditions := applyConditionPatchOps(t, tt.existingConditions, patchOps)
 			assert.Len(t, conditions, tt.expectedConditions)
 
 			for _, newCond := range tt.newConditions {
@@ -570,18 +596,22 @@ func TestBuildConditionPatchOpsFromExisting_Connection(t *testing.T) {
 			}
 
 			require.NotNil(t, patchOps, "expected patch operations")
-			require.Len(t, patchOps, 1, "expected exactly one patch operation")
 
-			patch := patchOps[0]
-			assert.Equal(t, "replace", patch["op"])
-			assert.Equal(t, "/status/conditions", patch["path"])
+			conditions := applyConditionPatchOps(t, tt.existingConditions, patchOps)
+			require.NotEmpty(t, conditions)
 
-			conditions, ok := patch["value"].([]metav1.Condition)
-			require.True(t, ok, "patch value should be []metav1.Condition")
-
-			// Verify ObservedGeneration is set
-			readyCondition := conditions[0]
+			readyCondition := findCondition(conditions, tt.newCondition.Type)
+			require.NotNil(t, readyCondition, "expected condition of type %s", tt.newCondition.Type)
 			assert.Equal(t, tt.generation, readyCondition.ObservedGeneration)
 		})
 	}
+}
+
+func findCondition(conditions []metav1.Condition, conditionType string) *metav1.Condition {
+	for i := range conditions {
+		if conditions[i].Type == conditionType {
+			return &conditions[i]
+		}
+	}
+	return nil
 }

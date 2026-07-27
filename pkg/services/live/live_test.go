@@ -239,6 +239,10 @@ func Test_handleOnPublish_IDTokenExpiration(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("expired token", func(t *testing.T) {
+		// When the token is expired we trigger a refresh. If the refresh
+		// trigger succeeds we let the op proceed instead of failing with
+		// ErrorExpired (which centrifuge-js treats as fatal and would tear
+		// down the subscription with no retry).
 		expiration := time.Now().Add(-time.Hour)
 		token := createToken(t, &expiration)
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{IDToken: token})
@@ -246,7 +250,8 @@ func Test_handleOnPublish_IDTokenExpiration(t *testing.T) {
 			Channel: "test",
 			Data:    []byte("test"),
 		})
-		require.ErrorIs(t, err, centrifuge.ErrorExpired)
+		require.NotErrorIs(t, err, centrifuge.ErrorExpired)
+		require.NotErrorIs(t, err, errorExpiredTemporary)
 		require.Empty(t, reply)
 	})
 
@@ -274,6 +279,9 @@ func Test_handleOnRPC_IDTokenExpiration(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("expired token", func(t *testing.T) {
+		// See the matching note in Test_handleOnPublish_IDTokenExpiration —
+		// successful refresh trigger should let the op continue rather than
+		// returning ErrorExpired.
 		expiration := time.Now().Add(-time.Hour)
 		token := createToken(t, &expiration)
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{IDToken: token})
@@ -281,7 +289,8 @@ func Test_handleOnRPC_IDTokenExpiration(t *testing.T) {
 			Method: "grafana.query",
 			Data:   []byte("test"),
 		})
-		require.ErrorIs(t, err, centrifuge.ErrorExpired)
+		require.NotErrorIs(t, err, centrifuge.ErrorExpired)
+		require.NotErrorIs(t, err, errorExpiredTemporary)
 		require.Empty(t, reply)
 	})
 
@@ -309,13 +318,15 @@ func Test_handleOnSubscribe_IDTokenExpiration(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("expired token", func(t *testing.T) {
+		// See the matching note in Test_handleOnPublish_IDTokenExpiration.
 		expiration := time.Now().Add(-time.Hour)
 		token := createToken(t, &expiration)
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{IDToken: token})
 		reply, err := g.handleOnSubscribe(ctx, client, centrifuge.SubscribeEvent{
 			Channel: "test",
 		})
-		require.ErrorIs(t, err, centrifuge.ErrorExpired)
+		require.NotErrorIs(t, err, centrifuge.ErrorExpired)
+		require.NotErrorIs(t, err, errorExpiredTemporary)
 		require.Empty(t, reply)
 	})
 

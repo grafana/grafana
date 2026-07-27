@@ -15,7 +15,6 @@
     'react-refresh',
 
     "@types/history", // this can be removed entirely when we upgrade history since v5 exposes types directly
-    "cypress", // cypress use is deprecated, we should not bump it anymore
     "history", // we should bump this together with react-router-dom (see https://github.com/grafana/grafana/issues/76744)
     "react-router", // we should bump this together with history and react-router-dom
     "react-router-dom", // we should bump this together with history (see https://github.com/grafana/grafana/issues/76744)
@@ -92,7 +91,7 @@
     },
     {
       groupName: "locker",
-      reviewers: ["team:grafana/plugins-platform-frontend"],
+      reviewers: ["team:grafana/grafana-catalog"],
       matchPackageNames: ["@locker/{/,}**"],
       minimumReleaseAge: "7 days",
     },
@@ -117,7 +116,7 @@
   },
   prConcurrentLimit: 10,
   rebaseWhen: "conflicted",
-  reviewers: ["team:grafana/frontend-ops"],
+  reviewers: ["team:grafana/grafana-frontend-platform"],
   separateMajorMinor: false,
   vulnerabilityAlerts: {
     addLabels: ["area/security"],

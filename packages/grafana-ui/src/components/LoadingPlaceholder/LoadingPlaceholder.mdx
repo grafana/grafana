@@ -1,15 +1,22 @@
-import { ArgTypes } from '@storybook/blocks';
+import { ArgTypes } from '@storybook/addon-docs/blocks';
 import { LoadingPlaceholder } from './LoadingPlaceholder';
 
 # LoadingPlaceholder
 
-Loading indicator with a text. Used to alert a user to wait for an activity to complete.
+Loading indicator with a text label. Use this component when an individual element or section within an already-rendered page is loading — for example, a data table, chart, or form that is fetching its own data.
 
 ### Usage
 
 ```jsx
 <LoadingPlaceholder text="Loading..." />
 ```
+
+### When to use
+
+- A specific section of the page is fetching data independently
+- An inline element needs a transient loading state
+
+For cases where the entire page or view is not yet ready to display, use [PageLoader](?path=/docs/information-pageloader--docs) instead.
 
 ### Props
 

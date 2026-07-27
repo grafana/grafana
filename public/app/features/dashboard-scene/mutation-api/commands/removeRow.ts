@@ -14,7 +14,7 @@ import { movePanelsToLayout } from './movePanelsHelper';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
-export const removeRowPayloadSchema = payloads.removeRow;
+const removeRowPayloadSchema = payloads.removeRow;
 
 export type RemoveRowPayload = z.infer<typeof removeRowPayloadSchema>;
 

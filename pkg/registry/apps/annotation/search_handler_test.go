@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,9 +23,7 @@ import (
 func TestSearchHandler(t *testing.T) {
 	ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), metav1.NamespaceDefault)
 
-	// create several test annotations with different tags and scopes
-	store := NewMemoryStore()
-	annotations := []*annotationV0.Annotation{
+	seedAnnotations := []*annotationV0.Annotation{
 		{
 			ObjectMeta: metav1.ObjectMeta{Name: "a-1", Namespace: metav1.NamespaceDefault},
 			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"tag1"}, Scopes: []string{"scope1"}},
@@ -45,17 +45,14 @@ func TestSearchHandler(t *testing.T) {
 			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{}, Scopes: []string{}},
 		},
 	}
-	for _, anno := range annotations {
-		_, err := store.Create(ctx, anno)
-		require.NoError(t, err)
-	}
 
-	accessClient := &fakeAccessClient{fn: func(_ authtypes.CheckRequest) bool { return true }}
-	handler := newSearchHandler(store, accessClient)
+	accessClient := &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }}
+	dashClient := newFakeFolderResolver(nil)
 
 	tests := []struct {
 		name          string
 		queryParams   url.Values
+		deleteFirst   []string
 		expectedNames []string
 	}{
 		{
@@ -143,10 +140,44 @@ func TestSearchHandler(t *testing.T) {
 			},
 			expectedNames: []string{"a-1", "a-4"},
 		},
+		{
+			name:          "Soft-deleted annotations are excluded by default",
+			queryParams:   url.Values{"tag": []string{"tag1"}},
+			deleteFirst:   []string{"a-1"},
+			expectedNames: []string{"a-4"},
+		},
+		{
+			name: "Soft-deleted annotations are included with deleted=include",
+			queryParams: url.Values{
+				"tag":     []string{"tag1"},
+				"deleted": []string{"include"},
+			},
+			deleteFirst:   []string{"a-1"},
+			expectedNames: []string{"a-1", "a-4"},
+		},
+		{
+			name: "Only soft-deleted annotations are returned with deleted=only",
+			queryParams: url.Values{
+				"tag":     []string{"tag1"},
+				"deleted": []string{"only"},
+			},
+			deleteFirst:   []string{"a-1"},
+			expectedNames: []string{"a-1"},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			store := NewMemoryStore()
+			for _, anno := range seedAnnotations {
+				_, err := store.Create(ctx, anno.DeepCopy())
+				require.NoError(t, err)
+			}
+			for _, name := range tt.deleteFirst {
+				require.NoError(t, store.Delete(ctx, metav1.NamespaceDefault, name))
+			}
+			handler := newSearchHandler(store, accessClient, dashClient, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
+
 			u := &url.URL{
 				Scheme:   "http",
 				Host:     "localhost",

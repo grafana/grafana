@@ -2,15 +2,19 @@ package provisioning
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioningapi "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -154,6 +158,40 @@ func TestCheckQuota(t *testing.T) {
 	}
 }
 
+// A missing ref surfaces from the git layer as ErrRefNotFound wrapped by fmt.Errorf
+// (a *fmt.wrapError, not an APIStatus). The directory-listing handler must unwrap it so
+// the client gets a 404 instead of a 500 + UnhandledError log.
+func TestHandleDirectoryListing_RefNotFoundMapsTo404(t *testing.T) {
+	mockAccess := auth.NewMockAccessChecker(t)
+	mockAccess.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+
+	wrappedErr := fmt.Errorf("ref not found: %s: %w", "refs/heads/test-panel", repository.ErrRefNotFound)
+	mockReadWriter := repository.NewMockReaderWriter(t)
+	mockReadWriter.EXPECT().ReadTree(mock.Anything, "test-panel").Return([]repository.FileTreeEntry(nil), wrappedErr)
+
+	connector := &filesConnector{access: mockAccess}
+	responder := &fakeResponder{}
+
+	connector.handleDirectoryListing(
+		context.Background(),
+		"test-repo",
+		resources.DualWriteOptions{Path: "", Ref: "test-panel"},
+		mockReadWriter,
+		responder,
+	)
+
+	require.Error(t, responder.err)
+	// The responder must receive a concrete *StatusError (an APIStatus), not a wrapped
+	// error — the apiserver's ErrorToAPIStatus maps via a non-unwrapping type assertion,
+	// so a wrapped error becomes 500 + UnhandledError. A deliberate type assertion (not
+	// errors.As) is what mirrors that behavior here; errors.As would unwrap and pass even
+	// for the wrapped error that causes the 500.
+	//nolint:errorlint // intentional: assert the concrete type the responder receives, matching the apiserver's non-unwrapping mapping
+	statusErr, ok := responder.err.(*apierrors.StatusError)
+	require.True(t, ok, "responder must receive a *StatusError, got %T", responder.err)
+	require.True(t, apierrors.IsNotFound(statusErr), "expected a 404 NotFound, got %#v", statusErr)
+}
+
 func TestHandleMethodRequest_FolderMetadataGuard(t *testing.T) {
 	tests := []struct {
 		name            string
@@ -213,7 +251,7 @@ func TestHandleMethodRequest_FolderMetadataGuard(t *testing.T) {
 			opts := resources.DualWriteOptions{Path: tc.path}
 
 			if tc.expectForbidden {
-				_, err := connector.handleMethodRequest(context.Background(), req, opts, false, nil)
+				_, err := connector.handleMethodRequest(context.Background(), req, opts, false, nil, nil, nil)
 				require.Error(t, err)
 				assert.True(t, apierrors.IsForbidden(err))
 			} else {
@@ -221,7 +259,7 @@ func TestHandleMethodRequest_FolderMetadataGuard(t *testing.T) {
 				// This is intentional: we only test the guard logic here, not the downstream handlers.
 				require.Panics(t, func() {
 					//nolint:errcheck
-					_, _ = connector.handleMethodRequest(context.Background(), req, opts, false, nil)
+					_, _ = connector.handleMethodRequest(context.Background(), req, opts, false, nil, nil, nil)
 				}, "guard must not intercept; code should proceed past the guard")
 			}
 		})
@@ -296,7 +334,7 @@ func TestHandleMethodRequest_PutDirectoryRouting(t *testing.T) {
 
 		require.Panics(t, func() {
 			//nolint:errcheck
-			_, _ = connector.handleMethodRequest(context.Background(), req, opts, true, nil)
+			_, _ = connector.handleMethodRequest(context.Background(), req, opts, true, nil, nil, nil)
 		})
 	})
 
@@ -306,7 +344,7 @@ func TestHandleMethodRequest_PutDirectoryRouting(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPut, "/", body)
 		opts := resources.DualWriteOptions{Path: "myfolder/"}
 
-		_, err := connector.handleMethodRequest(context.Background(), req, opts, true, nil)
+		_, err := connector.handleMethodRequest(context.Background(), req, opts, true, nil, nil, nil)
 		require.Error(t, err)
 		assert.True(t, apierrors.IsMethodNotSupported(err))
 	})
@@ -321,4 +359,322 @@ func TestHandleMethodRequest_PutDirectoryRouting(t *testing.T) {
 		require.Error(t, err)
 		assert.True(t, apierrors.IsMethodNotSupported(err), "expected MethodNotSupported, got: %v", err)
 	})
+}
+
+func TestParseRequestOptionsPathValidation(t *testing.T) {
+	tests := []struct {
+		name        string
+		method      string
+		path        string
+		wantErr     bool
+		errContains string
+	}{
+		{
+			name:   "GET json file allowed",
+			method: http.MethodGet,
+			path:   "dashboard.json",
+		},
+		{
+			name:   "GET yaml file allowed",
+			method: http.MethodGet,
+			path:   "dashboard.yaml",
+		},
+		{
+			name:   "GET yml file allowed",
+			method: http.MethodGet,
+			path:   "dashboard.yml",
+		},
+		{
+			name:   "GET markdown file allowed",
+			method: http.MethodGet,
+			path:   "README.md",
+		},
+		{
+			name:   "GET nested markdown file allowed",
+			method: http.MethodGet,
+			path:   "folder/subfolder/README.md",
+		},
+		{
+			name:        "GET txt file not allowed",
+			method:      http.MethodGet,
+			path:        "file.txt",
+			wantErr:     true,
+			errContains: "unsupported file extension",
+		},
+		{
+			name:   "POST json file allowed",
+			method: http.MethodPost,
+			path:   "dashboard.json",
+		},
+		{
+			name:        "POST markdown file not allowed",
+			method:      http.MethodPost,
+			path:        "README.md",
+			wantErr:     true,
+			errContains: "unsupported file extension",
+		},
+		{
+			name:        "PUT markdown file not allowed",
+			method:      http.MethodPut,
+			path:        "README.md",
+			wantErr:     true,
+			errContains: "unsupported file extension",
+		},
+		{
+			name:        "DELETE markdown file not allowed",
+			method:      http.MethodDelete,
+			path:        "README.md",
+			wantErr:     true,
+			errContains: "unsupported file extension",
+		},
+		{
+			name:   "GET directory allowed",
+			method: http.MethodGet,
+			path:   "dashboards/",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := repository.NewMockRepository(t)
+			mockRepo.On("Config").Return(&provisioningapi.Repository{
+				Spec: provisioningapi.RepositorySpec{
+					Title: "test-repo",
+				},
+			}).Maybe()
+
+			connector := &filesConnector{}
+			r := httptest.NewRequest(tt.method, "/test-repo/files/"+tt.path, nil)
+
+			opts, err := connector.parseRequestOptions(r, "test-repo", mockRepo)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.errContains)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.path, opts.Path)
+			}
+		})
+	}
+}
+
+// TestParseRequestOptionsPathWithSpace verifies the /files endpoint accepts a
+// path whose folder segment contains a space (e.g. a folder titled "My Group").
+// The apiserver decodes %20 into r.URL.Path before we extract the file path, and
+// IsSafe explicitly allows spaces, so the path is served as-is.
+func TestParseRequestOptionsPathWithSpace(t *testing.T) {
+	mockRepo := repository.NewMockRepository(t)
+	mockRepo.On("Config").Return(&provisioningapi.Repository{
+		Spec: provisioningapi.RepositorySpec{
+			Title: "test-repo",
+		},
+	}).Maybe()
+
+	connector := &filesConnector{}
+	// The space is percent-encoded on the wire; the server decodes it into URL.Path.
+	r := httptest.NewRequest(http.MethodGet, "/test-repo/files/My%20Group/dashboard.json", nil)
+
+	opts, err := connector.parseRequestOptions(r, "test-repo", mockRepo)
+	require.NoError(t, err)
+	require.Equal(t, "My Group/dashboard.json", opts.Path)
+}
+
+func TestParseRequestOptionsRefValidation(t *testing.T) {
+	tests := []struct {
+		name    string
+		ref     string
+		wantErr bool
+	}{
+		{name: "empty ref is allowed", ref: ""},
+		{name: "valid branch name", ref: "main"},
+		{name: "valid branch with slash", ref: "feature/my-branch"},
+		{name: "valid short commit SHA", ref: "abc1234"},
+		{name: "valid full commit SHA", ref: "abcdef0123456789abcdef0123456789abcdef01"},
+		{name: "invalid ref with semicolon", ref: "main; rm -rf /", wantErr: true},
+		{name: "invalid ref with space", ref: "main branch", wantErr: true},
+		{name: "invalid ref with backtick", ref: "main`whoami`", wantErr: true},
+		{name: "invalid ref with double dots", ref: "feature/..bad", wantErr: true},
+		{name: "invalid ref with newline", ref: "main\nfoo", wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := repository.NewMockRepository(t)
+			mockRepo.On("Config").Return(&provisioningapi.Repository{
+				Spec: provisioningapi.RepositorySpec{
+					Title: "test-repo",
+				},
+			}).Maybe()
+
+			connector := &filesConnector{}
+			r := httptest.NewRequest(http.MethodGet, "/test-repo/files/dashboard.json", nil)
+			if tt.ref != "" {
+				q := r.URL.Query()
+				q.Set("ref", tt.ref)
+				r.URL.RawQuery = q.Encode()
+			}
+
+			_, err := connector.parseRequestOptions(r, "test-repo", mockRepo)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				require.ErrorIs(t, err, repository.ErrInvalidRef)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestHandleGetRawFile(t *testing.T) {
+	tests := []struct {
+		name           string
+		path           string
+		fileContent    string
+		readError      error
+		wantErr        bool
+		errContains    string
+		expectedResult string
+	}{
+		{
+			name:           "successful readme read",
+			path:           "README.md",
+			fileContent:    "# Hello World\n\nThis is a test.",
+			expectedResult: "# Hello World\n\nThis is a test.",
+		},
+		{
+			name:           "nested readme read",
+			path:           "folder/README.md",
+			fileContent:    "# Folder Readme",
+			expectedResult: "# Folder Readme",
+		},
+		{
+			name:        "file not found",
+			path:        "README.md",
+			readError:   repository.ErrFileNotFound,
+			wantErr:     true,
+			errContains: "not found",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockReadWriter := repository.NewMockReaderWriter(t)
+			mockAccess := auth.NewMockAccessChecker(t)
+			mockAccess.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+
+			repo := &provisioningapi.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+				Spec: provisioningapi.RepositorySpec{
+					Sync: provisioningapi.SyncOptions{Target: provisioningapi.SyncTargetTypeFolder},
+				},
+			}
+			mockReadWriter.EXPECT().Config().Return(repo).Maybe()
+			authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, resources.NewMockResourceClients(t), false)
+
+			if tt.readError != nil {
+				mockReadWriter.EXPECT().Read(mock.Anything, tt.path, "").Return(nil, tt.readError)
+			} else {
+				mockReadWriter.EXPECT().Read(mock.Anything, tt.path, "").Return(&repository.FileInfo{
+					Path: tt.path,
+					Data: []byte(tt.fileContent),
+					Ref:  "main",
+					Hash: "abc123",
+				}, nil)
+			}
+
+			connector := &filesConnector{access: mockAccess}
+
+			opts := resources.DualWriteOptions{Path: tt.path}
+
+			result, err := connector.handleGetRawFile(context.Background(), opts, mockReadWriter, authorizer)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.errContains)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, result)
+				require.Equal(t, tt.path, result.Path)
+
+				content, ok := result.Resource.File.Object["content"]
+				require.True(t, ok, "content field should exist")
+				require.Equal(t, tt.expectedResult, content)
+			}
+		})
+	}
+}
+
+func TestHandleGetRawFile_FolderScopedAuth(t *testing.T) {
+	t.Run("denies the read when the user lacks folder read permission", func(t *testing.T) {
+		mockReadWriter := repository.NewMockReaderWriter(t)
+		mockAccess := auth.NewMockAccessChecker(t)
+
+		repo := &provisioningapi.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			Spec: provisioningapi.RepositorySpec{
+				Sync: provisioningapi.SyncOptions{Target: provisioningapi.SyncTargetTypeFolder},
+			},
+		}
+		mockReadWriter.EXPECT().Config().Return(repo).Maybe()
+
+		// Folder check is denied — readWriter.Read on the file must never be called.
+		mockAccess.EXPECT().
+			Check(mock.Anything, mock.Anything, mock.Anything).
+			Return(apierrors.NewForbidden(provisioningapi.RepositoryResourceInfo.GroupResource(), "team-a", errors.New("denied")))
+
+		authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, resources.NewMockResourceClients(t), false)
+		connector := &filesConnector{access: mockAccess}
+
+		_, err := connector.handleGetRawFile(
+			context.Background(),
+			resources.DualWriteOptions{Path: "team-a/README.md"},
+			mockReadWriter,
+			authorizer,
+		)
+
+		require.Error(t, err)
+		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got %v", err)
+	})
+}
+
+func TestIsRawFileIntegration(t *testing.T) {
+	tests := []struct {
+		name     string
+		path     string
+		expected bool
+	}{
+		{
+			name:     "README.md is raw",
+			path:     "README.md",
+			expected: true,
+		},
+		{
+			name:     "nested README.md is raw",
+			path:     "folder/subfolder/README.md",
+			expected: true,
+		},
+		{
+			name:     "dashboard.json is not raw",
+			path:     "dashboard.json",
+			expected: false,
+		},
+		{
+			name:     "dashboard.yaml is not raw",
+			path:     "dashboard.yaml",
+			expected: false,
+		},
+		{
+			name:     "directory is not raw",
+			path:     "folder/",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.expected, resources.IsRawFile(tt.path))
+		})
+	}
 }

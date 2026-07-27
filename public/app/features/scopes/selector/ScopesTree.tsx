@@ -2,14 +2,14 @@ import { css } from '@emotion/css';
 import { useId } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { type GrafanaTheme2, type Scope } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { RecentScopes } from './RecentScopes';
 import { ScopesTreeHeadline } from './ScopesTreeHeadline';
 import { ScopesTreeItemList } from './ScopesTreeItemList';
 import { ScopesTreeSearch } from './ScopesTreeSearch';
-import { type NodesMap, type SelectedScope, type TreeNode } from './types';
+import { type NodesMap, type RecentScopeSet, type SelectedScope, type TreeNode } from './types';
 import { useScopeActions } from './useScopeActions';
 import { useScopesHighlighting } from './useScopesHighlighting';
 
@@ -20,8 +20,8 @@ export interface ScopesTreeProps {
   scopeNodes: NodesMap;
 
   // Recent scopes are only shown at the root node
-  recentScopes?: Scope[][];
-  onRecentScopesSelect?: (scopeIds: string[], parentNodeId?: string, scopeNodeId?: string) => void;
+  recentScopes?: RecentScopeSet[];
+  onRecentScopesSelect?: (scopeIds: string[], scopeNodeId?: string) => void;
 }
 
 export function ScopesTree({

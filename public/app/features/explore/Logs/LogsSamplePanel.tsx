@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useRef, type JSX } from 'react';
+import { useRef, useState, type JSX } from 'react';
 
 import {
   CoreApp,
@@ -21,7 +20,6 @@ import { type DataQuery, LogsSortOrder, type TimeZone } from '@grafana/schema';
 import { Button, Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { LogList } from 'app/features/logs/components/panel/LogList';
 
-import { LogRows } from '../../logs/components/LogRows';
 import { dataFrameToLogsModel } from '../../logs/logsModel';
 import { SupplementaryResultError } from '../SupplementaryResultError';
 
@@ -40,11 +38,11 @@ type Props = {
 
 export function LogsSamplePanel(props: Props) {
   const { queryResponse, timeZone, enabled, setLogsSampleEnabled, datasourceInstance, queries, splitOpen } = props;
-  const newLogsPanelEnabled = useBooleanFlagValue('newLogsPanel', true);
 
-  const styles = useStyles2(getStyles, newLogsPanelEnabled);
+  const styles = useStyles2(getStyles);
 
   const logsContainerRef = useRef<HTMLDivElement | null>(null);
+  const [logListContainerElement, setLogListContainerElement] = useState<HTMLDivElement | null>(null);
 
   const onToggleLogsSampleCollapse = (isOpen: boolean) => {
     setLogsSampleEnabled(isOpen);
@@ -112,37 +110,23 @@ export function LogsSamplePanel(props: Props) {
     );
   } else {
     const logs = dataFrameToLogsModel(queryResponse.data);
-    LogsSamplePanelContent =
-      newLogsPanelEnabled && logsContainerRef.current ? (
-        <LogList
-          app={CoreApp.Explore}
-          containerElement={logsContainerRef.current}
-          enableLogDetails
-          dedupStrategy={LogsDedupStrategy.none}
-          displayedFields={[]}
-          logOptionsStorageKey={SETTING_KEY_ROOT}
-          logs={logs.rows}
-          showControls
-          showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-          sortOrder={store.get(SETTINGS_KEYS.logsSortOrder) || LogsSortOrder.Descending}
-          timeRange={props.timeRange}
-          timeZone={timeZone}
-          wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
-        />
-      ) : (
-        <LogRows
-          logRows={logs.rows}
-          dedupStrategy={LogsDedupStrategy.none}
-          showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
-          showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-          wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
-          prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
-          timeZone={timeZone}
-          enableLogDetails
-          scrollElement={null}
-          timeRange={props.timeRange}
-        />
-      );
+    LogsSamplePanelContent = logListContainerElement ? (
+      <LogList
+        app={CoreApp.Explore}
+        containerElement={logListContainerElement}
+        enableLogDetails
+        dedupStrategy={LogsDedupStrategy.none}
+        displayedFields={[]}
+        logOptionsStorageKey={SETTING_KEY_ROOT}
+        logs={logs.rows}
+        showControls
+        showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
+        sortOrder={store.get(SETTINGS_KEYS.logsSortOrder) || LogsSortOrder.Descending}
+        timeRange={props.timeRange}
+        timeZone={timeZone}
+        wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+      />
+    ) : null;
   }
 
   return queryResponse?.state !== LoadingState.NotStarted ? (
@@ -162,13 +146,13 @@ export function LogsSamplePanel(props: Props) {
     >
       <OpenInSplitViewButton />
       <div className={styles.logContainer} ref={logsContainerRef}>
-        {LogsSamplePanelContent}
+        <div ref={setLogListContainerElement}>{LogsSamplePanelContent}</div>
       </div>
     </Collapse>
   ) : null;
 }
 
-const getStyles = (theme: GrafanaTheme2, newLogsPanelEnabled: boolean) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     logSamplesButton: css({
       position: 'absolute',
@@ -176,7 +160,7 @@ const getStyles = (theme: GrafanaTheme2, newLogsPanelEnabled: boolean) => {
       right: theme.spacing(1),
     }),
     logContainer: css({
-      overflow: newLogsPanelEnabled ? 'visible' : 'scroll',
+      overflow: 'visible',
     }),
     infoTooltip: css({
       marginLeft: theme.spacing(1),

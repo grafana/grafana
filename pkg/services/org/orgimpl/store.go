@@ -43,6 +43,7 @@ type store interface {
 	GetByID(context.Context, *org.GetOrgByIDQuery) (*org.Org, error)
 	GetByName(context.Context, *org.GetOrgByNameQuery) (*org.Org, error)
 	SearchOrgUsers(context.Context, *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error)
+	SearchOrgUsersByEmails(context.Context, *org.SearchOrgUsersByEmailsQuery) ([]*org.OrgUserDTO, error)
 	RemoveOrgUser(context.Context, *org.RemoveOrgUserCommand) error
 
 	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error)
@@ -52,7 +53,7 @@ type store interface {
 type sqlStore struct {
 	db      db.DB
 	dialect migrator.Dialect
-	//TODO: moved to service
+	// TODO: moved to service
 	log     log.Logger
 	deletes []string
 	cfg     *setting.Cfg
@@ -638,6 +639,62 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 		return nil, err
 	}
 	return &result, nil
+}
+
+func (ss *sqlStore) SearchOrgUsersByEmails(ctx context.Context, query *org.SearchOrgUsersByEmailsQuery) ([]*org.OrgUserDTO, error) {
+	result := make([]*org.OrgUserDTO, 0)
+	if len(query.Emails) == 0 {
+		return result, nil
+	}
+	err := ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+		emailArgs := make([]any, len(query.Emails))
+		for i, e := range query.Emails {
+			emailArgs[i] = strings.ToLower(e)
+		}
+		placeholders := strings.Repeat("?,", len(query.Emails))
+		placeholders = placeholders[:len(placeholders)-1]
+
+		whereConditions := []string{
+			"org_user.org_id = ?",
+			fmt.Sprintf("u.email IN (%s)", placeholders),
+			"u.is_service_account = ?",
+		}
+		whereParams := append([]any{query.OrgID}, emailArgs...)
+		whereParams = append(whereParams, ss.dialect.BooleanValue(false))
+
+		if query.ExcludeHiddenUsers && ss.cfg != nil {
+			cond, params := buildHiddenUsersFilter(nil, ss.cfg.HiddenUsers)
+			if cond != "" {
+				whereConditions = append(whereConditions, cond)
+				whereParams = append(whereParams, params...)
+			}
+		}
+
+		sess := dbSession.Table("org_user").
+			Join("INNER", []string{ss.dialect.Quote("user"), "u"}, "org_user.user_id=u.id").
+			Where(strings.Join(whereConditions, " AND "), whereParams...).
+			Cols(
+				"org_user.org_id",
+				"org_user.user_id",
+				"u.email",
+				"u.uid",
+				"u.name",
+				"u.login",
+				"org_user.role",
+				"u.last_seen_at",
+				"u.created",
+				"u.updated",
+				"u.is_disabled",
+				"u.is_provisioned",
+			).Asc("u.login", "u.email")
+
+		return sess.Find(&result)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (ss *sqlStore) GetByName(ctx context.Context, query *org.GetOrgByNameQuery) (*org.Org, error) {

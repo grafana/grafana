@@ -30,6 +30,9 @@ type keeperDB struct {
 	Description string
 	Type        string
 	Payload     string
+
+	// Status
+	Active bool
 }
 
 func (*keeperDB) TableName() string {
@@ -55,6 +58,9 @@ func (kp *keeperDB) toKubernetes() (*secretv1beta1.Keeper, error) {
 	resource := &secretv1beta1.Keeper{
 		Spec: secretv1beta1.KeeperSpec{
 			Description: kp.Description,
+		},
+		Status: secretv1beta1.KeeperStatus{
+			Active: kp.Active,
 		},
 	}
 

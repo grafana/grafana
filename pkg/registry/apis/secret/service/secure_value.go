@@ -89,10 +89,21 @@ func (s *SecureValueService) Create(ctx context.Context, sv *secretv1beta1.Secur
 		s.metrics.SecureValueCreateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	// Secure value creation uses the active keeper
-	keeperName, keeperCfg, err := s.keeperMetadataStorage.GetActiveKeeperConfig(ctx, sv.Namespace)
-	if err != nil {
-		return nil, fmt.Errorf("fetching active keeper config: namespace=%+v %w", sv.Namespace, err)
+	var (
+		keeperName                            = contracts.SystemKeeperName
+		keeperCfg  secretv1beta1.KeeperConfig = secretv1beta1.NewNamedKeeperConfig(contracts.SystemKeeperName, &secretv1beta1.SystemKeeperConfig{})
+	)
+
+	// Secure value creation for non-inline secure values uses the active keeper
+	// Inline secure values always use the `system` keeper.
+	if isInline := len(sv.OwnerReferences) > 0; !isInline {
+		activeKeeperName, activeKeeperCfg, err := s.keeperMetadataStorage.GetActiveKeeperConfig(ctx, sv.Namespace)
+		if err != nil {
+			return nil, fmt.Errorf("fetching active keeper config: namespace=%+v %w", sv.Namespace, err)
+		}
+
+		keeperName = activeKeeperName
+		keeperCfg = activeKeeperCfg
 	}
 
 	return s.createNewVersion(ctx, keeperName, keeperCfg, sv, actorUID)
@@ -134,6 +145,10 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 	if err != nil {
 		return nil, false, fmt.Errorf("reading secure value secret: %+w", err)
 	}
+
+	// only service identities are allowed to mutate owner references after a secure value is created.
+	// for any other identity, preserve the existing ones to prevent unauthorized changes.
+	s.preserveOwnerReferencesForNonAccessPolicy(ctx, currentVersion, newSecureValue)
 
 	keeperCfg, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, currentVersion.Namespace, currentVersion.Status.Keeper, contracts.ReadOpts{})
 	if err != nil {
@@ -431,4 +446,13 @@ func (s *SecureValueService) SetKeeperAsActive(ctx context.Context, namespace xk
 		return fmt.Errorf("calling keeper metadata storage to set keeper as active: %w", err)
 	}
 	return nil
+}
+
+func (s *SecureValueService) preserveOwnerReferencesForNonAccessPolicy(ctx context.Context, currentSecureValue, newSecureValue *secretv1beta1.SecureValue) {
+	authInfo, ok := claims.AuthInfoFrom(ctx)
+	if ok && authInfo.GetIdentityType() == claims.TypeAccessPolicy {
+		return
+	}
+
+	newSecureValue.OwnerReferences = currentSecureValue.OwnerReferences
 }

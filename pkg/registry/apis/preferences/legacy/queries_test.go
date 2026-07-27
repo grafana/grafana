@@ -24,12 +24,6 @@ func TestPreferencesQueries(t *testing.T) {
 		return &v
 	}
 
-	getTeamQuery := func(orgId int64, user string, admin bool) sqltemplate.SQLTemplate {
-		v := newTeamsQueryReq(nodb, orgId, user, admin)
-		v.SQLTemplate = mocks.NewTestingSQLTemplate()
-		return &v
-	}
-
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir:        "testdata",
 		SQLTemplatesFS: sqlTemplatesFS,
@@ -84,6 +78,12 @@ func TestPreferencesQueries(t *testing.T) {
 						q.TeamUID = "ttt"
 					}),
 				},
+				{
+					Name: "namespace",
+					Data: getPreferencesQuery(1, func(q *preferencesQuery) {
+						q.Namespace = true
+					}),
+				},
 			},
 			sqlPreferencesRV: {
 				{
@@ -91,16 +91,6 @@ func TestPreferencesQueries(t *testing.T) {
 					Data: getPreferencesQuery(1, func(q *preferencesQuery) {
 						q.All = true // avoid validation error
 					}),
-				},
-			},
-			sqlTeams: {
-				{
-					Name: "members",
-					Data: getTeamQuery(1, "uuu", false),
-				},
-				{
-					Name: "admin",
-					Data: getTeamQuery(1, "uuu", true),
 				},
 			},
 		},

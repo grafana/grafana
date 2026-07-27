@@ -251,11 +251,7 @@ func (s *LocalSource) readFile(pluginJSONPath string) (io.ReadCloser, error) {
 	return os.Open(filepath.Clean(absPluginJSONPath))
 }
 
-func DirAsLocalSources(cfg *config.PluginManagementCfg, pluginsPaths []string, class plugins.Class) ([]*LocalSource, error) {
-	if len(pluginsPaths) == 0 {
-		return []*LocalSource{}, errors.New("plugins path not configured")
-	}
-
+func DirAsLocalSources(cfg *config.PluginManagementCfg, pluginsPaths []string, class plugins.Class, logger log.Logger) []*LocalSource {
 	// It's safe to ignore gosec warning G304 since the variable part of the file path comes from a configuration
 	// variable.
 	// nolint:gosec
@@ -267,7 +263,8 @@ func DirAsLocalSources(cfg *config.PluginManagementCfg, pluginsPaths []string, c
 		}
 		d, err := os.ReadDir(pluginsPath)
 		if err != nil {
-			return []*LocalSource{}, fmt.Errorf("failed to open plugins path: %w", err)
+			logger.Error("Failed to read plugin path, skipping", "path", pluginsPath, "error", err)
+			continue
 		}
 
 		var pluginDirs []string
@@ -287,5 +284,5 @@ func DirAsLocalSources(cfg *config.PluginManagementCfg, pluginsPaths []string, c
 		}
 	}
 
-	return sources, nil
+	return sources
 }

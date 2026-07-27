@@ -36,6 +36,20 @@ repository: {
 					// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 					path?: string
 				}
+				#GitHubEnterpriseRepositoryConfig: {
+					// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
+					serverUrl?: string
+					// The repository URL on the GHES server (e.g. `https://ghes.example.com/example/test`).
+					url?: string
+					// The branch to use in the repository.
+					branch: string
+					// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
+					token?: string
+					// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
+					encryptedToken?: [...string]
+					// Path is the subdirectory for the Grafana data inside the repository.
+					path?: string
+				}
 				#GitRepositoryConfig: {
 					// The repository URL (e.g. `https://github.com/example/test.git`).
 					url?: string
@@ -57,6 +71,8 @@ repository: {
 					branch: string
 					// TokenUser is the user that will be used to access the repository if it's a personal access token.
 					tokenUser?: string
+					// Email is the Atlassian account email used to authenticate the Bitbucket REST API. Required to enable webhooks.
+					email?: string
 					// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
 					token?: string
 					// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
@@ -92,6 +108,36 @@ repository: {
 					// The API path is appended automatically. Trailing slashes are stripped.
 					// Must be a valid HTTP or HTTPS URL (e.g. `https://grafana.example.com`).
 					baseUrl?: string
+					// Disabled turns off webhook integration for this repository. When true,
+					// Grafana will not register or receive webhook events from the Git provider
+					// and will poll the repository on an interval instead. Use this when Grafana
+					// is not reachable from the public internet.
+					disabled?: bool
+				}
+				#CommitOptions: {
+					// Template for commit messages produced by single-resource UI operations
+					// (dashboard save/delete/move, folder create/rename/delete).
+					// Bulk operations and sync jobs are out of scope and build their own messages.
+					// Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}.
+					// When empty, a built-in default is used (e.g. "Save dashboard: <title>").
+					singleResourceMessageTemplate?: string
+					// Name used as the commit signer. Required for the signing key's
+					// identity to match the commit, which providers need to mark commits
+					// as Verified. When empty, defaults to "Grafana".
+					signerName?: string
+					// Email used as the commit signer. Must match the signing key's
+					// identity and a verified email on the account where the matching
+					// public key is registered. When empty, defaults to
+					// "noreply@grafana.com".
+					signerEmail?: string
+					// Method used to sign commits with the key in secure.commitSigningKey. When unset, commits are not signed.
+					signingMethod?: "gpg" | "ssh" | "smime"
+					// When true, commits are authored by the signer identity
+					// (signerName/signerEmail).
+					signerIsAuthor?: bool
+					// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
+					// signingMethod is "smime". This is public, not a secret.
+					smimeCertificate?: string
 				}
 				#HealthStatus: {
 					// When not healthy, requests will not be executed
@@ -126,7 +172,9 @@ repository: {
 					count:    int
 				}
 				#WebhookStatus: {
-					id?:     int
+					id?: int
+					// TODO: consolidate id and uuid into a single string identifier in the next version.
+					uuid?:   string
 					url?:    string
 					secret?: string
 					encryptedSecret?: [...string]
@@ -138,6 +186,9 @@ repository: {
 					title: string
 					// Repository description
 					description?: string
+					// Commit message options. Currently only contains the template used by
+					// single-resource UI operations; future siblings (bulk, sync) can live here.
+					commit?: #CommitOptions
 					// UI driven Workflow that allow changes to the contends of the repository.
 					// The order is relevant for defining the precedence of the workflows.
 					// When empty, the repository does not support any edits (eg, readonly)
@@ -145,7 +196,7 @@ repository: {
 					// Sync settings -- how values are pulled from the repository into grafana
 					sync: #SyncOptions
 					// The repository type. When selected oneOf the values below should be non-nil
-					type: "local" | "github" | "git" | "bitbucket" | "gitlab"
+					type: "local" | "github" | "githubEnterprise" | "git" | "bitbucket" | "gitlab"
 					// Webhook settings for the repository.
 					webhook?: #WebhookConfig
 					// The repository on the local file system.
@@ -154,6 +205,9 @@ repository: {
 					// The repository on GitHub.
 					// Mutually exclusive with local | github | git.
 					github?: #GitHubRepositoryConfig
+					// The repository on a self-managed GitHub Enterprise Server (GHES).
+					// Mutually exclusive with the other repository configs.
+					githubEnterprise?: #GitHubEnterpriseRepositoryConfig
 					// The repository on Git.
 					// Mutually exclusive with local | github | git.
 					git?: #GitRepositoryConfig

@@ -143,7 +143,7 @@ type reFormatting struct {
 
 var formatREs = []reFormatting{
 	{re: regexp.MustCompile(`\s+`), replacement: " "},
-	{re: regexp.MustCompile(` ?([+-/*=<>%!~]+) ?`), replacement: " $1 "},
+	{re: regexp.MustCompile(` ?([+-/*=<>%!~@#]+) ?`), replacement: " $1 "},
 	{re: regexp.MustCompile(`([([{]) `), replacement: "$1"},
 	{re: regexp.MustCompile(` ([)\]}])`), replacement: "$1"},
 	{re: regexp.MustCompile(` ?, ?`), replacement: ", "},

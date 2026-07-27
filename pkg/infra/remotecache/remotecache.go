@@ -27,7 +27,7 @@ const (
 )
 
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, usageStats usagestats.Service,
-	secretsService secrets.Service) (*RemoteCache, error) {
+	secretsService secrets.Service) (*RemoteCache, error) { //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	client, err := createClient(cfg.RemoteCacheOptions, sqlStore, secretsService)
 	if err != nil {
 		return nil, err
@@ -109,7 +109,7 @@ func (ds *RemoteCache) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func createClient(opts *setting.RemoteCacheSettings, sqlstore db.DB, secretsService secrets.Service) (cache CacheStorage, err error) {
+func createClient(opts *setting.RemoteCacheSettings, sqlstore db.DB, secretsService secrets.Service) (cache CacheStorage, err error) { //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	switch opts.Name {
 	case redisCacheType:
 		cache, err = newRedisStorage(opts)

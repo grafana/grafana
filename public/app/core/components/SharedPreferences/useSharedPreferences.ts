@@ -1,55 +1,36 @@
-import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useCallback } from 'react';
 
 import {
-  useGetOrgPreferencesQuery,
-  useUpdateOrgPreferencesMutation,
-} from '@grafana/api-clients/internal/rtkq/legacy/preferences/org';
-import {
-  useGetTeamPreferencesQuery,
-  useUpdateTeamPreferencesMutation,
-} from '@grafana/api-clients/internal/rtkq/legacy/preferences/team';
-import {
-  useGetUserPreferencesQuery,
-  useUpdateUserPreferencesMutation,
-} from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
-import { type UpdatePrefsCmd } from 'app/api/clients/legacy';
+  useListPreferencesQuery,
+  useUpdatePreferencesMutation,
+  type PreferencesSpec,
+} from '@grafana/api-clients/rtkq/preferences/v1alpha1';
 
 import { type Props } from './utils';
 
-export const useSharedPreferences = (preferenceType: Props['preferenceType'], resourceUri: Props['resourceUri']) => {
-  const teamId = preferenceType === 'team' ? resourceUri.split('/')[1] : undefined;
+export const useSharedPreferences = (preferencesName: Props['resourceUri']) => {
+  const { data, isLoading, isError } = useListPreferencesQuery({ fieldSelector: `metadata.name=${preferencesName}` });
+  const [updatePreferences, { data: updateData, isLoading: isUpdating, isError: isUpdateError }] =
+    useUpdatePreferencesMutation();
 
-  const { data: userPrefs, isLoading: isLoadingUser } = useGetUserPreferencesQuery(
-    preferenceType !== 'user' ? skipToken : undefined
-  );
-  const { data: orgPrefs, isLoading: isLoadingOrg } = useGetOrgPreferencesQuery(
-    preferenceType !== 'org' ? skipToken : undefined
-  );
-  const { data: teamPrefs, isLoading: isLoadingTeam } = useGetTeamPreferencesQuery(
-    preferenceType !== 'team' ? skipToken : { teamId: teamId! }
-  );
-
-  const [updateUserPreferences, { isLoading: isSubmittingUser }] = useUpdateUserPreferencesMutation();
-  const [updateOrgPreferences, { isLoading: isSubmittingOrg }] = useUpdateOrgPreferencesMutation();
-  const [updateTeamPreferences, { isLoading: isSubmittingTeam }] = useUpdateTeamPreferencesMutation();
-
-  const prefs = userPrefs ?? orgPrefs ?? teamPrefs;
-  const isLoading = isLoadingUser || isLoadingOrg || isLoadingTeam;
-  const isSubmitting = isSubmittingUser || isSubmittingOrg || isSubmittingTeam;
-
-  const updatePreferences = useCallback(
-    (prefsData: UpdatePrefsCmd) => {
-      if (preferenceType === 'user') {
-        return updateUserPreferences({ updatePrefsCmd: prefsData }).unwrap();
-      } else if (preferenceType === 'org') {
-        return updateOrgPreferences({ updatePrefsCmd: prefsData }).unwrap();
-      } else {
-        return updateTeamPreferences({ teamId: teamId!, updatePrefsCmd: prefsData }).unwrap();
-      }
+  const updatePreferencesWrapped = useCallback(
+    (prefsData: Partial<PreferencesSpec>) => {
+      return updatePreferences({ patch: { spec: prefsData }, name: preferencesName }).unwrap();
     },
-    [preferenceType, teamId, updateUserPreferences, updateOrgPreferences, updateTeamPreferences]
+    [preferencesName, updatePreferences]
   );
-
-  return [updatePreferences, { preferences: prefs, isLoading, isSubmitting }] as const;
+  return [
+    updatePreferencesWrapped,
+    {
+      preferences: data?.items[0]?.spec,
+      isLoading,
+      /**
+       * Suppress errors after updating preferences because RTK automatically refetches the preferences after updating,
+       * but we also reload the page. This cancels the request, and causes a momentary error state while refreshing.
+       */
+      isError: updateData ? false : isError,
+      isUpdating,
+      isUpdateError,
+    },
+  ] as const;
 };
