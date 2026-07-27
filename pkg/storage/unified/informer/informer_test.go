@@ -239,8 +239,9 @@ func TestInformer_LiveDeleteEvictsFromStore(t *testing.T) {
 		sub.publish(t, subject(), event(resourcepb.WatchNotification_DELETED, "gone"))
 		synctest.Wait()
 
-		var got []string
-		for _, o := range n.store.List(context.Background()) {
+		snapshot := n.store.List(context.Background())
+		got := make([]string, 0, len(snapshot))
+		for _, o := range snapshot {
 			got = append(got, o.(*metav1.PartialObjectMetadata).Name)
 		}
 		assert.Equal(t, []string{"keep"}, got)
