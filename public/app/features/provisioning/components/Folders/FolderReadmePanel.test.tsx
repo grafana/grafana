@@ -1,4 +1,5 @@
-import { act, render, screen } from 'test/test-utils';
+import mermaid from 'mermaid';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
@@ -8,6 +9,16 @@ import { FOLDER_README_ANCHOR_ID, FolderReadmePanel } from './FolderReadmePanel'
 import { FolderReadmeEvents } from './analytics/main';
 
 jest.mock('../../hooks/useFolderReadme');
+
+jest.mock('mermaid', () => ({
+  __esModule: true,
+  default: {
+    initialize: jest.fn(),
+    render: jest.fn(),
+  },
+}));
+
+const mockMermaidRender = mermaid.render as jest.MockedFunction<typeof mermaid.render>;
 
 const mockUseFolderReadme = useFolderReadme as jest.MockedFunction<typeof useFolderReadme>;
 const editClickedSpy = jest.spyOn(FolderReadmeEvents, 'editClicked').mockImplementation();
@@ -214,6 +225,43 @@ describe('FolderReadmePanel', () => {
     expect(screen.getByText('README.md')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Edit README/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Add README/i })).not.toBeInTheDocument();
+  });
+
+  describe('mermaid diagrams', () => {
+    const mermaidReadme = ['# Diagram', '', '```mermaid', 'graph TD; A-->B;', '```', ''].join('\n');
+
+    it('renders ```mermaid fenced blocks as diagrams', async () => {
+      mockMermaidRender.mockResolvedValue({ svg: '<svg data-testid="mermaid-svg"></svg>' } as never);
+      setReadmeResult({ markdownContent: mermaidReadme });
+
+      const { container } = setup();
+
+      expect(await screen.findByTestId('mermaid-svg')).toBeInTheDocument();
+      // The original code block is replaced by the rendered diagram.
+      expect(container.querySelector('code.language-mermaid')).toBeNull();
+      expect(mockMermaidRender).toHaveBeenCalledWith(expect.any(String), 'graph TD; A-->B;\n');
+    });
+
+    it('keeps the source and flags the block when a diagram fails to render', async () => {
+      mockMermaidRender.mockRejectedValue(new Error('parse error'));
+      setReadmeResult({ markdownContent: mermaidReadme });
+
+      const { container } = setup();
+
+      await waitFor(() => expect(container.querySelector('.markdown-mermaid-error')).not.toBeNull());
+      // A broken diagram doesn't hide the rest of the README or its own source.
+      expect(screen.getByText(/graph TD/)).toBeInTheDocument();
+      expect(screen.getByText('Diagram')).toBeInTheDocument();
+    });
+
+    it('does not load mermaid for READMEs without diagrams', async () => {
+      setReadmeResult({ markdownContent: '# Hello\n\nNo diagrams here.' });
+
+      setup();
+
+      await screen.findByText('Hello');
+      expect(mockMermaidRender).not.toHaveBeenCalled();
+    });
   });
 
   it('sanitizes mXSS payloads in README markdown', () => {

@@ -1,16 +1,17 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect, useRef } from 'react';
 import { useIntersection } from 'react-use';
 
 import { type GrafanaTheme2, renderMarkdown, textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, Icon, LinkButton, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, LinkButton, Spinner, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type FolderReadmeStatus, useFolderReadme } from '../../hooks/useFolderReadme';
 import { getRepoEditFileUrl, getRepoNewFileUrl } from '../../utils/git';
 import { rewriteRelativeMarkdownLinks } from '../../utils/markdownLinks';
+import { MERMAID_DIAGRAM_CLASS, MERMAID_ERROR_CLASS, renderMermaidDiagrams } from '../../utils/mermaid';
 
 import { FolderReadmeEvents } from './analytics/main';
 
@@ -181,6 +182,8 @@ function RenderedMarkdown({
   baseDirInRepo: string;
   repositoryType: RepositoryView['type'];
 }) {
+  const styles = useStyles2(getStyles);
+  const theme = useTheme2();
   const html = renderMarkdown(markdown);
   const rewritten = rewriteRelativeMarkdownLinks(html, { repository, baseDirInRepo });
   const safe = textUtil.sanitize(rewritten);
@@ -200,7 +203,28 @@ function RenderedMarkdown({
     return () => el.removeEventListener('click', handleClick);
   }, [repositoryType]);
 
-  return <div ref={containerRef} className="markdown-html" dangerouslySetInnerHTML={{ __html: safe }} />;
+  // Turn ```mermaid fenced blocks into diagrams. The container is keyed by theme
+  // so a light/dark switch resets it to the source markup before we re-render.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) {
+      return;
+    }
+    const signal = { cancelled: false };
+    renderMermaidDiagrams(el, { isDark: theme.isDark, signal });
+    return () => {
+      signal.cancelled = true;
+    };
+  }, [safe, theme.isDark]);
+
+  return (
+    <div
+      key={theme.isDark ? 'dark' : 'light'}
+      ref={containerRef}
+      className={cx('markdown-html', styles.markdownBody)}
+      dangerouslySetInnerHTML={{ __html: safe }}
+    />
+  );
 }
 
 /**
@@ -299,5 +323,20 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   body: css({
     padding: theme.spacing(2),
+  }),
+  markdownBody: css({
+    [`& .${MERMAID_DIAGRAM_CLASS}`]: {
+      display: 'flex',
+      justifyContent: 'center',
+      margin: theme.spacing(2, 0),
+      svg: {
+        maxWidth: '100%',
+        height: 'auto',
+      },
+    },
+    // Failed diagram: keep the source visible but signal it couldn't render.
+    [`& .${MERMAID_ERROR_CLASS}`]: {
+      borderLeft: `3px solid ${theme.colors.error.border}`,
+    },
   }),
 });
