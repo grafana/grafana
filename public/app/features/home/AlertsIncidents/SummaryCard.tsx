@@ -68,7 +68,7 @@ export function SummaryCard<T>({
         )}
 
         {loading && (
-          <Stack direction="column">
+          <Stack direction="column" data-testid="summary-card-skeleton">
             {Array.from({ length: 3 }, (_, i) => (
               <Skeleton key={i} height={20} />
             ))}

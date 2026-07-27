@@ -4,6 +4,7 @@ import { act, render, screen, waitFor } from 'test/test-utils';
 import { PluginIncludeType, type PluginMeta } from '@grafana/data';
 import { setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import { invalidateCachedPromisesCache } from '@grafana/runtime/internal';
+import { mockComboboxRect } from '@grafana/test-utils';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -25,6 +26,9 @@ jest.mock('../analytics/main', () => ({
 
 setBackendSrv(backendSrv);
 setupMockServer();
+// The team filter Combobox virtualizes its options; without mocked element rects
+// the virtualizer measures 0 height in jsdom and renders no options.
+mockComboboxRect();
 
 function makeAlert(overrides: Partial<AlertmanagerAlert> & { labels: AlertmanagerAlert['labels'] }): AlertmanagerAlert {
   return {
@@ -50,8 +54,49 @@ function mockTeams(teams: Array<{ name: string }>) {
   );
 }
 
+/**
+ * Grafana org teams returned by the team dropdown's /api/teams/search fetches.
+ * Honors the `query` (case-insensitive name contains) and `perpage` params like
+ * the real endpoint; returns the query params of each request received.
+ */
+function mockOrgTeams(teams: Array<{ name: string }>) {
+  const requests: Array<{ query: string | null; perpage: string | null }> = [];
+  server.use(
+    http.get('/api/teams/search', ({ request }) => {
+      const params = new URL(request.url).searchParams;
+      const query = params.get('query');
+      const perpage = Number(params.get('perpage') ?? 1000);
+      requests.push({ query, perpage: params.get('perpage') });
+
+      const matching = teams.filter((t) => !query || t.name.toLowerCase().includes(query.toLowerCase()));
+      return HttpResponse.json({
+        teams: matching.slice(0, perpage).map((t, i) => ({
+          ...t,
+          id: i + 1,
+          uid: `org-team-${i}`,
+          orgId: 1,
+          memberCount: 1,
+          isProvisioned: false,
+        })),
+        totalCount: matching.length,
+        page: 1,
+        perPage: perpage,
+      });
+    })
+  );
+  return requests;
+}
+
+/** Mocks the alertmanager alerts endpoint; returns the `filter` query params of each request received. */
 function mockAlerts(alerts: AlertmanagerAlert[]) {
-  server.use(http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () => HttpResponse.json(alerts)));
+  const requests: string[][] = [];
+  server.use(
+    http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
+      requests.push(new URL(request.url).searchParams.getAll('filter'));
+      return HttpResponse.json(alerts);
+    })
+  );
+  return requests;
 }
 
 /** Report the Incident/IRM plugins as absent so the component only shows the alerts tab. */
@@ -90,6 +135,7 @@ beforeEach(async () => {
     .spyOn(contextSrv, 'hasPermission')
     .mockImplementation((action: string) => action === AccessControlAction.AlertingInstanceRead);
   mockTeams([]);
+  mockOrgTeams([]);
   mockAlerts([]);
   // The component probes the IRM/Incident plugin settings; absent by default.
   // Tests that need the incidents tab layer mockIncidentPlugin() on top.
@@ -251,5 +297,159 @@ describe('AlertIncidentTabs', () => {
     expect(await screen.findByText('Database outage')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /declare an incident/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /view all incidents/i })).not.toBeInTheDocument();
+  });
+
+  describe('team filter dropdown', () => {
+    it('shows the dropdown on the Alerts tab and hides it on the Incidents tab', async () => {
+      mockOrgTeams([{ name: 'Team A' }]);
+      mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+      mockIncidentPlugin();
+      mockIncidents([activeIncident]);
+
+      const { user } = render(<AlertIncidentTabs />);
+
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+      expect(await screen.findByRole('combobox', { name: /filter alerts by team/i })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('tab', { name: /incidents/i }));
+
+      expect(await screen.findByText('Database outage')).toBeInTheDocument();
+      expect(screen.queryByRole('combobox', { name: /filter alerts by team/i })).not.toBeInTheDocument();
+    });
+
+    it('refetches alerts filtered to only the selected team', async () => {
+      mockTeams([{ name: 'Team A' }, { name: 'Team B' }]);
+      mockOrgTeams([{ name: 'Team A' }, { name: 'Team B' }, { name: 'Team C' }]);
+      const requests = mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+
+      const { user } = render(<AlertIncidentTabs />);
+
+      // Initial request is filtered to the user's own teams.
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+      expect(requests).toHaveLength(1);
+      expect(requests[0]).toEqual(['team=~"Team A|Team B"']);
+
+      await user.click(await screen.findByRole('combobox', { name: /filter alerts by team/i }));
+      await user.click(await screen.findByRole('option', { name: 'Team C' }));
+
+      // Selecting a team issues a new request whose matcher contains only that team.
+      await waitFor(() => expect(requests).toHaveLength(2));
+      expect(requests[1]).toEqual(['team=~"Team C"']);
+    });
+
+    it('shows the loading skeleton while the switched team request is in flight, then the filtered alerts', async () => {
+      mockTeams([{ name: 'Team A' }]);
+      mockOrgTeams([{ name: 'Team A' }, { name: 'Team C' }]);
+
+      // First request (user's teams) resolves immediately; the second (Team C) is
+      // held open behind a gate so the in-flight loading state can be observed.
+      let releaseSecondRequest!: () => void;
+      const secondRequestGate = new Promise<void>((resolve) => (releaseSecondRequest = resolve));
+      let alertRequests = 0;
+      server.use(
+        http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', async () => {
+          alertRequests++;
+          if (alertRequests > 1) {
+            await secondRequestGate;
+            return HttpResponse.json([makeAlert({ labels: { alertname: 'Disk Full', severity: 'high' } })]);
+          }
+          return HttpResponse.json([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+        })
+      );
+
+      const { user } = render(<AlertIncidentTabs />);
+
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+      expect(screen.queryByTestId('summary-card-skeleton')).not.toBeInTheDocument();
+
+      await user.click(await screen.findByRole('combobox', { name: /filter alerts by team/i }));
+      await user.click(await screen.findByRole('option', { name: 'Team C' }));
+
+      // While the filtered request is pending, the skeleton replaces the stale rows.
+      expect(await screen.findByTestId('summary-card-skeleton')).toBeInTheDocument();
+      expect(screen.queryByText('CPU Critical')).not.toBeInTheDocument();
+
+      releaseSecondRequest();
+
+      expect(await screen.findByText('Disk Full')).toBeInTheDocument();
+      expect(screen.queryByTestId('summary-card-skeleton')).not.toBeInTheDocument();
+    });
+
+    it('does not refetch when re-selecting the already selected team', async () => {
+      mockTeams([{ name: 'Team A' }]);
+      mockOrgTeams([{ name: 'Team A' }, { name: 'Team C' }]);
+      const requests = mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+
+      const { user } = render(<AlertIncidentTabs />);
+
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+      const combobox = await screen.findByRole('combobox', { name: /filter alerts by team/i });
+
+      await user.click(combobox);
+      await user.click(await screen.findByRole('option', { name: 'Team C' }));
+      await waitFor(() => expect(requests).toHaveLength(2));
+
+      // Picking the same team again is a no-op: no state change, no new request.
+      await user.click(combobox);
+      await user.click(await screen.findByRole('option', { name: 'Team C' }));
+
+      expect(combobox).toHaveDisplayValue('Team C');
+      expect(requests).toHaveLength(2);
+    });
+
+    it('shows a team-scoped empty message when the selected team has no alerts', async () => {
+      mockTeams([{ name: 'Team A' }]);
+      mockOrgTeams([{ name: 'Team A' }, { name: 'Team C' }]);
+      // The user's own teams have a firing alert; the explicitly selected team has none.
+      server.use(
+        http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
+          const filters = new URL(request.url).searchParams.getAll('filter');
+          const isSelectedTeamFilter = filters.some((f) => f.includes('Team C'));
+          return HttpResponse.json(
+            isSelectedTeamFilter ? [] : [makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]
+          );
+        })
+      );
+
+      const { user } = render(<AlertIncidentTabs />);
+
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+      await user.click(await screen.findByRole('combobox', { name: /filter alerts by team/i }));
+      await user.click(await screen.findByRole('option', { name: 'Team C' }));
+
+      // The empty copy names the selected team instead of claiming "your teams".
+      expect(await screen.findByText('No firing alerts for Team C.')).toBeInTheDocument();
+      expect(screen.queryByText('No firing alerts for your teams.')).not.toBeInTheDocument();
+    });
+
+    it('searches teams server-side so teams beyond the first page are reachable', async () => {
+      // 150 teams: the default (unfiltered) page only covers the first 100,
+      // so "Zebra Squad" is only reachable via a server-side query.
+      const manyTeams = Array.from({ length: 150 }, (_, i) => ({ name: `Team ${String(i).padStart(3, '0')}` }));
+      manyTeams.push({ name: 'Zebra Squad' });
+      const teamRequests = mockOrgTeams(manyTeams);
+      mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+
+      const { user } = render(<AlertIncidentTabs />);
+
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+      const combobox = await screen.findByRole('combobox', { name: /filter alerts by team/i });
+      await user.click(combobox);
+
+      // Default list: "All teams & services" plus the first page of teams,
+      // fetched without a query and capped at one page.
+      expect(await screen.findByRole('option', { name: 'All teams & services' })).toBeInTheDocument();
+      expect(await screen.findByRole('option', { name: 'Team 000' })).toBeInTheDocument();
+      expect(teamRequests).toContainEqual({ query: null, perpage: '100' });
+      // Sliced out of the first page, so absent from the default list.
+      expect(screen.queryByRole('option', { name: 'Zebra Squad' })).not.toBeInTheDocument();
+
+      // Typing issues a server-side search that surfaces the out-of-page team.
+      // Use keyboard() instead of type(): type() re-clicks the input, which
+      // toggles the menu closed and flushes the selected label into the input.
+      await user.keyboard('zebra');
+      expect(await screen.findByRole('option', { name: 'Zebra Squad' })).toBeInTheDocument();
+      expect(teamRequests).toContainEqual({ query: 'zebra', perpage: '100' });
+    });
   });
 });

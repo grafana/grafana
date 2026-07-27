@@ -75,6 +75,7 @@ export function FiringAlertsCardView({
     visibleAlerts,
     hasAlerts,
     hasTeams,
+    selectedTeam,
     loading,
     error,
     refetch,
@@ -121,9 +122,13 @@ export function FiringAlertsCardView({
           : undefined
       }
       emptyMessage={
-        hasTeams
-          ? t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.')
-          : t('home.firing-alerts-card.empty', 'You have no firing alerts.')
+        // An explicit team selection overrides the "your teams" default filter,
+        // so the copy names that team instead of claiming it's the user's own.
+        selectedTeam
+          ? t('home.firing-alerts-card.empty-selected-team', 'No firing alerts for {{team}}.', { team: selectedTeam })
+          : hasTeams
+            ? t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.')
+            : t('home.firing-alerts-card.empty', 'You have no firing alerts.')
       }
       items={visibleAlerts}
       getItemKey={({ alert }) => alert.fingerprint}

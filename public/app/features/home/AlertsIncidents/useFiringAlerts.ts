@@ -37,8 +37,11 @@ export type FiringAlertsData = ReturnType<typeof useFiringAlerts>;
 /**
  * All data fetching and derived state for the homepage Firing alerts view,
  * shared between the old-layout card and the redesigned tabs.
+ *
+ * When `selectedTeam` is set (from the team dropdown) it overrides the default
+ * filter of the user's own teams.
  */
-export function useFiringAlerts() {
+export function useFiringAlerts(selectedTeam?: string) {
   // The hook gates its own fetching so it's safe to call unconditionally,
   // e.g. from the tabs component when only incidents are available.
   const enabled = canViewFiringAlerts();
@@ -53,13 +56,14 @@ export function useFiringAlerts() {
   const teamNames = (teams ?? []).map((t) => t.name);
   const hasTeams = teamNames.length > 0;
 
-  // Filter to the user's teams when they have any. No memo needed:
-  // RTK Query serializes query args, so referential identity doesn't matter.
-  const matchers = hasTeams ? buildTeamMatchers(teamNames) : [];
+  // An explicit team selection wins; otherwise filter to the user's teams when they
+  // have any. No memo needed: RTK Query serializes query args, so referential
+  // identity doesn't matter.
+  const matchers = selectedTeam ? buildTeamMatchers([selectedTeam]) : hasTeams ? buildTeamMatchers(teamNames) : [];
 
   const {
     data: alerts,
-    isLoading: alertsLoading,
+    isFetching: alertsLoading,
     error,
     refetch,
   } = alertmanagerApi.useGetAlertmanagerAlertsQuery(
@@ -113,6 +117,8 @@ export function useFiringAlerts() {
     highCount,
     hasAlerts,
     hasTeams,
+    // Echoed back so the card can scope its empty message to the filtered team.
+    selectedTeam,
     loading,
     error,
     refetch,

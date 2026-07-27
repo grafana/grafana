@@ -14,6 +14,7 @@ import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
 import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons';
 import { FiringAlertsCardView } from './FiringAlertsCard';
 import { IncidentsCardView } from './IncidentsCard';
+import { TeamFilterCombobox } from './TeamFilterCombobox';
 import { canViewFiringAlerts, useFiringAlerts } from './useFiringAlerts';
 import { useIncidents } from './useIncidents';
 
@@ -42,7 +43,9 @@ function AlertIncidentTabsInner({
 }) {
   // Default to alerts tab if alerts are available, otherwise default to incidents tab
   const [activeTab, setActiveTab] = useState(canViewAlerts ? ALERTS_TAB_ID : INCIDENTS_TAB_ID);
-  const alertsData = useFiringAlerts();
+  // Kept across tab switches so returning to the Alerts tab restores the filter.
+  const [selectedTeam, setSelectedTeam] = useState<string | undefined>();
+  const alertsData = useFiringAlerts(selectedTeam);
   const incidentsData = useIncidents();
   const { count, hasAlerts, loading, canCreate, newRuleHref, viewAllHref, error } = alertsData;
   const {
@@ -91,12 +94,14 @@ function AlertIncidentTabsInner({
       : []),
   ];
   return (
-    <Stack direction="column" gap={2} minWidth={0}>
-      <Stack justifyContent="space-between" alignItems="center">
+    <Stack direction="column" gap={1} minWidth={0}>
+      <Stack justifyContent="space-between" alignItems="center" minHeight={4}>
         <Text element="h2" variant="h5">
           {title}
         </Text>
-        {/* TODO: team dropdown */}
+        {canViewAlerts && activeTab === ALERTS_TAB_ID && (
+          <TeamFilterCombobox selectedTeam={selectedTeam} onChange={setSelectedTeam} />
+        )}
       </Stack>
 
       <HomeSection paddingX={2} paddingY={1} display="flex" direction="column" grow={1}>
