@@ -2494,7 +2494,7 @@ When set to `false`, the OTLP client will use TLS credentials with the default s
 
 ### `[tracing.opentelemetry.file]`
 
-Capture Grafana's own traces to a local file in OpenTelemetry Protocol (OTLP) JSON format, without running a collector or a tracing backend.
+Grafana can capture its own distributed traces to a local file in OpenTelemetry Protocol (OTLP) JSON format, without running a collector or a tracing backend.
 Capturing stops when the file reaches the size limit or the capture duration elapses, whichever comes first.
 Use this exporter for support: turn it on, reproduce an issue, then collect and share the file.
 
