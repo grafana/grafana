@@ -107,7 +107,7 @@ describe('DataSourceWithBackend', () => {
           targets: [{ refId: 'A' }],
           range: { from: undefined, to: undefined, raw: { from: '', to: '' } },
         } as unknown as DataQueryRequest)
-      ).toThrow('Invalid DateTime in query time range');
+      ).toThrow('Missing DateTime in query time range');
 
       expect(mock.calls.length).toBe(0);
     });

@@ -60,11 +60,15 @@ export function isExpressionReference(ref?: DataSourceRef | string | null): bool
 }
 
 function getQueryTimeRangeBounds(range?: TimeRange): { from: string; to: string } {
+  if (range?.from == null || range?.to == null) {
+    throw new Error('Missing DateTime in query time range');
+  }
+
   let from: unknown;
   let to: unknown;
   try {
-    from = range?.from.valueOf();
-    to = range?.to.valueOf();
+    from = range.from.valueOf();
+    to = range.to.valueOf();
   } catch {
     throw new Error('Invalid DateTime in query time range');
   }
