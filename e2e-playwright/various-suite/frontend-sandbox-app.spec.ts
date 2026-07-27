@@ -1,5 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
+import { mockGcomApi } from '../utils/gcom-api-mock';
+
 const APP_ID = 'sandbox-app-test';
 
 test.describe(
@@ -28,6 +30,8 @@ test.describe(
       });
 
       test('Loads the app configuration with the sandbox div wrapper', async ({ page }) => {
+        // The plugin catalog fetches grafana.com; `networkidle` would wait for that round trip.
+        await mockGcomApi(page);
         await page.goto(`/plugins/${APP_ID}`, { waitUntil: 'networkidle' });
 
         const sandboxDiv = page.locator('div[data-plugin-sandbox="sandbox-app-test"]');

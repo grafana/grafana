@@ -2,12 +2,32 @@ import { type APIRequestContext, type Page, type Request } from '@playwright/tes
 
 import { expect } from '@grafana/plugin-e2e';
 
+import { type GcomPlugin, mockGcomApi } from '../../utils/gcom-api-mock';
+
 // App must be a pure app (no bundled panel) — bundled panels appear in the viz picker and break panelIcons.spec.ts.
-export const PLUGINS = [
-  { id: 'grafana-llm-app', label: 'app' },
-  { id: 'yesoreyeram-infinity-datasource', label: 'datasource' },
-  { id: 'grafana-clock-panel', label: 'panel' },
+// The versions are pinned because the backend downloads the real package from grafana.com; bump them if a
+// version is ever unpublished.
+const CATALOG_PLUGINS: Array<GcomPlugin & { label: string }> = [
+  { slug: 'grafana-llm-app', name: 'LLM', type: 'app', version: '1.0.8', grafanaDependency: '>=9.5.2', label: 'app' },
+  {
+    slug: 'yesoreyeram-infinity-datasource',
+    name: 'Infinity',
+    type: 'datasource',
+    version: '3.11.1',
+    grafanaDependency: '>=11.6.0-0',
+    label: 'datasource',
+  },
+  {
+    slug: 'grafana-clock-panel',
+    name: 'Clock',
+    type: 'panel',
+    version: '3.2.2',
+    grafanaDependency: '>=11.0.0',
+    label: 'panel',
+  },
 ];
+
+export const PLUGINS = CATALOG_PLUGINS.map(({ slug, label }) => ({ id: slug, label }));
 
 type Action = 'install' | 'uninstall';
 
@@ -66,6 +86,7 @@ async function clickAndAssert(
 
 // Install -> uninstall through the catalog UI, asserting the write paths and button flips (uninstall confirms via modal).
 export async function assertInstallUninstallRoundtrip(page: Page, pluginId: string, mt: boolean): Promise<void> {
+  await mockGcomApi(page, CATALOG_PLUGINS);
   await page.goto(`/plugins/${pluginId}`);
 
   const installButton = page.getByRole('button', { name: 'Install', exact: true });

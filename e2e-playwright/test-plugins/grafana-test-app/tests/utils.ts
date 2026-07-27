@@ -2,6 +2,8 @@ import { type APIRequestContext, type Locator, type Page } from '@playwright/tes
 
 import { expect } from '@grafana/plugin-e2e';
 
+import { mockGcomApi } from '../../../utils/gcom-api-mock';
+
 type WritePath = 'legacy' | 'mt';
 
 function isLegacyWrite(method: string, url: string, pluginId: string): boolean {
@@ -38,6 +40,8 @@ async function clickAndAssertWrite(page: Page, button: Locator, pluginId: string
 // Drives the disable -> enable round-trip, asserting each write routes through `expected` and the
 // reloaded page reflects the new state (button flip).
 export async function assertEnableDisableRoundtrip(page: Page, pluginId: string, expected: WritePath): Promise<void> {
+  // The test plugin isn't published on grafana.com, so the catalog only needs the 404s the mock serves.
+  await mockGcomApi(page);
   await page.goto(`/plugins/${pluginId}`);
 
   const disableButton = page.getByRole('button', { name: 'Disable', exact: true });
