@@ -972,6 +972,13 @@ var jsonEmptyLiterals = [][]byte{[]byte("null"), []byte("{}"), []byte("[]"), []b
 // fitPostProcessingArtifact, so all of them agree on what "nothing" is -- otherwise the gate records a
 // budget failure against a panel that sent no evidence, or a flag claims a field didn't fit when the
 // client never sent it.
+//
+// The check is deliberately shallow: it recognizes an empty value, not a structurally empty one. An
+// object whose members are all empty ({"input":[],"output":[],"display":null}) counts as content and
+// gets an artifact -- and, on a skipped panel, a manifest error saying evidence was discarded. Going
+// deeper would mean parsing every payload just to answer the gate, on the hot path for a multi-megabyte
+// capture, so the contract is on the client instead: omit postProcessing (or send {}) when nothing was
+// captured. See the field doc on diagnosticsRequest.PostProcessing in pkg/api.
 func hasJSONContent(raw json.RawMessage) bool {
 	trimmed := bytes.TrimSpace(raw)
 	if len(trimmed) == 0 {
@@ -1012,10 +1019,11 @@ func marshalPostProcessingArtifact(raw json.RawMessage, maxBytes int) ([]byte, b
 // lose the cheap, high-signal evidence in exactly the data-heavy cases this artifact exists to
 // explain, the same reasoning marshalQueryDataArtifactWithLimit applies to the submitted query.
 //
-// The last rung holds only fixed-size markers (well under minDiagnosticArtifactBytes) and is built
-// from a fixed template so it cannot fail to encode -- the rungs above embed client JSON verbatim and
-// can. It is returned even if it somehow still doesn't fit, because there is nothing further to drop;
-// callers enforcing a hard budget re-check the length.
+// The last rung holds only fixed-size markers (well under minDiagnosticArtifactBytes -- pinned by
+// TestFitPostProcessingArtifact_markerFloorFitsMinimumBudget) and cannot fail to encode: every
+// remaining field is an int or a bool, unlike the rungs above, which embed client JSON verbatim. It is
+// returned even if it somehow still doesn't fit, because there is nothing further to drop; callers
+// enforcing a hard budget re-check the length.
 func fitPostProcessingArtifact(trimmed json.RawMessage, indentedBytes, maxBytes int) []byte {
 	artifact := postProcessingArtifact{
 		Version:       postProcessingArtifactVersion,
@@ -1064,15 +1072,10 @@ func fitPostProcessingArtifact(trimmed json.RawMessage, indentedBytes, maxBytes 
 		artifact.Transformations = nil
 	}
 
-	return []byte(fmt.Sprintf(`{
-  "version": %d,
-  "truncated": true,
-  "originalBytes": %d,
-  "indentedBytes": %d,
-  "limitBytes": %d,
-  "framesOmitted": %t,
-  "transformationsOmitted": %t,
-  "displayOmitted": %t
-}`, postProcessingArtifactVersion, len(trimmed), indentedBytes, maxBytes,
-		artifact.FramesOmitted, artifact.TransformationsOmitted, artifact.DisplayOmitted))
+	// Markers only: both json.RawMessage fields are nil here (either cleared by the ladder above or
+	// never set, when the payload wasn't an object), leaving nothing but ints and bools -- so this
+	// encode cannot fail and the error is discarded rather than papered over with a literal template
+	// that would have to restate every field name and drift from the tags above.
+	out, _ := json.MarshalIndent(artifact, "", "  ")
+	return out
 }

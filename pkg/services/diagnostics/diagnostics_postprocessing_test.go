@@ -173,15 +173,38 @@ func TestMarshalPostProcessingArtifact_omissionFlagsReflectWhatWasSent(t *testin
 
 // TestFitPostProcessingArtifact_markerFloorFitsMinimumBudget pins the assumption BuildDashboard's
 // budget gate rests on: the marker-only floor stays under minDiagnosticArtifactBytes. The byte counts
-// are interpolated, so the widest possible values are what has to fit -- a floor that outgrew the gate
-// would make a near-exhausted panel trip the "exceeded its assigned budget" path and lose everything.
+// are rendered into it, so the widest possible values are what has to fit -- a floor that outgrew the
+// gate would make a near-exhausted panel trip the "exceeded its assigned budget" path and lose
+// everything.
+//
+// Both extremes are covered because they are mutually exclusive and each grows a different part of the
+// floor: the byte counts are widest when the budget is enormous, which is also when no omission flag is
+// set (the ladder's first rung fits and the floor is never reached), while the flags are all set only
+// when the budget is too small to hold them -- and they are omitempty, so their keys appear only then.
 func TestFitPostProcessingArtifact_markerFloorFitsMinimumBudget(t *testing.T) {
-	floor := fitPostProcessingArtifact(json.RawMessage(`[]`), math.MaxInt, math.MaxInt)
-	require.Less(t, len(floor), minDiagnosticArtifactBytes)
+	t.Run("widest byte counts", func(t *testing.T) {
+		floor := fitPostProcessingArtifact(json.RawMessage(`[]`), math.MaxInt, math.MaxInt)
+		require.Less(t, len(floor), minDiagnosticArtifactBytes)
 
-	var bare postProcessingArtifact
-	require.NoError(t, json.Unmarshal(floor, &bare), "the floor is valid JSON even at extreme sizes")
-	require.True(t, bare.Truncated)
+		var bare postProcessingArtifact
+		require.NoError(t, json.Unmarshal(floor, &bare), "the floor is valid JSON even at extreme sizes")
+		require.True(t, bare.Truncated)
+	})
+
+	t.Run("every omission flag set", func(t *testing.T) {
+		// Content in all three droppable fields, and a budget below even the transform config, so the
+		// ladder runs out and every flag key is present alongside a realistically wide payload size.
+		payload := json.RawMessage(`{"transformations":[{"id":"` + strings.Repeat("t", 4096) + `"}],` +
+			`"display":{"pluginId":"stat"},"input":[{"a":1}],"output":[{"b":2}]}`)
+		floor := fitPostProcessingArtifact(payload, math.MaxInt32, 64)
+		require.Less(t, len(floor), minDiagnosticArtifactBytes)
+
+		var bare postProcessingArtifact
+		require.NoError(t, json.Unmarshal(floor, &bare))
+		require.True(t, bare.FramesOmitted)
+		require.True(t, bare.TransformationsOmitted)
+		require.True(t, bare.DisplayOmitted)
+	})
 }
 
 // ---- whole-dashboard path -----------------------------------------------------------------------

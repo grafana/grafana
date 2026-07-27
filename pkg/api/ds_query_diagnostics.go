@@ -28,6 +28,17 @@ type diagnosticsRequest struct {
 	// PostProcessing carries the client-captured frontend pipeline evidence (transformation
 	// input/output frames + applied display context) that /api/ds/query never sees because
 	// transformations and field config run in the browser.
+	//
+	// Contract for the capture side: omit the field, or send {}, when nothing was captured. The
+	// server's emptiness check is shallow (see diagnostics.hasJSONContent), so a structurally empty
+	// object -- {"input":[],"output":[],"display":null} -- is treated as evidence: it earns an artifact
+	// carrying nothing, and on a non-data panel a manifest error claiming evidence was discarded.
+	//
+	// The shape is otherwise the client's own document, embedded verbatim when it fits. Only the
+	// top-level "transformations", "display", "input" and "output" keys are understood, and only to
+	// decide what to drop first when a payload is over budget (see
+	// diagnostics.fitPostProcessingArtifact) -- a payload using other names still round-trips intact,
+	// it just degrades to markers instead of keeping its transform config.
 	PostProcessing json.RawMessage `json:"postProcessing"`
 }
 
@@ -47,6 +58,12 @@ const (
 	// legitimately scales with panel count (each panel carries its own queries and frontend evidence).
 	// It matters more there: generation is asynchronous, so the decoded payload stays resident until the
 	// archive is assembled, multiplied by up to diagnosticsMaxInFlightJobs concurrent runs.
+	//
+	// Note this cap is all-or-nothing where the artifact budgets in pkg/services/diagnostics degrade:
+	// there is no panel-count cap yet, so a wide dashboard whose per-panel captures add up past this
+	// gets a 413 and no bundle at all, rather than a bundle with truncated evidence. The capture side
+	// therefore needs its own per-panel/whole-dashboard budget to stay under it -- part of the
+	// "dashboard-level limits" follow-up together with the panel-count cap.
 	maxDashboardDiagnosticsBodyBytes = 64 << 20
 )
 

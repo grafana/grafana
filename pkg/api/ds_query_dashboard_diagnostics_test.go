@@ -166,21 +166,30 @@ func TestQueryDashboardDiagnostics_rejectsWhenInFlightCapReached(t *testing.T) {
 func TestQueryDiagnostics_rejectsOversizedBody(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
 
-	// Padding inside postProcessing rather than a bare blob: that is the client-supplied field with no
-	// server-side bound, and it must be the body cap -- not the artifact cap -- that rejects it.
-	oversized := func(maxBytes int64) string {
-		return `{"panels":[{"id":1,"queries":[{"refId":"A"}],"postProcessing":{"pad":"` +
-			strings.Repeat("x", int(maxBytes)+1024) + `"}}],` +
-			`"queries":[{"refId":"A"}],"postProcessing":{"pad":"x"}}`
-	}
-
 	tests := []struct {
 		name     string
 		maxBytes int64
-		call     func(*HTTPServer, *contextmodel.ReqContext) response.Response
+		// prefix/suffix bracket the padding so it lands inside the postProcessing THAT ENDPOINT binds,
+		// rather than a bare blob or a field the other endpoint's struct ignores: that is the
+		// client-supplied field with no server-side bound, and it must be the body cap -- not the
+		// artifact cap -- that rejects it.
+		prefix, suffix string
+		call           func(*HTTPServer, *contextmodel.ReqContext) response.Response
 	}{
-		{"single panel", maxDiagnosticsBodyBytes, (*HTTPServer).QueryDiagnostics},
-		{"whole dashboard", maxDashboardDiagnosticsBodyBytes, (*HTTPServer).QueryDashboardDiagnostics},
+		{
+			name:     "single panel",
+			maxBytes: maxDiagnosticsBodyBytes,
+			prefix:   `{"queries":[{"refId":"A"}],"postProcessing":{"pad":"`,
+			suffix:   `"}}`,
+			call:     (*HTTPServer).QueryDiagnostics,
+		},
+		{
+			name:     "whole dashboard",
+			maxBytes: maxDashboardDiagnosticsBodyBytes,
+			prefix:   `{"panels":[{"id":1,"queries":[{"refId":"A"}],"postProcessing":{"pad":"`,
+			suffix:   `"}}]}`,
+			call:     (*HTTPServer).QueryDashboardDiagnostics,
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -188,7 +197,14 @@ func TestQueryDiagnostics_rejectsOversizedBody(t *testing.T) {
 			// and a nil one would panic loudly if that stopped being true.
 			hs := &HTTPServer{}
 
-			req, err := http.NewRequest(http.MethodPost, "/api/ds/diagnostics", strings.NewReader(oversized(tc.maxBytes)))
+			// Streamed rather than built with strings.Repeat: materializing a body past the 64 MiB
+			// dashboard cap costs ~130 MiB of test strings, in a package whose tests already run wide.
+			body := io.MultiReader(
+				strings.NewReader(tc.prefix),
+				io.LimitReader(padReader{}, tc.maxBytes+1024),
+				strings.NewReader(tc.suffix),
+			)
+			req, err := http.NewRequest(http.MethodPost, "/api/ds/diagnostics", body)
 			require.NoError(t, err)
 			req.Header.Set("Content-Type", "application/json")
 			c := &contextmodel.ReqContext{
@@ -222,8 +238,11 @@ func TestQueryDiagnostics_acceptsBodyWithinCap(t *testing.T) {
 		Return(backend.NewQueryDataResponse(), nil)
 	hs := &HTTPServer{queryDataService: fakeQuery}
 
-	// Comfortably under the cap, comfortably over anything a hand-written body would reach.
-	body := `{"queries":[{"refId":"A"}],"postProcessing":{"pad":"` + strings.Repeat("x", 8<<20) + `"}}`
+	// Comfortably over anything a hand-written body would reach, and under both bounds it has to clear:
+	// the body cap here and the per-artifact cap in the bundler, so the capture reaches the bundle whole.
+	const padBytes = 1 << 20
+	require.Less(t, padBytes, int(maxDiagnosticsBodyBytes))
+	body := `{"queries":[{"refId":"A"}],"postProcessing":{"pad":"` + strings.Repeat("x", padBytes) + `"}}`
 	req, err := http.NewRequest(http.MethodPost, "/api/ds/diagnostics", strings.NewReader(body))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
@@ -240,6 +259,20 @@ func TestQueryDiagnostics_acceptsBodyWithinCap(t *testing.T) {
 	resp := hs.QueryDiagnostics(c)
 	require.Equal(t, http.StatusOK, resp.Status(),
 		"a large but in-cap capture is accepted and bundled")
+	// A 200 alone would also pass if the capture were dropped somewhere between binding and assembly,
+	// which is the failure this test is really about, so check it reached the bundle.
+	require.Contains(t, readTarGzFiles(t, resp.Body()), "frontend-processing.json")
+}
+
+// padReader yields an endless run of 'x'. Used to stream an over-cap request body instead of building
+// it with strings.Repeat, which for the 64 MiB dashboard cap would allocate the padding twice over.
+type padReader struct{}
+
+func (padReader) Read(p []byte) (int, error) {
+	for i := range p {
+		p[i] = 'x'
+	}
+	return len(p), nil
 }
 
 // TestBuildDashboardDiagnosticsArchive_recordsPerRefIDQueryError guards against a regression where
