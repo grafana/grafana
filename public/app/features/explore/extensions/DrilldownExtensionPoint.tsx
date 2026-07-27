@@ -26,10 +26,6 @@ const QUERYLESS_APPS = [
 ];
 
 /**
- * Renders a button to open queryless drilldown apps.
- * Only displays when at least one queryless app extension is available.
- */
-/**
  * Exposes the queryless-app drilldown availability + click behavior so it can be rendered in different
  * shapes (a button, a menu item, etc.). Returns `isAvailable: false` when no queryless app extension is
  * registered for the given queries.
@@ -57,6 +53,10 @@ export function useDrilldownExtension(
   return { isAvailable: querylessLinks.length > 0, onClick };
 }
 
+/**
+ * Renders a button to open queryless drilldown apps.
+ * Only displays when at least one queryless app extension is available.
+ */
 export function DrilldownExtensionPoint({ queries, onExtensionClick, compact }: Props): ReactElement | null {
   const { isAvailable, onClick } = useDrilldownExtension(queries, onExtensionClick);
 
