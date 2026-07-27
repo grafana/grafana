@@ -253,13 +253,13 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await moveTab(dashboardPage, page, selectors, `${repeatTitleBase}${repeatOptions.at(0)}`, 'New tab');
 
-      // playwright too fast - adding intermediate step so that UI has time to update
-      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New tab')).click();
-
-      // verify move by tab position
-      const repeatedTab = await getTabPosition(dashboardPage, selectors, `${repeatTitleBase}${repeatOptions.at(0)}`);
-      const normalTab = await getTabPosition(dashboardPage, selectors, 'New tab');
-      expect(normalTab?.x).toBeLessThan(repeatedTab?.x || 0);
+      // The tab order is only updated after the drop animation finishes (onDragEnd),
+      // so retry the position check until the reorder has been applied
+      await expect(async () => {
+        const repeatedTab = await getTabPosition(dashboardPage, selectors, `${repeatTitleBase}${repeatOptions.at(0)}`);
+        const normalTab = await getTabPosition(dashboardPage, selectors, 'New tab');
+        expect(normalTab?.x).toBeLessThan(repeatedTab!.x);
+      }).toPass();
       await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 

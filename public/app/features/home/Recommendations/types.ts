@@ -11,6 +11,8 @@ export interface RecommendationItem {
   description: string;
   action: string; // CTA label, e.g. "Enable Hosted Traces"
   href: string;
+  /** CTA intent for analytics: enable a disabled app (default) or set up an enabled-but-silent one. */
+  cta?: 'enable' | 'setup';
 }
 
 export interface ExistingItem {

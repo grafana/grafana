@@ -86,7 +86,17 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 				ResourceVersion: 1,
 				Action:          action,
 			})
-			got := recvEvent(t, out)
+			// Watch subscribes to the whole change stream, so a late warm-up
+			// duplicate (establishInterest publishes many and drains only on a
+			// timeout) can still be queued ahead of ours. Skip anything that is not
+			// the playlist event we just published.
+			var got Event
+			for {
+				got = recvEvent(t, out)
+				if got.Namespace == "default" {
+					break
+				}
+			}
 			assert.Equal(t, action, got.Action, "action %q must survive the round trip", action)
 		}
 	})
