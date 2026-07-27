@@ -77,6 +77,7 @@ export interface Props<TQuery extends DataQuery> {
   hideRefId?: boolean;
   queryLibraryRef?: string;
   onCancelQueryLibraryEdit?: () => void;
+  onQueryLibraryEditSaved?: () => void;
   addingSavedQuery?: boolean;
   onCancelAddSavedQuery?: () => void;
   isOpen?: boolean;
@@ -279,8 +280,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   onExitQueryLibraryEditingMode = () => {
-    // Exit query library editing mode after successful update
-    this.props.onCancelQueryLibraryEdit?.();
+    // Exit query library editing mode after successful update. Unlike cancelling, this must not re-open
+    // the library drawer — the editing banner does that itself so it can highlight the query it saved.
+    this.props.onQueryLibraryEditSaved?.();
   };
 
   onCopyQuery = () => {

@@ -48,6 +48,7 @@ export interface Props {
   queryRowWrapper?: (children: ReactNode, refId: string) => ReactNode;
   queryLibraryRef?: string;
   onCancelQueryLibraryEdit?: () => void;
+  onQueryLibraryEditSaved?: () => void;
   addingSavedQuery?: boolean;
   onCancelAddSavedQuery?: () => void;
   isOpen?: boolean;
@@ -253,6 +254,7 @@ export class QueryEditorRows extends PureComponent<Props> {
       queryRowWrapper,
       queryLibraryRef,
       onCancelQueryLibraryEdit,
+      onQueryLibraryEditSaved,
       addingSavedQuery,
       onCancelAddSavedQuery,
       isOpen,
@@ -305,6 +307,7 @@ export class QueryEditorRows extends PureComponent<Props> {
                       eventBus={eventBus}
                       queryLibraryRef={queryLibraryRef}
                       onCancelQueryLibraryEdit={onCancelQueryLibraryEdit}
+                      onQueryLibraryEditSaved={onQueryLibraryEditSaved}
                       addingSavedQuery={addingSavedQuery}
                       onCancelAddSavedQuery={onCancelAddSavedQuery}
                       isOpen={isOpen}

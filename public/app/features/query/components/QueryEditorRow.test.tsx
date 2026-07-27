@@ -476,6 +476,30 @@ describe('QueryEditorRow', () => {
       });
     });
 
+    it('should report a successful save separately from cancelling, so the drawer is not re-opened twice', async () => {
+      const mockOnEditSaved = jest.fn();
+      render(
+        <QueryEditorRow
+          {...props(testData)}
+          queryLibraryRef="test-ref"
+          onCancelQueryLibraryEdit={mockOnCancelEdit}
+          onQueryLibraryEditSaved={mockOnEditSaved}
+        />
+      );
+
+      await waitFor(() => {
+        expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).toHaveBeenCalled();
+      });
+
+      const onUpdateSuccess = mockQueryLibraryContext.renderQueryLibraryEditingHeader.mock.calls[0][4];
+      onUpdateSuccess();
+
+      // Saving only leaves editing mode; the banner re-opens the drawer itself so it can highlight the
+      // query it just saved. Cancelling is the path that re-opens it from here.
+      expect(mockOnEditSaved).toHaveBeenCalledTimes(1);
+      expect(mockOnCancelEdit).not.toHaveBeenCalled();
+    });
+
     it('should render the add-mode header when addingSavedQuery is set without a queryLibraryRef', async () => {
       const mockOnCancelAdd = jest.fn();
       render(<QueryEditorRow {...props(testData)} addingSavedQuery={true} onCancelAddSavedQuery={mockOnCancelAdd} />);

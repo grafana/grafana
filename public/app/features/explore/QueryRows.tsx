@@ -120,6 +120,13 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
     }
   };
 
+  // After a successful save the editing banner re-opens the drawer itself (it knows which query to
+  // highlight), so this only has to leave editing mode.
+  const onQueryLibraryEditSaved = useCallback(
+    () => dispatch(updateQueryLibraryRefAction({ exploreId, queryLibraryRef: undefined })),
+    [dispatch, exploreId]
+  );
+
   // Exit "adding a new saved query" mode (e.g. the banner's Discard, or after saving-and-continuing).
   const onCancelAddSavedQuery = useCallback(() => {
     dispatch(setAddingSavedQueryAction({ exploreId, addingSavedQuery: false }));
@@ -150,6 +157,7 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
       eventBus={eventBridge}
       queryLibraryRef={queryLibraryRef}
       onCancelQueryLibraryEdit={onCancelQueryLibraryEdit}
+      onQueryLibraryEditSaved={onQueryLibraryEditSaved}
       addingSavedQuery={addingSavedQuery}
       onCancelAddSavedQuery={onCancelAddSavedQuery}
       isOpen={isOpen}
