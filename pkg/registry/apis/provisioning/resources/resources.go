@@ -116,15 +116,21 @@ func (r *ResourcesManager) findResource(id resourceID) (string, bool) {
 	return path, found
 }
 
-func (r *ResourcesManager) addResource(id resourceID, path string) {
+// claimResource atomically records path as the owner of id for this run. It
+// returns (existingOwner, false) when a DIFFERENT path already owns id (an
+// in-run duplicate); otherwise it records path and returns ("", true). The
+// check and the claim happen under one lock so concurrent writers of the same
+// UID cannot both proceed.
+func (r *ResourcesManager) claimResource(id resourceID, path string) (string, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if _, found := r.resourcesLookup[id]; found {
-		return
+	if existing, found := r.resourcesLookup[id]; found && existing != path {
+		return existing, false
 	}
 
 	r.resourcesLookup[id] = path
+	return "", true
 }
 
 // CreateResource writes an object to the repository
@@ -231,6 +237,7 @@ type WriteResourceOption func(*writeResourceConfig)
 
 type writeResourceConfig struct {
 	existingHash string
+	previousName string
 }
 
 // WithExistingHash provides the content hash of the resource as it currently
@@ -239,6 +246,17 @@ type writeResourceConfig struct {
 func WithExistingHash(hash string) WriteResourceOption {
 	return func(cfg *writeResourceConfig) {
 		cfg.existingHash = hash
+	}
+}
+
+// WithPreviousName provides the UID (metadata.name) this file already owned
+// before the write. When it equals the new content's UID, the write is a pure
+// in-place update — the resource is already owned by this path, so the
+// cross-file duplicate probe is skipped. Leave unset for creates and
+// identity-changing updates so the probe still runs.
+func WithPreviousName(name string) WriteResourceOption {
+	return func(cfg *writeResourceConfig) {
+		cfg.previousName = name
 	}
 }
 
@@ -275,10 +293,10 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 		parsed.SkipStrictValidation = true
 	}
 
-	return r.writeResourceFromParsed(ctx, path, ref, parsed)
+	return r.writeResourceFromParsed(ctx, path, ref, parsed, cfg.previousName)
 }
 
-func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, ref string, parsed *ParsedResource, folderOpts ...EnsurePathOption) (string, schema.GroupVersionKind, error) {
+func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, ref string, parsed *ParsedResource, previousName string, folderOpts ...EnsurePathOption) (string, schema.GroupVersionKind, error) {
 	if parsed.Obj.GetName() == "" {
 		return "", schema.GroupVersionKind{}, NewResourceValidationError(ErrMissingName)
 	}
@@ -290,31 +308,42 @@ func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, re
 		Group:    parsed.GVK.Group,
 	}
 
-	if existing, found := r.findResource(id); found {
+	// Fast path: another file already claimed this UID earlier in the run →
+	// duplicate; warn without probing. Optimization only — claimResource below is
+	// the authoritative, atomic guard for the concurrent case.
+	if existing, found := r.findResource(id); found && existing != path {
 		return "", parsed.GVK, NewResourceValidationError(
 			fmt.Errorf("duplicate resource name: %s, %s and %s: %w", parsed.Obj.GetName(), path, existing, ErrDuplicateName),
 		)
 	}
 
-	// resourcesLookup only catches two files colliding within this run. A file
-	// unchanged since a previous sync is never re-written, so its UID is absent
-	// from the map even though the resource already exists owned by that file.
-	// Writing here would upsert that resource in place and silently flip its
-	// ownership to this file, turning the original owner into an invisible
-	// zombie. Detect the accidental duplicate and block the write with an error,
-	// preserving the original owner.
-	owner, dup, err := r.accidentalDuplicateOwner(ctx, path, ref, parsed)
-	if err != nil {
-		return "", parsed.GVK, err
-	}
-	if dup {
-		return "", parsed.GVK, fmt.Errorf("duplicate resource name: %s, %s and %s: %w", parsed.Obj.GetName(), path, owner, ErrDuplicateName)
+	// A resource with this UID may already exist owned by a DIFFERENT file (e.g. a
+	// file unchanged since a previous sync, so absent from the in-run lookup).
+	// Writing here would upsert it in place and silently flip its sourcePath to
+	// this file, turning the original owner into an invisible zombie. Probe for
+	// that, skipping only a pure in-place update that keeps its own UID
+	// (previousName == name), where the owner is already this path and no hijack
+	// is possible.
+	if previousName != parsed.Obj.GetName() {
+		owner, dup, err := r.accidentalDuplicateOwner(ctx, path, ref, parsed)
+		if err != nil {
+			return "", parsed.GVK, err
+		}
+		if dup {
+			return "", parsed.GVK, NewResourceValidationError(
+				fmt.Errorf("duplicate resource name: %s, %s and %s: %w", parsed.Obj.GetName(), path, owner, ErrDuplicateName),
+			)
+		}
 	}
 
-	// Record ownership only once the write is going ahead. A skipped duplicate
-	// must not leave its path in the lookup, or a later file in this same run
-	// (including the real owner) would be wrongly flagged as an in-run duplicate.
-	r.addResource(id, path)
+	// Atomically claim the UID for this run. Only the goroutine that wins the
+	// claim proceeds to write; a concurrent loser is told the current owner and
+	// warns, so two files can never both write the same UID (silent hijack).
+	if owner, ok := r.claimResource(id, path); !ok {
+		return "", parsed.GVK, NewResourceValidationError(
+			fmt.Errorf("duplicate resource name: %s, %s and %s: %w", parsed.Obj.GetName(), path, owner, ErrDuplicateName),
+		)
+	}
 
 	// For resources that exist in folders, set the header annotation
 	if supportsFolderAnnotation(r.clients.SupportedResources(), parsed.GVK) {
@@ -340,7 +369,7 @@ func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, re
 	parsed.Meta.SetResourceVersion("")
 
 	runCtx, runSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.run_resource")
-	err = parsed.Run(runCtx)
+	err := parsed.Run(runCtx)
 	if err != nil {
 		runSpan.RecordError(err)
 		// Wrap resource validation errors (like dashboard refresh interval) as warnings
@@ -414,6 +443,9 @@ func (r *ResourcesManager) accidentalDuplicateOwner(ctx context.Context, path, r
 // changed compared to oldName, deletes the old resource to prevent orphans.
 // Used by full sync where the old identity is known from Changes().Existing.
 func (r *ResourcesManager) ReplaceResourceFromFile(ctx context.Context, path, ref string, oldName string, oldGVR schema.GroupVersionResource, opts ...WriteResourceOption) (string, schema.GroupVersionKind, error) {
+	// The old identity is known, so the cross-file duplicate probe can be skipped
+	// when the UID is unchanged (in-place update); it still runs on an identity change.
+	opts = append(opts, WithPreviousName(oldName))
 	newName, gvk, err := r.WriteResourceFromFile(ctx, path, ref, opts...)
 	if err != nil || oldName == "" || oldName == newName {
 		return newName, gvk, err
@@ -442,6 +474,9 @@ func (r *ResourcesManager) ReplaceResourceFromFileByRef(ctx context.Context, pat
 	if oldInfo.Hash != "" {
 		opts = append(opts, WithExistingHash(oldInfo.Hash))
 	}
+	// The old identity is known, so the cross-file duplicate probe can be skipped
+	// when the UID is unchanged (in-place update); it still runs on an identity change.
+	opts = append(opts, WithPreviousName(oldParsed.Obj.GetName()))
 	newName, gvk, writeErr := r.WriteResourceFromFile(ctx, path, ref, opts...)
 	if writeErr != nil {
 		return newName, gvk, writeErr
@@ -552,7 +587,9 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 
 	oldFolderName := oldParsed.ExistingFolder()
 
-	newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, folderOpts...)
+	// A same-identity rename keeps its own UID, so the cross-file duplicate probe
+	// is skipped; a rename that also changes the UID (SameIdentity false) still probes.
+	newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, oldParsed.Obj.GetName(), folderOpts...)
 	if err != nil {
 		return oldParsed.Obj.GetName(), oldFolderName, gvk, fmt.Errorf("failed to write resource: %w", err)
 	}
