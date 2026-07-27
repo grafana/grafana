@@ -202,10 +202,7 @@ describe('PanelAlertTabContent', () => {
           queries.map((query) => ({
             ...query,
             datasource: { uid: settings?.uid, type: settings?.type },
-            expr: (query as { expr?: string }).expr?.replace(
-              '$__interval',
-              String(scopedVars.__interval?.value)
-            ),
+            expr: (query as { expr?: string }).expr?.replace('$__interval', String(scopedVars.__interval?.value)),
             interval: '',
           })),
       };
