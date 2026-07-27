@@ -51,14 +51,21 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 	// satisfy DeltaSource, so the rest of the wiring is identical.
 	jobController := controller.NewJobController()
 
-	jobInformer := informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
+	jobInformer, jobClaimCache := informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
 	reg, err := jobInformer.AddEventHandler(jobController.EventHandler())
 	if err != nil {
 		return fmt.Errorf("failed to add job event handler: %w", err)
 	}
 
 	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
-	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobClaimExpiry, deps.Registerer)
+	// Claim from the informer snapshot rather than a cluster-wide `!claim` List.
+	// With many concurrent drivers that List degenerates into a full cross-tenant
+	// scan and dominates storage List p99; the cache path keeps claiming O(1).
+	jobStoreOpts := []jobs.JobStoreOption{}
+	if jobClaimCache != nil {
+		jobStoreOpts = append(jobStoreOpts, jobs.WithClaimCache(jobClaimCache))
+	}
+	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobClaimExpiry, deps.Registerer, jobStoreOpts...)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}

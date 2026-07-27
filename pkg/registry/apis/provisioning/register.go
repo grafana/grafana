@@ -1093,7 +1093,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			// Create JobController to handle job create notifications
 			jobController := appcontroller.NewJobController()
-			jobSource := informer.NewJobDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
+			// The in-process apiserver runs few drivers, so it keeps the List-based
+			// claim path; the claim cache is wired only in the standalone jobqueue
+			// operator, which runs many concurrent drivers.
+			jobSource, _ := informer.NewJobDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
 			if _, err := jobSource.AddEventHandler(jobController.EventHandler()); err != nil {
 				return fmt.Errorf("add job controller event handler: %w", err)
 			}

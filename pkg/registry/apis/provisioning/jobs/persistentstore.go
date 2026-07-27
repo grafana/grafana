@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	mathrand "math/rand/v2"
 	"net/http"
 	"strconv"
 	"time"
@@ -13,6 +14,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -80,6 +82,50 @@ var (
 	_ Store = (*persistentStore)(nil)
 )
 
+// maxClaimCandidates bounds how many candidate jobs a single cache-backed Claim
+// will Get+attempt before giving up, so a claim never fans out into an unbounded
+// number of Gets when the cache holds many jobs that turn out to be already
+// claimed.
+//
+// Note this is a budget of attempts, not of results: the legacy List's Limit:16
+// returned 16 jobs the server had already filtered to unclaimed, whereas these 16
+// Gets may all land on entries that were unclaimed at the last re-list but have
+// since been taken. A Claim can therefore return ErrNoJobs while claimable jobs
+// remain in the cache. That is self-correcting — each such Get writes the fresh,
+// claimed object back so the next Claim skips it for free — but it is why
+// claimsTotal{outcome="exhausted"} is worth watching: a sustained rate there
+// means drivers are giving up early and the budget is too small for the churn.
+const maxClaimCandidates = 16
+
+// ClaimCache is the subset of the jobs informer's snapshot the store reads to
+// find claim candidates without a cluster-wide storage List. It is deliberately
+// staleness-tolerant: entries may be minimal (a live add carries only
+// namespace/name) or lag the store by up to one re-list, so Claim always Gets
+// the authoritative object before it attempts the optimistic claim. It is
+// structurally satisfied by pkg/storage/unified/informer.Cache.
+//
+// Objects passed to Update must not be mutated afterwards: the cache is read
+// concurrently by sibling drivers without any per-object locking, so handing it
+// an object another goroutine still writes to (a claimed job the driver goes on
+// to Complete, say) is a data race on the shared label map.
+type ClaimCache interface {
+	List(ctx context.Context) []runtime.Object
+	Update(ctx context.Context, obj runtime.Object)
+	Delete(ctx context.Context, namespace, name string)
+}
+
+// JobStoreOption configures optional persistentStore behaviour.
+type JobStoreOption func(*persistentStore)
+
+// WithClaimCache makes Claim source candidates from the jobs informer cache
+// instead of a cluster-wide `!claim` List. The List selector cannot be indexed,
+// so under many concurrent drivers it degenerates into a full cross-tenant
+// collection scan; reading candidates from the local cache and claiming them
+// with a targeted Get+Update keeps claiming O(1) regardless of driver count.
+func WithClaimCache(cache ClaimCache) JobStoreOption {
+	return func(s *persistentStore) { s.cache = cache }
+}
+
 // persistentStore is a job queue implementation that uses the API client instead of rest.Storage.
 type persistentStore struct {
 	client client.ProvisioningV0alpha1Interface
@@ -91,23 +137,31 @@ type persistentStore struct {
 	// If a job is abandoned, it will have its claim cleaned up periodically.
 	expiry time.Duration
 
+	// cache, when set, is the jobs informer snapshot Claim reads candidates from
+	// instead of a cluster-wide List. Nil falls back to the List path.
+	cache ClaimCache
+
 	queueMetrics QueueMetrics
 }
 
 // NewJobStore creates a new job queue implementation using the API client.
-func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry time.Duration, registry prometheus.Registerer) (*persistentStore, error) {
+func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry time.Duration, registry prometheus.Registerer, opts ...JobStoreOption) (*persistentStore, error) {
 	if expiry <= 0 {
 		expiry = time.Second * 30
 	}
 
 	queueMetrics := RegisterQueueMetrics(registry)
 
-	return &persistentStore{
+	s := &persistentStore{
 		client:       provisioningClient,
 		clock:        time.Now,
 		expiry:       expiry,
 		queueMetrics: queueMetrics,
-	}, nil
+	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s, nil
 }
 
 // Claim takes a job from storage, marks it as ours, and returns it.
@@ -125,7 +179,111 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 		span.End()
 	}()
 
-	logger := logging.FromContext(ctx).With("operation", "claim")
+	// When a jobs informer cache is wired, source candidates from it instead of a
+	// cluster-wide `!claim` List. That List selector cannot be indexed, so under
+	// many concurrent drivers it degenerates into a full cross-tenant collection
+	// scan and dominates storage List p99. The cache path keeps claiming O(1).
+	if s.cache != nil {
+		job, rollback, err = s.claimFromCache(ctx)
+	} else {
+		job, rollback, err = s.claimFromList(ctx)
+	}
+	if job != nil {
+		span.SetAttributes(
+			attribute.String("job.name", job.GetName()),
+			attribute.String("job.namespace", job.GetNamespace()),
+			attribute.String("job.repository", job.Spec.Repository),
+			attribute.String("job.action", string(job.Spec.Action)),
+		)
+	}
+	return job, rollback, err
+}
+
+// claimFromCache finds a claimable job by reading candidates from the informer
+// snapshot and claiming the first that a targeted Get+Update wins. The cache is
+// staleness-tolerant, so each candidate is re-Got before the claim attempt and
+// the authoritative object decides claimability.
+func (s *persistentStore) claimFromCache(ctx context.Context) (*provisioning.Job, func(), error) {
+	logger := logging.FromContext(ctx).With("operation", "claim", "source", "cache")
+
+	candidates := s.cache.List(ctx)
+	// Shuffle so concurrent drivers do not all target the same head candidate and
+	// pile up conflicts on it.
+	mathrand.Shuffle(len(candidates), func(i, j int) { candidates[i], candidates[j] = candidates[j], candidates[i] })
+
+	gets := 0
+	for _, obj := range candidates {
+		if ctx.Err() != nil {
+			return nil, nil, ctx.Err()
+		}
+		// Bound the storage Gets per claim so a large cache full of already-claimed
+		// jobs cannot fan out into an unbounded number of calls.
+		if gets >= maxClaimCandidates {
+			break
+		}
+		cached, ok := obj.(*provisioning.Job)
+		if !ok || cached == nil {
+			continue
+		}
+		// Cheap pre-filter: skip jobs our cached view already shows claimed. The
+		// fresh Get below is the real gate; this only avoids wasted Gets.
+		if _, claimed := cached.Labels[LabelJobClaim]; claimed {
+			continue
+		}
+
+		// The cached object may be minimal (a live add carries only namespace/name)
+		// or lag a claim placed since the last re-list, so Get the authoritative
+		// version before attempting the optimistic claim.
+		gets++
+		fresh, err := s.client.Jobs(cached.GetNamespace()).Get(ctx, cached.GetName(), metav1.GetOptions{})
+		if apierrors.IsNotFound(err) {
+			// Completed or reaped since the cache last saw it.
+			s.cache.Delete(ctx, cached.GetNamespace(), cached.GetName())
+			continue
+		}
+		if err != nil {
+			logger.Debug("failed to get candidate job, skipping", "job", cached.GetName(), "namespace", cached.GetNamespace(), "error", err)
+			continue
+		}
+		if _, claimed := fresh.Labels[LabelJobClaim]; claimed {
+			s.cache.Update(ctx, fresh) // keep the cache warm so siblings skip it too
+			continue
+		}
+
+		claimedJob, rollback, won, err := s.claimJob(ctx, *fresh)
+		if err != nil {
+			return nil, nil, err
+		}
+		if !won {
+			continue
+		}
+		// Reflect the claim in the cache so sibling drivers skip it without a Get.
+		// This must be a copy: the caller owns claimedJob and goes on to mutate it
+		// (Complete deletes the claim labels off it), while sibling drivers read the
+		// cached object's labels with no per-object locking.
+		s.cache.Update(ctx, claimedJob.DeepCopy())
+		s.queueMetrics.RecordClaim("cache", "claimed")
+		return claimedJob, rollback, nil
+	}
+
+	// Distinguish "nothing to claim" from "gave up with candidates left to try":
+	// both surface to the driver as ErrNoJobs, but only the latter means the Get
+	// budget is too small for the churn and jobs are being left on the floor until
+	// the next wake-up.
+	outcome := "empty"
+	if gets >= maxClaimCandidates {
+		outcome = "exhausted"
+	}
+	s.queueMetrics.RecordClaim("cache", outcome)
+	logger.Debug("no claimable jobs in cache", "candidates", len(candidates), "gets", gets, "outcome", outcome)
+	return nil, nil, ErrNoJobs
+}
+
+// claimFromList is the legacy path: a cluster-wide `!claim` List followed by an
+// optimistic claim of each returned job. Retained as a fallback for wirings that
+// have no informer cache (e.g. the apiserver-backed informer).
+func (s *persistentStore) claimFromList(ctx context.Context) (*provisioning.Job, func(), error) {
+	logger := logging.FromContext(ctx).With("operation", "claim", "source", "list")
 
 	requirement, err := labels.NewRequirement(LabelJobClaim, selection.DoesNotExist, nil)
 	if err != nil {
@@ -134,110 +292,129 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 
 	jobs, err := s.client.Jobs("").List(ctx, metav1.ListOptions{
 		LabelSelector: labels.NewSelector().Add(*requirement).String(),
-		Limit:         16,
+		Limit:         maxClaimCandidates,
 	})
 	if err != nil {
 		return nil, nil, apifmt.Errorf("failed to list jobs: %w", err)
 	}
 
 	if len(jobs.Items) == 0 {
+		s.queueMetrics.RecordClaim("list", "empty")
 		logger.Debug("no jobs available to claim")
 		return nil, nil, ErrNoJobs
 	}
 
 	logger.Debug("found jobs available", "count", len(jobs.Items))
 
-	for _, job := range jobs.Items {
-		if job.Labels == nil {
-			job.Labels = make(map[string]string)
-		}
-		job.Labels[LabelJobClaim] = strconv.FormatInt(s.clock().UnixMilli(), 10)
-		job.Labels[LabelJobClaimOwner] = util.GenerateShortUID()
-		s.queueMetrics.RecordWaitTime(string(job.Spec.Action), s.clock().Sub(job.CreationTimestamp.Time).Seconds())
-
-		// Set up the provisioning identity for this namespace
-		ctx, _, err = identity.WithProvisioningIdentity(ctx, job.GetNamespace())
+	for i := range jobs.Items {
+		claimedJob, rollback, won, err := s.claimJob(ctx, jobs.Items[i])
 		if err != nil {
-			// This should never happen, as it is already a valid namespace from the job existing... but better be safe.
-			return nil, nil, apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
+			return nil, nil, err
 		}
-
-		// This relies on the resource version being updated for us.
-		// If the resource version we pass in via the current job is not the same as the one currently in the store, it will fail with Conflict.
-		// This is the desired behavior, as it ensures that claims are atomic.
-		updatedJob, err := s.client.Jobs(job.GetNamespace()).Update(ctx, &job, metav1.UpdateOptions{})
-		if apierrors.IsConflict(err) {
-			// On conflict: another worker claimed the job before us.
-			// On would create: the job was completed and deleted before we could claim it.
-			// We'll just move on to the next job.
-			continue
+		if won {
+			s.queueMetrics.RecordClaim("list", "claimed")
+			return claimedJob, rollback, nil
 		}
-		if err != nil {
-			return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
-		}
-
-		logger.Info("job claim complete",
-			"job", updatedJob.GetName(),
-			"namespace", updatedJob.GetNamespace(),
-			"repository", updatedJob.Spec.Repository,
-			"action", updatedJob.Spec.Action,
-		)
-
-		span.SetAttributes(
-			attribute.String("job.name", updatedJob.GetName()),
-			attribute.String("job.namespace", updatedJob.GetNamespace()),
-			attribute.String("job.repository", updatedJob.Spec.Repository),
-			attribute.String("job.action", string(updatedJob.Spec.Action)),
-		)
-
-		return updatedJob.DeepCopy(), func() {
-			// Rolling back does not need to care about the parent's cancellation state.
-			// This will also use the parent context (i.e. from the for loop!), ensuring we have permissions to do this.
-			ctx = context.WithoutCancel(ctx)
-
-			logger := logging.FromContext(ctx).With("namespace", updatedJob.GetNamespace(), "job", updatedJob.GetName())
-
-			timeoutCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-			refetched, err := s.client.Jobs(updatedJob.GetNamespace()).Get(timeoutCtx, updatedJob.GetName(), metav1.GetOptions{})
-			cancel()
-			if apierrors.IsNotFound(err) {
-				// The job was probably completed already. Nothing to roll back!
-				return
-			} else if err != nil {
-				// We failed. Nothing much we can do but let the job be cleaned up by the periodic cleaner.
-				logger.Warn("failed to roll back job claim; letting periodic cleaner deal with it", "error", err)
-				return
-			}
-
-			// Only roll back if the job in the store is still the one we claimed. Job names are
-			// deterministic, so this same name may now be a re-created job claimed by another
-			// worker. Stripping its claim would hand that worker's job to a third one and
-			// reintroduce duplicate execution, so leave it alone.
-			if refetched.UID != updatedJob.UID || refetched.Labels[LabelJobClaimOwner] != updatedJob.Labels[LabelJobClaimOwner] {
-				logger.Info("claim no longer owned by this worker - skipping rollback")
-				return
-			}
-
-			// Rollback the claim.
-			refetchedJob := refetched.DeepCopy()
-			delete(refetchedJob.Labels, LabelJobClaim)
-			delete(refetchedJob.Labels, LabelJobClaimOwner)
-			refetchedJob.Status.State = provisioning.JobStatePending
-
-			timeoutCtx, cancel = context.WithTimeout(ctx, 5*time.Second)
-			_, err = s.client.Jobs(updatedJob.GetNamespace()).Update(timeoutCtx, refetchedJob, metav1.UpdateOptions{})
-			cancel()
-			if err != nil && !apierrors.IsConflict(err) {
-				logger.Warn("failed to roll back job claim; letting periodic cleaner deal with it", "error", err)
-			} else if err != nil {
-				logger.Debug("failed to roll back job claim; got an OK error", "error", err)
-			}
-		}, nil
 	}
 
 	// We failed to claim any jobs.
+	s.queueMetrics.RecordClaim("list", "exhausted")
 	logger.Debug("no jobs claimed - all already claimed by others")
 	return nil, nil, ErrNoJobs
+}
+
+// claimJob attempts to take ownership of a single job via an optimistic update.
+// It returns (job, rollback, true, nil) on a successful claim. If another worker
+// claimed it first (Conflict) or it was completed/deleted, it returns
+// (nil, nil, false, nil) so the caller moves on to the next candidate. A non-nil
+// error is a real failure that should abort the whole claim.
+func (s *persistentStore) claimJob(ctx context.Context, job provisioning.Job) (*provisioning.Job, func(), bool, error) {
+	logger := logging.FromContext(ctx).With("operation", "claim")
+
+	if job.Labels == nil {
+		job.Labels = make(map[string]string)
+	}
+	job.Labels[LabelJobClaim] = strconv.FormatInt(s.clock().UnixMilli(), 10)
+	job.Labels[LabelJobClaimOwner] = util.GenerateShortUID()
+	s.queueMetrics.RecordWaitTime(string(job.Spec.Action), s.clock().Sub(job.CreationTimestamp.Time).Seconds())
+
+	// Set up the provisioning identity for this namespace. This ctx also backs the
+	// rollback closure, so it must carry the namespace's permissions.
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, job.GetNamespace())
+	if err != nil {
+		// This should never happen, as it is already a valid namespace from the job existing... but better be safe.
+		return nil, nil, false, apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
+	}
+
+	// This relies on the resource version being updated for us.
+	// If the resource version we pass in via the current job is not the same as the one currently in the store, it will fail with Conflict.
+	// This is the desired behavior, as it ensures that claims are atomic.
+	updatedJob, err := s.client.Jobs(job.GetNamespace()).Update(ctx, &job, metav1.UpdateOptions{})
+	if apierrors.IsConflict(err) {
+		// On conflict: another worker claimed the job before us.
+		// On would create: the job was completed and deleted before we could claim it.
+		// We'll just move on to the next job.
+		return nil, nil, false, nil
+	}
+	if err != nil {
+		return nil, nil, false, apifmt.Errorf("failed to claim job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
+	}
+
+	logger.Info("job claim complete",
+		"job", updatedJob.GetName(),
+		"namespace", updatedJob.GetNamespace(),
+		"repository", updatedJob.Spec.Repository,
+		"action", updatedJob.Spec.Action,
+	)
+
+	return updatedJob.DeepCopy(), s.claimRollback(ctx, updatedJob), true, nil
+}
+
+// claimRollback builds the function that releases a claim if the driver fails to
+// process the job. ctx must already carry the job namespace's identity.
+func (s *persistentStore) claimRollback(ctx context.Context, updatedJob *provisioning.Job) func() {
+	return func() {
+		// Rolling back does not need to care about the parent's cancellation state.
+		ctx = context.WithoutCancel(ctx)
+
+		logger := logging.FromContext(ctx).With("namespace", updatedJob.GetNamespace(), "job", updatedJob.GetName())
+
+		timeoutCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		refetched, err := s.client.Jobs(updatedJob.GetNamespace()).Get(timeoutCtx, updatedJob.GetName(), metav1.GetOptions{})
+		cancel()
+		if apierrors.IsNotFound(err) {
+			// The job was probably completed already. Nothing to roll back!
+			return
+		} else if err != nil {
+			// We failed. Nothing much we can do but let the job be cleaned up by the periodic cleaner.
+			logger.Warn("failed to roll back job claim; letting periodic cleaner deal with it", "error", err)
+			return
+		}
+
+		// Only roll back if the job in the store is still the one we claimed. Job names are
+		// deterministic, so this same name may now be a re-created job claimed by another
+		// worker. Stripping its claim would hand that worker's job to a third one and
+		// reintroduce duplicate execution, so leave it alone.
+		if refetched.UID != updatedJob.UID || refetched.Labels[LabelJobClaimOwner] != updatedJob.Labels[LabelJobClaimOwner] {
+			logger.Info("claim no longer owned by this worker - skipping rollback")
+			return
+		}
+
+		// Rollback the claim.
+		refetchedJob := refetched.DeepCopy()
+		delete(refetchedJob.Labels, LabelJobClaim)
+		delete(refetchedJob.Labels, LabelJobClaimOwner)
+		refetchedJob.Status.State = provisioning.JobStatePending
+
+		timeoutCtx, cancel = context.WithTimeout(ctx, 5*time.Second)
+		_, err = s.client.Jobs(updatedJob.GetNamespace()).Update(timeoutCtx, refetchedJob, metav1.UpdateOptions{})
+		cancel()
+		if err != nil && !apierrors.IsConflict(err) {
+			logger.Warn("failed to roll back job claim; letting periodic cleaner deal with it", "error", err)
+		} else if err != nil {
+			logger.Debug("failed to roll back job claim; got an OK error", "error", err)
+		}
+	}
 }
 
 // Update saves the job back to the store.

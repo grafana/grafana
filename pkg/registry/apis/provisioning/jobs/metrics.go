@@ -26,6 +26,7 @@ type JobMetrics struct {
 type QueueMetrics struct {
 	queueSize     *prometheus.GaugeVec
 	queueWaitTime *prometheus.HistogramVec
+	claimsTotal   *prometheus.CounterVec
 }
 
 var (
@@ -57,9 +58,21 @@ func RegisterQueueMetrics(registry prometheus.Registerer) QueueMetrics {
 		)
 		registry.MustRegister(queueWaitTime)
 
+		claimsTotal := prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "grafana_provisioning_jobs_claims_total",
+				Help: "Job claim attempts by candidate source and outcome. source=cache reads the " +
+					"informer snapshot, source=list does the cluster-wide `!claim` List. " +
+					"outcome=exhausted means the attempt gave up with candidates still untried.",
+			},
+			[]string{"source", "outcome"},
+		)
+		registry.MustRegister(claimsTotal)
+
 		queueMetrics = QueueMetrics{
 			queueSize:     queueSize,
 			queueWaitTime: queueWaitTime,
+			claimsTotal:   claimsTotal,
 		}
 	})
 	return queueMetrics
@@ -75,6 +88,10 @@ func (m *QueueMetrics) DecreaseQueueSize(action string) {
 
 func (m *QueueMetrics) RecordWaitTime(action string, waitSeconds float64) {
 	m.queueWaitTime.WithLabelValues(action).Observe(waitSeconds)
+}
+
+func (m *QueueMetrics) RecordClaim(source, outcome string) {
+	m.claimsTotal.WithLabelValues(source, outcome).Inc()
 }
 
 func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
