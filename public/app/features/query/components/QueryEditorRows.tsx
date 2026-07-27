@@ -198,7 +198,7 @@ export class QueryEditorRows extends PureComponent<Props> {
 
     const startIndex = result.source.index;
     const endIndex = result.destination.index;
-    
+
     if (startIndex === endIndex) {
       return;
     }
