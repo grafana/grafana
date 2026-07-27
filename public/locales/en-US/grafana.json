@@ -12394,7 +12394,8 @@
       "error-exit": "Exit workspace",
       "error-message": "The Grafana Assistant workspace could not be loaded.",
       "error-reload": "Reload page",
-      "error-title": "Workspace unavailable"
+      "error-title": "Workspace unavailable",
+      "workspace": "Workspace"
     },
     "help": {
       "aria-label": "Help",

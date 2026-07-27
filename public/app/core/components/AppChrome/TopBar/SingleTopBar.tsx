@@ -5,7 +5,7 @@ import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type ScopesContextValue } from '@grafana/runtime';
-import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { useFlagAssistantFullscreenWorkspace, useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -18,8 +18,13 @@ import { useSelector } from 'app/types/store';
 import { HomeLogo } from '../../Branding/Branding';
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
+import {
+  getComponentIdFromComponentMeta,
+  useExtensionSidebarContext,
+} from '../ExtensionSidebar/ExtensionSidebarProvider';
 import { ExtensionToolbarItem } from '../ExtensionSidebar/ExtensionToolbarItem';
 import { FeatureControlButton } from '../FeatureControl/FeatureControlButton';
+import { AssistantToolbarButtons } from '../FullscreenWorkspace/AssistantToolbarButtons';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
 
@@ -31,6 +36,8 @@ import { SingleTopBarActions } from './SingleTopBarActions';
 import { TopBarExtensionPoint } from './TopBarExtensionPoint';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
 import { getChromeHeaderLevelHeight } from './useChromeHeaderHeight';
+
+const ASSISTANT_PLUGIN_ID = 'grafana-assistant-app';
 
 interface Props {
   sectionNav: NavModelItem;
@@ -55,6 +62,13 @@ export const SingleTopBar = memo(function SingleTopBar({
 }: Props) {
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const { chrome } = useGrafana();
+  const fullscreenWorkspaceEnabled = useFlagAssistantFullscreenWorkspace();
+  const { availableComponents, dockedComponentId, setDockedComponentId } = useExtensionSidebarContext();
+  const assistantComponentTitle = availableComponents.get(ASSISTANT_PLUGIN_ID)?.addedComponents[0]?.title;
+  const assistantComponentId = assistantComponentTitle
+    ? getComponentIdFromComponentMeta(ASSISTANT_PLUGIN_ID, assistantComponentTitle)
+    : undefined;
+  const isAssistantSidebarOpen = assistantComponentId !== undefined && dockedComponentId === assistantComponentId;
   const state = chrome.useState();
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const styles = useStyles2(getStyles, menuDockedAndOpen, visualRefreshEnabled);
@@ -105,6 +119,12 @@ export const SingleTopBar = memo(function SingleTopBar({
           {!showToolbarLevel && actions}
           {!contextSrv.user.isSignedIn && <SignInLink />}
           <NavRightButton />
+          {fullscreenWorkspaceEnabled && (
+            <AssistantToolbarButtons
+              isOpen={isAssistantSidebarOpen}
+              onClick={() => setDockedComponentId(isAssistantSidebarOpen ? undefined : assistantComponentId)}
+            />
+          )}
           {profileNode && <ProfileButton profileNode={profileNode} onToggleKioskMode={onToggleKioskMode} />}
         </Stack>
       </div>
