@@ -21,8 +21,6 @@ type Severity = QueryResultMetaNotice['severity'];
 
 interface InspectableEntry {
   severity: Severity;
-  // Human-readable summary; matches the panel header popover text. Shown above the raw payload
-  // for errors and used as the toggle's accessible label.
   title?: string;
   content: string;
   link?: string;
