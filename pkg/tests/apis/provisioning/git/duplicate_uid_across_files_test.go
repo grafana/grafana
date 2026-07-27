@@ -63,9 +63,9 @@ func TestIntegrationProvisioning_IncrementalGitSync_DuplicateUIDAcrossFiles(t *t
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
 	require.NotEmpty(t, jobObj.Status.Errors,
-		"accidental duplicate is user misuse and must be a errors, not warnings")
-	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
-		"incremental sync should finish in warning state when a second file declares an existing UID")
+		"accidental duplicate is user misuse and must be surfaced as an error, not a warning")
+	require.Equal(t, provisioning.JobStateError, jobObj.Status.State,
+		"incremental sync should finish in error state when a second file declares an existing UID")
 	common.RequireJobErrorContains(t, jobObj, "duplicate resource name")
 
 	// The original owner keeps the UID and file B's dashboard is not created, so

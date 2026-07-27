@@ -295,7 +295,6 @@ func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, re
 			fmt.Errorf("duplicate resource name: %s, %s and %s: %w", parsed.Obj.GetName(), path, existing, ErrDuplicateName),
 		)
 	}
-	r.addResource(id, path)
 
 	// resourcesLookup only catches two files colliding within this run. A file
 	// unchanged since a previous sync is never re-written, so its UID is absent
@@ -311,6 +310,11 @@ func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, re
 	if dup {
 		return "", parsed.GVK, fmt.Errorf("duplicate resource name: %s, %s and %s: %w", parsed.Obj.GetName(), path, owner, ErrDuplicateName)
 	}
+
+	// Record ownership only once the write is going ahead. A skipped duplicate
+	// must not leave its path in the lookup, or a later file in this same run
+	// (including the real owner) would be wrongly flagged as an in-run duplicate.
+	r.addResource(id, path)
 
 	// For resources that exist in folders, set the header annotation
 	if supportsFolderAnnotation(r.clients.SupportedResources(), parsed.GVK) {
@@ -400,7 +404,10 @@ func (r *ResourcesManager) accidentalDuplicateOwner(ctx context.Context, path, r
 		return "", false, fmt.Errorf("parsing owning file %s: %w", owner, err)
 	}
 
-	return owner, ownerParsed.Obj.GetName() == name, nil
+	// Compare the full resource identity (group, kind, name), not just the name:
+	// if the owning file now declares a different group/kind under the same name
+	// it has released this resource, so the write is a legitimate takeover.
+	return owner, parsed.SameIdentity(ownerParsed), nil
 }
 
 // ReplaceResourceFromFile writes a resource from file and, if the resource name
