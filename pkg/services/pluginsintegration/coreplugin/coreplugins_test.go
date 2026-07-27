@@ -24,7 +24,6 @@ func TestNewPlugin(t *testing.T) {
 		{ID: InfluxDB},
 		{ID: Loki},
 		{ID: MySQL},
-		{ID: PostgreSQL},
 		{ID: Prometheus},
 		{ID: TestData, ExpectedAlias: TestDataAlias},
 		{ID: TestDataAlias, ExpectedID: TestData, ExpectedAlias: TestDataAlias},

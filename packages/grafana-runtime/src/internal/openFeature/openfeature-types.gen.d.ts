@@ -34,6 +34,7 @@ declare module "@openfeature/core" {
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
     | "alerting.ruleQuality"
+    | "azureMonitorBatchAPI"
     | "recentlyViewedDashboards"
     | "experimentRecentlyViewedDashboards"
     | "otelLogsFormatting"
@@ -79,7 +80,7 @@ declare module "@openfeature/core" {
     | "grafana.onDemandDiagnostics"
     | "grafana.multiTenantNavTree"
     | "grafana.exploreMetricsSidebar"
-    | "grafana.thresholdsInterpolation";
+    | "grafana.dynamicTraceToLogs";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

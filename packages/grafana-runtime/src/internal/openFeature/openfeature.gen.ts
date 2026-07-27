@@ -25,6 +25,8 @@ export const FlagKeys = {
   AssistantFullscreenWorkspace: "assistant.fullscreenWorkspace",
   /** Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID. */
   AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
+  /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
+  AzureMonitorBatchAPI: "azureMonitorBatchAPI",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
@@ -55,6 +57,8 @@ export const FlagKeys = {
   GrafanaCustomizableMegaMenu: "grafana.customizableMegaMenu",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
+  /** Check for the existence of logs when linking from the Trace View */
+  GrafanaDynamicTraceToLogs: "grafana.dynamicTraceToLogs",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
   /** Enables the sidebar in Explore metrics (Metrics Drilldown) */
@@ -89,8 +93,6 @@ export const FlagKeys = {
   GrafanaSecretsReferenceValueUI: "grafana.secretsReferenceValueUI",
   /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
   GrafanaStarredFolders: "grafana.starredFolders",
-  /** Enables using dashboard variables in panel threshold values */
-  GrafanaThresholdsInterpolation: "grafana.thresholdsInterpolation",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
   /** Use the find default scope endpoint to seed the initial scope selection when none is set. */
@@ -219,6 +221,17 @@ export const useFlagAssistantFullscreenWorkspace = (options?: ReactFlagEvaluatio
  */
 export const useFlagAwsAssumeRolePerDatasourceExternalId = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("awsAssumeRolePerDatasourceExternalId", false, options).value;
+};
+
+/**
+ * Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
+ *
+ * **Details:**
+ * - flag key: `azureMonitorBatchAPI`
+ * - default value: `false`
+ */
+export const useFlagAzureMonitorBatchAPI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("azureMonitorBatchAPI", false, options).value;
 };
 
 /**
@@ -384,6 +397,17 @@ export const useFlagGrafanaCustomizableMegaMenu = (options?: ReactFlagEvaluation
  */
 export const useFlagGrafanaDashboardSettingsRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardSettingsRedesign", true, options).value;
+};
+
+/**
+ * Check for the existence of logs when linking from the Trace View
+ *
+ * **Details:**
+ * - flag key: `grafana.dynamicTraceToLogs`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDynamicTraceToLogs = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dynamicTraceToLogs", false, options).value;
 };
 
 /**
@@ -574,17 +598,6 @@ export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOption
 };
 
 /**
- * Enables using dashboard variables in panel threshold values
- *
- * **Details:**
- * - flag key: `grafana.thresholdsInterpolation`
- * - default value: `false`
- */
-export const useFlagGrafanaThresholdsInterpolation = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.thresholdsInterpolation", false, options).value;
-};
-
-/**
  * Replaces the bundled home dashboard with the unified homepage React page
  *
  * **Details:**
@@ -622,10 +635,10 @@ export const useFlagGrafanaVectorSearchCmdk = (options?: ReactFlagEvaluationOpti
  *
  * **Details:**
  * - flag key: `grafana.viewPanelPane`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaViewPanelPane = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.viewPanelPane", false, options).value;
+  return useFlag("grafana.viewPanelPane", true, options).value;
 };
 
 /**

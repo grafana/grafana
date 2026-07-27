@@ -9,17 +9,16 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AlertState, type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { alertsCardClicked } from '../analytics/main';
+import { ctaClicked } from '../analytics/main';
 
 import { FiringAlertsCard } from './FiringAlertsCard';
 import { HOME_CARD_MAX_ITEMS } from './constants';
 
 jest.mock('../analytics/main', () => ({
-  alertsCardClicked: jest.fn(),
-  incidentsCardClicked: jest.fn(),
+  ctaClicked: jest.fn(),
   tabChanged: jest.fn(),
   clearHistoryClicked: jest.fn(),
-  emptyCtaClicked: jest.fn(),
+  homepageViewed: jest.fn(),
 }));
 
 setBackendSrv(backendSrv);
@@ -358,10 +357,10 @@ describe('FiringAlertsCard', () => {
 
       await user.click(await screen.findByRole('link', { name: /^Linked alert/ }));
 
-      expect(jest.mocked(alertsCardClicked)).toHaveBeenCalledWith({
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'alerts_card',
         action: 'alert_detail',
         placement: 'list',
-        severity: 'critical',
       });
     });
 
@@ -379,7 +378,8 @@ describe('FiringAlertsCard', () => {
 
       await user.click(await screen.findByRole('link', { name: /create an alert rule/i }));
 
-      expect(jest.mocked(alertsCardClicked)).toHaveBeenCalledWith({
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'alerts_card',
         action: 'create_rule',
         placement: 'empty_state',
       });
@@ -398,13 +398,15 @@ describe('FiringAlertsCard', () => {
       const { user } = render(<FiringAlertsCard />);
 
       await user.click(await screen.findByRole('link', { name: /create an alert rule/i }));
-      expect(jest.mocked(alertsCardClicked)).toHaveBeenCalledWith({
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'alerts_card',
         action: 'create_rule',
         placement: 'footer',
       });
 
       await user.click(screen.getByRole('link', { name: /view all firing alerts/i }));
-      expect(jest.mocked(alertsCardClicked)).toHaveBeenCalledWith({
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'alerts_card',
         action: 'view_all_alerts',
         placement: 'footer',
       });
@@ -418,7 +420,8 @@ describe('FiringAlertsCard', () => {
 
       await user.click(await screen.findByRole('link', { name: /view all alert rules/i }));
 
-      expect(jest.mocked(alertsCardClicked)).toHaveBeenCalledWith({
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'alerts_card',
         action: 'view_all_rules',
         placement: 'footer',
       });

@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -56,6 +57,7 @@ type service struct {
 	backend       resource.StorageBackend
 	vectorBackend vector.VectorBackend
 	embedder      *embedder.Embedder
+	reranker      *rerank.Reranker
 	serverStopper resource.ResourceServerStopper
 	cfg           *setting.Cfg
 	features      featuremgmt.FeatureToggles
@@ -117,10 +119,11 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 	backend resource.StorageBackend,
 	vectorBackend vector.VectorBackend,
 	embedderInstance *embedder.Embedder,
+	rerankerInstance *rerank.Reranker,
 	provider grpcserver.Provider,
 	opts ...ServiceOption,
 ) (resource.UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, vectorMetrics, searchRing, backend, vectorBackend, embedderInstance, nil)
+	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, vectorMetrics, searchRing, backend, vectorBackend, embedderInstance, rerankerInstance, nil)
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -159,11 +162,12 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	backend resource.StorageBackend,
 	vectorBackend vector.VectorBackend,
 	embedderInstance *embedder.Embedder,
+	rerankerInstance *rerank.Reranker,
 	searchClient resourcepb.ResourceIndexClient,
 	provider grpcserver.Provider,
 	opts ...ServiceOption,
 ) (resource.UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, vectorMetrics, searchRing, backend, vectorBackend, embedderInstance, searchClient)
+	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, vectorMetrics, searchRing, backend, vectorBackend, embedderInstance, rerankerInstance, searchClient)
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -223,6 +227,7 @@ func newService(
 	backend resource.StorageBackend,
 	vectorBackend vector.VectorBackend,
 	embedder *embedder.Embedder,
+	reranker *rerank.Reranker,
 	searchClient resourcepb.ResourceIndexClient,
 ) *service {
 	authn := newGrpcAuthenticator(cfg, tracer)
@@ -231,6 +236,7 @@ func newService(
 		backend:            backend,
 		vectorBackend:      vectorBackend,
 		embedder:           embedder,
+		reranker:           reranker,
 		cfg:                cfg,
 		features:           features,
 		authenticator:      authn,
@@ -396,7 +402,7 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 		}
 	}
 
-	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.docBuilders, s.indexMetrics, s.OwnsIndex, snapshotStore)
+	searchOptions, err := search.NewSearchOptions(s.cfg, s.docBuilders, s.indexMetrics, s.OwnsIndex, snapshotStore)
 	if err != nil {
 		return err
 	}
@@ -425,6 +431,7 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 		Backend:        s.backend,
 		VectorBackend:  s.vectorBackend,
 		Embedder:       s.embedder,
+		Reranker:       s.reranker,
 		Cfg:            s.cfg,
 		Tracer:         s.tracing,
 		Reg:            s.reg,
