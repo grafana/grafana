@@ -16,7 +16,7 @@ import (
 func Query(ctx context.Context, dsInfo *models.DatasourceInfo, tsdbQuery backend.QueryDataRequest, logger log.Logger) (*backend.QueryDataResponse, error) {
 	logger = logger.FromContext(ctx)
 	tRes := backend.NewQueryDataResponse()
-	logger.Debug("Received a query", "query", tsdbQuery)
+	logger.Debug("Received a query request", "numQueries", len(tsdbQuery.Queries))
 	r, err := runnerFromDataSource(dsInfo)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
