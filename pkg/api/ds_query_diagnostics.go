@@ -101,7 +101,14 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	if bundleErr == nil {
 		bundleErr = respErr
 	}
-	bundle, err := diagnostics.NewBundler().Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, bundleErr)
+	// Serializing the request must not sink a bundle that already captured HAR and a response: drop the
+	// request JSON on failure but hand the error to Build so it records querydata-error.txt instead of
+	// silently omitting the request, mirroring how the per-panel dashboard path isolates the same failure.
+	queryRequestJSON, marshalErr := json.Marshal(reqDTO.MetricRequest)
+	if marshalErr != nil {
+		queryRequestJSON = nil
+	}
+	bundle, err := diagnostics.NewBundler().Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, queryRequestJSON, marshalErr, bundleErr)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to build diagnostics bundle", err)
 	}

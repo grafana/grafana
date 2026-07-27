@@ -236,18 +236,50 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	// Record job processing error on span
 	if err != nil {
 		span.RecordError(err)
-		logger.Error("job failed", "duration", duration, "error", err)
-	} else {
-		logger.Info("job complete", "duration", duration)
 	}
 
 	// Complete the job
 	d.mu.Lock()
+	// recorder.Complete builds a fresh status, so carry the running progress-update
+	// count forward and bump it for this final write -- otherwise the count
+	// accumulated during processing would be lost on the historic job.
+	progressUpdates := d.currentJob.Status.ProgressUpdates
 	d.currentJob.Status = recorder.Complete(ctx, err)
+	d.currentJob.Status.ProgressUpdates = progressUpdates + 1
 	defer func() {
 		d.currentJob = nil
 		d.mu.Unlock()
 	}()
+
+	// Log completion keyed off the final job state so that per-file errors that
+	// promoted the job to an error/warning state (without a top-level err) are
+	// still visible. The per-file breakdown stays at Debug to avoid noise at Info.
+	status := d.currentJob.Status
+	logFields := []any{
+		"duration", duration,
+		"state", status.State,
+		"errorCount", len(status.Errors),
+		"warningCount", len(status.Warnings),
+		"message", status.Message,
+	}
+	switch {
+	case err != nil:
+		logger.Error("job failed", append(logFields, "error", err)...)
+	case status.State == provisioning.JobStateError:
+		logger.Error("job completed with errors", logFields...)
+	case status.State == provisioning.JobStateWarning:
+		logger.Warn("job completed with warnings", logFields...)
+	default:
+		logger.Info("job complete", logFields...)
+	}
+
+	if len(status.Errors) > 0 || len(status.Warnings) > 0 {
+		logger.Debug("job completion details",
+			"errors", status.Errors,
+			"warnings", status.Warnings,
+			"reasons", recorder.ResultReasons(),
+		)
+	}
 
 	// Save the finished job
 	if err = d.historicJobs.WriteJob(ctx, d.currentJob.DeepCopy()); err != nil {
@@ -370,13 +402,15 @@ func (d *jobDriver) processJobWithLeaseCheck(ctx context.Context, recorder JobPr
 }
 
 // withJobAuthorSignature carries the job's recorded author into ctx as the git
-// commit signature when present. The author annotations are set at creation time
-// by the job admission mutator, which is where the user-attribution feature flag
-// is enforced; the driver simply applies whatever was recorded on the job.
+// commit signature. The author annotations are set at creation time by the job
+// admission mutator, which is where the user-attribution feature flag is
+// enforced; the driver simply applies whatever was recorded on the job. An
+// email is required: webhook attribution carries none, so webhook-created jobs
+// keep the default Grafana commit identity.
 func withJobAuthorSignature(ctx context.Context, job *provisioning.Job) context.Context {
 	name := job.Annotations[appjobs.AnnoAuthor]
 	email := job.Annotations[appjobs.AnnoAuthorEmail]
-	if name == "" && email == "" {
+	if email == "" {
 		return ctx
 	}
 	return repository.WithAuthorSignature(ctx, repository.CommitSignature{Name: name, Email: email})
@@ -497,10 +531,15 @@ func (d *jobDriver) onProgress() ProgressFn {
 				*d.currentJob = *latest
 			}
 
-			job := d.currentJob
-			// Update status on the current job
-			job.Status = status
-			updated, err := d.store.Update(ctx, job)
+			// Build the candidate on a copy so a failed write never mutates our
+			// in-memory job: the recorder ignores progress errors and keeps going,
+			// so leaving an increment behind would count writes that never persisted.
+			// The incoming status replaces the whole status object, so carry the
+			// progress-update count forward and bump it for this write.
+			candidate := d.currentJob.DeepCopy()
+			candidate.Status = status
+			candidate.Status.ProgressUpdates = d.currentJob.Status.ProgressUpdates + 1
+			updated, err := d.store.Update(ctx, candidate)
 			if err != nil {
 				if apierrors.IsConflict(err) && attempt < maxRetries-1 {
 					d.mu.Unlock()
@@ -511,7 +550,7 @@ func (d *jobDriver) onProgress() ProgressFn {
 				return apifmt.Errorf("failed to update job progress: %w", err)
 			}
 
-			// Update succeeded, update our local copy
+			// Update succeeded, commit the persisted state to our local copy.
 			*d.currentJob = *updated
 			d.mu.Unlock()
 

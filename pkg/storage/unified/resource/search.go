@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"math/rand"
+	"net/http"
 	"slices"
 	"strings"
 	"sync"
@@ -35,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/util/debouncer"
 )
@@ -168,6 +170,12 @@ type SearchBackend interface {
 	// TotalDocs returns the total number of documents across all indexes.
 	TotalDocs() int64
 
+	// SnapshotCountThreshold returns the document count at or above which
+	// BuildIndex uses remote snapshots, or 0 when snapshots are inactive (no
+	// store configured). The startup prebuild uses it to cap counting without
+	// changing the snapshot decision.
+	SnapshotCountThreshold() int64
+
 	// GetOpenIndexes returns the list of indexes that are currently open.
 	GetOpenIndexes() []NamespacedResource
 
@@ -181,6 +189,7 @@ type searchServer struct {
 	storage       StorageBackend
 	vectorBackend vector.VectorBackend
 	embedder      *embedder.Embedder
+	reranker      *rerank.Reranker
 	search        SearchBackend
 	indexMetrics  *BleveIndexMetrics
 	vectorMetrics *VectorMetrics
@@ -194,6 +203,7 @@ type searchServer struct {
 	rateLimiter            vector.RateLimiter
 	rateLimitPerTenant     int
 	rateLimitWindow        time.Duration
+	collectionAllowlist    vector.CollectionAllowlist
 
 	ownsIndexFn func(key NamespacedResource) (bool, error)
 
@@ -254,7 +264,7 @@ var (
 )
 
 // newSearchServer creates a new search server implementation.
-func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend vector.VectorBackend, embedder *embedder.Embedder, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, vectorMetrics *VectorMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (*searchServer, error) {
+func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend vector.VectorBackend, embedder *embedder.Embedder, reranker *rerank.Reranker, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, vectorMetrics *VectorMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (*searchServer, error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
@@ -284,6 +294,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		storage:        storage,
 		vectorBackend:  vectorBackend,
 		embedder:       embedder,
+		reranker:       reranker,
 		search:         opts.Backend,
 		log:            log.New("resource-search"),
 		initWorkers:    opts.InitWorkerThreads,
@@ -306,6 +317,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		rateLimiter:            opts.RateLimiter,
 		rateLimitPerTenant:     opts.RateLimitPerTenant,
 		rateLimitWindow:        opts.RateLimitWindow,
+		collectionAllowlist:    vector.NewCollectionAllowlist(opts.AllowedInternalCollections, opts.AllowedExternalCollections),
 	}
 
 	s.rebuildQueue = debouncer.NewQueue(combineRebuildRequests)
@@ -616,17 +628,10 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 			resource = r
 		}
 	}
+
+	// record metrics at the end
 	defer func() {
-		// Validation early-returns wrap a BadRequestError in the response but
-		// don't return an error — map those to InvalidArgument so the histogram
-		// doesn't conflate them with successful searches.
-		code := codes.OK
-		switch {
-		case retErr != nil:
-			code = status.Code(retErr)
-		case resp != nil && resp.Error != nil:
-			code = codes.InvalidArgument
-		}
+		code := vectorSearchResponseCode(resp, retErr)
 		if s.vectorMetrics != nil {
 			metricutil.ObserveWithExemplar(ctx,
 				s.vectorMetrics.SearchDuration.WithLabelValues(group, resource, code.String()),
@@ -641,6 +646,11 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 
 	if errResp := validateVectorSearchRequest(req); errResp != nil {
 		return errResp, nil
+	}
+
+	// External collections skip the per-result BatchCheck, so this namespace check is their only cross-tenant guard.
+	if errRes := requireUserNamespace(ctx, req.Key.Namespace); errRes != nil {
+		return &resourcepb.VectorSearchResponse{Error: errRes}, nil
 	}
 
 	limit := int(req.Limit)
@@ -662,13 +672,24 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return nil, err
 	}
 
+	// An unprovisioned (group, resource) pair — no catalog row, so no
+	// partition to search — is NOT_FOUND before we spend an embedding on
+	// the query.
+	coll, collAllowed, err := s.resolveAllowedCollection(ctx, req.Key.Group, req.Key.Resource)
+	if err != nil {
+		return nil, s.grpcStatusError(ctx, "vector search: resolve collection", err)
+	}
+	if !collAllowed {
+		return &resourcepb.VectorSearchResponse{Error: NewNotFoundError(req.Key)}, nil
+	}
+
 	dense, err := s.embedVectorSearchQuery(ctx, req.Key.Namespace, req.Query)
 	if err != nil {
 		return nil, err
 	}
 
 	results, err := s.vectorBackend.Search(ctx,
-		req.Key.Namespace, s.embedder.Model, req.Key.Resource,
+		req.Key.Namespace, s.embedder.Model, coll.PartitionKey,
 		dense, limit, translateVectorSearchFilters(req.Filters)...)
 	if err != nil {
 		if ctx.Err() != nil {
@@ -686,20 +707,26 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return nil, status.Error(codes.Unauthenticated, "no user in context")
 	}
 
-	allowed, err := s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
-	if err != nil {
-		if ctx.Err() != nil {
-			return nil, status.FromContextError(ctx.Err()).Err()
+	// External rows aren't unified-storage resources — the authz service
+	// has nothing to answer for them, so per-result checks are skipped
+	// and the caller does its own post-filtering.
+	var allowed map[vectorAuthzKey]bool
+	if !coll.IsExternal {
+		allowed, err = s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
+		if err != nil {
+			if ctx.Err() != nil {
+				return nil, status.FromContextError(ctx.Err()).Err()
+			}
+			s.log.Error("vector search: authz batch check", "err", err)
+			return nil, status.Error(codes.Internal, "authz batch check")
 		}
-		s.log.Error("vector search: authz batch check", "err", err)
-		return nil, status.Error(codes.Internal, "authz batch check")
 	}
 
 	resp = &resourcepb.VectorSearchResponse{
 		Results: make([]*resourcepb.VectorSearchResult, 0, len(results)),
 	}
 	for _, r := range results {
-		if !allowed[vectorAuthzKey{r.UID, r.Folder}] {
+		if !coll.IsExternal && !allowed[vectorAuthzKey{r.UID, r.Folder}] {
 			continue
 		}
 		resp.Results = append(resp.Results, &resourcepb.VectorSearchResult{
@@ -713,6 +740,31 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		})
 	}
 	return resp, nil
+}
+
+// vectorSearchResponseCode maps a VectorSearch outcome to the gRPC code label
+// on the search-duration metric. ErrorResult carries HTTP-style codes; an
+// unmapped code labels as Unknown — a signal to add a mapping, not a silent
+// mislabel.
+func vectorSearchResponseCode(resp *resourcepb.VectorSearchResponse, retErr error) codes.Code {
+	switch {
+	case retErr != nil:
+		return status.Code(retErr)
+	case resp == nil || resp.Error == nil:
+		return codes.OK
+	}
+	switch resp.Error.Code {
+	case http.StatusBadRequest:
+		return codes.InvalidArgument
+	case http.StatusNotFound:
+		return codes.NotFound
+	case http.StatusForbidden:
+		return codes.PermissionDenied
+	case http.StatusUnauthorized:
+		return codes.Unauthenticated
+	default:
+		return codes.Unknown
+	}
 }
 
 // validateVectorSearchRequest returns a non-nil response with a
@@ -1141,9 +1193,18 @@ func (s *searchServer) startupIndexStats(ctx context.Context) ([]ResourceStats, 
 		s.log.FromContext(ctx).Debug("open index stats unavailable, falling back to resource stats")
 	}
 
+	// The prebuild only compares counts against thresholds, so cap counting above
+	// the highest one that consumes the count: init min size, plus the snapshot
+	// threshold when a snapshot store is active.
+	limit := s.initMinSize
+	if t := int(s.search.SnapshotCountThreshold()); t > limit {
+		limit = t
+	}
+	limit++
+
 	start := time.Now()
-	stats, err = s.storage.GetResourceStats(ctx, NamespacedResource{}, s.initMinSize)
-	s.log.Debug("startupIndexStats: got resource stats from storage", "elapsed", time.Since(start).String(), "stats", len(stats), "err", err)
+	stats, err = s.storage.GetResourceStatsWithLimit(ctx, NamespacedResource{}, s.initMinSize, limit)
+	s.log.Debug("startupIndexStats: got resource stats from storage", "elapsed", time.Since(start).String(), "stats", len(stats), "err", err, "countLimit", limit)
 	return stats, err
 }
 

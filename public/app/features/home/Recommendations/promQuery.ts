@@ -3,6 +3,7 @@ import { first } from 'rxjs/operators';
 
 import {
   type DataFrame,
+  type DataQuery,
   type DataSourceInstanceSettings,
   dateTime,
   type Field,
@@ -43,13 +44,13 @@ export function readSeries(frames: DataFrame[], refId: string): FieldSparkline |
 }
 
 /**
- * Run PromQL through the shared {@link createQueryRunner | QueryRunner} against `ds` — core plumbing
- * owns request building, interval math, and frame conversion, and the Prometheus datasource always
- * answers with DataFrames. Throws (surfaced as an error; callers omit the entry) when the query
- * errors or times out.
+ * Run queries through the shared {@link createQueryRunner | QueryRunner} against `ds` — core
+ * plumbing owns request building, interval math, and frame conversion. Works for any datasource
+ * whose targets are expressible as DataQuery (Prometheus PromQL, Tempo TraceQL). Throws (surfaced
+ * as an error; callers omit the entry) when the query errors or times out.
  */
-async function runPromQueries(
-  queries: PromQuery[],
+export async function runDatasourceQueries(
+  queries: DataQuery[],
   range: TimeRange,
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
   timeoutMs = 30_000
@@ -96,7 +97,7 @@ export async function runInstantQueries(
     instant: true,
     range: false,
   }));
-  return runPromQueries(targets, getDefaultTimeRange(), ds, timeoutMs);
+  return runDatasourceQueries(targets, getDefaultTimeRange(), ds, timeoutMs);
 }
 
 /**
@@ -112,5 +113,6 @@ export async function runRangeQuery(
   const toTime = dateTime();
   const fromTime = dateTime().subtract(hours, 'h');
   const range: TimeRange = { from: fromTime, to: toTime, raw: { from: `now-${hours}h`, to: 'now' } };
-  return runPromQueries([{ refId, expr, instant: false, range: true }], range, ds);
+  const target: PromQuery = { refId, expr, instant: false, range: true };
+  return runDatasourceQueries([target], range, ds);
 }
