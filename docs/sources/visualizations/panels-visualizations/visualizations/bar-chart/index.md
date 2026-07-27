@@ -111,7 +111,7 @@ For more information about applying filters this way, refer to [Dashboard drilld
 Use the **Graph styles > Transform** [override property](#field-overrides) to transform series values without affecting the values shown in the tooltip, context menu, or legend. Choose from the following transform options:
 
 - **Constant** - Show the first value as a constant line.
-- **Negative Y transform** - Flip the results to negative values on the y-axis.
+- **Negative Y** - Flip the results to negative values on the y-axis.
 
 ## Configuration options
 
@@ -130,7 +130,7 @@ Use these options to refine your visualization.
 | Option                           | Description                                                                                      |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | X Axis                           | Specify which field is used for the x-axis.          |
-| Orientation                      | Choose from: <ul><li>**Auto** - Grafana decides the bar orientation based on the panel dimensions.</li><li>**Horizontal** - Will make the X axis the category axis.</li><li>**Vertical** - Will make the Y axis the category axis.</li></ul> |
+| Orientation                      | Choose from: <ul><li>**Auto** - Grafana decides the bar orientation based on the panel dimensions.</li><li>**Horizontal** - Will make the Y axis the category axis.</li><li>**Vertical** - Will make the X axis the category axis.</li></ul> |
 | Rotate x-axis tick labels        | When the graph is vertically oriented, this setting rotates the labels under the bars. This setting is useful when bar chart labels are long and overlap.  |
 | X-axis tick label max length | Sets the maximum length of bar chart labels. Labels longer than the maximum length are truncated, and appended with `...`. This option is available when **Rotate x-axis tick labels** isn't `0`. |
 | X-axis labels minimum spacing | Sets the minimum spacing between x-axis labels. Depending on your choice, you can select the **RTL** checkbox to require space from the right side. Choose from: <ul><li>**None** - All tick marks are shown.</li><li>**Small** - 100 pixels of space is required between labels.</li><li>**Medium** - 200 pixels of space is required between labels.</li><li>**Large** - 300 pixels of space is required between labels.</li></ul>  |
@@ -193,7 +193,7 @@ Some field options will not affect the visualization until you click outside of 
 | Show grid lines | Set whether grid lines are displayed in the chart. Choose from: <ul><li>**Auto** - Grafana automatically determines whether grid lines are displayed.</li><li>**On** - Grid lines are always displayed.</li><li>**Off** - Grid lines are never displayed</li></ul> |
 | Color | Choose whether the axis color is the **Text** or **Series** color. |
 | Show border | Toggle the switch to hide or display the border. |
-| Scale | Set how the y-axis is split. Choose from: <ul><li>**Linear**</li><li>**Logarithmic** - Choose between log base 2 or log base 10.</li><li>**Symlog** - Uses a symmetrical logarithmic scale. Choose between log base 2 or log base 10, allowing for negative values.</li></ul> |
+| Scale | Set how the y-axis is split. Choose from: <ul><li>**Linear**</li><li>**Logarithmic** - Choose between log base 2 or log base 10.</li><li>**Symlog** - Uses a symmetrical logarithmic scale. Choose between log base 2 or log base 10, allowing for negative values. When you select this option, you can also set a **Linear threshold** at which the scale changes from linear to logarithmic.</li></ul> |
 | Centered zero | Set the y-axis so it's centered on zero. |
 | [Soft min and soft max](#soft-min-and-soft-max) | Set a **Soft min** or **soft max** option for better control of Y-axis limits. By default, Grafana sets the range for the Y-axis automatically based on the dataset. |
 
