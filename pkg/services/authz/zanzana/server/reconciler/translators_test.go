@@ -112,6 +112,67 @@ func TestTranslateResourcePermissionToTuples(t *testing.T) {
 	}
 }
 
+func TestTranslateDatasourceResourcePermissionToTuples(t *testing.T) {
+	const (
+		group    = "loki.datasource.grafana.app"
+		resource = "datasources"
+		name     = "ds-1"
+	)
+
+	subjects := []struct {
+		name string
+		kind iamv0.ResourcePermissionSpecPermissionKind
+		id   string
+		user string
+	}{
+		{"user", iamv0.ResourcePermissionSpecPermissionKindUser, "uid1", "user:uid1"},
+		{"service-account", iamv0.ResourcePermissionSpecPermissionKindServiceAccount, "sa1", "service-account:sa1"},
+		{"team", iamv0.ResourcePermissionSpecPermissionKindTeam, "team1", "team:team1#member"},
+		{"basic-role", iamv0.ResourcePermissionSpecPermissionKindBasicRole, "Editor", "role:basic_editor#assignee"},
+	}
+	levels := []struct {
+		name     string
+		verb     string
+		relation string
+	}{
+		{"query", "Query", "view"},
+		{"edit", "Edit", "edit"},
+		{"admin", "Admin", "admin"},
+	}
+
+	for _, subject := range subjects {
+		for _, level := range levels {
+			t.Run(subject.name+"/"+level.name, func(t *testing.T) {
+				rp := &iamv0.ResourcePermission{
+					ObjectMeta: metav1.ObjectMeta{Name: "loki.datasource.grafana.app-datasources-ds-1"},
+					Spec: iamv0.ResourcePermissionSpec{
+						Resource: iamv0.ResourcePermissionspecResource{
+							ApiGroup: group,
+							Resource: resource,
+							Name:     name,
+						},
+						Permissions: []iamv0.ResourcePermissionspecPermission{{
+							Kind: subject.kind,
+							Name: subject.id,
+							Verb: level.verb,
+						}},
+					},
+				}
+
+				tuples, err := TranslateResourcePermissionToTuples(toUnstructured(t, rp))
+				require.NoError(t, err)
+				require.ElementsMatch(t,
+					tupleKeyStrings([]*openfgav1.TupleKey{
+						common.NewResourceTuple(subject.user, level.relation, group, resource, "", name),
+						common.NewResourceTuple(subject.user, common.RelationCreate, group, resource, "query", name),
+					}),
+					tupleKeyStrings(tuples),
+				)
+			})
+		}
+	}
+}
+
 func TestTranslateTeamToMemberTuples(t *testing.T) {
 	t.Run("admin and member", func(t *testing.T) {
 		team := &iamv0.Team{
@@ -825,6 +886,45 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 					validateTupleAgainstSchema(t, ts, tuple)
 				}
 			})
+		}
+	})
+
+	t.Run("datasource resource permissions for all levels and subject kinds", func(t *testing.T) {
+		kinds := []struct {
+			kind iamv0.ResourcePermissionSpecPermissionKind
+			name string
+		}{
+			{iamv0.ResourcePermissionSpecPermissionKindUser, "uid1"},
+			{iamv0.ResourcePermissionSpecPermissionKindServiceAccount, "sa1"},
+			{iamv0.ResourcePermissionSpecPermissionKindTeam, "team1"},
+			{iamv0.ResourcePermissionSpecPermissionKindBasicRole, "Editor"},
+		}
+
+		for _, k := range kinds {
+			for _, verb := range []string{"Query", "Edit", "Admin"} {
+				t.Run(string(k.kind)+"/"+verb, func(t *testing.T) {
+					rp := &iamv0.ResourcePermission{
+						ObjectMeta: metav1.ObjectMeta{Name: "rp-datasource-schema-test"},
+						Spec: iamv0.ResourcePermissionSpec{
+							Resource: iamv0.ResourcePermissionspecResource{
+								ApiGroup: "loki.datasource.grafana.app",
+								Resource: "datasources",
+								Name:     "ds-1",
+							},
+							Permissions: []iamv0.ResourcePermissionspecPermission{
+								{Kind: k.kind, Name: k.name, Verb: verb},
+							},
+						},
+					}
+
+					tuples, err := TranslateResourcePermissionToTuples(toUnstructured(t, rp))
+					require.NoError(t, err)
+					require.Len(t, tuples, 2)
+					for _, tuple := range tuples {
+						validateTupleAgainstSchema(t, ts, tuple)
+					}
+				})
+			}
 		}
 	})
 

@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -952,5 +953,117 @@ func TestGetOrgUsersForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
 		assert.Equal(t, "jdoe", got[0].Login)
 		assert.Equal(t, int64(42), got[0].UserID)
 		assert.Equal(t, "other", got[1].Login)
+	})
+}
+
+func TestUpdateOrgUserForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
+	permissions := []accesscontrol.Permission{
+		{Action: accesscontrol.ActionOrgUsersRead, Scope: "users:*"},
+		{Action: accesscontrol.ActionOrgUsersWrite, Scope: "users:*"},
+	}
+
+	orgUsersWithTwoAdmins := user.SearchUserQueryResult{
+		TotalCount: 2,
+		Users: []*user.UserSearchHitDTO{
+			{ID: 1, Login: "target", Role: string(identity.RoleAdmin)},
+			{ID: 2, Login: "other", Role: string(identity.RoleAdmin)},
+		},
+	}
+
+	type deps struct {
+		updateCmd   *user.UpdateUserCommand
+		legacyError error
+		updateError error
+		searchUsers user.SearchUserQueryResult
+	}
+
+	setup := func(t *testing.T, d *deps) *webtest.Server {
+		return SetupAPITestServer(t, func(hs *HTTPServer) {
+			hs.Cfg = setting.NewCfg()
+			hs.authInfoService = &authinfotest.FakeService{
+				ExpectedUserAuth: &login.UserAuth{AuthModule: ""},
+			}
+			hs.userService = &usertest.FakeUserService{
+				ExpectedSearchUsers: d.searchUsers,
+				UpdateFn: func(_ context.Context, cmd *user.UpdateUserCommand) error {
+					d.updateCmd = cmd
+					return d.updateError
+				},
+			}
+			hs.orgService = &orgtest.FakeOrgService{ExpectedError: d.legacyError}
+			hs.accesscontrolService = &actest.FakeService{ExpectedPermissions: permissions}
+		})
+	}
+
+	sendPatch := func(t *testing.T, server *webtest.Server, role string) int {
+		signedInUser := userWithPermissions(1, permissions)
+		signedInUser.OrgRole = identity.RoleAdmin
+		body := fmt.Sprintf(`{"role": %q}`, role)
+		req := server.NewRequest(http.MethodPatch, "/api/org/users/1", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		res, err := server.Send(webtest.RequestWithSignedInUser(req, signedInUser))
+		require.NoError(t, err)
+		require.NoError(t, res.Body.Close())
+		return res.StatusCode
+	}
+
+	t.Run("routes the role update through the user service when the flag is enabled", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+
+		// Force the legacy path to error so a 200 proves it was not taken.
+		d := &deps{legacyError: errors.New("legacy path must not be called"), searchUsers: orgUsersWithTwoAdmins}
+		statusCode := sendPatch(t, setup(t, d), "Editor")
+
+		assert.Equal(t, http.StatusOK, statusCode)
+		require.NotNil(t, d.updateCmd)
+		assert.Equal(t, int64(1), d.updateCmd.UserID)
+		require.NotNil(t, d.updateCmd.OrgRole)
+		assert.Equal(t, string(identity.RoleEditor), *d.updateCmd.OrgRole)
+	})
+
+	t.Run("returns 500 when the user service update fails", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+
+		d := &deps{updateError: errors.New("boom"), searchUsers: orgUsersWithTwoAdmins}
+		statusCode := sendPatch(t, setup(t, d), "Editor")
+
+		assert.Equal(t, http.StatusInternalServerError, statusCode)
+	})
+
+	t.Run("blocks demoting the last org admin", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+
+		d := &deps{searchUsers: user.SearchUserQueryResult{
+			TotalCount: 2,
+			Users: []*user.UserSearchHitDTO{
+				{ID: 1, Login: "target", Role: string(identity.RoleAdmin)},
+				{ID: 2, Login: "other", Role: string(identity.RoleViewer)},
+			},
+		}}
+		statusCode := sendPatch(t, setup(t, d), "Editor")
+
+		assert.Equal(t, http.StatusBadRequest, statusCode)
+		assert.Nil(t, d.updateCmd, "user service update should not be called when the change is blocked")
+	})
+
+	t.Run("allows promoting to Admin without the last-admin lookup", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+
+		d := &deps{}
+		statusCode := sendPatch(t, setup(t, d), "Admin")
+
+		assert.Equal(t, http.StatusOK, statusCode)
+		require.NotNil(t, d.updateCmd)
+		assert.Equal(t, string(identity.RoleAdmin), *d.updateCmd.OrgRole)
+	})
+
+	t.Run("keeps using the legacy org service when the flag is disabled", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, false)
+
+		d := &deps{}
+		statusCode := sendPatch(t, setup(t, d), "Editor")
+
+		assert.Equal(t, http.StatusOK, statusCode)
+		assert.Nil(t, d.updateCmd, "user service update should not be called on the legacy path")
 	})
 }

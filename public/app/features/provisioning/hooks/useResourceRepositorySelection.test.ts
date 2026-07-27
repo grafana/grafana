@@ -1,6 +1,5 @@
 import { renderHook } from '@testing-library/react';
 
-import { config } from '@grafana/runtime';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { resourceKindInfos } from '../utils/resourceKinds';
@@ -18,14 +17,7 @@ const repo = { name: 'r1', title: 'R1', target: 'instance', type: 'git', workflo
 
 describe('useResourceRepositorySelection', () => {
   beforeEach(() => {
-    config.featureToggles.provisioning = true;
     mockQuery.mockReturnValue({ data: undefined });
-  });
-
-  it('is unavailable when provisioning is disabled', () => {
-    config.featureToggles.provisioning = false;
-    const { result } = renderHook(() => useResourceRepositorySelection(resourceKindInfos.playlist));
-    expect(result.current.isAvailable).toBe(false);
   });
 
   it('is unavailable when the kind is not declared in availableResources', () => {
