@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	mathrand "math/rand/v2"
 	"net/http"
 	"strconv"
+	"sync/atomic"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -141,6 +141,11 @@ type persistentStore struct {
 	// instead of a cluster-wide List. Nil falls back to the List path.
 	cache ClaimCache
 
+	// claimRotor rotates the starting offset into the candidate list per claim so
+	// concurrent drivers spread across distinct head candidates instead of all
+	// racing the same one.
+	claimRotor atomic.Uint64
+
 	queueMetrics QueueMetrics
 }
 
@@ -207,12 +212,19 @@ func (s *persistentStore) claimFromCache(ctx context.Context) (*provisioning.Job
 	logger := logging.FromContext(ctx).With("operation", "claim", "source", "cache")
 
 	candidates := s.cache.List(ctx)
-	// Shuffle so concurrent drivers do not all target the same head candidate and
-	// pile up conflicts on it.
-	mathrand.Shuffle(len(candidates), func(i, j int) { candidates[i], candidates[j] = candidates[j], candidates[i] })
+
+	// Rotate the per-call starting offset so concurrent drivers spread across
+	// distinct head candidates instead of all racing the same one and piling up
+	// claim conflicts. A monotonic counter gives a deterministic spread with no PRNG.
+	n := len(candidates)
+	var start int
+	if n > 0 {
+		start = int(s.claimRotor.Add(1) % uint64(n))
+	}
 
 	gets := 0
-	for _, obj := range candidates {
+	for k := 0; k < n; k++ {
+		obj := candidates[(start+k)%n]
 		if ctx.Err() != nil {
 			return nil, nil, ctx.Err()
 		}
