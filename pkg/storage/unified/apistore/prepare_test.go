@@ -1,9 +1,12 @@
 package apistore
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"math/rand/v2"
 	"strings"
 	"testing"
@@ -17,6 +20,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/client-go/dynamic"
@@ -26,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -846,4 +851,127 @@ func (f *fakeSearchIndex) Search(_ context.Context, req *resourcepb.ResourceSear
 		}
 	}
 	return rsp, nil
+}
+
+// fakeOrder builds an immutable version-order snapshot for a single group (highest first).
+func fakeOrder(group string, order ...string) map[string][]string {
+	return map[string][]string{group: order}
+}
+
+// dashboardAt returns a dashboard with TypeMeta set to version so checkGVK takes the resolved-GVK path.
+func dashboardAt(version string) *dashv1.Dashboard {
+	d := &dashv1.Dashboard{}
+	d.Name = "test-name"
+	d.APIVersion = dashv1.DashboardResourceInfo.GroupResource().Group + "/" + version
+	d.Kind = "Dashboard"
+	return d
+}
+
+// newGlobalCapRegistry builds a registry whose global (ini) layer caps group at maxVersion.
+func newGlobalCapRegistry(group string, order []string, maxVersion string) *versionpolicy.VersionPolicyRegistry {
+	return versionpolicy.NewVersionPolicyRegistry(
+		versionpolicy.NewResolver(fakeOrder(group, order...)),
+		nil,
+		map[string]versionpolicy.VersionPolicy{group: {MaxAllowedVersion: maxVersion}},
+	)
+}
+
+func TestEncodeMaxVersionEnforcement(t *testing.T) {
+	_ = dashv1.AddToScheme(rtscheme)
+	group := dashv1.DashboardResourceInfo.GroupResource().Group
+
+	newStorage := func(gr schema.GroupResource, vp *versionpolicy.VersionPolicyRegistry) *Storage {
+		return &Storage{
+			gr:    gr,
+			codec: apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+			opts: StorageOptions{
+				Scheme:        rtscheme,
+				VersionPolicy: vp,
+			},
+		}
+	}
+
+	t.Run("max=v1 + object v2 is rejected with a 4xx naming the ceiling", func(t *testing.T) {
+		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "v1")
+		s := newStorage(dashv1.DashboardResourceInfo.GroupResource(), reg)
+
+		var buf bytes.Buffer
+		err := s.encode(dashboardAt("v2"), &buf)
+
+		require.Error(t, err)
+		require.True(t, apierrors.IsBadRequest(err) || apierrors.IsConflict(err), "expected a 4xx, got %v", err)
+		require.Contains(t, err.Error(), "v1", "message should name the ceiling version")
+	})
+
+	t.Run("max=v2 + object v1 is stored as v1, unchanged (regression guard)", func(t *testing.T) {
+		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "v2")
+		s := newStorage(dashv1.DashboardResourceInfo.GroupResource(), reg)
+
+		var buf bytes.Buffer
+		err := s.encode(dashboardAt("v1"), &buf)
+		require.NoError(t, err)
+
+		out := &unstructured.Unstructured{}
+		require.NoError(t, json.Unmarshal(buf.Bytes(), out))
+		require.Equal(t, group+"/v1", out.GetAPIVersion(), "no down/up-conversion: stored version must be exactly what was written")
+	})
+
+	t.Run("no policy set for the group leaves encode unchanged", func(t *testing.T) {
+		s := newStorage(dashv1.DashboardResourceInfo.GroupResource(), nil)
+
+		var buf bytes.Buffer
+		err := s.encode(dashboardAt("v2"), &buf)
+		require.NoError(t, err)
+	})
+
+	codecStorage := func(reg *versionpolicy.VersionPolicyRegistry, persistAs string) *Storage {
+		return &Storage{
+			gr: dashv1.DashboardResourceInfo.GroupResource(),
+			codec: upcastCodec{
+				Codec:      apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+				apiVersion: group + "/" + persistAs,
+			},
+			opts: StorageOptions{Scheme: nil, VersionPolicy: reg}, // Scheme nil = codec path
+		}
+	}
+
+	t.Run("codec path: cap enforced against the persisted version, not the declared one", func(t *testing.T) {
+		// The codec converts up (persists v2) while the request declared v1 (<= cap). The old check read the
+		// declared version and let this through; the fix rejects against the persisted v2.
+		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "v1")
+		var buf bytes.Buffer
+		err := codecStorage(reg, "v2").encode(dashboardAt("v1"), &buf)
+
+		require.Error(t, err)
+		require.True(t, apierrors.IsBadRequest(err), "expected a 4xx, got %v", err)
+		require.Contains(t, err.Error(), "v1", "message should name the ceiling version")
+		require.Zero(t, buf.Len(), "rejected write must not leave its payload in the destination buffer")
+	})
+
+	t.Run("codec path: persisted version at/under cap is allowed", func(t *testing.T) {
+		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "v2")
+		var buf bytes.Buffer
+		require.NoError(t, codecStorage(reg, "v1").encode(dashboardAt("v1"), &buf))
+		out := &unstructured.Unstructured{}
+		require.NoError(t, json.Unmarshal(buf.Bytes(), out))
+		require.Equal(t, group+"/v1", out.GetAPIVersion())
+	})
+
+	t.Run("codec path: uncapped group encodes directly", func(t *testing.T) {
+		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "") // no cap for the group
+		var buf bytes.Buffer
+		require.NoError(t, codecStorage(reg, "v2").encode(dashboardAt("v2"), &buf))
+	})
+}
+
+// upcastCodec is a codec whose Encode always writes a fixed apiVersion, simulating a versioning codec
+// that converts to a higher-priority storage version than the request declared. Decode is inherited.
+type upcastCodec struct {
+	runtime.Codec
+	apiVersion string
+}
+
+func (c upcastCodec) Encode(_ runtime.Object, w io.Writer) error {
+	_, err := fmt.Fprintf(w, `{"apiVersion":%q,"kind":"Dashboard","metadata":{"name":"x"}}`, c.apiVersion)
+	return err
 }

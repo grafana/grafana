@@ -68,3 +68,11 @@ func (r *VersionPolicyRegistry) IsVersionAllowed(group, version string) (allowed
 	}
 	return true, max
 }
+
+// HasMaxAllowed reports whether a maxAllowedVersion ceiling is configured for the group. Used to skip
+// buffering on the enforce path when a group has no cap.
+func (r *VersionPolicyRegistry) HasMaxAllowed(group string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.global[group].MaxAllowedVersion != ""
+}

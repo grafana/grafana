@@ -39,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
@@ -94,6 +95,10 @@ type StorageOptions struct {
 
 	// Temporary fix to support adding default permissions AfterCreate
 	Permissions DefaultPermissionSetter
+
+	// VersionPolicy rejects a write whose storage version outranks the group's maxAllowedVersion cap.
+	// Shared across resources (set via the RESTOptionsGetter); nil disables enforcement.
+	VersionPolicy *versionpolicy.VersionPolicyRegistry
 }
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.

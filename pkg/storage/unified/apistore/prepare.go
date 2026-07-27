@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"strconv"
 	"time"
 
@@ -15,6 +14,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -435,17 +435,65 @@ func (s *Storage) checkGVK(obj runtime.Object) error {
 	return nil
 }
 
-func (s *Storage) encode(obj runtime.Object, w io.Writer) error {
-	// The standard encoder is fine when only one type maps to a group
+func (s *Storage) encode(obj runtime.Object, buf *bytes.Buffer) error {
 	if s.opts.Scheme == nil {
-		return s.codec.Encode(obj, w)
+		return s.encodeViaCodec(obj, buf)
 	}
 	if err := s.checkGVK(obj); err != nil {
 		return err
 	}
-
-	// This will always write the saved GVK, unlike:
+	// The JSON encoder writes obj's own (checkGVK-resolved) GVK, so the checked version is the persisted version.
+	// This always writes the saved GVK, unlike:
 	// https://github.com/kubernetes/kubernetes/blob/v1.34.3/staging/src/k8s.io/apimachinery/pkg/runtime/serializer/versioning/versioning.go#L267
 	// that picks an arbitrary GVK that may not match the same group!
-	return json.NewEncoder(w).Encode(obj)
+	if err := s.enforceMaxAllowedVersion(obj.GetObjectKind().GroupVersionKind().Version); err != nil {
+		return err
+	}
+	return json.NewEncoder(buf).Encode(obj)
+}
+
+// encodeViaCodec serializes through the versioning codec (no scheme). That codec may convert the object
+// to a higher-priority storage version, so the cap is enforced against the persisted apiVersion read back
+// from the encoded bytes, not the declared version. Encoding goes straight into the destination buffer;
+// a rejected write resets it so no rejected payload is retained.
+func (s *Storage) encodeViaCodec(obj runtime.Object, buf *bytes.Buffer) error {
+	if err := s.codec.Encode(obj, buf); err != nil {
+		return err
+	}
+	if s.opts.VersionPolicy == nil || !s.opts.VersionPolicy.HasMaxAllowed(s.gr.Group) {
+		return nil
+	}
+	if err := s.enforceMaxAllowedVersion(persistedVersion(buf.Bytes(), obj)); err != nil {
+		buf.Reset()
+		return err
+	}
+	return nil
+}
+
+// enforceMaxAllowedVersion rejects (never rewrites) a write whose version outranks the group's configured maxAllowedVersion.
+// Protects unified storage in every mode, but only fails the request when unified is synchronous; legacy-primary dual-write persists to legacy and rejects only the background unified copy.
+func (s *Storage) enforceMaxAllowedVersion(version string) error {
+	if s.opts.VersionPolicy == nil {
+		return nil
+	}
+	allowed, maxAllowed := s.opts.VersionPolicy.IsVersionAllowed(s.gr.Group, version)
+	if allowed {
+		return nil
+	}
+	return apierrors.NewBadRequest(fmt.Sprintf(
+		"%s: version %s exceeds the configured maximum version %s for group %s",
+		s.gr.String(), version, maxAllowed, s.gr.Group))
+}
+
+// persistedVersion reads the apiVersion actually written by the codec, so the cap is enforced against
+// the stored version. It falls back to the object's declared version if the encoded form has no
+// parseable TypeMeta, so it never silently skips the cap.
+func persistedVersion(encoded []byte, obj runtime.Object) string {
+	var tm metav1.TypeMeta
+	if json.Unmarshal(encoded, &tm) == nil && tm.APIVersion != "" {
+		if gv, err := schema.ParseGroupVersion(tm.APIVersion); err == nil {
+			return gv.Version
+		}
+	}
+	return obj.GetObjectKind().GroupVersionKind().Version
 }
