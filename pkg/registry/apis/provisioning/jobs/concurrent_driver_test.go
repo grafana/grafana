@@ -31,6 +31,27 @@ func newTestConcurrentDriver(t *testing.T, numDrivers int, jobInterval time.Dura
 	return driver
 }
 
+// TestNewConcurrentJobDriver_RejectsBadConfig verifies that configuration that
+// would panic at runtime (a non-positive backstop interval feeds time.NewTicker)
+// or make no sense (no workers) is rejected at construction time.
+func TestNewConcurrentJobDriver_RejectsBadConfig(t *testing.T) {
+	_, err := NewConcurrentJobDriver(
+		0,
+		time.Minute, time.Second, 30*time.Second,
+		&MockStore{}, &MockRepoGetter{}, &MockHistoryWriter{},
+		prometheus.NewRegistry(), nil,
+	)
+	require.ErrorContains(t, err, "numDrivers")
+
+	_, err = NewConcurrentJobDriver(
+		1,
+		time.Minute, 0, 30*time.Second,
+		&MockStore{}, &MockRepoGetter{}, &MockHistoryWriter{},
+		prometheus.NewRegistry(), nil,
+	)
+	require.ErrorContains(t, err, "jobInterval")
+}
+
 // TestConcurrentJobDriver_EventHandler_Enqueue verifies which informer add
 // events feed the work queue: minimal (NATS-style) objects and unclaimed full
 // objects enqueue, while full objects that already carry a claim are skipped.
@@ -231,6 +252,84 @@ func TestConcurrentJobDriver_ProcessesJobEndToEnd(t *testing.T) {
 	worker.AssertCalled(t, "Process", mock.Anything, mockRepo, mock.Anything, mock.Anything)
 	history.AssertCalled(t, "WriteJob", mock.Anything, mock.Anything)
 	assert.True(t, rollbackCalled.Load(), "the deferred rollback must always run; the store makes it a no-op for completed jobs")
+}
+
+// TestConcurrentJobDriver_PostClaimFailureDoesNotRerunJob verifies that a
+// failure after the job was claimed and executed (here: Complete fails) does
+// not rate-limit-retry the key. The claim rollback returns the job to pending,
+// so an immediate retry would re-claim it and re-run the worker's side effects;
+// recovery belongs to the backstop poll instead.
+func TestConcurrentJobDriver_PostClaimFailureDoesNotRerunJob(t *testing.T) {
+	claimedJob := makeTestJob("1")
+	claimedJob.Labels = map[string]string{
+		LabelJobClaim:      "1000000000000",
+		LabelJobClaimOwner: "owner-A",
+	}
+
+	var claims atomic.Int32
+	completeCalled := make(chan struct{})
+
+	store := &MockStore{}
+	store.EXPECT().ListUnclaimedJobs(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
+	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job").
+		RunAndReturn(func(context.Context, string, string) (*provisioning.Job, func(), error) {
+			claims.Add(1)
+			return claimedJob.DeepCopy(), func() {}, nil
+		}).Maybe()
+	store.EXPECT().Update(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, job *provisioning.Job) (*provisioning.Job, error) {
+			return job.DeepCopy(), nil
+		}).Maybe()
+	store.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(claimedJob.DeepCopy(), nil).Maybe()
+	store.EXPECT().RenewLease(mock.Anything, mock.Anything).Return(nil).Maybe()
+	store.EXPECT().Complete(mock.Anything, mock.Anything).
+		RunAndReturn(func(context.Context, *provisioning.Job) error {
+			select {
+			case <-completeCalled:
+			default:
+				close(completeCalled)
+			}
+			return errors.New("transient delete failure")
+		}).Maybe()
+
+	history := &MockHistoryWriter{}
+	history.EXPECT().WriteJob(mock.Anything, mock.Anything).Return(nil).Maybe()
+
+	mockRepo := &repository.MockRepository{}
+	mockRepo.On("Config").Return(makeRepoConfig("test-repo", nil, nil))
+
+	repoGetter := &MockRepoGetter{}
+	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").Return(mockRepo, nil).Maybe()
+
+	worker := &MockWorker{}
+	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true).Maybe()
+	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(nil).Maybe()
+
+	metrics := RegisterJobMetrics(prometheus.NewPedanticRegistry())
+	driver := newTestConcurrentDriver(t, 1, time.Hour, store, repoGetter, history, &metrics, worker)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	runDone := make(chan error, 1)
+	go func() { runDone <- driver.Run(ctx) }()
+
+	driver.EventHandler().AddFunc(&provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
+	})
+
+	select {
+	case <-completeCalled:
+	case <-time.After(5 * time.Second):
+		t.Fatal("job never reached Complete")
+	}
+
+	// A rate-limited retry would re-claim within tens of milliseconds; give it
+	// ample time to prove the key was dropped instead.
+	time.Sleep(300 * time.Millisecond)
+	assert.Equal(t, int32(1), claims.Load(), "a post-claim failure must not re-run the job from the queue")
+
+	cancel()
+	require.NoError(t, <-runDone)
 }
 
 // TestConcurrentJobDriver_DuplicateEventsCauseNoDuplicateProcessing verifies

@@ -70,6 +70,11 @@ func NewConcurrentJobDriver(
 	if numDrivers <= 0 {
 		return nil, fmt.Errorf("numDrivers must be greater than 0, got %d", numDrivers)
 	}
+	// The backstop poller tickers on jobInterval; time.NewTicker panics on
+	// non-positive intervals, so reject bad config here instead of at runtime.
+	if jobInterval <= 0 {
+		return nil, fmt.Errorf("jobInterval must be greater than 0, got %s", jobInterval)
+	}
 	// Default lease renewal interval to 1/3 of job timeout, minimum 5 seconds
 	if leaseRenewalInterval <= 0 {
 		leaseRenewalInterval = jobTimeout / 3
@@ -232,12 +237,20 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 	case apierrors.IsNotFound(err):
 		logger.Debug("job no longer exists - dropping from queue")
 		c.queue.Forget(key)
+	case errors.Is(err, errPostClaim):
+		// The job may already have executed; an immediate retry would re-run its
+		// side effects. Its claim was rolled back, so the backstop poll
+		// re-discovers it at the regular poll cadence instead.
+		logger.Error("job failed after it was claimed - dropping from queue", "error", err)
+		c.queue.Forget(key)
 	case c.queue.NumRequeues(key)+1 >= maxClaimAttempts:
 		logger.Error("job failed too many times - dropping from queue; the backstop poll re-adds it if still unclaimed",
 			"attempts", c.queue.NumRequeues(key)+1, "error", err)
 		c.queue.Forget(key)
 	default:
-		logger.Warn("failed to process job - will retry",
+		// Only claim-path failures reach here; the job was never claimed by this
+		// worker, so retrying cannot re-run any work.
+		logger.Warn("failed to claim job - will retry",
 			"attempt", c.queue.NumRequeues(key)+1, "error", err)
 		c.queue.AddRateLimited(key)
 	}
@@ -262,7 +275,11 @@ func (c *ConcurrentJobDriver) runBackstopPoller(ctx context.Context) {
 
 	logger.Debug("start backstop poller", "interval", c.jobInterval, "list_limit", limit)
 
-	// Enqueue the startup backlog without waiting for the first tick.
+	// Enqueue the startup backlog without waiting for the first tick. The
+	// informer's initial list delivers most of these as add events too, but the
+	// driver must not depend on an informer being wired or synced (it may lag,
+	// retry, or be absent). The queue deduplicates the overlap, so the cost is
+	// at most one redelivery for keys already in flight.
 	c.enqueueUnclaimedJobs(ctx, limit)
 
 	ticker := time.NewTicker(c.jobInterval)

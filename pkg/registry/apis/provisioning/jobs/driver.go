@@ -56,6 +56,14 @@ type Store interface {
 	ListExpiredJobs(ctx context.Context, expiredBefore time.Time, limit int) ([]*provisioning.Job, error)
 }
 
+// errPostClaim marks failures that happened after the job was successfully
+// claimed. By then the worker may already have executed the job (e.g. only
+// Complete failed), and the deferred claim rollback returns the job to
+// pending — so retrying the key from the queue would re-run work with side
+// effects. The worker loop drops these keys instead and lets the backstop
+// poll re-discover the job, preserving the pre-queue retry cadence.
+var errPostClaim = errors.New("job failed after it was claimed")
+
 // jobProcessor claims and drives a single job at a time to completion.
 // Each worker goroutine of the ConcurrentJobDriver owns one jobProcessor:
 // its per-job state (currentJob) must never be shared across goroutines.
@@ -143,7 +151,7 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string) e
 	ctx = request.WithNamespace(ctx, namespace)
 	ctx, _, err = identity.WithProvisioningIdentity(ctx, namespace)
 	if err != nil {
-		return apifmt.Errorf("failed to grant provisioning identity: %w", err)
+		return errors.Join(errPostClaim, apifmt.Errorf("failed to grant provisioning identity: %w", err))
 	}
 
 	jobctx, cancel := context.WithTimeout(ctx, d.jobTimeout)
@@ -209,7 +217,7 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string) e
 	// Mark the job as completed.
 	if err := d.store.Complete(ctx, d.currentJob); err != nil {
 		span.RecordError(err)
-		return apifmt.Errorf("failed to complete job '%s' in '%s': %w", d.currentJob.GetName(), d.currentJob.GetNamespace(), err)
+		return errors.Join(errPostClaim, apifmt.Errorf("failed to complete job '%s' in '%s': %w", d.currentJob.GetName(), d.currentJob.GetNamespace(), err))
 	}
 
 	return nil
