@@ -1,8 +1,9 @@
-import { test, expect } from '@grafana/plugin-e2e';
 import { execFileSync } from 'child_process';
 import { mkdtempSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
+
+import { test, expect } from '@grafana/plugin-e2e';
 
 // Flow 2 of the on-prem diagnostics "storybook" (see fabrizio-notes on-prem-diagnostics/e2e/
 // storybook-and-e2e-plan.md): drive the REAL "Download diagnostics" drawer end-to-end, capture the
