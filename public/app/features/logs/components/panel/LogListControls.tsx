@@ -736,6 +736,10 @@ const getStyles = (theme: GrafanaTheme2, controlsExpanded: boolean) => {
   return {
     navContainer: css({
       maxHeight: '100%',
+      // Lets the column shrink below its content height so the options scroll instead of overflowing.
+      minHeight: 0,
+      overflowY: 'auto',
+      overflowX: 'hidden',
       display: 'flex',
       flex: '1 0 auto',
       gap: theme.spacing(3),
@@ -747,11 +751,6 @@ const getStyles = (theme: GrafanaTheme2, controlsExpanded: boolean) => {
       borderLeft: `solid 1px ${theme.colors.border.medium}`,
       minWidth: theme.spacing(4),
       backgroundColor: theme.colors.background.primary,
-      // On small screens / small logs visualizations the controls can be taller than the
-      // available space, hiding options. Allow the toolbar to scroll vertically so every
-      // option stays reachable.
-      overflowY: 'auto',
-      overflowX: 'hidden',
     }),
     scrollToTopButton: css({
       margin: 0,
