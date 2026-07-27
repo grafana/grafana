@@ -109,6 +109,8 @@ func (s *HeadlessScreenshotService) Take(ctx context.Context, opts ScreenshotOpt
 
 	renderOpts := rendering.Opts{
 		CommonOpts: rendering.CommonOpts{
+			// alerting does not pass any user here so auth would need to be purely
+			// using a CAP with dashboards:read (X-Access-Token)...
 			AuthOpts: rendering.AuthOpts{
 				OrgID:   dashboard.OrgID,
 				OrgRole: org.RoleAdmin,

@@ -235,6 +235,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(bus.Bus), new(*bus.InProcBus)),
 	rendering.ProvideService,
 	wire.Bind(new(rendering.Service), new(*rendering.RenderingService)),
+	rendering.NewInProcRoundTripper,
+	wire.Bind(new(rendering.AuthMiddleware), new(*rendering.InProcRoundTripper)),
 	routing.ProvideRegister,
 	wire.Bind(new(routing.RouteRegister), new(*routing.RouteRegisterImpl)),
 	hooks.ProvideService,

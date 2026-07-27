@@ -2,23 +2,16 @@ package rendering
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/gob"
 	"errors"
 	"fmt"
 	"math"
-	"net"
-	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
-
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -32,24 +25,23 @@ import (
 var _ Service = (*RenderingService)(nil)
 
 type RenderingService struct {
-	log                 log.Logger
-	renderAction        renderFunc
-	renderCSVAction     renderCSVFunc
-	domain              string
-	inProgressCount     atomic.Int32
-	version             string
-	versionMutex        sync.RWMutex
-	capabilities        []Capability
-	rendererCallbackURL string
-	netClient           *http.Client
+	log             log.Logger
+	renderAction    renderFunc
+	renderCSVAction renderCSVFunc
+	inProgressCount atomic.Int32
+	version         string
+	versionMutex    sync.RWMutex
+	capabilities    []Capability
+	callback        RendererCallback
 
+	imageRendererClient         *Client
 	perRequestRenderKeyProvider renderKeyProvider
 	Cfg                         *setting.Cfg
 	features                    featuremgmt.FeatureToggles
 	RemoteCacheService          *remotecache.RemoteCache
 }
 
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remoteCache *remotecache.RemoteCache) (*RenderingService, error) {
+func ProvideService(cfg *setting.Cfg, cfgProvider setting.Provider, authMiddleware AuthMiddleware, features featuremgmt.FeatureToggles, remoteCache *remotecache.RemoteCache) (*RenderingService, error) {
 	folders := []string{
 		cfg.ImagesDir,
 		cfg.CSVsDir,
@@ -66,34 +58,10 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 
 	logger := log.New("rendering")
 
-	//  value used for domain attribute of renderKey cookie
-	var domain string
-
-	// value used by the image renderer to make requests to Grafana
-	rendererCallbackURL := cfg.RendererCallbackUrl
-	// Default value for callback URL using a remote renderer should be AppURL
-	if cfg.RendererServerUrl != "" && rendererCallbackURL == "" {
-		rendererCallbackURL = cfg.AppURL
-	}
-
-	switch {
-	case rendererCallbackURL != "":
-		if rendererCallbackURL[len(rendererCallbackURL)-1] != '/' {
-			rendererCallbackURL += "/"
-		}
-
-		u, err := url.Parse(rendererCallbackURL)
-		if err != nil {
-			logger.Warn("Image renderer callback url is not valid. " +
-				"Please provide a valid RendererCallbackUrl. " +
-				"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
-			return nil, err
-		}
-		domain = u.Hostname()
-	case cfg.HTTPAddr != setting.DefaultHTTPAddr:
-		domain = cfg.HTTPAddr
-	default:
-		domain = "localhost"
+	// temp
+	callback, err := ResolveCallback(cfgProvider)
+	if err != nil {
+		return nil, err
 	}
 
 	var renderKeyProvider renderKeyProvider
@@ -134,31 +102,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 		}
 	}
 
-	netTransport := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		Dial: (&net.Dialer{
-			Timeout: 30 * time.Second,
-		}).Dial,
-		TLSHandshakeTimeout: 5 * time.Second,
-	}
-
-	if cfg.RendererCACert != "" {
-		caCert, err := os.ReadFile(cfg.RendererCACert)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read renderer CA cert file: %w", err)
-		}
-		caCertPool := x509.NewCertPool()
-		if !caCertPool.AppendCertsFromPEM(caCert) {
-			return nil, fmt.Errorf("failed to parse renderer CA cert")
-		}
-		netTransport.TLSClientConfig = &tls.Config{
-			RootCAs: caCertPool,
-		}
-	}
-
-	netClient := &http.Client{
-		Transport: otelhttp.NewTransport(netTransport),
-	}
+	imageRendererClient := NewClient(cfgProvider, authMiddleware)
 
 	s := &RenderingService{
 		perRequestRenderKeyProvider: renderKeyProvider,
@@ -180,9 +124,8 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 		features:            features,
 		RemoteCacheService:  remoteCache,
 		log:                 logger,
-		domain:              domain,
-		rendererCallbackURL: rendererCallbackURL,
-		netClient:           netClient,
+		callback:            callback,
+		imageRendererClient: imageRendererClient,
 	}
 
 	gob.Register(&RenderUser{})
@@ -423,37 +366,6 @@ func (rs *RenderingService) getNewFilePath(rt RenderType) (string, error) {
 	}
 
 	return filepath.Abs(filepath.Join(folder, fmt.Sprintf("%s.%s", rand, ext)))
-}
-
-// getGrafanaCallbackURL creates a URL to send to the image rendering as callback for rendering a Grafana resource
-func (rs *RenderingService) getGrafanaCallbackURL(path string) string {
-	if rs.rendererCallbackURL != "" {
-		// rendererCallbackURL should be set if:
-		// - the backend rendering service is remote (default value is cfg.AppURL
-		// and set when initializing the service)
-		// - the service is a plugin and Grafana is running behind a proxy changing its domain
-
-		// &render=1 signals to the legacy redirect layer to
-		return fmt.Sprintf("%s%s&render=1", rs.rendererCallbackURL, path)
-	}
-
-	protocol := rs.Cfg.Protocol
-	switch protocol {
-	case setting.HTTPScheme:
-		protocol = "http"
-	case setting.HTTP2Scheme, setting.HTTPSScheme, setting.SocketHTTP2Scheme:
-		protocol = "https"
-	default:
-		// TODO: Handle other schemes?
-	}
-
-	subPath := ""
-	if rs.Cfg.ServeFromSubPath {
-		subPath = rs.Cfg.AppSubURL
-	}
-
-	// &render=1 signals to the legacy redirect layer to
-	return fmt.Sprintf("%s://%s:%s%s/%s&render=1", protocol, rs.domain, rs.Cfg.HTTPPort, subPath, path)
 }
 
 func isoTimeOffsetToPosixTz(isoOffset string) string {
