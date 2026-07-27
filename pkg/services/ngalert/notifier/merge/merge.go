@@ -134,20 +134,24 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (v1.AMConfigV1, Mer
 		return v1.AMConfigV1{}, MergeResult{}, fmt.Errorf("cannot merge because config %s because it conflicts with existing managed route", mimirCfg.Identifier)
 	}
 
-	mergedReceivers, renamedReceivers, addedReceivers := Receivers(cfg.AlertmanagerConfig.Receivers, mcfg.Receivers, mimirCfg.Identifier)
+	importedReceivers, err := mcfg.ToGrafanaReceivers()
+	if err != nil {
+		return v1.AMConfigV1{}, MergeResult{}, fmt.Errorf("failed to convert imported receivers: %w", err)
+	}
+	mergedReceivers, renamedReceivers, addedReceivers := Receivers(cfg.AlertmanagerConfig.Receivers, importedReceivers, mimirCfg.Identifier)
 
 	mergedTimeIntervals, renamedTimeIntervals, addedTimeIntervals := TimeIntervals(
 		cfg.AlertmanagerConfig.MuteTimeIntervals,
 		cfg.AlertmanagerConfig.TimeIntervals,
-		mcfg.MuteTimeIntervals,
-		mcfg.TimeIntervals,
+		mcfg.ToGrafanaMuteTimeIntervals(),
+		mcfg.ToGrafanaTimeIntervals(),
 		mimirCfg.Identifier,
 	)
 
 	managedRoutes := make(v1.ManagedRoutes, len(cfg.ManagedRoutes)+1)
 	{
 		maps.Copy(managedRoutes, cfg.ManagedRoutes)
-		extraRoute := mcfg.Route
+		extraRoute := mcfg.ToGrafanaRoute()
 		RenameResourceUsagesInRoutes([]*v1.Route{extraRoute}, RenameResources{Receivers: renamedReceivers, TimeIntervals: renamedTimeIntervals})
 		managedRoutes[mimirCfg.Identifier] = extraRoute
 	}
@@ -195,13 +199,13 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (v1.AMConfigV1, Mer
 
 // DeduplicateResources merges existing and incoming resources (receivers and time intervals) and ensures unique names by
 // appending a suffix derived from identifier. Returns renamed resources for tracking adjustments made.
-func DeduplicateResources(a, b v1.PostableApiAlertingConfig, identifier string) RenameResources {
-	_, renamedReceivers, _ := Receivers(a.Receivers, b.Receivers, identifier)
+func DeduplicateResources(a v1.PostableApiAlertingConfig, b v1.ExtraAlertmanagerConfig, identifier string) RenameResources {
+	_, renamedReceivers, _ := Receivers(a.Receivers, b.ReceiverNameStubs(), identifier)
 	_, renamedTimeIntervals, _ := TimeIntervals(
 		a.MuteTimeIntervals,
 		a.TimeIntervals,
-		b.MuteTimeIntervals,
-		b.TimeIntervals,
+		b.ToGrafanaMuteTimeIntervals(),
+		b.ToGrafanaTimeIntervals(),
 		identifier,
 	)
 	return RenameResources{Receivers: renamedReceivers, TimeIntervals: renamedTimeIntervals}

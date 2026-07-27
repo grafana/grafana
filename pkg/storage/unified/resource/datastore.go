@@ -780,15 +780,35 @@ func (d *dataStore) processGroupResourceStats(ctx context.Context, gr GroupResou
 
 	var stats []ResourceStats
 
-	// Iterate descending so the first key seen for each name is its latest
-	// version, which decides liveness directly. open distinguishes "not started"
-	// from a cluster-scoped resource (empty namespace).
+	// Iterate ascending: a forward index scan is cheap on every backend, while a
+	// backward scan of a large range is much slower on some. Ascending puts a
+	// name's oldest version first, so its latest (last-seen) version decides
+	// liveness. open tells a not-yet-started scan apart from a cluster-scoped
+	// resource, whose namespace is empty.
 	open := false
+	haveName := false
 	curNS := ""
 	curName := ""
-	var liveCount, maxRV int64
+	var curNameLive bool
+	var curNameRV, liveCount, maxRV int64
+
+	flushName := func() {
+		if !haveName {
+			return
+		}
+		if curNameLive {
+			liveCount++
+		}
+		// maxRV is the namespace's latest version, reported as ResourceVersion in
+		// exact mode only; a capped count has no meaningful latest version.
+		if countLimit == 0 && curNameRV > maxRV {
+			maxRV = curNameRV
+		}
+		haveName, curName, curNameLive, curNameRV = false, "", false, 0
+	}
 
 	emit := func() {
+		flushName()
 		if open && liveCount > int64(minCount) {
 			stats = append(stats, ResourceStats{
 				NamespacedResource: NamespacedResource{Namespace: curNS, Group: gr.Group, Resource: gr.Resource},
@@ -796,15 +816,16 @@ func (d *dataStore) processGroupResourceStats(ctx context.Context, gr GroupResou
 				ResourceVersion:    maxRV,
 			})
 		}
-		open, curName, liveCount, maxRV = false, "", 0, 0
+		open, curNS, liveCount, maxRV = false, "", 0, 0
 	}
 
-	// endKey is the exclusive upper bound; it shrinks as capped namespaces are
-	// skipped, moving the scan down to the next namespace.
+	// startKey is the inclusive lower bound; it advances past capped namespaces,
+	// moving the scan forward to the next namespace.
+	startKey := basePrefix
 	endKey := PrefixRangeEnd(basePrefix)
 	for {
 		seeked := false
-		for key, err := range d.kv.Keys(ctx, dataSection, ListOptions{StartKey: basePrefix, EndKey: endKey, Sort: SortOrderDesc}) {
+		for key, err := range d.kv.Keys(ctx, dataSection, ListOptions{StartKey: startKey, EndKey: endKey, Sort: SortOrderAsc}) {
 			if err != nil {
 				return nil, err
 			}
@@ -819,29 +840,23 @@ func (d *dataStore) processGroupResourceStats(ctx context.Context, gr GroupResou
 				emit()
 				open, curNS = true, dk.Namespace
 			}
-			if dk.Name == curName {
-				continue // older version of a resource already counted
+			if !haveName || dk.Name != curName {
+				flushName()
+				haveName, curName = true, dk.Name
 			}
-			curName = dk.Name
-			// maxRV is the namespace's latest version, reported as ResourceVersion in
-			// exact mode only; a capped count has no meaningful latest version.
-			if countLimit == 0 && dk.ResourceVersion > maxRV {
-				maxRV = dk.ResourceVersion
-			}
-			if dk.Action != DataActionDeleted {
-				liveCount++
-			}
+			curNameLive = dk.Action != DataActionDeleted
+			curNameRV = dk.ResourceVersion
 
 			if countLimit > 0 && liveCount >= int64(countLimit) {
 				ns := curNS
 				emit()
-				// Skip the rest of this namespace by lowering the upper bound to its
-				// prefix. A cluster-scoped resource is one partition under
-				// group/resource, so drop the whole prefix.
+				// Skip the rest of this namespace by advancing the lower bound past it.
+				// A cluster-scoped resource is one partition under group/resource, so
+				// jump to the end.
 				if ns == "" {
-					endKey = basePrefix
+					startKey = endKey
 				} else {
-					endKey = gr.Group + "/" + gr.Resource + "/" + ns + "/"
+					startKey = PrefixRangeEnd(gr.Group + "/" + gr.Resource + "/" + ns + "/")
 				}
 				seeked = true
 				break
