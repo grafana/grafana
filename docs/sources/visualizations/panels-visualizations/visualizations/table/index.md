@@ -344,7 +344,7 @@ The colored background cell type has the following options:
 | Apply to entire row | Toggle the switch on to apply the background color that's configured for the cell to the whole row. When more than one field has this option enabled (for example, when it's set through the panel-level cell type or through overrides that target multiple fields), the row uses the color from the first (leftmost) matching column. |
 | Cell value inspect | <p>Enables value inspection from table cells. When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.</p><p>Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.</p> |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to the [Tooltip from field](#tooltip-from-field). |
-| Styling from field | Toggle on the **Styling from field** switch to apply the styling from another field (or column). The referenced field must contain CSS properties formatted in JSON object syntax (for example, `{"name":"John"}`). For more information, refer to the [Styling from field](#styling-from-field). |
+| Styling from field | Toggle on the **Styling from field** switch to apply the styling from another field (or column). The referenced field must contain CSS properties formatted in JSON object syntax (for example, `{"color":"red"}`). For more information, refer to the [Styling from field](#styling-from-field). |
 <!-- prettier-ignore-end -->
 
 <!-- The cell value inspect, tooltip from field, and styling from field descriptions above should be copied from docs/sources/shared/visualizations/cell-options.md -->
@@ -366,7 +366,7 @@ The gauge cell type has the following options:
 | Gauge display mode | Controls the type of gauge used. For more information, refer to the [Gauge display mode](#gauge-display-mode). |
 | Value display      | Controls how the value is displayed. For more information, refer to the [Value display](#value-display). |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
-| Styling from field | Toggle on the **Styling from field** switch to apply the styling from another field (or column). The referenced field must contain CSS properties formatted in JSON object syntax (for example, `{"name":"John"}`). For more information, refer to the [Styling from field](#styling-from-field). |
+| Styling from field | Toggle on the **Styling from field** switch to apply the styling from another field (or column). The referenced field must contain CSS properties formatted in JSON object syntax (for example, `{"color":"red"}`). For more information, refer to the [Styling from field](#styling-from-field). |
 <!-- prettier-ignore-end -->
 
 {{< admonition type="note" >}}
@@ -403,7 +403,7 @@ Labels displayed alongside of the gauges can be set to be colored by value, matc
 This cell type shows values rendered as a sparkline.
 To show sparklines on data with multiple time series, use the [Time series to table transformation](ref:time-series-to-table-transformation) to process it into a format the table can show.
 
-You can color sparklines using thresholds by setting the field's color scheme to **From thresholds (by value)** in the [standard color scheme options](ref:color-scheme), using an override, and setting **Gradient mode** to **Scheme**. When thresholds are defined, the sparkline automatically reflects threshold levels along the line.
+To change the series color, use the standard [color scheme](ref:color-scheme) field option.
 
 ![Table using sparkline cell type](/media/docs/grafana/panels-visualizations/screenshot-table-as-sparkline-v11.3.png)
 
@@ -418,14 +418,14 @@ For more detailed information about all of the sparkline styling options (except
 | Line interpolation  | How the graph interpolates the series line. Choose from:<ul><li>**Linear** - Points are joined by straight lines.</li><li>**Smooth** - Points are joined by curved lines that smooths transitions between points.</li><li>**Step before** - The line is displayed as steps between points. Points are rendered at the end of the step.</li><li>**Step after** - The line is displayed as steps between points. Points are rendered at the beginning of the step.</li></ul> |
 | Line width          | The thickness of the series lines or the outline for bars using the **Line width** slider. |
 | Fill opacity        | The series area fill color using the **Fill opacity** slider. |
-| Gradient mode       | Gradient mode controls the gradient fill, which is based on the series color. Gradient appearance is influenced by the **Fill opacity** setting. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme](ref:color-scheme). Choose from:<ul><li>**None** - No gradient fill. This is the default setting.</li><li>**Opacity** - An opacity gradient where the opacity of the fill increases as y-axis values increase.</li><li>**Hue** - A subtle gradient that's based on the hue of the series color.</li><li>**Scheme** - The sparkline line color automatically reflects the configured threshold levels when the color scheme is set to **From thresholds (by value)** and thresholds are defined.</li></ul> |
+| Gradient mode       | Gradient mode controls the gradient fill, which is based on the series color. Gradient appearance is influenced by the **Fill opacity** setting. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme](ref:color-scheme). Choose from:<ul><li>**None** - No gradient fill.</li><li>**Opacity** - An opacity gradient where the opacity of the fill increases as y-axis values increase.</li><li>**Hue** - A subtle gradient that's based on the hue of the series color. This is the default setting.</li></ul> |
 | Line style          | Choose from:<ul><li>**Solid**</li><li>**Dash** - Select the length and gap for the line dashes. Default dash spacing is 10, 10.</li><li>**Dots** - Select the gap for the dot spacing. Default dot spacing is 0, 10.</li></ul> |
 | Connect null values | How null values, which are gaps in the data, appear on the graph. Null values can be connected to form a continuous line or set to a threshold above which gaps in the data are no longer connected. Choose from:<ul><li>**Never** - Time series data points with gaps in the data are never connected.</li><li>**Always** - Time series data points with gaps in the data are always connected.</li><li>**Threshold** - Specify a threshold above which gaps in the data are no longer connected. This can be useful when the connected gaps in the data are of a known size or within a known range, and gaps outside this range should no longer be connected.</li></ul> |
 | Show points         | Whether to show data points to lines or bars. Choose from: <ul><li>**Auto** - Grafana determines a point's visibility based on the density of the data. If the density is low, then points appear.</li><li>**Always** - Show the points regardless of how dense the dataset is.</li><li>**Never** - Don't show points.</li></ul> |
 | Point size          | Set the size of the points, from 1 to 40 pixels in diameter. |
 | Bar alignment       | Set the position of the bar relative to a data point. |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
-| Styling from field | Toggle on the **Styling from field** switch to apply the styling from another field (or column). The referenced field must contain CSS properties formatted in JSON object syntax (for example, `{"name":"John"}`). For more information, refer to the [Styling from field](#styling-from-field). |
+| Styling from field | Toggle on the **Styling from field** switch to apply the styling from another field (or column). The referenced field must contain CSS properties formatted in JSON object syntax (for example, `{"color":"red"}`). For more information, refer to the [Styling from field](#styling-from-field). |
 <!-- prettier-ignore-end -->
 
 #### JSON View
@@ -463,10 +463,10 @@ The **Markdown + HTML** cell type displays rich Markdown or HTML content, render
 customized, pre-formatted information alongside tabular data, such as formatted strings,
 lists of links, or other dynamic cases.
 
-For this cell type, you can toggle the **Dynamic height** switch, which allows the cell to resize
-dynamically based on the cell content. If you use dynamic height, we strongly recommend that you
-also toggle on **Pagination** to avoid performance issues in larger tables, since enabling
-Dynamic height disables table {{< term "virtualization" >}}virtualization{{< /term >}}.
+For this cell type, you can toggle the **Dynamic height** switch (labeled **Alpha** in the UI), which
+allows the cell to resize dynamically based on the cell content. If you use dynamic height, we
+strongly recommend that you also toggle on **Pagination** to avoid performance issues in larger
+tables, since enabling Dynamic height disables table {{< term "virtualization" >}}virtualization{{< /term >}}.
 
 By default, the HTML rendered is sanitized, and un-sanitized HTML can only be rendered
 in these cells if the [`disable_sanitize_html`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#disable_sanitize_html) option is set to true for your Grafana instance.
@@ -612,7 +612,7 @@ The following image shows the "Info" field with the styling from the "Style" fie
 By default, field overrides apply only to columns in the parent table.
 To target columns inside a nested table, set the **Target fields** option on the override to **Nested**:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-override-nested-scope-v13.x.png" max-width="350px" alt="Field override configuration with the Target fields selector showing Series and Nested options" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-override-nested-scope-v13.x.png" max-width="350px" alt="Field override configuration with the Target fields selector showing Dataframe and Nested options" >}}
 
 All standard override properties&mdash;including thresholds, value mappings, units, data links, and cell type&mdash;apply the same way to nested fields.
 
