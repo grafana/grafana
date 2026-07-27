@@ -46,4 +46,14 @@ describe('ExtensionToolbarItemButton', () => {
     const button = screen.getByTestId('extension-toolbar-button-open');
     expect(button).toHaveAttribute('aria-label', 'Open AI assistants and sidebar apps');
   });
+
+  it.each([
+    ['grafana-grafanadocsplugin-app', 'book'],
+    ['grafana-pathfinder-app', 'book'],
+    ['grafana-grotfood-app', 'gf-grotfood'],
+  ])('renders the correct icon for pluginId "%s" (%s)', (pluginId, iconName) => {
+    render(<ExtensionToolbarItemButton isOpen={false} pluginId={pluginId} />);
+
+    expect(screen.getByTestId(`icon-${iconName}`)).toBeInTheDocument();
+  });
 });

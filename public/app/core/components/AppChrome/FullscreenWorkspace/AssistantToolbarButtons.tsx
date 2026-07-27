@@ -1,21 +1,20 @@
 import { css } from '@emotion/css';
-import { forwardRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { MessageSparkles, Sparkles, Icon as SVGIcon } from '@grafana/icons';
+import { useFlagAssistantFullscreenWorkspace } from '@grafana/runtime/internal';
 import { ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
+import {
+  getComponentIdFromComponentMeta,
+  useExtensionSidebarContext,
+} from '../ExtensionSidebar/ExtensionSidebarProvider';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
-interface Props {
-  /** Whether the assistant sidebar is open — drives the Chat pill's active styling. */
-  isOpen: boolean;
-  /** Toggles the assistant sidebar. */
-  onClick?: () => void;
-}
-
+const ASSISTANT_PLUGIN_ID = 'grafana-assistant-app';
 const ASSISTANT_ICON_GRADIENT_ID = 'grafana-assistant-toolbar-icon-gradient';
 
 function getOrangeColor(theme: GrafanaTheme2) {
@@ -41,91 +40,75 @@ function AssistantIconGradientDefs() {
 }
 
 /**
- * The Grafana Assistant's top-bar buttons: a labelled purple "Chat" pill (the sidebar
- * toggle) and an "Enter Workspace" pill. `ExtensionToolbarItemButton` delegates here for
- * the `grafana-assistant-app` plugin, keeping the assistant-specific UI + styles out of the
- * generic extension-toolbar button. The forwarded ref lands on the Chat pill for the
- * extension sidebar's `Dropdown` integration.
+ * The Grafana Assistant's top-bar buttons: a "Chat" pill (the sidebar toggle) and a
+ * "Workspace" pill. Self-contained like `NavRightButton`/`InviteUserButton`: it decides for
+ * itself whether it should render (fullscreen workspace flag on, not a small screen, and the
+ * `grafana-assistant-app` plugin actually available), rather than the caller working that out.
  */
-export const AssistantToolbarButtons = forwardRef<HTMLButtonElement, Props>(function AssistantToolbarButtons(
-  { isOpen, onClick },
-  ref
-) {
+export function AssistantToolbarButtons() {
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
+  const fullscreenWorkspaceEnabled = useFlagAssistantFullscreenWorkspace();
+  const isSmallScreen = !useMediaQueryMinWidth('sm');
+  const { availableComponents, dockedComponentId, setDockedComponentId } = useExtensionSidebarContext();
+
+  const assistantComponentTitle = availableComponents.get(ASSISTANT_PLUGIN_ID)?.addedComponents[0]?.title;
+  const assistantComponentId = assistantComponentTitle
+    ? getComponentIdFromComponentMeta(ASSISTANT_PLUGIN_ID, assistantComponentTitle)
+    : undefined;
+  const isOpen = assistantComponentId !== undefined && dockedComponentId === assistantComponentId;
+
+  const shouldRender = fullscreenWorkspaceEnabled && !isSmallScreen && assistantComponentId !== undefined;
 
   return (
-    <>
-      <AssistantIconGradientDefs />
-      <ToolbarButton
-        ref={ref}
-        icon={
-          <span className={styles.chatIcon}>
-            <SVGIcon component={Sparkles} size="lg" />
-          </span>
-        }
-        onClick={onClick}
-        variant={isOpen ? 'active' : 'default'}
-        className={isOpen ? styles.chatButtonActive : undefined}
-        data-testid={`extension-toolbar-button-${isOpen ? 'close' : 'open'}`}
-        aria-expanded={isOpen}
-        aria-pressed={isOpen}
-        aria-label={
-          isOpen
-            ? t('navigation.extension-sidebar.assistant-close', 'Close Grafana Assistant')
-            : t('navigation.extension-sidebar.assistant-open', 'Open Grafana Assistant')
-        }
-        tooltip={
-          isOpen
-            ? t('navigation.extension-sidebar.assistant-close-tooltip', 'Close Chat')
-            : t('navigation.extension-sidebar.assistant-open-tooltip', 'Open Chat')
-        }
-      >
-        {t('navigation.extension-sidebar.assistant-label', 'Chat')}
-      </ToolbarButton>
-      <NavToolbarSeparator />
-      <ToolbarButton
-        icon={
-          <span className={styles.workspaceIcon}>
-            <SVGIcon component={MessageSparkles} size="lg" />
-          </span>
-        }
-        onClick={() => chrome.setFullscreenWorkspace(true)}
-        aria-label={t('navigation.fullscreen-workspace.workspace', 'Workspace')}
-        tooltip={t('navigation.fullscreen-workspace.enter', 'Enter Workspace')}
-      >
-        {t('navigation.fullscreen-workspace.workspace', 'Workspace')}
-      </ToolbarButton>
-      <NavToolbarSeparator className={styles.separator} />
-    </>
+    shouldRender && (
+      <>
+        <AssistantIconGradientDefs />
+        <ToolbarButton
+          icon={
+            <span className={styles.chatIcon}>
+              <SVGIcon component={Sparkles} size="lg" />
+            </span>
+          }
+          onClick={() => setDockedComponentId(isOpen ? undefined : assistantComponentId)}
+          variant={isOpen ? 'active' : 'default'}
+          className={isOpen ? styles.chatButtonActive : undefined}
+          data-testid={`extension-toolbar-button-${isOpen ? 'close' : 'open'}`}
+          aria-expanded={isOpen}
+          aria-pressed={isOpen}
+          aria-label={
+            isOpen
+              ? t('navigation.extension-sidebar.assistant-close', 'Close Grafana Assistant')
+              : t('navigation.extension-sidebar.assistant-open', 'Open Grafana Assistant')
+          }
+          tooltip={
+            isOpen
+              ? t('navigation.extension-sidebar.assistant-close-tooltip', 'Close Chat')
+              : t('navigation.extension-sidebar.assistant-open-tooltip', 'Open Chat')
+          }
+        >
+          {t('navigation.extension-sidebar.assistant-label', 'Chat')}
+        </ToolbarButton>
+        <NavToolbarSeparator />
+        <ToolbarButton
+          icon={
+            <span className={styles.workspaceIcon}>
+              <SVGIcon component={MessageSparkles} size="lg" />
+            </span>
+          }
+          onClick={() => chrome.setFullscreenWorkspace(true)}
+          aria-label={t('navigation.fullscreen-workspace.workspace', 'Workspace')}
+          tooltip={t('navigation.fullscreen-workspace.enter', 'Enter Workspace')}
+        >
+          {t('navigation.fullscreen-workspace.workspace', 'Workspace')}
+        </ToolbarButton>
+        <NavToolbarSeparator className={styles.separator} />
+      </>
+    )
   );
-});
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  assistantPill: css({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: theme.spacing(0.75),
-    height: theme.spacing(3.5),
-    padding: theme.spacing(0, 1.25),
-    borderRadius: theme.shape.radius.default,
-    border: `1px solid ${theme.colors.border.weak}`,
-    background: 'rgba(155, 140, 255, 0.05)',
-    margin: theme.spacing(0, 1, 0, 2),
-    color: '#9b8cff',
-    fontSize: theme.typography.bodySmall.fontSize,
-    fontWeight: theme.typography.fontWeightMedium,
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-    '&:hover': {
-      background: 'rgba(155, 140, 255, 0.12)',
-    },
-  }),
-  assistantPillActive: css({
-    borderColor: '#9b8cff',
-    background: 'rgba(155, 140, 255, 0.12)',
-    boxShadow: '0 0 0 1px rgba(155, 140, 255, 0.35)',
-  }),
   separator: css({
     marginRight: theme.spacing(1),
   }),

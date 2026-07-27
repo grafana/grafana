@@ -269,6 +269,14 @@ describe('ExtensionToolbarItem', () => {
   });
 
   it('should not render anything when the assistant is the only plugin and fullscreen workspace is enabled', async () => {
+    // Earlier tests in this suite override `usePluginLinks`'s mock return value and never reset
+    // it, so this must set it back explicitly rather than relying on the top-level factory mock —
+    // otherwise this test silently exercises the stale links from whichever test ran before it.
+    (usePluginLinks as jest.Mock).mockReturnValue({
+      links: [{ pluginId: mockPluginMeta.pluginId, title: mockComponent.title }],
+      isLoading: false,
+    });
+
     await act(async () => {
       setTestFlags({ [FULLSCREEN_WORKSPACE_FLAG]: true });
     });
