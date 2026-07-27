@@ -504,13 +504,15 @@ func (d *jobDriver) onProgress() ProgressFn {
 				*d.currentJob = *latest
 			}
 
-			job := d.currentJob
+			// Build the candidate on a copy so a failed write never mutates our
+			// in-memory job: the recorder ignores progress errors and keeps going,
+			// so leaving an increment behind would count writes that never persisted.
 			// The incoming status replaces the whole status object, so carry the
 			// progress-update count forward and bump it for this write.
-			progressUpdates := job.Status.ProgressUpdates
-			job.Status = status
-			job.Status.ProgressUpdates = progressUpdates + 1
-			updated, err := d.store.Update(ctx, job)
+			candidate := d.currentJob.DeepCopy()
+			candidate.Status = status
+			candidate.Status.ProgressUpdates = d.currentJob.Status.ProgressUpdates + 1
+			updated, err := d.store.Update(ctx, candidate)
 			if err != nil {
 				if apierrors.IsConflict(err) && attempt < maxRetries-1 {
 					d.mu.Unlock()
@@ -521,7 +523,7 @@ func (d *jobDriver) onProgress() ProgressFn {
 				return apifmt.Errorf("failed to update job progress: %w", err)
 			}
 
-			// Update succeeded, update our local copy
+			// Update succeeded, commit the persisted state to our local copy.
 			*d.currentJob = *updated
 			d.mu.Unlock()
 
