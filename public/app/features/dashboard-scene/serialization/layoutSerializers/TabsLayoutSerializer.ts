@@ -30,10 +30,11 @@ export function serializeTabsLayout(layoutManager: TabsLayoutManager, isSnapshot
 export function serializeTab(tab: TabItem, isSnapshot?: boolean): TabsLayoutTabKind {
   const layout = tab.state.layout.serialize(isSnapshot);
 
-  // A repeated tab is "materialized" when it is a clone or has produced clones. When serializing a snapshot
-  // of a materialized repeat we bake the interpolated title (matching the tab renderer) and strip the repeat
-  // directive below. If the repeat hasn't been materialized, leave both untouched so it isn't silently dropped.
-  const isMaterializedRepeat = Boolean(tab.state.repeatSourceKey) || Boolean(tab.state.repeatedTabs?.length);
+  // A repeated tab is "materialized" when it is a clone or the repeat has already run. `repeatedTabs` is
+  // `undefined` only while the repeat hasn't run yet; an empty array means it ran with a single value. When
+  // serializing a snapshot of a materialized repeat we bake the interpolated title (matching the tab renderer)
+  // and strip the repeat directive below. If it hasn't run, leave both untouched so it isn't silently dropped.
+  const isMaterializedRepeat = Boolean(tab.state.repeatSourceKey) || tab.state.repeatedTabs !== undefined;
   const title = isSnapshot && isMaterializedRepeat ? interpolateSectionTitle(tab, tab.state.title) : tab.state.title;
 
   const tabKind: TabsLayoutTabKind = {

@@ -1777,6 +1777,34 @@ describe('snapshot mode: repeated rows', () => {
     expect(rowsLayout.rows[0].spec.repeat).toEqual({ mode: 'variable', value: 'server' });
   });
 
+  it('materializes a finished single-value repeat (repeatedRows is an empty array, not undefined)', () => {
+    // An empty `repeatedRows` means the repeat ran and resolved to a single value — it IS materialized, so
+    // the title must be baked and the repeat directive stripped (unlike the not-yet-run `undefined` case).
+    const sourceRow = new RowItem({
+      key: 'row-1',
+      title: 'Row $server',
+      repeatByVariable: 'server',
+      repeatedRows: [], // ran, single value → materialized
+      $variables: new SceneVariableSet({
+        variables: [new LocalValueVariable({ name: 'server', value: 'A', text: 'A' })],
+      }),
+      layout: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          children: [
+            new DashboardGridItem({ key: 'grid-item-1', body: new VizPanel({ key: 'panel-1', pluginId: 'timeseries' }) }),
+          ],
+        }),
+      }),
+    });
+
+    const scene = setupDashboardScene(getMinimalSceneState(new RowsLayoutManager({ rows: [sourceRow] })));
+    const rowsLayout = transformSceneToSaveModelSchemaV2(scene, true).layout.spec as RowsLayoutSpec;
+
+    expect(rowsLayout.rows).toHaveLength(1);
+    expect(rowsLayout.rows[0].spec.repeat).toBeUndefined();
+    expect(rowsLayout.rows[0].spec.title).toBe('Row A');
+  });
+
   it('disambiguates AutoGrid panels inside a row clone (AutoGrid is the default row layout)', () => {
     const buildRow = (rowKey: string, panelKey: string, repeatSourceKey?: string) =>
       new RowItem({
