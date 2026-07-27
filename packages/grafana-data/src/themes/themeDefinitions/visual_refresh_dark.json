@@ -18,9 +18,12 @@
     "secondary": {
       "main": "palette.ink700",
       "background": "palette.ink700",
-      "border": "palette.ink600",
+      "shade": "palette.ink650",
+      "backgroundEmphasis": "palette.ink650",
+      "border": "palette.ink650",
+      "borderEmphasis": "palette.ink600",
       "text": "palette.ink200",
-      "contrastText": "palette.ink200"
+      "contrastText": "palette.ink100"
     },
     "tertiary": {
       "main": "palette.violet400",

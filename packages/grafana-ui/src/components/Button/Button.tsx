@@ -338,7 +338,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
   // specify border color for normal button vs border color for outline button
   if (color.name === 'secondary') {
     borderColor = color.border;
-    hoverBorderColor = theme.colors.emphasize(color.border, 0.25);
+    hoverBorderColor = color.borderEmphasis;
     outlineBorderColor = theme.colors.border.strong;
   }
 
