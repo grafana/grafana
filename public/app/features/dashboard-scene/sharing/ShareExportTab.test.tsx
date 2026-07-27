@@ -5,6 +5,12 @@ import {
   defaultQueryGroupKind,
   defaultVizConfigSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import {
+  AnnoKeyFolder,
+  AnnoKeyFolderTitle,
+  AnnoKeyFolderUrl,
+  AnnoKeyGrantPermissions,
+} from 'app/features/apiserver/types';
 import * as dashboardApiModule from 'app/features/dashboard/api/dashboard_api';
 import { ExportFormat, type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { type DashboardDataDTO } from 'app/types/dashboard';
@@ -207,6 +213,58 @@ describe('ShareExportTab', () => {
       if ('metadata' in result.json) {
         expect(result.json.metadata).not.toHaveProperty('resourceVersion');
         expect(result.json.metadata).not.toHaveProperty('namespace');
+      }
+    });
+
+    it('should strip folder annotations when sharing externally is off', async () => {
+      mockGetDashboardAPI(mockV1Spec, {
+        ...mockV2ResourceResponse,
+        metadata: {
+          ...mockV2ResourceResponse.metadata,
+          annotations: {
+            [AnnoKeyFolder]: 'folder-uid',
+            [AnnoKeyFolderTitle]: 'My Folder',
+            [AnnoKeyFolderUrl]: '/dashboards/f/my-folder',
+            [AnnoKeyGrantPermissions]: 'default',
+          },
+        },
+      });
+
+      const tab = buildV2DashboardScenario();
+      tab.setState({ exportFormat: ExportFormat.V2Resource, isSharingExternally: false });
+
+      const result = await tab.getExportableDashboardJson();
+
+      expect('metadata' in result.json && result.json.metadata?.annotations).toEqual({
+        [AnnoKeyGrantPermissions]: 'default',
+      });
+    });
+
+    it('should strip folder annotations when sharing externally is on', async () => {
+      mockGetDashboardAPI(mockV1Spec, {
+        ...mockV2ResourceResponse,
+        metadata: {
+          ...mockV2ResourceResponse.metadata,
+          annotations: {
+            [AnnoKeyFolder]: 'folder-uid',
+            [AnnoKeyFolderTitle]: 'My Folder',
+            [AnnoKeyFolderUrl]: '/dashboards/f/my-folder',
+            [AnnoKeyGrantPermissions]: 'default',
+          },
+        },
+      });
+
+      const tab = buildV2DashboardScenario();
+      tab.setState({ exportFormat: ExportFormat.V2Resource, isSharingExternally: true });
+
+      const result = await tab.getExportableDashboardJson();
+
+      if ('metadata' in result.json) {
+        const annotations = result.json.metadata?.annotations ?? {};
+        expect(annotations[AnnoKeyFolder]).toBeUndefined();
+        expect(annotations[AnnoKeyFolderTitle]).toBeUndefined();
+        expect(annotations[AnnoKeyFolderUrl]).toBeUndefined();
+        expect(annotations[AnnoKeyGrantPermissions]).toBeUndefined();
       }
     });
 
