@@ -31,9 +31,14 @@ type Bundler struct{}
 const (
 	maxQueryDataArtifactBytes  = 8 << 20
 	maxDashboardQueryDataBytes = 32 << 20
+	// maxPostProcessingArtifactBytes caps a single frontend-processing.json, the way
+	// maxQueryDataArtifactBytes does querydata.json. Named separately rather than reusing that constant
+	// because the two artifacts are budgeted independently and only happen to share a value today --
+	// tuning one must not silently move the other.
+	maxPostProcessingArtifactBytes = 8 << 20
 	// maxDashboardPostProcessingBytes bounds the TOTAL frontend-processing.json across a whole-dashboard
 	// bundle, the way maxDashboardQueryDataBytes does for querydata.json -- without it a per-panel cap
-	// alone lets an N-panel dashboard contribute N * maxQueryDataArtifactBytes, all resident at once
+	// alone lets an N-panel dashboard contribute N * maxPostProcessingArtifactBytes, all resident at once
 	// while the archive is assembled. It matters more here than for query data: this payload is
 	// client-supplied and the request body is not yet capped (see the MVP NOTE in pkg/api).
 	//
@@ -117,7 +122,7 @@ func (b *Bundler) Build(in BuildInput) ([]byte, error) {
 
 	// No dashboard-wide budget applies on the single-panel path: there is exactly one artifact, so the
 	// per-artifact cap is the whole bound.
-	if fp, _ := marshalPostProcessingArtifact(in.PostProcessing, maxQueryDataArtifactBytes); len(fp) > 0 {
+	if fp, _ := marshalPostProcessingArtifact(in.PostProcessing, maxPostProcessingArtifactBytes); len(fp) > 0 {
 		files["frontend-processing.json"] = fp
 	}
 
@@ -229,7 +234,7 @@ func marshalQueryDataArtifactWithLimit(request json.RawMessage, resp *backend.Qu
 
 // fitQueryDataArtifact encodes artifact with progressively less content -- request kept, request
 // omitted, summary dropped, then markers only -- and returns the first encoding within maxBytes. The
-// last rung holds only fixed-size markers, which keeps it under minQueryDataArtifactBytes so the
+// last rung holds only fixed-size markers, which keeps it under minDiagnosticArtifactBytes so the
 // budget gate in BuildDashboard stays meaningful; it is returned even when it somehow still doesn't
 // fit, because there is nothing further to drop, and callers enforcing a hard budget re-check length.
 func fitQueryDataArtifact(artifact queryDataArtifact, request json.RawMessage, maxBytes int) ([]byte, error) {
@@ -409,7 +414,7 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 			// panel has no query results and therefore no transform pipeline, so the client should not be
 			// sending evidence for one -- but if it does, say so in the manifest rather than discarding it
 			// without a trace.
-			if hasPostProcessing(p.PostProcessing) {
+			if hasJSONContent(p.PostProcessing) {
 				entry.PostProcessingError = "frontend pipeline evidence discarded: panel was not executed"
 			}
 			manifest.Panels = append(manifest.Panels, entry)
@@ -468,8 +473,8 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 		// frontend-processing.json draws on its own dashboard-wide pool (see
 		// maxDashboardPostProcessingBytes) so a large payload on early panels cannot leave later panels
 		// with nothing, and N panels cannot multiply the per-panel cap into the whole archive.
-		if hasPostProcessing(p.PostProcessing) {
-			ppLimit := min(maxQueryDataArtifactBytes, postProcessingBytesRemaining)
+		if hasJSONContent(p.PostProcessing) {
+			ppLimit := min(maxPostProcessingArtifactBytes, postProcessingBytesRemaining)
 			switch {
 			case ppLimit < minDiagnosticArtifactBytes:
 				entry.PostProcessingTruncated = true
@@ -940,36 +945,53 @@ type postProcessingArtifact struct {
 	// LimitBytes was compared against. Both are reported because they differ -- a client that already
 	// pretty-prints can even shrink under re-indentation -- so a reader checking the artifact against
 	// the request body would otherwise be comparing against the wrong number.
-	OriginalBytes int  `json:"originalBytes"`
-	IndentedBytes int  `json:"indentedBytes"`
-	LimitBytes    int  `json:"limitBytes"`
-	FramesOmitted bool `json:"framesOmitted,omitempty"`
-	// TransformationsOmitted/DisplayOmitted record that even the small fields had to be dropped, so a
-	// reader can tell "the client never sent it" from "it didn't fit".
+	OriginalBytes int `json:"originalBytes"`
+	IndentedBytes int `json:"indentedBytes"`
+	LimitBytes    int `json:"limitBytes"`
+	// The *Omitted flags all mean "the client sent this and it had to be dropped", never "it isn't
+	// here": each is set from what the payload actually carried, so a reader can tell a field that
+	// didn't fit from one that was never captured and doesn't go hunting for the latter.
+	FramesOmitted          bool `json:"framesOmitted,omitempty"`
 	TransformationsOmitted bool `json:"transformationsOmitted,omitempty"`
 	DisplayOmitted         bool `json:"displayOmitted,omitempty"`
 }
 
-// jsonNullLiteral is compared against with bytes.Equal rather than string(payload) == "null", which
-// would copy the whole (potentially multi-megabyte) payload just to reject four bytes.
-var jsonNullLiteral = []byte("null")
+// jsonEmptyLiterals are the payloads that are syntactically present but carry nothing: a client with
+// nothing to report sends one of these as readily as it omits the field, and an "empty capture"
+// artifact (or a manifest error claiming evidence was discarded) is worse than no artifact at all.
+//
+// Compared with bytes.Equal rather than string(payload) == "null", which would copy the whole
+// (potentially multi-megabyte) payload just to reject a few bytes. Interior whitespace ("{ }") is not
+// normalized away, since no JSON encoder emits it for an empty container.
+var jsonEmptyLiterals = [][]byte{[]byte("null"), []byte("{}"), []byte("[]"), []byte(`""`)}
 
-// hasPostProcessing reports whether the client actually sent frontend pipeline evidence. Shared with
-// marshalPostProcessingArtifact so BuildDashboard's budget gate agrees with it on what "nothing" is
-// and doesn't record a budget failure against a panel that sent no evidence at all.
-func hasPostProcessing(raw json.RawMessage) bool {
+// hasJSONContent reports whether a raw JSON value carries something worth recording. Shared by
+// BuildDashboard's budget gate, marshalPostProcessingArtifact, and the per-field omission flags in
+// fitPostProcessingArtifact, so all of them agree on what "nothing" is -- otherwise the gate records a
+// budget failure against a panel that sent no evidence, or a flag claims a field didn't fit when the
+// client never sent it.
+func hasJSONContent(raw json.RawMessage) bool {
 	trimmed := bytes.TrimSpace(raw)
-	return len(trimmed) > 0 && !bytes.Equal(trimmed, jsonNullLiteral)
+	if len(trimmed) == 0 {
+		return false
+	}
+	for _, empty := range jsonEmptyLiterals {
+		if bytes.Equal(trimmed, empty) {
+			return false
+		}
+	}
+	return true
 }
 
 // marshalPostProcessingArtifact returns the frontend-processing.json bytes for the client-captured
 // pipeline evidence plus whether content had to be dropped to fit maxBytes, or (nil, false) when the
-// client sent nothing. The payload is embedded verbatim (pretty-printed) when it fits; when it does
-// not, it degrades through fitPostProcessingArtifact rather than vanishing behind a bare marker.
+// client sent nothing -- an empty container included (see hasJSONContent). The payload is embedded
+// verbatim (pretty-printed) when it fits; when it does not, it degrades through
+// fitPostProcessingArtifact rather than vanishing behind a bare marker.
 //
 // Transient peak serialization memory is not yet strictly bounded (same limitation as querydata.json).
 func marshalPostProcessingArtifact(raw json.RawMessage, maxBytes int) ([]byte, bool) {
-	if !hasPostProcessing(raw) {
+	if !hasJSONContent(raw) {
 		return nil, false
 	}
 	trimmed := bytes.TrimSpace(raw)
@@ -999,7 +1021,6 @@ func fitPostProcessingArtifact(trimmed json.RawMessage, indentedBytes, maxBytes 
 		OriginalBytes: len(trimmed),
 		IndentedBytes: indentedBytes,
 		LimitBytes:    maxBytes,
-		FramesOmitted: true,
 	}
 
 	// Only a JSON object can carry the fields worth keeping; any other shape (array, string, number)
@@ -1007,10 +1028,23 @@ func fitPostProcessingArtifact(trimmed json.RawMessage, indentedBytes, maxBytes 
 	var fields struct {
 		Transformations json.RawMessage `json:"transformations"`
 		Display         json.RawMessage `json:"display"`
+		Input           json.RawMessage `json:"input"`
+		Output          json.RawMessage `json:"output"`
 	}
 	if err := json.Unmarshal(trimmed, &fields); err == nil {
-		artifact.Transformations = fields.Transformations
-		artifact.Display = fields.Display
+		// Derived from what the payload actually carried rather than assumed: the frames are the bulk this
+		// rung drops, but a payload whose weight sits in some other field never had any, and marking them
+		// omitted would send a reader looking for evidence the client never captured.
+		artifact.FramesOmitted = hasJSONContent(fields.Input) || hasJSONContent(fields.Output)
+		// Only content worth keeping is carried over. An empty or null field is not evidence, and
+		// embedding it would also make the *Omitted flags below report it as "didn't fit" when the client
+		// never sent it -- the exact distinction those flags exist to draw.
+		if hasJSONContent(fields.Transformations) {
+			artifact.Transformations = fields.Transformations
+		}
+		if hasJSONContent(fields.Display) {
+			artifact.Display = fields.Display
+		}
 		if out, err := json.MarshalIndent(artifact, "", "  "); err == nil && len(out) <= maxBytes {
 			return out
 		}
@@ -1018,14 +1052,14 @@ func fitPostProcessingArtifact(trimmed json.RawMessage, indentedBytes, maxBytes 
 		// Display is dropped before the transformation config: a panel's field config and overrides can
 		// themselves be sizeable, while the transform list is the more direct answer to "did a frontend
 		// transform do this?".
+		artifact.DisplayOmitted = len(artifact.Display) > 0
 		artifact.Display = nil
-		artifact.DisplayOmitted = len(fields.Display) > 0
 		if out, err := json.MarshalIndent(artifact, "", "  "); err == nil && len(out) <= maxBytes {
 			return out
 		}
 
+		artifact.TransformationsOmitted = len(artifact.Transformations) > 0
 		artifact.Transformations = nil
-		artifact.TransformationsOmitted = len(fields.Transformations) > 0
 	}
 
 	return []byte(fmt.Sprintf(`{
@@ -1034,9 +1068,9 @@ func fitPostProcessingArtifact(trimmed json.RawMessage, indentedBytes, maxBytes 
   "originalBytes": %d,
   "indentedBytes": %d,
   "limitBytes": %d,
-  "framesOmitted": true,
+  "framesOmitted": %t,
   "transformationsOmitted": %t,
   "displayOmitted": %t
 }`, postProcessingArtifactVersion, len(trimmed), indentedBytes, maxBytes,
-		artifact.TransformationsOmitted, artifact.DisplayOmitted))
+		artifact.FramesOmitted, artifact.TransformationsOmitted, artifact.DisplayOmitted))
 }

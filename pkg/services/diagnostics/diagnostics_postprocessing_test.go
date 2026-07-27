@@ -3,6 +3,7 @@ package diagnostics
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"strings"
 	"testing"
 
@@ -43,8 +44,15 @@ func TestBundler_Build_recordsFrontendProcessing(t *testing.T) {
 	require.NotContains(t, body, `"truncated"`, "an artifact that fits carries no truncation markers")
 }
 
+// TestBundler_Build_omitsEmptyFrontendProcessing covers the shapes a client sends when it captured
+// nothing. An empty container is as much "no evidence" as an absent field -- shipping a 2-byte `{}`
+// artifact tells a reader the capture ran and found nothing, which is the opposite of the truth.
 func TestBundler_Build_omitsEmptyFrontendProcessing(t *testing.T) {
-	for _, raw := range []json.RawMessage{nil, json.RawMessage(""), json.RawMessage("  "), json.RawMessage("null")} {
+	empty := []json.RawMessage{
+		nil, json.RawMessage(""), json.RawMessage("  "), json.RawMessage("null"),
+		json.RawMessage("{}"), json.RawMessage("[]"), json.RawMessage(`""`), json.RawMessage(" {} "),
+	}
+	for _, raw := range empty {
 		blob, err := NewBundler().Build(BuildInput{HARBuffer: &harcapture.Buffer{}, PanelJSON: json.RawMessage(`{"id":1}`), PostProcessing: raw})
 		require.NoError(t, err)
 		files := readTarGz(t, blob)
@@ -129,7 +137,51 @@ func TestMarshalPostProcessingArtifact_nonObjectPayload(t *testing.T) {
 	require.True(t, artifact.Truncated)
 	require.Empty(t, artifact.Transformations)
 	require.False(t, artifact.TransformationsOmitted, "nothing was sent to omit")
+	require.False(t, artifact.FramesOmitted, "an unparseable shape carried no identifiable frames to omit")
 	require.NotContains(t, string(out), strings.Repeat("x", 100))
+}
+
+// TestMarshalPostProcessingArtifact_omissionFlagsReflectWhatWasSent pins the distinction the flags
+// exist to draw: they mean "this didn't fit", not "this isn't here". A payload whose bulk sits outside
+// input/output must not claim the frames were dropped, and a field the client sent as null or empty
+// must not be reported as omitted -- either way a reader goes hunting for evidence that never existed.
+func TestMarshalPostProcessingArtifact_omissionFlagsReflectWhatWasSent(t *testing.T) {
+	// Bulk in an unrelated field, no frames and no display sent at all.
+	noFrames := json.RawMessage(`{"transformations":[{"id":"reduce"}],"somethingElse":"` + strings.Repeat("x", 3000) + `"}`)
+	out, truncated := marshalPostProcessingArtifact(noFrames, 300)
+	require.True(t, truncated)
+
+	var artifact postProcessingArtifact
+	require.NoError(t, json.Unmarshal(out, &artifact))
+	require.False(t, artifact.FramesOmitted, "the payload carried no frames, so none were omitted")
+	require.False(t, artifact.DisplayOmitted, "no display context was sent")
+
+	// Empty/null fields beside real frames: the frames are genuinely dropped, the empty ones are not
+	// "omitted" and are not embedded either.
+	emptyFields := json.RawMessage(`{"transformations":[{"id":"reduce"}],"display":null,` +
+		`"output":[{"schema":{"name":"out"},"data":{"values":[["` + strings.Repeat("x", 3000) + `"]]}}]}`)
+	out, truncated = marshalPostProcessingArtifact(emptyFields, 400)
+	require.True(t, truncated)
+	require.NotContains(t, string(out), `"display"`, "a null display context is not embedded as evidence")
+
+	artifact = postProcessingArtifact{}
+	require.NoError(t, json.Unmarshal(out, &artifact))
+	require.True(t, artifact.FramesOmitted, "output frames were present and dropped")
+	require.False(t, artifact.DisplayOmitted, "a null display context was never sent, so it wasn't omitted")
+	require.NotEmpty(t, artifact.Transformations)
+}
+
+// TestFitPostProcessingArtifact_markerFloorFitsMinimumBudget pins the assumption BuildDashboard's
+// budget gate rests on: the marker-only floor stays under minDiagnosticArtifactBytes. The byte counts
+// are interpolated, so the widest possible values are what has to fit -- a floor that outgrew the gate
+// would make a near-exhausted panel trip the "exceeded its assigned budget" path and lose everything.
+func TestFitPostProcessingArtifact_markerFloorFitsMinimumBudget(t *testing.T) {
+	floor := fitPostProcessingArtifact(json.RawMessage(`[]`), math.MaxInt, math.MaxInt)
+	require.Less(t, len(floor), minDiagnosticArtifactBytes)
+
+	var bare postProcessingArtifact
+	require.NoError(t, json.Unmarshal(floor, &bare), "the floor is valid JSON even at extreme sizes")
+	require.True(t, bare.Truncated)
 }
 
 // ---- whole-dashboard path -----------------------------------------------------------------------
@@ -166,7 +218,7 @@ func TestBundler_BuildDashboard_boundsTotalFrontendProcessing(t *testing.T) {
 	// the total and the test would pass without exercising the budget at all.
 	const panelCount = 12
 	const frameBytes = maxDashboardPostProcessingBytes / 8
-	require.Less(t, frameBytes, maxQueryDataArtifactBytes, "each panel must fit its own cap")
+	require.Less(t, frameBytes, maxPostProcessingArtifactBytes, "each panel must fit its own cap")
 	require.Greater(t, panelCount*frameBytes, maxDashboardPostProcessingBytes, "together they must overrun the pool")
 
 	panels := make([]DashboardPanel, 0, panelCount)
@@ -213,7 +265,7 @@ func TestBundler_BuildDashboard_boundsTotalFrontendProcessing(t *testing.T) {
 // the dashboard-wide pool: one enormous panel degrades on its own, without consuming the whole pool.
 func TestBundler_BuildDashboard_perPanelCapStillApplies(t *testing.T) {
 	blob, err := NewBundler().BuildDashboard(nil, []DashboardPanel{
-		{ID: 1, Title: "huge", PostProcessing: postProcessingPayload(t, maxQueryDataArtifactBytes+1024)},
+		{ID: 1, Title: "huge", PostProcessing: postProcessingPayload(t, maxPostProcessingArtifactBytes+1024)},
 		{ID: 2, Title: "small", PostProcessing: json.RawMessage(`{"transformations":[{"id":"reduce"}]}`)},
 	})
 	require.NoError(t, err)
@@ -221,7 +273,7 @@ func TestBundler_BuildDashboard_perPanelCapStillApplies(t *testing.T) {
 	files := readTarGz(t, blob)
 	byID := manifestPanelsByID(t, files)
 	require.True(t, byID[1].PostProcessingTruncated, "the oversized panel is truncated by the per-panel cap")
-	require.LessOrEqual(t, byID[1].PostProcessingBytes, maxQueryDataArtifactBytes)
+	require.LessOrEqual(t, byID[1].PostProcessingBytes, maxPostProcessingArtifactBytes)
 	require.Contains(t, string(files["panels/1-huge/frontend-processing.json"]), `"reduce"`,
 		"the truncated artifact still carries the transformation config")
 
@@ -248,6 +300,19 @@ func TestBundler_BuildDashboard_recordsDiscardedPostProcessingForSkippedPanel(t 
 	byID := manifestPanelsByID(t, files)
 	require.Contains(t, byID[1].PostProcessingError, "discarded")
 	require.Empty(t, byID[2].PostProcessingError, "a skipped panel that sent nothing records nothing")
+}
+
+// TestBundler_BuildDashboard_skippedPanelWithEmptyPostProcessing is the flip side: a client that posts
+// an empty capture for every panel (the likely shape for a row or text panel) must not have each one
+// reported as evidence Grafana threw away.
+func TestBundler_BuildDashboard_skippedPanelWithEmptyPostProcessing(t *testing.T) {
+	blob, err := NewBundler().BuildDashboard(nil, []DashboardPanel{
+		{ID: 1, Title: "Row", Skipped: "no queries (non-data panel)", PostProcessing: json.RawMessage(`{}`)},
+	})
+	require.NoError(t, err)
+
+	byID := manifestPanelsByID(t, readTarGz(t, blob))
+	require.Empty(t, byID[1].PostProcessingError, "an empty capture is not discarded evidence")
 }
 
 // manifestPanelsByID decodes manifest.json and indexes its panel entries by id.
