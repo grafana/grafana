@@ -1885,8 +1885,8 @@ func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *
 }
 
 // TestIntegrationProvisioning_DeleteRepositoryClearsJobQueue verifies that
-// deleting a repository clears any jobs queued against it, via the remove-jobs
-// finalizer.
+// deleting a repository clears the jobs queued against it, via the
+// remove-pending-jobs finalizer.
 func TestIntegrationProvisioning_DeleteRepositoryClearsJobQueue(t *testing.T) {
 	helper := sharedHelper(t)
 
@@ -1900,16 +1900,46 @@ func TestIntegrationProvisioning_DeleteRepositoryClearsJobQueue(t *testing.T) {
 		SkipSync:   true,
 	})
 
-	// The remove-jobs finalizer must be present for the queue to be cleared.
+	// The remove-pending-jobs finalizer must be present for the queue to be cleared.
 	createdRepo, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 	require.NoError(t, err)
 	require.Contains(t, createdRepo.GetFinalizers(), repository.RemovePendingJobsFinalizer,
-		"repository should carry the remove-jobs finalizer")
+		"repository should carry the remove-pending-jobs finalizer")
 
-	// Enqueue several jobs directly against the repository.
-	for i := 0; i < 5; i++ {
-		helper.CreatePullJob(t, fmt.Sprintf("%s-queued-%d", repo, i), repo)
+	// jobsForRepo returns the total and the pending (unclaimed) active jobs
+	// queued for the repository. A pending job has not yet been claimed by a
+	// worker, so it carries no claim label.
+	ctx := t.Context()
+	jobsForRepo := func(t require.TestingT) (total, pending int) {
+		list, err := helper.Jobs.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err, "failed to list jobs")
+		for _, job := range list.Items {
+			labels := job.GetLabels()
+			if labels[jobs.LabelRepository] != repo {
+				continue
+			}
+			total++
+			if _, claimed := labels[jobs.LabelJobClaim]; !claimed {
+				pending++
+			}
+		}
+		return total, pending
 	}
+
+	// Enqueue many jobs directly against the repository. A large batch guarantees
+	// that, with a bounded worker pool, several are still pending (unclaimed) when
+	// the repository is deleted — so clearing them exercises the finalizer rather
+	// than a worker simply draining the queue.
+	const enqueued = 30
+	for i := 0; i < enqueued; i++ {
+		helper.CreatePullJob(t, fmt.Sprintf("%s-queued-%02d", repo, i), repo)
+	}
+
+	// Confirm the jobs really are queued and pending before we delete the repo.
+	total, pending := jobsForRepo(t)
+	require.NotZero(t, total, "jobs should be queued for the repository before deletion")
+	require.NotZero(t, pending, "some queued jobs should be pending (unclaimed) before deletion")
+	t.Logf("before deletion: %d queued for %q (%d pending)", total, repo, pending)
 
 	// Deleting the repository must leave no jobs behind for it.
 	require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}),
@@ -1917,14 +1947,8 @@ func TestIntegrationProvisioning_DeleteRepositoryClearsJobQueue(t *testing.T) {
 	helper.WaitForRepositoryDeleted(t, repo)
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		list, err := helper.Jobs.Resource.List(t.Context(), metav1.ListOptions{})
-		if !assert.NoError(collect, err, "failed to list jobs") {
-			return
-		}
-		for _, job := range list.Items {
-			assert.NotEqual(collect, repo, job.GetLabels()[jobs.LabelRepository],
-				"job %q should not remain queued for the deleted repository", job.GetName())
-		}
+		total, _ := jobsForRepo(collect)
+		assert.Zero(collect, total, "no jobs should remain queued for the deleted repository")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "queue should be cleared for the deleted repository")
 }
 
