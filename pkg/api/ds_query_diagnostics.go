@@ -112,7 +112,16 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	if marshalErr != nil {
 		queryRequestJSON = nil
 	}
-	bundle, err := diagnostics.NewBundler().Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, queryRequestJSON, reqDTO.PostProcessing, marshalErr, bundleErr)
+	bundle, err := diagnostics.NewBundler().Build(diagnostics.BuildInput{
+		Resp:             resp,
+		HARBuffer:        harBuffer,
+		PanelJSON:        reqDTO.Panel,
+		DashboardJSON:    reqDTO.Dashboard,
+		QueryRequestJSON: queryRequestJSON,
+		PostProcessing:   reqDTO.PostProcessing,
+		QueryRequestErr:  marshalErr,
+		QueryErr:         bundleErr,
+	})
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to build diagnostics bundle", err)
 	}

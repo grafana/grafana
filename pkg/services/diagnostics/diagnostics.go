@@ -1,6 +1,8 @@
 // Package diagnostics assembles on-demand datasource diagnostic bundles: captured HTTP traffic
-// (HAR), QueryData request/results, and the panel/dashboard JSON. The HTTP handler in pkg/api runs
-// the queries with capture active and delegates bundle assembly here.
+// (HAR), QueryData request/results, the panel/dashboard JSON, and the client-captured frontend
+// pipeline evidence (transformation input/output frames + applied display context, which only exist
+// in the browser). The HTTP handler in pkg/api runs the queries with capture active and delegates
+// bundle assembly here.
 package diagnostics
 
 import (
@@ -29,9 +31,22 @@ type Bundler struct{}
 const (
 	maxQueryDataArtifactBytes  = 8 << 20
 	maxDashboardQueryDataBytes = 32 << 20
-	// minQueryDataArtifactBytes is the smallest budget worth attempting: below it not even a truncated
-	// artifact (version + omission markers) fits, so the panel's query data is skipped up front.
-	minQueryDataArtifactBytes = 256
+	// maxDashboardPostProcessingBytes bounds the TOTAL frontend-processing.json across a whole-dashboard
+	// bundle, the way maxDashboardQueryDataBytes does for querydata.json -- without it a per-panel cap
+	// alone lets an N-panel dashboard contribute N * maxQueryDataArtifactBytes, all resident at once
+	// while the archive is assembled. It matters more here than for query data: this payload is
+	// client-supplied and the request body is not yet capped (see the MVP NOTE in pkg/api).
+	//
+	// Budgeted separately rather than drawn from the query-data pool because the two artifacts answer
+	// different questions and a reader usually needs both: sharing one pool would let a data-heavy
+	// dashboard consume it on query data (written first) and silently leave every panel's transform
+	// evidence out, which is exactly the evidence this artifact exists to provide.
+	maxDashboardPostProcessingBytes = 32 << 20
+	// minDiagnosticArtifactBytes is the smallest budget worth attempting for a size-bounded artifact:
+	// below it not even a truncated form (version + omission markers) fits, so the panel's artifact is
+	// skipped up front. Shared by querydata.json and frontend-processing.json, whose marker-only
+	// fallbacks are both well under it.
+	minDiagnosticArtifactBytes = 256
 )
 
 // queryDataArtifactVersion is the schema version stamped into every querydata.json (including its
@@ -43,21 +58,44 @@ func NewBundler() *Bundler {
 	return &Bundler{}
 }
 
-// Build assembles a .tar.gz bundle from the query response, the captured HAR buffer, and the
-// optional panel/dashboard JSON the client supplied. traffic.har is omitted when nothing was
-// captured.
+// BuildInput is the caller-supplied content for a single-panel bundle. Every field is optional: the
+// bundle holds whatever was supplied and omits the rest.
+//
+// A struct rather than positional parameters because most fields are mutually assignable
+// (json.RawMessage, error), so a transposed argument would silently produce a wrong bundle -- the
+// panel JSON filed as the frontend evidence, say -- with nothing for the compiler to catch.
+type BuildInput struct {
+	Resp      *backend.QueryDataResponse // query response, carries external plugins' __har__ frames
+	HARBuffer *harcapture.Buffer         // in-process capture buffer for this request's queries
+
+	PanelJSON        json.RawMessage
+	DashboardJSON    json.RawMessage
+	QueryRequestJSON json.RawMessage // MetricRequest submitted for this request
+	PostProcessing   json.RawMessage // client-captured frontend pipeline evidence (transform IO + display)
+
+	// QueryRequestErr is the caller's failure to serialize the request into QueryRequestJSON. Kept
+	// separate from QueryErr so it can be recorded rather than silently omitting the request JSON.
+	QueryRequestErr error
+	QueryErr        error // top-level error running the queries, if any
+}
+
+// Build assembles a .tar.gz bundle from the query response, the captured HAR buffer, and the optional
+// panel/dashboard JSON and frontend pipeline evidence the client supplied. traffic.har is omitted
+// when nothing was captured.
 //
 // Server logs are intentionally omitted because they are not scoped to this request and would leak
 // unrelated activity into a bundle meant for external sharing; they will be tackled in a follow-up.
-func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer, panelJSON, dashboardJSON, queryRequestJSON, postProcessingJSON json.RawMessage, queryRequestErr, queryErr error) ([]byte, error) {
+func (b *Bundler) Build(in BuildInput) ([]byte, error) {
+	resp, harBuffer := in.Resp, in.HARBuffer
+	queryRequestJSON := in.QueryRequestJSON
 	files := map[string][]byte{}
 
 	// queryRequestErr is the caller's failure to serialize the request into queryRequestJSON. Record it
 	// so a support engineer can tell the request JSON was omitted because serialization failed rather
 	// than silently dropped, mirroring how the per-panel dashboard path records manifest.queryDataError.
 	var queryDataErr error
-	if queryRequestErr != nil {
-		queryDataErr = fmt.Errorf("serialize query request: %w", queryRequestErr)
+	if in.QueryRequestErr != nil {
+		queryDataErr = fmt.Errorf("serialize query request: %w", in.QueryRequestErr)
 	}
 	if resp != nil || len(queryRequestJSON) > 0 {
 		queryData, err := marshalQueryDataArtifact(queryRequestJSON, resp)
@@ -77,7 +115,9 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 		files["querydata-error.txt"] = []byte(queryDataErr.Error() + "\n")
 	}
 
-	if fp := marshalPostProcessingArtifact(postProcessingJSON, maxQueryDataArtifactBytes); len(fp) > 0 {
+	// No dashboard-wide budget applies on the single-panel path: there is exactly one artifact, so the
+	// per-artifact cap is the whole bound.
+	if fp, _ := marshalPostProcessingArtifact(in.PostProcessing, maxQueryDataArtifactBytes); len(fp) > 0 {
 		files["frontend-processing.json"] = fp
 	}
 
@@ -89,17 +129,17 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 		files["traffic.har"] = har
 	}
 
-	if len(panelJSON) > 0 {
-		files["panel.json"] = indentJSON(panelJSON)
+	if len(in.PanelJSON) > 0 {
+		files["panel.json"] = indentJSON(in.PanelJSON)
 	}
-	if len(dashboardJSON) > 0 {
-		files["dashboard.json"] = indentJSON(dashboardJSON)
+	if len(in.DashboardJSON) > 0 {
+		files["dashboard.json"] = indentJSON(in.DashboardJSON)
 	}
 
-	if queryErr != nil {
+	if in.QueryErr != nil {
 		// Recorded verbatim -- redaction is intentionally deferred for this experimental feature
 		// (see the harcapture package doc); the error text can embed a request URL with credentials.
-		files["query-error.txt"] = []byte(queryErr.Error() + "\n")
+		files["query-error.txt"] = []byte(in.QueryErr.Error() + "\n")
 	}
 
 	return buildTarGz(files)
@@ -325,8 +365,14 @@ type manifestPanelEntry struct {
 	QueryDataBytes     int      `json:"queryDataBytes,omitempty"`
 	QueryDataTruncated bool     `json:"queryDataTruncated,omitempty"`
 	QueryDataError     string   `json:"queryDataError,omitempty"`
-	Skipped            string   `json:"skipped,omitempty"`
-	Error              string   `json:"error,omitempty"`
+	// PostProcessing* mirror the QueryData* trio for frontend-processing.json, so a reader can see
+	// which panels carry frontend pipeline evidence -- and which had it truncated or dropped -- from
+	// manifest.json alone, without unpacking every panel directory.
+	PostProcessingBytes     int    `json:"postProcessingBytes,omitempty"`
+	PostProcessingTruncated bool   `json:"postProcessingTruncated,omitempty"`
+	PostProcessingError     string `json:"postProcessingError,omitempty"`
+	Skipped                 string `json:"skipped,omitempty"`
+	Error                   string `json:"error,omitempty"`
 	// CaptureError records a failure to serialize this panel's captured traffic. It's kept separate
 	// from Error (a query failure) so one unserializable buffer only loses this panel's traffic.har,
 	// not the whole multi-panel bundle.
@@ -334,7 +380,8 @@ type manifestPanelEntry struct {
 }
 
 // BuildDashboard assembles a whole-dashboard .tar.gz: a shared dashboard.json and manifest.json plus
-// per-panel panels/<id>-<slug>/{panel.json, querydata.json, traffic.har, query-error.txt}.
+// per-panel panels/<id>-<slug>/{panel.json, querydata.json, frontend-processing.json, traffic.har,
+// query-error.txt}.
 //
 // Like Build, captured traffic and error text are recorded VERBATIM -- redaction is intentionally
 // deferred (see the harcapture package doc) -- and server logs are omitted (not request-scoped).
@@ -351,12 +398,20 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 
 	usedDirs := map[string]bool{}
 	queryDataBytesRemaining := maxDashboardQueryDataBytes
+	postProcessingBytesRemaining := maxDashboardPostProcessingBytes
 	panelJSONByID := indexPanelJSON(dashboardJSON)
 	for _, p := range panels {
 		entry := manifestPanelEntry{ID: p.ID, Title: p.Title, Datasources: p.Datasources}
 
 		if p.Skipped != "" {
 			entry.Skipped = p.Skipped
+			// A skipped panel gets no directory, so there is nowhere to write its artifacts. A non-data
+			// panel has no query results and therefore no transform pipeline, so the client should not be
+			// sending evidence for one -- but if it does, say so in the manifest rather than discarding it
+			// without a trace.
+			if hasPostProcessing(p.PostProcessing) {
+				entry.PostProcessingError = "frontend pipeline evidence discarded: panel was not executed"
+			}
 			manifest.Panels = append(manifest.Panels, entry)
 			continue
 		}
@@ -382,9 +437,9 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 		}
 		if p.Resp != nil || len(p.QueryRequest) > 0 {
 			queryDataLimit := min(maxQueryDataArtifactBytes, queryDataBytesRemaining)
-			if queryDataLimit < minQueryDataArtifactBytes {
+			if queryDataLimit < minDiagnosticArtifactBytes {
 				entry.QueryDataTruncated = true
-				queryDataErrs = append(queryDataErrs, fmt.Sprintf("remaining dashboard query-data budget (%d bytes) below the %d-byte minimum artifact size", queryDataBytesRemaining, minQueryDataArtifactBytes))
+				queryDataErrs = append(queryDataErrs, fmt.Sprintf("remaining dashboard query-data budget (%d bytes) below the %d-byte minimum artifact size", queryDataBytesRemaining, minDiagnosticArtifactBytes))
 			} else {
 				queryData, truncated, err := marshalQueryDataArtifactWithLimit(p.QueryRequest, p.Resp, queryDataLimit)
 				if err != nil {
@@ -410,8 +465,33 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 		// panel instead of embedded \n escapes.
 		entry.QueryDataError = strings.Join(queryDataErrs, "; ")
 
-		if fp := marshalPostProcessingArtifact(p.PostProcessing, maxQueryDataArtifactBytes); len(fp) > 0 {
-			files[dir+"/frontend-processing.json"] = fp
+		// frontend-processing.json draws on its own dashboard-wide pool (see
+		// maxDashboardPostProcessingBytes) so a large payload on early panels cannot leave later panels
+		// with nothing, and N panels cannot multiply the per-panel cap into the whole archive.
+		if hasPostProcessing(p.PostProcessing) {
+			ppLimit := min(maxQueryDataArtifactBytes, postProcessingBytesRemaining)
+			switch {
+			case ppLimit < minDiagnosticArtifactBytes:
+				entry.PostProcessingTruncated = true
+				entry.PostProcessingError = fmt.Sprintf("remaining dashboard post-processing budget (%d bytes) below the %d-byte minimum artifact size", postProcessingBytesRemaining, minDiagnosticArtifactBytes)
+			default:
+				fp, truncated := marshalPostProcessingArtifact(p.PostProcessing, ppLimit)
+				switch {
+				case len(fp) == 0:
+					// Nothing encodable survived; there is no partial form left to write.
+					entry.PostProcessingError = "frontend pipeline evidence could not be encoded"
+				case len(fp) > ppLimit:
+					// The marker-only rung is returned even when it doesn't fit, because there is nothing
+					// further to drop -- so enforce the budget here rather than blowing past it.
+					entry.PostProcessingTruncated = true
+					entry.PostProcessingError = "frontend-processing artifact exceeded its assigned dashboard budget"
+				default:
+					files[dir+"/frontend-processing.json"] = fp
+					entry.PostProcessingBytes = len(fp)
+					entry.PostProcessingTruncated = truncated
+					postProcessingBytesRemaining -= len(fp)
+				}
+			}
 		}
 
 		// A single panel's capture that fails to serialize must not sink the whole multi-panel bundle:
@@ -840,27 +920,123 @@ func indentJSON(raw []byte) []byte {
 	return out.Bytes()
 }
 
-// marshalPostProcessingArtifact returns the frontend-processing.json bytes for the client-captured
-// pipeline evidence, or nil when the client sent nothing. The payload is embedded verbatim (pretty-
-// printed); if it exceeds maxBytes it is replaced with an explicit truncation marker so a large
-// transform result cannot bloat the archive without a visible signal. Transient peak serialization
-// memory is not yet strictly bounded (same limitation as querydata.json).
-func marshalPostProcessingArtifact(raw json.RawMessage, maxBytes int) []byte {
+// postProcessingArtifactVersion is the schema version stamped into the DEGRADED forms of
+// frontend-processing.json. An untruncated artifact is the client's own document embedded verbatim and
+// is versioned (if at all) by the client, so only the fallbacks below carry this stamp -- which is
+// also how a reader distinguishes a Grafana-generated fallback from a client payload that happens to
+// have a "truncated" key of its own.
+const postProcessingArtifactVersion = 1
+
+// postProcessingArtifact is the degraded form of frontend-processing.json. The frames (input/output)
+// are what make the payload large, while the transformation config and display context are small and
+// are the fields that let a reader decide "wrong transform config" vs "bad datasource data" -- so they
+// are kept verbatim as long as they fit.
+type postProcessingArtifact struct {
+	Version         int             `json:"version"`
+	Transformations json.RawMessage `json:"transformations,omitempty"`
+	Display         json.RawMessage `json:"display,omitempty"`
+	Truncated       bool            `json:"truncated"`
+	// OriginalBytes is the payload as received; IndentedBytes is its pretty-printed size, which is what
+	// LimitBytes was compared against. Both are reported because they differ -- a client that already
+	// pretty-prints can even shrink under re-indentation -- so a reader checking the artifact against
+	// the request body would otherwise be comparing against the wrong number.
+	OriginalBytes int  `json:"originalBytes"`
+	IndentedBytes int  `json:"indentedBytes"`
+	LimitBytes    int  `json:"limitBytes"`
+	FramesOmitted bool `json:"framesOmitted,omitempty"`
+	// TransformationsOmitted/DisplayOmitted record that even the small fields had to be dropped, so a
+	// reader can tell "the client never sent it" from "it didn't fit".
+	TransformationsOmitted bool `json:"transformationsOmitted,omitempty"`
+	DisplayOmitted         bool `json:"displayOmitted,omitempty"`
+}
+
+// jsonNullLiteral is compared against with bytes.Equal rather than string(payload) == "null", which
+// would copy the whole (potentially multi-megabyte) payload just to reject four bytes.
+var jsonNullLiteral = []byte("null")
+
+// hasPostProcessing reports whether the client actually sent frontend pipeline evidence. Shared with
+// marshalPostProcessingArtifact so BuildDashboard's budget gate agrees with it on what "nothing" is
+// and doesn't record a budget failure against a panel that sent no evidence at all.
+func hasPostProcessing(raw json.RawMessage) bool {
 	trimmed := bytes.TrimSpace(raw)
-	if len(trimmed) == 0 || string(trimmed) == "null" {
-		return nil
+	return len(trimmed) > 0 && !bytes.Equal(trimmed, jsonNullLiteral)
+}
+
+// marshalPostProcessingArtifact returns the frontend-processing.json bytes for the client-captured
+// pipeline evidence plus whether content had to be dropped to fit maxBytes, or (nil, false) when the
+// client sent nothing. The payload is embedded verbatim (pretty-printed) when it fits; when it does
+// not, it degrades through fitPostProcessingArtifact rather than vanishing behind a bare marker.
+//
+// Transient peak serialization memory is not yet strictly bounded (same limitation as querydata.json).
+func marshalPostProcessingArtifact(raw json.RawMessage, maxBytes int) ([]byte, bool) {
+	if !hasPostProcessing(raw) {
+		return nil, false
 	}
-	pretty := indentJSON(raw)
+	trimmed := bytes.TrimSpace(raw)
+	pretty := indentJSON(trimmed)
 	if len(pretty) <= maxBytes {
-		return pretty
+		return pretty, false
 	}
-	marker, err := json.MarshalIndent(struct {
-		Truncated     bool `json:"truncated"`
-		OriginalBytes int  `json:"originalBytes"`
-		LimitBytes    int  `json:"limitBytes"`
-	}{Truncated: true, OriginalBytes: len(pretty), LimitBytes: maxBytes}, "", "  ")
-	if err != nil {
-		return nil
+	return fitPostProcessingArtifact(trimmed, len(pretty), maxBytes), true
+}
+
+// fitPostProcessingArtifact encodes progressively less of the payload -- frames dropped, then display,
+// then the transformation config -- and returns the first encoding within maxBytes.
+//
+// The frames go first because they are the bulk, and the transformation config goes last because it is
+// the field that localizes a transform bug: dropping everything the moment the frames don't fit would
+// lose the cheap, high-signal evidence in exactly the data-heavy cases this artifact exists to
+// explain, the same reasoning marshalQueryDataArtifactWithLimit applies to the submitted query.
+//
+// The last rung holds only fixed-size markers (well under minDiagnosticArtifactBytes) and is built
+// from a fixed template so it cannot fail to encode -- the rungs above embed client JSON verbatim and
+// can. It is returned even if it somehow still doesn't fit, because there is nothing further to drop;
+// callers enforcing a hard budget re-check the length.
+func fitPostProcessingArtifact(trimmed json.RawMessage, indentedBytes, maxBytes int) []byte {
+	artifact := postProcessingArtifact{
+		Version:       postProcessingArtifactVersion,
+		Truncated:     true,
+		OriginalBytes: len(trimmed),
+		IndentedBytes: indentedBytes,
+		LimitBytes:    maxBytes,
+		FramesOmitted: true,
 	}
-	return marker
+
+	// Only a JSON object can carry the fields worth keeping; any other shape (array, string, number)
+	// has no separable small part, so it goes straight to markers.
+	var fields struct {
+		Transformations json.RawMessage `json:"transformations"`
+		Display         json.RawMessage `json:"display"`
+	}
+	if err := json.Unmarshal(trimmed, &fields); err == nil {
+		artifact.Transformations = fields.Transformations
+		artifact.Display = fields.Display
+		if out, err := json.MarshalIndent(artifact, "", "  "); err == nil && len(out) <= maxBytes {
+			return out
+		}
+
+		// Display is dropped before the transformation config: a panel's field config and overrides can
+		// themselves be sizeable, while the transform list is the more direct answer to "did a frontend
+		// transform do this?".
+		artifact.Display = nil
+		artifact.DisplayOmitted = len(fields.Display) > 0
+		if out, err := json.MarshalIndent(artifact, "", "  "); err == nil && len(out) <= maxBytes {
+			return out
+		}
+
+		artifact.Transformations = nil
+		artifact.TransformationsOmitted = len(fields.Transformations) > 0
+	}
+
+	return []byte(fmt.Sprintf(`{
+  "version": %d,
+  "truncated": true,
+  "originalBytes": %d,
+  "indentedBytes": %d,
+  "limitBytes": %d,
+  "framesOmitted": true,
+  "transformationsOmitted": %t,
+  "displayOmitted": %t
+}`, postProcessingArtifactVersion, len(trimmed), indentedBytes, maxBytes,
+		artifact.TransformationsOmitted, artifact.DisplayOmitted))
 }

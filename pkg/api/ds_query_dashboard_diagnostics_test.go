@@ -211,6 +211,55 @@ func TestBuildDashboardDiagnosticsArchive_recordsSubmittedQueryRequest(t *testin
 	require.Contains(t, string(files["panels/1-panel-1/querydata.json"]), `"expr": "up"`)
 }
 
+// TestBuildDashboardDiagnosticsArchive_forwardsPostProcessing covers the wiring for the frontend
+// pipeline evidence: it is the one artifact the backend cannot reconstruct, so if the per-panel
+// postProcessing field stops reaching diagnostics.DashboardPanel the bundle silently loses it with
+// every other artifact still present and nothing failing.
+func TestBuildDashboardDiagnosticsArchive_forwardsPostProcessing(t *testing.T) {
+	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(backend.NewQueryDataResponse(), nil)
+	hs := &HTTPServer{queryDataService: fakeQuery}
+
+	reqDTO := dashboardDiagnosticsRequest{
+		Panels: []panelDiagnosticsSpec{{
+			ID:             1,
+			Title:          "Panel 1",
+			PostProcessing: json.RawMessage(`{"transformations":[{"id":"reduce"}],"display":{"pluginId":"stat"}}`),
+			MetricRequest: dtos.MetricRequest{
+				Queries: []*simplejson.Json{simplejson.NewFromAny(map[string]any{"refId": "A"})},
+			},
+		}},
+	}
+
+	archive, err := hs.buildDashboardDiagnosticsArchive(context.Background(), &user.SignedInUser{OrgID: 1, UserUID: "u1"}, false, false, reqDTO, "job-postprocessing")
+	require.NoError(t, err)
+
+	files := readTarGzFiles(t, archive)
+	require.Contains(t, files, "panels/1-panel-1/frontend-processing.json")
+	body := string(files["panels/1-panel-1/frontend-processing.json"])
+	require.Contains(t, body, `"reduce"`)
+	require.Contains(t, body, `"stat"`)
+	require.Contains(t, string(files["manifest.json"]), `"postProcessingBytes"`,
+		"the manifest records the artifact so a reader sees it without unpacking the panel dir")
+}
+
+// TestPanelDiagnosticsSpec_bindsPostProcessing pins the wire contract: the field is client-supplied,
+// so a rename or a missing tag would leave it silently empty on every request.
+func TestPanelDiagnosticsSpec_bindsPostProcessing(t *testing.T) {
+	body := `{"dashboard":{"title":"d"},"panels":[{"id":7,"title":"P","postProcessing":{"transformations":[{"id":"reduce"}]}}]}`
+
+	var req dashboardDiagnosticsRequest
+	require.NoError(t, json.Unmarshal([]byte(body), &req))
+	require.Len(t, req.Panels, 1)
+	require.JSONEq(t, `{"transformations":[{"id":"reduce"}]}`, string(req.Panels[0].PostProcessing))
+
+	// The single-panel request carries the same field under the same name.
+	var single diagnosticsRequest
+	require.NoError(t, json.Unmarshal([]byte(`{"postProcessing":{"display":{"pluginId":"stat"}}}`), &single))
+	require.JSONEq(t, `{"display":{"pluginId":"stat"}}`, string(single.PostProcessing))
+}
+
 // TestBuildDashboardDiagnosticsArchive_queryV2Dispatch guards against a regression where the
 // dashboard-level path always called QueryData, ignoring the X-Query-V2 signal that QueryDiagnostics
 // (the single-panel path) honors -- so captured traffic wouldn't match a panel using Query V2's
