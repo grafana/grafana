@@ -236,10 +236,6 @@ require (
 
 // Internal module references (every entry should also have a replace in the section below)
 require (
-	// This needs to be here for other projects that import grafana/grafana
-	// For local development grafana/grafana will always use the local files
-	// Check go.work file for details
-	github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.11 // @grafana/data-sources-plugins
 	github.com/grafana/grafana/apps/advisor v0.0.0 // @grafana/grafana-catalog
 	github.com/grafana/grafana/apps/alerting/alertenrichment v0.0.0 // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/alerting/notifications v0.0.0 // @grafana/alerting-backend
