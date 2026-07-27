@@ -41,6 +41,63 @@ func makeTestJob(rv string) *provisioning.Job {
 	}
 }
 
+// TestOnProgress_IncrementsProgressUpdates verifies that each successful progress
+// update bumps the job's ProgressUpdates count, and that the running total is
+// carried forward across the status overwrite that happens on every call.
+func TestOnProgress_IncrementsProgressUpdates(t *testing.T) {
+	store := &MockStore{}
+	driver := &jobDriver{store: store}
+	driver.currentJob = makeTestJob("1")
+
+	// Echo the job back so the driver's local copy keeps the persisted count.
+	store.EXPECT().Update(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, job *provisioning.Job) (*provisioning.Job, error) {
+			return job.DeepCopy(), nil
+		})
+
+	progressFn := driver.onProgress()
+	status := provisioning.JobStatus{State: provisioning.JobStateWorking, Message: "test"}
+
+	require.NoError(t, progressFn(context.Background(), status))
+	assert.Equal(t, int64(1), driver.currentJob.Status.ProgressUpdates)
+
+	require.NoError(t, progressFn(context.Background(), status))
+	assert.Equal(t, int64(2), driver.currentJob.Status.ProgressUpdates)
+
+	require.NoError(t, progressFn(context.Background(), status))
+	assert.Equal(t, int64(3), driver.currentJob.Status.ProgressUpdates)
+}
+
+// TestOnProgress_FailedWriteDoesNotInflateCount verifies that a failed
+// (non-conflict) status write does not leave an increment behind on the
+// in-memory job. The progress recorder ignores progress errors and keeps
+// going, so a failed write must not bump ProgressUpdates for the next call.
+func TestOnProgress_FailedWriteDoesNotInflateCount(t *testing.T) {
+	store := &MockStore{}
+	driver := &jobDriver{store: store}
+	driver.currentJob = makeTestJob("1")
+
+	// First write fails with a non-conflict error (no retry).
+	store.EXPECT().Update(mock.Anything, mock.Anything).
+		Return(nil, errors.New("boom")).Once()
+	// Second write succeeds; echo the job back so the persisted count sticks.
+	store.EXPECT().Update(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, job *provisioning.Job) (*provisioning.Job, error) {
+			return job.DeepCopy(), nil
+		}).Once()
+
+	progressFn := driver.onProgress()
+	status := provisioning.JobStatus{State: provisioning.JobStateWorking, Message: "test"}
+
+	require.Error(t, progressFn(context.Background(), status))
+	assert.Equal(t, int64(0), driver.currentJob.Status.ProgressUpdates,
+		"a failed write must not increment the count")
+
+	require.NoError(t, progressFn(context.Background(), status))
+	assert.Equal(t, int64(1), driver.currentJob.Status.ProgressUpdates,
+		"the first successful write is the first counted update")
+}
+
 // TestOnProgress_DeadlockOnConflict verifies that the onProgress callback
 // does not deadlock when Store.Update returns a conflict error.
 //
