@@ -1785,7 +1785,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/react@npm:^0.27.0, @floating-ui/react@npm:^0.27.19":
+"@floating-ui/react@npm:0.27.20, @floating-ui/react@npm:^0.27.0, @floating-ui/react@npm:^0.27.19":
   version: 0.27.20
   resolution: "@floating-ui/react@npm:0.27.20"
   dependencies:
@@ -18464,7 +18464,7 @@ __metadata:
     "@emotion/react": "npm:11.14.0"
     "@fingerprintjs/fingerprintjs": "npm:^3.4.2"
     "@floating-ui/dom": "npm:^1.7.6"
-    "@floating-ui/react": "npm:0.27.19"
+    "@floating-ui/react": "npm:0.27.20"
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@grafana/alerting": "workspace:*"
     "@grafana/api-clients": "workspace:*"
