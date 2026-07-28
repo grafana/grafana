@@ -1437,6 +1437,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "alerting.manualAssistantInvestigation",
+			Description:  "Enable manually starting an Assistant investigation from the alert instance drawer.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "alertingAIAnalyzeCentralStateHistory",
 			Description:  "Enable AI-analyze central state history.",
 			Stage:        FeatureStageExperimental,
