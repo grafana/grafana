@@ -48,7 +48,8 @@ export { useMetricDetail } from './data/useMetricDetail';
  *
  * `invalidateMetricCache` is the way to force fresh data before the entries expire on their own —
  * the action behind a shell's refresh control. It drops the cached entries *and* makes every mounted
- * hook re-request; entries also expire by themselves after `CACHE_TTL_MS`.
+ * hook re-request. Entries also expire on their own after a few minutes, but that is a floor on
+ * staleness rather than a refresh: nothing re-runs until something asks again.
  */
 export { dsKey, invalidateMetricCache, rangeKey } from './data/metricResourceClient';
 
